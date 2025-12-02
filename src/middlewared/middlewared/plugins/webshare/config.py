@@ -49,10 +49,10 @@ class WebshareService(ConfigService):
 
     @private
     def setup_directories(self):
-        os.makedirs(WEBSHARE_BULK_DOWNLOAD_PATH, mode=0o700, exist_ok=False)
+        os.makedirs(WEBSHARE_BULK_DOWNLOAD_PATH, mode=0o700, exist_ok=True)
         os.chown(WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_UID, WEBSHARE_GID)
 
-        os.makedirs(WEBSHARE_DATA_PATH, mode=0o700, exist_ok=False)
+        os.makedirs(WEBSHARE_DATA_PATH, mode=0o700, exist_ok=True)
         os.chown(WEBSHARE_DATA_PATH, WEBSHARE_UID, WEBSHARE_GID)
 
     @private
