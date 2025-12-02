@@ -19,6 +19,7 @@ class SharingWebshareModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
     path = sa.Column(sa.String(255))
+    is_home_base = sa.Column(sa.Boolean())
     enabled = sa.Column(sa.Boolean())
 
 
@@ -69,7 +70,7 @@ class SharingWebshareService(SharingService):
         new = old.copy()
         new.update(data)
 
-        await self.validate(new, 'sharing_webshare_update', verrors)
+        await self.validate(new, 'sharing_webshare_update', verrors, old)
 
         verrors.check()
 
@@ -117,6 +118,18 @@ class SharingWebshareService(SharingService):
         await self.validate_share_name(data['name'], schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors)
+
+        if data['is_home_base']:
+            filters = [['is_home_base', '=', True]]
+            if old:
+                filters.append(['id', '!=', old['id']])
+
+            if await self.query(filters, {'select': ['id']}):
+                verrors.add(
+                    f'{schema_name}.is_home_base',
+                    'Only one share can be configured as home directory base.',
+                    errno.EEXIST
+                )
 
     @private
     async def compress(self, data):
