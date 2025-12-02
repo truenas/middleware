@@ -396,7 +396,7 @@ class DiskEntry:
         try:
             return read_gpt(dev_fd or self.devpath, self.lbs)
         except Exception as e:
-            if isinstance(e, OSError) and e.errno == errno.ENOMEDIUM:
+            if isinstance(e, OSError) and e.errno in (errno.ENOMEDIUM, errno.EACCES, errno.EPERM):
                 # when we access the "identifier" attribute of the disk object
                 # we try to read partitions on the devices which requires
                 # opening the underlying device. Our users run TrueNAS
@@ -405,6 +405,9 @@ class DiskEntry:
                 # For example, opening an empty sd-card reader device
                 # raises errno 123 (no medimum found). In this scenario
                 # and any other, we should not crash here.
+                # sd* devices are owned by [root,disk] and have 660 permissions.
+                # The netdata service runs as the netdata user and, under certain
+                # conditions, will fail this read resulting in spamming the syslog.
                 pass
             else:
                 logger.exception("Unexpected error reading partitions for device: %r", self.devpath)
