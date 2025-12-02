@@ -166,3 +166,33 @@ def test_webshare(share):
             ws.close()
     finally:
         auth_ws.close()
+
+
+def test_webshare_dataset_details(share):
+    """Test that webshare details appear in pool.dataset.details"""
+    details = call('pool.dataset.details')
+
+    # Find the dataset that has the webshare
+    webshare_dataset = None
+    for ds in details:
+        if ds['id'] == share['dataset']:
+            webshare_dataset = ds
+            break
+        # Check children recursively
+        for child in ds.get('children', []):
+            if child['id'] == share['dataset']:
+                webshare_dataset = child
+                break
+
+    assert webshare_dataset is not None, f"Dataset {share['dataset']} not found in details"
+
+    # Verify webshare_shares field exists and contains our share
+    assert 'webshare_shares' in webshare_dataset, "webshare_shares field not found in dataset details"
+
+    webshare_shares = webshare_dataset['webshare_shares']
+    assert len(webshare_shares) == 1, f"Expected 1 webshare, found {len(webshare_shares)}"
+
+    webshare = webshare_shares[0]
+    assert webshare['enabled'] is True
+    assert webshare['path'] == f"/mnt/{share['dataset']}"
+    assert webshare['share_name'] == 'Share'
