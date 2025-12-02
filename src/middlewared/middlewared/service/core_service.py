@@ -270,9 +270,6 @@ class CoreService(Service):
                     continue
 
                 method = None
-                # For CRUD.do_{update,delete} they need to be accounted
-                # as "item_method", since they are just wrapped.
-                item_method = None
                 if is_service_class(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
@@ -283,8 +280,6 @@ class CoreService(Service):
                         method = getattr(svc, 'do_{}'.format(attr), None)
                         if method is None:
                             continue
-                        if attr in ('update', 'delete'):
-                            item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
                 elif is_service_class(svc, ConfigService):
@@ -373,7 +368,6 @@ class CoreService(Service):
                     'description': doc,
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
-                    'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
                     'filterable': issubclass(method.new_style_accepts, QueryArgs),
                     'filterable_schema': None,

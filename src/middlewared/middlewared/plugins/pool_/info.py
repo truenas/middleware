@@ -5,7 +5,7 @@ from middlewared.api.current import (
     PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
     PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult
 )
-from middlewared.service import CallError, item_method, private, Service, ValidationError
+from middlewared.service import CallError, private, Service, ValidationError
 
 
 class PoolService(Service):
@@ -40,7 +40,6 @@ class PoolService(Service):
 
         return found
 
-    @item_method
     @api_method(PoolAttachmentsArgs, PoolAttachmentsResult, roles=['POOL_READ'])
     async def attachments(self, oid):
         """
@@ -52,7 +51,6 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
-    @item_method
     @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):
         """
@@ -71,7 +69,6 @@ class PoolService(Service):
 
         return processes
 
-    @item_method
     @api_method(PoolGetDisksArgs, PoolGetDisksResult, roles=['POOL_READ'])
     async def get_disks(self, oid):
         """
@@ -97,7 +94,6 @@ class PoolService(Service):
         return info
 
     @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'])
-    @item_method
     async def is_upgraded(self, oid):
         """
         Returns whether or not the pool of `id` is on the latest version and with all feature

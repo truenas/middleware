@@ -2,7 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolReplaceArgs, PoolReplaceResult
-from middlewared.service import item_method, job, Service, ValidationErrors
+from middlewared.service import job, Service, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 
 
@@ -14,7 +14,6 @@ def find_disk_from_identifier(disks, ident):
 
 class PoolService(Service):
 
-    @item_method
     @api_method(PoolReplaceArgs, PoolReplaceResult, roles=['POOL_WRITE'])
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):

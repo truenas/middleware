@@ -20,7 +20,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
@@ -429,7 +429,6 @@ class VMService(CRUDService):
 
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
-    @item_method
     @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'])
     async def status(self, id_):
         """

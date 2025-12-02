@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult
-from middlewared.service import item_method, private, Service
+from middlewared.service import private, Service
 
 from .utils import dataset_mountpoint
 
@@ -12,7 +12,6 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @item_method
     @api_method(PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult, roles=['DATASET_READ'])
     async def attachments(self, oid):
         """
