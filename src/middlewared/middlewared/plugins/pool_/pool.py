@@ -215,7 +215,9 @@ class PoolService(CRUDService):
         # regenerate crontab because of scrub
         await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
-    async def _process_topology(self, schema_name, data, old=None):
+    async def _process_topology(
+        self, schema_name: str, data: dict, old: dict | None = None, validate_all_sed: bool = False
+    ):
         verrors = ValidationErrors()
 
         verrors.add_child(
@@ -267,11 +269,10 @@ class PoolService(CRUDService):
         # At this point, we have validated disks and are ready to proceed to the next step in pool creation
         # where we format disks and finally create the pool with necessary configuration
         # We will now try to configure SED disks (if any) automatically
-        all_sed = data.get('all_sed', False)
-        if old or all_sed:
+        if validate_all_sed:
             # We will only want to do SED magic on zpool create if consumer has explicitly set that flag
             await self.middleware.call(
-                'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', all_sed
+                'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', validate_all_sed
             )
 
         return disks, vdevs
@@ -431,7 +432,7 @@ class PoolService(CRUDService):
                     err = i.value[1]
                 raise CallError(err)
 
-        disks, vdevs = await self._process_topology('pool_create', data)
+        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
 
         if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
             if log_disks := {disk: osize
@@ -608,7 +609,7 @@ class PoolService(CRUDService):
 
         disks = vdevs = None
         if 'topology' in data:
-            disks, vdevs = await self._process_topology('pool_update', data, pool)
+            disks, vdevs = await self._process_topology('pool_update', data, pool, pool['all_sed'])
 
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
