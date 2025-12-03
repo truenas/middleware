@@ -1,10 +1,10 @@
 import asyncio
-import threading
-
 from collections import defaultdict, namedtuple
+import threading
+from typing import Callable, Literal, Sequence
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
-from middlewared.api.base import query_result
+from middlewared.api.base import BaseModel, query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
 
@@ -15,8 +15,15 @@ THREADING_LOCKS = defaultdict(threading.Lock)
 
 
 def filterable_api_method(
-    *, roles=None, item=None, private=False, cli_private=False, authorization_required=True, pass_app=False,
-    pass_app_require=False, pass_thread_local_storage=False,
+    *,
+    roles: list[str] | None = None,
+    item: type[BaseModel] | None = None,
+    private: bool = False,
+    cli_private: bool = False,
+    authorization_required: bool = True,
+    pass_app: bool = False,
+    pass_app_require: bool = False,
+    pass_thread_local_storage: bool = False,
 ):
     def filterable_internal(fn):
         register_models = []
@@ -53,8 +60,15 @@ def filterable_api_method(
 
 
 def job(
-    lock=None, lock_queue_size=5, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
-    description=None, abortable=False, read_roles: list[str] | None = None,
+    lock: Callable[[Sequence], str] | str | None = None,
+    lock_queue_size: int | None = 5,
+    logs: bool = False,
+    pipes: list[Literal["input", "output"]] | None = None,
+    check_pipes: bool = True,
+    transient: bool = False,
+    description: Callable[..., str] | None = None,
+    abortable: bool = False,
+    read_roles: list[str] | None = None,
 ):
     """
     Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
@@ -99,9 +113,6 @@ def job(
         the job can write its logs there, and they will be available in the `/var/log/jobs/{id}.log` file. By default,
         no such file is opened.
 
-    :param process: If `True` then the job body is called in a separate process. By default, job body is executed in the
-        main middleware process.
-
     :param pipes: A list of pipes a job can have. A job can have `pipes=["input"]` pipe, `pipes=["output"]` pipe
         or both at the same time.
 
@@ -111,7 +122,7 @@ def job(
 
     :param check_pipes: If `True`, then the job will check that all its specified pipes are opened (it's the caller's
         responsibility to open the pipes). If `False`, then the job must explicitly run `job.check_pipe("input")`
-        before accessing the pipe. This is useful when a job might or might need a pipe depending on its call arguments.
+        before accessing the pipe. This is useful when a job may or may not need a pipe depending on its call arguments.
         By default, all pipes are checked.
 
     :param transient: If `True` then `"core.get_jobs"` ADDED or CHANGED event won't be sent for this job, and it will
@@ -144,7 +155,7 @@ def job(
             'lock': lock,
             'lock_queue_size': lock_queue_size,
             'logs': logs,
-            'process': process,
+            'process': False,
             'pipes': pipes or [],
             'check_pipes': check_pipes,
             'transient': transient,
@@ -168,8 +179,23 @@ def no_authz_required(fn):
     return fn
 
 
-def pass_app(*, message_id=False, require=False):
-    """Pass the application instance as parameter to the method."""
+def pass_app(*, message_id: bool = False, require: bool = False):
+    """
+    Pass the application instance as a parameter to the method.
+
+    The decorated method receives an `app` parameter providing access to the API call context, including
+    authentication credentials (`app.authenticated_credentials`), session ID, connection origin, and whether
+    this is a WebSocket connection. Useful for authorization checks, audit logging, and passing caller context
+    to nested method calls.
+
+    :param message_id: If `True`, also pass a `message_id` parameter that uniquely identifies this API call.
+        Used in CRUD methods for tracking and audit trails.
+
+    :param require: If `True`, the `app` parameter is guaranteed to be non-None. Methods with `require=True`
+        will error if called without an app context (e.g., from internal calls). If `False`, the method must
+        handle `app` being None. Use `require=True` when the method needs caller identity/permissions and is
+        only called via the API. Use `require=False` when the method works with or without caller context.
+    """
     def wrapper(fn):
         fn._pass_app = {
             'message_id': message_id,
@@ -180,12 +206,79 @@ def pass_app(*, message_id=False, require=False):
 
 
 def pass_thread_local_storage(fn):
-    """Pass a thread-local storage object as a parameter to the method."""
+    """
+    Pass a thread-local storage object as a parameter to the method.
+
+    The decorated method receives a `tls` parameter containing thread-local state initialized for the current
+    thread. Primarily used to provide thread-safe access to libzfs handles (`tls.lzh`) for ZFS operations,
+    since libzfs handles cannot be safely shared across threads.
+
+    The `tls` object is an instance of `threading.local()` that is initialized per-thread with resources like
+    a libzfs handle. Methods that directly interact with ZFS (create/destroy datasets, query properties, etc.)
+    should use this decorator to access `tls.lzh` for thread-safe ZFS operations.
+    """
     fn._pass_thread_local_storage = True
     return fn
 
 
-def periodic(interval, run_on_start=True):
+def periodic(interval: float, run_on_start: bool = True):
+    """
+    Flag method as a periodic task that runs automatically at regular intervals.
+
+    Periodic tasks are set up during middleware startup (when system state reaches 'READY') and run continuously
+    throughout the middleware lifecycle. They are useful for maintenance operations, cache cleanup, health checks,
+    and other recurring background tasks.
+
+    :param interval: The number of seconds to wait between successive executions of the task. After the task
+        completes (successfully or with an exception), the middleware will schedule the next execution to run after
+        this many seconds. For example:
+
+        .. code-block:: python
+
+            @periodic(interval=3600)  # Run every hour
+            async def cleanup_cache(self):
+                ...
+
+            @periodic(interval=86400)  # Run every 24 hours
+            async def daily_maintenance(self):
+                ...
+
+        Common intervals:
+        - 60 seconds = 1 minute
+        - 3600 seconds = 1 hour
+        - 86400 seconds = 24 hours
+
+    :param run_on_start: If `True`, the task will execute immediately when middleware starts (with zero delay),
+        and then again after the first `interval` passes. If `False`, the task will wait for the full `interval`
+        duration before its first execution. Default is `True`.
+
+        Use `run_on_start=True` when you want the task to run as soon as the system is ready, for example:
+
+        .. code-block:: python
+
+            @periodic(interval=86400)  # Runs immediately, then every 24 hours
+            async def sync_encryption_keys(self):
+                ...
+
+        Use `run_on_start=False` when you want to delay the first execution, for example to avoid running
+        resource-intensive tasks during system startup:
+
+        .. code-block:: python
+
+            @periodic(interval=3600, run_on_start=False)  # Waits 1 hour, then runs every hour
+            async def health_check(self):
+                ...
+
+    Notes:
+        - Periodic tasks are resilient to exceptions; if a task raises an exception, it will be logged and the
+          task will be rescheduled to run again after the next interval.
+        - Periodic tasks run in the main middleware event loop; long-running or CPU-intensive operations should offload
+          work to separate threads/processes.
+        - The interval timing starts after the task completes, not from when it starts. If a task takes 10 seconds
+          to run and has a 60-second interval, the next execution will occur 70 seconds after the previous start.
+        - Periodic tasks are typically combined with `@private` decorator since they run automatically and are not
+          meant to be called directly via the API.
+    """
     def wrapper(fn):
         fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
         return fn

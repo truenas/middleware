@@ -83,8 +83,8 @@ if typing.TYPE_CHECKING:
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
     from .pipe import Pipes
     from .service import Service
-    from .types import EventType
     from .utils.origin import ConnectionOrigin
+    from .utils.types import EventType
 
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
