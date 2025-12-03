@@ -50,13 +50,8 @@ Methods can be special and be treated as a job. Job is a long running method whi
 
 Jobs are put in a single queue, processed as a FIFO, and can share an exclusive lock.
 
-Job is a decorator and takes the following parameters:
-
- - lock: a string or a callable for the shared lock name
- - process: a boolean on whether the job should run as a standalone process or a green thread.
-
 e.g.
-    @job(lock='update', process=True)
+    @job(lock='update')
     def update(self, job):
         job.set_progress(0, 'Fetching')
 

@@ -63,7 +63,6 @@ def job(
     lock: Callable[[Sequence], str] | str | None = None,
     lock_queue_size: int | None = 5,
     logs: bool = False,
-    process: bool = False,
     pipes: list[Literal["input", "output"]] | None = None,
     check_pipes: bool = True,
     transient: bool = False,
@@ -114,9 +113,6 @@ def job(
         the job can write its logs there, and they will be available in the `/var/log/jobs/{id}.log` file. By default,
         no such file is opened.
 
-    :param process: If `True` then the job body is called in a separate process. By default, job body is executed in the
-        main middleware process.
-
     :param pipes: A list of pipes a job can have. A job can have `pipes=["input"]` pipe, `pipes=["output"]` pipe
         or both at the same time.
 
@@ -159,7 +155,7 @@ def job(
             'lock': lock,
             'lock_queue_size': lock_queue_size,
             'logs': logs,
-            'process': process,
+            'process': False,
             'pipes': pipes or [],
             'check_pipes': check_pipes,
             'transient': transient,
@@ -276,8 +272,8 @@ def periodic(interval: float, run_on_start: bool = True):
     Notes:
         - Periodic tasks are resilient to exceptions; if a task raises an exception, it will be logged and the
           task will be rescheduled to run again after the next interval.
-        - Periodic tasks run in the main middleware event loop; long-running or CPU-intensive operations should
-          use the `@job(process=True)` decorator or offload work to separate threads/processes.
+        - Periodic tasks run in the main middleware event loop; long-running or CPU-intensive operations should offload
+          work to separate threads/processes.
         - The interval timing starts after the task completes, not from when it starts. If a task takes 10 seconds
           to run and has a 60-second interval, the next execution will occur 70 seconds after the previous start.
         - Periodic tasks are typically combined with `@private` decorator since they run automatically and are not
