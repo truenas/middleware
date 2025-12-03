@@ -13,7 +13,6 @@ from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
 from middlewared.service_exception import (
     CallError,
     ErrnoMixin,
-    InstanceNotFound,
     MatchNotFound,
 )
 from middlewared.utils.crypto import ssl_uuid4
@@ -67,6 +66,11 @@ class ShellWorkerThread(threading.Thread):
                 options["container_id"],
                 options.get("command", "/bin/bash"),
             ]
+            if not as_root:
+                command = ["/usr/bin/sudo", "-H", "-u", username] + command
+            return command, not as_root
+        elif options.get("container_id"):
+            command = options["nsenter"] + [options["command"]]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root

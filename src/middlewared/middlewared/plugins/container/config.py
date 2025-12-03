@@ -75,7 +75,7 @@ class LXCConfigService(ConfigService):
 
         return await self.config()
 
-    @api_method(LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult, roles=["VIRT_GLOBAL_READ"])
+    @api_method(LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult, roles=["LXC_CONFIG_READ"])
     async def bridge_choices(self):
         """
         Bridge choices for virtualization purposes.

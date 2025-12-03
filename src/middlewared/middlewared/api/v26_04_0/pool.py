@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field, PositiveInt, Secret
 
