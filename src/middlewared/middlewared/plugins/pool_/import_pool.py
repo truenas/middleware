@@ -197,7 +197,7 @@ class PoolService(Service):
             'vol_guid': guid,
             'vol_all_sed': None,
         })
-        if await self.middleware.call('system.is_sed_enabled'):
+        if await self.middleware.call('system.sed_enabled'):
             self.middleware.create_task(self.middleware.call('pool.update_all_sed_attr'))
 
         await self.middleware.call('pool.scrub.create', {'pool': pool_id})
