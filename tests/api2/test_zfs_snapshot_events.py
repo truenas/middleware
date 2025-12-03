@@ -62,6 +62,31 @@ def test_delete_with_dependent_clone():
                 ),
             ]
 
+            c.call("pool.snapshot.delete", f"{ds}@test", {"defer": True})
+            c.call("pool.snapshot.get_instance", f"{ds}@test")
+
+            c.call("pool.dataset.delete", f"{ds}/clone01")
+            with pytest.raises(InstanceNotFound):
+                c.call("pool.snapshot.get_instance", f"{ds}@test")
+
+
+def test_recursive_delete_with_dependent_clone():
+    with dataset("test_snapshot_events_dependent_clone") as ds:
+        with client() as c:
+            c.call("pool.dataset.create", {"name": f"{ds}/child"})
+            c.call("pool.snapshot.create", {"dataset": ds, "name": "test", "recursive": True})
+            c.call("pool.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
+            c.call("pool.snapshot.clone", {"snapshot": f"{ds}/child@test", "dataset_dst": f"{ds}/clone02"})
+
+            with pytest.raises(ValidationErrors) as ve:
+                c.call("pool.snapshot.delete", f"{ds}@test")
+
+            c.call("pool.snapshot.delete", f"{ds}@test", {"recursive": True})
+            with pytest.raises(InstanceNotFound):
+                c.call("pool.snapshot.get_instance", f"{ds}@test")
+            with pytest.raises(InstanceNotFound):
+                c.call("pool.snapshot.get_instance", f"{ds}/child@test")
+
 
 def test_delete_nonexistent_snapshot():
     with dataset("test_snapshot_events_nonexistent_snapshot") as ds:
@@ -71,4 +96,4 @@ def test_delete_nonexistent_snapshot():
             with pytest.raises(InstanceNotFound) as e:
                 c.call("pool.snapshot.delete", f"{ds}@testing")
 
-            assert str(e.value) == f"[ENOENT] None: Snapshot {ds}@testing not found"
+            assert str(e.value) == f"[ENOENT] None: '{ds}@testing' not found"

@@ -11,7 +11,7 @@ from middlewared.api.current import (
     ZFSResourceQueryResult,
 )
 from middlewared.service import Service, private
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .destroy_impl import destroy_impl, DestroyArgs
@@ -257,6 +257,7 @@ class ZFSResourceService(Service):
         data.setdefault("recursive", False)
         data.setdefault("bypass", False)
         data.setdefault("all_snapshots", False)
+        data.setdefault("defer", False)
         if os.path.isabs(path):
             raise ValidationError(
                 schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
@@ -268,11 +269,13 @@ class ZFSResourceService(Service):
             # internal callers and not to our public API.
             raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        tmp = path.split("/")
-        if len(tmp) == 1 or tmp[-1] == "":
-            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
-
         a_snapshot = "@" in path
+
+        if not a_snapshot:
+            tmp = path.split("/")
+            if len(tmp) == 1 or tmp[-1] == "":
+                raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
+
         if a_snapshot and data["all_snapshots"]:
             raise ValidationError(
                 schema,
@@ -361,10 +364,18 @@ class ZFSResourceService(Service):
         data["bypass"] = False
         try:
             failed, errnum = self.middleware.call_sync("zfs.resource.destroy_impl", data)
-        except (ZFSPathHasClonesException, ZFSPathHasHoldsException) as e:
+        except ZFSPathHasClonesException as e:
+            ve = ValidationErrors()
+            ve.add(
+                "options.defer",
+                f"Please set this attribute as '{e.path}' snapshot has dependent clones: {', '.join(e.clones)}",
+                errno.EINVAL
+            )
+            raise ve
+        except ZFSPathHasHoldsException as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)
         except ZFSPathNotFoundException as e:
-            raise ValidationError(schema, e.message, errno.ENOENT)
+            raise InstanceNotFound(e.message)
         else:
             if failed:
                 # this is the channel program execution path and so when an

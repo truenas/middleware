@@ -246,7 +246,9 @@ class ContainerService(CRUDService):
                     'readonly': 'IGNORE',
                 }
             ))
-            await self.middleware.call('zfs.snapshot.delete', f'{data["dataset"]}@{source_snapshot}')
+            await self.middleware.call(
+                'zfs.resource.destroy', DestroyArgs(path=f'{data["dataset"]}@{source_snapshot}')
+            )
 
         return await self.create_with_dataset(data)
 

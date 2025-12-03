@@ -322,6 +322,9 @@ class ZFSResourceDestroyArgs(BaseModel):
     """
     all_snapshots: bool = False
     """Remove all snapshots for resource being destroyed."""
+    defer: bool = False
+    """Rather than returning error if the given snapshot is ineligible for immediate destruction, mark it for deferred,
+    automatic destruction once it becomes eligible."""
 
 
 class ZFSResourceDestroyResult(BaseModel):

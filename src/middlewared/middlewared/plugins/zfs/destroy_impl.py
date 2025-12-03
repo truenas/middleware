@@ -27,6 +27,9 @@ class DestroyArgs(typing.TypedDict):
     deleting zfs resources that are "protected".
     NOTE: This is only ever set by internal callers and is
     not exposed to the public API."""
+    defer: bool
+    """Rather than returning error if the given snapshot is ineligible for immediate destruction, mark it for deferred,
+    automatic destruction once it becomes eligible."""
 
 
 def destroy_nonrecursive_impl(tls, data: DestroyArgs):
@@ -38,12 +41,13 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
         holds = rsrc.get_holds()
         if holds:
             raise ZFSPathHasHoldsException(path, holds)
-        clones = rsrc.get_clones()
-        if clones:
-            raise ZFSPathHasClonesException(path, clones)
+        if not data["defer"]:
+            clones = rsrc.get_clones()
+            if clones:
+                raise ZFSPathHasClonesException(path, clones)
 
         try:
-            truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,))
+            truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,), defer_destroy=data["defer"])
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to destroy {path!r}: {e}"
             errnum = e.code
@@ -77,16 +81,17 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
 def destroy_impl(tls, data: DestroyArgs):
     recursive = data.get("recursive", False)
     all_snaps = data.get("all_snapshots", False)
+    defer = data.get("defer", False)
     if not recursive and not all_snaps:
         return destroy_nonrecursive_impl(tls, data)
 
     target = data["path"].split("@")[0]
     rcpa = {
-        "pool_name": data["path"].split("/")[0],
+        "pool_name": target.split("/")[0],
         "script": None,
         "script_arguments_dict": {
             "recursive": recursive,
-            "defer": False,
+            "defer": defer,
             "target": target,
         },
         "readonly": False,
@@ -116,7 +121,7 @@ def destroy_impl(tls, data: DestroyArgs):
         try_again = True
         for clone, err in res["return"]["clones"].items():
             if err == errno.EBUSY:
-                rsrc = open_resource(name=clone)
+                rsrc = open_resource(tls, clone)
                 if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
                     mnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
                     if mnt.mountpoint.value != "legacy":

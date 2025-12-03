@@ -1,6 +1,26 @@
+import asyncio
+import base64
+import collections
+import configparser
+import enum
+import json
+import logging
+import os
+import re
+import shlex
+import subprocess
+import tempfile
+
+import aiorwlock
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 from middlewared.alert.base import (
-    Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertLevel,
+    OneShotAlertClass,
+    SimpleOneShotAlertClass,
 )
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -29,6 +49,7 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
@@ -42,27 +63,11 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
 
-import aiorwlock
-import asyncio
-import base64
-from collections import namedtuple
-import configparser
-import enum
-import json
-import logging
-import os
-import re
-import shlex
-import subprocess
-import tempfile
-
 RE_TRANSF1 = re.compile(r"Transferred:\s*(?P<progress_1>.+), (?P<progress>[0-9]+)%$")
 RE_TRANSF2 = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$")
 RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)?$")
-
 OAUTH_URL = "https://www.truenas.com/oauth"
-
-RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
+RcloneConfigTuple = collections.namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +75,7 @@ logger = logging.getLogger(__name__)
 class RcloneConfig:
     def __init__(self, cloud_sync):
         self.cloud_sync = cloud_sync
-
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]["type"]]
-
         self.config = None
         self.tmp_file = None
         self.tmp_file_filter = None
@@ -248,8 +251,8 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         if snapshot:
             try:
-                await middleware.call("zfs.snapshot.delete", snapshot)
-            except CallError as e:
+                await middleware.call("zfs.resource.destroy", DestroyArgs(path=snapshot))
+            except Exception as e:
                 middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials

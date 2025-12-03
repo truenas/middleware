@@ -596,12 +596,19 @@ class CoreService(Service):
         """
         Will sequentially call `method` with arguments from the `params` list. For example, running
 
-            call("core.bulk", "zfs.snapshot.delete", [["tank@snap-1", true], ["tank@snap-2", false]])
+            call(
+                "core.bulk",
+                "zfs.resource.destroy",
+                [
+                    {"path": "tank@snap-1", "recursive": True},
+                    {"path": "tank@snap-2", "recursive": False}
+                ]
+            )
 
         will call
 
-            call("zfs.snapshot.delete", "tank@snap-1", true)
-            call("zfs.snapshot.delete", "tank@snap-2", false)
+            call("zfs.resource.destroy", {"path": tank@snap-1", recursive=True})
+            call("zfs.resource.destroy", {"path": "tank@snap-2", recursive=False)
 
         If the first call fails and the seconds succeeds (returning `true`), the result of the overall call will be:
 
