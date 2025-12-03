@@ -542,11 +542,13 @@ class PoolDatasetService(CRUDService):
                 for entry in acl_to_set:
                     if entry['id'] == 568 and entry['tag'] == 'USER' and entry['type'] == 'ALLOW':
                         if entry['flags']['FILE_INHERIT'] and entry['flags']['DIRECTORY_INHERIT']:
-                            if all([entry['perms'][x] for x in [
-                                'READ_DATA', 'WRITE_DATA', 'DELETE', 'DELETE_CHILD', 'READ_ACL',
-                                'APPEND_DATA', 'READ_NAMED_ATTRS', 'WRITE_NAMED_ATTRS',
-                                'READ_ATTRIBUTES', 'WRITE_ATTRIBUTES'
-                            ]]):
+                            if all(
+                                entry['perms'][role]
+                                for role in (
+                                    'READ_DATA', 'WRITE_DATA', 'DELETE', 'DELETE_CHILD', 'READ_ACL', 'APPEND_DATA',
+                                    'READ_NAMED_ATTRS', 'WRITE_NAMED_ATTRS', 'READ_ATTRIBUTES', 'WRITE_ATTRIBUTES'
+                                )
+                            ):
                                 must_add_apps = False
                                 break
             else:
