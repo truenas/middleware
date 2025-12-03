@@ -30,7 +30,7 @@ class PoolPoolNormalizeInfo(PoolEntry):
 class PoolPoolNormalizeInfoArgs(BaseModel):
     pool_name: str
     sed_cache: dict | None = None
-    all_sed_pool: bool = False
+    all_sed_pool: bool | None = False
 
 
 class PoolPoolNormalizeInfoResult(BaseModel):
