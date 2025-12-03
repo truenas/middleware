@@ -3,7 +3,7 @@ import os
 import pytest
 import stat
 
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.filesystem import constants
 from middlewared.utils.filesystem import directory
 
