@@ -166,7 +166,7 @@ class TestHTTPServiceTNCPortRegistration:
             if method == 'system.general.https_port_changed':
                 return (True, 8443)
             elif method == 'tn_connect.config':
-                return {'status': Status.CONFIGURED}
+                return {'status': Status.CONFIGURED.name}
 
         mock_middleware.call.side_effect = mock_call
 
@@ -189,7 +189,7 @@ class TestHTTPServiceTNCPortRegistration:
             if method == 'system.general.https_port_changed':
                 return (True, 8443)
             elif method == 'tn_connect.config':
-                return {'status': Status.CONFIGURED}
+                return {'status': Status.CONFIGURED.name}
 
         mock_middleware.call.side_effect = mock_call
 
