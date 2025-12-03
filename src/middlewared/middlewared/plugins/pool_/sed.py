@@ -10,7 +10,7 @@ class PoolService(Service):
         event_send = False
 
     @private
-    async def update_all_sed_attr(self):
+    async def update_all_sed_attr(self, only_check_null_values=True):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
         # How we will do this is that we will scan all disks which are being used and create a mapping
@@ -18,7 +18,12 @@ class PoolService(Service):
         # based or not
         sed_disks = set()
         pool_mapping = defaultdict(set)
-        db_pools = {p['name']: p for p in await self.middleware.call('pool.query')}
+        filters = [['all_sed', '=', None]] if only_check_null_values else []
+        db_pools = {p['name']: p for p in await self.middleware.call('pool.query', filters)}
+        if not db_pools:
+            # If all pools in db already have db row updated, there is nothing to be done here
+            return
+
         for disk in await self.middleware.call('disk.get_used'):
             # We only care about disks in pools which are actually in db
             pool_name = disk['imported_zpool'] or disk['exported_zpool']
