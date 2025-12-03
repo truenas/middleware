@@ -156,9 +156,6 @@ class ShareSec(Service):
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):
         if not os.path.exists(LOCAL_SHARE_INFO_FILE):
-            if not self.middleware.call_sync('service.started', 'cifs'):
-                return
-
             self.flush_share_info()
             return
 
@@ -175,6 +172,10 @@ class ShareSec(Service):
         share in share_info.tdb.
         """
         if not (entries := (await self.middleware.call('smb.sharesec.entries'))):
+            # Current share_info.tdb doesn't exist or has no entries. If the config DB has any
+            # entries we should flush them to running configuration.
+            if await self.middleware.call('datastore.query', 'sharing.cifs_share'):
+                await self.middleware.call('smb.sharesec.flush_share_info')
             return
 
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
