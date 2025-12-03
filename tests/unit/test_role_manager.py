@@ -39,7 +39,9 @@ EXPECTED_FA_RESOURCES = frozenset({
 @pytest.fixture(scope='module')
 def nostig_roles():
     # Generate list of expected roles that should be unavailable for STIG mode
-    PREFIXES = ('VM', 'TRUECOMMAND', 'CATALOG', 'DOCKER', 'APPS', 'VIRT', 'TRUENAS_CONNECT', 'API_KEY')
+    PREFIXES = (
+        'VM', 'TRUECOMMAND', 'CATALOG', 'DOCKER', 'APPS', 'VIRT', 'TRUENAS_CONNECT', 'API_KEY', 'CONTAINER', 'LXC'
+    )
     yield set([
         role_name for
         role_name in list(ROLES.keys()) if role_name.startswith(PREFIXES) and not role_name.endswith('READ')
