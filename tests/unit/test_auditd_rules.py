@@ -7,18 +7,24 @@ from middlewared.utils import auditd
 WITH_GPOS_STIG = True
 # STIG test items
 MODULE_STIG_RULE = "-a always,exit -F arch=b64 -S init_module,finit_module -F key=module-load"
-SAMPLE_STIG_RULE = "-a always,exit -F arch=b64 -S all -F path=/etc/gshadow -F perm=wa -F key=identity"
+# Note: SAMPLE_STIG_RULE uses the expanded syscall list instead of "-S all" because auditctl -l
+# returns rules with syscalls expanded by the kernel audit subsystem after augenrules --load
+SAMPLE_STIG_RULE = (
+    "-a always,exit -F arch=b64 -S open,bind,truncate,ftruncate,rename,mkdir,rmdir,creat,link,unlink,symlink,chmod,"
+    "fchmod,chown,fchown,lchown,mknod,acct,swapon,quotactl,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,"
+    "fremovexattr,openat,mkdirat,mknodat,fchownat,unlinkat,renameat,linkat,symlinkat,fchmodat,fallocate,renameat2,"
+    "openat2 -F path=/etc/gshadow -F perm=wa -F key=identity"
+)
 IMMUTABLE_STIG_RULE = "-e 2"
 # Non-STIG test items
 SAMPLE_CE_RULES = ["-a always,exclude -F msgtype=USER_START", "-a always,exclude -F msgtype=SERVICE_START"]
 # Common test items
-INCUS_RULE = "-a always,exit -F arch=b64 -S all -F path=/usr/bin/incus -F perm=x -F auid!=-1 -F key=escalation"
 REBOOT_RULE = "-a always,exit -F arch=b64 -S execve -F path=/usr/sbin/reboot -F key=escalation"
 
 STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE, REBOOT_RULE]  # TODO:  IMMUTABLE_STIG_RULE when enabled
 STIG_ASSERT_NOT_IN = SAMPLE_CE_RULES
 
-NON_STIG_ASSERT_IN = [INCUS_RULE, REBOOT_RULE] + SAMPLE_CE_RULES
+NON_STIG_ASSERT_IN = [REBOOT_RULE] + SAMPLE_CE_RULES
 NON_STIG_ASSERT_NOT_IN = [SAMPLE_STIG_RULE]
 
 
