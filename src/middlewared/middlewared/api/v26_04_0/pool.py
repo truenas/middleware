@@ -45,7 +45,7 @@ class PoolEntry(BaseModel):
     """Name of the storage pool."""
     guid: str
     """Globally unique identifier (GUID) for this pool."""
-    all_sed: bool
+    all_sed: bool | None
     """Set when pool is made up of SED disks."""
     status: str = Field(examples=["ONLINE", "DEGRADED", "FAULTED"])
     """Current status of the pool."""

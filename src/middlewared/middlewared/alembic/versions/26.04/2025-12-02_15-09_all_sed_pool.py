@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('storage_volume', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('vol_all_sed', sa.Boolean(), server_default='0', nullable=False))
+        batch_op.add_column(sa.Column('vol_all_sed', sa.Boolean(), nullable=True))
 
 
 def downgrade():
