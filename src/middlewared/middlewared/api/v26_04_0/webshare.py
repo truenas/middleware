@@ -1,3 +1,5 @@
+from typing import Literal
+
 from middlewared.api.base import (
     BaseModel,
     excluded_field,
@@ -21,6 +23,8 @@ class WebshareEntry(BaseModel):
     """Unique identifier for the Webshare service configuration."""
     search: bool
     """Search indexing is enabled."""
+    passkey: Literal["ENABLED", "DISABLED", "REQUIRED"]
+    """Passkey authentication mode."""
 
 
 @single_argument_args("webshare_update")

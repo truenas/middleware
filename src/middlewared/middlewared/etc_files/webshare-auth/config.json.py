@@ -10,6 +10,8 @@ def render(service, middleware):
         raise FileShouldNotExist()
 
     config = middleware.call_sync("webshare.config")
+    hostname = middleware.call_sync("system.hostname")
+    rp_name = f"TrueNAS WebShare @ {hostname}"
 
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
@@ -50,9 +52,9 @@ def render(service, middleware):
             },
         },
         "passkey": {
-            "mode": "disable",
-            "rp_name": "TrueNAS WebShare",
-            "rp_display_name": "TrueNAS WebShare",
+            "mode": config["passkey"].lower(),
+            "rp_name": rp_name,
+            "rp_display_name": rp_name,
             "rp_id": "truenas.direct",
             "rp_origins": middleware.call_sync("webshare.urls"),
             "timeout": 60000,

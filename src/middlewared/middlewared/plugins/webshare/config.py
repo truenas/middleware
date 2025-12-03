@@ -16,6 +16,7 @@ class WebshareModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     search = sa.Column(sa.Boolean(), default=False)
+    passkey = sa.Column(sa.String(20), default='DISABLED')
 
 
 class WebshareService(ConfigService):
