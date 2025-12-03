@@ -73,7 +73,9 @@ class FailoverEventsService(Service):
 
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
-        return await (await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)).wait(timeout=timeout)
+        return await (
+            await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)
+        ).wait(timeout=timeout)
 
     async def become_active_service(self, service, timeout):
         logger.info('Become active %s', service)
