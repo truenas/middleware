@@ -2,7 +2,7 @@
 Allow marking all SED based pools in db
 
 Revision ID: d2c5ab6398b3
-Revises: bf646ce959c5
+Revises: c35cc8467317
 Create Date: 2025-12-02 15:09:18.331279+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 revision = 'd2c5ab6398b3'
-down_revision = 'bf646ce959c5'
+down_revision = 'c35cc8467317'
 branch_labels = None
 depends_on = None
 
