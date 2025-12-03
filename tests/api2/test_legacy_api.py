@@ -8,7 +8,7 @@ from middlewared.test.integration.utils import client, session, url
 
 class APIVersions(enum.Enum):
     FT = ("25.04.0", "25.04.1", "25.04.2",)
-    GE = ("25.10.0", "25.10.1",)
+    GE = ("25.10.0", "25.10.1", "25.10.2",)
 
 
 def get_api_versions():
@@ -53,7 +53,7 @@ def misc_methods() -> list[tuple[tuple, str]]:
     """
     return [
         (("fcport.status",), APIVersions.FT.value[0]),
-        (("audit.query", [{"query-options": {"count": True}}]), APIVersions.GE.value[0]),
+        (("audit.query", {"query-options": {"count": True}}), APIVersions.GE.value[0]),
     ]
 
 
@@ -107,9 +107,10 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "rsynctask.query",
             "service.query",
             "sharing.smb.query",
+            "sharing.webshare.query",
             "tunable.query",
             "vmware.query",
-            "zfs.resource.query"
+            "zfs.resource.query",
         )
     ):
         return
@@ -144,6 +145,7 @@ def test_config_method(legacy_api_client, config_method):
             "truecommand.config",
             "update.config",
             "ups.config",
+            "webshare.config",
         )
     ):
         return
@@ -152,6 +154,7 @@ def test_config_method(legacy_api_client, config_method):
         version in APIVersions.GE.value
         and config_method in {
             "lxc.config",
+            "webshare.config",
         }
     ):
         return

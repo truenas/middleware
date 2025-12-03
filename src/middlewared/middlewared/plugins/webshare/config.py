@@ -1,0 +1,85 @@
+import os
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    WebshareEntry, WebshareUpdateArgs, WebshareUpdateResult,
+)
+from middlewared.service import ConfigService, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH, WEBSHARE_UID, WEBSHARE_GID
+
+HOSTNAMES_KEY = "webshare_hostnames"
+
+
+class WebshareModel(sa.Model):
+    __tablename__ = 'services_webshare'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    search = sa.Column(sa.Boolean(), default=False)
+    passkey = sa.Column(sa.String(20), default='DISABLED')
+
+
+class WebshareService(ConfigService):
+
+    class Config:
+        service = 'webshare'
+        service_verb = 'reload'
+        datastore = 'services.webshare'
+        cli_namespace = 'service.webshare'
+        role_prefix = 'SHARING_WEBSHARE'
+        entry = WebshareEntry
+
+    @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration')
+    async def do_update(self, data):
+        """
+        Update Webshare Service Configuration.
+        """
+        old = await self.config()
+
+        new = old.copy()
+        new.update(data)
+
+        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new)
+
+        if old['search'] != new['search']:
+            await self.middleware.call('truesearch.configure')
+
+        await self._service_change(self._config.service, 'reload')
+
+        return new
+
+    @private
+    def setup_directories(self):
+        os.makedirs(WEBSHARE_BULK_DOWNLOAD_PATH, mode=0o700, exist_ok=True)
+        os.chown(WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_UID, WEBSHARE_GID)
+
+        os.makedirs(WEBSHARE_DATA_PATH, mode=0o700, exist_ok=True)
+        os.chown(WEBSHARE_DATA_PATH, WEBSHARE_UID, WEBSHARE_GID)
+
+    @private
+    async def urls(self):
+        try:
+            hostnames = await self.middleware.call("keyvalue.get", HOSTNAMES_KEY)
+        except KeyError:
+            hostnames = hostnames_from_config(await self.middleware.call("tn_connect.hostname.config"))
+
+        return [f"https://{hostname}:755" for hostname in hostnames]
+
+
+def hostnames_from_config(tn_connect_hostname_config):
+    return sorted(list(tn_connect_hostname_config["hostname_details"].keys()))
+
+
+async def tn_connect_hostname_updated(middleware, tn_connect_hostname_config):
+    hostnames = hostnames_from_config(tn_connect_hostname_config)
+    await middleware.call("keyvalue.set", HOSTNAMES_KEY, hostnames)
+    if not await middleware.call("service.started", "webshare"):
+        # We do not want to reload webshare if it's not running
+        # but we still however do want the hostnames key to be set
+        return
+
+    await middleware.call("service.control", "RELOAD", "webshare")
+
+
+async def setup(middleware):
+    middleware.register_hook("tn_connect.hostname.updated", tn_connect_hostname_updated)

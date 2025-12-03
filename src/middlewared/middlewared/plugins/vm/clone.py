@@ -8,7 +8,7 @@ from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
-from middlewared.service import CallError, item_method, Service, private
+from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
 
 
@@ -78,9 +78,10 @@ class VMService(Service):
 
         return clone_dst
 
-    @item_method
-    @api_method(VMCloneArgs, VMCloneResult, roles=['VM_WRITE'])
-    async def clone(self, id_, name):
+    @api_method(
+        VMCloneArgs, VMCloneResult, roles=['VM_WRITE'], audit='VM clone', audit_callback=True
+    )
+    async def clone(self, audit_callback, id_, name):
         """
         Clone the VM `id`.
 
@@ -101,6 +102,7 @@ class VMService(Service):
         if name is not None:
             vm['name'] = name
 
+        audit_callback(f'{origin_name} to {vm["name"]}')
         # In case we need to rollback
         created_snaps = []
         created_clones = []

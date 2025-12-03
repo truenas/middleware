@@ -72,6 +72,10 @@ class SystemService(Service):
     async def is_enterprise(self):
         return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
 
+    @private
+    async def sed_enabled(self):
+        return await self.is_enterprise() and await self.feature_enabled('SED')
+
     @api_method(
         SystemVersionShortArgs,
         SystemVersionShortResult,

@@ -19,7 +19,7 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
 from middlewared.service import (
-    CallError, ValidationErrors, job, item_method, private, TaskPathService,
+    CallError, ValidationErrors, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -568,7 +568,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
             yield ' '.join(line)
 
-    @item_method
     @api_method(RsyncTaskRunArgs, RsyncTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
     @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
     def run(self, job, id_):

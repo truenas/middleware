@@ -7,7 +7,7 @@ from middlewared.api.current import (
     VMStartArgs, VMStartResult, VMStopArgs, VMStopResult, VMRestartArgs, VMRestartResult, VMPoweroffArgs,
     VMPoweroffResult, VMSuspendArgs, VMSuspendResult, VMResumeArgs, VMResumeResult,
 )
-from middlewared.service import CallError, item_method, job, private, Service
+from middlewared.service import CallError, job, private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .vm_domain import VmDomain, VmDomainConfiguration
@@ -21,7 +21,6 @@ class VMService(Service):
         if not await self.middleware.call('vm.license_active'):
             raise CallError('Requested action cannot be performed as system is not licensed to use VMs')
 
-    @item_method
     @api_method(VMStartArgs, VMStartResult, roles=['VM_WRITE'])
     def start(self, id_, options):
         """
@@ -58,7 +57,6 @@ class VMService(Service):
         # Reload HTTP service for display device changes
         self.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
 
-    @item_method
     @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'])
     @job(lock=lambda args: f'stop_vm_{args[0]}')
     def stop(self, job, id_, options):
@@ -79,7 +77,6 @@ class VMService(Service):
         else:
             self.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
 
-    @item_method
     @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'])
     def poweroff(self, id_):
         """
@@ -88,7 +85,6 @@ class VMService(Service):
         vm_data = self.middleware.call_sync('vm.get_instance', id_)
         self.middleware.libvirt_domains_manager.vms.destroy(self.pylibvirt_vm(vm_data))
 
-    @item_method
     @api_method(VMRestartArgs, VMRestartResult, roles=['VM_WRITE'])
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id_):
@@ -103,7 +99,6 @@ class VMService(Service):
 
         self.middleware.call_sync('vm.start', id_, {'overcommit': True})
 
-    @item_method
     @api_method(VMSuspendArgs, VMSuspendResult, roles=['VM_WRITE'])
     def suspend(self, id_):
         """
@@ -112,7 +107,6 @@ class VMService(Service):
         vm_data = self.middleware.call_sync('vm.get_instance', id_)
         self.middleware.libvirt_domains_manager.vms.suspend(self.pylibvirt_vm(vm_data))
 
-    @item_method
     @api_method(VMResumeArgs, VMResumeResult, roles=['VM_WRITE'])
     def resume(self, id_):
         """
@@ -150,6 +144,7 @@ class VMService(Service):
         vm = vm.copy()
         vm.pop("display_available", None)
         vm.pop("status", None)
+        vm.pop('autostart', None)
 
         devices = []
         for device in sorted(vm["devices"], key=lambda x: (x['order'], x['id'])):

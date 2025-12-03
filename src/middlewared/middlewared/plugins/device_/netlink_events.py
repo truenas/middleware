@@ -360,6 +360,7 @@ def process_netlink_data(sock, data):
 def netlink_events(middleware):
     """Monitor netlink events for IP address changes"""
     sock = None
+    poller = None
     retry_count = 0
     max_retries = 10
     while True:
@@ -378,10 +379,13 @@ def netlink_events(middleware):
                 middleware.logger.info(
                     "Netlink socket created successfully for IP address monitoring"
                 )
+                # Create poller for the new socket
+                poller = select.poll()
+                poller.register(sock, select.POLLIN)
 
             # Wait for messages
-            ready, _, _ = select.select([sock], [], [])
-            if ready:
+            events = poller.poll()  # Blocks indefinitely until socket is ready
+            if events:
                 data = sock.recv(8192)
 
                 # Process netlink data and send events
@@ -399,6 +403,7 @@ def netlink_events(middleware):
                 except Exception:
                     pass
                 sock = None
+                poller = None
 
             retry_count += 1
             if retry_count >= max_retries:

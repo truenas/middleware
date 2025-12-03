@@ -4,7 +4,7 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult
-from middlewared.service import CallError, item_method, job, private, Service, ValidationError
+from middlewared.service import CallError, job, private, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -40,7 +40,6 @@ class PoolService(Service):
         except Exception:
             self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
-    @item_method
     @api_method(PoolExportArgs, PoolExportResult, audit="Pool Export", audit_callback=True, roles=['POOL_WRITE'])
     @job(lock='pool_export')
     async def export(self, job, audit_callback, oid, options):

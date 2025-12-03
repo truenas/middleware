@@ -4,7 +4,7 @@ from middlewared.alert.base import (
 )
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CloudCredentialEntry,
+    CredentialsEntry,
     CredentialsCreateArgs, CredentialsCreateResult,
     CredentialsUpdateArgs, CredentialsUpdateResult,
     CredentialsDeleteArgs, CredentialsDeleteResult,
@@ -32,7 +32,7 @@ from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, private, TaskPathService,
+    CallError, CRUDService, ValidationError, ValidationErrors, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -542,7 +542,7 @@ class CredentialsService(CRUDService):
 
         role_prefix = "CLOUD_SYNC"
 
-        entry = CloudCredentialEntry
+        entry = CredentialsEntry
 
     @private
     async def extend(self, data):
@@ -772,7 +772,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             if provider.readonly:
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
-    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True, pass_app_rest=True)
+    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True)
     async def do_create(self, app, cloud_sync):
         """
         Creates a new cloud_sync entry.
@@ -794,7 +794,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         return await self.get_instance(cloud_sync["id"])
 
-    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True, pass_app_rest=True)
+    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True)
     async def do_update(self, app, id_, data):
         """
         Updates the cloud_sync entry `id` with `data`.
@@ -950,7 +950,6 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             else:
                 raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
-    @item_method
     @api_method(CloudSyncSyncArgs, CloudSyncSyncResult, roles=["CLOUD_SYNC_WRITE"])
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True,
          read_roles=["CLOUD_SYNC_READ"])
@@ -1025,7 +1024,6 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                         })
                     raise
 
-    @item_method
     @api_method(CloudSyncAbortArgs, CloudSyncAbortResult, roles=["CLOUD_SYNC_WRITE"])
     async def abort(self, id_):
         """

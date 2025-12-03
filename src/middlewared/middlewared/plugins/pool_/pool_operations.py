@@ -2,7 +2,7 @@ from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolScrubArgs, PoolScrubResult, PoolUpgradeArgs, PoolUpgradeResult
-from middlewared.service import item_method, job, private, Service
+from middlewared.service import job, private, Service
 
 
 class PoolService(Service):
@@ -60,7 +60,6 @@ class PoolService(Service):
         with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
             f.write(str(scrub_max_active))
 
-    @item_method
     @api_method(PoolScrubArgs, PoolScrubResult, roles=['POOL_WRITE'])
     @job(transient=True)
     async def scrub(self, job, oid, action):
@@ -85,7 +84,6 @@ class PoolService(Service):
         return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
 
     @api_method(PoolUpgradeArgs, PoolUpgradeResult, roles=['POOL_WRITE'])
-    @item_method
     async def upgrade(self, oid):
         """
         Upgrade pool of `id` to latest version with all feature flags.

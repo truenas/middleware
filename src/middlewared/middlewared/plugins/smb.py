@@ -10,18 +10,18 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     SharingSMBGetaclArgs, SharingSMBGetaclResult,
     SharingSMBSetaclArgs, SharingSMBSetaclResult,
-    SmbServiceEntry, SMBUpdateArgs, SMBUpdateResult,
+    SMBEntry, SMBUpdateArgs, SMBUpdateResult,
     SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult,
     SMBBindipChoicesArgs, SMBBindipChoicesResult,
     SharingSMBPresetsArgs, SharingSMBPresetsResult,
     SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult,
-    SmbShareEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
+    SharingSMBEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
     SharingSMBUpdateArgs, SharingSMBUpdateResult,
     SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.service import job, pass_app, private, SharingService
+from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.constants import (
@@ -46,6 +46,7 @@ from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
@@ -94,7 +95,7 @@ class SMBService(ConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
         role_prefix = 'SHARING_SMB'
-        entry = SmbServiceEntry
+        entry = SMBEntry
 
     @private
     def is_configured(self):
@@ -130,6 +131,16 @@ class SMBService(ConfigService):
             smb_shares = []
 
         ds_config = self.middleware.call_sync('directoryservices.config')
+        if ds_config['enable'] and ds_config['service_type'] == 'IPA':
+            # We can only apply IPA configuration to samba if we've properly created
+            # the SMB keytab and SPN entries, and updated our secrets.tdb file.
+            # If we don't skip configuration here, we may hit internal SMB_ASSERT
+            # in SMB server.
+            if not self.middleware.call_sync('kerberos.keytab.query', [[
+                'name', '=', IpaConfigName.IPA_SMB_KEYTAB.value
+            ]]):
+                ds_config['configuration']['smb_domain'] = None
+
         smb_config = self.middleware.call_sync('smb.config')
         smb_shares = self.middleware.call_sync('sharing.smb.query', [
             [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
@@ -444,14 +455,15 @@ class SMBService(ConfigService):
         if not new['aapl_extensions']:
             filters = [['OR', [
                 ['options.afp', '=', True], ['options.timemachine', '=', True],
-                ['purpose', '=', 'TIMEMACHINE_SHARE']
+                ['purpose', '=', 'TIMEMACHINE_SHARE'],
+                ['purpose', '=', 'FCP_SHARE'],
             ]]]
             if await self.middleware.call(
                 'sharing.smb.query', filters, {'count': True, 'select': ['purpose']}
             ):
                 verrors.add(
                     'smb_update.aapl_extensions',
-                    'This option must be enabled when AFP or time machine shares are present'
+                    'This option must be enabled when AFP, time machine, or Final Cut Pro shares are present'
                 )
 
         if new['enable_smb1']:
@@ -463,8 +475,7 @@ class SMBService(ConfigService):
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
-    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration')
-    @pass_app(rest=True)
+    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
         """
         Update SMB Service Configuration.
@@ -652,14 +663,13 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
         role_prefix = 'SHARING_SMB'
-        entry = SmbShareEntry
+        entry = SharingSMBEntry
 
     @api_method(
         SharingSMBCreateArgs, SharingSMBCreateResult,
         audit='SMB share create',
         audit_extended=lambda data: data['name'],
         pass_app=True,
-        pass_app_rest=True
     )
     async def do_create(self, app, data):
         audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get(share_field.AUDIT)
@@ -768,7 +778,6 @@ class SharingSMBService(SharingService):
         audit='SMB share update',
         audit_callback=True,
         pass_app=True,
-        pass_app_rest=True
     )
     async def do_update(self, app, audit_callback, id_, data):
         old = await self.get_instance(id_)
@@ -1272,6 +1281,13 @@ class SharingSMBService(SharingService):
                 'This feature may be enabled in the general SMB server configuration.'
             )
 
+        if data[share_field.PURPOSE] == SMBSharePurpose.FCP_SHARE and not smb_config['aapl_extensions']:
+            verrors.add(
+                f'{schema_name}.purpose',
+                'Apple SMB2/3 protocol extension support is required by this parameter. '
+                'This feature may be enabled in the general SMB server configuration.'
+            )
+
         if data[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
             await self.legacy_share_validate(data, schema_name, verrors, old)
 
@@ -1326,7 +1342,7 @@ class SharingSMBService(SharingService):
         out[share_field.OPTS] = {}
 
         match out[share_field.PURPOSE]:
-            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE:
+            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE | SMBSharePurpose.FCP_SHARE:
                 out[share_field.OPTS][share_field.AAPL_MANGLING] = data[share_field.AAPL_MANGLING]
             case SMBSharePurpose.TIMEMACHINE_SHARE:
                 out[share_field.OPTS] = {

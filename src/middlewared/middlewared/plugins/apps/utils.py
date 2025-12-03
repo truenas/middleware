@@ -8,6 +8,17 @@ PROJECT_PREFIX = 'ix-'
 UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'
 
 
+def upgrade_summary_info(app: dict) -> dict:
+    return {
+        'latest_version': app['version'],
+        'latest_human_version': app['human_version'],
+        'upgrade_version': app['version'],
+        'upgrade_human_version': app['human_version'],
+        'changelog': 'Image updates are available for this app',
+        'available_versions_for_upgrade': [],
+    }
+
+
 def get_upgrade_snap_name(app_name: str, app_version: str) -> str:
     return f'{UPGRADE_SNAP_PREFIX}{app_name}-{app_version}'
 

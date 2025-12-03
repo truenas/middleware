@@ -20,7 +20,7 @@ from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
-from .utils import get_upgrade_snap_name
+from .utils import get_upgrade_snap_name, upgrade_summary_info
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -89,22 +89,22 @@ class AppService(Service):
             raise CallError(f'No upgrade available for {app_name!r}')
 
         if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
-            job.set_progress(20, 'Pulling app images')
+            job.set_progress(10, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
             finally:
                 app = self.middleware.call_sync('app.get_instance', app_name)
-                if app['upgrade_available'] is False:
+                if app['upgrade_available'] is False or app['custom_app']:
                     # This conditional is for the case that maybe pull was successful but redeploy failed,
                     # so we make sure that when we are returning from here, we don't have any alert left
                     # if the image has actually been updated
                     self.middleware.call_sync('app.update_app_upgrade_alert')
 
-            self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
-            job.set_progress(100, 'App successfully upgraded and redeployed')
-            return app
+                    self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
+                    job.set_progress(100, 'App successfully upgraded and redeployed')
+                    return app
 
-        job.set_progress(0, f'Retrieving versions for {app_name!r} app')
+        job.set_progress(15, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
         upgrade_version = versions_config['specified_version']
 
@@ -177,16 +177,20 @@ class AppService(Service):
             raise CallError(f'No upgrade available for {app_name!r}')
 
         if app['custom_app']:
-            return {
-                'latest_version': app['version'],
-                'latest_human_version': app['human_version'],
-                'upgrade_version': app['version'],
-                'upgrade_human_version': app['human_version'],
-                'changelog': 'Image updates are available for this app',
-                'available_versions_for_upgrade': [],
-            }
+            return upgrade_summary_info(app)
 
-        versions_config = await self.get_versions(app, options)
+        try:
+            versions_config = await self.get_versions(app, options)
+        except ValidationErrors:
+            # We want to safely handle the case where ix-app has only image updates available
+            # but not a version upgrade of compose files
+            # If we come at this point for an ix-app, it means that version upgrade was not available
+            # and only image updates were available for ix-app
+            if app['metadata']['name'] == IX_APP_NAME and app['image_updates_available']:
+                return upgrade_summary_info(app)
+
+            raise
+
         return {
             'latest_version': versions_config['latest_version']['version'],
             'latest_human_version': versions_config['latest_version']['human_version'],

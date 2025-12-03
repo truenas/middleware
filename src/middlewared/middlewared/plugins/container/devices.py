@@ -1,7 +1,4 @@
-from truenas_pylibvirt.utils.pci import (
-    get_pci_device_default_data, get_all_pci_devices_details, get_single_pci_device_details,
-)
-from truenas_pylibvirt.utils.usb import find_usb_device_by_libvirt_name, get_all_usb_devices
+from truenas_pylibvirt.utils.usb import get_all_usb_devices
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -11,10 +8,8 @@ from middlewared.api.current import (
     ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
     ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
     ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
-    ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,
     ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
-    ContainerDevicePciDeviceArgs, ContainerDevicePciDeviceResult,
-    ContainerDevicePciDeviceChoicesArgs, ContainerDevicePciDeviceChoicesResult,
+    ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
 )
 from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
@@ -53,26 +48,41 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
             device['container'] = device['container']['id']
         return device
 
-    @api_method(ContainerDeviceCreateArgs, ContainerDeviceCreateResult)
+    @api_method(
+        ContainerDeviceCreateArgs,
+        ContainerDeviceCreateResult,
+        audit='Container device create',
+        audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
+    )
     async def do_create(self, data):
         """
         Create a new device for the container of id `container`.
         """
         return await self._create_impl(data)
 
-    @api_method(ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        ContainerDeviceUpdateArgs,
+        ContainerDeviceUpdateResult,
+        audit='Container device update',
+        audit_callback=True,
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a container device of `id`.
         """
-        return await self._update_impl(id_, data)
+        return await self._update_impl(id_, data, audit_callback)
 
-    @api_method(ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult)
-    async def do_delete(self, id_, options):
+    @api_method(
+        ContainerDeviceDeleteArgs,
+        ContainerDeviceDeleteResult,
+        audit='Container device delete',
+        audit_callback=True,
+    )
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete a container device of `id`.
         """
-        return await self._delete_impl(id_, options)
+        return await self._delete_impl(id_, options, audit_callback)
 
     @api_method(
         ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult, roles=['CONTAINER_DEVICE_READ']
@@ -87,16 +97,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         }
 
     @api_method(
-        ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,
-        roles=['CONTAINER_DEVICE_READ']
-    )
-    def usb_device(self, device):
-        """
-        Retrieve details about `device` USB device.
-        """
-        return find_usb_device_by_libvirt_name(device)
-
-    @api_method(
         ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
         roles=['CONTAINER_DEVICE_READ']
     )
@@ -107,22 +107,15 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return get_all_usb_devices()
 
     @api_method(
-        ContainerDevicePciDeviceArgs, ContainerDevicePciDeviceResult, roles=['CONTAINER_DEVICE_READ']
-    )
-    def pci_device(self, device):
-        """Retrieve details about `device` PCI device"""
-        if device_details := get_single_pci_device_details(device):
-            return device_details[device]
-        else:
-            return {
-                **get_pci_device_default_data(),
-                'error': 'Device not found',
-            }
-
-    @api_method(
-        ContainerDevicePciDeviceChoicesArgs, ContainerDevicePciDeviceChoicesResult,
+        ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
         roles=['CONTAINER_DEVICE_READ']
     )
-    def pci_device_choices(self):
-        """Available choices for PCI passthru devices"""
-        return get_all_pci_devices_details()
+    async def gpu_choices(self):
+        """
+        Available choices for GPU devices.
+        """
+        return {
+            gpu['addr']['pci_slot']: gpu['vendor']
+            for gpu in await self.middleware.call('device.get_gpus')
+            if gpu['vendor'] in ('AMD', 'INTEL', 'NVIDIA') and gpu['available_to_host']
+        }

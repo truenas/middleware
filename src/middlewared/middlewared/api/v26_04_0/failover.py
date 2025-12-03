@@ -12,7 +12,7 @@ __all__ = [
     "FailoverGetIpsResult", "FailoverLicensedArgs", "FailoverLicensedResult", "FailoverNodeArgs", "FailoverNodeResult",
     "FailoverStatusArgs", "FailoverStatusResult", "FailoverSyncFromPeerArgs", "FailoverSyncFromPeerResult",
     "FailoverSyncToPeerArgs", "FailoverSyncToPeerResult", "FailoverUpdateArgs", "FailoverUpdateResult",
-    "FailoverUpgradeArgs", "FailoverUpgradeResult",
+    "FailoverUpgradeArgs", "FailoverUpgradeResult", "FailoverStatusChangedEvent",
 ]
 
 
@@ -140,3 +140,13 @@ class FailoverUpgradeArgs(BaseModel):
 class FailoverUpgradeResult(BaseModel):
     result: bool
     """Returns `true` when the failover upgrade is successfully initiated."""
+
+
+class FailoverStatusChangedEvent(BaseModel):
+    fields: "FailoverStatusChangedEventFields"
+    """Event fields."""
+
+
+class FailoverStatusChangedEventFields(BaseModel):
+    status: str
+    """Current status of the failover system."""

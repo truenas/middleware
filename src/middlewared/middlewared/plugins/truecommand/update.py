@@ -2,10 +2,10 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     TRUECOMMAND_CONNECTING_STATUS_REASON, TruecommandStatus, TruecommandStatusReason, TruecommandEntry,
-    TruecommandUpdateArgs, TruecommandUpdateResult,
+    TruecommandUpdateArgs, TruecommandUpdateResult, TruecommandConfigChangedEvent,
 )
 from middlewared.service import ConfigService, private, ValidationErrors
 
@@ -38,6 +38,16 @@ class TruecommandService(ConfigService):
         cli_namespace = 'system.truecommand'
         role_prefix = 'TRUECOMMAND'
         entry = TruecommandEntry
+        events = [
+            Event(
+                name='truecommand.config',
+                description='Sent on TrueCommand configuration changes.',
+                roles=['READONLY_ADMIN'],
+                models={
+                    'CHANGED': TruecommandConfigChangedEvent,
+                },
+            )
+        ]
 
     @private
     async def tc_extend(self, config):

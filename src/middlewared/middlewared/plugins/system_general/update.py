@@ -53,6 +53,7 @@ class SystemGeneralService(ConfigService):
         super().__init__(*args, **kwargs)
         self._original_datastore = {}
         self._rollback_timer = None
+        self._changed_https_port = False, -1
 
     @private
     async def general_system_extend(self, data):
@@ -227,6 +228,14 @@ class SystemGeneralService(ConfigService):
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
+        # If self._changed_https_port[0] is True, this means this method was called after the port was updated and
+        # before https_port_changed was called. We want to leave the flag set to show that the port still needs to be
+        # applied.
+        self._changed_https_port = (
+            self._changed_https_port[0] or (config['ui_httpsport'] != new_config['ui_httpsport']),
+            new_config['ui_httpsport']
+        )
+
         await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
 
         if rollback_timeout is not None:
@@ -290,3 +299,11 @@ class SystemGeneralService(ConfigService):
 
             self._rollback_timer = None
             self._original_datastore = {}
+
+    @private
+    async def https_port_changed(self) -> tuple[bool, int]:
+        """Return whether there is a pending port to apply. Reset the flag when this is called."""
+        ret = self._changed_https_port
+        # Reset the _changed_https_port flag. It will be set again if the port is updated in do_update again.
+        self._changed_https_port = False, -1
+        return ret

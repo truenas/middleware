@@ -9,7 +9,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ACMEDNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
+    'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
     'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
     'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs',
     'DNSAuthenticatorAuthenticatorSchemasResult', 'Route53SchemaArgs', 'ACMECustomDNSAuthenticatorReturns',
@@ -128,7 +128,7 @@ AuthType: TypeAlias = Annotated[
 # ACME DNS Authenticator
 
 
-class ACMEDNSAuthenticatorEntry(BaseModel):
+class DNSAuthenticatorEntry(BaseModel):
     id: int
     """Unique identifier for the DNS authenticator."""
     attributes: Secret[AuthType]
@@ -150,7 +150,7 @@ class DNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
 
 
 class DNSAuthenticatorCreateResult(BaseModel):
-    result: ACMEDNSAuthenticatorEntry
+    result: DNSAuthenticatorEntry
     """The created DNS authenticator configuration."""
 
 
@@ -166,7 +166,7 @@ class DNSAuthenticatorUpdateArgs(BaseModel):
 
 
 class DNSAuthenticatorUpdateResult(BaseModel):
-    result: ACMEDNSAuthenticatorEntry
+    result: DNSAuthenticatorEntry
     """The updated DNS authenticator configuration."""
 
 

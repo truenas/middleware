@@ -4,6 +4,7 @@ import os
 import re
 import uuid
 
+from ixhardware.chassis import TRUENAS_UNKNOWN
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
@@ -139,6 +140,12 @@ class ContainerService(CRUDService):
 
     @private
     async def validate(self, verrors, schema_name, data, old=None):
+        if not await self.license_active():
+            verrors.add(
+                f'{schema_name}.name',
+                'System is not licensed to use containers.'
+            )
+
         if data['uuid'] is None:
             data['uuid'] = str(uuid.uuid4())
 
@@ -181,7 +188,12 @@ class ContainerService(CRUDService):
                 'Name can only contain alphanumeric and hyphen characters.'
             )
 
-    @api_method(ContainerCreateArgs, ContainerCreateResult)
+    @api_method(
+        ContainerCreateArgs,
+        ContainerCreateResult,
+        audit='Container create',
+        audit_extended=lambda data: data['name'],
+    )
     @job(lock=lambda args: f'container_create:{args[0].get("name")}')
     async def do_create(self, job, data):
         """
@@ -250,8 +262,13 @@ class ContainerService(CRUDService):
 
         return await self.get_instance(container_id)
 
-    @api_method(ContainerUpdateArgs, ContainerUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        ContainerUpdateArgs,
+        ContainerUpdateResult,
+        audit='Container update',
+        audit_callback=True,
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a Container.
         """
@@ -259,6 +276,7 @@ class ContainerService(CRUDService):
         del old['devices']
         new = old.copy()
         new.update(data)
+        audit_callback(new['name'])
 
         verrors = ValidationErrors()
         await self.validate(verrors, 'container_update', new, old=old)
@@ -275,12 +293,18 @@ class ContainerService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(ContainerDeleteArgs, ContainerDeleteResult)
-    def do_delete(self, id_):
+    @api_method(
+        ContainerDeleteArgs,
+        ContainerDeleteResult,
+        audit='Container delete',
+        audit_callback=True,
+    )
+    def do_delete(self, audit_callback, id_):
         """
         Delete a Container.
         """
         container = self.middleware.call_sync("container.get_instance", id_)
+        audit_callback(container['name'])
 
         pylibvirt_container = self.middleware.call_sync("container.pylibvirt_container", container)
         try:
@@ -295,7 +319,7 @@ class ContainerService(CRUDService):
         self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=container['dataset']))
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
-    @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['VIRT_GLOBAL_READ'])
+    @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'])
     async def pool_choices(self):
         """
         Pool choices for container creation.
@@ -318,3 +342,22 @@ class ContainerService(CRUDService):
                 pools[ds['name']] = ds['name']
 
         return pools
+
+    @private
+    async def license_active(self):
+        """
+        If this is iX enterprise hardware and has NOT been licensed to run containers
+        then this will return False, otherwise this will return true.
+        """
+        system_chassis = await self.middleware.call('truenas.get_chassis_hardware')
+        if system_chassis == TRUENAS_UNKNOWN or 'MINI' in system_chassis:
+            # 1. if it's not iX branded hardware
+            # 2. OR if it's a MINI, then allow containers/vms
+            return True
+
+        license_ = await self.middleware.call('system.license')
+        if license_ is None:
+            # it's iX branded hardware but has no license
+            return False
+
+        return 'JAILS' in license_['features']

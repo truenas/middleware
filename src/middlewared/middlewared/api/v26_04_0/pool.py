@@ -261,6 +261,8 @@ class PoolCreate(BaseModel):
     """Physical layout and configuration of vdevs in the pool."""
     allow_duplicate_serials: bool = False
     """Whether to allow disks with duplicate serial numbers in the pool."""
+    all_sed: bool = False
+    """When set, all disks in the pool must be SED based."""
 
 
 class PoolDetachOptions(BaseModel):

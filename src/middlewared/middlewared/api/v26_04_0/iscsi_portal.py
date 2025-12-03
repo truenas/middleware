@@ -5,7 +5,7 @@ from pydantic import IPvAnyAddress, field_validator
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 
 __all__ = [
-    "IscsiPortalEntry",
+    "ISCSIPortalEntry",
     "ISCSIPortalListenIpChoicesArgs",
     "ISCSIPortalListenIpChoicesResult",
     "ISCSIPortalCreateArgs",
@@ -33,7 +33,7 @@ class IscsiPortalIPInfo(IscsiPortalIP):
     """TCP port number for the iSCSI portal."""
 
 
-class IscsiPortalEntry(BaseModel):
+class ISCSIPortalEntry(BaseModel):
     id: int
     """Unique identifier for the iSCSI portal."""
     listen: list[IscsiPortalIPInfo]
@@ -55,7 +55,7 @@ class ISCSIPortalListenIpChoicesResult(BaseModel):
     per node."""
 
 
-class IscsiPortalCreate(IscsiPortalEntry):
+class IscsiPortalCreate(ISCSIPortalEntry):
     id: Excluded = excluded_field()
     tag: Excluded = excluded_field()
     listen: list[IscsiPortalIP]
@@ -68,7 +68,7 @@ class ISCSIPortalCreateArgs(BaseModel):
 
 
 class ISCSIPortalCreateResult(BaseModel):
-    result: IscsiPortalEntry
+    result: ISCSIPortalEntry
     """The created iSCSI portal configuration."""
 
 
@@ -84,7 +84,7 @@ class ISCSIPortalUpdateArgs(BaseModel):
 
 
 class ISCSIPortalUpdateResult(BaseModel):
-    result: IscsiPortalEntry
+    result: ISCSIPortalEntry
     """The updated iSCSI portal configuration."""
 
 

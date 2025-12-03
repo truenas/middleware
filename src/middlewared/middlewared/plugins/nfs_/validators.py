@@ -93,9 +93,9 @@ def validate_bind_ip(ips: list):
     """ Validate list strings are IP addresses """
     not_valid = []
     for ip in ips:
-        # The join below does no play well with None
+        # The join below does not play well with None
         if ip is None:
-            ip == "None"
+            ip = "None"
         try:
             ip_address(ip)
         except ValueError:

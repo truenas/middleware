@@ -7,10 +7,10 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NfsEntry,
+    NFSEntry,
     NFSUpdateArgs, NFSUpdateResult,
     NFSBindipChoicesArgs, NFSBindipChoicesResult,
-    NfsShareEntry,
+    SharingNFSEntry,
     SharingNFSCreateArgs, SharingNFSCreateResult,
     SharingNFSUpdateArgs, SharingNFSUpdateResult,
     SharingNFSDeleteArgs, SharingNFSDeleteResult
@@ -92,7 +92,7 @@ class NFSService(SystemServiceService):
         cli_namespace = "service.nfs"
         role_prefix = "SHARING_NFS"
 
-        entry = NfsEntry
+        entry = NFSEntry
 
     @private
     def name_to_id_conversion(self, name, name_type='user'):
@@ -436,7 +436,7 @@ class SharingNFSService(SharingService):
         cli_namespace = "sharing.nfs"
         role_prefix = "SHARING_NFS"
 
-        entry = NfsShareEntry
+        entry = SharingNFSEntry
 
     @api_method(
         SharingNFSCreateArgs, SharingNFSCreateResult,

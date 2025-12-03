@@ -7,7 +7,7 @@ from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, Iscsi
                                   IscsiExtentType, NonEmptyString, excluded_field)
 
 __all__ = [
-    "IscsiExtentEntry",
+    "iSCSITargetExtentEntry",
     "iSCSITargetExtentCreateArgs",
     "iSCSITargetExtentCreateResult",
     "iSCSITargetExtentUpdateArgs",
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class IscsiExtentEntry(BaseModel):
+class iSCSITargetExtentEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
     type: IscsiExtentType = 'DISK'
@@ -41,7 +41,7 @@ class IscsiExtentEntry(BaseModel):
     locked: bool | None
 
 
-class IscsiExtentCreate(IscsiExtentEntry):
+class IscsiExtentCreate(iSCSITargetExtentEntry):
     id: Excluded = excluded_field()
     naa: Excluded = excluded_field()
     vendor: Excluded = excluded_field()
@@ -53,7 +53,7 @@ class iSCSITargetExtentCreateArgs(BaseModel):
 
 
 class iSCSITargetExtentCreateResult(BaseModel):
-    result: IscsiExtentEntry
+    result: iSCSITargetExtentEntry
 
 
 class IscsiExtentUpdate(IscsiExtentCreate, metaclass=ForUpdateMetaclass):
@@ -66,7 +66,7 @@ class iSCSITargetExtentUpdateArgs(BaseModel):
 
 
 class iSCSITargetExtentUpdateResult(BaseModel):
-    result: IscsiExtentEntry
+    result: iSCSITargetExtentEntry
 
 
 class iSCSITargetExtentDeleteArgs(BaseModel):

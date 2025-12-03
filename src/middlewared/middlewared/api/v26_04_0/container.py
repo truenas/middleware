@@ -18,6 +18,7 @@ __all__ = [
     "ContainerStartArgs", "ContainerStartResult",
     "ContainerStopArgs", "ContainerStopResult",
     "ContainerMigrateArgs", "ContainerMigrateResult",
+    "ContainersMetricsEventSourceArgs", "ContainersMetricsEventSourceEvent"
 ]
 
 
@@ -206,3 +207,115 @@ class ContainerMigrateArgs(BaseModel):
 
 class ContainerMigrateResult(BaseModel):
     result: None
+
+
+class ContainersMetricsEventSourceArgs(BaseModel):
+    interval: int = Field(default=2, ge=2)
+    """Interval in seconds between metrics updates (minimum 2 seconds)."""
+
+
+class ContainersMetricsEventSourceEvent(BaseModel):
+    result: dict[str, dict] = Field(examples=[{
+        "15": {
+            "cpu": {
+                "cpu_user_percentage": 0.0,
+                "cpu_system_percentage": 0.0
+            },
+            "throttled": {
+                "throttled_throttled_percentage": 0.0
+            },
+            "throttled_duration": {
+                "throttled_duration_duration_ms": 0.0
+            },
+            "mem": {
+                "mem_anon_mib": 9.5507812,
+                "mem_kernel_stack_mib": 0.109375,
+                "mem_slab_mib": 1.5317764,
+                "mem_sock_mib": 0.0117188,
+                "mem_anon_thp_mib": 2.0,
+                "mem_file_mib": 15.8125
+            },
+            "writeback": {
+                "writeback_dirty_mib": 0.0,
+                "writeback_writeback_mib": 0.0
+            },
+            "pgfaults": {
+                "pgfaults_pgfault_mib_s": 0.0,
+                "pgfaults_pgmajfault_mib_s": 0.0
+            },
+            "mem_usage": {
+                "mem_usage_ram_mib": 28.4375,
+                "mem_usage_swap_mib": 0.0
+            },
+            "mem_usage_limit": {
+                "mem_usage_limit_available_mib": 9693.0039062,
+                "mem_usage_limit_used_mib": 28.4375
+            },
+            "mem_utilization": {
+                "mem_utilization_utilization_percentage": 0.0
+            },
+            "io": {
+                "io_read_kib_s": 0.0,
+                "io_write_kib_s": 0.0
+            },
+            "serviced_ops": {
+                "serviced_ops_read_operations_s": 0.0,
+                "serviced_ops_write_operations_s": 0.0
+            },
+            "pids_current": {
+                "pids_current_pids_pids": 12.0
+            },
+            "cpu_some_pressure": {
+                "cpu_some_pressure_some_10_percentage": 0.0,
+                "cpu_some_pressure_some_60_percentage": 0.0,
+                "cpu_some_pressure_some_300_percentage": 0.0
+            },
+            "cpu_some_pressure_stall_time": {
+                "cpu_some_pressure_stall_time_time_ms": 0.0
+            },
+            "cpu_full_pressure": {
+                "cpu_full_pressure_full_10_percentage": 0.0,
+                "cpu_full_pressure_full_60_percentage": 0.0,
+                "cpu_full_pressure_full_300_percentage": 0.0
+            },
+            "cpu_full_pressure_stall_time": {
+                "cpu_full_pressure_stall_time_time_ms": 0.0
+            },
+            "mem_some_pressure": {
+                "mem_some_pressure_some_10_percentage": 0.0,
+                "mem_some_pressure_some_60_percentage": 0.0,
+                "mem_some_pressure_some_300_percentage": 0.0
+            },
+            "memory_some_pressure_stall_time": {
+                "memory_some_pressure_stall_time_time_ms": 0.0
+            },
+            "mem_full_pressure": {
+                "mem_full_pressure_full_10_percentage": 0.0,
+                "mem_full_pressure_full_60_percentage": 0.0,
+                "mem_full_pressure_full_300_percentage": 0.0
+            },
+            "memory_full_pressure_stall_time": {
+                "memory_full_pressure_stall_time_time_ms": 0.0
+            },
+            "io_some_pressure": {
+                "io_some_pressure_some_10_percentage": 0.0,
+                "io_some_pressure_some_60_percentage": 0.0,
+                "io_some_pressure_some_300_percentage": 0.0
+            },
+            "io_some_pressure_stall_time": {
+                "io_some_pressure_stall_time_time_ms": 0.0
+            },
+            "io_full_pressure": {
+                "io_full_pressure_full_10_percentage": 0.0,
+                "io_full_pressure_full_60_percentage": 0.0,
+                "io_full_pressure_full_300_percentage": 0.0
+            },
+            "io_full_pressure_stall_time": {
+                "io_full_pressure_stall_time_time_ms": 0.0
+            },
+            "cpu_limit": {
+                "cpu_limit_used_percentage": 0.0
+            }
+        }
+    }])
+    """Real-time metrics data for all virtual instances."""

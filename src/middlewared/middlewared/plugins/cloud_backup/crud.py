@@ -9,7 +9,7 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
-from middlewared.service import pass_app, private, TaskPathService, ValidationErrors
+from middlewared.service import private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
@@ -90,8 +90,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         args = self.transfer_setting_args()
         return list(args.keys())
 
-    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult)
-    @pass_app(rest=True)
+    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult, pass_app=True)
     async def do_create(self, app, cloud_backup):
         """
         Create a new cloud backup task
@@ -107,8 +106,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         return await self.get_instance(cloud_backup["id"])
 
-    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult)
-    @pass_app(rest=True)
+    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, pass_app=True)
     async def do_update(self, app, id_, data):
         """
         Update the cloud backup entry `id` with `data`.

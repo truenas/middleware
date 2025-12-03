@@ -221,7 +221,10 @@ class ZFSSnapshotService(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 snap = zfs.get_snapshot(snap_id)
-                user_props = self.middleware.call_sync('pool.dataset.get_create_update_user_props', props, True)
+                user_props = {
+                    prop['key']: {'value': prop['value']} if 'value' in prop else {'source': 'INHERIT'}
+                    for prop in props
+                }
                 self.middleware.call_sync('zfs.dataset.update_zfs_object_props', user_props, snap)
         except libzfs.ZFSException as e:
             raise CallError(str(e))

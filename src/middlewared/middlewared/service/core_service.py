@@ -16,7 +16,7 @@ from remote_pdb import RemotePdb
 
 import middlewared.main
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
     CoreGetServicesArgs, CoreGetServicesResult,
@@ -35,6 +35,7 @@ from middlewared.api.current import (
     CoreSetOptionsArgs, CoreSetOptionsResult,
     CoreSubscribeArgs, CoreSubscribeResult,
     CoreUnsubscribeArgs, CoreUnsubscribeResult,
+    CoreGetJobsAddedEvent, CoreGetJobsChangedEvent,
     QueryArgs,
 )
 from middlewared.common.environ import environ_update
@@ -63,6 +64,15 @@ class CoreService(Service):
 
     class Config:
         cli_private = True
+        events = [
+            Event(
+                name='core.get_jobs',
+                description='Updates on job changes.',
+                roles=None,
+                models={'ADDED': CoreGetJobsAddedEvent, 'CHANGED': CoreGetJobsChangedEvent},
+                authorization_required=False,
+            )
+        ]
 
     @api_method(CoreResizeShellArgs, CoreResizeShellResult, authorization_required=False)
     async def resize_shell(self, id_, cols, rows):
@@ -115,7 +125,7 @@ class CoreService(Service):
 
         return job
 
-    @filterable_api_method(item=CoreGetJobsItem, authorization_required=False, pass_app=True, pass_app_rest=True)
+    @filterable_api_method(item=CoreGetJobsItem, authorization_required=False, pass_app=True)
     def get_jobs(self, app, filters, options):
         """
         Get information about long-running jobs.
@@ -146,8 +156,7 @@ class CoreService(Service):
         ], filters, options)
         return jobs
 
-    @api_method(CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult, authorization_required=False,
-                pass_app=True, pass_app_rest=True)
+    @api_method(CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult, authorization_required=False, pass_app=True)
     async def job_download_logs(self, app, id_, filename, buffered):
         """
         Download logs of the job `id`.
@@ -199,7 +208,7 @@ class CoreService(Service):
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
 
-    @api_method(CoreJobAbortArgs, CoreJobAbortResult, authorization_required=False, pass_app=True, pass_app_rest=True)
+    @api_method(CoreJobAbortArgs, CoreJobAbortResult, authorization_required=False, pass_app=True)
     def job_abort(self, app, id_):
         job = self._job_by_app_and_id(app, id_, JobAccess.ABORT)
         job.abort()
@@ -261,9 +270,6 @@ class CoreService(Service):
                     continue
 
                 method = None
-                # For CRUD.do_{update,delete} they need to be accounted
-                # as "item_method", since they are just wrapped.
-                item_method = None
                 if is_service_class(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
@@ -274,8 +280,6 @@ class CoreService(Service):
                         method = getattr(svc, 'do_{}'.format(attr), None)
                         if method is None:
                             continue
-                        if attr in ('update', 'delete'):
-                            item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
                 elif is_service_class(svc, ConfigService):
@@ -364,12 +368,10 @@ class CoreService(Service):
                     'description': doc,
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
-                    'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
                     'filterable': issubclass(method.new_style_accepts, QueryArgs),
                     'filterable_schema': None,
                     'pass_application': hasattr(method, '_pass_app'),
-                    'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
@@ -485,7 +487,7 @@ class CoreService(Service):
                 result[line_ip] = sline[2]
         return result
 
-    @api_method(CoreDownloadArgs, CoreDownloadResult, authorization_required=False, pass_app=True, pass_app_rest=True)
+    @api_method(CoreDownloadArgs, CoreDownloadResult, authorization_required=False, pass_app=True)
     async def download(self, app, method, args, filename, buffered):
         """
         Core helper to call a job marked for download.

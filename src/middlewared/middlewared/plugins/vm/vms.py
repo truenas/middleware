@@ -20,7 +20,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
@@ -126,7 +126,12 @@ class VMService(CRUDService):
         """
         return BOOT_LOADER_OPTIONS
 
-    @api_method(VMCreateArgs, VMCreateResult)
+    @api_method(
+        VMCreateArgs,
+        VMCreateResult,
+        audit='VM create',
+        audit_extended=lambda data: data['name'],
+    )
     async def do_create(self, data):
         """
         Create a Virtual Machine (VM).
@@ -315,8 +320,13 @@ class VMService(CRUDService):
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
 
-    @api_method(VMUpdateArgs, VMUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        VMUpdateArgs,
+        VMUpdateResult,
+        audit='VM update',
+        audit_callback=True,
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update all information of a specific VM.
 
@@ -334,6 +344,7 @@ class VMService(CRUDService):
         old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
+        audit_callback(new['name'])
 
         if new['name'] != old['name']:
             if old['status']['state'] in ACTIVE_STATES:
@@ -370,13 +381,18 @@ class VMService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(VMDeleteArgs, VMDeleteResult)
-    def do_delete(self, id_, data):
+    @api_method(
+        VMDeleteArgs,
+        VMDeleteResult,
+        audit='VM delete',
+        audit_callback=True,
+    )
+    def do_delete(self, audit_callback, id_, data):
         """
         Delete a VM.
         """
         vm = self.middleware.call_sync('vm.get_instance', id_)
-
+        audit_callback(vm['name'])
         force_delete = data.get('force')
 
         if data['zvols']:
@@ -413,7 +429,6 @@ class VMService(CRUDService):
 
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
-    @item_method
     @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'])
     async def status(self, id_):
         """

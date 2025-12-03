@@ -1,13 +1,13 @@
 import re
 
-import pyudev
-
 import libsgio
+import pyudev
+from truenas_pylibvirt.utils.gpu import get_gpus
+
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.service import Service, private
 from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.disks_.disk_class import DiskEntry
-from middlewared.utils.gpu import get_gpus
 
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')

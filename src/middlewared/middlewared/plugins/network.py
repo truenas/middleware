@@ -22,7 +22,7 @@ from middlewared.api.current import (
     InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
     InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
 )
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, pass_app, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from .interface.interface_types import InterfaceType
@@ -576,7 +576,12 @@ class InterfaceService(CRUDService):
         """
         return bool(self._original_datastores)
 
-    @api_method(InterfaceRollbackArgs, InterfaceRollbackResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(
+        InterfaceRollbackArgs,
+        InterfaceRollbackResult,
+        audit='Network interface rollback pending changes',
+        roles=['NETWORK_INTERFACE_WRITE']
+    )
     async def rollback(self):
         """
         Rollback pending interfaces changes.
@@ -635,7 +640,12 @@ class InterfaceService(CRUDService):
             if remaining > 0:
                 return int(remaining)
 
-    @api_method(InterfaceCommitArgs, InterfaceCommitResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(
+        InterfaceCommitArgs,
+        InterfaceCommitResult,
+        audit='Network interface commit pending changes',
+        roles=['NETWORK_INTERFACE_WRITE']
+    )
     async def commit(self, options):
         """
         Commit/apply pending interfaces changes.
@@ -661,7 +671,11 @@ class InterfaceService(CRUDService):
         else:
             self._original_datastores = {}
 
-    @api_method(InterfaceCreateArgs, InterfaceCreateResult)
+    @api_method(
+        InterfaceCreateArgs,
+        InterfaceCreateResult,
+        audit='Network interface create', audit_extended=lambda data: data["name"]
+    )
     async def do_create(self, data):
         """
         Create virtual interfaces (Link Aggregation, VLAN)
@@ -1160,8 +1174,13 @@ class InterfaceService(CRUDService):
                 )
         return lagports_ids
 
-    @api_method(InterfaceUpdateArgs, InterfaceUpdateResult)
-    async def do_update(self, oid, data):
+    @api_method(
+        InterfaceUpdateArgs,
+        InterfaceUpdateResult,
+        audit='Network interface update',
+        audit_callback=True
+    )
+    async def do_update(self, audit_callback, oid, data):
         """
         Update Interface of `id`.
 
@@ -1175,6 +1194,7 @@ class InterfaceService(CRUDService):
         await self.middleware.call('network.common.check_failover_disabled', 'interface.update', verrors)
 
         iface = await self.get_instance(oid)
+        audit_callback(iface['name'])
 
         new = iface.copy()
         new.update(data)
@@ -1332,8 +1352,13 @@ class InterfaceService(CRUDService):
 
         return await self.get_instance(new['name'])
 
-    @api_method(InterfaceDeleteArgs, InterfaceDeleteResult)
-    async def do_delete(self, oid):
+    @api_method(
+        InterfaceDeleteArgs,
+        InterfaceDeleteResult,
+        audit='Network interface delete',
+        audit_callback=True
+    )
+    async def do_delete(self, audit_callback, oid):
         """
         Delete Interface of `id`.
         """
@@ -1351,6 +1376,7 @@ class InterfaceService(CRUDService):
                 verrors.add(schema, 'Virt is using this interface as its bridge interface.')
 
         verrors.check()
+        audit_callback(iface['name'])
 
         await self.__save_datastores()
 
@@ -1388,8 +1414,8 @@ class InterfaceService(CRUDService):
 
         return oid
 
-    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'])
-    @pass_app()
+    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'],
+                pass_app=True)
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
         try:
@@ -1397,8 +1423,8 @@ class InterfaceService(CRUDService):
         except AttributeError:
             pass
 
-    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=['NETWORK_INTERFACE_READ'])
-    @pass_app()
+    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=['NETWORK_INTERFACE_READ'],
+                pass_app=True)
     async def websocket_interface(self, app):
         """
         Returns the interface this websocket is connected to.

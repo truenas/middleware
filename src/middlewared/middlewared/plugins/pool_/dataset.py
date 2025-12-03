@@ -15,7 +15,7 @@ from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
 from middlewared.service import (
-    CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
+    CallError, CRUDService, InstanceNotFound, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
 )
 from middlewared.service.decorators import pass_thread_local_storage
@@ -919,7 +919,6 @@ class PoolDatasetService(CRUDService):
 
         return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
 
-    @item_method
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""

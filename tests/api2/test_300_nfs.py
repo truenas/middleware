@@ -1527,7 +1527,7 @@ class TestNFSops:
         pp([""], None, id="basic settings"),
         pp(["a.b.c.d"], "not appear to be", id="Not a valid IP"),
         pp(["", "ixsystems.com"], "not appear to be", id="2nd entry not valid IP"),
-        pp(["", None], "expected str instance", id="2nd entry is None"),
+        pp(["", None], "not appear to be valid", id="2nd entry is None"),
         pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
     ])
     def test_nfs_bindip(self, start_nfs, param, errmsg):
@@ -1553,13 +1553,9 @@ class TestNFSops:
             if param[0] == "":
                 param[0] = truenas_server.ip
 
-            # Test the config and the standalone private
-            with pytest.raises((ValueError, ValidationErrors, TypeError)) as ve:
+            # Test the standalone private
+            with pytest.raises(ValueError, match=errmsg):
                 call("nfs.bindip", {"bindip": param})
-            if ve.typename in ["ValueError", "TypeError"]:
-                assert errmsg in str(ve.value)
-            else:
-                assert errmsg in str(ve.value.errors[0])
 
     def test_v4_domain(self, start_nfs):
         '''
@@ -2018,12 +2014,12 @@ class TestNFSops:
         current_alerts = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
         assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert.\n{current_alerts}"
 
-        with nfs_dataset('nfs') as ds:
-            with nfs_share(NFS_PATH, {
-            }) as nfsid:
+        with nfs_dataset('nfs_temp') as ds:
+            nfs_share_path = f"/mnt/{ds}"
+            with nfs_share(nfs_share_path) as nfsid:
                 alerts = call('alert.list')
-                current_alerts = [entry for entry in alerts if entry['key'] == f"/mnt/{ds}"]
-                assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert for key '/mnt/{ds}'\n{alerts}"
+                current_alerts = [entry for entry in alerts if entry['key'] == nfs_share_path]
+                assert len(current_alerts) == 0, f"Unexpectedly found alert for key '{nfs_share_path}'\n{alerts}"
 
                 allowed_client_list = [f"192.168.50.{i}" for i in range(1, 101)]
                 call('sharing.nfs.update', nfsid, {'hosts': allowed_client_list})

@@ -2,7 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolReplaceArgs, PoolReplaceResult
-from middlewared.service import item_method, job, Service, ValidationErrors
+from middlewared.service import job, Service, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 
 
@@ -14,7 +14,6 @@ def find_disk_from_identifier(disks, ident):
 
 class PoolService(Service):
 
-    @item_method
     @api_method(PoolReplaceArgs, PoolReplaceResult, roles=['POOL_WRITE'])
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):
@@ -73,6 +72,9 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         verrors.check()
+
+        # Let's run some magic to ensure that if a SED disk is being added, it gets handled appropriately
+        await self.middleware.call('disk.setup_sed_disks_for_pool', [disk['devname']], 'options.disk')
 
         sibling_sizes = []
         for vdev in found[2]:

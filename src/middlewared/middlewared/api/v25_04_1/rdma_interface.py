@@ -5,7 +5,7 @@ from pydantic import IPvAnyAddress, field_validator
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
 
 __all__ = [
-    "RdmaInterfaceEntry",
+    "RDMAInterfaceEntry",
     "RdmaInterfaceCreateArgs",
     "RdmaInterfaceCreateResult",
     "RdmaInterfaceUpdateArgs",
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class RdmaInterfaceEntry(BaseModel):
+class RDMAInterfaceEntry(BaseModel):
     id: str
     node: str = ''
     ifname: str
@@ -34,7 +34,7 @@ class RdmaInterfaceCreateCheck(BaseModel):
     ping_mac: str
 
 
-class RdmaInterfaceCreate(RdmaInterfaceEntry):
+class RdmaInterfaceCreate(RDMAInterfaceEntry):
     id: Excluded = excluded_field()
     check: Optional[RdmaInterfaceCreateCheck] = None
 
@@ -44,7 +44,7 @@ class RdmaInterfaceCreateArgs(BaseModel):
 
 
 class RdmaInterfaceCreateResult(BaseModel):
-    result: RdmaInterfaceEntry
+    result: RDMAInterfaceEntry
 
 
 class RdmaInterfaceUpdate(RdmaInterfaceCreate, metaclass=ForUpdateMetaclass):
@@ -57,7 +57,7 @@ class RdmaInterfaceUpdateArgs(BaseModel):
 
 
 class RdmaInterfaceUpdateResult(BaseModel):
-    result: RdmaInterfaceEntry
+    result: RDMAInterfaceEntry
 
 
 class RdmaInterfaceDeleteArgs(BaseModel):

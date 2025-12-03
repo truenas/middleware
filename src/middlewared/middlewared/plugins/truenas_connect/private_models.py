@@ -1,5 +1,5 @@
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, single_argument_args
-from middlewared.api.current import TNCEntry
+from middlewared.api.current import TrueNASConnectEntry
 
 
 @single_argument_args('tn_connect_update_environment')
@@ -11,4 +11,4 @@ class TrueNASConnectUpdateEnvironmentArgs(BaseModel, metaclass=ForUpdateMetaclas
 
 
 class TrueNASConnectUpdateEnvironmentResult(BaseModel):
-    result: TNCEntry
+    result: TrueNASConnectEntry

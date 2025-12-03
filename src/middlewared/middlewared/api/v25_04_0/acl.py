@@ -25,7 +25,7 @@ from middlewared.utils.filesystem.acl import (
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'AclTemplateEntry',
+    'ACLTemplateEntry',
     'ACLTemplateByPathArgs', 'ACLTemplateByPathResult',
     'ACLTemplateCreateArgs', 'ACLTemplateCreateResult',
     'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
@@ -271,7 +271,7 @@ class FilesystemSetaclResult(FilesystemGetaclResult):
     pass
 
 
-class AclTemplateEntry(BaseModel):
+class ACLTemplateEntry(BaseModel):
     id: int
     builtin: bool
     name: str
@@ -280,7 +280,7 @@ class AclTemplateEntry(BaseModel):
     comment: str = ''
 
 
-class AclTemplateCreate(AclTemplateEntry):
+class AclTemplateCreate(ACLTemplateEntry):
     id: Excluded = excluded_field()
     builtin: Excluded = excluded_field()
 
@@ -290,7 +290,7 @@ class ACLTemplateCreateArgs(BaseModel):
 
 
 class ACLTemplateCreateResult(BaseModel):
-    result: AclTemplateEntry
+    result: ACLTemplateEntry
 
 
 class AclTemplateUpdate(AclTemplateCreate, metaclass=ForUpdateMetaclass):
@@ -303,7 +303,7 @@ class ACLTemplateUpdateArgs(BaseModel):
 
 
 class ACLTemplateUpdateResult(BaseModel):
-    result: AclTemplateEntry
+    result: ACLTemplateEntry
 
 
 class ACLTemplateDeleteArgs(BaseModel):
@@ -329,4 +329,4 @@ class ACLTemplateByPathArgs(BaseModel):
 
 
 class ACLTemplateByPathResult(BaseModel):
-    result: list[AclTemplateEntry]
+    result: list[ACLTemplateEntry]

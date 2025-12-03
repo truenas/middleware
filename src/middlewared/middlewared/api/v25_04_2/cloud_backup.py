@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString
-from .cloud_sync import CloudCredentialEntry
+from .cloud_sync import CredentialsEntry
 from .common import CronModel
 
 
@@ -70,7 +70,7 @@ class CloudBackupCreate(BaseModel):
 
 class CloudBackupEntry(CloudBackupCreate):
     id: int
-    credentials: CloudCredentialEntry
+    credentials: CredentialsEntry
     """Cloud credentials to use for each backup"""
     job: dict | None
     """Information regarding the task's job state, e.g. progress"""

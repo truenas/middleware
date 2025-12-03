@@ -3,13 +3,13 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
+    PeriodicSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
     PeriodicSnapshotTaskUpdateResult, PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
     PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, PeriodicSnapshotTaskMaxTotalCountArgs,
     PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult
 )
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import is_child
@@ -46,7 +46,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         datastore_extend_context = 'pool.snapshottask.extend_context'
         namespace = 'pool.snapshottask'
         cli_namespace = 'task.snapshot'
-        entry = PoolSnapshotTaskEntry
+        entry = PeriodicSnapshotTaskEntry
         role_prefix='SNAPSHOT_TASK'
 
     @private
@@ -318,7 +318,6 @@ class PeriodicSnapshotTaskService(CRUDService):
         # This is a random round number that is large enough and does not cause issues in most use cases.
         return 10000
 
-    @item_method
     @api_method(PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
     async def run(self, id_):
         """

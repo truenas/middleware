@@ -14,7 +14,7 @@ from middlewared.api.current import (
     iSCSITargetExtentDeleteResult,
     iSCSITargetExtentDiskChoicesArgs,
     iSCSITargetExtentDiskChoicesResult,
-    IscsiExtentEntry,
+    iSCSITargetExtentEntry,
     iSCSITargetExtentUpdateArgs,
     iSCSITargetExtentUpdateResult
 )
@@ -77,7 +77,7 @@ class iSCSITargetExtentService(SharingService):
         datastore_extend = 'iscsi.extent.extend'
         cli_namespace = 'sharing.iscsi.extent'
         role_prefix = 'SHARING_ISCSI_EXTENT'
-        entry = IscsiExtentEntry
+        entry = iSCSITargetExtentEntry
 
     @private
     async def sharing_task_determine_locked(self, data):

@@ -175,7 +175,7 @@ def __apply_purpose_and_options(
     opts = config_in[share_field.OPTS]
 
     match config_in[share_field.PURPOSE]:
-        case SMBSharePurpose.DEFAULT_SHARE:
+        case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.FCP_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
             vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['posix locking'] = False
@@ -576,6 +576,11 @@ def generate_smb_conf_dict(
             # properly tested edge-cases with HA and have CI coverage for winbindd-initiated
             # password changes.
             'machine password timeout': 0,
+            # We're using MIT kerberos instead of built in heimdal. Instructing samba to use
+            # the system krb5.conf file ensures that libads uses the non-heimdal directives to
+            # disable rdns and ensures it uses the connectable KDCs that we discovered in middleware
+            # via DNS.
+            'create krb5 conf': False,
         })
 
         idmap = ds_config['configuration']['idmap']['idmap_domain']

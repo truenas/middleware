@@ -1,3 +1,5 @@
+from truenas_pylibvirt.utils.gpu import get_gpus
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemAdvancedGetGpuPciChoicesArgs,
@@ -6,7 +8,6 @@ from middlewared.api.current import (
     SystemAdvancedUpdateGpuPciIdsResult,
 )
 from middlewared.service import private, Service, ValidationErrors
-from middlewared.utils.gpu import get_gpus
 
 
 class SystemAdvancedService(Service):

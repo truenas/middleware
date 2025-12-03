@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 from urllib.parse import urlparse
 
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
+from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
@@ -13,6 +14,7 @@ __all__ = [
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent',
 ]
 
 
@@ -38,6 +40,13 @@ class AddressPool(BaseModel):
         return self
 
 
+class RegistryMirror(BaseModel):
+    url: HttpUrl
+    """URL of the registry mirror."""
+    insecure: bool
+    """Whether the registry mirror uses an insecure (HTTP) connection."""
+
+
 class DockerEntry(BaseModel):
     id: int
     """Unique identifier for the Docker configuration."""
@@ -47,16 +56,30 @@ class DockerEntry(BaseModel):
     """ZFS dataset used for Docker data storage or `null`."""
     pool: NonEmptyString | None
     """Storage pool used for Docker or `null` if not configured."""
-    nvidia: bool
+    nvidia: SkipJsonSchema[bool]
     """Whether NVIDIA GPU support is enabled for containers."""
     address_pools: list[dict]
     """Array of network address pools for container networking."""
     cidr_v6: str
     """IPv6 CIDR block for Docker container networking."""
-    secure_registry_mirrors: list[HttpUrl]
-    """Array of secure (HTTPS) registry mirror URLs."""
-    insecure_registry_mirrors: list[HttpUrl]
-    """Array of insecure (HTTP) registry mirror URLs."""
+    registry_mirrors: list[RegistryMirror]
+    """Array of registry mirrors."""
+
+    @classmethod
+    def from_previous(cls, value):
+        value["registry_mirrors"] = [
+            {"url": url, "insecure": True} for url in value.pop("insecure_registry_mirrors")
+        ] + [
+            {"url": url, "insecure": False} for url in value.pop("secure_registry_mirrors")
+        ]
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        registry_mirrors = value.pop("registry_mirrors")
+        value["insecure_registry_mirrors"] = [m["url"] for m in registry_mirrors if m["insecure"]]
+        value["secure_registry_mirrors"] = [m["url"] for m in registry_mirrors if not m["insecure"]]
+        return value
 
 
 @single_argument_args('docker_update')
@@ -69,10 +92,8 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     """IPv6 CIDR block for Docker container networking."""
     migrate_applications: bool
     """Whether to migrate existing applications when changing pools."""
-    secure_registry_mirrors: list[HttpUrl]
-    """Array of secure (HTTPS) registry mirror URLs."""
-    insecure_registry_mirrors: list[HttpUrl]
-    """Array of insecure (HTTP) registry mirror URLs."""
+    registry_mirrors: list[RegistryMirror]
+    """Array of registry mirrors."""
 
     @field_validator('cidr_v6')
     @classmethod
@@ -83,13 +104,14 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
         return v
 
-    @field_validator('secure_registry_mirrors')
+    @field_validator('registry_mirrors')
     @classmethod
-    def validate_secure_registries(cls, v):
-        for url in v:
-            parsed = urlparse(url)
-            if parsed.scheme == 'http':
-                raise ValueError(f'Secure registry mirror {url} cannot use HTTP protocol.')
+    def validate_registry_mirrors(cls, v):
+        for mirror in v:
+            if urlparse(mirror.url).scheme == 'http' and not mirror.insecure:
+                raise ValueError(
+                    f'Registry mirror URL that starts with "http://" must be marked as insecure: {mirror.url}'
+                )
         return v
 
     @model_validator(mode='after')
@@ -205,3 +227,15 @@ class DockerBackupToPoolArgs(BaseModel):
 class DockerBackupToPoolResult(BaseModel):
     result: None
     """Returns `null` when the pool backup is successfully started."""
+
+
+class DockerEventsAddedEvent(BaseModel):
+    id: str
+    """App name."""
+    fields: dict
+    """Event fields."""
+
+
+class DockerStateChangedEvent(BaseModel):
+    fields: StatusResult
+    """Event fields."""

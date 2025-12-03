@@ -6,10 +6,11 @@ from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_account_service_url
 
 import middlewared.sqlalchemy as sa
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
-    TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
+    TrueNASConnectEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
     TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
+    TrueNASConnectConfigChangedEvent, TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
 )
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
@@ -56,8 +57,18 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         datastore_extend = 'tn_connect.config_extend'
         cli_private = True
         namespace = 'tn_connect'
-        entry = TNCEntry
+        entry = TrueNASConnectEntry
         role_prefix = 'TRUENAS_CONNECT'
+        events = [
+            Event(
+                name='tn_connect.config',
+                description='Sent on TrueNAS Connect configuration changes',
+                roles=['TRUENAS_CONNECT_READ'],
+                models={
+                    'CHANGED': TrueNASConnectConfigChangedEvent,
+                },
+            )
+        ]
 
     @private
     async def config_extend(self, config):
@@ -114,7 +125,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         verrors.check()
 
-    @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult)
+    @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult, audit='TrueNAS Connect: Updating configuration')
     async def do_update(self, data):
         """
         Update TrueNAS Connect configuration.
@@ -296,6 +307,18 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
         }
 
+    @api_method(
+        TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult, roles=['TRUENAS_CONNECT_READ']
+    )
+    async def ips_with_hostnames(self):
+        """
+        Returns current mapping of ips configured with truenas connect against their hostnames.
+        """
+        hostname_config = await self.middleware.call('tn_connect.hostname.config')
+        return {
+            v: k for k, v in hostname_config['hostname_details'].items()
+        } if hostname_config['error'] is None and hostname_config['hostname_configured'] else {}
+
     @private
     async def set_status(self, new_status, db_payload=None):
         assert new_status in Status.__members__
@@ -309,9 +332,3 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_internal(self):
         config = await self.config()
         return (await self.middleware.call('datastore.config', self._config.datastore)) | config
-
-
-async def setup(middleware):
-    middleware.event_register(
-        'tn_connect.config', 'Sent on TrueNAS Connect configuration changes', roles=['TRUENAS_CONNECT_READ']
-    )
