@@ -91,7 +91,7 @@ def generate_api_key_auth_data(passwd):
     rounds = 500000
     salt_length = 16
     salt = CryptoDatum(generate_string(string_size=salt_length, extra_chars='./').encode())
-    thehash = CyptoDatum(pbkdf2_hmac('sha512', passwd.encode(), salt, rounds))
+    thehash = CryptoDatum(pbkdf2_hmac('sha512', passwd.encode(), salt, rounds))
     scram_auth = generate_scram_auth_data(salted_password=thehash, salt=salt, iterations=rounds)
 
     return {
