@@ -57,6 +57,13 @@ class IpmiChassisService(Service):
 
         return result
 
+    @private
+    def identify_impl(self, verb):
+        """Implementation method to set IPMI chassis identify state on local system."""
+        if self.middleware.call_sync('ipmi.is_loaded'):
+            verb = 'force' if verb == 'ON' else '0'
+            run(['ipmi-chassis', f'--chassis-identify={verb}'], stdout=DEVNULL, stderr=DEVNULL)
+
     @api_method(
         IpmiChassisIdentifyArgs,
         IpmiChassisIdentifyResult,
@@ -72,11 +79,13 @@ class IpmiChassisService(Service):
         verb = data.get('verb', 'ON')
         apply_remote = data.get('apply_remote', False)
 
-        if apply_remote and self.middleware.call_sync('failover.licensed'):
+        if not apply_remote:
+            self.identify_impl(verb)
+        elif self.middleware.call_sync('failover.licensed'):
             try:
-                # Call remote with dict parameter (no apply_remote to avoid loop)
-                # Wrap in list to pass as positional parameter
-                return self.middleware.call_sync(
+                # Call public method 'identify' on remote without parameters
+                # This executes locally on the remote node (apply_remote defaults to False)
+                self.middleware.call_sync(
                     'failover.call_remote', 'ipmi.chassis.identify', [{'verb': verb}]
                 )
             except Exception as e:
@@ -84,6 +93,3 @@ class IpmiChassisService(Service):
                     'ipmi.chassis.identify',
                     f'Failed to apply chassis identify on remote controller: {e}'
                 )
-
-        verb = 'force' if verb == 'ON' else '0'
-        run(['ipmi-chassis', f'--chassis-identify={verb}'], stdout=DEVNULL, stderr=DEVNULL)
