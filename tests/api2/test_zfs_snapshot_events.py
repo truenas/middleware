@@ -72,7 +72,7 @@ def test_recursive_delete_with_dependent_clone():
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}/child@test", "dataset_dst": f"{ds}/clone02"})
 
-            with pytest.raises(ValidationErrors)
+            with pytest.raises(ValidationErrors):
                 c.call("pool.snapshot.delete", f"{ds}@test")
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"recursive": True})
