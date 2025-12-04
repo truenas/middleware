@@ -58,6 +58,16 @@ def pam_stig():
             c.call('etc.generate', 'ssh')
 
 
+@pytest.fixture(scope='function')
+def enable_2fa():
+    with Client() as c:
+        c.call('auth.twofactor.update', {'enabled': True})
+        try:
+            yield
+        finally:
+            c.call('auth.twofactor.update', {'enabled': False})
+
+
 @contextmanager
 def unix_pam_authenticator(username: str, origin: ConnectionOrigin):
     # Constructor now takes username and origin
@@ -320,7 +330,7 @@ def test__otpw_login_nonadmin_otp(admin_user):
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']
 
 
-def test__pam_oath(admin_user, pam_stig):
+def test__pam_oath(admin_user, enable_2fa):
     # Set a twofactor secret. We don't actually need to know it since we're checking for change in
     # PAM conversation
     with Client() as c2:
@@ -329,7 +339,7 @@ def test__pam_oath(admin_user, pam_stig):
     # With the new authenticator, we can properly handle PAM conversations
     # The test validates we get prompted for OTP (PAM_CONV_AGAIN) to cover NAS-136065
     pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
 
     # Should get PAM_CONV_AGAIN indicating 2FA is required
     assert resp.code == PAMCode.PAM_CONV_AGAIN

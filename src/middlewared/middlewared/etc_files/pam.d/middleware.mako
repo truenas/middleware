@@ -17,7 +17,7 @@ ${FAILLOCK_AUTH_SUCC.as_conf()}
 %endif
 %endif
 % if twofactor_enabled:
-auth    [success=ok unknown_user=ignore default=die]    pam_oath.so    usersfile=/etc/users.oath    window=${twofactor_auth['window']}
+auth    [success=ok user_unknown=ignore default=die]    pam_oath.so    usersfile=/etc/users.oath    window=${twofactor_auth['window']}
 % endif
 @include common-account
 password	required	pam_deny.so
