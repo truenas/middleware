@@ -19,6 +19,7 @@ def convert_keys(username, keys) -> UserKeyringEntry:
             expiry = int(key['expires_at'].timestamp())
 
         user_api_keys.append(UserApiKey(
+            algorithm='SHA512',
             expiry=expiry,
             dbid=key['id'],
             username=username,
