@@ -369,7 +369,7 @@ def test__pam_oath(oath_admin_user, enable_2fa):
 
     otp_token = get_totp_token(
         secret=oath_admin_user['twofactor_secret'],
-        interval=enable_2fa['window'],
+        interval=oath_admin_user['interval'],
         digits=oath_admin_user['digits']
     )
 
