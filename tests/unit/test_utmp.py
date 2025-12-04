@@ -1,7 +1,9 @@
 import ipaddress
 import os
+import pyotp
 import pytest
 import socket
+import truenas_pam_session
 
 from contextlib import contextmanager
 from middlewared.utils.account import authenticator, faillock
@@ -61,9 +63,9 @@ def pam_stig():
 @pytest.fixture(scope='function')
 def enable_2fa():
     with Client() as c:
-        c.call('auth.twofactor.update', {'enabled': True})
+        twofactor_config = c.call('auth.twofactor.update', {'enabled': True})
         try:
-            yield
+            yield twofactor_config
         finally:
             c.call('auth.twofactor.update', {'enabled': False})
 
@@ -133,6 +135,28 @@ def admin_user():
             ba_id = c.call('group.query', [['gid', '=', 544]], {'get': True})['id']
             c.call('user.update', u['id'], {'groups': u['groups'] + [ba_id]})
             yield u
+
+
+@pytest.fixture(scope='function')
+def oath_admin_user(admin_user):
+    with Client() as c:
+        c.call('user.renew_2fa_secret', admin_user['username'], {})
+        user_2fa_config = c.call(
+            'datastore.query', 'account.twofactor_user_auth',
+            [['user_id', '=', admin_user['id']]], {'get': True}
+        )
+        try:
+            yield admin_user | {
+                'twofactor_secret': user_2fa_config['secret'],
+                'interval': user_2fa_config['interval'],
+                'digits': user_2fa_config['otp_digits']
+            }
+        finally:
+            c.call('user.unset_2fa_secret', admin_user['username'])
+
+
+def get_totp_token(secret, interval, digits):
+    return pyotp.TOTP(secret, interval=interval, digits=digits).now()
 
 
 # test__utmp_conversion and test__login_logout removed - utmp functionality
@@ -330,16 +354,11 @@ def test__otpw_login_nonadmin_otp(admin_user):
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']
 
 
-def test__pam_oath(admin_user, enable_2fa):
-    # Set a twofactor secret. We don't actually need to know it since we're checking for change in
-    # PAM conversation
-    with Client() as c2:
-        c2.call('user.renew_2fa_secret', admin_user['username'], {})
-
+def test__pam_oath(oath_admin_user, enable_2fa):
     # With the new authenticator, we can properly handle PAM conversations
     # The test validates we get prompted for OTP (PAM_CONV_AGAIN) to cover NAS-136065
-    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    pam_hdl = authenticator.UserPamAuthenticator(username=oath_admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(oath_admin_user['username'], oath_admin_user['password'])
 
     # Should get PAM_CONV_AGAIN indicating 2FA is required
     assert resp.code == PAMCode.PAM_CONV_AGAIN
@@ -347,3 +366,11 @@ def test__pam_oath(admin_user, enable_2fa):
     # Verify the message contains OATH prompt
     assert resp.reason is not None
     assert 'One-time password (OATH)' in resp.reason
+
+    otp_token = get_totp_token(
+        secret=oath_admin_user['twofactor_secret'],
+        window=enable_2fa['window'],
+        digits=oath_admin_user['digits']
+    )
+
+    resp = pam_hdl.authenticate_oath(otp_token)
