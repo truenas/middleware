@@ -11,31 +11,6 @@ class ZFSSnapshotService(Service):
         process_pool = True
         private = True
 
-    def clone(self, data):
-        """
-        Clone a given snapshot to a new dataset.
-
-        Returns:
-            bool: True if succeed.
-
-        """
-        snapshot = data.get('snapshot', '')
-        dataset_dst = data.get('dataset_dst', '')
-        props = data.get('dataset_properties', {})
-
-        try:
-            with libzfs.ZFS() as zfs:
-                snp = zfs.get_snapshot(snapshot)
-                snp.clone(dataset_dst, props)
-                dataset = zfs.get_dataset(dataset_dst)
-                if dataset.type.name == 'FILESYSTEM':
-                    dataset.mount_recursive()
-            self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
-            return True
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            raise CallError(f'Failed to clone snapshot: {err}')
-
     def rollback(self, id_, options={}):
         """
         Rollback to a given snapshot `id`.

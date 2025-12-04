@@ -1,8 +1,9 @@
 import errno
 import pprint
-import pytest
 
 from unittest.mock import ANY
+
+import pytest
 
 from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.test.integration.assets.pool import dataset
@@ -51,16 +52,12 @@ def test_delete_with_dependent_clone():
             c.call("pool.snapshot.create", {"dataset": ds, "name": "test"})
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
 
-            with pytest.raises(ValidationErrors) as ve:
+            with pytest.raises(ValidationError) as ve:
                 c.call("pool.snapshot.delete", f"{ds}@test")
 
-            assert ve.value.errors == [
-                ValidationError(
-                    "options.defer",
-                    f"Please set this attribute as '{ds}@test' snapshot has dependent clones: {ds}/clone01",
-                    errno.EINVAL
-                ),
-            ]
+            assert ve.value.attribute == "zfs.resource.destroy.defer"
+            assert ve.value.errmsg == f"Snapshot '{ds}@test' has dependent clones: {ds}/clone01"
+            assert ve.value.errno == errno.ENOTEMPTY
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"defer": True})
             c.call("pool.snapshot.get_instance", f"{ds}@test")
@@ -78,7 +75,7 @@ def test_recursive_delete_with_dependent_clone():
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}/child@test", "dataset_dst": f"{ds}/clone02"})
 
-            with pytest.raises(ValidationErrors) as ve:
+            with pytest.raises(ValidationErrors):
                 c.call("pool.snapshot.delete", f"{ds}@test")
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"recursive": True})
