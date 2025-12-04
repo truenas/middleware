@@ -263,6 +263,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                             # so that it in turn can pass a client message that second factor
                             # is required.
                             self._twofactor_in_progress = True
+                            self._twofactor_user = True
                             resp.reason = msg.msg
                             return resp
 
