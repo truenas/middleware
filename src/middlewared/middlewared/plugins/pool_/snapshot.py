@@ -1,3 +1,5 @@
+import errno
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolSnapshotEntry,
@@ -18,7 +20,7 @@ from middlewared.api.current import (
     PoolSnapshotRenameArgs,
     PoolSnapshotRenameResult,
 )
-from middlewared.service import CRUDService, filterable_api_method, ValidationError
+from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs, RenameArgs
@@ -107,14 +109,15 @@ class PoolSnapshotService(CRUDService):
         if '@' not in id_:
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 
-        self.middleware.call_sync(
-            'zfs.resource.destroy',
-            DestroyArgs(
-                path=id_,
-                recursive=options['recursive'],
-                defer=options['defer'],
+        try:
+            self.middleware.call_sync(
+                'zfs.resource.destroy',
+                DestroyArgs(path=id_, recursive=options['recursive'], defer=options['defer'])
             )
-        )
+        except ValidationError as ve:
+            if ve.errno == errno.ENOENT:
+                raise InstanceNotFound(ve.errmsg)
+            raise
 
         # TODO: Events won't be sent for child snapshots in recursive delete
         self.middleware.send_event(

@@ -3,7 +3,6 @@ import errno
 import libzfs
 
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.filter_list import filter_list, filter_getattrs
 
 from .utils import get_snapshot_count_cached
@@ -230,37 +229,3 @@ class ZFSSnapshotService(CRUDService):
             raise CallError(str(e))
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
-
-    def delete(self, id_, options={}):
-        """
-        Delete snapshot of name `id`.
-
-        `options.defer` (bool) will defer the deletion of snapshot.
-
-        """
-        defer_ = options.get('defer', False)
-        recursive_ = options.get('recursive', False)
-        verrors = ValidationErrors()
-
-        try:
-            with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(id_)
-                snap.delete(defer=defer_, recursive=recursive_)
-        except libzfs.ZFSException as e:
-            if e.code == libzfs.Error.NOENT:
-                raise InstanceNotFound(str(e))
-
-            if e.args and isinstance(e.args[0], str) and 'snapshot has dependent clones' in e.args[0]:
-                with libzfs.ZFS() as zfs:
-                    dep = list(zfs.get_snapshot(id_).dependents)
-                    if len(dep) and not defer_:
-                        verrors.add(
-                            'options.defer',
-                            f'Please set this attribute as {snap.name!r} snapshot has dependent clones: '
-                            f'{", ".join([i.name for i in dep])}'
-                        )
-                        verrors.check()
-
-            raise CallError(str(e))
-        else:
-            return True
