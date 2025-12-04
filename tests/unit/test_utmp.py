@@ -354,9 +354,16 @@ def test__otpw_login_nonadmin_otp(admin_user):
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']
 
 
-def test__pam_oath(oath_admin_user, enable_2fa):
-    # With the new authenticator, we can properly handle PAM conversations
-    # The test validates we get prompted for OTP (PAM_CONV_AGAIN) to cover NAS-136065
+def test__pam_oath_no2fa(admin_user, enable_2fa):
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+
+    # We should have user_unknown=ignore in pam config so accounts missing from users.oath file
+    # will retrieve last PAM status (success hopefully).
+    assert resp.code == PAMCode.PAM_SUCCESS
+
+
+def test__pam_oath_2fa(oath_admin_user, enable_2fa):
     pam_hdl = authenticator.UserPamAuthenticator(username=oath_admin_user['username'], origin=v4_origin)
     resp = pam_hdl.authenticate(oath_admin_user['username'], oath_admin_user['password'])
 
