@@ -69,7 +69,7 @@ def __get_truenas_pam_keyring():
     return pam_keyring
 
 
-def __get_user_keyring(username):
+def __get_user_keyring(username, retry=True):
     if (pam_keyring := __get_truenas_pam_keyring()) is None:
         return None
 
@@ -80,6 +80,15 @@ def __get_user_keyring(username):
         )
     except FileNotFoundError:
         return None
+    except PermissionError:
+        if retry:
+            # User keyring may be in flux / recently cleared. Drop
+            # our stored keyring info and retry from the beginning
+            keyrings['persistent'] = None
+            keyrings['truenas_pam'] = None
+            return __get_user_keyring(username, False)
+
+        raise
 
     return user_keyring
 
