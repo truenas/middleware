@@ -246,7 +246,7 @@ class UserService(CRUDService):
 
     @private
     async def user_extend_context(self, rows, extra):
-        group_roles = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'roles']})
+        groups = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'name', 'roles']})
 
         user_api_keys = defaultdict(list)
         for key in await self.middleware.call('api_key.query'):
@@ -273,7 +273,8 @@ class UserService(CRUDService):
                 )
             }),
             'user_api_keys': user_api_keys,
-            'roles_mapping': {i['id']: i['roles'] for i in group_roles}
+            'roles_mapping': {i['id']: i['roles'] for i in groups},
+            'group_ids': {i['name']: i['id'] for i in groups},
         }
 
     @private
@@ -360,6 +361,8 @@ class UserService(CRUDService):
             if user['username'] in ctx['pam_locked_users']:
                 user['locked'] = True
 
+        user['webshare'] = ctx['group_ids']['truenas_webshare'] in user['groups']
+
         return user
 
     @private
@@ -375,6 +378,7 @@ class UserService(CRUDService):
             'twofactor_auth_configured',
             'password_age',
             'password_change_required',
+            'webshare',
         ]
 
         match user['userns_idmap']:
@@ -705,6 +709,8 @@ class UserService(CRUDService):
 
                 raise
 
+        self.handle_webshare(data)
+
         pk = None  # Make sure pk exists to rollback in case of an error
         password = data['password']
         data = self.user_compress(data)
@@ -980,6 +986,8 @@ class UserService(CRUDService):
         password = user.get('password')
 
         self.__set_password(user)
+
+        self.handle_webshare(user)
 
         user = self.user_compress(user)
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
@@ -1687,6 +1695,21 @@ class UserService(CRUDService):
             data['smbhash'] = '*'
 
         return data
+
+    @private
+    def handle_webshare(self, data):
+        webshare = self.middleware.call_sync(
+            'datastore.query',
+            'account.bsdgroups',
+            [('group', '=', 'truenas_webshare')],
+            {'prefix': 'bsdgrp_', 'get': True},
+        )
+        if data['webshare']:
+            if webshare['id'] not in data['groups']:
+                data['groups'].append(webshare['id'])
+        else:
+            if webshare['id'] in data['groups']:
+                data['groups'].remove(webshare['id'])
 
     @private
     def update_sshpubkey(self, homedir, user, group):
