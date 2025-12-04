@@ -220,7 +220,6 @@ class DomainConnection(
             results = self.middleware.call_sync('dnsclient.forward_lookup', {
                 'names': [entry['target'] for entry in results],
                 'record_types': ['A', 'AAAA'],
-                'query-options': {'order_by': ['priority', 'weight']},
                 'dns_client_options': {'timeout': config['timeout'], 'raise_error': 'NEVER'}
             })
         except Exception:
