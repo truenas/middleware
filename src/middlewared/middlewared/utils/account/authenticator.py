@@ -291,12 +291,6 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         if not self.twofactor_user:
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, 'User does not support two-factor auth')
 
-        for msg in resp.reason:
-            if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
-                client_responses.append(twofactor_token)
-            else:
-                client_responses.append(None)
-
         resp = self.auth_continue([twofactor_token])
         if resp.code == PAMCode.PAM_SUCCESS:
             # Grab fresh copy since account flags may have changed due to OTPW login
