@@ -287,13 +287,6 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         stage = TrueNASAuthenticatorStage.AUTH
         client_responses = []
 
-        try:
-            # The cpython extension keeps copies of all messages from pam conversation.
-            # the oath prompt should be the last one we have
-            resp = self.ctx.messages()[-1]
-        except IndexError:
-            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, 'Authentication not in progress')
-
         if not self.twofactor_user:
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, 'User does not support two-factor auth')
 
@@ -303,7 +296,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             else:
                 client_responses.append(None)
 
-        resp = self.auth_continue(client_responses)
+        resp = self.auth_continue([twofactor_token])
         if resp.code == PAMCode.PAM_SUCCESS:
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
