@@ -1,7 +1,7 @@
 """Convert API keys to SCRAM auth
 
 Revision ID: 055cfee51499
-Revises: bf646ce959c5
+Revises: 64618eb831b2
 Create Date: 2025-12-02 18:18:37.674898+00:00
 
 """
@@ -14,7 +14,7 @@ from middlewared.utils.pwenc import encrypt
 
 # revision identifiers, used by Alembic.
 revision = '055cfee51499'
-down_revision = 'bf646ce959c5'
+down_revision = '64618eb831b2'
 branch_labels = None
 depends_on = None
 
