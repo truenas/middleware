@@ -368,7 +368,7 @@ class ZFSResourceService(Service):
             raise ValidationError(
                 f"{schema}.defer",
                 f"Snapshot {e.path!r} has dependent clones: {', '.join(e.clones)}",
-                errno.EINVAL
+                errno.ENOTEMPTY
             )
         except ZFSPathHasHoldsException as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)

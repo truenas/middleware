@@ -1,7 +1,9 @@
+import errno
 import pprint
-import pytest
 
 from unittest.mock import ANY
+
+import pytest
 
 from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.test.integration.assets.pool import dataset
@@ -55,6 +57,7 @@ def test_delete_with_dependent_clone():
 
             assert ve.value.attribute == "zfs.resource.destroy.defer"
             assert ve.value.errmsg == f"Snapshot '{ds}@test' has dependent clones: {ds}/clone01"
+            assert ve.value.errno == errno.ENOTEMPTY
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"defer": True})
             c.call("pool.snapshot.get_instance", f"{ds}@test")
