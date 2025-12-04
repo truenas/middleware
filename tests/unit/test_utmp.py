@@ -374,3 +374,4 @@ def test__pam_oath(oath_admin_user, enable_2fa):
     )
 
     resp = pam_hdl.authenticate_oath(otp_token)
+    assert resp.code == PAMCode.PAM_SUCCESS
