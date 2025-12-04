@@ -78,6 +78,13 @@ class PoolService(Service):
 
         sibling_sizes = []
         for vdev in found[2]:
+            # We should only account for `ONLINE` vdevs.
+            # For example, a vdev might be `UNAVAIL` when its path is `/dev/sdb2`, but the current system’s `sdb` disk
+            # may have been replaced with an unrelated one (with a different partition GUID). We should not include this
+            # disk partition’s size when calculating the new disk partition size.
+            if vdev.get('status') != 'ONLINE':
+                continue
+
             if vdev.get('device'):
                 size = await self.middleware.call('disk.get_dev_size', vdev['device'])
                 if size is not None:
