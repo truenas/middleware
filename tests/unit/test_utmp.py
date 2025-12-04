@@ -328,18 +328,12 @@ def test__pam_oath(admin_user, pam_stig):
 
     # With the new authenticator, we can properly handle PAM conversations
     # The test validates we get prompted for OTP (PAM_CONV_AGAIN) to cover NAS-136065
-    from truenas_authenticator import UserPamAuthenticator
-    auth = UserPamAuthenticator(
-        username=admin_user['username'],
-        service='sshd',  # Use sshd service which has 2FA enabled
-        rhost='127.0.0.1'
-    )
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user)
 
-    resp = auth.pam_authenticate_simple(admin_user['username'], admin_user['password'])
     # Should get PAM_CONV_AGAIN indicating 2FA is required
     assert resp.code == PAMCode.PAM_CONV_AGAIN
 
     # Verify the message contains OATH prompt
     assert resp.reason is not None
-    messages = [str(msg.msg) for msg in resp.reason]
-    assert any('One-time password (OATH)' in msg for msg in messages)
+    assert 'One-time password (OATH)' in resp.reason

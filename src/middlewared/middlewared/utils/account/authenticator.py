@@ -147,7 +147,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 else:
                     passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
 
-        if self.state.service is MiddlewarePamFile.API_KEY:
+        if self.state.service == MiddlewarePamFile.API_KEY.service:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
@@ -219,7 +219,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 # PASSWORD_CHANGE_REQUIRED can only be set for local accounts. We don't allow
                 # password changes through middleware currently for directory services.
                 if otpw_resp.data['password_set_override'] and passwd_entry['source'] == 'LOCAL':
-                    self.state.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
+                    self.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
 
                 code = PAMCode.PAM_SUCCESS
                 reason = None
@@ -263,6 +263,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                             # so that it in turn can pass a client message that second factor
                             # is required.
                             self._twofactor_in_progress = True
+                            resp['reason'] = msg.msg
                             return resp
 
                         responses.append(password)
@@ -335,7 +336,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         # pass the normalized name to the PAM stack when authenticating
         resp = self.pam_authenticate_simple(pw['pw_name'], password)
         if resp.code != PAMCode.PAM_SUCCESS:
-            if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service is MiddlewarePamFile.DEFAULT:
+            if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service == MiddlewarePamFile.DEFAULT.service:
                 # This is possibly due to tally lock. In this case we'll change PAM code to reflect locked
                 # status
                 if is_tally_locked(pw['pw_name']):
