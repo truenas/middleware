@@ -112,7 +112,7 @@ def rename_impl(tls, data: RenameArgs):
         raise ZFSPathAlreadyExistsException(new)
 
     recurse = data.get("recursive", False)
-    if recurse is True and "@" not in new or "@" not in curr:
+    if recurse is True and ("@" not in new or "@" not in curr):
         raise ZFSPathNotASnapshotException()
 
     rsrc.rename(
