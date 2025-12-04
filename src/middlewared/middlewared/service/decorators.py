@@ -1,7 +1,4 @@
-import asyncio
-import threading
-
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
@@ -9,9 +6,7 @@ if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
 
 
-LOCKS = defaultdict(asyncio.Lock)
 PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_on_start'])
-THREADING_LOCKS = defaultdict(threading.Lock)
 
 
 def cli_private(fn):
