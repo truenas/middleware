@@ -66,9 +66,5 @@ from .system_security import *  # noqa
 from .tn_connect import *  # noqa
 from .truenas import *  # noqa
 from .user import *  # noqa
-from .virt_device import *  # noqa
-from .virt_global import *  # noqa
-from .virt_instance import *  # noqa
-from .virt_volume import *  # noqa
 from .webui_enclosure import *  # noqa
 from .webui_main_dashboard import *  # noqa

@@ -421,30 +421,6 @@ class UsageService(Service):
 
         return {'vms': vms}
 
-    async def gather_virt(self, context):
-        virt = []
-        for v in await self.middleware.call('virt.instance.query'):
-            nics = disks = 0
-            for device in await self.middleware.call('virt.instance.device_list', v['id']):
-                dtype = device['dev_type']
-                if dtype == 'NIC':
-                    nics += 1
-                elif dtype == 'DISK':
-                    disks += 1
-
-            virt.append({
-                'type': v['type'],
-                'autostart': v['autostart'],
-                'cpu': v['cpu'],
-                'nics': nics,
-                'disks': disks,
-                'vnc_enabled': v['vnc_enabled'],
-                'secure_boot': v['secure_boot'],
-                'memory': v['memory'],
-            })
-
-        return {'virt': virt}
-
     def gather_nspawn_containers(self, context):
         nspawn_containers = list()
         try:

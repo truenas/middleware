@@ -297,12 +297,6 @@ def test_docker_apps_enabled_fail(enterprise_product, two_factor_enabled):
             call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
-def test_vm_support_enabled_fail(enterprise_product, two_factor_enabled):
-    with mock('virt.global.config', return_value={"pool": "VirtualMachinePool"}):
-        with pytest.raises(ValidationErrors, match='Please disable VMs as VMs are not supported'):
-            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
-
-
 def test_tn_connect_enabled_fail(enterprise_product, two_factor_enabled):
     with mock('tn_connect.config', return_value={"enabled": True}):
         with pytest.raises(ValidationErrors, match='Please disable TrueNAS Connect as it is not supported'):
@@ -462,7 +456,6 @@ class TestNotAuthorizedOps:
     @pytest.mark.parametrize('cmd, args, is_job', [
         pp('truecommand.update', {'enabled': True, 'api_key': '1234567890-ABCDE'}, True, id="Truecommand"),
         pp('docker.update', {'pool': 'NotApplicable'}, True, id="Docker"),
-        pp('virt.global.update', {'pool': 'NotApplicable'}, True, id="VM support"),
         pp('tn_connect.update', {'enabled': True, 'ips': ['1.2.3.4']}, False, id="TrueNAS Connect"),
         # VM operations
         pp('vm.create', {'name': 'test_vm', 'vcpus': 1, 'memory': 512, 'bootloader': 'UEFI'}, False, id="VM create"),

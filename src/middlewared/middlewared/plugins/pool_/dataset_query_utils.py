@@ -28,7 +28,6 @@ INTERNAL_DATASETS = (
     ".system",
     "ix-applications",
     "ix-apps",
-    ".ix-virt",
     CONTAINER_DS_NAME,
 )
 """
