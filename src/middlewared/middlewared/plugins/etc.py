@@ -246,6 +246,7 @@ class EtcService(Service):
             'ctx': [
                 {'method': 'datastore.config', 'args': ['system.settings']},
                 {'method': 'system.security.config'},
+                {'method': 'auth.twofactor.config'},
                 {'method': 'api_key.query', 'args': [[['revoked', '=', False]]]}
             ],
             'entries': [
