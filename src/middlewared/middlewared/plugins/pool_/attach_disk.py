@@ -8,7 +8,7 @@ from middlewared.service import job, Service, ValidationErrors
 
 class PoolService(Service):
 
-    LOCKS = defaultdict(asyncio.Lock)
+    POOL_LOCKS = defaultdict(asyncio.Lock)
 
     @api_method(PoolAttachArgs, PoolAttachResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'pool_attach_disk_{args[1]["new_disk"]}', lock_queue_size=0)
@@ -28,7 +28,7 @@ class PoolService(Service):
         - Operations on different pools with different disks can run concurrently.
         """
         # Acquire pool lock to serialize operations on the same pool
-        async with self.LOCKS[f'pool_{oid}']:
+        async with self.POOL_LOCKS[oid]:
             pool = await self.middleware.call('pool.get_instance', oid)
             verrors = ValidationErrors()
             topology = pool['topology']
