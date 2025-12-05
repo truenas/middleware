@@ -83,7 +83,7 @@ def clone_impl(tls, data: CloneArgs):
     else:
         raise ZFSPathAlreadyExistsException(new)
 
-    if props := data.get("props", None):
+    if props := data.get("properties", None):
         rsrc.clone(name=new, properties=props)
     else:
         rsrc.clone(name=new)
