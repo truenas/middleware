@@ -28,10 +28,12 @@ from middlewared.service.decorators import pass_thread_local_storage
 
 from .destroy_impl import destroy_impl, DestroyArgs
 from .exceptions import (
+    ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
     ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
 )
+from .rename_promote_clone_impl import rename_impl, RenameArgs
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_query_impl import query_snapshots_impl
 from .utils import group_paths_by_parents, has_internal_path
@@ -266,4 +268,82 @@ class ZFSResourceSnapshotService(Service):
         if failed:
             raise ValidationError(
                 "zfs.resource.snapshot.destroy", failed, errnum or errno.EFAULT
+            )
+
+    @private
+    @pass_thread_local_storage
+    def rename_impl(self, tls, data: dict):
+        args: RenameArgs = {
+            "current_name": data["current_name"],
+            "new_name": data["new_name"],
+            "recursive": data.get("recursive", False),
+        }
+        return rename_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotRenameArgs,
+        ZFSResourceSnapshotRenameResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def rename(self, data):
+        """
+        Rename a ZFS snapshot.
+
+        Args:
+            data: Rename parameters containing:
+                - current_name: Current snapshot path (e.g., 'pool/dataset@old_name').
+                - new_name: New snapshot path (e.g., 'pool/dataset@new_name').
+                - recursive: Recursively rename matching snapshots in child datasets.
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found, new name already exists, or invalid paths.
+
+        Examples:
+            # Rename a single snapshot
+            rename({"current_name": "tank/data@old", "new_name": "tank/data@new"})
+
+            # Rename recursively (all matching child snapshots)
+            rename({
+                "current_name": "tank@old",
+                "new_name": "tank@new",
+                "recursive": True
+            })
+        """
+        current_name = data["current_name"]
+        new_name = data["new_name"]
+
+        # Validate both paths are snapshot paths
+        if "@" not in current_name:
+            raise ValidationError(
+                "zfs.resource.snapshot.rename",
+                "current_name must be a snapshot path (containing '@').",
+            )
+        if "@" not in new_name:
+            raise ValidationError(
+                "zfs.resource.snapshot.rename",
+                "new_name must be a snapshot path (containing '@').",
+            )
+
+        # Validate same dataset (only snapshot name can change)
+        current_ds = current_name.rsplit("@", 1)[0]
+        new_ds = new_name.rsplit("@", 1)[0]
+        if current_ds != new_ds:
+            raise ValidationError(
+                "zfs.resource.snapshot.rename",
+                "Cannot rename snapshot to a different dataset. "
+                f"Dataset must remain '{current_ds}'.",
+            )
+
+        try:
+            self.middleware.call_sync("zfs.resource.snapshot.rename_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rename", e.message, errno.ENOENT
+            )
+        except ZFSPathAlreadyExistsException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rename", e.message, errno.EEXIST
             )
