@@ -207,8 +207,6 @@ def __apply_purpose_and_options(
                 out['zfs_core:dataset_auto_quota'] = f'{opts[share_field.AUTO_QUOTA]}G'
 
         case SMBSharePurpose.LEGACY_SHARE:
-            out['hosts allow'] = opts[share_field.HOSTSALLOW]
-            out['hosts deny'] = opts[share_field.HOSTSDENY]
             out['nt acl support'] = opts[share_field.ACL]
             out['guest ok'] = opts[share_field.GUESTOK]
             if opts[share_field.STREAMS]:
@@ -262,6 +260,14 @@ def __apply_purpose_and_options(
 
         case _:
             raise ValueError(f'{config_in["purpose"]}: Unexpected share purpose.')
+
+    # Some but not all purposes have hosts allow / hosts deny
+    for field, param in (
+        (share_field.HOSTSALLOW, 'hosts allow'),
+        (share_field.HOSTSDENY, 'hosts deny')
+    ):
+        if opts.get(field):
+            out[param] = opts[field]
 
     if acl_enabled:
         # Add vfs object for our ACL type
