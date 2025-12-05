@@ -1,4 +1,5 @@
 import errno
+import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -26,11 +27,15 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .destroy_impl import destroy_impl, DestroyArgs
 from .exceptions import (
+    ZFSPathHasClonesException,
+    ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
 )
+from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_query_impl import query_snapshots_impl
-from .utils import group_paths_by_parents
+from .utils import group_paths_by_parents, has_internal_path
 
 
 class ZFSResourceSnapshotService(Service):
@@ -40,10 +45,9 @@ class ZFSResourceSnapshotService(Service):
         entry = ZFSResourceSnapshotEntry
 
     @private
-    def validate_query_args(self, data):
-        """Validate query arguments.
+    def validate_recursive_paths(self, schema: str, data: dict):
+        """Validate paths don't overlap when recursive=True.
 
-        Validates that dataset paths don't overlap when recursive=True.
         (Duplicate paths are already rejected by Pydantic UniqueList)
         """
         if not data.get("recursive", False):
@@ -55,7 +59,7 @@ class ZFSResourceSnapshotService(Service):
         dataset_paths = [p for p in paths if "@" not in p]
         if group_paths_by_parents(dataset_paths):
             raise ValidationError(
-                "zfs.resource.snapshot.query",
+                schema,
                 (
                     "Paths must be non-overlapping - no path can be relative to another "
                     "when recursive is set to True."
@@ -113,10 +117,63 @@ class ZFSResourceSnapshotService(Service):
                 "properties": ["used", "referenced", "creation"]
             })
         """
-        self.validate_query_args(data)
+        self.validate_recursive_paths("zfs.resource.snapshot.query", data)
         try:
             return self.middleware.call_sync("zfs.resource.snapshot.query_impl", data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.query", e.message, errno.ENOENT
+            )
+
+    @private
+    @pass_thread_local_storage
+    def count_impl(self, tls, data: dict | None = None):
+        base = ZFSResourceSnapshotCountArgs().model_dump()["data"]
+        if data is None:
+            final = base
+        else:
+            final = base | data
+
+        return count_snapshots_impl(tls.lzh, final)
+
+    @api_method(
+        ZFSResourceSnapshotCountArgs,
+        ZFSResourceSnapshotCountResult,
+        roles=["SNAPSHOT_READ"],
+    )
+    def count(self, data):
+        """
+        Count ZFS snapshots per dataset.
+
+        This method provides a fast way to count snapshots without retrieving
+        full snapshot information. Useful for UI displays and quota checks.
+
+        Args:
+            data: Count parameters containing:
+                - paths: List of dataset paths to count snapshots for. If empty,
+                         counts snapshots for root filesystems only.
+                - recursive: Include snapshots from child datasets in counts.
+
+        Returns:
+            Dict mapping dataset names to their snapshot counts.
+
+        Examples:
+            # Count snapshots for root filesystems only
+            count({})
+
+            # Count all snapshots recursively
+            count({"recursive": True})
+
+            # Count snapshots for a specific dataset
+            count({"paths": ["tank/data"]})
+
+            # Count snapshots for a dataset and all children
+            count({"paths": ["tank"], "recursive": True})
+        """
+        self.validate_recursive_paths("zfs.resource.snapshot.count", data)
+        try:
+            return self.middleware.call_sync("zfs.resource.snapshot.count_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.count", e.message, errno.ENOENT
             )
