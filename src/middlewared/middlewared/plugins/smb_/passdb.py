@@ -28,7 +28,7 @@ class SMBService(Service):
             return query_passdb_entries(filters or [], options or {})
         except PassdbMustReinit as err:
             self.logger.warning(err.errmsg)
-            self.synchronize_passdb(True).wait_sync(raise_error=True)
+            self.middleware.call_sync('smb.synchronize_passdb').wait_sync(raise_error=True)
             return query_passdb_entries(filters or [], options or {})
 
     @private
@@ -55,7 +55,7 @@ class SMBService(Service):
 
     @private
     @job(lock="passdb_sync", lock_queue_size=1)
-    def synchronize_passdb(self, passdb_job, force=False):
+    def synchronize_passdb(self, passdb_job):
         """ Sync user configuration from our user table with Samba's passdb.tdb file
 
         Params:
@@ -66,13 +66,13 @@ class SMBService(Service):
             RuntimeError - TDB library error
         """
         server_name = self.middleware.call_sync('smb.config')['netbiosname']
-        if force:
-            try:
-                os.unlink(PASSDB_PATH)
-            except FileNotFoundError:
-                pass
 
-        pdb_entries = {entry['user_rid']: entry for entry in query_passdb_entries([], {})}
+        try:
+            pdb_entries = {entry['user_rid']: entry for entry in query_passdb_entries([], {})}
+        except PassdbMustReinit:
+            os.unlink(PASSDB_PATH)
+            pdb_entries = {}
+
         to_update = []
         broken_entries = []
 
