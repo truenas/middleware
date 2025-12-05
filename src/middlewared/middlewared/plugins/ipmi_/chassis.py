@@ -7,7 +7,7 @@ from middlewared.api.current import (
     IpmiChassisInfoArgs,
     IpmiChassisInfoResult,
 )
-from middlewared.service import Service
+from middlewared.service import private, Service, ValidationError
 
 
 class IpmiChassisService(Service):
@@ -16,13 +16,9 @@ class IpmiChassisService(Service):
         namespace = 'ipmi.chassis'
         cli_namespace = 'service.ipmi.chassis'
 
-    @api_method(
-        IpmiChassisInfoArgs,
-        IpmiChassisInfoResult,
-        roles=['IPMI_READ'],
-    )
-    def info(self):
-        """Return IPMI chassis info."""
+    @private
+    def info_impl(self):
+        """Implementation method to get IPMI chassis info from local system."""
         rv = {}
         if not self.middleware.call_sync('ipmi.is_loaded'):
             return rv
@@ -35,15 +31,65 @@ class IpmiChassisService(Service):
         return rv
 
     @api_method(
+        IpmiChassisInfoArgs,
+        IpmiChassisInfoResult,
+        roles=['IPMI_READ'],
+    )
+    def info(self, data):
+        """
+        Return IPMI chassis info.
+
+        `query-remote`: [optional] if True on HA system, then return info from remote controller.
+        """
+        query_remote = data.get('query-remote', False)
+        result = {}
+        if not query_remote:
+            result = self.info_impl()
+        elif self.middleware.call_sync('failover.licensed'):
+            try:
+                # Call public method 'info' on remote without parameters
+                # This executes locally on the remote node (query_remote defaults to False)
+                result = self.middleware.call_sync(
+                    'failover.call_remote', 'ipmi.chassis.info'
+                )
+            except Exception:
+                result = {}
+
+        return result
+
+    @private
+    def identify_impl(self, verb):
+        """Implementation method to set IPMI chassis identify state on local system."""
+        if self.middleware.call_sync('ipmi.is_loaded'):
+            verb = 'force' if verb == 'ON' else '0'
+            run(['ipmi-chassis', f'--chassis-identify={verb}'], stdout=DEVNULL, stderr=DEVNULL)
+
+    @api_method(
         IpmiChassisIdentifyArgs,
         IpmiChassisIdentifyResult,
         roles=['IPMI_WRITE'],
     )
-    def identify(self, verb):
+    def identify(self, data):
         """
         Toggle the chassis identify light.
 
         `verb`: str if 'ON' turn identify light on. if 'OFF' turn identify light off.
+        `apply_remote`: bool if True on HA systems, apply to remote controller.
         """
-        verb = 'force' if verb == 'ON' else '0'
-        run(['ipmi-chassis', f'--chassis-identify={verb}'], stdout=DEVNULL, stderr=DEVNULL)
+        verb = data.get('verb', 'ON')
+        apply_remote = data.get('apply_remote', False)
+
+        if not apply_remote:
+            self.identify_impl(verb)
+        elif self.middleware.call_sync('failover.licensed'):
+            try:
+                # Call public method 'identify' on remote without parameters
+                # This executes locally on the remote node (apply_remote defaults to False)
+                self.middleware.call_sync(
+                    'failover.call_remote', 'ipmi.chassis.identify', [{'verb': verb}]
+                )
+            except Exception as e:
+                raise ValidationError(
+                    'ipmi.chassis.identify',
+                    f'Failed to apply chassis identify on remote controller: {e}'
+                )
