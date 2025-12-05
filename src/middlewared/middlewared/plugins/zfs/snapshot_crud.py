@@ -1,5 +1,4 @@
 import errno
-import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -176,4 +175,95 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.count", e.message, errno.ENOENT
+            )
+
+    @private
+    @pass_thread_local_storage
+    def destroy_impl(self, tls, data: dict):
+        args: DestroyArgs = {
+            "path": data["path"],
+            "recursive": data.get("recursive", False),
+            "all_snapshots": data.get("all_snapshots", False),
+            "bypass": False,
+            "defer": data.get("defer", False),
+        }
+        return destroy_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotDestroyArgs,
+        ZFSResourceSnapshotDestroyResult,
+        roles=["SNAPSHOT_DELETE"],
+    )
+    def destroy(self, data):
+        """
+        Destroy ZFS snapshots.
+
+        Args:
+            data: Destroy parameters containing:
+                - path: Snapshot path (e.g., 'pool/dataset@snapshot') or dataset path
+                        when all_snapshots=True (e.g., 'pool/dataset').
+                - recursive: Recursively destroy matching snapshots in child datasets.
+                - all_snapshots: If True, path is a dataset and all its snapshots are destroyed.
+                - defer: Defer destruction if snapshot is in use (e.g., has clones).
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found, has clones (without defer), or has holds.
+
+        Examples:
+            # Destroy a single snapshot
+            destroy({"path": "tank/data@backup"})
+
+            # Destroy recursively (all matching child snapshots)
+            destroy({"path": "tank@backup", "recursive": True})
+
+            # Defer destruction if in use
+            destroy({"path": "tank/data@snap", "defer": True})
+
+            # Destroy all snapshots for a dataset
+            destroy({"path": "tank/data", "all_snapshots": True})
+
+            # Destroy all snapshots for a dataset and its children
+            destroy({"path": "tank", "all_snapshots": True, "recursive": True})
+        """
+        path = data["path"]
+        all_snapshots = data.get("all_snapshots", False)
+
+        # Validate path format based on all_snapshots flag
+        if all_snapshots:
+            if "@" in path:
+                raise ValidationError(
+                    "zfs.resource.snapshot.destroy",
+                    "When all_snapshots is True, path must be a dataset path (no '@').",
+                )
+        else:
+            if "@" not in path:
+                raise ValidationError(
+                    "zfs.resource.snapshot.destroy",
+                    "Path must be a snapshot path (containing '@'). "
+                    "Use all_snapshots=True to destroy all snapshots for a dataset.",
+                )
+
+        try:
+            failed, errnum = self.middleware.call_sync(
+                "zfs.resource.snapshot.destroy_impl", data
+            )
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.destroy", e.message, errno.ENOENT
+            )
+        except ZFSPathHasClonesException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.destroy", e.message, errno.EBUSY
+            )
+        except ZFSPathHasHoldsException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.destroy", e.message, errno.EBUSY
+            )
+
+        if failed:
+            raise ValidationError(
+                "zfs.resource.snapshot.destroy", failed, errnum or errno.EFAULT
             )

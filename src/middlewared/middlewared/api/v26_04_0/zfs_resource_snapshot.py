@@ -135,9 +135,12 @@ class ZFSResourceSnapshotCountResult(BaseModel):
 
 class ZFSResourceSnapshotDestroyQuery(BaseModel):
     path: NonEmptyString
-    """Snapshot path to destroy (e.g., 'pool/dataset@snapshot')."""
+    """Path to destroy. Either a snapshot path (e.g., 'pool/dataset@snapshot') or
+    a dataset path when all_snapshots=True (e.g., 'pool/dataset')."""
     recursive: bool = False
     """Recursively destroy matching snapshots in child datasets."""
+    all_snapshots: bool = False
+    """If True, path should be a dataset path and all its snapshots will be destroyed."""
     defer: bool = False
     """Defer destruction if snapshot is in use (e.g., has clones)."""
 
