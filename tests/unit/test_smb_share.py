@@ -477,6 +477,19 @@ def test__hosts(nfsacl_dataset, hostsconfig):
     assert conf[smbconf] == ['jenny']
 
 
+@pytest.mark.parametrize('hostsconfig', [
+    ('hostsallow', 'hosts allow'),
+    ('hostsdeny', 'hosts deny')
+])
+def test__hosts_default_share(nfsacl_dataset, hostsconfig):
+    db, smbconf = hostsconfig
+    smb = DEFAULT_SHARE | {'path': nfsacl_dataset}
+    smb['options'][db] = ['jenny']
+    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+
+    assert conf[smbconf] == ['jenny']
+
+
 @pytest.mark.parametrize('path_suffix', ['%M/%U', None])
 def test__homes_standalone(nfsacl_dataset, path_suffix):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}

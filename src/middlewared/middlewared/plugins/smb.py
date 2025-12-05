@@ -1348,9 +1348,12 @@ class SharingSMBService(SharingService):
         out[share_field.ABE] = out.pop('abe')
         out[share_field.OPTS] = {}
 
+        # pre-parse our hosts allow / deny fields
         match out[share_field.PURPOSE]:
             case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE | SMBSharePurpose.FCP_SHARE:
                 out[share_field.OPTS][share_field.AAPL_MANGLING] = data[share_field.AAPL_MANGLING]
+                out[share_field.OPTS][share_field.HOSTSALLOW] = data[share_field.HOSTSALLOW].split()
+                out[share_field.OPTS][share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
             case SMBSharePurpose.TIMEMACHINE_SHARE:
                 out[share_field.OPTS] = {
                     share_field.AUTO_SNAP: data[share_field.AUTO_SNAP],
@@ -1359,17 +1362,23 @@ class SharingSMBService(SharingService):
                     share_field.TIMEMACHINE_QUOTA: data[share_field.TIMEMACHINE_QUOTA],
                     share_field.VUID: data[share_field.VUID] or None,
                 }
+                out[share_field.OPTS][share_field.HOSTSALLOW] = data[share_field.HOSTSALLOW].split()
+                out[share_field.OPTS][share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
             case SMBSharePurpose.TIME_LOCKED_SHARE:
                 out[share_field.OPTS] = {
                     share_field.WORM_GRACE: data['worm_grace_period'] or 900,
                     share_field.AAPL_MANGLING: data[share_field.AAPL_MANGLING],
                 }
+                out[share_field.OPTS][share_field.HOSTSALLOW] = data[share_field.HOSTSALLOW].split()
+                out[share_field.OPTS][share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
             case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
                 out[share_field.OPTS] = {
                     share_field.DS_NAMING_SCHEMA: data[share_field.PATH_SUFFIX] or None,
                     share_field.AUTO_QUOTA: data[share_field.AUTO_QUOTA],
                     share_field.AAPL_MANGLING: data[share_field.AAPL_MANGLING],
                 }
+                out[share_field.OPTS][share_field.HOSTSALLOW] = data[share_field.HOSTSALLOW].split()
+                out[share_field.OPTS][share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
             case SMBSharePurpose.EXTERNAL_SHARE:
                 if out[share_field.PATH].startswith('EXTERNAL:'):
                     remote_path = out[share_field.PATH].removeprefix('EXTERNAL:').split(',')
@@ -1432,9 +1441,6 @@ class SharingSMBService(SharingService):
             data[share_field.VUID] = opts[share_field.VUID] or ''
 
         match data[share_field.PURPOSE]:
-            case SMBSharePurpose.LEGACY_SHARE:
-                data[share_field.HOSTSALLOW] = ' '.join(opts.pop(share_field.HOSTSALLOW, []))
-                data[share_field.HOSTSDENY] = ' '.join(opts.pop(share_field.HOSTSDENY, []))
             case SMBSharePurpose.TIME_LOCKED_SHARE:
                 data['worm_grace_period'] = opts.pop(share_field.WORM_GRACE, 900)
             case SMBSharePurpose.EXTERNAL_SHARE:
@@ -1449,6 +1455,11 @@ class SharingSMBService(SharingService):
 
         data.pop(self.locked_field, None)
         data.update(opts)
+
+        # hosts allow and hosts deny are space-delimited
+        for field in (share_field.HOSTSALLOW, share_field.HOSTSDENY):
+            if data.get(field, None) is not None:
+                data[field] = ' '.join(data[field])
 
         if data[share_field.PURPOSE] != SMBSharePurpose.LEGACY_SHARE:
             # Make sure to set these keys to defaults for sake of DB consistency
