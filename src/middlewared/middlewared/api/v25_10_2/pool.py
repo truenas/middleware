@@ -140,7 +140,9 @@ class PoolEntry(BaseModel):
 
 class PoolAttach(BaseModel):
     target_vdev: str
-    """GUID or device name of the target vdev to attach to."""
+    """The GUID of the vdev where the disk needs to be attached. In the case of a STRIPED vdev, this is the STRIPED \
+    disk GUID which will be converted into a mirror. If `target_vdev` is already a mirror, it will be converted into \
+    an n-way mirror."""
     new_disk: str
     """Name of the new disk to attach."""
     allow_duplicate_serials: bool = False
