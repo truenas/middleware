@@ -28,7 +28,7 @@ class SMBService(Service):
             return query_passdb_entries(filters or [], options or {})
         except PassdbMustReinit as err:
             self.logger.warning(err.errmsg)
-            self.synchronize_passdb().wait_sync(raise_error=True)
+            self.middleware.call_sync('smb.synchronize_passdb').wait_sync(raise_error=True)
             return query_passdb_entries(filters or [], options or {})
 
     @private
