@@ -1,3 +1,4 @@
+import pathlib
 from dataclasses import dataclass
 from typing import Literal
 
@@ -13,6 +14,7 @@ except ImportError:
 
 __all__ = (
     "get_encryption_info",
+    "group_paths_by_parents",
     "has_internal_path",
     "open_resource",
 )
@@ -87,6 +89,38 @@ def get_encryption_info(data: dict) -> EncryptionInfo:
             locked=data["keystatus"]["raw"] != "available",
             location=data["keylocation"]["raw"],
         )
+
+
+def group_paths_by_parents(paths: list[str]) -> dict[str, list[str]]:
+    """
+    Group paths by their parent directories, mapping each parent to
+    all paths that are relative to it. For each path in the input list,
+    finds all other paths that are relative to that path and groups
+    them together.
+
+    Args:
+        paths: List of relative POSIX path strings
+
+    Returns:
+        Dict mapping parent paths to lists of their relative subpaths.
+        Empty dict if no overlapping paths exist.
+
+    Example:
+        >>> group_paths_by_parents(['dozer/test', 'dozer/test/foo', 'tank', 'dozer/abc'])
+        {'dozer/test': ['dozer/test/foo']}
+    """
+    root_dict = dict()
+    if not paths:
+        return root_dict
+
+    for path in paths:
+        subpaths = list()
+        for sp in paths:
+            if pathlib.Path(sp).is_relative_to(pathlib.Path(path)) and sp != path:
+                subpaths.append(sp)
+        if subpaths:
+            root_dict[path] = subpaths
+    return root_dict
 
 
 def open_resource(tls, path: str):
