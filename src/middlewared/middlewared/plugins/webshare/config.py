@@ -6,7 +6,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH, WEBSHARE_UID, WEBSHARE_GID
+from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH
 
 HOSTNAMES_KEY = "webshare_hostnames"
 
@@ -51,10 +51,8 @@ class WebshareService(ConfigService):
     @private
     def setup_directories(self):
         os.makedirs(WEBSHARE_BULK_DOWNLOAD_PATH, mode=0o700, exist_ok=True)
-        os.chown(WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_UID, WEBSHARE_GID)
 
         os.makedirs(WEBSHARE_DATA_PATH, mode=0o700, exist_ok=True)
-        os.chown(WEBSHARE_DATA_PATH, WEBSHARE_UID, WEBSHARE_GID)
 
     @private
     async def urls(self):

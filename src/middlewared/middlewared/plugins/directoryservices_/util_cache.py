@@ -296,6 +296,7 @@ class DSCacheFill:
                     'password_age': None,
                     'password_history': None,
                     'password_change_required': False,
+                    'webshare': False,
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:

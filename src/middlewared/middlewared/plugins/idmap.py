@@ -460,6 +460,7 @@ class IdmapDomainService(Service):
             'password_change_required': False,
             'roles': [],
             'api_keys': [],
+            'webshare': False,
         }
 
     @private
