@@ -81,14 +81,13 @@ def __get_user_keyring(username, retry=True):
     except FileNotFoundError:
         return None
     except PermissionError:
-        if retry:
-            # User keyring may be in flux / recently cleared. Drop
-            # our stored keyring info and retry from the beginning
-            keyrings['persistent'] = None
-            keyrings['truenas_pam'] = None
-            return __get_user_keyring(username, False)
+        if not retry:
+            raise
 
-        raise
+        # The persistent keyring may not be initialized in current
+        # thread. We'll forcibly load it and then retry.
+        truenas_keyring.get_persistent_keyring()
+        return __get_user_keyring(username, False)
 
     return user_keyring
 
@@ -155,20 +154,29 @@ def reset_tally(username) -> None:
     user_keyring.unlink_key(lock_key.serial)
 
 
-def tally_locked_users() -> set[str]:
+def tally_locked_users(retry=True) -> set[str]:
     """ Create a set of usernames of all users who are currently tally locked. The
     TRUENAS_PAM_KEYRING key descriptions contain the affected user's name. """
     locked_users = set()
     if (pam_keyring := __get_truenas_pam_keyring()) is None:
         return locked_users
 
-    for user_keyring in pam_keyring.iter_keyring_contents():
-        try:
-            if __get_lock_key(user_keyring):
-                locked_users.add(user_keyring.key.description)
-        except Exception:
-            # This is called in user.query extend context. We can't allow exceptions or logs to be raised here
-            # because the code path is really hot.
-            pass
+    try:
+        for user_keyring in pam_keyring.iter_keyring_contents():
+            try:
+                if __get_lock_key(user_keyring):
+                    locked_users.add(user_keyring.key.description)
+            except Exception:
+                # This is called in user.query extend context. We can't allow exceptions or logs to be raised here
+                # because the code path is really hot.
+                pass
+    except PermissionError:
+        if not retry:
+            raise
+
+        # The persistent keyring may not be initialized in current
+        # thread. We'll forcibly load it and then retry.
+        truenas_keyring.get_persistent_keyring()
+        return tally_locked_users(False)
 
     return locked_users
