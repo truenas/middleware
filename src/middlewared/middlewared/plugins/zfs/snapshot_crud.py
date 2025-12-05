@@ -31,9 +31,10 @@ from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
     ZFSPathHasHoldsException,
+    ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
 )
-from .rename_promote_clone_impl import rename_impl, RenameArgs
+from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_query_impl import query_snapshots_impl
 from .utils import group_paths_by_parents, has_internal_path
@@ -346,4 +347,80 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathAlreadyExistsException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rename", e.message, errno.EEXIST
+            )
+
+    @private
+    @pass_thread_local_storage
+    def clone_impl(self, tls, data: dict):
+        args: CloneArgs = {
+            "current_name": data["snapshot"],
+            "new_name": data["dataset"],
+        }
+        if data.get("properties"):
+            args["properties"] = data["properties"]
+        return clone_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotCloneArgs,
+        ZFSResourceSnapshotCloneResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def clone(self, data):
+        """
+        Clone a ZFS snapshot to create a new dataset.
+
+        Args:
+            data: Clone parameters containing:
+                - snapshot: Source snapshot path to clone (e.g., 'pool/dataset@snapshot').
+                - dataset: Destination dataset path for the clone (e.g., 'pool/clone').
+                - properties: Optional ZFS properties to set on the cloned dataset.
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found, destination already exists, or source is not a snapshot.
+
+        Examples:
+            # Clone a snapshot to a new dataset
+            clone({"snapshot": "tank/data@backup", "dataset": "tank/data_clone"})
+
+            # Clone with properties
+            clone({
+                "snapshot": "tank/data@backup",
+                "dataset": "tank/data_clone",
+                "properties": {"compression": "lz4", "quota": "10G"}
+            })
+        """
+        snapshot = data["snapshot"]
+        dataset = data["dataset"]
+
+        # Validate snapshot path contains @
+        if "@" not in snapshot:
+            raise ValidationError(
+                "zfs.resource.snapshot.clone",
+                "snapshot must be a snapshot path (containing '@').",
+            )
+
+        # Validate dataset path does NOT contain @
+        if "@" in dataset:
+            raise ValidationError(
+                "zfs.resource.snapshot.clone",
+                "dataset must be a dataset path (not containing '@').",
+            )
+
+        try:
+            self.middleware.call_sync("zfs.resource.snapshot.clone_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.clone", e.message, errno.ENOENT
+            )
+        except ZFSPathAlreadyExistsException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.clone", e.message, errno.EEXIST
+            )
+        except ZFSPathNotASnapshotException:
+            raise ValidationError(
+                "zfs.resource.snapshot.clone",
+                f"'{snapshot}' is not a snapshot.",
             )
