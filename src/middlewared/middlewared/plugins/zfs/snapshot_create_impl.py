@@ -2,7 +2,11 @@ import dataclasses
 import errno
 from typing import TypedDict
 
-from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from .exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathInvalidException,
+    ZFSPathNotFoundException,
+)
 from .snapshot_query_impl import query_snapshots_impl
 
 try:
@@ -70,7 +74,9 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
 
     Raises:
         ZFSPathNotFoundException: If the dataset doesn't exist
-        ValueError: If snapshot creation fails due to invalid parameters
+        ZFSPathAlreadyExistsException: If snapshot already exists
+        ZFSPathInvalidException: If no datasets to snapshot (all excluded)
+        ZFSCoreException: If snapshot creation fails
     """
     dataset = data["dataset"]
     snap_name = data["name"]
@@ -99,7 +105,7 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
         datasets_to_snap.extend(child_datasets)
 
     if not datasets_to_snap:
-        raise ValueError(
+        raise ZFSPathInvalidException(
             f"No datasets to snapshot - '{dataset}' and all children are excluded"
         )
 
@@ -114,16 +120,12 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
 
     try:
         truenas_pylibzfs.lzc.create_snapshots(**kwargs)
-    except Exception as e:
-        # lzc.create_snapshots raises exceptions with an 'errors' attribute
-        # containing a tuple of (snapshot_path, error_code) pairs
-        errors = getattr(e, "errors", None)
-        if errors:
-            for snap_path, err_code in errors:
-                if err_code == errno.EEXIST:
-                    raise ZFSPathAlreadyExistsException(snap_path)
-        # Re-raise with error details for other errors
-        raise ValueError(f"Failed to create snapshot(s): {e}")
+    except truenas_pylibzfs.lzc.ZFSCoreException as e:
+        # errors is tuple of (snapshot_path, error_code) pairs
+        for snap_path, err_code in e.errors:
+            if err_code == errno.EEXIST:
+                raise ZFSPathAlreadyExistsException(snap_path)
+        raise
 
     # Query and return the primary snapshot
     # Use properties=None for optimized query (no properties needed initially,

@@ -31,7 +31,9 @@ class ZFSPathInvalidException(Exception):
 
 
 class ZFSPathNotASnapshotException(Exception):
-    pass
+    def __init__(self, path):
+        self.message = f"{path!r} must be a snapshot path (containing '@')"
+        super().__init__(self.message)
 
 
 class ZFSPathNotFoundException(Exception):

@@ -13,6 +13,8 @@ from middlewared.api.current import (
     ZFSResourceSnapshotDestroyResult,
     ZFSResourceSnapshotHoldArgs,
     ZFSResourceSnapshotHoldResult,
+    ZFSResourceSnapshotHoldsArgs,
+    ZFSResourceSnapshotHoldsResult,
     ZFSResourceSnapshotQueryArgs,
     ZFSResourceSnapshotQueryResult,
     ZFSResourceSnapshotReleaseArgs,
@@ -37,8 +39,9 @@ from .exceptions import (
 from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_create_impl import create_snapshots_impl, CreateSnapshotArgs
+from .snapshot_hold_release_impl import hold_impl, HoldArgs
 from .snapshot_query_impl import query_snapshots_impl
-from .utils import group_paths_by_parents, has_internal_path
+from .utils import group_paths_by_parents, has_internal_path, open_resource
 
 
 class ZFSResourceSnapshotService(Service):
@@ -510,4 +513,113 @@ class ZFSResourceSnapshotService(Service):
         except ValueError as e:
             raise ValidationError(
                 "zfs.resource.snapshot.create", str(e), errno.EINVAL
+            )
+
+    @private
+    @pass_thread_local_storage
+    def hold_impl(self, tls, data: dict):
+        args: HoldArgs = {
+            "path": data["path"],
+            "tag": data.get("tag", "truenas"),
+            "recursive": data.get("recursive", False),
+        }
+        return hold_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotHoldArgs,
+        ZFSResourceSnapshotHoldResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def hold(self, data):
+        """
+        Create a hold on a ZFS snapshot.
+
+        A hold prevents a snapshot from being destroyed. Multiple holds
+        can be placed on a snapshot with different tags.
+
+        Args:
+            data: Hold parameters containing:
+                - path: Snapshot path to hold (e.g., 'pool/dataset@snapshot').
+                - tag: Hold tag name (default: 'truenas').
+                - recursive: Apply hold to matching snapshots in child datasets.
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found or hold creation fails.
+
+        Examples:
+            # Hold a single snapshot
+            hold({"path": "tank/data@backup"})
+
+            # Hold with custom tag
+            hold({"path": "tank/data@backup", "tag": "replication"})
+
+            # Hold recursively
+            hold({"path": "tank@backup", "recursive": True})
+        """
+        path = data["path"]
+
+        # Validate path is a snapshot
+        if "@" not in path:
+            raise ValidationError(
+                "zfs.resource.snapshot.hold",
+                "path must be a snapshot path (containing '@').",
+            )
+
+        try:
+            self.middleware.call_sync("zfs.resource.snapshot.hold_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.hold", e.message, errno.ENOENT
+            )
+        except ValueError as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.hold", str(e), errno.EINVAL
+            )
+
+    @private
+    @pass_thread_local_storage
+    def holds_impl(self, tls, path: str) -> tuple:
+        rsrc = open_resource(tls, path)
+        return rsrc.get_holds()
+
+    @api_method(
+        ZFSResourceSnapshotHoldsArgs,
+        ZFSResourceSnapshotHoldsResult,
+        roles=["SNAPSHOT_READ"],
+    )
+    def holds(self, data):
+        """
+        Get holds on a ZFS snapshot.
+
+        Args:
+            data: Query parameters containing:
+                - path: Snapshot path to query (e.g., 'pool/dataset@snapshot').
+
+        Returns:
+            List of hold tag names on the snapshot.
+
+        Examples:
+            holds({"path": "tank/data@backup"})
+            # Returns: ["truenas", "replication"]
+        """
+        path = data["path"]
+
+        # Validate path is a snapshot
+        if "@" not in path:
+            raise ValidationError(
+                "zfs.resource.snapshot.holds",
+                "path must be a snapshot path (containing '@').",
+            )
+
+        try:
+            holds = self.middleware.call_sync(
+                "zfs.resource.snapshot.holds_impl", path
+            )
+            return list(holds)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.holds", e.message, errno.ENOENT
             )

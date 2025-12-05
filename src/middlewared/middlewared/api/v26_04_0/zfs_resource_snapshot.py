@@ -25,6 +25,8 @@ __all__ = (
     "ZFSResourceSnapshotCreateResult",
     "ZFSResourceSnapshotHoldArgs",
     "ZFSResourceSnapshotHoldResult",
+    "ZFSResourceSnapshotHoldsArgs",
+    "ZFSResourceSnapshotHoldsResult",
     "ZFSResourceSnapshotReleaseArgs",
     "ZFSResourceSnapshotReleaseResult",
     "ZFSResourceSnapshotRollbackArgs",
@@ -230,6 +232,21 @@ class ZFSResourceSnapshotHoldArgs(BaseModel):
 
 class ZFSResourceSnapshotHoldResult(BaseModel):
     result: None
+
+
+class ZFSResourceSnapshotHoldsQuery(BaseModel):
+    path: NonEmptyString
+    """Snapshot path to query holds for (e.g., 'pool/dataset@snapshot')."""
+
+
+class ZFSResourceSnapshotHoldsArgs(BaseModel):
+    data: ZFSResourceSnapshotHoldsQuery
+    """Query parameters for getting holds on a ZFS snapshot."""
+
+
+class ZFSResourceSnapshotHoldsResult(BaseModel):
+    result: list[str]
+    """List of hold tag names on the snapshot."""
 
 
 class ZFSResourceSnapshotReleaseQuery(BaseModel):

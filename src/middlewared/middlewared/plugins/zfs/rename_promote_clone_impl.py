@@ -70,7 +70,7 @@ def clone_impl(tls, data: CloneArgs):
     curr = data.pop("current_name", "")
     rsrc = open_resource(tls, curr)
     if rsrc.type != ZFSType.ZFS_TYPE_SNAPSHOT:
-        raise ZFSPathNotASnapshotException()
+        raise ZFSPathNotASnapshotException(curr)
 
     new = data.pop("new_name", None)
     if not new:
@@ -113,7 +113,7 @@ def rename_impl(tls, data: RenameArgs):
 
     recurse = data.get("recursive", False)
     if recurse is True and ("@" not in new or "@" not in curr):
-        raise ZFSPathNotASnapshotException()
+        raise ZFSPathNotASnapshotException(curr if "@" not in curr else new)
 
     rsrc.rename(
         new_name=new,
