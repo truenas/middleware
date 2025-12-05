@@ -136,10 +136,10 @@ def destroy_impl(tls, data: DestroyArgs):
     if res["return"]["failed"]:
         failed = f"Failed to destroy {data['path']!r}"
         if res["return"]["clones"]:
-            failed += f" There are clones ({','.join(tuple(res['clones'].keys()))})"
+            failed += f" There are clones ({','.join(tuple(res['return']['clones'].keys()))})"
             errnum = errno.EBUSY
         elif res["return"]["holds"]:
-            failed += f" There are holds ({','.join(tuple(res['holds'].keys()))})"
+            failed += f" There are holds ({','.join(tuple(res['return']['holds'].keys()))})"
             errnum = errno.EBUSY
         else:
             errnum = res["return"]["failed"].get(data["path"], errno.EFAULT)
