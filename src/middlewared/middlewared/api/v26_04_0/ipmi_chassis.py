@@ -5,7 +5,10 @@ from middlewared.api.base import BaseModel
 from pydantic import Field
 
 
-__all__ = ["IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult", "IpmiChassisInfoArgs", "IpmiChassisInfoResult"]
+__all__ = [
+    "IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult",
+    "IpmiChassisInfoArgs", "IpmiChassisInfoResult"
+]
 
 
 class IPMIChassisInfo(BaseModel):
@@ -35,9 +38,16 @@ class IPMIChassisInfo(BaseModel):
     """Current chassis identify LED state."""
 
 
-class IpmiChassisIdentifyArgs(BaseModel):
+class IpmiChassisIdentifyRequest(BaseModel):
     verb: Literal["ON", "OFF"] = "ON"
     """Action to perform on the chassis identify LED."""
+    apply_remote: bool = False
+    """If on an HA system, and this field is set to True, the settings will be sent to the remote controller."""
+
+
+class IpmiChassisIdentifyArgs(BaseModel):
+    data: IpmiChassisIdentifyRequest = Field(default_factory=IpmiChassisIdentifyRequest)
+    """Request parameters for IPMI chassis identify operation."""
 
 
 class IpmiChassisIdentifyResult(BaseModel):
@@ -45,8 +55,14 @@ class IpmiChassisIdentifyResult(BaseModel):
     """Returns `null` when the chassis identify operation completes successfully."""
 
 
+class IpmiChassisInfoRequest(BaseModel):
+    query_remote: bool = Field(alias='query-remote', default=False)
+    """Whether to query remote IPMI chassis information on HA systems."""
+
+
 class IpmiChassisInfoArgs(BaseModel):
-    pass
+    data: IpmiChassisInfoRequest = Field(default_factory=IpmiChassisInfoRequest)
+    """Request parameters for IPMI chassis information."""
 
 
 class IpmiChassisInfoResult(BaseModel):
