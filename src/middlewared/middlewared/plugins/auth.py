@@ -307,6 +307,7 @@ class AuthService(Service):
 
         `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `LOGIN_PASSWORD`, `API_KEY` or `TOKEN`,
         depending on what authentication method was used.
+
         For `UNIX_SOCKET` and `LOGIN_PASSWORD` logged-in `username` field will be provided in `credentials_data`.
         For `API_KEY` corresponding `api_key` will be provided in `credentials_data`.
         For `TOKEN` its `parent` credential will be provided in `credentials_data`.
