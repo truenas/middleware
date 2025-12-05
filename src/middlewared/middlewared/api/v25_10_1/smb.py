@@ -286,6 +286,18 @@ class DefaultOpt(BaseModel):
     NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
     WARNING: This value should not be changed once data is written to the SMB share. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class LegacyOpt(BaseModel):
@@ -411,6 +423,18 @@ class TimeMachineOpt(BaseModel):
     """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS \
     advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or \
     update a share, setting this value to null makes the TrueNAS server generate a new UUID for the share. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class MultiprotocolOpt(BaseModel):
@@ -423,6 +447,18 @@ class MultiprotocolOpt(BaseModel):
     NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
     WARNING: This value should not be changed once data is written to the SMB share. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class TimeLockedOpt(BaseModel):
@@ -437,6 +473,18 @@ class TimeLockedOpt(BaseModel):
     NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
     WARNING: This value should not be changed once data is written to the SMB share. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class PrivateDatasetOpt(BaseModel):
@@ -457,6 +505,18 @@ class PrivateDatasetOpt(BaseModel):
     NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
     WARNING: This value should not be changed once data is written to the SMB share. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class ExternalOpt(BaseModel):
@@ -495,11 +555,35 @@ class FCPStorageOpt(BaseModel):
     server's local filesystem.
 
     NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients. """
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 class VeeamRepositoryOpt(BaseModel):
     """ These configuration options apply to shares with the `VEEAM_REPOSITORY_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.VEEAM_REPOSITORY_SHARE] = Field(exclude=True, repr=False)
+    hostsallow: list[str] = Field(default=[], examples=[
+        ['192.168.0.200', '150.203.'],
+        ['150.203.15.0/255.255.255.0'],
+        ['150.203. EXCEPT 150.203.6.66']
+    ])
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
+    may be used to limit a wildcard list.
+
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
+    hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
+    `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
 
 
 SmbShareOptions = Annotated[
