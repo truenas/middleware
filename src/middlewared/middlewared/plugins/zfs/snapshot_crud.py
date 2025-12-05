@@ -36,6 +36,7 @@ from .exceptions import (
 )
 from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
 from .snapshot_count_impl import count_snapshots_impl
+from .snapshot_create_impl import create_snapshots_impl, CreateSnapshotArgs
 from .snapshot_query_impl import query_snapshots_impl
 from .utils import group_paths_by_parents, has_internal_path
 
@@ -423,4 +424,90 @@ class ZFSResourceSnapshotService(Service):
             raise ValidationError(
                 "zfs.resource.snapshot.clone",
                 f"'{snapshot}' is not a snapshot.",
+            )
+
+    @private
+    @pass_thread_local_storage
+    def create_impl(self, tls, data: dict):
+        args: CreateSnapshotArgs = {
+            "dataset": data["dataset"],
+            "name": data["name"],
+            "recursive": data.get("recursive", False),
+            "exclude": data.get("exclude", []),
+        }
+        if data.get("user_properties"):
+            args["user_properties"] = data["user_properties"]
+        return create_snapshots_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotCreateArgs,
+        ZFSResourceSnapshotCreateResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def create(self, data):
+        """
+        Create a ZFS snapshot.
+
+        Args:
+            data: Create parameters containing:
+                - dataset: Dataset path to snapshot (e.g., 'pool/dataset').
+                - name: Snapshot name (the part after @).
+                - recursive: Create snapshots recursively for child datasets.
+                - exclude: Datasets to exclude when creating recursive snapshots.
+                - user_properties: User properties to set on the snapshot.
+
+        Returns:
+            Snapshot entry for the created snapshot.
+
+        Raises:
+            ValidationError: If dataset not found or snapshot already exists.
+
+        Examples:
+            # Create a single snapshot
+            create({"dataset": "tank/data", "name": "backup"})
+
+            # Create recursive snapshots
+            create({
+                "dataset": "tank",
+                "name": "backup",
+                "recursive": True
+            })
+
+            # Create with user properties
+            create({
+                "dataset": "tank/data",
+                "name": "backup",
+                "user_properties": {"com.company:backup_type": "daily"}
+            })
+        """
+        dataset = data["dataset"]
+        name = data["name"]
+
+        # Validate dataset path does NOT contain @
+        if "@" in dataset:
+            raise ValidationError(
+                "zfs.resource.snapshot.create",
+                "dataset must be a dataset path (not containing '@').",
+            )
+
+        # Validate snapshot name does NOT contain @
+        if "@" in name:
+            raise ValidationError(
+                "zfs.resource.snapshot.create",
+                "name must be a snapshot name (not containing '@').",
+            )
+
+        try:
+            return self.middleware.call_sync("zfs.resource.snapshot.create_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.create", e.message, errno.ENOENT
+            )
+        except ZFSPathAlreadyExistsException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.create", e.message, errno.EEXIST
+            )
+        except ValueError as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.create", str(e), errno.EINVAL
             )

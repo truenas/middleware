@@ -193,20 +193,16 @@ class ZFSResourceSnapshotCloneResult(BaseModel):
 class ZFSResourceSnapshotCreateQuery(BaseModel):
     dataset: NonEmptyString
     """Dataset path to snapshot (e.g., 'pool/dataset')."""
-    name: str | None = None
-    """Snapshot name. Mutually exclusive with naming_schema."""
-    naming_schema: str | None = None
-    """Naming schema for auto-generated snapshot name. Mutually exclusive with name."""
+    name: NonEmptyString
+    """Snapshot name (the part after @)."""
     recursive: bool = False
     """Create snapshots recursively for child datasets."""
     exclude: list[str] = []
     """Datasets to exclude when creating recursive snapshots."""
-    properties: dict[str, str | int] = {}
-    """ZFS properties to set on the snapshot."""
-    vmware_sync: bool = False
-    """Coordinate with VMware for consistent snapshots."""
-    suspend_vms: bool = False
-    """Suspend VMs before taking the snapshot."""
+    user_properties: dict[str, str] = {}
+    """User properties to set on the snapshot. Only user-defined properties are
+    supported (e.g., 'com.company:backup_type'). Regular ZFS properties cannot
+    be set on snapshots at creation time."""
 
 
 class ZFSResourceSnapshotCreateArgs(BaseModel):
