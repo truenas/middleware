@@ -279,7 +279,7 @@ def test__session_limits(admin_user, pam_stig):
         user_pam_authenticator(*args),
         user_pam_authenticator(*args),
     ):
-        with pytest.raises(Exception, match='Permission denied'):
+        with pytest.raises(Exception, match='PAM_PERM_DENIED'):
             with user_pam_authenticator(*args):
                 pass
 
