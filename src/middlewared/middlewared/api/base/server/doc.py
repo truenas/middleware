@@ -23,6 +23,7 @@ class APIDumpMethod(BaseModel):
     doc: str | None
     schemas: dict
     removed_in: str | None
+    job_options: dict | None = None
 
 
 class APIDumpEvent(BaseModel):
@@ -82,7 +83,9 @@ class APIDumper:
         if doc := inspect.getdoc(method.methodobj):
             doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc).strip()
 
+        job_options = None
         if hasattr(method.methodobj, "_job"):
+            job_options = method.methodobj._job
             # FIXME: If we decide to keep the jobs, make this nicer (a badge?)
             if doc:
                 doc = doc + "\r\n\r\n"
@@ -97,6 +100,7 @@ class APIDumper:
             doc=doc,
             schemas=schemas,
             removed_in=getattr(method.methodobj, "_removed_in", None),
+            job_options=job_options,
         )
 
     async def _dump_method_schemas(self, method: Method):
