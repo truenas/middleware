@@ -718,8 +718,8 @@ class FailoverService(ConfigService):
                     existing_bes.add(i['id'])
             except CallError as e:
                 if e.errno == CallError.ENOMETHOD:
-                    for i in self.middleware.call_sync('failover.call_remote', 'bootenv.query'):
-                        existing_bes.add(i['name'])
+                    for i in self.middleware.call_sync('failover.call_remote', 'boot.environment.query'):
+                        existing_bes.add(i['id'])
                 else:
                     raise
 

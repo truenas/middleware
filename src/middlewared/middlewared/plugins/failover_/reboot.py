@@ -257,9 +257,9 @@ class FailoverRebootService(Service):
 
             remote_be_id = (await self.middleware.call(
                 'failover.call_remote',
-                'bootenv.query',
+                'boot.environment.query',
                 [
-                    [['active', 'rin', 'R']],
+                    [['active', '=', True]],
                     {'get': True},
                 ],
             ))['id']
