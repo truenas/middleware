@@ -121,7 +121,9 @@ async def zfs_events_hook(middleware, data):
         # We do this separately and do not get it from above because right now above implementation would handle
         # this for disks which are not in a pool which is in our database
         # Ideally would be better to get this once and reuse it for above too
-        if pool := await middleware.call("pool.query", [["name", "=", data["pool"]]], {'force_sql_filters': True}):
+        if await middleware.call('system.sed_enabled') and (
+            pool := await middleware.call("pool.query", [["name", "=", data["pool"]]], {'force_sql_filters': True})
+        ):
             if pool["healthy"]:
                 # Let's only trigger this if pool is healthy
                 middleware.create_task(middleware.call("pool.update_all_sed_attr", True, data["pool"]))
