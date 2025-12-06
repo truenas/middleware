@@ -48,9 +48,7 @@ class CatalogService(Service):
             catalog = await self.middleware.call('catalog.config')
 
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call(
-                'catalog.update_git_repository', catalog['location'], OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
-            )
+            await self.update_git_repository(catalog['location'], OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH)
             job.set_progress(15, 'Reading catalog information')
             # Update feature map cache whenever official catalog is updated
             await self.middleware.call('catalog.get_feature_map', False)
