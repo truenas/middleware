@@ -124,7 +124,7 @@ async def zfs_events_hook(middleware, data):
         if await middleware.call('system.sed_enabled') and (
             pool := await middleware.call("pool.query", [["name", "=", data["pool"]]], {'force_sql_filters': True})
         ):
-            if pool["healthy"]:
+            if pool[0]["healthy"]:
                 # Let's only trigger this if pool is healthy
                 middleware.create_task(middleware.call("pool.update_all_sed_attr", True, data["pool"]))
 
