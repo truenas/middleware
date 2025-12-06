@@ -115,26 +115,24 @@ def __snapshot_callback(snap_hdl, state: SnapshotQueryState) -> bool:
 
     # Apply txg filtering
     createtxg = snap_hdl.createtxg
-    min_txg = state.query_args.get("min_txg", 0)
-    max_txg = state.query_args.get("max_txg", 0)
+    min_txg = state.query_args["min_txg"]
+    max_txg = state.query_args["max_txg"]
 
-    if min_txg > 0 and createtxg < min_txg:
+    if min_txg and createtxg < min_txg:
         return True
-    if max_txg > 0 and createtxg > max_txg:
+    if max_txg and createtxg > max_txg:
         return True
 
     # Get snapshot data
+    get_source = state.query_args["get_source"]
     info = snap_hdl.asdict(
         properties=state.properties,
-        get_user_properties=state.query_args.get("get_user_properties", False),
-        get_source=state.query_args.get("get_source", False),
+        get_user_properties=state.query_args["get_user_properties"],
+        get_source=get_source,
     )
 
     # Normalize the result
-    info = __normalize_snapshot_result(
-        info,
-        normalize_source=state.query_args.get("get_source", False),
-    )
+    info = __normalize_snapshot_result(info, normalize_source=get_source)
 
     state.results.append(info)
     return True
@@ -154,8 +152,8 @@ def __dataset_iter_callback(ds_hdl, state: SnapshotQueryState) -> bool:
     # Iterate over this dataset's snapshots
     ds_hdl.iter_snapshots(callback=__snapshot_callback, state=state, fast=True)
 
-    # If recursive, also iterate child datasets
-    if state.query_args.get("recursive", False):
+    # If recursive, also iterate child datasets (default set in query_snapshots_impl)
+    if state.query_args["recursive"]:
         ds_hdl.iter_filesystems(callback=__dataset_iter_callback, state=state)
 
     return True
@@ -210,6 +208,13 @@ def query_snapshots_impl(hdl, data: dict) -> list:
     Returns:
         List of snapshot dictionaries
     """
+    # Set defaults to avoid repeated .get() in callbacks
+    data.setdefault("min_txg", 0)
+    data.setdefault("max_txg", 0)
+    data.setdefault("get_user_properties", False)
+    data.setdefault("get_source", False)
+    data.setdefault("recursive", False)
+
     state = SnapshotQueryState(
         results=[],
         query_args=data,
