@@ -14,12 +14,11 @@ from middlewared.utils.tdb import (
 )
 
 try:
-    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty, ZFSType
+    from truenas_pylibzfs import ZFSProperty, ZFSType
 except ImportError:
-    ZFSError = ZFSException = ZFSProperty = ZFSType = None
+    ZFSProperty = ZFSType = None
 
-from .exceptions import ZFSPathNotFoundException
-from .utils import has_internal_path
+from .utils import has_internal_path, open_resource
 
 __all__ = ("count_snapshots_impl",)
 
@@ -186,7 +185,7 @@ def __commit_cache_updates(batch_ops: list) -> None:
         logger.warning("Failed to update cached snapshot counts", exc_info=True)
 
 
-def count_snapshots_impl(hdl, data: dict) -> dict[str, int]:
+def count_snapshots_impl(tls, data: dict) -> dict[str, int]:
     """Count ZFS snapshots per dataset.
 
     Uses TDB caching with snapshots_changed property as invalidation key.
@@ -194,7 +193,7 @@ def count_snapshots_impl(hdl, data: dict) -> dict[str, int]:
     or iter_snapshots for unmounted datasets and zvols.
 
     Args:
-        hdl: ZFS library handle (tls.lzh)
+        tls: Thread local storage containing lzh (libzfs handle)
         data: Count parameters dict containing:
             - paths: List of dataset paths to count snapshots for
             - recursive: Whether to include child dataset snapshots
@@ -213,28 +212,15 @@ def count_snapshots_impl(hdl, data: dict) -> dict[str, int]:
 
     if paths:
         for path in paths:
-            if "@" in path:
-                # Snapshot path - just check if it exists and count as 1
-                try:
-                    hdl.open_resource(name=path)
-                    dataset = path.split("@", 1)[0]
-                    state.counts[dataset] = state.counts.get(dataset, 0) + 1
-                except ZFSException as e:
-                    if ZFSError(e.code) == ZFSError.EZFS_NOENT:
-                        raise ZFSPathNotFoundException(path)
-                    raise
+            rsrc = open_resource(tls, path)
+            if rsrc.type == ZFSType.ZFS_TYPE_SNAPSHOT:
+                dataset = rsrc.name.split("@", 1)[0]
+                state.counts[dataset] = state.counts.get(dataset, 0) + 1
             else:
-                # Dataset path - count all snapshots for this dataset
-                try:
-                    ds_hdl = hdl.open_resource(name=path)
-                    __dataset_count_callback(ds_hdl, state)
-                except ZFSException as e:
-                    if ZFSError(e.code) == ZFSError.EZFS_NOENT:
-                        raise ZFSPathNotFoundException(path)
-                    raise
+                __dataset_count_callback(rsrc, state)
     else:
         # No paths specified - count snapshots from root filesystems only
-        hdl.iter_root_filesystems(callback=__dataset_count_callback, state=state)
+        tls.lzh.iter_root_filesystems(callback=__dataset_count_callback, state=state)
 
     # Commit any cache updates
     __commit_cache_updates(state.batch_ops)

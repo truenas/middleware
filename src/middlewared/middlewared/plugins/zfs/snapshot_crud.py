@@ -141,7 +141,7 @@ class ZFSResourceSnapshotService(Service):
         else:
             final = base | data
 
-        return count_snapshots_impl(tls.lzh, final)
+        return count_snapshots_impl(tls, final)
 
     @api_method(
         ZFSResourceSnapshotCountArgs,
