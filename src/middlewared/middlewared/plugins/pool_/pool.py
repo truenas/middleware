@@ -30,6 +30,7 @@ class PoolPoolNormalizeInfo(PoolEntry):
 class PoolPoolNormalizeInfoArgs(BaseModel):
     pool_name: str
     sed_cache: dict | None = None
+    all_sed_pool: bool | None = False
 
 
 class PoolPoolNormalizeInfoResult(BaseModel):
@@ -42,6 +43,7 @@ class PoolModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     vol_name = sa.Column(sa.String(120), unique=True)
     vol_guid = sa.Column(sa.String(50))
+    vol_all_sed = sa.Column(sa.Boolean(), default=False, nullable=True)
 
 
 class PoolService(CRUDService):
@@ -57,7 +59,7 @@ class PoolService(CRUDService):
         entry = PoolEntry
 
     @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
-    async def pool_normalize_info(self, pool_name, sed_cache=None):
+    async def pool_normalize_info(self, pool_name, sed_cache=None, all_sed_pool=False):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
 
@@ -140,7 +142,10 @@ class PoolService(CRUDService):
             # Reason for having this explicit dict cache workflow is so that in pool extend context, we
             # avoid querying SED disks at all and this code path only gets triggered if there is actually
             # a zpool which failed to import and locked SED disks might be to blame
-            if not sed_cache:
+            #
+            # We only want to initialize sed cache here if system is licensed for it and the pool in qeustion
+            # is actually an all sed based pool
+            if all_sed_pool and not sed_cache:
                 sed_enabled = await self.middleware.call('system.sed_enabled')
                 locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
                     ['sed_status', '=', SEDStatus.LOCKED]
@@ -150,8 +155,9 @@ class PoolService(CRUDService):
                     'locked_sed_disks': locked_sed_disks,
                 })
 
-            if sed_cache['sed_enabled']:
+            if all_sed_pool and sed_cache['sed_enabled']:
                 if sed_cache['locked_sed_disks']:
+                    rv['status_code'] = 'LOCKED_SED_DISKS'
                     rv['status_detail'] = ('Pool might have failed to import because of '
                                            f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
 
@@ -170,7 +176,9 @@ class PoolService(CRUDService):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
         # WebUI expects the same data as in `boot.get_state`
-        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'], context["sed_cache"])
+        pool |= self.middleware.call_sync(
+            'pool.pool_normalize_info', pool['name'], context['sed_cache'], pool['all_sed'],
+        )
         return pool
 
     async def __convert_topology_to_vdevs(self, topology):
@@ -214,7 +222,9 @@ class PoolService(CRUDService):
         # regenerate crontab because of scrub
         await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
-    async def _process_topology(self, schema_name, data, old=None):
+    async def _process_topology(
+        self, schema_name: str, data: dict, old: dict | None = None, validate_all_sed: bool = False
+    ):
         verrors = ValidationErrors()
 
         verrors.add_child(
@@ -266,11 +276,10 @@ class PoolService(CRUDService):
         # At this point, we have validated disks and are ready to proceed to the next step in pool creation
         # where we format disks and finally create the pool with necessary configuration
         # We will now try to configure SED disks (if any) automatically
-        all_sed = data.pop('all_sed', False)
-        if old or all_sed:
+        if validate_all_sed:
             # We will only want to do SED magic on zpool create if consumer has explicitly set that flag
             await self.middleware.call(
-                'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', all_sed
+                'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', validate_all_sed
             )
 
         return disks, vdevs
@@ -430,7 +439,7 @@ class PoolService(CRUDService):
                     err = i.value[1]
                 raise CallError(err)
 
-        disks, vdevs = await self._process_topology('pool_create', data)
+        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
 
         if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
             if log_disks := {disk: osize
@@ -503,6 +512,7 @@ class PoolService(CRUDService):
             pool = {
                 'name': data['name'],
                 'guid': z_pool['guid'],
+                'all_sed': data['all_sed'],
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
@@ -606,7 +616,7 @@ class PoolService(CRUDService):
 
         disks = vdevs = None
         if 'topology' in data:
-            disks, vdevs = await self._process_topology('pool_update', data, pool)
+            disks, vdevs = await self._process_topology('pool_update', data, pool, pool['all_sed'])
 
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
