@@ -125,9 +125,10 @@ def test_zfs_resource_snapshot_clone_zvol():
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "VOLUME"
             finally:
+                # Use defer=True for zvol clones - kernel may still be accessing device
                 call(
                     "zfs.resource.destroy",
-                    {"path": clone_path, "recursive": True},
+                    {"path": clone_path, "recursive": True, "defer": True},
                 )
 
 
