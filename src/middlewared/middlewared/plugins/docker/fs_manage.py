@@ -33,6 +33,11 @@ class DockerFilesystemManageService(Service):
                 except CallError as e:
                     if e.errno != errno.EBUSY:
                         raise
+                    # A sync is already running - return that job so callers can wait on it
+                    if jobs := await self.middleware.call(
+                        'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
+                    ):
+                        return await self.middleware.call('core.job_wait', jobs[0]['id'])
             except Exception as e:
                 await self.middleware.call(
                     'docker.state.set_status', Status.FAILED.value,

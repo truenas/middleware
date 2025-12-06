@@ -37,7 +37,8 @@ class DockerService(Service):
                     zprops=DatasetDefaults.create_time_props(os.path.basename(dsname))
                 )
             )
-            await (await self.middleware.call('docker.fs_manage.umount')).wait()
+            if umount_job := await self.middleware.call('docker.fs_manage.umount'):
+                await umount_job.wait()
 
             await self.replicate_apps_dataset(new_pool, old_config['pool'], migration_options)
 
