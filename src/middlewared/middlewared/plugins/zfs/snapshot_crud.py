@@ -39,7 +39,8 @@ from .exceptions import (
 from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_create_impl import create_snapshots_impl, CreateSnapshotArgs
-from .snapshot_hold_release_impl import hold_impl, HoldArgs
+from .snapshot_hold_release_impl import hold_impl, HoldArgs, release_impl, ReleaseArgs
+from .snapshot_rollback_impl import rollback_impl, RollbackArgs
 from .snapshot_query_impl import query_snapshots_impl
 from .utils import group_paths_by_parents, has_internal_path, open_resource
 
@@ -187,11 +188,21 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def destroy_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.destroy"
+        path = data["path"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        # For snapshot paths, extract the dataset portion
+        check_path = path.split("@")[0] if "@" in path else path
+        if not bypass and has_internal_path(check_path):
+            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
         args: DestroyArgs = {
-            "path": data["path"],
+            "path": path,
             "recursive": data.get("recursive", False),
             "all_snapshots": data.get("all_snapshots", False),
-            "bypass": False,
+            "bypass": bypass,
             "defer": data.get("defer", False),
         }
         return destroy_impl(tls, args)
@@ -278,8 +289,18 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def rename_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.rename"
+        current_name = data["current_name"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        # For snapshot paths, extract the dataset portion
+        check_path = current_name.split("@")[0] if "@" in current_name else current_name
+        if not bypass and has_internal_path(check_path):
+            raise ValidationError(schema, f"{current_name!r} is a protected path.", errno.EACCES)
+
         args: RenameArgs = {
-            "current_name": data["current_name"],
+            "current_name": current_name,
             "new_name": data["new_name"],
             "recursive": data.get("recursive", False),
         }
@@ -356,9 +377,23 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def clone_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.clone"
+        snapshot = data["snapshot"]
+        dataset = data["dataset"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection on BOTH source and destination
+        if not bypass:
+            # For snapshot paths, extract the dataset portion
+            source_check = snapshot.split("@")[0] if "@" in snapshot else snapshot
+            if has_internal_path(source_check):
+                raise ValidationError(schema, f"{snapshot!r} is a protected path.", errno.EACCES)
+            if has_internal_path(dataset):
+                raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
+
         args: CloneArgs = {
-            "current_name": data["snapshot"],
-            "new_name": data["dataset"],
+            "current_name": snapshot,
+            "new_name": dataset,
         }
         if data.get("properties"):
             args["properties"] = data["properties"]
@@ -432,8 +467,16 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def create_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.create"
+        dataset = data["dataset"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        if not bypass and has_internal_path(dataset):
+            raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
+
         args: CreateSnapshotArgs = {
-            "dataset": data["dataset"],
+            "dataset": dataset,
             "name": data["name"],
             "recursive": data.get("recursive", False),
             "exclude": data.get("exclude", []),
@@ -518,8 +561,18 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def hold_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.hold"
+        path = data["path"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        if not bypass:
+            check_path = path.split("@")[0] if "@" in path else path
+            if has_internal_path(check_path):
+                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
         args: HoldArgs = {
-            "path": data["path"],
+            "path": path,
             "tag": data.get("tag", "truenas"),
             "recursive": data.get("recursive", False),
         }
@@ -622,4 +675,149 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.holds", e.message, errno.ENOENT
+            )
+
+    @private
+    @pass_thread_local_storage
+    def release_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.release"
+        path = data["path"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        if not bypass:
+            check_path = path.split("@")[0] if "@" in path else path
+            if has_internal_path(check_path):
+                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+        args: ReleaseArgs = {
+            "path": path,
+            "tag": data.get("tag"),
+            "recursive": data.get("recursive", False),
+        }
+        return release_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotReleaseArgs,
+        ZFSResourceSnapshotReleaseResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def release(self, data):
+        """
+        Release hold(s) from a ZFS snapshot.
+
+        Args:
+            data: Release parameters containing:
+                - path: Snapshot path to release holds from (e.g., 'pool/dataset@snapshot').
+                - tag: Specific hold tag to release. If None, releases all holds.
+                - recursive: Release holds from matching snapshots in child datasets.
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found or release fails.
+
+        Examples:
+            # Release a specific hold
+            release({"path": "tank/data@backup", "tag": "replication"})
+
+            # Release all holds from a snapshot
+            release({"path": "tank/data@backup"})
+
+            # Release holds recursively
+            release({"path": "tank@backup", "tag": "backup", "recursive": True})
+        """
+        path = data["path"]
+
+        # Validate path is a snapshot
+        if "@" not in path:
+            raise ValidationError(
+                "zfs.resource.snapshot.release",
+                "path must be a snapshot path (containing '@').",
+            )
+
+        try:
+            self.middleware.call_sync("zfs.resource.snapshot.release_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.release", e.message, errno.ENOENT
+            )
+
+    @private
+    @pass_thread_local_storage
+    def rollback_impl(self, tls, data: dict):
+        schema = "zfs.resource.snapshot.rollback"
+        path = data["path"]
+        bypass = data.get("bypass", False)
+
+        # Check for internal path protection
+        if not bypass:
+            check_path = path.split("@")[0] if "@" in path else path
+            if has_internal_path(check_path):
+                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+        args: RollbackArgs = {
+            "path": path,
+            "recursive": data.get("recursive", False),
+            "recursive_clones": data.get("recursive_clones", False),
+            "force": data.get("force", False),
+            "recursive_rollback": data.get("recursive_rollback", False),
+        }
+        return rollback_impl(tls, args)
+
+    @api_method(
+        ZFSResourceSnapshotRollbackArgs,
+        ZFSResourceSnapshotRollbackResult,
+        roles=["SNAPSHOT_WRITE"],
+    )
+    def rollback(self, data):
+        """
+        Rollback a ZFS dataset to a snapshot.
+
+        WARNING: This is a destructive change. All data written since the
+        target snapshot was taken will be discarded.
+
+        Args:
+            data: Rollback parameters containing:
+                - path: Snapshot path to rollback to (e.g., 'pool/dataset@snapshot').
+                - recursive: Destroy any snapshots and bookmarks more recent than the one specified.
+                - recursive_clones: Like recursive, but also destroy any clones.
+                - force: Force unmount of any clones.
+                - recursive_rollback: Do a complete recursive rollback of each child snapshot.
+
+        Returns:
+            None on success.
+
+        Raises:
+            ValidationError: If snapshot not found or rollback fails.
+
+        Examples:
+            # Basic rollback
+            rollback({"path": "tank/data@backup"})
+
+            # Rollback destroying more recent snapshots
+            rollback({"path": "tank/data@backup", "recursive": True})
+
+            # Rollback all child datasets
+            rollback({"path": "tank@backup", "recursive_rollback": True})
+        """
+        path = data["path"]
+
+        # Validate path is a snapshot
+        if "@" not in path:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback",
+                "path must be a snapshot path (containing '@').",
+            )
+
+        try:
+            self.middleware.call_sync("zfs.resource.snapshot.rollback_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", e.message, errno.ENOENT
+            )
+        except ValueError as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", str(e), errno.EINVAL
             )
