@@ -196,8 +196,6 @@ class ZFSResourceService(Service):
         path = data["path"]
         data.setdefault("recursive", False)
         data.setdefault("bypass", False)
-        data.setdefault("all_snapshots", False)
-        data.setdefault("defer", False)
         if os.path.isabs(path):
             raise ValidationError(
                 schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
@@ -227,7 +225,7 @@ class ZFSResourceService(Service):
                 raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
             elif len(rv) > 1:
                 raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
-            elif not data["all_snapshots"]:
+            else:
                 # Check if dataset has snapshots using snapshot.count
                 snap_counts = self.middleware.call_sync(
                     "zfs.resource.snapshot.count", {"paths": [path]}
@@ -247,9 +245,9 @@ class ZFSResourceService(Service):
         Destroy a ZFS resource (filesystem or volume).
 
         This method provides an interface for destroying ZFS datasets and volumes \
-        with support for recursive deletion and batch snapshot deletion.
+        with support for recursive deletion.
 
-        NOTE: To destroy snapshots directly, use `zfs.resource.snapshot.destroy`.
+        NOTE: To destroy snapshots, use `zfs.resource.snapshot.destroy`.
 
         Args:
             data (dict): Dictionary containing destruction parameters:
@@ -259,8 +257,6 @@ class ZFSResourceService(Service):
                     Cannot be an absolute path or end with a forward slash.
                 - recursive (bool, optional): If True, recursively destroy all descendants \
                     including their snapshots, clones, and holds. Default: False.
-                - all_snapshots (bool, optional): If True, destroy all snapshots of the \
-                    specified resource (resource remains). Default: False.
 
         Returns:
             None: On successful destruction.
@@ -270,6 +266,7 @@ class ZFSResourceService(Service):
                 - Snapshot path provided (use zfs.resource.snapshot.destroy)
                 - Resource does not exist (ENOENT)
                 - Resource has children and recursive=False (EBUSY)
+                - Resource has snapshots and recursive=False
                 - Attempting to destroy root filesystem
                 - Path is absolute (starts with /)
                 - Path ends with forward slash
@@ -282,13 +279,10 @@ class ZFSResourceService(Service):
             # Recursively destroy filesystem and all descendants
             destroy({"path": "tank/parent", "recursive": True})
 
-            # Destroy all snapshots of a resource (keeping "tank/temp")
-            destroy({"path": "tank/temp", "all_snapshots": True})
-
         Notes:
             - Root filesystem destruction is not allowed for safety
             - Protected system paths cannot be destroyed via API
-            - For volumes with snapshots, either use recursive=True or all_snapshots=True
+            - Datasets with snapshots require recursive=True
             - To destroy snapshots, use `zfs.resource.snapshot.destroy`
         """
         schema = "zfs.resource.destroy"

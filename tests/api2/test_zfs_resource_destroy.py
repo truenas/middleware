@@ -102,8 +102,8 @@ def test_zfs_resource_destroy_with_clone():
     assert len(result) == 0
 
 
-def test_zfs_resource_destroy_all_snapshots():
-    """Test deletion of all snapshots from a filesystem"""
+def test_zfs_resource_snapshot_destroy_all_snapshots():
+    """Test deletion of all snapshots from a filesystem via snapshot service"""
     source_name = "test_fs_all_snaps"
     source = create_resource(source_name)
     for i in range(1, 6):
@@ -113,13 +113,16 @@ def test_zfs_resource_destroy_all_snapshots():
     counts = call("zfs.resource.snapshot.count", {"paths": [source]})
     assert counts[source] == 5
 
-    call("zfs.resource.destroy", {"path": source, "all_snapshots": True})
+    # Use zfs.resource.snapshot.destroy with all_snapshots=True
+    call("zfs.resource.snapshot.destroy", {"path": source, "all_snapshots": True})
 
     # Verify snapshots are gone
     counts = call("zfs.resource.snapshot.count", {"paths": [source]})
     assert counts[source] == 0
 
-    # cleanup
+    # cleanup - dataset should still exist
+    result = call("zfs.resource.query", {"paths": [source], "properties": None})
+    assert len(result) == 1
     call("zfs.resource.destroy", {"path": source})
 
 

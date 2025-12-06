@@ -304,19 +304,8 @@ class ZFSResourceDestroyArgs(BaseModel):
     Snapshot paths (containing '@') are not accepted - use \
     `zfs.resource.snapshot.destroy` instead."""
     recursive: bool = False
-    """Recursively destroy all descendants of the resource. This will also \
-    release any holds and destroy any clones for any of the descendants of \
-    the resource being deleted.
-
-    If you want to destroy all snapshots for a particular resource, then \
-    you must pass the `path` string as "pool/name" and set the all_snapshots \
-    flag to True. This will leave "pool/name" on disk but will remove all \
-    snapshots (and clones/holds) recursively for that resource.
-    """
-    all_snapshots: bool = False
-    """Remove all snapshots for resource being destroyed."""
-    defer: bool = False
-    """Defer destruction if resource cannot be immediately destroyed."""
+    """Recursively destroy all descendants of the resource, including \
+    child datasets, snapshots, clones, and holds."""
 
 
 class ZFSResourceDestroyResult(BaseModel):
