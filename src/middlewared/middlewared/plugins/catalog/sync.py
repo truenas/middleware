@@ -2,7 +2,8 @@ import aiohttp
 
 from middlewared.api import api_method
 from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
+from middlewared.utils.network import check_internet_connectivity
 
 from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
@@ -75,4 +76,11 @@ class CatalogService(Service):
     @private
     async def update_git_repository(self, location, repository, branch):
         await self.middleware.call('network.general.will_perform_activity', 'catalog')
-        return await self.middleware.run_in_thread(pull_clone_repository, repository, location, branch)
+        try:
+            return await self.middleware.run_in_thread(pull_clone_repository, repository, location, branch)
+        except Exception:
+            # We will check if there was a network issue and raise an error in a nicer format if that's the case
+            if error := await check_internet_connectivity():
+                raise CallError(error)
+
+            raise
