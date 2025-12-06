@@ -34,13 +34,14 @@ class ReleaseArgs(TypedDict, total=False):
 class CollectSnapshotsState:
     snapshots: list
     snap_name: str
+    lzh: object  # libzfs handle for opening resources
 
 
 def __collect_matching_snapshots_callback(ds_hdl, state: CollectSnapshotsState) -> bool:
     """Callback for collecting matching snapshot paths from child datasets."""
     snap_path = f"{ds_hdl.name}@{state.snap_name}"
     try:
-        ds_hdl.root.open_resource(name=snap_path)
+        state.lzh.open_resource(name=snap_path)
         state.snapshots.append(snap_path)
     except truenas_pylibzfs.ZFSException:
         # Snapshot doesn't exist for this child dataset, skip
@@ -84,7 +85,7 @@ def _collect_recursive_snapshots(tls, dataset: str, snap_name: str) -> list[str]
             raise ZFSPathNotFoundException(dataset)
         raise
 
-    state = CollectSnapshotsState(snapshots=snapshots, snap_name=snap_name)
+    state = CollectSnapshotsState(snapshots=snapshots, snap_name=snap_name, lzh=tls.lzh)
     ds_hdl.iter_filesystems(callback=__collect_matching_snapshots_callback, state=state)
 
     return state.snapshots
