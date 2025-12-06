@@ -8,6 +8,14 @@ class PoolService(Service):
         event_send = False
 
     @private
+    async def ha_update_all_sed_attr(self):
+        if await self.middleware.call('system.sed_enabled'):
+            await self.update_all_sed_attr()
+        else:
+            for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_all_sed', '=', None]]):
+                await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
+
+    @private
     async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
