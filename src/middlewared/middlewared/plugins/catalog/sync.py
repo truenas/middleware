@@ -40,7 +40,7 @@ class CatalogService(Service):
         return self.SYNCED
 
     @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'])
-    @job(lock='official_catalog_sync', lock_queue_size=1)
+    @job(lock='official_catalog_sync', lock_queue_size=0)
     async def sync(self, job):
         """
         Sync truenas catalog to retrieve latest changes from upstream.
