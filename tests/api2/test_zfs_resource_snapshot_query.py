@@ -220,8 +220,8 @@ def test_zfs_resource_snapshot_query_min_txg():
         # Create multiple snapshots and track their createtxg
         txgs = []
         for i in range(5):
-            result = call("pool.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
-            txgs.append(int(result["properties"]["createtxg"]["value"]))
+            result = call("zfs.resource.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
+            txgs.append(result["createtxg"])
 
         try:
             # Query with min_txg set to the 3rd snapshot's txg
@@ -237,7 +237,7 @@ def test_zfs_resource_snapshot_query_min_txg():
         finally:
             # Cleanup snapshots
             for i in range(5):
-                call("zfs.snapshot.delete", f"{ds}@snap{i}")
+                call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap{i}"})
 
 
 def test_zfs_resource_snapshot_query_max_txg():
@@ -246,8 +246,8 @@ def test_zfs_resource_snapshot_query_max_txg():
         # Create multiple snapshots and track their createtxg
         txgs = []
         for i in range(5):
-            result = call("pool.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
-            txgs.append(int(result["properties"]["createtxg"]["value"]))
+            result = call("zfs.resource.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
+            txgs.append(result["createtxg"])
 
         try:
             # Query with max_txg set to the 3rd snapshot's txg
@@ -263,7 +263,7 @@ def test_zfs_resource_snapshot_query_max_txg():
         finally:
             # Cleanup snapshots
             for i in range(5):
-                call("zfs.snapshot.delete", f"{ds}@snap{i}")
+                call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap{i}"})
 
 
 def test_zfs_resource_snapshot_query_min_max_txg():
@@ -272,8 +272,8 @@ def test_zfs_resource_snapshot_query_min_max_txg():
         # Create multiple snapshots and track their createtxg
         txgs = []
         for i in range(5):
-            result = call("pool.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
-            txgs.append(int(result["properties"]["createtxg"]["value"]))
+            result = call("zfs.resource.snapshot.create", {"dataset": ds, "name": f"snap{i}"})
+            txgs.append(result["createtxg"])
 
         try:
             # Query with both min and max txg (snap1, snap2, snap3)
@@ -290,7 +290,7 @@ def test_zfs_resource_snapshot_query_min_max_txg():
         finally:
             # Cleanup snapshots
             for i in range(5):
-                call("zfs.snapshot.delete", f"{ds}@snap{i}")
+                call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap{i}"})
 
 
 def test_zfs_resource_snapshot_query_overlapping_paths_recursive():

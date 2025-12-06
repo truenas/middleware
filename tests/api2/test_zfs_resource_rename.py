@@ -93,27 +93,27 @@ def test_pool_snapshot_rename_non_recursive(rename_test_pool):
     snap = "snap1"
 
     call("pool.dataset.create", {"name": fs})
-    call("pool.snapshot.create", {"dataset": fs, "name": snap})
+    call("zfs.resource.snapshot.create", {"dataset": fs, "name": snap})
 
     old_snap = f"{fs}@{snap}"
     new_snap = f"{fs}@snap1_renamed"
 
     try:
         # Should succeed
-        call("pool.snapshot.rename", old_snap, {
+        call("zfs.resource.snapshot.rename", {
+            "current_name": old_snap,
             "new_name": new_snap,
-            "recursive": False,
-            "force": True
         })
 
         # Verify rename succeeded
-        result = call("pool.snapshot.query", [["id", "=", new_snap]])
+        result = call("zfs.resource.snapshot.query", {"paths": [new_snap]})
         assert len(result) == 1
-        assert result[0]["id"] == new_snap
+        assert result[0]["name"] == new_snap
 
         # Verify old name no longer exists
-        result = call("pool.snapshot.query", [["id", "=", old_snap]])
-        assert len(result) == 0
+        result = call("zfs.resource.snapshot.query", {"paths": [fs]})
+        old_names = [r["name"] for r in result]
+        assert old_snap not in old_names
     finally:
         # cleanup
         try:
@@ -136,31 +136,29 @@ def test_pool_snapshot_rename_recursive(rename_test_pool):
     call("pool.dataset.create", {"name": child})
 
     # Create recursive snapshot
-    call("pool.snapshot.create", {"dataset": root, "name": snap, "recursive": True})
+    call("zfs.resource.snapshot.create", {"dataset": root, "name": snap, "recursive": True})
 
     try:
         # Verify both snapshots exist
-        result = call("pool.snapshot.query", [["id", "=", f"{root}@{snap}"]])
-        assert len(result) == 1
-        result = call("pool.snapshot.query", [["id", "=", f"{child}@{snap}"]])
-        assert len(result) == 1
+        result = call("zfs.resource.snapshot.query", {"paths": [root], "recursive": True})
+        snap_names = [r["name"] for r in result]
+        assert f"{root}@{snap}" in snap_names
+        assert f"{child}@{snap}" in snap_names
 
-        # Recursive rename via pool.snapshot.rename
-        call("pool.snapshot.rename", f"{root}@{snap}", {
+        # Recursive rename via zfs.resource.snapshot.rename
+        call("zfs.resource.snapshot.rename", {
+            "current_name": f"{root}@{snap}",
             "new_name": f"{root}@{new_snap}",
             "recursive": True,
-            "force": True
         })
 
         # Verify rename succeeded for both
-        result = call("pool.snapshot.query", [["id", "=", f"{root}@{new_snap}"]])
-        assert len(result) == 1
-        result = call("pool.snapshot.query", [["id", "=", f"{root}@{snap}"]])
-        assert len(result) == 0
-        result = call("pool.snapshot.query", [["id", "=", f"{child}@{new_snap}"]])
-        assert len(result) == 1
-        result = call("pool.snapshot.query", [["id", "=", f"{child}@{snap}"]])
-        assert len(result) == 0
+        result = call("zfs.resource.snapshot.query", {"paths": [root], "recursive": True})
+        snap_names = [r["name"] for r in result]
+        assert f"{root}@{new_snap}" in snap_names
+        assert f"{root}@{snap}" not in snap_names
+        assert f"{child}@{new_snap}" in snap_names
+        assert f"{child}@{snap}" not in snap_names
     finally:
         # cleanup
         try:

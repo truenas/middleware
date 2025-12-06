@@ -72,7 +72,7 @@ def test_zfs_resource_destroy_snapshot():
     fs = create_resource(fs_name)
     snaps = [f"snap{i}" for i in range(1, 4)]
     for snap in snaps:
-        call("zfs.snapshot.create", {"dataset": fs, "name": snap})
+        call("zfs.resource.snapshot.create", {"dataset": fs, "name": snap})
 
     result = call("zfs.resource.query", {"paths": [fs], "get_snapshots": True})
     assert len(result[0]["snapshots"]) == 3
@@ -99,7 +99,7 @@ def test_zfs_resource_destroy_recursive_snapshots():
     create_resource(os.path.join(lvl0, branch1), {"create_ancestors": True})
     create_resource(os.path.join(lvl0, branch2), {"create_ancestors": True})
     snap = "rec_snap"
-    call("zfs.snapshot.create", {"dataset": root, "name": snap, "recursive": True})
+    call("zfs.resource.snapshot.create", {"dataset": root, "name": snap, "recursive": True})
     for i in call(
         "zfs.resource.query",
         {
@@ -134,9 +134,9 @@ def test_zfs_resource_destroy_with_clone():
     source_name = "test_fs_clone_source"
     source = create_resource(source_name)
     snap = "snap"
-    call("zfs.snapshot.create", {"dataset": source, "name": snap})
+    call("zfs.resource.snapshot.create", {"dataset": source, "name": snap})
     clone_name = os.path.join(source.split("/")[0], "test_fs_clone")
-    call("zfs.resource.clone", {"current_name": f"{source}@{snap}", "new_name": clone_name})
+    call("zfs.resource.snapshot.clone", {"snapshot": f"{source}@{snap}", "dataset": clone_name})
     # Try to destroy source snapshot without removing clone (should fail)
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.destroy", {"path": source})
@@ -155,8 +155,8 @@ def test_zfs_resource_destroy_with_hold():
     source_name = "test_fs_hold_source"
     source = create_resource(source_name)
     snap = "snap"
-    call("zfs.snapshot.create", {"dataset": source, "name": snap})
-    call("zfs.snapshot.hold", f"{source}@{snap}")
+    call("zfs.resource.snapshot.create", {"dataset": source, "name": snap})
+    call("zfs.resource.snapshot.hold", {"path": f"{source}@{snap}"})
 
     # Try to destroy snapshot with hold (should fail)
     with pytest.raises(Exception) as exc_info:
@@ -177,7 +177,7 @@ def test_zfs_resource_destroy_all_snapshots():
     source_name = "test_fs_all_snaps"
     source = create_resource(source_name)
     for i in range(1, 6):
-        call("zfs.snapshot.create", {"dataset": source, "name": f"snap{i}"})
+        call("zfs.resource.snapshot.create", {"dataset": source, "name": f"snap{i}"})
 
     result = call("zfs.resource.query", {"paths": [source], "properties": None, "get_snapshots": True})
     assert len(result[0]["snapshots"]) == 5
@@ -223,9 +223,9 @@ def test_zfs_resource_destroy_complex_hierarchy():
     br2 = br2.removeprefix(f'{pool_name}/')
     zv2 = create_resource(f"{br2}/zv2", args)
     snap1 = "snap1"
-    call("zfs.snapshot.create", {"dataset": root, "name": snap1, "recursive": True})
+    call("zfs.resource.snapshot.create", {"dataset": root, "name": snap1, "recursive": True})
     snap2 = "snap2"
-    call("zfs.snapshot.create", {"dataset": zv2, "name": snap2})
+    call("zfs.resource.snapshot.create", {"dataset": zv2, "name": snap2})
 
     call("zfs.resource.destroy", {"path": root, "recursive": True})
     result = call(

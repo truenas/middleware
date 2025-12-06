@@ -8,58 +8,71 @@ def test_zfs_resource_snapshot_hold_basic():
     """Test creating a hold on a snapshot"""
     with dataset("test_snap_hold_basic") as ds:
         with snapshot(ds, "snap") as snap:
-            # Initially no holds
-            holds = call("zfs.resource.snapshot.holds", {"path": snap})
-            assert holds == []
+            try:
+                # Initially no holds
+                holds = call("zfs.resource.snapshot.holds", {"path": snap})
+                assert holds == []
 
-            # Add a hold
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "test_hold"})
+                # Add a hold
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "test_hold"})
 
-            # Verify hold exists
-            holds = call("zfs.resource.snapshot.holds", {"path": snap})
-            assert "test_hold" in holds
+                # Verify hold exists
+                holds = call("zfs.resource.snapshot.holds", {"path": snap})
+                assert "test_hold" in holds
+            finally:
+                call("zfs.resource.snapshot.release", {"path": snap})
 
 
 def test_zfs_resource_snapshot_hold_default_tag():
     """Test hold uses default 'truenas' tag"""
     with dataset("test_snap_hold_default") as ds:
         with snapshot(ds, "snap") as snap:
-            # Add hold without specifying tag
-            call("zfs.resource.snapshot.hold", {"path": snap})
+            try:
+                # Add hold without specifying tag
+                call("zfs.resource.snapshot.hold", {"path": snap})
 
-            # Verify 'truenas' tag is used
-            holds = call("zfs.resource.snapshot.holds", {"path": snap})
-            assert "truenas" in holds
+                # Verify 'truenas' tag is used
+                holds = call("zfs.resource.snapshot.holds", {"path": snap})
+                assert "truenas" in holds
+            finally:
+                call("zfs.resource.snapshot.release", {"path": snap})
 
 
 def test_zfs_resource_snapshot_hold_multiple():
     """Test multiple holds on same snapshot"""
     with dataset("test_snap_hold_multi") as ds:
         with snapshot(ds, "snap") as snap:
-            # Add multiple holds
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold1"})
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold2"})
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold3"})
+            try:
+                # Add multiple holds
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold1"})
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold2"})
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold3"})
 
-            # Verify all holds exist
-            holds = call("zfs.resource.snapshot.holds", {"path": snap})
-            assert len(holds) == 3
-            assert "hold1" in holds
-            assert "hold2" in holds
-            assert "hold3" in holds
+                # Verify all holds exist
+                holds = call("zfs.resource.snapshot.holds", {"path": snap})
+                assert len(holds) == 3
+                assert "hold1" in holds
+                assert "hold2" in holds
+                assert "hold3" in holds
+            finally:
+                # Release all holds before cleanup
+                call("zfs.resource.snapshot.release", {"path": snap})
 
 
 def test_zfs_resource_snapshot_hold_prevents_destroy():
     """Test that holds prevent snapshot destruction"""
     with dataset("test_snap_hold_protect") as ds:
         with snapshot(ds, "snap") as snap:
-            # Add hold
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "protect"})
+            try:
+                # Add hold
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "protect"})
 
-            # Try to destroy without defer (should fail)
-            with pytest.raises(Exception) as exc_info:
-                call("zfs.resource.snapshot.destroy", {"path": snap})
-            assert "hold" in str(exc_info.value).lower()
+                # Try to destroy without defer (should fail)
+                with pytest.raises(Exception) as exc_info:
+                    call("zfs.resource.snapshot.destroy", {"path": snap})
+                assert "hold" in str(exc_info.value).lower()
+            finally:
+                call("zfs.resource.snapshot.release", {"path": snap})
 
 
 def test_zfs_resource_snapshot_hold_recursive():
@@ -146,12 +159,15 @@ def test_zfs_resource_snapshot_hold_zvol():
         "test_snap_hold_zvol", {"type": "VOLUME", "volsize": 1048576}
     ) as zvol:
         with snapshot(zvol, "snap") as snap:
-            # Add hold
-            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "zvol_hold"})
+            try:
+                # Add hold
+                call("zfs.resource.snapshot.hold", {"path": snap, "tag": "zvol_hold"})
 
-            # Verify hold exists
-            holds = call("zfs.resource.snapshot.holds", {"path": snap})
-            assert "zvol_hold" in holds
+                # Verify hold exists
+                holds = call("zfs.resource.snapshot.holds", {"path": snap})
+                assert "zvol_hold" in holds
+            finally:
+                call("zfs.resource.snapshot.release", {"path": snap})
 
 
 def test_zfs_resource_snapshot_hold_protected_path():
