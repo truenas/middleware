@@ -210,12 +210,6 @@ class DockerService(ConfigService):
 
                 catalog_sync_job = None
                 try:
-                    # We want to wait for the catalog sync to finish if it was initiated already
-                    for c_job in await self.middleware.call(
-                        'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
-                    ):
-                        await (await self.middleware.call('core.job_wait', c_job['id'])).wait()
-
                     catalog_sync_job = await self.middleware.call('docker.fs_manage.umount')
                 except CallError as e:
                     # We handle this specially, if for whatever reason ix-apps dataset is not there,
