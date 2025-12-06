@@ -153,3 +153,27 @@ def test_zfs_resource_snapshot_clone_nested():
                     "zfs.resource.destroy",
                     {"path": parent_path, "recursive": True},
                 )
+
+
+def test_zfs_resource_snapshot_clone_protected_source():
+    """Test that cloning from protected snapshot path is rejected"""
+    # boot-pool is always protected - no need to create actual resources
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.clone",
+            {"snapshot": "boot-pool@test", "dataset": "tank/test_clone"},
+        )
+    assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_clone_protected_destination():
+    """Test that cloning to protected dataset path is rejected"""
+    with dataset("test_snap_clone_protected_dest") as ds:
+        with snapshot(ds, "snap") as snap:
+            # Try to clone to boot-pool (protected)
+            with pytest.raises(Exception) as exc_info:
+                call(
+                    "zfs.resource.snapshot.clone",
+                    {"snapshot": snap, "dataset": "boot-pool/test_clone"},
+                )
+            assert "protected" in str(exc_info.value).lower()

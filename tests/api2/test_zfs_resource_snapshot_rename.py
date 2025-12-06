@@ -171,3 +171,14 @@ def test_zfs_resource_snapshot_rename_zvol():
 
         # Cleanup
         ssh(f"zfs destroy {zvol}@new_snap")
+
+
+def test_zfs_resource_snapshot_rename_protected_path():
+    """Test that renaming snapshots on protected paths is rejected"""
+    # boot-pool is always protected - no need to create actual resources
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.rename",
+            {"current_name": "boot-pool@test", "new_name": "boot-pool@new_name"},
+        )
+    assert "protected" in str(exc_info.value).lower()

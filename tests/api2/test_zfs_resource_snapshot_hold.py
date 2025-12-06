@@ -152,3 +152,65 @@ def test_zfs_resource_snapshot_hold_zvol():
             # Verify hold exists
             holds = call("zfs.resource.snapshot.holds", {"path": snap})
             assert "zvol_hold" in holds
+
+
+def test_zfs_resource_snapshot_hold_protected_path():
+    """Test that holding snapshots on protected paths is rejected"""
+    # boot-pool is always protected - no need to create actual resources
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.hold",
+            {"path": "boot-pool@test", "tag": "test"},
+        )
+    assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_release_basic():
+    """Test releasing a hold from a snapshot"""
+    with dataset("test_snap_release_basic") as ds:
+        with snapshot(ds, "snap") as snap:
+            # Add a hold
+            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "release_test"})
+
+            # Verify hold exists
+            holds = call("zfs.resource.snapshot.holds", {"path": snap})
+            assert "release_test" in holds
+
+            # Release the hold
+            call("zfs.resource.snapshot.release", {"path": snap, "tag": "release_test"})
+
+            # Verify hold is gone
+            holds = call("zfs.resource.snapshot.holds", {"path": snap})
+            assert "release_test" not in holds
+
+
+def test_zfs_resource_snapshot_release_all():
+    """Test releasing all holds from a snapshot"""
+    with dataset("test_snap_release_all") as ds:
+        with snapshot(ds, "snap") as snap:
+            # Add multiple holds
+            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold1"})
+            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold2"})
+            call("zfs.resource.snapshot.hold", {"path": snap, "tag": "hold3"})
+
+            # Verify all holds exist
+            holds = call("zfs.resource.snapshot.holds", {"path": snap})
+            assert len(holds) == 3
+
+            # Release all holds (no tag specified)
+            call("zfs.resource.snapshot.release", {"path": snap})
+
+            # Verify all holds are gone
+            holds = call("zfs.resource.snapshot.holds", {"path": snap})
+            assert len(holds) == 0
+
+
+def test_zfs_resource_snapshot_release_protected_path():
+    """Test that releasing holds on protected paths is rejected"""
+    # boot-pool is always protected - no need to create actual resources
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.release",
+            {"path": "boot-pool@test", "tag": "test"},
+        )
+    assert "protected" in str(exc_info.value).lower()

@@ -276,3 +276,25 @@ def test_zfs_resource_snapshot_destroy_path_validation():
         finally:
             # Cleanup
             ssh(f"zfs destroy {ds}@snap")
+
+
+def test_zfs_resource_snapshot_destroy_protected_path():
+    """Test that destroying snapshots on protected paths is rejected"""
+    # boot-pool is always protected - no need to create actual resources
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.destroy",
+            {"path": "boot-pool@test"},
+        )
+    assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_destroy_protected_path_all_snapshots():
+    """Test that destroying all snapshots on protected paths is rejected"""
+    # boot-pool is always protected
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.destroy",
+            {"path": "boot-pool", "all_snapshots": True},
+        )
+    assert "protected" in str(exc_info.value).lower()
