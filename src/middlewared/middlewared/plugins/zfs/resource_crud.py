@@ -40,7 +40,7 @@ from .rename_promote_clone_impl import (
     rename_impl,
     RenameArgs,
 )
-from .utils import has_internal_path
+from .utils import group_paths_by_parents, has_internal_path
 
 
 class ZFSResourceService(Service):
@@ -126,39 +126,6 @@ class ZFSResourceService(Service):
             raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
-    def group_paths_by_parents(self, paths: list[str]) -> dict[str, list[str]]:
-        """
-        Group paths by their parent directories, mapping each parent to
-        all paths that are relative to it. For each path in the input list,
-        finds all other paths that are relative to that path and groups
-        them together.
-
-        Args:
-            paths: List of relative POSIX path strings
-
-        Returns:
-            Dict mapping parent paths to lists of their relative subpaths
-
-        Example:
-            >>> group_paths_by_parents(['dozer/test', 'dozer/test/foo', 'tank', 'dozer/abc'])
-            {'dozer/test': ['dozer/test/foo']}
-        """
-        root_dict = dict()
-        if not paths:
-            return root_dict
-
-        for path in paths:
-            subpaths = list()
-            for sp in paths:
-                if pathlib.Path(sp).is_relative_to(pathlib.Path(path)) and sp != path:
-                    # Find all paths that are relative to this path
-                    # (excluding the path itself)
-                    subpaths.append(sp)
-            if subpaths:
-                root_dict[path] = subpaths
-        return root_dict
-
-    @private
     def validate_query_args(self, data):
         for path in data["paths"]:
             if "@" in path:
@@ -167,7 +134,7 @@ class ZFSResourceService(Service):
                     "Set `get_snapshots = True` when wanting to query snapshot information.",
                 )
 
-        if data["get_children"] and self.group_paths_by_parents(data["paths"]):
+        if data["get_children"] and group_paths_by_parents(data["paths"]):
             raise ValidationError(
                 "zfs.resource.query",
                 (
