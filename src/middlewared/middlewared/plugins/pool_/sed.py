@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from middlewared.service import private, Service
 
 
@@ -13,33 +11,38 @@ class PoolService(Service):
     async def update_all_sed_attr(self, only_check_null_values=True):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
-        # How we will do this is that we will scan all disks which are being used and create a mapping
-        # of them to reflect to which pool they belong to and then we can see if all of them are SED
-        # based or not
-        sed_disks = set()
-        pool_mapping = defaultdict(set)
+        # How we will do this is that we will get disks from pool topology and then check if all of them are SED
+        # based or not using disk.query with sed filter (forcing db level filter for performance)
+        # We will only query those pools which are actually healthy
         filters = [['all_sed', '=', None]] if only_check_null_values else []
-        db_pools = {p['name']: p for p in await self.middleware.call('pool.query', filters)}
+        db_pools = await self.middleware.call('pool.query', filters)
         if not db_pools:
             # If all pools in db already have db row updated, there is nothing to be done here
             return
 
-        for disk in await self.middleware.call('disk.get_used'):
-            # We only care about disks in pools which are actually in db
-            pool_name = disk['imported_zpool'] or disk['exported_zpool']
-            if pool_name not in db_pools:
-                continue
+        sed_disks = {
+            disk['name'] for disk in await self.middleware.call(
+                'disk.query', [['sed', '=', True]], {'force_sql_filters': True}
+            )
+        }
 
-            pool_mapping[pool_name].add(disk['name'])
-            if disk['sed']:
-                sed_disks.add(disk['name'])
-
-        for pool_name, pool_info in db_pools.items():
-            if pool_name not in pool_mapping or pool_mapping[pool_name].issubset(sed_disks) is False:
+        for pool in db_pools:
+            pool_disks = await self.get_disks_from_topology(pool)
+            if not pool_disks or not pool_disks.issubset(sed_disks):
                 await self.middleware.call(
-                    'datastore.update', 'storage.volume', pool_info['id'], {'vol_all_sed': False}
+                    'datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False}
                 )
             else:
                 await self.middleware.call(
-                    'datastore.update', 'storage.volume', pool_info['id'], {'vol_all_sed': True}
+                    'datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': True}
                 )
+
+    @private
+    async def get_disks_from_topology(self, pool_id_or_pool):
+        pool = await self.middleware.call(
+            'pool.get_instance', pool_id_or_pool
+        ) if isinstance(pool_id_or_pool, int) else pool_id_or_pool
+        return {
+            vdev['disk'] for vdev in await self.middleware.call('pool.flatten_topology', pool['topology'] or {})
+            if vdev.get('type') == 'DISK' and vdev.get('disk')
+        }
