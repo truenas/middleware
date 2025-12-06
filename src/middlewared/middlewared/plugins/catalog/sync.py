@@ -75,6 +75,6 @@ class CatalogService(Service):
             self.middleware.create_task(self.middleware.call('app.check_upgrade_alerts'))
 
     @private
-    def update_git_repository(self, location, repository, branch):
-        self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
-        return pull_clone_repository(repository, location, branch)
+    async def update_git_repository(self, location, repository, branch):
+        await self.middleware.call('network.general.will_perform_activity', 'catalog')
+        return await self.middleware.run_in_thread(pull_clone_repository, repository, location, branch)
