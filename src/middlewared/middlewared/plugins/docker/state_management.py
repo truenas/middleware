@@ -1,3 +1,5 @@
+import errno
+
 from middlewared.api.base import Event
 from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, periodic, Service
@@ -123,7 +125,11 @@ class DockerStateService(Service):
         if await self.validate(False) is False:
             return
 
-        await (await self.middleware.call('catalog.sync')).wait()
+        try:
+            await (await self.middleware.call('catalog.sync')).wait()
+        except CallError as e:
+            if e.errno != errno.EBUSY:
+                raise
 
         docker_config = await self.middleware.call('docker.config')
         if docker_config['enable_image_updates']:

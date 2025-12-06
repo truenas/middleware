@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import os
 import shutil
 import uuid
@@ -61,7 +62,11 @@ class DockerSetupService(Service):
     async def status_change(self):
         config = await self.middleware.call('docker.config')
         if not config['pool']:
-            await (await self.middleware.call('catalog.sync')).wait()
+            try:
+                await (await self.middleware.call('catalog.sync')).wait()
+            except CallError as e:
+                if e.errno != errno.EBUSY:
+                    raise
             return
 
         await self.create_update_docker_datasets(config['dataset'])
