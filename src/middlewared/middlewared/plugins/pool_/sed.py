@@ -8,13 +8,14 @@ class PoolService(Service):
         event_send = False
 
     @private
-    async def update_all_sed_attr(self, only_check_null_values=True):
+    async def update_all_sed_attr(self, check_all_pools=False):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
         # How we will do this is that we will get disks from pool topology and then check if all of them are SED
         # based or not using disk.query with sed filter (forcing db level filter for performance)
-        # We will only query those pools which are actually healthy
-        filters = [['all_sed', '=', None]] if only_check_null_values else []
+        #
+        # We will only query those pools which are actually healthy unless forced to query and update all pools
+        filters = [] if check_all_pools else [['all_sed', '=', None], ['healthy', '=', True]]
         db_pools = await self.middleware.call('pool.query', filters)
         if not db_pools:
             # If all pools in db already have db row updated, there is nothing to be done here
