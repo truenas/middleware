@@ -28,7 +28,11 @@ class DockerFilesystemManageService(Service):
                         'zfs.resource.unmount',
                         UnmountArgs(filesystem=docker_ds, force=True, recursive=True)
                     )
-                return await self.middleware.call('catalog.sync')
+                try:
+                    return await self.middleware.call('catalog.sync')
+                except CallError as e:
+                    if e.errno != errno.EBUSY:
+                        raise
             except Exception as e:
                 await self.middleware.call(
                     'docker.state.set_status', Status.FAILED.value,
@@ -40,6 +44,15 @@ class DockerFilesystemManageService(Service):
         return await self.common_func(True)
 
     async def umount(self):
+        # Wait for any running catalog.sync job before unmounting.
+        # A running sync determines its target path at start - if it started
+        # while mounted, it writes to /mnt/.ix-apps/truenas_catalog. Unmounting
+        # while sync is active would cause writes to an invalid path.
+        for job in await self.middleware.call(
+            'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
+        ):
+            await (await self.middleware.call('core.job_wait', job['id'])).wait()
+
         return await self.common_func(False)
 
     async def ensure_ix_apps_mount_point(self, docker_ds):
