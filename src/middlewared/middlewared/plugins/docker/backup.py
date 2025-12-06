@@ -55,7 +55,8 @@ class DockerService(Service):
             raise CallError(f'{name!r} is not a valid snapshot name. It should be a valid ZFS snapshot name')
 
         snap_name = BACKUP_NAME_PREFIX + name
-        if self.middleware.call_sync('zfs.resource.snapshot_exists', f'{docker_config["dataset"]}@{snap_name}'):
+        snap_path = f'{docker_config["dataset"]}@{snap_name}'
+        if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_path):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
@@ -101,17 +102,25 @@ class DockerService(Service):
 
         backups_base_dir = backup_ds_path()
         backups = {}
+        # Check if the dataset exists
         ds = self.middleware.call_sync(
             'zfs.resource.query_impl',
-            {'paths': [docker_config['dataset']], 'properties': None, 'get_snapshots': True}
+            {'paths': [docker_config['dataset']], 'properties': None}
         )
         if not ds:
             return backups
-        elif not ds[0]["snapshots"]:
+
+        # Get snapshots for the dataset (properties: None for efficiency)
+        snapshots = self.middleware.call_sync(
+            'zfs.resource.snapshot.query',
+            {'paths': [docker_config['dataset']], 'properties': None}
+        )
+        if not snapshots:
             return backups
 
         prefix = f'{docker_config["dataset"]}@{BACKUP_NAME_PREFIX}'
-        for snap_name, snap_info in ds[0]['snapshots'].items():
+        for snap in snapshots:
+            snap_name = snap['name']
             if not snap_name.startswith(prefix):
                 continue
 

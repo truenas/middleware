@@ -62,7 +62,7 @@ class AppService(Service):
                 continue
 
             snap_name = f'{dataset}@{get_upgrade_snap_name(app_info["name"], app_info["version"])}'
-            if self.middleware.call_sync('zfs.resource.snapshot_exists', snap_name):
+            if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_name):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 

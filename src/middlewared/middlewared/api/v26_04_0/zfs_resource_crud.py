@@ -239,8 +239,6 @@ class ZFSResourceEntry(BaseModel):
     """Custom metadata properties with colon-separated names (max 256 chars)."""
     children: list | None
     """The children of this zfs resource."""
-    snapshots: dict[str, dict] | None
-    """Snapshots for this zfs resource."""
 
 
 class ZFSResourceQuery(BaseModel):
@@ -281,8 +279,6 @@ class ZFSResourceQuery(BaseModel):
     to its parent."""
     get_children: bool = False
     """Retrieve children information for the zfs resource."""
-    get_snapshots: bool = False
-    """Retrieve snapshot information for the zfs resource."""
     max_depth: int = 0
     """Maximum depth to recurse when retrieving children.
     A value of 0 means unlimited recursion (default behavior).
@@ -304,16 +300,13 @@ class ZFSResourceQuery(BaseModel):
 @single_argument_args("zfs_resource_destroy_args")
 class ZFSResourceDestroyArgs(BaseModel):
     path: NonEmptyString
-    """Path of the zfs resource to be destroyed."""
+    """Path of the zfs resource (dataset or volume) to be destroyed. \
+    Snapshot paths (containing '@') are not accepted - use \
+    `zfs.resource.snapshot.destroy` instead."""
     recursive: bool = False
     """Recursively destroy all descendants of the resource. This will also \
     release any holds and destroy any clones for any of the descendants of \
     the resource being deleted.
-
-    If you want to recursively remove a particular snapshot \
-    from all descendants. You must set the `path` string to a snapshot \
-    (i.e. dozer/a@snap01) and set this to True. This will recursively \
-    destroy all snapshots named `snap01` from any descendants of dozer/a.
 
     If you want to destroy all snapshots for a particular resource, then \
     you must pass the `path` string as "pool/name" and set the all_snapshots \
@@ -323,9 +316,7 @@ class ZFSResourceDestroyArgs(BaseModel):
     all_snapshots: bool = False
     """Remove all snapshots for resource being destroyed."""
     defer: bool = False
-    """Rather than returning error if the given snapshot is ineligible for \
-    immediate destruction, mark it for deferred, automatic destruction once \
-    it becomes eligible."""
+    """Defer destruction if resource cannot be immediately destroyed."""
 
 
 class ZFSResourceDestroyResult(BaseModel):

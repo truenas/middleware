@@ -23,7 +23,7 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs, RenameArgs
+from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 
 
 class PoolSnapshotService(CRUDService):
@@ -40,12 +40,12 @@ class PoolSnapshotService(CRUDService):
     def clone(self, data):
         """Clone a given snapshot to a new dataset."""
         self.middleware.call_sync(
-            'zfs.resource.clone',
-            CloneArgs(
-                current_name=data['snapshot'],
-                new_name=data['dataset_dst'],
-                properties=data['dataset_properties'],
-            )
+            'zfs.resource.snapshot.clone',
+            {
+                'snapshot': data['snapshot'],
+                'dataset': data['dataset_dst'],
+                'properties': data['dataset_properties'],
+            }
         )
         self.middleware.call_sync(
             'zfs.resource.mount', MountArgs(filesystem=data['dataset_dst'])

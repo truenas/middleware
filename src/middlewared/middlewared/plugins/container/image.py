@@ -61,9 +61,10 @@ class ContainerImageService(Service):
         snapshot_name = f'{dataset_name}@image'
         if datasets := self.middleware.call_sync(
             'zfs.resource.query_impl',
-            {'paths': [dataset_name], 'properties': None, 'get_snapshots': True}
+            {'paths': [dataset_name], 'properties': None}
         ):
-            if snapshot_name not in datasets[0]['snapshots']:
+            # Check if the snapshot exists
+            if not self.middleware.call_sync('zfs.resource.snapshot.exists', snapshot_name):
                 # Orphan dataset without a snapshot. Probably leftover from a
                 # previous `pull` attempt that failed and did not clean up
                 # properly. Delete it.

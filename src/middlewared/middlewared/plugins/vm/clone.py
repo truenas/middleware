@@ -7,7 +7,6 @@ from middlewared.api import api_method
 from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
 
@@ -36,16 +35,23 @@ class VMService(Service):
     async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
         zz = await self.middleware.call(
             'zfs.resource.query_impl',
-            {'paths': [zvol], 'properties': None, 'get_snapshots': True}
+            {'paths': [zvol], 'properties': None}
         )
         if not zz:
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
+
+        # Get existing snapshots for this zvol (properties: None for efficiency)
+        existing_snaps = await self.middleware.call(
+            'zfs.resource.snapshot.query',
+            {'paths': [zvol], 'properties': None}
+        )
+        existing_snap_names = {s['name'] for s in existing_snaps}
 
         snapshot_name = name
         i = 0
         while True:
             zvol_snapshot = f'{zvol}@{snapshot_name}'
-            if zvol_snapshot in zz[0]['snapshots']:
+            if zvol_snapshot in existing_snap_names:
                 if ZVOL_CLONE_RE.search(snapshot_name):
                     snapshot_name = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', snapshot_name)
                 else:
@@ -72,7 +78,7 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.resource.clone', CloneArgs(current_name=zvol_snapshot, new_name=clone_dst))
+        await self.middleware.call('zfs.resource.snapshot.clone', {'snapshot': zvol_snapshot, 'dataset': clone_dst})
 
         created_clones.append(clone_dst)
 
