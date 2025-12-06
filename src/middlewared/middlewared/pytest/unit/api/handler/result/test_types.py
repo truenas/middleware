@@ -13,4 +13,4 @@ def test_preserves_types():
         },
     }
 
-    assert serialize_result(MethodResult, value, False) == value
+    assert serialize_result(MethodResult, value, False, False) == value
