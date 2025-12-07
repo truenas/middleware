@@ -113,7 +113,7 @@ class DockerService(Service):
         # Get snapshots for the dataset (properties: None for efficiency)
         snapshots = self.middleware.call_sync(
             'zfs.resource.snapshot.query',
-            {'paths': [docker_config['dataset']], 'properties': None}
+            {'paths': [docker_config['dataset']], 'properties': ['creation']}
         )
         if not snapshots:
             return backups
@@ -141,7 +141,7 @@ class DockerService(Service):
                 'snapshot_name': snap_name,
                 'created_on': str(
                     datetime.datetime.fromtimestamp(
-                        snap_info["properties"]["creation"]["value"],
+                        snap["properties"]["creation"]["value"],
                         datetime.UTC
                     )
                 ),
