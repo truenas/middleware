@@ -65,13 +65,14 @@ def misc_method_names(misc_methods) -> list[str]:
 def test_query_method(legacy_api_client, query_method, misc_method_names):
     client, version = legacy_api_client
     # Methods that do not exist in the previous API versions
+    _startswith = ("zfs.resource.",)
     if (
         version in APIVersions.FT.value
         and query_method in (
             "vm.query",
             "vm.device.query",
-            "zfs.resource.query"
         )
+        or query_method.startswith(_startswith)
     ):
         return
 
@@ -110,8 +111,8 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "sharing.webshare.query",
             "tunable.query",
             "vmware.query",
-            "zfs.resource.query",
         )
+        or query_method.startswith(_startswith)
     ):
         return
 
