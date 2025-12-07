@@ -133,6 +133,23 @@ class ZFSResourceSnapshotService(Service):
             )
 
     @private
+    def exists(self, snap_name: str) -> bool:
+        """Check if a snapshot exists.
+
+        Args:
+            snap_name: Full snapshot path (e.g., 'pool/dataset@snapshot').
+
+        Returns:
+            True if the snapshot exists, False otherwise.
+        """
+        # Use properties=None for efficiency - we only care about existence
+        result = self.middleware.call_sync(
+            "zfs.resource.snapshot.query_impl",
+            {"paths": [snap_name], "properties": None}
+        )
+        return bool(result)
+
+    @private
     @pass_thread_local_storage
     def count_impl(self, tls, data: dict | None = None):
         base = ZFSResourceSnapshotCountArgs().model_dump()["data"]

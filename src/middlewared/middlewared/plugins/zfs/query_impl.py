@@ -1,9 +1,9 @@
 import dataclasses
 
 try:
-    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty
+    from truenas_pylibzfs import ZFSError, ZFSException
 except ImportError:
-    ZFSError = ZFSException = ZFSProperty = None
+    ZFSError = ZFSException = None
 
 from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result
@@ -26,20 +26,6 @@ class CallbackState:
     """Current recursion depth."""
 
 
-def __query_impl_snapshots_callback(hdl, info):
-    si = hdl.asdict(properties={ZFSProperty.CREATION})
-    info["snapshots"].update(
-        {
-            si["name"]: {
-                "guid": si["guid"],
-                "createtxg": si["createtxg"],
-                "properties": si["properties"]
-            }
-        }
-    )
-    return True
-
-
 def __query_impl_callback(hdl, state):
     if state.eip and has_internal_path(hdl.name):
         # returning False here will halt the iteration
@@ -56,13 +42,6 @@ def __query_impl_callback(hdl, state):
         ),
         normalize_source=state.query_args["get_source"],
     )
-    info["snapshots"] = None
-    if state.query_args["get_snapshots"]:
-        info["snapshots"] = dict()
-        hdl.iter_snapshots(
-            callback=__query_impl_snapshots_callback, state=info, fast=True
-        )
-
     info["children"] = None
     state.results.append(info)
 

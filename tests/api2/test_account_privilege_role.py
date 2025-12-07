@@ -12,16 +12,16 @@ from middlewared.test.integration.utils import client
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("role", ["ZFS_RESOURCE_READ"])
+@pytest.mark.parametrize("role", ["SNAPSHOT_READ"])
 def test_can_read_with_read_or_write_role(role):
     with dataset("test_snapshot_read") as ds:
         with snapshot(ds, "test"):
             with unprivileged_user_client([role]) as c:
-                snaps = c.call(
-                    "zfs.resource.query",
-                    {"paths": [ds], "properties": None, "get_snapshots": True}
-                )[0]["snapshots"]
-                assert len(snaps) == 1
+                counts = c.call(
+                    "zfs.resource.snapshot.count",
+                    {"paths": [ds]}
+                )
+                assert counts[ds] == 1
 
 
 def test_can_not_write_with_read_role():

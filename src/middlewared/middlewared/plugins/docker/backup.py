@@ -55,7 +55,8 @@ class DockerService(Service):
             raise CallError(f'{name!r} is not a valid snapshot name. It should be a valid ZFS snapshot name')
 
         snap_name = BACKUP_NAME_PREFIX + name
-        if self.middleware.call_sync('zfs.resource.snapshot_exists', f'{docker_config["dataset"]}@{snap_name}'):
+        snap_path = f'{docker_config["dataset"]}@{snap_name}'
+        if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_path):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
@@ -101,17 +102,25 @@ class DockerService(Service):
 
         backups_base_dir = backup_ds_path()
         backups = {}
+        # Check if the dataset exists
         ds = self.middleware.call_sync(
             'zfs.resource.query_impl',
-            {'paths': [docker_config['dataset']], 'properties': None, 'get_snapshots': True}
+            {'paths': [docker_config['dataset']], 'properties': None}
         )
         if not ds:
             return backups
-        elif not ds[0]["snapshots"]:
+
+        # Get snapshots for the dataset (properties: None for efficiency)
+        snapshots = self.middleware.call_sync(
+            'zfs.resource.snapshot.query',
+            {'paths': [docker_config['dataset']], 'properties': ['creation']}
+        )
+        if not snapshots:
             return backups
 
         prefix = f'{docker_config["dataset"]}@{BACKUP_NAME_PREFIX}'
-        for snap_name, snap_info in ds[0]['snapshots'].items():
+        for snap in snapshots:
+            snap_name = snap['name']
             if not snap_name.startswith(prefix):
                 continue
 
@@ -132,7 +141,7 @@ class DockerService(Service):
                 'snapshot_name': snap_name,
                 'created_on': str(
                     datetime.datetime.fromtimestamp(
-                        snap_info["properties"]["creation"]["value"],
+                        snap["properties"]["creation"]["value"],
                         datetime.UTC
                     )
                 ),
@@ -167,19 +176,20 @@ class DockerService(Service):
 async def post_system_update_hook(middleware):
     if not (await middleware.call('docker.config'))['dataset']:
         # If docker is not configured, there is nothing to backup
-        logger.debug('Docker is not configured, skipping app\'s backup on system update')
+        logger.debug('Docker is not configured, skipping apps backup on system update')
         return
 
-    backups = [
-        v for k, v in (await middleware.call('docker.list_backups')).items()
-        if k.startswith(UPDATE_BACKUP_PREFIX)
-    ]
+    backups = []
+    for k, v in (await middleware.call('docker.list_backups')).items():
+        if k.startswith(UPDATE_BACKUP_PREFIX):
+            backups.append(v)
+
     if len(backups) >= 3:
         backups.sort(key=lambda d: d['created_on'])
         while len(backups) >= 3:
             backup = backups.pop(0)
             try:
-                logger.debug('Deleting %r app\'s old auto-generated backup', backup['name'])
+                logger.debug('Deleting %r apps old auto-generated backup', backup['name'])
                 await middleware.call('docker.delete_backup', backup['name'])
             except Exception as e:
                 logger.error(

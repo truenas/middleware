@@ -33,8 +33,6 @@ from .mount_unmount_impl import (
 )
 from .query_impl import query_impl
 from .rename_promote_clone_impl import (
-    clone_impl,
-    CloneArgs,
     promote_impl,
     PromoteArgs,
     rename_impl,
@@ -48,21 +46,6 @@ class ZFSResourceService(Service):
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
-
-    @private
-    @pass_thread_local_storage
-    def clone(self, tls, data: CloneArgs) -> None:
-        schema = "zfs.resource.clone"
-        try:
-            clone_impl(tls, data)
-        except ZFSPathNotASnapshotException:
-            raise ValidationError(schema, "Only snapshots may be cloned")
-        except ZFSPathAlreadyExistsException as e:
-            raise ValidationError(schema, e.message, errno.EEXIST)
-        except ZFSPathNotProvidedException:
-            raise ValidationError(schema, "'current_name' key is required")
-        except ZFSPathNotFoundException as e:
-            raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
     @pass_thread_local_storage
@@ -114,6 +97,11 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def rename(self, tls, data: RenameArgs) -> None:
         schema = "zfs.resource.rename"
+        if "@" in data.get("current_name", ""):
+            raise ValidationError(
+                schema,
+                "Use `zfs.resource.snapshot.rename` to rename snapshots.",
+            )
         try:
             rename_impl(tls, data)
         except ZFSPathNotASnapshotException:
@@ -131,7 +119,7 @@ class ZFSResourceService(Service):
             if "@" in path:
                 raise ValidationError(
                     "zfs.resource.query",
-                    "Set `get_snapshots = True` when wanting to query snapshot information.",
+                    "Use `zfs.resource.snapshot.query` to query snapshot information.",
                 )
 
         if data["get_children"] and group_paths_by_parents(data["paths"]):
@@ -202,29 +190,12 @@ class ZFSResourceService(Service):
             return results
 
     @private
-    def snapshot_exists(self, snap_name: str):
-        """Check to see if a given snapshot exists.
-        NOTE: internal method so lots of assumptions
-        are made by the passed in `snap_name` arg."""
-        rv = self.middleware.call_sync(
-            "zfs.resource.query_impl",
-            {
-                "paths": [snap_name.split("@")[0]],
-                "properties": None,
-                "get_snapshots": True,
-            },
-        )
-        return rv and snap_name in rv[0]["snapshots"]
-
-    @private
     @pass_thread_local_storage
     def destroy_impl(self, tls, data: DestroyArgs):
         schema = "zfs.resource.destroy"
         path = data["path"]
         data.setdefault("recursive", False)
         data.setdefault("bypass", False)
-        data.setdefault("all_snapshots", False)
-        data.setdefault("defer", False)
         if os.path.isabs(path):
             raise ValidationError(
                 schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
@@ -236,30 +207,30 @@ class ZFSResourceService(Service):
             # internal callers and not to our public API.
             raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        a_snapshot = "@" in path
-
-        if not a_snapshot:
-            tmp = path.split("/")
-            if len(tmp) == 1 or tmp[-1] == "":
-                raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
-
-        if a_snapshot and data["all_snapshots"]:
+        if "@" in path:
             raise ValidationError(
                 schema,
-                f"Setting all_snapshots and specifying a snapshot ({path}) is invalid.",
-                errno.EINVAL,
+                "Use `zfs.resource.snapshot.destroy` to destroy snapshots.",
             )
 
+        tmp = path.split("/")
+        if len(tmp) == 1 or tmp[-1] == "":
+            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
+
         if not data["recursive"]:
-            if not a_snapshot:
-                args = {"paths": [path], "properties": None, "get_children": True, "get_snapshots": True}
-                rv = self.middleware.call_sync("zfs.resource.query", args)
-                extra = "Set recursive=True to remove them."
-                if not rv:
-                    raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
-                elif len(rv) > 1:
-                    raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
-                elif not data["all_snapshots"] and rv[0]["snapshots"]:
+            args = {"paths": [path], "properties": None, "get_children": True}
+            rv = self.middleware.call_sync("zfs.resource.query", args)
+            extra = "Set recursive=True to remove them."
+            if not rv:
+                raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
+            elif len(rv) > 1:
+                raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
+            else:
+                # Check if dataset has snapshots using snapshot.count
+                snap_counts = self.middleware.call_sync(
+                    "zfs.resource.snapshot.count", {"paths": [path]}
+                )
+                if snap_counts.get(path, 0) > 0:
                     raise ValidationError(schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
 
         return destroy_impl(tls, data)
@@ -271,30 +242,31 @@ class ZFSResourceService(Service):
     )
     def destroy(self, data):
         """
-        Destroy a ZFS resource (filesystem, volume, or snapshot).
+        Destroy a ZFS resource (filesystem or volume).
 
-        This method provides an interface for destroying ZFS resources with support \
-        for recursive deletion, clone removal, hold removal, and batch snapshot deletion.
+        This method provides an interface for destroying ZFS datasets and volumes \
+        with support for recursive deletion.
+
+        NOTE: To destroy snapshots, use `zfs.resource.snapshot.destroy`.
 
         Args:
             data (dict): Dictionary containing destruction parameters:
                 - path (str): Path of the ZFS resource to destroy. Must be in the form \
-                    'pool/name', 'pool/name@snapshot', or 'pool/zvol'.
+                    'pool/name' or 'pool/zvol'. Snapshot paths (containing '@') are \
+                    not accepted - use `zfs.resource.snapshot.destroy` instead.
                     Cannot be an absolute path or end with a forward slash.
-                - recursive (bool, optional): If True, recursively destroy all descendants.
-                    For snapshots, destroys the snapshot across all descendant resources and \
-                    also destroy clones and/or holds that may be present.
-                    Default: False.
-                - all_snapshots (bool, optional): If True, destroy all snapshots of the \
-                    specified resource (resource remains). Default: False.
+                - recursive (bool, optional): If True, recursively destroy all descendants \
+                    including their snapshots, clones, and holds. Default: False.
 
         Returns:
             None: On successful destruction.
 
         Raises:
             ValidationError: Raised in the following cases:
+                - Snapshot path provided (use zfs.resource.snapshot.destroy)
                 - Resource does not exist (ENOENT)
                 - Resource has children and recursive=False (EBUSY)
+                - Resource has snapshots and recursive=False
                 - Attempting to destroy root filesystem
                 - Path is absolute (starts with /)
                 - Path ends with forward slash
@@ -304,27 +276,14 @@ class ZFSResourceService(Service):
             # Destroy a simple filesystem
             destroy({"path": "tank/temp"})
 
-            # Recursively destroy filesystem, snapshots, clones, holds
-            # and all children
+            # Recursively destroy filesystem and all descendants
             destroy({"path": "tank/parent", "recursive": True})
-
-            # Destroy a specific snapshot
-            destroy({"path": "tank/temp@snapshot1"})
-
-            # Recursively destroy the snapshot across all descendant
-            # resources including clone(s), and/or hold(s)
-            destroy({"path": "tank/parent@snap", "recursive": True})
-
-            # Destroy all snapshots of a resource (keeping "tank/temp")
-            destroy({"path": "tank/temp", "all_snapshots": True})
 
         Notes:
             - Root filesystem destruction is not allowed for safety
             - Protected system paths cannot be destroyed via API
-            - When destroying snapshots recursively, only matching snapshots in
-              descendant datasets are removed
-            - The all_snapshots flag only removes snapshots, not the dataset itself
-            - For volumes with snapshots, either use recursive=True or all_snapshots=True
+            - Datasets with snapshots require recursive=True
+            - To destroy snapshots, use `zfs.resource.snapshot.destroy`
         """
         schema = "zfs.resource.destroy"
         data = DestroyArgs(**data)
@@ -365,9 +324,11 @@ class ZFSResourceService(Service):
         and metadata. The query can be customized to retrieve specific resources, \
         properties, and control the output format.
 
+        NOTE: To query snapshots, use `zfs.resource.snapshot.query`.
+
         Raises:
             ValidationError: If:
-                - Snapshot paths are provided (must use `get_snapshots = True`)
+                - Snapshot paths are provided (use zfs.resource.snapshot.query)
                 - Overlapping paths are provided with get_children=True
 
         Examples:

@@ -66,129 +66,78 @@ def test_zfs_resource_destroy_volume():
     assert len(result) == 0
 
 
-def test_zfs_resource_destroy_snapshot():
-    """Test deletion of individual snapshots"""
-    fs_name = "test_fs_snap"
+def test_zfs_resource_destroy_rejects_snapshot_paths():
+    """Test that zfs.resource.destroy rejects snapshot paths"""
+    fs_name = "test_fs_reject_snap"
     fs = create_resource(fs_name)
-    snaps = [f"snap{i}" for i in range(1, 4)]
-    for snap in snaps:
-        call("zfs.resource.snapshot.create", {"dataset": fs, "name": snap})
+    call("zfs.resource.snapshot.create", {"dataset": fs, "name": "snap1"})
 
-    result = call("zfs.resource.query", {"paths": [fs], "get_snapshots": True})
-    assert len(result[0]["snapshots"]) == 3
-    call("zfs.resource.destroy", {"path": f"{fs}@snap2"})
-
-    result = call("zfs.resource.query", {"paths": [fs], "get_snapshots": True})
-    snapshots = result[0]["snapshots"]
-    assert len(snapshots) == 2
-    assert f"{fs}@snap1" in snapshots
-    assert f"{fs}@snap3" in snapshots
-    assert f"{fs}@snap2" not in snapshots
+    # zfs.resource.destroy should reject snapshot paths
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.destroy", {"path": f"{fs}@snap1"})
+    assert "zfs.resource.snapshot.destroy" in str(exc_info.value)
 
     # cleanup
     call("zfs.resource.destroy", {"path": fs, "recursive": True})
 
 
-def test_zfs_resource_destroy_recursive_snapshots():
-    """Test recursive deletion of snapshots across fs hierarchy"""
-    root_name = "test_fs_rec_snap"
-    root = create_resource(root_name)
-    lvl0 = os.path.join(root_name, "level0")
-    branch1 = "/".join([f"branch1_{i}" for i in range(1, 4)])
-    branch2 = "/".join([f"branch2_{i}" for i in range(1, 4)])
-    create_resource(os.path.join(lvl0, branch1), {"create_ancestors": True})
-    create_resource(os.path.join(lvl0, branch2), {"create_ancestors": True})
-    snap = "rec_snap"
-    call("zfs.resource.snapshot.create", {"dataset": root, "name": snap, "recursive": True})
-    for i in call(
-        "zfs.resource.query",
-        {
-            "paths": [root],
-            "properties": None,
-            "get_snapshots": True,
-            "get_children": True
-        }
-    ):
-        assert f"{i['name']}@{snap}" in i["snapshots"]
-
-    # Recursively destroy snapshot from root
-    call("zfs.resource.destroy", {"path": f"{root}@{snap}", "recursive": True})
-
-    for i in call(
-        "zfs.resource.query",
-        {
-            "paths": [root],
-            "properties": None,
-            "get_snapshots": True,
-            "get_children": True
-        }
-    ):
-        assert f"{i['name']}@{snap}" not in i["snapshots"]
-
-    # cleanup
-    call("zfs.resource.destroy", {"path": root, "recursive": True})
-
-
 def test_zfs_resource_destroy_with_clone():
-    """Test deletion of snapshot with clone"""
+    """Test deletion of dataset with clone"""
     source_name = "test_fs_clone_source"
     source = create_resource(source_name)
     snap = "snap"
     call("zfs.resource.snapshot.create", {"dataset": source, "name": snap})
     clone_name = os.path.join(source.split("/")[0], "test_fs_clone")
     call("zfs.resource.snapshot.clone", {"snapshot": f"{source}@{snap}", "dataset": clone_name})
-    # Try to destroy source snapshot without removing clone (should fail)
+    # Try to destroy source dataset without removing clone (should fail)
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.destroy", {"path": source})
     assert "clone" in str(exc_info.value).lower()
 
     call("zfs.resource.destroy", {"path": source, "recursive": True})
-    # Verify both snapshot and clone are gone
-    result = call("zfs.resource.query", {"paths": [source], "properties": None, "get_snapshots": True})
+    # Verify both dataset and clone are gone
+    result = call("zfs.resource.query", {"paths": [source], "properties": None})
     assert len(result) == 0
     result = call("zfs.resource.query", {"paths": [clone_name]})
     assert len(result) == 0
 
 
-def test_zfs_resource_destroy_with_hold():
-    """Test deletion of snapshot with hold"""
-    source_name = "test_fs_hold_source"
-    source = create_resource(source_name)
-    snap = "snap"
-    call("zfs.resource.snapshot.create", {"dataset": source, "name": snap})
-    call("zfs.resource.snapshot.hold", {"path": f"{source}@{snap}"})
-
-    # Try to destroy snapshot with hold (should fail)
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.destroy", {"path": f"{source}@{snap}"})
-    assert "hold" in str(exc_info.value).lower()
-
-    call("zfs.resource.destroy", {"path": f"{source}@{snap}", "recursive": True})
-
-    result = call("zfs.resource.query", {"paths": [source], "properties": None, "get_snapshots": True})
-    assert not result[0]["snapshots"]
-
-    # cleanup
-    call("zfs.resource.destroy", {"path": source})
-
-
-def test_zfs_resource_destroy_all_snapshots():
-    """Test deletion of all snapshots from a filesystem"""
+def test_zfs_resource_snapshot_destroy_all_snapshots():
+    """Test deletion of all snapshots from a filesystem via snapshot service"""
     source_name = "test_fs_all_snaps"
     source = create_resource(source_name)
     for i in range(1, 6):
         call("zfs.resource.snapshot.create", {"dataset": source, "name": f"snap{i}"})
 
-    result = call("zfs.resource.query", {"paths": [source], "properties": None, "get_snapshots": True})
-    assert len(result[0]["snapshots"]) == 5
+    # Verify snapshots exist
+    counts = call("zfs.resource.snapshot.count", {"paths": [source]})
+    assert counts[source] == 5
 
-    call("zfs.resource.destroy", {"path": source, "all_snapshots": True})
+    # Use zfs.resource.snapshot.destroy with all_snapshots=True
+    call("zfs.resource.snapshot.destroy", {"path": source, "all_snapshots": True})
 
-    result = call("zfs.resource.query", {"paths": [source], "properties": None, "get_snapshots": True})
-    assert not result[0]["snapshots"]
+    # Verify snapshots are gone
+    counts = call("zfs.resource.snapshot.count", {"paths": [source]})
+    assert counts[source] == 0
+
+    # cleanup - dataset should still exist
+    result = call("zfs.resource.query", {"paths": [source], "properties": None})
+    assert len(result) == 1
+    call("zfs.resource.destroy", {"path": source})
+
+
+def test_zfs_resource_destroy_non_recursive_with_snapshots_fails():
+    """Test that non-recursive deletion fails when filesystem has snapshots"""
+    fs_name = "test_fs_snap_fail"
+    fs = create_resource(fs_name)
+    call("zfs.resource.snapshot.create", {"dataset": fs, "name": "snap1"})
+
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.destroy", {"path": fs, "recursive": False})
+    assert "snapshots" in str(exc_info.value).lower()
 
     # cleanup
-    call("zfs.resource.destroy", {"path": source})
+    call("zfs.resource.destroy", {"path": fs, "recursive": True})
 
 
 @pytest.mark.parametrize(
@@ -233,7 +182,6 @@ def test_zfs_resource_destroy_complex_hierarchy():
         {
             "paths": [root],
             "properties": None,
-            "get_snapshots": True,
             "get_children": True,
         }
     )
