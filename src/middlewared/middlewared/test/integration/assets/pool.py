@@ -114,7 +114,7 @@ def snapshot(dataset, name, **kwargs):
             yield id_
     finally:
         try:
-            call("zfs.resource.destroy", {"path": id_, "recursive": True})
+            call("zfs.resource.snapshot.destroy", {"path": id_, "recursive": True})
         except ZFSPathNotFoundException:
             pass
 
