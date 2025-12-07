@@ -176,19 +176,20 @@ class DockerService(Service):
 async def post_system_update_hook(middleware):
     if not (await middleware.call('docker.config'))['dataset']:
         # If docker is not configured, there is nothing to backup
-        logger.debug('Docker is not configured, skipping app\'s backup on system update')
+        logger.debug('Docker is not configured, skipping apps backup on system update')
         return
 
-    backups = [
-        v for k, v in (await middleware.call('docker.list_backups')).items()
-        if k.startswith(UPDATE_BACKUP_PREFIX)
-    ]
+    backups = []
+    for k, v in (await middleware.call('docker.list_backups')).items():
+        if k.startswith(UPDATE_BACKUP_PREFIX):
+            backups.append(v)
+
     if len(backups) >= 3:
         backups.sort(key=lambda d: d['created_on'])
         while len(backups) >= 3:
             backup = backups.pop(0)
             try:
-                logger.debug('Deleting %r app\'s old auto-generated backup', backup['name'])
+                logger.debug('Deleting %r apps old auto-generated backup', backup['name'])
                 await middleware.call('docker.delete_backup', backup['name'])
             except Exception as e:
                 logger.error(
