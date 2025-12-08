@@ -224,6 +224,7 @@ class ShellApplication:
         except Exception:
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
+            self.middleware.logger.error('Failed to start shell console', exc_info=True)
         finally:
             self.shells.pop(conndata.id, None)
             return ws
