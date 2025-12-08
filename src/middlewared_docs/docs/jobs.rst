@@ -174,11 +174,20 @@ Notes:
 Uploading a File
 ^^^^^^^^^^^^^^^^
 
-Files can be uploaded via HTTP POST request only. The upload endpoint is ``http://system_ip/_upload``.
+Files can be uploaded to jobs that accept input via the ``/_upload`` HTTP endpoint. Eligible job methods are described
+as such on their corresponding doc pages. 
 
-It expects two values as form data: ``data`` and ``file``.
+The upload endpoint only accepts HTTP POST requests with ``multipart/form-data`` encoding.
 
-- ``data`` is JSON-encoded data. It must be the first parameter provided and in this format:
+1. Make an HTTP POST request to ``http://system_ip/_upload`` with form data
+2. Receive a response containing the job ID
+3. Monitor job progress using ``core.get_jobs`` if needed
+4. Wait for job completion to get the final result
+
+Form data parameters:
+
+- ``data``: JSON-encoded object specifying the method to call and its parameters. This must be the first
+  form field. Format:
 
     .. code:: json
 
@@ -187,15 +196,19 @@ It expects two values as form data: ``data`` and ``file``.
             "params": []
         }
 
-- ``file`` is the URI of the file to download.
+- ``file``: The file to upload. Can be specified multiple times to upload multiple files if the job
+  supports it.
 
-This example uses curl:
+Example using curl:
 
 .. code-block:: console
     :caption: Request
 
-    curl -X POST -u root:freenas -H "Content-Type: multipart/form-data" -F 'data={"method": "config.upload", "params": []}' -F "file=@/home/user/Desktop/config" http://system_ip/_upload/
-
+    curl -X POST -u root:freenas \
+         -H "Content-Type: multipart/form-data" \
+         -F 'data={"method": "config.upload", "params": []}' \
+         -F "file=@/home/user/Desktop/config.db" \
+         http://system_ip/_upload/
 
 .. code-block:: json
     :caption: Response
@@ -203,3 +216,6 @@ This example uses curl:
     {
         "job_id": 20
     }
+
+After receiving the job ID, you can monitor the job's progress and retrieve its result using ``core.get_jobs``
+or ``core.job_wait``.
