@@ -12,13 +12,12 @@ class RESTAPIUsageAlertClass(AlertClass):
         "The REST API will be removed in version 26.04. To avoid service disruption, "
         "migrate any remaining integrations to the supported JSON-RPC 2.0 over WebSocket API before "
         "upgrading. For migration guidance, see the "
-        "<a href=\"https://api.truenas.com/v26.04/jsonrpc.html\" target=\"_blank\">documentation</a>."
+        "<a href=\"https://api.truenas.com/v25.10/jsonrpc.html\" target=\"_blank\">documentation</a>."
     )
 
 
 class RESTAPIUsageAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
-    run_on_backup_node = True
 
     async def check(self):
         qf = [
