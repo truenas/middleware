@@ -1128,25 +1128,18 @@ class AuthService(Service):
                         return {
                             'response_type': AuthResp.SCRAM_RESPONSE,
                             'scram_type': 'SERVER_FIRST_RESPONSE',
-                            'rfc_str': resp.reason
-                            'user_info': None
+                            'rfc_str': resp.reason,
+                            'user_data': None
                         }
                     case 'CLIENT_FINAL_MESSAGE':
                         auth_ctx.next_mech = None
 
-                        resp = await self.middleware.run_in_thread(
+                        pam_resp = await self.middleware.run_in_thread(
                             auth_ctx.pam_hdl.handle_final_message,
                             data['rfc_str']
                         )
 
-                        if resp.code == PamCode.PAM_SUCCESS:
-                            return {
-                                'response_type': AuthResp.SCRAM_RESPONSE,
-                                'scram_type': 'SERVER_FINAL_RESPONSE',
-                                'rfc_str': resp.reason,
-                                'user_info': resp.user_info
-                            }
-                        else:
+                        if pam_resp.code != PamCode.PAM_SUCCESS:
                             await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                                 'credentials': {
                                     'credentials': 'SCRAM',
@@ -1154,8 +1147,35 @@ class AuthService(Service):
                                  },
                                  'error': pam_resp.reason,
                             }, False)
-                            # fall throguh to auth failure
+                            return resp
 
+                        user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
+                        if user_info is None:
+                            # User is unprivileged:
+                            return resp
+
+                        resp = {
+                            'response_type': AuthResp.SCRAM_RESPONSE,
+                            'scram_type': 'SERVER_FINAL_RESPONSE',
+                            'rfc_str': pam_resp.reason,
+                            'user_data': user_info
+                        }
+
+                        # SCRAM authentication can in theory be either an API key or
+                        if auth_ctx.pam_hdl.dbid:
+                            key = await self.middleware.call(
+                                'api_key.query', [['id', '=', key_id]],
+                                {'get': True, 'select': ['id', 'name', 'expired']}
+                            )
+                            cred = ApiKeySessionManagerCredentials(
+                                resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl
+                            )
+                        else:
+                            cred = UserSessionManagerCredentials(
+                                resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl
+                            )
+
+                        await login_fn(app, cred)
                     case _:
                         self.logger.error('%s: invalid scram message type', data['scram_type'])
                         raise CallError(f'{data["scram_type"]}: invalid SCRAM type')
