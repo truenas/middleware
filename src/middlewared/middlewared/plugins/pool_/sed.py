@@ -73,3 +73,17 @@ class PoolService(Service):
             vdev['disk'] for vdev in await self.middleware.call('pool.flatten_topology', pool['topology'] or {})
             if vdev.get('type') == 'DISK' and vdev.get('disk')
         }
+
+
+async def zfs_events_hook(middleware, data):
+    if data["class"] == "sysevent.fs.zfs.config_sync":
+        if await middleware.call('system.sed_enabled') and (
+            pool := await middleware.call("pool.query", [["name", "=", data["pool"]]], {'force_sql_filters': True})
+        ):
+            if pool[0]["healthy"]:
+                # Let's only trigger this if pool is healthy
+                middleware.create_task(middleware.call("pool.update_all_sed_attr", True, data["pool"]))
+
+
+async def setup(middleware):
+    middleware.register_hook("zfs.pool.events", zfs_events_hook)
