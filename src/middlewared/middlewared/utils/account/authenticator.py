@@ -476,7 +476,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             )
 
         msg = resp.reason[0]
-        is msg.msg_style != MSGStyle.PAM_TEXT_INFO:
+        if msg.msg_style != MSGStyle.PAM_TEXT_INFO:
             raise RuntimeError('{msg}: unexpected PAM message')
 
         passwd = self.truenas_user_obj
