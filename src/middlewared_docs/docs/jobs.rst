@@ -169,6 +169,8 @@ Notes:
 #. File download must begin within 60 seconds or the job is canceled.
 #. The file can only be downloaded once.
 
+.. _uploading-files:
+
 Uploading a File
 ^^^^^^^^^^^^^^^^
 
