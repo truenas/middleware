@@ -397,6 +397,8 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         except Exception as exc:
             self.scram_error = exc
             return
+        else:
+            self.scram_error = None
 
         if not origin.is_tcp_ip_family:
             raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
