@@ -490,7 +490,44 @@ class CoreService(Service):
     @api_method(CoreDownloadArgs, CoreDownloadResult, authorization_required=False, pass_app=True)
     async def download(self, app, method, args, filename, buffered):
         """
-        Core helper to call a job marked for download.
+        Call a job that produces downloadable output and get a URL to retrieve the result.
+
+        This method executes jobs that generate files or streaming data for download. The job writes its output
+        to a pipe, and this method returns a time-limited, single-use download URL.
+
+        1. Call `core.download` with the target job method, arguments, and desired filename
+        2. Receive an array containing the job ID and download URL
+        3. Make an HTTP GET request to the download URL to retrieve the data
+        4. The download URL expires after a timeout and can only be used once
+
+        Example JSON-RPC request to download a system configuration backup:
+
+        .. code-block:: json
+
+            {
+                "jsonrpc": "2.0",
+                "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+                "method": "core.download",
+                "params": [
+                    "config.save",
+                    [{}],
+                    "system-config-backup.db",
+                    false
+                ]
+            }
+
+        Response:
+
+        .. code-block:: json
+
+            {
+                "jsonrpc": "2.0",
+                "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+                "result": [
+                    86,
+                    "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"
+                ]
+            }
         """
         if app is not None:
             if not app.authenticated_credentials.authorize('CALL', method):
