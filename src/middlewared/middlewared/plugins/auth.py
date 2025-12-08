@@ -1122,7 +1122,7 @@ class AuthService(Service):
                                     'credentials': 'SCRAM',
                                     'credentials_data': {}
                                  },
-                                 'error': pam_resp.reason,
+                                 'error': resp.reason,
                             }, False)
                             return response
 
