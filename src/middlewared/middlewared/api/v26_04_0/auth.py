@@ -154,7 +154,7 @@ class AuthSCRAM(BaseModel):
     in RFC5802.\
     CLIENT_FINAL_MESSAGE - this corresponds with the client-final-message as defined
     in RFC5802."""
-    rfs_str: str = Field(examples=[
+    rfc_str: str = Field(examples=[
         "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
         "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
     ])
