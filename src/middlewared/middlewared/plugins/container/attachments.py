@@ -91,24 +91,23 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         await self.toggle(attachments, False)
 
     async def toggle(self, attachments, enabled):
-        if enabled:
-            action = 'container.start'
-            action_args = []
-        else:
-            action = 'container.stop'
-            action_args = [{'force': True}]
-
-        for attachment in attachments:
-            try:
-                await self.middleware.call(action, attachment['id'], *action_args)
-            except Exception:
-                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
+        return await getattr(self, 'start' if enabled else 'stop')(attachments)
 
     async def stop(self, attachments):
-        await self.toggle(attachments, False)
+        for attachment in attachments:
+            try:
+                await (
+                    await self.middleware.call('container.stop', attachment['id'], {'force': True})
+                ).wait(raise_error=True)
+            except Exception:
+                self.middleware.logger.warning('Unable to stop %r container', attachment['id'])
 
     async def start(self, attachments):
-        await self.toggle(attachments, True)
+        for attachment in attachments:
+            try:
+                await self.middleware.call('container.start', attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to start %r container', attachment['id'])
 
 
 async def setup(middleware):
