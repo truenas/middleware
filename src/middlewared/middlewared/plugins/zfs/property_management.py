@@ -9,7 +9,7 @@ except ImportError:
     # installed in the CI VM.
     property_sets = ZFSProperty = ZFSType = None
 
-__all__ = ("build_set_of_zfs_props",)
+__all__ = ("build_set_of_zfs_props", "build_set_of_zfs_snapshot_props", "DeterminedProperties")
 
 
 ZFSPropSetType: TypeAlias = frozenset["ZFSProperty"]
@@ -74,7 +74,8 @@ class DeterminedProperties:
 
     fs: ZFSPropSetType | None = None
     vol: ZFSPropSetType | None = None
-    snap: ZFSPropSetType | None = None
+    fs_snap: ZFSPropSetType | None = None
+    vol_snap: ZFSPropSetType | None = None
     default: ZFSPropSetType | None = None
 
 
@@ -165,3 +166,81 @@ def build_set_of_zfs_props(
 
     # Now cache and return the zfs properties for this type
     return __build_cache(hdl_type, req_props, det_props)
+
+
+def __build_snapshot_cache(
+    parent_type: ZFSResourceType, req_props: list[str], det_props: DeterminedProperties
+) -> frozenset["ZFSProperty"]:
+    """Build and cache a set of valid ZFS properties for snapshot of a specific parent type.
+
+    Args:
+        parent_type: The parent ZFS resource type (filesystem or volume)
+        req_props: List of requested property names as strings
+        det_props: DeterminedProperties instance to cache results in
+
+    Returns:
+        frozenset[ZFSProperty]: Set of valid ZFS snapshot properties for the parent type.
+    """
+    is_fs = parent_type == ZFSType.ZFS_TYPE_FILESYSTEM
+    is_vol = parent_type == ZFSType.ZFS_TYPE_VOLUME
+
+    # Get the valid snapshot properties for this parent type
+    if is_fs:
+        valid_props = property_sets.ZFS_FILESYSTEM_SNAPSHOT_PROPERTIES
+    else:
+        valid_props = property_sets.ZFS_VOLUME_SNAPSHOT_PROPERTIES
+
+    requested_props = set()
+    for i in req_props:
+        try:
+            prop = ZFSProperty[i.upper()]
+        except KeyError:
+            continue
+
+        if prop in valid_props:
+            requested_props.add(prop)
+
+    # Cache the result for this parent type
+    requested_props = frozenset(requested_props) if requested_props else frozenset()
+    if is_fs:
+        det_props.fs_snap = requested_props
+    elif is_vol:
+        det_props.vol_snap = requested_props
+
+    return requested_props
+
+
+def build_set_of_zfs_snapshot_props(
+    parent_type: ZFSResourceType,
+    det_props: DeterminedProperties,
+    req_props: list[str] | None,
+) -> frozenset["ZFSProperty"] | None:
+    """Build a set of ZFS properties to retrieve for a snapshot.
+
+    Unlike datasets, snapshots have NO default properties. Callers must
+    explicitly request what they need. This is a hot code path optimization.
+
+    Args:
+        parent_type: The parent ZFS resource type (filesystem or volume)
+        det_props: DeterminedProperties instance used for caching results
+        req_props: List of requested property names as strings. None or
+            empty list means no properties will be retrieved.
+
+    Returns:
+        frozenset[ZFSProperty] | None: Set of valid ZFS snapshot properties,
+            or None if no properties should be retrieved.
+    """
+    # None or empty list = no properties (caller must be explicit)
+    if not req_props:
+        return None
+
+    is_fs = parent_type == ZFSType.ZFS_TYPE_FILESYSTEM
+    is_vol = parent_type == ZFSType.ZFS_TYPE_VOLUME
+
+    # Check if we already have cached properties for this parent type
+    if is_fs and det_props.fs_snap is not None:
+        return det_props.fs_snap
+    elif is_vol and det_props.vol_snap is not None:
+        return det_props.vol_snap
+
+    return __build_snapshot_cache(parent_type, req_props, det_props)

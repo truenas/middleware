@@ -24,6 +24,7 @@ from middlewared.service import CRUDService, filterable_api_method, InstanceNotF
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
+from middlewared.utils.filter_list import filter_list
 
 
 class PoolSnapshotService(CRUDService):
@@ -74,6 +75,44 @@ class PoolSnapshotService(CRUDService):
         """
         return self.middleware.call_sync('zfs.snapshot.release', id_, options)
 
+    def _transform_snapshot_entry(self, snap):
+        """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format."""
+        # Transform properties from new format to old format
+        # New: {prop: {raw, source, value}}
+        # Old: {prop: {value, rawvalue, source, parsed}}
+        old_props = {}
+        if snap.get('properties'):
+            for prop_name, prop_data in snap['properties'].items():
+                if prop_data is None:
+                    continue
+                # Map source None -> "NONE"
+                source = prop_data.get('source')
+                if source is None:
+                    source = 'NONE'
+                old_props[prop_name] = {
+                    'value': str(prop_data.get('value', '')),
+                    'rawvalue': prop_data.get('raw', ''),
+                    'source': source,
+                    'parsed': prop_data.get('value'),
+                }
+
+        if snap['holds'] and 'truenas' in snap['holds']:
+            hold = {'truenas': 1}
+        else:
+            hold = {}
+
+        return {
+            'id': snap['name'],  # id is same as name for snapshots
+            'name': snap['name'],
+            'pool': snap['pool'],
+            'type': 'SNAPSHOT',
+            'snapshot_name': snap['snapshot_name'],
+            'dataset': snap['dataset'],
+            'createtxg': str(snap['createtxg']),
+            'properties': old_props,
+            'holds': hold,
+        }
+
     @filterable_api_method(item=PoolSnapshotEntry)
     def query(self, filters, options):
         """Query all ZFS Snapshots with `query-filters` and `query-options`.
@@ -86,11 +125,90 @@ class PoolSnapshotService(CRUDService):
             Limit snapshot retrieval based on maximum transaction group.
         `query-options.extra.retention` *(bool)*
             Include retention information in the query result (false by default).
-        `query-options.extra.properties` *(dict)*
-            Passed to `zfs.snapshots_serialized.props`.
-
+        `query-options.extra.properties` *(list)*
+            List of ZFS property names to retrieve.
         """
-        return self.middleware.call_sync('zfs.snapshot.query', filters, options)
+        filters = filters or []
+        options = options or {}
+        extra = options.get('extra', {})
+
+        # Build query args for zfs.resource.snapshot.query
+        query_args = {
+            'min_txg': extra.get('min_txg', 0),
+            'max_txg': extra.get('max_txg', 0),
+        }
+        if 'properties' in extra:
+            query_args['properties'] = extra['properties']
+
+        # Extract path-based filters for efficient querying
+        # Optimization: if filtering by id/name/pool/dataset, pass as paths
+        paths = []
+        remaining_filters = []
+        recursive = False
+        for f in filters:
+            if len(f) == 3 and f[1] in ('=', 'in'):
+                if f[0] in ('id', 'name'):
+                    # Direct snapshot lookup
+                    if f[1] == '=':
+                        paths.append(f[2])
+                    else:
+                        paths.extend(f[2])
+                elif f[0] in ('pool', 'dataset'):
+                    # Dataset-based lookup (get all snapshots for dataset)
+                    if f[1] == '=':
+                        paths.append(f[2])
+                    else:
+                        paths.extend(f[2])
+                    # For dataset filters, we need recursive=True to get all snapshots
+                    if f[0] == 'pool':
+                        recursive = True
+                else:
+                    remaining_filters.append(f)
+            else:
+                remaining_filters.append(f)
+
+        if paths:
+            query_args['paths'] = paths
+            query_args['recursive'] = recursive
+        else:
+            # legacy behavior would query all snapshots recursively
+            # when querying this endpoint with no arguments. That's
+            # bad design but we're stuck with it for awhile. If there
+            # are no paths that were requested, then set recursive
+            # to be true.
+            query_args['recursive'] = True
+
+        if extra.get("holds", False):
+            query_args["get_holds"] = True
+
+        # Query snapshots using the new efficient endpoint
+        snapshots = []
+        for i in self.middleware.call_sync(
+            'zfs.resource.snapshot.query',
+            query_args,
+        ):
+            # Transform to PoolSnapshotEntry format
+            snapshots.append(self._transform_snapshot_entry(i))
+
+        # Apply remaining filters and options using filter_list
+        select = options.pop('select', None)
+        result = filter_list(snapshots, remaining_filters, options)
+
+        # Add retention info if requested
+        if extra.get('retention'):
+            if isinstance(result, list):
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+            elif isinstance(result, dict):
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+
+        # Apply select if specified
+        if select:
+            if isinstance(result, list):
+                result = [{k: v for k, v in item.items() if k in select} for item in result]
+            elif isinstance(result, dict):
+                result = {k: v for k, v in result.items() if k in select}
+
+        return result
 
     @api_method(PoolSnapshotCreateArgs, PoolSnapshotCreateResult)
     def do_create(self, data):

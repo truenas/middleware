@@ -135,6 +135,8 @@ class ZFSResourceSnapshotEntry(BaseModel):
     """The name of the snapshot."""
     type: Literal["SNAPSHOT"] = "SNAPSHOT"
     """The type of zfs resource."""
+    holds: tuple[str] | None
+    """A list of tags that hold the snapshot."""
     properties: ZFSResourceSnapshotPropertiesEntry | None
     """Requested properties for the snapshot."""
     user_properties: dict[str, str] | None
@@ -150,6 +152,8 @@ class ZFSResourceSnapshotQuery(BaseModel):
     """Retrieve user-defined properties for snapshots."""
     get_source: bool = False
     """Include source information for each property value."""
+    get_holds: bool = False
+    """Include holds information (if any) for the snapshot."""
     recursive: bool = False
     """Include snapshots from child datasets when querying dataset paths."""
     min_txg: int = 0
