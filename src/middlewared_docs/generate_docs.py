@@ -171,7 +171,7 @@ class DocumentationGenerator:
         if isinstance(item, APIDumpMethod) and item.name == "core.download":
             downloadable_jobs = [
                 m for m in self.api.methods
-                if m.job_options and 'output' in m.job_options.get('pipes', [])
+                if m.output_pipes
             ]
             if downloadable_jobs:
                 result += "**Jobs that can be downloaded:**\n\n"
