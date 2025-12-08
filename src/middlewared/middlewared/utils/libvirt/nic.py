@@ -1,3 +1,4 @@
+import itertools
 import random
 
 from middlewared.service_exception import ValidationErrors
@@ -28,8 +29,7 @@ class NICDelegate(DeviceDelegate):
     ) -> None:
         nic = device['attributes'].get('nic_attach')
         if nic:
-            nic_choices = self.middleware.call_sync(self.nic_choices_endpoint)
-            if nic not in nic_choices:
+            if nic not in itertools.chain(*self.middleware.call_sync(self.nic_choices_endpoint).values()):
                 verrors.add('attributes.nic_attach', 'Not a valid choice.')
             elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
                 verrors.add(

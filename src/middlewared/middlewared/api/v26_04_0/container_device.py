@@ -153,8 +153,10 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
 
 @single_argument_result
 class ContainerDeviceNicAttachChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
-    """Available network interfaces and bridges for Container NIC attachment."""
+    BRIDGE: list[str]
+    """Available bridge interfaces for NIC attachment."""
+    MACVLAN: list[str]
+    """Available parent interfaces for creating MACVLAN NIC devices."""
 
 
 class USBCapability(BaseModel):

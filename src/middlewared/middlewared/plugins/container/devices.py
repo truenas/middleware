@@ -92,9 +92,13 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         Available choices for NIC Attach attribute.
         """
         container_bridge = await self.middleware.call('container.bridge_name')
-        return (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})) | {
-            container_bridge: container_bridge
-        }
+        nic_choices = {'BRIDGE': [container_bridge], 'MACVLAN': []}
+        for inf in (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})):
+            if inf.startswith('br'):
+                nic_choices['BRIDGE'].append(inf)
+            else:
+                nic_choices['MACVLAN'].append(inf)
+        return nic_choices
 
     @api_method(
         ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
