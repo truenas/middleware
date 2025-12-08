@@ -2,7 +2,8 @@ import aiohttp
 
 from middlewared.api import api_method
 from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
+from middlewared.utils.network import check_internet_connectivity
 
 from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
@@ -48,9 +49,7 @@ class CatalogService(Service):
             catalog = await self.middleware.call('catalog.config')
 
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call(
-                'catalog.update_git_repository', catalog['location'], OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
-            )
+            await self.update_git_repository(catalog['location'], OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH)
             job.set_progress(15, 'Reading catalog information')
             # Update feature map cache whenever official catalog is updated
             await self.middleware.call('catalog.get_feature_map', False)
@@ -75,6 +74,13 @@ class CatalogService(Service):
             self.middleware.create_task(self.middleware.call('app.check_upgrade_alerts'))
 
     @private
-    def update_git_repository(self, location, repository, branch):
-        self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
-        return pull_clone_repository(repository, location, branch)
+    async def update_git_repository(self, location, repository, branch):
+        await self.middleware.call('network.general.will_perform_activity', 'catalog')
+        try:
+            return await self.middleware.run_in_thread(pull_clone_repository, repository, location, branch)
+        except Exception:
+            # We will check if there was a network issue and raise an error in a nicer format if that's the case
+            if error := await check_internet_connectivity():
+                raise CallError(error)
+
+            raise
