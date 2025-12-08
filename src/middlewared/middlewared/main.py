@@ -1001,6 +1001,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if app.origin.is_tcp_ip_family:
                 remote_addr = origin
 
+        if app.websocket:
+            protocol = "WEBSOCKET"
+        else:
+            if app.fileapp:
+                protocol = "REST"
+            else:
+                protocol = "LEGACY_REST"
+
         message = "@cee:" + json.dumps({
             "TNAUDIT": {
                 "aid": str(uuid.uuid4()),
@@ -1019,7 +1027,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         "minor": 1,
                     },
                     "origin": origin,
-                    "protocol": "WEBSOCKET" if app.websocket else "REST",
+                    "protocol": protocol,
                     "credentials": {
                         "credentials": app.authenticated_credentials.class_name(),
                         "credentials_data": app.authenticated_credentials.dump(),
