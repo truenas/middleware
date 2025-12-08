@@ -194,10 +194,16 @@ class PoolService(Service):
         # update db
         for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_name', '=', pool_name]]):
             await self.middleware.call('datastore.delete', 'storage.volume', pool['id'])
+
+        sed_enabled_system = await self.middleware.call('system.sed_enabled')
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
             'vol_guid': guid,
+            'vol_all_sed': None if sed_enabled_system else False,
         })
+        if sed_enabled_system:
+            self.middleware.create_task(self.middleware.call('pool.update_all_sed_attr'))
+
         await self.middleware.call('pool.scrub.create', {'pool': pool_id})
 
         # re-enable/restart any services dependent on this pool

@@ -73,7 +73,9 @@ class FailoverEventsService(Service):
 
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
-        return await (await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)).wait(timeout=timeout)
+        return await (
+            await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)
+        ).wait(timeout=timeout)
 
     async def become_active_service(self, service, timeout):
         logger.info('Become active %s', service)
@@ -660,6 +662,12 @@ class FailoverEventsService(Service):
                 )
         else:
             logger.info('Volume imports complete')
+
+        # We will now run a task in the background to update any pool in db which has all_sed = null
+        # This is to scan any such pools which might be based off all disks being sed capable
+        # and to mark them and others appropriately
+        logger.info('Starting background task to scan all SED based pools (if any)')
+        self.middleware.create_task(self.middleware.call('pool.ha_update_all_sed_attr'))
 
         # Now that the volumes have been imported, get a head-start on activating extents.
         if handle_alua and iscsi_cleaned:
