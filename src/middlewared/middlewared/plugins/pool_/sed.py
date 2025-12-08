@@ -1,4 +1,9 @@
+import asyncio
+
 from middlewared.service import private, Service
+
+
+SED_UPDATE_LOCK = asyncio.Lock()
 
 
 class PoolService(Service):
@@ -17,6 +22,11 @@ class PoolService(Service):
 
     @private
     async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
+        async with SED_UPDATE_LOCK:
+            return await self.update_all_sed_attr_impl(skip_all_sed_check, filter_pool)
+
+    @private
+    async def update_all_sed_attr_impl(self, skip_all_sed_check, filter_pool):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
         # How we will do this is that we will get disks from pool topology and then check if all of them are SED
