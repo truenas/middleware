@@ -7,7 +7,7 @@ Job execution can be time-consuming, but its progress can be monitored.
 To monitor the progress of running jobs, subscribe to the `core.get_jobs event <api_events_core.get_jobs.html>`_.
 
 When a new job is initiated through a JSON-RPC 2.0 API call, its ``message_ids`` field will include the ``id`` of the call.
-Therefore, when starting a new job, the client should listen for the "added" event in the ``core.get_jobs`` subscription.
+Therefore, when starting a new job, the client should listen for the "added" event in the :doc:`core.get_jobs <api_methods_core.get_jobs>` subscription.
 Additionally, the client should monitor "changed" events because a "changed" event with a new ``message_ids`` field value
 may be emitted if a method call triggers a job that has already been scheduled.
 
@@ -75,7 +75,7 @@ Finally, it sends the method execution result as usual:
 Query Job Status
 ----------------
 
-Job status can be queried with the ``core.get_jobs`` method.
+Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_jobs>` method.
 
 .. code-block:: json
     :caption: Request
@@ -155,13 +155,13 @@ the output file. See :doc:`core.download <api_methods_core.download>` for full A
         ]
     }
 
-In the response, the first value "86" is the job ID for ``config.save``. This can be used to query
+In the response, the first value "86" is the job ID for :doc:`config.save <api_methods_config.save>`. This can be used to query
 the status of the job. The second value is a REST endpoint used to download the file.
 
 The download endpoint has the special format ``http://system_ip/_download/{job_id}?auth_token={token}``
 where ``job_id`` and ``token`` are parameters being passed.
 
-``core.download`` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
+:doc:`core.download <api_methods_core.download>` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
 
 Notes:
 
@@ -181,7 +181,7 @@ The upload endpoint only accepts HTTP POST requests with ``multipart/form-data``
 
 1. Make an HTTP POST request to ``http://system_ip/_upload`` with form data
 2. Receive a response containing the job ID
-3. Monitor job progress using ``core.get_jobs`` if needed
+3. Monitor job progress using :doc:`core.get_jobs <api_methods_core.get_jobs>` if needed
 4. Wait for job completion to get the final result
 
 Form data parameters:
@@ -217,5 +217,5 @@ Example using curl:
         "job_id": 20
     }
 
-After receiving the job ID, you can monitor the job's progress and retrieve its result using ``core.get_jobs``
-or ``core.job_wait``.
+After receiving the job ID, you can monitor the job's progress and retrieve its result using :doc:`core.get_jobs <api_methods_core.get_jobs>`
+or :doc:`core.job_wait <api_methods_core.job_wait>`.
