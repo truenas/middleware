@@ -403,10 +403,10 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         super().__init__(
             username=self.client_first.username, origin=origin, service=MiddlewarePamFile.API_KEY
         )
-        self.state.otpw_possible = False
-        self.dbid = self.client_first.api_key_id
         self.sent_server_first = False
         self.sent_server_final = False
+        self.state.otpw_possible = False
+        self.dbid = self.client_first.api_key_id
 
     def authenticate(self, username: str, password: str):
         raise NotImplementedError("Plain authentication is not supported for SCRAM authentication")
@@ -414,13 +414,14 @@ class ScramPamAuthenticator(UserPamAuthenticator):
     def handle_first_message(self) -> TrueNASAuthenticatorResponse:
         """ handle the ClientFirstMessage from the initialization and generate ServerFirstMessage. """
         stage = TrueNASAuthenticatorStage.AUTH
-        if self.sent_server_first:
-            raise RuntimeError('Already sent server first response')
 
         if self.scram_error:
             # We had some sort of parsing error on the client-provided RFC string. We'll convert it
             # to a PAM response here
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, str(self.scram_error))
+
+        if self.sent_server_first:
+            raise RuntimeError('Already sent server first response')
 
         try:
             self._get_user_obj(username)
