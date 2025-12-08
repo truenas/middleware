@@ -127,12 +127,12 @@ async def authenticate(app, middleware, request, credentials, method, resource):
         raise web.HTTPUnauthorized()
 
 
-def create_application_impl(request, credentials=None):
-    return Application(ConnectionOrigin.create(request), credentials)
+def create_application_impl(request, credentials, fileapp):
+    return Application(ConnectionOrigin.create(request), credentials, fileapp)
 
 
-async def create_application(request, credentials=None):
-    return await asyncio.to_thread(create_application_impl, request, credentials)
+async def create_application(request, credentials=None, fileapp=False):
+    return await asyncio.to_thread(create_application_impl, request, credentials, fileapp)
 
 
 def normalize_query_parameter(value):
@@ -143,13 +143,14 @@ def normalize_query_parameter(value):
 
 
 class Application(App):
-    def __init__(self, origin, authenticated_credentials):
+    def __init__(self, origin, authenticated_credentials, fileapp=False):
         super().__init__(origin)
         self.session_id = None
         self.authenticated = authenticated_credentials is not None
         self.authenticated_credentials = authenticated_credentials
         self.authentication_context = AuthenticationContext()
         self.rest = True
+        self.fileapp = fileapp
 
 
 class RESTfulAPI(object):
