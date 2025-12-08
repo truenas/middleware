@@ -71,6 +71,9 @@ class UserEntry(BaseModel):
     user account's password for local accounts. This feature is unavailable for local accounts when General Purpose OS \
     STIG compatibility mode is enabled. If set to `true` the user is automatically added to the `builtin_users` \
     group."""
+    webshare: bool = False
+    """ The user account may be used to access WebShare shares. If set to `true` the user is automatically added to \
+    the `webshare` group."""
     userns_idmap: Literal['DIRECT', None] | ContainerXID = None
     """
     Specifies the subuid mapping for this user. If DIRECT then the UID will be \

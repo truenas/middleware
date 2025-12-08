@@ -29,6 +29,7 @@ def share():
                 'full_name': 'Alex',
                 'group_create': True,
                 'password': PASSWORD,
+                'webshare': True,
             }) as u:
                 ssh(f"echo Canary > /mnt/{ds}/test.txt")
                 ssh(f"chown {u['uid']}:{u['group']['bsdgrp_gid']} /mnt/{ds}/test.txt")
@@ -59,6 +60,20 @@ class JSONRPCException(Exception):
     pass
 
 
+def connect():
+    for i in range(30):
+        try:
+            return websocket.create_connection(
+                f"wss://{host().ip}:755/webshare/ws",
+                sslopt={"cert_reqs": 0},
+                timeout=30,
+            )
+        except (ConnectionRefusedError, websocket.WebSocketBadStatusException):
+            time.sleep(1)
+    else:
+        assert False, "Unable to establish websocket connection with webshare auth service"
+
+
 def call_method(ws, method, params, *, call_id=None):
     if call_id is None:
         call_id = str(uuid.uuid4())
@@ -77,18 +92,7 @@ def call_method(ws, method, params, *, call_id=None):
 
 
 def test_webshare(share):
-    for i in range(30):
-        try:
-            auth_ws = websocket.create_connection(
-                f"wss://{host().ip}:755/webshare/ws",
-                sslopt={"cert_reqs": 0},
-                timeout=30,
-            )
-            break
-        except (ConnectionRefusedError, websocket.WebSocketBadStatusException):
-            time.sleep(1)
-    else:
-        assert False, "Unable to establish websocket connection with webshare auth service"
+    auth_ws = connect()
 
     try:
         result = call_method(auth_ws, "login", {
@@ -195,3 +199,22 @@ def test_webshare_dataset_details(share):
     assert webshare['enabled'] is True
     assert webshare['path'] == f"/mnt/{share['dataset']}"
     assert webshare['share_name'] == 'Share'
+
+
+def test_webshare_no_access(share):
+    with user({
+        'username': 'invalid_webshare',
+        'full_name': 'Alex',
+        'group_create': True,
+        'password': 'invalid_webshare',
+        'webshare': False,
+    }):
+        auth_ws = connect()
+
+        with pytest.raises(JSONRPCException) as exc:
+            call_method(auth_ws, "login", {
+                "username": 'invalid_webshare',
+                "password": 'invalid_webshare',
+            }, call_id=1)
+
+        assert exc.value.args[0] == {'code': -32001, 'message': 'User is not authorized to access this service'}

@@ -16,7 +16,7 @@ def render(service, middleware):
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
         "pam_service_name": "webshare",
-        "allowed_groups": ["webshare", "wheel", "sudo"],
+        "allowed_groups": ["truenas_webshare"],
         "webshare_config_path": "/etc/webshare/config.json",
         "log_level": "info",
         "data_directory": WEBSHARE_PATH,
