@@ -1116,7 +1116,7 @@ class AuthService(Service):
                         resp = await self.middleware.run_in_thread(
                             auth_ctx.pam_hdl.handle_first_message,
                         )
-                        if resp.code != PamCode.PAM_CONV_AGAIN:
+                        if resp.code != PAMCode.PAM_CONV_AGAIN:
                             await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                                 'credentials': {
                                     'credentials': 'SCRAM',
@@ -1140,7 +1140,7 @@ class AuthService(Service):
                             data['rfc_str']
                         )
 
-                        if pam_resp.code != PamCode.PAM_SUCCESS:
+                        if pam_resp.code != PAMCode.PAM_SUCCESS:
                             await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                                 'credentials': {
                                     'credentials': 'SCRAM',
