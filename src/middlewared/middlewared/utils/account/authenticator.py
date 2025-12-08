@@ -395,15 +395,16 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             self.client_first = truenas_pyscram.ClientFirstMessage(rfc_string=client_first_message)
         except Exception as exc:
             self.scram_error = exc
+            return
 
         if not origin.is_tcp_ip_family:
             raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
 
         super().__init__(
-            username=self.client_first_message.username, origin=origin, service=MiddlewarePamFile.API_KEY
+            username=self.client_first.username, origin=origin, service=MiddlewarePamFile.API_KEY
         )
         self.state.otpw_possible = False
-        self.dbid = self.client_first_message.api_key_id
+        self.dbid = self.client_first.api_key_id
         self.sent_server_first = False
         self.sent_server_final = False
 
