@@ -371,7 +371,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
     """ Authenticator for exchanges involving plain API key. SCRAM authentication with API
     is handled With ScramPamAuthenticator. """
     def __init__(self, *, username: str, origin: ConnectionOrigin):
-        if origin.is_tcp_ip_family:
+        if not origin.is_tcp_ip_family:
             raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
 
         super().__init__(username=username, origin=origin, service=MiddlewarePamFile.API_KEY)
@@ -387,6 +387,108 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
 
         self.dbid = dbid
         return super().authenticate(username, key)
+
+
+class ScramPamAuthenticator(UserPamAuthenticator):
+    def __init__(self, *, client_first_message: str, origin: ConnectionOrigin):
+        try:
+            self.client_first = truenas_pyscram.ClientFirstMessage(rfc_string=client_first_message)
+        except Exception as exc:
+            self.scram_error = exc
+
+        if not origin.is_tcp_ip_family:
+            raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
+
+        super().__init__(
+            username=self.client_first_message.username, origin=origin, service=MiddlewarePamFile.API_KEY
+        )
+        self.state.otpw_possible = False
+        self.dbid = self.client_first_message.api_key_id
+        self.sent_server_first = False
+        self.sent_server_final = False
+
+    def authenticate(self, username: str, password: str):
+        raise NotImplementedError("Plain authentication is not supported for SCRAM authentication")
+
+    def handle_first_message(self) -> TrueNASAuthenticatorResponse:
+        """ handle the ClientFirstMessage from the initialization and generate ServerFirstMessage. """
+        stage = TrueNASAuthenticatorStage.AUTH
+        if self.sent_server_first:
+            raise RuntimeError('Already sent server first response')
+
+        if self.scram_error:
+            # We had some sort of parsing error on the client-provided RFC string. We'll convert it
+            # to a PAM response here
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, str(self.scram_error))
+
+        try:
+            self._get_user_obj(username)
+        except KeyError:
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f'{username}: user does not exist')
+
+        code = None
+        resp = self.auth_init()
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
+
+        resp = []
+        for msg in resp.reason:
+            if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
+                if 'Send SCRAM ClientFirst message' not in msg.msg:
+                    raise RuntimeError(f'{msg.msg}: unexpected PAM response')
+
+                resp.append(str(self.client_first))
+            elif msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_ON:
+                resp.append(self.username)
+            else:
+                raise RuntimeError(f'{msg}: unexpected PAM respones')
+
+        # now time to get the ServerFirstResponse
+        resp = self.auth_continue([str(self.client_first)])
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
+
+        if len(resp.reason) != 1:
+            raise RuntimeError(f'{resp.reason}: unexpected PAM response')
+
+        self.sent_server_first = True
+        return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_CONV_AGAIN, resp[0].msg)
+
+    def handle_final_message(self, rfc_string: str) -> TrueNASAuthenticatorResponse:
+        stage = TrueNASAuthenticatorStage.AUTH
+        if self.sent_server_final:
+            raise RuntimeError('Already sent ServerFinalMessage')
+
+        if not self.sent_server_first:
+            raise RuntimeError('Did not send ServerFirstMessage')
+
+        resp = self.auth_continue([rfc_string])
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
+
+        msg = resp.reason[0]
+        is msg.msg_style != MSGStyle.PAM_TEXT_INFO:
+            raise RuntimeError('{msg}: unexpected PAM message')
+
+        passwd = self.truenas_user_obj
+        if self.dbid:
+            passwd['account_attributes'].append(AccountFlag.API_KEY)
+
+        return TrueNASAuthenticatorResponse(
+            stage=stage,
+            code=PAMCode.PAM_SUCCESS,
+            reason=resp[0].msg,
+            user_info=passwd
+        )
 
 
 class InternalPamAuthenticator(UserPamAuthenticator):

@@ -1103,6 +1103,63 @@ class AuthService(Service):
                     }
                 }
 
+            case AuthMech.SCRAM:
+                match data['scram_type']:
+                    case 'CLIENT_FIRST_MESSAGE':
+                        auth_ctx.pam_hdl = ScramPamAuthenticator(
+                            client_first_message=data['rfc_str'],
+                            origin=app.origin
+                        )
+                        auth_ctx.next_mech = AuthMech.SCRAM
+
+                        resp = await self.middleware.run_in_thread(
+                            auth_ctx.pam_hdl.handle_first_message,
+                        )
+                        if resp.code != PamCode.PAM_CONV_AGAIN:
+                            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                                'credentials': {
+                                    'credentials': 'SCRAM',
+                                    'credentials_data': {}
+                                 },
+                                 'error': pam_resp.reason,
+                            }, False)
+                            return response
+
+                        return {
+                            'response_type': AuthResp.SCRAM_RESPONSE,
+                            'scram_type': 'SERVER_FIRST_RESPONSE',
+                            'rfc_str': resp.reason
+                            'user_info': None
+                        }
+                    case 'CLIENT_FINAL_MESSAGE':
+                        auth_ctx.next_mech = None
+
+                        resp = await self.middleware.run_in_thread(
+                            auth_ctx.pam_hdl.handle_final_message,
+                            data['rfc_str']
+                        )
+
+                        if resp.code == PamCode.PAM_SUCCESS:
+                            return {
+                                'response_type': AuthResp.SCRAM_RESPONSE,
+                                'scram_type': 'SERVER_FINAL_RESPONSE',
+                                'rfc_str': resp.reason,
+                                'user_info': resp.user_info
+                            }
+                        else:
+                            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                                'credentials': {
+                                    'credentials': 'SCRAM',
+                                    'credentials_data': {}
+                                 },
+                                 'error': pam_resp.reason,
+                            }, False)
+                            # fall throguh to auth failure
+
+                    case _:
+                        self.logger.error('%s: invalid scram message type', data['scram_type'])
+                        raise CallError(f'{data["scram_type"]}: invalid SCRAM type')
+
             case _:
                 # This shouldn't happen so we'll log it and raise a call error
                 self.logger.error('%s: unexpected authentication mechanism', mechanism)
