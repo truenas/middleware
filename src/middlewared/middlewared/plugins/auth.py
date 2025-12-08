@@ -38,7 +38,8 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.account.authenticator import (
-    ApiKeyPamAuthenticator, UnixPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag
+    ApiKeyPamAuthenticator, UnixPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag,
+    ScramPamAuthenticator,
 )
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
