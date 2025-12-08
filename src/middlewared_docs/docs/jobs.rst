@@ -125,7 +125,7 @@ Downloading a File
 ^^^^^^^^^^^^^^^^^^
 
 If a job gives a file as an output, this endpoint is to be used to download
-the output file.
+the output file. See :doc:`core.download <api_methods_core.download>` for full API documentation.
 
 .. code-block:: json
     :caption: Request
