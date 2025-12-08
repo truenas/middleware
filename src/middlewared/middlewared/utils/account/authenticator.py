@@ -1,5 +1,6 @@
 import enum
 import os
+import truenas_pyscram
 from json import dumps
 from uuid import UUID
 from middlewared.plugins.account_.constants import ADMIN_UID

@@ -4,6 +4,7 @@ import random
 from datetime import timedelta
 import errno
 import time
+import truenas_pyscram
 from typing import TYPE_CHECKING
 
 from middlewared.api import api_method, Event
