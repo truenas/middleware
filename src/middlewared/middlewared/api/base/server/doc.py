@@ -25,6 +25,7 @@ class APIDumpMethod(BaseModel):
     removed_in: str | None
     input_pipes: bool = False
     output_pipes: bool = False
+    check_pipes: bool = True
 
 
 class APIDumpEvent(BaseModel):
@@ -81,15 +82,17 @@ class APIDumper:
             method_name = method_name[3:]
         name = f"{plugin}.{method_name}"
 
-        if doc := inspect.getdoc(method.methodobj):
+        methodobj_ = method.methodobj
+        if doc := inspect.getdoc(methodobj_):
             doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc).strip()
 
-        input_pipes = False
-        output_pipes = False
-        if hasattr(method.methodobj, "_job"):
-            pipes = method.methodobj._job['pipes']
-            input_pipes = 'input' in pipes
-            output_pipes = 'output' in pipes
+        input_pipes, output_pipes, check_pipes = False, False, True
+        if job := getattr(methodobj_, "_job", None):
+            pipes = job["pipes"]
+            input_pipes = "input" in pipes
+            output_pipes = "output" in pipes
+            check_pipes = job["check_pipes"]
+
             # FIXME: If we decide to keep the jobs, make this nicer (a badge?)
             if doc:
                 doc = doc + "\r\n\r\n"
@@ -106,6 +109,7 @@ class APIDumper:
             removed_in=getattr(method.methodobj, "_removed_in", None),
             input_pipes=input_pipes,
             output_pipes=output_pipes,
+            check_pipes=check_pipes
         )
 
     async def _dump_method_schemas(self, method: Method):
