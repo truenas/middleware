@@ -63,6 +63,7 @@ logging.TRACE = 6
 
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
 APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
+TRUENAS_AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
 DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 LOGFILE = '/var/log/middlewared.log'
@@ -115,6 +116,7 @@ ALL_LOG_FILES = (
     TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
     TNLog('failover', FAILOVER_LOGFILE),
     TNLog('netdata_api', NETDATA_API_LOGFILE),
+    TNLog('truenas_audit_handler', TRUENAS_AUDIT_HANDLER_LOGFILE),
     TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
     TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
 )
