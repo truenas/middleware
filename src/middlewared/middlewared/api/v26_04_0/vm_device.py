@@ -263,8 +263,10 @@ class VMDeviceNicAttachChoicesArgs(BaseModel):
 
 @single_argument_result
 class VMDeviceNicAttachChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
-    """Available network interfaces and bridges for VM NIC attachment."""
+    BRIDGE: list[str]
+    """Available bridge interfaces for NIC attachment."""
+    MACVLAN: list[str]
+    """Available parent interfaces for creating MACVLAN NIC devices."""
 
 
 class VMDeviceBindChoicesArgs(BaseModel):

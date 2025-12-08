@@ -341,11 +341,17 @@ class VMDeviceService(CRUDService, DeviceMixin):
         return device
 
     @api_method(VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult, roles=['VM_DEVICE_READ'])
-    def nic_attach_choices(self):
+    async def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.
         """
-        return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
+        nic_choices = {'BRIDGE': [], 'MACVLAN': []}
+        for inf in (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})):
+            if inf.startswith('br'):
+                nic_choices['BRIDGE'].append(inf)
+            else:
+                nic_choices['MACVLAN'].append(inf)
+        return nic_choices
 
     @api_method(VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult, roles=['VM_DEVICE_READ'])
     async def bind_choices(self):
