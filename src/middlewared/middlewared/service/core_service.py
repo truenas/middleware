@@ -502,52 +502,6 @@ class CoreService(Service):
         3. Make an HTTP GET request to the download URL to retrieve the data
 
         4. The download URL expires after a timeout and can only be used once
-
-        Example JSON-RPC request to download a system configuration backup:
-
-        .. code-block:: json
-
-            {
-
-                "jsonrpc": "2.0",
-
-                "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-
-                "method": "core.download",
-
-                "params": [
-
-                    "config.save",
-
-                    [{}],
-
-                    "system-config-backup.db",
-
-                    false
-
-                ]
-
-            }
-
-        Response:
-
-        .. code-block:: json
-
-            {
-
-                "jsonrpc": "2.0",
-
-                "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-
-                "result": [
-
-                    86,
-
-                    "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"
-
-                ]
-
-            }
         """
         if app is not None:
             if not app.authenticated_credentials.authorize('CALL', method):

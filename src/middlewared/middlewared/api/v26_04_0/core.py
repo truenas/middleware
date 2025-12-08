@@ -233,11 +233,11 @@ class CoreArpResult(BaseModel):
 
 
 class CoreDownloadArgs(BaseModel):
-    method: str
+    method: str = Field(examples=["config.save"])
     """Name of the job method to execute."""
     args: list
     """Arguments to pass to the job method."""
-    filename: str
+    filename: str = Field(examples=["system-config-backup.db"])
     """Suggested filename for the downloaded file. Sets the `Content-Disposition` header."""
     buffered: bool = False
     """Whether to buffer the job's output.
@@ -250,7 +250,9 @@ class CoreDownloadArgs(BaseModel):
 
 
 class CoreDownloadResult(BaseModel):
-    result: tuple[int, str]
+    result: tuple[int, str] = Field(
+        examples=[(86, "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M")]
+    )
     """Array containing the job ID and download URL.
 
     * First element: Job ID that can be used with `core.get_jobs` to monitor progress
