@@ -104,7 +104,7 @@ def dataset(name, data=None, pool=pool, **kwargs):
 def snapshot(dataset, name, **kwargs):
     get = kwargs.pop("get", False)
 
-    result = call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
+    result = call("pool.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
 
     id_ = f"{dataset}@{name}"
     try:
