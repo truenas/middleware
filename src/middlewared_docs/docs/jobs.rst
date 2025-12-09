@@ -6,9 +6,9 @@ Job execution can be time-consuming, but its progress can be monitored.
 
 To monitor the progress of running jobs, subscribe to the `core.get_jobs event <api_events_core.get_jobs.html>`_.
 
-When a new job is initiated through a JSON-RPC 2.0 API call, its `message_ids` field will include the `id` of the call.
-Therefore, when starting a new job, the client should listen for the `added` event in the `core.get_jobs` subscription.
-Additionally, the client should monitor `changed` events because a `changed` event with a new `message_ids` field value
+When a new job is initiated through a JSON-RPC 2.0 API call, its ``message_ids`` field will include the ``id`` of the call.
+Therefore, when starting a new job, the client should listen for the "added" event in the :doc:`core.get_jobs <api_methods_core.get_jobs>` subscription.
+Additionally, the client should monitor "changed" events because a "changed" event with a new ``message_ids`` field value
 may be emitted if a method call triggers a job that has already been scheduled.
 
 Example of Calling a Job Method
@@ -77,7 +77,7 @@ Finally, it sends the method execution result as usual:
 Query Job Status
 ################
 
-Job status can be queried with the `core.get_jobs` method.
+Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_jobs>` method.
 
 Request:
 
@@ -108,7 +108,7 @@ Downloading a File
 ******************
 
 If a job gives a file as an output, this endpoint is to be used to download
-the output file.
+the output file. See :doc:`core.download <api_methods_core.download>` for full API documentation.
 
 Request:
 
@@ -129,12 +129,14 @@ Response:
         "result": [86, "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"]
     }
 
-In the response, the first value `86` is the job id for `config.save`. This can be used to query
+In the response, the first value "86" is the job ID for :doc:`config.save <api_methods_config.save>`. This can be used to query
 the status of the job. The second value is a REST endpoint used to download the file.
 
 The download endpoint has a special format:
 
 `http://system_ip/_download/{job_id}?auth_token={token}`
+
+:doc:`core.download <api_methods_core.download>` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
 
 `job_id` and `token` are parameters being passed.
 
@@ -145,31 +147,52 @@ Note:
 2) File download must begin within 60 seconds or the job is canceled.
 3) The file can only be downloaded once.
 
+.. _uploading-files:
+
 Uploading a File
 ****************
 
-Files can be uploaded via HTTP POST request only. The upload endpoint is:
+Files can be uploaded to jobs that accept input via the ``/_upload`` HTTP endpoint. Eligible job methods are described
+as such on their corresponding doc pages. 
 
-`http://system_ip/_upload`
+The upload endpoint only accepts HTTP POST requests with ``multipart/form-data`` encoding.
 
-It expects two values as form data, `data` and `file`.
+1. Make an HTTP POST request to ``http://system_ip/_upload`` with form data
+2. Receive a response containing the job ID
+3. Monitor job progress using :doc:`core.get_jobs <api_methods_core.get_jobs>` if needed
+4. Wait for job completion to get the final result
 
-`data` is JSON-encoded data. It must be the first parameter provided and in this format:
+Form data parameters:
 
-    ::: json
+- ``data``: JSON-encoded object specifying the method to call and its parameters. This must be the first
+  form field. Format:
+
+    .. code:: json
+        {
+            "method": "config.upload",
+            "params": []
+        }
+
+- ``file``: The file to upload. Can be specified multiple times to upload multiple files if the job
+  supports it.
+
+Example using curl:
+
+.. code-block:: console
+    :caption: Request
+
+    curl -X POST -u root:freenas \
+         -H "Content-Type: multipart/form-data" \
+         -F 'data={"method": "config.upload", "params": []}' \
+         -F "file=@/home/user/Desktop/config.db" \
+         http://system_ip/_upload/
+
+.. code-block:: json
+    :caption: Response
+
     {
-        "method": "config.upload",
-        "params": []
+        "job_id": 20
     }
 
-`file` is the URI of the file to download.
-
-This example uses `curl`,
-
-Request:
-
-    curl -X POST -u root:freenas -H "Content-Type: multipart/form-data" -F 'data={"method": "config.upload", "params": []}' -F "file=@/home/user/Desktop/config" http://system_ip/_upload/
-
- Response:
-
-    {"job_id": 20}
+After receiving the job ID, you can monitor the job's progress and retrieve its result using :doc:`core.get_jobs <api_methods_core.get_jobs>`
+or :doc:`core.job_wait <api_methods_core.job_wait>`.
