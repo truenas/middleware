@@ -427,7 +427,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             raise RuntimeError('Already sent server first response')
 
         try:
-            self._get_user_obj(username)
+            self._get_user_obj(self.username)
         except KeyError:
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f'{username}: user does not exist')
 
