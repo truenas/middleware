@@ -463,7 +463,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             raise RuntimeError(f'{resp.reason}: unexpected PAM response')
 
         self.sent_server_first = True
-        return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_CONV_AGAIN, resp[0].msg)
+        return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_CONV_AGAIN, resp.reason[0].msg)
 
     def handle_final_message(self, rfc_string: str) -> TrueNASAuthenticatorResponse:
         stage = TrueNASAuthenticatorStage.AUTH
