@@ -439,20 +439,20 @@ class ScramPamAuthenticator(UserPamAuthenticator):
                 f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
             )
 
-        resp = []
+        client_resp = []
         for msg in resp.reason:
             if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
                 if 'Send SCRAM ClientFirst message' not in msg.msg:
                     raise RuntimeError(f'{msg.msg}: unexpected PAM response')
 
-                resp.append(str(self.client_first))
+                client_resp.append(str(self.client_first))
             elif msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_ON:
-                resp.append(self.username)
+                client_resp.append(self.username)
             else:
                 raise RuntimeError(f'{msg}: unexpected PAM respones')
 
         # now time to get the ServerFirstResponse
-        resp = self.auth_continue([str(self.client_first)])
+        resp = self.auth_continue(client_resp)
         if resp.code != PAMCode.PAM_CONV_AGAIN:
             return TrueNASAuthenticatorResponse(
                 stage, PAMCode.PAM_AUTH_ERR,
