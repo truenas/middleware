@@ -191,7 +191,7 @@ class PoolSnapshotService(CRUDService):
         # Query snapshots using the new efficient endpoint
         snapshots = []
         for i in self.middleware.call_sync(
-            'zfs.resource.snapshot.query',
+            'zfs.resource.snapshot.query_impl',
             query_args,
         ):
             # Transform to PoolSnapshotEntry format
