@@ -79,23 +79,41 @@ Query Job Status
 
 Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_jobs>` method.
 
-Request:
+.. code-block:: json
+    :caption: Request
 
-    :::javascript
     {
-      "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-      "msg": "method",
-      "method": "core.get_jobs",
-      "params": [[["id", "=", 53]]]
+        "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+        "msg": "method",
+        "method": "core.get_jobs",
+        "params": [
+            [["id", "=", 53]]
+        ]
     }
 
-Response:
+.. code-block:: json
+    :caption: Response
 
-    :::javascript
     {
-      "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-      "msg": "result",
-      "result": [{"id": 53, "method": "catalog.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
+        "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+        "msg": "result",
+        "result": [
+            {
+                "id": 53,
+                "method": "catalog.sync_all",
+                "arguments": [],
+                "logs_path": null,
+                "logs_excerpt": null,
+                "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null},
+                "result": null,
+                "error": null,
+                "exception": null,
+                "exc_info": null,
+                "state": "SUCCESS",
+                "time_started": {"$date": 1571300596053},
+                "time_finished": null
+            }
+        ]
     }
 
 Uploading / Downloading Files
@@ -110,23 +128,32 @@ Downloading a File
 If a job gives a file as an output, this endpoint is to be used to download
 the output file. See :doc:`core.download <api_methods_core.download>` for full API documentation.
 
-Request:
+.. code-block:: json
+    :caption: Request
 
-    :::javascript
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
         "msg": "method",
         "method": "core.download",
-        "params": ["config.save", [{}], "freenas-FreeNAS-11.3-MASTER-201910090828-20191017122016.db"]
+        "params": [
+            "config.save",
+            [
+                {}
+            ],
+            "freenas-FreeNAS-11.3-MASTER-201910090828-20191017122016.db"
+        ]
     }
 
-Response:
+.. code-block:: json
+    :caption: Response
 
-    :::javascript
     {
         "id": "cdc8740a-336b-b0cd-b850-47568fe94223",
         "msg": "result",
-        "result": [86, "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"]
+        "result": [
+            86,
+            "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"
+        ]
     }
 
 In the response, the first value "86" is the job ID for :doc:`config.save <api_methods_config.save>`. This can be used to query
