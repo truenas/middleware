@@ -21,6 +21,7 @@ from middlewared.api.current import (
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 from middlewared.utils.filter_list import filter_list
@@ -97,32 +98,19 @@ class PoolSnapshotService(CRUDService):
             }
         )
 
-    def _transform_snapshot_entry(self, snap, *, include_holds=True):
+    # Fast-path properties are inherent to snapshots and don't require ZFS property lookup.
+    # When ONLY these are requested, we don't return a 'properties' dict in the result.
+    FAST_PATH_PROPERTIES = frozenset({'name', 'createtxg'})
+
+    def _transform_snapshot_entry(self, snap, *, include_holds=True, include_properties=True, requested_props=None):
         """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
 
         Args:
             snap: Snapshot dict from zfs.resource.snapshot.query
             include_holds: Whether to include holds field (False for create/update results)
+            include_properties: Whether to include properties field in result
+            requested_props: Set of property names that were explicitly requested (for adding fast-path props)
         """
-        # Transform properties from new format to old format
-        # New: {prop: {raw, source, value}}
-        # Old: {prop: {value, rawvalue, source, parsed}}
-        old_props = {}
-        if snap.get('properties'):
-            for prop_name, prop_data in snap['properties'].items():
-                if prop_data is None:
-                    continue
-                # Map source None -> "NONE"
-                source = prop_data.get('source')
-                if source is None:
-                    source = 'NONE'
-                old_props[prop_name] = {
-                    'value': str(prop_data.get('value', '')),
-                    'rawvalue': prop_data.get('raw', ''),
-                    'source': source,
-                    'parsed': prop_data.get('value'),
-                }
-
         entry = {
             'id': snap['name'],  # id is same as name for snapshots
             'name': snap['name'],
@@ -131,8 +119,46 @@ class PoolSnapshotService(CRUDService):
             'snapshot_name': snap['snapshot_name'],
             'dataset': snap['dataset'],
             'createtxg': str(snap['createtxg']),
-            'properties': old_props,
         }
+
+        if include_properties:
+            # Transform properties from new format to old format
+            # New: {prop: {raw, source, value}}
+            # Old: {prop: {value, rawvalue, source, parsed}}
+            old_props = {}
+            if snap.get('properties'):
+                for prop_name, prop_data in snap['properties'].items():
+                    if prop_data is None:
+                        continue
+                    # Map source None -> "NONE"
+                    source = prop_data.get('source')
+                    if source is None:
+                        source = 'NONE'
+                    old_props[prop_name] = {
+                        'value': str(prop_data.get('value', '')),
+                        'rawvalue': prop_data.get('raw', ''),
+                        'source': source,
+                        'parsed': prop_data.get('value'),
+                    }
+
+            # Add fast-path properties to properties dict if they were explicitly requested
+            if requested_props:
+                if 'name' in requested_props and 'name' not in old_props:
+                    old_props['name'] = {
+                        'value': snap['name'],
+                        'rawvalue': snap['name'],
+                        'source': 'NONE',
+                        'parsed': snap['name'],
+                    }
+                if 'createtxg' in requested_props and 'createtxg' not in old_props:
+                    old_props['createtxg'] = {
+                        'value': str(snap['createtxg']),
+                        'rawvalue': str(snap['createtxg']),
+                        'source': 'NONE',
+                        'parsed': snap['createtxg'],
+                    }
+
+            entry['properties'] = old_props
 
         if include_holds:
             if snap.get('holds') and 'truenas' in snap['holds']:
@@ -196,8 +222,18 @@ class PoolSnapshotService(CRUDService):
             'min_txg': extra.get('min_txg', 0),
             'max_txg': extra.get('max_txg', 0),
         }
-        if 'properties' in extra:
-            query_args['properties'] = extra['properties']
+
+        # Determine which properties were requested and filter out fast-path ones
+        # Fast-path properties (name, createtxg) don't need ZFS property lookup
+        requested_props = set(extra.get('properties', []))
+        non_fast_path_props = requested_props - self.FAST_PATH_PROPERTIES
+
+        # Only include 'properties' in result if non-fast-path properties were requested
+        include_properties = bool(non_fast_path_props)
+
+        # Only pass non-fast-path properties to the backend
+        if non_fast_path_props:
+            query_args['properties'] = list(non_fast_path_props)
 
         # Extract path-based filters for efficient querying
         # Optimization: if filtering by id/name/pool/dataset, pass as paths
@@ -218,13 +254,23 @@ class PoolSnapshotService(CRUDService):
             query_args["get_holds"] = True
 
         # Query snapshots using the new efficient endpoint
+        # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
         snapshots = []
-        for i in self.middleware.call_sync(
-            'zfs.resource.snapshot.query_impl',
-            query_args,
-        ):
-            # Transform to PoolSnapshotEntry format
-            snapshots.append(self._transform_snapshot_entry(i))
+        try:
+            for i in self.middleware.call_sync(
+                'zfs.resource.snapshot.query_impl',
+                query_args,
+            ):
+                # Transform to PoolSnapshotEntry format
+                # Pass requested_props so fast-path properties can be added when needed
+                snapshots.append(self._transform_snapshot_entry(
+                    i,
+                    include_properties=include_properties,
+                    requested_props=requested_props if include_properties else None
+                ))
+        except ZFSPathNotFoundException:
+            # Path not found - return empty results (legacy behavior)
+            pass
 
         # Apply remaining filters and options using filter_list
         select = options.pop('select', None)
