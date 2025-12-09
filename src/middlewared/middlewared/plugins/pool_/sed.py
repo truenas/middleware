@@ -95,5 +95,18 @@ async def zfs_events_hook(middleware, data):
                 middleware.create_task(middleware.call("pool.update_all_sed_attr", True, data["pool"]))
 
 
+async def _post_license_sed_update(middleware):
+    # First we sync disks to make sure disks appropriately get marked as SED/non-SED
+    # Then we scan existing pools and make sure that they get marked as all_sed appropriately
+    await (await middleware.call('disk.sync_all')).wait()
+    await middleware.call('pool.update_all_sed_attr', True)
+
+
+async def hook_license_update(middleware, prev_license, *args, **kwargs):
+    if await middleware.call('system.sed_enabled'):
+        middleware.create_task(_post_license_sed_update(middleware))
+
+
 async def setup(middleware):
-    middleware.register_hook("zfs.pool.events", zfs_events_hook)
+    middleware.register_hook('zfs.pool.events', zfs_events_hook)
+    middleware.register_hook('system.post_license_update', hook_license_update)
