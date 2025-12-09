@@ -18,4 +18,4 @@ def test_query_result(result, serialized):
         username: str
         password: Secret[str]
 
-    assert serialize_result(query_result(Entry), result, False) == serialized
+    assert serialize_result(query_result(Entry), result, False, False) == serialized

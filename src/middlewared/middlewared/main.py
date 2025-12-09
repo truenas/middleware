@@ -136,6 +136,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions_adapter = None
         self.__audit_logger = setup_audit_logging()
         self.external_method_calls = defaultdict(int)  # Track external API method calls
+        self.dump_result_allow_fallback = True
 
     def get_method(self, name, *, mocks=False, params=None):
         serviceobj, methodobj = super().get_method(name)
@@ -859,7 +860,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if new_style_returns_model is None:
                 new_style_returns_model = methodobj.new_style_returns
 
-            return serialize_result(new_style_returns_model, result, expose_secrets)
+            return serialize_result(new_style_returns_model, result, expose_secrets, self.dump_result_allow_fallback)
 
         if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
             schema = methodobj.returns[0]

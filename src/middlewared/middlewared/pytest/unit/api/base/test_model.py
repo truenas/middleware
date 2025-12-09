@@ -65,7 +65,7 @@ def test_single_argument_result():
         name: str
         count: int
 
-    assert serialize_result(MethodResult, {"name": "ivan", "count": 1}, True) == {"name": "ivan", "count": 1}
+    assert serialize_result(MethodResult, {"name": "ivan", "count": 1}, True, False) == {"name": "ivan", "count": 1}
 
 
 def test_update_with_cron():
