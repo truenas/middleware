@@ -365,8 +365,9 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
+        # TODO: add zfs.resource.snapshot.update (what is this even used for???)
         data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
-        return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
+        # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
