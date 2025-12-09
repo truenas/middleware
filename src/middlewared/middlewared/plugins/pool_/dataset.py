@@ -5,7 +5,7 @@ import pathlib
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
-    PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult,
+    PoolDatasetDeleteArgs, PoolDatasetDeleteResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
@@ -15,7 +15,7 @@ from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
 from middlewared.service import (
-    CallError, CRUDService, InstanceNotFound, job, private, ValidationError, ValidationErrors,
+    CallError, CRUDService, InstanceNotFound, private, ValidationError, ValidationErrors,
     filterable_api_method,
 )
 from middlewared.service.decorators import pass_thread_local_storage

@@ -49,7 +49,6 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
