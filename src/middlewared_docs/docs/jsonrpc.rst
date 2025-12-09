@@ -14,11 +14,11 @@ JSON-RPC 2.0 Protocol
 Communication Mechanism
 ~~~~~~~~~~~~~~~~~~~~~~~
 
--  Messages are exchanged using the **WebSocket protocol**.
--  The client initiates a WebSocket connection to the TrueNAS API
-   endpoint.
--  The API follows the `JSON-RPC 2.0 <https://www.jsonrpc.org/specification>`_ specification for
-   request-response messaging.
+- Messages are exchanged using the **WebSocket protocol**.
+- The client initiates a WebSocket connection to the TrueNAS API
+  endpoint.
+- The API follows the `JSON-RPC 2.0 <https://www.jsonrpc.org/specification>`_ specification for
+  request-response messaging.
 
 Request and Response Format
 ---------------------------
@@ -29,14 +29,14 @@ JSON-RPC Request Structure
 A typical **method call** request from the client to TrueNAS follows
 this structure:
 
-.. code:: json
+.. code:: javascript
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "method": "<method_name>",
-     "params": [<parameters>]
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": number | string,
+      "method": string,
+      "params": array
+    }
 
 Example Request:
 ^^^^^^^^^^^^^^^^
@@ -45,59 +45,73 @@ Calling the ``system.info`` method:
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "method": "system.info",
-     "params": []
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "system.info",
+      "params": []
+    }
 
 JSON-RPC Response Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The TrueNAS API will respond with a standard JSON-RPC response:
 
-.. code:: json
+.. code:: javascript
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "result": {<result_data>}
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": number | string,
+      "result": any
+    }
 
 Example Response:
 ^^^^^^^^^^^^^^^^^
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "result": {
-       "version": "TrueNAS-25.04",
-       "uptime": "15 days"
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "version": "TrueNAS-25.04",
+        "uptime": "15 days"
+      }
+    }
 
 Error Response
 ~~~~~~~~~~~~~~
 
 If an error occurs, the response format is:
 
-.. code:: json
+.. code:: javascript
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "error": {
-       "code": -32001,
-       "message": "method call error",
-       "data": {<error_details>}
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": number | string,
+      "error": {
+        "code": number,
+        "message": string | null,
+        "data": {
+          "error": number,
+          "errname": string,
+          "reason": string,
+          "trace": {
+            "class": string,
+            "frames": array,
+            "formatted": string,
+            "repr": string
+          } | null,
+          "extra": array,
+          "py_exception": string
+        }
+      }
+    }
 
 Custom Error Codes
 ^^^^^^^^^^^^^^^^^^
+
+The following custom error codes can be returned in addition to the codes defined by the `JSON-RPC 2.0 specification <https://www.jsonrpc.org/specification#:~:text=NOT%20be%20included.-,5.1%20Error%20object,-When%20a%20rpc>`_.
 
 +---------------+-------------------------------------+----------------+
 | Error Code    | Message                             | Description    |
@@ -124,44 +138,92 @@ If the server needs to notify a connected client of an event, it sends a
 JSON-RPC Notification Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code-block:: javascript
+   :caption: collection_update
 
-   {
-     "jsonrpc": "2.0",
-     "method": "collection_update",
-     "params": [<update_data>]
-   }
+    {
+      "jsonrpc": "2.0",
+      "method": "collection_update",
+      "params": {
+        "msg": string,
+        "collection": string,
+        "id": any,
+        "fields": {
+          "id": string,
+          "state": string,
+          "progress": {
+            "percent": number,
+            "description": string
+          },
+          "result": any,
+          "exc_info": {
+            "type": string,
+            "extra": array | null,
+            "repr": string
+          },
+          "error": string,
+          "exception": string
+        },
+        "extra": object
+      }
+    }
+
+
+.. code-block:: javascript
+   :caption: notify_unsubscribed
+
+    {
+      "jsonrpc": "2.0",
+      "method": "notify_unsubscribed",
+      "params": {
+        "collection": string,
+        "error": {
+          "error": number,
+          "errname": string,
+          "reason": string,
+          "trace": {
+            "class": string,
+            "frames": array,
+            "formatted": string,
+            "repr": string
+          } | null,
+          "extra": array,
+          "py_exception": string
+        }
+      }
+    }
+
 
 Example Notification:
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "method": "collection_update",
-     "params": {
-       "collection": "disk.query",
-       "event": "CHANGED",
-       "fields": {
-         "name": "sda",
-         "status": "HEALTHY"
-       }
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "method": "collection_update",
+      "params": {
+        "collection": "disk.query",
+        "event": "CHANGED",
+        "fields": {
+          "name": "sda",
+          "status": "HEALTHY"
+        }
+      }
+    }
 
 Important Notes on Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  **No Response Required**: These notifications do not require a
-   response from the client.
--  **Event-Driven**: Notifications are used for updates such as status
-   changes, new log entries, or alerts.
+- **No Response Required**: These notifications do not require a
+  response from the client.
+- **Event-Driven**: Notifications are used for updates such as status
+  changes, new log entries, or alerts.
 
 Limitations
 -----------
 
--  **Batch Requests Are Not Supported**: Each request must be sent
-   individually; batch calls are not allowed.
--  **Error Handling**: Custom error codes are provided for handling
-   specific issues.
+- **Batch Requests Are Not Supported**: Each request must be sent
+  individually; batch calls are not allowed.
+- **Error Handling**: Custom error codes are provided for handling
+  specific issues.

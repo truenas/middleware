@@ -1,5 +1,5 @@
 Jobs
-----
+====
 
 Tasks that require significant time to execute or process a large amount of input or output are categorized as jobs.
 Job execution can be time-consuming, but its progress can be monitored.
@@ -12,7 +12,7 @@ Additionally, the client should monitor "changed" events because a "changed" eve
 may be emitted if a method call triggers a job that has already been scheduled.
 
 Example of Calling a Job Method
-###############################
+-------------------------------
 
 The client initiates a method call:
 
@@ -37,8 +37,7 @@ The server responds with the newly added job (e.g. id 101):
             "collection": "core.get_jobs",
             "fields": {
                 "id": 101,
-                "message_ids": ["6841f242-840a-11e6-a437-00e04d680384"],
-                ...
+                "message_ids": ["6841f242-840a-11e6-a437-00e04d680384"]
             }
         }
     }
@@ -58,8 +57,7 @@ Then, it updates the progress:
                 "progress": {
                     "percent": 50,
                     "description": "Copied 1000000 of 2000000 bytes"
-                },
-                ...
+                }
             }
         }
     }
@@ -75,7 +73,7 @@ Finally, it sends the method execution result as usual:
     }
 
 Query Job Status
-################
+----------------
 
 Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_jobs>` method.
 
@@ -90,6 +88,7 @@ Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_job
             [["id", "=", 53]]
         ]
     }
+
 
 .. code-block:: json
     :caption: Response
@@ -117,13 +116,13 @@ Job status can be queried with the :doc:`core.get_jobs <api_methods_core.get_job
     }
 
 Uploading / Downloading Files
-#############################
+-----------------------------
 
 There are some jobs which require input or output as files which can
 be uploaded or downloaded.
 
 Downloading a File
-******************
+^^^^^^^^^^^^^^^^^^
 
 If a job gives a file as an output, this endpoint is to be used to download
 the output file. See :doc:`core.download <api_methods_core.download>` for full API documentation.
@@ -159,25 +158,21 @@ the output file. See :doc:`core.download <api_methods_core.download>` for full A
 In the response, the first value "86" is the job ID for :doc:`config.save <api_methods_config.save>`. This can be used to query
 the status of the job. The second value is a REST endpoint used to download the file.
 
-The download endpoint has a special format:
-
-`http://system_ip/_download/{job_id}?auth_token={token}`
+The download endpoint has the special format ``http://system_ip/_download/{job_id}?auth_token={token}``
+where ``job_id`` and ``token`` are parameters being passed.
 
 :doc:`core.download <api_methods_core.download>` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
 
-`job_id` and `token` are parameters being passed.
+Notes:
 
-`core.download` takes responsibility for providing the download URI with the `job_id` and `token` values.
-
-Note:
-1) Job output is not buffered, so execution would be blocked if a file download is not started.
-2) File download must begin within 60 seconds or the job is canceled.
-3) The file can only be downloaded once.
+#. Job output is not buffered, so execution would be blocked if a file download is not started.
+#. File download must begin within 60 seconds or the job is canceled.
+#. The file can only be downloaded once.
 
 .. _uploading-files:
 
 Uploading a File
-****************
+^^^^^^^^^^^^^^^^
 
 Files can be uploaded to jobs that accept input via the ``/_upload`` HTTP endpoint. Eligible job methods are described
 as such on their corresponding doc pages. 
