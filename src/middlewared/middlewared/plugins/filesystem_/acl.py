@@ -785,12 +785,12 @@ class FilesystemService(Service):
                 case POSIXACE_Tag.USER_OBJ | POSIXACE_Tag.GROUP_OBJ:
                     # We currently allow these because we're populating in getacl response
                     # This may need to be re-evaluated. These tags don't require an explicit uid/gid
-                    # and so we cna just skip safely
+                    # and so we can just skip safely
                     continue
                 case NFS4ACE_Tag.SPECIAL_OWNER | NFS4ACE_Tag.SPECIAL_GROUP:
                     # We currently allow these because we're populating in getacl response
                     # This may need to be re-evaluated. These tags don't require an explicit uid/gid
-                    # and so we cna just skip safely
+                    # and so we can just skip safely
                     continue
                 case _:
                     raise ValidationError(
