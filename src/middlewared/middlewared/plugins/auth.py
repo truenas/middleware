@@ -1149,18 +1149,17 @@ class AuthService(Service):
                                  },
                                  'error': pam_resp.reason,
                             }, False)
-                            return resp
+                            return response
 
                         user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
                         if user_info is None:
                             # User is unprivileged:
-                            return resp
+                            return response
 
                         resp = {
                             'response_type': AuthResp.SCRAM_RESPONSE,
                             'scram_type': 'SERVER_FINAL_RESPONSE',
                             'rfc_str': pam_resp.reason,
-                            'user_info': user_info
                         }
 
                         # SCRAM authentication can in theory be either an API key or
@@ -1170,14 +1169,17 @@ class AuthService(Service):
                                 {'get': True, 'select': ['id', 'name', 'expired']}
                             )
                             cred = ApiKeySessionManagerCredentials(
-                                resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl
+                                user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl
                             )
                         else:
                             cred = UserSessionManagerCredentials(
-                                resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl
+                                user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl
                             )
 
                         await login_fn(app, cred)
+                        resp['user_info'] = await self.me(app)
+                        return resp
+
                     case _:
                         self.logger.error('%s: invalid scram message type', data['scram_type'])
                         raise CallError(f'{data["scram_type"]}: invalid SCRAM type')
