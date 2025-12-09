@@ -145,6 +145,64 @@ class SMBService(ConfigService):
         smb_shares = self.middleware.call_sync('sharing.smb.query', [
             [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
         ])
+
+        disabled_shares = []
+        for share in smb_shares:
+            # Transform audit group names to SID values for smb.conf insertion
+            if not share[share_field.AUDIT][share_field.AUDIT_ENABLE]:
+                # Auditing is not enabled and so we can skip more expensive checks
+                continue
+
+            for field in (share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST):
+                sids = []
+                if not (group_names := share[share_field.AUDIT].get(field, [])):
+                    # no entries in this list
+                    continue
+
+                entries = self.middleware.call_sync('group.query', [['group', 'in', group_names]])
+                for entry in entries:
+                    if not entry['smb']:
+                        # We can't effectively audit non-SMB groups since it won't form
+                        # a part of the security token
+                        self.logger.error('%s: share auditing configuration contains group [%s] '
+                                          'which is not a valid SMB group. Disabling share.',
+                                          share[share_field.NAME], entry['group'])
+                        share[share_field.ENABLED] = False
+                        disabled_shares.append(
+                            f'{share[share_field.NAME]}: {entry["group"]}: share group is not an SMB group'
+                        )
+                        break
+
+                    sids.append(entry['sid'])
+
+                if not share[share_field.ENABLED]:
+                    break
+
+                if len(sids) == len(group_names):
+                    # Best case. Everything was cached and all groups resolved.
+                    share[share_field.AUDIT][field] = sids
+                    continue
+
+                unresolved = set(group_names) - set(g['group'] for g in entries)
+                for group_name in unresolved:
+                    # We may not have a DS cache entry for this group and so we'll try a
+                    # direct query for it. This bypasses our caching and goes directly to
+                    # NSS modules, and when successful adds a new cache entry
+                    entry = self.middleware.call_sync('group.query', [['group', '=', group_name]])
+                    if not entry:
+                        self.logger.error('%s: share auditing configuration contains unknown group [%s]. '
+                                          'Disabling share.', share[share_field.NAME], group_name)
+                        share[share_field.ENABLED] = False
+                        disabled_shares.append(f'{share[share_field.NAME]}: {group_name}: unknown group')
+                        break
+
+                    sids.append(entry[0]['sid'])
+
+                if not share[share_field.ENABLED]:
+                    break
+
+                share[share_field.AUDIT][field] = sids
+
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
@@ -173,6 +231,13 @@ class SMBService(ConfigService):
             })
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
+
+        if disabled_shares:
+            self.middleware.call_sync('alert.oneshot_create', 'SMBAuditShareDisabled', {
+                'shares': ', '.join(disabled_shares)
+            })
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'SMBAuditShareDisabled')
 
         return generate_smb_conf_dict(
             ds_config,
@@ -1262,10 +1327,14 @@ class SharingSMBService(SharingService):
             for key in [share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST]:
                 for idx, group in enumerate(data[share_field.AUDIT][key]):
                     try:
-                        await self.middleware.call('group.get_group_obj', {'groupname': group})
+                        group_obj = await self.middleware.call(
+                            'group.get_group_obj', {'groupname': group, 'sid_info': True}
+                        )
                     except KeyError:
-                        verrors.add(f'{schema_name}.audit.{key}.{idx}',
-                                    f'{group}: group does not exist.')
+                        verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: group does not exist.')
+
+                    if not group_obj['sid']:
+                        verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: not an SMB group.')
 
                     has_limit = True
 
