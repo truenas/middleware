@@ -17,7 +17,7 @@ class SnapshotQueryState:
     results: list
     query_args: dict
     dp: DeterminedProperties
-    parent_type: ZFSType | None
+    parent_type: ZFSType
     eip: bool
     """(e)xclude (i)nternal (p)aths. Unless someone is querying
     an internal path, we will exclude them."""
