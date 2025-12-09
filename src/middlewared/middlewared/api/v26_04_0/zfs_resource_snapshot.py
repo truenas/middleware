@@ -135,7 +135,7 @@ class ZFSResourceSnapshotEntry(BaseModel):
     """The name of the snapshot."""
     type: Literal["SNAPSHOT"] = "SNAPSHOT"
     """The type of zfs resource."""
-    holds: tuple[str] | None
+    holds: tuple | None
     """A list of tags that hold the snapshot."""
     properties: ZFSResourceSnapshotPropertiesEntry | None
     """Requested properties for the snapshot."""

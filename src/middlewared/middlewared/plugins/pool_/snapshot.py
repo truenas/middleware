@@ -113,6 +113,36 @@ class PoolSnapshotService(CRUDService):
             'holds': hold,
         }
 
+    def _optimize_snap_query_filters(
+        self,
+        qry_filters: list,
+        paths: list,
+        remaining_filters: list
+    ) -> bool:
+        recursive = False
+        for f in qry_filters:
+            if len(f) == 3 and f[1] in ('=', 'in'):
+                if f[0] in ('id', 'name'):
+                    # Direct snapshot lookup
+                    if f[1] == '=':
+                        paths.append(f[2])
+                    else:
+                        paths.extend(f[2])
+                elif f[0] in ('pool', 'dataset'):
+                    # Dataset-based lookup (get all snapshots for dataset)
+                    if f[1] == '=':
+                        paths.append(f[2])
+                    else:
+                        paths.extend(f[2])
+                    # For dataset filters, we need recursive=True to get all snapshots
+                    if f[0] == 'pool':
+                        recursive = True
+                else:
+                    remaining_filters.append(f)
+            else:
+                remaining_filters.append(f)
+        return recursive
+
     @filterable_api_method(item=PoolSnapshotEntry)
     def query(self, filters, options):
         """Query all ZFS Snapshots with `query-filters` and `query-options`.
@@ -142,31 +172,8 @@ class PoolSnapshotService(CRUDService):
 
         # Extract path-based filters for efficient querying
         # Optimization: if filtering by id/name/pool/dataset, pass as paths
-        paths = []
-        remaining_filters = []
-        recursive = False
-        for f in filters:
-            if len(f) == 3 and f[1] in ('=', 'in'):
-                if f[0] in ('id', 'name'):
-                    # Direct snapshot lookup
-                    if f[1] == '=':
-                        paths.append(f[2])
-                    else:
-                        paths.extend(f[2])
-                elif f[0] in ('pool', 'dataset'):
-                    # Dataset-based lookup (get all snapshots for dataset)
-                    if f[1] == '=':
-                        paths.append(f[2])
-                    else:
-                        paths.extend(f[2])
-                    # For dataset filters, we need recursive=True to get all snapshots
-                    if f[0] == 'pool':
-                        recursive = True
-                else:
-                    remaining_filters.append(f)
-            else:
-                remaining_filters.append(f)
-
+        paths, remaining_filters = [], []
+        recursive = self._optimize_snap_query_filters(filters, paths, remaining_filters)
         if paths:
             query_args['paths'] = paths
             query_args['recursive'] = recursive
