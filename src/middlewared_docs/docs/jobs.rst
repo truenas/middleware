@@ -195,6 +195,7 @@ Form data parameters:
   form field. Format:
 
     .. code:: json
+
         {
             "method": "config.upload",
             "params": []
