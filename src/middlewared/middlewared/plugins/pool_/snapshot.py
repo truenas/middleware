@@ -21,7 +21,6 @@ from middlewared.api.current import (
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 from middlewared.utils.filter_list import filter_list
@@ -41,7 +40,7 @@ class PoolSnapshotService(CRUDService):
     def clone(self, data):
         """Clone a given snapshot to a new dataset."""
         self.middleware.call_sync(
-            'zfs.resource.snapshot.clone',
+            'zfs.resource.snapshot.clone_impl',
             {
                 'snapshot': data['snapshot'],
                 'dataset': data['dataset_dst'],
@@ -55,7 +54,16 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotRollbackArgs, PoolSnapshotRollbackResult, roles=['SNAPSHOT_WRITE', 'POOL_WRITE'])
     def rollback(self, id_, options):
-        return self.middleware.call_sync('zfs.snapshot.rollback', id_, options)
+        self.middleware.call_sync(
+            'zfs.resource.snapshot.rollback_impl',
+            {
+                'path': id_,
+                'recursive': options.get('recursive', False),
+                'recursive_clones': options.get('recursive_clones', False),
+                'force': options.get('force', False),
+                'recursive_rollback': options.get('recursive_rollback', False),
+            }
+        )
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
@@ -64,7 +72,14 @@ class PoolSnapshotService(CRUDService):
         Add `truenas` tag to the snapshot's tag namespace.
 
         """
-        return self.middleware.call_sync('zfs.snapshot.hold', id_, options)
+        self.middleware.call_sync(
+            'zfs.resource.snapshot.hold_impl',
+            {
+                'path': id_,
+                'tag': 'truenas',
+                'recursive': options.get('recursive', False),
+            }
+        )
 
     @api_method(PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, roles=['SNAPSHOT_WRITE'])
     def release(self, id_, options):
@@ -73,10 +88,22 @@ class PoolSnapshotService(CRUDService):
         Remove all hold tags from the specified snapshot.
 
         """
-        return self.middleware.call_sync('zfs.snapshot.release', id_, options)
+        self.middleware.call_sync(
+            'zfs.resource.snapshot.release_impl',
+            {
+                'path': id_,
+                'tag': None,  # Release all hold tags
+                'recursive': options.get('recursive', False),
+            }
+        )
 
-    def _transform_snapshot_entry(self, snap):
-        """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format."""
+    def _transform_snapshot_entry(self, snap, *, include_holds=True):
+        """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
+
+        Args:
+            snap: Snapshot dict from zfs.resource.snapshot.query
+            include_holds: Whether to include holds field (False for create/update results)
+        """
         # Transform properties from new format to old format
         # New: {prop: {raw, source, value}}
         # Old: {prop: {value, rawvalue, source, parsed}}
@@ -96,12 +123,7 @@ class PoolSnapshotService(CRUDService):
                     'parsed': prop_data.get('value'),
                 }
 
-        if snap['holds'] and 'truenas' in snap['holds']:
-            hold = {'truenas': 1}
-        else:
-            hold = {}
-
-        return {
+        entry = {
             'id': snap['name'],  # id is same as name for snapshots
             'name': snap['name'],
             'pool': snap['pool'],
@@ -110,8 +132,15 @@ class PoolSnapshotService(CRUDService):
             'dataset': snap['dataset'],
             'createtxg': str(snap['createtxg']),
             'properties': old_props,
-            'holds': hold,
         }
+
+        if include_holds:
+            if snap.get('holds') and 'truenas' in snap['holds']:
+                entry['holds'] = {'truenas': 1}
+            else:
+                entry['holds'] = {}
+
+        return entry
 
     def _optimize_snap_query_filters(
         self,
@@ -220,9 +249,73 @@ class PoolSnapshotService(CRUDService):
     @api_method(PoolSnapshotCreateArgs, PoolSnapshotCreateResult)
     def do_create(self, data):
         """Take a snapshot from a given dataset."""
-        result = self.middleware.call_sync('zfs.snapshot.create', data)
-        self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=result['id'], fields=result)
-        return result
+        dataset = data['dataset']
+        recursive = data.get('recursive', False)
+        exclude = data.get('exclude', [])
+        properties = data.get('properties', {})
+        vmware_sync = data.get('vmware_sync', False)
+        suspend_vms = data.get('suspend_vms', False)
+
+        # Resolve snapshot name
+        name = data.get('name')
+        if not name:
+            naming_schema = data.get('naming_schema')
+            if naming_schema:
+                name = self.middleware.call_sync('replication.new_snapshot_name', naming_schema)
+
+        if exclude:
+            for k in ['vmware_sync', 'properties']:
+                if data.get(k):
+                    raise ValidationError(
+                        f'snapshot_create.{k}',
+                        'This option is not supported when excluding datasets'
+                    )
+
+        # VMware sync setup
+        vmware_context = None
+        if vmware_sync:
+            vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
+
+        # VM suspend setup
+        affected_vms = {}
+        if suspend_vms:
+            if affected_vms := self.middleware.call_sync('vm.query_snapshot_begin', dataset, recursive):
+                self.middleware.call_sync('vm.suspend_vms', list(affected_vms))
+
+        try:
+            # Create snapshot via zfs.resource.snapshot.create_impl
+            result = self.middleware.call_sync(
+                'zfs.resource.snapshot.create_impl',
+                {
+                    'dataset': dataset,
+                    'name': name,
+                    'recursive': recursive,
+                    'exclude': exclude,
+                    'user_properties': properties,
+                }
+            )
+
+            # Set vmsynced property if applicable
+            if vmware_context and vmware_context['vmsynced']:
+                self.middleware.call_sync(
+                    'pool.dataset.update',
+                    dataset,
+                    {'user_properties_update': [{'key': 'freenas:vmsynced', 'value': 'Y'}]}
+                )
+
+            self.logger.info(f"Snapshot taken: {dataset}@{name}")
+        finally:
+            if affected_vms:
+                self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
+            if vmware_context:
+                self.middleware.call_sync('vmware.snapshot_end', vmware_context)
+
+        # Transform to PoolSnapshotCreateUpdateEntry format (excludes holds)
+        entry = self._transform_snapshot_entry(result, include_holds=False)
+        self.middleware.send_event(
+            f'{self._config.namespace}.query', 'ADDED', id=entry['id'], fields=entry
+        )
+        return entry
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
@@ -236,8 +329,12 @@ class PoolSnapshotService(CRUDService):
 
         try:
             self.middleware.call_sync(
-                'zfs.resource.destroy',
-                DestroyArgs(path=id_, recursive=options['recursive'], defer=options['defer'])
+                'zfs.resource.snapshot.destroy_impl',
+                {
+                    'path': id_,
+                    'recursive': options['recursive'],
+                    'defer': options['defer'],
+                }
             )
         except ValidationError as ve:
             if ve.errno == errno.ENOENT:

@@ -65,7 +65,7 @@ async def create_snapshot(
     st = await middleware.call("filesystem.statfs", path)
     snapshot_name = f"{name}-{utc_now().strftime('%Y%m%d%H%M%S')}"
     snapshot = await middleware.call(
-        "zfs.snapshot.create",
+        "zfs.resource.snapshot.create_impl",
         {
             "dataset": st["source"],
             "name": snapshot_name,

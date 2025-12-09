@@ -247,7 +247,7 @@ class ContainerService(CRUDService):
                 }
             ))
             await self.middleware.call(
-                'zfs.resource.destroy', DestroyArgs(path=f'{data["dataset"]}@{source_snapshot}')
+                'zfs.resource.snapshot.destroy_impl', {'path': f'{data["dataset"]}@{source_snapshot}'}
             )
 
         return await self.create_with_dataset(data)

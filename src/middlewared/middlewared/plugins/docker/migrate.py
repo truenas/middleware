@@ -4,7 +4,6 @@ from datetime import datetime
 from middlewared.service import CallError, private, Service
 from middlewared.service_exception import InstanceNotFound
 from middlewared.plugins.pool_.utils import CreateImplArgs
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
@@ -59,10 +58,14 @@ class DockerService(Service):
 
     @private
     async def replicate_apps_dataset(self, new_pool, old_pool, migration_options):
+        # Resolve naming schema to get snapshot name
+        snap_name = await self.middleware.call(
+            'replication.new_snapshot_name', MIGRATION_NAMING_SCHEMA
+        )
         snap_details = await self.middleware.call(
-            'zfs.snapshot.create', {
+            'zfs.resource.snapshot.create_impl', {
                 'dataset': applications_ds_name(old_pool),
-                'naming_schema': MIGRATION_NAMING_SCHEMA,
+                'name': snap_name,
                 'recursive': True,
             }
         )
@@ -90,12 +93,14 @@ class DockerService(Service):
 
         finally:
             await self.middleware.call(
-                'zfs.resource.destroy', DestroyArgs(path=snap_details['id'], recursive=True)
+                'zfs.resource.snapshot.destroy_impl',
+                {'path': snap_details['name'], 'recursive': True}
             )
-            snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
+            target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
             try:
                 await self.middleware.call(
-                    'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
+                    'zfs.resource.snapshot.destroy_impl',
+                    {'path': target_snap_name, 'recursive': True}
                 )
             except InstanceNotFound:
                 pass

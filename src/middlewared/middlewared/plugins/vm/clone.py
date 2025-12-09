@@ -60,7 +60,7 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.snapshot.create', {'dataset': zvol, 'name': snapshot_name})
+        await self.middleware.call('zfs.resource.snapshot.create_impl', {'dataset': zvol, 'name': snapshot_name})
         created_snaps.append(zvol_snapshot)
 
         clone_suffix = name
@@ -152,7 +152,9 @@ class VMService(Service):
                     else:
                         if snap is not None:
                             try:
-                                await self.middleware.call('zfs.resource.destroy', DestroyArgs(path=snap))
+                                await self.middleware.call(
+                                    'zfs.resource.snapshot.destroy_impl', {'path': snap}
+                                )
                             except Exception:
                                 self.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
             raise e

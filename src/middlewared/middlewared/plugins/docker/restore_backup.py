@@ -47,7 +47,8 @@ class DockerService(Service):
 
         job.set_progress(25, f'Rolling back to {backup_name!r} backup')
         self.middleware.call_sync(
-            'zfs.snapshot.rollback', backup['snapshot_name'], {
+            'zfs.resource.snapshot.rollback_impl', {
+                'path': backup['snapshot_name'],
                 'force': True,
                 'recursive': True,
                 'recursive_clones': True,

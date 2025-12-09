@@ -251,7 +251,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         if snapshot:
             try:
-                await middleware.call("zfs.resource.destroy", DestroyArgs(path=snapshot))
+                await middleware.call("zfs.resource.snapshot.destroy_impl", {"path": snapshot})
             except Exception as e:
                 middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
 

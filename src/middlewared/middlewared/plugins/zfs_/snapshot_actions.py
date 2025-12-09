@@ -43,7 +43,7 @@ class ZFSSnapshotService(Service):
             ):
                 datasets.add(f'{i["name"]}@{snap_name}')
 
-            for snap in filter(lambda sn: self.middleware.call_sync('zfs.snapshot.query', [['id', '=', sn]]), datasets):
+            for snap in filter(lambda sn: self.middleware.call_sync('zfs.resource.snapshot.query_impl', {'paths': [sn]}), datasets):
                 self.rollback_impl(args, snap)
 
         else:
