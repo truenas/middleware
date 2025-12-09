@@ -167,6 +167,27 @@ class DocumentationGenerator:
         if item.removed_in:
             result += f"*DEPRECATED: this method is scheduled to be removed in {item.removed_in}.*\n\n"
 
+        if isinstance(item, APIDumpMethod):
+            if item.name == "core.download":
+                # Add downloadable jobs list for core.download
+                downloadable_jobs = [
+                    m for m in self.api.methods
+                    if m.output_pipes
+                ]
+                if downloadable_jobs:
+                    result += "**Jobs that can be downloaded:**\n\n"
+                    for job in sorted(downloadable_jobs, key=lambda m: m.name):
+                        result += f"- :doc:`{job.name} <api_methods_{job.name}>`\n"
+                    result += "\n"
+            else:
+                modal = "MUST" if item.check_pipes else "CAN"
+                if item.input_pipes:
+                    # Add note about file upload for jobs with input pipes
+                    result += f"*This job {modal} be used with file upload.* See :ref:`uploading-files`.\n\n"
+                if item.output_pipes:
+                    # Add note about core.download for jobs with output pipes
+                    result += f"*This job {modal} be used with* :doc:`core.download <api_methods_core.download>`.\n\n"
+
         result += f".. raw:: html\n\n"
         result += textwrap.indent(
             f"<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4

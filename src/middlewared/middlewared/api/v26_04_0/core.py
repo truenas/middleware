@@ -233,21 +233,30 @@ class CoreArpResult(BaseModel):
 
 
 class CoreDownloadArgs(BaseModel):
-    method: str
-    """Method name to execute for generating download content."""
+    method: str = Field(examples=["config.save"])
+    """Name of the job method to execute."""
     args: list
-    """Array of arguments to pass to the method."""
-    filename: str
-    """Filename for the downloaded file."""
+    """Arguments to pass to the job method."""
+    filename: str = Field(examples=["system-config-backup.db"])
+    """Suggested filename for the downloaded file. Sets the `Content-Disposition` header."""
     buffered: bool = False
-    """Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay \
-    blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's \
-    pipe output will be buffered to ramfs."""
+    """Whether to buffer the job's output.
+
+    * `false` (default): Job starts writing immediately to the download stream. The job blocks until the client \
+      downloads the data or 60 seconds elapses. Use for large files or streaming data.
+    * `true`: Job output is buffered in RAM until completion, then made available for download. The download \
+      URL remains valid for 3600 seconds. Use for small files when you need to ensure the job completes before \
+      downloading."""
 
 
 class CoreDownloadResult(BaseModel):
-    result: tuple[int, str]
-    """Job ID and the URL for download."""
+    result: tuple[int, str] = Field(
+        examples=[(86, "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M")]
+    )
+    """Array containing the job ID and download URL.
+
+    * First element: Job ID that can be used with `core.get_jobs` to monitor progress
+    * Second element: Download URL in the format `/_download/{job_id}?auth_token={token}`"""
 
 
 @single_argument_args("options")
