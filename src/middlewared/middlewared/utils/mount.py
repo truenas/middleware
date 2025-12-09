@@ -36,14 +36,26 @@ def __parse_to_mnt_id(line, out_dict):
 
 
 def __create_tree(info, mount_id):
-    root_id = None
+    # Find root by smallest parent_id while building the tree. The root mount's
+    # parent_id references an early boot mount (initial ramfs created by
+    # init_mount_tree) that lies outside the visible tree per proc_pid_mountinfo(5).
+    # Kernel commit https://github.com/torvalds/linux/commit/7f9bfafc5f49 (6.14+)
+    # changed mount allocation from IDA to xarray, shifting IDs: shmem_init 0→1,
+    # init_mount_tree 1→2, causing root's parent_id to change from 1 to 2.
+    # Choosing the entry with the smallest parent_id remains valid and stable,
+    # because early-boot mounts (shmem_init/init_rootfs) are never unmounted.
+    root_entry = None
 
     for entry in info.values():
         if not entry.get('children'):
             entry['children'] = []
 
-        if entry['parent_id'] == 1:
-            root_id = entry['mount_id']
+        # Track mount with smallest parent_id
+        if root_entry is None or entry['parent_id'] < root_entry['parent_id']:
+            root_entry = entry
+
+        # Skip mounts whose parent is not in visible tree (per proc_pid_mountinfo(5))
+        if entry['parent_id'] not in info:
             continue
 
         parent = info[entry['parent_id']]
@@ -52,7 +64,7 @@ def __create_tree(info, mount_id):
         else:
             parent['children'].append(entry)
 
-    return info[mount_id or root_id]
+    return info[mount_id or root_entry['mount_id']]
 
 
 def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None):
