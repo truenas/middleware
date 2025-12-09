@@ -1,5 +1,5 @@
 <%
-from middlewared.logger import DEFAULT_SYSLOG_PATH, NGINX_LOG_PATH, ALL_LOG_FILES
+from middlewared.logger import DEFAULT_SYSLOG_PATH, NGINX_LOG_PATH, ALL_LOG_FILES, AUDIT_HANDLER_ERROR_SOCKET
 
 logger = middleware.logger
 
@@ -88,6 +88,10 @@ source s_tn_middleware {
 
 source s_tn_auditd {
   unix-stream("/var/run/syslog-ng/auditd.sock" create-dirs(yes) perm(0600));
+};
+
+source s_tn_audit_handler_errors {
+  unix-stream("${AUDIT_HANDLER_ERROR_SOCKET}" create-dirs(yes) perm(0600));
 };
 
 ##################

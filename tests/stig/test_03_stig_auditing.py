@@ -25,6 +25,7 @@ STIG_USER = 'stiguser'
 STIG_PWD = 'auditdtesting'
 # As stored on TrueNAS
 PRIVILEGED_RULE_FILE = '/conf/audit_rules/31-privileged.rules'
+AUDIT_HANDLER_LOG = '/var/log/audit/audit_handler.log'
 
 
 def config_auditd(maybe_stig: bool):
@@ -141,3 +142,38 @@ def test_privileged_and_escalation_events(test_rule, param, key, auditd_gpos_sti
     event = call('audit.query', payload)
     event_user = event['event_data']['syscall']['AUID']
     assert event_user == STIG_USER, f"Expected {STIG_USER} but found {event_user!r}"
+
+
+def test_missing_watch_object_at_start():
+    """
+    Objects under a watch rule that are missing generate different auditd messages
+    The process:
+    1) Start in non-gpos mode
+    2) Temporarily move a gpos audited directory
+    3) Start gpos auditing
+    4) Report any errors
+    5) Restore temporary changes
+
+    NOTE: While This condition is unhandled this test will generate an error report
+          and the test will succeed.
+          After the message is handled this test will fail and may be deleted.
+    """
+    watched_obj = "/etc/proftpd/conf.d"
+    temp_append = ".renamed"
+    # If everything is working, the size of /var/log/audit/audit_handler.log should be zero
+    logsize = ssh(f'stat -c %s {AUDIT_HANDLER_LOG}').strip()
+    log_contents = ssh(f"cat {AUDIT_HANDLER_LOG}")
+    assert len(log_contents) <= 1, log_contents
+    res = ""
+
+    try:
+        ssh(f"mv '{watched_obj}' '{watched_obj}{temp_append}'")
+        config_auditd(True)
+        sleep(1)
+        res = ssh(f"cat {AUDIT_HANDLER_LOG}")
+        assert "Unhandled auditd message" in res
+    finally:
+        # Restore
+        ssh(f"mv '{watched_obj}{temp_append}' '{watched_obj}'")
+        ssh(f"truncate -c --size 0 {AUDIT_HANDLER_LOG}")
+        config_auditd(False)

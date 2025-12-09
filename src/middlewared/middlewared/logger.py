@@ -63,7 +63,7 @@ logging.TRACE = 6
 
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
 APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
-TRUENAS_AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
+TRUENAS_AUDIT_HANDLER_ERROR_LOGFILE = '/var/log/audit/audit_handler.log'
 DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 LOGFILE = '/var/log/middlewared.log'
@@ -77,7 +77,9 @@ ZETTAREPL_LOGFORMAT = '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s]
 
 DEFAULT_IDENT = 'MIDDLEWARE: '
 MIDDLEWARE_AUDIT_IDENT = 'TNAUDIT_MIDDLEWARE: '
+AUDIT_HANDLER_ERROR_IDENT = 'TNAUDIT_HANDLER: '
 DEFAULT_SYSLOG_PATH = '/var/run/syslog-ng/middleware.sock'
+AUDIT_HANDLER_ERROR_SOCKET = '/var/run/syslog-ng/audit_handler_errors.sock'
 DEFAULT_PENDING_QUEUE_LEN = 4096
 
 
@@ -116,7 +118,7 @@ ALL_LOG_FILES = (
     TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
     TNLog('failover', FAILOVER_LOGFILE),
     TNLog('netdata_api', NETDATA_API_LOGFILE),
-    TNLog('truenas_audit_handler', TRUENAS_AUDIT_HANDLER_LOGFILE),
+    TNLog('truenas_audit_handler', TRUENAS_AUDIT_HANDLER_ERROR_LOGFILE),
     TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
     TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
 )
