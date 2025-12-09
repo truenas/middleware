@@ -400,6 +400,9 @@ def test__audit_log(request):
             new_data = call('sharing.smb.update', s['id'], {'audit': {'enable': True, 'ignore_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
             assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
+            sid = call('group.get_group_obj', {'groupname': 'builtin_users', 'sid_info': True})['sid']
+            value = call('smb.getparm', 'truenas_audit:ignore_list', 'SMB_AUDIT')
+            assert value.strip() == sid
 
             # Verify that being member of group in ignore list is sufficient to avoid new messages
             # By default authentication attempts are always logged
@@ -408,6 +411,8 @@ def test__audit_log(request):
             new_data = call('sharing.smb.update', s['id'], {'audit': {'enable': True, 'watch_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
+            value = call('smb.getparm', 'truenas_audit:watch_list', 'SMB_AUDIT')
+            assert value.strip() == sid
 
             # Verify that watch_list takes precedence
             # By default authentication attempts are always logged
