@@ -1131,7 +1131,7 @@ class AuthService(Service):
                             'response_type': AuthResp.SCRAM_RESPONSE,
                             'scram_type': 'SERVER_FIRST_RESPONSE',
                             'rfc_str': resp.reason,
-                            'user_data': None
+                            'user_info': None
                         }
                     case 'CLIENT_FINAL_MESSAGE':
                         auth_ctx.next_mech = None
@@ -1160,7 +1160,7 @@ class AuthService(Service):
                             'response_type': AuthResp.SCRAM_RESPONSE,
                             'scram_type': 'SERVER_FINAL_RESPONSE',
                             'rfc_str': pam_resp.reason,
-                            'user_data': user_info
+                            'user_info': user_info
                         }
 
                         # SCRAM authentication can in theory be either an API key or
