@@ -10,7 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.service import CallError, InstanceNotFound, job, private, Service
+from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationErrors
 from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
 
@@ -235,10 +235,6 @@ class PoolService(Service):
 
         This is useful after SED disks have been unlocked and the pool can now be imported.
 
-        Errors:
-            EINVAL - Pool is not offline
-            EFAULT - Failed to import pool
-
         .. examples(websocket)::
 
           Reimport pool of id 1 after unlocking SED disks.
@@ -252,16 +248,38 @@ class PoolService(Service):
             }
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-
-        if pool['status'] != 'OFFLINE':
-            raise CallError(
-                f'Pool {pool["name"]} is not offline (current status: {pool["status"]}). '
-                'Only offline pools can be reimported.',
-                errno.EINVAL
-            )
-
         vol_name = pool['name']
         vol_guid = pool['guid']
+
+        verrors = ValidationErrors()
+        if pool['status'] != 'OFFLINE':
+            verrors.add(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} is not offline (current status: {pool["status"]}). '
+                'Only offline pools can be reimported.'
+            )
+            verrors.check()
+
+        job.set_progress(5, 'Scanning for available pools')
+
+        available_pools = {p['guid']: p for p in await self.middleware.call('zfs.pool.find_import')}
+        pool_found = available_pools.get(vol_guid)
+
+        if pool_found is None:
+            verrors.add(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} (GUID: {vol_guid}) is not available for import. '
+                'If this is an all-SED pool, ensure SED disks have been unlocked first.'
+            )
+            verrors.check()
+
+        if pool_found['status'] == 'UNAVAIL':
+            verrors.add(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} is in UNAVAIL state and cannot be imported. '
+                'Some disks may be missing or still locked.'
+            )
+            verrors.check()
 
         job.set_progress(10, 'Importing pool')
 
@@ -308,7 +326,6 @@ class PoolService(Service):
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', vol_name)
 
-        # Send CHANGED event (not ADDED - pool already exists in DB)
         self.middleware.send_event('pool.query', 'CHANGED', id=oid, fields=pool)
 
         job.set_progress(100, 'Pool reimported successfully')
@@ -323,7 +340,7 @@ class PoolService(Service):
             name,  # name of the zpool / root dataset
         ]
         try:
-            self.logger.debug('Going to mount root dataset recusively: %r', name)
+            self.logger.debug('Going to mount root dataset recursively: %r', name)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
