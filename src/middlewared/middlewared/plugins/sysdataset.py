@@ -676,10 +676,6 @@ class SystemDatasetService(ConfigService):
             restart = ['netdata']
             if self.middleware.call_sync('service.started', 'nfs'):
                 restart.append('nfs')
-            if self.middleware.call_sync('service.started', 'cifs'):
-                if self.middleware.call_sync('smb.config')['stateful_failover']:
-                    # SMB locking dir on system dataset
-                    restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
 

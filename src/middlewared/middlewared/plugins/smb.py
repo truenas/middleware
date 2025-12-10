@@ -133,9 +133,6 @@ class SMBService(ConfigService):
         else:
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
-            # If we're not the active storage controller, don't shift lockdir.
-            # This avoids races on system dataset setup.
-            smb_config['stateful_failover'] = False
 
         ds_config = self.middleware.call_sync('directoryservices.config')
         if ds_config['enable'] and ds_config['service_type'] == 'IPA':
@@ -617,6 +614,11 @@ class SMBService(ConfigService):
             (SearchProtocol.SPOTLIGHT in new['search_protocols'])
         ):
             await self.middleware.call('truesearch.configure')
+
+        if old['stateful_failover'] != new['stateful_failover']:
+            verb = 'START' if new['stateful_failover'] else 'STOP'
+            ctdb_job = await self.middleware.call('service.control', verb, 'ctdb')
+            await ctdb_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config
