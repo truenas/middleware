@@ -23,6 +23,23 @@ from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
+TERMINATE_DEBUG_FILE = '/root/failover_terminate_debug.log'
+
+
+def _terminate_debug_log(msg):
+    """
+    Write debug message directly to file during shutdown.
+    Regular logging may not work during shutdown as the logging
+    infrastructure might not flush to disk before the system halts.
+    """
+    try:
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        with open(TERMINATE_DEBUG_FILE, 'a') as f:
+            f.write(f'{timestamp} {msg}\n')
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception:
+        pass
 
 # When we get to the point of transitioning to MASTER or BACKUP
 # we wrap the associated methods (`vrrp_master` and `vrrp_backup`)
@@ -70,6 +87,109 @@ class FailoverEventsService(Service):
     # this is the time limit we place on exporting the
     # zpool(s) when becoming the BACKUP node
     ZPOOL_EXPORT_TIMEOUT = 4  # seconds
+
+    async def terminate_timeout(self):
+        """Return the timeout in secs for the terminate method."""
+        return 30
+
+    async def terminate(self):
+        """
+        Called when middleware is shutting down.
+
+        On HA systems during shutdown/reboot, we trigger vrrp_backup directly to ensure
+        fenced is stopped and pools are exported before middlewared terminates. This
+        allows the other node to take over cleanly.
+
+        Basically the problem we have seen is that on shutdown of current MASTER node, what can happen
+        is that sometimes it takes some time for fenced to stop and because of that BACKUP when it tries to become
+        MASTER, is not able to start fenced because it is still running on old MASTER.
+        An easy way to reproduce this is to have VMs running with shutdown timeout of say 90secs and then MASTER
+        reboot is triggered and it will reproduce the problem where BACKUP tries to become MASTER but is unable to
+        start fenced.
+
+        What we want is basically a guarantee that when current MASTER shuts down ore reboots, fenced stops
+        in a timely fashion so new MASTER can do necessary reservations.
+
+        There are different edge cases here at play, middleware can stop before vrrp backup has successfully
+        completed it's magic or there could be other race conditions between services.
+
+        Best way to ensure that current MASTER processes vrrp backup would be to handle this specially on middleware
+        shut down. Middleware has hooks in place to allow graceful shutdown of any service which requires it and it
+        ensures that it gives time to necessary service/plugin for that to happen before it shuts itself down.
+
+        Here what we do is roughly the following:
+        1. Run following checks to ensure that indeed we want vrrp backup to be executed
+           a) System is HA
+           b) System is in shutdown state (shutdown state is guaranteed by ix-shutdown service)
+           c) We have fenced running
+           d) We have critical interface configured (otherwise failover was already not healthy)
+        2. We trigger vrrp backup event and wait for it to complete
+        """
+        _terminate_debug_log('[terminate] FailoverEventsService.terminate() called')
+
+        system_state = await self.middleware.call('system.state')
+        _terminate_debug_log(f'[terminate] System state: {system_state!r}')
+        if system_state != 'SHUTTING_DOWN':
+            _terminate_debug_log('[terminate] Not shutting down, skipping')
+            return
+
+        if not await self.middleware.call('failover.licensed'):
+            _terminate_debug_log('[terminate] Not HA licensed, skipping')
+            return
+
+        fenced_running = (await self.middleware.call('failover.fenced.run_info'))['running']
+        pools = await self.middleware.call('pool.query', [], {'select': ['name', 'status']})
+        pools_imported = any(p['status'] != 'OFFLINE' for p in pools)
+
+        _terminate_debug_log(f'[terminate] Fenced running: {fenced_running}, Pools imported: {pools_imported}')
+
+        if not fenced_running or not pools_imported:
+            _terminate_debug_log('[terminate] Not active node, skipping')
+            return
+
+        interfaces = await self.middleware.call('interface.query')
+        crit_iface = next((i for i in interfaces if i.get('failover_critical')), None)
+        if not crit_iface:
+            _terminate_debug_log('[terminate] No critical interface configured, skipping')
+            return
+
+        ifname = crit_iface['name']
+        _terminate_debug_log(f'[terminate] Triggering BACKUP event on interface {ifname!r}')
+
+        # Trigger BACKUP event - may return None if event is ignored (e.g., duplicate already running)
+        try:
+            backup_job = await self.middleware.call('failover.events.event', ifname, 'BACKUP')
+        except Exception as e:
+            _terminate_debug_log(f'[terminate] Failed to trigger BACKUP event: {e!r}')
+            backup_job = None
+
+        # If event was ignored, check if there's already a vrrp_backup job running
+        if backup_job is None:
+            _terminate_debug_log('[terminate] BACKUP event returned None, checking for existing job')
+            jobs = await self.middleware.call(
+                'core.get_jobs', [
+                    ('method', '=', 'failover.events.vrrp_backup'),
+                    ('state', 'in', ('RUNNING', 'WAITING')),
+                ]
+            )
+            if jobs:
+                backup_job = jobs[0]
+                _terminate_debug_log(f'[terminate] Found existing vrrp_backup job id={backup_job["id"]}')
+            else:
+                _terminate_debug_log('[terminate] No vrrp_backup job found, nothing to wait for')
+                return
+
+        # Wait for the job to complete
+        job_id = backup_job.id if hasattr(backup_job, 'id') else backup_job['id']
+        _terminate_debug_log(f'[terminate] Waiting for vrrp_backup job id={job_id}')
+        try:
+            await (await self.middleware.call('core.job_wait', job_id)).wait()
+            _terminate_debug_log('[terminate] vrrp_backup job completed')
+        except Exception as e:
+            _terminate_debug_log(f'[terminate] Error waiting for job: {e!r}')
+
+        fenced_running = (await self.middleware.call('failover.fenced.run_info'))['running']
+        _terminate_debug_log(f'[terminate] Final fenced status: running={fenced_running}')
 
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
