@@ -4,7 +4,10 @@ import os
 import subprocess
 
 from middlewared.api import api_method
-from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
+from middlewared.api.current import (
+    PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult,
+    PoolReimportArgs, PoolReimportResult,
+)
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
@@ -221,6 +224,94 @@ class PoolService(Service):
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+
+        return True
+
+    @api_method(PoolReimportArgs, PoolReimportResult, roles=['POOL_WRITE'])
+    @job(lock='pool_reimport')
+    async def reimport(self, job, oid):
+        """
+        Attempt to import a pool that exists in database but is currently OFFLINE.
+
+        This is useful after SED disks have been unlocked and the pool can now be imported.
+
+        Errors:
+            EINVAL - Pool is not offline
+            EFAULT - Failed to import pool
+
+        .. examples(websocket)::
+
+          Reimport pool of id 1 after unlocking SED disks.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.reimport",
+                "params": [1]
+            }
+        """
+        pool = await self.middleware.call('pool.get_instance', oid)
+
+        if pool['status'] != 'OFFLINE':
+            raise CallError(
+                f'Pool {pool["name"]} is not offline (current status: {pool["status"]}). '
+                'Only offline pools can be reimported.',
+                errno.EINVAL
+            )
+
+        vol_name = pool['name']
+        vol_guid = pool['guid']
+
+        job.set_progress(10, 'Importing pool')
+
+        # Import the pool using existing boot import logic
+        # This handles: import with proper flags, normalize root dataset properties
+        if not await self.middleware.run_in_thread(self.import_on_boot_impl, vol_name, vol_guid, True):
+            raise CallError(f'Failed to import pool {vol_name}', errno.EFAULT)
+
+        job.set_progress(30, 'Mounting datasets')
+
+        # Handle encryption - mount or unlock as needed
+        if not await self.middleware.run_in_thread(self.encryption_is_active, vol_name):
+            # Not encrypted - just mount recursively
+            await self.middleware.run_in_thread(self.recursive_mount, vol_name)
+
+        job.set_progress(50, 'Unlocking encrypted datasets')
+
+        # Run unlock logic (similar to unlock_on_boot_impl but for single pool)
+        await self.middleware.run_in_thread(self.unlock_on_boot_impl, vol_name)
+
+        job.set_progress(70, 'Resetting mountpoints')
+
+        # Reset mountpoints recursively
+        await self.reset_mountpoint_recursively(vol_name)
+
+        job.set_progress(80, 'Re-enabling services')
+
+        # Re-enable services that were disabled when pool went offline
+        key = f'pool:{vol_name}:enable_on_import'
+        if await self.middleware.call('keyvalue.has_key', key):
+            for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
+                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+                    if delegate.name == name:
+                        attachments = await delegate.query(pool['path'], False)
+                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        if attachments:
+                            await delegate.toggle(attachments, True)
+            await self.middleware.call('keyvalue.delete', key)
+
+        job.set_progress(90, 'Running post-import tasks')
+
+        # Post-import hooks and sync encryption keys
+        pool = await self.middleware.call('pool.get_instance', oid)
+        await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call('pool.dataset.sync_db_keys', vol_name)
+
+        # Send CHANGED event (not ADDED - pool already exists in DB)
+        self.middleware.send_event('pool.query', 'CHANGED', id=oid, fields=pool)
+
+        job.set_progress(100, 'Pool reimported successfully')
 
         return True
 
