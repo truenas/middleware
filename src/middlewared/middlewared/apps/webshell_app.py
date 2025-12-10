@@ -4,6 +4,7 @@ import contextlib
 import fcntl
 import os
 import queue
+import select
 import struct
 import termios
 import threading
@@ -36,6 +37,7 @@ class ShellWorkerThread(threading.Thread):
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
+        self.master_fd = None
         self.command, self.sudo_warning = self.get_command(username, as_root, options)
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
@@ -81,7 +83,7 @@ class ShellWorkerThread(threading.Thread):
         self.input_queue.put(ShellResize(cols, rows))
 
     def run(self):
-        self.shell_pid, master_fd = os.forkpty()
+        self.shell_pid, self.master_fd = os.forkpty()
         if self.shell_pid == 0:
             close_fds(3)
             os.chdir("/root")
@@ -93,11 +95,15 @@ class ShellWorkerThread(threading.Thread):
                 "LC_ALL": "C.UTF-8",
             }
             os.execve(self.command[0], self.command, env)
+            # execve never returns on success; if we reach here, it failed
+            error_msg = f"Failed to execute {self.command[0]}\r\n".encode()
+            os.write(2, error_msg)
+            os._exit(1)
 
         # Terminal baudrate affects input queue size
-        attr = termios.tcgetattr(master_fd)
+        attr = termios.tcgetattr(self.master_fd)
         attr[4] = attr[5] = termios.B921600
-        termios.tcsetattr(master_fd, termios.TCSANOW, attr)
+        termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
 
         if self.sudo_warning:
             asyncio.run_coroutine_threadsafe(
@@ -115,11 +121,28 @@ class ShellWorkerThread(threading.Thread):
             Reader thread for reading from pty file descriptor
             and forwarding it to the websocket.
             """
+            # Use a local copy of master_fd to avoid race condition with abort()
+            master_fd = self.master_fd
             try:
                 while True:
+                    # Use select to wait for data
+                    try:
+                        ready, _, _ = select.select([master_fd], [], [], 1.0)
+                        if not ready:
+                            # Timeout, check if child is still alive
+                            try:
+                                os.kill(self.shell_pid, 0)
+                                continue
+                            except ProcessLookupError:
+                                break
+                    except OSError:
+                        # Expected when master_fd is closed by abort()
+                        break
+
                     try:
                         read = os.read(master_fd, 1024)
                     except OSError:
+                        # Expected when PTY closes or abort() closes master_fd
                         break
                     if read == b"":
                         break
@@ -137,6 +160,8 @@ class ShellWorkerThread(threading.Thread):
             Writer thread for reading from input_queue and write to
             the shell pty file descriptor.
             """
+            # Use a local copy of master_fd to avoid race condition with abort()
+            master_fd = self.master_fd
             try:
                 while True:
                     try:
@@ -156,6 +181,9 @@ class ShellWorkerThread(threading.Thread):
                             os.kill(self.shell_pid, 0)
                         except ProcessLookupError:
                             break
+                    except OSError:
+                        # Expected when master_fd is closed by abort()
+                        break
             except Exception:
                 self.middleware.logger.error(
                     "Error in ShellWorkerThread.writer", exc_info=True
@@ -181,18 +209,33 @@ class ShellWorkerThread(threading.Thread):
 
         t_reader.join()
         t_writer.join()
+        self.close_master_fd()
         asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
     def die(self):
         self._die = True
 
     def abort(self):
+        # Close websocket
         asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
-        with contextlib.suppress(ProcessLookupError):
-            terminate_pid(self.shell_pid, timeout=5, use_pgid=True)
+        # Close the master FD
+        if self.master_fd is not None:
+            self.close_master_fd()
 
+        # Terminate the child process
+        if self.shell_pid:
+            with contextlib.suppress(ProcessLookupError):
+                terminate_pid(self.shell_pid, timeout=2, use_pgid=True)
+
+        # Set die flag
         self.die()
+
+    def close_master_fd(self):
+        """Raises TypeError if self.master_fd is None."""
+        with contextlib.suppress(OSError):
+            os.close(self.master_fd)
+            self.master_fd = None
 
 
 class ShellConnectionData:
