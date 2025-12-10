@@ -836,7 +836,10 @@ class iSCSITargetService(CRUDService):
         targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
         assoc = {a_tgt['extent']: a_tgt['target'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')}
         for bad_extent in bad_extents:
-            del targets[assoc[bad_extent]]
+            # the disabled / locked extent may not have a target mapping and so we need additional check here before
+            # removing it from list of active targets to avoid crashing here
+            if bad_extent in assoc:
+                targets.pop(assoc[bad_extent], None)
 
         # Also discount targets that do not have any extents
         targets_with_extents = assoc.values()
