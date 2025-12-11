@@ -168,13 +168,8 @@ def map_plx_nvme(model, ctx):
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
 
-def map_v140_v160_nvme(model, ctx):
-    """Map NVMe devices for V-series systems using PCIe slot addresses.
-
-    V-series systems (V140, V160, V260, V280) don't have the ACPI path used by
-    map_plx_nvme(), so we use a direct PCIe slot mapping approach similar to
-    map_r30_r60_or_fseries(). The rear NVMe bays are in PCIe slots 1-4.
-    """
+def map_vseries_nvme(model, ctx):
+    """Map NVMe devices for V-series systems using PCIe slot addresses."""
     num_of_nvme_slots = 4
 
     # Build a mapping of PCIe addresses to NVMe block device names
@@ -336,8 +331,7 @@ def map_nvme():
         ControllerModels.V260.value,
         ControllerModels.V280.value,
     ):
-        # V-series use different PCIe topology without the ACPI path used by other PLX systems
-        return map_v140_v160_nvme(model, ctx)
+        return map_vseries_nvme(model, ctx)
     elif model in (
         ControllerModels.M30.value,
         ControllerModels.M40.value,
