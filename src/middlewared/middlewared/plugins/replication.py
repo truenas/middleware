@@ -659,7 +659,11 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
                     results.append(replication)
 
             if replication["transport"] == "LOCAL" or replication["direction"] == "PULL":
-                if await self.middleware.call("filesystem.is_child", os.path.join("/mnt", replication["target_dataset"]), path):
+                if await self.middleware.call(
+                    "filesystem.is_child",
+                    os.path.join("/mnt", replication["target_dataset"]),
+                    path
+                ):
                     results.append(replication)
 
         return results
