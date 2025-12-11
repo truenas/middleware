@@ -438,6 +438,10 @@ class SharingNFSService(SharingService):
 
         entry = SharingNFSEntry
 
+    @private
+    async def human_identifier(self, share_task):
+        return share_task['path']
+
     @api_method(
         SharingNFSCreateArgs, SharingNFSCreateResult,
         audit='NFS share create', audit_extended=lambda data: data["path"]
