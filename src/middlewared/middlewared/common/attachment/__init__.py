@@ -191,6 +191,16 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
         options = options or {}
         if options.get('locked'):
-            # Let's generate alerts after service has been restarted/reloaded
-            for attachment in attachments:
-                await self.generate_alert(attachment)
+            if await self.check_service_for_alert_generation():
+                # Let's generate alerts after service has been restarted/reloaded
+                for attachment in attachments:
+                    await self.generate_alert(attachment)
+
+    async def check_service_for_alert_generation(self):
+        if self.service:
+            service_obj = await self.middleware.call('service.query', [['service', '=', self.service]])
+            if not service_obj or service_obj[0]['state'] != 'RUNNING':
+                # Service is not running, don't generate alerts
+                return False
+
+        return True
