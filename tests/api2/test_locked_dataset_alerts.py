@@ -29,6 +29,25 @@ SHARE_LOCKED_ALERT = 'ShareLocked'
 TASK_LOCKED_ALERT = 'TaskLocked'
 
 
+@contextlib.contextmanager
+def ensure_service_started(service_name):
+    """
+    Ensure a service is running for the test.
+    If the service is not running, start it and stop it after the test.
+    """
+    was_running = call('service.started', service_name)
+
+    if not was_running:
+        call('service.control', 'START', service_name, job=True)
+
+    try:
+        yield
+    finally:
+        if not was_running:
+            # Stop the service if we started it
+            call('service.control', 'STOP', service_name, job=True)
+
+
 def encryption_props():
     return {
         'encryption': True,
@@ -141,20 +160,21 @@ def test_smb_share_locked_alert(test_pool):
     """Test that locking a dataset with an SMB share generates an alert."""
     clear_alerts(SHARE_LOCKED_ALERT)
 
-    with dataset("smb_test", encryption_props(), pool=test_pool["name"]) as ds:
-        path = f"/mnt/{ds}"
+    with ensure_service_started('cifs'):
+        with dataset("smb_test", encryption_props(), pool=test_pool["name"]) as ds:
+            path = f"/mnt/{ds}"
 
-        with smb_share(path, "test_smb"):
-            # Lock the dataset
-            call("pool.dataset.lock", ds, job=True)
+            with smb_share(path, "test_smb"):
+                # Lock the dataset
+                call("pool.dataset.lock", ds, job=True)
 
-            # Wait for and verify alert
-            alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
-            assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
+                # Wait for and verify alert
+                alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
+                assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
 
-            # Verify alert contains SMB share info
-            smb_alerts = [a for a in alerts if 'SMB' in a.get('formatted', '')]
-            assert len(smb_alerts) >= 1, f"Expected SMB share alert, got alerts: {alerts}"
+                # Verify alert contains SMB share info
+                smb_alerts = [a for a in alerts if 'SMB' in a.get('formatted', '')]
+                assert len(smb_alerts) >= 1, f"Expected SMB share alert, got alerts: {alerts}"
 
     clear_alerts(SHARE_LOCKED_ALERT)
 
@@ -163,20 +183,21 @@ def test_nfs_share_locked_alert(test_pool):
     """Test that locking a dataset with an NFS share generates an alert."""
     clear_alerts(SHARE_LOCKED_ALERT)
 
-    with dataset("nfs_test", encryption_props(), pool=test_pool["name"]) as ds:
-        path = f"/mnt/{ds}"
+    with ensure_service_started('nfs'):
+        with dataset("nfs_test", encryption_props(), pool=test_pool["name"]) as ds:
+            path = f"/mnt/{ds}"
 
-        with nfs_share(path):
-            # Lock the dataset
-            call("pool.dataset.lock", ds, job=True)
+            with nfs_share(path):
+                # Lock the dataset
+                call("pool.dataset.lock", ds, job=True)
 
-            # Wait for and verify alert
-            alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
-            assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
+                # Wait for and verify alert
+                alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
+                assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
 
-            # Verify alert contains NFS share info
-            nfs_alerts = [a for a in alerts if 'NFS' in a.get('formatted', '')]
-            assert len(nfs_alerts) >= 1, f"Expected NFS share alert, got alerts: {alerts}"
+                # Verify alert contains NFS share info
+                nfs_alerts = [a for a in alerts if 'NFS' in a.get('formatted', '')]
+                assert len(nfs_alerts) >= 1, f"Expected NFS share alert, got alerts: {alerts}"
 
     clear_alerts(SHARE_LOCKED_ALERT)
 
@@ -185,25 +206,26 @@ def test_iscsi_extent_locked_alert(test_pool):
     """Test that locking a zvol with an iSCSI extent generates an alert."""
     clear_alerts(SHARE_LOCKED_ALERT)
 
-    zvol_props = {
-        **encryption_props(),
-        "type": "VOLUME",
-        "volsize": 1024 * 1024 * 1024,  # 1GB
-    }
-    with dataset("iscsi_zvol", zvol_props, pool=test_pool["name"]) as zvol_name:
-        disk_path = f"zvol/{zvol_name}"
+    with ensure_service_started('iscsitarget'):
+        zvol_props = {
+            **encryption_props(),
+            "type": "VOLUME",
+            "volsize": 1024 * 1024 * 1024,  # 1GB
+        }
+        with dataset("iscsi_zvol", zvol_props, pool=test_pool["name"]) as zvol_name:
+            disk_path = f"zvol/{zvol_name}"
 
-        with iscsi_extent("test_extent", disk_path):
-            # Lock the zvol
-            call("pool.dataset.lock", zvol_name, job=True)
+            with iscsi_extent("test_extent", disk_path):
+                # Lock the zvol
+                call("pool.dataset.lock", zvol_name, job=True)
 
-            # Wait for and verify alert
-            alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
-            assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
+                # Wait for and verify alert
+                alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
+                assert len(alerts) >= 1, f"Expected at least 1 ShareLocked alert, got {len(alerts)}"
 
-            # Verify alert contains iSCSI extent info
-            iscsi_alerts = [a for a in alerts if 'iSCSI' in a.get('formatted', '')]
-            assert len(iscsi_alerts) >= 1, f"Expected iSCSI extent alert, got alerts: {alerts}"
+                # Verify alert contains iSCSI extent info
+                iscsi_alerts = [a for a in alerts if 'iSCSI' in a.get('formatted', '')]
+                assert len(iscsi_alerts) >= 1, f"Expected iSCSI extent alert, got alerts: {alerts}"
 
     clear_alerts(SHARE_LOCKED_ALERT)
 
@@ -212,24 +234,26 @@ def test_multiple_shares_locked_alerts(test_pool):
     """Test that locking a dataset with multiple shares generates alerts for all."""
     clear_alerts(SHARE_LOCKED_ALERT)
 
-    with dataset("multi_share_test", encryption_props(), pool=test_pool["name"]) as ds:
-        path = f"/mnt/{ds}"
+    with ensure_service_started('cifs'):
+        with ensure_service_started('nfs'):
+            with dataset("multi_share_test", encryption_props(), pool=test_pool["name"]) as ds:
+                path = f"/mnt/{ds}"
 
-        with smb_share(path, "test_multi_smb"):
-            with nfs_share(path):
-                # Lock the dataset
-                call("pool.dataset.lock", ds, job=True)
+                with smb_share(path, "test_multi_smb"):
+                    with nfs_share(path):
+                        # Lock the dataset
+                        call("pool.dataset.lock", ds, job=True)
 
-                # Wait for and verify alerts
-                alerts = wait_for_alert(SHARE_LOCKED_ALERT, 2)
-                assert len(alerts) >= 2, f"Expected at least 2 ShareLocked alerts, got {len(alerts)}"
+                        # Wait for and verify alerts
+                        alerts = wait_for_alert(SHARE_LOCKED_ALERT, 2)
+                        assert len(alerts) >= 2, f"Expected at least 2 ShareLocked alerts, got {len(alerts)}"
 
-                # Verify we have both SMB and NFS alerts
-                formatted_texts = [a.get('formatted', '') for a in alerts]
-                has_smb = any('SMB' in text for text in formatted_texts)
-                has_nfs = any('NFS' in text for text in formatted_texts)
-                assert has_smb, f"Expected SMB alert in: {formatted_texts}"
-                assert has_nfs, f"Expected NFS alert in: {formatted_texts}"
+                        # Verify we have both SMB and NFS alerts
+                        formatted_texts = [a.get('formatted', '') for a in alerts]
+                        has_smb = any('SMB' in text for text in formatted_texts)
+                        has_nfs = any('NFS' in text for text in formatted_texts)
+                        assert has_smb, f"Expected SMB alert in: {formatted_texts}"
+                        assert has_nfs, f"Expected NFS alert in: {formatted_texts}"
 
     clear_alerts(SHARE_LOCKED_ALERT)
 
@@ -238,30 +262,31 @@ def test_alert_removed_on_unlock(test_pool):
     """Test that unlocking a dataset removes the locked alert."""
     clear_alerts(SHARE_LOCKED_ALERT)
 
-    with dataset("unlock_test", encryption_props(), pool=test_pool["name"]) as ds:
-        path = f"/mnt/{ds}"
+    with ensure_service_started('cifs'):
+        with dataset("unlock_test", encryption_props(), pool=test_pool["name"]) as ds:
+            path = f"/mnt/{ds}"
 
-        with smb_share(path, "test_unlock_smb"):
-            # Lock the dataset
-            call("pool.dataset.lock", ds, job=True)
+            with smb_share(path, "test_unlock_smb"):
+                # Lock the dataset
+                call("pool.dataset.lock", ds, job=True)
 
-            # Verify alert exists
-            alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
-            assert len(alerts) >= 1, "Expected ShareLocked alert after locking"
+                # Verify alert exists
+                alerts = wait_for_alert(SHARE_LOCKED_ALERT, 1)
+                assert len(alerts) >= 1, "Expected ShareLocked alert after locking"
 
-            # Unlock the dataset
-            call("pool.dataset.unlock", ds, {
-                "datasets": [{"name": ds, "passphrase": PASSPHRASE}],
-            }, job=True)
+                # Unlock the dataset
+                call("pool.dataset.unlock", ds, {
+                    "datasets": [{"name": ds, "passphrase": PASSPHRASE}],
+                }, job=True)
 
-            # Wait for alert to be removed
-            for _ in range(30):
-                alerts = get_alerts_by_class(SHARE_LOCKED_ALERT)
-                if len(alerts) == 0:
-                    break
-                sleep(1)
+                # Wait for alert to be removed
+                for _ in range(30):
+                    alerts = get_alerts_by_class(SHARE_LOCKED_ALERT)
+                    if len(alerts) == 0:
+                        break
+                    sleep(1)
 
-            assert len(alerts) == 0, f"Expected alerts to be cleared after unlock, got {len(alerts)}"
+                assert len(alerts) == 0, f"Expected alerts to be cleared after unlock, got {len(alerts)}"
 
     clear_alerts(SHARE_LOCKED_ALERT)
 
