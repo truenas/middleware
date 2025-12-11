@@ -59,7 +59,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def start(self, attachments):
         pass
 
-    async def stop(self, attachments, options=None):
+    async def stop(self, attachments, options: dict | None = None):
         pass
 
     async def disable(self, attachments):
