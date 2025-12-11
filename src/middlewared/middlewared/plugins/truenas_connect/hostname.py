@@ -111,7 +111,10 @@ class TNCHostnameService(Service):
         if args['fields']['iface'].startswith(internal_interfaces):
             return
 
-        await self.sync_interface_ips({'type': event_type, 'iface': args['fields']['iface']})
+        try:
+            await self.sync_interface_ips({'type': event_type, 'iface': args['fields']['iface']})
+        except Exception:
+            logger.error('Failed to sync interface IPs for TrueNAS Connect', exc_info=True)
 
 
 async def update_ips(middleware, event_type, args):
