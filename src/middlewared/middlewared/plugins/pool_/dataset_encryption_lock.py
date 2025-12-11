@@ -138,7 +138,39 @@ class PoolDatasetService(Service):
             'pool.dataset.query_encrypted_datasets', id_.split('/', 1)[0], {'key_loaded': False}
         )
         self._assign_supplied_recursive_keys(options['datasets'], keys_supplied, list(datasets.keys()))
+
+        # We're transforming dictionaries returned so that we have the following hierarchy
+        #
+        # datasets
+        # ├── "dozer/A" (dataset dict) (encryption root)
+        # |   └── "children" (list)
+        # │        ├── "dozer/A/B" (dataset dict) (encryption root = dozer/A)
+        # │        └── "dozer/A/B/C" (dataset dict) (encryption root = dozer/A)
+        # |
+        # └── "dozer/A/B/C/D" (dataset dict) (encryption root)
+        #     └── "children" (list)
+        #
+        # e.g. at top level will be encryption roots. Only children that have same
+        # encryption root as parent will be in the "children" list. The reason for this is that
+        # we will iterator [parent, child1, child2, ...] when doing unlock then mount steps
         for name, ds in datasets.items():
+            def add_children(target, encryption_root, dataset):
+                # this is a little messy. We want to basically collapse the dataset
+                # hierarchy so that we have structure like above (and omit anything that has
+                # an unusual mountpoint set).
+                for child in dataset['children']:
+                    if child['mountpoint'] in ('legacy', 'none'):
+                        # We don't want to forcibly mount a legacy mountpoint here. If we're
+                        # using these in a plugin we should have logic there to handle where
+                        # it's supposed to be mounted.
+                        self.logger.debug('%s: omitting dataset from automount due to '
+                                          'mountpoint of [%s]', child['name'], child['mountpoint'])
+                        continue
+
+                    if child['encryption_root'] == encryption_root:
+                        target.append(child)
+                        add_children(target, encryption_root, child)
+
             ds_key = keys_supplied.get(name) or ds['encryption_key']
             if ds['locked'] and id_.startswith(f'{name}/'):
                 # This ensures that `id` has locked parents and they should be unlocked first
@@ -152,6 +184,11 @@ class PoolDatasetService(Service):
 
             datasets[name] = {'key': ds_key, **ds}
 
+            # now remove any children that are a different encryption root
+            encryption_children = []
+            add_children(encryption_children, ds['encryption_root'], ds)
+            datasets[name]['children'] = encryption_children
+
         if locked_datasets:
             raise CallError(f'{id_} has locked parents {",".join(locked_datasets)} which must be unlocked first')
 
@@ -164,6 +201,7 @@ class PoolDatasetService(Service):
             ),
             key=lambda v: v.count('/')
         )
+
         for name_i, name in enumerate(names):
             skip = False
             for i in range(name.count('/') + 1):
@@ -187,13 +225,32 @@ class PoolDatasetService(Service):
                 )
             except CallError as e:
                 failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
-            else:
-                # Before we mount the dataset in question, we should ensure that the path where it will be mounted
-                # is not already being used by some other service/share. In this case, we should simply rename the
-                # directory where it will be mounted
+                continue
 
-                mount_path = os.path.join('/mnt', name)
+            # Before we mount the dataset in question, we should ensure that the path where it will be mounted
+            # is not already being used by some other service/share. In this case, we should simply rename the
+            # directory where it will be mounted
+            to_mount = [datasets[name]] + datasets[name]['children']
+            for ds in to_mount:
+                mount_path = os.path.join('/mnt', ds['name'])
                 if os.path.exists(mount_path):
+
+                    # possible TOCTOU on mounting dataset
+                    try:
+                        sfs = self.middleware.call_sync('filesystem.statfs', mount_path)
+                    except Exception:
+                        # don't worry about errors here, they'll be caught below
+                        pass
+                    else:
+                        if sfs['source'] == ds['name']:
+                            self.logger.debug(
+                                '%s: possible race on mounting dataset. Dataset already mounted. This may '
+                                'indicate multiple concurrent API calls impacting dataset locking and mounting',
+                                ds['name']
+                            )
+                            unlocked.append(ds['name'])
+                            continue
+
                     try:
                         self.middleware.call_sync('filesystem.set_zfs_attributes', {
                             'path': mount_path,
@@ -204,24 +261,34 @@ class PoolDatasetService(Service):
                         if e.errno != errno.EROFS:
                             raise
                     except Exception as e:
-                        failed[name]['error'] = (
+                        failed[ds['name']]['error'] = (
                             f'Dataset mount failed because immutable flag at {mount_path!r} could not be removed: {e}'
                         )
-                        continue
+                        # Break out of this loop because any deeper paths will also fail
+                        break
 
                     if not os.path.isdir(mount_path) or not directory_is_empty(mount_path):
-                        # rename please
-                        shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+                        # we already checked above that path above is not a mountpoint and we didn't have a
+                        # covert mount under us of this dataset. So we should be able to simply rename here.
+                        try:
+                            os.rename(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+                        except Exception as e:
+                            self.logger.error('%s: failed to move unexpected directory or file from mount path',
+                                              mount_path, exc_info=True)
+                            failed[ds['name']]['error'] = (
+                                f'Dataset mount failed because unexpected file at mount path could not be moved: {e}'
+                            )
+                            break
 
                 try:
                     self.middleware.call_sync(
                         'zfs.resource.mount',
-                        MountArgs(filesystem=name)
+                        MountArgs(filesystem=ds['name'])
                     )
                 except Exception as e:
-                    failed[name]['error'] = f'Failed to mount dataset: {e}'
+                    failed[ds['name']]['error'] = f'Failed to mount dataset: {e}'
                 else:
-                    unlocked.append(name)
+                    unlocked.append(ds['name'])
                     try:
                         self.middleware.call_sync('filesystem.set_zfs_attributes', {
                             'path': mount_path,
@@ -255,6 +322,8 @@ class PoolDatasetService(Service):
         if unlocked:
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
+                # FIXME: this is incorrect design. We should be passing array of dataset names and
+                # mountpoints that were *actually* unlocked rather than what was *requested* to be unlocked
                 self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset)
 
             job.set_progress(92, 'Updating database')
@@ -265,14 +334,20 @@ class PoolDatasetService(Service):
                     'key_format': datasets[unlocked_dataset]['key_format']['value'],
                 }
 
+            # The following hook call and datastore insertion are for encryption records of
+            # the encryption roots. This means we have checks for whether the unlocked dataset
+            # is at the top level of the `datasets` dict.
             for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
+                if unlocked_dataset not in datasets:
+                    continue
+
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
 
             job.set_progress(94, 'Running post-unlock tasks')
             self.middleware.call_hook_sync(
-                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
+                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked if ds in datasets],
             )
 
         return {'unlocked': unlocked, 'failed': failed}
