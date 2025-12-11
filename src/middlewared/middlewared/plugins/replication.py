@@ -28,7 +28,7 @@ from middlewared.utils.path import is_child
 
 
 class ReplicationModel(sa.Model):
-    __tablename__ = 'storage_replication'
+    __tablename__ = "storage_replication"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     repl_target_dataset = sa.Column(sa.String(120))
@@ -40,7 +40,7 @@ class ReplicationModel(sa.Model):
     repl_enabled = sa.Column(sa.Boolean(), default=True)
     repl_direction = sa.Column(sa.String(120), default="PUSH")
     repl_transport = sa.Column(sa.String(120), default="SSH")
-    repl_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
+    repl_ssh_credentials_id = sa.Column(sa.ForeignKey("system_keychaincredential.id"), index=True, nullable=True)
     repl_sudo = sa.Column(sa.Boolean())
     repl_netcat_active_side = sa.Column(sa.String(120), nullable=True, default=None)
     repl_netcat_active_side_port_min = sa.Column(sa.Integer(), nullable=True)
@@ -53,14 +53,14 @@ class ReplicationModel(sa.Model):
     repl_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
     repl_schedule_hour = sa.Column(sa.String(100), nullable=True, default="*")
     repl_schedule_daymonth = sa.Column(sa.String(100), nullable=True, default="*")
-    repl_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
+    repl_schedule_month = sa.Column(sa.String(100), nullable=True, default="*")
     repl_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
     repl_only_matching_schedule = sa.Column(sa.Boolean())
     repl_readonly = sa.Column(sa.String(120))
     repl_allow_from_scratch = sa.Column(sa.Boolean())
     repl_hold_pending_snapshots = sa.Column(sa.Boolean())
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
-    repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
+    repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default="WEEK")
     repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
     repl_lifetimes = sa.Column(sa.JSON(list))
     repl_large_block = sa.Column(sa.Boolean(), default=True)
@@ -70,7 +70,7 @@ class ReplicationModel(sa.Model):
     repl_restrict_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
     repl_restrict_schedule_hour = sa.Column(sa.String(100), nullable=True, default="*")
     repl_restrict_schedule_daymonth = sa.Column(sa.String(100), nullable=True, default="*")
-    repl_restrict_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
+    repl_restrict_schedule_month = sa.Column(sa.String(100), nullable=True, default="*")
     repl_restrict_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
     repl_restrict_schedule_begin = sa.Column(sa.Time(), nullable=True, default=time(hour=0))
     repl_restrict_schedule_end = sa.Column(sa.Time(), nullable=True, default=time(hour=23, minute=45))
@@ -89,16 +89,16 @@ class ReplicationModel(sa.Model):
     repl_encryption_key_format = sa.Column(sa.String(120), nullable=True)
     repl_encryption_key_location = sa.Column(sa.Text(), nullable=True)
 
-    repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
+    repl_periodic_snapshot_tasks = sa.relationship("PeriodicSnapshotTaskModel",
                                                    secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
 
 
 class ReplicationPeriodicSnapshotTaskModel(sa.Model):
-    __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'
+    __tablename__ = "storage_replication_repl_periodic_snapshot_tasks"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    replication_id = sa.Column(sa.ForeignKey('storage_replication.id', ondelete='CASCADE'), index=True)
-    task_id = sa.Column(sa.ForeignKey('storage_task.id', ondelete='CASCADE'), index=True)
+    replication_id = sa.Column(sa.ForeignKey("storage_replication.id", ondelete="CASCADE"), index=True)
+    task_id = sa.Column(sa.ForeignKey("storage_task.id", ondelete="CASCADE"), index=True)
 
 
 class ReplicationPairArgs(BaseModel):
@@ -261,7 +261,7 @@ class ReplicationService(CRUDService):
             self._config.datastore,
             id_,
             new,
-            {'prefix': self._config.datastore_prefix}
+            {"prefix": self._config.datastore_prefix}
         )
 
         await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
@@ -646,46 +646,46 @@ class ReplicationService(CRUDService):
 
 
 class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
-    name = 'replication'
-    title = 'Replication'
+    name = "replication"
+    title = "Replication"
 
     async def query(self, path, enabled, options=None):
         results = []
-        for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
-            if replication['transport'] == 'LOCAL' or replication['direction'] == 'PUSH':
-                if await self.middleware.call('filesystem.is_child', [
-                    os.path.join('/mnt', source_dataset) for source_dataset in replication['source_datasets']
+        for replication in await self.middleware.call("replication.query", [["enabled", "=", enabled]]):
+            if replication["transport"] == "LOCAL" or replication["direction"] == "PUSH":
+                if await self.middleware.call("filesystem.is_child", [
+                    os.path.join("/mnt", source_dataset) for source_dataset in replication["source_datasets"]
                 ], path):
                     results.append(replication)
 
-            if replication['transport'] == 'LOCAL' or replication['direction'] == 'PULL':
-                if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', replication['target_dataset']), path):
+            if replication["transport"] == "LOCAL" or replication["direction"] == "PULL":
+                if await self.middleware.call("filesystem.is_child", os.path.join("/mnt", replication["target_dataset"]), path):
                     results.append(replication)
 
         return results
 
     async def delete(self, attachments):
         for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'storage.replication', attachment['id'])
+            await self.middleware.call("datastore.delete", "storage.replication", attachment["id"])
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.middleware.call("zettarepl.update_tasks")
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
-            await self.middleware.call('datastore.update', 'storage.replication', attachment['id'],
-                                       {'repl_enabled': enabled})
+            await self.middleware.call("datastore.update", "storage.replication", attachment["id"],
+                                       {"repl_enabled": enabled})
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.middleware.call("zettarepl.update_tasks")
 
 
 async def on_zettarepl_state_changed(middleware, id_, fields):
-    if id_.startswith('replication_task_'):
-        task_id = int(id_.split('_')[-1])
-        middleware.send_event('replication.query', 'CHANGED', id=task_id, fields={'state': fields})
+    if id_.startswith("replication_task_"):
+        task_id = int(id_.split("_")[-1])
+        middleware.send_event("replication.query", "CHANGED", id=task_id, fields={"state": fields})
 
 
 async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
-    await middleware.call('network.general.register_activity', 'replication', 'Replication')
+    await middleware.call("pool.dataset.register_attachment_delegate", ReplicationFSAttachmentDelegate(middleware))
+    await middleware.call("network.general.register_activity", "replication", "Replication")
 
-    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)
+    middleware.register_hook("zettarepl.state_change", on_zettarepl_state_changed)
