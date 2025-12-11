@@ -32,9 +32,6 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def restart_reload_services(self, attachments):
         await self._service_change('iscsitarget', 'reload')
 
-    async def stop(self, attachments, options=None):
-        await self.restart_reload_services(attachments)
-
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', ISCSIFSAttachmentDelegate(middleware))

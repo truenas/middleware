@@ -148,6 +148,9 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def remove_alert(self, attachment):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
+    async def generate_alert(self, attachment):
+        await self.middleware.call(f'{self.namespace}.generate_locked_alert', attachment['id'])
+
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         # What this is essentially doing is testing if resource in question is a child of queried path
         # and not vice versa. While this is desirable in most cases, there are cases we also want to see
@@ -185,3 +188,9 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def stop(self, attachments, options=None):
         if attachments:
             await self.restart_reload_services(attachments)
+
+        options = options or {}
+        if options.get('locked'):
+            # Let's generate alerts after service has been restarted/reloaded
+            for attachment in attachments:
+                await self.generate_alert(attachment)
