@@ -14,7 +14,7 @@ from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 from auto_config import ha
-from protocols import smb_connection, smb_share
+from protocols import smb_connection, smb_share, nfs_share, SSH_NFS
 from truenas_api_client import ClientException
 
 SMB_NAME = "TestADShare"
@@ -59,6 +59,17 @@ def enable_smb():
     finally:
         call("service.update", "cifs", {"enable": False})
         call("service.control", "STOP", "cifs", job=True)
+
+
+@pytest.fixture(scope="function")
+def enable_nfs():
+    call("service.update", "nfs", {"enable": True})
+    call("service.control", "START", "nfs", job=True)
+    try:
+        yield
+    finally:
+        call("service.update", "nfs", {"enable": False})
+        call("service.control", "STOP", "nfs", job=True)
 
 
 def test_enable_leave_activedirectory():
@@ -268,6 +279,56 @@ def test_activedirectory_smb_ops(enable_smb):
 
             acl = call('filesystem.getacl', os.path.join(f'/mnt/{ds}', short_name, account.username), True)
             assert acl['trivial'] is False, str(acl)
+
+
+def test_activedirectory_nfs_ops(enable_nfs):
+    reset_systemd_svcs('winbind')
+    with directoryservice('ACTIVEDIRECTORY') as ad:
+        account = ad['account']
+
+        # Enable NFS Kerberos
+        call('nfs.update', {'v4_krb': True})
+
+        with dataset(
+            "ad_nfs",
+            acl=[{
+                'tag': 'GROUP',
+                'id': account.user_obj['pw_uid'],
+                'perms': {'BASIC': 'FULL_CONTROL'},
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            }]
+        ) as ds:
+            with nfs_share(f'/mnt/{ds}', {'security': ['KRB5']}):
+                call('service.control', 'RESTART', 'nfs', job=True)
+
+                with SSH_NFS(
+                    hostname=truenas_server.ip,
+                    path=f'/mnt/{ds}',
+                    vers=4,
+                    user=account.username,
+                    password=account.password,
+                    ip=truenas_server.ip,
+                    kerberos=True
+                ) as n:
+                    # Create a test file
+                    n.create('testfile.txt')
+
+                    # Create a directory
+                    n.mkdir('testdir')
+
+                    # Create a file in the directory
+                    n.create('testdir/testfile2.txt')
+
+                    # Verify files exist
+                    contents = n.ls('.')
+                    assert 'testfile.txt' in contents
+                    assert 'testdir' in contents
+
+                    # Clean up
+                    n.unlink('testdir/testfile2.txt')
+                    n.rmdir('testdir')
+                    n.unlink('testfile.txt')
 
 
 def test_account_privilege_authentication(enable_ds_auth):
