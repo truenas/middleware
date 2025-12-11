@@ -123,12 +123,14 @@ class ShellWorkerThread(threading.Thread):
             """
             # Use a local copy of master_fd to avoid race condition with abort()
             master_fd = self.master_fd
+            poller = select.poll()
+            poller.register(master_fd, select.POLLIN)
             try:
                 while True:
-                    # Use select to wait for data
+                    # Use poll to wait for data (1 second timeout)
                     try:
-                        ready, _, _ = select.select([master_fd], [], [], 1.0)
-                        if not ready:
+                        events = poller.poll(1000)  # timeout in milliseconds
+                        if not events:
                             # Timeout, check if child is still alive
                             try:
                                 os.kill(self.shell_pid, 0)
@@ -154,6 +156,9 @@ class ShellWorkerThread(threading.Thread):
                     "Error in ShellWorkerThread.reader", exc_info=True
                 )
                 self.abort()
+            finally:
+                with contextlib.suppress(OSError):
+                    poller.unregister(master_fd)
 
         def writer():
             """
