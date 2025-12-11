@@ -6,7 +6,6 @@ from middlewared.api import api_method
 from middlewared.api.current import DockerRestoreBackupArgs, DockerRestoreBackupResult
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, job, Service
 
 
@@ -40,9 +39,10 @@ class DockerService(Service):
         job.set_progress(20, 'Stopped Docker service')
 
         docker_config = self.middleware.call_sync('docker.config')
-        self.middleware.call_sync(
-            'zfs.resource.destroy_impl',
-            DestroyArgs(path=os.path.join(docker_config['dataset'], 'docker'), bypass=True),
+        self.middleware.call_sync2(
+            self.middleware.services.zfs.resource.destroy_impl,
+            os.path.join(docker_config['dataset'], 'docker'),
+            bypass=True,
         )
 
         job.set_progress(25, f'Rolling back to {backup_name!r} backup')

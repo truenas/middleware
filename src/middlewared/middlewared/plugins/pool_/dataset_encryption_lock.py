@@ -13,8 +13,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.load_unload_impl import UnloadKeyArgs
 
 from .utils import (
     dataset_mountpoint, dataset_can_be_mounted, encryption_root_children, retrieve_keys_from_file,
@@ -60,9 +58,11 @@ class PoolDatasetService(Service):
         await asyncio.gather(*coroutines)
         # recursive doesn't apply to zvols
         recursive = ds['type'] != 'VOLUME'
-        await self.middleware.call(
-            'zfs.resource.unload_key',
-            UnloadKeyArgs(force_unmount=options['force_umount'], filesystem=id_, recursive=recursive)
+        await self.middleware.call2(
+            self.middleware.services.zfs.resource.unload_key,
+            id_,
+            recursive=recursive,
+            force_unmount=options['force_umount'],
         )
 
         if ds['mountpoint']:
@@ -266,9 +266,9 @@ class PoolDatasetService(Service):
                             break
 
                 try:
-                    self.middleware.call_sync(
-                        'zfs.resource.mount',
-                        MountArgs(filesystem=ds['name'])
+                    self.middleware.call_sync2(
+                        self.middleware.services.zfs.resource.mount,
+                        ds['name'],
                     )
                 except Exception as e:
                     failed[ds['name']]['error'] = f'Failed to mount dataset: {e}'

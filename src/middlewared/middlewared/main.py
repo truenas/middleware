@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.model_provider import ModuleModelProvider, LazyModuleModelProvider
 from .api.base.handler.result import serialize_result
@@ -20,6 +21,7 @@ from .pipe import Pipe
 from .pylibvirt import create_pylibvirt_domains_manager
 from .role import ROLES, RoleManager
 import middlewared.service
+from .service_container import BaseServiceContainer
 from .service_exception import CallError, ErrnoMixin
 from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
 from .utils.audit import audit_username_from_session
@@ -54,7 +56,7 @@ import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
@@ -69,6 +71,7 @@ import textwrap
 import threading
 import time
 import traceback
+import types
 import typing
 import uuid
 
@@ -86,6 +89,7 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 _OptAuditCallback = typing.Callable[[str], None] | None
@@ -100,11 +104,47 @@ class LoopMonitorIgnoreFrame:
     cut_below: bool = False
 
 
-class PreparedCall(typing.NamedTuple):
-    args: list[typing.Any] | None = None
+@dataclass(slots=True, frozen=True, kw_only=True)
+class PreparedCall:
+    args: list = field(default_factory=list)
+    kwargs: dict = field(default_factory=dict)
     executor: typing.Any | None = None
     job: Job | None = None
     is_coroutine: bool = False
+
+
+def get_methods(container: BaseServiceContainer, prefix="") -> dict[str, types.MethodType]:
+    result = {}
+    for name, value in container.__dict__.items():
+        if isinstance(value, BaseServiceContainer):
+            result.update(**get_methods(value, f"{prefix}{name}."))
+        elif isinstance(value, middlewared.service.Service):
+            for attr in dir(value):
+                if attr.startswith("_"):
+                    continue
+
+                method = getattr(value, attr)
+                if callable(method):
+                    result[f"{prefix}{name}.{attr}"] = method
+
+    return result
+
+
+class ZfsServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.resource = ZFSResourceService(middleware)
+
+
+class ServiceContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super(ServiceContainer, self).__init__(middleware)
+
+        self.zfs = ZfsServicesContainer(middleware)
+
+        self.methods = get_methods(self)
+        for method_name, method in self.methods.items():
+            method.__func__.__method_name__ = method_name
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
@@ -160,6 +200,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.external_method_calls = defaultdict(int)  # Track external API method calls
         self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
         self.dump_result_allow_fallback = True
+        self.services = ServiceContainer(self)
 
     @typing.overload
     def get_method(
@@ -720,7 +761,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         name: str,
         serviceobj: Service,
         methodobj: typing.Callable,
-        params: typing.Iterable,
+        params: typing.Sequence,
+        kwargs: dict | None = None,
         *,
         app: App | None = None,
         audit_callback: _OptAuditCallback = None,
@@ -733,6 +775,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         :param in_event_loop: Whether we are in the event loop thread.
         :return:
         """
+        kwargs = kwargs or {}
         audit_callback = audit_callback or (lambda message: None)
 
         params = list(params)
@@ -792,14 +835,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         else:
             executor = io_thread_pool_executor
 
-        return PreparedCall(args=args, executor=executor, is_coroutine=is_coroutine)
+        return PreparedCall(args=args, kwargs=kwargs, executor=executor, is_coroutine=is_coroutine)
 
     async def _call(
         self,
         name: str,
         serviceobj: Service,
         methodobj: typing.Callable,
-        params: typing.Iterable,
+        params: typing.Sequence,
+        kwargs: dict | None = None,
         *,
         app: App | None = None,
         audit_callback: _OptAuditCallback = None,
@@ -809,7 +853,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         in_event_loop: bool = True,
     ) -> typing.Any:
         prepared_call = self._call_prepare(
-            name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
+            name, serviceobj, methodobj, params, kwargs, app=app, audit_callback=audit_callback,
             job_on_progress_cb=job_on_progress_cb, message_id=message_id, pipes=pipes, in_event_loop=in_event_loop
         )
 
@@ -829,7 +873,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return await self._call_worker(name, *prepared_call.args)
 
         self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
-        return await self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args)
+        return await self.run_in_executor(
+            prepared_call.executor,
+            methodobj,
+            *prepared_call.args,
+            **prepared_call.kwargs,
+        )
 
     async def _call_worker(self, name, *args, job=None):
         return await self.run_in_proc(main_worker, name, args, job)
@@ -1151,6 +1200,148 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs
+    ) -> T:
+        ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T:
+        ...
+
+    async def call2(
+        self,
+        f: typing.Callable[..., typing.Any],
+        *args: typing.Any,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: typing.Any,
+    ) -> typing.Any:
+        if threading.get_ident() != self.__thread_id:
+            raise RuntimeError("You can only use call from main thread")
+
+        name, serviceobj, methodobj = self.get_method_by_callable(f, args)
+
+        if profile:
+            methodobj = profile_wrap(methodobj)
+
+        return await self._call(
+            name, serviceobj, methodobj, args, kwargs,
+            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+        )
+
+    @typing.overload
+    def call_sync2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        background: bool = False,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        **kwargs: P.kwargs,
+    ) -> T:
+        ...
+
+    @typing.overload
+    def call_sync2[**P, T](
+        self,
+        f: typing.Callable[P, T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        background: bool = False,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        **kwargs: P.kwargs,
+    ) -> T:
+        ...
+
+    def call_sync2(
+        self,
+        f: typing.Callable[..., typing.Any],
+        *args: typing.Any,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        background: bool = False,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        **kwargs: typing.Any,
+    ) -> typing.Any:
+        if threading.get_ident() == self.__thread_id:
+            raise RuntimeError("You cannot use call_sync from main thread")
+
+        call_kwargs = {
+            **kwargs,
+            "app": app,
+            "audit_callback": audit_callback,
+            "job_on_progress_cb": job_on_progress_cb,
+        }
+
+        if background:
+            return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call2(f, *args, **call_kwargs)))
+
+        if asyncio.iscoroutinefunction(f):
+            return asyncio.run_coroutine_threadsafe(self.call2(*args, **call_kwargs), self.loop).result()
+
+        name, serviceobj, methodobj = self.get_method_by_callable(f, args)
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, args, app=app, audit_callback=audit_callback,
+                                           job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
+
+        if prepared_call.job:
+            return prepared_call.job
+
+        if prepared_call.is_coroutine:
+            self.logger.trace("Calling %r in main IO loop", name)
+            return self.run_coroutine(methodobj(*prepared_call.args))
+
+        if serviceobj._config.process_pool:
+            self.logger.trace("Calling %r in process pool", name)
+            return self.run_coroutine(self._call_worker(name, *prepared_call.args))
+
+        if not self._in_executor(prepared_call.executor):
+            self.logger.trace("Calling %r in executor %r", name, prepared_call.executor)
+            return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args))
+
+        self.logger.trace("Calling %r in current thread", name)
+        return methodobj(*prepared_call.args, **prepared_call.kwargs)
+
+    def get_method_by_callable(self, f: typing.Callable, args: typing.Sequence) -> tuple[str, Service, typing.Callable]:
+        if not inspect.ismethod(f):
+            raise RuntimeError(f"{f!r} is not a method")
+
+        name = getattr(f, "__method_name__", None)
+        if name is None:
+            raise RuntimeError(f"{f!r} is not a member of `self.middleware.services` hierarchy")
+
+        serviceobj = f.__self__
+        methodobj = f
+
+        if mock := self._mock_method(name, args):
+            methodobj = mock
+
+        return name, serviceobj, methodobj
 
     def _in_executor(self, executor):
         if isinstance(executor, concurrent.futures.thread.ThreadPoolExecutor):

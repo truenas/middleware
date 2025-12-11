@@ -4,7 +4,6 @@ import os
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, private, ValidationErrors
 from middlewared.utils import run
 
@@ -107,7 +106,7 @@ class DeviceMixin:
             ):
                 # FIXME: What about FS attachment? Also should we be stopping the vm only when
                 # deleting an attachment ?
-                await self.middleware.call('zfs.resource.destroy_impl', DestroyArgs(path=zvol_id))
+                await self.middleware.call2(self.middleware.services.zfs.resource.destroy_impl, zvol_id)
         if options['raw_file']:
             if device_dtype != 'RAW':
                 raise CallError('Device is not of RAW type.')

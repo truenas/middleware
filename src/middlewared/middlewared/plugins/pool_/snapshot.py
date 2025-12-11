@@ -22,8 +22,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
 from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 from middlewared.utils.filter_list import filter_list
 
 
@@ -48,8 +46,8 @@ class PoolSnapshotService(CRUDService):
                 'properties': data['dataset_properties'],
             }
         )
-        self.middleware.call_sync(
-            'zfs.resource.mount', MountArgs(filesystem=data['dataset_dst'])
+        self.middleware.call_sync2(
+            self.middleware.services.zfs.resource.mount, data['dataset_dst']
         )
         return True
 
@@ -414,11 +412,9 @@ class PoolSnapshotService(CRUDService):
                 'pool.snapshot.rename.new_name',
                 'Old and new snapshot must be part of the same ZFS dataset'
             )
-        await self.middleware.call(
-            'zfs.resource.rename',
-            RenameArgs(
-                current_name=id_,
-                new_name=options['new_name'],
-                recursive=options['recursive'],
-            )
+        await self.middleware.call2(
+            self.middleware.services.zfs.resource.rename,
+            id_,
+            options['new_name'],
+            options['recursive'],
         )

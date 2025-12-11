@@ -6,7 +6,6 @@ import uuid
 from middlewared.api import api_method
 from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
 
@@ -143,7 +142,7 @@ class VMService(Service):
                 # the clone first before destroying the snap
                 if clone is not None:
                     try:
-                        await self.middleware.call('zfs.resource.destroy', DestroyArgs(path=clone))
+                        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl, clone)
                     except Exception:
                         self.logger.exception('Failed to destroy cloned zvol %r', clone)
                         # failing to destroy the clone means destroying the snap will
