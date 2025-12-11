@@ -157,8 +157,7 @@ class ShellWorkerThread(threading.Thread):
                 )
                 self.abort()
             finally:
-                with contextlib.suppress(OSError):
-                    poller.unregister(master_fd)
+                poller.unregister(master_fd)
 
         def writer():
             """
