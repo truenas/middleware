@@ -59,7 +59,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def start(self, attachments):
         pass
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         pass
 
     async def disable(self, attachments):
@@ -182,6 +182,6 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         if attachments:
             await self.restart_reload_services(attachments)

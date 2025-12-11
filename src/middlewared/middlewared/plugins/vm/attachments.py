@@ -118,7 +118,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         await self.toggle(attachments, False)
 
     async def start(self, attachments):

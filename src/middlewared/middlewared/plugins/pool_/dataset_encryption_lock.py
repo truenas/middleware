@@ -52,7 +52,7 @@ class PoolDatasetService(Service):
 
         async def detach(delegate):
             if mountpoint:
-                await delegate.stop(await delegate.query(mountpoint, True))
+                await delegate.stop(await delegate.query(mountpoint, True), {'locked': True})
 
         coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
         await asyncio.gather(*coroutines)

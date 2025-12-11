@@ -1776,7 +1776,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         for share in attachments:
             await self.middleware.call('sharing.smb.close_share', share[share_field.NAME])
 

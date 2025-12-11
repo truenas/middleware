@@ -48,7 +48,7 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.error('Unable to %s %r app', action, attachment['id'], exc_info=True)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         await self.toggle(attachments, False)
 
     async def start(self, attachments):
