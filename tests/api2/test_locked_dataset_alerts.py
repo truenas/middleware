@@ -1,17 +1,7 @@
 """
 Test that alerts are generated when a dataset used by shares/tasks is locked.
 
-This tests the LockableFSAttachmentDelegate children:
-- SMBFSAttachmentDelegate (SMB shares)
-- NFSFSAttachmentDelegate (NFS shares)
-- ISCSIFSAttachmentDelegate (iSCSI extents)
-- RsyncFSAttachmentDelegate (Rsync tasks)
-
-Excluded from testing:
-- NVMetNamespaceAttachmentDelegate (requires specific hardware)
-- CloudSyncFSAttachmentDelegate (requires external credentials)
-- CloudBackupFSAttachmentDelegate (requires external credentials)
-- WebshareFSAttachmentDelegate (requires TrueNAS Connect)
+This tests various LockableFSAttachmentDelegates.
 """
 import contextlib
 import pytest
