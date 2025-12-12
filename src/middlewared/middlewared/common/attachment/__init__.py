@@ -59,7 +59,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def start(self, attachments):
         pass
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options: dict | None = None):
         pass
 
     async def disable(self, attachments):
@@ -148,6 +148,9 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def remove_alert(self, attachment):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
+    async def generate_alert(self, attachment):
+        await self.middleware.call(f'{self.namespace}.generate_locked_alert', attachment['id'])
+
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         # What this is essentially doing is testing if resource in question is a child of queried path
         # and not vice versa. While this is desirable in most cases, there are cases we also want to see
@@ -182,6 +185,22 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         if attachments:
             await self.restart_reload_services(attachments)
+
+        options = options or {}
+        if options.get('locked'):
+            if await self.check_service_for_alert_generation():
+                # Let's generate alerts after service has been restarted/reloaded
+                for attachment in attachments:
+                    await self.generate_alert(attachment)
+
+    async def check_service_for_alert_generation(self):
+        if self.service:
+            service_obj = await self.middleware.call('service.query', [['service', '=', self.service]])
+            if not service_obj or service_obj[0]['state'] != 'RUNNING':
+                # Service is not running, don't generate alerts
+                return False
+
+        return True

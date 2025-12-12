@@ -233,6 +233,18 @@ class PoolDatasetService(Service):
         else:
             path = path.removeprefix('/mnt/')
 
+        # Check if this path is in a dataset that's about to be locked
+        # This allows services to see the dataset as locked during delegate.stop()
+        # even though the key hasn't been unloaded yet
+        try:
+            about_to_lock = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
+            if about_to_lock:
+                dataset_name = path.removesuffix('/')
+                if dataset_name == about_to_lock or dataset_name.startswith(f'{about_to_lock}/'):
+                    return True
+        except KeyError:
+            pass
+
         for i in [path.removesuffix('/')] + get_dataset_parents(path):
             try:
                 crypto = tls.lzh.open_resource(name=i).crypto()

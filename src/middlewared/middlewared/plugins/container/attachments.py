@@ -93,7 +93,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
     async def toggle(self, attachments, enabled):
         return await getattr(self, 'start' if enabled else 'stop')(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         for attachment in attachments:
             try:
                 await (
