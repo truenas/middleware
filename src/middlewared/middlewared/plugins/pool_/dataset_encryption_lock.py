@@ -1,7 +1,6 @@
 import asyncio
 import errno
 import os
-import shutil
 import uuid
 
 from collections import defaultdict
