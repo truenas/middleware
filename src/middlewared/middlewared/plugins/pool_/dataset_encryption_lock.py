@@ -16,7 +16,10 @@ from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.load_unload_impl import UnloadKeyArgs
 
-from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
+from .utils import (
+    dataset_mountpoint, dataset_can_be_mounted, encryption_root_children, retrieve_keys_from_file,
+    ZFSKeyFormat,
+)
 
 
 class PoolDatasetService(Service):
@@ -153,23 +156,6 @@ class PoolDatasetService(Service):
         # encryption root as parent will be in the "children" list. The reason for this is that
         # we will iterator [parent, child1, child2, ...] when doing unlock then mount steps
         for name, ds in datasets.items():
-            def add_children(target, encryption_root, dataset):
-                # this is a little messy. We want to basically collapse the dataset
-                # hierarchy so that we have structure like above (and omit anything that has
-                # an unusual mountpoint set).
-                for child in dataset['children']:
-                    if child['mountpoint'] in ('legacy', 'none'):
-                        # We don't want to forcibly mount a legacy mountpoint here. If we're
-                        # using these in a plugin we should have logic there to handle where
-                        # it's supposed to be mounted.
-                        self.logger.debug('%s: omitting dataset from automount due to '
-                                          'mountpoint of [%s]', child['name'], child['mountpoint'])
-                        continue
-
-                    if child['encryption_root'] == encryption_root:
-                        target.append(child)
-                        add_children(target, encryption_root, child)
-
             ds_key = keys_supplied.get(name) or ds['encryption_key']
             if ds['locked'] and id_.startswith(f'{name}/'):
                 # This ensures that `id` has locked parents and they should be unlocked first
@@ -185,7 +171,7 @@ class PoolDatasetService(Service):
 
             # now remove any children that are a different encryption root
             encryption_children = []
-            add_children(encryption_children, ds['encryption_root'], ds)
+            encryption_root_children(encryption_children, ds['encryption_root'], ds)
             datasets[name]['children'] = encryption_children
 
         if locked_datasets:

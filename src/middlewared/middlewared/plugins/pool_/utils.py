@@ -194,6 +194,22 @@ def get_dataset_parents(dataset: str) -> list:
     return [parent.as_posix() for parent in Path(dataset).parents][:-1]
 
 
+def encryption_root_children(child_list_out: list[dict], encryption_root:str, dataset: dict) -> None:
+    """ helper function for generating list of children sharing same encryption root
+    that are mount candidates in `pool.dataset.unlock`. """
+    for child in dataset['children']:
+        if child['mountpoint'] in ('legacy', 'none'):
+            # We don't want to forcibly mount a legacy mountpoint here. If we're
+            # using these in a plugin we should have logic there to handle where
+            # it's supposed to be mounted.
+            continue
+
+        if child['encryption_root'] == encryption_root:
+            child_list_out.append(child)
+            # recursion is OK here since we'll never exceed max ZFS recursion depth
+            encryption_root_children(child_list_out, encryption_root, child)
+
+
 class ZFSKeyFormat(enum.Enum):
     HEX = 'HEX'
     PASSPHRASE = 'PASSPHRASE'
