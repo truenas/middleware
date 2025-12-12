@@ -168,6 +168,50 @@ def map_plx_nvme(model, ctx):
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
 
+def map_vseries_nvme(model, ctx):
+    """Map NVMe devices for V-series systems using PCIe slot addresses."""
+    num_of_nvme_slots = 4
+
+    # Build a mapping of PCIe addresses to NVMe block device names
+    nvmes = {}
+    for i in ctx.list_devices(subsystem='nvme'):
+        for namespace_dev in i.children:
+            if namespace_dev.device_type != 'disk':
+                continue
+
+            try:
+                # i.parent.sys_name looks like 0000:44:00.0
+                # namespace_dev.sys_name looks like nvme1n1
+                # Strip the last 2 chars (.0) to get the base address
+                nvmes[i.parent.sys_name[:-2]] = namespace_dev.sys_name
+            except (IndexError, AttributeError):
+                continue
+
+    # Map PCIe slots 1-4 to rear NVMe bays
+    mapped = {}
+    for slot_path in pathlib.Path('/sys/bus/pci/slots').iterdir():
+        try:
+            slot_name = slot_path.name
+            # Only process slots 1-4 (rear NVMe bays)
+            if not slot_name.isdigit():
+                continue
+
+            slot_num = int(slot_name)
+            if slot_num < 1 or slot_num > num_of_nvme_slots:
+                continue
+
+            # Read the PCIe address for this slot
+            addr = (slot_path / 'address').read_text().strip()
+
+            # Check if we have an NVMe device at this address
+            if nvme_device := nvmes.get(addr):
+                mapped[slot_num] = nvme_device
+        except (ValueError, FileNotFoundError, OSError):
+            continue
+
+    return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
+
+
 def map_r50_or_r50b(model, ctx):
     num_of_nvme_slots = 3 if model == 'R50' else 2  # r50 has 3 rear nvme slots, r50b has 2
     if model == 'R50':
@@ -282,14 +326,17 @@ def map_nvme():
         # all nvme systems which we need to handle separately
         return map_r30_r60_or_fseries(model, ctx)
     elif model in (
-        ControllerModels.M30.value,
-        ControllerModels.M40.value,
-        ControllerModels.M50.value,
-        ControllerModels.M60.value,
         ControllerModels.V140.value,
         ControllerModels.V160.value,
         ControllerModels.V260.value,
         ControllerModels.V280.value,
+    ):
+        return map_vseries_nvme(model, ctx)
+    elif model in (
+        ControllerModels.M30.value,
+        ControllerModels.M40.value,
+        ControllerModels.M50.value,
+        ControllerModels.M60.value,
         ControllerModels.R50BM.value,
     ):
         return map_plx_nvme(model, ctx)
