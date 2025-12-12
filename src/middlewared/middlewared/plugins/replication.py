@@ -341,31 +341,31 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
-    async def _validate(self, app, data, id_=None):
-        verrors = ValidationErrors()
-
-        await self._ensure_unique(verrors, "", "name", data["name"], id_)
-
-        # Direction
-
+    async def _validate_direction(self, app_creds, data: dict, verrors: ValidationErrors) -> list[dict]:
+        periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
+        naming_schema = data["naming_schema"]
+        also_include_naming_schema = data["also_include_naming_schema"]
+        name_regex = data["name_regex"]
+        schedule = data["schedule"]
+        auto = data["auto"]
         snapshot_tasks = []
 
         match data["direction"]:
             case "PUSH":
-                e, snapshot_tasks = await self._query_periodic_snapshot_tasks(data["periodic_snapshot_tasks"])
+                e, snapshot_tasks = await self._query_periodic_snapshot_tasks(periodic_snapshot_tasks)
                 verrors.add_child("periodic_snapshot_tasks", e)
 
-                if data["naming_schema"]:
+                if naming_schema:
                     verrors.add("naming_schema", "This field has no sense for push replication")
 
-                if not snapshot_tasks and not data["also_include_naming_schema"] and not data["name_regex"]:
+                if not snapshot_tasks and not also_include_naming_schema and not name_regex:
                     verrors.add(
                         "periodic_snapshot_tasks",
                         "You must at least either bind a periodic snapshot task or provide \"Also Include Naming "
                         "Schema\" or \"Name Regex\" for push replication task"
                     )
 
-                if data["schedule"] is None and data["auto"] and not data["periodic_snapshot_tasks"]:
+                if schedule is None and auto and not periodic_snapshot_tasks:
                     verrors.add(
                         "auto",
                         "Push replication that runs automatically must be either bound to a periodic snapshot task or "
@@ -373,19 +373,19 @@ class ReplicationService(CRUDService):
                     )
 
             case "PULL":
-                if data["schedule"] is None and data["auto"]:
+                if schedule is None and auto:
                     verrors.add("auto", "Pull replication that runs automatically must have a schedule")
 
-                if data["periodic_snapshot_tasks"]:
+                if periodic_snapshot_tasks:
                     verrors.add(
                         "periodic_snapshot_tasks",
                         "Pull replication can't be bound to a periodic snapshot task"
                     )
 
-                if not data["naming_schema"] and not data["name_regex"]:
+                if not naming_schema and not name_regex:
                     verrors.add("naming_schema", "Naming schema or Name regex are required for pull replication")
 
-                if data["also_include_naming_schema"]:
+                if also_include_naming_schema:
                     verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
 
                 if data["hold_pending_snapshots"]:
@@ -394,30 +394,39 @@ class ReplicationService(CRUDService):
                         "Pull replication tasks can't hold pending snapshots because they don't do source retention"
                     )
 
-                if app.authenticated_credentials.has_role("REPLICATION_TASK_WRITE"):
-                    if not app.authenticated_credentials.has_role("REPLICATION_TASK_WRITE_PULL"):
-                        verrors.add("direction", "You don't have permissions to use PULL replication")
+                if (
+                    app_creds.has_role("REPLICATION_TASK_WRITE")
+                    and not app_creds.has_role("REPLICATION_TASK_WRITE_PULL")
+                ):
+                    verrors.add("direction", "You don't have permissions to use PULL replication")
 
-        # Transport
+        return snapshot_tasks
 
-        if data["transport"] == "SSH+NETCAT":
-            if data["netcat_active_side"] is None:
+    async def _validate_transport(self, data: dict, verrors: ValidationErrors):
+        transport = data["transport"]
+        netcat_active_side = data["netcat_active_side"]
+        compression = data["compression"]
+        speed_limit = data["speed_limit"]
+
+        if transport == "SSH+NETCAT":
+            if netcat_active_side is None:
                 verrors.add("netcat_active_side", "You must choose active side for SSH+netcat replication")
 
-            if data["netcat_active_side_port_min"] is not None and data["netcat_active_side_port_max"] is not None:
-                if data["netcat_active_side_port_min"] > data["netcat_active_side_port_max"]:
-                    verrors.add(
-                        "netcat_active_side_port_max",
-                        "Please specify value greater than or equal to netcat_active_side_port_min"
-                    )
+            port_min = data["netcat_active_side_port_min"]
+            port_max = data["netcat_active_side_port_max"]
+            if port_min is not None and port_max is not None and port_min > port_max:
+                verrors.add(
+                    "netcat_active_side_port_max",
+                    "Please specify value greater than or equal to netcat_active_side_port_min"
+                )
 
-            if data["compression"] is not None:
+            if compression is not None:
                 verrors.add("compression", "Compression is not supported for SSH+netcat replication")
 
-            if data["speed_limit"] is not None:
+            if speed_limit is not None:
                 verrors.add("speed_limit", "Speed limit is not supported for SSH+netcat replication")
         else:
-            if data["netcat_active_side"] is not None:
+            if netcat_active_side is not None:
                 verrors.add("netcat_active_side", "This field only has sense for SSH+netcat replication")
 
             for k in (
@@ -429,95 +438,113 @@ class ReplicationService(CRUDService):
                 if data[k] is not None:
                     verrors.add(k, "This field only has sense for SSH+netcat replication")
 
-        if data["transport"] == "LOCAL":
-            if data["ssh_credentials"] is not None:
+        ssh_credentials = data["ssh_credentials"]
+        if transport == "LOCAL":
+            if ssh_credentials is not None:
                 verrors.add("ssh_credentials", "Remote credentials have no sense for local replication")
 
-            if data["compression"] is not None:
+            if compression is not None:
                 verrors.add("compression", "Compression has no sense for local replication")
 
-            if data["speed_limit"] is not None:
+            if speed_limit is not None:
                 verrors.add("speed_limit", "Speed limit has no sense for local replication")
-        elif data["ssh_credentials"] is None:
+        elif ssh_credentials is None:
             verrors.add("ssh_credentials", "SSH Credentials are required for non-local replication")
         else:
             try:
                 await self.middleware.call(
                     "keychaincredential.get_of_type",
-                    data["ssh_credentials"],
+                    ssh_credentials,
                     "SSH_CREDENTIALS"
                 )
             except CallError as e:
                 verrors.add("ssh_credentials", str(e))
 
-        # Common for all directions and transports
+    def _validate_source_datasets(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
+        source_datasets = data["source_datasets"]
+        recursive = data["recursive"]
+        exclude = data["exclude"]
 
-        for i, source_dataset in enumerate(data["source_datasets"]):
-            for snapshot_task in snapshot_tasks:
-                if is_child(source_dataset, snapshot_task["dataset"]):
-                    if data["recursive"]:
-                        for exclude in snapshot_task["exclude"]:
-                            if is_child(exclude, source_dataset) and exclude not in data["exclude"]:
-                                verrors.add(
-                                    "exclude",
-                                    f"You should exclude {exclude!r} as bound periodic snapshot task dataset "
-                                    f"{snapshot_task['dataset']!r} does"
-                                )
-                    elif source_dataset in snapshot_task["exclude"]:
+        def child_datasets():
+            """
+            Yield the index of the child dataset in `source_datasets`, the
+            child dataset, and the snapshot task of its parent dataset.
+            """
+            for i, src_ds in enumerate(source_datasets):
+                for periodic_snapshot_task in snapshot_tasks:
+                    if is_child(src_ds, periodic_snapshot_task["dataset"]):
+                        yield i, src_ds, periodic_snapshot_task
+
+        for i, src_ds, periodic_snapshot_task in child_datasets():
+            task_exclude = periodic_snapshot_task["exclude"]
+            task_ds = periodic_snapshot_task["dataset"]
+            if recursive:
+                for task_exclude_item in task_exclude:
+                    if is_child(task_exclude_item, src_ds) and task_exclude_item not in exclude:
                         verrors.add(
-                            f"source_datasets.{i}",
-                            f"Dataset {source_dataset!r} is excluded by bound periodic snapshot task for dataset "
-                            f"{snapshot_task['dataset']!r}"
+                            "exclude",
+                            f"You should exclude {task_exclude_item!r} as bound periodic snapshot task dataset "
+                            f"{task_ds!r} does"
                         )
-
-        if not data["recursive"] and data["exclude"]:
-            verrors.add("exclude", "Excluding child datasets is only supported for recursive replication")
-
-        for i, v in enumerate(data["exclude"]):
-            if not any(v.startswith(ds + "/") for ds in data["source_datasets"]):
-                verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
-
-        if data["replicate"]:
-            if not data["recursive"]:
-                verrors.add("recursive", "This option is required for full filesystem replication")
-
-            if data["exclude"]:
-                verrors.add("exclude", "This option is not supported for full filesystem replication")
-
-            if not data["properties"]:
-                verrors.add("properties", "This option is required for full filesystem replication")
-
-            if data["retention_policy"] != "SOURCE":
+            elif src_ds in task_exclude:
                 verrors.add(
-                    "retention_policy",
-                    "Only `Same as Source` retention policy can be used for full filesystem replication",
+                    f"source_datasets.{i}",
+                    f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset "
+                    f"{task_ds!r}"
                 )
 
-            for i, source_dataset in enumerate(data["source_datasets"]):
-                for j, another_source_dataset in enumerate(data["source_datasets"]):
-                    if j != i and is_child(source_dataset, another_source_dataset):
-                        verrors.add(
-                            f"source_datasets.{i}",
-                            "Replication task that replicates the entire filesystem can't replicate both "
-                            f"{another_source_dataset!r} and its child {source_dataset!r}"
-                        )
+        if not recursive and exclude:
+            verrors.add("exclude", "Excluding child datasets is only supported for recursive replication")
 
-            for i, periodic_snapshot_task in enumerate(snapshot_tasks):
-                if (
-                    not any(
-                        is_child(source_dataset, periodic_snapshot_task["dataset"])
-                        for source_dataset in data["source_datasets"]
-                    )
-                    or not periodic_snapshot_task["recursive"]
-                ):
+        for i, v in enumerate(exclude):
+            if not any(v.startswith(ds + "/") for ds in source_datasets):
+                verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
+
+        if not data["replicate"]:
+            return
+
+        required_msg = "This option is required for full filesystem replication"
+        if not recursive:
+            verrors.add("recursive", required_msg)
+
+        if exclude:
+            verrors.add("exclude", "This option is not supported for full filesystem replication")
+
+        if not data["properties"]:
+            verrors.add("properties", required_msg)
+
+        if data["retention_policy"] != "SOURCE":
+            verrors.add(
+                "retention_policy",
+                "Only `Same as Source` retention policy can be used for full filesystem replication",
+            )
+
+        for i, src_ds in enumerate(source_datasets):
+            for j, another_src_ds in enumerate(source_datasets):
+                if j != i and is_child(src_ds, another_src_ds):
                     verrors.add(
-                        f"periodic_snapshot_tasks.{i}",
-                        "Replication tasks that replicate the entire filesystem can only use periodic snapshot tasks "
-                        "that take recursive snapshots of the dataset being replicated (or its ancestor)"
+                        f"source_datasets.{i}",
+                        "Replication task that replicates the entire filesystem can't replicate both "
+                        f"{another_src_ds!r} and its child {src_ds!r}"
                     )
 
+        for i, periodic_snapshot_task in enumerate(snapshot_tasks):
+            if (
+                not any(
+                    is_child(src_ds, periodic_snapshot_task["dataset"])
+                    for src_ds in source_datasets
+                )
+                or not periodic_snapshot_task["recursive"]
+            ):
+                verrors.add(
+                    f"periodic_snapshot_tasks.{i}",
+                    "Replication tasks that replicate the entire filesystem can only use periodic snapshot tasks "
+                    "that take recursive snapshots of the dataset being replicated (or its ancestor)"
+                )
+
+    def _validate_common(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
         if data["encryption"] and not data["encryption_inherit"]:
-            for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
+            for k in ("encryption_key", "encryption_key_format", "encryption_key_location"):
                 if data[k] is None:
                     verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
@@ -527,9 +554,11 @@ class ReplicationService(CRUDService):
         elif data["only_matching_schedule"]:
             verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
 
-        if data["name_regex"]:
+        name_regex = data["name_regex"]
+        retention_policy = data["retention_policy"]
+        if name_regex:
             try:
-                re.compile(f"({data['name_regex']})$")
+                re.compile(f"({name_regex})$")
             except Exception as e:
                 verrors.add("name_regex", f"Invalid regex: {e}")
 
@@ -539,32 +568,50 @@ class ReplicationService(CRUDService):
             if data["naming_schema"] or data["also_include_naming_schema"]:
                 verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
-            if data["retention_policy"] not in ["SOURCE", "NONE"]:
+            if retention_policy not in ("SOURCE", "NONE"):
                 verrors.add(
                     "retention_policy",
                     "Only `Same as Source` and `None` retention policies can be used with Naming regex",
                 )
 
-        if data["retention_policy"] == "CUSTOM":
-            if data["lifetime_value"] is None:
-                verrors.add("lifetime_value", "This field is required for custom retention policy")
-            if data["lifetime_unit"] is None:
+        lifetime_value = data["lifetime_value"]
+        lifetime_unit = data["lifetime_unit"]
+        if retention_policy == "CUSTOM":
+            if lifetime_value is None or lifetime_unit is None:
                 verrors.add("lifetime_value", "This field is required for custom retention policy")
         else:
-            if data["lifetime_value"] is not None:
-                verrors.add("lifetime_value", "This field has no sense for specified retention policy")
-            if data["lifetime_unit"] is not None:
-                verrors.add("lifetime_unit", "This field has no sense for specified retention policy")
+            errmsg = "This field has no sense for specified retention policy"
+            if lifetime_value is not None:
+                verrors.add("lifetime_value", errmsg)
+            if lifetime_unit is not None:
+                verrors.add("lifetime_unit", errmsg)
             if data["lifetimes"]:
-                verrors.add("lifetimes", "This field has no sense for specified retention policy")
+                verrors.add("lifetimes", errmsg)
 
-        if data["enabled"]:
-            for i, snapshot_task in enumerate(snapshot_tasks):
-                if not snapshot_task["enabled"]:
-                    verrors.add(
-                        f"periodic_snapshot_tasks.{i}",
-                        "You can't bind disabled periodic snapshot task to enabled replication task"
-                    )
+        if not data["enabled"]:
+            return
+
+        for i, snapshot_task in enumerate(snapshot_tasks):
+            if not snapshot_task["enabled"]:
+                verrors.add(
+                    f"periodic_snapshot_tasks.{i}",
+                    "You can't bind disabled periodic snapshot task to enabled replication task"
+                )
+
+    async def _validate(self, app, data, id_=None):
+        verrors = ValidationErrors()
+
+        await self._ensure_unique(verrors, "", "name", data["name"], id_)
+
+        # Direction
+        snapshot_tasks = await self._validate_direction(app.authenticated_credentials, data, verrors)
+
+        # Transport
+        await self._validate_transport(data, verrors)
+
+        # Common for all directions and transports
+        self._validate_source_datasets(data, snapshot_tasks, verrors)
+        self._validate_common(data, snapshot_tasks, verrors)
 
         return verrors
 
