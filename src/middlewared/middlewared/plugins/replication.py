@@ -342,6 +342,10 @@ class ReplicationService(CRUDService):
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
     async def _validate_direction(self, app_creds, data: dict, verrors: ValidationErrors) -> list[dict]:
+        """
+        Validate direction-specific settings (PUSH vs PULL).
+        Returns list of periodic snapshot tasks (empty for PULL).
+        """
         periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
         naming_schema = data["naming_schema"]
         also_include_naming_schema = data["also_include_naming_schema"]
@@ -352,12 +356,15 @@ class ReplicationService(CRUDService):
 
         match data["direction"]:
             case "PUSH":
+                # Query and validate periodic snapshot tasks
                 e, snapshot_tasks = await self._query_periodic_snapshot_tasks(periodic_snapshot_tasks)
                 verrors.add_child("periodic_snapshot_tasks", e)
 
+                # PUSH gets snapshot names from tasks, not from naming_schema
                 if naming_schema:
                     verrors.add("naming_schema", "This field has no sense for push replication")
 
+                # PUSH needs at least one way to identify snapshots to replicate
                 if not snapshot_tasks and not also_include_naming_schema and not name_regex:
                     verrors.add(
                         "periodic_snapshot_tasks",
@@ -365,6 +372,7 @@ class ReplicationService(CRUDService):
                         "Schema\" or \"Name Regex\" for push replication task"
                     )
 
+                # Automatic PUSH needs a trigger (schedule or periodic snapshot task)
                 if schedule is None and auto and not periodic_snapshot_tasks:
                     verrors.add(
                         "auto",
@@ -373,27 +381,33 @@ class ReplicationService(CRUDService):
                     )
 
             case "PULL":
+                # PULL always needs a schedule since we don't control the remote snapshot creation
                 if schedule is None and auto:
                     verrors.add("auto", "Pull replication that runs automatically must have a schedule")
 
+                # PULL can't use periodic snapshot tasks (they're for local snapshots only)
                 if periodic_snapshot_tasks:
                     verrors.add(
                         "periodic_snapshot_tasks",
                         "Pull replication can't be bound to a periodic snapshot task"
                     )
 
+                # PULL needs naming_schema or name_regex to identify remote snapshots
                 if not naming_schema and not name_regex:
                     verrors.add("naming_schema", "Naming schema or Name regex are required for pull replication")
 
+                # also_include_naming_schema only makes sense with periodic snapshot tasks
                 if also_include_naming_schema:
                     verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
 
+                # PULL can't hold snapshots on source (we don't have access to do retention there)
                 if data["hold_pending_snapshots"]:
                     verrors.add(
                         "hold_pending_snapshots",
                         "Pull replication tasks can't hold pending snapshots because they don't do source retention"
                     )
 
+                # PULL replication requires explicit permission (security: pulling data from remote)
                 if (
                     app_creds.has_role("REPLICATION_TASK_WRITE")
                     and not app_creds.has_role("REPLICATION_TASK_WRITE_PULL")
@@ -403,15 +417,19 @@ class ReplicationService(CRUDService):
         return snapshot_tasks
 
     async def _validate_transport(self, data: dict, verrors: ValidationErrors):
+        """Validate transport settings (SSH+NETCAT, LOCAL, or SSH)."""
         transport = data["transport"]
         netcat_active_side = data["netcat_active_side"]
         compression = data["compression"]
         speed_limit = data["speed_limit"]
 
+        # SSH+NETCAT: Uses SSH for control, netcat for data transfer
         if transport == "SSH+NETCAT":
+            # Must specify which side opens the netcat listener
             if netcat_active_side is None:
                 verrors.add("netcat_active_side", "You must choose active side for SSH+netcat replication")
 
+            # Validate port range for netcat listener
             port_min = data["netcat_active_side_port_min"]
             port_max = data["netcat_active_side_port_max"]
             if port_min is not None and port_max is not None and port_min > port_max:
@@ -420,15 +438,18 @@ class ReplicationService(CRUDService):
                     "Please specify value greater than or equal to netcat_active_side_port_min"
                 )
 
+            # Netcat handles raw data transfer, so compression/speed limit not applicable
             if compression is not None:
                 verrors.add("compression", "Compression is not supported for SSH+netcat replication")
 
             if speed_limit is not None:
                 verrors.add("speed_limit", "Speed limit is not supported for SSH+netcat replication")
         else:
+            # For SSH and LOCAL: Netcat-specific fields should not be set
             if netcat_active_side is not None:
                 verrors.add("netcat_active_side", "This field only has sense for SSH+netcat replication")
 
+            # Check all netcat-specific fields are null for non-netcat transports
             for k in (
                 "netcat_active_side_listen_address",
                 "netcat_active_side_port_min",
@@ -438,8 +459,10 @@ class ReplicationService(CRUDService):
                 if data[k] is not None:
                     verrors.add(k, "This field only has sense for SSH+netcat replication")
 
+        # Validate credentials based on transport type
         ssh_credentials = data["ssh_credentials"]
         if transport == "LOCAL":
+            # LOCAL replication is same-system, so no remote credentials or network features
             if ssh_credentials is not None:
                 verrors.add("ssh_credentials", "Remote credentials have no sense for local replication")
 
@@ -449,8 +472,10 @@ class ReplicationService(CRUDService):
             if speed_limit is not None:
                 verrors.add("speed_limit", "Speed limit has no sense for local replication")
         elif ssh_credentials is None:
+            # SSH and SSH+NETCAT both require SSH credentials
             verrors.add("ssh_credentials", "SSH Credentials are required for non-local replication")
         else:
+            # Verify the SSH credentials exist and are valid
             try:
                 await self.middleware.call(
                     "keychaincredential.get_of_type",
@@ -461,6 +486,7 @@ class ReplicationService(CRUDService):
                 verrors.add("ssh_credentials", str(e))
 
     def _validate_source_datasets(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
+        """Validate source datasets, exclusions, and full filesystem replication settings."""
         source_datasets = data["source_datasets"]
         recursive = data["recursive"]
         exclude = data["exclude"]
@@ -475,10 +501,12 @@ class ReplicationService(CRUDService):
                     if is_child(src_ds, periodic_snapshot_task["dataset"]):
                         yield i, src_ds, periodic_snapshot_task
 
+        # Validate that exclusions are consistent between replication task and snapshot tasks
         for i, src_ds, periodic_snapshot_task in child_datasets():
             task_exclude = periodic_snapshot_task["exclude"]
             task_ds = periodic_snapshot_task["dataset"]
             if recursive:
+                # For recursive replication, snapshot task exclusions should be replicated in our exclude list
                 for task_exclude_item in task_exclude:
                     if is_child(task_exclude_item, src_ds) and task_exclude_item not in exclude:
                         verrors.add(
@@ -487,22 +515,27 @@ class ReplicationService(CRUDService):
                             f"{task_ds!r} does"
                         )
             elif src_ds in task_exclude:
+                # For non-recursive, can't replicate a dataset that's excluded from snapshots
                 verrors.add(
                     f"source_datasets.{i}",
                     f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset "
                     f"{task_ds!r}"
                 )
 
+        # Exclude lists only work with recursive replication
         if not recursive and exclude:
             verrors.add("exclude", "Excluding child datasets is only supported for recursive replication")
 
+        # Every excluded dataset must be a child of at least one source dataset
         for i, v in enumerate(exclude):
             if not any(v.startswith(ds + "/") for ds in source_datasets):
                 verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
 
+        # Full filesystem replication (replicate=True) has additional requirements
         if not data["replicate"]:
             return
 
+        # Full filesystem replication must include all children and properties
         required_msg = "This option is required for full filesystem replication"
         if not recursive:
             verrors.add("recursive", required_msg)
@@ -513,12 +546,14 @@ class ReplicationService(CRUDService):
         if not data["properties"]:
             verrors.add("properties", required_msg)
 
+        # Full filesystem replication must use SOURCE retention to match source exactly
         if data["retention_policy"] != "SOURCE":
             verrors.add(
                 "retention_policy",
                 "Only `Same as Source` retention policy can be used for full filesystem replication",
             )
 
+        # Source datasets can't overlap (e.g., can't replicate both tank/foo and tank/foo/bar)
         for i, src_ds in enumerate(source_datasets):
             for j, another_src_ds in enumerate(source_datasets):
                 if j != i and is_child(src_ds, another_src_ds):
@@ -528,6 +563,7 @@ class ReplicationService(CRUDService):
                         f"{another_src_ds!r} and its child {src_ds!r}"
                     )
 
+        # Snapshot tasks must be recursive and cover the source datasets
         for i, periodic_snapshot_task in enumerate(snapshot_tasks):
             if (
                 not any(
@@ -543,46 +579,57 @@ class ReplicationService(CRUDService):
                 )
 
     def _validate_common(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
+        """Validate common settings (encryption, schedules, retention, naming)."""
+        # When encryption is enabled but not inherited, must specify key details
         if data["encryption"] and not data["encryption_inherit"]:
             for k in ("encryption_key", "encryption_key_format", "encryption_key_location"):
                 if data[k] is None:
                     verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
+        # Schedule validation: schedule requires auto, only_matching_schedule requires schedule
         if data["schedule"]:
             if not data["auto"]:
                 verrors.add("schedule", "You can't have schedule for replication that does not run automatically")
         elif data["only_matching_schedule"]:
             verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
 
+        # Name regex validation and compatibility checks
         name_regex = data["name_regex"]
         retention_policy = data["retention_policy"]
         if name_regex:
+            # Verify regex syntax is valid
             try:
                 re.compile(f"({name_regex})$")
             except Exception as e:
                 verrors.add("name_regex", f"Invalid regex: {e}")
 
+            # Name regex is mutually exclusive with snapshot tasks (which provide their own naming)
             if snapshot_tasks:
                 verrors.add("name_regex", "Naming regex can't be used with periodic snapshot tasks")
 
+            # Name regex is mutually exclusive with naming schema
             if data["naming_schema"] or data["also_include_naming_schema"]:
                 verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
+            # Name regex has limited retention policy options (can't calculate lifetimes from arbitrary names)
             if retention_policy not in ("SOURCE", "NONE"):
                 verrors.add(
                     "retention_policy",
                     "Only `Same as Source` and `None` retention policies can be used with Naming regex",
                 )
 
+        # Retention policy validation: CUSTOM requires lifetime settings, others forbid them
         lifetime_value = data["lifetime_value"]
         lifetime_unit = data["lifetime_unit"]
         if retention_policy == "CUSTOM":
+            # CUSTOM retention needs both value and unit to calculate snapshot lifetime
             errmsg = "This field is required for custom retention policy"
             if lifetime_value is None:
                 verrors.add("lifetime_value", errmsg)
             if lifetime_unit is None:
                 verrors.add("lifetime_unit", errmsg)
         else:
+            # Non-CUSTOM retention policies (SOURCE, NONE) don't use lifetime settings
             errmsg = "This field has no sense for specified retention policy"
             if lifetime_value is not None:
                 verrors.add("lifetime_value", errmsg)
@@ -591,6 +638,7 @@ class ReplicationService(CRUDService):
             if data["lifetimes"]:
                 verrors.add("lifetimes", errmsg)
 
+        # Can't bind disabled snapshot tasks to enabled replication tasks
         if not data["enabled"]:
             return
 
