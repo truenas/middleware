@@ -104,8 +104,10 @@ def dataset(name, data=None, pool=pool, **kwargs):
 def snapshot(dataset, name, **kwargs):
     get = kwargs.pop("get", False)
 
-    result = call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
-
+    result = call(
+        "zfs.resource.snapshot.create_impl",
+        {"dataset": dataset, "name": name, "bypass": True, **kwargs}
+    )
     id_ = f"{dataset}@{name}"
     try:
         if get:

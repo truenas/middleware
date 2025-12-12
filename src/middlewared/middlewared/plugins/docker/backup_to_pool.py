@@ -56,10 +56,14 @@ class DockerService(Service):
         job.set_progress(30, 'Snapshotting apps dataset')
         schema = f'ix-apps-{docker_config["pool"]}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
         try:
+            # Resolve naming schema to get snapshot name
+            snap_name = await self.middleware.call(
+                'replication.new_snapshot_name', schema
+            )
             await self.middleware.call(
-                'zfs.snapshot.create', {
+                'zfs.resource.snapshot.create_impl', {
                     'dataset': applications_ds_name(docker_config["pool"]),
-                    'naming_schema': schema,
+                    'name': snap_name,
                     'recursive': True,
                 }
             )

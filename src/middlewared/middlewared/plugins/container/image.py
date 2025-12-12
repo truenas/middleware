@@ -139,7 +139,7 @@ class ContainerImageService(Service):
 
                 # Create ZFS snapshot
                 job.set_progress(98, 'Creating ZFS snapshot...')
-                self.middleware.call_sync('zfs.snapshot.create', {
+                self.middleware.call_sync('zfs.resource.snapshot.create_impl', {
                     'dataset': dataset_name,
                     'name': 'image'
                 })

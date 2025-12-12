@@ -61,7 +61,9 @@ class SnapshotCountAlertSource(AlertSource):
         return to_alert
 
     async def check(self):
-        snapshot_counts = await self.middleware.call("zfs.snapshot.count")
+        snapshot_counts = await self.middleware.call(
+            "zfs.resource.snapshot.count_impl", {"recursive": True}
+        )
         alerts = await self._check_smb(snapshot_counts)
         alerts.extend(await self._check_total(snapshot_counts))
         return alerts

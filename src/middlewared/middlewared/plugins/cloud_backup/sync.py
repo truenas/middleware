@@ -28,7 +28,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
             await middleware.call("cloud_backup.validate_zvol", local_path)
 
             name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{utc_now().strftime('%Y%m%d%H%M%S')}"
-            snapshot = (await middleware.call("zfs.snapshot.create", {
+            snapshot = (await middleware.call("pool.snapshot.create", {
                 "dataset": zvol_path_to_name(local_path),
                 "name": name,
                 "suspend_vms": True,
@@ -116,7 +116,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if snapshot is not None:
             try:
-                await middleware.call("zfs.resource.destroy", DestroyArgs(path=snapshot))
+                await middleware.call("zfs.resource.snapshot.destroy_impl", {"path": snapshot})
             except Exception as e:
                 middleware.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")
 

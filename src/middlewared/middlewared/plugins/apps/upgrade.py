@@ -11,7 +11,6 @@ from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 
@@ -66,7 +65,7 @@ class AppService(Service):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 
-            self.middleware.call_sync('zfs.snapshot.create', {
+            self.middleware.call_sync('zfs.resource.snapshot.create_impl', {
                 'dataset': dataset,
                 'name': get_upgrade_snap_name(app_info["name"], app_info["version"])
             })
@@ -143,13 +142,14 @@ class AppService(Service):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
                 try:
                     self.middleware.call_sync(
-                        'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
+                        'zfs.resource.snapshot.destroy_impl',
+                        {'path': snap_name, 'recursive': True}
                     )
                 except InstanceNotFound:
                     pass
 
                 self.middleware.call_sync(
-                    'zfs.snapshot.create', {
+                    'zfs.resource.snapshot.create_impl', {
                         'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
                     }
                 )

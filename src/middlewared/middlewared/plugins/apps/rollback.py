@@ -75,7 +75,8 @@ class AppService(Service):
                 if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_name):
                     job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
                     self.middleware.call_sync(
-                        'zfs.snapshot.rollback', snap_name, {
+                        'zfs.resource.snapshot.rollback_impl', {
+                            'path': snap_name,
                             'force': True,
                             'recursive': True,
                             'recursive_clones': True,

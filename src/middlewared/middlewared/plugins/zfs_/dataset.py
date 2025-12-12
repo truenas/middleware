@@ -153,14 +153,6 @@ class ZFSDatasetService(CRUDService):
             raise CallError(f'Failed to delete dataset: {error}', errno_)
         return True
 
-    def destroy_snapshots(self, name, snapshot_spec):
-        try:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(name)
-                return dataset.delete_snapshots(snapshot_spec)
-        except libzfs.ZFSException as e:
-            raise CallError(str(e))
-
     def update_zfs_object_props(self, properties, zfs_object):
         verrors = ValidationErrors()
         for k, v in properties.items():

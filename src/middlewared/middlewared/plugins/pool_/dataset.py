@@ -5,7 +5,7 @@ import pathlib
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
-    PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult,
+    PoolDatasetDeleteArgs, PoolDatasetDeleteResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
@@ -15,7 +15,7 @@ from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
 from middlewared.service import (
-    CallError, CRUDService, InstanceNotFound, job, private, ValidationError, ValidationErrors,
+    CallError, CRUDService, InstanceNotFound, private, ValidationError, ValidationErrors,
     filterable_api_method,
 )
 from middlewared.service.decorators import pass_thread_local_storage
@@ -899,41 +899,6 @@ class PoolDatasetService(CRUDService):
             'zfs.resource.destroy', DestroyArgs(path=id_, recursive=options['recursive'])
         )
         return True
-
-    # Used by Democratic CSI
-    # FIXME: phase it out
-    @api_method(
-        PoolDatasetDestroySnapshotsArgs,
-        PoolDatasetDestroySnapshotsResult,
-        roles=['SNAPSHOT_WRITE'],
-        removed_in="v26.04",
-    )
-    @job(lock=lambda args: f'destroy_snapshots_{args[0]}')
-    async def destroy_snapshots(self, job, name, snapshots_spec):
-        """
-        Destroy specified snapshots of a given dataset.
-        """
-        await self.get_instance(name, {'extra': {
-            'properties': [],
-            'retrieve_children': False,
-        }})
-
-        verrors = ValidationErrors()
-        schema_name = 'destroy_snapshots'
-        if snapshots_spec['all'] and snapshots_spec['snapshots']:
-            verrors.add(
-                f'{schema_name}.snapshots', 'Must not be specified when all snapshots are specified for removal'
-            )
-        else:
-            for i, entry in enumerate(snapshots_spec['snapshots']):
-                if not entry:
-                    verrors.add(f'{schema_name}.snapshots.{i}', 'Either "start" or "end" must be specified')
-
-        verrors.check()
-
-        job.set_progress(20, 'Initial validation complete')
-
-        return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
