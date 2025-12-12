@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import errno
 
 from pydantic_core import ValidationError
@@ -70,6 +72,8 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
     try:
         instance = model(**data)
     except ValidationError as e:
+        union_errors = defaultdict(list)
+
         verrors = ValidationErrors()
         for error in e.errors():
             loc = list(map(str, error["loc"]))
@@ -78,8 +82,18 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
             if error["type"] == "union_tag_not_found":
                 loc.append(error["ctx"]["discriminator"].strip("'"))
                 msg = "Field required"
+            elif loc and ("[" in loc[-1] or "(" in loc[-1]):
+                # If the field is a union, all of its members will have their validation errors listed under their
+                # corresponding repr()s.
+                # i.e. `endpoint.literal['']` or `endpoint.function-after[str(), function-wrap[wrap_val()]]`
+                # Let's handle this after
+                union_errors[".".join(loc[:-1])].append(msg)
+                continue
 
             verrors.add(".".join(loc), msg)
+
+        for field, msg in union_errors.items():
+            verrors.add(field, " or ".join(msg))
 
         raise verrors from None
 
