@@ -837,12 +837,27 @@ class AuditModel(Model):
 
 
 @pytest.mark.parametrize("filters,expected_ids", [
+    # Existing tests - full array/object matching
     ([['$.event_data.params', '=', [38]]], [1]),
     ([['$.event_data.nested', '=', {'key': 'value1'}]], [1]),
     ([['$.event_data.params', '=', [40, 41]]], [3]),
     ([['username', '=', 'admin']], [1, 2]),
     ([['username', '=', 'admin'], ['$.event_data.params', '=', [38]]], [1]),
     ([['$.event_data.method', '=', 'user.delete']], [1, 3]),
+
+    # NEW - Array index access tests
+    # Access first element of params array
+    ([['$.event_data.params[0]', '=', 38]], [1]),
+    ([['$.event_data.params[0]', '=', 39]], [2]),
+    ([['$.event_data.params[0]', '=', 40]], [3]),
+    # Access second element of params array (only row 3 has two elements)
+    ([['$.event_data.params[1]', '=', 41]], [3]),
+    # Combine array index with other filters
+    ([['$.event_data.method', '=', 'user.delete'], ['$.event_data.params[0]', '=', 38]], [1]),
+    ([['username', '=', 'admin'], ['$.event_data.params[0]', '=', 38]], [1]),
+    # Access nested object property
+    ([['$.event_data.nested.key', '=', 'value1']], [1]),
+    ([['$.event_data.nested.key', '=', 'value2']], [2]),
 ])
 @pytest.mark.asyncio
 async def test__json_path_filters(filters, expected_ids):
@@ -862,6 +877,102 @@ async def test__json_path_filters(filters, expected_ids):
 
         result = await ds.query("audit.middleware_0_1", filters)
         assert [row["ROW_ID"] for row in result] == expected_ids
+
+
+# =============================================================================
+# NEW - Tests for top-level array column access (e.g., $.roles[0])
+# This tests the case where the JSON column itself contains an array
+# =============================================================================
+
+class RolesModel(Model):
+    """Model with a JSON column that stores an array directly (not nested in object)"""
+    __tablename__ = 'test_roles'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String())
+    roles = sa.Column(sa.String())  # JSON array stored as string
+
+
+@pytest.mark.parametrize("filters,expected_ids", [
+    # Top-level array index access - currently BROKEN, needs json_path_parse() fix
+    ([['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
+    ([['$.roles[0]', '=', 'READONLY_ADMIN']], [2]),
+    ([['$.roles[1]', '=', 'SHARING_ADMIN']], [1]),  # Second role
+    # Combine with regular column filter
+    ([['name', '=', 'Local Administrator'], ['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
+    # Single column JSONPath (no array index) - currently BROKEN
+    ([['$.roles', '=', '["FULL_ADMIN", "SHARING_ADMIN"]']], [1]),
+])
+@pytest.mark.asyncio
+async def test__json_path_top_level_array(filters, expected_ids):
+    """Test filtering on JSON columns that contain arrays at the top level"""
+    async with datastore_test() as ds:
+        ds.execute(
+            "INSERT INTO test_roles VALUES (1, 'Local Administrator', '[\"FULL_ADMIN\", \"SHARING_ADMIN\"]')"
+        )
+        ds.execute(
+            "INSERT INTO test_roles VALUES (2, 'Read-Only Administrator', '[\"READONLY_ADMIN\"]')"
+        )
+        ds.execute(
+            "INSERT INTO test_roles VALUES (3, 'Sharing Administrator', '[\"SHARING_ADMIN\"]')"
+        )
+
+        result = await ds.query("test.roles", filters)
+        assert [row["id"] for row in result] == expected_ids
+
+
+# =============================================================================
+# NEW - Tests for complex nested JSON with array access (audit-like use case)
+# =============================================================================
+
+class AuditComplexModel(Model):
+    """Model simulating real audit event_data structure with params array containing objects"""
+    __tablename__ = 'audit_complex'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    event_data = sa.Column(sa.String())  # JSON with nested structure
+
+
+@pytest.mark.parametrize("filters,expected_ids", [
+    # Access property of first object in params array (main audit use case)
+    ([['$.event_data.params[0].username', '=', 'barney']], [1]),
+    ([['$.event_data.params[0].username', '=', 'fred']], [2]),
+    # Access nested property in array element
+    ([['$.event_data.params[0].settings.theme', '=', 'dark']], [1]),
+    ([['$.event_data.params[0].settings.theme', '=', 'light']], [2]),
+    # Combine method filter with params array access
+    ([['$.event_data.method', '=', 'user.create'], ['$.event_data.params[0].username', '=', 'barney']], [1]),
+    # Access second positional argument
+    ([['$.event_data.params[1].notify', '=', True]], [1]),
+    ([['$.event_data.params[1].notify', '=', False]], [2]),
+])
+@pytest.mark.asyncio
+async def test__json_path_nested_array_object_access(filters, expected_ids):
+    """Test filtering on array elements that contain objects (audit params use case)"""
+    async with datastore_test() as ds:
+        # Row 1: user.create for barney with dark theme, notify=true
+        ds.execute(
+            "INSERT INTO audit_complex VALUES (1, '"
+            '{"method": "user.create", "params": ['
+            '{"username": "barney", "settings": {"theme": "dark"}}, {"notify": true}]}'
+            "')"
+        )
+        # Row 2: user.create for fred with light theme, notify=false
+        ds.execute(
+            "INSERT INTO audit_complex VALUES (2, '"
+            '{"method": "user.create", "params": ['
+            '{"username": "fred", "settings": {"theme": "light"}}, {"notify": false}]}'
+            "')"
+        )
+        # Row 3: user.delete for barney (different method)
+        ds.execute(
+            "INSERT INTO audit_complex VALUES (3, '"
+            '{"method": "user.delete", "params": [{"username": "barney"}]}'
+            "')"
+        )
+
+        result = await ds.query("audit.complex", filters)
+        assert [row["id"] for row in result] == expected_ids
 
 
 class LinkedToModel(Model):
