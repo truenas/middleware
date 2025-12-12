@@ -1332,6 +1332,7 @@ class SharingSMBService(SharingService):
                         )
                     except KeyError:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: group does not exist.')
+                        continue
 
                     if not group_obj['sid']:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: not an SMB group.')
