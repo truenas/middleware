@@ -160,7 +160,7 @@ class S3CredentialsModel(BaseModel):
     """S3 access key ID for authentication."""
     secret_access_key: Secret[NonEmptyString]
     """S3 secret access key for authentication."""
-    endpoint: str = ""
+    endpoint: Literal[""] | HttpUrl = ""
     """S3-compatible endpoint URL or empty string for AWS S3."""
     region: Secret[str] = ""
     """S3 region or empty string for default."""
