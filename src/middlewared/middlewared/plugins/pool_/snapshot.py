@@ -53,18 +53,14 @@ class PoolSnapshotService(CRUDService):
         )
         return True
 
-    @api_method(PoolSnapshotRollbackArgs, PoolSnapshotRollbackResult, roles=['SNAPSHOT_WRITE', 'POOL_WRITE'])
+    @api_method(
+        PoolSnapshotRollbackArgs,
+        PoolSnapshotRollbackResult,
+        roles=['SNAPSHOT_WRITE', 'POOL_WRITE']
+    )
     def rollback(self, id_, options):
-        self.middleware.call_sync(
-            'zfs.resource.snapshot.rollback_impl',
-            {
-                'path': id_,
-                'recursive': options.get('recursive', False),
-                'recursive_clones': options.get('recursive_clones', False),
-                'force': options.get('force', False),
-                'recursive_rollback': options.get('recursive_rollback', False),
-            }
-        )
+        argsdict = {'path': id_} | options
+        self.middleware.call_sync('zfs.resource.snapshot.rollback_impl', argsdict)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
@@ -78,7 +74,7 @@ class PoolSnapshotService(CRUDService):
             {
                 'path': id_,
                 'tag': 'truenas',
-                'recursive': options.get('recursive', False),
+                'recursive': options['recursive'],
             }
         )
 
@@ -94,13 +90,9 @@ class PoolSnapshotService(CRUDService):
             {
                 'path': id_,
                 'tag': None,  # Release all hold tags
-                'recursive': options.get('recursive', False),
+                'recursive': options['recursive'],
             }
         )
-
-    # Fast-path properties are inherent to snapshots and don't require ZFS property lookup.
-    # When ONLY these are requested, we don't return a 'properties' dict in the result.
-    FAST_PATH_PROPERTIES = frozenset({'name', 'createtxg'})
 
     def _transform_snapshot_entry(self, snap, *, include_holds=True, include_properties=True, requested_props=None):
         """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
@@ -226,7 +218,7 @@ class PoolSnapshotService(CRUDService):
         # Determine which properties were requested and filter out fast-path ones
         # Fast-path properties (name, createtxg) don't need ZFS property lookup
         requested_props = set(extra.get('properties', []))
-        non_fast_path_props = requested_props - self.FAST_PATH_PROPERTIES
+        non_fast_path_props = requested_props - frozenset({'name', 'createtxg'})
 
         # Only include 'properties' in result if non-fast-path properties were requested
         include_properties = bool(non_fast_path_props)
@@ -310,7 +302,7 @@ class PoolSnapshotService(CRUDService):
                 name = self.middleware.call_sync('replication.new_snapshot_name', naming_schema)
 
         if exclude:
-            for k in ['vmware_sync', 'properties']:
+            for k in ('vmware_sync', 'properties'):
                 if data.get(k):
                     raise ValidationError(
                         f'snapshot_create.{k}',
