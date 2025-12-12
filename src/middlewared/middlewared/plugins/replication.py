@@ -577,8 +577,11 @@ class ReplicationService(CRUDService):
         lifetime_value = data["lifetime_value"]
         lifetime_unit = data["lifetime_unit"]
         if retention_policy == "CUSTOM":
-            if lifetime_value is None or lifetime_unit is None:
-                verrors.add("lifetime_value", "This field is required for custom retention policy")
+            errmsg = "This field is required for custom retention policy"
+            if lifetime_value is None:
+                verrors.add("lifetime_value", errmsg)
+            if lifetime_unit is None:
+                verrors.add("lifetime_unit", errmsg)
         else:
             errmsg = "This field has no sense for specified retention policy"
             if lifetime_value is not None:
