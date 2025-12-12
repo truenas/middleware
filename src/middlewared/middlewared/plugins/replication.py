@@ -491,36 +491,28 @@ class ReplicationService(CRUDService):
         recursive = data["recursive"]
         exclude = data["exclude"]
 
-        def child_datasets():
-            """
-            Yield the index of the child dataset in `source_datasets`, the
-            child dataset, and the snapshot task of its parent dataset.
-            """
-            for i, src_ds in enumerate(source_datasets):
-                for periodic_snapshot_task in snapshot_tasks:
-                    if is_child(src_ds, periodic_snapshot_task["dataset"]):
-                        yield i, src_ds, periodic_snapshot_task
-
         # Validate that exclusions are consistent between replication task and snapshot tasks
-        for i, src_ds, periodic_snapshot_task in child_datasets():
-            task_exclude = periodic_snapshot_task["exclude"]
-            task_ds = periodic_snapshot_task["dataset"]
-            if recursive:
-                # For recursive replication, snapshot task exclusions should be replicated in our exclude list
-                for task_exclude_item in task_exclude:
-                    if is_child(task_exclude_item, src_ds) and task_exclude_item not in exclude:
+        for i, src_ds in enumerate(source_datasets):
+            for periodic_snapshot_task in snapshot_tasks:
+                task_ds = periodic_snapshot_task["dataset"]
+                if is_child(src_ds, task_ds):
+                    task_exclude = periodic_snapshot_task["exclude"]
+                    if recursive:
+                        # For recursive replication, snapshot task exclusions should be replicated in our exclude list
+                        for task_exclude_item in task_exclude:
+                            if is_child(task_exclude_item, src_ds) and task_exclude_item not in exclude:
+                                verrors.add(
+                                    "exclude",
+                                    f"You should exclude {task_exclude_item!r} as bound periodic snapshot task dataset "
+                                    f"{task_ds!r} does"
+                                )
+                    elif src_ds in task_exclude:
+                        # For non-recursive, can't replicate a dataset that's excluded from snapshots
                         verrors.add(
-                            "exclude",
-                            f"You should exclude {task_exclude_item!r} as bound periodic snapshot task dataset "
-                            f"{task_ds!r} does"
+                            f"source_datasets.{i}",
+                            f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset "
+                            f"{task_ds!r}"
                         )
-            elif src_ds in task_exclude:
-                # For non-recursive, can't replicate a dataset that's excluded from snapshots
-                verrors.add(
-                    f"source_datasets.{i}",
-                    f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset "
-                    f"{task_ds!r}"
-                )
 
         # Exclude lists only work with recursive replication
         if not recursive and exclude:
