@@ -194,7 +194,7 @@ def get_dataset_parents(dataset: str) -> list:
     return [parent.as_posix() for parent in Path(dataset).parents][:-1]
 
 
-def encryption_root_children(child_list_out: list[dict], encryption_root:str, dataset: dict) -> None:
+def encryption_root_children(child_list_out: list[dict], encryption_root: str, dataset: dict) -> None:
     """ helper function for generating list of children sharing same encryption root
     that are mount candidates in `pool.dataset.unlock`. """
     for child in dataset['children']:
