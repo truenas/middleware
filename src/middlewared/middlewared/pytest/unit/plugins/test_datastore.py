@@ -935,12 +935,13 @@ class AuditComplexModel(Model):
 
 @pytest.mark.parametrize("filters,expected_ids", [
     # Access property of first object in params array (main audit use case)
-    ([['$.event_data.params[0].username', '=', 'barney']], [1]),
+    # Note: Row 1 and Row 3 both have username=barney in params[0]
+    ([['$.event_data.params[0].username', '=', 'barney']], [1, 3]),
     ([['$.event_data.params[0].username', '=', 'fred']], [2]),
     # Access nested property in array element
     ([['$.event_data.params[0].settings.theme', '=', 'dark']], [1]),
     ([['$.event_data.params[0].settings.theme', '=', 'light']], [2]),
-    # Combine method filter with params array access
+    # Combine method filter with params array access (this filters to just row 1)
     ([['$.event_data.method', '=', 'user.create'], ['$.event_data.params[0].username', '=', 'barney']], [1]),
     # Access second positional argument
     ([['$.event_data.params[1].notify', '=', True]], [1]),
