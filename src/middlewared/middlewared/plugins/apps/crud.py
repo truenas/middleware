@@ -13,7 +13,6 @@ from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
 from middlewared.utils.filter_list import filter_list
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 
 from .compose_utils import collect_logs, compose_action
 from .custom_app_utils import validate_payload
@@ -212,9 +211,11 @@ class AppService(CRUDService):
 
         if apps_volume_ds and remove_ds:
             try:
-                self.middleware.call_sync(
-                    'zfs.resource.destroy_impl',
-                    DestroyArgs(path=apps_volume_ds, recursive=True, bypass=True),
+                self.middleware.call_sync2(
+                    self.middleware.services.zfs.resource.destroy_impl,
+                    apps_volume_ds,
+                    recursive=True,
+                    bypass=True,
                 )
             except Exception:
                 self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
@@ -333,9 +334,11 @@ class AppService(CRUDService):
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-            self.middleware.call_sync(
-                'zfs.resource.destroy_impl',
-                DestroyArgs(path=apps_volume_ds, recursive=True, bypass=True)
+            self.middleware.call_sync2(
+                self.middleware.services.zfs.resource.destroy_impl,
+                apps_volume_ds,
+                recursive=True,
+                bypass=True,
             )
 
         if options.get('send_event', True):

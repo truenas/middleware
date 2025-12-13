@@ -17,7 +17,6 @@ from middlewared.api.current import (
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
 )
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CRUDService, job, private, ValidationErrors
@@ -318,7 +317,7 @@ class ContainerService(CRUDService):
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
-        self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=container['dataset']))
+        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl,container['dataset'])
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'])

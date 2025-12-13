@@ -18,7 +18,6 @@ from middlewared.api.current import (
     VMLogFileDownloadResult,
 )
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
@@ -406,7 +405,11 @@ class VMService(CRUDService):
 
                 disk_name = zvol_path_to_name(zvol['attributes']['path'])
                 try:
-                    self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=disk_name, recursive=True))
+                    self.middleware.call_sync2(
+                        self.middleware.services.zfs.resource.destroy_impl,
+                        disk_name,
+                        recursive=True,
+                    )
                 except Exception:
                     if not force_delete:
                         raise

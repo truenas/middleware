@@ -1,5 +1,3 @@
-from typing import TypedDict
-
 from .utils import open_resource
 
 try:
@@ -10,30 +8,29 @@ except ImportError:
 
 __all__ = (
     "unload_key_impl",
-    "UnloadKeyArgs",
 )
 
 
-class UnloadKeyArgs(TypedDict):
-    filesystem: str
-    """Unload the encryption key from ZFS, removing the ability to access the
-    resource (filesystem or zvol) and all of its children that inherit the
-    'keylocation' property. This requires that the resource is not currently
-    open or mounted."""
-    recursive: bool
-    """Recursively unload encryption keys for any child resources of the
-    parent."""
-    force_unmount: bool
-    """Forcefully unmount the resource before unloading the encryption key."""
+def unload_key_impl(tls, filesystem: str, recursive: bool, force_unmount: bool):
+    """
+    Unload the encryption key from ZFS.
 
-
-def unload_key_impl(tls, data: UnloadKeyArgs):
-    """libzfs doesn't allow (though it's misleading) the ability
+    libzfs doesn't allow (though it's misleading) the ability
     to unload the encryption key of a zfs resource without first
-    unmounting it. This is why it's calling "unmount" method."""
-    rsrc = open_resource(tls, data.get("filesystem", ""))
+    unmounting it. This is why it's calling "unmount" method.
+
+    Args:
+        filesystem: Unload the encryption key from ZFS, removing the ability to access the
+            resource (filesystem or zvol) and all of its children that inherit the
+            'keylocation' property. This requires that the resource is not currently
+            open or mounted.
+        recursive: Recursively unload encryption keys for any child resources of the
+            parent.
+        force_unmount: Forcefully unmount the resource before unloading the encryption key.
+    """
+    rsrc = open_resource(tls, filesystem)
     rsrc.unmount(
-        force=data.get("force_unmount", False),
-        recursive=data.get("recursive", False),
+        force=force_unmount,
+        recursive=recursive,
         unload_encryption_key=True
     )

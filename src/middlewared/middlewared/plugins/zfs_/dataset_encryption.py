@@ -2,7 +2,6 @@ import libzfs
 
 from middlewared.service import CallError, job, Service
 from middlewared.utils.filter_list import filter_list
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 
 from .utils import unlocked_zvols_fast, zvol_path_to_name
 
@@ -98,9 +97,10 @@ class ZFSDatasetService(Service):
             raise CallError(f'Failed to load key for {id_}: {e}')
         else:
             if mount_ds:
-                self.middleware.call_sync(
-                    'zfs.resource.mount',
-                    MountArgs(filesystem=id_, recursive=recursive)
+                self.middleware.call_sync2(
+                    self.middleware.services.zfs.resource.mount,
+                    id_,
+                    recursive=recursive,
                 )
 
     def check_key(self, id_: str, options: dict | None = None):
