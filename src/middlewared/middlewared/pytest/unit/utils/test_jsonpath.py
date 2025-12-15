@@ -1,4 +1,5 @@
 import pytest
+
 from middlewared.utils import jsonpath
 
 
@@ -70,17 +71,17 @@ def test_filters_json_path_parse(filters_in, filters_out):
     ('$.foo.bar', ('foo', '$.bar')),
     ('$.foo.bar.tar', ('foo', '$.bar.tar')),
 
-    # Array index in nested path - NEW
+    # Array index in nested path
     ('$.event_data.params[0]', ('event_data', '$.params[0]')),
     ('$.event_data.params[0].username', ('event_data', '$.params[0].username')),
     ('$.foo.bar[0].baz', ('foo', '$.bar[0].baz')),
     ('$.foo.items[0].values[1]', ('foo', '$.items[0].values[1]')),
 
-    # Top-level array index (no dot after column) - currently BROKEN, needs fix
+    # Top-level array index (no dot after column)
     ('$.roles[0]', ('roles', '$[0]')),
     ('$.params[0]', ('params', '$[0]')),
 
-    # Single column (no nested path) - currently BROKEN, needs fix
+    # Single column (no nested path)
     ('$.roles', ('roles', '$')),
 ])
 def test_json_path_parse(json_path, expected):

@@ -92,14 +92,40 @@ def query_filters_json_path_parse(filters_in: list) -> list:
 
 def json_path_parse(str_in: str) -> tuple[str, str]:
     """Convert a JSONPath string for datastore query into column name and JSONPath relative
-    to the column. This is required in datastore plugins FiltersMixing.
-    Example: '$.service_data.origin' -> ('service_data', '$.origin')"""
+    to the column. This is required in datastore plugins FiltersMixin.
 
+    Examples:
+        '$.service_data.origin' -> ('service_data', '$.origin')
+        '$.event_data.params[0].username' -> ('event_data', '$.params[0].username')
+        '$.roles[0]' -> ('roles', '$[0]')
+        '$.roles' -> ('roles', '$')
+    """
     if not str_in.startswith(JSON_PATH_PREFIX):
         raise ValueError(f'{str_in}: not a JSONPath')
 
-    column, relative_path = str_in[len(JSON_PATH_PREFIX):].split('.', 1)
-    return (column, JSON_PATH_PREFIX + relative_path)
+    remainder = str_in[len(JSON_PATH_PREFIX):]  # Remove "$."
+
+    # Find the first delimiter (either '.' or '[')
+    dot_pos = remainder.find(JSON_PATH_DOT_SEGMENT)
+    bracket_pos = remainder.find('[')
+
+    if dot_pos == -1 and bracket_pos == -1:
+        # Just a column name like "$.roles" -> ('roles', '$')
+        return remainder, JSON_PATH_ROOT_NODE_ID
+    elif dot_pos == -1:
+        # Only bracket found like "$.roles[0]" -> ('roles', '$[0]')
+        column = remainder[:bracket_pos]
+        relative_path = JSON_PATH_ROOT_NODE_ID + remainder[bracket_pos:]
+        return column, relative_path
+    elif bracket_pos == -1 or dot_pos < bracket_pos:
+        # Dot comes first like "$.service_data.origin" -> ('service_data', '$.origin')
+        column, rest = remainder.split(JSON_PATH_DOT_SEGMENT, 1)
+        return column, JSON_PATH_PREFIX + rest
+    else:
+        # Bracket comes first like "$.foo[0].bar" -> ('foo', '$[0].bar')
+        column = remainder[:bracket_pos]
+        relative_path = JSON_PATH_ROOT_NODE_ID + remainder[bracket_pos:]
+        return column, relative_path
 
 
 def query_select_json_path_parse(select_in: list) -> list:

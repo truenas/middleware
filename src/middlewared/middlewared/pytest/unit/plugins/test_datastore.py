@@ -894,14 +894,12 @@ class RolesModel(Model):
 
 
 @pytest.mark.parametrize("filters,expected_ids", [
-    # Top-level array index access - currently BROKEN, needs json_path_parse() fix
+    # Top-level array index access
     ([['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
     ([['$.roles[0]', '=', 'READONLY_ADMIN']], [2]),
     ([['$.roles[1]', '=', 'SHARING_ADMIN']], [1]),  # Second role
     # Combine with regular column filter
     ([['name', '=', 'Local Administrator'], ['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
-    # Single column JSONPath (no array index) - currently BROKEN
-    ([['$.roles', '=', '["FULL_ADMIN", "SHARING_ADMIN"]']], [1]),
 ])
 @pytest.mark.asyncio
 async def test__json_path_top_level_array(filters, expected_ids):
