@@ -1126,7 +1126,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
             assert r.datain == zeros, r.datain
 
         # Take snap0
-        with snapshot(dataset_id, "snap0", get=True) as snap0_config:
+        with snapshot(dataset_id, "snap0") as snap0_id:
 
             # Now let's write DEADBEEF to a few LBAs using WRITE (16)
             for lba in deadbeef_lbas:
@@ -1141,7 +1141,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                     assert r.datain == zeros, r.datain
 
             # Take snap1
-            with snapshot(dataset_id, "snap1", get=True) as snap1_config:
+            with snapshot(dataset_id, "snap1") as snap1_id:
 
                 # Do a WRITE for > 1 LBA
                 s.write16(10, 2, deadbeef * 2)
@@ -1155,7 +1155,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                         assert r.datain == zeros, r.datain
 
                 # Now revert to snap1
-                snapshot_rollback(snap1_config['id'])
+                snapshot_rollback(snap1_id)
 
                 # Check results using READ (16)
                 for lba in range(0, 12):
@@ -1166,7 +1166,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                         assert r.datain == zeros, r.datain
 
             # Now revert to snap0
-            snapshot_rollback(snap0_config['id'])
+            snapshot_rollback(snap0_id)
 
             # Check results using READ (16)
             for lba in range(0, 12):
@@ -1196,7 +1196,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
             assert r.datain == zeros, r.datain
 
     # Take snap0
-    with snapshot(dataset_id, "snap0", get=True) as snap0_config:
+    with snapshot(dataset_id, "snap0") as snap0_id:
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
@@ -1214,7 +1214,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                     assert r.datain == zeros, r.datain
 
         # Take snap1
-        with snapshot(dataset_id, "snap1", get=True) as snap1_config:
+        with snapshot(dataset_id, "snap1") as snap1_id:
 
             with iscsi_scsi_connection(ip, iqn) as s:
                 TUR(s)
@@ -1231,7 +1231,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                         assert r.datain == zeros, r.datain
 
                 # Now revert to snap1
-                snapshot_rollback(snap1_config['id'])
+                snapshot_rollback(snap1_id)
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
@@ -1245,7 +1245,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                     assert r.datain == zeros, r.datain
 
         # Now revert to snap0
-        snapshot_rollback(snap0_config['id'])
+        snapshot_rollback(snap0_id)
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
