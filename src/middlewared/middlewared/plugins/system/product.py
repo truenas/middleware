@@ -4,9 +4,8 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import os
-from datetime import date
 
-from licenselib.license import ContractType, Features, License
+from licenselib.license import License
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemFeatureEnabledArgs,
@@ -25,11 +24,11 @@ from middlewared.api.current import (
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
-from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 from middlewared.utils.version import parse_version_string
 
+from .product_utils import get_license, LICENSE_FILE
 
-LICENSE_FILE = '/data/license'
+
 LICENSE_FILE_MODE = 0o600
 PRODUCT_NAME = 'TrueNAS'
 
@@ -125,57 +124,7 @@ class SystemService(Service):
 
     @private
     def license(self, include_raw_license: bool = False):
-        return self._get_license(include_raw_license=include_raw_license)
-
-    @staticmethod
-    def _get_license(include_raw_license: bool = False):
-        try:
-            with open(LICENSE_FILE) as f:
-                raw_license = f.read().strip('\n')
-                licenseobj = License.load(raw_license)
-        except Exception:
-            return
-
-        license_ = {
-            'model': licenseobj.model,
-            'system_serial': licenseobj.system_serial,
-            'system_serial_ha': licenseobj.system_serial_ha,
-            'contract_type': ContractType(licenseobj.contract_type).name.upper(),
-            'contract_start': licenseobj.contract_start,
-            'contract_end': licenseobj.contract_end,
-            'legacy_contract_hardware': (
-                licenseobj.contract_hardware.name.upper()
-                if licenseobj.contract_type == ContractType.legacy
-                else None
-            ),
-            'legacy_contract_software': (
-                licenseobj.contract_software.name.upper()
-                if licenseobj.contract_type == ContractType.legacy
-                else None
-            ),
-            'customer_name': licenseobj.customer_name,
-            'expired': licenseobj.expired,
-            'features': [i.name.upper() for i in licenseobj.features],
-            'addhw': licenseobj.addhw,
-            'addhw_detail': [],
-        }
-
-        for quantity, code in licenseobj.addhw:
-            try:
-                license_['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]} Expansion shelf')
-            except KeyError:
-                license_['addhw_detail'].append(f'<Unknown hardware {code}>')
-
-        if Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14):
-            # Licenses issued before 2017-04-14 had a bug in the feature bit for fibrechannel, which
-            # means they were issued having dedup+jails instead.
-            if Features.dedup in licenseobj.features and Features.jails in licenseobj.features:
-                license_['features'].append(Features.fibrechannel.name.upper())
-
-        if include_raw_license:
-            license_['raw_license'] = raw_license
-
-        return license_
+        return get_license(include_raw_license)
 
     @private
     def license_path(self):
