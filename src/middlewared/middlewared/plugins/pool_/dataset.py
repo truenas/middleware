@@ -10,10 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
-from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -413,15 +410,18 @@ class PoolDatasetService(CRUDService):
         if mntpnt == 'legacy' or args.zprops.get('canmount', 'on') != 'on':
             return
         elif args.name == CONTAINER_DS_NAME and mntpnt.startswith(f'/{CONTAINER_DS_NAME}'):
-            margs = MountArgs(
-                filesystem=args.name,
+            self.middleware.call_sync2(
+                self.middleware.services.zfs.resource.mount,
+                args.name,
+                mountpoint=f'/mnt{mntpnt}',  # FIXME: altroot not respected cf. NAS-138287
                 recursive=args.create_ancestors,
-                mountpoint=f'/mnt{mntpnt}'  # FIXME: altroot not respected cf. NAS-138287
             )
         else:
-            margs = MountArgs(filesystem=args.name, recursive=args.create_ancestors)
-
-        self.middleware.call_sync('zfs.resource.mount', margs)
+            self.middleware.call_sync2(
+                self.middleware.services.zfs.resource.mount,
+                args.name,
+                recursive=args.create_ancestors,
+            )
 
     @api_method(
         PoolDatasetCreateArgs,
@@ -895,15 +895,15 @@ class PoolDatasetService(CRUDService):
                 'zfs_file_attributes': {'immutable': False}
             })
 
-        await self.middleware.call(
-            'zfs.resource.destroy', DestroyArgs(path=id_, recursive=options['recursive'])
+        await self.middleware.call2(
+            self.middleware.services.zfs.resource.destroy_impl, id_, recursive=options['recursive']
         )
         return True
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""
-        return await self.middleware.call('zfs.resource.promote', PromoteArgs(current_name=id_))
+        return await self.middleware.call2(self.middleware.services.zfs.resource.promote, id_)
 
     @api_method(
         PoolDatasetRenameArgs,
@@ -933,12 +933,11 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
-        return await self.middleware.call(
-            'zfs.resource.rename',
-            RenameArgs(
-                current_name=id_,
-                new_name=options['new_name'],
-                force_unmount=options['force'],
-                recursive=options['recursive'],
-            )
+        return await self.middleware.call2(
+            self.middleware.services.zfs.resource.rename,
+            id_,
+            options['new_name'],
+            options['recursive'],
+            False,  # no_unmount
+            options['force'],
         )

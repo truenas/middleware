@@ -28,7 +28,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .destroy_impl import destroy_impl, DestroyArgs
+from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
@@ -36,7 +36,7 @@ from .exceptions import (
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
 )
-from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
+from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_create_impl import create_snapshots_impl, CreateSnapshotArgs
 from .snapshot_hold_release_impl import hold_impl, HoldArgs, release_impl, ReleaseArgs
@@ -215,14 +215,14 @@ class ZFSResourceSnapshotService(Service):
         if not bypass and has_internal_path(check_path):
             raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        args: DestroyArgs = {
-            "path": path,
-            "recursive": data.get("recursive", False),
-            "all_snapshots": data.get("all_snapshots", False),
-            "bypass": bypass,
-            "defer": data.get("defer", False),
-        }
-        return destroy_impl(tls, args)
+        return destroy_impl(
+            tls,
+            path,
+            data.get("recursive", False),
+            data.get("all_snapshots", False),
+            bypass,
+            data.get("defer", False),
+        )
 
     @api_method(
         ZFSResourceSnapshotDestroyArgs,
@@ -316,12 +316,14 @@ class ZFSResourceSnapshotService(Service):
         if not bypass and has_internal_path(check_path):
             raise ValidationError(schema, f"{current_name!r} is a protected path.", errno.EACCES)
 
-        args: RenameArgs = {
-            "current_name": current_name,
-            "new_name": data["new_name"],
-            "recursive": data.get("recursive", False),
-        }
-        return rename_impl(tls, args)
+        return rename_impl(
+            tls,
+            current_name,
+            data["new_name"],
+            data.get("recursive", False),
+            False,  # no_unmount
+            False,  # force_unmount
+        )
 
     @api_method(
         ZFSResourceSnapshotRenameArgs,

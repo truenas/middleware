@@ -8,8 +8,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 
 from .utils import container_dataset
 
@@ -193,7 +191,7 @@ class ContainerService(Service):
                     "pool.dataset.update_impl",
                     UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
                 )
-                self.middleware.call_sync("zfs.resource.mount", MountArgs(filesystem=dataset["name"]))
+                self.middleware.call_sync2(self.middleware.services.zfs.resource.mount, dataset["name"])
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
                     manifest = yaml.safe_load(f.read())
@@ -212,11 +210,10 @@ class ContainerService(Service):
                 os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
                 os.rmdir(rootfs_path)
 
-                self.middleware.call_sync(
-                    "zfs.resource.rename", RenameArgs(
-                        current_name=dataset["name"],
-                        new_name=dst_dataset,
-                    )
+                self.middleware.call_sync2(
+                    self.middleware.services.zfs.resource.rename,
+                    dataset["name"],
+                    dst_dataset,
                 )
 
                 container_instance = self.middleware.call_sync(

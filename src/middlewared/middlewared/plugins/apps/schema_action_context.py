@@ -2,7 +2,6 @@ import os
 
 from middlewared.service import CallError, Service
 from middlewared.plugins.pool_.utils import CreateImplArgs
-from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 
 from .ix_apps.path import get_app_parent_volume_ds_name
 from .utils import DatasetDefaults
@@ -34,7 +33,10 @@ class AppSchemaActions(Service):
                     zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
                 )
             )
-            await self.middleware.call('zfs.resource.mount', MountArgs(filesystem=create_ds))
+            await self.middleware.call2(
+                self.middleware.services.zfs.resource.mount,
+                create_ds,
+            )
 
     async def apply_acls(self, acls_to_apply):
         bulk_job = await self.middleware.call(
