@@ -65,6 +65,8 @@ class PoolDatasetService(Service):
                 }
             )
         finally:
+            # We do this after unload key to make sure that if anything queries shares/datasets etc, the dataset/share
+            # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         if ds['mountpoint']:
