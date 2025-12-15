@@ -99,6 +99,7 @@ class ShellWorkerThread(threading.Thread):
                     "%s: Failed to chdir into home directory for user [%s] in ShellWorkerThread.run",
                     homedir, self.username,  exc_info=True
                 )
+                os.chdir(DEFAULT_HOME_PATH)
 
             env = {
                 "TERM": "xterm",
