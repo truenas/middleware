@@ -341,7 +341,7 @@ class ShellApplication:
                 try:
                     user_obj = await self.middleware.call("user.get_user_obj", {"username": token["username"]})
                 except KeyError:
-                    raise CallError(f'{username}: user does not exist')
+                    raise CallError(f'{token["username"]}: user does not exist')
 
                 conndata.t_worker = ShellWorkerThread(
                     middleware=self.middleware,
