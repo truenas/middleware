@@ -102,7 +102,7 @@ class S3CredentialsModel(BaseModel):
     type: Literal["S3"]
     access_key_id: Secret[NonEmptyString]
     secret_access_key: Secret[NonEmptyString]
-    endpoint: str = ""
+    endpoint: Literal[""] | HttpUrl = ""
     region: Secret[str] = ""
     skip_region: Secret[bool] = False
     signatures_v2: Secret[bool] = False
