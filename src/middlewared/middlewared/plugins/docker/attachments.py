@@ -33,7 +33,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
     async def toggle(self, attachments, enabled):
         await getattr(self, 'start' if enabled else 'stop')(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         if not attachments:
             return
         try:

@@ -20,7 +20,7 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
             except Exception as e:
                 self.middleware.logger.warning('Unable to %s %r: %s', action, attachment['id'], e)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments, options=None):
         await self.toggle(attachments, False)
 
     async def start(self, attachments):
