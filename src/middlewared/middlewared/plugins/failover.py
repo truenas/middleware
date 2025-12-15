@@ -48,6 +48,7 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
+from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.plugins.update_.install import STARTING_INSTALLER
@@ -148,9 +149,10 @@ class FailoverService(ConfigService):
         try:
             is_ha = self.middleware.call_sync('cache.get', HA_LICENSE_CACHE_KEY)
         except KeyError:
-            is_ha = False
-            if (info := self.middleware.call_sync('system.license')) is not None and info['system_serial_ha']:
-                is_ha = True
+            is_ha = is_licensed_for_ha()
+            if is_ha:
+                # We only set this cache if it is HA keeping in line with previous behaviour
+                # We probably should invalidate this cache on system license update
                 self.middleware.call_sync('cache.put', HA_LICENSE_CACHE_KEY, is_ha)
 
         return is_ha

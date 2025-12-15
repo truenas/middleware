@@ -7,6 +7,7 @@ After=network.target middlewared.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=true
+ExecStop=/usr/bin/ha_panic
 ExecStop=/usr/local/bin/scst_util.sh stop-alua
 ExecStop=midclt call core.event_send system.shutdown ADDED
 ExecStop=midclt call --job initshutdownscript.execute_init_tasks SHUTDOWN
