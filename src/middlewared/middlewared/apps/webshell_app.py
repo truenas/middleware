@@ -40,6 +40,7 @@ class ShellWorkerThread(threading.Thread):
         self.shell_pid = None
         self.command, self.sudo_warning = self.get_command(username, as_root, options)
         self.homedir = homedir
+        self.username = username
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
@@ -94,7 +95,17 @@ class ShellWorkerThread(threading.Thread):
         if self.shell_pid == 0:
             close_fds(3)
             homedir = self.homedir or DEFAULT_HOME_PATH
-            os.chdir(homedir)
+            try:
+                os.chdir(homedir)
+            except FileNotFoundError:
+                os.chdir(DEFAULT_HOME_PATH)
+            except Exception:
+                self.middleware.logger.error(
+                    "%s: Failed to chdir into home directory for user [%s] in ShellWorkerThread.run",
+                    homedir, self.username,  exc_info=True
+                )
+                os.chdir(DEFAULT_HOME_PATH)
+
             env = {
                 "TERM": "xterm",
                 "HOME": homedir,
