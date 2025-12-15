@@ -31,13 +31,14 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, username, as_root, options):
+    def __init__(self, middleware, ws, input_queue, loop, username, as_root, options, homedir):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
         self.command, self.sudo_warning = self.get_command(username, as_root, options)
+        self.homedir = homedir
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
@@ -91,10 +92,11 @@ class ShellWorkerThread(threading.Thread):
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
             close_fds(3)
-            os.chdir("/root")
+            homedir = self.homedir or "/var/empty"
+            os.chdir(homedir)
             env = {
                 "TERM": "xterm",
-                "HOME": "/root",
+                "HOME": homedir,
                 "LANG": "en_US.UTF-8",
                 "PATH": "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
                 "LC_ALL": "C.UTF-8",
@@ -336,12 +338,18 @@ class ShellApplication:
                                 as_root = True
                                 break
 
+                try:
+                    user_obj = await self.middleware.call("user.get_user_obj", {"username": token["username"]})
+                except KeyError:
+                    raise CallError(f'{username}: user does not exist')
+
                 conndata.t_worker = ShellWorkerThread(
                     middleware=self.middleware,
                     ws=ws,
                     input_queue=input_queue,
                     loop=asyncio.get_event_loop(),
                     username=token["username"],
+                    homedir=user_obj["pw_dir"],
                     as_root=as_root,
                     options=options,
                 )
