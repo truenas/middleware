@@ -837,15 +837,14 @@ class AuditModel(Model):
 
 
 @pytest.mark.parametrize("filters,expected_ids", [
-    # Existing tests - full array/object matching
+    # Full array/object matching
     ([['$.event_data.params', '=', [38]]], [1]),
     ([['$.event_data.nested', '=', {'key': 'value1'}]], [1]),
     ([['$.event_data.params', '=', [40, 41]]], [3]),
     ([['username', '=', 'admin']], [1, 2]),
     ([['username', '=', 'admin'], ['$.event_data.params', '=', [38]]], [1]),
     ([['$.event_data.method', '=', 'user.delete']], [1, 3]),
-
-    # NEW - Array index access tests
+    # Array index access
     # Access first element of params array
     ([['$.event_data.params[0]', '=', 38]], [1]),
     ([['$.event_data.params[0]', '=', 39]], [2]),
