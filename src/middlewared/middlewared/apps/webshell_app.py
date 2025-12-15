@@ -18,6 +18,7 @@ from middlewared.service_exception import (
 )
 from middlewared.utils.crypto import ssl_uuid4
 from middlewared.utils.os import close_fds, terminate_pid
+from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 from truenas_api_client import json
 
 __all__ = ("ShellApplication",)
@@ -92,7 +93,7 @@ class ShellWorkerThread(threading.Thread):
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
             close_fds(3)
-            homedir = self.homedir or "/var/empty"
+            homedir = self.homedir or DEFAULT_HOME_PATH
             os.chdir(homedir)
             env = {
                 "TERM": "xterm",
