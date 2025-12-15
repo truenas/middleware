@@ -52,13 +52,22 @@ class PoolDatasetService(Service):
             if mountpoint:
                 await delegate.stop(await delegate.query(mountpoint, True))
 
-        coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
-        await asyncio.gather(*coroutines)
-        await self.middleware.call(
-            'zfs.dataset.unload_key', id_, {
-                'umount': True, 'force_umount': options['force_umount'], 'recursive': True
-            }
-        )
+        try:
+            # Mark dataset as "about to be locked" so services can treat it as locked
+            # during delegate.stop() even though the key hasn't been unloaded yet
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
+
+            coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
+            await asyncio.gather(*coroutines)
+            await self.middleware.call(
+                'zfs.dataset.unload_key', id_, {
+                    'umount': True, 'force_umount': options['force_umount'], 'recursive': True
+                }
+            )
+        finally:
+            # We do this after unload key to make sure that if anything queries shares/datasets etc, the dataset/share
+            # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
+            await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         if ds['mountpoint']:
             await self.middleware.call('filesystem.set_zfs_attributes', {
