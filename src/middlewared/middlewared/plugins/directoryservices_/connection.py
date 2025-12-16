@@ -531,3 +531,22 @@ class DomainConnection(
                 f'{domain}: The domain join is not healthy. This prevents the TrueNAS server from leaving the domain. '
                 'You may need to manually clean up the machine account on the remote domain controller.'
             )
+
+    @job()
+    @kerberos_ticket
+    def sync_keytab(self, job: Job) -> None:
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_type = DSType(ds_config['service_type'])
+
+        match ds_type:
+            case DSType.AD:
+                do_sync_keytab_fn = self._ad_sync_keytab
+            case _:
+                # TODO: in principle this can also be done on an IPA domain, but implementation
+                # will be distinct from AD implementation.
+                raise CallError(
+                    f'{ds_type}: The configured directory service type does not support keytab sync.',
+                    errno.EOPNOTSUPP
+                )
+
+        do_sync_keytab_fn(ds_config)
