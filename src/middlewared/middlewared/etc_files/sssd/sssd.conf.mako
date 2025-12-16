@@ -85,10 +85,10 @@ ldap_search_timeout = ${ds_config['timeout']}
 ldap_network_timeout = ${ds_config['timeout']}
 ldap_schema = ${ds_config['configuration']['schema'].lower()}
 min_id = ${min_uid}
-${'\n    '.join(search_params)}
-${'\n    '.join(map_params)}
+${'\n'.join(search_params)}
+${'\n'.join(map_params)}
 % if aux:
-${'\n    '.join(aux)}
+${'\n'.join(aux)}
 % endif
 % elif ds_type == DSType.IPA.value:
 [sssd]
