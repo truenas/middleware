@@ -71,7 +71,7 @@ def test__attribute_map_keys_passwd():
 
         match key:
             case constants.ATTR_USER_OBJ:
-                assert results[0] == "ldap_user_object_class = (objectClass=canary)"
+                assert results[0] == "ldap_user_object_class = canary"
             case constants.ATTR_USER_NAME:
                 assert results[0] == "ldap_user_name = canary"
             case constants.ATTR_USER_UID:
@@ -121,7 +121,7 @@ def test__attribute_map_keys_group():
 
         match key:
             case constants.ATTR_GROUP_OBJ:
-                assert results[0] == "ldap_group_object_class = (objectClass=canary)"
+                assert results[0] == "ldap_group_object_class = canary"
             case constants.ATTR_GROUP_GID:
                 assert results[0] == "ldap_group_gid_number = canary"
             case constants.ATTR_GROUP_MEMBER:
@@ -138,7 +138,7 @@ def test__attribute_map_keys_netgroup():
 
         match key:
             case constants.ATTR_NETGROUP_OBJ:
-                assert results[0] == "ldap_netgroup_object_class = (objectClass=canary)"
+                assert results[0] == "ldap_netgroup_object_class = canary"
             case constants.ATTR_NETGROUP_MEMBER:
                 assert results[0] == "ldap_netgroup_member = canary"
             case constants.ATTR_NETGROUP_TRIPLE:
