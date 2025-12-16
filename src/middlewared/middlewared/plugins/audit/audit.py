@@ -345,6 +345,8 @@ class AuditService(ConfigService):
                 'Quota on auditing dataset must be greater than or equal to '
                 'the space reservation for the dataset.'
             )
+        if new['quota_fill_warning'] >= new['quota_fill_critical']:
+            verrors.add('audit_update.quota_fill_warning', 'Must be strictly less than quota_fill_critical.')
 
     @private
     async def update_audit_dataset(self, new):
