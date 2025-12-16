@@ -75,7 +75,7 @@ class NFSService(SimpleService):
 
             # Re-check and log if not enabled.  Continue anyway as
             # kerberos is often not required.
-            if (use_gss_proxy := self.check_gssproxy_state()) != GSSPROXY_ENABLED:
+            if (use_gss_proxy := await self.check_gssproxy_state()) != GSSPROXY_ENABLED:
                 self.middleware.logger.warning(
                     f"Failed to enable use-gss-proxy for NFS.  use-gss-proxy is {use_gss_proxy}"
                 )
