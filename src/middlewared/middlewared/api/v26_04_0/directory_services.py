@@ -25,6 +25,7 @@ __all__ = [
     'DirectoryServicesEntry', 'DirectoryServicesUpdateArgs', 'DirectoryServicesUpdateResult',
     'DirectoryServicesLeaveArgs', 'DirectoryServicesLeaveResult',
     'DirectoryServicesCertificateChoicesArgs', 'DirectoryServicesCertificateChoicesResult',
+    'DirectoryServicesSyncKeytabArgs', 'DirectoryServicesSyncKeytabResult',
     'DirectoryServicesStatusChangedEvent',
 ]
 
@@ -659,3 +660,11 @@ class DirectoryServicesCertificateChoicesResult(BaseModel):
 class DirectoryServicesStatusChangedEvent(BaseModel):
     fields: DirectoryServicesStatus
     """Event fields."""
+
+
+class DirectoryServicesSyncKeytabArgs(BaseModel):
+    pass
+
+
+class DirectoryServicesSyncKeytabResult(BaseModel):
+    result: None
