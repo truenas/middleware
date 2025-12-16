@@ -8,6 +8,7 @@ from middlewared.api.current import (
     DirectoryServicesUpdateArgs, DirectoryServicesUpdateResult,
     DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
     DirectoryServicesCertificateChoicesArgs, DirectoryServicesCertificateChoicesResult,
+    DirectoryServicesSyncKeytabArgs, DirectoryServicesSyncKeytabResult,
 )
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, private, job
@@ -873,3 +874,51 @@ class DirectoryServices(ConfigService):
                 ]
             )
         }
+
+    @api_method(
+        DirectoryServicesSyncKeytabArgs, DirectoryServicesSyncKeytabResult,
+        roles=['DIRECTORY_SERVICE_WRITE']
+    )
+    @job(lock='directoryservices_change')
+    async def sync_keytab(self, job):
+        """ Sync local keytab with remote domain controller. This is required if additional
+        kerberos SPNs were added to the truenas account in the remote domain controller after
+        joining the directory service.
+
+        This is currently only implemented for active directory. """
+        ds_config = await self.config()
+        verrors = ValidationErrors()
+        if not ds_config['enable']:
+            verrors.add(
+                'directoryservices.sync_keytab',
+                'Directory services must be enabled in order to synchronize keytab.'
+            )
+
+        # Currently this is only implemented for AD. Adding for IPA domains will require
+        # additional design in the ipa-specific directoryservices mixin.
+        if ds_config['service_type'] and ds_config['service_type'] != DSType.AD.value:
+            verrors.add(
+                'directoryservices.sync_keytab',
+                'This feature is currently only supported for active directory domains.'
+            )
+        else:
+            status = await self.middleware.call('directoryservices.status')
+            if status['status'] != DSStatus.HEALTHY.name:
+                verrors.add(
+                    'directoryservices.sync_keytab',
+                    'Operation may only be performed when healthy.'
+                    f'Current status: {status["status"]}.'
+                )
+
+        if not await self.middleware.call('failover.is_single_master_node'):
+            verrors.add(
+                'directoryservices.sync_keytab',
+                'Operation may only be performed on active storage controller.'
+            )
+
+        verrors.check()
+
+        # Actual per-directory-service implementatoin of sync_keytab will be in the
+        # private namespace directoryservices.connection.
+        sync_job = await self.middleware.call('directoryservices.connection.sync_keytab')
+        await job.wrap(sync_job)

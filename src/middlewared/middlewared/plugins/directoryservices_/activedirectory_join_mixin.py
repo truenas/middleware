@@ -555,3 +555,25 @@ class ADJoinMixin:
             self.middleware.call_sync('etc.generate', 'kerberos')
 
         self.middleware.call_sync('kerberos.wait_for_renewal')
+
+    def _ad_sync_keytab(self, ds_config):
+        # remove all samba keytabs to prevent accidentally incorporating some stale
+        # info into our new AD_MACHINE_ACCOUNT keytab
+        for file in os.listdir(SAMBA_KEYTAB_DIR):
+            os.unlink(os.path.join(SAMBA_KEYTAB_DIR, file))
+
+        # Now have samba create relevant keytabs in SAMBA_KEYTAB_DIR
+        netads = subprocess.run([
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'keytab', 'create',
+        ], check=False, capture_output=True)
+
+        if netads.returncode != 0:
+            raise CallError(
+                f'Failed to create new keytab from active directory: {netads.stderr.decode()}'
+            )
+
+        # now store the ad keytab using our normal middleware method
+        self.middleware.call_sync('kerberos.keytab.store_ad_keytab')

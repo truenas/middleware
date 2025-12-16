@@ -25,6 +25,7 @@ __all__ = [
     'DirectoryServicesEntry', 'DirectoryServicesUpdateArgs', 'DirectoryServicesUpdateResult',
     'DirectoryServicesLeaveArgs', 'DirectoryServicesLeaveResult',
     'DirectoryServicesCertificateChoicesArgs', 'DirectoryServicesCertificateChoicesResult',
+    'DirectoryServicesSyncKeytabArgs', 'DirectoryServicesSyncKeytabResult',
 ]
 
 IdmapId = Annotated[int, Field(ge=TRUENAS_IDMAP_MIN, le=TRUENAS_IDMAP_MAX)]
@@ -650,3 +651,11 @@ class DirectoryServicesCertificateChoicesArgs(BaseModel):
 class DirectoryServicesCertificateChoicesResult(BaseModel):
     result: dict[NonEmptyString, NonEmptyString]
     """IDs of certificates mapped to their names."""
+
+
+class DirectoryServicesSyncKeytabArgs(BaseModel):
+    pass
+
+
+class DirectoryServicesSyncKeytabResult(BaseModel):
+    result: None
