@@ -38,7 +38,7 @@ def attribute_maps_data_to_params(data):
             match key:
                 # passwd
                 case ldap_constants.ATTR_USER_OBJ:
-                    map_params.append(f'ldap_user_object_class = (objectClass={value})')
+                    map_params.append(f'ldap_user_object_class = {value}')
                 case ldap_constants.ATTR_USER_NAME:
                     map_params.append(f'ldap_user_name = {value}')
                 case ldap_constants.ATTR_USER_UID:
@@ -71,7 +71,7 @@ def attribute_maps_data_to_params(data):
 
                 # group
                 case ldap_constants.ATTR_GROUP_OBJ:
-                    map_params.append(f'ldap_group_object_class = (objectClass={value})')
+                    map_params.append(f'ldap_group_object_class = {value}')
                 case ldap_constants.ATTR_GROUP_GID:
                     map_params.append(f'ldap_group_gid_number = {value}')
                 case ldap_constants.ATTR_GROUP_MEMBER:
@@ -79,7 +79,7 @@ def attribute_maps_data_to_params(data):
 
                 # netgroup
                 case ldap_constants.ATTR_NETGROUP_OBJ:
-                    map_params.append(f'ldap_netgroup_object_class = (objectClass={value})')
+                    map_params.append(f'ldap_netgroup_object_class = {value}')
                 case ldap_constants.ATTR_NETGROUP_MEMBER:
                     map_params.append(f'ldap_netgroup_member = {value}')
                 case ldap_constants.ATTR_NETGROUP_TRIPLE:
