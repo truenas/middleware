@@ -194,8 +194,8 @@ class Enclosure:
                 # more R series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'iX_TrueNASR20p' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
-                # R20
+            case 'iX_TrueNASR20p' | 'SMC_SC826-P' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
+                # R20 series
                 self.model = dmi_model.value
                 self.controller = True
             case 'AHCI_SGPIOEnclosure':
