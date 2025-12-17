@@ -47,7 +47,7 @@ def get_gssproxy_state() -> int | None:
     Return value of /proc/net/rpc/use-gss-proxy or
     None if proc file does not exist or read failure
     """
-    GSSPROXY_PROCFILE = '/proc/net/rcp/use-gss-proxy'
+    GSSPROXY_PROCFILE = '/proc/net/rpc/use-gss-proxy'
     rv = None
     try:
         val = ssh(f"cat {GSSPROXY_PROCFILE}")
