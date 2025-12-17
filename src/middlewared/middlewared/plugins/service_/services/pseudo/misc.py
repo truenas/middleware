@@ -267,3 +267,11 @@ class NVMfService(SimpleService):
     reloadable = True
     etc = ["nvmet"]
     systemd_unit = "ix-nvmf"
+
+
+class RpcGssService(SimpleService):
+    """Start auth-rpcgss-module service to
+       enable gssproxy usage"""
+    name = "auth-rpcgss-module"
+
+    systemd_unit = "auth-rpcgss-module"
