@@ -36,12 +36,12 @@ class AppImageEntry(BaseModel):
     """Whether this is a dangling image (no tags or references)."""
     update_available: bool
     """Whether a newer version of this image is available for download."""
-    created: str
-    """Timestamp when the container image was created (ISO format)."""
-    author: str
-    """Author or maintainer of the container image."""
-    comment: LongString
-    """Comment or description provided by the image author."""
+    created: str | None
+    """Timestamp when the container image was created (ISO format) or `null` if not available."""
+    author: str | None
+    """Author or maintainer of the container image or `null` if not specified."""
+    comment: LongString | None
+    """Comment or description provided by the image author or `null` if not provided."""
     parsed_repo_tags: list[AppImageParsedRepoTags] | None = None
     """Parsed repository tag information or `null` if not available."""
 
