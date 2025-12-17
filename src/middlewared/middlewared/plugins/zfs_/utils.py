@@ -1,29 +1,15 @@
-# -*- coding=utf-8 -*-
 import enum
-import logging
 import os
 import re
 
 from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import is_child
-from middlewared.utils.tdb import (
-    get_tdb_handle,
-    TDBBatchAction,
-    TDBBatchOperation,
-    TDBDataType,
-    TDBOptions,
-    TDBPathType,
-)
-
-logger = logging.getLogger(__name__)
 
 __all__ = [
-    "get_snapshot_count_cached",
     "path_to_dataset_impl",
     "paths_to_datasets_impl",
     "zvol_name_to_path",
@@ -33,8 +19,6 @@ __all__ = [
 LEGACY_USERPROP_PREFIX = 'org.freenas'
 USERPROP_PREFIX = 'org.truenas'
 ZD_PARTITION = re.compile(r'zd[0-9]+p[0-9]+$')
-SNAP_COUNT_TDB_NAME = 'snapshot_count'
-SNAP_COUNT_TDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
 
 
 class TNUserProp(enum.Enum):
@@ -181,134 +165,6 @@ def unlocked_zvols_fast(options=None, data=None):
     info_level = options or []
     zvols = get_zvols(info_level, data or {})
     return zvols
-
-
-def get_snapshot_count_cached(middleware, lz, datasets, update_datasets=False, remove_snapshots_changed=False):
-    """
-    Try retrieving snapshot count for dataset from cache if the
-    `snapshots_changed` timestamp hasn't changed. If it has,
-    then retrieve new snapshot count in most optimized way possible
-    and cache new value
-
-    Parameters:
-    ----------
-    middleware - middleware object
-    lz - libzfs handle, e.g. libzfs.ZFS()
-    zhdl - iterable containing dataset information as returned by
-        libzfs.datasets_serialized
-    update_datasets - bool - optional - insert `snapshot_count` key into datasets passed
-        into this method
-    remove_snapshots_changed - bool - remove the snapshots_changed key from dataset properties
-        after processing. This is to hide the fact that we had to retrieve this property to
-        determine whether to return cached value.
-
-    Returns:
-    -------
-    Dict containing following:
-        key (dataset name) : value (int - snapshot count)
-    """
-    def get_mountpoint(zhdl):
-        mp = zhdl['properties'].get('mountpoint')
-        if mp is None:
-            return None
-
-        if mp['parsed'] and mp['parsed'] != 'legacy':
-            return mp['parsed']
-
-        return None
-
-    def entry_get_cnt(zhdl):
-        """
-        Retrieve snapshot count in most efficient way possible. If dataset is mounted, then
-        retrieve from st_nlink otherwise, iter snapshots from dataset handle
-        """
-        if mp := get_mountpoint(zhdl):
-            try:
-                st = os.stat(f'{mp}/.zfs/snapshot')
-            except Exception:
-                pass
-            else:
-                if st.st_ino == ZFSCTL.INO_SNAPDIR.value:
-                    return st.st_nlink - 2
-
-        return len(lz.snapshots_serialized(['name'], datasets=[zhdl['name']], recursive=False))
-
-    def get_entry_fetch(key):
-        """ retrieve cached snapshot count from persistent key-value store """
-        try:
-            with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
-                entry = hdl.get(key)
-        except MatchNotFound:
-            entry = {
-                'changed_ts': None,
-                'cnt': -1
-            }
-        return entry
-
-    def process_entry(out, zhdl, batch_ops):
-        """
-        This method processes the dataset entry and
-        sets new value in tdb file if necessary. Since
-        we may be consuming "flattened" datasets here, there
-        is potential for duplicate entries. Hence, check for
-        whether we've already handled the dataset for this run.
-        """
-        existing_entry = out.get(zhdl['name'])
-        if existing_entry:
-            if update_datasets:
-                zhdl['snapshot_count'] = existing_entry
-
-            if remove_snapshots_changed:
-                zhdl['properties'].pop('snapshots_changed', None)
-
-            return
-
-        changed_ts = zhdl['properties']['snapshots_changed']['parsed']
-        cache_key = f'SNAPCNT%{zhdl["name"]}'
-
-        entry = get_entry_fetch(cache_key)
-
-        if entry['changed_ts'] != changed_ts:
-            entry['cnt'] = entry_get_cnt(zhdl)
-            entry['changed_ts'] = changed_ts
-
-            # There are circumstances in which legacy datasets
-            # may not have this property populated. We don't
-            # want cache insertion with NULL key to avoid
-            # collisions
-            if changed_ts:
-                batch_ops.append(TDBBatchOperation(
-                    action=TDBBatchAction.SET,
-                    key=cache_key,
-                    value=entry
-                ))
-
-        out[zhdl['name']] = entry['cnt']
-        if update_datasets:
-            zhdl['snapshot_count'] = entry['cnt']
-
-        if remove_snapshots_changed:
-            zhdl['properties'].pop('snapshots_changed', None)
-
-    def iter_datasets(out, datasets_in, batch_ops):
-        for ds in datasets_in:
-            process_entry(out, ds, batch_ops)
-            iter_datasets(out, ds.get('children', []), batch_ops)
-
-    out = {}
-    batch_ops = []
-
-    iter_datasets(out, datasets, batch_ops)
-
-    if batch_ops:
-        # Commit changes to snapshot counts under a transaction lock
-        try:
-            with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
-                hdl.batch_op(batch_ops)
-        except Exception:
-            logger.warning('Failed to update cached snapshot counts', exc_info=True)
-
-    return out
 
 
 def paths_to_datasets_impl(
