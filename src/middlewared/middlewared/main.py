@@ -1896,7 +1896,7 @@ def main():
                 await asyncio.to_thread(sys.stderr.buffer.write, stderr)
                 return process.returncode
             except Exception as e:
-                sys.stderr.write(f"Failed to run test: {e}\n")
+                await asyncio.to_thread(sys.stderr.write, f"Failed to run test: {e}\n")
                 return 1
 
         single_task = run_test_command
