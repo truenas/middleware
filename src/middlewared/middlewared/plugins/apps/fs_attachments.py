@@ -4,6 +4,8 @@ from middlewared.common.attachment import FSAttachmentDelegate
 class AppFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'apps'
     title = 'Apps'
+    # Apps depend on Docker, so they start after and stop before Docker
+    priority = 5
 
     async def query(self, path, enabled, options=None):
         apps_attached = []

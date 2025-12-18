@@ -1,3 +1,6 @@
+import asyncio
+from itertools import groupby
+
 from middlewared.api import api_method
 from middlewared.api.current import PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult
 from middlewared.service import private, Service
@@ -65,3 +68,39 @@ class PoolDatasetService(Service):
     @private
     async def get_attachment_delegates(self):
         return self.attachment_delegates
+
+    @private
+    async def get_attachment_delegates_for_start(self):
+        """
+        Returns delegates sorted for start operations.
+        Higher priority delegates (infrastructure) run first.
+        """
+        return sorted(self.attachment_delegates, key=lambda d: d.priority, reverse=True)
+
+    @private
+    async def get_attachment_delegates_for_stop(self):
+        """
+        Returns delegates sorted for stop operations.
+        Lower priority delegates (dependent services) run first.
+        """
+        return sorted(self.attachment_delegates, key=lambda d: d.priority)
+
+    @private
+    async def stop_attachment_delegates(self, path):
+        """
+        Stop attachment delegates in priority order.
+        Delegates with the same priority run in parallel, but different priority
+        groups run sequentially (lower priority first).
+        """
+        if not path:
+            return
+
+        delegates = await self.get_attachment_delegates_for_stop()
+        for _, group in groupby(delegates, key=lambda d: d.priority):
+            group_list = list(group)
+
+            async def stop_delegate(delegate):
+                if attachments := await delegate.query(path, True):
+                    await delegate.stop(attachments)
+
+            await asyncio.gather(*[stop_delegate(dg) for dg in group_list])

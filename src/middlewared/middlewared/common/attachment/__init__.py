@@ -15,6 +15,11 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     service = None
     # attribute which is used to identify human readable description of an attachment
     resource_name = 'name'
+    # Priority for ordering delegate operations
+    # On start: delegates are processed high-to-low priority (infrastructure starts first)
+    # On stop: delegates are processed low-to-high priority (dependent services stop first)
+    # Delegates with same priority maintain registration order among themselves.
+    priority = 0
 
     def __init__(self, middleware):
         self.middleware = middleware
