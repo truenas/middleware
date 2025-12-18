@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import os
 import uuid
@@ -50,12 +49,8 @@ class PoolDatasetService(Service):
 
         mountpoint = dataset_mountpoint(ds)
 
-        async def detach(delegate):
-            if mountpoint:
-                await delegate.stop(await delegate.query(mountpoint, True))
+        await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
 
-        coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop')]
-        await asyncio.gather(*coroutines)
         # recursive doesn't apply to zvols
         recursive = ds['type'] != 'VOLUME'
         await self.middleware.call2(
