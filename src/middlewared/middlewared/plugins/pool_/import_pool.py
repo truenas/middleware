@@ -221,7 +221,7 @@ class PoolService(Service):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self._post_import_actions(pool)
+        await self._post_import_actions(pool, 'ADDED')
 
         return True
 
@@ -298,18 +298,18 @@ class PoolService(Service):
 
         # Post-import hooks and sync encryption keys
         pool = await self.middleware.call('pool.get_instance', oid)
-        await self._post_import_actions(pool)
+        await self._post_import_actions(pool, 'CHANGED')
 
         job.set_progress(100, 'Pool reimported successfully')
 
         return True
 
     @private
-    async def _post_import_actions(self, pool):
+    async def _post_import_actions(self, pool, event_type):
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
-        self.middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+        self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
 
     @private
     def recursive_mount(self, name):
