@@ -17,9 +17,9 @@ async def setup(middleware):
             await middleware.call('certificate.setup_self_signed_cert_for_ui')
         except Exception as e:
             failure = True
-            middleware.logger.debug(
+            middleware.logger.error(
                 'Failed to set certificate for system.general plugin: %s', e, exc_info=True
             )
 
     if not failure:
-        middleware.logger.debug('Certificate setup for System complete')
+        middleware.logger.trace('Certificate setup for System complete')

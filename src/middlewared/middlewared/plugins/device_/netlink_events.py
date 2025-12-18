@@ -376,7 +376,7 @@ def netlink_events(middleware):
                 # Bind to groups
                 sock.bind((0, groups))
                 retry_count = 0  # Reset retry count on successful socket creation
-                middleware.logger.info(
+                middleware.logger.trace(
                     "Netlink socket created successfully for IP address monitoring"
                 )
                 # Create poller for the new socket

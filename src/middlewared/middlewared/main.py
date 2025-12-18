@@ -490,7 +490,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         delay = method._periodic.interval
 
                     method_name = f'{service_name}.{task_name}'
-                    self.logger.debug(
+                    self.logger.trace(
                         f"Setting up periodic task {method_name} to run every {method._periodic.interval} seconds"
                     )
 

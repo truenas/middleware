@@ -69,7 +69,7 @@ class RDMAService(Service):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
         Since these are just the hardware present in the system, we cache the result."""
-        self.logger.info('Fetching RDMA link netdev choices')
+        self.logger.trace('Fetching RDMA link netdev choices')
 
         link_cmd = ['rdma', '-j', 'link']
 
