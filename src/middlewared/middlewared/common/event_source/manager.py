@@ -118,7 +118,7 @@ class EventSourceManager:
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
-    async def unsubscribe(self, ident: str, error: Exception | None = None):
+    async def unsubscribe(self, ident, error=None):
         ident_data = self.idents.pop(ident, None)
         if ident_data is None:
             return
