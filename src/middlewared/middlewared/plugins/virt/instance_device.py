@@ -164,8 +164,9 @@ class VirtInstanceDeviceService(Service):
                     device['description'] = 'Unknown'
             case 'gpu':
                 device['dev_type'] = 'GPU'
-                device['gpu_type'] = incus['gputype'].upper()
-                match incus['gputype']:
+                gpu_type = incus.get('gputype', 'physical')
+                device['gpu_type'] = gpu_type.upper()
+                match gpu_type:
                     case 'physical':
                         device['pci'] = incus['pci']
                         if 'gpu_choices' not in context:
