@@ -221,9 +221,7 @@ class PoolService(Service):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self.middleware.call_hook('pool.post_import', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
-        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+        await self._post_import_actions(pool)
 
         return True
 
@@ -234,18 +232,6 @@ class PoolService(Service):
         Attempt to import a pool that exists in database but is currently OFFLINE.
 
         This is useful after SED disks have been unlocked and the pool can now be imported.
-
-        .. examples(websocket)::
-
-          Reimport pool of id 1 after unlocking SED disks.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.reimport",
-                "params": [1]
-            }
         """
         pool = await self.middleware.call('pool.get_instance', oid)
         vol_name = pool['name']
@@ -285,7 +271,7 @@ class PoolService(Service):
 
         # Import the pool using existing boot import logic
         # This handles: import with proper flags, normalize root dataset properties
-        if not await self.middleware.run_in_thread(self.import_on_boot_impl, vol_name, vol_guid, True):
+        if not await self.middleware.call('pool.import_on_boot_impl', vol_name, vol_guid, True):
             raise CallError(f'Failed to import pool {vol_name}', errno.EFAULT)
 
         job.set_progress(30, 'Mounting datasets')
@@ -302,35 +288,30 @@ class PoolService(Service):
 
         job.set_progress(70, 'Resetting mountpoints')
 
-        # Reset mountpoints recursively
         await self.reset_mountpoint_recursively(vol_name)
 
         job.set_progress(80, 'Re-enabling services')
 
-        # Re-enable services that were disabled when pool went offline
-        key = f'pool:{vol_name}:enable_on_import'
-        if await self.middleware.call('keyvalue.has_key', key):
-            for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
-                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
-                    if delegate.name == name:
-                        attachments = await delegate.query(pool['path'], False)
-                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
-                        if attachments:
-                            await delegate.toggle(attachments, True)
-            await self.middleware.call('keyvalue.delete', key)
+        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+            if attachments := await delegate.query(pool['path'], False):
+                await delegate.toggle(attachments, True)
 
         job.set_progress(90, 'Running post-import tasks')
 
         # Post-import hooks and sync encryption keys
         pool = await self.middleware.call('pool.get_instance', oid)
-        await self.middleware.call_hook('pool.post_import', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', vol_name)
-
-        self.middleware.send_event('pool.query', 'CHANGED', id=oid, fields=pool)
+        await self._post_import_actions(pool)
 
         job.set_progress(100, 'Pool reimported successfully')
 
         return True
+
+    @private
+    async def _post_import_actions(self, pool):
+        await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+
+        self.middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
 
     @private
     def recursive_mount(self, name):
