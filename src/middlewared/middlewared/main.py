@@ -1841,12 +1841,11 @@ def main():
     parser.add_argument('--test', action='store_true', help=argparse.SUPPRESS)
     args, test_command = parser.parse_known_args()
 
-    # If --test was specified, everything after it (and optional --) is the test command
+    # If --test was specified, everything after it is the test command
     if args.test:
-        # Remove the optional '--' separator if present
+        # Remove the '--' separator if present
         if test_command and test_command[0] == '--':
             test_command = test_command[1:]
-        args.test = test_command if test_command else []
     else:
         # If --test wasn't specified but there are unknown args, it's an error
         if test_command:
@@ -1876,16 +1875,12 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
-    # When --test is provided, create a coroutine that will run the test command
-    # after middleware initialization completes. The command runs with the middleware
-    # process's stdin/stdout/stderr, allowing interactive tools and proper output capture.
-    # The exit code from the test command determines the middleware exit code.
     single_task = None
     if args.test:
         async def run_test_command() -> int:
             try:
                 process = await asyncio.create_subprocess_exec(
-                    *args.test,
+                    *test_command,
                     stdin=sys.stdin,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
