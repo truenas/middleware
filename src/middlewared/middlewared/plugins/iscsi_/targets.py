@@ -644,14 +644,18 @@ class iSCSITargetService(CRUDService):
             #        'node.session.timeo.replacement_timeout', '-v', '10']
             # await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
             # So instead do this.
-            if not await self.middleware.call('iscsi.target.set_ha_targets_sys',
-                                              f'{global_basename}:HA:',
-                                              'recovery_tmo', '10\n'):
+            if not await self.middleware.call(
+                'iscsi.target.set_ha_targets_sys',
+                f'{global_basename}:HA:',
+                'recovery_tmo', '10\n'
+            ):
                 # Failed to cleanly set.  Give the above LOGINs time to settle and then call again.
                 await asyncio.sleep(5)
-                await self.middleware.call('iscsi.target.set_ha_targets_sys',
-                                           f'{global_basename}:HA:',
-                                           'recovery_tmo', '10\n')
+                await self.middleware.call(
+                    'iscsi.target.set_ha_targets_sys',
+                    f'{global_basename}:HA:',
+                    'recovery_tmo', '10\n'
+                )
 
         # Now calculate the result to hand back.
         result = {}
