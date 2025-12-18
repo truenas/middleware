@@ -1677,14 +1677,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # Kill everyone else in my process group
             pgid = os.getpgid(0)
             pid = os.getpid()
-            for p in os.listdir("/proc"):
-                if p.isdigit():
-                    p = int(p)
-                    try:
-                        if p != pid and os.getpgid(p) == pgid:
-                            os.kill(p, signal.SIGKILL)
-                    except Exception:
-                        pass
+            with os.scandir("/proc") as entries:
+                for entry in entries:
+                    if entry.name.isdigit():
+                        p = int(entry.name)
+                        try:
+                            if p != pid and os.getpgid(p) == pgid:
+                                os.kill(p, signal.SIGKILL)
+                        except Exception:
+                            pass
 
             os._exit(exit_code)
 
