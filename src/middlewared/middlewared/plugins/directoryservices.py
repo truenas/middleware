@@ -12,8 +12,8 @@ from middlewared.service import Service, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
 
-PREREQUISITE_SERVICES = ['auth-rpcgss-module']
-DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh', 'ftp']
+PREREQUISITE_SERVICES = ('auth-rpcgss-module')
+DEPENDENT_SERVICES = ('smb', 'nfs', 'ssh', 'ftp')
 
 
 class DirectoryServices(Service):
