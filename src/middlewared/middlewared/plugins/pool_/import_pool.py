@@ -10,7 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationErrors
+from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationError
 from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
 
@@ -237,14 +237,13 @@ class PoolService(Service):
         vol_name = pool['name']
         vol_guid = pool['guid']
 
-        verrors = ValidationErrors()
         if pool['status'] != 'OFFLINE':
-            verrors.add(
+            raise ValidationError(
                 'pool_reimport.id',
                 f'Pool {vol_name!r} is not offline (current status: {pool["status"]}). '
-                'Only offline pools can be reimported.'
+                'Only offline pools can be reimported.',
+                errno.EINVAL
             )
-            verrors.check()
 
         job.set_progress(5, 'Scanning for available pools')
 
@@ -252,20 +251,20 @@ class PoolService(Service):
         pool_found = available_pools.get(vol_guid)
 
         if pool_found is None:
-            verrors.add(
+            raise ValidationError(
                 'pool_reimport.id',
                 f'Pool {vol_name!r} (GUID: {vol_guid}) is not available for import. '
-                'If this is an all-SED pool, ensure SED disks have been unlocked first.'
+                'If this is an all-SED pool, ensure SED disks have been unlocked first.',
+                errno.ENOENT
             )
-            verrors.check()
 
         if pool_found['status'] == 'UNAVAIL':
-            verrors.add(
+            raise ValidationError(
                 'pool_reimport.id',
                 f'Pool {vol_name!r} is in UNAVAIL state and cannot be imported. '
-                'Some disks may be missing or still locked.'
+                'Some disks may be missing or still locked.',
+                errno.ENXIO
             )
-            verrors.check()
 
         job.set_progress(10, 'Importing pool')
 
