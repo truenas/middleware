@@ -210,7 +210,7 @@ class PoolService(Service):
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
-                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
                         attachments = [attachment for attachment in attachments if attachment['id'] in ids]

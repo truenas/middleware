@@ -65,3 +65,19 @@ class PoolDatasetService(Service):
     @private
     async def get_attachment_delegates(self):
         return self.attachment_delegates
+
+    @private
+    async def get_attachment_delegates_for_start(self):
+        """
+        Returns delegates sorted for start operations.
+        Higher priority delegates (infrastructure) run first.
+        """
+        return sorted(self.attachment_delegates, key=lambda d: d.priority, reverse=True)
+
+    @private
+    async def get_attachment_delegates_for_stop(self):
+        """
+        Returns delegates sorted for stop operations.
+        Lower priority delegates (dependent services) run first.
+        """
+        return sorted(self.attachment_delegates, key=lambda d: d.priority)

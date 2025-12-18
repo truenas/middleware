@@ -54,7 +54,7 @@ class PoolDatasetService(Service):
             if mountpoint:
                 await delegate.stop(await delegate.query(mountpoint, True))
 
-        coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
+        coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop')]
         await asyncio.gather(*coroutines)
         # recursive doesn't apply to zvols
         recursive = ds['type'] != 'VOLUME'
@@ -351,7 +351,7 @@ class PoolDatasetService(Service):
     @private
     async def unlock_handle_attachments(self, dataset):
         mountpoint = dataset_mountpoint(dataset)
-        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
             # FIXME: put this into `VMFSAttachmentDelegate`
             if attachment_delegate.name == 'vm':
                 await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)

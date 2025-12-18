@@ -7,6 +7,8 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'docker'
     title = 'Docker'
     service = 'docker'
+    # Docker must start before apps, and stop after apps
+    priority = 10
 
     async def query(self, path, enabled, options=None):
         results = []
