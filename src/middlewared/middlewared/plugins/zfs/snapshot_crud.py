@@ -143,11 +143,14 @@ class ZFSResourceSnapshotService(Service):
             True if the snapshot exists, False otherwise.
         """
         # Use properties=None for efficiency - we only care about existence
-        result = self.middleware.call_sync(
-            "zfs.resource.snapshot.query_impl",
-            {"paths": [snap_name], "properties": None}
-        )
-        return bool(result)
+        try:
+            self.middleware.call_sync(
+                "zfs.resource.snapshot.query_impl",
+                {"paths": [snap_name], "properties": None}
+            )
+        except ZFSPathNotFoundException:
+            return False
+        return True
 
     @private
     @pass_thread_local_storage
