@@ -38,6 +38,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
             return
         try:
             await (await self.middleware.call('service.control', 'STOP', self.service)).wait(raise_error=True)
+            await (await self.middleware.call('docker.fs_manage.umount')).wait(raise_error=True)
         except Exception as e:
             self.middleware.logger.error('Failed to stop docker: %s', e)
 
