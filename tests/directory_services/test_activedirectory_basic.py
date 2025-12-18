@@ -11,7 +11,7 @@ from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.test.integration.utils.system import reset_systemd_svcs
+from middlewared.test.integration.utils.system import reset_systemd_svcs, get_gssproxy_state
 
 from auto_config import ha
 from protocols import smb_connection, smb_share
@@ -131,6 +131,9 @@ def test_enable_leave_activedirectory():
 
         with pytest.raises(match='Workgroup may not be changed'):
             call('smb.update', {'workgroup': 'wilbur'})
+
+        # authentication with kerberos requires gssproxy
+        assert get_gssproxy_state() == 1
 
     assert check_ad_started() is False
 
