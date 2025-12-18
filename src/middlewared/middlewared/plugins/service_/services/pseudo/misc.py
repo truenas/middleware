@@ -256,3 +256,11 @@ class NVMETargetService(PseudoServiceBase):
 
     async def failure_logs(self):
         return None
+
+
+class RpcGssService(SimpleService):
+    """Start auth-rpcgss-module service to
+       enable gssproxy usage"""
+    name = "auth-rpcgss-module"
+
+    systemd_unit = "auth-rpcgss-module"

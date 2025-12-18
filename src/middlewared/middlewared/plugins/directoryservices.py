@@ -11,7 +11,8 @@ from middlewared.service import Service, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
 
-DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh', 'ftp']
+PREREQUISITE_SERVICES = ('auth-rpcgss-module',)
+DEPENDENT_SERVICES = ('smb', 'nfs', 'ssh', 'ftp')
 
 
 class DirectoryServices(Service):
@@ -122,6 +123,11 @@ class DirectoryServices(Service):
 
     @private
     def restart_dependent_services(self):
+        # System services that should be started
+        for svc in PREREQUISITE_SERVICES:
+            self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
+
+        # Dependent protocols
         for svc in self.middleware.call_sync('service.query', [['OR', [
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
