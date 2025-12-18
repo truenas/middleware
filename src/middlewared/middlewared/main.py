@@ -1643,7 +1643,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         json.dump(result, stream)
 
-    def run(self):
+    def run(
+        self,
+        single_task: typing.Callable[[], typing.Coroutine[typing.Any, typing.Any, int]] | None = None,
+    ) -> None:
+        """
+        Run the middleware event loop.
+
+        Args:
+            single_task: Optional coroutine factory that returns a single task to execute.
+                        The task should return an integer exit code. If provided, middleware
+                        will initialize, run this single task, and exit with the returned code.
+                        If None (default), middleware will run indefinitely in normal daemon mode.
+
+        The method initializes the middleware, sets up the event loop, and either:
+        - Runs forever as a daemon (when single_task is None), or
+        - Executes the provided single task and exits with its return code
+        """
         self._console_write('starting')
 
         set_thread_name('asyncio_loop')
@@ -1654,6 +1670,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.loop.slow_callback_duration = 0.2
 
         self.loop.run_until_complete(self.__initialize())
+
+        if single_task is not None:
+            exit_code = self.loop.run_until_complete(single_task())
+
+            # Kill everyone else in my process group
+            pgid = os.getpgid(0)
+            pid = os.getpid()
+            for p in os.listdir("/proc"):
+                if p.isdigit():
+                    p = int(p)
+                    try:
+                        if p != pid and os.getpgid(p) == pgid:
+                            os.kill(p, signal.SIGKILL)
+                    except Exception:
+                        pass
+
+            os._exit(exit_code)
 
         try:
             self.loop.run_forever()
@@ -1778,7 +1811,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dump-api', action='store_true')
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--loop-debug', action='store_true')
@@ -1793,7 +1825,31 @@ def main():
         'console',
         'file',
     ], default='console')
-    args = parser.parse_args()
+    # Hidden argument for dumping API models to JSON
+    # This generates a complete JSON representation of all API versions, methods, and models
+    # that is consumed by the middlewared_docs package builder to generate API documentation.
+    parser.add_argument('--dump-api', action='store_true', help=argparse.SUPPRESS)
+    # Hidden argument for running test commands with a fully initialized middleware
+    # Usage: middleware --test -- python3 runtest.py --ip localhost --password testpass --test test_zfs_snapshot.py
+    # This allows running test commands (like pytest) with access to a running middleware instance.
+    # The middleware will fully initialize (plugins loaded, services available), then execute
+    # the specified command, and exit with the command's exit code.
+    # This is particularly useful for LLM-driven development workflows where rapid feedback
+    # is needed - the LLM can make code changes, then immediately test them by running
+    # pytest or other validation tools in the context of a fully initialized middleware.
+    parser.add_argument('--test', action='store_true', help=argparse.SUPPRESS)
+    args, test_command = parser.parse_known_args()
+
+    # If --test was specified, everything after it (and optional --) is the test command
+    if args.test:
+        # Remove the optional '--' separator if present
+        if test_command and test_command[0] == '--':
+            test_command = test_command[1:]
+        args.test = test_command if test_command else []
+    else:
+        # If --test wasn't specified but there are unknown args, it's an error
+        if test_command:
+            parser.error(f"unrecognized arguments: {' '.join(test_command)}")
 
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
@@ -1819,7 +1875,32 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
-    middleware.run()
+    # When --test is provided, create a coroutine that will run the test command
+    # after middleware initialization completes. The command runs with the middleware
+    # process's stdin/stdout/stderr, allowing interactive tools and proper output capture.
+    # The exit code from the test command determines the middleware exit code.
+    single_task = None
+    if args.test:
+        async def run_test_command() -> int:
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    *args.test,
+                    stdin=sys.stdin,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await process.communicate()
+                # Write these after the test is complete to avoid interfering with the middleware’s output.
+                sys.stdout.buffer.write(stdout)
+                sys.stderr.buffer.write(stderr)
+                return process.returncode
+            except Exception as e:
+                sys.stderr.write(f"Failed to run test: {e}\n")
+                return 1
+
+        single_task = run_test_command
+
+    middleware.run(single_task)
 
 
 if __name__ == '__main__':
