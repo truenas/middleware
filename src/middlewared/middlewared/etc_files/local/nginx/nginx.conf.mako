@@ -307,6 +307,20 @@ ${spaces}gzip off;
             try_files /index.html =404;
         }
 
+        location = /ui/sw.js {
+            allow all;
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "${system_version}";
+            ${security_headers(indent=12)}
+
+            alias /usr/share/truenas/webui/sw.js;
+        }
+
         location /ui {
             allow all;
 
