@@ -194,8 +194,8 @@ class Enclosure:
                 # more R series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'iX_TrueNASR20p' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
-                # R20
+            case 'iX_TrueNASR20p' | 'SMC_SC826-P' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
+                # R20 series
                 self.model = dmi_model.value
                 self.controller = True
             case 'AHCI_SGPIOEnclosure':
@@ -776,10 +776,16 @@ class Enclosure:
                 return 7
             elif self.is_mini_3_xl_plus:
                 return 10
-            elif any((self.is_mini_r, self.is_hseries, self.is_xseries, self.is_r30, self.is_r60, self.is_12_bay_jbod)):
+            elif any((
+                self.is_mini_r,
+                self.is_hseries,
+                self.is_xseries,
+                self.is_r20_series,
+                self.is_r30,
+                self.is_r60,
+                self.is_12_bay_jbod,
+            )):
                 return 12
-            elif self.is_r20_series:
-                return 14
             elif self.is_r10:
                 return 16
             elif any((self.is_fseries, self.is_mseries, self.is_vseries, self.is_24_bay_jbod)):
@@ -799,7 +805,7 @@ class Enclosure:
         """
         if not self.model:
             return 0
-        elif self.model == ControllerModels.R50B.value:
+        elif self.is_r20_series or self.model == ControllerModels.R50B.value:
             return 2
         elif self.model == ControllerModels.R50.value:
             return 3
