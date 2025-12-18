@@ -351,8 +351,7 @@ ${spaces}gzip off;
             ${security_headers(indent=12)}
             add_header Expires 0;
 
-            alias /usr/share/truenas/webui;
-            try_files $uri $uri/ @index;
+            alias /usr/share/truenas/webui/sw.js;
         }
 
         location = /ui/index.html {
@@ -368,8 +367,7 @@ ${spaces}gzip off;
             ${security_headers(indent=12)}
             add_header Expires 0;
 
-            alias /usr/share/truenas/webui;
-            try_files $uri $uri/ @index;
+            alias /usr/share/truenas/webui/index.html;
         }
 
         location /ui {
