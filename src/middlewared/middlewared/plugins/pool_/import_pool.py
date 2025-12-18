@@ -276,17 +276,16 @@ class PoolService(Service):
         job.set_progress(30, 'Mounting datasets')
 
         # Handle encryption - mount or unlock as needed
-        if not await self.middleware.run_in_thread(self.encryption_is_active, vol_name):
+        if not await self.middleware.call('pool.encryption_is_active', vol_name):
             # Not encrypted - just mount recursively
-            await self.middleware.run_in_thread(self.recursive_mount, vol_name)
+            await self.middleware.call('pool.recursive_mount', vol_name)
 
         job.set_progress(50, 'Unlocking encrypted datasets')
 
         # Run unlock logic (similar to unlock_on_boot_impl but for single pool)
-        await self.middleware.run_in_thread(self.unlock_on_boot_impl, vol_name)
+        await self.middleware.call('pool.unlock_on_boot_impl', vol_name)
 
         job.set_progress(70, 'Resetting mountpoints')
-
         await self.reset_mountpoint_recursively(vol_name)
 
         job.set_progress(80, 'Re-enabling services')
