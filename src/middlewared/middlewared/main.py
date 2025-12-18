@@ -1892,8 +1892,8 @@ def main():
                 )
                 stdout, stderr = await process.communicate()
                 # Write these after the test is complete to avoid interfering with the middleware’s output.
-                sys.stdout.buffer.write(stdout)
-                sys.stderr.buffer.write(stderr)
+                await asyncio.to_thread(sys.stdout.buffer.write, stdout)
+                await asyncio.to_thread(sys.stderr.buffer.write, stderr)
                 return process.returncode
             except Exception as e:
                 sys.stderr.write(f"Failed to run test: {e}\n")
