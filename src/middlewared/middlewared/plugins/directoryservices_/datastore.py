@@ -554,6 +554,16 @@ class DirectoryServices(ConfigService):
         # First check that our credential is functional. If the credential type is
         # KERBEROS_USER or KERBEROS_PRINCIPAL then this will also perform a kinit and
         # ensure we have a basic kerberos configuration for a potential domain join
+        if new['credential']['credential_type'] in (DSCredType.KERBEROS_USER, DSCredType.KERBEROS_PRINCIPAL):
+            # We're going to pre-emptively kdestroy because of errors reported by automation
+            # team in which kinit can periodically fail with KRB5_CC_IO error.
+            try:
+                self.middleware.call_sync('kerberos.kdestroy')
+            except Exception:
+                # This should be non-fatal. We will pick up any serious ccache errors while
+                # validating credentials below
+                self.logger.debug('kdestroy failed while preparing initial credentials', exc_info=True)
+
         validate_credential(SCHEMA, new, verrors, revert)
         if verrors:
             self.__revert_changes(revert)

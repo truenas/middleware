@@ -15,12 +15,14 @@ import time
 
 from contextlib import contextmanager
 from datetime import timedelta
+from functools import wraps
 from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.time_utils import utc_now
 from tempfile import NamedTemporaryFile
+from threading import Lock
 from typing import Optional
 
 # See lib/krb5/keytab/kt_file.c in MIT kerberos source
@@ -31,6 +33,7 @@ KRB5_KT_VNO = b'\x05\x02'  # KRB v5 keytab version 2, (last changed in 2009)
 
 SAF_CACHE_TIMEOUT = timedelta(hours=1)
 SAF_CACHE_FILE = os.path.join('/root', '.KDC_SERVER_AFFINITY')
+GSS_LOCK = Lock()
 
 
 # The following schemas are used for validation of klist / ktutil_list output
@@ -204,6 +207,17 @@ def klist_impl(ccache_path: str) -> list:
     return parse_klist_output(kl.stdout.decode())
 
 
+def gssapi_synchronized(func):
+    """ decorator that ensures all GSSAPI operations are serialized under a threading lock """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with GSS_LOCK:
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+@gssapi_synchronized
 def gss_acquire_cred_user(
     username: str,
     password: str,
@@ -242,6 +256,7 @@ def gss_acquire_cred_user(
     return gssapi.Credentials(cr.creds)
 
 
+@gssapi_synchronized
 def gss_acquire_cred_principal(
     principal_name: str,
     ccache_path: str | None = None,
@@ -281,6 +296,7 @@ def gss_acquire_cred_principal(
     return cr
 
 
+@gssapi_synchronized
 def gss_get_current_cred(
     ccache_path: str,
     raise_error: Optional[bool] = True
@@ -322,6 +338,7 @@ def gss_get_current_cred(
     return cred
 
 
+@gssapi_synchronized
 def gss_dump_cred(cred: gssapi.Credentials) -> dict:
     if not isinstance(cred, gssapi.Credentials):
         raise TypeError(f'{type(cred)}: not gssapi.Credentials type')
