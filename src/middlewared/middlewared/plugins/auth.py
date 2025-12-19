@@ -942,6 +942,7 @@ class AuthService(Service):
                     # at PAM level because both fail with ENOKEY.
                     if key['expires_at']:
                         resp['pam_response']['reason'] = 'Api key is expired.'
+                        resp['pam_response']['code'] = PAMCode.PAM_CRED_EXPIRED
                     elif key['revoked']:
                         resp['pam_response']['reason'] = 'Api key is revoked.'
                     else:
