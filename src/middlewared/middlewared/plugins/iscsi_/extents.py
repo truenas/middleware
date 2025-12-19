@@ -528,13 +528,12 @@ class iSCSITargetExtentService(SharingService):
         """
         diskchoices = {}
 
-        zvols = await self.middleware.call(
-            'zfs.dataset.unlocked_zvols_fast',
-            [['attachment', '=', None]], {},
+        for zvol in await self.middleware.call2(
+            self.middleware.services.zfs.resource.unlocked_zvols_fast,
+            [['attachment', '=', None]],
+            {},
             ['SIZE', 'RO', 'ATTACHMENT']
-        )
-
-        for zvol in zvols:
+        ):
             key = os.path.relpath(zvol['path'], '/dev')
             if zvol['ro']:
                 description = f'{zvol["name"]} [ro]'

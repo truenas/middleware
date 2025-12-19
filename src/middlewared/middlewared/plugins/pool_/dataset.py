@@ -769,10 +769,11 @@ class PoolDatasetService(CRUDService):
                 existing_snapdev_prop = dataset[0]['snapdev']['parsed'].upper()
                 snapdev_prop = data.get('snapdev') or existing_snapdev_prop
                 if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
-                    if await self.middleware.call(
-                        'zfs.dataset.unlocked_zvols_fast',
+                    if await self.middleware.call2(
+                        self.middleware.services.zfs.resource.unlocked_zvols_fast,
                         [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id_}@']],
-                        {}, ['RO', 'ATTACHMENT']
+                        {},
+                        ['RO', 'ATTACHMENT']
                     ):
                         verrors.add(
                             'pool_dataset_update.snapdev',
