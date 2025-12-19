@@ -45,6 +45,7 @@ setup(
     entry_points={
         'console_scripts': [
             'configure_fips = middlewared.scripts.configure_fips:main',
+            'ha_panic = middlewared.scripts.ha_panic:main',
             'setup_cgroups = middlewared.scripts.setup_cgroups:main',
             'middlewared = middlewared.main:main',
             'midgdb = middlewared.scripts.gdb:main',
