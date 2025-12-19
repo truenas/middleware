@@ -194,6 +194,7 @@ if ha and ip2:
 def get_ipinfo(ip_to_use):
     iface = net = gate = ns1 = ns2 = None
     with client(host_ip=ip_to_use) as c:
+        c.call('etc.generate', 'pam_middleware')
         net_config = c.call('network.configuration.config')
         ns1 = net_config.get('nameserver1')
         ns2 = net_config.get('nameserver2')
