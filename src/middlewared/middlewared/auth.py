@@ -218,7 +218,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         token_manager: 'TokenManager',
         token: 'Token',
         authenticator: TokenPamAuthenticator,
-        origin: ConnectionOrigin,
     ):
         self.root_credentials = token.root_credentials()
         """ Root credentials for the token are the credentials used for originally
@@ -226,10 +225,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.authenticator = authenticator
         """ The PamAuthenticator generated for the middleware session that is
         using the token (already authenticated by providing the token string) """
-        self.origin = origin
-        """ A reference for the origin of this connection is required in order
-        to ensure that PAM auditd entries properly account for the remote host
-        that is using the token. """
 
         self.token_manager = token_manager
         self.token = token

@@ -510,7 +510,7 @@ class AuthService(Service):
                                 'at the current security level',
                                 errno.EOPNOTSUPP)
 
-        cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+        cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
         pam_resp = cred.pam_authenticate()
         if pam_resp.code != PAMCode.PAM_SUCCESS:
             raise CallError(f'Failed to get token for action: {pam_resp.reason}')
@@ -922,21 +922,6 @@ class AuthService(Service):
                     data['username'],
                     data['api_key'],
                 )
-                if resp['pam_response']['code'] == PAMCode.PAM_AUTHINFO_UNAVAIL:
-                    # This is a special error code that means we need to
-                    # etc.generate because we somehow got garbage in the file.
-                    # It should not happen, but we must try to recover.
-
-                    self.logger.warning('API key backend has errors that require regenerating its file.')
-                    await self.middleware.call('etc.generate', 'pam_middleware')
-
-                    # We've exhausted steps we can take, so we'll take the
-                    # response to second request as authoritative
-                    resp = await self.get_login_user(
-                        app,
-                        data['username'],
-                        data['api_key'],
-                    )
 
                 # Retrieve the API key here so that we can upgrade the underlying
                 # hash type and iterations if needed (since we have plain-text).
@@ -946,16 +931,24 @@ class AuthService(Service):
                     key_id = int(data['api_key'].split('-')[0])
                     key = await self.middleware.call(
                         'api_key.query', [['id', '=', key_id]],
-                        {'get': True, 'select': ['id', 'name', 'expired']}
+                        {'get': True, 'select': ['id', 'name', 'expires_at', 'revoked']}
                     )
                 except Exception:
                     key = None
 
-                if resp['pam_response']['code'] == PAMCode.PAM_CRED_EXPIRED:
-                    # Give more precise reason for login failure for audit trails
-                    # because we need to differentiate between key and account
-                    # being expired.
-                    resp['pam_response']['reason'] = 'Api key is expired.'
+                if key and resp['pam_response']['code'] == PAMCode.PAM_AUTHINFO_UNAVAIL:
+                    # Key may be expired or revoked. In both of these cases we won't
+                    # have a key in the user's keyring. There's no way to differentiate
+                    # at PAM level because both fail with ENOKEY.
+                    if key['expires_at']:
+                        resp['pam_response']['reason'] = 'Api key is expired.'
+                    elif key['revoked']:
+                        resp['pam_response']['reason'] = 'Api key is revoked.'
+                    else:
+                        self.logger.warning('%s: unexpected PAM_AUTHINFO_UNAVAIL response '
+                                            'for API key. Forcibly regenerating API keys.',
+                                            key['name'])
+                        await self.middleware.call('etc.generate', 'pam_middleware')
 
                 if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
                     if not app.origin.secure_transport:
@@ -1166,7 +1159,7 @@ class AuthService(Service):
                         if auth_ctx.pam_hdl.dbid:
                             key = await self.middleware.call(
                                 'api_key.query', [['id', '=', auth_ctx.pam_hdl.dbid]],
-                                {'get': True, 'select': ['id', 'name', 'expired']}
+                                {'get': True, 'select': ['id', 'name']}
                             )
                             cred = ApiKeySessionManagerCredentials(
                                 user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl

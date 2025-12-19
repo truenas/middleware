@@ -177,7 +177,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             rhost=str(origin),
             pam_env={'pam_truenas_session_data': dumps(session_info)}
         )
-        self.state.otpw_possible = True
+        self.otpw_possible = True
 
     def login(self) -> TrueNASAuthenticatorResponse:
         resp = super().login()
@@ -218,7 +218,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         """ When autenticated uses may generate a single-use password for an account. If
         regular PAM auth fails for non-api-key case, we should check it against our single-use
         passwords. """
-        if not self.state.otpw_possible:
+        if not self.otpw_possible:
             return
 
         otpw_resp = OTPW_MANAGER.authenticate(passwd_entry['pw_uid'], password)
@@ -250,12 +250,20 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         self._twofactor_user = False  # reset any old 2FA flag
 
         resp = self.auth_init()
-        if resp.code == PAMCode.PAM_SUCCESS:
-            # unix auth will succeed immediately
-            return resp
-
-        if resp.code != PAMCode.PAM_CONV_AGAIN:
-            raise RuntimeError(f'{resp}: unexpected PAM module response when initializing conversation')
+        match resp.code:
+            case PAMCode.PAM_SUCCESS:
+                # Unix authentication will succeed immmediately
+                return resp
+            case PAMCode.PAM_CONV_AGAIN:
+                # The service module has requested some information from the client
+                # we'll handle exchange below
+                pass
+            case PAMCode.PAM_AUTHINFO_UNAVAIL:
+                # This may be request for API key authentication for a revoked or expired key
+                return resp
+            case _:
+                # Something very unexpected
+                return resp
 
         while resp.code == PAMCode.PAM_CONV_AGAIN:
             if resp.reason:
@@ -342,9 +350,15 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                     otpw_resp = self.__otpw_authenticate(password, pw)
                     if otpw_resp:
                         code, reason = otpw_resp
-                        resp.code = code
-                        resp.reason = reason
-                        resp.user_info = pw
+                        if code == PAMCode.PAM_SUCCESS:
+                            # swap out our pam service with UNIX to properly initialize
+                            # underlying PAM context.
+                            self.state.service = MiddlewarePamFile.UNIX.service
+                            resp = self.pam_authenticate_simple(pw['pw_name'], '')
+                            resp.user_info = pw
+                        else:
+                            resp.code = code
+                            resp.reason = reason
 
         if resp.code == PAMCode.PAM_SUCCESS:
             # pam_acct_mgmt(3) determines whether the user's account is valid. This
@@ -382,7 +396,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
             raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
 
         super().__init__(username=username, origin=origin, service=MiddlewarePamFile.API_KEY)
-        self.state.otpw_possible = False
+        self.otpw_possible = False
 
     def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
         """ Split up API key into DBID and actual key material then pass to backend """
@@ -414,7 +428,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         )
         self.sent_server_first = False
         self.sent_server_final = False
-        self.state.otpw_possible = False
+        self.otpw_possible = False
         self.dbid = self.client_first.api_key_id
 
     def authenticate(self, username: str, password: str):
@@ -510,7 +524,7 @@ class InternalPamAuthenticator(UserPamAuthenticator):
     """ Authenticator for handling AF_UNIX connections, API token authentication, and HA connections. """
     def __init__(self, *, username: str, origin: ConnectionOrigin):
         super().__init__(username=username, origin=origin, service=MiddlewarePamFile.UNIX)
-        self.state.otpw_possible = False
+        self.otpw_possible = False
 
     def authenticate(self, username: str) -> TrueNASAuthenticatorResponse:
         """ Authentication for our unix socket is somewhat different. We just simply
