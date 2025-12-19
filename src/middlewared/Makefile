@@ -46,6 +46,9 @@ install:
 		exit 1; \
 	fi
 
+remove_mako:
+	rm -rf /var/run/mako/etc_files
+
 # kept here for backwards compatibility for our internal CI
 # and builds that are Goldeye or older. Halfmoon and newer
 # dont use this.
@@ -59,7 +62,7 @@ install_deps:
 migrate:
 	migrate
 
-reinstall: stop_service install_deps clean build_deb install migrate start_service
+reinstall: stop_service install_deps clean build_deb remove_mako install migrate start_service
 
 # this is to be called in github actions running in a container (no systemd (pid 1))
 # so it's the same as `reinstall` but without the start/stop{_service} and migrate calls
