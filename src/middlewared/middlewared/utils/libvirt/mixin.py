@@ -161,7 +161,7 @@ class DeviceMixin:
     async def _disk_choices(self):
         out = {}
         zvols = await self.middleware.call(
-            'zfs.dataset.unlocked_zvols_fast', [
+            'zfs.resource.unlocked_zvols_fast', [
                 ['OR', [['attachment', '=', None], ['attachment.method', '=', f'{self._service_type}.devices.query']]],
                 ['ro', '=', False],
             ],

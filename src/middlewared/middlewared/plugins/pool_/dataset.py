@@ -770,7 +770,7 @@ class PoolDatasetService(CRUDService):
                 snapdev_prop = data.get('snapdev') or existing_snapdev_prop
                 if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
                     if await self.middleware.call(
-                        'zfs.dataset.unlocked_zvols_fast',
+                        'zfs.resource.unlocked_zvols_fast',
                         [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id_}@']],
                         {}, ['RO', 'ATTACHMENT']
                     ):

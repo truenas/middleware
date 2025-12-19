@@ -529,7 +529,7 @@ class iSCSITargetExtentService(SharingService):
         diskchoices = {}
 
         zvols = await self.middleware.call(
-            'zfs.dataset.unlocked_zvols_fast',
+            'zfs.resource.unlocked_zvols_fast',
             [['attachment', '=', None]], {},
             ['SIZE', 'RO', 'ATTACHMENT']
         )
