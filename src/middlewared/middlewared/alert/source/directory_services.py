@@ -47,7 +47,7 @@ class DirectoryServiceDomainBindAlertSource(AlertSource):
 
         except Exception:
             # We shouldn't be raising other sorts of errors
-            self.logger.error("Unexpected error while performing health check.", exc_info=True)
+            self.middleware.logger.error("Unexpected error while performing health check.", exc_info=True)
 
 
 class DirectoryServiceDnsUpdateAlertSource(AlertSource):
@@ -71,7 +71,7 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             # disabling directory services. Most likely scenario is playing around with datastore
             # plugin or sqlite3 commands.
             self.middleware.logger.warning('Periodic DNS update failed due to misconfiguration.', exc_info=True)
-            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err', str(exc)}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err': str(exc)}, key=None)
         except FileNotFoundError:
             # This happens if the system dataset is not mounted. We'll log an error but not
             # raise an alert because there are probably many other things hollering about the
@@ -90,8 +90,8 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             else:
                 errmsg = exc.errmsg
 
-            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err', errmsg}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err': errmsg}, key=None)
         except Exception as exc:
             # If needed we can enhance this in the future to parse CallError
             self.middleware.logger.warning('Periodic DNS update failed.', exc_info=True)
-            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err', str(exc)}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlertClass, {'err': str(exc)}, key=None)
