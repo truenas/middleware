@@ -16,10 +16,10 @@ __all__ = [
     "PoolExportResult", "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs",
     "PoolGetDisksResult", "PoolImportFindArgs", "PoolImportFindResult", "PoolImportPoolArgs", "PoolImportPoolResult",
     "PoolIsUpgradedArgs", "PoolIsUpgradedResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs",
-    "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult", "PoolRemoveArgs", "PoolRemoveArgs",
-    "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs", "PoolScrubResult", "PoolUpdateArgs",
-    "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs", "PoolValidateNameResult",
-    "PoolCreateEncryptionOptions",
+    "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult", "PoolReimportArgs", "PoolReimportResult",
+    "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
+    "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
+    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions",
 ]
 
 
@@ -459,6 +459,16 @@ class PoolImportPoolArgs(BaseModel):
 class PoolImportPoolResult(BaseModel):
     result: Literal[True]
     """Indicates successful pool import."""
+
+
+class PoolReimportArgs(BaseModel):
+    id: int
+    """ID of the pool to reimport."""
+
+
+class PoolReimportResult(BaseModel):
+    result: Literal[True]
+    """Indicates successful pool reimport."""
 
 
 class PoolIsUpgradedArgs(BaseModel):

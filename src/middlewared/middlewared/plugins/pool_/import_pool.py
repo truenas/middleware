@@ -4,10 +4,13 @@ import os
 import subprocess
 
 from middlewared.api import api_method
-from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
+from middlewared.api.current import (
+    PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult,
+    PoolReimportArgs, PoolReimportResult,
+)
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.service import CallError, InstanceNotFound, job, private, Service
+from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationError
 from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
 
@@ -218,11 +221,95 @@ class PoolService(Service):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self.middleware.call_hook('pool.post_import', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
-        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+        await self._post_import_actions(pool, 'ADDED')
 
         return True
+
+    @api_method(PoolReimportArgs, PoolReimportResult, roles=['POOL_WRITE'])
+    @job(lock='pool_reimport')
+    async def reimport(self, job, oid):
+        """
+        Attempt to import a pool that exists in database but is currently OFFLINE.
+
+        This is useful after SED disks have been unlocked and the pool can now be imported.
+        """
+        pool = await self.middleware.call('pool.get_instance', oid)
+        vol_name = pool['name']
+        vol_guid = pool['guid']
+
+        if pool['status'] != 'OFFLINE':
+            raise ValidationError(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} is not offline (current status: {pool["status"]}). '
+                'Only offline pools can be reimported.',
+                errno.EINVAL
+            )
+
+        job.set_progress(5, 'Scanning for available pools')
+
+        available_pools = {p['guid']: p for p in await self.middleware.call('zfs.pool.find_import')}
+        pool_found = available_pools.get(vol_guid)
+
+        if pool_found is None:
+            raise ValidationError(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} (GUID: {vol_guid}) is not available for import. '
+                'If this is an all-SED pool, ensure SED disks have been unlocked first.',
+                errno.ENOENT
+            )
+
+        if pool_found['status'] == 'UNAVAIL':
+            raise ValidationError(
+                'pool_reimport.id',
+                f'Pool {vol_name!r} is in UNAVAIL state and cannot be imported. '
+                'Some disks may be missing or still locked.',
+                errno.ENXIO
+            )
+
+        job.set_progress(10, 'Importing pool')
+
+        # Import the pool using existing boot import logic
+        # This handles: import with proper flags, normalize root dataset properties
+        if not await self.middleware.call('pool.import_on_boot_impl', vol_name, vol_guid, True):
+            raise CallError(f'Failed to import pool {vol_name}', errno.EFAULT)
+
+        job.set_progress(30, 'Mounting datasets')
+
+        # Handle encryption - mount or unlock as needed
+        if not await self.middleware.call('pool.encryption_is_active', vol_name):
+            # Not encrypted - just mount recursively
+            await self.middleware.call('pool.recursive_mount', vol_name)
+
+        job.set_progress(50, 'Unlocking encrypted datasets')
+
+        # Run unlock logic (similar to unlock_on_boot_impl but for single pool)
+        await self.middleware.call('pool.unlock_on_boot_impl', vol_name)
+
+        job.set_progress(70, 'Resetting mountpoints')
+        await self.reset_mountpoint_recursively(vol_name)
+
+        job.set_progress(80, 'Re-enabling services')
+
+        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+            if attachments := await delegate.query(pool['path'], False):
+                await delegate.start(attachments)
+
+        job.set_progress(90, 'Running post-import tasks')
+
+        # Post-import hooks and sync encryption keys
+        pool = await self.middleware.call('pool.get_instance', oid)
+        await self._post_import_actions(pool, 'CHANGED')
+
+        job.set_progress(100, 'Pool reimported successfully')
+
+        return True
+
+    @private
+    async def _post_import_actions(self, pool, event_type):
+        await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+
+        self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
 
     @private
     def recursive_mount(self, name):
@@ -232,7 +319,7 @@ class PoolService(Service):
             name,  # name of the zpool / root dataset
         ]
         try:
-            self.logger.debug('Going to mount root dataset recusively: %r', name)
+            self.logger.debug('Going to mount root dataset recursively: %r', name)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
