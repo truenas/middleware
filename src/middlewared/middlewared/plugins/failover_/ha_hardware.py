@@ -6,6 +6,8 @@
 import enum
 import re
 
+from middlewared.plugins.system.product_utils import get_license
+
 
 class HA_HARDWARE(enum.Enum):
     """
@@ -27,3 +29,11 @@ class HA_HARDWARE(enum.Enum):
     XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
 
     MSERIES_ENCLOSURE = re.compile(r'\s*(ECStream|iX)\s*4024S([ps])', re.M)
+
+
+def is_licensed_for_ha() -> bool:
+    _license = get_license()
+    if _license is None:
+        return False
+
+    return bool(_license['system_serial_ha'])
