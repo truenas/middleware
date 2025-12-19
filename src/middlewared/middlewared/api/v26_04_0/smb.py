@@ -202,6 +202,10 @@ class SMBEntry(BaseModel):
     debug: bool
     """ Set SMB log levels to debug. Use this setting only when troubleshooting a specific SMB issue. Do not use it \
     in production environments. """
+    stateful_failover: bool
+    """ Enterprise feature to ensure SMB state consistency across HA failover events. This feature is \
+    incompatible with the following share purposes: MULTIPROTOCOL_SHARE, LEGACY_SHARE. This feature is also \
+    incompatible with SMB1 support. """
 
     @field_validator('bindip')
     @classmethod
