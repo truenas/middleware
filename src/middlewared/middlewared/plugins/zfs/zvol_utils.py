@@ -80,7 +80,6 @@ def unlocked_zvols_fast_impl(options=None, data=None):
                     out[zvol_name]["ro"] = f.readline()[:-1] == "1"
 
             if "ATTACHMENT" in options:
-                out = None
                 for method, attachment in data.get("attachments", {}).items():
                     val = attachment.pop(zvol_name, None)
                     if val is not None:
