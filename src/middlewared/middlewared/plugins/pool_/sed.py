@@ -1,6 +1,7 @@
 import asyncio
 
 from middlewared.service import private, Service
+from middlewared.utils.zfs.event import ZfsEvent, ZfsConfigSyncEvent
 
 
 SED_UPDATE_LOCK = asyncio.Lock()
@@ -85,14 +86,14 @@ class PoolService(Service):
         }
 
 
-async def zfs_events_hook(middleware, data):
-    if data["class"] == "sysevent.fs.zfs.config_sync":
+async def zfs_events_hook(middleware, event: ZfsEvent):
+    if isinstance(event, ZfsConfigSyncEvent):
         if await middleware.call('system.sed_enabled') and (
-            pool := await middleware.call("pool.query", [["name", "=", data["pool"]]], {'force_sql_filters': True})
+            pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
         ):
             if pool[0]["healthy"]:
                 # Let's only trigger this if pool is healthy
-                middleware.create_task(middleware.call("pool.update_all_sed_attr", True, data["pool"]))
+                middleware.create_task(middleware.call("pool.update_all_sed_attr", True, event.pool))
 
 
 async def _post_license_sed_update(middleware):

@@ -1,5 +1,6 @@
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils.zfs.event import ZfsEvent, ZfsConfigSyncEvent
 
 
 class DiskService(Service):
@@ -111,10 +112,10 @@ class DiskService(Service):
                     self.middleware.send_event("disk.query", "CHANGED", id=event, fields=disks[event])
 
 
-async def zfs_events_hook(middleware, data):
-    if data["class"] == "sysevent.fs.zfs.config_sync":
+async def zfs_events_hook(middleware, event: ZfsEvent):
+    if isinstance(event, ZfsConfigSyncEvent):
         try:
-            await middleware.call("disk.sync_zfs_guid", data["pool"])
+            await middleware.call("disk.sync_zfs_guid", event.pool)
         except MatchNotFound:
             pass
 
