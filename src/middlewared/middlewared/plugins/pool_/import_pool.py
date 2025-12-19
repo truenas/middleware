@@ -292,7 +292,7 @@ class PoolService(Service):
 
         for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
             if attachments := await delegate.query(pool['path'], False):
-                await delegate.toggle(attachments, True)
+                await delegate.start(attachments)
 
         job.set_progress(90, 'Running post-import tasks')
 
