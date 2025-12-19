@@ -13,6 +13,7 @@ from middlewared.api.current import (
 from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.utils.filter_list import filter_list
 
 from .destroy_impl import destroy_impl
 from .exceptions import (
@@ -35,6 +36,7 @@ from .rename_promote_clone_impl import (
     rename_impl,
 )
 from .utils import group_paths_by_parents, has_internal_path
+from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
 
 class ZFSResourceService(Service):
@@ -42,6 +44,30 @@ class ZFSResourceService(Service):
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+
+    @private
+    def unlocked_zvols_fast(
+        self,
+        filters: list | None = None,
+        options: dict | None = None,
+        additional_information: list | None = None,
+    ):
+        if filters is None:
+            filters = list()
+        if options is None:
+            options = dict()
+        if additional_information is None:
+            additional_information = list()
+
+        att_data = dict()
+        if "ATTACHMENT" in additional_information:
+            att_data = get_zvol_attachments_impl(self.middleware)
+
+        return filter_list(
+            list(unlocked_zvols_fast_impl(additional_information, att_data).values()),
+            filters,
+            options,
+        )
 
     @private
     @pass_thread_local_storage
@@ -56,7 +82,9 @@ class ZFSResourceService(Service):
         try:
             promote_impl(tls, current_name)
         except ZFSPathInvalidException:
-            raise ValidationError(schema, f"{current_name!r} is ineligible for promotion.")
+            raise ValidationError(
+                schema, f"{current_name!r} is ineligible for promotion."
+            )
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'current_name' key is required")
         except ZFSPathNotFoundException as e:
@@ -99,7 +127,15 @@ class ZFSResourceService(Service):
         """
         schema = "zfs.resource.mount"
         try:
-            mount_impl(tls, filesystem, mountpoint, recursive, mount_options, force, load_encryption_key)
+            mount_impl(
+                tls,
+                filesystem,
+                mountpoint,
+                recursive,
+                mount_options,
+                force,
+                load_encryption_key,
+            )
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'filesystem' key is required")
         except ZFSPathNotFoundException as e:
@@ -137,7 +173,15 @@ class ZFSResourceService(Service):
         """
         schema = "zfs.resource.unmount"
         try:
-            unmount_impl(tls, filesystem, mountpoint, recursive, force, lazy, unload_encryption_key)
+            unmount_impl(
+                tls,
+                filesystem,
+                mountpoint,
+                recursive,
+                force,
+                lazy,
+                unload_encryption_key,
+            )
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'filesystem' key is required")
         except ZFSPathNotFoundException as e:
@@ -145,7 +189,9 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def unload_key(self, tls, filesystem: str, recursive: bool = False, force_unmount: bool = False) -> None:
+    def unload_key(
+        self, tls, filesystem: str, recursive: bool = False, force_unmount: bool = False
+    ) -> None:
         """
         Unload the encryption key from ZFS.
 
@@ -208,7 +254,9 @@ class ZFSResourceService(Service):
                 "Use `zfs.resource.snapshot.rename` to rename snapshots.",
             )
         try:
-            rename_impl(tls, current_name, new_name, recursive, no_unmount, force_unmount)
+            rename_impl(
+                tls, current_name, new_name, recursive, no_unmount, force_unmount
+            )
         except ZFSPathNotASnapshotException:
             raise ValidationError(schema, "recursive is only valid for snapshots")
         except ZFSPathAlreadyExistsException as e:
@@ -324,14 +372,20 @@ class ZFSResourceService(Service):
         schema = "zfs.resource.destroy"
         if os.path.isabs(path):
             raise ValidationError(
-                schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
+                schema,
+                "Absolute path is invalid. Must be in form of <pool>/<resource>.",
+                errno.EINVAL,
             )
         elif path.endswith("/"):
-            raise ValidationError(schema, "Path must not end with a forward-slash.", errno.EINVAL)
+            raise ValidationError(
+                schema, "Path must not end with a forward-slash.", errno.EINVAL
+            )
         elif not bypass and has_internal_path(path):
             # NOTE: `bypass` is a value only exposed to
             # internal callers and not to our public API.
-            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+            raise ValidationError(
+                schema, f"{path!r} is a protected path.", errno.EACCES
+            )
 
         if "@" in path:
             raise ValidationError(
@@ -341,7 +395,9 @@ class ZFSResourceService(Service):
 
         tmp = path.split("/")
         if len(tmp) == 1 or tmp[-1] == "":
-            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
+            raise ValidationError(
+                schema, "Destroying the root filesystem is not allowed.", errno.EINVAL
+            )
 
         if not recursive:
             args = {"paths": [path], "properties": None, "get_children": True}
@@ -350,21 +406,23 @@ class ZFSResourceService(Service):
             if not rv:
                 raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
             elif len(rv) > 1:
-                raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
+                raise ValidationError(
+                    schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY
+                )
             else:
                 # Check if dataset has snapshots using snapshot.count
                 snap_counts = self.middleware.call_sync(
                     "zfs.resource.snapshot.count", {"paths": [path]}
                 )
                 if snap_counts.get(path, 0) > 0:
-                    raise ValidationError(schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
+                    raise ValidationError(
+                        schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY
+                    )
 
         return destroy_impl(tls, path, recursive, all_snapshots, bypass, defer)
 
     @api_method(
-        ZFSResourceDestroyArgs,
-        ZFSResourceDestroyResult,
-        roles=["ZFS_RESOURCE_WRITE"]
+        ZFSResourceDestroyArgs, ZFSResourceDestroyResult, roles=["ZFS_RESOURCE_WRITE"]
     )
     def destroy(self, data):
         """
@@ -424,7 +482,7 @@ class ZFSResourceService(Service):
             raise ValidationError(
                 f"{schema}.defer",
                 f"Snapshot {e.path!r} has dependent clones: {', '.join(e.clones)}",
-                errno.ENOTEMPTY
+                errno.ENOTEMPTY,
             )
         except ZFSPathHasHoldsException as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)
