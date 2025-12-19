@@ -648,7 +648,7 @@ class SMBService(ConfigService):
                 )
 
             invalid_shares = await self.middleware.call('sharing.smb.query', [
-                ['purpose', 'in', ['LEGACY_SHARE', 'MULTIPROTOCOL_SHARE']]
+                ['purpose', 'in', [SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.MULTIPROTOCOL_SHARE]]
             ])
             if invalid_shares:
                 invalid_shares_str = ', '.join([share['name'] for share in invalid_shares])
@@ -662,7 +662,6 @@ class SMBService(ConfigService):
                     'smb_update.stateful_failover',
                     'This feature is incompatible with unsupported smb_options'
                 )
-
 
         await self.validate_smb(new, verrors)
         verrors.check()
@@ -1344,7 +1343,7 @@ class SharingSMBService(SharingService):
                 )
 
         smb_config = await self.middleware.call('smb.config')
-        if data[share_filed.PURPOSE] in (SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.MULTIPROTOCOL_SHARE):
+        if data[share_field.PURPOSE] in (SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.MULTIPROTOCOL_SHARE):
             if smb_config['stateful_failover']:
                 verrors.add(
                     f'{schema_name}.purpose',
