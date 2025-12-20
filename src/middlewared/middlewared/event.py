@@ -62,6 +62,7 @@ class EventSource:
         self.arg = arg
         self.send_event_internal = send_event
         self.unsubscribe_all = unsubscribe_all
+        self._canceled = False
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
 
@@ -83,17 +84,24 @@ class EventSource:
 
     async def process(self):
         error = None
+
         try:
             await self.run()
         except Exception as e:
             error = e
             self.middleware.logger.error('EventSource %r run() failed', self.name, exc_info=True)
+
         try:
             await self.on_finish()
         except Exception:
             self.middleware.logger.error('EventSource %r on_finish() failed', self.name, exc_info=True)
 
-        await self.unsubscribe_all(error)
+        # The event source is explicitly cancelled if and only if all subscribers are gone.
+        # There is no need to run `unsubscribe_all` in that case.
+        # Moreover, running `unsubscribe_all` would unsubscribe new subscribers that were added
+        # to the new event source instance while the cancelled event source instance was shutting down.
+        if not self._canceled:
+            await self.unsubscribe_all(error)
 
     async def run(self):
         await self.middleware.run_in_thread(self.run_sync)
@@ -102,6 +110,7 @@ class EventSource:
         raise NotImplementedError('run_sync() method not implemented')
 
     async def cancel(self):
+        self._canceled = True
         self._cancel.set()
         await self.middleware.run_in_thread(self._cancel_sync.set)
 
