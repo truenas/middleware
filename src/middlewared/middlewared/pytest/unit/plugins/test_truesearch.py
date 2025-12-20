@@ -33,3 +33,33 @@ async def test_process_directories(directories, datasets, result):
         for dataset, encrypted in datasets.items()
     ])
     assert await TrueSearchService(middleware).process_directories(directories) == result
+
+
+@pytest.mark.asyncio
+async def test_legacy_mountpoint():
+    middleware = Mock()
+    middleware.call = AsyncMock(return_value=[
+        {
+            "type": "FILESYSTEM",
+            "properties": {
+                "mountpoint": {
+                    "value": "legacy"
+                },
+                "encryption": {
+                    "value": "off"
+                },
+            }
+        },
+        {
+            "type": "FILESYSTEM",
+            "properties": {
+                "mountpoint": {
+                    "value": "/mnt/tank/users"
+                },
+                "encryption": {
+                    "value": "off"
+                },
+            }
+        },
+    ])
+    assert await TrueSearchService(middleware).process_directories({"/mnt/tank/users"}) == ["/mnt/tank/users"]

@@ -65,9 +65,10 @@ class TrueSearchService(Service):
             if dataset['type'] != 'FILESYSTEM':
                 continue
 
-            if dataset['properties']['mountpoint']['value']:
+            mountpoint = dataset['properties']['mountpoint']['value']
+            if mountpoint and mountpoint != 'legacy':
                 encrypted = dataset['properties']['encryption']['value'] != 'off'
-                mountpoints[dataset['properties']['mountpoint']['value']] = encrypted
+                mountpoints[mountpoint] = encrypted
 
         result = set()
         for directory in directories:
@@ -77,7 +78,7 @@ class TrueSearchService(Service):
 
     def _processed_directories_for_directory(self, mountpoints: dict[str, bool], directory: str) -> set[str]:
         result = set()
-        match (encrypted := mountpoints.get(directory)):
+        match mountpoints.get(directory):
             case True:
                 # The dataset is encrypted. Don't index this dataset.
                 return set()
@@ -90,13 +91,13 @@ class TrueSearchService(Service):
                         result.add(mountpoint)
 
                 return result
-            case None:
+            case _:
                 # Directory is not a dataset. Find its parent dataset
                 parent = directory
                 while parent not in ["/mnt", "/"]:
                     parent = os.path.dirname(parent)
 
-                    match (encrypted := mountpoints.get(parent)):
+                    match mountpoints.get(parent):
                         case True:
                             # The dataset is encrypted. Don't index this dataset.
                             return set()
