@@ -1,5 +1,6 @@
 from .call import *  # noqa
 from .client import *  # noqa
+from .event import *  # noqa
 from .failover import * # noqa
 from .filesystem import * # noqa
 from .ha import * # noqa

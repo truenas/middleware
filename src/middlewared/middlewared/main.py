@@ -1831,7 +1831,7 @@ def main():
     # that is consumed by the middlewared_docs package builder to generate API documentation.
     parser.add_argument('--dump-api', action='store_true', help=argparse.SUPPRESS)
     # Hidden argument for running test commands with a fully initialized middleware
-    # Usage: middleware --test -- python3 runtest.py --ip localhost --password testpass --test test_zfs_snapshot.py
+    # Usage: middlewared --test -- python3 runtest.py --ip localhost --password testpass --test test_zfs_snapshot.py
     # This allows running test commands (like pytest) with access to a running middleware instance.
     # The middleware will fully initialize (plugins loaded, services available), then execute
     # the specified command, and exit with the command's exit code.
