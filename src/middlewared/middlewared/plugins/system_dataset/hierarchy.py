@@ -149,12 +149,12 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'gid': 0,
                 'mode': 0o755,
             },
-            'post_mount_actions': [
-                {
-                    'method': 'smb.setup_directories',
-                    'args': [],
-                }
-            ]
+            'create_paths': [
+                {'path': '/var/db/system/samba4/state', 'uid': 0, 'gid': 0},
+                {'path': '/var/db/system/samba4/cache', 'uid': 0, 'gid': 0},
+                {'path': '/var/db/system/samba4/private', 'uid': 0, 'gid': 0, 'mode': 0o700},
+                {'path': '/var/db/system/samba4/winbindd_privileged', 'uid': 0, 'gid': 0, 'mode': 0o700},
+            ],
         },
         {
             'name': os.path.join(pool_name, '.system/truesearch'),

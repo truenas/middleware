@@ -83,6 +83,7 @@ class SMBModel(sa.Model):
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
     cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
     cifs_srv_search_protocols = sa.Column(sa.JSON(list), default=[])
+    cifs_srv_stateful_failover = sa.Column(sa.Boolean, default=False)
 
 
 class SMBService(ConfigService):
@@ -349,8 +350,6 @@ class SMBService(ConfigService):
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
-        config_job.set_progress(0, 'Setting up SMB directories.')
-        await self.setup_directories()
 
         """
         We may have failed over and changed our netbios name, which would also
@@ -633,6 +632,35 @@ class SMBService(ConfigService):
                 verrors.add(
                     'smb_update.search_protocols',
                     'Share indexing service is not available. ' + ' '.join(reasons)
+                )
+
+        if new['stateful_failover']:
+            if not await self.middleware.call('failover.licensed'):
+                verrors.add(
+                    'smb_update.stateful_failover',
+                    'This feature is only available for HA-capable TrueNAS Enterprise servers.'
+                )
+
+            if new['enable_smb1']:
+                verrors.add(
+                    'smb_update.stateful_failover',
+                    'This feature is incompatible with SMB1 support'
+                )
+
+            invalid_shares = await self.middleware.call('sharing.smb.query', [
+                ['purpose', 'in', [SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.MULTIPROTOCOL_SHARE]]
+            ])
+            if invalid_shares:
+                invalid_shares_str = ', '.join([share['name'] for share in invalid_shares])
+                verrors.add(
+                    'smb_update.stateful_failover',
+                    f'The following SMB shares are incompatible with this feature: {invalid_shares_str}'
+                )
+
+            if new['smb_options']:
+                verrors.add(
+                    'smb_update.stateful_failover',
+                    'This feature is incompatible with unsupported smb_options'
                 )
 
         await self.validate_smb(new, verrors)
@@ -1315,6 +1343,12 @@ class SharingSMBService(SharingService):
                 )
 
         smb_config = await self.middleware.call('smb.config')
+        if data[share_field.PURPOSE] in (SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.MULTIPROTOCOL_SHARE):
+            if smb_config['stateful_failover']:
+                verrors.add(
+                    f'{schema_name}.purpose',
+                    'The specified purpose is incompatible with stateful SMB failover'
+                )
 
         if data[share_field.AUDIT][share_field.AUDIT_ENABLE]:
             if smb_config['enable_smb1']:
@@ -1803,11 +1837,6 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         ) else False
 
 
-async def systemdataset_setup_hook(middleware, data):
-    if not data['in_progress']:
-        await middleware.call('smb.setup_directories')
-
-
 async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
@@ -1821,4 +1850,3 @@ async def setup(middleware):
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('dataset.post_unlock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
-    middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)
