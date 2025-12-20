@@ -7,7 +7,7 @@
 # Override the build step if necessary
 override_dh_auto_build:
 	virtualenv --system-site-packages virtualenv
-	virtualenv/bin/pip install -r requirements.txt
+	virtualenv/bin/pip install -r _requirements.txt
 	virtualenv/bin/python3 generate_docs.py dist
 	dh_auto_build
 
