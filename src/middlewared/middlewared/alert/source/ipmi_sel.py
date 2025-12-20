@@ -29,12 +29,12 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
 
     async def dismiss(self, alerts, alert):
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
-        if await self.middleware.call("keyvalue.has_key", IPMISELAlertSource.dismissed_datetime_kv_key):
-            d = await self.middleware.call("keyvalue.get", IPMISELAlertSource.dismissed_datetime_kv_key)
+        if await self.call2(self.s.keyvalue.has_key, IPMISELAlertSource.dismissed_datetime_kv_key):
+            d = await self.call2(self.s.keyvalue.get, IPMISELAlertSource.dismissed_datetime_kv_key)
             d = d.replace(tzinfo=None)
             datetimes.append(d)
 
-        await self.middleware.call("keyvalue.set", IPMISELAlertSource.dismissed_datetime_kv_key, max(datetimes))
+        await self.call2(self.s.keyvalue.set, IPMISELAlertSource.dismissed_datetime_kv_key, max(datetimes))
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
@@ -105,14 +105,14 @@ class IPMISELAlertSource(AlertSource):
 
         alerts = []
         if records:
-            if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
+            if await self.call2(self.s.keyvalue.has_key, self.dismissed_datetime_kv_key):
                 dismissed_datetime = (
-                    (await self.middleware.call("keyvalue.get", self.dismissed_datetime_kv_key)).replace(tzinfo=None)
+                    (await self.call2(self.s.keyvalue.get, self.dismissed_datetime_kv_key)).replace(tzinfo=None)
                 )
             else:
                 # Prevent notifying about existing alerts on first install/upgrade
                 dismissed_datetime = max(record["datetime"] for record in records)
-                await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
+                await self.call2(self.s.keyvalue.set, self.dismissed_datetime_kv_key, dismissed_datetime)
 
             alerts_by_key = {}
             for record in sorted(

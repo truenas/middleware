@@ -33,6 +33,7 @@ from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
+from .utils.service.call_mixin import AuditCallback, CallMixin, JobProgressCallback
 from .utils.service.crud import real_crud_method
 from .utils.systemd import SystemdNotifier
 from .utils.threading import (
@@ -90,11 +91,10 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
-_OptAuditCallback = typing.Callable[[str], None] | None
-_OptJobProgressCallback = typing.Callable[[dict], None] | None
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -121,7 +121,7 @@ def get_methods(container: BaseServiceContainer, prefix="") -> dict[str, types.M
             result.update(**get_methods(value, f"{prefix}{name}."))
         elif isinstance(value, middlewared.service.Service):
             for attr in dir(value):
-                if attr.startswith("_"):
+                if attr.startswith("_") or attr in {"call2", "call_sync2", "s"}:
                     continue
 
                 method = getattr(value, attr)
@@ -141,6 +141,7 @@ class ServiceContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super(ServiceContainer, self).__init__(middleware)
 
+        self.keyvalue = KeyValueService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
         self.methods = get_methods(self)
@@ -148,7 +149,7 @@ class ServiceContainer(BaseServiceContainer):
             method.__func__.__method_name__ = method_name
 
 
-class Middleware(LoadPluginsMixin, ServiceCallMixin):
+class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
 
@@ -771,8 +772,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         kwargs: dict | None = None,
         *,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        audit_callback: AuditCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
@@ -852,8 +853,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         kwargs: dict | None = None,
         *,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        audit_callback: AuditCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
@@ -1154,8 +1155,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         name: str,
         *params,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        audit_callback: AuditCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         pipes: Pipes | None = None,
         profile: bool = False,
     ) -> typing.Any:
@@ -1173,9 +1174,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self,
         name: str,
         *params,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
+        audit_callback: AuditCallback = None,
         background: bool = False,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
@@ -1207,41 +1208,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs
-    ) -> T:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
     async def call2(
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        audit_callback: AuditCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: typing.Any,
@@ -1259,40 +1232,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        background: bool = False,
-        job_on_progress_cb: _OptJobProgressCallback = None,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
-        background: bool = False,
-        job_on_progress_cb: _OptJobProgressCallback = None,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
     def call_sync2(
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
         app: App | None = None,
-        audit_callback: _OptAuditCallback = None,
+        audit_callback: AuditCallback = None,
         background: bool = False,
-        job_on_progress_cb: _OptJobProgressCallback = None,
+        job_on_progress_cb: JobProgressCallback = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:

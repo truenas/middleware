@@ -211,12 +211,7 @@ class AppService(CRUDService):
 
         if apps_volume_ds and remove_ds:
             try:
-                self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.destroy_impl,
-                    apps_volume_ds,
-                    recursive=True,
-                    bypass=True,
-                )
+                self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
             except Exception:
                 self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
 
@@ -334,12 +329,7 @@ class AppService(CRUDService):
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-            self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.destroy_impl,
-                apps_volume_ds,
-                recursive=True,
-                bypass=True,
-            )
+            self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
 
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)

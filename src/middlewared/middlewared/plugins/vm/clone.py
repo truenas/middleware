@@ -142,7 +142,7 @@ class VMService(Service):
                 # the clone first before destroying the snap
                 if clone is not None:
                     try:
-                        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl, clone)
+                        self.call_sync2(self.s.zfs.resource.destroy_impl, clone)
                     except Exception:
                         self.logger.exception('Failed to destroy cloned zvol %r', clone)
                         # failing to destroy the clone means destroying the snap will

@@ -317,7 +317,7 @@ class ContainerService(CRUDService):
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
-        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl,container['dataset'])
+        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'])

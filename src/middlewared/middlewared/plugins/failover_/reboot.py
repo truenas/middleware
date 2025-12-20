@@ -289,13 +289,13 @@ class FailoverRebootService(Service):
         self.remote_reboot_reasons_key = f'remote_reboot_reasons_{await self.middleware.call("failover.node")}'
         self.remote_reboot_reasons = {
             k: RemoteRebootReason(**v)
-            for k, v in (await self.middleware.call('keyvalue.get', self.remote_reboot_reasons_key, {})).items()
+            for k, v in (await self.call2(self.s.keyvalue.get, self.remote_reboot_reasons_key, {})).items()
         }
         self.loaded = True
 
     @private
     async def persist_remote_reboot_reasons(self):
-        await self.middleware.call('keyvalue.set', self.remote_reboot_reasons_key, {
+        await self.call2(self.s.keyvalue.set, self.remote_reboot_reasons_key, {
             k: asdict(v)
             for k, v in self.remote_reboot_reasons.items()
         })

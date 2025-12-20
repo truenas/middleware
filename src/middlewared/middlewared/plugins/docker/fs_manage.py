@@ -18,19 +18,14 @@ class DockerFilesystemManageService(Service):
                 if mount:
                     # Check if ix-apps dataset mount point needs updating
                     await self.ensure_ix_apps_mount_point(docker_ds)
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.mount,
+                    await self.call2(
+                        self.s.zfs.resource.mount,
                         docker_ds,
                         recursive=True,
                         force=True,
                     )
                 else:
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.unmount,
-                        docker_ds,
-                        recursive=True,
-                        force=True,
-                    )
+                    await self.call2(self.s.zfs.resource.unmount, docker_ds, recursive=True, force=True)
                 try:
                     return await self.middleware.call('catalog.sync')
                 except CallError as e:

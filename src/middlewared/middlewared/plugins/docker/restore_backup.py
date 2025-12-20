@@ -41,11 +41,7 @@ class DockerService(Service):
         job.set_progress(20, 'Stopped Docker service')
 
         docker_config = self.middleware.call_sync('docker.config')
-        self.middleware.call_sync2(
-            self.middleware.services.zfs.resource.destroy_impl,
-            os.path.join(docker_config['dataset'], 'docker'),
-            bypass=True,
-        )
+        self.call_sync2(self.s.zfs.resource.destroy_impl, os.path.join(docker_config['dataset'], 'docker'), bypass=True)
 
         job.set_progress(25, f'Rolling back to {backup_name!r} backup')
         docker_ds, snapshot_name = backup['snapshot_name'].split('@')
