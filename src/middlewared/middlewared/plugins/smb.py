@@ -357,6 +357,9 @@ class SMBService(ConfigService):
         local user account setup, otherwise we may end up with the incorrect
         domain SID for the guest account.
         """
+        config_job.set_progress(0, 'Setting up SMB directories.')
+        await self.setup_directories()
+
         try:
             await self.middleware.call('idmap.gencache.flush')
         except Exception:
