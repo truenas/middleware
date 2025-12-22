@@ -125,11 +125,17 @@ class SMBService(ConfigService):
 
     @private
     def generate_smb_configuration(self):
-        if self.middleware.call_sync('failover.status') in ('SINGLE', 'MASTER'):
-            smb_shares = self.middleware.call_sync('sharing.smb.query')
+        smb_config = self.middleware.call_sync('smb.config')
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            smb_shares = self.middleware.call_sync('sharing.smb.query', [
+                [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
+            ])
         else:
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
+            # If we're not the active storage controller, don't shift lockdir.
+            # This avoids races on system dataset setup.
+            smb_config['stateful_failover'] = False
 
         ds_config = self.middleware.call_sync('directoryservices.config')
         if ds_config['enable'] and ds_config['service_type'] == 'IPA':
@@ -141,11 +147,6 @@ class SMBService(ConfigService):
                 'name', '=', IpaConfigName.IPA_SMB_KEYTAB.value
             ]]):
                 ds_config['configuration']['smb_domain'] = None
-
-        smb_config = self.middleware.call_sync('smb.config')
-        smb_shares = self.middleware.call_sync('sharing.smb.query', [
-            [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
-        ])
 
         disabled_shares = []
         for share in smb_shares:
