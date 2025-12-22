@@ -21,7 +21,7 @@ from middlewared.api.current import (
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
-from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
 from middlewared.utils.filter_list import filter_list
 
 
@@ -92,15 +92,50 @@ class PoolSnapshotService(CRUDService):
             }
         )
 
-    def _transform_snapshot_entry(self, snap, *, include_holds=True, include_properties=True, requested_props=None):
+    def _transform_snapshot_entry(self, snap, *, include_holds=True, requested_props=None):
         """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
 
         Args:
             snap: Snapshot dict from zfs.resource.snapshot.query
             include_holds: Whether to include holds field (False for create/update results)
-            include_properties: Whether to include properties field in result
             requested_props: Set of property names that were explicitly requested (for adding fast-path props)
         """
+        # Transform properties from new format to old format
+        # New: {prop: {raw, source, value}}
+        # Old: {prop: {value, rawvalue, source, parsed}}
+        old_props = {}
+        if snap.get('properties'):
+            for prop_name, prop_data in snap['properties'].items():
+                if prop_data is None:
+                    continue
+                # Map source None -> "NONE"
+                source = prop_data.get('source')
+                if source is None:
+                    source = 'NONE'
+                old_props[prop_name] = {
+                    'value': str(prop_data.get('value', '')),
+                    'rawvalue': prop_data.get('raw', ''),
+                    'source': source,
+                    'parsed': prop_data.get('value'),
+                }
+
+        # Add fast-path properties to properties dict if they were explicitly requested
+        if requested_props:
+            if 'name' in requested_props and 'name' not in old_props:
+                old_props['name'] = {
+                    'value': snap['name'],
+                    'rawvalue': snap['name'],
+                    'source': 'NONE',
+                    'parsed': snap['name'],
+                }
+            if 'createtxg' in requested_props and 'createtxg' not in old_props:
+                old_props['createtxg'] = {
+                    'value': str(snap['createtxg']),
+                    'rawvalue': str(snap['createtxg']),
+                    'source': 'NONE',
+                    'parsed': snap['createtxg'],
+                }
+
         entry = {
             'id': snap['name'],  # id is same as name for snapshots
             'name': snap['name'],
@@ -109,46 +144,8 @@ class PoolSnapshotService(CRUDService):
             'snapshot_name': snap['snapshot_name'],
             'dataset': snap['dataset'],
             'createtxg': str(snap['createtxg']),
+            'properties': old_props,  # Always include properties (required by API schema)
         }
-
-        if include_properties:
-            # Transform properties from new format to old format
-            # New: {prop: {raw, source, value}}
-            # Old: {prop: {value, rawvalue, source, parsed}}
-            old_props = {}
-            if snap.get('properties'):
-                for prop_name, prop_data in snap['properties'].items():
-                    if prop_data is None:
-                        continue
-                    # Map source None -> "NONE"
-                    source = prop_data.get('source')
-                    if source is None:
-                        source = 'NONE'
-                    old_props[prop_name] = {
-                        'value': str(prop_data.get('value', '')),
-                        'rawvalue': prop_data.get('raw', ''),
-                        'source': source,
-                        'parsed': prop_data.get('value'),
-                    }
-
-            # Add fast-path properties to properties dict if they were explicitly requested
-            if requested_props:
-                if 'name' in requested_props and 'name' not in old_props:
-                    old_props['name'] = {
-                        'value': snap['name'],
-                        'rawvalue': snap['name'],
-                        'source': 'NONE',
-                        'parsed': snap['name'],
-                    }
-                if 'createtxg' in requested_props and 'createtxg' not in old_props:
-                    old_props['createtxg'] = {
-                        'value': str(snap['createtxg']),
-                        'rawvalue': str(snap['createtxg']),
-                        'source': 'NONE',
-                        'parsed': snap['createtxg'],
-                    }
-
-            entry['properties'] = old_props
 
         if include_holds:
             if snap.get('holds') and 'truenas' in snap['holds']:
@@ -218,9 +215,6 @@ class PoolSnapshotService(CRUDService):
         requested_props = set(extra.get('properties', []))
         non_fast_path_props = requested_props - frozenset({'name', 'createtxg'})
 
-        # Only include 'properties' in result if non-fast-path properties were requested
-        include_properties = bool(non_fast_path_props)
-
         # Only pass non-fast-path properties to the backend
         if non_fast_path_props:
             query_args['properties'] = list(non_fast_path_props)
@@ -243,6 +237,17 @@ class PoolSnapshotService(CRUDService):
         if extra.get("holds", False):
             query_args["get_holds"] = True
 
+        retention = extra.get("retention", False)
+        if retention:
+            # MISERABLE design choice here. "retention" is a confusing
+            # term to represent the fact that we actually want to query
+            # all custom user space properties for each snapshot. But
+            # then we pull out a singular user space property and then
+            # parse it in the zettarepl.annotate_snapshots function and
+            # then take the value and put it at a separate top-level key
+            # of the final response. sigh...
+            query_args["get_user_properties"] = True
+
         # Query snapshots using the new efficient endpoint
         # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
         snapshots = []
@@ -255,8 +260,7 @@ class PoolSnapshotService(CRUDService):
                 # Pass requested_props so fast-path properties can be added when needed
                 snapshots.append(self._transform_snapshot_entry(
                     i,
-                    include_properties=include_properties,
-                    requested_props=requested_props if include_properties else None
+                    requested_props=requested_props if requested_props else None
                 ))
         except ZFSPathNotFoundException:
             # Path not found - return empty results (legacy behavior)
@@ -267,11 +271,11 @@ class PoolSnapshotService(CRUDService):
         result = filter_list(snapshots, remaining_filters, options)
 
         # Add retention info if requested
-        if extra.get('retention'):
+        if retention:
             if isinstance(result, list):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result, True)
             elif isinstance(result, dict):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result], True)[0]
 
         # Apply select if specified
         if select:
@@ -340,6 +344,12 @@ class PoolSnapshotService(CRUDService):
                 )
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
+        except ZFSPathAlreadyExistsException:
+            raise ValidationError(
+                "pool.snapshot.create",
+                f"{name} already exists.",
+                errno.EEXIST
+            )
         finally:
             if affected_vms:
                 self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))

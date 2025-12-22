@@ -2,7 +2,7 @@ import errno
 
 import pytest
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
@@ -50,7 +50,7 @@ def test_min_max_txg_snapshot_query():
 def test_already_exists():
     with dataset('test') as test_dataset:
         call('pool.snapshot.create', {'dataset': test_dataset, 'name': 'snap'})
-        with pytest.raises(CallError) as ve:
+        with pytest.raises(ValidationError) as ve:
             call('pool.snapshot.create', {'dataset': test_dataset, 'name': 'snap'})
 
         assert ve.value.errno == errno.EEXIST

@@ -105,20 +105,12 @@ def test_zfs_resource_snapshot_query_no_properties():
             assert len(result) == 1
             assert result[0]["properties"] is None
 
-
-def test_zfs_resource_snapshot_query_default_properties():
-    """Test querying with empty properties list returns defaults"""
-    with dataset("test_snap_query_default_props") as ds:
-        with snapshot(ds, "snap1") as snap:
             result = call(
                 "zfs.resource.snapshot.query",
                 {"paths": [snap], "properties": []},
             )
             assert len(result) == 1
-            props = result[0]["properties"]
-            assert props is not None
-            # Should have space-related properties by default
-            assert "used" in props or "referenced" in props
+            assert result[0]["properties"] is None
 
 
 def test_zfs_resource_snapshot_query_user_properties():

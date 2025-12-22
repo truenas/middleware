@@ -119,8 +119,7 @@ def test_zfs_resource_snapshot_count_no_snapshots():
     """Test counting snapshots on dataset with no snapshots"""
     with dataset("test_snap_count_empty") as ds:
         result = call("zfs.resource.snapshot.count", {"paths": [ds]})
-        # Dataset with no snapshots should not appear in results
-        assert ds not in result
+        assert result[ds] == 0
 
 
 def test_zfs_resource_snapshot_count_nonexistent_dataset():
