@@ -128,12 +128,11 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
         raise
 
     # Query and return the primary snapshot
-    # Use properties=None for optimized query (no properties needed initially,
-    # but we return the entry so caller can see what was created)
+    # The requested properties are expected by UI
     primary_snap_path = f"{dataset}@{snap_name}"
     results = query_snapshots_impl(
         tls.lzh,
-        {"paths": [primary_snap_path], "properties": []},
+        {"paths": [primary_snap_path], "properties": ["creation", "createtxg"]},
     )
 
     # TODO: Consider returning list of all created snapshots for recursive=True
@@ -150,6 +149,6 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
         "type": "SNAPSHOT",
         "createtxg": 0,
         "guid": 0,
-        "properties": None,
-        "user_properties": None,
+        "properties": {},
+        "user_properties": {},
     }

@@ -155,8 +155,7 @@ def __dataset_count_callback(ds_hdl, state: SnapshotCountState) -> bool:
 
     # Count snapshots for this dataset (with caching)
     count = __count_dataset_snapshots_cached(ds_hdl, state.batch_ops)
-    if count > 0:
-        state.counts[ds_name] = count
+    state.counts[ds_name] = count
 
     # If recursive, also iterate child datasets
     if state.recursive:
