@@ -1,3 +1,5 @@
+from middlewared.utils.privilege_constants import LocalAdminGroups
+
 ADMIN_UID = 950
 ADMIN_GID = 950
 MIN_AUTO_XID = 3000  # See NAS-117892 - purpose is to avoid collision with apps uids/gids
@@ -22,12 +24,13 @@ USERNS_IDMAP_NONE = 0
 # have enhanced privileges to the server and group membership can expose
 # unexpected security issues.
 ALLOWED_BUILTIN_GIDS = {
-    14,  # ftp -- required for FTP access
-    544,  # builtin_administrators
-    545,  # builtin_users
-    568,  # apps
-    951,  # truenas_readonly_administrators
-    952,  # truenas_sharing_administrators
+    LocalAdminGroups.FTP,  # 14 -- required for FTP access
+    LocalAdminGroups.TRUENAS_WEBSHARE_ADMINISTRATORS,  # 445
+    LocalAdminGroups.BUILTIN_ADMINISTRATORS,  # 544
+    LocalAdminGroups.BUILTIN_USERS,  # 545
+    LocalAdminGroups.APPS,  # 568
+    LocalAdminGroups.TRUENAS_READONLY_ADMINISTRATORS,  # 951
+    LocalAdminGroups.TRUENAS_SHARING_ADMINISTRATORS,  # 952
 }
 
 # TRUENAS_IDMAP_MAX + 1, this is also first ID in range allocated for Incus idmaps
