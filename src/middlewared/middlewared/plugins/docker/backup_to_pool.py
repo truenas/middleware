@@ -65,6 +65,7 @@ class DockerService(Service):
                     'dataset': applications_ds_name(docker_config["pool"]),
                     'name': snap_name,
                     'recursive': True,
+                    'bypass': True,
                 }
             )
         finally:
