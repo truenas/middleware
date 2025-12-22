@@ -7,6 +7,7 @@ class NFSService(SimpleService):
     name = "nfs"
     reloadable = True
     systemd_unit_timeout = 10
+    may_run_on_standby = False
 
     etc = ["nfsd"]
 

@@ -118,6 +118,7 @@ class NfsMountdService(PseudoServiceBase):
     Used in HA mode to stop nfs-mountd on the standby node
     '''
     name = "mountd"
+    may_run_on_standby = False
 
     async def stop(self):
         await systemd_unit("nfs-mountd", "stop")

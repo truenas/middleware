@@ -6,6 +6,7 @@ class WebShareService(SimpleService):
 
     etc = ["webshare"]
     reloadable = True
+    may_run_on_standby = False
 
     systemd_unit = "truenas-webshare-auth"
     systemd_async_start = True
