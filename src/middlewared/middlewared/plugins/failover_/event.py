@@ -19,11 +19,15 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
+from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.virt.utils import VirtGlobalStatus as VirtStatus
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
+
+# list of services to stop on standby controller
+BACKUP_STOP_SERVICES = frozenset(svc.name for svc in all_services if not svc.may_run_on_standby)
 
 # When we get to the point of transitioning to MASTER or BACKUP
 # we wrap the associated methods (`vrrp_master` and `vrrp_backup`)
@@ -72,9 +76,11 @@ class FailoverEventsService(Service):
     # zpool(s) when becoming the BACKUP node
     ZPOOL_EXPORT_TIMEOUT = 4  # seconds
 
-    async def restart_service(self, service, timeout):
-        logger.info('Restarting %s', service)
-        return await (await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)).wait(timeout=timeout)
+    async def service_action(self, service, timeout, verb):
+        logger.info('%s %s', verb, service)
+        return await (
+            await self.middleware.call('service.control', verb, service, self.HA_PROPAGATE)
+        ).wait(timeout=timeout)
 
     async def become_active_service(self, service, timeout):
         logger.info('Become active %s', service)
@@ -119,7 +125,7 @@ class FailoverEventsService(Service):
             *[
                 self.become_active_service(svc, data['timeout'])
                 if svc in self.BECOME_ACTIVE_SERVICES
-                else self.restart_service(svc, data['timeout'])
+                else self.service_action(svc, data['timeout'], 'RESTART')
                 for svc in to_restart
             ],
             return_exceptions=True
@@ -128,6 +134,26 @@ class FailoverEventsService(Service):
             if isinstance(exc, asyncio.TimeoutError):
                 logger.error(
                     'Failed to restart service "%s" after %d seconds',
+                    svc, data['timeout']
+                )
+
+    async def stop_services_backup(self, data):
+        """
+        Concurrently stop various services that are enabled in systemd but shouldn't
+        be running on the standby controller
+        """
+        data.setdefault('timeout', 15)
+        exceptions = await asyncio.gather(
+            *[
+                self.service_action(svc, data['timeout'], 'STOP')
+                for svc in BACKUP_STOP_SERVICES
+            ],
+            return_exceptions=True
+        )
+        for svc, exc in zip(BACKUP_STOP_SERVICES, exceptions):
+            if isinstance(exc, asyncio.TimeoutError):
+                logger.error(
+                    'Failed to stop service "%s" after %d seconds',
                     svc, data['timeout']
                 )
 
@@ -955,9 +981,6 @@ class FailoverEventsService(Service):
 
         self.run_call('truecommand.stop_truecommand_service')
 
-        logger.info('Stopping NFS mountd service')
-        self.run_call('service.control', 'STOP', 'mountd', job=True)
-
         # we keep SSH running on both controllers (if it's enabled by user)
         filters = [['srv_service', '=', 'ssh']]
         options = {'get': True}
@@ -1020,6 +1043,14 @@ class FailoverEventsService(Service):
         except Exception:
             logger.warning('Failed to activate directory services', exc_info=True)
         logger.info('Done activating directory services')
+
+        logger.info('Stopping active-only services on standby controller')
+        try:
+            self.run_call('failover.events.stop_services_backup', {})
+        except Exception:
+            logger.warning('Failed to stop active-only services on standby controller', exc_info=True)
+
+        logger.info('Done stopping active-only services.')
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'

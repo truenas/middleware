@@ -6,5 +6,6 @@ class NetdataService(SimpleService):
 
     etc = ['netdata']
     restartable = True
+    may_run_on_standby = False
 
     systemd_unit = 'netdata'

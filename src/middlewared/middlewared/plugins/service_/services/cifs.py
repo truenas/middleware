@@ -4,6 +4,7 @@ from .base import SimpleService
 class CIFSService(SimpleService):
     name = "cifs"
     reloadable = True
+    may_run_on_standby = False
 
     etc = ["smb"]
 

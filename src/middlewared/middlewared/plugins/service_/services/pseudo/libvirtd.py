@@ -5,6 +5,7 @@ class LibvirtdService(SimpleService):
     name = "libvirtd"
     systemd_unit = "libvirtd"
     etc = ["libvirt"]
+    may_run_on_standby = False
 
     async def after_start(self):
         await self.middleware.call("service.start", "libvirt-guests", {"ha_propagate": False})
@@ -18,3 +19,4 @@ class LibvirtGuestService(SimpleService):
     systemd_unit = "libvirt-guests"
     systemd_async_start = True
     etc = ["libvirt_guests"]
+    may_run_on_standby = False
