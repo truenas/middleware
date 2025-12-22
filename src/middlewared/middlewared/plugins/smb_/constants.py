@@ -1,4 +1,5 @@
 import enum
+import os
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 
@@ -7,6 +8,7 @@ NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 VEEAM_REPO_BLOCKSIZE = 131072
+SAMBA_BOOTENV_DIR = '/var/lib/truenas-samba'
 
 
 class SMBCmd(enum.Enum):
@@ -75,19 +77,17 @@ class SMBPath(enum.Enum):
     GLOBALCONF = ('/etc/smb4.conf', 0o644, False)
     STUBCONF = ('/usr/local/etc/smb4.conf', 0o644, False)
     SHARECONF = ('/etc/smb4_share.conf', 0o755, False)
-    STATEDIR = ('/var/db/system/samba4', 0o755, True)
-    PRIVATEDIR = ('/var/db/system/samba4/private', 0o700, True)
+    STATEDIR = (SAMBA_BOOTENV_DIR, 0o755, True)
+    PRIVATEDIR = (os.path.join(SAMBA_BOOTENV_DIR, 'private'), 0o700, True)
     KEYTABDIR = (SAMBA_KEYTAB_DIR, 0o700, True)
-    LEGACYSTATE = ('/root/samba', 0o755, True)
-    LEGACYPRIVATE = ('/root/samba/private', 0o700, True)
     CACHE_DIR = ('/var/run/samba-cache', 0o755, True)
     PASSDB_DIR = ('/var/run/samba-cache/private', 0o700, True)
-    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', 0o700, False)
+    MSG_SOCK = (os.path.join(SAMBA_BOOTENV_DIR, 'private', 'msg.sock'), 0o700, False)
     RUNDIR = ('/var/run/samba', 0o755, True)
     LOCKDIR = ('/var/run/samba-lock', 0o755, True)
     LOGDIR = ('/var/log/samba4', 0o755, True)
     IPCSHARE = ('/tmp', 0o1777, True)
-    WINBINDD_PRIVILEGED = ('/var/db/system/samba4/winbindd_privileged', 0o750, True)
+    WINBINDD_PRIVILEGED = (os.path.join(SAMBA_BOOTENV_DIR, 'winbindd_privileged'), 0o750, True)
 
     @property
     def mode(self):

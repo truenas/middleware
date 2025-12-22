@@ -118,11 +118,11 @@ def test_set_smb_acl_by_unix_id(setup_smb_share, sharesec_user):
 
 
 def test_delete_share_info_tdb(setup_smb_share):
-    cmd = 'rm /var/db/system/samba4/share_info.tdb'
+    cmd = 'rm /var/lib/truenas-samba/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-    cmd = 'test -f /var/db/system/samba4/share_info.tdb'
+    cmd = 'test -f /var/lib/truenas-samba/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, results['output']
 
@@ -141,7 +141,7 @@ def test_restore_sharesec_with_flush_share_info(setup_smb_share, sharesec_user):
 
 
 def test_verify_share_info_tdb_is_created(setup_smb_share, sharesec_user):
-    cmd = 'test -f /var/db/system/samba4/share_info.tdb'
+    cmd = 'test -f /var/lib/truenas-samba/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
@@ -160,7 +160,7 @@ def test_verify_share_info_tdb_is_created(setup_smb_share, sharesec_user):
 
     setup_smb_share['name'] = 'my_sharesec2'
     assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
-    assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username'], ssh('tdbdump /var/db/system/samba4/share_info.tdb') 
+    assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username'], ssh('tdbdump /var/lib/truenas-samba/share_info.tdb')
 
 
 def test_toggle_share_and_verify_acl_preserved(setup_smb_share, sharesec_user):
@@ -219,7 +219,7 @@ def test_restore_via_synchronize(setup_smb_share):
         assert acl['share_acl'][0]['ae_who_sid'] == sid
 
         # Remove and be very certain share_info.tdb file is removed
-        ssh('rm /var/db/system/samba4/share_info.tdb')
+        ssh('rm /var/lib/truenas-samba/share_info.tdb')
         assert call('smb.sharesec.entries') == []
 
         acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})

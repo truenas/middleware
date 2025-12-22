@@ -150,10 +150,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'mode': 0o755,
             },
             'create_paths': [
-                {'path': '/var/db/system/samba4/state', 'uid': 0, 'gid': 0},
-                {'path': '/var/db/system/samba4/cache', 'uid': 0, 'gid': 0},
-                {'path': '/var/db/system/samba4/private', 'uid': 0, 'gid': 0, 'mode': 0o700},
-                {'path': '/var/db/system/samba4/winbindd_privileged', 'uid': 0, 'gid': 0, 'mode': 0o750},
+                {'path': '/var/db/system/samba4/lock', 'uid': 0, 'gid': 0},
             ],
         },
         {

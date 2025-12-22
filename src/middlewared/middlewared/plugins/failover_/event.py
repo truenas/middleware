@@ -55,7 +55,7 @@ class FailoverEventsService(Service):
 
     # list of critical services that get restarted first
     # before the other services during a failover event
-    CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs', 'nvmet']
+    CRITICAL_SERVICES = ['iscsitarget', 'nvmet']
 
     # list of services that use service.become_active instead of
     # service.restart during a failover on the MASTER node.

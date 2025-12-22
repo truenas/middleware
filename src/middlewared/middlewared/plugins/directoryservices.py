@@ -119,20 +119,6 @@ class DirectoryServices(Service):
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
     @private
-    @job()
-    async def initialize(self, job):
-        # retrieve status to force initialization of status
-        if (await self.middleware.call('directoryservices.status'))['type'] is None:
-            return
-
-        try:
-            await self.middleware.call('idmap.gencache.flush')
-        except Exception:
-            self.logger.warning('Cache flush failed', exc_info=True)
-
-        await self.middleware.call('directoryservices.health.recover')
-
-    @private
     def restart_dependent_services(self):
         # System services that should be started
         for svc in PREREQUISITE_SERVICES:
@@ -148,7 +134,11 @@ class DirectoryServices(Service):
     @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
-        # ensure that samba is properly configured
+        """
+        Set up directory services and NSS for the server. This handles NFS and SMB startup as well
+        on the active storage controller
+        """
+        # ensure that samba is properly configured. This will block until networking is up
         config_job = self.middleware.call_sync('smb.configure')
         config_job.wait_sync(raise_error=True)
 
@@ -156,8 +146,6 @@ class DirectoryServices(Service):
         # shows we're healthy. If we can't recover due to things being irreparably
         # broken then this will raise an exception.
         self.middleware.call_sync('directoryservices.health.recover')
-        if DSHealthObj.dstype is None:
-            return
 
         # nsswitch.conf needs to be updated
         self.middleware.call_sync('etc.generate', 'nss')
@@ -168,11 +156,14 @@ class DirectoryServices(Service):
             job.set_progress(10, 'Refreshing cache')
             # NOTE: we're deliberately not specifying `force` here because we want to avoid
             # unnecessary cache rebuilds during HA failover events.
-            cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
-            cache_refresh.wait_sync()
 
-        job.set_progress(75, 'Restarting dependent services')
-        self.restart_dependent_services()
+            if DSHealthObj.dstype is not None:
+                cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
+                cache_refresh.wait_sync()
+
+            job.set_progress(75, 'Restarting dependent services')
+            self.restart_dependent_services()
+
         job.set_progress(100, 'Setup complete')
 
 

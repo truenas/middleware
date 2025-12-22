@@ -325,12 +325,6 @@ class SMBService(ConfigService):
     @job(lock="smb_configure")
     async def configure(self, config_job):
         """
-        Many samba-related tools will fail if they are unable to initialize
-        a messaging context, which will happen if the samba-related directories
-        do not exist or have incorrect permissions.
-        """
-
-        """
         We may have failed over and changed our netbios name, which would also
         change the system SID. Flush out gencache entries before proceeding with
         local user account setup, otherwise we may end up with the incorrect
@@ -367,58 +361,7 @@ class SMBService(ConfigService):
         # other circumstances are causing our share ACL to get mismatchy.
         await self.middleware.call('smb.sharesec.flush_share_info')
         await self.middleware.call('smb.set_configured')
-        """
-        It is possible that system dataset was migrated or an upgrade
-        wiped our secrets.tdb file. Re-import directory service secrets
-        if they are missing from the current running configuration.
-        """
-        config_job.set_progress(65, 'Initializing directory services')
-        ds_job = await self.middleware.call("directoryservices.initialize")
-        await ds_job.wait()
-
-        config_job.set_progress(70, 'Checking SMB server status.')
-        if await self.middleware.call("service.started_or_enabled", "cifs"):
-            config_job.set_progress(80, 'Restarting SMB service.')
-            svc_job = await self.middleware.call('service.control', 'RESTART', 'cifs', {'ha_propagate': False})
-            await svc_job.wait(raise_error=True)
-
-        # Ensure that winbind is running once we configure SMB service
-        svc_job = await self.middleware.call('service.control', 'RESTART', 'idmap', {'ha_propagate': False})
-        await svc_job.wait(raise_error=True)
-
         config_job.set_progress(100, 'Finished configuring SMB.')
-
-    @private
-    async def configure_wait(self):
-        """
-        This method is possibly called by cifs service and idmap service start
-        depending on whether system dataset setup was successful. Although
-        a partially configured system dataset is a somewhat undefined state,
-        it's best to at least try to get the SMB service working properly.
-
-        Callers use response here to determine whether to make the start / restart
-        operation a no-op.
-        """
-        if await self.middleware.call("smb.is_configured"):
-            return True
-
-        in_progress = await self.middleware.call("core.get_jobs", [
-            ["method", "=", "smb.configure"],
-            ["state", "=", "RUNNING"]
-        ])
-        if in_progress:
-            return False
-
-        if not await self.middleware.call('systemdataset.sysdataset_path'):
-            return False
-
-        self.logger.warning(
-            "SMB service was not properly initialized. "
-            "Attempting to configure SMB service."
-        )
-        conf_job = await self.middleware.call("smb.configure")
-        await conf_job.wait(raise_error=True)
-        return True
 
     @private
     async def validate_smb(self, new, verrors):

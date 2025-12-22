@@ -1,9 +1,11 @@
 import enum
 import json
+import os
 import struct
 import subprocess
 
 from base64 import b64encode, b64decode
+from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.service import Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filter_list import filter_list
@@ -14,7 +16,7 @@ from middlewared.utils.tdb import (
     TDBPathType,
 )
 
-SECRETS_FILE = '/var/db/system/samba4/private/secrets.tdb'
+SECRETS_FILE = os.path.join(SMBPath.PRIVATEDIR.path, 'secrets.tdb')
 SECRETS_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
 

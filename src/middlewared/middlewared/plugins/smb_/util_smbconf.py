@@ -43,8 +43,7 @@ AD_KEYTAB_PARAMS = (
 EXCLUDED_IDMAP_ITEMS = frozenset(['name', 'range_low', 'range_high', 'idmap_backend', 'sssd_compat'])
 
 # Paths used for stateful failover implementation
-SAMBA_STATEDIR = os.path.join(SYSDATASET_PATH, 'samba4', 'state')
-SAMBA_CACHEDIR = os.path.join(SYSDATASET_PATH, 'samba4', 'cache')
+SAMBA_HA_LOCKDIR = os.path.join(SYSDATASET_PATH, 'samba4', 'lock')
 
 
 class TrueNASVfsObjects(enum.StrEnum):
@@ -447,7 +446,7 @@ def generate_smb_conf_dict(
         'fruit:zero_file_id': False,
         'restrict anonymous': 0 if guest_enabled else 2,
         'winbind request timeout': 60 if ds_type is DSType.AD else 2,
-        'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.value[0]}/passdb.tdb',
+        'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.path}/passdb.tdb',
         'workgroup': smb_service_config['workgroup'],
         'netbios name': smb_service_config['netbiosname'],
         'netbios aliases': ' '.join(smb_service_config['netbiosalias']),
@@ -475,6 +474,8 @@ def generate_smb_conf_dict(
         # being enabled behind the scenes when directory leases are enabled, which causes
         # contention with fcntl locks on the database containing open files.
         'smb3 directory leases': 'no',
+        'state directory': SMBPath.STATEDIR.path,
+        'private directory': SMBPath.PRIVATEDIR.path,
     }
 
     if SearchProtocol.SPOTLIGHT in smb_service_config['search_protocols']:
@@ -673,8 +674,7 @@ def generate_smb_conf_dict(
 
     if smb_service_config['stateful_failover']:
         smbconf.update({
-            'state directory': SAMBA_STATEDIR,
-            'cache directory': SAMBA_CACHEDIR
+            'lock directory': SAMBA_HA_LOCKDIR,
         })
 
     # The following parameters must come after processing includes in order to
