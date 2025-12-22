@@ -107,7 +107,14 @@ class ServiceService(CRUDService):
             services = await self.middleware.call('datastore.query', 'services.services', [], default_options)
             return filter_list(services, filters, options)
 
-        return await self.middleware.call('datastore.query', 'services.services', filters, options | default_options)
+        # When extending, we cannot use order_by in SQL since extended fields don't exist in the database yet
+        # Remove pagination options and let filter_list handle them after extending
+        datastore_options = (options | default_options).copy()
+        for opt in ('count', 'get', 'limit', 'offset', 'order_by', 'select'):
+            datastore_options.pop(opt, None)
+
+        services = await self.middleware.call('datastore.query', 'services.services', filters, datastore_options)
+        return filter_list(services, filters, options)
 
     @api_method(
         ServiceUpdateArgs,

@@ -20,7 +20,7 @@ from .service import Service
 from .service_mixin import ServiceChangeMixin
 
 
-PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
+PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'order_by', 'select')
 
 
 def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[BaseModel]:

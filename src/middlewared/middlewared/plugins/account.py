@@ -421,6 +421,7 @@ class UserService(CRUDService):
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
         datastore_options.pop('offset', None)
+        datastore_options.pop('order_by', None)
         datastore_options.pop('select', None)
 
         if filters_include_ds_accounts(filters):
@@ -2018,6 +2019,7 @@ class GroupService(CRUDService):
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
         datastore_options.pop('offset', None)
+        datastore_options.pop('order_by', None)
         datastore_options.pop('select', None)
 
         if filters_include_ds_accounts(filters):
