@@ -1303,7 +1303,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call2(f, *args, **call_kwargs)))
 
         if asyncio.iscoroutinefunction(f):
-            return asyncio.run_coroutine_threadsafe(self.call2(*args, **call_kwargs), self.loop).result()
+            return asyncio.run_coroutine_threadsafe(self.call2(f, *args, **call_kwargs), self.loop).result()
 
         name, serviceobj, methodobj = self.get_method_by_callable(f, args)
         prepared_call = self._call_prepare(name, serviceobj, methodobj, args, app=app, audit_callback=audit_callback,
