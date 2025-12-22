@@ -10,6 +10,7 @@ class ServiceInterface:
     restartable = False  # Implements `restart` method instead of `stop` + `start`
     reloadable = False  # Implements `reload` method
     deprecated = False  # Alert if service is running
+    may_run_on_standby = True  # should be allowed to run on HA standby
 
     def __init__(self, middleware):
         self.middleware = middleware

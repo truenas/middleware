@@ -4,6 +4,7 @@ from .base import SimpleService
 class MDNSService(SimpleService):
     name = "mdns"
     reloadable = True
+    may_run_on_standby = False
 
     etc = ["mdns"]
 

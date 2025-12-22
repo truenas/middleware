@@ -12,6 +12,7 @@ DOCKER_STATUS_CHECK_INTERVAL = 2
 class DockerService(SimpleService):
     name = 'docker'
     etc = ['app_registry', 'docker']
+    may_run_on_standby = False
     systemd_unit = 'docker'
 
     async def before_start(self):
