@@ -6,5 +6,6 @@ class TruesearchService(SimpleService):
 
     etc = ["truesearch"]
     reloadable = True
+    may_run_on_standby = False
 
     systemd_unit = "truesearch"

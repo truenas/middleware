@@ -48,6 +48,7 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
+from middlewared.plugins.failover_.event import BACKUP_STOP_SERVICES
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
@@ -1196,7 +1197,11 @@ async def service_remote(middleware, service, verb, options):
         # to not replicate to the remote controller
         return
 
-    ignore = ('system', 'nfs', 'netdata', 'truecommand', 'truesearch', 'docker', 'libvirtd', 'libvirtd-guests')
+    if service in BACKUP_STOP_SERVICES:
+        # service should not run on standby controller
+        return
+
+    ignore = ('system',)
     if service in ignore:
         # doesn't matter what's going on, no reason to do
         # any type of service action on the remote controller
