@@ -1306,23 +1306,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return asyncio.run_coroutine_threadsafe(self.call2(f, *args, **call_kwargs), self.loop).result()
 
         name, serviceobj, methodobj = self.get_method_by_callable(f, args)
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, args, app=app, audit_callback=audit_callback,
-                                           job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, args, kwargs, app=app,
+                                           audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb,
+                                           in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
 
         if prepared_call.is_coroutine:
             self.logger.trace("Calling %r in main IO loop", name)
-            return self.run_coroutine(methodobj(*prepared_call.args))
+            return self.run_coroutine(methodobj(*prepared_call.args, **prepared_call.kwargs))
 
         if serviceobj._config.process_pool:
             self.logger.trace("Calling %r in process pool", name)
-            return self.run_coroutine(self._call_worker(name, *prepared_call.args))
+            return self.run_coroutine(self._call_worker(name, *prepared_call.args, **prepared_call.kwargs))
 
         if not self._in_executor(prepared_call.executor):
             self.logger.trace("Calling %r in executor %r", name, prepared_call.executor)
-            return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args))
+            return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args,
+                                                           **prepared_call.kwargs))
 
         self.logger.trace("Calling %r in current thread", name)
         return methodobj(*prepared_call.args, **prepared_call.kwargs)
