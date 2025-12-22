@@ -1816,7 +1816,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         ) else False
 
 
-def create_samba_directories():
+def create_samba_directories(middleware):
     """ ensure that required samba state directories exist and have correct permissions """
     for p in SMBPath:
         if p == SMBPath.STUBCONF:
@@ -1826,7 +1826,13 @@ def create_samba_directories():
             st = os.stat(p.path)
         except FileNotFoundError:
             if p.is_dir:
-                os.mkdir(p.path, p.mode)
+                # We are using os.makedirs here because middleware depends to some degree
+                # on a functional winbindd configuration
+                try:
+                    os.makedirs(p.path, p.mode, exist_ok=True)
+                except Exception:
+                    middleware.logger.warning('%s: failed to create path.', p.path, exc_info=True)
+
         else:
             if st.st_mode & 0o777 != p.mode:
                 os.chmod(p.path, p.mode)
@@ -1845,7 +1851,7 @@ async def setup(middleware):
         SystemServiceListenMultipleDelegate(middleware, 'smb', 'bindip'),
     )
     # We need to ensure that required state directories exist in order to startup winbindd
-    await middleware.run_in_thread(create_samba_directories)
+    await middleware.run_in_thread(create_samba_directories, middleware)
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('dataset.post_unlock', hook_post_generic, sync=True)
