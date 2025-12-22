@@ -11,6 +11,7 @@ from middlewared.plugins.directoryservices_.util_cache import check_cache_versio
 from middlewared.service import Service, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
 
 PREREQUISITE_SERVICES = ('auth-rpcgss-module',)
 DEPENDENT_SERVICES = ('smb', 'nfs', 'ssh', 'ftp')
@@ -129,7 +130,9 @@ class DirectoryServices(Service):
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
         ]], ['service', 'in', DEPENDENT_SERVICES]]):
-            self.middleware.call_sync('service.control', 'RESTART', svc['service']).wait_sync(raise_error=True)
+            self.middleware.call_sync(
+                'service.control', 'RESTART', svc['service'], DEF_SVC_OPTS
+            ).wait_sync(raise_error=True)
 
     @private
     @job(lock='ds_init', lock_queue_size=1)
