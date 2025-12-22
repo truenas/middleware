@@ -54,7 +54,7 @@ from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from socket import htonl, ntohl
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import (
     lsa_sidtype
@@ -80,8 +80,8 @@ class GroupmapEntryType(enum.Enum):
 
 
 class GroupmapFile(enum.Enum):
-    DEFAULT = f'{SYSDATASET_PATH}/samba4/group_mapping.tdb'
-    REJECT = f'{SYSDATASET_PATH}/samba4/group_mapping_rejects.tdb'
+    DEFAULT = f'{SMBPath.STATEDIR.path}/group_mapping.tdb'
+    REJECT = f'{SMBPath.STATEDIR.path}/group_mapping_rejects.tdb'
 
 
 @dataclass(frozen=True)

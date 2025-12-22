@@ -740,12 +740,6 @@ class SystemDatasetService(ConfigService):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
-            if self.middleware.call_sync('service.started', 'idmap'):
-                restart.append('idmap')
-            if self.middleware.call_sync('service.started', 'nmbd'):
-                restart.append('nmbd')
-            if self.middleware.call_sync('service.started', 'wsdd'):
-                restart.append('wsdd')
 
             try:
                 for i in restart:

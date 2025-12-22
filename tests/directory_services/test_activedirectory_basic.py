@@ -350,7 +350,7 @@ def test_secrets_restore():
         reset_systemd_svcs('winbind')
         assert check_ad_started() is True
 
-        ssh('rm /var/db/system/samba4/private/secrets.tdb')
+        ssh('rm /var/lib/truenas-samba/private/secrets.tdb')
 
         with pytest.raises(ClientException):
             call('directoryservices.health.check')

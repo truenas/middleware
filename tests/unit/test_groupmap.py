@@ -21,10 +21,10 @@ from middlewared.utils.tdb import close_sysdataset_tdb_handles
 
 @pytest.fixture(scope='module')
 def groupmap_dir():
-    os.makedirs('/var/db/system/samba4', exist_ok=True)
+    os.makedirs('/var/lib/truenas-samba', exist_ok=True)
     try:
         # pre-emptively delete in case we're running on a TrueNAS VM
-        os.unlink('/var/db/system/samba4/group_mapping.tdb')
+        os.unlink('/var/lib/truenas-samba/group_mapping.tdb')
     except FileNotFoundError:
         pass
 

@@ -9,7 +9,7 @@ class IdmapService(SimpleService):
     systemd_unit = "winbind"
 
     async def healthy(self):
-        return await self.middleware.call("smb.configure_wait")
+        return await self.middleware.call("smb.is_configured")
 
     async def start(self):
         if not await self.healthy():
