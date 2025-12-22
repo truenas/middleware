@@ -85,7 +85,7 @@ class PoolService(Service):
         def wipe_label():
             with open(os.path.join('/dev', part_data['disk']), 'r+b') as f:
                 f.seek(wipe_start)
-                f.write(b'0' * wipe_size)
+                f.write(b'\0' * wipe_size)
 
         await self.middleware.run_in_thread(wipe_label)
 

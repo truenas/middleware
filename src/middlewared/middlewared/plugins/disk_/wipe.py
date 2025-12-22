@@ -75,7 +75,7 @@ class DiskService(Service):
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
             if mode in ('QUICK', 'FULL'):
-                to_write = b'0' * CHUNK
+                to_write = b'\0' * CHUNK
             else:
                 to_write = os.urandom(CHUNK)
 
