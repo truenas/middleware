@@ -37,7 +37,7 @@ class WebshareService(ConfigService):
         old = WebshareEntry(**await self.config())
         new = old.updated(data)
 
-        await self.middleware.call('datastore.update', self._config.datastore, new.id, new.dict())
+        await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
         if old.search != new.search:
             await self.middleware.call('truesearch.configure')

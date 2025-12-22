@@ -2,7 +2,7 @@ import asyncio
 import functools
 import inspect
 import re
-from typing import Callable
+import typing
 
 from .handler.accept import accept_params
 from ..base.model import BaseModel
@@ -82,7 +82,7 @@ def api_method(
     *,
     audit: str | None = None,
     audit_callback: bool = False,
-    audit_extended: Callable[..., str] | None = None,
+    audit_extended: typing.Callable[..., str] | None = None,
     rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
@@ -259,7 +259,10 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
         for name in function_arg_names(func)[args_index:]
     ]
     # We only compare annotations since we don't care about parameter names.
-    if [annotation for _, annotation in expected_args] != [annotation for _, annotation in func_args]:
+    expected_annotations = [normalize_annotation(annotation) for _, annotation in expected_args]
+    func_annotations = [normalize_annotation(annotation) for _, annotation in func_args]
+
+    if expected_annotations != func_annotations:
         expected = ", ".join([
             f"{name}: {annotation!r}" if annotation is not None else name
             for name, annotation in expected_args
@@ -271,6 +274,13 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
 
     expected_return_annotation = returns.model_fields["result"].annotation
     return_annotation = func.__annotations__.get("return", type(None))
-    if return_annotation != expected_return_annotation:
+    if normalize_annotation(return_annotation) != normalize_annotation(expected_return_annotation):
         raise ValueError(f"{func.__name__}: must have a `return` annotation of {expected_return_annotation!r}. "
                          f"Got {return_annotation!r}.")
+
+
+def normalize_annotation(annotation):
+    if typing.get_origin(annotation) is typing.Annotated:
+        return typing.get_args(annotation)[0]
+
+    return annotation

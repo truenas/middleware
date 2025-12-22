@@ -133,7 +133,7 @@ class SharingWebshareService(SharingService):
 
     @private
     def compress(self, data: SharingWebshareEntry):
-        data = data.dict()
+        data = data.model_dump()
         data.pop(self.locked_field, None)
         return data
 
