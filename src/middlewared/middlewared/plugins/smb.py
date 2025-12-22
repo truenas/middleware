@@ -289,27 +289,6 @@ class SMBService(ConfigService):
         return smbconf_getparm(parm, section)
 
     @private
-    async def setup_directories(self):
-        def create_dirs(spec, path):
-            try:
-                os.chmod(path, spec.mode)
-                if os.stat(path).st_uid != 0:
-                    self.logger.warning("%s: invalid owner for path. Correcting.", path)
-                    os.chown(path, 0, 0)
-            except FileNotFoundError:
-                if spec.is_dir:
-                    os.mkdir(path, spec.mode)
-
-        await self.middleware.call('etc.generate', 'smb')
-
-        for p in SMBPath:
-            if p == SMBPath.STUBCONF:
-                continue
-
-            path = p.path
-            await self.middleware.run_in_thread(create_dirs, p, path)
-
-    @private
     async def netif_wait(self, timeout=120):
         """
         Wait for for the ix-netif sentinel file
@@ -357,9 +336,6 @@ class SMBService(ConfigService):
         local user account setup, otherwise we may end up with the incorrect
         domain SID for the guest account.
         """
-        config_job.set_progress(0, 'Setting up SMB directories.')
-        await self.setup_directories()
-
         try:
             await self.middleware.call('idmap.gencache.flush')
         except Exception:
@@ -1840,6 +1816,25 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         ) else False
 
 
+def create_samba_directories():
+    """ ensure that required samba state directories exist and have correct permissions """
+    for p in SMBPath:
+        if p == SMBPath.STUBCONF:
+            continue
+
+        try:
+            st = os.stat(p.path)
+        except FileNotFoundError:
+            if p.is_dir:
+                os.mkdir(p.path, p.mode)
+        else:
+            if st.st_mode & 0o777 != p.mode:
+                os.chmod(p.path, p.mode)
+
+            if st.st_uid != 0 or st.st_gid != 0:
+                os.chown(p.path, 0, 0)
+
+
 async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
@@ -1849,6 +1844,8 @@ async def setup(middleware):
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'smb', 'bindip'),
     )
+    # We need to ensure that required state directories exist in order to startup winbindd
+    await middleware.run_in_thread(create_samba_directories)
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('dataset.post_unlock', hook_post_generic, sync=True)
