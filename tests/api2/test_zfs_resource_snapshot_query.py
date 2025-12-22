@@ -103,14 +103,14 @@ def test_zfs_resource_snapshot_query_no_properties():
                 {"paths": [snap], "properties": None},
             )
             assert len(result) == 1
-            assert result[0]["properties"] == []
+            assert result[0]["properties"] is None
 
             result = call(
                 "zfs.resource.snapshot.query",
                 {"paths": [snap], "properties": []},
             )
             assert len(result) == 1
-            assert result[0]["properties"] == []
+            assert result[0]["properties"] is None
 
 
 def test_zfs_resource_snapshot_query_user_properties():

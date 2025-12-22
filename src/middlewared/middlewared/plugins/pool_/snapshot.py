@@ -237,6 +237,17 @@ class PoolSnapshotService(CRUDService):
         if extra.get("holds", False):
             query_args["get_holds"] = True
 
+        retention = extra.get("retention", False)
+        if retention:
+            # MISERABLE design choice here. "retention" is a confusing
+            # term to represent the fact that we actually want to query
+            # all custom user space properties for each snapshot. But
+            # then we pull out a singular user space property and then
+            # parse it in the zettarepl.annotate_snapshots function and
+            # then take the value and put it at a separate top-level key
+            # of the final response. sigh...
+            query_args["get_user_properties"] = True
+
         # Query snapshots using the new efficient endpoint
         # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
         snapshots = []
@@ -260,11 +271,11 @@ class PoolSnapshotService(CRUDService):
         result = filter_list(snapshots, remaining_filters, options)
 
         # Add retention info if requested
-        if extra.get('retention'):
+        if retention:
             if isinstance(result, list):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result, True)
             elif isinstance(result, dict):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result], True)[0]
 
         # Apply select if specified
         if select:
