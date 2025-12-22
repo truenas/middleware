@@ -312,13 +312,22 @@ def order_nulls(_list: list[_Entry], order: str) -> tuple[list[_Entry], list[_En
 
 def order_no_null(_list: list[_Entry], order: str) -> list[_Entry]:
     """Sort entries by a field without special handling for null values."""
+    original_order = order
     if order.startswith(REVERSE_CHAR):
         order = order[1:]
         reverse = True
     else:
         reverse = False
 
-    return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
+    try:
+        return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
+    except TypeError as e:
+        if "not supported between instances of 'NoneType'" in str(e):
+            raise ValueError(
+                f'Cannot sort by {original_order!r} because the field contains null values. '
+                f'Please use "nulls_first:{original_order}" or "nulls_last:{original_order}" to specify null placement.'
+            ) from e
+        raise
 
 
 def do_order(rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
