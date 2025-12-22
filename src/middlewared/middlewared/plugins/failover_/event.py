@@ -149,6 +149,12 @@ class FailoverEventsService(Service):
             ],
             return_exceptions=True
         )
+        for svc, exc in zip(BACKUP_STOP_SERVICES, exceptions):
+            if isinstance(exc, asyncio.TimeoutError):
+                logger.error(
+                    'Failed to stop service "%s" after %d seconds',
+                    svc, data['timeout']
+                )
 
     async def refresh_failover_status(self, jobid, event):
         # this is called in a background task so we need to make sure that
