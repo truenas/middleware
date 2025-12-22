@@ -1049,7 +1049,7 @@ class FailoverEventsService(Service):
 
         logger.info('Stopping active-only services on standby controller')
         try:
-            self.run_call('failover.stop_services_backup', {})
+            self.run_call('failover.events.stop_services_backup', {})
         except Exception:
             logger.warning('Failed to stop active-only services on standby controller', exc_info=True)
 
