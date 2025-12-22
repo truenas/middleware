@@ -121,9 +121,9 @@ def test_snapshot(has_zvol_sibling):
             time.sleep(1)
 
             snaps = call(
-                "zfs.resource.query",
-                {"paths": [ds], "properties": None, "get_snapshots": True}
-            )[0]["snapshots"]
+                "zfs.resource.snapshot.query",
+                {"paths": [ds], "properties": None}
+            )
             assert len(snaps) == 0
         finally:
             if has_zvol_sibling:
