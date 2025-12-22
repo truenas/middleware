@@ -12,6 +12,7 @@ enable chronyd.service
 enable syslog-ng.service
 
 # Disabled services
+disable certmonger.service
 disable smbd.service
 disable proftpd.service
 disable avahi-daemon.service
