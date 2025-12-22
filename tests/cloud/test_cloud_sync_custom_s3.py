@@ -12,7 +12,7 @@ from middlewared.test.integration.utils.mock_rclone import mock_rclone
     (
         {
 
-            "endpoint": "s3.fr-par.scw.cloud",
+            "endpoint": "https://s3.fr-par.scw.cloud",
             "region": "fr-par",
             "skip_region": False,
             "signatures_v2": False,
