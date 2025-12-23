@@ -30,6 +30,8 @@ class IncusService(SimpleService):
             await self._unit_action("Stop", unit=unit)
         finally:
             del unit
+
+        await self._systemd_unit('lxcfs.service', 'stop')
         await self.middleware.run_in_thread(self._stop_dnsmasq)
 
     def _stop_dnsmasq(self):

@@ -35,6 +35,7 @@ disable walinuxagent*
 disable serial-getty@*
 disable docker*
 disable smartmontools.service
+disable lxcfs.service
 
 # We want middlewared to import pools
 disable zfs-mount.service
