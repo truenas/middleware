@@ -1638,6 +1638,33 @@ class UserService(CRUDService):
                         f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
                     )
 
+        # Root user restrictions
+        if old and old['uid'] == 0:  # Root user being updated
+            if 'groups' in data:
+                # Get builtin_administrators group ID
+                builtin_admin_group = await self.middleware.call(
+                    'group.query',
+                    [('group', '=', 'builtin_administrators'), ('local', '=', True)],
+                    {'get': True}
+                )
+                builtin_admin_gid = builtin_admin_group['id']
+
+                new_groups = data['groups']
+
+                # Rule 1: Cannot remove root from builtin_administrators
+                if builtin_admin_gid not in new_groups:
+                    verrors.add(
+                        f'{schema}.groups',
+                        'The root user must remain a member of the builtin_administrators group.'
+                    )
+
+                # Rule 2: Root can only be in builtin_administrators, no other groups
+                if new_groups != [builtin_admin_gid]:
+                    verrors.add(
+                        f'{schema}.groups',
+                        'The root user may only be a member of the builtin_administrators group.'
+                    )
+
         if 'full_name' in data:
             for illegal_char in filter(lambda c: c in data['full_name'], (':', '\n')):
                 verrors.add(f'{schema}.full_name', f'The {illegal_char!r} character is not allowed.')
@@ -2453,6 +2480,25 @@ class GroupService(CRUDService):
                     f'This group is primary for the following users: {", ".join(map(str, notfound))}. '
                     'You can\'t remove them.',
                 )
+
+        # Special handling for builtin_administrators group
+        if pk and 'users' in data:
+            group = await self.middleware.call('group.get_instance', pk)
+            if group['group'] == 'builtin_administrators':
+                # Get root user ID
+                root_user = await self.middleware.call(
+                    'user.query',
+                    [('username', '=', 'root')],
+                    {'get': True}
+                )
+                root_user_id = root_user['id']
+
+                # Check if root is being removed from builtin_administrators
+                if root_user_id not in data['users']:
+                    verrors.add(
+                        f'{schema}.users',
+                        'The root user must remain a member of the builtin_administrators group.'
+                    )
 
         if 'sudo_commands' in data:
             verrors.add_child(
