@@ -16,6 +16,34 @@ DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
 pp = pytest.param
 
 
+@pytest.fixture(scope="module")
+def root_user():
+    orig_groups = []
+    root_id = None  # should be 1
+    try:
+        root_info = call("user.query", [["username", "=", "root"]], {"get": True})
+        root_id = root_info['id']
+        orig_groups = root_info['groups']
+        yield root_info
+    finally:
+        # Restore original group list
+        call('user.update', root_id, {"groups": orig_groups})
+
+
+@pytest.fixture(scope="module")
+def builtin_admin_group():
+    orig_users = []
+    group_id = None  # should be 40
+    try:
+        group_info = call("group.query", [["group", "=", "builtin_administrators"]], {"get": True})
+        group_id = group_info['id']
+        orig_users = group_info['users']
+        yield group_info
+    finally:
+        # restore original user list
+        call('group.update', group_id, {"users": orig_users})
+
+
 @pytest.fixture(scope="function")
 def admin_users():
     builtin_administrators_group_id = call(
@@ -263,3 +291,68 @@ def test_account_last_admin(admin_users, name):
         with pytest.raises(ValidationErrors, match='After locking this user'):
             with temporary_update(last_admin, {"locked": True}):
                 pass
+
+
+def test_root_is_full_admin_and_in_builtin_admins(root_user, builtin_admin_group):
+    """Confirm the root user account is a member of the 'builtin_administrators' group."""
+    assert builtin_admin_group['id'] in root_user['groups']
+    assert "FULL_ADMIN" in root_user["roles"], \
+        f"root user does not have FULL_ADMIN role. Roles: {root_user['roles']}"
+
+
+@pytest.mark.parametrize("via_type", [
+    pp("user", id="user.update"),
+    pp("group", id="group.update")
+])
+def test_cannot_remove_root_from_builtin_admins(root_user, builtin_admin_group, via_type):
+    """Confirm we cannot remove the root user from builtin_administrators
+       or change the assigned role."""
+
+    # Configuration for different update methods
+    config = {
+        "user": {
+            "prepare_payload": lambda: [g for g in root_user["groups"] if g != builtin_admin_group["id"]],
+            "call_update": lambda payload: call("user.update", root_user["id"], {"groups": payload}),
+        },
+        "group": {
+            "prepare_payload": lambda: [u for u in builtin_admin_group["users"] if u != root_user["id"]],
+            "call_update": lambda payload: call("group.update", builtin_admin_group["id"], {"users": payload}),
+        }
+    }
+
+    # Get the configuration for this test type
+    test_config = config[via_type]
+
+    # Prepare the payload that would remove root from builtin_administrators
+    payload = test_config["prepare_payload"]()
+
+    # Try to remove root from builtin_administrators (should fail)
+    with pytest.raises((ValidationErrors, CallError), match="must remain a member"):
+        test_config["call_update"](payload)
+
+    # Verify the root user still has builtin_administrators
+    root_user_after = call("user.query", [["username", "=", "root"]], {"get": True})
+    assert builtin_admin_group["id"] in root_user_after["groups"], \
+        f"root user was incorrectly removed from builtin_administrators via {via_type}.update"
+
+    # And continues to have the FULL_ADMIN role and none other
+    assert len(root_user_after["roles"]) == 1
+    assert "FULL_ADMIN" in root_user_after["roles"], \
+        "root user's FULL_ADMIN role was incorrectly removed"
+
+
+def test_cannot_add_root_to_other_groups(root_user):
+    """Confirm we cannot add the root user to other groups."""
+
+    # Create a test group to try adding root to
+    with group({"name": "test_group_for_root"}) as test_grp:
+        # Try to add the test group to root's groups
+        new_groups = root_user["groups"] + [test_grp["id"]]
+
+        with pytest.raises((ValidationErrors, CallError), match="may only be a member"):
+            call("user.update", root_user["id"], {"groups": new_groups})
+
+        # Verify root only has builtin_administrators
+        root_user_after = call("user.query", [["username", "=", "root"]], {"get": True})
+        assert root_user_after["groups"] == root_user["groups"], \
+            "root user's groups were incorrectly modified"
