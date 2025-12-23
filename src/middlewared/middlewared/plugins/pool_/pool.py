@@ -87,6 +87,7 @@ class PoolService(CRUDService):
             'freeing_str': None,
             'dedup_table_quota': None,
             'dedup_table_size': None,
+            'all_sed': all_sed_pool,
             'autotrim': {
                 'parsed': 'off',
                 'rawvalue': 'off',
