@@ -1640,26 +1640,33 @@ class UserService(CRUDService):
 
         # Root user restrictions
         if old and old['uid'] == 0:  # Root user being updated
-            if 'groups' in data:
-                # Get builtin_administrators group ID
-                builtin_admin_group = await self.middleware.call(
-                    'group.query',
-                    [('group', '=', 'builtin_administrators'), ('local', '=', True)],
-                    {'get': True}
+            # root user is not allowed access via webshare
+            if data.get('webshare'):
+                verrors.add(
+                    f'{schema}.webshare',
+                    'The root user is not allowed access via webshare.'
                 )
-                builtin_admin_gid = builtin_admin_group['id']
+            if 'groups' in data:
+                # Get builtin_administrators group primary key (datastore id)
+                builtin_admin_group = await self.middleware.call(
+                    'datastore.query',
+                    'account.bsdgroups',
+                    [('group', '=', 'builtin_administrators')],
+                    {'get': True, 'prefix': 'bsdgrp_'}
+                )
+                builtin_admin_pk = builtin_admin_group['id']
 
                 new_groups = data['groups']
 
                 # Rule 1: Cannot remove root from builtin_administrators
-                if builtin_admin_gid not in new_groups:
+                if builtin_admin_pk not in new_groups:
                     verrors.add(
                         f'{schema}.groups',
                         'The root user must remain a member of the builtin_administrators group.'
                     )
 
                 # Rule 2: Root can only be in builtin_administrators, no other groups
-                if new_groups != [builtin_admin_gid]:
+                if new_groups != [builtin_admin_pk]:
                     verrors.add(
                         f'{schema}.groups',
                         'The root user may only be a member of the builtin_administrators group.'
@@ -1731,7 +1738,8 @@ class UserService(CRUDService):
             [('group', '=', 'truenas_webshare')],
             {'prefix': 'bsdgrp_', 'get': True},
         )
-        if data['webshare']:
+        # root user is excluded from participating
+        if data['webshare'] and (data['username'] != 'root'):
             if webshare['id'] not in data['groups']:
                 data['groups'].append(webshare['id'])
         else:
@@ -2485,16 +2493,17 @@ class GroupService(CRUDService):
         if pk and 'users' in data:
             group = await self.middleware.call('group.get_instance', pk)
             if group['group'] == 'builtin_administrators':
-                # Get root user ID
+                # Get root user primary key (datastore id)
                 root_user = await self.middleware.call(
-                    'user.query',
+                    'datastore.query',
+                    'account.bsdusers',
                     [('username', '=', 'root')],
-                    {'get': True}
+                    {'get': True, 'prefix': 'bsdusr_'}
                 )
-                root_user_id = root_user['id']
+                root_user_pk = root_user['id']
 
                 # Check if root is being removed from builtin_administrators
-                if root_user_id not in data['users']:
+                if root_user_pk not in data['users']:
                     verrors.add(
                         f'{schema}.users',
                         'The root user must remain a member of the builtin_administrators group.'

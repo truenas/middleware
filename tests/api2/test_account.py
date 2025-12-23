@@ -21,7 +21,7 @@ def root_user():
     orig_groups = []
     root_id = None  # should be 1
     try:
-        root_info = call("user.query", [["username", "=", "root"]], {"get": True})
+        root_info = call("user.query", [["username", "=", "root"], ["local", "=", True]], {"get": True})
         root_id = root_info['id']
         orig_groups = root_info['groups']
         yield root_info
@@ -356,3 +356,8 @@ def test_cannot_add_root_to_other_groups(root_user):
         root_user_after = call("user.query", [["username", "=", "root"]], {"get": True})
         assert root_user_after["groups"] == root_user["groups"], \
             "root user's groups were incorrectly modified"
+
+
+def test_cannot_enable_webshare_for_root_user(root_user):
+    with pytest.raises(ValidationErrors, match='not allowed access via webshare'):
+        call('user.update', root_user['id'], {"webshare": True})
