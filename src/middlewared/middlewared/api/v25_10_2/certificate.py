@@ -106,7 +106,7 @@ class CertificateEntry(BaseModel):
     """Subject Alternative Names (SAN) from the certificate extension. `null` if no SAN extension is present."""
     email: str | None
     """Email address from the certificate subject. `null` if not specified."""
-    DN: str | None
+    DN: LongString | None
     """Distinguished Name (DN) of the certificate subject in RFC 2253 format. `null` if certificate parsing failed."""
     subject_name_hash: int | None
     """Hash of the certificate subject name. `null` if certificate parsing failed."""
