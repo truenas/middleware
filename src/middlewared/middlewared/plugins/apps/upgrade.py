@@ -67,7 +67,8 @@ class AppService(Service):
 
             self.middleware.call_sync('zfs.resource.snapshot.create_impl', {
                 'dataset': dataset,
-                'name': get_upgrade_snap_name(app_info["name"], app_info["version"])
+                'name': get_upgrade_snap_name(app_info["name"], app_info["version"]),
+                'bypass': True,
             })
             logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
 
@@ -142,15 +143,21 @@ class AppService(Service):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
                 try:
                     self.middleware.call_sync(
-                        'zfs.resource.snapshot.destroy_impl',
-                        {'path': snap_name, 'recursive': True}
+                        'zfs.resource.snapshot.destroy_impl', {
+                            'path': snap_name, 
+                            'recursive': True, 
+                            'bypass': True,
+                        }
                     )
                 except InstanceNotFound:
                     pass
 
                 self.middleware.call_sync(
                     'zfs.resource.snapshot.create_impl', {
-                        'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
+                        'dataset': app_volume_ds,
+                        'name': app['version'],
+                        'recursive': True,
+                        'bypass': True,
                     }
                 )
 
