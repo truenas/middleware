@@ -49,12 +49,12 @@ class AppService(Service):
             if not dataset:
                 if host_path.startswith('/mnt/') is False:
                     logger.debug(
-                        'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path,
+                        "Skipping %r host path for %r app's snapshot as it is not under /mnt", host_path,
                         app_info['name']
                     )
                 else:
                     logger.debug(
-                        'Skipping %r host path for %r app\'s snapshot as it is not a dataset', host_path,
+                        "Skipping %r host path for %r app's snapshot as it is not a dataset", host_path,
                         app_info['name']
                     )
 
@@ -144,8 +144,8 @@ class AppService(Service):
                 try:
                     self.middleware.call_sync(
                         'zfs.resource.snapshot.destroy_impl', {
-                            'path': snap_name, 
-                            'recursive': True, 
+                            'path': snap_name,
+                            'recursive': True,
                             'bypass': True,
                         }
                     )
