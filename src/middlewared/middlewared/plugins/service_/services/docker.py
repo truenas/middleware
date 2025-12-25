@@ -48,6 +48,7 @@ class DockerService(SimpleService):
     async def stop(self):
         await super().stop()
         await self._systemd_unit('docker.socket', 'stop')
+        await self._systemd_unit('containerd.service', 'stop')
 
     async def after_start(self):
         await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
