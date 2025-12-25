@@ -93,28 +93,6 @@ class UserService(Service):
             'otp_digits': user_twofactor_config['otp_digits'],
         }
 
-    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult, private=True)
-    def verify_twofactor_token(self, username, token):
-        """
-        Returns boolean true if provided `token` is successfully authenticated for `username`.
-        """
-        twofactor_config = self.middleware.call_sync('auth.twofactor.config')
-        if not twofactor_config['enabled']:
-            raise CallError('Please enable Two Factor Authentication first')
-
-        user = self.middleware.call_sync('user.translate_username', username)
-        if not user['twofactor_auth_configured']:
-            raise CallError('Two Factor Authentication is not configured for this user')
-
-        user_twofactor_config = self.middleware.call_sync(
-            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
-        )
-        totp = pyotp.totp.TOTP(
-            user_twofactor_config['secret'], interval=user_twofactor_config['interval'],
-            digits=user_twofactor_config['otp_digits'],
-        )
-        return totp.verify(token or '', valid_window=twofactor_config['window'])
-
     @private
     async def translate_username(self, username):
         """
