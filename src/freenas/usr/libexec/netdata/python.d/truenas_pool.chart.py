@@ -15,6 +15,7 @@ class Service(SimpleService):
     def get_data(self):
         data = {}
         for pool_guid, info in get_pool_dataset_stats().items():
+            self.add_chart_dimension(pool_guid)
             for i, value in info.items():
                 data[f'{pool_guid}.{i}'] = value
             data[f'{pool_guid}.total'] = info['used'] + info['available']
@@ -30,6 +31,10 @@ class Service(SimpleService):
         ])
 
         for pool_guid in data.keys():
-            self.charts['usage'].add_dimension([f'{pool_guid}.available', 'available', 'absolute'])
-            self.charts['usage'].add_dimension([f'{pool_guid}.used', 'used', 'absolute'])
-            self.charts['usage'].add_dimension([f'{pool_guid}.total', 'total', 'absolute'])
+            self.add_chart_dimension(pool_guid)
+
+    def add_chart_dimension(self, pool_guid):
+        for identifier in ('available', 'used', 'total'):
+            if f'{pool_guid}.{identifier}' in self.charts['usage']:
+                continue
+            self.charts['usage'].add_dimension([f'{pool_guid}.{identifier}', identifier, 'absolute'])
