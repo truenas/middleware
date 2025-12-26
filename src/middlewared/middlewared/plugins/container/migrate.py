@@ -191,7 +191,7 @@ class ContainerService(Service):
                     "pool.dataset.update_impl",
                     UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
                 )
-                self.middleware.call_sync2(self.middleware.services.zfs.resource.mount, dataset["name"])
+                self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
                     manifest = yaml.safe_load(f.read())
@@ -210,11 +210,7 @@ class ContainerService(Service):
                 os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
                 os.rmdir(rootfs_path)
 
-                self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.rename,
-                    dataset["name"],
-                    dst_dataset,
-                )
+                self.call_sync2(self.s.zfs.resource.rename, dataset["name"], dst_dataset)
 
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",

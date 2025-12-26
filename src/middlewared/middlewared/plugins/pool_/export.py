@@ -87,8 +87,8 @@ class PoolService(Service):
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
         if not options['cascade']:
-            if await self.middleware.call('keyvalue.has_key', enable_on_import_key):
-                enable_on_import = await self.middleware.call('keyvalue.get', enable_on_import_key)
+            if await self.call2(self.s.keyvalue.has_key, enable_on_import_key):
+                enable_on_import = await self.call2(self.s.keyvalue.get, enable_on_import_key)
 
         for i, delegate in enumerate(await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop')):
             job.set_progress(
@@ -106,9 +106,9 @@ class PoolService(Service):
                     )
 
         if enable_on_import:
-            await self.middleware.call('keyvalue.set', enable_on_import_key, enable_on_import)
+            await self.call2(self.s.keyvalue.set, enable_on_import_key, enable_on_import)
         else:
-            await self.middleware.call('keyvalue.delete', enable_on_import_key)
+            await self.call2(self.s.keyvalue.delete, enable_on_import_key)
 
         job.set_progress(20, 'Terminating processes that are using this pool')
         try:

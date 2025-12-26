@@ -26,7 +26,7 @@ class MigrationService(Service):
         private = True
 
     async def run(self):
-        if await self.middleware.call("keyvalue.get", "run_migration", False):
+        if await self.call2(self.s.keyvalue.get, "run_migration", False):
             executed_migrations = {m["name"] for m in await self.middleware.call("datastore.query", "system.migration")}
 
             for module in load_migrations(self.middleware):
@@ -46,7 +46,7 @@ class MigrationService(Service):
 
                 await self.middleware.call("datastore.insert", "system.migration", {"name": name}, {"ha_sync": False})
 
-            await self.middleware.call("keyvalue.set", "run_migration", False, {"ha_sync": False})
+            await self.call2(self.s.keyvalue.set, "run_migration", False, {"ha_sync": False})
 
 
 def on_config_upload(middleware, path):

@@ -405,11 +405,7 @@ class VMService(CRUDService):
 
                 disk_name = zvol_path_to_name(zvol['attributes']['path'])
                 try:
-                    self.middleware.call_sync2(
-                        self.middleware.services.zfs.resource.destroy_impl,
-                        disk_name,
-                        recursive=True,
-                    )
+                    self.call_sync2(self.s.zfs.resource.destroy_impl, disk_name, recursive=True)
                 except Exception:
                     if not force_delete:
                         raise

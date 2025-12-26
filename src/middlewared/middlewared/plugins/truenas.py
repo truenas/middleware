@@ -98,7 +98,7 @@ class TrueNASService(Service):
         """
         Returns if system is marked as production.
         """
-        return await self.middleware.call('keyvalue.get', 'truenas:production', False)
+        return await self.call2(self.s.keyvalue.get, 'truenas:production', False)
 
     @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult, roles=['FULL_ADMIN'])
     @job()
@@ -107,7 +107,7 @@ class TrueNASService(Service):
         Sets system production state and optionally sends initial debug.
         """
         was_production = await self.is_production()
-        await self.middleware.call('keyvalue.set', 'truenas:production', production)
+        await self.call2(self.s.keyvalue.set, 'truenas:production', production)
 
         if not was_production and production:
             serial = (await self.middleware.call('system.dmidecode_info'))["system-serial-number"]

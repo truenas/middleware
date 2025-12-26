@@ -33,10 +33,7 @@ class AppSchemaActions(Service):
                     zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
                 )
             )
-            await self.middleware.call2(
-                self.middleware.services.zfs.resource.mount,
-                create_ds,
-            )
+            await self.call2(self.s.zfs.resource.mount, create_ds)
 
     async def apply_acls(self, acls_to_apply):
         bulk_job = await self.middleware.call(
