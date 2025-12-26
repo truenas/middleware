@@ -3,6 +3,7 @@ import contextlib
 import pathlib
 import typing
 import yaml
+from yaml import CSafeLoader
 
 from middlewared.service_exception import CallError
 from middlewared.utils import sw_version
@@ -20,7 +21,7 @@ def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
     for rendered_file in get_rendered_templates_of_app(app_name, version):
         with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
             with open(rendered_file, 'r') as f:
-                if (data := yaml.safe_load(f)) is not None:
+                if (data := yaml.load(f, Loader=CSafeLoader)) is not None:
                     rendered_config.update(data)
 
     return rendered_config
@@ -41,7 +42,7 @@ def write_new_app_config(app_name: str, version: str, values: dict[str, typing.A
 
 def get_current_app_config(app_name: str, version: str) -> dict:
     with open(get_installed_app_config_path(app_name, version), 'r') as f:
-        return yaml.safe_load(f) or {}
+        return yaml.load(f, Loader=CSafeLoader) or {}
 
 
 def render_compose_templates(app_version_path: str, values_file_path: str):

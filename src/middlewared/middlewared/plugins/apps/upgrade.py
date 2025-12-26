@@ -3,6 +3,7 @@ import os
 import subprocess
 import tempfile
 import yaml
+from yaml import CSafeLoader
 
 from packaging.version import Version
 
@@ -316,7 +317,7 @@ class AppService(Service):
 
             if stdout:
                 try:
-                    config = yaml.safe_load(stdout.decode())
+                    config = yaml.load(stdout.decode(), Loader=CSafeLoader)
                 except yaml.YAMLError as e:
                     raise CallError(f'{migration_file_basename!r} migration file returned invalid YAML: {e}')
 

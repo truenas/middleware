@@ -1,4 +1,5 @@
 import yaml
+from yaml import CSafeLoader
 
 from middlewared.service import ValidationErrors
 
@@ -18,7 +19,7 @@ def validate_payload(data: dict, schema: str) -> dict:
 
     if data.get('custom_compose_config_string'):
         try:
-            compose_config = yaml.safe_load(data['custom_compose_config_string'])
+            compose_config = yaml.load(data['custom_compose_config_string'], Loader=CSafeLoader)
             compose_yaml_string = data['custom_compose_config_string']
         except yaml.YAMLError:
             verrors.add(f'{schema}.custom_compose_config_string', 'Invalid YAML provided')
