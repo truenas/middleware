@@ -2,7 +2,7 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    WebshareEntry, WebshareUpdateArgs, WebshareUpdateResult,
+    WebshareEntry, WebshareUpdate, WebshareUpdateArgs, WebshareUpdateResult,
 )
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
@@ -29,19 +29,17 @@ class WebshareService(ConfigService):
         role_prefix = 'SHARING_WEBSHARE'
         entry = WebshareEntry
 
-    @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration')
-    async def do_update(self, data):
+    @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration', check_annotations=True)
+    async def do_update(self, data: WebshareUpdate) -> WebshareEntry:
         """
         Update Webshare Service Configuration.
         """
-        old = await self.config()
+        old = WebshareEntry(**await self.config())
+        new = old.updated(data)
 
-        new = old.copy()
-        new.update(data)
+        await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
-        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new)
-
-        if old['search'] != new['search']:
+        if old.search != new.search:
             await self.middleware.call('truesearch.configure')
 
         await self._service_change(self._config.service, 'reload')

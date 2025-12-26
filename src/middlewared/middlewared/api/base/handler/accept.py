@@ -8,7 +8,14 @@ from middlewared.api.base.model import BaseModel
 from middlewared.service_exception import ValidationErrors
 
 
-def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, expose_secrets=True) -> list:
+def accept_params(
+    model: type[BaseModel],
+    args: list,
+    *,
+    dump_models=True,
+    exclude_unset=False,
+    expose_secrets=True
+) -> list:
     """
     Accepts a list of `args` for a method call and validates it using `model`.
 
@@ -18,19 +25,27 @@ def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, ex
 
     :param model: `BaseModel` that defines method args.
     :param args: a list of method args.
+    :param dump_models: it true, will dump all pydantic models.
     :param exclude_unset: if true, will not append default parameters to the list.
     :param expose_secrets: if false, will replace `Secret` parameters with a placeholder.
     :return: a validated list of method args.
     """
+    if not dump_models and not expose_secrets:
+        raise ValueError("`expose_secrets=False` is not compatible with `dump_models=False`")
+
     args_as_dict = model_dict_from_list(model, args)
 
-    dump = validate_model(model, args_as_dict, exclude_unset=exclude_unset, expose_secrets=expose_secrets)
+    result = validate_model(model, args_as_dict, dump_models=dump_models, exclude_unset=exclude_unset,
+                            expose_secrets=expose_secrets)
 
     fields = list(model.model_fields)
     if exclude_unset:
         fields = fields[:len(args)]
 
-    return [dump[model.model_fields[field].alias or field] for field in fields]
+    if dump_models:
+        return [result[model.model_fields[field].alias or field] for field in fields]
+    else:
+        return [getattr(result, field) for field in fields]
 
 
 def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
@@ -57,7 +72,14 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
     }
 
 
-def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, expose_secrets=True) -> dict:
+def validate_model(
+    model: type[BaseModel],
+    data: dict,
+    *,
+    dump_models=True,
+    exclude_unset=False,
+    expose_secrets=True,
+) -> dict | BaseModel:
     """
     Validates `data` against the `model`, sanitizes values, sets defaults.
 
@@ -65,10 +87,14 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
 
     :param model: `BaseModel` subclass.
     :param data: provided data.
+    :param dump_models: it true, will dump all pydantic models.
     :param exclude_unset: if true, will not add default values.
     :param expose_secrets: if false, will replace `Secret` fields with a placeholder.
     :return: validated data.
     """
+    if not dump_models and not expose_secrets:
+        raise ValueError("`expose_secrets=False` is not compatible with `dump_models=False`")
+
     try:
         instance = model(**data)
     except ValidationError as e:
@@ -96,6 +122,9 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
             verrors.add(field, " or ".join(msg))
 
         raise verrors from None
+
+    if not dump_models:
+        return instance
 
     return instance.model_dump(
         context={"expose_secrets": expose_secrets},

@@ -6,13 +6,12 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     NonEmptyString,
-    single_argument_args,
 )
 
 __all__ = [
-    "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdateResult",
-    "SharingWebshareEntry", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
-    "SharingWebshareUpdateArgs", "SharingWebshareUpdateResult",
+    "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdate", "WebshareUpdateResult",
+    "SharingWebshareEntry", "SharingWebshareCreate", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
+    "SharingWebshareUpdate", "SharingWebshareUpdateArgs", "SharingWebshareUpdateResult",
     "SharingWebshareDeleteArgs", "SharingWebshareDeleteResult",
 ]
 
@@ -27,9 +26,13 @@ class WebshareEntry(BaseModel):
     """Passkey authentication mode."""
 
 
-@single_argument_args("webshare_update")
-class WebshareUpdateArgs(WebshareEntry, metaclass=ForUpdateMetaclass):
+class WebshareUpdate(WebshareEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+
+
+class WebshareUpdateArgs(BaseModel):
+    webshare_update: WebshareUpdate
+    """Updated webshare configuration data."""
 
 
 class WebshareUpdateResult(BaseModel):
@@ -60,13 +63,13 @@ class SharingWebshareEntry(BaseModel):
     """
 
 
-class WebshareShareCreate(SharingWebshareEntry):
+class SharingWebshareCreate(SharingWebshareEntry):
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
 
 class SharingWebshareCreateArgs(BaseModel):
-    data: WebshareShareCreate
+    data: SharingWebshareCreate
     """Webshare share configuration data for the new share."""
 
 
@@ -75,14 +78,14 @@ class SharingWebshareCreateResult(BaseModel):
     """The created Webshare share configuration."""
 
 
-class WebshareShareUpdate(WebshareShareCreate, metaclass=ForUpdateMetaclass):
+class SharingWebshareUpdate(SharingWebshareCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
 class SharingWebshareUpdateArgs(BaseModel):
     id: int
     """ID of the Webshare share to update."""
-    data: WebshareShareUpdate
+    data: SharingWebshareUpdate
     """Updated Webshare share configuration data."""
 
 
