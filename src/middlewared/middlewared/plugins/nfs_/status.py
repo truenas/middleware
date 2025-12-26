@@ -2,6 +2,7 @@ import os
 import tempfile
 import typing
 import yaml
+from yaml import CSafeLoader
 from contextlib import suppress
 
 from middlewared.api import api_method
@@ -96,7 +97,7 @@ class NFSService(Service):
         info = {}
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
-                info = yaml.safe_load(f.read())
+                info = yaml.load(f.read(), Loader=CSafeLoader)
 
                 # NFS-135435: Fixup non-printable chars
                 for item in ['name', 'Implementation domain', 'Implementation name']:
@@ -114,7 +115,7 @@ class NFSService(Service):
         states = []
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/states", "r") as f:
-                states = yaml.safe_load(f.read())
+                states = yaml.load(f.read(), Loader=CSafeLoader)
 
         # states file may be empty, which changes it to None type
         # return empty list in this case

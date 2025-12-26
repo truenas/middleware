@@ -1,5 +1,6 @@
 import os
 import yaml
+from yaml import CSafeLoader
 
 from apps_validation.json_schema_utils import APP_CONFIG_MIGRATIONS_SCHEMA
 from jsonschema import validate, ValidationError
@@ -51,7 +52,7 @@ def get_migration_scripts(app_name: str, current_version: str, target_version: s
 
     try:
         with open(migration_yaml_path, 'r') as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f, Loader=CSafeLoader)
 
         validate(data, APP_CONFIG_MIGRATIONS_SCHEMA)
     except FileNotFoundError:

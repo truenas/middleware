@@ -1,5 +1,6 @@
 import os
 import yaml
+from yaml import CSafeLoader
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -194,7 +195,7 @@ class ContainerService(Service):
                 self.middleware.call_sync2(self.middleware.services.zfs.resource.mount, dataset["name"])
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
-                    manifest = yaml.safe_load(f.read())
+                    manifest = yaml.load(f.read(), Loader=CSafeLoader)
 
                 config = manifest["container"]["config"]
 
