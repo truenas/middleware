@@ -70,8 +70,12 @@ class UPSService(SystemServiceService):
     async def ups_config_extend(self, data):
         data['mode'] = data['mode'].upper()
         data['shutdown'] = data['shutdown'].upper()
-        host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
-        data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
+        if data['mode'] == 'SLAVE':
+            # Slave mode: use dummy-ups repeater to connect to remote master
+            data['driver'] = 'dummy-ups'
+            data['port'] = f"{data['identifier']}@{data['remotehost']}:{data['remoteport']}"
+        # Always use localhost since we run local NUT server (master or dummy-ups repeater)
+        data['complete_identifier'] = f'{data["identifier"]}@localhost:{data["remoteport"]}'
         return data
 
     @api_method(UPSPortChoicesArgs, UPSPortChoicesResult, roles=['SYSTEM_GENERAL_READ'])
