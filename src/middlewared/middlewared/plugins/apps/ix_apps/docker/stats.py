@@ -35,7 +35,7 @@ def list_resources_stats_by_project_internal(project_name: str | None = None) ->
         label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}
         for container in client.containers.list(all=True, filters=label_filter, sparse=True):
             stats = container.stats(stream=False, decode=None, one_shot=True)
-            project = container.labels.get(PROJECT_KEY)
+            project = container.attrs.get('Labels', {}).get(PROJECT_KEY) 
             if not project:
                 continue
 
