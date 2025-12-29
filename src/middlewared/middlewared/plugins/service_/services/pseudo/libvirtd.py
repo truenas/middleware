@@ -13,6 +13,10 @@ class LibvirtdService(SimpleService):
     async def before_stop(self):
         await self.middleware.call("service.stop", "libvirt-guests")
 
+    async def after_stop(self):
+        for service in ('virtlockd.socket', 'virtlogd.socket', 'virtlockd.service', 'virtlogd.service'):
+            await self._systemd_unit(service, 'stop')
+
 
 class LibvirtGuestService(SimpleService):
     name = "libvirt-guests"

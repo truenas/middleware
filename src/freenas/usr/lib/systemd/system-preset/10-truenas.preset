@@ -31,6 +31,7 @@ disable libvirtd.service
 disable winbind.service
 disable nvidia-*
 disable libvirt*
+disable virt*
 disable walinuxagent*
 disable serial-getty@*
 disable docker*
