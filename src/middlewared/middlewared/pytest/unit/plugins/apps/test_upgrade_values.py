@@ -1,6 +1,5 @@
 import textwrap
 import unittest.mock
-import yaml
 
 import pytest
 
