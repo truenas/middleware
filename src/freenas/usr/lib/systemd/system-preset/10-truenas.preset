@@ -28,6 +28,7 @@ disable nut-*
 disable nut.target
 disable wsdd.service
 disable libvirtd.service
+disable virtlogd.service
 disable winbind.service
 disable nvidia-*
 disable libvirt*
