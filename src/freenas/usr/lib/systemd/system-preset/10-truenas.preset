@@ -34,6 +34,7 @@ disable libvirt*
 disable walinuxagent*
 disable serial-getty@*
 disable docker*
+disable containerd.service
 disable smartmontools.service
 disable lxcfs.service
 
