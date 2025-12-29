@@ -6,6 +6,7 @@ from middlewared.service import filterable_api_method, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import filter_list
 from middlewared.utils.security_descriptor import (
+    legacy_share_acl_string_to_sd_bytes,
     share_acl_to_sd_bytes,
     sd_bytes_to_share_acl,
 )
@@ -149,7 +150,8 @@ class ShareSec(Service):
         for share in shares:
             share_name = 'HOMES' if share['home'] else share['name']
             if share['share_acl'] and share['share_acl'].startswith('S-1-'):
-                self.setacl({'share_name': share_name, 'share_acl': share['share_acl']})
+                sd_bytes = legacy_share_acl_string_to_sd_bytes(share['share_acl'])
+                store_share_acl(share_name, sd_bytes)
             elif share['share_acl']:
                 store_share_acl(share_name, share['share_acl'])
 
