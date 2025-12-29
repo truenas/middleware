@@ -26,7 +26,7 @@ def local_user():
 
 @pytest.fixture(scope='module')
 def create_dataset():
-    """ create an nfsv4 dataset under /root """
+    """ create an nfsv4 dataset under /var for basic functional testing """
     with Client() as c:
         mnt = c.call('filesystem.mount_info', [['mountpoint', '=', '/var']], {'get': True})
 
