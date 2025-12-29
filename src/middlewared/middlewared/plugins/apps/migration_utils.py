@@ -1,13 +1,12 @@
 import os
 import yaml
-from yaml import CSafeLoader
 
 from apps_validation.json_schema_utils import APP_CONFIG_MIGRATIONS_SCHEMA
 from jsonschema import validate, ValidationError
 from packaging.version import Version
 
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
-
+from .ix_apps.utils import safe_yaml_load
 
 def version_in_range(version: str, min_version: str = None, max_version: str = None) -> bool:
     parsed_version = Version(version)
@@ -52,7 +51,7 @@ def get_migration_scripts(app_name: str, current_version: str, target_version: s
 
     try:
         with open(migration_yaml_path, 'r') as f:
-            data = yaml.load(f, Loader=CSafeLoader)
+            data = safe_yaml_load(f)
 
         validate(data, APP_CONFIG_MIGRATIONS_SCHEMA)
     except FileNotFoundError:

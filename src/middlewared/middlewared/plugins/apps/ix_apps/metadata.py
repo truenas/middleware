@@ -2,20 +2,19 @@ import os
 import typing
 
 import yaml
-from yaml import CSafeLoader
 
 from middlewared.utils.io import write_if_changed
 from .path import get_collective_config_path, get_collective_metadata_path, get_installed_app_metadata_path
 from .portals import get_portals_and_app_notes
-from .utils import dump_yaml
+from .utils import dump_yaml, safe_yaml_load
 
 
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
-    """ wrapper around yaml.load that ensure dict always returned """
+    """ wrapper around safe_yaml_load that ensure dict always returned """
     try:
         with open(yaml_path, 'r') as f:
-            if (data := yaml.load(f, Loader=CSafeLoader)) is None:
-                # yaml.load may return None if file empty
+            if (data := safe_yaml_load(f)) is None:
+                # safe_yaml_load may return None if file empty
                 return {}
 
             return data

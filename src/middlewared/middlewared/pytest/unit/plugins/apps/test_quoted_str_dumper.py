@@ -1,8 +1,7 @@
 import textwrap
 import yaml
-from yaml import CSafeLoader
 
-from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml
+from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml, safe_yaml_load
 
 
 def test_basic_string_quoting():
@@ -73,7 +72,7 @@ def test_scientific_notation_strings():
     assert '".nan"' in result
 
     # Verify round-trip preserves strings, not converted to numbers
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
     assert loaded['scientific1'] == '8E1'  # Must remain string, not 80.0
     assert isinstance(loaded['scientific1'], str)
@@ -101,7 +100,7 @@ def test_docker_compose_case():
     assert '- "8E1"' in result or '"8E1"' in result
 
     # Verify round-trip preserves the exact strings
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
     assert loaded['services']['test']['command'][1] == '8E1'
     assert isinstance(loaded['services']['test']['command'][1], str)
@@ -158,7 +157,7 @@ def test_strings_with_quotes():
     }
     result = yaml.dump(data, Dumper=QuotedStrDumper)
     # Should handle quotes properly
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_strings_with_whitespace():
@@ -176,7 +175,7 @@ def test_strings_with_whitespace():
     assert '"  indented"' in result
     assert '"trailing  "' in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_multiline_strings_block_style():
@@ -190,7 +189,7 @@ def test_multiline_strings_block_style():
     # Should use block literal style (|-)
     assert '|-' in result
     # Verify round-trip
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
 
 
@@ -210,7 +209,7 @@ def test_strings_with_escape_sequences():
     # Multiline should use block style
     assert '|-' in result
     # Verify round-trip preserves all characters
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
 
 
@@ -229,7 +228,7 @@ def test_path_strings():
     for key in data:
         assert f'"{key}"' in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_url_strings():
@@ -248,7 +247,7 @@ def test_url_strings():
     for value in data.values():
         assert f'"{value}"' in result or value in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_command_strings():
@@ -264,7 +263,7 @@ def test_command_strings():
     }
     result = yaml.dump(data, Dumper=QuotedStrDumper)
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_json_like_strings():
@@ -277,7 +276,7 @@ def test_json_like_strings():
     result = yaml.dump(data, Dumper=QuotedStrDumper)
     # Should be properly quoted
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_non_string_types():
@@ -304,7 +303,7 @@ def test_non_string_types():
     assert '"null_value"' in result
     assert ': null' in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_nested_structures():
@@ -332,7 +331,7 @@ def test_nested_structures():
     assert '"version"' in result
     assert '"1.0.0"' in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data
 
 
 def test_list_of_strings():
@@ -358,7 +357,7 @@ def test_list_of_strings():
     assert '- ""' in result
     assert '- "with spaces"' in result
     # Verify round-trip
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
 
 
@@ -373,7 +372,7 @@ def test_edge_cases():
     }
     result = yaml.dump(data, Dumper=QuotedStrDumper)
     # Verify round-trip
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
 
 
@@ -386,7 +385,7 @@ def test_yaml_anchors_and_aliases():
     }
     result = yaml.dump(data, Dumper=QuotedStrDumper)
     # Verify round-trip preserves structure
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
     # Verify that modifications to one affect the other (alias behavior)
     loaded['primary']['port'] = 9090
@@ -394,7 +393,7 @@ def test_yaml_anchors_and_aliases():
 
 
 def test_compatibility_with_safe_load():
-    """Test that output can be parsed with yaml.load(Loader=CSafeLoader)."""
+    """Test that output can be parsed with safe_yaml_load."""
     test_cases = [
         {'simple': 'string'},
         {'number': 42},
@@ -408,7 +407,7 @@ def test_compatibility_with_safe_load():
 
     for data in test_cases:
         dumped = yaml.dump(data, Dumper=QuotedStrDumper)
-        loaded = yaml.load(dumped, Loader=CSafeLoader)
+        loaded = safe_yaml_load(dumped)
         assert loaded == data, f"Failed for: {data}"
 
 
@@ -451,7 +450,7 @@ def test_dump_yaml_helper():
     assert '"string": "value"' in result_with_flow
 
     # Verify round-trip
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
 
     # Test that it uses QuotedStrDumper by default
@@ -486,7 +485,7 @@ def test_literal_backslash_n_vs_actual_newline():
     assert result.strip() == expected_yaml
 
     # Verify round-trip preserves exact strings
-    loaded = yaml.load(result, Loader=CSafeLoader)
+    loaded = safe_yaml_load(result)
     assert loaded == data
     assert loaded['actual_newline'] == 'line1\nline2'  # Actual newline preserved
     assert loaded['literal_backslash_n'] == r'line1\nline2'  # Literal \n preserved
@@ -507,4 +506,4 @@ def test_empty_collections():
     assert '[]' in result
     assert '""' in result
     # Verify round-trip
-    assert yaml.load(result, Loader=CSafeLoader) == data
+    assert safe_yaml_load(result) == data

@@ -5,7 +5,6 @@ import os
 import shutil
 
 import yaml
-from yaml import CSafeLoader
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -131,7 +130,7 @@ class DockerService(Service):
 
             try:
                 with open(backup_apps_state_file_path(backup_name), 'r') as f:
-                    apps = yaml.load(f.read(), Loader=CSafeLoader)
+                    apps = yaml.safe_load(f.read())
             except (FileNotFoundError, yaml.YAMLError):
                 continue
 
