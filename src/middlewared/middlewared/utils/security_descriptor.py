@@ -83,3 +83,16 @@ def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict]:
         })
 
     return share_acl
+
+
+def legacy_share_acl_string_to_sd_bytes(aclstr: str) -> bytes:
+    """ Convert space-delimited ACL string into security descriptor bytes """
+    share_acl = []
+    for ace in aclstr.split():
+        # sample ace: "S-1-1-0:ALLOWED/0x0/FULL"
+        ae_who, ae_data = ace.split(':')
+        ae_type, empty, ae_perm = ae_data.split('/')
+
+        share_acl.append({'ae_who_sid': ae_who, 'ae_perm': ae_perm, 'ae_type': ae_type})
+
+    return share_acl_to_sd_bytes(share_acl)
