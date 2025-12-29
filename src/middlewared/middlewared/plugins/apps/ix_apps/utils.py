@@ -1,5 +1,5 @@
 import enum
-from typing import Any
+from typing import Any, TextIO
 
 import yaml
 
@@ -38,7 +38,7 @@ def _repr_str(dumper, data: str):
 QuotedStrDumper.add_representer(str, _repr_str)
 
 
-def safe_yaml_load(stream) -> Any:
+def safe_yaml_load(stream: str | TextIO) -> Any:
     """
     Helper function to safely load YAML data using CSafeLoader.
 
