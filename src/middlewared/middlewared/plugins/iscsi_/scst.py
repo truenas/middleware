@@ -19,13 +19,20 @@ class iSCSITargetService(Service):
         namespace = 'iscsi.scst'
         private = True
 
-    def path_write(self, path, text):
+    def path_write(self, path, text, allow_absent=False):
         p = pathlib.Path(path)
         realpath = str(p.resolve())
-        if realpath.startswith(SCST_BASE) and p.exists():
-            p.write_text(text)
+        if allow_absent:
+            try:
+                if realpath.startswith(SCST_BASE) and p.exists():
+                    p.write_text(text)
+            except FileNotFoundError:
+                pass
         else:
-            raise ValueError(f'Unexpected path "{realpath}"')
+            if realpath.startswith(SCST_BASE) and p.exists():
+                p.write_text(text)
+            else:
+                raise ValueError(f'Unexpected path "{realpath}"')
 
     async def set_all_cluster_mode(self, value):
         text = f'{int(value)}\n'
@@ -75,10 +82,11 @@ class iSCSITargetService(Service):
                                    f'{int(value)}\n')
 
     async def set_devices_cluster_mode(self, devices, value):
+        allow_absent = value == 0
         text = f'{int(value)}\n'
         paths = [f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode' for device in devices]
         if paths:
-            await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in paths])
+            await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text, allow_absent) for path in paths])
 
     def disable(self):
         pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('0\n')
