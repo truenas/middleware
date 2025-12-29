@@ -1,8 +1,9 @@
 import textwrap
 import unittest.mock
-import yaml
 
 import pytest
+
+from middlewared.plugins.apps.ix_apps.utils import safe_yaml_load
 
 from middlewared.plugins.apps.upgrade import AppService
 from middlewared.pytest.unit.middleware import Middleware
@@ -52,7 +53,7 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
     mock_temp_file_instance = unittest.mock.MagicMock()
     mock_temp_file_instance.name = '/mocked/tempfile/path'
     mock_tempfile.return_value.__enter__.return_value = mock_temp_file_instance
-    mock_current_config.return_value = yaml.safe_load(APP_CONFIG)
+    mock_current_config.return_value = safe_yaml_load(APP_CONFIG)
 
     mock_process = unittest.mock.MagicMock()
     mock_process.communicate.return_value = (APP_CONFIG.encode(), b'')
@@ -71,7 +72,7 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
     }
 
     result = app_upgrade.upgrade_values(app, upgrade_version)
-    expected_dict = yaml.safe_load(APP_CONFIG)
+    expected_dict = safe_yaml_load(APP_CONFIG)
     assert result is not None
     assert mock_popen.call_count == len(file_paths)
     if file_paths:

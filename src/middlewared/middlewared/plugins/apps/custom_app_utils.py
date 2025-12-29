@@ -3,6 +3,7 @@ import yaml
 from middlewared.service import ValidationErrors
 
 from .compose_utils import validate_compose_config
+from .ix_apps.utils import safe_yaml_load
 
 
 def validate_payload(data: dict, schema: str) -> dict:
@@ -18,7 +19,7 @@ def validate_payload(data: dict, schema: str) -> dict:
 
     if data.get('custom_compose_config_string'):
         try:
-            compose_config = yaml.safe_load(data['custom_compose_config_string'])
+            compose_config = safe_yaml_load(data['custom_compose_config_string'])
             compose_yaml_string = data['custom_compose_config_string']
         except yaml.YAMLError:
             verrors.add(f'{schema}.custom_compose_config_string', 'Invalid YAML provided')
