@@ -211,15 +211,15 @@ class PoolService(Service):
         # re-enable/restart any services dependent on this pool
         pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
         key = f'pool:{pool["name"]}:enable_on_import'
-        if await self.middleware.call('keyvalue.has_key', key):
-            for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
+        if await self.call2(self.s.keyvalue.has_key, key):
+            for name, ids in (await self.call2(self.s.keyvalue.get, key)).items():
                 for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
                         attachments = [attachment for attachment in attachments if attachment['id'] in ids]
                         if attachments:
                             await delegate.toggle(attachments, True)
-            await self.middleware.call('keyvalue.delete', key)
+            await self.call2(self.s.keyvalue.delete, key)
 
         await self._post_import_actions(pool, 'ADDED')
 
@@ -513,12 +513,7 @@ class PoolService(Service):
             if not umount_root_short_circuit:
                 with contextlib.suppress(CallError):
                     self.logger.debug('Forcefully umounting %r', vol_name)
-                    self.middleware.call_sync2(
-                        self.middleware.services.zfs.resource.unmount,
-                        vol_name,
-                        recursive=True,
-                        force=True,
-                    )
+                    self.call_sync2(self.s.zfs.resource.unmount, vol_name, recursive=True, force=True)
                     self.logger.debug('Successfully umounted %r', vol_name)
 
             pool_mount = f'/mnt/{vol_name}'
@@ -629,8 +624,8 @@ class PoolService(Service):
         # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
         # unlocked, so if there are any children it has which were unencrypted - we force umount them
         try:
-            await self.middleware.call2(
-                self.middleware.services.zfs.resource.unmount,
+            await self.call2(
+                self.s.zfs.resource.unmount,
                 pool_name,
                 recursive=True,
                 force=True,

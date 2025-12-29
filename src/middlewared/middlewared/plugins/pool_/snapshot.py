@@ -46,9 +46,7 @@ class PoolSnapshotService(CRUDService):
                 'properties': data['dataset_properties'],
             }
         )
-        self.middleware.call_sync2(
-            self.middleware.services.zfs.resource.mount, data['dataset_dst']
-        )
+        self.call_sync2(self.s.zfs.resource.mount, data['dataset_dst'])
         return True
 
     @api_method(
@@ -422,9 +420,4 @@ class PoolSnapshotService(CRUDService):
                 'pool.snapshot.rename.new_name',
                 'Old and new snapshot must be part of the same ZFS dataset'
             )
-        await self.middleware.call2(
-            self.middleware.services.zfs.resource.rename,
-            id_,
-            options['new_name'],
-            options['recursive'],
-        )
+        await self.call2(self.s.zfs.resource.rename, id_, options['new_name'], options['recursive'])

@@ -44,11 +44,7 @@ class ZFSDatasetService(Service):
             raise CallError(f'Failed to load key for {id_}: {e}')
         else:
             if mount_ds:
-                self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.mount,
-                    id_,
-                    recursive=recursive,
-                )
+                self.call_sync2(self.s.zfs.resource.mount, id_, recursive=recursive)
 
     def check_key(self, id_: str, options: dict | None = None):
         """

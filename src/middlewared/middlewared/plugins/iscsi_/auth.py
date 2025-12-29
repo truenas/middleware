@@ -241,9 +241,9 @@ class iSCSITargetAuthCredentialService(CRUDService):
         """
         for alert in UPGRADE_ALERTS:
             try:
-                args = await self.middleware.call("keyvalue.get", alert)
+                args = await self.call2(self.s.keyvalue.get, alert)
                 await self.middleware.call("alert.oneshot_create", alert, args)
-                await self.middleware.call("keyvalue.delete", alert)
+                await self.call2(self.s.keyvalue.delete, alert)
             except KeyError:
                 pass
 

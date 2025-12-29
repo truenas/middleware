@@ -2533,5 +2533,5 @@ async def setup(middleware):
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 
-    if await middleware.call('keyvalue.get', 'run_migration', False):
+    if await middleware.call2(middleware.services.keyvalue.get, 'run_migration', False):
         await middleware.call('user.sync_builtin')

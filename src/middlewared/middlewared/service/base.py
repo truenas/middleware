@@ -63,7 +63,12 @@ def validate_api_method_schema_class_names(klass):
 
     errors = []
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
-        if name.startswith('_') or getattr(method, '_private', False) or klass._config.private:
+        if (
+            name.startswith('_') or
+            name in {'call2', 'call_sync2'} or
+            getattr(method, '_private', False) or
+            klass._config.private
+        ):
             continue
 
         methods_will_be_wrapped_later = {

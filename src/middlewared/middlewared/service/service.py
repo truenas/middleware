@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING
 
 from middlewared.logger import Logger
+from middlewared.utils.service.call_mixin import CallMixin
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 from .base import ServiceBase
 
 
-class Service(metaclass=ServiceBase):
+class Service(CallMixin, metaclass=ServiceBase):
     """
     Generic service abstract class
 

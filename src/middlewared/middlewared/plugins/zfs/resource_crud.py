@@ -473,11 +473,7 @@ class ZFSResourceService(Service):
         path = data["path"]
         recursive = data.get("recursive", False)
         try:
-            failed, errnum = self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.destroy_impl,
-                path,
-                recursive,
-            )
+            failed, errnum = self.call_sync2(self.s.zfs.resource.destroy_impl, path, recursive)
         except ZFSPathHasClonesException as e:
             raise ValidationError(
                 f"{schema}.defer",

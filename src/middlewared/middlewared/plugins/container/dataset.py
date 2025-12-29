@@ -46,7 +46,7 @@ class ContainerService(Service):
             )
 
         if not os.path.exists(main_dataset_mountpoint):
-            await self.middleware.call2(self.middleware.services.zfs.resource.mount, main_dataset)
+            await self.call2(self.s.zfs.resource.mount, main_dataset)
 
         for dataset in datasets:
             if dataset not in existing_datasets:
@@ -54,4 +54,4 @@ class ContainerService(Service):
                     'pool.dataset.create_impl',
                     CreateImplArgs(name=dataset, ztype='FILESYSTEM')
                 )
-            await self.middleware.call2(self.middleware.services.zfs.resource.mount, dataset)
+            await self.call2(self.s.zfs.resource.mount, dataset)

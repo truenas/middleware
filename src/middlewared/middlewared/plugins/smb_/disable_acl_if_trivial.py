@@ -8,7 +8,7 @@ class SMBService(Service):
 
     @private
     async def disable_acl_if_trivial(self):
-        share_ids = await self.middleware.call("keyvalue.get", "smb_disable_acl_if_trivial", [])
+        share_ids = await self.call2(self.s.keyvalue.get, "smb_disable_acl_if_trivial", [])
         if not share_ids:
             return
 
@@ -36,6 +36,6 @@ class SMBService(Service):
             share_ids.discard(share["id"])
 
         if share_ids:
-            await self.middleware.call("keyvalue.set", "smb_disable_acl_if_trivial", list(share_ids))
+            await self.call2(self.s.keyvalue.set, "smb_disable_acl_if_trivial", list(share_ids))
         else:
-            await self.middleware.call("keyvalue.delete", "smb_disable_acl_if_trivial")
+            await self.call2(self.s.keyvalue.delete, "smb_disable_acl_if_trivial")
