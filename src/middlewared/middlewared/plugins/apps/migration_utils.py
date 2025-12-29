@@ -6,6 +6,7 @@ from jsonschema import validate, ValidationError
 from packaging.version import Version
 
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
+from .ix_apps.utils import safe_yaml_load
 
 
 def version_in_range(version: str, min_version: str = None, max_version: str = None) -> bool:
@@ -51,7 +52,7 @@ def get_migration_scripts(app_name: str, current_version: str, target_version: s
 
     try:
         with open(migration_yaml_path, 'r') as f:
-            data = yaml.safe_load(f)
+            data = safe_yaml_load(f)
 
         validate(data, APP_CONFIG_MIGRATIONS_SCHEMA)
     except FileNotFoundError:

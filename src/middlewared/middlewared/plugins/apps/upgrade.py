@@ -22,6 +22,7 @@ from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
+from .ix_apps.utils import safe_yaml_load
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -316,7 +317,7 @@ class AppService(Service):
 
             if stdout:
                 try:
-                    config = yaml.safe_load(stdout.decode())
+                    config = safe_yaml_load(stdout.decode())
                 except yaml.YAMLError as e:
                     raise CallError(f'{migration_file_basename!r} migration file returned invalid YAML: {e}')
 
