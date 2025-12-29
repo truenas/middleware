@@ -8,6 +8,7 @@ from packaging.version import Version
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
 from .ix_apps.utils import safe_yaml_load
 
+
 def version_in_range(version: str, min_version: str = None, max_version: str = None) -> bool:
     parsed_version = Version(version)
     if min_version and max_version and (min_version == max_version):

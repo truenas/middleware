@@ -44,7 +44,7 @@ def safe_yaml_load(stream) -> Any:
 
     CSafeLoader is functionally identical to SafeLoader but uses a C implementation
     which is significantly faster and releases the GIL during parsing. This is
-    particularly important in multi-threaded environments where python-native YAML 
+    particularly important in multi-threaded environments where python-native YAML
     parsing can cause GIL contention and starve the asyncio event loop.
 
     Args:
