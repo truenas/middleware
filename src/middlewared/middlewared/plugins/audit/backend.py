@@ -22,7 +22,8 @@ from middlewared.api.current import GenericQueryResult, QueryFilters, QueryOptio
 from middlewared.service import job, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 
-from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES, AUDIT_CHUNK_SZ
+from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_CHUNK_SZ
+from middlewared.plugins.audit.table import AUDIT_TABLES
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
 from middlewared.utils.jsonpath import json_path_parse, JSON_PATH_PREFIX
