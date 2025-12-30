@@ -1573,7 +1573,7 @@ class SharingSMBService(SharingService):
                 'ae_who_sid': entry.get('ae_who_sid')
             }
 
-            if not set(entry.keys()) & set(['ae_who_str', 'ae_who_id']):
+            if not set(entry.keys()) & set(['ae_who_sid', 'ae_who_id']):
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.sid',
                     'Either a SID or Unix ID must be specified for ACL entry.'
