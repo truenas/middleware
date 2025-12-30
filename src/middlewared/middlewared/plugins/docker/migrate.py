@@ -67,6 +67,7 @@ class DockerService(Service):
                 'dataset': applications_ds_name(old_pool),
                 'name': snap_name,
                 'recursive': True,
+                'bypass':  True
             }
         )
 
@@ -94,13 +95,13 @@ class DockerService(Service):
         finally:
             await self.middleware.call(
                 'zfs.resource.snapshot.destroy_impl',
-                {'path': snap_details['name'], 'recursive': True}
+                {'path': snap_details['name'], 'recursive': True, 'bypass': True}
             )
             target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
             try:
                 await self.middleware.call(
                     'zfs.resource.snapshot.destroy_impl',
-                    {'path': target_snap_name, 'recursive': True}
+                    {'path': target_snap_name, 'recursive': True, 'bypass': True}
                 )
             except InstanceNotFound:
                 pass
