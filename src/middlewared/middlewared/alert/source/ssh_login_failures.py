@@ -1,4 +1,5 @@
-import time
+from datetime import timedelta
+from time import time
 
 from middlewared.alert.base import (
     AlertClass,
@@ -7,6 +8,7 @@ from middlewared.alert.base import (
     Alert,
     AlertSource,
 )
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class SSHLoginFailuresAlertClass(AlertClass):
@@ -17,6 +19,8 @@ class SSHLoginFailuresAlertClass(AlertClass):
 
 
 class SSHLoginFailuresAlertSource(AlertSource):
+    schedule = IntervalSchedule(timedelta(hours=24))
+
     async def check(self):
         cnt = await self.middleware.call(
             "audit.query",
@@ -24,7 +28,7 @@ class SSHLoginFailuresAlertSource(AlertSource):
                 "services": ["SYSTEM"],
                 "query-filters": [
                     # current time minus 24h in seconds
-                    ["message_timestamp", ">=", int(time.time() - 86_400)],
+                    ["message_timestamp", ">=", int(time() - 86_400)],
                     ["success", "=", False],
                     ["event", "=", "CREDENTIAL"],
                     ["event_data.auth_action", "=", "USER_AUTH"],
