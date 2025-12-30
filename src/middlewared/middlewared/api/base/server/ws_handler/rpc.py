@@ -54,7 +54,7 @@ class RpcWebSocketApp(App):
         try:
             data_ = json.dumps(data)
         except Exception as e:
-            self.middleware.logger.error(f"Failed to JSON serialize server message: {e}", exc_info=True)
+            self.middleware.logger.error(f"{data}: Failed to JSON serialize server message: {e}", exc_info=True)
             self.send_truenas_error(
                 data.get("id"),
                 JSONRPCError.INTERNAL_ERROR.value,
