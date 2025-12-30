@@ -58,9 +58,7 @@ def _parse_networks(stats: dict[str, Any]) -> dict[str, NetworkStats]:
 
 
 def get_container_stats(container: Any) -> tuple[str, ResourceStats] | None:
-    """
-    Extract resource usage stats for a single Docker container.
-    """
+    """Extract resource usage stats for a single Docker container."""
     try:
         project = container.attrs.get('Labels', {}).get(PROJECT_KEY)
         if not project:
@@ -78,6 +76,21 @@ def get_container_stats(container: Any) -> tuple[str, ResourceStats] | None:
 
 
 def list_resources_stats_by_project(project_name: str | None = None) -> dict[str, ResourceStats]:
+    """
+    Aggregate resource statistics for Docker containers grouped by project.
+
+    This function retrieves and aggregates CPU, memory, network I/O,
+    and block I/O statistics for all containers associated with projects. If a
+    project_name is specified, it filters the results to only that project.
+
+    Args:
+        project_name (str, optional): The name of the project to filter by. If None,
+            statistics for all projects are returned.
+
+    Returns:
+        dict[str, ResourceStats]: A dictionary where keys are project names and
+            values are aggregated ResourceStats for all containers in that project.
+    """
     projects = get_default_stats()
     label_filter = {
         'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY
