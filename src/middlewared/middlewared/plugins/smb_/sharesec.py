@@ -17,9 +17,9 @@ from middlewared.utils.tdb import (
     TDBPathType,
 )
 from struct import pack
-from .constants import SAMBA_BOOTENV_PATH
+from .constants import SAMBA_BOOTENV_DIR
 
-LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_PATH, 'share_info.tdb')
+LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')
 SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 SHARE_INFO_VERSION_KEY = 'INFO/version'
 SHARE_INFO_VERSION_DATA = b64encode(pack('<I', 3))
