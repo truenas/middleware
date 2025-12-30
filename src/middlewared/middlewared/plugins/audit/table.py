@@ -15,6 +15,7 @@ from middlewared.sqlalchemy import (
 from .utils import AUDITED_SERVICES
 
 TABLE_PREFIX = "audit_"
+AUDIT_BASE = declarative_base()
 
 __all__ = ("AUDIT_TABLES",)
 
@@ -38,7 +39,7 @@ def generate_audit_table(svc, vers):
     """
     return Table(
         audit_table_name(svc, vers),
-        declarative_base().metadata,
+        AUDIT_BASE.metadata,
         Column("audit_id", String(36)),
         Column("message_timestamp", Integer()),
         Column("timestamp", DateTime()),
