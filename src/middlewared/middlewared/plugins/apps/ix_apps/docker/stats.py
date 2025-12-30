@@ -86,7 +86,7 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict[str
         containers = list(client.containers.list(all=True, filters=label_filter, sparse=True))
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [
-                executor.submit(get_container_stats, container) 
+                executor.submit(get_container_stats, container)
                 for container in containers
             ]
             for future in concurrent.futures.as_completed(futures):
