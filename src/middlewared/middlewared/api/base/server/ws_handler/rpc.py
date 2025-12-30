@@ -411,7 +411,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                                                exc_info=True)
         else:
             if isinstance(result, ValidationErrors):
-                self.logger.debug("XXX: method: %s params: %s returned ValidationErrors", method, params)
+                self.middleware.logger.debug("XXX: method: %s params: %s returned ValidationErrors", method, params)
                 app.send_truenas_validation_error(id_, sys.exc_info(), list(result))
                 return
 
