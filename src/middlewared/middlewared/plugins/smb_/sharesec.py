@@ -1,7 +1,6 @@
 import os
 
 from base64 import b64encode, b64decode
-from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.service import filterable_api_method, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filter_list import filter_list
@@ -17,8 +16,9 @@ from middlewared.utils.tdb import (
     TDBPathType,
 )
 from struct import pack
+from .constants import SAMBA_BOOTENV_DIR
 
-LOCAL_SHARE_INFO_FILE = os.path.join(SYSDATASET_PATH, 'samba4', 'share_info.tdb')
+LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')
 SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 SHARE_INFO_VERSION_KEY = 'INFO/version'
 SHARE_INFO_VERSION_DATA = b64encode(pack('<I', 3))
