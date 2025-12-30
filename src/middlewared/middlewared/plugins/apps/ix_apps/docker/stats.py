@@ -47,11 +47,6 @@ def get_container_stats(container):
 
 
 def list_resources_stats_by_project(project_name: str | None = None) -> dict:
-    # Retry logic removed as get_container_stats suppresses exceptions.
-    return list_resources_stats_by_project_internal(project_name)
-
-
-def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict:
     projects = get_default_stats()
     with get_docker_client() as client:
         label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}
