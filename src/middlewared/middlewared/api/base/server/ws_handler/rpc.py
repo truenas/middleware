@@ -410,6 +410,11 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 self.middleware.logger.warning(f"Exception while calling {method.name}(*{method.dump_args(params)!r})",
                                                exc_info=True)
         else:
+            if isinstance(result, ValidationErrors):
+                self.logger.debug("XXX: method: %s params: %s returned ValidationErrors", method, params)
+                app.send_truenas_validation_error(id_, sys.exc_info(), list(result))
+                return
+
             if id_ != undefined:
                 app.send({
                     "jsonrpc": "2.0",
