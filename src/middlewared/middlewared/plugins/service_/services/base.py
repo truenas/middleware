@@ -37,6 +37,19 @@ _JOB_REMOVED_FILTER_RULE = MatchRule(
     path="/org/freedesktop/systemd1",
 )
 
+_SYSTEMD_MANAGER = DBusAddress(
+    "/org/freedesktop/systemd1",
+    bus_name="org.freedesktop.systemd1",
+    interface="org.freedesktop.systemd1.Manager",
+)
+
+
+async def _load_unit_path(router, service_name: str) -> str:
+    """Load a systemd unit and return its D-Bus object path."""
+    msg = new_method_call(_SYSTEMD_MANAGER, "LoadUnit", "s", (service_name,))
+    reply = await router.send_and_get_reply(msg)
+    return reply.body[0]
+
 
 @contextlib.asynccontextmanager
 async def open_unit(service_name: str | bytes):
@@ -53,15 +66,7 @@ async def open_unit(service_name: str | bytes):
         service_name = service_name.decode()
 
     async with open_dbus_router(bus="SYSTEM") as router:
-        manager = DBusAddress(
-            "/org/freedesktop/systemd1",
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.systemd1.Manager",
-        )
-
-        msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-        reply = await router.send_and_get_reply(msg)
-        unit_path = reply.body[0]
+        unit_path = await _load_unit_path(router, service_name)
 
         props = DBusAddress(
             unit_path,
@@ -227,15 +232,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
 
             with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
-                manager = DBusAddress(
-                    "/org/freedesktop/systemd1",
-                    bus_name="org.freedesktop.systemd1",
-                    interface="org.freedesktop.systemd1.Manager",
-                )
-
-                msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-                reply = await router.send_and_get_reply(msg)
-                unit_path = reply.body[0]
+                unit_path = await _load_unit_path(router, service_name)
 
                 unit = DBusAddress(
                     unit_path,
