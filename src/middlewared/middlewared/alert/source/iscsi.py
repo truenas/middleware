@@ -19,7 +19,7 @@ class ISCSIPortalIPAlertSource(AlertSource):
         try:
             started = await self.middleware.call('service.started', 'iscsitarget')
         except Exception:
-            # during upgrade this crashed in `pystemd.dbusexc.DBusTimeoutError: [err -110]: b'Connection timed out'`
+            # during upgrade this crashed with a timeout error
             # so don't pollute the webUI with tracebacks
             return
         else:
