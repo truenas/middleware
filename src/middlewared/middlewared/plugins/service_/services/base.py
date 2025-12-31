@@ -86,7 +86,13 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         return f"{self.systemd_unit}.service".encode()
 
     async def _unit_action(self, action, wait=True, unit=None):
-        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout, unit=unit)
+        return await self.middleware.run_in_thread(
+            self._unit_action_sync,
+            action,
+            wait,
+            self.systemd_unit_timeout,
+            unit=unit
+        )
 
     def _unit_action_sync(self, action, wait, timeout, unit=None):
         unit_passed_to_us = True
@@ -152,36 +158,36 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         unit_name = self._get_systemd_unit_name()
 
         try:
-            j = journal.Reader()
-            j.seek_monotonic(unit.Unit.InactiveExitTimestampMonotonic / 1e6)
+            with journal.Reader() as j:
+                j.seek_monotonic(unit.Unit.InactiveExitTimestampMonotonic / 1e6)
 
-            # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
-            # `add_matches_for_unit` function
+                # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
+                # `add_matches_for_unit` function
 
-            # Look for messages from the service itself
-            j.add_match(_SYSTEMD_UNIT=unit_name)
+                # Look for messages from the service itself
+                j.add_match(_SYSTEMD_UNIT=unit_name)
 
-            # Look for coredumps of the service
-            j.add_disjunction()
-            j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
-            j.add_match(_UID=0)
-            j.add_match(COREDUMP_UNIT=unit_name)
+                # Look for coredumps of the service
+                j.add_disjunction()
+                j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
+                j.add_match(_UID=0)
+                j.add_match(COREDUMP_UNIT=unit_name)
 
-            # Look for messages from PID 1 about this service
-            j.add_disjunction()
-            j.add_match(_PID=1)
-            j.add_match(UNIT=unit_name)
+                # Look for messages from PID 1 about this service
+                j.add_disjunction()
+                j.add_match(_PID=1)
+                j.add_match(UNIT=unit_name)
 
-            # Look for messages from authorized daemons about this service
-            j.add_disjunction()
-            j.add_match(_UID=0)
-            j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
+                # Look for messages from authorized daemons about this service
+                j.add_disjunction()
+                j.add_match(_UID=0)
+                j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
 
-            return "\n".join([
-                f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-                f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
-                for record in j
-            ])
+                return "\n".join([
+                    f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
+                    f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
+                    for record in j
+                ])
         finally:
             del unit
 
