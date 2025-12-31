@@ -86,7 +86,13 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         return f"{self.systemd_unit}.service".encode()
 
     async def _unit_action(self, action, wait=True, unit=None):
-        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout, unit=unit)
+        return await self.middleware.run_in_thread(
+            self._unit_action_sync,
+            action,
+            wait,
+            self.systemd_unit_timeout,
+            unit=unit
+        )
 
     def _unit_action_sync(self, action, wait, timeout, unit=None):
         unit_passed_to_us = True
