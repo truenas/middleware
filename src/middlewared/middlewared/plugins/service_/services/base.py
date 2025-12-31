@@ -1,6 +1,6 @@
+import asyncio
 import contextlib
 import logging
-import select
 import subprocess
 
 # NOTE: We prefer to minimize third-party dependencies in critical service management code.
@@ -8,13 +8,9 @@ import subprocess
 #   1. Pure Python implementation (no C extensions or Cython)
 #   2. No transitive third-party dependencies
 #   3. Verified under stress testing to be free of memory leaks
-# This replaces pystemd for certain operations, as pystemd's lxml dependency
-# exhibits memory "leaks" (it's not really a leak, they use a global hash)
 from jeepney import DBusAddress, new_method_call
-from jeepney.io.asyncio import open_dbus_router
-from pystemd.base import SDObject
-from pystemd.dbusexc import DBusUnknownObjectError
-from pystemd.dbuslib import DBus
+from jeepney.bus_messages import message_bus, MatchRule
+from jeepney.io.asyncio import open_dbus_router, Proxy
 from systemd import journal
 
 from middlewared.utils import run
@@ -23,6 +19,36 @@ from .base_interface import ServiceInterface, IdentifiableServiceInterface
 from .base_state import ServiceState
 
 logger = logging.getLogger(__name__)
+
+# D-Bus AddMatch rule includes sender for daemon filtering
+_JOB_REMOVED_SUBSCRIPTION_RULE = MatchRule(
+    type="signal",
+    sender="org.freedesktop.systemd1",
+    interface="org.freedesktop.systemd1.Manager",
+    member="JobRemoved",
+    path="/org/freedesktop/systemd1",
+)
+
+# Local filter rule omits sender (signal contains unique name, not well-known name)
+_JOB_REMOVED_FILTER_RULE = MatchRule(
+    type="signal",
+    interface="org.freedesktop.systemd1.Manager",
+    member="JobRemoved",
+    path="/org/freedesktop/systemd1",
+)
+
+_SYSTEMD_MANAGER = DBusAddress(
+    "/org/freedesktop/systemd1",
+    bus_name="org.freedesktop.systemd1",
+    interface="org.freedesktop.systemd1.Manager",
+)
+
+
+async def _load_unit_path(router, service_name: str) -> str:
+    """Load a systemd unit and return its D-Bus object path."""
+    msg = new_method_call(_SYSTEMD_MANAGER, "LoadUnit", "s", (service_name,))
+    reply = await router.send_and_get_reply(msg)
+    return reply.body[0]
 
 
 @contextlib.asynccontextmanager
@@ -40,15 +66,7 @@ async def open_unit(service_name: str | bytes):
         service_name = service_name.decode()
 
     async with open_dbus_router(bus="SYSTEM") as router:
-        manager = DBusAddress(
-            "/org/freedesktop/systemd1",
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.systemd1.Manager",
-        )
-
-        msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-        reply = await router.send_and_get_reply(msg)
-        unit_path = reply.body[0]
+        unit_path = await _load_unit_path(router, service_name)
 
         props = DBusAddress(
             unit_path,
@@ -149,16 +167,6 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
         return reply.body[0]
 
 
-class Job(SDObject):
-    def __init__(self, job, bus=None, _autoload=False):
-        super().__init__(
-            destination=b"org.freedesktop.systemd1",
-            path=job,
-            bus=bus,
-            _autoload=_autoload,
-        )
-
-
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     systemd_unit = NotImplemented
     systemd_async_start = False
@@ -197,69 +205,61 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def failure_logs(self):
         unit_name = self._get_systemd_unit_name()
         monotonic_timestamp = await get_inactive_exit_timestamp(unit_name)
-        return await self.middleware.run_in_thread(self._unit_failure_logs, monotonic_timestamp)
+        return await self.middleware.run_in_thread(
+            self._unit_failure_logs, monotonic_timestamp
+        )
 
     def _get_systemd_unit_name(self):
-        return f"{self.systemd_unit}.service".encode()
+        return f"{self.systemd_unit}.service"
 
     async def _unit_action(self, action, wait=True):
         unit_name = self._get_systemd_unit_name()
-        job = await call_unit_action(unit_name, action)
         if wait:
-            # Encode job path to bytes for pystemd compatibility (temporary until pystemd is removed)
-            await self.middleware.run_in_thread(
-                self._wait_for_job, job.encode(), self.systemd_unit_timeout
+            await self._call_unit_action_and_wait(
+                unit_name, action, self.systemd_unit_timeout
             )
+        else:
+            await call_unit_action(unit_name, action)
 
-    def _wait_for_job(self, job, timeout):
-        with DBus() as bus:
-            done = False
+    async def _call_unit_action_and_wait(self, service_name, action, timeout):
+        """
+        Call a unit action and wait for job completion via D-Bus signals.
 
-            def callback(msg, error=None, userdata=None):
-                nonlocal done
+        Subscribes to JobRemoved signals before calling the action to avoid
+        race conditions where the job completes before we start listening.
+        """
+        async with open_dbus_router(bus="SYSTEM") as router:
+            await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
 
-                msg.process_reply(True)
+            with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
+                unit_path = await _load_unit_path(router, service_name)
 
-                if msg.body[1] == job:
-                    done = True
+                unit = DBusAddress(
+                    unit_path,
+                    bus_name="org.freedesktop.systemd1",
+                    interface="org.freedesktop.systemd1.Unit",
+                )
 
-            bus.match_signal(
-                b"org.freedesktop.systemd1",
-                b"/org/freedesktop/systemd1",
-                b"org.freedesktop.systemd1.Manager",
-                b"JobRemoved",
-                callback,
-                None,
-            )
+                msg = new_method_call(unit, action, "s", ("replace",))
+                reply = await router.send_and_get_reply(msg)
+                job_path = reply.body[0]
 
-            job_object = Job(job, bus)
-            try:
-                job_object.load()
-            except DBusUnknownObjectError:
-                # Job has already completed
-                return
-
-            fd = bus.get_fd()
-            poller = select.poll()
-            poller.register(fd, select.POLLIN)
-            while True:
-                events = poller.poll(timeout * 1000)  # timeout in milliseconds
-                if not events:
-                    break
-
-                bus.process()
-
-                if done:
-                    break
-
-            del callback
-            del job_object
+                try:
+                    async with asyncio.timeout(timeout):
+                        while True:
+                            msg = await queue.get()
+                            if msg.body[1] == job_path:
+                                return
+                except TimeoutError:
+                    # Timeout expired before our job's signal arrived. This is unlikely
+                    # but could happen if many other jobs complete during the wait period.
+                    pass
 
     async def _systemd_unit(self, unit, verb):
         await systemd_unit(unit, verb)
 
     def _unit_failure_logs(self, monotonic_timestamp):
-        unit_name = self._get_systemd_unit_name()
+        unit_name = self._get_systemd_unit_name().encode()
 
         with journal.Reader() as j:
             j.seek_monotonic(monotonic_timestamp / 1e6)
@@ -286,16 +286,26 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             j.add_match(_UID=0)
             j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
 
-            return "\n".join([
-                f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-                f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
-                for record in j
-            ])
+            return "\n".join(
+                [
+                    f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
+                    f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
+                    for record in j
+                ]
+            )
 
 
 async def systemd_unit(unit, verb):
-    result = await run("systemctl", verb, unit, check=False, encoding="utf-8", stderr=subprocess.STDOUT)
+    result = await run(
+        "systemctl", verb, unit, check=False, encoding="utf-8", stderr=subprocess.STDOUT
+    )
     if result.returncode != 0:
-        logger.warning("%s %s failed with code %d: %r", unit, verb, result.returncode, result.stdout)
+        logger.warning(
+            "%s %s failed with code %d: %r",
+            unit,
+            verb,
+            result.returncode,
+            result.stdout,
+        )
 
     return result
