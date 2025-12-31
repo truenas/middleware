@@ -2,7 +2,7 @@ from collections import defaultdict
 import concurrent.futures
 from typing import Any, TypedDict, cast
 
-from .utils import get_docker_client, PROJECT_KEY
+from .utils import get_caching_docker_client, PROJECT_KEY
 
 
 class BlkioStats(TypedDict):
@@ -95,7 +95,8 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict[str
     label_filter = {
         'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY
     }
-    with get_docker_client() as client:
+    client = get_caching_docker_client()
+    try:
         containers = list(client.containers.list(all=True, filters=label_filter, sparse=True))
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [
@@ -115,4 +116,8 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict[str
                 for net_name, net_stats in stats['networks'].items():
                     p_stats['networks'][net_name]['rx_bytes'] += net_stats['rx_bytes']
                     p_stats['networks'][net_name]['tx_bytes'] += net_stats['tx_bytes']
+    except Exception:
+        # Return what we have, or empty
+        pass
+
     return dict(projects)
