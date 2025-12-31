@@ -19,6 +19,19 @@ from .base_state import ServiceState
 
 logger = logging.getLogger(__name__)
 
+_UNIT_SUFFIXES = (
+    ".service",
+    ".socket",
+    ".target",
+    ".mount",
+    ".timer",
+    ".path",
+    ".slice",
+    ".scope",
+    ".swap",
+    ".device",
+)
+
 # D-Bus AddMatch rule includes sender for daemon filtering
 _JOB_REMOVED_SUBSCRIPTION_RULE = MatchRule(
     type="signal",
@@ -42,12 +55,14 @@ _SYSTEMD_MANAGER = DBusAddress(
     interface="org.freedesktop.systemd1.Manager",
 )
 
-_VERB_TO_ACTION = types.MappingProxyType({
-    "start": "Start",
-    "stop": "Stop",
-    "restart": "Restart",
-    "reload": "Reload",
-})
+_VERB_TO_ACTION = types.MappingProxyType(
+    {
+        "start": "Start",
+        "stop": "Stop",
+        "restart": "Restart",
+        "reload": "Reload",
+    }
+)
 
 
 async def _load_unit_path(router, service_name: str) -> str:
@@ -116,9 +131,7 @@ async def _verify_service_started(
         )
         logger.warning("%s %s failed: %s", service_name, action, result)
     else:
-        logger.warning(
-            "%s %s completed but service is %s", service_name, action, state
-        )
+        logger.warning("%s %s completed but service is %s", service_name, action, state)
 
 
 @contextlib.asynccontextmanager
@@ -391,9 +404,6 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
                     for record in j
                 ]
             )
-
-
-_UNIT_SUFFIXES = (".service", ".socket", ".target", ".mount", ".timer", ".path", ".slice", ".scope", ".swap", ".device")
 
 
 async def systemd_unit(unit, verb):
