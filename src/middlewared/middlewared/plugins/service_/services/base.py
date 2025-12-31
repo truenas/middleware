@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import logging
-import subprocess
+import types
 
 # NOTE: We prefer to minimize third-party dependencies in critical service management code.
 # However, jeepney was chosen for D-Bus communication because:
@@ -11,9 +11,8 @@ import subprocess
 from jeepney import DBusAddress, new_method_call
 from jeepney.bus_messages import message_bus, MatchRule
 from jeepney.io.asyncio import open_dbus_router, Proxy
+from jeepney.wrappers import unwrap_msg
 from systemd import journal
-
-from middlewared.utils import run
 
 from .base_interface import ServiceInterface, IdentifiableServiceInterface
 from .base_state import ServiceState
@@ -43,12 +42,83 @@ _SYSTEMD_MANAGER = DBusAddress(
     interface="org.freedesktop.systemd1.Manager",
 )
 
+_VERB_TO_ACTION = types.MappingProxyType({
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart",
+    "reload": "Reload",
+})
+
 
 async def _load_unit_path(router, service_name: str) -> str:
     """Load a systemd unit and return its D-Bus object path."""
     msg = new_method_call(_SYSTEMD_MANAGER, "LoadUnit", "s", (service_name,))
     reply = await router.send_and_get_reply(msg)
-    return reply.body[0]
+    return unwrap_msg(reply)[0]
+
+
+async def _get_unit_property(router, unit_path: str, interface: str, prop: str):
+    """Get a property from a systemd unit via D-Bus."""
+    props = DBusAddress(
+        unit_path,
+        bus_name="org.freedesktop.systemd1",
+        interface="org.freedesktop.DBus.Properties",
+    )
+    msg = new_method_call(props, "Get", "ss", (interface, prop))
+    reply = await router.send_and_get_reply(msg)
+    return unwrap_msg(reply)[0][1]
+
+
+async def _verify_service_started(
+    router, unit_path: str, service_name: str, action: str
+) -> None:
+    """
+    Verify service is running after Start/Restart, log warnings if not.
+
+    NOTE: There is an inherent race condition with D-Bus service management.
+    Services that crash very quickly after starting (e.g., nut-server.service
+    crashes in ~50ms due to missing UPS configuration) may appear as "active"
+    at verification time, then crash milliseconds later. This is unavoidable
+    without adding arbitrary sleeps, which would slow all service operations
+    and still not guarantee detection. This matches systemctl behavior, which
+    also does not wait to verify services stay running.
+    """
+    state = await _get_unit_property(
+        router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
+    )
+    substate = await _get_unit_property(
+        router, unit_path, "org.freedesktop.systemd1.Unit", "SubState"
+    )
+
+    if substate in ("auto-restart", "auto-restart-queued"):
+        logger.warning("%s %s: service is crash-looping", service_name, action)
+        return
+
+    if state in ("active", "activating"):
+        return
+
+    conditions = await _get_unit_property(
+        router, unit_path, "org.freedesktop.systemd1.Unit", "Conditions"
+    )
+    failed = [f"{c[0]}={c[3]}" for c in conditions if c[4] < 0]
+    if failed:
+        logger.warning(
+            "%s %s skipped due to unmet conditions: %s",
+            service_name,
+            action,
+            ", ".join(failed),
+        )
+        return
+
+    if state == "failed":
+        result = await _get_unit_property(
+            router, unit_path, "org.freedesktop.systemd1.Service", "Result"
+        )
+        logger.warning("%s %s failed: %s", service_name, action, result)
+    else:
+        logger.warning(
+            "%s %s completed but service is %s", service_name, action, state
+        )
 
 
 @contextlib.asynccontextmanager
@@ -164,7 +234,66 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
 
         msg = new_method_call(unit, action, "s", ("replace",))
         reply = await router.send_and_get_reply(msg)
-        return reply.body[0]
+        return unwrap_msg(reply)[0]
+
+
+async def call_unit_action_and_wait(
+    service_name: str | bytes, action: str, timeout: float = 10.0
+) -> None:
+    """
+    Call a unit action and wait for job completion via D-Bus signals.
+
+    Subscribes to JobRemoved signals before calling the action to avoid
+    race conditions where the job completes before we start listening.
+
+    Args:
+        service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
+        action: The action to perform (Start, Stop, Restart, Reload)
+        timeout: Maximum time to wait for job completion in seconds
+    """
+    if isinstance(service_name, bytes):
+        service_name = service_name.decode()
+
+    async with open_dbus_router(bus="SYSTEM") as router:
+        await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
+
+        with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
+            unit_path = await _load_unit_path(router, service_name)
+
+            unit = DBusAddress(
+                unit_path,
+                bus_name="org.freedesktop.systemd1",
+                interface="org.freedesktop.systemd1.Unit",
+            )
+
+            msg = new_method_call(unit, action, "s", ("replace",))
+            reply = await router.send_and_get_reply(msg)
+            job_path = unwrap_msg(reply)[0]
+
+            try:
+                async with asyncio.timeout(timeout):
+                    while True:
+                        msg = await queue.get()
+                        if msg.body[1] == job_path:
+                            result = msg.body[3]
+                            if result != "done":
+                                logger.warning(
+                                    "%s %s job finished with result: %s",
+                                    service_name,
+                                    action,
+                                    result,
+                                )
+                                return
+
+                            if action in ("Start", "Restart"):
+                                await _verify_service_started(
+                                    router, unit_path, service_name, action
+                                )
+                            return
+            except TimeoutError:
+                # Timeout expired before our job's signal arrived. This is unlikely
+                # but could happen if many other jobs complete during the wait period.
+                pass
 
 
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
@@ -222,38 +351,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             await call_unit_action(unit_name, action)
 
     async def _call_unit_action_and_wait(self, service_name, action, timeout):
-        """
-        Call a unit action and wait for job completion via D-Bus signals.
-
-        Subscribes to JobRemoved signals before calling the action to avoid
-        race conditions where the job completes before we start listening.
-        """
-        async with open_dbus_router(bus="SYSTEM") as router:
-            await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
-
-            with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
-                unit_path = await _load_unit_path(router, service_name)
-
-                unit = DBusAddress(
-                    unit_path,
-                    bus_name="org.freedesktop.systemd1",
-                    interface="org.freedesktop.systemd1.Unit",
-                )
-
-                msg = new_method_call(unit, action, "s", ("replace",))
-                reply = await router.send_and_get_reply(msg)
-                job_path = reply.body[0]
-
-                try:
-                    async with asyncio.timeout(timeout):
-                        while True:
-                            msg = await queue.get()
-                            if msg.body[1] == job_path:
-                                return
-                except TimeoutError:
-                    # Timeout expired before our job's signal arrived. This is unlikely
-                    # but could happen if many other jobs complete during the wait period.
-                    pass
+        await call_unit_action_and_wait(service_name, action, timeout)
 
     async def _systemd_unit(self, unit, verb):
         await systemd_unit(unit, verb)
@@ -295,17 +393,17 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             )
 
 
-async def systemd_unit(unit, verb):
-    result = await run(
-        "systemctl", verb, unit, check=False, encoding="utf-8", stderr=subprocess.STDOUT
-    )
-    if result.returncode != 0:
-        logger.warning(
-            "%s %s failed with code %d: %r",
-            unit,
-            verb,
-            result.returncode,
-            result.stdout,
-        )
+_UNIT_SUFFIXES = (".service", ".socket", ".target", ".mount", ".timer", ".path", ".slice", ".scope", ".swap", ".device")
 
-    return result
+
+async def systemd_unit(unit, verb):
+    """Perform a systemd unit action via D-Bus."""
+    action = _VERB_TO_ACTION.get(verb)
+    if action is None:
+        raise ValueError(f"Unsupported systemd verb: {verb}")
+
+    # D-Bus LoadUnit requires full unit name with suffix
+    if not unit.endswith(_UNIT_SUFFIXES):
+        unit = f"{unit}.service"
+
+    await call_unit_action_and_wait(unit, action)
