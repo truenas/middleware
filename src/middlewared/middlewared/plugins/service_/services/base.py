@@ -245,11 +245,14 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
                 job_path = reply.body[0]
 
                 try:
-                    while True:
-                        msg = await asyncio.wait_for(queue.get(), timeout)
-                        if msg.body[1] == job_path:
-                            return
-                except asyncio.TimeoutError:
+                    async with asyncio.timeout(timeout):
+                        while True:
+                            msg = await queue.get()
+                            if msg.body[1] == job_path:
+                                return
+                except TimeoutError:
+                    # Timeout expired before our job's signal arrived. This is unlikely
+                    # but could happen if many other jobs complete during the wait period.
                     pass
 
     async def _systemd_unit(self, unit, verb):
