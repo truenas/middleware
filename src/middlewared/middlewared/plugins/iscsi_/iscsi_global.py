@@ -171,6 +171,10 @@ class ISCSIGlobalService(SystemServiceService):
 
         if old['direct_config'] != new['direct_config']:
             await self.middleware.call('etc.generate', 'scst_direct')
+            if licensed:
+                await self.middleware.call(
+                    'failover.call_remote', 'etc.generate', ['scst_direct']
+                )
 
         if licensed and old['alua'] != new['alua']:
             if new['alua']:
