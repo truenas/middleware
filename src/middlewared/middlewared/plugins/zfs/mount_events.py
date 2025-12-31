@@ -1,4 +1,3 @@
-import os
 import select
 import time
 
@@ -6,13 +5,10 @@ from middlewared.utils.mount import __mntent_dict
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
 
-def parse_mounts(lines: str) -> dict[str, dict]:
-    mounts = {}
-    for line in lines.splitlines():
-        mount = __mntent_dict(line)
+def parse_zfs_mountline(line: str, mounts: dict) -> None:
+    mount = __mntent_dict(line)
+    if mount['fs_type'] == 'zfs' and '@' not in mount['mount_source']:
         mounts[mount['mountpoint']] = mount
-
-    return mounts
 
 
 def mount_events_process(middleware):
@@ -20,7 +16,9 @@ def mount_events_process(middleware):
     while True:
         try:
             with open('/proc/self/mountinfo', 'r') as f:
-                prev = parse_mounts(f.read())
+                prev = dict()
+                for line in f:
+                    parse_zfs_mountline(line, prev)
 
                 poller = select.poll()
                 poller.register(f, select.POLLERR | select.POLLPRI)
@@ -30,17 +28,15 @@ def mount_events_process(middleware):
                     poller.poll()  # returns on mount/umount/propagation/etc.
 
                     # Rewind and read new snapshot
-                    os.lseek(f.fileno(), 0, os.SEEK_SET)
+                    f.seek(0)
 
-                    cur = parse_mounts(f.read())
+                    cur = dict()
+                    for line in f:
+                        parse_zfs_mountline(line, cur)
 
                     for mountpoint, mount in cur.items():
                         if mountpoint not in prev:
-                            if mount['fs_type'] == 'zfs':
-                                if '@' in mount['mount_source']:
-                                    continue
-
-                                middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
+                            middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
 
                     prev = cur
         except Exception:
