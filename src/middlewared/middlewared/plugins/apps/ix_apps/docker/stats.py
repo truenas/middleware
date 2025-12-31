@@ -1,4 +1,5 @@
 from collections import defaultdict
+import concurrent.futures
 from typing import Any, TypedDict, cast
 
 from .utils import get_caching_docker_client, PROJECT_KEY
@@ -97,19 +98,24 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict[str
     client = get_caching_docker_client()
     try:
         containers = list(client.containers.list(all=True, filters=label_filter, sparse=True))
-        for container in containers:
-            result = get_container_stats(container)
-            if not result:
-                continue
-            project, stats = result
-            p_stats = projects[project]
-            p_stats['cpu_usage'] += stats['cpu_usage']
-            p_stats['memory'] += stats['memory']
-            p_stats['blkio']['read'] += stats['blkio']['read']
-            p_stats['blkio']['write'] += stats['blkio']['write']
-            for net_name, net_stats in stats['networks'].items():
-                p_stats['networks'][net_name]['rx_bytes'] += net_stats['rx_bytes']
-                p_stats['networks'][net_name]['tx_bytes'] += net_stats['tx_bytes']
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            futures = [
+                executor.submit(get_container_stats, container)
+                for container in containers
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if not result:
+                    continue
+                project, stats = result
+                p_stats = projects[project]
+                p_stats['cpu_usage'] += stats['cpu_usage']
+                p_stats['memory'] += stats['memory']
+                p_stats['blkio']['read'] += stats['blkio']['read']
+                p_stats['blkio']['write'] += stats['blkio']['write']
+                for net_name, net_stats in stats['networks'].items():
+                    p_stats['networks'][net_name]['rx_bytes'] += net_stats['rx_bytes']
+                    p_stats['networks'][net_name]['tx_bytes'] += net_stats['tx_bytes']
     except Exception:
         # Return what we have, or empty
         pass
