@@ -7,6 +7,7 @@ from typing import Iterator
 PROJECT_KEY: str = 'com.docker.compose.project'
 DOCKER_SOCKET_URL = 'unix://var/run/docker.sock'
 
+
 @contextlib.contextmanager
 def get_docker_client() -> Iterator[docker.DockerClient]:
     """
@@ -38,6 +39,6 @@ def get_caching_docker_client() -> docker.DockerClient:
                     version='auto',
                     max_pool_size=20
                 )
-                client.api.trust_env = False 
+                client.api.trust_env = False
                 _STATS_CLIENT = client
     return _STATS_CLIENT
