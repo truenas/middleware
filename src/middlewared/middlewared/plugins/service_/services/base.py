@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import select
 import subprocess
@@ -24,15 +25,16 @@ from .base_state import ServiceState
 logger = logging.getLogger(__name__)
 
 
-async def get_inactive_exit_timestamp(service_name: str | bytes) -> int:
+@contextlib.asynccontextmanager
+async def open_unit(service_name: str | bytes):
     """
-    Get InactiveExitTimestampMonotonic for a systemd service via D-Bus.
+    Async context manager for accessing a systemd unit via D-Bus.
 
-    Args:
-        service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
-
-    Returns:
-        Timestamp in microseconds
+    Yields:
+        Tuple of (router, unit_path, props_address) where:
+        - router: The jeepney D-Bus router for sending messages
+        - unit_path: The D-Bus object path for the unit
+        - props: DBusAddress for accessing unit properties
     """
     if isinstance(service_name, bytes):
         service_name = service_name.decode()
@@ -54,6 +56,20 @@ async def get_inactive_exit_timestamp(service_name: str | bytes) -> int:
             interface="org.freedesktop.DBus.Properties",
         )
 
+        yield router, unit_path, props
+
+
+async def get_inactive_exit_timestamp(service_name: str | bytes) -> int:
+    """
+    Get InactiveExitTimestampMonotonic for a systemd service via D-Bus.
+
+    Args:
+        service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
+
+    Returns:
+        Timestamp in microseconds
+    """
+    async with open_unit(service_name) as (router, unit_path, props):
         msg = new_method_call(
             props,
             "Get",
@@ -61,7 +77,6 @@ async def get_inactive_exit_timestamp(service_name: str | bytes) -> int:
             ("org.freedesktop.systemd1.Unit", "InactiveExitTimestampMonotonic"),
         )
         reply = await router.send_and_get_reply(msg)
-
         return reply.body[0][1]
 
 
@@ -75,26 +90,7 @@ async def get_service_state(service_name: str | bytes) -> tuple[bytes, int]:
     Returns:
         Tuple of (active_state as bytes, main_pid as int)
     """
-    if isinstance(service_name, bytes):
-        service_name = service_name.decode()
-
-    async with open_dbus_router(bus="SYSTEM") as router:
-        manager = DBusAddress(
-            "/org/freedesktop/systemd1",
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.systemd1.Manager",
-        )
-
-        msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-        reply = await router.send_and_get_reply(msg)
-        unit_path = reply.body[0]
-
-        props = DBusAddress(
-            unit_path,
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.DBus.Properties",
-        )
-
+    async with open_unit(service_name) as (router, unit_path, props):
         # Get ActiveState from Unit interface
         msg = new_method_call(
             props, "Get", "ss", ("org.freedesktop.systemd1.Unit", "ActiveState")
@@ -122,31 +118,11 @@ async def get_unit_active_state(service_name: str | bytes) -> str:
     Returns:
         Active state as string (e.g., "active", "inactive", "activating")
     """
-    if isinstance(service_name, bytes):
-        service_name = service_name.decode()
-
-    async with open_dbus_router(bus="SYSTEM") as router:
-        manager = DBusAddress(
-            "/org/freedesktop/systemd1",
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.systemd1.Manager",
-        )
-
-        msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-        reply = await router.send_and_get_reply(msg)
-        unit_path = reply.body[0]
-
-        props = DBusAddress(
-            unit_path,
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.DBus.Properties",
-        )
-
+    async with open_unit(service_name) as (router, unit_path, props):
         msg = new_method_call(
             props, "Get", "ss", ("org.freedesktop.systemd1.Unit", "ActiveState")
         )
         reply = await router.send_and_get_reply(msg)
-
         return reply.body[0][1]
 
 
@@ -161,20 +137,7 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
     Returns:
         Job object path
     """
-    if isinstance(service_name, bytes):
-        service_name = service_name.decode()
-
-    async with open_dbus_router(bus="SYSTEM") as router:
-        manager = DBusAddress(
-            "/org/freedesktop/systemd1",
-            bus_name="org.freedesktop.systemd1",
-            interface="org.freedesktop.systemd1.Manager",
-        )
-
-        msg = new_method_call(manager, "LoadUnit", "s", (service_name,))
-        reply = await router.send_and_get_reply(msg)
-        unit_path = reply.body[0]
-
+    async with open_unit(service_name) as (router, unit_path, props):
         unit = DBusAddress(
             unit_path,
             bus_name="org.freedesktop.systemd1",
@@ -183,7 +146,6 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
 
         msg = new_method_call(unit, action, "s", ("replace",))
         reply = await router.send_and_get_reply(msg)
-
         return reply.body[0]
 
 
