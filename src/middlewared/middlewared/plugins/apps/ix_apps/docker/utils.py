@@ -5,40 +5,40 @@ from typing import Iterator
 
 
 PROJECT_KEY: str = 'com.docker.compose.project'
-DOCKER_SOCKET_URL = 'unix://var/run/docker.sock'
+
+_client = None
+_client_lock = threading.Lock()
+
+
+def _get_or_create_client() -> docker.DockerClient:
+    global _client
+    with _client_lock:
+        if _client is None:
+            _client = docker.from_env()
+            _client.api.trust_env = False
+    return _client
 
 
 @contextlib.contextmanager
 def get_docker_client() -> Iterator[docker.DockerClient]:
     """
-    Context manager that yields a Docker client instance.
-    The client is closed automatically when the context is exited.
+    Context manager that yields a global Docker client instance.
+    If an exception occurs while using the client, it is closed and
+    set to None so that a new client will be created on the next request.
+
+    Yields:
+        docker.DockerClient: The Docker client instance.
     """
-    client = docker.from_env(max_pool_size=20)
-    client.api.trust_env = False
+    client = _get_or_create_client()
     try:
         yield client
-    finally:
-        client.close()
-
-
-_STATS_CLIENT = None
-_STATS_CLIENT_LOCK = threading.Lock()
-
-
-def get_caching_docker_client() -> docker.DockerClient:
-    """
-    Returns a persistent Docker client instance that is reused across calls.
-    """
-    global _STATS_CLIENT
-    if _STATS_CLIENT is None:
-        with _STATS_CLIENT_LOCK:
-            if _STATS_CLIENT is None:
-                client = docker.DockerClient(
-                    base_url=DOCKER_SOCKET_URL,
-                    version='auto',
-                    max_pool_size=20
-                )
-                client.api.trust_env = False
-                _STATS_CLIENT = client
-    return _STATS_CLIENT
+    except Exception:
+        with _client_lock:
+            global _client
+            if _client:
+                try:
+                    _client.close()
+                except Exception:
+                    pass
+            _client = None
+        raise
