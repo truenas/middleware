@@ -33,6 +33,7 @@ from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.service.crud import real_crud_method
+from .utils.systemd import SystemdNotifier
 from .utils.threading import (
     set_thread_name,
     IoThreadPoolExecutor,
@@ -76,7 +77,6 @@ import typing
 import uuid
 
 from pydantic import create_model, Field
-from systemd.daemon import notify as systemd_notify
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
@@ -201,6 +201,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
         self.dump_result_allow_fallback = True
         self.services = ServiceContainer(self)
+        self._systemd_notifier: SystemdNotifier | None = None
 
     @typing.overload
     def get_method(
@@ -588,13 +589,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.console_error_counter += 1
 
     def __notify_startup_progress(self):
-        systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
+        if self._systemd_notifier:
+            self._systemd_notifier.notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
         with open(MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
             pass
 
-        systemd_notify('READY=1')
+        if self._systemd_notifier:
+            self._systemd_notifier.notify('READY=1')
+            self._systemd_notifier.close()
+            self._systemd_notifier = None
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
@@ -1706,6 +1711,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         os._exit(0)
 
     async def __initialize(self):
+        self._systemd_notifier = SystemdNotifier()
         self.app = app = web.Application(middlewares=[
             normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
         ], loop=self.loop)
