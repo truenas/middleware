@@ -1,7 +1,8 @@
+from datetime import datetime
 from os.path import exists
-from systemd import journal
 
 from middlewared.service import private, Service
+from middlewared.utils.journal import query_journal
 
 
 class SystemService(Service):
@@ -11,23 +12,26 @@ class SystemService(Service):
         coredumps = []
 
         try:
-            with journal.Reader() as reader:
-                reader.add_match(CODE_FUNC='submit_coredump')
-                for core in reader:
-                    coredump = {
-                        'time': core['COREDUMP_TIMESTAMP'].strftime('%c'),
-                        'pid': core['COREDUMP_PID'],
-                        'uid': core['COREDUMP_UID'],
-                        'gid': core['COREDUMP_GID'],
-                        'unit': core.get('COREDUMP_UNIT'),
-                        'sig': core['COREDUMP_SIGNAL'],
-                        'exe': core.get('COREDUMP_EXE'),
-                    }
-                    if 'COREDUMP_FILENAME' not in core or not isinstance(core['COREDUMP_FILENAME'], str):
-                        coredump['corefile'] = 'none'
-                    else:
-                        coredump['corefile'] = 'present' if exists(core['COREDUMP_FILENAME']) else 'missing'
-                    coredumps.append(coredump)
+            for core in query_journal(["CODE_FUNC=submit_coredump"]):
+                # COREDUMP_TIMESTAMP is in microseconds since epoch
+                timestamp_us = int(core.get("COREDUMP_TIMESTAMP", 0))
+                timestamp = datetime.fromtimestamp(timestamp_us / 1_000_000)
+
+                coredump = {
+                    'time': timestamp.strftime('%c'),
+                    'pid': int(core.get('COREDUMP_PID', 0)),
+                    'uid': int(core.get('COREDUMP_UID', 0)),
+                    'gid': int(core.get('COREDUMP_GID', 0)),
+                    'unit': core.get('COREDUMP_UNIT'),
+                    'sig': int(core.get('COREDUMP_SIGNAL', 0)),
+                    'exe': core.get('COREDUMP_EXE'),
+                }
+                filename = core.get('COREDUMP_FILENAME')
+                if not filename or not isinstance(filename, str):
+                    coredump['corefile'] = 'none'
+                else:
+                    coredump['corefile'] = 'present' if exists(filename) else 'missing'
+                coredumps.append(coredump)
         except Exception:
             self.logger.warning('Failed to obtain coredump information', exc_info=True)
 
