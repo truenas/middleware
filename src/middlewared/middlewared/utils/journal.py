@@ -1,7 +1,13 @@
+import datetime
 import json
 import subprocess
 import time
-from datetime import datetime
+
+__all__ = (
+    "format_journal_record",
+    "monotonic_to_realtime_since",
+    "query_journal",
+)
 
 
 def _get_boot_time() -> float:
@@ -45,7 +51,7 @@ def query_journal(match_args: list[str], since: str | None = None) -> list[dict]
 
 def format_journal_record(record: dict) -> str:
     """Format a journal record as a log line."""
-    ts = datetime.fromtimestamp(
+    ts = datetime.datetime.fromtimestamp(
         int(record.get("__REALTIME_TIMESTAMP", 0)) / 1_000_000
     )
     syslog_id = record.get("SYSLOG_IDENTIFIER", "")
@@ -58,4 +64,4 @@ def monotonic_to_realtime_since(monotonic_us: int) -> str:
     """Convert monotonic timestamp (microseconds) to --since string for journalctl."""
     boot_time = _get_boot_time()
     realtime_ts = boot_time + (monotonic_us / 1_000_000)
-    return datetime.fromtimestamp(realtime_ts).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.datetime.fromtimestamp(realtime_ts).strftime("%Y-%m-%d %H:%M:%S")
