@@ -502,7 +502,7 @@ class AuthService(Service):
         if auth_ctx.pam_hdl:
             raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
 
-        auth_ctx.pam_hdl = TokenPamAuthenticator(username=token.credentials()['username'] or 'root', origin=origin)
+        auth_ctx.pam_hdl = TokenPamAuthenticator(username=token.root_credentials()['username'] or 'root', origin=origin)
         if token.single_use:
             self.token_manager.destroy(token)
         else:
