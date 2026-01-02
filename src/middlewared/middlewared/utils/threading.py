@@ -51,8 +51,7 @@ class IoThreadPoolExecutor(concurrent.futures.Executor):
 
     def __init__(self):
         self.executor = concurrent.futures.ThreadPoolExecutor(
-            self.thread_count,
-            "IoThread",
+            thread_name_prefix="IoThread",
             initializer=initializer,
             initargs=("IoThread", thread_local_storage),
         )
