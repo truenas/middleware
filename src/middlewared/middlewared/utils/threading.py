@@ -47,7 +47,7 @@ def start_daemon_thread(*args, **kwargs):
 
 
 class IoThreadPoolExecutor(concurrent.futures.Executor):
-    _cnt = itertools.counter(1).__next__
+    _cnt = itertools.count(1).__next__
 
     def __init__(self):
         self.executor = concurrent.futures.ThreadPoolExecutor(
