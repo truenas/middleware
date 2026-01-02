@@ -57,8 +57,11 @@ def parse_filter(filter_in, filters_out):
         if filter_in[0] != 'OR':
             raise ValueError(f'{filter_in}: invalid filter')
 
+        or_filters = []
         for f in filter_in[1]:
-            parse_filter(f, filters_out)
+            parse_filter(f, or_filters)
+
+        filters_out.append(['OR', or_filters])
 
         return
 
