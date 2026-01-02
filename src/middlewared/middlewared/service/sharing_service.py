@@ -1,9 +1,16 @@
+import os
+from typing import TYPE_CHECKING
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.utils.filesystem.stat_x import statx
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
+if TYPE_CHECKING:
+    from . import ValidationErrors
 
 
 class SharingTaskService(CRUDService):
@@ -18,6 +25,12 @@ class SharingTaskService(CRUDService):
     @private
     async def get_path_field(self, data):
         return data[self.path_field]
+
+    @staticmethod
+    @private
+    def mntinfo(path: str | bytes) -> dict:
+        mnt_id = statx(path).stx_mnt_id
+        return getmntinfo(mnt_id)[mnt_id]
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
@@ -58,7 +71,10 @@ class SharingTaskService(CRUDService):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
     @private
-    async def validate_path_field(self, data, schema, verrors):
+    async def validate_path_field(
+        self, data: dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
+    ) -> 'ValidationErrors':
+        """If `split_path` and the path is valid, add 'dataset' and 'relative_path' fields to `data`."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -69,9 +85,21 @@ class SharingTaskService(CRUDService):
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, path)
+            if split_path:
+                data.update(dataset=path, relative_path=None)
 
         elif loc is FSLocation.LOCAL:
             await self.validate_local_path(verrors, name, path)
+            if split_path:
+                mntinfo = await self.middleware.run_in_thread(self.mntinfo, path)
+                dataset_name = mntinfo['mount_source']
+
+                # Calculate relative path
+                relative_path = os.path.relpath(path, mntinfo['mountpoint'])
+                if relative_path == '.':
+                    relative_path = ''
+
+                data.update(dataset=dataset_name, relative_path=relative_path)
 
         else:
             self.logger.error('%s: unknown location type', loc.name)

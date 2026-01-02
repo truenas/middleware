@@ -54,7 +54,7 @@ from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpos
 from middlewared.utils.tdb import TDBError
 
 
-BASE_SHARE_PARAMS = frozenset(['id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit', 'path'])
+BASE_SHARE_PARAMS = frozenset(['id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit'])
 
 
 class SMBModel(sa.Model):
@@ -642,7 +642,8 @@ class SharingSMBModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cifs_purpose = sa.Column(sa.String(120))
-    cifs_path = sa.Column(sa.String(255), nullable=True)
+    cifs_dataset = sa.Column(sa.String(255), nullable=True)
+    cifs_relative_path = sa.Column(sa.String(255), nullable=True)
     cifs_path_suffix = sa.Column(sa.String(255), nullable=False)
     cifs_home = sa.Column(sa.Boolean(), default=False)
     cifs_name = sa.Column(sa.String(120))
@@ -1218,11 +1219,11 @@ class SharingSMBService(SharingService):
             await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
 
     @private
-    async def validate(self, data, schema_name, verrors, old=None):
+    async def validate(self, data: dict, schema_name: str, verrors: ValidationErrors, old: dict | None = None) -> None:
         if await self.query([[share_field.NAME, 'C=', data[share_field.NAME]], ['id', '!=', data.get('id', 0)]]):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
-        await self.validate_path_field(data, schema_name, verrors)
+        await self.validate_path_field(data, schema_name, verrors, split_path=True)
         timemachine = is_time_machine_share(data)
 
         if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
@@ -1366,8 +1367,13 @@ class SharingSMBService(SharingService):
         )
 
     @private
-    async def extend(self, data):
-        out = {}
+    async def extend(self, data: dict) -> dict:
+        ds, path = data.pop('dataset'), data.pop('relative_path')
+        if ds and path:
+            out = {'path': os.path.join('/mnt', ds, path)}
+        else:
+            out = {'path': ds}
+
         for key in BASE_SHARE_PARAMS:
             out[key] = data.pop(key)
 
@@ -1444,9 +1450,13 @@ class SharingSMBService(SharingService):
         return out
 
     @private
-    async def compress(self, data_in):
+    async def compress(self, data_in: dict) -> dict:
         data = data_in.copy()
         opts = data.pop(share_field.OPTS, {})
+        # dataset and relative_path are handled in `validate`
+        path = data.pop(share_field.PATH, None)
+        data.setdefault('dataset', path)
+        data.setdefault('relative_path', None)
 
         if share_field.DS_NAMING_SCHEMA in opts:
             data[share_field.PATH_SUFFIX] = opts.pop(share_field.DS_NAMING_SCHEMA, '')
@@ -1471,7 +1481,7 @@ class SharingSMBService(SharingService):
             case SMBSharePurpose.TIME_LOCKED_SHARE:
                 data['worm_grace_period'] = opts.pop(share_field.WORM_GRACE, 900)
             case SMBSharePurpose.EXTERNAL_SHARE:
-                data[share_field.PATH] = f'EXTERNAL:{",".join(opts.pop(share_field.REMOTE_PATH, []))}'
+                data['dataset'] = f'EXTERNAL:{",".join(opts.pop(share_field.REMOTE_PATH, []))}'
             case _:
                 pass
 
