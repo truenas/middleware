@@ -12,7 +12,12 @@ from jeepney import DBusAddress, new_method_call
 from jeepney.bus_messages import message_bus, MatchRule
 from jeepney.io.asyncio import open_dbus_router, Proxy
 from jeepney.wrappers import unwrap_msg
-from systemd import journal
+
+from middlewared.utils.journal import (
+    format_journal_record,
+    monotonic_to_realtime_since,
+    query_journal,
+)
 
 from .base_interface import ServiceInterface, IdentifiableServiceInterface
 from .base_state import ServiceState
@@ -370,40 +375,35 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         await systemd_unit(unit, verb)
 
     def _unit_failure_logs(self, monotonic_timestamp):
-        unit_name = self._get_systemd_unit_name().encode()
+        unit_name = self._get_systemd_unit_name()
+        since = monotonic_to_realtime_since(monotonic_timestamp)
 
-        with journal.Reader() as j:
-            j.seek_monotonic(monotonic_timestamp / 1e6)
+        # Match logic from systemd's add_matches_for_unit
+        # (https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c)
+        # Using + for OR (disjunction) between match groups
+        match_args = [
+            # Match group 1: messages from the service itself
+            f"_SYSTEMD_UNIT={unit_name}",
+            # OR
+            "+",
+            # Match group 2: coredumps of the service
+            "MESSAGE_ID=fc2e22bc6ee647b6b90729ab34a250b1",
+            "_UID=0",
+            f"COREDUMP_UNIT={unit_name}",
+            # OR
+            "+",
+            # Match group 3: messages from PID 1 about this service
+            "_PID=1",
+            f"UNIT={unit_name}",
+            # OR
+            "+",
+            # Match group 4: messages from authorized daemons about this service
+            "_UID=0",
+            f"OBJECT_SYSTEMD_UNIT={unit_name}",
+        ]
 
-            # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
-            # `add_matches_for_unit` function
-
-            # Look for messages from the service itself
-            j.add_match(_SYSTEMD_UNIT=unit_name)
-
-            # Look for coredumps of the service
-            j.add_disjunction()
-            j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
-            j.add_match(_UID=0)
-            j.add_match(COREDUMP_UNIT=unit_name)
-
-            # Look for messages from PID 1 about this service
-            j.add_disjunction()
-            j.add_match(_PID=1)
-            j.add_match(UNIT=unit_name)
-
-            # Look for messages from authorized daemons about this service
-            j.add_disjunction()
-            j.add_match(_UID=0)
-            j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
-
-            return "\n".join(
-                [
-                    f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-                    f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
-                    for record in j
-                ]
-            )
+        records = query_journal(match_args, since=since)
+        return "\n".join(format_journal_record(r) for r in records)
 
 
 async def systemd_unit(unit, verb):
