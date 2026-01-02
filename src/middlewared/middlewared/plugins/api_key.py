@@ -12,7 +12,7 @@ from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.account.authenticator import ApiKeyAuthenticator
+from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
 from middlewared.utils.origin import ConnectionOrigin
@@ -349,9 +349,13 @@ class ApiKeyService(CRUDService):
         if not auth_ctx:
             raise CallError('Authentication context was not initialized')
 
+
+        if auth_ctx.pam_hdl:
+            raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
+
         entry = await self.get_instance(key_id)
 
-        auth_ctx.pam_hdl = ApiKeyAuthenticator(username=entry['username'] or 'root', origin=origin)
+        auth_ctx.pam_hdl = ApiKeyPamAuthenticator(username=entry['username'] or 'root', origin=origin)
 
         resp = await self.middleware.call('auth.authenticate_plain',
                                           entry['username'],

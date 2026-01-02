@@ -499,6 +499,9 @@ class AuthService(Service):
         if not auth_ctx:
             raise CallError('Authentication context was not initialized')
 
+        if auth_ctx.pam_hdl:
+            raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
+
         auth_ctx.pam_hdl = TokenPamAuthenticator(username=token.credentials()['username'] or 'root', origin=origin)
         if token.single_use:
             self.token_manager.destroy(token)
