@@ -28,6 +28,7 @@ from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.plugins import LoadPluginsMixin
+from .utils.prctl import set_cmdline, set_name
 from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
@@ -65,7 +66,6 @@ import multiprocessing
 import os
 import pathlib
 import re
-import setproctitle
 import signal
 import sys
 import textwrap
@@ -1664,10 +1664,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         - Executes the provided single task and exits with its return code
         """
         self._console_write('starting')
-
-        set_thread_name('asyncio_loop')
         self.loop = asyncio.get_event_loop()
-
         if self.loop_debug:
             self.loop.set_debug(True)
             self.loop.slow_callback_duration = 0.2
@@ -1872,7 +1869,8 @@ def main():
         asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
         return
 
-    setproctitle.setproctitle('middlewared')
+    set_name('middlewared')
+    set_cmdline('middlewared')
 
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:

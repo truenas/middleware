@@ -1,8 +1,6 @@
 import asyncio
 import inspect
 import os
-import setproctitle
-
 from truenas_api_client import Client
 
 import middlewared.api
@@ -10,7 +8,7 @@ from . import logger
 from .common.environ import environ_update
 from .utils import MIDDLEWARE_RUN_DIR
 from .utils.plugins import LoadPluginsMixin
-from .utils.prctl import die_with_parent
+from .utils.prctl import die_with_parent, set_cmdline, set_name
 from .utils.service.call import MethodNotFoundError, ServiceCallMixin
 
 
@@ -139,7 +137,8 @@ def worker_init(debug_level, log_handler):
         'middlewared.plugins.zfs_',
     ])
     os.environ['MIDDLEWARED_LOADING'] = 'False'
-    setproctitle.setproctitle('middlewared (worker)')
+    set_name('mw-worker')
+    set_cmdline('mw-worker')
     die_with_parent()
     logger.setup_logging('worker', debug_level, log_handler)
     receive_events()

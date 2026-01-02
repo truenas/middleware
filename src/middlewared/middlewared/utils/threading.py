@@ -21,7 +21,17 @@ __all__ = [
 ]
 
 
-def set_thread_name(name):
+def set_thread_name(name: str) -> None:
+    """
+    Set the calling thread's comm name visible in `ps -e`, `top`, and `htop`.
+
+    This updates /proc/self/comm (or /proc/self/task/[tid]/comm for non-main threads).
+    The name is limited to 15 characters. For the main thread, this is also the
+    process name shown in process listings.
+
+    Note: This only sets the comm name, not cmdline. Threads share the process
+    cmdline and cannot have individual command lines.
+    """
     set_name(name)
 
 
