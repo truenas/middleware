@@ -10,13 +10,6 @@ __all__ = (
 )
 
 
-def _get_boot_time() -> float:
-    """Get system boot time in seconds since epoch."""
-    uptime_seconds = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
-    current_time = time.time()
-    return current_time - uptime_seconds
-
-
 def query_journal(match_args: list[str], since: str | None = None) -> list[dict]:
     """
     Query journalctl and return parsed JSON records.
@@ -38,6 +31,9 @@ def query_journal(match_args: list[str], since: str | None = None) -> list[dict]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     records = []
+    if result.returncode != 0:
+        return records
+
     for line in result.stdout.strip().split("\n"):
         if not line:
             continue
@@ -62,6 +58,10 @@ def format_journal_record(record: dict) -> str:
 
 def monotonic_to_realtime_since(monotonic_us: int) -> str:
     """Convert monotonic timestamp (microseconds) to --since string for journalctl."""
-    boot_time = _get_boot_time()
+    # We use CLOCK_MONOTONIC because journalctl's monotonic timestamps
+    # exclude sleep time, just like this clock.
+    uptime_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+    current_time_ns = time.time_ns()
+    boot_time = (current_time_ns - uptime_ns) / 1e9
     realtime_ts = boot_time + (monotonic_us / 1_000_000)
     return datetime.datetime.fromtimestamp(realtime_ts).strftime("%Y-%m-%d %H:%M:%S")
