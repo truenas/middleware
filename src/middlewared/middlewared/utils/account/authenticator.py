@@ -365,17 +365,16 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             # includes things like account expiration and access restrictions. Failure
             # here is considered an overall authentication failure, exact PAM response
             # depends on the PAM modules implementing pam_sm_acct_mgmt().
-            try:
-                self.ctx.acct_mgmt()
-            except PAMError as exc:
-                resp.code = exc.code
-                resp.reason = str(exc)
+            acct_resp = self.account_management()
 
-                if exc.code == PAMCode.PAM_AUTH_ERR:
-                    # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
-                    # If password is expired, convert to PAM_EXPIRED
-                    pam_messages = self.ctx.messages
-                    if any([msg.startswith('Your account has expired') for msg in pam_messages]):
+            if acct_resp.code != PAMCode.PAM_SUCCESS:
+                # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
+                # If password is expired, convert to PAM_EXPIRED
+                resp.code = acct_resp.code
+                resp.reason = acct_resp.reason
+                if acct_resp.code == PAMCode.PAM_AUTH_ERR:
+                    pam_messages = self.ctx.messages()
+                    if pam_messages and any([m.msg.startswith('Your account has expired') for m in pam_messages[-1]]):
                         resp.code = PAMCode.PAM_ACCT_EXPIRED
                         resp.reason = 'Account expired due to aging rules'
 

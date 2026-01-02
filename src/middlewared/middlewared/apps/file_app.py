@@ -126,9 +126,10 @@ async def authenticate(
     method: 'HttpVerb',
     resource: str
 ) -> SessionManagerCredentials:
+    origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
+
     match credentials['credentials']:
         case 'TOKEN':
-            origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
             # We are using the UnixPamAuthenticator here because we are generating a
             # fresh login based on the username in base token's credentials
             app.authentication_context.pam_hdl = UnixPamAuthenticator()
@@ -176,8 +177,7 @@ async def authenticate(
                     text='API key authentication is not permitted by server authentication security level'
                 )
 
-            app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
-            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
+            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], origin, app=app)
             if api_key is None:
                 raise web.HTTPUnauthorized(text='Invalid API key')
 

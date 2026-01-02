@@ -297,7 +297,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     """ Authentication from other HA node """
-    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
+    def login(self) -> TrueNASAuthenticatorResponse:
         return DEFAULT_LOGIN_SUCCESS
 
     def logout(self) -> TrueNASAuthenticatorResponse:

@@ -499,9 +499,7 @@ class AuthService(Service):
         if not auth_ctx:
             raise CallError('Authentication context was not initialized')
 
-        if not auth_ctx.pam_hdl:
-            raise CallError('Authenticator was not initialized')
-
+        auth_ctx.pam_hdl = TokenPamAuthenticator(username=token.credentials()['username'] or 'root', origin=origin)
         if token.single_use:
             self.token_manager.destroy(token)
         else:
@@ -510,6 +508,7 @@ class AuthService(Service):
                                 'at the current security level',
                                 errno.EOPNOTSUPP)
 
+        # We re-do the PAM authentication here to ensure that account is stil valid
         cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
         pam_resp = cred.pam_authenticate()
         if pam_resp.code != PAMCode.PAM_SUCCESS:

@@ -12,8 +12,10 @@ from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.account.authenticator import ApiKeyAuthenticator
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
+from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
@@ -335,14 +337,22 @@ class ApiKeyService(CRUDService):
 
     @private
     @pass_app(require=True)
-    async def authenticate(self, app, key: str) -> dict | None:
+    async def authenticate(self, app, key: str, origin: ConnectionOrigin) -> dict | None:
         """Wrapper around `auth.authenticate` for file upload endpoint."""
         try:
             key_id = int(key.split('-', 1)[0])
         except ValueError:
             return None
 
+
+        auth_ctx = app.authentication_context
+        if not auth_ctx:
+            raise CallError('Authentication context was not initialized')
+
         entry = await self.get_instance(key_id)
+
+        auth_ctx.pam_hdl = ApiKeyAuthenticator(username=entry['username'] or 'root', origin=origin)
+
         resp = await self.middleware.call('auth.authenticate_plain',
                                           entry['username'],
                                           key, app=app)
