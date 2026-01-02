@@ -3,6 +3,7 @@ import base64
 import collections
 import configparser
 import enum
+import itertools
 import json
 import logging
 import os
@@ -932,17 +933,31 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                 if decrypt_filenames:
                     if result:
                         decrypted_names = {}
-                        proc = await run((["rclone", "--config", config.config_path, "cryptdecode", "encrypted:"] +
-                                         [item["Name"] for item in result]),
-                                         check=False, encoding="utf8", errors="ignore")
-                        for line in proc.stdout.splitlines():
-                            try:
-                                encrypted, decrypted = line.rstrip("\r\n").split(" \t ", 1)
-                            except ValueError:
-                                continue
+                        # truenas_admin@prometheus[~]$ rclone cryptdecode --help
+                        # Returns unencrypted file names when provided with a list of encrypted file
+                        # names. List limit is 10 items
+                        for batch in itertools.batched([item["Name"] for item in result], 10):
+                            proc = await run(
+                                [
+                                    "rclone",
+                                    "--config",
+                                    config.config_path,
+                                    "cryptdecode",
+                                    "encrypted:",
+                                    *batch
+                                ],
+                                check=False,
+                                encoding="utf8",
+                                errors="ignore",
+                            )
+                            for line in proc.stdout.splitlines():
+                                try:
+                                    encrypted, decrypted = line.rstrip("\r\n").split(" \t ", 1)
+                                except ValueError:
+                                    continue
 
-                            if decrypted != "Failed to decrypt":
-                                decrypted_names[encrypted] = decrypted
+                                if decrypted != "Failed to decrypt":
+                                    decrypted_names[encrypted] = decrypted
 
                         for item in result:
                             if item["Name"] in decrypted_names:
