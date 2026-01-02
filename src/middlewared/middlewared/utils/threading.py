@@ -1,7 +1,6 @@
-from concurrent.futures import Executor, Future, ThreadPoolExecutor
-from itertools import count
+import concurrent.futures
+import itertools
 import logging
-import os
 import threading
 
 try:
@@ -13,7 +12,6 @@ from .prctl import set_name
 
 thread_local_storage = threading.local()
 logger = logging.getLogger(__name__)
-counter = count(1)
 __all__ = [
     "set_thread_name",
     "start_daemon_thread",
@@ -48,23 +46,30 @@ def start_daemon_thread(*args, **kwargs):
     return t
 
 
-class IoThreadPoolExecutor(Executor):
+class IoThreadPoolExecutor(concurrent.futures.Executor):
+    _cnt = itertools.count(1).__next__
+
     def __init__(self):
-        self.thread_count = (20 if ((os.cpu_count() or 1) + 4) < 32 else 32) + 1
-        self.executor = ThreadPoolExecutor(
-            self.thread_count,
-            "IoThread",
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            thread_name_prefix="IoThread",
             initializer=initializer,
             initargs=("IoThread", thread_local_storage),
         )
+        # py3.13+ fixed calculation of default workers
+        # so we just use whatever they use. NOTE: not
+        # best practice to depend on attribute of a class
+        # beginning with underscore since that's paradigm
+        # for being "private" and can change at any given
+        # time.
+        self.thread_count = self.executor._max_workers
 
     def submit(self, fn, *args, **kwargs):
         if len(self.executor._threads) == self.thread_count:
             if self.executor._idle_semaphore._value - 1 <= 1:
-                fut = Future()
+                fut = concurrent.futures.Future()
                 logger.trace("Calling %r in a single-use thread", fn)
                 start_daemon_thread(
-                    name=f"ExtraIoThread_{next(counter)}",
+                    name=f"ExtraIoThread_{self._cnt()}",
                     target=worker,
                     args=(fut, fn, thread_local_storage, args, kwargs),
                 )
