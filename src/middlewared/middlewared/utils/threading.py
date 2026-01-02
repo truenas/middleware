@@ -1,5 +1,5 @@
-from concurrent.futures import Executor, Future, ThreadPoolExecutor
-from itertools import count
+import concurrent.futures
+import itertools
 import logging
 import threading
 
@@ -12,7 +12,6 @@ from .prctl import set_name
 
 thread_local_storage = threading.local()
 logger = logging.getLogger(__name__)
-counter = count(1)
 __all__ = [
     "set_thread_name",
     "start_daemon_thread",
@@ -47,9 +46,11 @@ def start_daemon_thread(*args, **kwargs):
     return t
 
 
-class IoThreadPoolExecutor(Executor):
+class IoThreadPoolExecutor(concurrent.futures.Executor):
+    _cnt = itertools.counter(1).__next__
+
     def __init__(self):
-        self.executor = ThreadPoolExecutor(
+        self.executor = concurrent.futures.ThreadPoolExecutor(
             self.thread_count,
             "IoThread",
             initializer=initializer,
@@ -66,10 +67,10 @@ class IoThreadPoolExecutor(Executor):
     def submit(self, fn, *args, **kwargs):
         if len(self.executor._threads) == self.thread_count:
             if self.executor._idle_semaphore._value - 1 <= 1:
-                fut = Future()
+                fut = concurrent.futures.Future()
                 logger.trace("Calling %r in a single-use thread", fn)
                 start_daemon_thread(
-                    name=f"ExtraIoThread_{next(counter)}",
+                    name=f"ExtraIoThread_{self._cnt()}",
                     target=worker,
                     args=(fut, fn, thread_local_storage, args, kwargs),
                 )
