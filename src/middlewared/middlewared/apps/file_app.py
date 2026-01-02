@@ -132,7 +132,6 @@ async def authenticate(
         case 'TOKEN':
             # We are using the UnixPamAuthenticator here because we are generating a
             # fresh login based on the username in base token's credentials
-            app.authentication_context.pam_hdl = UnixPamAuthenticator()
             try:
                 token = await middleware.call(
                     'auth.get_token_for_action',
@@ -155,7 +154,10 @@ async def authenticate(
             if twofactor_auth['enabled']:
                 raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-            app.authentication_context.pam_hdl = UserPamAuthenticator()
+            app.authentication_context.pam_hdl = UserPamAuthenticator(
+                username=credentials['credentials_data']['username'],
+                origin=origin
+            )
             resp = await middleware.call(
                 'auth.authenticate_plain',
                 credentials['credentials_data']['username'],
