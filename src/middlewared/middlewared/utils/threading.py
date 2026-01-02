@@ -1,7 +1,6 @@
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from itertools import count
 import logging
-import os
 import threading
 
 try:
@@ -50,13 +49,19 @@ def start_daemon_thread(*args, **kwargs):
 
 class IoThreadPoolExecutor(Executor):
     def __init__(self):
-        self.thread_count = (20 if ((os.cpu_count() or 1) + 4) < 32 else 32) + 1
         self.executor = ThreadPoolExecutor(
             self.thread_count,
             "IoThread",
             initializer=initializer,
             initargs=("IoThread", thread_local_storage),
         )
+        # py3.13+ fixed calculation of default workers
+        # so we just use whatever they use. NOTE: not
+        # best practice to depend on attribute of a class
+        # beginning with underscore since that's paradigm
+        # for being "private" and can change at any given
+        # time.
+        self.thread_count = self.executor._max_workers
 
     def submit(self, fn, *args, **kwargs):
         if len(self.executor._threads) == self.thread_count:
