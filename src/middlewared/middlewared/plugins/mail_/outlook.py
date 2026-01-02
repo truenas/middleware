@@ -1,6 +1,6 @@
 import base64
 import dataclasses
-import smptlib
+import smtplib
 import time
 
 from middlewared.service import CallError, private, Service
@@ -17,7 +17,7 @@ class MailService(Service):
     outlook_tokens: dict[str, OutlookToken] = {}
 
     @private
-    def outlook_xoauth2(self, server: smptlib.SMTP, config: dict):
+    def outlook_xoauth2(self, server: smtplib.SMTP, config: dict):
         server.ehlo()
 
         if token := self._get_outlook_token(config["fromemail"], config["oauth"]["refresh_token"]):
@@ -55,6 +55,6 @@ class MailService(Service):
     def _set_outlook_token(self, email: str, refresh_token: str, token: str, expires_in: int):
         self.outlook_tokens[email + refresh_token] = OutlookToken(token, time.monotonic() + expires_in)
 
-    def _do_xoauth2(self, server: smptlib.SMTP, email: str, access_token: str):
+    def _do_xoauth2(self, server: smtplib.SMTP, email: str, access_token: str):
         auth_string = f"user={email}\1auth=Bearer {access_token}\1\1"
         return server.docmd("AUTH XOAUTH2", base64.b64encode(auth_string.encode()).decode())
