@@ -1432,10 +1432,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for handler in self.__event_subs.get(name, []):
             asyncio.run_coroutine_threadsafe(wrap(handler), loop=self.loop)
 
-    def pdb(self):
-        import pdb
-        pdb.set_trace()
-
     def log_threads_stacks(self):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
@@ -1734,7 +1730,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         self.loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.loop.add_signal_handler(signal.SIGTERM, self.terminate)
-        self.loop.add_signal_handler(signal.SIGUSR1, self.pdb)
         self.loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
         for version, api in apis.items():
