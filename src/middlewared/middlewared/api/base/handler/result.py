@@ -1,6 +1,7 @@
 import logging
 
 from middlewared.api.base import BaseModel
+from middlewared.api.base.model import ensure_model_ready
 from middlewared.service_exception import ValidationErrors
 from .remove_secrets import remove_secrets
 
@@ -19,6 +20,7 @@ def serialize_result(model: type[BaseModel], result, expose_secrets: bool, allow
     :param allow_fallback: if false, a serialization error will raise an exception.
     :return: serialized method execution result.
     """
+    ensure_model_ready(model)
     try:
         return model(result=result).model_dump(
             context={"expose_secrets": expose_secrets},

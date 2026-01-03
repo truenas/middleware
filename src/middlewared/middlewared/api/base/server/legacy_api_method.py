@@ -3,6 +3,7 @@ from typing import Any, TYPE_CHECKING
 from middlewared.api.base.handler.accept import model_dict_from_list
 from middlewared.api.base.handler.dump_params import dump_params
 from middlewared.api.base.handler.version import APIVersionsAdapter, APIVersionDoesNotContainModelException
+from middlewared.api.base.model import ensure_model_ready
 from middlewared.api.base.server.method import Method
 from middlewared.utils.service.call import MethodNotFoundError
 from middlewared.utils.service.crud import real_crud_method
@@ -83,6 +84,7 @@ class LegacyAPIMethod(Method):
             self.adapter.current_version,
         )
 
+        ensure_model_ready(self.current_accepts_model)
         return [adapted_params_dict[field] for field in self.current_accepts_model.model_fields]
 
     async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):

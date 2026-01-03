@@ -4,7 +4,7 @@ import errno
 
 from pydantic_core import ValidationError
 
-from middlewared.api.base.model import BaseModel
+from middlewared.api.base.model import BaseModel, ensure_model_ready
 from middlewared.service_exception import ValidationErrors
 
 
@@ -22,6 +22,7 @@ def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, ex
     :param expose_secrets: if false, will replace `Secret` parameters with a placeholder.
     :return: a validated list of method args.
     """
+    ensure_model_ready(model)
     args_as_dict = model_dict_from_list(model, args)
 
     dump = validate_model(model, args_as_dict, exclude_unset=exclude_unset, expose_secrets=expose_secrets)
@@ -46,6 +47,7 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
     :param args: a list of method args.
     :return: a dictionary of method args.
     """
+    ensure_model_ready(model)
     if len(args) > len(model.model_fields):
         verrors = ValidationErrors()
         verrors.add("", f"Too many arguments (expected {len(model.model_fields)}, found {len(args)})", errno.EINVAL)
@@ -69,6 +71,7 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
     :param expose_secrets: if false, will replace `Secret` fields with a placeholder.
     :return: validated data.
     """
+    ensure_model_ready(model)
     try:
         instance = model(**data)
     except ValidationError as e:
