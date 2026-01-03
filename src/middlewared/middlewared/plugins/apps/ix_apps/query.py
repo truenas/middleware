@@ -151,7 +151,9 @@ def list_apps(
                     continue
 
                 app_metadata = metadata[entry.name]
-                upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
+                upgrade_available, latest_version = upgrade_available_for_app(
+                    train_to_apps_version_mapping, app_metadata
+                )
                 app_data = {
                     'name': entry.name,
                     'id': entry.name,
