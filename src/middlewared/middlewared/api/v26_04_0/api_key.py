@@ -31,8 +31,14 @@ class ApiKeyEntry(BaseModel):
     """Username associated with the API key or `null` for system keys."""
     user_identifier: int | str
     """User ID (numeric) or SID (string) that owns this API key."""
-    keyhash: Secret[str]
-    """Hashed representation of the API key (masked for security)."""
+    iterations: int
+    """Number of iterations of PBKDF2-SHA512."""
+    salt: Secret[str]
+    """Base64 encoded salt for API key."""
+    stored_key: Secret[str]
+    """SCRAM StoredKey for API key."""
+    server_key: Secret[str]
+    """SCRAM ServerKey for API key."""
     created_at: datetime
     """Timestamp when the API key was created."""
     expires_at: datetime | None = None
@@ -48,13 +54,18 @@ class ApiKeyEntry(BaseModel):
 class ApiKeyEntryWithKey(ApiKeyEntry):
     key: str
     """The actual API key value (only returned on creation)."""
+    client_key: str
+    """Pre-computed SCRAM ClientKey."""
 
 
 class ApiKeyCreate(ApiKeyEntry):
     id: Excluded = excluded_field()
     username: LocalUsername | RemoteUsername
     user_identifier: Excluded = excluded_field()
-    keyhash: Excluded = excluded_field()
+    salt: Excluded = excluded_field()
+    stored_key: Excluded = excluded_field()
+    server_key: Excluded = excluded_field()
+    iterations: Excluded = excluded_field()
     created_at: Excluded = excluded_field()
     local: Excluded = excluded_field()
     revoked: Excluded = excluded_field()
