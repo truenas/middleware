@@ -34,8 +34,8 @@ def test_dot_notation_conversion(dot_notation, expected):
     ([['foo.bar', '=', 'canary']], [['$.foo.bar', '=', 'canary']]),
     ([['foo', '=', 'canary']], [['foo', '=', 'canary']]),
     (
-        [["OR", [[['foo', '=', 'canary']], [['foo.bar', '=', 'canary']]]]],
-        [["OR", [[['foo', '=', 'canary']], [['$.foo.bar', '=', 'canary']]]]],
+        [["OR", [['foo', '=', 'canary'], ['foo.bar', '=', 'canary']]]],
+        [["OR", [['foo', '=', 'canary'], ['$.foo.bar', '=', 'canary']]]],
     ),
 
     # Array index bracket notation in filters - NEW
@@ -49,8 +49,8 @@ def test_dot_notation_conversion(dot_notation, expected):
     ),
     # Array index in OR filters
     (
-        [["OR", [[['event_data.params[0].id', '=', 1]], [['event_data.params[0].id', '=', 2]]]]],
-        [["OR", [[['$.event_data.params[0].id', '=', 1]], [['$.event_data.params[0].id', '=', 2]]]]]
+        [["OR", [['event_data.params[0].id', '=', 1], ['event_data.params[0].id', '=', 2]]]],
+        [["OR", [['$.event_data.params[0].id', '=', 1], ['$.event_data.params[0].id', '=', 2]]]]
     ),
     # Multiple array indexes
     (
