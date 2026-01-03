@@ -159,7 +159,7 @@ class TrueSearchService(Service):
             self.RECONFIGURE_TIMER.cancel()
 
         enabled = await self.enabled()
-        running = (await self.middleware.call('service.get_state', 'truesearch')).running
+        running = await self.middleware.call('service.started', 'truesearch')
 
         if enabled and running:
             await (await self.middleware.call('service.control', 'RELOAD', 'truesearch')).wait(raise_error=True)
