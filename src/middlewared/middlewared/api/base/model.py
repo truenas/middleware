@@ -1,6 +1,6 @@
 import inspect
 from types import NoneType
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import Annotated, Any, Self, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Secret, create_model, Field, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
@@ -221,6 +221,23 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         :return: value of the same model in the preceding API version.
         """
         return value
+
+    def updated(self, value: "BaseModel") -> Self:
+        """
+        Returns an updated version of this model using All the fields that are present in the `value` model and are not
+        `undefined`.
+        :param value: model to update from.
+        :return: updated version of this model.
+        """
+        update = {}
+        for field in value.model_fields.keys():
+            field_value = getattr(value, field)
+            if field_value is undefined:
+                continue
+
+            update[field] = field_value
+
+        return self.model_copy(update=update)
 
 
 def single_argument_args(name: str):
