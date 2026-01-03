@@ -15,12 +15,38 @@ def test_dot_notation_conversion(dot_notation, expected):
     ([['foo.bar', '=', 'canary']], [['$.foo.bar', '=', 'canary']]),
     ([['foo', '=', 'canary']], [['foo', '=', 'canary']]),
     (
-        [["OR", [[['foo', '=', 'canary']], [['foo.bar', '=', 'canary']]]]],
-        [["OR", [[['foo', '=', 'canary']], [['$.foo.bar', '=', 'canary']]]]],
+        [['foo', '=', 'canary'], ['foo.bar', '=', 'canary']],
+        [['foo', '=', 'canary'], ['$.foo.bar', '=', 'canary']],
+    ),
+    (
+        [["OR", [['foo', '=', 'canary'], ['foo.bar', '=', 'canary']]]],
+        [["OR", [['foo', '=', 'canary'], ['$.foo.bar', '=', 'canary']]]],
+    ),
+    (
+        [["OR", [['foo', '=', 'canary'], ['foo.bar', '=', 'canary'], ['foo.bar', '=', 'finch']]]],
+        [["OR", [['foo', '=', 'canary'], ['$.foo.bar', '=', 'canary'], ['$.foo.bar', '=', 'finch']]]],
+    ),
+    (
+        [
+            ['pk', '=', 'primary_key'],
+            ["OR", [['foo', '=', 'canary'], ['foo.bar', '=', 'canary'], ['foo.bar', '=', 'finch']]]
+        ],
+        [
+            ['pk', '=', 'primary_key'],
+            ["OR", [['foo', '=', 'canary'], ['$.foo.bar', '=', 'canary'], ['$.foo.bar', '=', 'finch']]]
+        ],
     ),
 ])
 def test_filters_json_path_parse(filters_in, filters_out):
-     assert jsonpath.query_filters_json_path_parse(filters_in) == filters_out
+    assert jsonpath.query_filters_json_path_parse(filters_in) == filters_out
+
+
+@pytest.mark.parametrize('filters_in', [
+    ([["OR", [['foo', '=', 'canary']], [['foo', '=', 'finch']]]])
+])
+def test_filters_json_path_parse_failures(filters_in):
+    with pytest.raises(ValueError, match='invalid filter format'):
+        jsonpath.query_filters_json_path_parse(filters_in)
 
 
 @pytest.mark.parametrize('json_path,expected', [

@@ -65,10 +65,12 @@ def query_filters_json_path_parse(filters_in: list) -> list:
     for f in filters_in:
         if len(f) == FL_LEN_OR:
             # format: ["OR", [<filter>, <filter>, ...]]
+            # Each branch in the OR list must be a single filter: ['field', 'op', 'value']
             or_filter = []
             for branch in f[FL_OFFSET_OR_DATA]:
-                new_filter = query_filters_json_path_parse(branch)
-                or_filter.append(new_filter)
+                # Branch is a single filter - wrap, process, unwrap
+                new_filter = query_filters_json_path_parse([branch])
+                or_filter.append(new_filter[0])
 
             out.append(['OR', or_filter])
             continue
@@ -77,10 +79,13 @@ def query_filters_json_path_parse(filters_in: list) -> list:
             raise ValueError(f'{f}: invalid filter format')
 
         # format: [<left field>, <operator>, <right field>]
-        new_filter = f.copy()
-        op = f[FL_OFFSET_OP]
-        field_offset = FL_OFFSET_R if op.startswith('r') else FL_OFFSET_L
-        to_convert = f[field_offset]
+        try:
+            new_filter = f.copy()
+            op = f[FL_OFFSET_OP]
+            field_offset = FL_OFFSET_R if op.startswith('r') else FL_OFFSET_L
+            to_convert = f[field_offset]
+        except (ValueError, AttributeError):
+            raise ValueError(f"{f}: invalid filter format")
 
         if isinstance(to_convert, str):
             new_filter[field_offset] = dot_notation_to_json_path(to_convert)
