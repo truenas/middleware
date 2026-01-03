@@ -16,7 +16,16 @@ from middlewared.utils.lang import undefined
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
-           "NotRequired", "model_subset"]
+           "NotRequired", "model_subset", "ensure_model_ready"]
+
+
+def ensure_model_ready(model: type["BaseModel"]) -> None:
+    """
+    Ensures a Pydantic model is ready for use by rebuilding it if defer_build was used.
+    This should be called before first use of a model for validation or serialization.
+    """
+    if model is not None and not model.__pydantic_complete__:
+        model.model_rebuild()
 
 
 class _NotRequired:...
@@ -178,6 +187,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         str_max_length=1024,
         use_attribute_docstrings=True,
         arbitrary_types_allowed=True,
+        defer_build=True,
     )
 
     @classmethod
