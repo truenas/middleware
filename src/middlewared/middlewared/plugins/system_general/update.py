@@ -61,10 +61,7 @@ class SystemGeneralService(ConfigService):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
-        if data['ui_certificate']:
-            data['ui_certificate'] = await self.middleware.call(
-                'certificate.get_instance', data['ui_certificate']['id']
-            )
+        data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
