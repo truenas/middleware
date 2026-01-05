@@ -82,7 +82,9 @@ def query_filters_json_path_parse(filters_in: list) -> list:
         try:
             new_filter = f.copy()
             op = f[FL_OFFSET_OP]
-            field_offset = FL_OFFSET_R if op.startswith('r') else FL_OFFSET_L
+            # Handle reverse operators (those starting with r except rin)
+            # rin is "reverse in" but used as contains, so treat it as normal operator
+            field_offset = FL_OFFSET_R if (op.startswith('r') and op != 'rin') else FL_OFFSET_L
             to_convert = f[field_offset]
         except (ValueError, AttributeError):
             raise ValueError(f"{f}: invalid filter format")
