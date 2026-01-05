@@ -73,8 +73,8 @@ class CertificateService(CRUDService):
                 # We have added an explicit check here to account for users who already
                 # were using TNC and had it configured for UI already as nginx would fail to
                 # configure SSL otherwise for them if we fail it here
-                ui_cert = (await self.middleware.call('system.general.config'))['ui_certificate']
-                if not ui_cert or (ui_cert and ui_cert['id'] != id_):
+                ui_cert_id = (await self.middleware.call('system.general.config'))['ui_certificate']
+                if not ui_cert_id or ui_cert_id != id_:
                     verrors.add(
                         schema_name,
                         f'Certificate "{cert["name"]}" is reserved for TrueNAS Connect service '

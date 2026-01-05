@@ -18,7 +18,9 @@ class CertificateService(Service):
             # So on master event, we will try to renew certs
             return
 
-        system_cert = self.middleware.call_sync('system.general.config')['ui_certificate']
+        if system_cert := self.middleware.call_sync('system.general.config')['ui_certificate']:
+            system_cert = self.middleware.call_sync('certificate.get_instance', system_cert)
+
         tnc_config = self.middleware.call_sync('tn_connect.config')
         if system_cert and (
             all(
