@@ -148,19 +148,3 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             'alerts': await self.middleware.call('alert.list'),
             'stats': stats,
         }
-
-
-async def check_status(middleware):
-    tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] in CONFIGURED_TNC_STATES:
-        middleware.create_task(middleware.call('tn_connect.heartbeat.start'))
-
-
-async def _event_system_ready(middleware, event_type, args):
-    await check_status(middleware)
-
-
-async def setup(middleware):
-    middleware.event_subscribe('system.ready', _event_system_ready)
-    if await middleware.call('system.ready'):
-        await check_status(middleware)
