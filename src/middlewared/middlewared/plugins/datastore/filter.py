@@ -59,6 +59,7 @@ class FilterMixin(SchemaMixin):
             'nin': nin,
             '^': lambda col, value: col.startswith(value),
             '$': lambda col, value: col.endswith(value),
+            'rin': lambda col, value: col.contains(value),
         }
 
         rv = []
