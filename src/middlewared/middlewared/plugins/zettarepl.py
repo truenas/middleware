@@ -9,7 +9,6 @@ import os
 import pytz
 import queue
 import re
-import setproctitle
 import signal
 import socket
 import threading
@@ -47,7 +46,7 @@ from middlewared.logger import setup_logging
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.cgroups import move_to_root_cgroups
-from middlewared.utils.prctl import die_with_parent
+from middlewared.utils.prctl import die_with_parent, set_cmdline, set_name
 from middlewared.utils.size import format_size
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
@@ -149,7 +148,8 @@ class ZettareplProcess:
 
     def __call__(self):
         try:
-            setproctitle.setproctitle('middlewared (zettarepl)')
+            set_name('mw-zettarepl')
+            set_cmdline('mw-zettarepl')
             die_with_parent()
             move_to_root_cgroups(os.getpid())
             if logging.getLevelName(self.debug_level) == logging.TRACE:
