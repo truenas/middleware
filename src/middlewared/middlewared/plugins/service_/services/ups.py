@@ -22,8 +22,12 @@ class UPSService(SimpleService):
         await self._unit_action("Start")
 
     async def after_start(self):
+        # Restart netdata to pick up UPS config changes
+        await (await self.middleware.call('service.control', 'RESTART', 'netdata')).wait(raise_error=True)
         # Reconfigure mdns (add nut service)
-        await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
+        await (
+            await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})
+        ).wait(raise_error=True)
 
     async def before_stop(self):
         await self.middleware.call("ups.dismiss_alerts")
@@ -36,4 +40,6 @@ class UPSService(SimpleService):
 
     async def after_stop(self):
         # Reconfigure mdns (remove nut service)
-        await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
+        await (
+            await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})
+        ).wait(raise_error=True)
