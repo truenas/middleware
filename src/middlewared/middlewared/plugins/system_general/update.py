@@ -61,7 +61,10 @@ class SystemGeneralService(ConfigService):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
-        data['ui_certificate'] = data['ui_certificate']['id'] if data['ui_certificate'] else None
+        if data['ui_certificate']:
+            data['ui_certificate'] = data['ui_certificate']['id']
+        else:
+            data['ui_certificate'] = None
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
