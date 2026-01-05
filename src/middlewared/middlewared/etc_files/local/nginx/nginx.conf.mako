@@ -32,7 +32,9 @@
 
 
     general_settings = middleware.call_sync('system.general.config')
-    cert = general_settings['ui_certificate']
+    # We use query instead of get_instance to be just safer here as we definitely don't want nginx rendering to fail 
+    cert = middleware.call_sync('certificate.query', [["id", "=", general_settings['ui_certificate']]]) if general_settings['ui_certificate'] else None
+    cert = cert[0] if cert else None
     dhparams_file = middleware.call_sync('certificate.dhparam')
     x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
