@@ -56,10 +56,16 @@ def pylibvirt_domain_state(
     libvirt_domain,
     domain: BaseDomain,
 ):
+    domain_state = connection.domain_state(libvirt_domain).value
+    if libvirt_domain.isActive():
+        state = 'SUSPENDED' if domain_state == 'PAUSED' else 'RUNNING'
+    else:
+        state = 'STOPPED'
+
     return {
-        'state': 'RUNNING' if libvirt_domain.isActive() else 'STOPPED',
+        'state': state,
         'pid': domain.pid(),
-        'domain_state': connection.domain_state(libvirt_domain).value,
+        'domain_state': domain_state,
     }
 
 
