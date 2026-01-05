@@ -544,8 +544,8 @@ class UnixPamAuthenticator(InternalPamAuthenticator):
 
 
 class TokenPamAuthenticator(InternalPamAuthenticator):
-    def __init__(self, *, origin: ConnectionOrigin):
+    def __init__(self, *, username: str, origin: ConnectionOrigin):
         # Tokens have an unusual authenticator flow that's inside the TokenSessionManagerCredentials
         # object. So we'll initially set them up for a totally unprivileged user and then
         # rely on the subsequent authenticate call to handle the rest.
-        super().__init__(username='nobody', origin=origin)
+        super().__init__(username=username, origin=origin)
