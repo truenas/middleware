@@ -69,16 +69,38 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         return config
 
     @private
+    async def ha_vips(self):
+        vips = []
+        for interface in await self.middleware.call('interface.query'):
+            for vip_entry in interface.get('failover_virtual_aliases', []):
+                vips.append(vip_entry['address'])
+        return vips
+
+    @private
     async def validate_data(self, old_config, data):
         verrors = ValidationErrors()
-
-        # Ensure at least one interface or at least one IP is provided (unless use_all_interfaces is True)
-        if data['enabled'] and not data['ips'] and not data['interfaces'] and not data['use_all_interfaces']:
-            verrors.add(
-                'tn_connect_update',
-                'At least one IP or interface must be provided when TrueNAS Connect is enabled '
-                '(or use_all_interfaces must be set to true)'
-            )
+        if data['enabled']:
+            if await self.middleware.call('system.is_ha_capable'):
+                # In case of HA, we want to ensure following:
+                # 1) We have VIP available
+                # 2) User has not specified interfaces/use all interfaces
+                if not await self.ha_vips():
+                    verrors.add(
+                        'tn_connect_update.enabled',
+                        'HA systems must be in a healthy state to enable TNC ensuring we have VIP available'
+                    )
+                for k in filter(lambda k: data[k], ('interfaces', 'use_all_interfaces')):
+                    verrors.add(
+                        f'tn_connect_update.{k}',
+                        'Must be unset on HA systems'
+                    )
+            elif not data['ips'] and not data['interfaces'] and not data['use_all_interfaces']:
+                # Ensure at least one interface or at least one IP is provided (unless use_all_interfaces is True)
+                verrors.add(
+                    'tn_connect_update',
+                    'At least one IP or interface must be provided when TrueNAS Connect is enabled '
+                    '(or use_all_interfaces must be set to true)'
+                )
 
         data['ips'] = [str(ip) for ip in data['ips']]
 
