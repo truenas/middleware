@@ -595,7 +595,7 @@ class TestTNCInterfacesUpdate:
         await tnc_service.do_update(data)
 
         # Verify hostname.register_update_ips was called with combined IPs
-        register_call = tnc_service.middleware.call.call_args_list[4]  # Updated index after system.is_ha_capable + cache.pop
+        register_call = tnc_service.middleware.call.call_args_list[4]
         assert register_call[0][0] == 'tn_connect.hostname.register_update_ips'
         combined_ips = register_call[0][1]
         assert set(combined_ips) == {'192.168.1.100', '10.0.0.10'}
