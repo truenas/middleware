@@ -277,7 +277,7 @@ class CoreBulkArgs(BaseModel):
 class CoreBulkResultItem(BaseModel):
     job_id: int | None
     """Job ID for this bulk operation item or `null` if it failed to start."""
-    error: str | None
+    error: LongString | None
     """Error message if this item failed or `null` on success."""
     result: Any
     """Result data returned by this bulk operation item."""
