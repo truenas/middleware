@@ -19,6 +19,7 @@ class CertificateService(Service):
             return
 
         system_cert = self.middleware.call_sync('system.general.config')['ui_certificate']
+        system_cert_ids = []
         tnc_config = self.middleware.call_sync('tn_connect.config')
         if system_cert and (
             all(
@@ -29,11 +30,18 @@ class CertificateService(Service):
                 )
             ) or tnc_config['certificate'] == system_cert['id']
         ):
+            system_cert_ids.append(system_cert['id'])
+
+        if tnc_config['certificate'] and (not system_cert or tnc_config['certificate'] != system_cert['id']):
+            system_cert_ids.append(tnc_config['certificate'])
+
+        if system_cert_ids:
             filters = [(
-                'OR', (('acme', '!=', None), ('id', '=', system_cert['id']))
+                'OR', (('acme', '!=', None), ('id', 'in', system_cert_ids))
             )]
         else:
             filters = [('acme', '!=', None)]
+
         certs = self.middleware.call_sync('certificate.query', filters)
 
         progress = 0
