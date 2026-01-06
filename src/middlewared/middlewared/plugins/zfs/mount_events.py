@@ -1,14 +1,9 @@
 import select
 import time
+import truenas_os
 
-from middlewared.utils.mount import __mntent_dict
+from middlewared.utils.mount import __statmount_dict
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
-
-
-def parse_zfs_mountline(line: str, mounts: dict) -> None:
-    mount = __mntent_dict(line)
-    if mount['fs_type'] == 'zfs' and '@' not in mount['mount_source']:
-        mounts[mount['mountpoint']] = mount
 
 
 def mount_events_process(middleware):
@@ -16,10 +11,8 @@ def mount_events_process(middleware):
     while True:
         try:
             with open('/proc/self/mountinfo', 'r') as f:
-                prev = dict()
-                for line in f:
-                    parse_zfs_mountline(line, prev)
-
+                # listmount() returns a list of mount ids
+                prev = set(truenas_os.listmount())
                 poller = select.poll()
                 poller.register(f, select.POLLERR | select.POLLPRI)
 
@@ -27,15 +20,11 @@ def mount_events_process(middleware):
                     # Block until the kernel signals a mount table change
                     poller.poll()  # returns on mount/umount/propagation/etc.
 
-                    # Rewind and read new snapshot
-                    f.seek(0)
-
-                    cur = dict()
-                    for line in f:
-                        parse_zfs_mountline(line, cur)
-
-                    for mountpoint, mount in cur.items():
-                        if mountpoint not in prev:
+                    cur = set(truenas_os.listmount())
+                    for new in (cur - prev):
+                        sm = truenas_os.statmount(new, mask=truenas_os.STATMOUNT_ALL)
+                        if sm.fs_type == 'zfs' and '@' not in sm.sb_source:
+                            mount = __statmount_dict(sm)
                             middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
 
                     prev = cur

@@ -39,7 +39,7 @@ from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
 from middlewared.utils.filesystem.utils import timespec_convert_float
-from middlewared.utils.mount import getmntinfo
+from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
@@ -207,21 +207,7 @@ class FilesystemService(Service):
 
     @filterable_api_method(private=True)
     def mount_info(self, filters, options):
-        retries = 1
-        for i in range(retries):
-            try:
-                # getmntinfo() may be weird sometimes i.e check NAS-135584 where we might have a malformed line
-                # in mountinfo
-                mntinfo = getmntinfo()
-            except Exception as e:
-                if i >= retries:
-                    raise CallError(f'Unable to retrieve mount information: {e}')
-
-                time.sleep(0.25)
-            else:
-                break
-
-        return filter_list(list(mntinfo.values()), filters, options)
+        return filter_list(iter_mountinfo(), filters, options)
 
     @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
     def mkdir(self, data):
@@ -569,14 +555,13 @@ class FilesystemService(Service):
             fd = os.open(path, os.O_PATH)
             try:
                 st = os.fstatvfs(fd)
-                mntid = stat_x.statx('', dir_fd=fd, flags=stat_x.ATFlags.EMPTY_PATH.value).stx_mnt_id
+                mntinfo = statmount(fd=fd)
             finally:
                 os.close(fd)
 
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        mntinfo = getmntinfo(mnt_id=mntid)[mntid]
         flags = mntinfo['mount_opts']
         for flag in mntinfo['super_opts']:
             if flag in flags:

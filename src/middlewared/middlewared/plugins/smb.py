@@ -47,7 +47,7 @@ from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SI
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from middlewared.utils.mount import getmnttree
+from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
@@ -1144,7 +1144,7 @@ class SharingSMBService(SharingService):
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
-        this_mnt = getmnttree(st['mount_id'])
+        this_mnt = statmount(path=path)
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fs_type"]}: path is not a ZFS dataset')
 
@@ -1161,7 +1161,7 @@ class SharingSMBService(SharingService):
 
         current_acltype = get_acl_type(this_mnt['super_opts'])
 
-        for child in this_mnt['children']:
+        for child in iter_mountinfo(target_mnt_id=this_mnt['mount_id']):
             # The child filesystem may or may not be mounted under the SMB share. Two relevant
             # cases:
             #
