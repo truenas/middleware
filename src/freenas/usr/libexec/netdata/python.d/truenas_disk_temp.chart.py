@@ -1,11 +1,11 @@
-from bases.FrameworkServices.SimpleService import SimpleService
+from bases.FrameworkServices.TNSimpleService import TNService
 
 from middlewared.utils.disks_.disk_class import iterate_disks
 
 
-class Service(SimpleService):
+class Service(TNService):
     def __init__(self, configuration=None, name=None):
-        SimpleService.__init__(self, configuration=configuration, name=name)
+        TNService.__init__(self, configuration=configuration, name=name)
         self.update_every = 300
         self.disks = set()
 
