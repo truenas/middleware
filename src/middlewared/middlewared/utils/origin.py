@@ -63,10 +63,10 @@ class ConnectionOrigin:
                     gid=gid,
                 )
             elif sock.family in (AF_INET, AF_INET6):
-                la, lp, ra, rp, ssl = get_tcp_ip_info(sock, request)
+                fam, la, lp, ra, rp, ssl = get_tcp_ip_info(sock, request)
 
                 return cls(
-                    family=sock.family,
+                    family=fam,
                     loc_addr=la,
                     loc_port=lp,
                     rem_addr=ra,
@@ -215,11 +215,11 @@ def get_tcp_ip_info(sock, request) -> tuple:
             if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
                 if check_uids:
                     if i['idiag_uid'] in UIDS_TO_CHECK:
-                        return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+                        return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
                 else:
-                    return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+                    return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
 
-    return None, None, None, None, None
+    return None, None, None, None, None, None
 
 
 def is_external_call(app):
