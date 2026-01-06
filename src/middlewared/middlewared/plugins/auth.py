@@ -847,6 +847,7 @@ class AuthService(Service):
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
                     auth_ctx.next_mech = AuthMech.OTP_TOKEN
+                    auth_ctx.auth_data = {'user': resp['user_data']}
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
                         'username': data['username']
