@@ -196,7 +196,6 @@ class SystemGeneralService(ConfigService):
         )
 
         config = await self.config()
-        config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('usage_collection_is_set'):
             config['usage_collection'] = None
         new_config = config.copy()
