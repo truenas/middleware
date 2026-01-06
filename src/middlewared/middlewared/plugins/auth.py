@@ -1076,7 +1076,13 @@ class AuthService(Service):
                     return response
 
                 # Use the AF_UNIX style authenticator with username from base auth
-                auth_ctx.pam_hdl = TokenPamAuthenticator(origin=app.origin)
+                cred = token.root_credentials()
+                if cred.is_user_session:
+                    username = cred.dump()['username']
+                else:
+                    username = 'root'
+
+                auth_ctx.pam_hdl = TokenPamAuthenticator(username=username, origin=app.origin)
 
                 cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
                 pam_resp = await self.middleware.run_in_thread(cred.pam_authenticate)
