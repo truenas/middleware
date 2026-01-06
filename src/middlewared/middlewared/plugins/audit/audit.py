@@ -131,6 +131,21 @@ class AuditService(ConfigService):
 
         return data
 
+    @private
+    def remove_duplicates(result_to_dedup: list[dict]):
+        # Eliminate duplicates, e.g. init calls, and retain ordering
+        seen = set()
+        unique_result = []
+        for d in result_to_dedup:
+            # Convert the dictionary to a frozenset of items to make it hashable
+            # Sorting the items ensures {'a': 1, 'b': 2} is the same as {'b': 2, 'a': 1}
+            hashable_dict = frozenset(d.items())
+            if hashable_dict not in seen:
+                unique_result.append(d)
+                seen.add(hashable_dict)
+
+        return unique_result
+
     @api_method(AuditQueryArgs, AuditQueryResult)
     async def query(self, data):
         """
@@ -197,7 +212,13 @@ class AuditService(ConfigService):
         # Validate and possibly reduce filters being passed to backend
         filters = parse_query_filters(data['query-filters'])
         options = parse_query_options(data['query-options'])
-        return await self.middleware.call('auditbackend.query', data['services'][0], filters, options)
+        result = await self.middleware.call('auditbackend.query', data['services'][0], filters, options)
+
+        # Apply deduplication if requested
+        if data['query-options'].get('extra', {}).get('dedup'):
+            result = self.remove_duplicates(result)
+
+        return result
 
     @api_method(AuditExportArgs, AuditExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
     @job()
