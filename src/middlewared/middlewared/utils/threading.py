@@ -1,3 +1,4 @@
+import asyncio
 import concurrent.futures
 import itertools
 import logging
@@ -15,10 +16,31 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "set_thread_name",
     "start_daemon_thread",
+    "run_coro_threadsafe",
     "IoThreadPoolExecutor",
     "io_thread_pool_executor",
     "thread_local_storage",
 ]
+
+
+def _discard_future_exception(fut):
+    """Callback to prevent 'Future exception was never retrieved' warnings."""
+    if not fut.cancelled():
+        fut.exception()
+
+
+def run_coro_threadsafe(coro, loop):
+    """
+    Schedule a coroutine from a non-async context without leaking futures.
+
+    Unlike asyncio.run_coroutine_threadsafe(), this does not require the
+    caller to await or retrieve the result. The future is automatically
+    cleaned up when the coroutine completes.
+
+    Use this for fire-and-forget coroutine scheduling from threads.
+    """
+    fut = asyncio.run_coroutine_threadsafe(coro, loop)
+    fut.add_done_callback(_discard_future_exception)
 
 
 def set_thread_name(name: str) -> None:
