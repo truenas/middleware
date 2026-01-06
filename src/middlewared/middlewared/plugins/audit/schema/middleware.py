@@ -25,6 +25,10 @@ class AuditEventMiddlewareMethodCallEventData(BaseModel):
     vers: AuditEventVersion
 
 
+class AuditEventMiddlewareRebootShutdownEventData(BaseModel):
+    reason: str | None
+
+
 class AuditEventMiddlewareServiceData(BaseModel):
     vers: AuditEventVersion
     origin: str | None
@@ -33,8 +37,12 @@ class AuditEventMiddlewareServiceData(BaseModel):
 
 
 class AuditEventMiddleware(AuditEvent):
-    event: Literal['AUTHENTICATION', 'METHOD_CALL']
-    event_data: AuditEventMiddlewareAuthenticationEventData | AuditEventMiddlewareMethodCallEventData
+    event: Literal['AUTHENTICATION', 'METHOD_CALL', 'REBOOT', 'SHUTDOWN']
+    event_data: (
+        AuditEventMiddlewareAuthenticationEventData |
+        AuditEventMiddlewareMethodCallEventData |
+        AuditEventMiddlewareRebootShutdownEventData
+    )
     service: Literal['MIDDLEWARE']
     service_data: AuditEventMiddlewareServiceData
 
@@ -49,11 +57,17 @@ class AuditEventMiddlewareMethodCall(AuditEventMiddleware):
     event_data: AuditEventMiddlewareMethodCallEventData
 
 
+class AuditEventMiddlewareRebootShutdownCall(AuditEventMiddleware):
+    event: Literal['REBOOT', 'SHUTDOWN']
+    event_data: AuditEventMiddlewareRebootShutdownEventData
+
+
 AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS = [
     add_attrs(replace_refs(event_model.model_json_schema()))
     for event_model in (
         AuditEventMiddlewareAuthentication,
         AuditEventMiddlewareMethodCall,
+        AuditEventMiddlewareRebootShutdownCall,
     )
 ]
 
