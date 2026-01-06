@@ -1,11 +1,11 @@
-from bases.FrameworkServices.SimpleService import SimpleService
+from bases.FrameworkServices.TNSimpleService import TNService
 
 from middlewared.utils.metrics.pool_stats import get_pool_dataset_stats
 
 
-class Service(SimpleService):
+class Service(TNService):
     def __init__(self, configuration=None, name=None):
-        SimpleService.__init__(self, configuration=configuration, name=name)
+        TNService.__init__(self, configuration=configuration, name=name)
         self.update_every = 300
 
     def check(self):
