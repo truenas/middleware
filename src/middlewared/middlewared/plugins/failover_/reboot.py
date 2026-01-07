@@ -15,6 +15,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import CallError, job, private, Service
+from middlewared.utils.threading import run_coro_threadsafe
 
 
 @dataclass
@@ -311,7 +312,7 @@ async def system_reboot_info_handler(middleware, *args, **kwargs):
 
 
 def remote_reboot_info(middleware, *args, **kwargs):
-    asyncio.run_coroutine_threadsafe(middleware.call('failover.reboot.send_event'), loop=middleware.loop)
+    run_coro_threadsafe(middleware.call('failover.reboot.send_event'), loop=middleware.loop)
 
 
 async def setup(middleware):
