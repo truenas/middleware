@@ -306,6 +306,7 @@ def generate_smb_share_conf_dict(
         'comment': share_config[share_field.COMMENT],
         'browseable': share_config[share_field.BROWSEABLE],
         'ea support': False,
+        'smb3 unix extensions': False,
     }
 
     acl_check = __transform_share_path(ds_type, share_config, config_out)
