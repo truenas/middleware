@@ -32,7 +32,7 @@ def _discard_future_exception(fut, log_exceptions):
             logger.warning("Exception in fire-and-forget coroutine: %r", exc)
 
 
-def run_coro_threadsafe(coro, loop, *, log_exceptions=True):
+def run_coro_threadsafe(coro, loop, *, log_exceptions=False):
     """
     Schedule a coroutine from a non-async context without leaking futures.
 
@@ -45,7 +45,7 @@ def run_coro_threadsafe(coro, loop, *, log_exceptions=True):
     Args:
         coro: The coroutine to schedule.
         loop: The event loop to schedule the coroutine on.
-        log_exceptions: If True (default), log exceptions as warnings.
+        log_exceptions: If True, log exceptions as warnings.
     """
     fut = asyncio.run_coroutine_threadsafe(coro, loop)
     fut.add_done_callback(

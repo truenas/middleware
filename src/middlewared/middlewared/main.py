@@ -1431,7 +1431,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            run_coro_threadsafe(wrap(handler), loop=self.loop)
+            run_coro_threadsafe(wrap(handler), loop=self.loop, log_exceptions=True)
 
     def log_threads_stacks(self):
         for thread_id, stack in get_threads_stacks().items():
