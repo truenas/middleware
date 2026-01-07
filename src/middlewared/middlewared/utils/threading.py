@@ -46,12 +46,26 @@ def initializer(thread_name, tls):
         )
 
 
-def start_daemon_thread(*args, **kwargs):
+def start_daemon_thread(*args, name, **kwargs):
+    """
+    Start a daemon thread with the given arguments.
+
+    The `name` parameter is required to facilitate troubleshooting and to easily
+    identify which thread of the parent process was created by what.
+
+    Args:
+        *args: Positional arguments passed to `threading.Thread`.
+        name: The name of the thread (required).
+        **kwargs: Keyword arguments passed to `threading.Thread`.
+
+    Returns:
+        The started `threading.Thread` instance.
+    """
     kwargs.setdefault("daemon", True)
     if not kwargs["daemon"]:
         raise ValueError("`start_daemon_thread` called with `daemon=False`")
 
-    t = threading.Thread(*args, **kwargs)
+    t = threading.Thread(*args, name=name, **kwargs)
     t.start()
     return t
 
