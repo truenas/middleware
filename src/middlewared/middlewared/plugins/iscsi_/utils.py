@@ -1,3 +1,4 @@
+import itertools
 import re
 from enum import StrEnum
 
@@ -38,3 +39,9 @@ def sanitize_extent(device):
     if HBTL.match(device):
         return device
     return device.replace('.', '_').replace('/', '-')
+
+
+def chunker(it, size):
+    iterator = iter(it)
+    while chunk := list(itertools.islice(iterator, size)):
+        yield chunk

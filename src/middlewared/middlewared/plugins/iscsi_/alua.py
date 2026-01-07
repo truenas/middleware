@@ -6,6 +6,8 @@ from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 
+from .utils import chunker
+
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
 SLOW_RETRY_SECONDS = 30
@@ -14,12 +16,6 @@ GET_UNIT_STATE_SECONDS = 2
 RELOAD_REMOTE_QUICK_RETRIES = 10
 STANDBY_ENABLE_DEVICES_RETRIES = 10
 REMOTE_RELOAD_LONG_DELAY_SECS = 300
-
-
-def chunker(it, size):
-    iterator = iter(it)
-    while chunk := list(itertools.islice(iterator, size)):
-        yield chunk
 
 
 class iSCSITargetAluaService(Service):
