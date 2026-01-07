@@ -72,6 +72,13 @@ class DistributedLockManagerService(Service):
                 self.fully_created = True
 
     @private
+    async def recreate_comms_peer(self):
+        for nodeid, node in self.nodes.items():
+            if not node['local']:
+                await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
+                await self.middleware.call('dlm.kernel.comms_add_node', nodeid, node['ip'], node['local'])
+
+    @private
     async def lockspace_member(self, dest_nodeid, lockspace_name):
         await self.middleware.call('dlm.create')
         if dest_nodeid == self.nodeID:

@@ -2,7 +2,7 @@ import asyncio
 import itertools
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
-from middlewared.service import CallError, Service, job
+from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 
@@ -285,29 +285,11 @@ class iSCSITargetAluaService(Service):
             job.set_progress(22, 'Remote iscsitarget is active')
             self.logger.debug('Remote iscsitarget is active')
 
-        # Next turn off cluster_mode for all the extents.
-        # this will avoid "ignore dlm msg because seq mismatch" errors when we reconnect
-        # Rather than try to execute in parallel, we will take our time
-        cr_opts = {'timeout': 10, 'connect_timeout': 10}
-        logged_enomethod = False
+        # Do cleanup of DLM on ACTIVE
         while self.standby_starting:
             try:
-                try:
-                    devices = await self.middleware.call('failover.call_remote', 'iscsi.scst.cluster_mode_devices_set', [], cr_opts)
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        raise
-                    # We have not yet upgraded the other node
-                    if not logged_enomethod:
-                        self.logger.debug('Awaiting the ACTIVE node being upgraded.')
-                        logged_enomethod = True
-                    await asyncio.sleep(SLOW_RETRY_SECONDS)
-                    continue
-                # We did manage to call cluster_mode_devices_set
-                if not devices:
-                    break
-                for device in devices:
-                    await self.middleware.call('failover.call_remote', 'iscsi.scst.set_device_cluster_mode', [device, 0], cr_opts)
+                await self.middleware.call('failover.call_remote', 'iscsi.alua.reset_active', [], {"job": True})
+                break
             except Exception:
                 # This is a fail-safe exception catch.  Should never occur.
                 self.logger.warning('Unexpected failure while cleaning up ACTIVE cluster_mode', exc_info=True)
@@ -753,8 +735,17 @@ class iSCSITargetAluaService(Service):
     @job(lock='reset_active', transient=True, lock_queue_size=1)
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
-        job.set_progress(0, 'Start logout HA targets')
-        self.logger.debug('Start logout HA targets')
+
+        job.set_progress(0, 'Reset active')
+        self.logger.debug('Reset active')
+        await self.middleware.call('dlm.local_reset', False)
+        self.logger.debug('Reset local DLM')
+        job.set_progress(10, 'Reset local DLM')
+
+        # Kernel comms to the peer node might not be in a clean state.
+        await self.middleware.call('dlm.recreate_comms_peer')
+        self.logger.debug('Recreated peer comms')
+        job.set_progress(20, 'Recreated peer comms')
 
         # This is similar, but not identical to iscsi.target.logout_ha_targets
         # The main difference is these are logged out in series, to allow e.g. cluster_mode settle
@@ -764,6 +755,8 @@ class iSCSITargetAluaService(Service):
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
 
+        job.set_progress(50, 'Start logout HA targets')
+        self.logger.debug('Start logout HA targets')
         # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
         todo = set(iqn for iqn in iqns.values() if iqn in existing)
 
@@ -777,8 +770,4 @@ class iSCSITargetAluaService(Service):
                 self.logger.warning('Failed to logout %r', iqn, exc_info=True)
 
         self.logger.debug('Logged out %d HA targets', count)
-        job.set_progress(50, 'Logged out HA targets')
-
-        await self.middleware.call('dlm.eject_peer')
-        self.logger.debug('Ejected peer')
-        job.set_progress(10, 'Ejected peer')
+        job.set_progress(100, 'Logged out HA targets')
