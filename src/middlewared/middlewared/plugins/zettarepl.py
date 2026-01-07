@@ -176,7 +176,7 @@ class ZettareplProcess:
             self.zettarepl.set_observer(self._observer)
             self.zettarepl.set_tasks(definition.tasks)
 
-            start_daemon_thread(target=self._process_command_queue)
+            start_daemon_thread(name="zr_cmd_queue", target=self._process_command_queue)
         except Exception:
             logging.getLogger("zettarepl").error("Unhandled exception during zettarepl startup", exc_info=True)
             self.startup_error.value = True
@@ -308,10 +308,12 @@ class ZettareplService(Service):
                 )
                 self.process = multiprocessing.Process(name="zettarepl", target=zettarepl_process)
                 self.process.start()
-                start_daemon_thread(target=self._join, args=(self.process, startup_error))
+                start_daemon_thread(name="zr_proc_join", target=self._join, args=(self.process, startup_error))
 
                 if self.observer_queue_reader is None:
-                    self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
+                    self.observer_queue_reader = start_daemon_thread(
+                        name="zr_obs_reader", target=self._observer_queue_reader
+                    )
 
                 self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
@@ -328,7 +330,7 @@ class ZettareplService(Service):
                         pass
                     event.set()
 
-                start_daemon_thread(target=target)
+                start_daemon_thread(name="zr_proc_stop", target=target)
                 if not event.wait(5):
                     self.logger.warning("Zettarepl was not joined in time, sending SIGKILL")
                     os.kill(self.process.pid, signal.SIGKILL)

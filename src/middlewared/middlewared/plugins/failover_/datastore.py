@@ -86,7 +86,7 @@ class FailoverDatastoreService(Service):
                         self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', {'mins': total_mins})
                         raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
 
-            start_daemon_thread(target=send_retry)
+            start_daemon_thread(name="fo_db_retry", target=send_retry)
 
     def send(self):
         token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token', [
