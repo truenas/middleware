@@ -13,10 +13,11 @@ import os
 import pathlib
 
 from collections import namedtuple
+from truenas_os import AT_EMPTY_PATH, statx, StatxResult
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import statx, statx_entry_impl, ATFlags, StructStatx
+from .stat_x import statx_entry_impl, STATX_DEFAULT_MASK
 from .utils import path_in_ctldir
 
 
@@ -132,7 +133,7 @@ class DirectoryIterator():
         self.__dir_fd = DirectoryFd(path, dir_fd)
         self.__file_type = FileType(file_type).name if file_type else None
         self.__path_iter = os.scandir(self.__dir_fd.fileno)
-        self.__stat = statx('', dir_fd=self.__dir_fd.fileno, flags=ATFlags.EMPTY_PATH.value)
+        self.__stat = statx('', dir_fd=self.__dir_fd.fileno, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
@@ -290,7 +291,7 @@ class DirectoryIterator():
         return self.__request_mask
 
     @property
-    def stat(self) -> StructStatx:
+    def stat(self) -> StatxResult:
         return self.__stat
 
     def close(self, force=False) -> None:

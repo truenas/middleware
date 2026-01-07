@@ -34,7 +34,6 @@ from middlewared.service import filterable_api_method, job, private, ConfigServi
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.mount import statmount
-from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.functools_ import cache
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
