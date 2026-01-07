@@ -23,6 +23,7 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin, is_external_call
+from middlewared.utils.threading import run_coro_threadsafe
 from .base import BaseWebSocketHandler
 from ..app import App
 from ..method import Method
@@ -62,7 +63,7 @@ class RpcWebSocketApp(App):
                 sys.exc_info()
             )
         else:
-            asyncio.run_coroutine_threadsafe(self.ws.send_str(data_), self.middleware.loop)
+            run_coro_threadsafe(self.ws.send_str(data_), self.middleware.loop)
 
     def send_error(self, id_: Any, code: int, message: str, data: Any = None):
         error = {
