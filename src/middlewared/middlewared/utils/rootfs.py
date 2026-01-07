@@ -5,8 +5,7 @@ import json
 import os
 import subprocess
 
-from middlewared.utils.filesystem import stat_x
-from middlewared.utils.mount import getmntinfo
+from middlewared.utils.mount import statmount
 
 
 @dataclass
@@ -88,8 +87,7 @@ class ReadonlyRootfsManager:
                 self.use_functioning_dpkg_sysext = True
                 continue
 
-            st_mnt_id = stat_x.statx(mountpoint).stx_mnt_id
-            readonly = "RO" in getmntinfo(mnt_id=st_mnt_id)[st_mnt_id]["super_opts"]
+            readonly = "RO" in statmount(mountpoint)["mount_opts"]
 
             self.datasets[dataset] = Dataset(name, mountpoint, ReadonlyState(readonly, readonly))
 

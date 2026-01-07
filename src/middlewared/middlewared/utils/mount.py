@@ -1,100 +1,109 @@
 import os
 import logging
+import truenas_os
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["getmntinfo", "getmnttree"]
+__all__ = ["getmntinfo", "iter_mountinfo", "statmount"]
 
 
-def __mntent_dict(line):
-    mnt_id, parent_id, maj_min, root, mp, opts, extra = line.split(" ", 6)
-    fstype, mnt_src, super_opts = extra.strip().split('- ', 1)[1].split()
+def __parse_mnt_attr(attr: int) -> list:
+    out = []
+    if attr & truenas_os.MOUNT_ATTR_NOATIME:
+        out.append('NOATIME')
 
-    major, minor = maj_min.split(':')
-    devid = os.makedev(int(major), int(minor))
+    if attr & truenas_os.MOUNT_ATTR_RELATIME:
+        out.append('RELATIME')
 
+    if attr & truenas_os.MOUNT_ATTR_NOSUID:
+        out.append('NOSUID')
+
+    if attr & truenas_os.MOUNT_ATTR_NODEV:
+        out.append('NODEV')
+
+    if attr & truenas_os.MOUNT_ATTR_NOEXEC:
+        out.append('NOEXEC')
+
+    if attr & truenas_os.MOUNT_ATTR_RDONLY:
+        out.append('RO')
+    else:
+        out.append('RW')
+
+    if attr & truenas_os.MOUNT_ATTR_IDMAP:
+        out.append('IDMAP')
+
+    if attr & truenas_os.MOUNT_ATTR_NOSYMFOLLOW:
+        out.append('NOSYMFOLLOW')
+
+    return out
+
+
+def __statmount_dict(sm: truenas_os.StatmountResult) -> dict:
     return {
-        'mount_id': int(mnt_id),
-        'parent_id': int(parent_id),
+        'mount_id': sm.mnt_id,
+        'parent_id': sm.mnt_parent_id,
         'device_id': {
-            'major': int(major),
-            'minor': int(minor),
-            'dev_t': devid,
+            'major': sm.sb_dev_major,
+            'minor': sm.sb_dev_minor,
+            'dev_t': os.makedev(sm.sb_dev_major, sm.sb_dev_minor)
         },
-        'root': root.replace('\\040', ' '),
-        'mountpoint': mp.replace('\\040', ' '),
-        'mount_opts': opts.upper().split(','),
-        'fs_type': fstype,
-        'mount_source': mnt_src.replace('\\040', ' '),
-        'super_opts': super_opts.upper().split(','),
+        'root': sm.mnt_root,
+        'mountpoint': sm.mnt_point,
+        'mount_opts': __parse_mnt_attr(sm.mnt_attr),
+        'fs_type': sm.fs_type,
+        'mount_source': sm.sb_source,
+        'super_opts': sm.mnt_opts.upper().split(',') if sm.mnt_opts else []
     }
 
 
-def __parse_to_mnt_id(line, out_dict):
-    entry = __mntent_dict(line)
-    out_dict.update({entry['mount_id']: entry})
 
+def iter_mountinfo(
+    *, target_mnt_id: int | None = None,
+    reverse: bool = False,
+    as_dict: bool = True
+):
+    """
+    Iterate mountpoints on the server. If `target_mnt_id` is provided then only children of the specified mount id
+    will be iterated. If `reverse` is specified, then they will be iterated in reverse order. If `as_dict` is
+    specified, then iterator will yield dictionary of legacy format.
+    """
+    iter_kwargs = {'reverse': reverse, 'statmount_flags': truenas_os.STATMOUNT_ALL}
+    if target_mnt_id:
+        iter_kwargs['mnt_id'] = target_mnt_id
 
-def __create_tree(info, mount_id):
-    # Find root by smallest parent_id while building the tree. The root mount's
-    # parent_id references an early boot mount (initial ramfs created by
-    # init_mount_tree) that lies outside the visible tree per proc_pid_mountinfo(5).
-    # Kernel commit https://github.com/torvalds/linux/commit/7f9bfafc5f49 (6.14+)
-    # changed mount allocation from IDA to xarray, shifting IDs: shmem_init 0→1,
-    # init_mount_tree 1→2, causing root's parent_id to change from 1 to 2.
-    # Choosing the entry with the smallest parent_id remains valid and stable,
-    # because early-boot mounts (shmem_init/init_rootfs) are never unmounted.
-    root_entry = None
-
-    for entry in info.values():
-        if not entry.get('children'):
-            entry['children'] = []
-
-        # Track mount with smallest parent_id
-        if root_entry is None or entry['parent_id'] < root_entry['parent_id']:
-            root_entry = entry
-
-        # Skip mounts whose parent is not in visible tree (per proc_pid_mountinfo(5))
-        if entry['parent_id'] not in info:
-            continue
-
-        parent = info[entry['parent_id']]
-        if not parent.get('children'):
-            parent['children'] = [entry]
+    for sm in truenas_os.iter_mount(**iter_kwargs):
+        if as_dict:
+            yield __statmount_dict(sm)
         else:
-            parent['children'].append(entry)
-
-    return info[mount_id or root_entry['mount_id']]
+            yield sm
 
 
-def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None):
-    if dev_id:
-        maj_min = f'{os.major(dev_id)}:{os.minor(dev_id)}'
+def statmount(
+    *,
+    path: str|None = None,
+    fd: int|None = None,
+    as_dict: bool = True
+) -> dict|truenas_os.StatmountResult:
+    """
+    Get mount information about the given path or open file. If as_dict
+    is set, then we return a dictionary with same keys and formatting
+    as previous getmntinfo() call.
+    """
+    if (not path and not fd) or (path and fd):
+        raise ValueError('One of path or fd is required')
+
+    if path:
+        mnt_id = truenas_os.statx(path, mask=truenas_os.STATX_MNT_ID_UNIQUE).stx_mnt_id
     else:
-        maj_min = None
+        mnt_id = truenas_os.statx(
+            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=truenas_os.STATX_MNT_ID_UNIQUE
+        ).stx_mnt_id
 
-    if mnt_id:
-        mount_id = f'{mnt_id} '
+    sm = truenas_os.statmount(mnt_id, mask=truenas_os.STATMOUNT_ALL)
+    if not as_dict:
+        return sm
 
-    with open('/proc/self/mountinfo') as f:
-        for line in f:
-            try:
-                if maj_min:
-                    if line.find(maj_min) == -1:
-                        continue
-
-                    callback(line, private_data)
-                    break
-                elif mnt_id is not None:
-                    if not line.startswith(mount_id):
-                        continue
-
-                    callback(line, private_data)
-                    break
-
-                callback(line, private_data)
-            except Exception as e:
-                raise RuntimeError(f'Failed to parse {line!r} line: {e}')
+    return __statmount_dict(sm)
 
 
 def getmntinfo(mnt_id=None):
@@ -131,15 +140,13 @@ def getmntinfo(mnt_id=None):
     `super_opts` - per-superblock options (see mount(2)).
     """
     info = {}
-    __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
+    # special handling for mnt_id
+    if mnt_id:
+        sm = truenas_os.statmount(mnt_id)
+        info[mnt_id] = __statmount_dict(sm)
+    else:
+        for entry in iter_mountinfo():
+            mnt_id = entry['mount_id']
+            info[mnt_id] = entry
+
     return info
-
-
-def getmnttree(mount_id=None):
-    """
-    Generate a mount info tree of either the root filesystem or a given
-    filesystem specified by mnt_id. cf. documentation for getmntinfo().
-    """
-    info = {}
-    __iter_mountinfo(callback=__parse_to_mnt_id, private_data=info)
-    return __create_tree(info, mount_id)

@@ -10,8 +10,7 @@ from pathlib import Path
 from subprocess import run
 
 from middlewared.utils import ProductType
-from middlewared.utils.mount import getmntinfo
-from middlewared.utils.filesystem.stat_x import statx
+from middlewared.utils.mount import statmount
 
 
 ZFS_CMD = '/usr/sbin/zfs'
@@ -37,8 +36,7 @@ def set_readwrite(entry):
 
 
 def usr_fs_check():
-    mntid = statx('/usr').stx_mnt_id
-    mntinfo = getmntinfo(mnt_id=mntid)[mntid]
+    mntinfo = statmount(path='/usr')
     match mntinfo['fs_type']:
         case 'zfs':
             return
