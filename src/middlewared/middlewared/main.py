@@ -37,6 +37,7 @@ from .utils.service.crud import real_crud_method
 from .utils.systemd import SystemdNotifier
 from .utils.threading import (
     set_thread_name,
+    run_coro_threadsafe,
     IoThreadPoolExecutor,
     io_thread_pool_executor,
     thread_local_storage,
@@ -1430,7 +1431,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            asyncio.run_coroutine_threadsafe(wrap(handler), loop=self.loop)
+            run_coro_threadsafe(wrap(handler), loop=self.loop)
 
     def log_threads_stacks(self):
         for thread_id, stack in get_threads_stacks().items():
