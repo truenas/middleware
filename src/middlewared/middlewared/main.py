@@ -1891,6 +1891,8 @@ def main():
                 # Write these after the test is complete to avoid interfering with the middleware’s output.
                 await asyncio.to_thread(sys.stdout.buffer.write, stdout)
                 await asyncio.to_thread(sys.stderr.buffer.write, stderr)
+                await asyncio.to_thread(sys.stdout.buffer.flush)
+                await asyncio.to_thread(sys.stderr.buffer.flush)
                 return process.returncode
             except Exception as e:
                 await asyncio.to_thread(sys.stderr.write, f"Failed to run test: {e}\n")

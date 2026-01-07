@@ -4,6 +4,7 @@ import typing
 from pydantic import ValidationError
 
 from middlewared.api.base import BaseModel
+from middlewared.utils.typing_ import is_union
 
 
 def model_field_is_model(model, value_hint=None, name_hint=None) -> type[BaseModel] | None:
@@ -67,7 +68,7 @@ def model_field_is_dict_of_models(model) -> type[BaseModel] | None:
 def unpack_union_model_field(model):
     # Handle both typing.Union and types.UnionType (|)
     origin = typing.get_origin(model)
-    if origin is types.UnionType or origin is typing.Union:
+    if is_union(origin):
         for member in typing.get_args(model):
             yield member
 
