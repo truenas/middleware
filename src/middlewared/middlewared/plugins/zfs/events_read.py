@@ -29,4 +29,4 @@ def zfs_events_thread(middleware):
 
 
 async def setup(middleware):
-    start_daemon_thread(target=zfs_events_thread, args=(middleware,))
+    start_daemon_thread(name="zfs_events", target=zfs_events_thread, args=(middleware,))

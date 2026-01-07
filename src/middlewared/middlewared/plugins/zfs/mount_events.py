@@ -45,4 +45,4 @@ def mount_events_process(middleware):
 
 
 async def setup(middleware):
-    start_daemon_thread(target=mount_events_process, args=(middleware,))
+    start_daemon_thread(name="zfs_mnt_events", target=mount_events_process, args=(middleware,))
