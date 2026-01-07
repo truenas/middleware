@@ -18,6 +18,7 @@ from middlewared.service_exception import (
 )
 from middlewared.utils.crypto import ssl_uuid4
 from middlewared.utils.os import close_fds, terminate_pid
+from middlewared.utils.threading import run_coro_threadsafe
 from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 from truenas_api_client import json
 
@@ -202,13 +203,13 @@ class ShellWorkerThread(threading.Thread):
 
         t_reader.join()
         t_writer.join()
-        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
+        run_coro_threadsafe(self.ws.close(), self.loop)
 
     def die(self):
         self._die = True
 
     def abort(self):
-        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
+        run_coro_threadsafe(self.ws.close(), self.loop)
 
         with contextlib.suppress(ProcessLookupError):
             terminate_pid(self.shell_pid, timeout=5, use_pgid=True)
