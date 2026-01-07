@@ -311,7 +311,9 @@ class ZettareplService(Service):
                 start_daemon_thread(name="zr_proc_join", target=self._join, args=(self.process, startup_error))
 
                 if self.observer_queue_reader is None:
-                    self.observer_queue_reader = start_daemon_thread(name="zr_obs_reader", target=self._observer_queue_reader)
+                    self.observer_queue_reader = start_daemon_thread(
+                        name="zr_obs_reader", target=self._observer_queue_reader
+                    )
 
                 self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
