@@ -45,9 +45,12 @@ class FailoverDatastoreService(Service):
         return self.failure
 
     def set_failure(self):
+        if self.failure:
+            return
+
         self.failure = True
         try:
-            # This is executed in `hook_datastore_execute_write` so we can't query local failover status here and we'll
+            # This is executed in `hook_datastore_execute_write` so we can't query local failover status here, and we'll
             # have to rely on remote.
             if (fs := self.middleware.call_sync('failover.call_remote', 'failover.status')) == 'BACKUP':
                 self.send()
@@ -104,7 +107,7 @@ class FailoverDatastoreService(Service):
     def receive(self):
         # Take the following example:
         # 1. upgrade both HA controllers
-        # 2. standby controller reboots (by design) into the newly OS version
+        # 2. standby controller reboots (by design) into the new OS version
         # 3. active controller does NOT reboot (by design)
         # 4. for some unpredictable reason, upgrade is not "finalized"
         #   (i.e. reboot the active to failover to the newly upgraded controller, etc)
