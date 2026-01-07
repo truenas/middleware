@@ -44,4 +44,4 @@ def udev_events(middleware):
 
 
 def setup(middleware):
-    start_daemon_thread(target=udev_events, args=(middleware,))
+    start_daemon_thread(name="udev_events", target=udev_events, args=(middleware,))

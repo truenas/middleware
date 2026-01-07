@@ -432,4 +432,4 @@ def setup(middleware):
     )
     middleware.event_subscribe("ipaddress.change", _restart_vendor_service)
     # Start the netlink monitoring daemon thread
-    start_daemon_thread(target=netlink_events, args=(middleware,))
+    start_daemon_thread(name="netlink_events", target=netlink_events, args=(middleware,))
