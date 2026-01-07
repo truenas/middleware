@@ -1127,9 +1127,6 @@ class SharingSMBService(SharingService):
                     schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
                 )
 
-            for c in mnt['children']:
-                validate_child(c)
-
         def get_acl_type(sb_info):
             if 'NFS4ACL' in sb_info:
                 return 'NFSV4'
