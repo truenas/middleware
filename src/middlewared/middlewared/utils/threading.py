@@ -26,7 +26,9 @@ __all__ = [
 def _discard_future_exception(fut):
     """Callback to prevent 'Future exception was never retrieved' warnings."""
     if not fut.cancelled():
-        fut.exception()
+        exc = fut.exception()
+        if exc is not None:
+            logger.warning("Exception in fire-and-forget coroutine: %r", exc)
 
 
 def run_coro_threadsafe(coro, loop):
