@@ -1,7 +1,8 @@
 import asyncio
 import functools
+import inspect
 import re
-from typing import Callable
+import typing
 
 from .handler.accept import accept_params
 from ..base.model import BaseModel
@@ -18,29 +19,56 @@ CONFIG_CRUD_METHODS = frozenset([
 MAJOR_VERSION = re.compile(r"^v([0-9]{2})\.([0-9]{2})$")
 
 
-def calculate_args_index(f, audit_callback):
-    signature_args = list(f.__code__.co_varnames)[:f.__code__.co_argcount]
+def function_arg_names(f):
+    return list(f.__code__.co_varnames)[:f.__code__.co_argcount]
+
+
+def calculate_args_index(f, audit_callback, check_annotations):
+    from middlewared.api.base.server.app import App
+    from middlewared.job import Job
+
+    signature_args = function_arg_names(f)
     # This must match the order used in `Middleware._call_prepare`
     expected_args = []
     if signature_args and signature_args[0] == 'self':
-        expected_args.append('self')
+        expected_args.append(('self', None))
     if pass_app := hasattr(f, '_pass_app'):
-        expected_args.append('app')
+        expected_args.append(('app', App))
     # `app` comes before `job` as defined in `Job.__run_body`
     if hasattr(f, '_job'):
-        expected_args.append('job')
+        expected_args.append(('job', Job))
     if audit_callback:
-        expected_args.append('audit_callback')
+        expected_args.append(('audit_callback', None))  # FIXME: Replace `None` with proper annotation
     if hasattr(f, '_pass_thread_local_storage'):
-        expected_args.append('tls')
+        expected_args.append(('tls', None))
     if pass_app and f._pass_app['message_id']:
-        expected_args.append('message_id')
+        expected_args.append(('message_id', str))
 
-    if signature_args[:len(expected_args)] != expected_args:
-        raise RuntimeError(
-            f"Invalid method signature for {f!r}. Its arguments list must start with {', '.join(expected_args)!r}. "
-            f"It is {', '.join(signature_args)!r}"
-        )
+    # FIXME: Get rid of the cases where `check_annotations` is `False`
+    if check_annotations:
+        signature_args_with_annotations = [
+            (name, f.__annotations__.get(name))
+            for name in signature_args[:len(expected_args)]
+        ]
+        if signature_args_with_annotations[:len(expected_args)] != expected_args:
+            expected = ", ".join([
+                f"{name}: {annotation!r}" if annotation is not None else name
+                for name, annotation in expected_args
+            ])
+            signature = inspect.signature(f)
+            found = ", ".join([str(signature.parameters[name]) for name in signature_args])
+            raise RuntimeError(
+                f"Invalid method signature for {f!r}. Its arguments list must start with {expected!r}. "
+                f"It is {found!r}"
+            )
+    else:
+        expected_args_names = [name for name, _ in expected_args]
+        if signature_args[:len(expected_args)] != expected_args_names:
+            expected = ", ".join(expected_args_names)
+            raise RuntimeError(
+                f"Invalid method signature for {f!r}. Its arguments list must start with {expected!r}. "
+                f"It is {', '.join(signature_args)!r}"
+            )
 
     args_index = len(expected_args)
     if hasattr(f, '_skip_arg'):
@@ -54,7 +82,7 @@ def api_method(
     *,
     audit: str | None = None,
     audit_callback: bool = False,
-    audit_extended: Callable[..., str] | None = None,
+    audit_extended: typing.Callable[..., str] | None = None,
     rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
@@ -66,6 +94,7 @@ def api_method(
     pass_thread_local_storage: bool = False,
     skip_args: int | None = None,
     removed_in: str | None = None,
+    check_annotations: bool = False,  # FIXME: Eventually must be `True` for all api methods.
 ):
     """
     Mark a `Service` class method as an API method.
@@ -123,7 +152,12 @@ def api_method(
         if skip_args is not None:
             func._skip_arg = skip_args
 
-        args_index = calculate_args_index(func, audit_callback)
+        args_index = calculate_args_index(func, audit_callback, check_annotations)
+
+        dump_models = True
+        if check_annotations:
+            check_method_annotations(func, args_index, accepts, returns)
+            dump_models = False
 
         if asyncio.iscoroutinefunction(func):
             if pass_thread_local_storage:
@@ -131,7 +165,7 @@ def api_method(
 
             @functools.wraps(func)
             async def wrapped(*args):
-                args = list(args[:args_index]) + accept_params(accepts, args[args_index:])
+                args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
 
                 result = await func(*args)
 
@@ -139,7 +173,7 @@ def api_method(
         else:
             @functools.wraps(func)
             def wrapped(*args):
-                args = list(args[:args_index]) + accept_params(accepts, args[args_index:])
+                args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
 
                 result = func(*args)
 
@@ -216,3 +250,37 @@ def check_model_module(model: type[BaseModel], private: bool):
                 "Public methods must have their accepts/returns models defined in middlewared.api package. "
                 f"{model.__name__} is defined in {module_name}."
             )
+
+
+def check_method_annotations(func, args_index: int, accepts: type[BaseModel], returns: type[BaseModel]):
+    expected_args = [(name, field.annotation) for name, field in accepts.model_fields.items()]
+    func_args = [
+        (name, func.__annotations__.get(name))
+        for name in function_arg_names(func)[args_index:]
+    ]
+    # We only compare annotations since we don't care about parameter names.
+    expected_annotations = [normalize_annotation(annotation) for _, annotation in expected_args]
+    func_annotations = [normalize_annotation(annotation) for _, annotation in func_args]
+
+    if expected_annotations != func_annotations:
+        expected = ", ".join([
+            f"{name}: {annotation!r}" if annotation is not None else name
+            for name, annotation in expected_args
+        ])
+        signature = inspect.signature(func)
+        found = ", ".join([str(signature.parameters[name]) for name, _ in func_args])
+        raise ValueError(f"{func.__name__}: must the following signature: {expected!r}. "
+                         f"Got {found!r}.")
+
+    expected_return_annotation = returns.model_fields["result"].annotation
+    return_annotation = func.__annotations__.get("return", type(None))
+    if normalize_annotation(return_annotation) != normalize_annotation(expected_return_annotation):
+        raise ValueError(f"{func.__name__}: must have a `return` annotation of {expected_return_annotation!r}. "
+                         f"Got {return_annotation!r}.")
+
+
+def normalize_annotation(annotation):
+    if typing.get_origin(annotation) is typing.Annotated:
+        return typing.get_args(annotation)[0]
+
+    return annotation

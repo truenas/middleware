@@ -59,6 +59,11 @@ warnings.filterwarnings("ignore", module="pydantic.json_schema")
 # asyncssh imports various weak crypto algorithms generating log spam on every middleware start
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 
+# Pydantic serializer warnings:
+# Expected `bool` but got `Undefined`- serialized value may not be as expected
+# This is expected for our update models.
+warnings.filterwarnings("ignore", category=UserWarning, module="middlewared.api.base.model")
+
 logging.TRACE = 6
 
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'

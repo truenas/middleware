@@ -17,7 +17,11 @@ class SharingTaskService(CRUDService):
 
     @private
     async def get_path_field(self, data):
-        return data[self.path_field]
+        if isinstance(data, dict):
+            # FIXME: Remove all the cases where this is dict
+            return data[self.path_field]
+        else:
+            return getattr(data, self.path_field)
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
