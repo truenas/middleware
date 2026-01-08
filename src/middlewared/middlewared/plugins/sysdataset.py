@@ -105,7 +105,7 @@ class SystemDatasetService(ConfigService):
 
         try:
             mntinfo = statmount(path=SYSDATASET_PATH)
-        except (FileNotFoundError, OSError):
+        except FileNotFoundError:
             self.logger.warning('%s: mountpoint not found', SYSDATASET_PATH)
             return None
 
@@ -403,7 +403,7 @@ class SystemDatasetService(ConfigService):
         # refresh our mountinfo in case it changed
         try:
             sysds_mntinfo = [statmount(path=SYSDATASET_PATH)]
-        except (FileNotFoundError, OSError):
+        except FileNotFoundError:
             sysds_mntinfo = []
 
         if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
@@ -632,8 +632,7 @@ class SystemDatasetService(ConfigService):
                     self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
                 except KeyError:
                     pass
-        except (FileNotFoundError, OSError):
-            # SYSDATASET_PATH not mounted
+        except FileNotFoundError:
             pass
 
         # Find mount by source
