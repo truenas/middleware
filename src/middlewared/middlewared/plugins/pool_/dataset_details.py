@@ -8,7 +8,6 @@ from middlewared.api.current import (
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
-from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.mount import statmount
 
 

@@ -4,7 +4,6 @@ import os
 from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.mount import statmount
 from middlewared.utils.path import is_child
 

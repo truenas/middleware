@@ -38,7 +38,6 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
-from middlewared.utils.filesystem.utils import timespec_convert_float
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
@@ -442,12 +441,12 @@ class FilesystemService(Service):
             'mode': st['st'].stx_mode,
             'uid': st['st'].stx_uid,
             'gid': st['st'].stx_gid,
-            'atime': timespec_convert_float(st['st'].stx_atime),
-            'mtime': timespec_convert_float(st['st'].stx_mtime),
-            'ctime': timespec_convert_float(st['st'].stx_ctime),
-            'btime': timespec_convert_float(st['st'].stx_btime),
+            'atime': st['st'].stx_atime,
+            'mtime': st['st'].stx_mtime,
+            'ctime': st['st'].stx_ctime,
+            'btime': st['st'].stx_btime,
             'mount_id': st['st'].stx_mnt_id,
-            'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
+            'dev': st['st'].stx_dev,
             'inode': st['st'].stx_ino,
             'nlink': st['st'].stx_nlink,
             'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],

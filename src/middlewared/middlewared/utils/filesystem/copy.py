@@ -44,7 +44,7 @@ from .directory import (
     DirectoryRequestMask,
 )
 from .stat_x import StatxEtype
-from .utils import path_in_ctldir, timespec_convert_int
+from .utils import path_in_ctldir
 
 CLONETREE_ROOT_DEPTH = 0
 MAX_RW_SZ = 2147483647 & ~4096  # maximum size of read/write in kernel
@@ -343,10 +343,7 @@ def _do_mkfile(
 
     # We need to write timestamps after file data to ensure reset atime / mtime
     if config.flags.value & CopyFlags.TIMESTAMPS.value:
-        ns_ts = (
-            timespec_convert_int(src.stat.stx_atime),
-            timespec_convert_int(src.stat.stx_mtime)
-        )
+        ns_ts = (src.stat.stx_atime_ns, src.stat.stx_mtime_ns)
         try:
             utime(dst_fd, ns=ns_ts)
         except Exception:
@@ -503,10 +500,7 @@ def _copytree_impl(
                         )
 
                     if config.flags.value & CopyFlags.TIMESTAMPS.value:
-                        ns_ts = (
-                            timespec_convert_int(entry.stat.stx_atime),
-                            timespec_convert_int(entry.stat.stx_mtime)
-                        )
+                        ns_ts = (entry.stat.stx_atime_ns, entry.stat.stx_mtime_ns)
                         try:
                             utime(new_dst_fd, ns=ns_ts)
                         except Exception:
@@ -619,10 +613,7 @@ def copytree(
                     fchown(dst_fd, d_iter.stat.stx_uid, d_iter.stat.stx_gid)
 
                 if config.flags.value & CopyFlags.TIMESTAMPS.value:
-                    ns_ts = (
-                        timespec_convert_int(d_iter.stat.stx_atime),
-                        timespec_convert_int(d_iter.stat.stx_mtime)
-                    )
+                    ns_ts = (d_iter.stat.stx_atime_ns, d_iter.stat.stx_mtime_ns)
                     utime(dst_fd, ns=ns_ts)
             except Exception:
                 if config.raise_error:
