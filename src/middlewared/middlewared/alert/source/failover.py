@@ -50,12 +50,19 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     products = (ProductType.ENTERPRISE,)
 
 
+# Track consecutive failures to avoid alerting on transient errors that quickly clear,
+# which could trigger unnecessary alarm emails to customers.
+_check_status_failure_count = 0
+
+
 class FailoverAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 
     async def check(self):
+        global _check_status_failure_count
+
         if not await self.middleware.call('failover.internal_interfaces'):
             return [Alert(FailoverInterfaceNotFoundAlertClass)]
 
@@ -72,9 +79,13 @@ class FailoverAlertSource(AlertSource):
             remote = await self.middleware.call('failover.call_remote', 'failover.vip.get_states')
             if err := await self.middleware.call('failover.vip.check_states', local, remote):
                 return [Alert(VRRPStatesDoNotAgreeAlertClass, {'error': i}) for i in err]
+            _check_status_failure_count = 0
         except CallError as e:
+            self.logger.exception("Unexpected failure")
             if e.errno != errno.ECONNREFUSED:
-                return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
+                _check_status_failure_count += 1
+                if _check_status_failure_count >= 5:
+                    return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         if await self.middleware.call('failover.status') in ('ERROR', 'UNKNOWN'):
             return [Alert(FailoverFailedAlertClass)]
