@@ -87,7 +87,7 @@ class ReadonlyRootfsManager:
                 self.use_functioning_dpkg_sysext = True
                 continue
 
-            readonly = "RO" in statmount(mountpoint)["mount_opts"]
+            readonly = "RO" in statmount(path=mountpoint)["mount_opts"]
 
             self.datasets[dataset] = Dataset(name, mountpoint, ReadonlyState(readonly, readonly))
 
