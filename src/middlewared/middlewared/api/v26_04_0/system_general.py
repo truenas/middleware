@@ -64,6 +64,12 @@ class SystemGeneralEntry(BaseModel):
     """Controls whether configured Directory Service users that are granted with Privileges are allowed to log in to \
     the Web UI or use TrueNAS API."""
 
+    @classmethod
+    def to_previous(cls, value):
+        if (cert_id := value.get('ui_certificate')) is not None:
+            value['ui_certificate'] = {'id': cert_id}
+        return value
+
 
 @single_argument_args("general_settings")
 class SystemGeneralUpdateArgs(SystemGeneralEntry, metaclass=ForUpdateMetaclass):
