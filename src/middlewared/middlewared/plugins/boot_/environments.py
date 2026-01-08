@@ -5,6 +5,7 @@ import os
 import subprocess
 
 from middlewared.api import api_method
+from middlewared.utils.mount import statmount
 from middlewared.api.current import (
     BootEnvironmentActivateArgs,
     BootEnvironmentActivateResult,
@@ -99,9 +100,7 @@ class BootEnvironmentService(Service):
         except Exception:
             return results
 
-        active_be = self.middleware.call_sync(
-            "filesystem.mount_info", [["mountpoint", "=", "/"]], {"get": True}
-        )["mount_source"]
+        active_be = statmount(path='/')['mount_source']
         activated_be = self.middleware.call_sync(
             "zfs.pool.query", [["name", "=", bp_name]], {"get": True}
         )["properties"]["bootfs"]["value"]
