@@ -24,6 +24,7 @@ from middlewared.service import CallError, ConfigService, ValidationError, Valid
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -102,17 +103,15 @@ class SystemDatasetService(ConfigService):
             if fsid == cached_entry['fsid']:
                 return SYSDATASET_PATH
 
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['mountpoint', '=', SYSDATASET_PATH]]
-        )
-        if not mntinfo:
+        try:
+            mntinfo = statmount(path=SYSDATASET_PATH)
+        except (FileNotFoundError, OSError):
             self.logger.warning('%s: mountpoint not found', SYSDATASET_PATH)
             return None
 
-        if mntinfo[0]['mount_source'] != ds_name:
+        if mntinfo['mount_source'] != ds_name:
             self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected. fsid: %d',
-                                SYSDATASET_PATH, mntinfo[0]['mount_source'], ds_name, fsid)
+                                SYSDATASET_PATH, mntinfo['mount_source'], ds_name, fsid)
             return None
 
         self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': ds_name, 'fsid': fsid})
@@ -356,7 +355,7 @@ class SystemDatasetService(ConfigService):
                 job.wait_sync(raise_error=True)
                 return
 
-        mntinfo = self.middleware.call_sync('filesystem.mount_info')
+        mntinfo = list(getmntinfo().values())
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
                 ds = self.middleware.call_sync(
@@ -402,8 +401,10 @@ class SystemDatasetService(ConfigService):
             self.middleware.call_sync('systemdataset.setup_datasets', config['pool'], config['uuid'])
 
         # refresh our mountinfo in case it changed
-        mntinfo = self.middleware.call_sync('filesystem.mount_info')
-        sysds_mntinfo = filter_list(mntinfo, [['mountpoint', "=", SYSDATASET_PATH]])
+        try:
+            sysds_mntinfo = [statmount(path=SYSDATASET_PATH)]
+        except (FileNotFoundError, OSError):
+            sysds_mntinfo = []
 
         if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
             os.unlink(SYSDATASET_PATH)
@@ -624,22 +625,29 @@ class SystemDatasetService(ConfigService):
 
         This is why mount info is checked before manipulating sysdataset_path.
         """
-        current = self.middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', SYSDATASET_PATH]])
-        if current and current[0]['mount_source'].split('/')[0] == pool:
-            try:
-                self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
-            except KeyError:
-                pass
+        try:
+            current = statmount(path=SYSDATASET_PATH)
+            if current['mount_source'].split('/')[0] == pool:
+                try:
+                    self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
+                except KeyError:
+                    pass
+        except (FileNotFoundError, OSError):
+            # SYSDATASET_PATH not mounted
+            pass
 
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['mount_source', '=', f'{pool}/.system']]
-        )
+        # Find mount by source
+        mntinfo = None
+        for mount in iter_mountinfo():
+            if mount['mount_source'] == f'{pool}/.system':
+                mntinfo = mount
+                break
+
         if not mntinfo:
             # Pool's system dataset not mounted
             return
 
-        mp = mntinfo[0]['mountpoint']
+        mp = mntinfo['mountpoint']
         if retry:
             flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
         else:
