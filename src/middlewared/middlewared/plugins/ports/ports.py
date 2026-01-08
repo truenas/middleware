@@ -104,8 +104,8 @@ class PortService(Service):
 
         if raise_error:
             verrors.check()
-
-        return verrors
+        else:
+            return verrors
 
     async def ports_mapping(self, whitelist_namespace=None):
         ports = defaultdict(dict)
