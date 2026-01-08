@@ -1,5 +1,7 @@
 from typing import TypeVar, TYPE_CHECKING
 
+from middlewared.utils.pydantic_ import model_json_schema
+
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
 
@@ -8,7 +10,7 @@ _PartialSchema = TypeVar("_PartialSchema")
 
 
 def get_json_schema(model: type["BaseModel"]) -> list:
-    schema = model.model_json_schema()
+    schema = model_json_schema(model)
     schema = replace_refs(schema)
     schema = add_attrs(schema)
 
