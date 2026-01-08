@@ -301,7 +301,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['uid'] == ADMIN_UID)
-        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'].get(user['id']))
 
         if user['userns_idmap'] == USERNS_IDMAP_DIRECT:
             user['userns_idmap'] = 'DIRECT'
