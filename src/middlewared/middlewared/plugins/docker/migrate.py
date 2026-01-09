@@ -85,7 +85,8 @@ class DockerService(Service):
                     'retention_policy': 'SOURCE',
                     'replicate': True,
                     'readonly': 'IGNORE',
-                    'exclude_mountpoint_property': False,
+                    'exclude_mountpoint_property': True,
+                    'mount': False,
                 }
             )
             await migrate_job.wait()
