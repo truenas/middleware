@@ -61,7 +61,7 @@ class ZFSResourceService(Service):
 
         att_data = dict()
         if "ATTACHMENT" in additional_information:
-            att_data = get_zvol_attachments_impl(self.middleware)
+            att_data = {"attachments": get_zvol_attachments_impl(self.middleware)}
 
         return filter_list(
             list(unlocked_zvols_fast_impl(additional_information, att_data).values()),
