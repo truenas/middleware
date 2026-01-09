@@ -714,7 +714,7 @@ class SystemDatasetService(ConfigService):
                 if StatxAttr.MOUNT_ROOT.name in tmpdir_stat['attributes']:
                     # Still mounted, so we're on error path - unmount children
                     tmpdir_mnt_id = tmpdir_stat['st'].stx_mnt_id
-                    for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id, reverse=True):
+                    for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id):
                         truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
                     # Now unmount original
