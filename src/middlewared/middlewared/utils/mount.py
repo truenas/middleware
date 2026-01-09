@@ -4,7 +4,7 @@ import truenas_os
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["getmntinfo", "iter_mountinfo", "statmount"]
+__all__ = ["getmntinfo", "iter_mountinfo", "statmount", "umount", "move_tree"]
 
 
 def __parse_mnt_attr(attr: int) -> list:
@@ -150,3 +150,78 @@ def getmntinfo(mnt_id=None):
             info[mnt_id] = entry
 
     return info
+
+
+def umount(path: str, flags: int = 0, recursive: bool = False):
+    """
+    Unmount filesystem at the given path.
+
+    Args:
+        path: Path to the mountpoint to unmount
+        flags: Unmount flags (e.g., truenas_os.MNT_DETACH, truenas_os.MNT_FORCE)
+        recursive: If True, recursively unmount all child mounts before unmounting the target
+
+    Raises:
+        FileNotFoundError: If path does not exist (when recursive=True)
+
+    Common flag combinations:
+        - MNT_DETACH: Lazy unmount (detach from filesystem hierarchy immediately)
+        - MNT_FORCE: Force unmount even if busy
+        - MNT_DETACH | MNT_FORCE: Detach and force unmount
+    """
+    if recursive:
+        # Get the mount ID of the target path
+        mnt_id = truenas_os.statx(path, mask=truenas_os.STATX_MNT_ID_UNIQUE).stx_mnt_id
+
+        # Unmount all child mounts first
+        for mnt in iter_mountinfo(target_mnt_id=mnt_id):
+            truenas_os.umount2(target=mnt['mountpoint'], flags=flags)
+
+    # Unmount the target path itself
+    truenas_os.umount2(target=path, flags=flags)
+
+
+def move_tree(
+    source_path: str,
+    destination_path: str,
+    *,
+    open_tree_flags: int = truenas_os.OPEN_TREE_CLOEXEC,
+    move_mount_flags: int = truenas_os.MOVE_MOUNT_BENEATH
+):
+    """
+    Atomically move a mount tree from source to destination.
+
+    This uses open_tree() to get a handle to the source mount tree, then
+    move_mount() to atomically place it at the destination. When using
+    MOVE_MOUNT_BENEATH, the new mount is placed underneath any existing
+    mount at the destination.
+
+    Args:
+        source_path: Path to the source mount tree
+        destination_path: Path where the mount tree should be moved
+        open_tree_flags: Flags for open_tree() (default: OPEN_TREE_CLOEXEC)
+        move_mount_flags: Flags for move_mount() (default: MOVE_MOUNT_BENEATH)
+                         Will be ORed with MOVE_MOUNT_F_EMPTY_PATH
+
+    Raises:
+        Any exception from open_tree() or move_mount()
+
+    Example:
+        # Atomically replace /system with contents from /tmp/newsystem
+        move_tree('/tmp/newsystem', '/system')
+        # Caller should then unmount the old layer if using MOVE_MOUNT_BENEATH
+    """
+    tree_fd = truenas_os.open_tree(
+        path=source_path,
+        flags=open_tree_flags
+    )
+
+    try:
+        truenas_os.move_mount(
+            from_dirfd=tree_fd,
+            from_path="",
+            to_path=destination_path,
+            flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH | move_mount_flags
+        )
+    finally:
+        os.close(tree_fd)

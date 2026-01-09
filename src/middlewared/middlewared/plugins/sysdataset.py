@@ -3,7 +3,8 @@ import json
 import os
 import shutil
 import subprocess
-import threading
+import tempfile
+import truenas_os
 import uuid
 
 from contextlib import contextmanager, suppress
@@ -17,6 +18,7 @@ from middlewared.api.current import (
     SystemDatasetUpdateResult
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
+from middlewared.plugins.system_dataset.mount import mount_hierarchy
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
@@ -24,7 +26,7 @@ from middlewared.service import CallError, ConfigService, ValidationError, Valid
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
+from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo, umount, move_tree
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -50,7 +52,6 @@ class SystemDatasetService(ConfigService):
         entry = SystemDatasetEntry
 
     force_pool = None
-    sysdataset_release_lock = threading.Lock()
 
     @private
     def sysdataset_path(self, expected_datasetname=None):
@@ -86,35 +87,16 @@ class SystemDatasetService(ConfigService):
             ds_name = expected_datasetname
 
         try:
-            cached_entry = self.middleware.call_sync('cache.get', 'SYSDATASET_PATH')
-        except KeyError:
-            cached_entry = None
-
-        try:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
-        except FileNotFoundError:
-            # SYSDATASET_PATH may not exist on first boot. Do not log.
-            return None
-        except OSError:
-            self.logger.warning('Failed to stat sysdataset fd', exc_info=True)
-            return None
-
-        if cached_entry and cached_entry['dataset'] == ds_name:
-            if fsid == cached_entry['fsid']:
-                return SYSDATASET_PATH
-
-        try:
             mntinfo = statmount(path=SYSDATASET_PATH)
         except FileNotFoundError:
             self.logger.warning('%s: mountpoint not found', SYSDATASET_PATH)
             return None
 
         if mntinfo['mount_source'] != ds_name:
-            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected. fsid: %d',
-                                SYSDATASET_PATH, mntinfo['mount_source'], ds_name, fsid)
+            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected',
+                                SYSDATASET_PATH, mntinfo['mount_source'], ds_name)
             return None
 
-        self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': ds_name, 'fsid': fsid})
         return SYSDATASET_PATH
 
     @private
@@ -160,7 +142,7 @@ class SystemDatasetService(ConfigService):
             self.logger.warning('Standby controller does not yet have the system dataset UUID')
             return
 
-        self.logger.info(f'Setting {remote_uuid_key}={remote_config[remote_uuid_key]!r}')
+        self.logger.debug(f'Setting {remote_uuid_key}={remote_config[remote_uuid_key]!r}')
         await self.middleware.call(
             'datastore.update',
             'system.systemdataset',
@@ -205,14 +187,29 @@ class SystemDatasetService(ConfigService):
         Update System Dataset Service Configuration.
         """
         data.setdefault('pool_exclude', None)
-
         config = await self.config()
+        old_pool = config['pool']
 
-        new = config.copy()
-        new.update(data)
+        new_pool = await self._validate_and_select_pool(data, config)
 
+        await self.middleware.call(
+            'datastore.update',
+            'system.systemdataset',
+            config['id'],
+            {'pool': new_pool},
+            {'prefix': 'sys_'}
+        )
+
+        await self.middleware.call('systemdataset.setup', data['pool_exclude'])
+        return await self.config()
+
+    async def _validate_and_select_pool(self, data, config):
+        """Validate new pool selection and return final pool choice"""
         verrors = ValidationErrors()
-        if new['pool'] != config['pool']:
+        new_pool = data.get('pool', config['pool'])
+
+        # Check if pool change is allowed
+        if new_pool != config['pool']:
             system_ready = await self.middleware.call('system.ready')
             ds = await self.middleware.call('directoryservices.status')
             if system_ready and ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
@@ -222,59 +219,20 @@ class SystemDatasetService(ConfigService):
                     errno.EPERM
                 )
 
-            if new['pool']:
-                if error := await self.destination_pool_error(new['pool']):
+            if new_pool:
+                if error := await self.destination_pool_error(new_pool):
                     verrors.add('sysdataset_update.pool', error)
 
-        if new['pool']:
-            if new['pool'] not in await self.pool_choices(False):
+        # Validate pool choice if provided
+        if new_pool:
+            if new_pool not in await self.pool_choices(False):
                 verrors.add(
                     'sysdataset_update.pool',
                     'The system dataset cannot be placed on this pool.'
                 )
-        else:
-            for pool in await self.middleware.call(
-                'systemdataset.query_pools_for_system_dataset', data['pool_exclude']
-            ):
-                if await self.destination_pool_error(pool):
-                    continue
-
-                new['pool'] = pool
-                break
-            else:
-                # If a data pool could not be found, reset it to blank
-                # Which will eventually mean its back to boot pool (temporarily)
-                new['pool'] = ''
 
         verrors.check()
-
-        update_dict = {k: v for k, v in new.items() if k in ['pool']}
-
-        await self.middleware.call(
-            'datastore.update',
-            'system.systemdataset',
-            config['id'],
-            update_dict,
-            {'prefix': 'sys_'}
-        )
-
-        new = await self.config()
-
-        if config['pool'] != new['pool']:
-            await self.middleware.call('systemdataset.migrate', config['pool'], new['pool'])
-
-        await self.middleware.call('systemdataset.setup', data['pool_exclude'])
-
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'MASTER':
-                try:
-                    await self.middleware.call(
-                        'failover.call_remote', 'system.reboot', ['Failover system dataset change'],
-                    )
-                except Exception as e:
-                    self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
-
-        return await self.config()
+        return new_pool
 
     @private
     async def destination_pool_error(self, new_pool):
@@ -316,133 +274,65 @@ class SystemDatasetService(ConfigService):
 
     @private
     def setup_impl(self, exclude_pool):
+        """
+        Internal implementation of setup - no recursion, clear flow.
+        """
         self.force_pool = None
         config = self.middleware.call_sync('systemdataset.config')
 
-        boot_pool = self.middleware.call_sync('boot.pool_name')
+        # Determine which pool to use
+        target_pool, is_fallback = self.select_system_dataset_pool(
+            preferred_pool=config['pool'],
+            exclude_pool=exclude_pool
+        )
 
-        # If the system dataset is configured in a data pool we need to make sure it exists.
-        # In case it does not we need to use another one.
-        pools_in_db = {
-            i['vol_name']: i for i in self.middleware.call_sync(
-                'datastore.query', 'storage_volume'
+        # If we selected a different pool than configured AND it's not a fallback,
+        # update the database directly
+        if target_pool != config['pool'] and not is_fallback:
+            self.logger.debug('Updating system dataset pool from %r to %r', config['pool'], target_pool)
+            self.middleware.call_sync(
+                'datastore.update',
+                'system.systemdataset',
+                config['id'],
+                {'pool': target_pool},
+                {'prefix': 'sys_'}
             )
-        }
-        if (
-            config['pool'] != boot_pool
-            and config['pool'] not in pools_in_db
-            and not self.middleware.call_sync(
-                'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
-            )
-        ):
-            # FIXME: this is badddddd. It's a DEADLOCK because this method (setup_impl)
-            # is called by sysdataset.update and sysdataset.update calls this method which
-            # calls sysdataset.update.......yikes
-            self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
-            job = self.middleware.call_sync('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
-            job.wait_sync(raise_error=True)
-            return
+            # Refresh config after database update
+            config = self.middleware.call_sync('systemdataset.config')
 
-        # If we dont have a pool configured in the database try to find the first data pool
-        # to put it on.
-        if not config['pool_set']:
-            if pools := self.query_pools_for_system_dataset(exclude_pool):
-                self.logger.debug(
-                    'System dataset pool was not set, moving it to first available pool %r',
-                    pools[0]
-                )
-                job = self.middleware.call_sync('systemdataset.update', {'pool': pools[0]})
-                job.wait_sync(raise_error=True)
-                return
-
-        mntinfo = list(getmntinfo().values())
-        if config['pool'] != boot_pool:
-            if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
-                ds = self.middleware.call_sync(
-                    'zfs.resource.query_impl',
-                    {'paths': [config['basename']], 'properties': ['encryption']}
-                )
-                if not ds:
-                    # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
-                    msg = 'Root dataset for pool %r is not available, and dataset %r does not exist, '
-                    msg += 'temporarily setting up system dataset on boot pool'
-                    self.logger.debug(msg, config['pool'], config['basename'])
-                    self.force_pool = boot_pool
-                    config = self.middleware.call_sync('systemdataset.config')
-                else:
-                    enc = get_encryption_info(ds[0]['properties'])
-                    if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
-                        msg = 'Root dataset for pool %r is not available,'
-                        msg += 'temporarily setting up system dataset on boot pool'
-                        # Pool is encrypted with a key and is locked
-                        self.logger.debug(msg, config['pool'])
-                        self.force_pool = boot_pool
-                        config = self.middleware.call_sync('systemdataset.config')
-                    else:
-                        self.logger.debug(
-                            'Root dataset for pool %r is not available, but system dataset may be manually '
-                            'mounted. Proceeding with normal setup.',
-                            config['pool']
-                        )
-
-        mounted_pool = mounted = None
-
-        sysds_mntinfo = filter_list(mntinfo, [['mountpoint', '=', '/var/db/system']])
-        if sysds_mntinfo:
-            mounted_pool = sysds_mntinfo[0]['mount_source'].split('/')[0]
-
-        if mounted_pool and mounted_pool.split('/')[0] != config['pool']:
-            self.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
-            with self.release_system_dataset():
-                self.__umount(mounted_pool, config['uuid'])
-                self.middleware.call_sync('systemdataset.setup_datasets', config['pool'], config['uuid'])
-                mounted = self.__mount(config['pool'], config['uuid'])
-        else:
-            self.middleware.call_sync('systemdataset.setup_datasets', config['pool'], config['uuid'])
-
-        # refresh our mountinfo in case it changed
-        try:
-            sysds_mntinfo = [statmount(path=SYSDATASET_PATH)]
-        except FileNotFoundError:
-            sysds_mntinfo = []
+        # If it's a temporary fallback, set force_pool so systemdataset.config returns the temporary pool
+        if is_fallback:
+            self.force_pool = target_pool
+            config = self.middleware.call_sync('systemdataset.config')
 
         if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
             os.unlink(SYSDATASET_PATH)
 
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
 
-        ds_mntinfo = filter_list(mntinfo, [['mount_source', '=', config['basename']]])
-        if ds_mntinfo:
-            acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
-        else:
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
-                {'paths': [config['basename']], 'properties': ['acltype']}
-            )
-            acl_enabled = ds and ds[0]['properties']['acltype']['raw'] != 'off'
+        try:
+            sysds_mntinfo = statmount(path=SYSDATASET_PATH)
+            if sysds_mntinfo['mount_source'].endswith('.system'):
+                mounted_pool = sysds_mntinfo['mount_source'].split('/')[0]
+            else:
+                mounted_pool = None
+        except FileNotFoundError:
+            mounted_pool = None
 
-        if acl_enabled:
-            self.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'})
-            )
+        # If wrong pool is mounted, migrate
+        if mounted_pool and mounted_pool != target_pool:
+            self.logger.debug('Migrating system dataset from %r to %r', mounted_pool, target_pool)
+            self.migrate(mounted_pool, target_pool)
+            return self.middleware.call_sync('systemdataset.config')
 
-        if mounted is None:
-            mounted = self.__mount(config['pool'], config['uuid'])
+        # If nothing mounted or same pool, just ensure and mount
+        datasets = self.middleware.call_sync('systemdataset.setup_datasets', target_pool, config['uuid'])
 
-        corepath = f'{SYSDATASET_PATH}/cores'
-        if os.path.exists(corepath):
-            if self.call_sync2(self.s.keyvalue.get, 'run_migration', False):
-                try:
-                    cores = Path(corepath)
-                    for corefile in cores.iterdir():
-                        corefile.unlink()
-                except Exception:
-                    self.logger.warning("Failed to clear old core files.", exc_info=True)
+        if not mounted_pool:
+            self.mount_system_dataset(datasets)
 
-            subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
-            os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
-            subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
+        # Post-mount setup
+        self._post_mount_setup()
 
         return self.middleware.call_sync('systemdataset.config')
 
@@ -476,11 +366,72 @@ class SystemDatasetService(ConfigService):
         return rv
 
     @private
+    def select_system_dataset_pool(self, preferred_pool=None, exclude_pool=None):
+        """
+        Determine which pool should host the system dataset.
+        Returns: (pool_name, is_temporary_fallback)
+
+        Priority:
+        1. preferred_pool (if valid and available)
+        2. First available non-boot data pool (if not excluded)
+        3. Boot pool (fallback)
+        """
+        boot_pool = self.middleware.call_sync('boot.pool_name')
+
+        # Try preferred pool first
+        if preferred_pool and preferred_pool != exclude_pool:
+            if self._pool_is_available(preferred_pool):
+                return (preferred_pool, False)
+
+            # Pool encrypted/locked/missing - temporary fallback
+            if preferred_pool != boot_pool:
+                self.logger.warning('Pool %r unavailable, using boot pool temporarily', preferred_pool)
+                return (boot_pool, True)
+
+        # Find first available data pool
+        for pool in self.query_pools_for_system_dataset(exclude_pool):
+            return (pool, False)
+
+        # Fallback to boot pool
+        return (boot_pool, False)
+
+    def _pool_is_available(self, pool):
+        """Check if pool is mounted and unlocked"""
+        boot_pool = self.middleware.call_sync('boot.pool_name')
+
+        if pool == boot_pool:
+            return True
+
+        pool_mounted = any(
+            mnt['mount_source'] == pool
+            for mnt in iter_mountinfo()
+        )
+
+        if not pool_mounted:
+            # Check if dataset exists and is encrypted/locked
+            ds = self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {'paths': [pool], 'properties': ['encryption']}
+            )
+            if ds:
+                enc = get_encryption_info(ds[0]['properties'])
+                if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
+                    return False
+            return False
+
+        return True
+
+    @private
     async def setup_datasets(self, pool, uuid):
         """
         Make sure system datasets for `pool` exist and have the right mountpoint property
+
+        Returns datasets spec dict for the pool that will be used to construct mount tree
         """
         boot_pool = await self.middleware.call('boot.pool_name')
+        # We may pass empty string for case where we don't have a valid data pool choice.
+        # In this case fallback to boot pool.
+        pool = pool or boot_pool
         root_dataset_is_passphrase_encrypted = False
         if pool != boot_pool:
             p = await self.middleware.call(
@@ -545,6 +496,8 @@ class SystemDatasetService(ConfigService):
                         UpdateImplArgs(name=dataset, zprops=update_props_dict)
                     )
 
+        return list(datasets.values())
+
     def __create_relevant_paths(self, ds_name, create_paths):
         for create_path_config in create_paths:
             try:
@@ -558,48 +511,15 @@ class SystemDatasetService(ConfigService):
                 if (mode := create_path_config.get('mode')) and (cpath_stat.st_mode & 0o777) != mode:
                     os.chmod(create_path_config['path'], mode)
             except Exception:
-                self.logger.exception(
+                self.logger.error(
                     'Failed to ensure %r path for %r dataset', create_path_config['path'], ds_name,
                 )
 
-    def __mount(self, pool, uuid, path=SYSDATASET_PATH):
-        """
-        Mount group of datasets associated with our system dataset.
-        `path` will be either  SYSDATASET_PATH or temp dir in the middlewared
-        rundir. The latter occurs when migrating dataset between pools.
-        """
-        mounted = False
-        for ds_config in get_system_dataset_spec(pool, uuid):
-            dataset, name = ds_config['name'], os.path.basename(ds_config['name'])
-
-            mountpoint = ds_config.get('mountpoint', f'{SYSDATASET_PATH}/{name}').replace(SYSDATASET_PATH, path)
-
-            if os.path.ismount(mountpoint):
-                continue
-
-            with suppress(FileExistsError):
-                os.mkdir(mountpoint)
-            subprocess.run(['mount', '-t', 'zfs', dataset, mountpoint], check=True)
-
-            chown_config = ds_config['chown_config']
-            mode_perms = chown_config.pop('mode')
-            mountpoint_stat = os.stat(mountpoint)
-            if mountpoint_stat.st_uid != chown_config['uid'] or mountpoint_stat.st_gid != chown_config['gid']:
-                os.chown(mountpoint, **chown_config)
-
-            if (mountpoint_stat.st_mode & 0o777) != mode_perms:
-                os.chmod(mountpoint, mode_perms)
-
-            mounted = True
-            if path == SYSDATASET_PATH:
-                self.__create_relevant_paths(ds_config['name'], ds_config.get('create_paths', []))
-                self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
-
-        if mounted and path == SYSDATASET_PATH:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
-            self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': f'{path}/.system', 'fsid': fsid})
-
-        return mounted
+    @private
+    def apply_dataset_spec(self, datasets):
+        for ds_config in datasets:
+            self.__create_relevant_paths(ds_config['name'], ds_config.get('create_paths', []))
+            self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
 
     def __post_mount_actions(self, ds_name, actions):
         for action in actions:
@@ -611,151 +531,167 @@ class SystemDatasetService(ConfigService):
                     action['method'], ds_name, exc_info=True,
                 )
             else:
-                self.logger.info(
+                self.logger.debug(
                     'Successfully ran post mount action %r endpoint for %r dataset', action['method'], ds_name
                 )
 
-    def __umount(self, pool, uuid, retry=True):
+    @private
+    def mount_system_dataset(self, datasets, target_path=SYSDATASET_PATH):
         """
-        Umount the group of datasets associated with the system dataset.
-        When migrating between system datasets, `pool` will be filesystem
-        mounted in middleware rundir for one of the umount calls.
-
-        This is why mount info is checked before manipulating sysdataset_path.
+        Mount system dataset hierarchy at target path.
+        Applies permissions and runs post-mount actions.
         """
+        target_fd = os.open(target_path, os.O_DIRECTORY)
         try:
-            current = statmount(path=SYSDATASET_PATH)
-            if current['mount_source'].split('/')[0] == pool:
+            mount_hierarchy(target_fd=target_fd, datasets=datasets)
+        finally:
+            os.close(target_fd)
+
+        self.apply_dataset_spec(datasets)
+
+    def _rsync_system_dataset(self, to_path):
+        """Rsync system dataset contents"""
+        cp = subprocess.run(
+            ['rsync', '-az', f'{SYSDATASET_PATH}/', to_path],
+            check=False,
+            capture_output=True
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
+
+    def _post_mount_setup(self):
+        """Post-mount setup: coredump bind mount, ACL disable, etc."""
+        config = self.middleware.call_sync('systemdataset.config')
+
+        # Verify correct pool is mounted
+        sysds_mntinfo = statmount(path=SYSDATASET_PATH)
+        mounted_pool = sysds_mntinfo['mount_source'].split('/')[0]
+
+        if mounted_pool != config['pool']:
+            raise CallError(
+                f'{mounted_pool}: system dataset pool incorrect after remount. '
+                f'Expected {config["pool"]}'
+            )
+
+        # Disable ACLs if enabled
+        acl_enabled = (
+            'POSIXACL' in sysds_mntinfo['super_opts'] or
+            'NFSV4ACL' in sysds_mntinfo['super_opts']
+        )
+        if acl_enabled:
+            self.middleware.call_sync(
+                'pool.dataset.update_impl',
+                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'})
+            )
+
+        # Setup coredump bind mount
+        corepath = f'{SYSDATASET_PATH}/cores'
+        if os.path.exists(corepath):
+            if self.middleware.call_sync('keyvalue.get', 'run_migration', False):
                 try:
-                    self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
-                except KeyError:
-                    pass
-        except FileNotFoundError:
-            pass
+                    cores = Path(corepath)
+                    for corefile in cores.iterdir():
+                        corefile.unlink()
+                except Exception:
+                    self.logger.warning("Failed to clear old core files.", exc_info=True)
 
-        # Find mount by source
-        mntinfo = None
-        for mount in iter_mountinfo():
-            if mount['mount_source'] == f'{pool}/.system':
-                mntinfo = mount
-                break
+            coredump_path = '/var/lib/systemd/coredump'
+            os.makedirs(coredump_path, exist_ok=True)
 
-        if not mntinfo:
-            # Pool's system dataset not mounted
-            return
+            # Check if coredump path is already a mountpoint
+            st = truenas_os.statx(path=coredump_path, mask=truenas_os.STATX_BASIC_STATS)
+            is_mountpoint = st.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT
 
-        mp = mntinfo['mountpoint']
-        if retry:
-            flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
-        else:
-            # We're doing a retry and have logged a warning message pointing fingers
-            # at offending processes so that a dev can hopefully fix it later on.
-            flags = '-lf'
+            # If already mounted, use MOVE_MOUNT_BENEATH to replace atomically
+            move_flags = truenas_os.MOVE_MOUNT_BENEATH if is_mountpoint else 0
+
+            move_tree(
+                corepath,
+                coredump_path,
+                open_tree_flags=truenas_os.OPEN_TREE_CLONE | truenas_os.OPEN_TREE_CLOEXEC,
+                move_mount_flags=move_flags
+            )
+
+            # If we moved beneath, unmount the old layer
+            if is_mountpoint:
+                umount(coredump_path, flags=truenas_os.MNT_DETACH | truenas_os.MNT_FORCE, recursive=True)
+
+    @contextmanager
+    def _release_system_dataset(self):
+        """
+        This context manager is used to toggle system-dataset dependent services and
+        tasks for cases where the dataset is unmounted / remounted.
+        """
+        restart = ['netdata']
+        if self.middleware.call_sync('service.started', 'nfs'):
+            restart.append('nfs')
+        if self.middleware.call_sync('service.started', 'cifs'):
+            restart.insert(0, 'cifs')
+        if self.middleware.call_sync('service.started', 'open-vm-tools'):
+            restart.append('open-vm-tools')
 
         try:
-            subprocess.run(['umount', flags, '--recursive', mp], check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode()
-            if 'no mount point specified' in stderr:
-                return
-        else:
-            return
+            for i in restart:
+                self.middleware.call_sync('service.control', 'STOP', i).wait_sync(raise_error=True)
 
-        error = f'Unable to umount {mp}: {stderr}'
-        if 'target is busy' in stderr:
-            # error message is of format "umount: <mountpoint>: target is busy"
-            ds_mp = stderr.split(':')[1].strip()
-            processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [ds_mp], True, True)
+            close_sysdataset_tdb_handles()
+            yield
+        finally:
+            restart.reverse()
+            for i in restart:
+                self.middleware.call_sync('service.control', 'START', i).wait_sync(raise_error=True)
 
-            if retry:
-                self.logger.warning("The following processes are using %s: %s",
-                                    ds_mp, json.dumps(processes, indent=2))
-                return self.__umount(pool, uuid, False)
+    def _migrate_with_data_copy(self, from_pool, to_pool, datasets):
+        """Perform migration with data copy and atomic remount"""
+        with tempfile.TemporaryDirectory(prefix='/var/db/', ignore_cleanup_errors=True) as tmpdir:
+            # Mount new datasets in temp location
+            tmptarget_fd = os.open(tmpdir, os.O_DIRECTORY)
 
-            error += f'\nThe following processes are using {ds_mp!r}: ' + json.dumps(processes, indent=2)
+            try:
+                os.fchmod(tmptarget_fd, 0o700)
+                mount_hierarchy(target_fd=tmptarget_fd, datasets=datasets)
 
-        raise CallError(error) from None
+                with self._release_system_dataset():
+                    self._rsync_system_dataset(tmpdir)
+
+                    # Atomically move new mount tree to SYSDATASET_PATH
+                    try:
+                        move_tree(tmpdir, SYSDATASET_PATH)
+                    except Exception:
+                        self.logger.error('Failed to move %s to %s', tmpdir, SYSDATASET_PATH, exc_info=True)
+                    else:
+                        # Successfully moved, unmount old layer
+                        umount(SYSDATASET_PATH, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE, recursive=True)
+
+            finally:
+                os.close(tmptarget_fd)
+
+                # Clean up in case of any sort of failure resulting in the mount tree still existing
+                tmpdir_stat = truenas_os.statx(
+                    path=tmpdir,
+                    mask=truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_BASIC_STATS
+                )
+                if tmpdir_stat.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT:
+                    umount(tmpdir, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE, recursive=True)
 
     @private
     def migrate(self, _from, _to):
         """
-        Migrate system dataset to a new pool. If it is moving from
-        an existing pool, then the new datasets are mounted in
-        the middleware rundir temprorarily so that data can be
-        rsynced from the old pool.
+        Migrate system dataset from one pool to another.
+        Copies data and atomically switches mount points.
         """
         config = self.middleware.call_sync('systemdataset.config')
-
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
-        self.middleware.call_sync('systemdataset.setup_datasets', _to, config['uuid'])
+
+        # Ensure target datasets exist
+        datasets = self.middleware.call_sync('systemdataset.setup_datasets', _to, config['uuid'])
 
         if _from:
-            path = f'{MIDDLEWARE_RUN_DIR}/system.new'
-            if not os.path.exists(f'{MIDDLEWARE_RUN_DIR}/system.new'):
-                os.mkdir(f'{MIDDLEWARE_RUN_DIR}/system.new')
-            else:
-                # Make sure we clean up any previous attempts
-                subprocess.run(['umount', '-R', path], check=False)
+            self._migrate_with_data_copy(_from, _to, datasets)
         else:
-            path = SYSDATASET_PATH
+            self.mount_system_dataset(datasets)
 
-        self.__mount(_to, config['uuid'], path=path)
-
-        # context manager handles service stop / restart
-        with self.release_system_dataset():
-            if _from:
-                cp = subprocess.run(
-                    ['rsync', '-az', f'{SYSDATASET_PATH}/', f'{MIDDLEWARE_RUN_DIR}/system.new'],
-                    check=False,
-                    capture_output=True
-                )
-                if cp.returncode == 0:
-                    # Let's make sure that we don't have coredump directory mounted
-                    subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
-                    self.__umount(_from, config['uuid'])
-                    self.__umount(_to, config['uuid'])
-                    self.__mount(_to, config['uuid'], SYSDATASET_PATH)
-                    proc = subprocess.Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
-                    proc.communicate()
-
-                    os.rmdir(f'{MIDDLEWARE_RUN_DIR}/system.new')
-                else:
-                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
-
-    @contextmanager
-    @private
-    def release_system_dataset(self):
-        """
-        This context manager is used to toggle system-dataset dependent services and
-        tasks for cases where the dataset is unmounted / remounted.
-
-        The operations are performed under a lock because systemdataset.update() and
-        systemdataset.setup() both can lead to this being called, and we don't want
-        simultaneous releases of system dataset.
-        """
-        with self.sysdataset_release_lock:
-            # TODO: Review these services because /var/log no longer sits on
-            # the system dataset so any service that could potentially open
-            # a file descriptor underneath /var/log will no longer need to be
-            # stopped/restarted to allow the system dataset to migrate
-            restart = ['netdata']
-            if self.middleware.call_sync('service.started', 'nfs'):
-                restart.append('nfs')
-            if self.middleware.call_sync('service.started', 'cifs'):
-                restart.insert(0, 'cifs')
-            if self.middleware.call_sync('service.started', 'open-vm-tools'):
-                restart.append('open-vm-tools')
-
-            try:
-                for i in restart:
-                    self.middleware.call_sync('service.control', 'STOP', i).wait_sync(raise_error=True)
-
-                close_sysdataset_tdb_handles()
-                yield
-            finally:
-                restart.reverse()
-                for i in restart:
-                    self.middleware.call_sync('service.control', 'START', i).wait_sync(raise_error=True)
+        self._post_mount_setup()
 
     @private
     def get_system_dataset_spec(self, pool, uid):
@@ -789,6 +725,7 @@ async def pool_pre_export(middleware, pool, options, job):
 async def setup(middleware):
     def setup_paths():
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
+        truenas_os.mount_setattr(path='/var', propagation=truenas_os.MS_PRIVATE, flags=truenas_os.AT_RECURSIVE)
         if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):
             if os.path.exists('/var/cache/nscd'):
                 shutil.rmtree('/var/cache/nscd')
