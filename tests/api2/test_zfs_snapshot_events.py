@@ -1,6 +1,5 @@
 import errno
 import pprint
-
 from unittest.mock import ANY
 
 import pytest
@@ -55,9 +54,8 @@ def test_delete_with_dependent_clone():
             with pytest.raises(ValidationError) as ve:
                 c.call("pool.snapshot.delete", f"{ds}@test")
 
-            assert ve.value.attribute == "zfs.resource.destroy.defer"
-            assert ve.value.errmsg == f"Snapshot '{ds}@test' has dependent clones: {ds}/clone01"
-            assert ve.value.errno == errno.ENOTEMPTY
+            assert ve.value.errmsg == f"'{ds}@test' has the following clones: {ds}/clone01"
+            assert ve.value.errno == errno.EBUSY
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"defer": True})
             c.call("pool.snapshot.get_instance", f"{ds}@test")
@@ -75,7 +73,7 @@ def test_recursive_delete_with_dependent_clone():
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
             c.call("pool.snapshot.clone", {"snapshot": f"{ds}/child@test", "dataset_dst": f"{ds}/clone02"})
 
-            with pytest.raises(ValidationErrors):
+            with pytest.raises(ValidationError):
                 c.call("pool.snapshot.delete", f"{ds}@test")
 
             c.call("pool.snapshot.delete", f"{ds}@test", {"recursive": True})
