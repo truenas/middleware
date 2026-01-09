@@ -10,6 +10,7 @@ from truenas_crypto_utils.read import get_cert_id
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
+from middlewared.utils.threading import io_thread_pool_executor
 
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
 
@@ -195,7 +196,10 @@ class TNCACMEService(Service):
         await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
             return await create_cert(
-                await self.middleware.call('tn_connect.config_internal'), csr_details, cert_renewal_id
+                await self.middleware.call('tn_connect.config_internal'),
+                csr_details,
+                cert_renewal_id,
+                executor=io_thread_pool_executor,
             )
         except TNCCallError as e:
             raise CallError(str(e))
