@@ -717,6 +717,9 @@ class SystemDatasetService(ConfigService):
                     for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id, reverse=True):
                         truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
 
+                    # Now unmount original
+                    truenas_os.umount2(target=tmpdir, flags=truenas_os.MNT_DETACH)
+
     @private
     def migrate(self, _from, _to):
         """
