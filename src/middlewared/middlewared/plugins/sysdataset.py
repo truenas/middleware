@@ -432,7 +432,7 @@ class SystemDatasetService(ConfigService):
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
-            if self.middleware.call_sync('keyvalue.get', 'run_migration', False):
+            if self.call_sync2(self.s.keyvalue.get, 'run_migration', False):
                 try:
                     cores = Path(corepath)
                     for corefile in cores.iterdir():
@@ -523,9 +523,7 @@ class SystemDatasetService(ConfigService):
                 )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.destroy_impl, dataset, recursive=True
-                    )
+                    await self.call2(self.s.zfs.resource.destroy_impl, dataset, recursive=True)
                     await self.middleware.call(
                         'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)
                     )

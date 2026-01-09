@@ -47,7 +47,7 @@ class CompoundService(Service):
         methods_parts = {}
         for part in self.parts:
             for name in dir(part):
-                if name.startswith('_'):
+                if name.startswith('_') or name in {'call2', 'call_sync2', 's'}:
                     continue
 
                 meth = getattr(part, name)

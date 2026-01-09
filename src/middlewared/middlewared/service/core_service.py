@@ -266,7 +266,7 @@ class CoreService(Service):
                 continue
 
             for attr in dir(svc):
-                if attr.startswith('_'):
+                if attr.startswith('_') or attr in {'call2', 'call_sync2', 's'}:
                     continue
 
                 method = None
