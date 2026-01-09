@@ -26,6 +26,7 @@ from middlewared.service import CallError, ConfigService, ValidationError, Valid
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filesystem.stat_x import statx_entry_impl, StatxAttr
 from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
@@ -591,13 +592,18 @@ class SystemDatasetService(ConfigService):
                 )
 
                 try:
-                    # Move new under old
-                    truenas_os.move_mount(
-                        from_dirfd=tmptree,
-                        from_path="",
-                        to_path=target_path,
-                        flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
-                    )
+                    # Move new under old (BENEATH requires to_dirfd, not to_path)
+                    target_fd = os.open(target_path, os.O_DIRECTORY)
+                    try:
+                        truenas_os.move_mount(
+                            from_dirfd=tmptree,
+                            from_path="",
+                            to_dirfd=target_fd,
+                            to_path="",
+                            flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
+                        )
+                    finally:
+                        os.close(target_fd)
 
                     # Remove old
                     truenas_os.move_mount(
@@ -617,10 +623,6 @@ class SystemDatasetService(ConfigService):
                 os.close(sysdsfd)
         finally:
             os.close(tmptree)
-
-        # Unmount old tree from temp location
-        for mnt in iter_mountinfo(path=new_path, reverse=True):
-            truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
 
     def _post_mount_setup(self):
         """Post-mount setup: coredump bind mount, ACL disable, etc."""
@@ -706,7 +708,14 @@ class SystemDatasetService(ConfigService):
 
             finally:
                 os.close(tmptarget_fd)
-                # Cleanup happens via tempfile context manager
+
+                # Check if tmpdir is still a mount point (only on error path)
+                tmpdir_stat = statx_entry_impl(Path(tmpdir), dir_fd=truenas_os.AT_FDCWD)
+                if StatxAttr.MOUNT_ROOT.name in tmpdir_stat['attributes']:
+                    # Still mounted, so we're on error path - unmount children
+                    tmpdir_mnt_id = tmpdir_stat['st'].stx_mnt_id_unique
+                    for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id, reverse=True):
+                        truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
 
     @private
     def migrate(self, _from, _to):
