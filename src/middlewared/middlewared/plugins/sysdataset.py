@@ -715,10 +715,10 @@ class SystemDatasetService(ConfigService):
                     # Still mounted, so we're on error path - unmount children
                     tmpdir_mnt_id = tmpdir_stat['st'].stx_mnt_id
                     for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id, reverse=True):
-                        truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
+                        truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
                     # Now unmount original
-                    truenas_os.umount2(target=tmpdir, flags=truenas_os.MNT_DETACH)
+                    truenas_os.umount2(target=tmpdir, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
     @private
     def migrate(self, _from, _to):
