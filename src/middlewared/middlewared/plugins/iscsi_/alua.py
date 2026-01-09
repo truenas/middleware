@@ -48,6 +48,7 @@ class iSCSITargetAluaService(Service):
         self.enabled = set()
         self.standby_starting = False
         self.standby_alua_ready = False
+        self.standby_skip_cluster_mode = False
 
         self.active_elected_job = None
         self.activate_extents_job = None
@@ -60,6 +61,7 @@ class iSCSITargetAluaService(Service):
         self._standby_write_empty_config = None
 
     async def before_start(self):
+        self.standby_skip_cluster_mode = True
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 self._standby_write_empty_config = True
@@ -72,6 +74,13 @@ class iSCSITargetAluaService(Service):
 
     async def before_stop(self):
         self.standby_starting = False
+
+    async def after_stop(self):
+        self.standby_skip_cluster_mode = True
+        if await self.middleware.call('failover.status') == 'BACKUP':
+            # Good hygiene
+            self._standby_write_empty_config = True
+            await self.middleware.call('etc.generate', 'scst')
 
     async def standby_enable_devices(self, devices):
         await self.middleware.call('iscsi.target.login_ha_targets')
@@ -382,6 +391,7 @@ class iSCSITargetAluaService(Service):
                 self.logger.warning('Failed to login and surface HA targets', exc_info=True)
 
         # Now that the ground is cleared, start enabling cluster_mode on extents
+        self.standby_skip_cluster_mode = False
         while self.standby_starting:
             try:
                 # We'll refetch the extents each time round the loop in case more have been added
@@ -475,7 +485,7 @@ class iSCSITargetAluaService(Service):
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
-        if self._standby_write_empty_config is not False:
+        if self.standby_skip_cluster_mode or self._standby_write_empty_config is not False:
             self.logger.debug('Skipping standby_fix_cluster_mode')
             return
         job.set_progress(0, 'Fixing cluster_mode')

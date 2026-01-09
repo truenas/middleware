@@ -51,6 +51,9 @@ class ISCSITargetService(SimpleService):
     async def before_stop(self):
         await self.middleware.call("iscsi.alua.before_stop")
 
+    async def after_stop(self):
+        await self.middleware.call("iscsi.alua.after_stop")
+
     async def reload(self):
         return (await run(
             ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
