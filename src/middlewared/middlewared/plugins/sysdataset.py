@@ -692,7 +692,7 @@ class SystemDatasetService(ConfigService):
 
     def _migrate_with_data_copy(self, from_pool, to_pool, datasets):
         """Perform migration with data copy and atomic remount"""
-        with tempfile.TemporaryDirectory(prefix='/var/db/') as tmpdir:
+        with tempfile.TemporaryDirectory(prefix='/var/db/', ignore_cleanup_errors=True) as tmpdir:
             # Mount new datasets in temp location
             tmptarget_fd = os.open(tmpdir, os.O_DIRECTORY)
             os.fchmod(tmptarget_fd, 0o700)
