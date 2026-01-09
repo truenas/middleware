@@ -133,15 +133,21 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             'tx_queues': self.tx_queues,
         }
 
-        with EthernetHardwareSettings(self.name) as dev:
-            state.update({
-                'capabilities': dev.enabled_capabilities,
-                'supported_media': dev.supported_media,
-                'media_type': dev.media_type,
-                'media_subtype': dev.media_subtype,
-                'active_media_type': dev.active_media_type,
-                'active_media_subtype': dev.active_media_subtype,
-            })
+        if False:
+            # WARNING: this leaks memory because of our horrific design
+            # with all these nested subclasses and mixins. There are no
+            # consumers of this so disable it for now. This will be
+            # fixed properly in later release. This is least intrusive
+            # at time of writing.
+            with EthernetHardwareSettings(self.name) as dev:
+                state.update({
+                    'capabilities': dev.enabled_capabilities,
+                    'supported_media': dev.supported_media,
+                    'media_type': dev.media_type,
+                    'media_subtype': dev.media_subtype,
+                    'active_media_type': dev.active_media_type,
+                    'active_media_subtype': dev.active_media_subtype,
+                })
 
         if self.name.startswith('bond'):
             state.update({
