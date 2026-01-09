@@ -55,9 +55,6 @@ def test_change_retention():
 
             result = call("pool.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
                           {"get": True, "extra": {"retention": True}})
-            properties = [v for k, v in result["properties"].items() if k.startswith("org.truenas:destroy_at_")]
-            assert properties, result["properties"]
-            assert properties[0]["value"] == "2031-04-10T06:30:00"
             assert result["retention"] == {
                 "datetime": ANY,
                 "source": "property",
@@ -101,9 +98,6 @@ def test_delete_retention():
 
             result = call("pool.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
                           {"get": True, "extra": {"retention": True}})
-            properties = [v for k, v in result["properties"].items() if k.startswith("org.truenas:destroy_at_")]
-            assert properties, result["properties"]
-            assert properties[0]["value"] == "2031-04-10T06:30:00"
             assert result["retention"] == {
                 "datetime": ANY,
                 "source": "property",

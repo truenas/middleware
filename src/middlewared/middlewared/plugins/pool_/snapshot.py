@@ -1,4 +1,5 @@
 import errno
+from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -90,7 +91,8 @@ class PoolSnapshotService(CRUDService):
             }
         )
 
-    def _transform_snapshot_entry(self, snap, *, include_holds=True, requested_props=None):
+    def _transform_snapshot_entry(self, snap, *, include_holds=True, include_user_properties=False,
+                                  requested_props=None):
         """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
 
         Args:
@@ -151,6 +153,9 @@ class PoolSnapshotService(CRUDService):
             else:
                 entry['holds'] = {}
 
+        if include_user_properties:
+            entry['user_properties'] = snap.get('user_properties', {})
+
         return entry
 
     def _optimize_snap_query_filters(
@@ -203,7 +208,7 @@ class PoolSnapshotService(CRUDService):
         extra = options.get('extra', {})
 
         # Build query args for zfs.resource.snapshot.query
-        query_args = {
+        query_args: dict[str, Any] = {
             'min_txg': extra.get('min_txg', 0),
             'max_txg': extra.get('max_txg', 0),
         }
@@ -236,6 +241,7 @@ class PoolSnapshotService(CRUDService):
             query_args["get_holds"] = True
 
         retention = extra.get("retention", False)
+        include_user_properties = False
         if retention:
             # MISERABLE design choice here. "retention" is a confusing
             # term to represent the fact that we actually want to query
@@ -245,6 +251,7 @@ class PoolSnapshotService(CRUDService):
             # then take the value and put it at a separate top-level key
             # of the final response. sigh...
             query_args["get_user_properties"] = True
+            include_user_properties = True
 
         # Query snapshots using the new efficient endpoint
         # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
@@ -258,7 +265,8 @@ class PoolSnapshotService(CRUDService):
                 # Pass requested_props so fast-path properties can be added when needed
                 snapshots.append(self._transform_snapshot_entry(
                     i,
-                    requested_props=requested_props if requested_props else None
+                    include_user_properties=include_user_properties,
+                    requested_props=requested_props if requested_props else None,
                 ))
         except ZFSPathNotFoundException:
             # Path not found - return empty results (legacy behavior)
