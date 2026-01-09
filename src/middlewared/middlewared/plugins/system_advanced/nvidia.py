@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from middlewared.service import private, Service
+from middlewared.utils.gpu import set_nvidia_persistence_mode
 
 
 class SystemAdvancedService(Service):
@@ -47,13 +48,7 @@ class SystemAdvancedService(Service):
             if cp.returncode != 0:
                 self.logger.error('Error loading nvidia driver: %s', cp.stderr)
             else:
-                # Needed to verify that NVIDIA character devices are present and functioning correctly.
-                cp = subprocess.run(
-                    ['nvidia-smi'],
-                    capture_output=True,
-                )
-                if cp.returncode != 0:
-                    self.logger.error('Error while setting up nvidia gpu: %s', cp.stderr)
+                set_nvidia_persistence_mode(config['nvidia_persistence_mode'])
 
 
 async def setup(middleware):

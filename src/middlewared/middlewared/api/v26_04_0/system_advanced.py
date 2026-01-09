@@ -94,6 +94,8 @@ class SystemAdvancedEntry(BaseModel):
     """Additional kernel boot parameters to pass to the Linux kernel."""
     nvidia: bool
     """Whether NVIDIA GPU support is enabled."""
+    nvidia_persistence_mode: bool = False
+    """Enable NVIDIA persistence mode to keep the driver loaded, reducing GPU initialization latency."""
 
 
 class SystemAdvancedUpdate(SystemAdvancedEntry, metaclass=ForUpdateMetaclass):

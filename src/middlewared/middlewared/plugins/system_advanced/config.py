@@ -52,6 +52,7 @@ class SystemAdvancedModel(sa.Model):
     adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
     adv_kernel_extra_options = sa.Column(sa.Text(), default='', nullable=False)
     adv_nvidia = sa.Column(sa.Boolean(), default=False)
+    adv_nvidia_persistence_mode = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemAdvancedService(ConfigService):
@@ -254,6 +255,11 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['nvidia'] != config_data['nvidia']:
                 await self.middleware.call('system.advanced.handle_nvidia_toggle')
+            elif original_data['nvidia_persistence_mode'] != config_data['nvidia_persistence_mode']:
+                # If nvidia and persistence mode both changed, it will already be handled
+                # by above if conditional
+                # Nvidia stayed the same but persistence mode changed
+                await self.middleware.call('system.advanced.configure_nvidia')
 
             await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
 
