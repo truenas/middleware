@@ -165,8 +165,8 @@ class DockerService(Service):
         if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
 
-        self.call_sync2(
-            self.s.zfs.resource.snapshot.destroy_impl,
+        self.middleware.call_sync(
+            'zfs.resource.snapshot.destroy_impl',
             {'path': backup['snapshot_name'], 'recursive': True, 'bypass': True},
         )
         shutil.rmtree(backup['backup_path'], True)
