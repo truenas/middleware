@@ -240,7 +240,7 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
-        st = stat_x.statx_entry_impl(p, None)
+        st = stat_x.statx_entry_impl(p)
         stat = st['st']
 
         if statlib.S_IMODE(stat.stx_mode) != mode:
@@ -427,7 +427,7 @@ class FilesystemService(Service):
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
 
-        st = stat_x.statx_entry_impl(path, None)
+        st = stat_x.statx_entry_impl(path)
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
