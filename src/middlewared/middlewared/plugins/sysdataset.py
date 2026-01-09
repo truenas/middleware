@@ -620,7 +620,7 @@ class SystemDatasetService(ConfigService):
 
         # Unmount old tree from temp location
         for mnt in iter_mountinfo(path=new_path, reverse=True):
-            truenas_os.umount2(path=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
+            truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH)
 
     def _post_mount_setup(self):
         """Post-mount setup: coredump bind mount, ACL disable, etc."""
@@ -658,7 +658,7 @@ class SystemDatasetService(ConfigService):
                 except Exception:
                     self.logger.warning("Failed to clear old core files.", exc_info=True)
 
-            truenas_os.umount2(path='/var/lib/systemd/coredump', flags=truenas_os.MNT_DETACH)
+            truenas_os.umount2(target='/var/lib/systemd/coredump', flags=truenas_os.MNT_DETACH)
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
 
