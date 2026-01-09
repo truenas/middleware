@@ -545,11 +545,6 @@ class FilesystemService(Service):
         Raises:
             CallError(ENOENT) - Path not found
         """
-        if not path.startswith('/mnt/'):
-            raise CallError('Path must start with "/mnt/"')
-        elif path == '/mnt/':
-            raise CallError('Path must include more than "/mnt/"')
-
         try:
             fd = os.open(path, os.O_PATH)
             try:
