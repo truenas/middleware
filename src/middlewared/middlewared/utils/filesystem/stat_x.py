@@ -35,7 +35,7 @@ class StatxAttr(IntFlag):
 STATX_DEFAULT_MASK = truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE
 
 
-def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
+def statx_entry_impl(entry, dir_fd=truenas_os.AT_FDCWD, get_ctldir=True):
     """
     This is a convenience wrapper around stat_x that was originally
     located within the filesystem plugin
@@ -62,7 +62,7 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
         # This is equivalent to lstat() call
         out['st'] = truenas_os.statx(
             path,
-            dir_fd=dir_fd or truenas_os.AT_FDCWD,
+            dir_fd=dir_fd,
             flags=truenas_os.AT_SYMLINK_NOFOLLOW,
             mask=STATX_DEFAULT_MASK
         )
