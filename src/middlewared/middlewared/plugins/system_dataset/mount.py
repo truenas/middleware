@@ -22,34 +22,46 @@ def create_mount_one(dataset_spec: dict) -> int:
 
 def mount_hierarchy(*, target_fd: int, datasets: list) -> None:
     """ Mount the specified dataset hierarchy to the given path represented by target_fd """
-    for idx, ds in enumerate(datasets):
-        mntfd = create_mount_one(ds)
-        if idx == 0:
-            truenas_os.move_mount(
-                from_dirfd=mntfd,
-                from_path="",
-                to_dirfd=target_fd,
-                to_path="",
-                flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH
-            )
-        else:
-            target_path = os.path.basename(ds['name'])
-            chown_config = ds['chown_config']
-            mode_perms = chown_config.pop('mode')
+    child_target_fd = None
+    mntfd = None
 
-            try:
-                os.mkdir(target_path, dir_fd=target_fd, mode=mode_perms)
-            except FileExistsError:
-                os.chmod(target_path, dir_fd=target_fd, mode=mode_perms)
+    try:
+        for idx, ds in enumerate(datasets):
+            mntfd = create_mount_one(ds)
+            if idx == 0:
+                truenas_os.move_mount(
+                    from_dirfd=mntfd,
+                    from_path="",
+                    to_dirfd=target_fd,
+                    to_path="",
+                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH
+                )
+                child_target_fd = os.open(os.readlink(f'/proc/self/{target_fd}', os.O_DIRECTORY))
+            else:
+                target_path = os.path.basename(ds['name'])
+                chown_config = ds['chown_config']
+                mode_perms = chown_config.pop('mode')
 
-            os.chown(target_path, dir_fd=target_fd, **chown_config)
+                try:
+                    os.mkdir(target_path, dir_fd=target_fd, mode=mode_perms)
+                except FileExistsError:
+                    os.chmod(target_path, dir_fd=target_fd, mode=mode_perms)
 
-            truenas_os.move_mount(
-                from_dirfd=mntfd,
-                from_path="",
-                to_dirfd=target_fd,
-                to_path=target_path,
-                flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH
-            )
+                os.chown(target_path, dir_fd=target_fd, **chown_config)
 
-        os.close(mntfd)
+                truenas_os.move_mount(
+                    from_dirfd=mntfd,
+                    from_path="",
+                    to_dirfd=child_target_fd,
+                    to_path=target_path,
+                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH
+                )
+
+            os.close(mntfd)
+            mntfd = None
+
+    finally:
+        if child_target_fd:
+            os.close(child_target_fd)
+        if mntfd:
+            os.close(mntfd)
