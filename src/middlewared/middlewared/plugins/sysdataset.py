@@ -660,7 +660,19 @@ class SystemDatasetService(ConfigService):
 
             truenas_os.umount2(target='/var/lib/systemd/coredump', flags=truenas_os.MNT_DETACH)
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
-            subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
+            clone_fd = truenas_os.open_tree(
+                path=corepath,
+                flags=truenas_os.OPEN_TREE_CLONE | truenas_os.OPEN_TREE_CLOEXEC
+            )
+            try:
+                truenas_os.move_mount(
+                    from_dirfd=clone_fd,
+                    from_path='',
+                    to_path='/var/lib/systemd/coredump',
+                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH
+                )
+            finally:
+                os.close(clone_fd)
 
     def _restart_dependent_services(self):
         """Restart services that depend on system dataset"""
