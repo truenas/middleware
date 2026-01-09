@@ -2,6 +2,7 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.jsonschema import add_attrs, replace_refs
+from middlewared.utils.pydantic_ import model_json_schema
 from .common import AuditEvent, convert_schema_to_set
 
 
@@ -58,7 +59,7 @@ class AuditEventSystemEscalation(AuditEventSystem):
 
 
 AUDIT_EVENT_SYSTEM_JSON_SCHEMAS = [
-    add_attrs(replace_refs(event_model.model_json_schema()))
+    add_attrs(replace_refs(model_json_schema(event_model)))
     for event_model in (
         AuditEventSystemLogin,
         AuditEventSystemPrivileged,

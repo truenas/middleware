@@ -4,6 +4,7 @@ import typing
 from pydantic import Discriminator, Secret
 
 from middlewared.api.base import BaseModel, SECRET_VALUE
+from middlewared.utils.typing_ import is_union
 from .inspect import model_field_is_model, model_field_is_list_of_models, model_field_is_dict_of_models
 
 __all__ = ["remove_secrets"]
@@ -97,7 +98,7 @@ def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseMo
 
     # Now annotation should be the Union[Model1, Model2, ...]
     origin = typing.get_origin(annotation)
-    if origin not in (typing.Union, type(typing.Union)):
+    if not is_union(origin):
         return None
 
     # Get all union members
