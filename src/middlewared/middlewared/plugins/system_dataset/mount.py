@@ -43,11 +43,11 @@ def mount_hierarchy(*, target_fd: int, datasets: list) -> None:
                 mode_perms = chown_config.pop('mode')
 
                 try:
-                    os.mkdir(target_path, dir_fd=target_fd, mode=mode_perms)
+                    os.mkdir(target_path, dir_fd=child_target_fd, mode=mode_perms)
                 except FileExistsError:
-                    os.chmod(target_path, dir_fd=target_fd, mode=mode_perms)
+                    os.chmod(target_path, dir_fd=child_target_fd, mode=mode_perms)
 
-                os.chown(target_path, dir_fd=target_fd, **chown_config)
+                os.chown(target_path, dir_fd=child_target_fd, **chown_config)
 
                 truenas_os.move_mount(
                     from_dirfd=mntfd,
