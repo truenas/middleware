@@ -36,7 +36,7 @@ def mount_hierarchy(*, target_fd: int, datasets: list) -> None:
                     to_path="",
                     flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH
                 )
-                child_target_fd = os.open(os.readlink(f'/proc/self/{target_fd}', os.O_DIRECTORY))
+                child_target_fd = os.open(os.readlink(f'/proc/self/fd/{target_fd}'), os.O_DIRECTORY)
             else:
                 target_path = os.path.basename(ds['name'])
                 chown_config = ds['chown_config']
