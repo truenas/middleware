@@ -41,7 +41,8 @@ def ensure_model_ready(model: type["BaseModel"]) -> None:
                         ensure_model_ready(submodel)
 
 
-class _NotRequired:...
+class _NotRequired:
+    pass
 
 
 NotRequired = _NotRequired()

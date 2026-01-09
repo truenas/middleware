@@ -85,7 +85,7 @@ class APIDumper:
 
         methodobj_ = method.methodobj
         if doc := inspect.getdoc(methodobj_):
-            doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc).strip()
+            doc = re.sub(r"(\S)\n[ ]*(\S)", r"\1 \2", doc).strip()
 
         input_pipes, output_pipes, check_pipes = False, False, True
         if job := getattr(methodobj_, "_job", None):
