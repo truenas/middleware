@@ -587,7 +587,7 @@ class SystemDatasetService(ConfigService):
                     from_dirfd=tmptree,
                     from_path="",
                     to_path=new_path,
-                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH||truenas_os.MOVE_MOUNT_BENEATH
+                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
                 )
             except Exception:
                 self.logger.error('Failed to move %s to new path %s', target_path, new_path, exc_info=True)
