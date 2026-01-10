@@ -576,7 +576,7 @@ class SystemDatasetService(ConfigService):
         """Atomically replace old mount with new mount"""
         # Get handle to new tree
         tmptree = truenas_os.open_tree(
-            dir_fd=new_fd,
+            dir_fd=new_path,
             path="",
             flags=truenas_os.AT_EMPTY_PATH|truenas_os.OPEN_TREE_CLOEXEC
         )
@@ -586,20 +586,20 @@ class SystemDatasetService(ConfigService):
                 truenas_os.move_mount(
                     from_dirfd=tmptree,
                     from_path="",
-                    to_path=new_path,
+                    to_path=target_path,
                     flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
                 )
             except Exception:
                 self.logger.error('Failed to move %s to new path %s', target_path, new_path, exc_info=True)
             else:
                 # succeed in move so unmount top layer
-                old_stat = statx_entry_impl(Path(new_path), dir_fd=truenas_os.AT_FDCWD)
+                old_stat = statx_entry_impl(Path(target_path), dir_fd=truenas_os.AT_FDCWD)
                 mnt_id = old_stat['st'].stx_mnt_id
                 for mnt in iter_mountinfo(target_mnt_id=mnt_id):
                     truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
                 # Now unmount original
-                truenas_os.umount2(target=new_path, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
+                truenas_os.umount2(target=target_path, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
                 self._restart_dependent_services()
 
         finally:
