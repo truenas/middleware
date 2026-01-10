@@ -576,8 +576,7 @@ class SystemDatasetService(ConfigService):
         """Atomically replace old mount with new mount"""
         # Get handle to new tree
         tmptree = truenas_os.open_tree(
-            dir_fd=new_path,
-            path="",
+            path=new_path,
             flags=truenas_os.AT_EMPTY_PATH|truenas_os.OPEN_TREE_CLOEXEC
         )
 
