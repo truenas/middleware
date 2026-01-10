@@ -582,45 +582,26 @@ class SystemDatasetService(ConfigService):
         )
 
         try:
-            # Get handle to old tree
-            sysdsfd = os.open(target_path, os.O_DIRECTORY)
             try:
-                oldtree = truenas_os.open_tree(
-                    dir_fd=sysdsfd,
-                    path="",
-                    flags=truenas_os.AT_EMPTY_PATH|truenas_os.OPEN_TREE_CLOEXEC
+                truenas_os.move_mount(
+                    from_dirfd=tmptree,
+                    from_path="",
+                    to_path=new_path,
+                    flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH||truenas_os.MOVE_MOUNT_BENEATH
                 )
+            except Exception:
+                self.logger.error('Failed to move %s to new path %s', target_path, new_path, exc_info=True)
+            else:
+                # succeed in move so unmount top layer
+                old_stat = statx_entry_impl(Path(new_path), dir_fd=truenas_os.AT_FDCWD)
+                mnt_id = old_stat['st'].stx_mnt_id
+                for mnt in iter_mountinfo(target_mnt_id=mnt_id):
+                    truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
-                try:
-                    # Move new under old (BENEATH requires to_dirfd, not to_path)
-                    target_fd = os.open(target_path, os.O_DIRECTORY)
-                    try:
-                        truenas_os.move_mount(
-                            from_dirfd=tmptree,
-                            from_path="",
-                            to_dirfd=target_fd,
-                            to_path="",
-                            flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
-                        )
-                    finally:
-                        os.close(target_fd)
+                # Now unmount original
+                truenas_os.umount2(target=new_path, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
+                self._restart_dependent_services()
 
-                    # Remove old
-                    truenas_os.move_mount(
-                        from_dirfd=sysdsfd,
-                        from_path="",
-                        to_dirfd=new_fd,
-                        to_path="",
-                        flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_T_EMPTY_PATH
-                    )
-
-                    # Release handles to old services
-                    self._restart_dependent_services()
-
-                finally:
-                    os.close(oldtree)
-            finally:
-                os.close(sysdsfd)
         finally:
             os.close(tmptree)
 
