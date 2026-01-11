@@ -1,6 +1,8 @@
+import subprocess
 from logging import getLogger
-from pyroute2.ethtool import Ethtool
-from pyroute2.ethtool.ioctl import NotSupportedError, NoSuchDevice
+
+from .ethtool import DeviceNotFound, OperationNotSupported, get_ethtool
+from .utils import run
 
 
 logger = getLogger(__name__)
@@ -10,56 +12,52 @@ class EthernetHardwareSettings:
 
     def __init__(self, interface):
         self._name = interface
-        self._eth = Ethtool()
         self._caps = self.__capabilities__()
         self._media = self.__mediainfo__()
 
     def __capabilities__(self):
         result = {'enabled': [], 'disabled': [], 'supported': []}
-        try:
-            for i in self._eth.get_features(self._name):
-                for name, feature in i.items():
-                    if not name.strip() or not feature.available:
-                        # testing shows that there are features
-                        # without a name so make sure we ignore
-                        # those as well as ignore the feature if
-                        # it's not "available" to be changed
-                        continue
+        return result
 
-                    if feature.enable:
-                        result['enabled'].append(name)
-                    else:
-                        result['disabled'].append(name)
-                    result['supported'].append(name)
+        # FIXME: unused and very inefficient with overall
+        # design. Must be fixed properly in future. For now,
+        # disable it.
+        try:
+            eth = get_ethtool()
+            result = eth.get_features(self._name)
+        except (OperationNotSupported, DeviceNotFound):
+            pass
         except Exception:
             logger.error('Failed to get capabilities for %s', self._name, exc_info=True)
-
         return result
 
     def __set_features__(self, action, capabilities):
-        features = []
+        # c.f. comment in self.__capabilities__()
+        return
+
+        features_to_change = []
         for cap in capabilities:
             if action == 'enable' and cap in self.disabled_capabilities:
-                # means the feature(s) being requested to be enabled is currently disabled
-                features.append(cap)
+                features_to_change.append(cap)
             elif action == 'disable' and cap in self.enabled_capabilities:
-                # means the feature(s) being requested to be disabled is currently enabled
-                features.append(cap)
+                features_to_change.append(cap)
 
-        if features:
-            changed_features = self._eth.get_features(self._name)
-            set_features = False
-            for feature in features:
-                try:
-                    changed_features.features[feature].enable = True if action == 'enable' else False
-                    set_features = True
-                except KeyError:
-                    logger.error('Feature "%s" not found on interface "%s"', feature, self._name)
-                    continue
+        if not features_to_change:
+            return
 
-            if set_features:
-                # actually send the request to the kernel to enable/disable the feature(s)
-                self._eth.set_features(self._name, changed_features)
+        cmd = ['ethtool', '-K', self._name]
+        value = 'on' if action == 'enable' else 'off'
+        for feature in features_to_change:
+            if feature not in self.supported_capabilities:
+                logger.error('Feature "%s" not found on interface "%s"', feature, self._name)
+                continue
+            cmd.extend([feature, value])
+
+        if len(cmd) > 3:
+            try:
+                run(cmd)
+            except subprocess.CalledProcessError as e:
+                logger.error('Failed to set features on %s: %s', self._name, e.stderr)
 
     @property
     def enabled_capabilities(self):
@@ -67,6 +65,8 @@ class EthernetHardwareSettings:
 
     @enabled_capabilities.setter
     def enabled_capabilities(self, capabilities):
+        # c.f. comment in self.__capabilities__()
+        return
         self.__set_features__('enable', capabilities)
 
     @property
@@ -75,6 +75,8 @@ class EthernetHardwareSettings:
 
     @disabled_capabilities.setter
     def disabled_capabilities(self, capabilities):
+        # c.f. comment in self.__capabilities__()
+        return
         self.__set_features__('disable', capabilities)
 
     @property
@@ -89,53 +91,27 @@ class EthernetHardwareSettings:
             'active_media_subtype': '',
             'supported_media': [],
         }
-
-        # We use the undocumented `with_netlink=False` kwargs because
-        # it was noticed that we were getting log spam on machines in
-        # the lab.
-        # Log message looks like:
-        # "pyroute2.ethtool.ethtool.from_netlink():224 - Bit name is not the same as the target: FEC_NONE <> None"
-        # This looks like a bug upstream but the keyword arg works around
-        # the problem.
         try:
-            attrs = self._eth.get_link_mode(self._name, with_netlink=False)
+            eth = get_ethtool()
+            link_modes = eth.get_link_modes(self._name)
+            port = eth.get_link_info(self._name)['port']
+            speed = link_modes['speed']
+            autoneg = link_modes['autoneg']
+            supported_modes = link_modes['supported_modes']
             mst = 'Unknown'
-            if attrs.speed is not None:
-                # looks like 1000Mb/s, 10000Mb/s, etc
-                mst = f'{attrs.speed}Mb/s'
+            if speed is not None and speed > 0:
+                mst = f'{speed}Mb/s'
+            mst = f'{mst} {port}'
 
-            # looks like ("Unknown Twisted Pair" OR "1000Mb/s Twisted Pair" etc
-            mst = f'{mst} {self._eth.get_link_info(self._name, with_netlink=False).port}'
-
-            # fill out the results
             result['media_type'] = 'Ethernet'
-            result['media_subtype'] = 'autoselect' if attrs.autoneg else mst
+            result['media_subtype'] = 'autoselect' if autoneg else mst
             result['active_media_type'] = 'Ethernet'
-            result['active_media_subtype'] = mst  # just matches media_subtype...gross
-            result['supported_media'].extend(attrs.supported_modes)
-        except (NotSupportedError, NoSuchDevice):
-            # NotSupportedError:
-            # ----saw this on a VM running inside xen where the
-            # ----nic driver being used doesnt report any type
-            # ----of media info (ethtool binary didnt report anything either)
-            # ----so ignore these errors
-
-            # NoSuchDevice:
-            # ----udevd will rename interfaces from "old" names (eth0) to new names (enp5s0)
-            # ----[2.283069] r8169 0000:05:00.0 enp5s0: renamed from eth0 (this is from dmesg)
-
-            # ----For whatever, reason, ethtool will barf and say "No Such Device" even though
-            # ----it clearly exists. By the time this method is called, the device exists but
-            # ----we're failing because of a driver problem and/or because the device has been
-            # ----renamed. Instead of spamming logs, just pass and return empty information
-
-            # ----The situation I saw on real hardware is a Realtek card using the 2.5Gbps driver
-            # ----[4205.447000] RTL8226 2.5Gbps PHY r8169-500:00: attached PHY driver
-            # ----[RTL8226 2.5Gbps PHY] (mii_bus:phy_addr=r8169-500:00, irq=IGNORE)
+            result['active_media_subtype'] = mst
+            result['supported_media'].extend(supported_modes)
+        except (OperationNotSupported, DeviceNotFound):
             pass
         except Exception:
             logger.error('Failed to get media info for %s', self._name, exc_info=True)
-
         return result
 
     @property
@@ -159,7 +135,7 @@ class EthernetHardwareSettings:
         return self._media['supported_media']
 
     def close(self):
-        self._eth.close()
+        pass
 
     def __enter__(self):
         return self
