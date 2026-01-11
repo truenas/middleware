@@ -26,7 +26,6 @@ from middlewared.service import CallError, ConfigService, ValidationError, Valid
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.filesystem.stat_x import statx_entry_impl, StatxAttr
 from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
@@ -572,7 +571,7 @@ class SystemDatasetService(ConfigService):
         if cp.returncode != 0:
             raise CallError(f'Failed to rsync from {from_path}: {cp.stderr.decode()}')
 
-    def _atomic_remount(self, new_path, target_path, new_fd):
+    def _atomic_remount_sysdataset(self, new_path):
         """Atomically replace old mount with new mount"""
         # Get handle to new tree
         tmptree = truenas_os.open_tree(
@@ -585,20 +584,20 @@ class SystemDatasetService(ConfigService):
                 truenas_os.move_mount(
                     from_dirfd=tmptree,
                     from_path="",
-                    to_path=target_path,
+                    to_path=SYSDATASET_PATH,
                     flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH|truenas_os.MOVE_MOUNT_BENEATH
                 )
             except Exception:
-                self.logger.error('Failed to move %s to new path %s', target_path, new_path, exc_info=True)
+                self.logger.error('Failed to move %s to new path %s', SYSDATASET_PATH, new_path, exc_info=True)
             else:
                 # succeed in move so unmount top layer
-                old_stat = statx_entry_impl(Path(target_path), dir_fd=truenas_os.AT_FDCWD)
-                mnt_id = old_stat['st'].stx_mnt_id
+                old_stat = truenas_os.statx(path=SYSDATASET_PATH, mask=truenas_os.STATX_MNT_ID_UNIQUE)
+                mnt_id = old_stat.stx_mnt_id
                 for mnt in iter_mountinfo(target_mnt_id=mnt_id):
                     truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
                 # Now unmount original
-                truenas_os.umount2(target=target_path, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
+                truenas_os.umount2(target=SYSDATASET_PATH, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
                 self._restart_dependent_services()
 
         finally:
@@ -684,16 +683,19 @@ class SystemDatasetService(ConfigService):
                 self._rsync_system_dataset(SYSDATASET_PATH, tmpdir)
 
                 # Atomic switcheroo
-                self._atomic_remount(tmpdir, SYSDATASET_PATH, tmptarget_fd)
+                self._atomic_remount_sysdataset(tmpdir)
 
             finally:
                 os.close(tmptarget_fd)
 
                 # Check if tmpdir is still a mount point (only on error path)
-                tmpdir_stat = statx_entry_impl(Path(tmpdir), dir_fd=truenas_os.AT_FDCWD)
-                if StatxAttr.MOUNT_ROOT.name in tmpdir_stat['attributes']:
+                tmpdir_stat = truenas_os.statx(
+                    path=tmpdir,
+                    mask=truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_BASIC_STATS
+                )
+                if tmpdir_stat.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT:
                     # Still mounted, so we're on error path - unmount children
-                    tmpdir_mnt_id = tmpdir_stat['st'].stx_mnt_id
+                    tmpdir_mnt_id = tmpdir_stat.stx_mnt_id
                     for mnt in iter_mountinfo(target_mnt_id=tmpdir_mnt_id):
                         truenas_os.umount2(target=mnt['mountpoint'], flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE)
 
