@@ -465,6 +465,8 @@ class SystemDatasetService(ConfigService):
             # configured on zpools that are passphrase-encrypted.
             if root_dataset_is_passphrase_encrypted:
                 props['encryption'] = 'off'
+
+            props['overlay'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 props['quota'] = '1G'
