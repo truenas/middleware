@@ -1,5 +1,7 @@
 from typing import Annotated, Any, Literal, Self, Union
+
 from pydantic import AfterValidator, Field, field_validator, IPvAnyInterface, model_validator
+
 from middlewared.api.base import (
     BaseModel,
     excluded_field,
@@ -18,11 +20,14 @@ from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.constants import LEGACY_SHARE_FIELDS
 from middlewared.utils.lang import undefined
 from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, SearchProtocol, validate_smb_path_suffix
+from .common import QueryFilters, QueryOptions
+
 
 __all__ = [
     'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
     'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
-    'SMBEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
+    'SMBEntry', 'SMBStatusArgs', 'SMBStatusResult',
+    'SMBUpdateArgs', 'SMBUpdateResult',
     'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
     'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
     'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
@@ -217,6 +222,36 @@ class SMBEntry(BaseModel):
         returns a dictionary of addresses without the netmask info.
         (i.e. {'192.168.1.150': '192.168.1.150'})."""
         return [str(i.ip) for i in values]
+
+
+class SMBStatusOptions(BaseModel):
+    verbose: bool = True
+    """Return verbose status output."""
+    fast: bool = False
+    """Do not check if the status data is valid by checking if the processes that the status data refer to all still \
+    exist. This option decreases execution time on busy systems and clusters but may display stale data of processes \
+    that died without cleaning up properly."""
+    restrict_user: str = ''
+    """Limit results to the specified user."""
+    restrict_session: str = ''
+    """Limit results to the specified SMB session ID."""
+    resolve_uids: bool = True
+    """Resolve Unix user IDs and group IDs to usernames and group names in the status output."""
+
+
+class SMBStatusArgs(BaseModel):
+    info_level: Literal['ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = 'ALL'
+    """Type of information requests. Defaults to "ALL"."""
+    filters: QueryFilters = []
+    """Query filters to apply to the status results."""
+    options: QueryOptions = QueryOptions()
+    """Query options for controlling result pagination and ordering."""
+    status_options: SMBStatusOptions = SMBStatusOptions()
+    """Additional options for retrieving and formatting SMB status information."""
+
+
+class SMBStatusResult(BaseModel):
+    result: list[dict] | dict | int
 
 
 @single_argument_args('smb_update')
