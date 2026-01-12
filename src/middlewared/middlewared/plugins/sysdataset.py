@@ -22,7 +22,6 @@ from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
-from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
 from middlewared.utils.size import format_size
@@ -213,15 +212,6 @@ class SystemDatasetService(ConfigService):
 
         verrors = ValidationErrors()
         if new['pool'] != config['pool']:
-            system_ready = await self.middleware.call('system.ready')
-            ds = await self.middleware.call('directoryservices.status')
-            if system_ready and ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
-                verrors.add(
-                    'sysdataset_update.pool',
-                    'System dataset location may not be moved while the Active Directory service is enabled.',
-                    errno.EPERM
-                )
-
             if new['pool']:
                 if error := await self.destination_pool_error(new['pool']):
                     verrors.add('sysdataset_update.pool', error)
@@ -742,7 +732,9 @@ class SystemDatasetService(ConfigService):
             if self.middleware.call_sync('service.started', 'nfs'):
                 restart.append('nfs')
             if self.middleware.call_sync('service.started', 'cifs'):
-                restart.insert(0, 'cifs')
+                if self.middleware.call_sync('smb.config')['stateful_failover']:
+                    # SMB locking dir on system dataset
+                    restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
 
