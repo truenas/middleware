@@ -29,8 +29,9 @@ class SMBService(Service):
     @api_method(SMBStatusArgs, SMBStatusResult, roles=['SHARING_SMB_READ'])
     def status(self, info_level, filters, options, status_options):
         """Returns SMB server status (sessions, open files, locks, notifications)."""
+        # First handle AUTH_LOG
         lvl = InfoLevel[info_level]
-        if lvl == InfoLevel.AUTH_LOG:
+        if lvl is InfoLevel.AUTH_LOG:
             return self.middleware.call_sync('audit.query', {
                 'services': ['SMB'],
                 'query-filters': filters + [['event', '=', 'AUTHENTICATION']],
@@ -50,6 +51,7 @@ class SMBService(Service):
                     restrict_session = str(f[2])
                     filters = []
 
+        # Build command
         flags = '-j' + lvl.value
         if status_options['verbose']:
             flags += 'v'
@@ -67,11 +69,13 @@ class SMBService(Service):
         if status_options['resolve_uids']:
             statuscmd.append('--resolve-uids')
 
+        # Run command
         smbstatus = subprocess.run(statuscmd, capture_output=True)
 
         if smbstatus.returncode != 0:
             raise CallError(f'Failed to retrieve SMB status: {smbstatus.stderr.decode().strip()}')
 
+        # Parse and return output
         json_status = json.loads(smbstatus.stdout.decode() or '{"sessions": {}}')
 
         match lvl:

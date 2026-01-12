@@ -234,7 +234,9 @@ class SMBStatusOptions(BaseModel):
     restrict_user: str = ''
     """Limit results to the specified user."""
     restrict_session: str = ''
+    """Limit results to the specified SMB session ID."""
     resolve_uids: bool = True
+    """Resolve Unix user IDs and group IDs to usernames and group names in the status output."""
 
 
 class SMBStatusArgs(BaseModel):
@@ -244,9 +246,11 @@ class SMBStatusArgs(BaseModel):
     "AUTH_LOG" provides AUTHENTICATION events from the SMB audit log. Support for this information level will be \
     removed in a future version. Please use `audit.query` instead."""
     filters: QueryFilters = []
+    """Query filters to apply to the status results."""
     options: QueryOptions = QueryOptions()
+    """Query options for controlling result pagination and ordering."""
     status_options: SMBStatusOptions = SMBStatusOptions()
-    """Additional options to filter query results."""
+    """Additional options for retrieving and formatting SMB status information."""
 
 
 class SMBStatusResult(BaseModel):
