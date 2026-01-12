@@ -676,6 +676,7 @@ def generate_smb_conf_dict(
     if smb_service_config['stateful_failover']:
         smbconf.update({
             'lock directory': SAMBA_HA_LOCKDIR,
+            'truenas stateful failover': True,
         })
 
     # The following parameters must come after processing includes in order to
