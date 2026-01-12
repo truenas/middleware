@@ -245,8 +245,8 @@ class ContainerService(CRUDService):
                     'readonly': 'IGNORE',
                 }
             ))
-            await self.middleware.call(
-                'zfs.resource.snapshot.destroy_impl', {'path': f'{data["dataset"]}@{source_snapshot}'}
+            await self.call2(
+                self.s.zfs.resource.snapshot.destroy_impl, {'path': f'{data["dataset"]}@{source_snapshot}'}
             )
 
         return await self.create_with_dataset(data)
@@ -327,8 +327,8 @@ class ContainerService(CRUDService):
         """
         pools = {}
         imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
-        for ds in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for ds in await self.call2(
+            self.s.zfs.resource.query_impl,
             {
                 'paths': [
                     p['name']

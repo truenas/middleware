@@ -72,8 +72,8 @@ class DockerFilesystemManageService(Service):
         to newer TN version, we need to update the mount point of ix-apps dataset so it gets reflected
         properly.
         """
-        ds = await self.middleware.call(
-            'zfs.resource.query_impl',
+        ds = await self.call2(
+            self.s.zfs.resource.query_impl,
             {'paths': [docker_ds], 'properties': ['mountpoint']}
         )
         if not ds:

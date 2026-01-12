@@ -29,8 +29,8 @@ class DockerSetupService(Service):
 
         ds = {
             i['name']
-            for i in await self.middleware.call(
-                'zfs.resource.query_impl',
+            for i in await self.call2(
+                self.s.zfs.resource.query_impl,
                 {'paths': docker_datasets(config['dataset']), 'properties': None}
             )
         }
@@ -93,8 +93,8 @@ class DockerSetupService(Service):
     def create_update_docker_datasets_impl(self, docker_ds):
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
-            i['name']: i['properties'] for i in self.middleware.call_sync(
-                'zfs.resource.query_impl',
+            i['name']: i['properties'] for i in self.call_sync2(
+                self.s.zfs.resource.query_impl,
                 {
                     'paths': expected_docker_datasets,
                     'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),

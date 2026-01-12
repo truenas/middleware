@@ -48,8 +48,8 @@ class BootEnvironmentService(Service):
     def zfs_get_props(self):
         rv = list()
         bp_name = self.middleware.call_sync('boot.pool_name')
-        for i in self.middleware.call_sync(
-            "zfs.resource.query_impl",
+        for i in self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {
                 "paths": [f"{bp_name}/ROOT"],
                 "get_children": True,

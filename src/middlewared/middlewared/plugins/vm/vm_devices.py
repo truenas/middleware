@@ -186,8 +186,8 @@ class VMDeviceService(CRUDService, DeviceMixin):
     def validate_convert_zvol(self, zvp, schema):
         ptn = zvp.removeprefix('/dev/zvol/').replace('+', ' ')
         ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
-        zv = self.middleware.call_sync(
-            'zfs.resource.query_impl',
+        zv = self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {'paths': [ptn], 'properties': ['volsize']}
         )
         if not zv:

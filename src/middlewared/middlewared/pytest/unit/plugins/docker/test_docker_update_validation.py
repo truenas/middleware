@@ -355,7 +355,7 @@ async def test_docker_update_validation(system_state, new_values, old_values, er
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
-    m['zfs.resource.query_impl'] = mock_zfs_resource_query_impl(system_state)
+    m.services.zfs.resource.query_impl = mock_zfs_resource_query_impl(system_state)
     m['system.is_ha_capable'] = lambda *arg: False
     with patch('middlewared.plugins.docker.update.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']

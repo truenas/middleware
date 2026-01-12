@@ -40,8 +40,8 @@ class KMIPService(Service, KMIPServerMixin):
         if not ds_in_db:
             return rv
 
-        for i in self.middleware.call_sync(
-            'zfs.resource.query_impl',
+        for i in self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {'paths': list(ds_in_db), 'get_children': True, 'properties': None}
         ):
             if i['name'] in ds_in_db:

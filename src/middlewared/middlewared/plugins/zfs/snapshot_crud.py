@@ -126,7 +126,7 @@ class ZFSResourceSnapshotService(Service):
         """
         self.validate_recursive_paths("zfs.resource.snapshot.query", data)
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.query_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.query_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.query", e.message, errno.ENOENT
@@ -144,10 +144,7 @@ class ZFSResourceSnapshotService(Service):
         """
         # Use properties=None for efficiency - we only care about existence
         try:
-            self.middleware.call_sync(
-                "zfs.resource.snapshot.query_impl",
-                {"paths": [snap_name], "properties": None}
-            )
+            self.call_sync2(self.s.zfs.resource.snapshot.query_impl, {"paths": [snap_name], "properties": None})
         except ZFSPathNotFoundException:
             return False
         return True
@@ -199,7 +196,7 @@ class ZFSResourceSnapshotService(Service):
         """
         self.validate_recursive_paths("zfs.resource.snapshot.count", data)
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.count_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.count_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.count", e.message, errno.ENOENT
@@ -285,9 +282,7 @@ class ZFSResourceSnapshotService(Service):
                 )
 
         try:
-            failed, errnum = self.middleware.call_sync(
-                "zfs.resource.snapshot.destroy_impl", data
-            )
+            failed, errnum = self.call_sync2(self.s.zfs.resource.snapshot.destroy_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.destroy", e.message, errno.ENOENT
@@ -386,7 +381,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.rename_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.rename_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rename", e.message, errno.ENOENT
@@ -471,7 +466,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.clone_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.clone_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.clone", e.message, errno.ENOENT
@@ -566,7 +561,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.create_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.create_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.create", e.message, errno.ENOENT
@@ -644,7 +639,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.hold_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.hold_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.hold", e.message, errno.ENOENT
@@ -690,9 +685,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            holds = self.middleware.call_sync(
-                "zfs.resource.snapshot.holds_impl", path
-            )
+            holds = self.call_sync2(self.s.zfs.resource.snapshot.holds_impl, path)
             return list(holds)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
@@ -760,7 +753,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.release_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.release_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.release", e.message, errno.ENOENT
@@ -834,7 +827,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.rollback_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rollback", e.message, errno.ENOENT

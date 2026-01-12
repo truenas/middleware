@@ -146,8 +146,8 @@ class ContainerService(Service):
     @private
     def migrate_specific_pool(self, job, pool, existing_containers):
         processed_parents_mountpoints = False
-        datasets = self.middleware.call_sync(
-            "zfs.resource.query_impl",
+        datasets = self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {
                 "paths": [f"{pool}/.ix-virt/containers"],
                 "get_children": True,

@@ -74,7 +74,7 @@ class CloudTaskServiceMixin:
 
         if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
             zvol = zvol_path_to_name(path)
-            zz = await self.middleware.call('zfs.resource.query_impl', {'paths': [zvol], 'properties': None})
+            zz = await self.call2(self.s.zfs.resource.query_impl, {'paths': [zvol], 'properties': None})
             if not zz:
                 verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
             elif not zz[0]['type'] == 'VOLUME':
@@ -90,8 +90,8 @@ class CloudTaskServiceMixin:
             await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
-            for i in await self.middleware.call(
-                "zfs.resource.query_impl",
+            for i in await self.call2(
+                self.s.zfs.resource.query_impl,
                 {
                     "paths": [data["path"].removeprefix("/mnt/")],
                     "properties": None,

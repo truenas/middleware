@@ -50,13 +50,12 @@ class DockerService(Service):
         docker_ds, snapshot_name = backup['snapshot_name'].split('@')
         skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
         for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
-            self.middleware.call_sync(
-                'zfs.resource.snapshot.rollback_impl', {
-                    'path': f'{dataset}@{snapshot_name}',
-                    'force': True,
-                    'recursive': True,
-                    'recursive_clones': True,
-                    'bypass': True,
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, {
+                'path': f'{dataset}@{snapshot_name}',
+                'force': True,
+                'recursive': True,
+                'recursive_clones': True,
+                'bypass': True,
                 }
             )
 

@@ -95,8 +95,8 @@ class DiskDelegate(StorageDelegate):
             # Add normalized path for the zvol
             device['attributes']['path'] = zvol_name_to_path(device['attributes']['zvol_name'])
 
-            zvol = self.middleware.call_sync(
-                'zfs.resource.query_impl',
+            zvol = self.middleware.call_sync2(
+                self.middleware.services.zfs.resource.query_impl,
                 {'paths': [device['attributes']['zvol_name']], 'properties': None}
             )
             if zvol:
@@ -105,8 +105,8 @@ class DiskDelegate(StorageDelegate):
                 # check for parent's existence so we can give a validation error
                 # message that is more intuitive for end-user
                 parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
-                if parentzvol and not self.middleware.call_sync(
-                    'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
+                if parentzvol and not self.middleware.call_sync2(
+                    self.middleware.services.zfs.resource.query_impl, {'paths': [parentzvol], 'properties': None}
                 ):
                     verrors.add(
                         'attributes.zvol_name',
@@ -124,8 +124,8 @@ class DiskDelegate(StorageDelegate):
                 verrors.add('attributes.path', 'Disk residing in boot pool cannot be consumed and is not supported.')
             else:
                 zvol_name = zvol_path_to_name(path)
-                zvol = self.middleware.call_sync(
-                    'zfs.resource.query_impl', {'paths': [zvol_name], 'properties': None}
+                zvol = self.middleware.call_sync2(
+                    self.middleware.services.zfs.resource.query_impl, {'paths': [zvol_name], 'properties': None}
                 )
                 if not zvol:
                     verrors.add(
