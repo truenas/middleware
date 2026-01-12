@@ -472,7 +472,7 @@ class AuditService(ConfigService):
                 to_remove.add(i['name'])
 
         if to_remove:
-            self.logger.debug(
+            self.logger.trace(
                 'Removing refreservations from the following datasets: %s',
                 ', '.join(to_remove)
             )
