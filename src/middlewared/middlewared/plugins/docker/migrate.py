@@ -43,6 +43,10 @@ class DockerService(Service):
 
             await self.middleware.call('datastore.update', 'services.docker', old_config['id'], config)
 
+            # Mount the new pool's ix-apps so backup can be restored
+            if mount_job := await self.middleware.call('docker.fs_manage.mount'):
+                await mount_job.wait()
+
             job.set_progress(70, f'Restoring docker apps in {new_pool!r} pool')
             restore_job = await self.middleware.call('docker.restore_backup', backup_name)
             await restore_job.wait()
@@ -85,7 +89,8 @@ class DockerService(Service):
                     'retention_policy': 'SOURCE',
                     'replicate': True,
                     'readonly': 'IGNORE',
-                    'exclude_mountpoint_property': False,
+                    'exclude_mountpoint_property': True,
+                    'mount': False,
                 }
             )
             await migrate_job.wait()

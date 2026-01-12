@@ -150,3 +150,31 @@ def test_docker_unlocked_dataset_mount(docker_encrypted_pool):
         }, job=True
     )
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
+
+
+def test_ix_apps_mountpoint_inherited_on_pool_unset():
+    """
+    Verify that when Docker pool is unset, the ix-apps mountpoint is inherited
+    (reset from /.ix-apps).
+    """
+    with another_pool({'name': 'test_mountpoint_pool'}) as pool:
+        # Configure Docker on this pool
+        call('docker.update', {'pool': pool['name']}, job=True)
+        docker_ds = f'{pool["name"]}/ix-apps'
+
+        # Verify ix-apps has /.ix-apps mountpoint while active
+        ix_apps = call(
+            'zfs.resource.query',
+            {'paths': [docker_ds], 'properties': ['mountpoint']}
+        )
+        assert ix_apps[0]['properties']['mountpoint']['value'] == IX_APPS_MOUNT_PATH
+
+        # Unset Docker pool
+        call('docker.update', {'pool': None}, job=True)
+
+        # Verify ix-apps mountpoint is now inherited (not /.ix-apps)
+        ix_apps = call(
+            'zfs.resource.query',
+            {'paths': [docker_ds], 'properties': ['mountpoint']}
+        )
+        assert ix_apps[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH

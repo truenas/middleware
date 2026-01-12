@@ -16,7 +16,7 @@ class DockerFilesystemManageService(Service):
         if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
             try:
                 if mount:
-                    # Check if ix-apps dataset mount point needs updating
+                    # Ensure ix-apps has correct mountpoint set
                     await self.ensure_ix_apps_mount_point(docker_ds)
                     await self.call2(
                         self.s.zfs.resource.mount,
@@ -26,6 +26,10 @@ class DockerFilesystemManageService(Service):
                     )
                 else:
                     await self.call2(self.s.zfs.resource.unmount, docker_ds, recursive=True, force=True)
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=docker_ds, iprops={'mountpoint'})
+                    )
                 try:
                     return await self.middleware.call('catalog.sync')
                 except CallError as e:
