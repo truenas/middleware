@@ -614,7 +614,7 @@ class SystemDatasetService(ConfigService):
 
             # If we moved beneath, unmount the old layer
             if is_mountpoint:
-                umount(coredump_path, flags=truenas_os.MNT_DETACH | truenas_os.MNT_FORCE, recursive=True)
+                umount(coredump_path, flags=truenas_os.MNT_FORCE, recursive=True)
 
     @contextmanager
     def _release_system_dataset(self):
@@ -661,7 +661,7 @@ class SystemDatasetService(ConfigService):
                         self.logger.error('Failed to move %s to %s', tmpdir, SYSDATASET_PATH, exc_info=True)
                     else:
                         # Successfully moved, unmount old layer
-                        umount(SYSDATASET_PATH, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE, recursive=True)
+                        umount(SYSDATASET_PATH, flags=truenas_os.MNT_FORCE, recursive=True)
 
             finally:
                 os.close(tmptarget_fd)
@@ -672,7 +672,7 @@ class SystemDatasetService(ConfigService):
                     mask=truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_BASIC_STATS
                 )
                 if tmpdir_stat.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT:
-                    umount(tmpdir, flags=truenas_os.MNT_DETACH|truenas_os.MNT_FORCE, recursive=True)
+                    umount(tmpdir, flags=truenas_os.MNT_FORCE, recursive=True)
 
     @private
     def migrate(self, _from, _to):
