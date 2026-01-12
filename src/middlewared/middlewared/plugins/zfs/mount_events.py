@@ -22,7 +22,17 @@ def mount_events_process(middleware):
 
                     cur = set(truenas_os.listmount())
                     for new in (cur - prev):
-                        sm = truenas_os.statmount(new, mask=truenas_os.STATMOUNT_ALL)
+                        try:
+                            sm = truenas_os.statmount(new, mask=truenas_os.STATMOUNT_ALL)
+                        except FileNotFoundError:
+                            # we can in theory have race on listmount output and the statmount
+                            # call or this can maybe be a mount in a disconnected state.
+                            # Since the cause isn't 100% clear due to troubles reproducing,
+                            # we'll remove from our stored set of mounts and try again on
+                            # next iteration.
+                            cur.remove(new)
+                            continue
+
                         if sm.fs_type == 'zfs' and '@' not in sm.sb_source:
                             mount = __statmount_dict(sm)
                             middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
