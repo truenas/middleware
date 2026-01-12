@@ -240,11 +240,8 @@ class SMBStatusOptions(BaseModel):
 
 
 class SMBStatusArgs(BaseModel):
-    info_level: Literal['AUTH_LOG', 'ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = 'ALL'
-    """Type of information requests. Defaults to "ALL".
-
-    "AUTH_LOG" provides AUTHENTICATION events from the SMB audit log. Support for this information level will be \
-    removed in a future version. Please use `audit.query` instead."""
+    info_level: Literal['ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = 'ALL'
+    """Type of information requests. Defaults to "ALL"."""
     filters: QueryFilters = []
     """Query filters to apply to the status results."""
     options: QueryOptions = QueryOptions()

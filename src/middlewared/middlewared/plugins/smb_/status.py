@@ -11,7 +11,6 @@ from middlewared.utils.filter_list import filter_list
 
 
 class InfoLevel(enum.Enum):
-    AUTH_LOG = 'l'
     ALL = ''
     SESSIONS = 'p'
     SHARES = 'S'
@@ -29,17 +28,10 @@ class SMBService(Service):
     @api_method(SMBStatusArgs, SMBStatusResult, roles=['SHARING_SMB_READ'])
     def status(self, info_level, filters, options, status_options):
         """Returns SMB server status (sessions, open files, locks, notifications)."""
-        # First handle AUTH_LOG
         lvl = InfoLevel[info_level]
-        if lvl is InfoLevel.AUTH_LOG:
-            return self.middleware.call_sync('audit.query', {
-                'services': ['SMB'],
-                'query-filters': filters + [['event', '=', 'AUTHENTICATION']],
-                'query-options': options
-            })
-
         restrict_user = status_options['restrict_user']
         restrict_session = status_options['restrict_session']
+
         # Apply some optimizations for case where filter is only asking for a specific uid or session id.
         if len(filters) == 1:
             f = filters[0]
