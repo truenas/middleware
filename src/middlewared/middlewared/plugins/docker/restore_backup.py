@@ -40,7 +40,8 @@ class DockerService(Service):
 
         docker_config = self.middleware.call_sync('docker.config')
         self.middleware.call_sync(
-            'zfs.dataset.delete', os.path.join(docker_config['dataset'], 'docker'), {'force': True}
+            'zfs.dataset.delete', os.path.join(docker_config['dataset'], 'docker'),
+            {'force': True, 'recursively_remove_dependents': True}
         )
 
         job.set_progress(25, f'Rolling back to {backup_name!r} backup')
