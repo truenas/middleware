@@ -255,6 +255,9 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         """
         update = {}
         for field in value.model_fields.keys():
+            if not hasattr(self, field):
+                continue
+
             field_value = getattr(value, field)
             if field_value is undefined:
                 continue

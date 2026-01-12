@@ -63,7 +63,8 @@ class LoadPluginsMixin:
         self._services_aliases: dict[str, 'Service'] = {}
         super().__init__()
 
-    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None):
+    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None,
+                      service_container=None):
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
         services = []
@@ -84,12 +85,20 @@ class LoadPluginsMixin:
             return service._config.namespace
 
         for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
-            parts = list(parts)
+            service = service_container
+            for name_part in name.split("."):
+                if (service := getattr(service, name_part, None)) is None:
+                    break
+            if service is not None and not isinstance(service, Service):
+                service = None
 
-            if len(parts) == 1:
-                service = parts[0](self)
-            else:
-                service = CompoundService(self, [part(self) for part in parts])
+            if service is None:
+                parts = list(parts)
+
+                if len(parts) == 1:
+                    service = parts[0](self)
+                else:
+                    service = CompoundService(self, [part(self) for part in parts])
 
             if not service._config.private and not service._config.cli_private and not service._config.cli_namespace:
                 raise RuntimeError(f'Service {service!r} does not have CLI namespace set')

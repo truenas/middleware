@@ -1,18 +1,26 @@
 from datetime import time
 import os
+import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PeriodicSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
-    PeriodicSnapshotTaskUpdateResult, PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
+    PeriodicSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult,
+    PeriodicSnapshotTaskUpdateArgs, PeriodicSnapshotTaskUpdateResult,
+    PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
     PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, PeriodicSnapshotTaskMaxTotalCountArgs,
-    PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult
+    PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult,
+    PoolSnapshotTaskCreate, PoolSnapshotTaskUpdate, PoolSnapshotTaskDeleteOptions,
+    PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
+from middlewared.utils.lang import undefined
 from middlewared.utils.path import is_child
+
+from .snapshot_.removal_date import PeriodicSnapshotTaskService as RemovalDateService
+from .snapshot_.task_retention import PeriodicSnapshotTaskService as TaskRetentionService
 
 
 class PeriodicSnapshotTaskModel(sa.Model):
@@ -37,7 +45,7 @@ class PeriodicSnapshotTaskModel(sa.Model):
     task_state = sa.Column(sa.Text(), default='{}')
 
 
-class PeriodicSnapshotTaskService(CRUDService):
+class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUDService):
 
     class Config:
         datastore = 'storage.task'
@@ -81,50 +89,25 @@ class PeriodicSnapshotTaskService(CRUDService):
         PeriodicSnapshotTaskCreateArgs,
         PeriodicSnapshotTaskCreateResult,
         audit='Snapshot task create:',
-        audit_extended=lambda data: data['dataset']
+        audit_extended=lambda data: data['dataset'],
+        check_annotations=True,
     )
-    async def do_create(self, data):
+    async def do_create(self, data: PoolSnapshotTaskCreate) -> PeriodicSnapshotTaskEntry:
         """
         Create a Periodic Snapshot Task
 
         Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
         Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
         or zvols from the snapshot.
+
         Snapshots will be automatically destroyed after a certain amount of time, specified by
         `lifetime_value` and `lifetime_unit`.
+
         If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the snapshot
         will be kept until the last of these tasks reaches its expiry time.
+
         Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
         and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
-
-        .. examples(websocket)::
-
-          Create a recursive Periodic Snapshot Task for dataset `data/work` excluding `data/work/temp`. Snapshots
-          will be created on weekdays every hour from 09:00 to 18:00 and will be stored for two weeks.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.snapshottask.create",
-                "params": [{
-                    "dataset": "data/work",
-                    "recursive": true,
-                    "exclude": ["data/work/temp"],
-                    "lifetime_value": 2,
-                    "lifetime_unit": "WEEK",
-                    "naming_schema": "auto_%Y-%m-%d_%H-%M",
-                    "schedule": {
-                        "minute": "0",
-                        "hour": "*",
-                        "dom": "*",
-                        "month": "*",
-                        "dow": "1,2,3,4,5",
-                        "begin": "09:00",
-                        "end": "18:00"
-                    }
-                }]
-            }
         """
 
         verrors = ValidationErrors()
@@ -133,73 +116,42 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.check()
 
-        convert_schedule_to_db_format(data, begin_end=True)
+        new = data.model_dump()
+        convert_schedule_to_db_format(new, begin_end=True)
 
-        data['id'] = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
-            data,
+            new,
             {'prefix': self._config.datastore_prefix}
         )
 
         await self.middleware.call('zettarepl.update_tasks')
 
-        return await self.get_instance(data['id'])
+        return await self.get_instance(id_)
 
     @api_method(
         PeriodicSnapshotTaskUpdateArgs,
         PeriodicSnapshotTaskUpdateResult,
         audit='Snapshot task update:',
-        audit_callback=True
+        audit_callback=True,
+        check_annotations=True,
     )
-    async def do_update(self, audit_callback, id_, data):
+    async def do_update(self, audit_callback, id_: int, data: PoolSnapshotTaskUpdate) -> PeriodicSnapshotTaskEntry:
         """
-        Update a Periodic Snapshot Task with specific `id`
+        Update a Periodic Snapshot Task with specific `id`.
 
-        See the documentation for `create` method for information on payload contents
-
-        .. examples(websocket)::
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.snapshottask.update",
-                "params": [
-                    1,
-                    {
-                        "dataset": "data/work",
-                        "recursive": true,
-                        "exclude": ["data/work/temp"],
-                        "lifetime_value": 2,
-                        "lifetime_unit": "WEEK",
-                        "naming_schema": "auto_%Y-%m-%d_%H-%M",
-                        "schedule": {
-                            "minute": "0",
-                            "hour": "*",
-                            "dom": "*",
-                            "month": "*",
-                            "dow": "1,2,3,4,5",
-                            "begin": "09:00",
-                            "end": "18:00"
-                        }
-                    }
-                ]
-            }
+        See the documentation for `create` method for information on payload contents.
         """
-
-        fixate_removal_date = data.pop('fixate_removal_date', False)
-
-        old = await self.get_instance(id_)
-        audit_callback(old['dataset'])
-        new = old.copy()
-        new.update(data)
+        old = PeriodicSnapshotTaskEntry(**await self.get_instance(id_))
+        audit_callback(old.dataset)
+        new = old.updated(data)
 
         verrors = ValidationErrors()
 
         verrors.add_child('periodic_snapshot_update', await self._validate(new))
 
-        if not new['enabled']:
+        if not new.enabled:
             for replication_task in await self.middleware.call('replication.query', [['enabled', '=', True]]):
                 if any(periodic_snapshot_task['id'] == id_
                        for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
@@ -212,27 +164,34 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.check()
 
-        convert_schedule_to_db_format(new, begin_end=True)
-
-        for key in ('vmware_sync', 'state'):
-            new.pop(key, None)
-
         will_change_retention_for = None
-        if fixate_removal_date:
-            will_change_retention_for = await self.middleware.call(
-                'pool.snapshottask.update_will_change_retention_for', id_, data,
+        if data.fixate_removal_date != undefined:
+            dump = data.model_dump()
+            dump.pop('fixate_removal_date')
+            will_change_retention_for = await self.call2(
+                self.s.pool.snapshottask.update_will_change_retention_for, id_,
+                PoolSnapshotTaskUpdateWillChangeRetentionFor(**dump),
             )
+
+        update = new.model_dump()
+        convert_schedule_to_db_format(update, begin_end=True)
+        for key in ('vmware_sync', 'state'):
+            update.pop(key, None)
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             id_,
-            new,
+            update,
             {'prefix': self._config.datastore_prefix}
         )
 
         if will_change_retention_for:
-            await self.middleware.call('pool.snapshottask.fixate_removal_date', will_change_retention_for, old)
+            await self.call2(
+                self.s.pool.snapshottask.fixate_removal_date,
+                will_change_retention_for,
+                old.model_dump(),
+            )
 
         await self.middleware.call('zettarepl.update_tasks')
 
@@ -242,9 +201,10 @@ class PeriodicSnapshotTaskService(CRUDService):
         PeriodicSnapshotTaskDeleteArgs,
         PeriodicSnapshotTaskDeleteResult,
         audit='Snapshot task delete:',
-        audit_callback=True
+        audit_callback=True,
+        check_annotations=True,
     )
-    async def do_delete(self, audit_callback, id_, options):
+    async def do_delete(self, audit_callback, id_: int, options: PoolSnapshotTaskDeleteOptions) -> typing.Literal[True]:
         """
         Delete a Periodic Snapshot Task with specific `id`
 
@@ -279,14 +239,12 @@ class PeriodicSnapshotTaskService(CRUDService):
                         f'first.',
                     )
 
-        if options['fixate_removal_date']:
-            will_change_retention_for = await self.middleware.call(
-                'pool.snapshottask.delete_will_change_retention_for', id_
-            )
+        if options.fixate_removal_date:
+            will_change_retention_for = await self.call2(self.s.pool.snapshottask.delete_will_change_retention_for, id_)
 
             if will_change_retention_for:
                 task = await self.get_instance(id_)
-                await self.middleware.call('pool.snapshottask.fixate_removal_date', will_change_retention_for, task)
+                await self.call2(self.s.pool.snapshottask.fixate_removal_date, will_change_retention_for, task)
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -298,8 +256,13 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return response
 
-    @api_method(PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, roles=['SNAPSHOT_TASK_READ'])
-    def max_count(self):
+    @api_method(
+        PeriodicSnapshotTaskMaxCountArgs,
+        PeriodicSnapshotTaskMaxCountResult,
+        roles=['SNAPSHOT_TASK_READ'],
+        check_annotations=True,
+    )
+    def max_count(self) -> int:
         """
         Returns a maximum amount of snapshots (per-dataset) the system can sustain.
         """
@@ -308,8 +271,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         # with too many, then File Explorer will show no snapshots available.
         return 512
 
-    @api_method(PeriodicSnapshotTaskMaxTotalCountArgs, PeriodicSnapshotTaskMaxTotalCountResult, roles=['SNAPSHOT_TASK_READ'])
-    def max_total_count(self):
+    @api_method(
+        PeriodicSnapshotTaskMaxTotalCountArgs,
+        PeriodicSnapshotTaskMaxTotalCountResult,
+        roles=['SNAPSHOT_TASK_READ'],
+        check_annotations=True,
+    )
+    def max_total_count(self) -> int:
         """
         Returns a maximum amount of snapshots (total) the system can sustain.
         """
@@ -318,8 +286,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         # This is a random round number that is large enough and does not cause issues in most use cases.
         return 10000
 
-    @api_method(PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
-    async def run(self, id_):
+    @api_method(
+        PeriodicSnapshotTaskRunArgs,
+        PeriodicSnapshotTaskRunResult,
+        roles=['SNAPSHOT_TASK_WRITE'],
+        check_annotations=True,
+    )
+    async def run(self, id_: int):
         """
         Execute a Periodic Snapshot Task of `id`.
         """
@@ -330,23 +303,23 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         await self.middleware.call("zettarepl.run_periodic_snapshot_task", task["id"])
 
-    async def _validate(self, data):
+    async def _validate(self, data: PeriodicSnapshotTaskEntry):
         verrors = ValidationErrors()
 
-        if data['dataset'] not in (await self.middleware.call('pool.filesystem_choices')):
+        if data.dataset not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 'dataset',
                 'Dataset not found'
             )
 
-        if not data['recursive'] and data['exclude']:
+        if not data.recursive and data.exclude:
             verrors.add(
                 'exclude',
                 'Excluding datasets is not necessary for non-recursive periodic snapshot tasks'
             )
 
-        for i, v in enumerate(data['exclude']):
-            if not v.startswith(f'{data["dataset"]}/'):
+        for i, v in enumerate(data.exclude):
+            if not v.startswith(f'{data.dataset}/'):
                 verrors.add(
                     f'exclude.{i}',
                     'Excluded dataset should be a child or other descendant of the selected dataset'
@@ -362,7 +335,10 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled, options=None):
         results = []
-        for task in await self.middleware.call('pool.snapshottask.query', [['enabled', '=', enabled]]):
+        for task in await self.middleware.call2(
+            self.middleware.services.pool.snapshottask.query,
+            [['enabled', '=', enabled]],
+        ):
             if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', task['dataset']), path):
                 results.append(task)
 

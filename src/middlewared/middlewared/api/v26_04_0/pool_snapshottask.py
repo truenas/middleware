@@ -14,6 +14,8 @@ __all__ = [
     "PeriodicSnapshotTaskMaxTotalCountResult", "PeriodicSnapshotTaskRunArgs", "PeriodicSnapshotTaskRunResult",
     "PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs", "PeriodicSnapshotTaskUpdateWillChangeRetentionForResult",
     "PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs", "PeriodicSnapshotTaskDeleteWillChangeRetentionForResult",
+    "PoolSnapshotTaskCreate", "PoolSnapshotTaskUpdate", "PoolSnapshotTaskDeleteOptions",
+    "PoolSnapshotTaskUpdateWillChangeRetentionFor",
 ]
 
 

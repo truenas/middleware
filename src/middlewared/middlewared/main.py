@@ -92,6 +92,7 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
@@ -131,6 +132,12 @@ def get_methods(container: BaseServiceContainer, prefix="") -> dict[str, types.M
     return result
 
 
+class PoolServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.snapshottask = PeriodicSnapshotTaskService(middleware)
+
+
 class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -142,6 +149,7 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.keyvalue = KeyValueService(middleware)
+        self.pool = PoolServicesContainer(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
         self.methods = get_methods(self)
@@ -385,6 +393,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             on_module_begin=on_module_begin,
             on_module_end=on_module_end,
             on_modules_loaded=on_modules_loaded,
+            service_container=self.services,
         )
 
         implicit_methods = ('config', 'get_instance', 'query')

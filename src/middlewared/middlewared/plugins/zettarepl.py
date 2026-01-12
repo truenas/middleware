@@ -620,7 +620,7 @@ class ZettareplService(Service):
         hold_tasks = {}
 
         periodic_snapshot_tasks = {}
-        for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["enabled", "=", True]]):
+        for periodic_snapshot_task in await self.call2(self.s.pool.snapshottask.query, [["enabled", "=", True]]):
             hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task["dataset"])
             if hold_task_reason:
                 hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task['id']}"] = hold_task_reason

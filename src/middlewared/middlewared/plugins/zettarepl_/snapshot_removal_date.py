@@ -23,7 +23,7 @@ class ZettareplService(Service):
     removal_dates_loaded = False
 
     def load_removal_dates(self, pool=None):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         cmd = ["zfs", "list", "-t", "snapshot", "-H", "-o", f"name,{property_name}"]
         if pool is not None:
             cmd.extend(["-r", pool])
@@ -78,7 +78,7 @@ class ZettareplService(Service):
         return task_snapshots
 
     def fixate_removal_date(self, datasets, task):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))
@@ -110,12 +110,12 @@ class ZettareplService(Service):
                         self.removal_dates[k1][k2] = destroy_at
 
     def annotate_snapshots(self, snapshots: list[dict], pop_user_props: bool = False):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         zettarepl_tasks = [
             PeriodicSnapshotTask.from_data(task["id"], self.middleware.call_sync(
                 "zettarepl.periodic_snapshot_task_definition", task,
             ))
-            for task in self.middleware.call_sync("pool.snapshottask.query", [["enabled", "=", True]])
+            for task in self.call_sync2(self.s.pool.snapshottask.query, [["enabled", "=", True]])
         ]
         snapshot_owners = [
             PeriodicSnapshotTaskSnapshotOwner(utc_now(), zettarepl_task)

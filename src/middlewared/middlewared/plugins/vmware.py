@@ -472,9 +472,7 @@ class VMWareService(CRUDService):
 
     @private
     def periodic_snapshot_task_begin(self, task_id):
-        task = self.middleware.call_sync("pool.snapshottask.query",
-                                         [["id", "=", task_id]],
-                                         {"get": True})
+        task = self.call_sync2(self.s.pool.snapshottask.query, [["id", "=", task_id]], {"get": True})
 
         # If there's a VMWare Plugin object for this filesystem
         # snapshot the VMs before taking the ZFS snapshot.

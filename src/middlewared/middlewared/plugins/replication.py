@@ -673,7 +673,7 @@ class ReplicationService(CRUDService):
     async def _query_periodic_snapshot_tasks(self, ids):
         verrors = ValidationErrors()
 
-        query_result = await self.middleware.call("pool.snapshottask.query", [["id", "in", ids]])
+        query_result = await self.call2(self.s.pool.snapshottask.query, [["id", "in", ids]])
 
         snapshot_tasks = []
         for i, task_id in enumerate(ids):
@@ -707,7 +707,7 @@ class ReplicationService(CRUDService):
         List all naming schemas used in periodic snapshot and replication tasks.
         """
         naming_schemas = []
-        for snapshottask in await self.middleware.call("pool.snapshottask.query"):
+        for snapshottask in await self.call2(self.s.pool.snapshottask.query):
             naming_schemas.append(snapshottask["naming_schema"])
         for replication in await self.middleware.call("replication.query"):
             naming_schemas.extend(replication["naming_schema"])
