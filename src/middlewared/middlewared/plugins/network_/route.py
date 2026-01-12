@@ -1,9 +1,6 @@
-import asyncio
 import contextlib
 import ipaddress
-import os
 import re
-import signal
 import typing
 
 import truenas_pynetif as netif
@@ -13,9 +10,6 @@ from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
-
-RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
-RE_RTSOLD_NUMBER_OF_VALID_RAS = re.compile(r'number of valid RAs: ([0-9]+)')
 
 
 class RouteService(Service):
@@ -135,14 +129,8 @@ class RouteService(Service):
                     ['int_ipv6auto', '=', True],
                 ]
             )
-            remove = False
             if not autoconfigured_interface:
                 self.logger.info('Removing IPv6 default route as there is no IPv6 autoconfiguration')
-                remove = True
-            elif not await self.middleware.call('route.has_valid_router_announcements', interface):
-                self.logger.info('Removing IPv6 default route as IPv6 autoconfiguration has not succeeded')
-                remove = True
-            if remove:
                 routing_table.delete(routing_table.default_route_ipv6)
 
     @private
@@ -178,51 +166,3 @@ class RouteService(Service):
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
         return self.gateway_is_reachable(ipv4_gateway, ipv=4)
-
-    @private
-    async def has_valid_router_announcements(self, interface):
-        rtsold_dump_path = '/var/run/rtsold.dump'
-
-        try:
-            with open('/var/run/rtsold.pid') as f:
-                rtsold_pid = int(f.read().strip())
-        except (FileNotFoundError, ValueError):
-            self.logger.warning('rtsold pid file does not exist')
-            return False
-
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(rtsold_dump_path)
-
-        try:
-            os.kill(rtsold_pid, signal.SIGUSR1)
-        except ProcessLookupError:
-            self.logger.warning('rtsold is not running')
-            return False
-
-        for i in range(10):
-            await asyncio.sleep(0.2)
-            try:
-                with open(rtsold_dump_path) as f:
-                    dump = f.readlines()
-                    break
-            except FileNotFoundError:
-                continue
-        else:
-            self.logger.warning('rtsold has not dumped status')
-            return False
-
-        current_interface = None
-        for line in dump:
-            line = line.strip()
-
-            m = RE_RTSOLD_INTERFACE.match(line)
-            if m:
-                current_interface = m.group(1)
-
-            if current_interface == interface:
-                m = RE_RTSOLD_NUMBER_OF_VALID_RAS.match(line)
-                if m:
-                    return int(m.group(1)) > 0
-
-        self.logger.warning('Have not found %s status in rtsold dump', interface)
-        return False
