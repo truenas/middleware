@@ -13,9 +13,12 @@ class PeriodicSnapshotTaskService(Service):
     class Config:
         namespace = "pool.snapshottask"
 
-    @api_method(PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
-		roles=['SNAPSHOT_TASK_READ'])
-    async def update_will_change_retention_for(self, id_, data):
+    @api_method(
+        PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs,
+        PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
+		roles=['SNAPSHOT_TASK_READ'],
+    )
+    async def update_will_change_retention_for(self, id_: int, data):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
         with `data`.
@@ -35,8 +38,11 @@ class PeriodicSnapshotTaskService(Service):
 
         return result
 
-    @api_method(PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
-		roles=['SNAPSHOT_TASK_READ'])
+    @api_method(
+        PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs,
+        PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
+		roles=['SNAPSHOT_TASK_READ'],
+    )
     async def delete_will_change_retention_for(self, id_):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.
