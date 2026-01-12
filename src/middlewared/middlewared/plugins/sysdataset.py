@@ -254,16 +254,6 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('systemdataset.migrate', config['pool'], new['pool'])
 
         await self.middleware.call('systemdataset.setup', data['pool_exclude'])
-
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'MASTER':
-                try:
-                    await self.middleware.call(
-                        'failover.call_remote', 'system.reboot', ['Failover system dataset change'],
-                    )
-                except Exception as e:
-                    self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
-
         return await self.config()
 
     @private
