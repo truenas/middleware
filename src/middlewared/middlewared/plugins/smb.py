@@ -531,7 +531,7 @@ class SMBService(ConfigService):
                     'NetBIOS aliases may not be changed while directory service is enabled.'
                 )
             else:
-                for idx, nbname in new['netbiosalias']:
+                for idx, nbname in enumerate(new['netbiosalias']):
                     if old['netbiosalias'][idx].casefold() != new['netbiosalias'][idx].casefold():
                         verrors.add(
                             f'smb_update.netbiosalias.{idx}',
