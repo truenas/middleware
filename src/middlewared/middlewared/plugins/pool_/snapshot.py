@@ -382,7 +382,7 @@ class PoolSnapshotService(CRUDService):
 
         try:
             self.middleware.call_sync(
-                'zfs.resource.snapshot.destroy_impl',
+                'zfs.resource.snapshot.destroy',
                 {
                     'path': id_,
                     'recursive': options['recursive'],
