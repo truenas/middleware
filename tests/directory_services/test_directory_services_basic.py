@@ -49,8 +49,8 @@ def test_directory_services_network_domain(service_type):
     ds_config = call('directoryservices.config')
     print(f"\nMCG DEBUG: ds_config=\n{ds_config}")
 
-    with directoryservice(service_type) as ds_config:
-        # ds_config = call('directoryservices.config')
+    with directoryservice(service_type):
+        ds_config = call('directoryservices.config')
         if service_type != 'LDAP':
             net_config = call('network.configuration.config')
             assert net_config['domain'] == ds_config['configuration']['domain']
