@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
 from middlewared.utils.smb import SearchProtocol
 
@@ -57,11 +58,11 @@ class TrueSearchService(Service):
         pools = {directory.removeprefix('/mnt/').split('/')[0] for directory in directories}
 
         mountpoints = {}
-        for dataset in await self.call2(self.s.zfs.resource.query_impl, {
-            'paths': pools,
-            'properties': ['encryption', 'mountpoint'],
-            'get_children': True,
-        }):
+        for dataset in await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(
+            paths=pools,
+            properties=['encryption', 'mountpoint'],
+            get_children=True,
+        )):
             if dataset['type'] != 'FILESYSTEM':
                 continue
 

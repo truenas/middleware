@@ -16,7 +16,8 @@ from middlewared.api.current import (
     iSCSITargetExtentDiskChoicesResult,
     iSCSITargetExtentEntry,
     iSCSITargetExtentUpdateArgs,
-    iSCSITargetExtentUpdateResult
+    iSCSITargetExtentUpdateResult,
+    ZFSResourceQuery
 )
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.pool_.utils import UpdateImplArgs
@@ -240,7 +241,7 @@ class iSCSITargetExtentService(SharingService):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             if zvol := await self.call2(
                 self.s.zfs.resource.query_impl,
-                {'paths': [zvolname], 'properties': ['volthreading']}
+                ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
             ):
                 if (
                     zvol[0]['type'] == 'VOLUME'
@@ -674,8 +675,10 @@ class iSCSITargetExtentService(SharingService):
         if not zvols:
             return
 
-        args = {'paths': zvols, 'properties': ['volthreading']}
-        for zvol in await self.call2(self.s.zfs.resource.query_impl, args):
+        for zvol in await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=zvols, properties=['volthreading']),
+        ):
             if zvol['properties']['volthreading']['raw'] == 'on':
                 await self.middleware.call(
                     'pool.dataset.update_impl',

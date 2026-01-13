@@ -10,12 +10,12 @@ from middlewared.pytest.unit.middleware import Middleware
 def mock_zfs_resource_query_impl(system_state):
     """Create a mock function for zfs.resource.query_impl."""
     def _query_impl(args):
-        paths = args.get('paths', [])
+        paths = args.paths
         if not paths:
             return []
 
         path = paths[0]
-        requested_properties = args.get('properties', [])
+        requested_properties = args.properties
 
         # Check if it's querying for ix-apps dataset
         if path.endswith('/ix-apps'):

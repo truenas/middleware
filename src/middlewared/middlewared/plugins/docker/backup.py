@@ -14,6 +14,7 @@ from middlewared.api.current import (
     DockerListBackupsResult,
     DockerDeleteBackupArgs,
     DockerDeleteBackupResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
@@ -104,7 +105,7 @@ class DockerService(Service):
         # Check if the dataset exists
         ds = self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {'paths': [docker_config['dataset']], 'properties': None}
+            ZFSResourceQuery(paths=[docker_config['dataset']], properties=None)
         )
         if not ds:
             return backups

@@ -4,7 +4,7 @@ import re
 import uuid
 
 from middlewared.api import api_method
-from middlewared.api.current import VMCloneArgs, VMCloneResult
+from middlewared.api.current import VMCloneArgs, VMCloneResult, ZFSResourceQuery
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
@@ -34,7 +34,7 @@ class VMService(Service):
     async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
         zz = await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [zvol], 'properties': None}
+            ZFSResourceQuery(paths=[zvol], properties=None)
         )
         if not zz:
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
@@ -66,7 +66,7 @@ class VMService(Service):
         while True:
             clone_dst = f'{zvol}_{clone_suffix}'
             if await self.call2(
-                self.s.zfs.resource.query_impl, {'paths': [clone_dst], 'properties': None}
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[clone_dst], properties=None)
             ):
                 if ZVOL_CLONE_RE.search(clone_suffix):
                     clone_suffix = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix)

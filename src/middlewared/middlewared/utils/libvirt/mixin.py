@@ -2,6 +2,7 @@ import copy
 import os
 
 from middlewared.api.base.handler.accept import validate_model
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, private, ValidationErrors
@@ -102,7 +103,7 @@ class DeviceMixin:
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
             zvol_id = zvol_path_to_name(device['attributes']['path'])
             if await self.middleware.call2(
-                self.middleware.services.zfs.resource.query_impl, {'paths': [zvol_id], 'properties': None}
+                self.middleware.services.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol_id], properties=None)
             ):
                 # FIXME: What about FS attachment? Also should we be stopping the vm only when
                 # deleting an attachment ?

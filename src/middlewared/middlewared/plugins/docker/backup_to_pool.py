@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult
+from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult, ZFSResourceQuery
 from middlewared.service import job, private, Service, ValidationErrors
 from middlewared.plugins.zfs.utils import get_encryption_info
 
@@ -38,7 +38,7 @@ class DockerService(Service):
 
         target_root_ds = await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [target_pool], 'properties': ['encryption']}
+            ZFSResourceQuery(paths=[target_pool], properties=['encryption'])
         )
         if not target_root_ds:
             verrors.add('target_pool', 'Target pool does not exist')

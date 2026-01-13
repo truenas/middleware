@@ -6,6 +6,7 @@ import os
 import subprocess
 import time
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, private, Service
 from middlewared.utils.size import format_size
 
@@ -142,5 +143,5 @@ class UpdateService(Service):
 
     def _space_left(self, pool_name):
         return self.call_sync2(
-            self.s.zfs.resource.query_impl, {'paths': [pool_name], 'properties': ['available']}
+            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[pool_name], properties=['available'])
         )[0]['properties']['available']['value']

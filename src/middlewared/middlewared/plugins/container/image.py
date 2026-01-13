@@ -6,6 +6,7 @@ import requests
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult,
+    ZFSResourceQuery
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import CreateImplArgs
@@ -60,7 +61,7 @@ class ContainerImageService(Service):
         snapshot_name = f'{dataset_name}@image'
         if self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {'paths': [dataset_name], 'properties': None}
+            ZFSResourceQuery(paths=[dataset_name], properties=None)
         ):
             # Check if the snapshot exists
             if not self.call_sync2(self.s.zfs.resource.snapshot.exists, snapshot_name):

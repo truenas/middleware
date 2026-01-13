@@ -1,5 +1,6 @@
 import errno
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 
@@ -74,7 +75,7 @@ class DockerFilesystemManageService(Service):
         """
         ds = await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [docker_ds], 'properties': ['mountpoint']}
+            ZFSResourceQuery(paths=[docker_ds], properties=['mountpoint'])
         )
         if not ds:
             return

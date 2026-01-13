@@ -5,6 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
+    ZFSResourceQuery,
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
@@ -148,11 +149,11 @@ class ContainerService(Service):
         processed_parents_mountpoints = False
         datasets = self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {
-                "paths": [f"{pool}/.ix-virt/containers"],
-                "get_children": True,
-                "properties": None
-            }
+            ZFSResourceQuery(
+                paths=[f"{pool}/.ix-virt/containers"],
+                get_children=True,
+                properties=None
+            )
         )
         if datasets:
             self.middleware.call_sync("container.ensure_datasets", pool)

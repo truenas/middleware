@@ -5,9 +5,11 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceDestroyArgsData,
     ZFSResourceDestroyArgs,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
+    ZFSResourceQuery,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
 )
@@ -276,15 +278,15 @@ class ZFSResourceService(Service):
             raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
-    def validate_query_args(self, data):
-        for path in data["paths"]:
+    def validate_query_args(self, data: ZFSResourceQuery):
+        for path in data.paths:
             if "@" in path:
                 raise ValidationError(
                     "zfs.resource.query",
                     "Use `zfs.resource.snapshot.query` to query snapshot information.",
                 )
 
-        if data["get_children"] and group_paths_by_parents(data["paths"]):
+        if data.get_children and group_paths_by_parents(data.paths):
             raise ValidationError(
                 "zfs.resource.query",
                 (
@@ -337,16 +339,11 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls, data: dict | None = None):
-        base = ZFSResourceQueryArgs().model_dump()["data"]
-        if data is None:
-            final = base
-        else:
-            final = base | data
-            self.validate_query_args(final)
+    def query_impl(self, tls, data: ZFSResourceQuery):
+        self.validate_query_args(data)
 
-        results = query_impl(tls.lzh, final)
-        if final["nest_results"]:
+        results = query_impl(tls.lzh, data.model_dump())
+        if data.nest_results:
             return self.nest_paths(results)
         else:
             return results
@@ -409,8 +406,10 @@ class ZFSResourceService(Service):
             )
 
         if not recursive:
-            args = {"paths": [path], "properties": None, "get_children": True}
-            rv = self.call_sync2(self.s.zfs.resource.query, args)
+            rv = self.call_sync2(
+                self.s.zfs.resource.query,
+                ZFSResourceQuery(paths=[path], properties=None, get_children=True),
+            )
             extra = "Set recursive=True to remove them."
             if not rv:
                 raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
@@ -431,9 +430,12 @@ class ZFSResourceService(Service):
         return destroy_impl(tls, path, recursive, all_snapshots, bypass, defer)
 
     @api_method(
-        ZFSResourceDestroyArgs, ZFSResourceDestroyResult, roles=["ZFS_RESOURCE_WRITE"]
+        ZFSResourceDestroyArgs,
+        ZFSResourceDestroyResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
     )
-    def destroy(self, data):
+    def destroy(self, data: ZFSResourceDestroyArgsData):
         """
         Destroy a ZFS resource (filesystem or volume).
 
@@ -479,8 +481,8 @@ class ZFSResourceService(Service):
             - To destroy snapshots, use `zfs.resource.snapshot.destroy`
         """
         schema = "zfs.resource.destroy"
-        path = data["path"]
-        recursive = data.get("recursive", False)
+        path = data.path
+        recursive = data.recursive
         try:
             failed, errnum = self.call_sync2(self.s.zfs.resource.destroy_impl, path, recursive)
         except ZFSPathHasClonesException as e:
@@ -507,8 +509,9 @@ class ZFSResourceService(Service):
         ZFSResourceQueryArgs,
         ZFSResourceQueryResult,
         roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
     )
-    def query(self, data):
+    def query(self, data: ZFSResourceQuery) -> list[ZFSResourceEntry]:
         """
         Query ZFS resources (datasets and volumes) with flexible filtering options.
 
