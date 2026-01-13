@@ -248,7 +248,6 @@ class NetworkConfigurationService(ConfigService):
                     else:
                         schema = 'global_configuration_update.hostname_b'
 
-            # ds = await self.middleware.call('directoryservices.status')
             if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] != DSStatus.JOINING.name:
                 verrors.add(
                     schema,
@@ -292,7 +291,6 @@ class NetworkConfigurationService(ConfigService):
 
         # dns domain name changed or /etc/hosts table changed
         licensed = await self.middleware.call('failover.licensed')
-        # domainname_changed = new_config['domain'] != config['domain']
         hosts_table_changed = new_config['hosts'] != config['hosts']
         if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')

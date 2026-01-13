@@ -47,13 +47,12 @@ def test_directory_services_network_domain(service_type):
     """
 
     ds_config = call('directoryservices.config')
-    print(f"\nMCG DEBUG: ds_config=\n{ds_config}")
 
     with directoryservice(service_type):
         ds_config = call('directoryservices.config')
         if service_type != 'LDAP':
             net_config = call('network.configuration.config')
-            assert net_config['domain'] == ds_config['configuration']['domain']
+            assert net_config['domain'] == ds_config['configuration']['domain'].lower()
 
             with pytest.raises(ValidationErrors, match="cannot change this parameter"):
                 call('network.configuration.update', {'domain': 'block.me'})
@@ -62,7 +61,7 @@ def test_directory_services_network_domain(service_type):
 
     # Test after leaving directory services
     net_config = call('network.configuration.config')
-    assert net_config['configuration']['domain'] == DEFAULT_NETWORK_DOMAIN
+    assert net_config['domain'] == DEFAULT_NETWORK_DOMAIN
 
     try:
         call('network.configuration.update', {'domain': 'accept.me'})
