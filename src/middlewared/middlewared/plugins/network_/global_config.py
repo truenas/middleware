@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, ValidationErrors, private
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils import are_indices_in_consecutive_order
-from middlewared.utils.network import DEFAULT_NETWORK_DOMAIN
+from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
 
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'

@@ -7,6 +7,7 @@ from .ipa_join_mixin import IPAJoinMixin
 from .ldap_join_mixin import LDAPJoinMixin
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.job import Job
+from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
 from middlewared.service import job, pass_app, Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
@@ -15,7 +16,6 @@ from middlewared.utils.directoryservices.dns import (
     NSUPDATE_LOCK, dns_record_is_expired, update_dns_record_state, remove_dns_record_state
 )
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, kdc_saf_cache_set
-from middlewared.utils.network import DEFAULT_NETWORK_DOMAIN
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from os import curdir as dot
 

@@ -8,9 +8,6 @@ INTERNET_TIMEOUT = 15
 CONNECTIVITY_CHECK_URL = 'http://www.gstatic.com/generate_204'
 CONNECTIVITY_CHECK_TIMEOUT = 10
 
-# Used by network.configuration
-DEFAULT_NETWORK_DOMAIN = 'local'
-
 
 async def check_internet_connectivity() -> str | None:
     """
