@@ -689,7 +689,7 @@ class SystemDatasetService(ConfigService):
                     # ValueError will be raised if the path isn't a mountpoint
                     pass
                 except Exception:
-                    self.logger.debug('%s: unexpected exception when unmounting path', path, exc_info=True)
+                    self.logger.exception('%s: unexpected exception when unmounting path', path)
         else:
             path = SYSDATASET_PATH
 
