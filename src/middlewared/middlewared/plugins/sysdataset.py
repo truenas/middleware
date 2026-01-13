@@ -58,21 +58,9 @@ class SystemDatasetService(ConfigService):
         and is called potentially quite frequently (once per ZFS event
         or pool.dataset.query, etc).
 
-        Best case scenario we have one cache lookup and one statvfs() call.
-        Worst case, a mount_info lookup is added to the mix.
-
         `None` indicates that there was an issue with filesystem mounted
         at SYSDATASET_PATH. Typically this could indicate a failed migration
         of system dataset or problem importing expected pool for system dataset.
-
-        Heuristic for wrong path is to first check result we cached from last time
-        we checked the past. If dataset name matches, then perform an statvfs() on
-        SYSDATASET_PATH to verify that the FSID matches.
-
-        If we lack a cache entry, then look up SYSDATASET_PATH in mountinfo
-        and make sure the two match. If they don't None is returned.
-
-        If the mountinfo and expected value match, cache fsid and dataset name.
         """
         if expected_datasetname is None:
             db_pool = self.middleware.call_sync(
@@ -85,35 +73,16 @@ class SystemDatasetService(ConfigService):
             ds_name = expected_datasetname
 
         try:
-            cached_entry = self.middleware.call_sync('cache.get', 'SYSDATASET_PATH')
-        except KeyError:
-            cached_entry = None
-
-        try:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
-        except FileNotFoundError:
-            # SYSDATASET_PATH may not exist on first boot. Do not log.
-            return None
-        except OSError:
-            self.logger.warning('Failed to stat sysdataset fd', exc_info=True)
-            return None
-
-        if cached_entry and cached_entry['dataset'] == ds_name:
-            if fsid == cached_entry['fsid']:
-                return SYSDATASET_PATH
-
-        try:
-            mntinfo = statmount(path=SYSDATASET_PATH)
+            mntinfo = statmount(path=SYSDATASET_PATH, as_dict=False)
         except FileNotFoundError:
             self.logger.warning('%s: mountpoint not found', SYSDATASET_PATH)
             return None
 
-        if mntinfo['mount_source'] != ds_name:
-            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected. fsid: %d',
-                                SYSDATASET_PATH, mntinfo['mount_source'], ds_name, fsid)
+        if mntinfo.sb_source != ds_name:
+            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected.',
+                                SYSDATASET_PATH, mntinfo.sb_source, ds_name)
             return None
 
-        self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': ds_name, 'fsid': fsid})
         return SYSDATASET_PATH
 
     @private
@@ -575,10 +544,6 @@ class SystemDatasetService(ConfigService):
                 self.__create_relevant_paths(ds_config['name'], ds_config.get('create_paths', []))
                 self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
 
-        if mounted and path == SYSDATASET_PATH:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
-            self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': f'{path}/.system', 'fsid': fsid})
-
         return mounted
 
     def __post_mount_actions(self, ds_name, actions):
@@ -603,16 +568,6 @@ class SystemDatasetService(ConfigService):
 
         This is why mount info is checked before manipulating sysdataset_path.
         """
-        try:
-            current = statmount(path=SYSDATASET_PATH)
-            if current['mount_source'].split('/')[0] == pool:
-                try:
-                    self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
-                except KeyError:
-                    pass
-        except FileNotFoundError:
-            pass
-
         # Find mount by source
         mntinfo = None
         for mount in iter_mountinfo():
