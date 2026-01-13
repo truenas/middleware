@@ -1,12 +1,11 @@
 import pytest
 from functions import SSH_TEST
 
+from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 from middlewared.service_exception import ValidationErrors
-
-from middlewared.utils.network import DEFAULT_NETWORK_DOMAIN
 
 
 @pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
