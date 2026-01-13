@@ -1002,12 +1002,13 @@ class AuthService(Service):
                 # context has user information. We don't re-request username from the
                 # client as this would open possibility of user trivially bypassing
                 # 2FA.
-                resp = await self.middleware.run_in_thread(
+                pam_resp = await self.middleware.run_in_thread(
                     auth_ctx.pam_hdl.authenticate_oath,
                     data['otp_token']
                 )
+                resp = {'pam_response': {'code': pam_resp.code, 'reason': pam_resp.reason}}
 
-                if resp.code == PAMCode.PAM_SUCCESS:
+                if pam_resp.code == PAMCode.PAM_SUCCESS:
                     # Per feedback to NEP-053 it was decided to only request second
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
@@ -1027,11 +1028,11 @@ class AuthService(Service):
                                 'username': auth_data['user']['username'],
                             },
                         },
-                        'error': 'One-time token validation failed.'
+                        'error': f'One-time token validation failed: {pam_resp.reason}'
                     }, False)
 
                     # Give the user a few attempts to recover a fat-fingered OTP cred
-                    if resp.code == PAMCode.PAM_CONV_AGAIN:
+                    if pam_resp.code == PAMCode.PAM_CONV_AGAIN:
                         # Module says that we still have a few attempts remaining
                         auth_ctx.auth_data = auth_data
                         auth_ctx.next_mech = AuthMech.OTP_TOKEN
