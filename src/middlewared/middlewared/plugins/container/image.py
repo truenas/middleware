@@ -58,12 +58,12 @@ class ContainerImageService(Service):
         suffix = f'images/{image["name"]}:{image["version"]}'
         dataset_name = os.path.join(container_dataset(pool), suffix)
         snapshot_name = f'{dataset_name}@image'
-        if self.middleware.call_sync(
-            'zfs.resource.query_impl',
+        if self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {'paths': [dataset_name], 'properties': None}
         ):
             # Check if the snapshot exists
-            if not self.middleware.call_sync('zfs.resource.snapshot.exists', snapshot_name):
+            if not self.call_sync2(self.s.zfs.resource.snapshot.exists, snapshot_name):
                 # Orphan dataset without a snapshot. Probably leftover from a
                 # previous `pull` attempt that failed and did not clean up
                 # properly. Delete it.
@@ -138,7 +138,7 @@ class ContainerImageService(Service):
 
                 # Create ZFS snapshot
                 job.set_progress(98, 'Creating ZFS snapshot...')
-                self.middleware.call_sync('zfs.resource.snapshot.create_impl', {
+                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
                     'dataset': dataset_name,
                     'name': 'image'
                 })

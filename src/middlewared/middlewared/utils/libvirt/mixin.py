@@ -101,8 +101,8 @@ class DeviceMixin:
             if not device['attributes'].get('path', '').startswith('/dev/zvol'):
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
             zvol_id = zvol_path_to_name(device['attributes']['path'])
-            if await self.middleware.call(
-                'zfs.resource.query_impl', {'paths': [zvol_id], 'properties': None}
+            if await self.middleware.call2(
+                self.middleware.services.zfs.resource.query_impl, {'paths': [zvol_id], 'properties': None}
             ):
                 # FIXME: What about FS attachment? Also should we be stopping the vm only when
                 # deleting an attachment ?
@@ -160,8 +160,8 @@ class DeviceMixin:
 
     async def _disk_choices(self):
         out = {}
-        zvols = await self.middleware.call(
-            'zfs.resource.unlocked_zvols_fast', [
+        zvols = await self.middleware.call2(
+            self.middleware.services.zfs.resource.unlocked_zvols_fast, [
                 ['OR', [['attachment', '=', None], ['attachment.method', '=', f'{self._service_type}.devices.query']]],
                 ['ro', '=', False],
             ],

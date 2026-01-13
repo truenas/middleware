@@ -73,8 +73,8 @@ class AuditService(ConfigService):
     @private
     def get_audit_dataset(self):
         ds_name = self.audit_dataset_name()
-        ds = self.middleware.call_sync(
-            'zfs.resource.query_impl',
+        ds = self.call_sync2(
+            self.s.zfs.resource.query_impl,
             {
                 'paths': [ds_name],
                 'properties': [
@@ -460,8 +460,8 @@ class AuditService(ConfigService):
         # Get dataset names of any dataset on boot pool that isn't on the current
         # activated boot environment.
         to_remove = set()
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
             {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
         ):
             if i['name'] == cur['name'] or i['name'] == parent or i['name'].startswith(f'{parent}/'):

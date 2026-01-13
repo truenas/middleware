@@ -85,8 +85,8 @@ class PoolService(Service):
     async def filesystem_choices(self, types):
         """Returns all available zfs resources based on `types`."""
         info = []
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
             {'get_children': True, 'properties': None}
         ):
             if i['type'] in types:

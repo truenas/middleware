@@ -20,8 +20,8 @@ class ContainerService(Service):
         datasets = [f'{main_dataset}/containers', f'{main_dataset}/images']
 
         existing_datasets = set()
-        for dataset in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for dataset in await self.call2(
+            self.s.zfs.resource.query_impl,
             {'paths': [main_dataset] + datasets, 'properties': ['mountpoint']}
         ):
             if dataset['type'] != 'FILESYSTEM':

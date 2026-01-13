@@ -25,8 +25,8 @@ class AppsIxVolumeService(Service):
             return filter_list([], filters, options)
 
         docker_ds = (await self.middleware.call('docker.config'))['dataset']
-        datasets = await self.middleware.call(
-            'zfs.resource.query_impl',
+        datasets = await self.call2(
+            self.s.zfs.resource.query_impl,
             {
                 'paths': [get_app_mounts_ds(docker_ds)],
                 'get_children': True,

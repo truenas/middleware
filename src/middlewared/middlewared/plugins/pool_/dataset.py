@@ -871,8 +871,8 @@ class PoolDatasetService(CRUDService):
             raise ValidationError('pool.dataset.delete', f'{id_} is an invalid location')
 
         if not options['recursive']:
-            ds = await self.middleware.call(
-                'zfs.resource.query_impl',
+            ds = await self.call2(
+                self.s.zfs.resource.query_impl,
                 {'paths': [id_], 'properties': None, 'get_children': True}
             )
             if len(ds) > 1:

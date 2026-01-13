@@ -229,8 +229,8 @@ class SystemDatasetService(ConfigService):
     async def destination_pool_error(self, new_pool):
         config = await self.config()
         existing_dataset, new_dataset = None, None
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
             {'paths': [config['basename'], new_pool], 'properties': ['used', 'available']}
         ):
             if i['name'] == config['basename']:
@@ -280,8 +280,8 @@ class SystemDatasetService(ConfigService):
         if (
             config['pool'] != boot_pool
             and config['pool'] not in pools_in_db
-            and not self.middleware.call_sync(
-                'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+            and not self.call_sync2(
+                self.s.zfs.resource.query_impl, {'paths': [config['pool']], 'properties': None}
             )
         ):
             # FIXME: this is badddddd. It's a DEADLOCK because this method (setup_impl)
@@ -307,8 +307,8 @@ class SystemDatasetService(ConfigService):
         mntinfo = list(getmntinfo().values())
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
-                ds = self.middleware.call_sync(
-                    'zfs.resource.query_impl',
+                ds = self.call_sync2(
+                    self.s.zfs.resource.query_impl,
                     {'paths': [config['basename']], 'properties': ['encryption']}
                 )
                 if not ds:
@@ -364,8 +364,8 @@ class SystemDatasetService(ConfigService):
         if ds_mntinfo:
             acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
         else:
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
+            ds = self.call_sync2(
+                self.s.zfs.resource.query_impl,
                 {'paths': [config['basename']], 'properties': ['acltype']}
             )
             acl_enabled = ds and ds[0]['properties']['acltype']['raw'] != 'off'
@@ -412,8 +412,8 @@ class SystemDatasetService(ConfigService):
             ):
                 continue
 
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
+            ds = self.call_sync2(
+                self.s.zfs.resource.query_impl,
                 {'paths': [i['name']], 'properties': ['encryption']}
             )
             if not ds:
@@ -432,8 +432,8 @@ class SystemDatasetService(ConfigService):
         boot_pool = await self.middleware.call('boot.pool_name')
         root_dataset_is_passphrase_encrypted = False
         if pool != boot_pool:
-            p = await self.middleware.call(
-                'zfs.resource.query_impl',
+            p = await self.call2(
+                self.s.zfs.resource.query_impl,
                 {'paths': [pool], 'properties': ['encryption']}
             )
             if not p:
@@ -449,8 +449,8 @@ class SystemDatasetService(ConfigService):
         datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
             i['name']: i['properties']
-            for i in await self.middleware.call(
-                'zfs.resource.query_impl',
+            for i in await self.call2(
+                self.s.zfs.resource.query_impl,
                 {
                     'paths': list(datasets),
                     'properties': ['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']

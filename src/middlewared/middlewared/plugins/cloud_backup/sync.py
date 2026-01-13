@@ -36,9 +36,8 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
             clone = zvol_path_to_name(local_path) + f"-{name}"
             try:
-                await middleware.call(
-                    "zfs.resource.snapshot.clone",
-                    {"snapshot": snapshot, "dataset": clone}
+                await middleware.call2(
+                    middleware.services.zfs.resource.snapshot.clone, {"snapshot": snapshot, "dataset": clone}
                 )
             except Exception:
                 clone = None
@@ -118,7 +117,9 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if snapshot is not None:
             try:
-                await middleware.call("zfs.resource.snapshot.destroy_impl", {"path": snapshot})
+                await middleware.call2(
+                    middleware.services.zfs.resource.snapshot.destroy_impl, {"path": snapshot}
+                )
             except Exception as e:
                 middleware.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")
 

@@ -91,7 +91,7 @@ class UsageService(Service):
             context['services'].append({'name': i['service'], 'enabled': i['enable']})
 
         qry_ops = {'get_children': True, 'exclude_internal_paths': False}
-        for ds in self.middleware.call_sync('zfs.resource.query_impl', qry_ops):
+        for ds in self.call_sync2(self.s.zfs.resource.query_impl, qry_ops):
             if ds['name'] == ds['pool']:
                 context['root_datasets'][ds['pool']] = ds
                 context['total_datasets'] += 1

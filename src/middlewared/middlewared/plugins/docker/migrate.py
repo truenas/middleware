@@ -66,14 +66,12 @@ class DockerService(Service):
         snap_name = await self.middleware.call(
             'replication.new_snapshot_name', MIGRATION_NAMING_SCHEMA
         )
-        snap_details = await self.middleware.call(
-            'zfs.resource.snapshot.create_impl', {
-                'dataset': applications_ds_name(old_pool),
-                'name': snap_name,
-                'recursive': True,
-                'bypass':  True
-            }
-        )
+        snap_details = await self.call2(self.s.zfs.resource.snapshot.create_impl, {
+            'dataset': applications_ds_name(old_pool),
+            'name': snap_name,
+            'recursive': True,
+            'bypass':  True
+        })
 
         try:
             old_ds = applications_ds_name(old_pool)
@@ -98,15 +96,13 @@ class DockerService(Service):
                 raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {migrate_job.error}')
 
         finally:
-            await self.middleware.call(
-                'zfs.resource.snapshot.destroy_impl',
-                {'path': snap_details['name'], 'recursive': True, 'bypass': True}
-            )
+            await self.call2(self.s.zfs.resource.snapshot.destroy_impl, {
+                'path': snap_details['name'], 'recursive': True, 'bypass': True
+            })
             target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
             try:
-                await self.middleware.call(
-                    'zfs.resource.snapshot.destroy_impl',
-                    {'path': target_snap_name, 'recursive': True, 'bypass': True}
-                )
+                await self.call2(self.s.zfs.resource.snapshot.destroy_impl, {
+                    'path': target_snap_name, 'recursive': True, 'bypass': True
+                })
             except InstanceNotFound:
                 pass

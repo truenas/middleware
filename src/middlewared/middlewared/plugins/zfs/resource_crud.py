@@ -1,6 +1,7 @@
 import errno
 import os
 import pathlib
+import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -10,6 +11,7 @@ from middlewared.api.current import (
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
 )
+from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
 from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
@@ -38,12 +40,19 @@ from .rename_promote_clone_impl import (
 from .utils import group_paths_by_parents, has_internal_path
 from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 class ZFSResourceService(Service):
     class Config:
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.snapshot = ZFSResourceSnapshotService(middleware)
 
     @private
     def unlocked_zvols_fast(
@@ -401,7 +410,7 @@ class ZFSResourceService(Service):
 
         if not recursive:
             args = {"paths": [path], "properties": None, "get_children": True}
-            rv = self.middleware.call_sync("zfs.resource.query", args)
+            rv = self.call_sync2(self.s.zfs.resource.query, args)
             extra = "Set recursive=True to remove them."
             if not rv:
                 raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
@@ -411,8 +420,8 @@ class ZFSResourceService(Service):
                 )
             else:
                 # Check if dataset has snapshots using snapshot.count
-                snap_counts = self.middleware.call_sync(
-                    "zfs.resource.snapshot.count", {"paths": [path]}
+                snap_counts = self.call_sync2(
+                    self.s.zfs.resource.snapshot.count, {"paths": [path]}
                 )
                 if snap_counts.get(path, 0) > 0:
                     raise ValidationError(
@@ -533,6 +542,6 @@ class ZFSResourceService(Service):
             query({"paths": ["tank"], "nest_results": True, "get_children": True})
         """
         try:
-            return self.middleware.call_sync("zfs.resource.query_impl", data)
+            return self.call_sync2(self.s.zfs.resource.query_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)

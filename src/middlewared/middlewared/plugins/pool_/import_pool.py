@@ -32,8 +32,8 @@ class PoolService(Service):
         to_inherit = list()
         container_mnt = container_dataset_mountpoint(pool_name)
         container_ds = container_dataset(pool_name)
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
             {'paths': [pool_name], 'properties': ['mountpoint'], 'max_depth': 1}
         ):
             if i['type'] != 'FILESYSTEM':
@@ -81,8 +81,8 @@ class PoolService(Service):
             # NOTE: we use zfs.resource.query which will hide internal
             # paths. This is important so don't change it unless you
             # understand the implications fully.
-            for i in await self.middleware.call(
-                'zfs.resource.query',
+            for i in await self.call2(
+                self.s.zfs.resource.query,
                 {'paths': to_inherit, 'properties': None, 'get_children': True}
             ):
                 if i['type'] != 'FILESYSTEM':
@@ -368,8 +368,8 @@ class PoolService(Service):
     def normalize_root_dataset_properties(self, vol_name, vol_guid):
         try:
             self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
+            ds = self.call_sync2(
+                self.s.zfs.resource.query_impl,
                 {'paths': [vol_name], 'properties': ['acltype', 'aclinherit', 'aclmode']}
             )[0]['properties']
         except Exception:

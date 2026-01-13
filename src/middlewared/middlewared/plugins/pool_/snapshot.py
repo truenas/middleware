@@ -39,14 +39,11 @@ class PoolSnapshotService(CRUDService):
     @api_method(PoolSnapshotCloneArgs, PoolSnapshotCloneResult, roles=['SNAPSHOT_WRITE', 'DATASET_WRITE'])
     def clone(self, data):
         """Clone a given snapshot to a new dataset."""
-        self.middleware.call_sync(
-            'zfs.resource.snapshot.clone_impl',
-            {
-                'snapshot': data['snapshot'],
-                'dataset': data['dataset_dst'],
-                'properties': data['dataset_properties'],
-            }
-        )
+        self.call_sync2(self.s.zfs.resource.snapshot.clone_impl, {
+            'snapshot': data['snapshot'],
+            'dataset': data['dataset_dst'],
+            'properties': data['dataset_properties'],
+        })
         self.call_sync2(self.s.zfs.resource.mount, data['dataset_dst'])
         return True
 
@@ -57,7 +54,7 @@ class PoolSnapshotService(CRUDService):
     )
     def rollback(self, id_, options):
         argsdict = {'path': id_} | options
-        self.middleware.call_sync('zfs.resource.snapshot.rollback_impl', argsdict)
+        self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, argsdict)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
@@ -66,14 +63,11 @@ class PoolSnapshotService(CRUDService):
         Add `truenas` tag to the snapshot's tag namespace.
 
         """
-        self.middleware.call_sync(
-            'zfs.resource.snapshot.hold_impl',
-            {
-                'path': id_,
-                'tag': 'truenas',
-                'recursive': options['recursive'],
-            }
-        )
+        self.call_sync2(self.s.zfs.resource.snapshot.hold_impl, {
+            'path': id_,
+            'tag': 'truenas',
+            'recursive': options['recursive'],
+        })
 
     @api_method(PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, roles=['SNAPSHOT_WRITE'])
     def release(self, id_, options):
@@ -82,14 +76,11 @@ class PoolSnapshotService(CRUDService):
         Remove all hold tags from the specified snapshot.
 
         """
-        self.middleware.call_sync(
-            'zfs.resource.snapshot.release_impl',
-            {
-                'path': id_,
-                'tag': None,  # Release all hold tags
-                'recursive': options['recursive'],
-            }
-        )
+        self.call_sync2(self.s.zfs.resource.snapshot.release_impl, {
+            'path': id_,
+            'tag': None,  # Release all hold tags
+            'recursive': options['recursive'],
+        })
 
     def _transform_snapshot_entry(self, snap, *, include_holds=True, include_user_properties=False,
                                   requested_props=None):
@@ -257,10 +248,7 @@ class PoolSnapshotService(CRUDService):
         # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
         snapshots = []
         try:
-            for i in self.middleware.call_sync(
-                'zfs.resource.snapshot.query_impl',
-                query_args,
-            ):
+            for i in self.call_sync2(self.s.zfs.resource.snapshot.query_impl, query_args):
                 # Transform to PoolSnapshotEntry format
                 # Pass requested_props so fast-path properties can be added when needed
                 snapshots.append(self._transform_snapshot_entry(
@@ -330,16 +318,13 @@ class PoolSnapshotService(CRUDService):
 
         try:
             # Create snapshot via zfs.resource.snapshot.create_impl
-            result = self.middleware.call_sync(
-                'zfs.resource.snapshot.create_impl',
-                {
-                    'dataset': dataset,
-                    'name': name,
-                    'recursive': recursive,
-                    'exclude': exclude,
-                    'user_properties': properties,
-                }
-            )
+            result = self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
+                'dataset': dataset,
+                'name': name,
+                'recursive': recursive,
+                'exclude': exclude,
+                'user_properties': properties,
+            })
 
             # Set vmsynced property if applicable
             if vmware_context and vmware_context['vmsynced']:
@@ -381,14 +366,11 @@ class PoolSnapshotService(CRUDService):
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 
         try:
-            self.middleware.call_sync(
-                'zfs.resource.snapshot.destroy',
-                {
-                    'path': id_,
-                    'recursive': options['recursive'],
-                    'defer': options['defer'],
-                }
-            )
+            self.call_sync2(self.s.zfs.resource.snapshot.destroy, {
+                'path': id_,
+                'recursive': options['recursive'],
+                'defer': options['defer'],
+            })
         except ValidationError as ve:
             if ve.errno == errno.ENOENT:
                 raise InstanceNotFound(ve.errmsg)

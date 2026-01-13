@@ -120,13 +120,22 @@ def get_methods(container: BaseServiceContainer, prefix="") -> dict[str, types.M
         if isinstance(value, BaseServiceContainer):
             result.update(**get_methods(value, f"{prefix}{name}."))
         elif isinstance(value, middlewared.service.Service):
-            for attr in dir(value):
-                if attr.startswith("_") or attr in {"call2", "call_sync2", "s"}:
-                    continue
+            result.update(**get_service_methods(value, f"{prefix}{name}."))
 
-                method = getattr(value, attr)
-                if callable(method):
-                    result[f"{prefix}{name}.{attr}"] = method
+    return result
+
+
+def get_service_methods(service: middlewared.service.Service, prefix: str) -> dict[str, types.MethodType]:
+    result = {}
+    for attr in dir(service):
+        if attr.startswith("_") or attr in {"call2", "call_sync2", "s"}:
+            continue
+
+        attr_value = getattr(service, attr)
+        if isinstance(attr_value, middlewared.service.Service):
+            result.update(**get_service_methods(attr_value, f"{prefix}{attr}."))
+        elif callable(attr_value):
+            result[f"{prefix}{attr}"] = attr_value
 
     return result
 
