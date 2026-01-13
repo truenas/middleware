@@ -152,23 +152,49 @@ def getmntinfo(mnt_id=None):
     return info
 
 
-def umount(path: str, flags: int = 0, recursive: bool = False):
+def umount(
+    path: str,
+    *,
+    force: bool = False,
+    detach: bool = False,
+    expire: bool = False,
+    follow_symlinks: bool = False,
+    recursive: bool = False
+):
     """
     Unmount filesystem at the given path.
 
     Args:
         path: Path to the mountpoint to unmount
-        flags: Unmount flags (e.g., truenas_os.MNT_DETACH, truenas_os.MNT_FORCE)
+        force: If True, force unmount even if busy (MNT_FORCE)
+        detach: If True, lazy unmount - detach from filesystem hierarchy immediately (MNT_DETACH)
+        expire: If True, mark the mount as expired (MNT_EXPIRE)
+        follow_symlinks: If True, follow symlinks. If False, don't follow symlinks (UMOUNT_NOFOLLOW)
         recursive: If True, recursively unmount all child mounts before unmounting the target
 
     Raises:
-        FileNotFoundError: If path does not exist (when recursive=True)
+        ValueError: If target is not a mountpoint or if expire was specified with either force or detach
+        OSError: See umount2(2) manpage for errno explanations
+        FileNotFoundError: If path does not exist
 
-    Common flag combinations:
-        - MNT_DETACH: Lazy unmount (detach from filesystem hierarchy immediately)
-        - MNT_FORCE: Force unmount even if busy
-        - MNT_DETACH | MNT_FORCE: Detach and force unmount
+    Examples:
+        umount('/mnt/pool')  # Basic unmount
+        umount('/mnt/pool', force=True)  # Force unmount even if busy
+        umount('/mnt/pool', detach=True)  # Lazy unmount
+        umount('/mnt/pool', force=True, detach=True)  # Force and detach
+        umount('/mnt/pool', recursive=True)  # Recursively unmount children first
     """
+    # Build flags from boolean arguments
+    flags = 0
+    if force:
+        flags |= truenas_os.MNT_FORCE
+    if detach:
+        flags |= truenas_os.MNT_DETACH
+    if expire:
+        flags |= truenas_os.MNT_EXPIRE
+    if not follow_symlinks:
+        flags |= truenas_os.UMOUNT_NOFOLLOW
+
     if recursive:
         # Get the mount ID of the target path
         mnt_id = truenas_os.statx(path, mask=truenas_os.STATX_MNT_ID_UNIQUE).stx_mnt_id
