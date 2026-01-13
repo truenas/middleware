@@ -654,7 +654,9 @@ class SystemDatasetService(ConfigService):
                 processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [mp], True, True)
 
                 if retry:
-                    self.logger.warning("The following processes are using %s: %s",
+                    self.logger.warning(
+                        "The following processes are using %s: %s", mp, json.dumps(processes, indent=2)
+                    )
                                         mp, json.dumps(processes, indent=2))
                     return self.__umount(pool, uuid, False)
 
