@@ -28,16 +28,16 @@ class ReplicationAlertSource(AlertSource):
         for snapshottask in await self.middleware.call2(
             self.middleware.services.pool.snapshottask.query, [["enabled", "=", True]],
         ):
-            if snapshottask["state"]["state"] == "ERROR":
+            if snapshottask.state["state"] == "ERROR":
                 alerts.append(
                     Alert(
                         SnapshotFailedAlertClass,
                         {
-                            "name": snapshottask["dataset"],
-                            "message": snapshottask["state"]["error"],
+                            "name": snapshottask.dataset,
+                            "message": snapshottask.state["error"],
                         },
-                        key=[snapshottask["id"], snapshottask["state"]["datetime"].isoformat()],
-                        datetime=snapshottask["state"]["datetime"],
+                        key=[snapshottask.id, snapshottask.state["datetime"].isoformat()],
+                        datetime=snapshottask.state["datetime"],
                     )
                 )
 

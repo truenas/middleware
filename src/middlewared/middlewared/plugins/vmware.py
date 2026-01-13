@@ -472,7 +472,7 @@ class VMWareService(CRUDService):
 
     @private
     def periodic_snapshot_task_begin(self, task_id):
-        task = self.call_sync2(self.s.pool.snapshottask.query, [["id", "=", task_id]], {"get": True})
+        task = self.call_sync2(self.s.pool.snapshottask.get_instance, task_id)
 
         # If there's a VMWare Plugin object for this filesystem
         # snapshot the VMs before taking the ZFS snapshot.
@@ -480,10 +480,10 @@ class VMWareService(CRUDService):
         # to VMWare and destroy all the VMWare snapshots we created.
         # We do this because having VMWare snapshots in existence impacts
         # the performance of your VMs.
-        qs = self._dataset_get_vms(task["dataset"], task["recursive"])
+        qs = self._dataset_get_vms(task.dataset, task.recursive)
         if qs:
             return {
-                "dataset": task["dataset"],
+                "dataset": task.dataset,
                 "qs": qs,
             }
 
