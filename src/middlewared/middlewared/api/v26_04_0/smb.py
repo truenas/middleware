@@ -711,7 +711,13 @@ class SharingSMBEntry(BaseModel):
 
     WARNING: The TrueNAS server does not check if external paths are reachable. """
     dataset: NonEmptyString | None = Field(examples=['dozer/SHARE'])
+    """ The ZFS dataset name that contains the SMB share path. This is the dataset where the share data is stored. \
+    Returns `null` for external shares. This is a read-only field that is automatically populated based on "path". """
     relative_path: str | None
+    """ The path of the share relative to the dataset mountpoint. For example, if the share path is \
+    `/mnt/dozer/SHARE/subfolder` and the dataset `dozer/SHARE` is mounted at `/mnt/dozer/SHARE`, then the \
+    relative path is "subfolder". An empty string indicates the share is at the dataset root. Returns `null` for \
+    external shares. This is a read-only field that is automatically populated based on "path". """
     enabled: bool = True
     """ If unset, the SMB share is not available over the SMB protocol. """
     comment: str = Field(default='', examples=['Mammalian nurturable'])
