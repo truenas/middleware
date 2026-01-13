@@ -7,6 +7,7 @@ from .ipa_join_mixin import IPAJoinMixin
 from .ldap_join_mixin import LDAPJoinMixin
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.job import Job
+from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
 from middlewared.service import job, pass_app, Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
@@ -303,6 +304,10 @@ class DomainConnection(
             self.middleware.call_sync('dns.nsupdate', {'ops': payload})
             update_dns_record_state(fqdn)
 
+            # Update the domain setting in the network configuration
+            domain = ds_config['configuration']['domain']
+            self.middleware.call_sync('network.configuration.update', {'domain': domain.lower()})
+
     def renew_dns(self):
         """
         Perform automatic renewal of our expected DNS records through nsupdate / GSS-TSIG using the
@@ -370,6 +375,10 @@ class DomainConnection(
             payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
             self.middleware.call_sync('dns.nsupdate', {'ops': payload})
             remove_dns_record_state()
+
+        # Remove domain setting in network.Configuration.
+        # This can be done only after we've left a domain
+        self.middleware.call_sync('network.configuration.update', {'domain': DEFAULT_NETWORK_DOMAIN})
 
     @kerberos_ticket
     def _test_is_joined(self, ds_type: DSType, domain: str) -> bool:
