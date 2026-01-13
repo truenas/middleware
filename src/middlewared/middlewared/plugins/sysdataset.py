@@ -657,7 +657,6 @@ class SystemDatasetService(ConfigService):
                     self.logger.warning(
                         "The following processes are using %s: %s", mp, json.dumps(processes, indent=2)
                     )
-                                        mp, json.dumps(processes, indent=2))
                     return self.__umount(pool, uuid, False)
 
                 error += f'\nThe following processes are using {mp!r}: ' + json.dumps(processes, indent=2)
