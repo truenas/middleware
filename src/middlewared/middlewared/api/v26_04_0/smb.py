@@ -710,6 +710,8 @@ class SharingSMBEntry(BaseModel):
     Use the string `EXTERNAL` if the share works as a DFS proxy.
 
     WARNING: The TrueNAS server does not check if external paths are reachable. """
+    dataset: NonEmptyString | None = Field(examples=['dozer/SHARE'])
+    relative_path: str | None
     enabled: bool = True
     """ If unset, the SMB share is not available over the SMB protocol. """
     comment: str = Field(default='', examples=['Mammalian nurturable'])
@@ -815,6 +817,8 @@ class SharingSMBEntry(BaseModel):
 
 class SmbShareCreate(SharingSMBEntry):
     id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
     @model_validator(mode='after')
