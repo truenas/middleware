@@ -425,7 +425,7 @@ class SystemDatasetService(ConfigService):
             except (FileNotFoundError, ValueError):
                 pass
             except Exception:
-                self.logger.debug('Unexpected error while unmounting coredump path', exc_info=True)
+                self.logger.exception('Unexpected error while unmounting coredump path')
 
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
