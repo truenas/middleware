@@ -1012,7 +1012,7 @@ class AuthService(Service):
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
                     # an API key.
-                    user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
+                    user_info = await self.middleware.call('auth.authenticate_user', resp.user_info)
                     cred = LoginTwofactorSessionManagerCredentials(
                         user_info, CURRENT_AAL.level, auth_ctx.pam_hdl
                     )
