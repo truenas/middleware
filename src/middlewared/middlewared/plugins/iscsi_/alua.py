@@ -609,7 +609,7 @@ class iSCSITargetAluaService(Service):
             self.logger.debug(f'Completed wait for {lextent}/{rextent} to enter cluster_mode')
             return
 
-    async def removed_target_extent(self, target_name, lun, extent_name):
+    async def removed_target_extent(self, target_name, lun, extent_name, do_reload=True):
         """This is called on the STANDBY node to remove an extent from a target."""
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
             try:
@@ -667,7 +667,10 @@ class iSCSITargetAluaService(Service):
                 # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
                 await self.middleware.call('iscsi.target.logout_ha_target', target_name)
             finally:
-                await (await self.middleware.call('service.control', 'RELOAD', 'iscsitarget')).wait(raise_error=True)
+                if do_reload:
+                    await (await self.middleware.call('service.control',
+                                                      'RELOAD',
+                                                      'iscsitarget')).wait(raise_error=True)
 
     async def added_target_extent(self, target_name):
         """This is called on the STANDBY node after an extent has been added to a target."""

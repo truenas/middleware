@@ -20,6 +20,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils import secrets
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
@@ -194,10 +195,84 @@ class iSCSITargetExtentService(SharingService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('iscsitarget', 'reload')
+        target_name = None
+        assoc = []
+        if old['enabled'] != new['enabled']:
+            if await self.middleware.call('iscsi.global.alua_enabled'):
+                if await self.middleware.call('failover.remote_connected'):
+                    try:
+                        assoc = await self.middleware.call(
+                            'iscsi.targetextent.query',
+                            [['extent', '=', id_]],
+                            {'get': True}
+                        )
+                        target_name = (await self.middleware.call(
+                            'iscsi.target.query',
+                            [['id', '=', assoc['target']]],
+                            {'select': ['name'], 'get': True}))['name']
+                    except MatchNotFound:
+                        pass
 
-        # scstadmin can have issues when modifying an existing extent, re-run
-        await self._service_change('iscsitarget', 'reload')
+        if assoc and target_name:
+            # ALUA is enabled and we changed the enabled state of a mapped extent
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+            if new['enabled']:
+                # Just re-enabled the extent
+                await self.middleware.call(
+                    'iscsi.target.wait_for_ha_lun_present',
+                    target_name,
+                    assoc['lunid']
+                )
+                try:
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'iscsi.alua.added_target_extent',
+                        [target_name]
+                    )
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        # Better to continue than to raise the exception
+                # Now update the remote node
+                await self.middleware.call(
+                    'failover.call_remote',
+                    'service.control',
+                    ['RELOAD', 'iscsitarget'],
+                    {'job': True},
+                )
+                await self.middleware.call(
+                    'iscsi.alua.wait_cluster_mode',
+                    assoc['target'],
+                    assoc['extent']
+                )
+            else:
+                # Just disenabled the extent
+                await self.middleware.call(
+                    'iscsi.target.wait_for_ha_lun_absent',
+                    target_name,
+                    assoc['lunid']
+                )
+                try:
+                    # iscsi.alua.removed_target_extent includes a local service reload
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'iscsi.alua.removed_target_extent',
+                        [target_name, assoc['lunid'], old['name']]
+                    )
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        # Better to continue than to raise the exception
+                    await self.middleware.call(
+                        'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
+                    )
+            # Either way wait for ALUA settle
+            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+        else:
+            await self._service_change('iscsitarget', 'reload')
+
+            # scstadmin can have issues when modifying an existing extent, re-run
+            await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
 
