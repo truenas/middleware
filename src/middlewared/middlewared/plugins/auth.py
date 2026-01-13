@@ -1006,16 +1006,15 @@ class AuthService(Service):
                     auth_ctx.pam_hdl.authenticate_oath,
                     data['otp_token']
                 )
-                # get reference to auth data
-                auth_data = auth_ctx.auth_data
 
                 if resp.code == PAMCode.PAM_SUCCESS:
                     # Per feedback to NEP-053 it was decided to only request second
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
                     # an API key.
+                    user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
                     cred = LoginTwofactorSessionManagerCredentials(
-                        auth_data['user'], CURRENT_AAL.level, auth_ctx.pam_hdl
+                        user_info, CURRENT_AAL.level, auth_ctx.pam_hdl
                     )
                     await login_fn(app, cred)
                 else:
