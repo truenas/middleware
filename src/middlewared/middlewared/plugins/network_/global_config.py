@@ -6,8 +6,9 @@ from middlewared.api.current import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, ValidationErrors, private
-from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils import are_indices_in_consecutive_order
+from middlewared.utils.network import DEFAULT_NETWORK_DOMAIN
 
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
@@ -19,7 +20,7 @@ class NetworkConfigurationModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     gc_hostname = sa.Column(sa.String(120), default='nas')
     gc_hostname_b = sa.Column(sa.String(120), nullable=True)
-    gc_domain = sa.Column(sa.String(120), default='local')
+    gc_domain = sa.Column(sa.String(120), default=DEFAULT_NETWORK_DOMAIN)
     gc_ipv4gateway = sa.Column(sa.String(42), default='')
     gc_ipv6gateway = sa.Column(sa.String(45), default='')
     gc_nameserver1 = sa.Column(sa.String(45), default='')
@@ -225,7 +226,13 @@ class NetworkConfigurationService(ConfigService):
             lhost_changed = config['hostname_b'] != new_config['hostname_b']
             rhost_changed = config['hostname'] != new_config['hostname']
 
+        domainname_changed = new_config['domain'] != config['domain']
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
+
+        # These settings have directory services dependencies
+        if any([vhost_changed, lhost_changed, rhost_changed, domainname_changed]):
+            ds = await self.middleware.call('directoryservices.status')
+
         if vhost_changed or lhost_changed or rhost_changed:
             if vhost_changed:
                 schema = 'global_configuration_update.hostname_virtual'
@@ -241,13 +248,21 @@ class NetworkConfigurationService(ConfigService):
                     else:
                         schema = 'global_configuration_update.hostname_b'
 
-            ds = await self.middleware.call('directoryservices.status')
-            if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] != 'JOINING':
+            # ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] != DSStatus.JOINING.name:
                 verrors.add(
                     schema,
                     'You cannot change this parameter after TrueNAS joins a domain. '
                     'To change it, first leave the domain cleanly. '
                     'Then change the parameter and rejoin the domain.'
+                )
+
+        # Cannot manually change domain name if joined to a domain
+        if domainname_changed and ds.get('type'):
+            if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] == DSStatus.HEALTHY.name:
+                verrors.add(
+                    'global_configuration_update.domain',
+                    'You cannot change this parameter after TrueNAS joins a domain.'
                 )
 
         verrors.check()
@@ -277,7 +292,7 @@ class NetworkConfigurationService(ConfigService):
 
         # dns domain name changed or /etc/hosts table changed
         licensed = await self.middleware.call('failover.licensed')
-        domainname_changed = new_config['domain'] != config['domain']
+        # domainname_changed = new_config['domain'] != config['domain']
         hosts_table_changed = new_config['hosts'] != config['hosts']
         if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')

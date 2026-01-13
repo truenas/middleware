@@ -15,6 +15,7 @@ from middlewared.utils.directoryservices.dns import (
     NSUPDATE_LOCK, dns_record_is_expired, update_dns_record_state, remove_dns_record_state
 )
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, kdc_saf_cache_set
+from middlewared.utils.network import DEFAULT_NETWORK_DOMAIN
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from os import curdir as dot
 
@@ -303,6 +304,10 @@ class DomainConnection(
             self.middleware.call_sync('dns.nsupdate', {'ops': payload})
             update_dns_record_state(fqdn)
 
+            # Update the domain setting in the network configuration
+            domain = ds_config['configuration']['domain']
+            self.middleware.call_sync('network.configuration.update', {'domain': domain.lower()})
+
     def renew_dns(self):
         """
         Perform automatic renewal of our expected DNS records through nsupdate / GSS-TSIG using the
@@ -370,6 +375,10 @@ class DomainConnection(
             payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
             self.middleware.call_sync('dns.nsupdate', {'ops': payload})
             remove_dns_record_state()
+
+        # Remove domain setting in network.Configuration.
+        # This can be done only after we've left a domain
+        self.middleware.call_sync('network.configuration.update', {'domain': DEFAULT_NETWORK_DOMAIN})
 
     @kerberos_ticket
     def _test_is_joined(self, ds_type: DSType, domain: str) -> bool:
