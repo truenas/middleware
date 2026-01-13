@@ -92,7 +92,7 @@ class SystemServiceListenDelegateMixin:
         return self.middleware.get_service(self.plugin)._config.service
 
     async def repr(self, state):
-        return {"type": "SYSTEM_SERVICE", "system-service": self.service}
+        return {"type": "SYSTEM_SERVICE", "service": self.service}
 
 
 class SystemServiceListenSingleDelegate(SystemServiceListenDelegateMixin, ConfigServiceListenSingleDelegate):
