@@ -32,6 +32,13 @@ class UpdateService(Service):
                 "until the resilvering operation is finished."
             )
 
+        if self.middleware.call_sync("smb.config")["stateful_failover"]:
+            # CTDB will assert on version mismatch between nodes. Upgrade procedure should be:
+            # 1. disabled stateful failover
+            # 2. upgrade both nodes
+            # 3. enable stateful failover
+            raise CallError("Stateful SMB failover must be disabled prior to updating truenas")
+
         def progress_callback(progress, description):
             job.set_progress((0.5 + 0.5 * progress) * max_progress, description)
 

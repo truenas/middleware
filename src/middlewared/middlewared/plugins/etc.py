@@ -92,6 +92,17 @@ class EtcService(Service):
         'app_registry': [
             {'type': 'py', 'path': 'docker/config.json'},
         ],
+        'ctdb': {
+            'ctx': [
+                {'method': 'failover.status'},
+                {'method': 'systemdataset.config'},
+                {'method': 'smb.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'ctdb/nodes'},
+                {'type': 'mako', 'path': 'ctdb/ctdb.conf'},
+            ]
+        },
         'docker': [
             {'type': 'py', 'path': 'docker/daemon.json'},
         ],

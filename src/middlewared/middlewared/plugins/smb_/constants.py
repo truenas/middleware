@@ -1,5 +1,6 @@
 import enum
 import os
+from middlewared.utils import ctdb
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 
@@ -86,6 +87,12 @@ class SMBPath(enum.Enum):
     RUNDIR = ('/var/run/samba', 0o755, True)
     LOCKDIR = ('/var/run/samba-lock', 0o755, True)
     LOGDIR = ('/var/log/samba4', 0o755, True)
+    CTDB_RUNDIR = (ctdb.CTDB_RUN_DIR, 0o755, True)
+    CTDB_DATADIR = (ctdb.CTDB_DATA_DIR, 0o755, True)
+    CTDB_STATEDIR = (ctdb.STATE_DB, 0o755, True)
+    CTDB_VOLATILEDDB = (ctdb.VOLATILE_DB, 0o755, True)
+    CTDB_PERSITENTDB = (ctdb.PERSISTENT_DB, 0o755, True)
+    CTDB_LOGDIR = ('/var/log/ctdb', 0o755, True)
     IPCSHARE = ('/tmp', 0o1777, True)
     WINBINDD_PRIVILEGED = (os.path.join(SAMBA_BOOTENV_DIR, 'winbindd_privileged'), 0o750, True)
 
