@@ -710,7 +710,7 @@ class SystemDatasetService(ConfigService):
                     except (FileNotFoundError, ValueError):
                         pass
                     except Exception:
-                        self.logger.debug('Unexpected error while unmounting coredump dir', exc_info=True)
+                        self.logger.exception('Unexpected error while unmounting coredump dir')
 
                     self.__umount(_from, config['uuid'])
                     self.__umount(_to, config['uuid'])
