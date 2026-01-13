@@ -34,5 +34,6 @@ def test_system_reboot():
         "query-filters": [
             ["event", "=", "REBOOT"],
         ],
+        "query-options": {"limit": 100},
     })
     assert audit[-1]["event_data"] == {"reason": "Integration test"}
