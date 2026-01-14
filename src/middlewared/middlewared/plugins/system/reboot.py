@@ -8,6 +8,10 @@ from middlewared.service import private, Service
 class RebootReason(enum.Enum):
     FIPS = 'FIPS configuration was changed.'
     GPOSSTIG = 'General Purpose OS STIG configuration was changed.'
+    GPU_ISOLATION = (
+        'GPU isolation configuration was updated due to removed or reassigned PCI devices. '
+        'A reboot is required to unbind devices from VFIO driver.'
+    )
     UPGRADE = 'This system needs to be rebooted in order for the system upgrade to finish.'
 
 
@@ -27,7 +31,7 @@ class SystemRebootService(Service):
             ),
         ]
 
-    reboot_reasons : dict[str, str] = {}
+    reboot_reasons: dict[str, str] = {}
 
     @api_method(SystemRebootInfoArgs, SystemRebootInfoResult, roles=['SYSTEM_GENERAL_READ'])
     async def info(self):
