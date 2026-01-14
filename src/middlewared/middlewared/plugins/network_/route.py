@@ -1,15 +1,14 @@
-import contextlib
 import ipaddress
 import re
 import typing
 
-import truenas_pynetif as netif
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
+import truenas_pynetif as netif
 
 
 class RouteService(Service):
@@ -46,7 +45,10 @@ class RouteService(Service):
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
                 ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
+                interfaces = list()
+                for iface in netif.get_address_netlink().get_links():
+                    if not iface.startswith(ignore):
+                        interfaces.append(iface)
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -143,20 +145,12 @@ class RouteService(Service):
             case _:
                 raise ValidationError('route.gw_reachable.ipv', f'Expected 4 or 6, got {ipv}')
 
-        ignore_nics = ('lo', 'tap', 'epair')
-        for if_name, iface in netif.list_interfaces().items():
-            if not if_name.startswith(ignore_nics):
-                for nic_address in iface.addresses:
-                    if nic_address.af == FAMILY:
-                        addr_dict = nic_address.asdict()
-                        address = addr_dict['address']
-
-                        with contextlib.suppress(KeyError):
-                            address = f'{address}/{addr_dict["netmask"]}'
-
-                        nic = InterfaceClass(address)
-                        if ipaddress.ip_address(gateway) in nic.network:
-                            return True
+        gw = ipaddress.ip_address(gateway)
+        for addr in netif.get_address_netlink().get_addresses():
+            if addr.family != FAMILY or addr.scope == 254:  # skip wrong family and loopback
+                continue
+            if gw in InterfaceClass(f'{addr.address}/{addr.prefixlen}').network:
+                return True
 
         return False
 
