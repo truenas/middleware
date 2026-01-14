@@ -1,5 +1,7 @@
 import os
 import logging
+import typing
+
 import truenas_os
 
 logger = logging.getLogger(__name__)
@@ -78,12 +80,30 @@ def iter_mountinfo(
             yield sm
 
 
+@typing.overload
 def statmount(
     *,
-    path: str|None = None,
-    fd: int|None = None,
+    path: str | bytes | None = None,
+    fd: int | None = None,
+    as_dict: typing.Literal[True] = True
+) -> dict: ...
+
+
+@typing.overload
+def statmount(
+    *,
+    path: str | bytes | None = None,
+    fd: int | None = None,
+    as_dict: typing.Literal[False]
+) -> truenas_os.StatmountResult: ...
+
+
+def statmount(
+    *,
+    path: str | bytes | None = None,
+    fd: int | None = None,
     as_dict: bool = True
-) -> dict|truenas_os.StatmountResult:
+) -> dict | truenas_os.StatmountResult:
     """
     Get mount information about the given path or open file. If as_dict
     is set, then we return a dictionary with same keys and formatting

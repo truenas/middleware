@@ -132,6 +132,15 @@ class SharingNFSEntry(BaseModel):
     """Unique identifier for the NFS share."""
     path: NonEmptyString
     """ Local path to be exported. """
+    dataset: NonEmptyString | None
+    """The ZFS dataset name that contains the NFS share path. This is the dataset where the share data is \
+    stored. Returns `null` if the path is not on a ZFS dataset. This is a read-only field that is automatically \
+    populated based on "path"."""
+    relative_path: str | None
+    """The path of the share relative to the dataset mountpoint. For example, if the share path is \
+    `/mnt/tank/nfs/subfolder` and the dataset `tank/nfs` is mounted at `/mnt/tank/nfs`, then the \
+    relative path is "subfolder". An empty string indicates the share is at the dataset root. Returns `null` if \
+    the path is not on a ZFS dataset. This is a read-only field that is automatically populated based on "path"."""
     aliases: list[NonEmptyString] = []
     """ IGNORED for now. """
     comment: str = ""
@@ -175,6 +184,8 @@ class SharingNFSEntry(BaseModel):
 
 class NfsShareCreate(SharingNFSEntry):
     id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
 

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 from .common import CronModel
 from .keychain import KeychainCredentialEntry
 
@@ -25,6 +25,15 @@ class RsyncTaskEntry(BaseModel):
     """Unique identifier for the rsync task."""
     path: str = Field(max_length=RSYNC_PATH_LIMIT)
     """Local filesystem path to synchronize."""
+    dataset: NonEmptyString | None
+    """The ZFS dataset name that contains the rsync task path. This is the dataset where the task data is stored. \
+    Returns `null` if the path is not on a ZFS dataset. This is a read-only field that is automatically populated \
+    based on "path"."""
+    relative_path: str | None
+    """The path of the task relative to the dataset mountpoint. For example, if the task path is \
+    `/mnt/tank/rsync/data` and the dataset `tank/rsync` is mounted at `/mnt/tank/rsync`, then the relative path is \
+    "data". An empty string indicates the task is at the dataset root. Returns `null` if the path is not on a ZFS \
+    dataset. This is a read-only field that is automatically populated based on "path"."""
     user: str
     """Username to run the rsync task as."""
     mode: Literal["MODULE", "SSH"] = "MODULE"
@@ -77,6 +86,8 @@ class RsyncTaskEntry(BaseModel):
 
 class RsyncTaskCreate(RsyncTaskEntry):
     id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     ssh_credentials: int | None = None
     """Keychain credential ID for SSH authentication. `null` to use user's SSH keys."""
     validate_rpath: bool = True

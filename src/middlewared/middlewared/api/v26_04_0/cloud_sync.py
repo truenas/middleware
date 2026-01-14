@@ -90,6 +90,8 @@ class CloudSyncCreate(CloudSyncEntry):
     id: Excluded = excluded_field()
     credentials: int
     """ID of the cloud credential."""
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     job: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 

@@ -1,5 +1,8 @@
+import os.path
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.utils.mount import statmount
 from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
@@ -94,18 +97,32 @@ class SharingTaskService(CRUDService):
         )
 
     @private
-    async def sharing_task_extend(self, data, context):
-        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
-
+    async def sharing_task_extend(self, data: dict, context: dict) -> dict:
+        # Perform datastore_extend
         if self._config.datastore_extend:
+            args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
             data = await self.middleware.call(self._config.datastore_extend, *args)
 
+        # Set locked field
         if context['retrieve_locked_info']:
             data[self.locked_field] = await self.middleware.call(
                 f'{self._config.namespace}.sharing_task_determine_locked', data
             )
         else:
             data[self.locked_field] = None
+
+        # Calculate dataset and relative_path from path field
+        try:
+            path = data[self.path_field]
+            mntinfo = await self.middleware.run_in_thread(statmount, path=path, as_dict=False)
+
+            relative_path = os.path.relpath(path, mntinfo.mnt_point)
+            if relative_path == '.':
+                relative_path = ''
+
+            data.update(dataset=mntinfo.sb_source, relative_path=relative_path)
+        except Exception:
+            data.update(dataset=None, relative_path=None)
 
         return data
 

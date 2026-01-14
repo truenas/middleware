@@ -49,6 +49,14 @@ class SharingWebshareEntry(BaseModel):
     path: NonEmptyString
     """Local server path to share by using the Webshare protocol. The path must start with `/mnt/` and must be in a \
     ZFS pool."""
+    dataset: NonEmptyString
+    """The ZFS dataset name that contains the Webshare share path. This is the dataset where the share data is \
+    stored. This is a read-only field that is automatically populated based on "path"."""
+    relative_path: str
+    """The path of the share relative to the dataset mountpoint. For example, if the share path is \
+    `/mnt/dozer/webshare/subfolder` and the dataset `dozer/webshare` is mounted at `/mnt/dozer/webshare`, then the \
+    relative path is "subfolder". An empty string indicates the share is at the dataset root. This is a read-only \
+    field that is automatically populated based on "path"."""
     enabled: bool = True
     """If unset, the Webshare share is not available."""
     is_home_base: bool = False
@@ -65,6 +73,8 @@ class SharingWebshareEntry(BaseModel):
 
 class SharingWebshareCreate(SharingWebshareEntry):
     id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
 
