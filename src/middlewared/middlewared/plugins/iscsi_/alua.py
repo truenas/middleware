@@ -238,6 +238,46 @@ class iSCSITargetAluaService(Service):
         if await self.middleware.call('iscsi.scst.clear_suspend'):
             self.logger.debug('iSCSI unsuspended')
 
+    async def check_luns(self):
+        try:
+
+            _active_targets = await self.middleware.call('iscsi.target.active_targets')
+            _active_iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+            _logged_in_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+            # Let's ensure that _active_targets has IQNs with all required LUNs
+            for _targetname, _lundict in _active_targets.items():
+                if _iqn := _active_iqns.get(_targetname):
+                    # Check that the LUNs match expected
+                    _luns_present_set = {int(dev.split(":")[-1]) for dev in _logged_in_iqns.get(_iqn, [])}
+                    _luns_required_set = set(_lundict.keys())
+                    _missing = _luns_required_set - _luns_present_set
+                    _extra = _luns_present_set - _luns_required_set
+                    if _missing or _extra:
+                        if _missing:
+                            self.logger.debug('HA IQN %r missing LUNs %r', _iqn, _missing)
+                        if _extra:
+                            self.logger.debug('HA IQN %r missing LUNs %r', _iqn, _extra)
+                        return False
+                else:
+                    self.logger.debug('HA IQN missing %r', _iqn)
+                    return False
+
+            # Now let's ensure that the devices surfaced all the way
+            _devices = set()
+            for devs in _logged_in_iqns.values():
+                _devices.update(devs)
+            _cm_devices = set(await self.middleware.call('iscsi.scst.copy_manager_devices'))
+            _missing = _devices - _cm_devices
+            if _missing:
+                self.logger.debug('Some devices did not surface through copy manager %r', _missing)
+                return False
+
+        except Exception:
+            self.logger.warning('Failed to check LUNs', exc_info=True)
+            return False
+        return True
+
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
         job.set_progress(0, 'ALUA starting on STANDBY')
@@ -380,7 +420,9 @@ class iSCSITargetAluaService(Service):
                 devices = list(itertools.chain.from_iterable([x for x in after_iqns.values() if x is not None]))
                 if await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', devices):
                     self.logger.debug(f'cluster_mode surfaced for {devices}')
-                    break
+                    if await self.check_luns():
+                        self.logger.debug('Required LUNs appear present')
+                        break
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
                 self._standby_write_empty_config = False
