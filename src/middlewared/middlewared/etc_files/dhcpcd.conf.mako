@@ -44,9 +44,6 @@ static domain_name_servers=${nameservers}
 # Disable IPv4LL (169.254.x.x addresses)
 noipv4ll
 
-# Run in master mode (single daemon for all interfaces)
-master
-
 # Background immediately
 background
 

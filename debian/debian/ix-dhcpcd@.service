@@ -1,7 +1,8 @@
 [Unit]
 Description=DHCP Client Daemon on %I
+DefaultDependencies=no
 Wants=network.target
-After=networking.service sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device systemd-journald.socket
 Before=network.target
 BindsTo=sys-subsystem-net-devices-%i.device
 Documentation=man:dhcpcd(8)
