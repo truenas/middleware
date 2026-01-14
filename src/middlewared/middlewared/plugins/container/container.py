@@ -17,6 +17,7 @@ from middlewared.api.current import (
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
     ZFSResourceQuery,
+    ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
@@ -247,7 +248,8 @@ class ContainerService(CRUDService):
                 }
             ))
             await self.call2(
-                self.s.zfs.resource.snapshot.destroy_impl, {'path': f'{data["dataset"]}@{source_snapshot}'}
+                self.s.zfs.resource.snapshot.destroy_impl,
+                ZFSResourceSnapshotDestroyQuery(path=f'{data["dataset"]}@{source_snapshot}'),
             )
 
         return await self.create_with_dataset(data)

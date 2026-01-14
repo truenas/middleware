@@ -25,7 +25,9 @@ def env_mapping(prefix: str, mapping: dict[str, Any]) -> dict[str, str]:
     return env
 
 
-async def run_script(job, script_name, hook: str="", env={}):
+async def run_script(job, script_name, hook: str = "", env: dict | None = None):
+    env = env or {}
+
     hook = hook.strip()
     if not hook:
         return

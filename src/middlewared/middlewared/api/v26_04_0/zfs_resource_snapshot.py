@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic.json_schema import SkipJsonSchema
+
 from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
@@ -11,24 +13,35 @@ from .zfs_resource_crud import PropertyValue
 __all__ = (
     "ZFSResourceSnapshotEntry",
     "ZFSResourceSnapshotPropertiesEntry",
+    "ZFSResourceSnapshotQueryBase",
+    "ZFSResourceSnapshotQuery",
     "ZFSResourceSnapshotQueryArgs",
     "ZFSResourceSnapshotQueryResult",
+    "ZFSResourceSnapshotCountQuery",
     "ZFSResourceSnapshotCountArgs",
     "ZFSResourceSnapshotCountResult",
+    "ZFSResourceSnapshotDestroyQuery",
     "ZFSResourceSnapshotDestroyArgs",
     "ZFSResourceSnapshotDestroyResult",
+    "ZFSResourceSnapshotRenameQuery",
     "ZFSResourceSnapshotRenameArgs",
     "ZFSResourceSnapshotRenameResult",
+    "ZFSResourceSnapshotCloneQuery",
     "ZFSResourceSnapshotCloneArgs",
     "ZFSResourceSnapshotCloneResult",
+    "ZFSResourceSnapshotCreateQuery",
     "ZFSResourceSnapshotCreateArgs",
     "ZFSResourceSnapshotCreateResult",
+    "ZFSResourceSnapshotHoldQuery",
     "ZFSResourceSnapshotHoldArgs",
     "ZFSResourceSnapshotHoldResult",
+    "ZFSResourceSnapshotHoldsQuery",
     "ZFSResourceSnapshotHoldsArgs",
     "ZFSResourceSnapshotHoldsResult",
+    "ZFSResourceSnapshotReleaseQuery",
     "ZFSResourceSnapshotReleaseArgs",
     "ZFSResourceSnapshotReleaseResult",
+    "ZFSResourceSnapshotRollbackQuery",
     "ZFSResourceSnapshotRollbackArgs",
     "ZFSResourceSnapshotRollbackResult",
 )
@@ -143,9 +156,14 @@ class ZFSResourceSnapshotEntry(BaseModel):
     """User-defined properties for snapshots."""
 
 
-class ZFSResourceSnapshotQuery(BaseModel):
+class ZFSResourceSnapshotQueryBase(BaseModel):
     paths: UniqueList[str] = list()
-    """Dataset paths or specific snapshot paths to query. If empty, queries all snapshots."""
+    """Dataset paths to count snapshots for. If empty, counts all snapshots."""
+    recursive: bool = False
+    """Include snapshots from child datasets when counting."""
+
+
+class ZFSResourceSnapshotQuery(ZFSResourceSnapshotQueryBase):
     properties: list[str] | None = list()
     """List of ZFS properties to retrieve. Empty list returns default properties. None returns no properties."""
     get_user_properties: bool = False
@@ -154,8 +172,6 @@ class ZFSResourceSnapshotQuery(BaseModel):
     """Include source information for each property value."""
     get_holds: bool = False
     """Include holds information (if any) for the snapshot."""
-    recursive: bool = False
-    """Include snapshots from child datasets when querying dataset paths."""
     min_txg: int = 0
     """Minimum transaction group for filtering snapshots. 0 means no minimum."""
     max_txg: int = 0
@@ -171,11 +187,8 @@ class ZFSResourceSnapshotQueryResult(BaseModel):
     result: list[ZFSResourceSnapshotEntry]
 
 
-class ZFSResourceSnapshotCountQuery(BaseModel):
-    paths: UniqueList[str] = list()
-    """Dataset paths to count snapshots for. If empty, counts all snapshots."""
-    recursive: bool = False
-    """Include snapshots from child datasets when counting."""
+class ZFSResourceSnapshotCountQuery(ZFSResourceSnapshotQueryBase):
+    pass
 
 
 class ZFSResourceSnapshotCountArgs(BaseModel):
@@ -198,6 +211,8 @@ class ZFSResourceSnapshotDestroyQuery(BaseModel):
     """If True, path should be a dataset path and all its snapshots will be destroyed."""
     defer: bool = False
     """Defer destruction if snapshot is in use (e.g., has clones)."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotDestroyArgs(BaseModel):
@@ -216,6 +231,8 @@ class ZFSResourceSnapshotRenameQuery(BaseModel):
     """New snapshot path (e.g., 'pool/dataset@new_name')."""
     recursive: bool = False
     """Recursively rename matching snapshots in child datasets."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotRenameArgs(BaseModel):
@@ -234,6 +251,8 @@ class ZFSResourceSnapshotCloneQuery(BaseModel):
     """Destination dataset path for the clone (e.g., 'pool/clone')."""
     properties: dict[str, str | int] = {}
     """ZFS properties to set on the cloned dataset."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotCloneArgs(BaseModel):
@@ -258,6 +277,8 @@ class ZFSResourceSnapshotCreateQuery(BaseModel):
     """User properties to set on the snapshot. Only user-defined properties are
     supported (e.g., 'com.company:backup_type'). Regular ZFS properties cannot
     be set on snapshots at creation time."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotCreateArgs(BaseModel):
@@ -276,6 +297,8 @@ class ZFSResourceSnapshotHoldQuery(BaseModel):
     """Hold tag name to apply."""
     recursive: bool = False
     """Apply hold recursively to matching snapshots in child datasets."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotHoldArgs(BaseModel):
@@ -309,6 +332,8 @@ class ZFSResourceSnapshotReleaseQuery(BaseModel):
     """Specific tag to release. If None, releases all hold tags."""
     recursive: bool = False
     """Release holds recursively from matching snapshots in child datasets."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotReleaseArgs(BaseModel):
@@ -331,6 +356,8 @@ class ZFSResourceSnapshotRollbackQuery(BaseModel):
     """Force unmount of any clones."""
     recursive_rollback: bool = False
     """Do a complete recursive rollback of each child snapshot. Fails if any child lacks the snapshot."""
+    bypass: SkipJsonSchema[bool] = False
+    """If true, will bypass the safety checks that prevent deleting zfs resources that are "protected"."""
 
 
 class ZFSResourceSnapshotRollbackArgs(BaseModel):

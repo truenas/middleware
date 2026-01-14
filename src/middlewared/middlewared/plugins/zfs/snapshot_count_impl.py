@@ -4,6 +4,7 @@ import os
 
 from truenas_pylibzfs import ZFSProperty, ZFSType
 
+from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.tdb import (
@@ -161,9 +162,9 @@ def __dataset_count_callback(ds_hdl, state: SnapshotCountState) -> bool:
     return True
 
 
-def __should_exclude_internal_paths(data: dict) -> bool:
+def __should_exclude_internal_paths(data: ZFSResourceSnapshotCountQuery) -> bool:
     """Determine if internal paths should be excluded from counts."""
-    for path in data.get("paths", []):
+    for path in data.paths:
         if has_internal_path(path):
             return False
     return True
@@ -181,7 +182,7 @@ def __commit_cache_updates(batch_ops: list) -> None:
         logger.warning("Failed to update cached snapshot counts", exc_info=True)
 
 
-def count_snapshots_impl(tls, data: dict) -> dict[str, int]:
+def count_snapshots_impl(tls, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
     """Count ZFS snapshots per dataset.
 
     Uses TDB caching with snapshots_changed property as invalidation key.
@@ -200,11 +201,11 @@ def count_snapshots_impl(tls, data: dict) -> dict[str, int]:
     state = SnapshotCountState(
         counts={},
         batch_ops=[],
-        recursive=data.get("recursive", False),
+        recursive=data.recursive,
         eip=__should_exclude_internal_paths(data),
     )
 
-    paths = data.get("paths", [])
+    paths = data.paths
 
     if paths:
         for path in paths:

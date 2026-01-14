@@ -1,5 +1,7 @@
 from middlewared.api import api_method
-from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult, ZFSResourceQuery
+from middlewared.api.current import (
+    DockerBackupToPoolArgs, DockerBackupToPoolResult, ZFSResourceQuery, ZFSResourceSnapshotCreateQuery,
+)
 from middlewared.service import job, private, Service, ValidationErrors
 from middlewared.plugins.zfs.utils import get_encryption_info
 
@@ -60,13 +62,12 @@ class DockerService(Service):
             snap_name = await self.middleware.call(
                 'replication.new_snapshot_name', schema
             )
-            await self.call2(self.s.zfs.resource.snapshot.create_impl, {
-                'dataset': applications_ds_name(docker_config["pool"]),
-                'name': snap_name,
-                'recursive': True,
-                'bypass': True,
-            }
-            )
+            await self.call2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+                dataset=applications_ds_name(docker_config["pool"]),
+                name=snap_name,
+                recursive=True,
+                bypass=True,
+            ))
         finally:
             # We do this in try/finally block to ensure that docker service is started back
             await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)

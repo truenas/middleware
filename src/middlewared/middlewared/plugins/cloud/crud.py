@@ -1,4 +1,3 @@
-import os
 import shlex
 
 from middlewared.api.base.handler.accept import validate_model

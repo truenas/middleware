@@ -273,7 +273,9 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
                          f"Got {found!r}.")
 
     expected_return_annotation = returns.model_fields["result"].annotation
-    return_annotation = func.__annotations__.get("return", type(None))
+    return_annotation = func.__annotations__.get("return")
+    if return_annotation is None:
+        return_annotation = type(None)
     if normalize_annotation(return_annotation) != normalize_annotation(expected_return_annotation):
         raise ValueError(f"{func.__name__}: must have a `return` annotation of {expected_return_annotation!r}. "
                          f"Got {return_annotation!r}.")

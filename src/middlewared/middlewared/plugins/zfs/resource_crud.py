@@ -12,6 +12,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
+    ZFSResourceSnapshotCountQuery,
 )
 from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
 from middlewared.service import Service, private
@@ -420,7 +421,7 @@ class ZFSResourceService(Service):
             else:
                 # Check if dataset has snapshots using snapshot.count
                 snap_counts = self.call_sync2(
-                    self.s.zfs.resource.snapshot.count, {"paths": [path]}
+                    self.s.zfs.resource.snapshot.count, ZFSResourceSnapshotCountQuery(paths=[path]),
                 )
                 if snap_counts.get(path, 0) > 0:
                     raise ValidationError(

@@ -105,7 +105,7 @@ def snapshot(dataset, name, **kwargs):
     get = kwargs.pop("get", False)
 
     result = call(
-        "zfs.resource.snapshot.create_impl",
+        "zfs.resource.snapshot.create",
         {"dataset": dataset, "name": name, "bypass": True, **kwargs}
     )
     id_ = f"{dataset}@{name}"

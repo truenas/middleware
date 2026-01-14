@@ -9,6 +9,7 @@ from packaging.version import Version
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
+    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, private, Service, ValidationErrors
@@ -66,11 +67,11 @@ class AppService(Service):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 
-            self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
-                'dataset': dataset,
-                'name': get_upgrade_snap_name(app_info["name"], app_info["version"]),
-                'bypass': True,
-            })
+            self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+                datase=dataset,
+                name=get_upgrade_snap_name(app_info["name"], app_info["version"]),
+                bypass=True,
+            ))
             logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
 
     @api_method(
@@ -143,20 +144,20 @@ class AppService(Service):
             if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
                 try:
-                    self.call_sync2(self.s.zfs.resource.snapshot.destroy_impl, {
-                        'path': snap_name,
-                        'recursive': True,
-                        'bypass': True,
-                    })
+                    self.call_sync2(self.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
+                        path=snap_name,
+                        recursive=True,
+                        bypass=True,
+                    ))
                 except InstanceNotFound:
                     pass
 
-                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
-                    'dataset': app_volume_ds,
-                    'name': app['version'],
-                    'recursive': True,
-                    'bypass': True,
-                })
+                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+                    dataset=app_volume_ds,
+                    name=app['version'],
+                    recursive=True,
+                    bypass=True,
+                ))
 
                 job.set_progress(50, 'Created snapshot for upgrade')
 

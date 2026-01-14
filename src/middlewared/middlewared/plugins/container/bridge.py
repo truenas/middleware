@@ -51,7 +51,7 @@ class ContainerService(Service):
                 )
                 dnsmasq_args.append("--quiet-dhcp")
                 dnsmasq_args.append(f"--listen-address={ip.network[1]!s}")
-                dnsmasq_args.extend([f"--dhcp-range", f"{ip.network[2]!s},{ip.network[-2]!s},1h"])
+                dnsmasq_args.extend(["--dhcp-range", f"{ip.network[2]!s},{ip.network[-2]!s},1h"])
             if config["v6_network"]:
                 ip = ipaddress.ip_interface(config["v6_network"])
                 ipv6_masquerade = (
@@ -61,7 +61,7 @@ class ContainerService(Service):
                 dnsmasq_args.append("--quiet-ra")
                 dnsmasq_args.append(f"--listen-address={ip.network[1]!s}")
                 dnsmasq_args.append("--enable-ra")
-                dnsmasq_args.extend([f"--dhcp-range", f"::,constructor:{BRIDGE_NAME},ra-stateless,ra-names"])
+                dnsmasq_args.extend(["--dhcp-range", f"::,constructor:{BRIDGE_NAME},ra-stateless,ra-names"])
 
             icmp_type = "destination-unreachable, time-exceeded, parameter-problem"
             icmpv6_type = (
