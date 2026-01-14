@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import time
+import typing
 
 import truenas_pylibzfs
 
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.utils.zfs.event import parse_zfs_event
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
-def zfs_events_thread(middleware):
+
+def zfs_events_thread(middleware: Middleware) -> None:
     set_thread_name('retrieve_zfs_events_thread')
     while True:
         try:
@@ -25,5 +31,5 @@ def zfs_events_thread(middleware):
             continue
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     start_daemon_thread(name="zfs_events", target=zfs_events_thread, args=(middleware,))

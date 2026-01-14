@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 import os
 import re
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 __all__ = (
     "get_zvol_attachments_impl",
@@ -18,7 +24,10 @@ def zvol_path_to_name(path: str) -> str:
     return path[10:].replace("+", " ") or path
 
 
-def unlocked_zvols_fast_impl(options=None, data=None):
+def unlocked_zvols_fast_impl(
+    options: list[str] | None = None,
+    data: dict[str, Any] | None = None,
+) -> dict[str, dict[str, Any]]:
     """
     Get zvol information from /sys/block and /dev/zvol.
     This is quite a bit faster than using truenas_pylibzfs.
@@ -34,7 +43,7 @@ def unlocked_zvols_fast_impl(options=None, data=None):
     """
     data = data or dict()
     options = options or list()
-    out = dict()
+    out: dict[str, dict[str, Any]] = dict()
     for root, _, files in os.walk("/dev/zvol"):
         if not files:
             continue
@@ -90,8 +99,8 @@ def unlocked_zvols_fast_impl(options=None, data=None):
     return out
 
 
-def get_zvol_attachments_impl(middleware):
-    att_data = {
+def get_zvol_attachments_impl(middleware: Middleware) -> dict[str, dict[str, Any]]:
+    att_data: dict[str, dict[str, Any]] = {
         "iscsi.extent.query": dict(),
         "vm.devices.query": dict(),
         "nvmet.namespace.query": dict(),

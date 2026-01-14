@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Any
 
 import truenas_pylibzfs
 
@@ -10,22 +11,23 @@ __all__ = ("rollback_impl",)
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CollectNewerSnapshotsState:
     target_txg: int
-    snaps: list
+    snaps: list[str]
 
 
-def __collect_child_datasets_callback(child_hdl, state: list) -> bool:
+# FIXME: add `hdl` to `truenas_pylibzfs` stubs
+def __collect_child_datasets_callback(child_hdl: Any, state: list[str]) -> bool:
     """Callback for collecting child dataset names."""
     state.append(child_hdl.name)
     child_hdl.iter_filesystems(callback=__collect_child_datasets_callback, state=state)
     return True
 
 
-def _collect_child_datasets(ds_hdl, datasets: list) -> None:
+def _collect_child_datasets(ds_hdl: Any, datasets: list[str]) -> None:
     """Recursively collect all child dataset names."""
     ds_hdl.iter_filesystems(callback=__collect_child_datasets_callback, state=datasets)
 
 
-def __collect_newer_snapshots_callback(snap_hdl, state: CollectNewerSnapshotsState) -> bool:
+def __collect_newer_snapshots_callback(snap_hdl: Any, state: CollectNewerSnapshotsState) -> bool:
     """Callback for collecting snapshots newer than target."""
     props = snap_hdl.get_properties(properties={truenas_pylibzfs.ZFSProperty.CREATETXG})
     snap_txg = int(props.createtxg.value)
@@ -55,7 +57,7 @@ def _rollback_single(dataset: str, snap_name: str) -> str:
 
 
 def rollback_impl(
-    tls,
+    tls: Any,
     path: str,
     recursive: bool = False,
     recursive_clones: bool = False,
@@ -136,7 +138,7 @@ def rollback_impl(
             raise ValueError(f"Failed to rollback snapshot: {e}")
 
 
-def _destroy_newer_snapshots(tls, dataset: str, target_snap: str, destroy_clones: bool, force: bool) -> None:
+def _destroy_newer_snapshots(tls: Any, dataset: str, target_snap: str, destroy_clones: bool, force: bool) -> None:
     """Destroy snapshots newer than the target snapshot.
 
     Args:

@@ -1,3 +1,5 @@
+from typing import Collection
+
 __all__ = (
     "ZFSPathAlreadyExistsException",
     "ZFSPathInvalidException",
@@ -8,13 +10,13 @@ __all__ = (
 
 
 class ZFSPathAlreadyExistsException(Exception):
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.message = f"{path!r} already exists"
         super().__init__(self.message)
 
 
 class ZFSPathHasClonesException(Exception):
-    def __init__(self, path, clones):
+    def __init__(self, path: str, clones: Collection[str]):
         self.path = path
         self.clones = clones
         self.message = f"{path!r} has the following clones: {','.join(clones)}"
@@ -22,7 +24,7 @@ class ZFSPathHasClonesException(Exception):
 
 
 class ZFSPathHasHoldsException(Exception):
-    def __init__(self, path, holds):
+    def __init__(self, path: str, holds: Collection[str]):
         self.message = f"{path!r} has the following holds: {','.join(holds)}"
         super().__init__(self.message)
 
@@ -32,13 +34,13 @@ class ZFSPathInvalidException(Exception):
 
 
 class ZFSPathNotASnapshotException(Exception):
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.message = f"{path!r} must be a snapshot path (containing '@')"
         super().__init__(self.message)
 
 
 class ZFSPathNotFoundException(Exception):
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.message = f"{path!r} not found"
         super().__init__(self.message)
 

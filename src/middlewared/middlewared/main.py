@@ -714,7 +714,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
 
-    async def call_hook(self, name, *args, **kwargs):
+    async def call_hook(self, name: str, *args, **kwargs) -> None:
         """
         Call all hooks registered under `name` passing *args and **kwargs.
         Args:
@@ -736,10 +736,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
 
-    def call_hook_sync(self, name, *args, **kwargs):
-        return self.run_coroutine(self.call_hook(name, *args, **kwargs))
+    def call_hook_sync(self, name: str, *args, **kwargs) -> None:
+        self.run_coroutine(self.call_hook(name, *args, **kwargs))
 
-    def call_hook_inline(self, name, *args, **kwargs):
+    def call_hook_inline(self, name: str, *args, **kwargs) -> None:
         for hook, fut in self._call_hook_base(name, *args, **kwargs):
             if not hook['inline']:
                 raise RuntimeError('Only inline hooks can be called with call_hook_inline')

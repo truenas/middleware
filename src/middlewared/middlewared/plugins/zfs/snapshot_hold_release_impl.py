@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Any
 
 import truenas_pylibzfs
 
@@ -9,12 +10,12 @@ __all__ = ("hold_impl", "release_impl",)
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CollectSnapshotsState:
-    snapshots: list
+    snapshots: list[str]
     snap_name: str
-    lzh: object  # libzfs handle for opening resources
+    lzh: truenas_pylibzfs.ZFS
 
 
-def __collect_matching_snapshots_callback(ds_hdl, state: CollectSnapshotsState) -> bool:
+def __collect_matching_snapshots_callback(ds_hdl: Any, state: CollectSnapshotsState) -> bool:
     """Callback for collecting matching snapshot paths from child datasets."""
     snap_path = f"{ds_hdl.name}@{state.snap_name}"
     try:
@@ -28,7 +29,7 @@ def __collect_matching_snapshots_callback(ds_hdl, state: CollectSnapshotsState) 
     return True
 
 
-def _collect_recursive_snapshots(tls, dataset: str, snap_name: str) -> list[str]:
+def _collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
     """Collect all matching snapshot paths recursively.
 
     For recursive operations, finds all snapshots with the same name
@@ -68,7 +69,7 @@ def _collect_recursive_snapshots(tls, dataset: str, snap_name: str) -> list[str]
     return state.snapshots
 
 
-def hold_impl(tls, path: str, tag: str = "truenas", recursive: bool = False) -> None:
+def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False) -> None:
     """Create a hold on ZFS snapshot(s).
 
     Args:
@@ -115,7 +116,7 @@ def hold_impl(tls, path: str, tag: str = "truenas", recursive: bool = False) -> 
         raise
 
 
-def release_impl(tls, path: str, tag: str | None = None, recursive: bool = False) -> None:
+def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = False) -> None:
     """Release hold(s) from ZFS snapshot(s).
 
     Args:

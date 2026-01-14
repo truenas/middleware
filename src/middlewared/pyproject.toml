@@ -44,4 +44,3 @@ middlewared = [
     "test/integration/assets/**/*",
     "test/integration/utils/**/*",
 ]
-

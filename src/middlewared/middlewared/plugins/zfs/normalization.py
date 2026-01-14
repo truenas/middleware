@@ -1,4 +1,5 @@
 from types import MappingProxyType
+from typing import Any
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 
@@ -16,7 +17,7 @@ USER_PROP_RENAME_DICT = MappingProxyType(
 )
 
 
-def normalize_asdict_result(result: dict, *, normalize_source: bool) -> dict:
+def normalize_asdict_result(result: dict[str, Any], *, normalize_source: bool) -> dict[str, Any]:
     """
     Normalize ZFS resource dictionary result from truenas_pylibzfs asdict() method.
 

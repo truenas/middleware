@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Any
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 
@@ -11,16 +12,16 @@ __all__ = ("query_snapshots_impl",)
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class SnapshotQueryState:
-    results: list
-    query_args: dict
+    results: list[dict[str, Any]]
+    query_args: dict[str, Any]
     dp: DeterminedProperties
-    parent_type: ZFSType
+    parent_type: ZFSType | None
     eip: bool
     """(e)xclude (i)nternal (p)aths. Unless someone is querying
     an internal path, we will exclude them."""
 
 
-def __normalize_snapshot_result(data: dict, *, normalize_source: bool) -> dict:
+def __normalize_snapshot_result(data: dict[str, Any], *, normalize_source: bool) -> dict[str, Any]:
     """Normalize snapshot result from asdict().
 
     Adds dataset and snapshot_name fields parsed from the full name,
@@ -52,7 +53,7 @@ def __normalize_snapshot_result(data: dict, *, normalize_source: bool) -> dict:
     return data
 
 
-def __snapshot_callback(snap_hdl, state: SnapshotQueryState) -> bool:
+def __snapshot_callback(snap_hdl: Any, state: SnapshotQueryState) -> bool:
     """Callback for each snapshot during iteration.
 
     Returns True to continue iteration, False to stop.
@@ -72,6 +73,8 @@ def __snapshot_callback(snap_hdl, state: SnapshotQueryState) -> bool:
         return True
     if max_txg and createtxg > max_txg:
         return True
+
+    assert state.parent_type is not None  # Set by one of the callbacks in `query_snapshots_impl`
 
     # Get snapshot data with type-specific properties
     get_source = state.query_args["get_source"]
@@ -97,7 +100,7 @@ def __snapshot_callback(snap_hdl, state: SnapshotQueryState) -> bool:
     return True
 
 
-def __dataset_iter_callback(ds_hdl, state: SnapshotQueryState) -> bool:
+def __dataset_iter_callback(ds_hdl: Any, state: SnapshotQueryState) -> bool:
     """Callback for iterating over datasets to get their snapshots.
 
     Returns True to continue iteration, False to stop.
@@ -121,17 +124,17 @@ def __dataset_iter_callback(ds_hdl, state: SnapshotQueryState) -> bool:
     return True
 
 
-def __should_exclude_internal_paths(data: dict) -> bool:
+def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     """Determine if internal paths should be excluded from results."""
     for path in data.get("paths", []):
         if has_internal_path(path):
             # Someone is explicitly querying an internal path
             return False
     # Exclude internal paths by default
-    return data.get("exclude_internal_paths", True)
+    return data.get("exclude_internal_paths", True)  # type: ignore
 
 
-def __query_snapshot_directly(hdl, snap_path: str, state: SnapshotQueryState) -> None:
+def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryState) -> None:
     """Query a specific snapshot by its full path (pool/dataset@snapshot).
 
     Opens the parent dataset to determine its type for proper property handling.
@@ -153,7 +156,7 @@ def __query_snapshot_directly(hdl, snap_path: str, state: SnapshotQueryState) ->
         raise
 
 
-def __query_dataset_snapshots(hdl, ds_path: str, state: SnapshotQueryState) -> None:
+def __query_dataset_snapshots(hdl: Any, ds_path: str, state: SnapshotQueryState) -> None:
     """Query all snapshots for a dataset (and optionally its children)."""
     try:
         ds_hdl = hdl.open_resource(name=ds_path)
@@ -164,7 +167,7 @@ def __query_dataset_snapshots(hdl, ds_path: str, state: SnapshotQueryState) -> N
         raise
 
 
-def query_snapshots_impl(hdl, data: dict) -> list:
+def query_snapshots_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
     """Query ZFS snapshots with filtering options.
 
     Args:

@@ -78,7 +78,7 @@ def initializer(thread_name, tls):
         )
 
 
-def start_daemon_thread(*args, name, **kwargs):
+def start_daemon_thread(*args, name, **kwargs) -> threading.Thread:
     """
     Start a daemon thread with the given arguments.
 

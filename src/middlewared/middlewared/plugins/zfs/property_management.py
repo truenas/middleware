@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeAlias
+from typing import Self, TypeAlias
 
 from truenas_pylibzfs import property_sets, ZFSProperty, ZFSType
 
@@ -12,22 +12,22 @@ ZFSResourceType: TypeAlias = "ZFSType"
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class ZFSPropertyTemplates:
-    default: ZFSPropSetType | None = None
+    default: ZFSPropSetType = frozenset()
     """The default set of zfs properties to be retrieved if \
     none are provided."""
-    fs: ZFSPropSetType | None = None
+    fs: ZFSPropSetType = frozenset()
     """All available set of zfs properties for filesystems."""
-    fs_ro: ZFSPropSetType | None = None
+    fs_ro: ZFSPropSetType = frozenset()
     """All available set of readonly zfs properties for filesystems."""
-    vol: ZFSPropSetType | None = None
+    vol: ZFSPropSetType = frozenset()
     """All available set of zfs properties for volumes."""
-    vol_ro: ZFSPropSetType | None = None
+    vol_ro: ZFSPropSetType = frozenset()
     """All available set of readonly zfs properties for volumes."""
-    crypto: ZFSPropSetType | None = None
+    crypto: ZFSPropSetType = frozenset()
     """All available zfs encryption related properties."""
 
     @classmethod
-    def generate(cls):
+    def generate(cls) -> Self:
         """Generate ZFS property templates from available property sets.
 
         Returns:
@@ -87,7 +87,7 @@ def __build_cache(
         frozenset[ZFSProperty]: Set of valid ZFS properties for the type.
             Returns empty frozenset if no valid properties found.
     """
-    requested_props = set()
+    requested_props: set[ZFSProperty] = set()
     is_fs = hdl_type == ZFSType.ZFS_TYPE_FILESYSTEM
     is_vol = hdl_type == ZFSType.ZFS_TYPE_VOLUME
     for i in req_props:
@@ -109,11 +109,10 @@ def __build_cache(
             requested_props |= PROPERTY_TEMPLATES.crypto
 
     # Cache the result for this type
-    requested_props = requested_props or set()
     if hdl_type == ZFSType.ZFS_TYPE_FILESYSTEM:
-        det_props.fs = requested_props
+        det_props.fs = frozenset(requested_props)
     elif hdl_type == ZFSType.ZFS_TYPE_VOLUME:
-        det_props.vol = requested_props
+        det_props.vol = frozenset(requested_props)
 
     return frozenset(requested_props)
 
@@ -184,7 +183,7 @@ def __build_snapshot_cache(
     else:
         valid_props = property_sets.ZFS_VOLUME_SNAPSHOT_PROPERTIES
 
-    requested_props = set()
+    requested_props_build = set()
     for i in req_props:
         try:
             prop = ZFSProperty[i.upper()]
@@ -192,10 +191,10 @@ def __build_snapshot_cache(
             continue
 
         if prop in valid_props:
-            requested_props.add(prop)
+            requested_props_build.add(prop)
 
     # Cache the result for this parent type
-    requested_props = frozenset(requested_props) if requested_props else frozenset()
+    requested_props = frozenset(requested_props_build)
     if is_fs:
         det_props.fs_snap = requested_props
     elif is_vol:

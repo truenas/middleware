@@ -12,6 +12,8 @@ JobProgressCallback = typing.Callable[[dict], None] | None
 
 
 class CallMixin:
+    middleware: middlewared.main.Middleware
+
     @property
     def s(self) -> middlewared.main.ServiceContainer:
         return self.middleware.services
@@ -21,12 +23,7 @@ class CallMixin:
         self,
         f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
         *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs
+        **kwargs: P.kwargs,
     ) -> T:
         ...
 
@@ -35,11 +32,6 @@ class CallMixin:
         self,
         f: typing.Callable[P, T],
         *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        pipes: Pipes | None = None,
-        profile: bool = False,
         **kwargs: P.kwargs,
     ) -> T:
         ...
@@ -48,13 +40,13 @@ class CallMixin:
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        pipes: Pipes | None = None,
-        profile: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Any:
+        app: App | None = kwargs.pop("app", None)
+        audit_callback: AuditCallback = kwargs.pop("audit_callback", None)
+        job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
+        pipes: Pipes | None = kwargs.pop("pipes", None)
+        profile: bool = kwargs.pop("profile", False)
         return await self.middleware.call2(
             f,
             *args,
@@ -71,10 +63,6 @@ class CallMixin:
         self,
         f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
         *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        background: bool = False,
-        job_on_progress_cb: JobProgressCallback = None,
         **kwargs: P.kwargs,
     ) -> T:
         ...
@@ -84,10 +72,6 @@ class CallMixin:
         self,
         f: typing.Callable[P, T],
         *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        background: bool = False,
-        job_on_progress_cb: JobProgressCallback = None,
         **kwargs: P.kwargs,
     ) -> T:
         ...
@@ -96,12 +80,12 @@ class CallMixin:
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
-        app: App | None = None,
-        audit_callback: AuditCallback = None,
-        background: bool = False,
-        job_on_progress_cb: JobProgressCallback = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
+        app: App | None = kwargs.pop("app", None)
+        audit_callback: AuditCallback = kwargs.pop("audit_callback", None)
+        background: bool = kwargs.pop("background", False)
+        job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
         return self.middleware.call_sync2(
             f,
             *args,

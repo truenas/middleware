@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 import select
 import time
+import typing
+
 import truenas_os
 
 from middlewared.utils.mount import __statmount_dict
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
-def mount_events_process(middleware):
+
+def mount_events_process(middleware: Middleware) -> None:
     set_thread_name('mount_events_thread')
     while True:
         try:
@@ -33,7 +40,7 @@ def mount_events_process(middleware):
                             cur.remove(new)
                             continue
 
-                        if sm.fs_type == 'zfs' and '@' not in sm.sb_source:
+                        if sm.fs_type == 'zfs' and '@' not in (sm.sb_source or ''):
                             mount = __statmount_dict(sm)
                             middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
 
@@ -43,5 +50,5 @@ def mount_events_process(middleware):
             time.sleep(5)
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     start_daemon_thread(name="zfs_mnt_events", target=mount_events_process, args=(middleware,))
