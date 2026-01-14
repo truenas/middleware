@@ -1,4 +1,4 @@
-from middlewared.utils.privilege_constants import LocalAdminGroups
+from middlewared.utils.privilege_constants import LocalBuiltinAdminGroups, LocalBuiltinGroups
 
 ADMIN_UID = 950
 ADMIN_GID = 950
@@ -23,15 +23,15 @@ USERNS_IDMAP_NONE = 0
 # interactive users members of builtin groups. These groups usually
 # have enhanced privileges to the server and group membership can expose
 # unexpected security issues.
-ALLOWED_BUILTIN_GIDS = {
-    LocalAdminGroups.FTP,  # 14 -- required for FTP access
-    LocalAdminGroups.TRUENAS_WEBSHARE_ADMINISTRATORS,  # 445
-    LocalAdminGroups.BUILTIN_ADMINISTRATORS,  # 544
-    LocalAdminGroups.BUILTIN_USERS,  # 545
-    LocalAdminGroups.APPS,  # 568
-    LocalAdminGroups.TRUENAS_READONLY_ADMINISTRATORS,  # 951
-    LocalAdminGroups.TRUENAS_SHARING_ADMINISTRATORS,  # 952
-}
+ALLOWED_BUILTIN_GIDS = frozenset({
+    LocalBuiltinGroups.FTP.value,  # 14 -- required for FTP access
+    LocalBuiltinAdminGroups.TRUENAS_WEBSHARE_ADMINISTRATORS.value,  # 445
+    LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS.value,  # 544
+    LocalBuiltinGroups.BUILTIN_USERS.value,  # 545
+    LocalBuiltinGroups.APPS.value,  # 568
+    LocalBuiltinAdminGroups.TRUENAS_READONLY_ADMINISTRATORS.value,  # 951
+    LocalBuiltinAdminGroups.TRUENAS_SHARING_ADMINISTRATORS.value,  # 952
+})
 
 CONTAINER_ROOT_UID = 2147000001
 

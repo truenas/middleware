@@ -11,7 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalAdminGroups
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
 from middlewared.utils.privilege import (
     privilege_has_webui_access,
     privileges_group_mapping
@@ -128,10 +128,10 @@ class PrivilegeService(CRUDService):
             builtin_privilege = BuiltinPrivileges(new["builtin_name"])
 
             if builtin_privilege == BuiltinPrivileges.LOCAL_ADMINISTRATOR:
-                if LocalAdminGroups.BUILTIN_ADMINISTRATORS not in new["local_groups"]:
+                if LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS not in new["local_groups"]:
                     verrors.add(
                         "privilege_update.local_groups",
-                        f"The group {LocalAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
+                        f"The group {LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
                         "among grantees of the \"Local Administrator\" privilege."
                     )
 
