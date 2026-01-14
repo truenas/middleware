@@ -163,7 +163,7 @@ class InterfaceService(CRUDService):
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
         ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
-        for name, iface in netif.list_interfaces().items():
+        for name, iface in netif.list_interface_states().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
             elif ignore_usb_nics and iface.bus == 'usb':
