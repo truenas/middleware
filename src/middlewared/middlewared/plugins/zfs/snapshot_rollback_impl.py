@@ -1,5 +1,4 @@
 import dataclasses
-from typing import TypedDict
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotASnapshotException
 
@@ -9,26 +8,13 @@ except ImportError:
     truenas_pylibzfs = None
 
 
-__all__ = ("rollback_impl", "RollbackArgs")
+__all__ = ("rollback_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CollectNewerSnapshotsState:
     target_txg: int
     snaps: list
-
-
-class RollbackArgs(TypedDict, total=False):
-    path: str
-    """Snapshot path to rollback to (e.g., 'pool/dataset@snapshot')."""
-    recursive: bool
-    """Destroy any snapshots and bookmarks more recent than the one specified."""
-    recursive_clones: bool
-    """Like recursive, but also destroy any clones."""
-    force: bool
-    """Force unmount of any clones."""
-    recursive_rollback: bool
-    """Do a complete recursive rollback of each child snapshot."""
 
 
 def __collect_child_datasets_callback(child_hdl, state: list) -> bool:
@@ -72,7 +58,14 @@ def _rollback_single(dataset: str, snap_name: str) -> str:
     )
 
 
-def rollback_impl(tls, data: RollbackArgs) -> None:
+def rollback_impl(
+    tls,
+    path: str,
+    recursive: bool = False,
+    recursive_clones: bool = False,
+    force: bool = False,
+    recursive_rollback: bool = False,
+) -> None:
     """Rollback a ZFS dataset to a snapshot.
 
     WARNING: This is a destructive change. All data written since the
@@ -80,18 +73,17 @@ def rollback_impl(tls, data: RollbackArgs) -> None:
 
     Args:
         tls: Thread local storage containing lzh (libzfs handle)
-        data: Rollback parameters
+        path: Snapshot path to rollback to (e.g., 'pool/dataset@snapshot').
+        recursive: Destroy any snapshots and bookmarks more recent than the one specified.
+        recursive_clones: Like recursive, but also destroy any clones.
+        force: Force unmount of any clones.
+        recursive_rollback: Do a complete recursive rollback of each child snapshot.
 
     Raises:
         ZFSPathNotFoundException: If the snapshot doesn't exist
         ZFSPathNotASnapshotException: If path is not a snapshot path
         ValueError: If rollback fails
     """
-    path = data["path"]
-    recursive = data.get("recursive", False)
-    recursive_clones = data.get("recursive_clones", False)
-    force = data.get("force", False)
-    recursive_rollback = data.get("recursive_rollback", False)
 
     # Parse snapshot path
     if "@" not in path:

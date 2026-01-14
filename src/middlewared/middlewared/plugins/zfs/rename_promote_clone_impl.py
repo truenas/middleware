@@ -1,5 +1,3 @@
-from typing import TypedDict
-
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
@@ -17,42 +15,43 @@ except ImportError:
 
 __all__ = (
     "clone_impl",
-    "CloneArgs",
     "promote_impl",
     "rename_impl",
 )
 
 
-class CloneArgs(TypedDict, total=False):
-    current_name: str
-    """The name of the zfs snapshot that should be cloned."""
-    new_name: str
-    """The new name to be given to the clone."""
-    properties: dict[str, str | int]
-    """Optional set of properties to set on the cloned resource."""
+def clone_impl(
+    tls,
+    current_name: str,
+    new_name: str,
+    properties: dict[str, str | int] | None = None,
+):
+    """
+    Clone a ZFS snapshot.
 
-
-def clone_impl(tls, data: CloneArgs):
-    curr = data.pop("current_name", "")
-    rsrc = open_resource(tls, curr)
+    Args:
+        current_name: The name of the zfs snapshot that should be cloned.
+        new_name: The new name to be given to the clone.
+        properties: Optional set of properties to set on the cloned resource.
+    """
+    rsrc = open_resource(tls, current_name)
     if rsrc.type != ZFSType.ZFS_TYPE_SNAPSHOT:
-        raise ZFSPathNotASnapshotException(curr)
+        raise ZFSPathNotASnapshotException(current_name)
 
-    new = data.pop("new_name", None)
-    if not new:
+    if not new_name:
         raise ZFSPathNotProvidedException()
 
     try:
-        open_resource(tls, new)
+        open_resource(tls, new_name)
     except ZFSPathNotFoundException:
         pass
     else:
-        raise ZFSPathAlreadyExistsException(new)
+        raise ZFSPathAlreadyExistsException(new_name)
 
-    if props := data.get("properties", None):
-        rsrc.clone(name=new, properties=props)
+    if properties:
+        rsrc.clone(name=new_name, properties=properties)
     else:
-        rsrc.clone(name=new)
+        rsrc.clone(name=new_name)
 
 
 def promote_impl(tls, current_name: str):
