@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, TimeString, SnapshotNameSchema
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, TimeString, SnapshotNameSchema
 from .common import CronModel
 
 
@@ -14,6 +14,8 @@ __all__ = [
     "PeriodicSnapshotTaskMaxTotalCountResult", "PeriodicSnapshotTaskRunArgs", "PeriodicSnapshotTaskRunResult",
     "PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs", "PeriodicSnapshotTaskUpdateWillChangeRetentionForResult",
     "PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs", "PeriodicSnapshotTaskDeleteWillChangeRetentionForResult",
+    "PoolSnapshotTaskCreate", "PoolSnapshotTaskUpdate", "PoolSnapshotTaskDeleteOptions",
+    "PoolSnapshotTaskUpdateWillChangeRetentionFor",
 ]
 
 
@@ -26,7 +28,9 @@ class PoolSnapshotTaskCron(CronModel):
     """End time of the window when snapshots can be taken."""
 
 
-class PoolSnapshotTaskCreate(BaseModel):
+class PeriodicSnapshotTaskEntry(BaseModel):
+    id: int
+    """Unique identifier for the periodic snapshot task."""
     dataset: str
     """The dataset to take snapshots of."""
     recursive: bool = False
@@ -45,6 +49,21 @@ class PoolSnapshotTaskCreate(BaseModel):
     """Whether to take snapshots even if no data has changed."""
     schedule: PoolSnapshotTaskCron = Field(default_factory=PoolSnapshotTaskCron)
     """Cron schedule for when snapshots should be taken."""
+    vmware_sync: bool
+    """Whether VMware VMs are synced before taking snapshots."""
+    state: Any
+    """Detailed state information for the task."""
+
+
+class PoolSnapshotTaskDBEntry(PeriodicSnapshotTaskEntry):
+    state: str
+    """Current state of the task."""
+
+
+class PoolSnapshotTaskCreate(PeriodicSnapshotTaskEntry):
+    id: Excluded = excluded_field()
+    vmware_sync: Excluded = excluded_field()
+    state: Excluded = excluded_field()
 
 
 class PoolSnapshotTaskUpdate(PoolSnapshotTaskCreate, metaclass=ForUpdateMetaclass):
@@ -59,20 +78,6 @@ class PoolSnapshotTaskUpdateWillChangeRetentionFor(PoolSnapshotTaskCreate, metac
 class PoolSnapshotTaskDeleteOptions(BaseModel):
     fixate_removal_date: bool = False
     """Whether to fix the removal date of existing snapshots when the task is deleted."""
-
-
-class PoolSnapshotTaskDBEntry(PoolSnapshotTaskCreate):
-    id: int
-    """Unique identifier for the periodic snapshot task."""
-    state: str
-    """Current state of the task."""
-
-
-class PeriodicSnapshotTaskEntry(PoolSnapshotTaskDBEntry):
-    vmware_sync: bool
-    """Whether VMware VMs are synced before taking snapshots."""
-    state: Any
-    """Detailed state information for the task."""
 
 
 class PeriodicSnapshotTaskCreateArgs(BaseModel):

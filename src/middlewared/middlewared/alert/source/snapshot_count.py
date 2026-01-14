@@ -29,7 +29,7 @@ class SnapshotCountAlertSource(AlertSource):
 
     async def _check_total(self, snapshot_counts: dict[str, int]) -> list[Alert]:
         """Return an `Alert` if the total number of snapshots exceeds the limit."""
-        max_total = await self.middleware.call("pool.snapshottask.max_total_count")
+        max_total = await self.middleware.call2(self.middleware.services.pool.snapshottask.max_total_count)
         total = sum(snapshot_counts.values())
 
         if total > max_total:
@@ -43,7 +43,7 @@ class SnapshotCountAlertSource(AlertSource):
 
     async def _check_smb(self, snapshot_counts: dict[str, int]) -> list[Alert]:
         """Return an `Alert` for every dataset shared over smb whose number of snapshots exceeds the limit."""
-        max_ = await self.middleware.call("pool.snapshottask.max_count")
+        max_ = await self.middleware.call2(self.middleware.services.pool.snapshottask.max_count)
         to_alert = list()
 
         for share in await self.middleware.call("sharing.smb.query"):
