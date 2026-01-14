@@ -1631,6 +1631,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         """
         self._console_write('starting')
         self.loop = asyncio.get_event_loop()
+        self.loop.set_default_executor(io_thread_pool_executor.executor)
         if self.loop_debug:
             self.loop.set_debug(True)
             self.loop.slow_callback_duration = 0.2
