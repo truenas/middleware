@@ -338,7 +338,15 @@ class DistributedLockManagerService(Service):
         # Finally turn off cluster mode locally on all extents
         try:
             DistributedLockManagerService.resetting = True
-            await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
+            try:
+                await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
+            except BlockingIOError:
+                # If any lockspaces are stopped, then restart them
+                for lockspace in await self.middleware.call('dlm.lockspaces'):
+                    if await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace):
+                        self.logger.warning('Starting stopped lockspace %r', lockspace)
+                        await self.middleware.call('dlm.kernel.lockspace_start', lockspace)
+                await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
         finally:
             DistributedLockManagerService.resetting = False
         self.logger.info('local_reset done')
