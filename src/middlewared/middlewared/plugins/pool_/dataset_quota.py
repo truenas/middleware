@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import truenas_pylibzfs
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetGetQuotaArgs,
@@ -13,10 +15,6 @@ from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import pwd, grp
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
 
 
 def quota_cb(quota, state):

@@ -1,9 +1,6 @@
 import time
 
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
+import truenas_pylibzfs
 
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.utils.zfs.event import parse_zfs_event

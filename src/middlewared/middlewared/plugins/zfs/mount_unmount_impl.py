@@ -1,10 +1,6 @@
+import truenas_pylibzfs
+
 from .utils import open_resource
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
 
 __all__ = (
     "mount_impl",

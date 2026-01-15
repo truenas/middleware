@@ -1,18 +1,14 @@
 import dataclasses
 import errno
 
+import truenas_pylibzfs
+
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
     ZFSPathNotFoundException,
 )
 from .snapshot_query_impl import query_snapshots_impl
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
 
 __all__ = ("create_snapshots_impl",)
 

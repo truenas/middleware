@@ -1,11 +1,12 @@
 import collections
 import contextlib
 import errno
+from io import BytesIO
 import json
 import os
 import shutil
 
-from io import BytesIO
+from truenas_pylibzfs import ZFSError, ZFSException
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -17,13 +18,6 @@ from middlewared.service import CallError, job, periodic, private, Service, Vali
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.pool_.utils import get_dataset_parents
-try:
-    from truenas_pylibzfs import ZFSError, ZFSException
-except ImportError:
-    # github CI crashes without this because the
-    # image on github doesn't have ZFS installed
-    # so it's safe to ignore it
-    ZFSError = ZFSException = None
 
 from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 

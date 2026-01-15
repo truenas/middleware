@@ -1,13 +1,10 @@
 import errno
 import os
 
+import truenas_pylibzfs
+
 from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
 
 __all__ = ("destroy_impl",)
 

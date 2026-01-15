@@ -20,10 +20,7 @@ jobs:
       - name: Install dev tools
         run: ./src/freenas/usr/bin/install-dev-tools
 
-      - name: Install middleware
-        run: |
-          cd src/middlewared ; make reinstall_container
-
       - name: Test
         run: |
+          cd src/middlewared
           pytest-3 -v --disable-pytest-warnings /usr/lib/python3/dist-packages/middlewared/pytest
