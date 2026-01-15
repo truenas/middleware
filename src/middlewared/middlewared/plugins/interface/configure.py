@@ -1,9 +1,8 @@
 import ipaddress
 import re
 
-import truenas_pynetif as netif
-
 from middlewared.service import private, Service
+import truenas_pynetif as netif
 
 from .interface_types import InterfaceType
 
@@ -14,12 +13,20 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
+    def __addrs_configured(self, name):
+        af = netif.get_address_netlink()
+        ac = set()
+        for addr in af.get_link_addresses(name):
+            if addr.family != netif.AddressFamily.LINK:
+                ac.add(addr)
+        return ac
+
+    @private
     def configure(self, data, aliases, options):
         options = options or {}
         name = data['int_interface']
         self.logger.info('Configuring interface %r', name)
-        iface = netif.get_interface(name)
-        addrs_configured = set([a for a in iface.addresses if a.af != netif.AddressFamily.LINK])
+        addrs_configured = self.__addrs_configured(name)
         has_ipv6 = (
             data['int_version'] == 6 or
             data['int_ipv6auto'] or
@@ -64,8 +71,9 @@ class InterfaceService(Service):
                     {'address': alias_vip, 'netmask': '32' if alias['alias_version'] == 4 else '128'}
                 ))
 
+        iface = netif.get_interface(name)
         for addr in addrs_configured:
-            address = str(addr.address)
+            address = addr.address
             if address.startswith('fe80::'):
                 # having a link-local address causes no harm and is a
                 # pre-requisite for IPv6 working in general. Just ignore it.
@@ -92,7 +100,7 @@ class InterfaceService(Service):
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
-            address = str(addr.address)
+            address = addr.address
             if address == vip or address in alias_vips:
                 # keepalived service is responsible for adding the VIP(s)
                 continue
@@ -158,19 +166,18 @@ class InterfaceService(Service):
 
     @private
     def alias_to_addr(self, alias):
-        addr = self.interface_to_addr(ipaddress.ip_interface(f'{alias["address"]}/{alias["netmask"]}'))
-        if 'vhid' in alias:
-            addr.vhid = alias['vhid']
-        return addr
+        # NOTE: 'vhid' is a legacy CARP property kept in the database to reduce churn.
+        # It is not used - VIPs are now managed by keepalived.
+        return self.interface_to_addr(ipaddress.ip_interface(f'{alias["address"]}/{alias["netmask"]}'))
 
     @private
     def interface_to_addr(self, ip):
-        addr = netif.InterfaceAddress()
-        addr.af = getattr(netif.AddressFamily, 'INET6' if ip.version == 6 else 'INET')
-        addr.address = ip.ip
-        addr.netmask = ip.netmask
-        addr.broadcast = ip.network.broadcast_address
-        return addr
+        return netif.AddressInfo(
+            family=netif.AddressFamily.INET6 if ip.version == 6 else netif.AddressFamily.INET,
+            prefixlen=ip.network.prefixlen,
+            address=str(ip.ip),
+            broadcast=str(ip.network.broadcast_address),
+        )
 
     @private
     async def get_configured_interfaces(self):

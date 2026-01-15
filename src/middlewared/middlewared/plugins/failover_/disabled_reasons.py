@@ -60,15 +60,14 @@ class FailoverDisabledService(Service):
             # crash since it's easily avoided
             return
 
-        try:
-            iface = netif.list_interfaces()[heartbeat_iface_name]
-            if iface.link_state != "LINK_STATE_UP":
-                reasons.add(DisabledReasonsEnum.NO_CARRIER_ON_HEARTBEAT.name)
-        except KeyError:
+        links = netif.get_address_netlink().get_links()
+        if heartbeat_iface_name not in links:
             # saw this on an internal m50 because the systemd-modules-load.service
             # timed out and was subsequently killed so the ntb kernel module didn't
             # get loaded
             reasons.add(DisabledReasonsEnum.NO_HEARTBEAT_IFACE.name)
+        elif links[heartbeat_iface_name].operstate != netif.IFOperState.UP:
+            reasons.add(DisabledReasonsEnum.NO_CARRIER_ON_HEARTBEAT.name)
 
     @private
     def get_local_reasons(self, app, ifaces, reasons):
