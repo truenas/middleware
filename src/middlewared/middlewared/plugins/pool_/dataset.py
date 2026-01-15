@@ -2,6 +2,8 @@ import errno
 import os
 import pathlib
 
+from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
@@ -33,10 +35,6 @@ from .utils import (
     ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
-try:
-    from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
-except ImportError:
-    ZFSError = ZFSException = ZFSType = None
 
 
 class PoolDatasetEncryptionModel(sa.Model):

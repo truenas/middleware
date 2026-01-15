@@ -1,9 +1,6 @@
 import dataclasses
 
-try:
-    from truenas_pylibzfs import ZFSError, ZFSException
-except ImportError:
-    ZFSError = ZFSException = None
+from truenas_pylibzfs import ZFSError, ZFSException
 
 from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result

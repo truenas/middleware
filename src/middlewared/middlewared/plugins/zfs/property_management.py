@@ -1,13 +1,7 @@
 from dataclasses import dataclass
 from typing import TypeAlias
 
-try:
-    from truenas_pylibzfs import property_sets, ZFSProperty, ZFSType
-except ImportError:
-    # NOTE: initialized this way so github CI
-    # doesn't explode since this module isn't
-    # installed in the CI VM.
-    property_sets = ZFSProperty = ZFSType = None
+from truenas_pylibzfs import property_sets, ZFSProperty, ZFSType
 
 __all__ = ("build_set_of_zfs_props", "build_set_of_zfs_snapshot_props", "DeterminedProperties")
 

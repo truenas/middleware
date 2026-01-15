@@ -1,11 +1,5 @@
 from .utils import open_resource
 
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
-
 __all__ = (
     "unload_key_impl",
 )

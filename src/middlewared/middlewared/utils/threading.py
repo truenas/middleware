@@ -5,10 +5,7 @@ import itertools
 import logging
 import threading
 
-try:
-    from truenas_pylibzfs import open_handle
-except ImportError:
-    open_handle = None
+from truenas_pylibzfs import open_handle
 
 from .prctl import set_name
 

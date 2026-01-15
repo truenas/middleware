@@ -2,6 +2,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TypeAlias
 
+import truenas_pylibzfs
+
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
@@ -14,11 +16,6 @@ from middlewared.utils.filter_list import (
     get_impl,
 )
 from middlewared.utils.size import format_size
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
 
 
 __all__ = ("generic_query",)

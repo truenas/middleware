@@ -1,3 +1,5 @@
+from truenas_pylibzfs import ZFSProperty, ZFSType
+
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
@@ -6,12 +8,6 @@ from .exceptions import (
     ZFSPathNotProvidedException,
 )
 from .utils import open_resource
-
-try:
-    from truenas_pylibzfs import ZFSProperty, ZFSType
-except ImportError:
-    ZFSProperty = ZFSType = None
-
 
 __all__ = (
     "clone_impl",

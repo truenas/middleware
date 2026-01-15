@@ -1,12 +1,8 @@
 import dataclasses
 
+import truenas_pylibzfs
+
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotASnapshotException
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
 
 __all__ = ("hold_impl", "release_impl",)
 
