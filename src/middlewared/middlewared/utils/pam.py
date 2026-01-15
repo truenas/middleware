@@ -1,25 +1,21 @@
 import enum
 from dataclasses import dataclass
 
-from middlewared.utils.account.faillock import FAIL_INTERVAL, MAX_FAILURE, UNLOCK_TIME
-
 
 class PAMModule(enum.StrEnum):
     DENY = 'pam_deny.so'
     ENV = 'pam_env.so'
     KEYINIT = 'pam_keyinit.so'
     MKHOMEDIR = 'pam_mkhomedir.so'
-    LIMITS = 'pam_limits.so'
     LOGINUID = 'pam_loginuid.so'
     MOTD = 'pam_motd.so'
     PERMIT = 'pam_permit.so'
     OATH = 'pam_oath.so'
     UNIX = 'pam_unix.so'
     SSS = 'pam_sss.so'
-    TDB = 'pam_tdb.so'
+    TRUENAS = 'pam_truenas.so'
     TTY_AUDIT = 'pam_tty_audit.so'
     WINBIND = 'pam_winbind.so'
-    FAILLOCK = 'pam_faillock.so'
 
 
 class PAMService(enum.StrEnum):
@@ -310,27 +306,31 @@ TTY_AUDIT_LINE = PAMLine(
 )
 
 
+TRUENAS_SESSION_NO_LIMIT = PAMLine(
+    pam_service=PAMService.SESSION,
+    pam_control=PAMSimpleControl.REQUIRED,
+    pam_module=PAMModule.TRUENAS,
+)
+
+TRUENAS_SESSION_LIMIT = PAMLine(
+    pam_service=PAMService.SESSION,
+    pam_control=PAMSimpleControl.REQUIRED,
+    pam_module=PAMModule.TRUENAS,
+    pam_module_args=('max_sessions=10',)
+)
+
+
 FAILLOCK_AUTH_FAIL = PAMLine(
     pam_service=PAMService.AUTH,
     pam_control=(PAMControl(PAMResponse.DEFAULT, PAMAction.DIE),),
-    pam_module=PAMModule.FAILLOCK,
-    pam_module_args=(
-        'authfail',
-        f'deny={MAX_FAILURE}',
-        f'unlock_time={UNLOCK_TIME}',
-        f'fail_interval={FAIL_INTERVAL}',
-    )
+    pam_module=PAMModule.TRUENAS,
+    pam_module_args=('authfail',)
 )
 
 
 FAILLOCK_AUTH_SUCC = PAMLine(
     pam_service=PAMService.AUTH,
     pam_control=PAMSimpleControl.REQUIRED,
-    pam_module=PAMModule.FAILLOCK,
-    pam_module_args=(
-        'authsucc',
-        f'deny={MAX_FAILURE}',
-        f'unlock_time={UNLOCK_TIME}',
-        f'fail_interval={FAIL_INTERVAL}',
-    )
+    pam_module=PAMModule.TRUENAS,
+    pam_module_args=('authsucc',)
 )

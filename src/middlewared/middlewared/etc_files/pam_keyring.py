@@ -1,11 +1,11 @@
 from middlewared.utils.user_api_key import (
     UserApiKey,
-    PamTdbEntry,
+    UserKeyringEntry,
     flush_user_api_keys
 )
 
 
-def convert_keys(username, keys) -> PamTdbEntry:
+def convert_keys(username, keys) -> UserKeyringEntry:
     user_api_keys = []
 
     for key in keys:
@@ -19,12 +19,17 @@ def convert_keys(username, keys) -> PamTdbEntry:
             expiry = int(key['expires_at'].timestamp())
 
         user_api_keys.append(UserApiKey(
+            algorithm='SHA512',
             expiry=expiry,
             dbid=key['id'],
-            userhash=key['keyhash']
+            username=username,
+            salt=key['salt'],
+            iterations=key['iterations'],
+            server_key=key['server_key'],
+            stored_key=key['stored_key']
         ))
 
-    return PamTdbEntry(
+    return UserKeyringEntry(
         username=username,
         keys=user_api_keys
     )
@@ -33,7 +38,7 @@ def convert_keys(username, keys) -> PamTdbEntry:
 def render(service, middleware, render_ctx):
     api_keys = render_ctx['api_key.query']
     entries = {}
-    pdb_entries = []
+    keyring_entries = []
     for key in api_keys:
         if key['username'] not in entries:
             entries[key['username']] = [key]
@@ -42,6 +47,6 @@ def render(service, middleware, render_ctx):
 
     for user, keys in entries.items():
         entry = convert_keys(user, keys)
-        pdb_entries.append(entry)
+        keyring_entries.append(entry)
 
-    flush_user_api_keys(pdb_entries)
+    flush_user_api_keys(keyring_entries)
