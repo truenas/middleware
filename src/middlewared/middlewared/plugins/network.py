@@ -1816,12 +1816,14 @@ class InterfaceService(CRUDService):
             if choices['static'] and addr.address not in static_ips:
                 continue
 
-            list_of_ip.append({
+            entry = {
                 'type': addr_type,
                 'address': addr.address,
                 'netmask': addr.prefixlen,
-                'broadcast': addr.broadcast,
-            })
+            }
+            if addr.broadcast:
+                entry['broadcast'] = addr.broadcast
+            list_of_ip.append(entry)
 
         return list_of_ip
 
