@@ -42,6 +42,7 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import create_zettarepl
 
+from middlewared.api.current import PeriodicSnapshotTaskEntry
 from middlewared.logger import setup_logging
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
@@ -621,12 +622,12 @@ class ZettareplService(Service):
 
         periodic_snapshot_tasks = {}
         for periodic_snapshot_task in await self.call2(self.s.pool.snapshottask.query, [["enabled", "=", True]]):
-            hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task["dataset"])
+            hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task.dataset)
             if hold_task_reason:
-                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task['id']}"] = hold_task_reason
+                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task.id}"] = hold_task_reason
                 continue
 
-            periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = self.periodic_snapshot_task_definition(
+            periodic_snapshot_tasks[f"task_{periodic_snapshot_task.id}"] = self.periodic_snapshot_task_definition(
                 periodic_snapshot_task,
             )
 
@@ -667,21 +668,21 @@ class ZettareplService(Service):
 
         return definition, hold_tasks
 
-    def periodic_snapshot_task_definition(self, periodic_snapshot_task):
+    def periodic_snapshot_task_definition(self, periodic_snapshot_task: PeriodicSnapshotTaskEntry):
         return {
-            "dataset": periodic_snapshot_task["dataset"],
+            "dataset": periodic_snapshot_task.dataset,
 
-            "recursive": periodic_snapshot_task["recursive"],
-            "exclude": periodic_snapshot_task["exclude"],
+            "recursive": periodic_snapshot_task.recursive,
+            "exclude": periodic_snapshot_task.exclude,
 
-            "lifetime": lifetime_iso8601(periodic_snapshot_task["lifetime_value"],
-                                         periodic_snapshot_task["lifetime_unit"]),
+            "lifetime": lifetime_iso8601(periodic_snapshot_task.lifetime_value,
+                                         periodic_snapshot_task.lifetime_unit),
 
-            "naming-schema": periodic_snapshot_task["naming_schema"],
+            "naming-schema": periodic_snapshot_task.naming_schema,
 
-            "schedule": zettarepl_schedule(periodic_snapshot_task["schedule"]),
+            "schedule": zettarepl_schedule(periodic_snapshot_task.schedule.model_dump()),
 
-            "allow-empty": periodic_snapshot_task["allow_empty"],
+            "allow-empty": periodic_snapshot_task.allow_empty,
         }
 
     async def _replication_task_definition(self, pools, replication_task):

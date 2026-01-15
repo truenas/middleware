@@ -45,7 +45,7 @@ class PeriodicSnapshotTaskModel(sa.Model):
     task_state = sa.Column(sa.Text(), default='{}')
 
 
-class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUDService):
+class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUDService[PeriodicSnapshotTaskEntry]):
 
     class Config:
         datastore = 'storage.task'
@@ -55,7 +55,8 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         namespace = 'pool.snapshottask'
         cli_namespace = 'task.snapshot'
         entry = PeriodicSnapshotTaskEntry
-        role_prefix='SNAPSHOT_TASK'
+        role_prefix = 'SNAPSHOT_TASK'
+        generic = True
 
     @private
     async def extend_context(self, rows, extra):
@@ -140,10 +141,8 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
     async def do_update(self, audit_callback, id_: int, data: PoolSnapshotTaskUpdate) -> PeriodicSnapshotTaskEntry:
         """
         Update a Periodic Snapshot Task with specific `id`.
-
-        See the documentation for `create` method for information on payload contents.
         """
-        old = PeriodicSnapshotTaskEntry(**await self.get_instance(id_))
+        old = await self.get_instance(id_)
         audit_callback(old.dataset)
         new = old.updated(data)
 
@@ -187,11 +186,7 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         )
 
         if will_change_retention_for:
-            await self.call2(
-                self.s.pool.snapshottask.fixate_removal_date,
-                will_change_retention_for,
-                old.model_dump(),
-            )
+            await self.call2(self.s.pool.snapshottask.fixate_removal_date, will_change_retention_for, old)
 
         await self.middleware.call('zettarepl.update_tasks')
 
@@ -206,25 +201,10 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
     )
     async def do_delete(self, audit_callback, id_: int, options: PoolSnapshotTaskDeleteOptions) -> typing.Literal[True]:
         """
-        Delete a Periodic Snapshot Task with specific `id`
-
-        .. examples(websocket)::
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.snapshottask.delete",
-                "params": [
-                    1
-                ]
-            }
+        Delete a Periodic Snapshot Task with specific `id`.
         """
-
-        if (task := await self.query([['id','=', id_]])):
-            audit_callback(task[0]['dataset'])
-        else:
-            audit_callback(f'Task id {id_} not found')
+        task = await self.get_instance(id_)
+        audit_callback(task.dataset)
 
         for replication_task in await self.middleware.call('replication.query', [
             ['direction', '=', 'PUSH'],
@@ -243,7 +223,6 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
             will_change_retention_for = await self.call2(self.s.pool.snapshottask.delete_will_change_retention_for, id_)
 
             if will_change_retention_for:
-                task = await self.get_instance(id_)
                 await self.call2(self.s.pool.snapshottask.fixate_removal_date, will_change_retention_for, task)
 
         response = await self.middleware.call(
@@ -333,26 +312,26 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'Snapshot Task'
     resource_name = 'dataset'
 
-    async def query(self, path, enabled, options=None):
+    async def query(self, path: str, enabled: bool, options=None):
         results = []
         for task in await self.middleware.call2(
             self.middleware.services.pool.snapshottask.query,
             [['enabled', '=', enabled]],
         ):
-            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', task['dataset']), path):
+            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', task.dataset), path):
                 results.append(task)
 
         return results
 
-    async def delete(self, attachments):
+    async def delete(self, attachments: list[PeriodicSnapshotTaskEntry]):
         for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'storage.task', attachment['id'])
+            await self.middleware.call('datastore.delete', 'storage.task', attachment.id)
 
         await self.middleware.call('zettarepl.update_tasks')
 
-    async def toggle(self, attachments, enabled):
+    async def toggle(self, attachments: list[PeriodicSnapshotTaskEntry], enabled: bool):
         for attachment in attachments:
-            await self.middleware.call('datastore.update', 'storage.task', attachment['id'], {'task_enabled': enabled})
+            await self.middleware.call('datastore.update', 'storage.task', attachment.id, {'task_enabled': enabled})
 
         await self.middleware.call('zettarepl.update_tasks')
 

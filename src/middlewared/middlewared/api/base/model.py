@@ -336,12 +336,12 @@ def single_argument_result(klass, klass_name=None):
 
 
 def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type[BaseModel]:
-    ResultItem = query_result_item(item)
+    item.__query_result_item__ = query_result_item(item)
     return create_model(
         name or item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[ResultItem] | ResultItem | int, Field()],
+        result=Annotated[list[item.__query_result_item__] | item.__query_result_item__ | int, Field()],
     )
 
 

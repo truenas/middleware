@@ -1,5 +1,6 @@
 import contextlib
 
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call
 
 
@@ -10,4 +11,7 @@ def snapshot_task(data):
     try:
         yield task
     finally:
-        call("pool.snapshottask.delete", task["id"])
+        try:
+            call("pool.snapshottask.delete", task["id"])
+        except InstanceNotFound:
+            pass

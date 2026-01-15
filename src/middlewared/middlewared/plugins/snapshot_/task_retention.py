@@ -30,13 +30,13 @@ class PeriodicSnapshotTaskService(Service):
         with `data`.
         """
 
-        old = PeriodicSnapshotTaskEntry(**await self.call2(self.s.pool.snapshottask.get_instance, id_))
+        old = await self.call2(self.s.pool.snapshottask.get_instance, id_)
         new = old.updated(data)
 
         result = defaultdict(list)
         if old != new:
-            old_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", old.model_dump())
-            new_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", new.model_dump())
+            old_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", old)
+            new_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", new)
             if diff := old_snapshots - new_snapshots:
                 for snapshot in sorted(diff):
                     dataset, snapshot = snapshot.split("@", 1)

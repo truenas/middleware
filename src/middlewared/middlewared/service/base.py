@@ -34,6 +34,9 @@ def service_config(klass, config):
         'role_prefix': None,
         'role_separate_delete': False,
         'verbose_name': klass.__name__.replace('Service', ''),
+        # Set this to `true` if you inherit from `CRUDService[EntryModel]` so that `query` and `get_instance` return
+        # model classes. FIXME: eventually this will be true for all classes, and this setting must be removed.
+        'generic': False,
     }
     config_attrs.update({
         k: v
