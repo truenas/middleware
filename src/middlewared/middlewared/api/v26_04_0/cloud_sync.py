@@ -52,6 +52,17 @@ class CloudSyncBwlimit(BaseModel):
 
 
 class CloudSyncEntry(BaseCloudEntry):
+    dataset: NonEmptyString | None
+    """The ZFS dataset name that contains the task path. For filesystem paths (e.g., `/mnt/tank/backup`), this is \
+    the dataset where the task data is stored. For zvol paths (e.g., `/dev/zvol/pool/myzvol`), this is the zvol \
+    dataset name (e.g., "pool/myzvol"). Returns `null` if the path is not on a ZFS dataset. This is a read-only \
+    field that is automatically populated based on "path"."""
+    relative_path: str | None
+    """The path of the task relative to the dataset mountpoint (for filesystem paths only). For example, if the \
+    task path is `/mnt/tank/backup/data` and the dataset `tank/backup` is mounted at `/mnt/tank/backup`, then the \
+    relative path is "data". An empty string indicates the task is at the dataset root. For zvol paths \
+    (e.g., `/dev/zvol/pool/myzvol`), this is always an empty string. Returns `null` if the path is not on a ZFS \
+    dataset. This is a read-only field that is automatically populated based on "path"."""
     bwlimit: list[CloudSyncBwlimit] = Field(default_factory=list)
     """Schedule of bandwidth limits."""
     transfers: PositiveInt | None = None
