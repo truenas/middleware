@@ -325,7 +325,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def get_state(self):
         unit_name = self._get_systemd_unit_name()
         state, main_pid = await get_service_state(unit_name)
-        if state == b"active" or (self.systemd_async_start and state == b"activating"):
+        if state == b"active" or (self.systemd_async_start and state == b"activating") or state == b"reloading":
             return ServiceState(True, list(filter(None, [main_pid])))
         else:
             return ServiceState(False, [])
