@@ -3,24 +3,35 @@ import errno
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceSnapshotEntry,
+    ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotCountArgs,
     ZFSResourceSnapshotCountResult,
+    ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotCloneArgs,
     ZFSResourceSnapshotCloneResult,
+    ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotCreateArgs,
     ZFSResourceSnapshotCreateResult,
+    ZFSResourceSnapshotDestroyQuery,
     ZFSResourceSnapshotDestroyArgs,
     ZFSResourceSnapshotDestroyResult,
+    ZFSResourceSnapshotHoldQuery,
     ZFSResourceSnapshotHoldArgs,
     ZFSResourceSnapshotHoldResult,
+    ZFSResourceSnapshotHoldsQuery,
     ZFSResourceSnapshotHoldsArgs,
     ZFSResourceSnapshotHoldsResult,
+    ZFSResourceSnapshotQueryBase,
+    ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotQueryArgs,
     ZFSResourceSnapshotQueryResult,
+    ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotReleaseArgs,
     ZFSResourceSnapshotReleaseResult,
+    ZFSResourceSnapshotRenameQuery,
     ZFSResourceSnapshotRenameArgs,
     ZFSResourceSnapshotRenameResult,
+    ZFSResourceSnapshotRollbackQuery,
     ZFSResourceSnapshotRollbackArgs,
     ZFSResourceSnapshotRollbackResult,
 )
@@ -52,17 +63,17 @@ class ZFSResourceSnapshotService(Service):
         entry = ZFSResourceSnapshotEntry
 
     @private
-    def validate_recursive_paths(self, schema: str, data: dict):
+    def validate_recursive_paths(self, schema: str, data: ZFSResourceSnapshotQueryBase) -> None:
         """Validate paths don't overlap when recursive=True.
 
         (Duplicate paths are already rejected by Pydantic UniqueList)
         """
-        if not data.get("recursive", False):
+        if not data.recursive:
             return
 
         # When recursive, check for overlapping dataset paths
         # (snapshot paths like "tank@snap" are direct lookups, not recursive)
-        paths = data.get("paths", [])
+        paths = data.paths
         dataset_paths = [p for p in paths if "@" not in p]
         if group_paths_by_parents(dataset_paths):
             raise ValidationError(
@@ -75,21 +86,16 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls, data: dict | None = None):
-        base = ZFSResourceSnapshotQueryArgs().model_dump()["data"]
-        if data is None:
-            final = base
-        else:
-            final = base | data
-
-        return query_snapshots_impl(tls.lzh, final)
+    def query_impl(self, tls, data: ZFSResourceSnapshotQuery):
+        return query_snapshots_impl(tls.lzh, data.model_dump())
 
     @api_method(
         ZFSResourceSnapshotQueryArgs,
         ZFSResourceSnapshotQueryResult,
         roles=["SNAPSHOT_READ"],
+        check_annotations=True,
     )
-    def query(self, data):
+    def query(self, data: ZFSResourceSnapshotQuery) -> list[ZFSResourceSnapshotEntry]:
         """
         This method provides an interface for retrieving information about ZFS snapshots,
         including their properties and user properties.
@@ -144,28 +150,26 @@ class ZFSResourceSnapshotService(Service):
         """
         # Use properties=None for efficiency - we only care about existence
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.query_impl, {"paths": [snap_name], "properties": None})
+            self.call_sync2(
+                self.s.zfs.resource.snapshot.query_impl,
+                ZFSResourceSnapshotQuery(paths=[snap_name], properties=None),
+            )
         except ZFSPathNotFoundException:
             return False
         return True
 
     @private
     @pass_thread_local_storage
-    def count_impl(self, tls, data: dict | None = None):
-        base = ZFSResourceSnapshotCountArgs().model_dump()["data"]
-        if data is None:
-            final = base
-        else:
-            final = base | data
-
-        return count_snapshots_impl(tls, final)
+    def count_impl(self, tls, data: ZFSResourceSnapshotCountQuery):
+        return count_snapshots_impl(tls, data)
 
     @api_method(
         ZFSResourceSnapshotCountArgs,
         ZFSResourceSnapshotCountResult,
         roles=["SNAPSHOT_READ"],
+        check_annotations=True,
     )
-    def count(self, data):
+    def count(self, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
         """
         Count ZFS snapshots per dataset.
 
@@ -204,32 +208,31 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls, data: dict):
+    def destroy_impl(self, tls, data: ZFSResourceSnapshotDestroyQuery):
         schema = "zfs.resource.snapshot.destroy"
-        path = data["path"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
         # For snapshot paths, extract the dataset portion
-        check_path = path.split("@")[0] if "@" in path else path
-        if not bypass and has_internal_path(check_path):
-            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+        check_path = data.path.split("@")[0] if "@" in data.path else data.path
+        if not data.bypass and has_internal_path(check_path):
+            raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
         return destroy_impl(
             tls,
-            path,
-            data.get("recursive", False),
-            data.get("all_snapshots", False),
-            bypass,
-            data.get("defer", False),
+            data.path,
+            data.recursive,
+            data.all_snapshots,
+            data.bypass,
+            data.defer,
         )
 
     @api_method(
         ZFSResourceSnapshotDestroyArgs,
         ZFSResourceSnapshotDestroyResult,
         roles=["SNAPSHOT_DELETE"],
+        check_annotations=True,
     )
-    def destroy(self, data):
+    def destroy(self, data: ZFSResourceSnapshotDestroyQuery) -> None:
         """
         Destroy ZFS snapshots.
 
@@ -263,18 +266,15 @@ class ZFSResourceSnapshotService(Service):
             # Destroy all snapshots for a dataset and its children
             destroy({"path": "tank", "all_snapshots": True, "recursive": True})
         """
-        path = data["path"]
-        all_snapshots = data.get("all_snapshots", False)
-
         # Validate path format based on all_snapshots flag
-        if all_snapshots:
-            if "@" in path:
+        if data.all_snapshots:
+            if "@" in data.path:
                 raise ValidationError(
                     "zfs.resource.snapshot.destroy",
                     "When all_snapshots is True, path must be a dataset path (no '@').",
                 )
         else:
-            if "@" not in path:
+            if "@" not in data.path:
                 raise ValidationError(
                     "zfs.resource.snapshot.destroy",
                     "Path must be a snapshot path (containing '@'). "
@@ -303,22 +303,20 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rename_impl(self, tls, data: dict):
+    def rename_impl(self, tls, data: ZFSResourceSnapshotRenameQuery):
         schema = "zfs.resource.snapshot.rename"
-        current_name = data["current_name"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
         # For snapshot paths, extract the dataset portion
-        check_path = current_name.split("@")[0] if "@" in current_name else current_name
-        if not bypass and has_internal_path(check_path):
-            raise ValidationError(schema, f"{current_name!r} is a protected path.", errno.EACCES)
+        check_path = data.current_name.split("@")[0] if "@" in data.current_name else data.current_name
+        if not data.bypass and has_internal_path(check_path):
+            raise ValidationError(schema, f"{data.current_name!r} is a protected path.", errno.EACCES)
 
         return rename_impl(
             tls,
-            current_name,
-            data["new_name"],
-            data.get("recursive", False),
+            data.current_name,
+            data.new_name,
+            data.recursive,
             False,  # no_unmount
             False,  # force_unmount
         )
@@ -327,8 +325,9 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotRenameArgs,
         ZFSResourceSnapshotRenameResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def rename(self, data):
+    def rename(self, data: ZFSResourceSnapshotRenameQuery) -> None:
         """
         Rename a ZFS snapshot.
 
@@ -355,24 +354,21 @@ class ZFSResourceSnapshotService(Service):
                 "recursive": True
             })
         """
-        current_name = data["current_name"]
-        new_name = data["new_name"]
-
         # Validate both paths are snapshot paths
-        if "@" not in current_name:
+        if "@" not in data.current_name:
             raise ValidationError(
                 "zfs.resource.snapshot.rename",
                 "current_name must be a snapshot path (containing '@').",
             )
-        if "@" not in new_name:
+        if "@" not in data.new_name:
             raise ValidationError(
                 "zfs.resource.snapshot.rename",
                 "new_name must be a snapshot path (containing '@').",
             )
 
         # Validate same dataset (only snapshot name can change)
-        current_ds = current_name.rsplit("@", 1)[0]
-        new_ds = new_name.rsplit("@", 1)[0]
+        current_ds = data.current_name.rsplit("@", 1)[0]
+        new_ds = data.new_name.rsplit("@", 1)[0]
         if current_ds != new_ds:
             raise ValidationError(
                 "zfs.resource.snapshot.rename",
@@ -393,34 +389,32 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def clone_impl(self, tls, data: dict):
+    def clone_impl(self, tls, data: ZFSResourceSnapshotCloneQuery) -> None:
         schema = "zfs.resource.snapshot.clone"
-        snapshot = data["snapshot"]
-        dataset = data["dataset"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection on BOTH source and destination
-        if not bypass:
+        if not data.bypass:
             # For snapshot paths, extract the dataset portion
-            source_check = snapshot.split("@")[0] if "@" in snapshot else snapshot
+            source_check = data.snapshot.split("@")[0] if "@" in data.snapshot else data.snapshot
             if has_internal_path(source_check):
-                raise ValidationError(schema, f"{snapshot!r} is a protected path.", errno.EACCES)
-            if has_internal_path(dataset):
-                raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
+                raise ValidationError(schema, f"{data.snapshot!r} is a protected path.", errno.EACCES)
+            if has_internal_path(data.dataset):
+                raise ValidationError(schema, f"{data.dataset!r} is a protected path.", errno.EACCES)
 
         return clone_impl(
             tls,
-            current_name=snapshot,
-            new_name=dataset,
-            properties=data.get("properties"),
+            current_name=data.snapshot,
+            new_name=data.dataset,
+            properties=data.properties,
         )
 
     @api_method(
         ZFSResourceSnapshotCloneArgs,
         ZFSResourceSnapshotCloneResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def clone(self, data):
+    def clone(self, data: ZFSResourceSnapshotCloneQuery) -> None:
         """
         Clone a ZFS snapshot to create a new dataset.
 
@@ -447,18 +441,15 @@ class ZFSResourceSnapshotService(Service):
                 "properties": {"compression": "lz4", "quota": "10G"}
             })
         """
-        snapshot = data["snapshot"]
-        dataset = data["dataset"]
-
         # Validate snapshot path contains @
-        if "@" not in snapshot:
+        if "@" not in data.snapshot:
             raise ValidationError(
                 "zfs.resource.snapshot.clone",
                 "snapshot must be a snapshot path (containing '@').",
             )
 
         # Validate dataset path does NOT contain @
-        if "@" in dataset:
+        if "@" in data.dataset:
             raise ValidationError(
                 "zfs.resource.snapshot.clone",
                 "dataset must be a dataset path (not containing '@').",
@@ -477,35 +468,34 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathNotASnapshotException:
             raise ValidationError(
                 "zfs.resource.snapshot.clone",
-                f"'{snapshot}' is not a snapshot.",
+                f"'{data.snapshot}' is not a snapshot.",
             )
 
     @private
     @pass_thread_local_storage
-    def create_impl(self, tls, data: dict):
+    def create_impl(self, tls, data: ZFSResourceSnapshotCreateQuery):
         schema = "zfs.resource.snapshot.create"
-        dataset = data["dataset"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
-        if not bypass and has_internal_path(dataset):
-            raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
+        if not data.bypass and has_internal_path(data.dataset):
+            raise ValidationError(schema, f"{data.dataset!r} is a protected path.", errno.EACCES)
 
         return create_snapshots_impl(
             tls,
-            dataset=dataset,
-            name=data["name"],
-            recursive=data.get("recursive", False),
-            exclude=data.get("exclude"),
-            user_properties=data.get("user_properties"),
+            dataset=data.dataset,
+            name=data.name,
+            recursive=data.recursive,
+            exclude=data.exclude,
+            user_properties=data.user_properties,
         )
 
     @api_method(
         ZFSResourceSnapshotCreateArgs,
         ZFSResourceSnapshotCreateResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def create(self, data):
+    def create(self, data: ZFSResourceSnapshotCreateQuery) -> ZFSResourceSnapshotEntry:
         """
         Create a ZFS snapshot.
 
@@ -541,25 +531,22 @@ class ZFSResourceSnapshotService(Service):
                 "user_properties": {"com.company:backup_type": "daily"}
             })
         """
-        dataset = data["dataset"]
-        name = data["name"]
-
         # Validate dataset path does NOT contain @
-        if "@" in dataset:
+        if "@" in data.dataset:
             raise ValidationError(
                 "zfs.resource.snapshot.create",
                 "dataset must be a dataset path (not containing '@').",
             )
 
         # Validate snapshot name does NOT contain @
-        if "@" in name:
+        if "@" in data.name:
             raise ValidationError(
                 "zfs.resource.snapshot.create",
                 "name must be a snapshot name (not containing '@').",
             )
 
         try:
-            return self.call_sync2(self.s.zfs.resource.snapshot.create_impl, data)
+            return ZFSResourceSnapshotEntry(**self.call_sync2(self.s.zfs.resource.snapshot.create_impl, data))
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.create", e.message, errno.ENOENT
@@ -575,30 +562,29 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def hold_impl(self, tls, data: dict):
+    def hold_impl(self, tls, data: ZFSResourceSnapshotHoldQuery):
         schema = "zfs.resource.snapshot.hold"
-        path = data["path"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
-        if not bypass:
-            check_path = path.split("@")[0] if "@" in path else path
+        if not data.bypass:
+            check_path = data.path.split("@")[0] if "@" in data.path else data.path
             if has_internal_path(check_path):
-                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+                raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
         return hold_impl(
             tls,
-            path=path,
-            tag=data.get("tag", "truenas"),
-            recursive=data.get("recursive", False),
+            path=data.path,
+            tag=data.tag,
+            recursive=data.recursive,
         )
 
     @api_method(
         ZFSResourceSnapshotHoldArgs,
         ZFSResourceSnapshotHoldResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def hold(self, data):
+    def hold(self, data: ZFSResourceSnapshotHoldQuery) -> None:
         """
         Create a hold on a ZFS snapshot.
 
@@ -627,10 +613,8 @@ class ZFSResourceSnapshotService(Service):
             # Hold recursively
             hold({"path": "tank@backup", "recursive": True})
         """
-        path = data["path"]
-
         # Validate path is a snapshot
-        if "@" not in path:
+        if "@" not in data.path:
             raise ValidationError(
                 "zfs.resource.snapshot.hold",
                 "path must be a snapshot path (containing '@').",
@@ -657,8 +641,9 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotHoldsArgs,
         ZFSResourceSnapshotHoldsResult,
         roles=["SNAPSHOT_READ"],
+        check_annotations=True,
     )
-    def holds(self, data):
+    def holds(self, data: ZFSResourceSnapshotHoldsQuery) -> list[str]:
         """
         Get holds on a ZFS snapshot.
 
@@ -673,17 +658,15 @@ class ZFSResourceSnapshotService(Service):
             holds({"path": "tank/data@backup"})
             # Returns: ["truenas", "replication"]
         """
-        path = data["path"]
-
         # Validate path is a snapshot
-        if "@" not in path:
+        if "@" not in data.path:
             raise ValidationError(
                 "zfs.resource.snapshot.holds",
                 "path must be a snapshot path (containing '@').",
             )
 
         try:
-            holds = self.call_sync2(self.s.zfs.resource.snapshot.holds_impl, path)
+            holds = self.call_sync2(self.s.zfs.resource.snapshot.holds_impl, data.path)
             return list(holds)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
@@ -692,30 +675,29 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def release_impl(self, tls, data: dict):
+    def release_impl(self, tls, data: ZFSResourceSnapshotReleaseQuery):
         schema = "zfs.resource.snapshot.release"
-        path = data["path"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
-        if not bypass:
-            check_path = path.split("@")[0] if "@" in path else path
+        if not data.bypass:
+            check_path = data.path.split("@")[0] if "@" in data.path else data.path
             if has_internal_path(check_path):
-                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+                raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
         return release_impl(
             tls,
-            path=path,
-            tag=data.get("tag"),
-            recursive=data.get("recursive", False),
+            path=data.path,
+            tag=data.tag,
+            recursive=data.recursive,
         )
 
     @api_method(
         ZFSResourceSnapshotReleaseArgs,
         ZFSResourceSnapshotReleaseResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def release(self, data):
+    def release(self, data: ZFSResourceSnapshotReleaseQuery) -> None:
         """
         Release hold(s) from a ZFS snapshot.
 
@@ -741,10 +723,8 @@ class ZFSResourceSnapshotService(Service):
             # Release holds recursively
             release({"path": "tank@backup", "tag": "backup", "recursive": True})
         """
-        path = data["path"]
-
         # Validate path is a snapshot
-        if "@" not in path:
+        if "@" not in data.path:
             raise ValidationError(
                 "zfs.resource.snapshot.release",
                 "path must be a snapshot path (containing '@').",
@@ -759,32 +739,31 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rollback_impl(self, tls, data: dict):
+    def rollback_impl(self, tls, data: ZFSResourceSnapshotRollbackQuery):
         schema = "zfs.resource.snapshot.rollback"
-        path = data["path"]
-        bypass = data.get("bypass", False)
 
         # Check for internal path protection
-        if not bypass:
-            check_path = path.split("@")[0] if "@" in path else path
+        if not data.bypass:
+            check_path = data.path.split("@")[0] if "@" in data.path else data.path
             if has_internal_path(check_path):
-                raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+                raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
         return rollback_impl(
             tls,
-            path=path,
-            recursive=data.get("recursive", False),
-            recursive_clones=data.get("recursive_clones", False),
-            force=data.get("force", False),
-            recursive_rollback=data.get("recursive_rollback", False),
+            path=data.path,
+            recursive=data.recursive,
+            recursive_clones=data.recursive_clones,
+            force=data.force,
+            recursive_rollback=data.recursive_rollback,
         )
 
     @api_method(
         ZFSResourceSnapshotRollbackArgs,
         ZFSResourceSnapshotRollbackResult,
         roles=["SNAPSHOT_WRITE"],
+        check_annotations=True,
     )
-    def rollback(self, data):
+    def rollback(self, data: ZFSResourceSnapshotRollbackQuery) -> None:
         """
         Rollback a ZFS dataset to a snapshot.
 
@@ -815,10 +794,8 @@ class ZFSResourceSnapshotService(Service):
             # Rollback all child datasets
             rollback({"path": "tank@backup", "recursive_rollback": True})
         """
-        path = data["path"]
-
         # Validate path is a snapshot
-        if "@" not in path:
+        if "@" not in data.path:
             raise ValidationError(
                 "zfs.resource.snapshot.rollback",
                 "path must be a snapshot path (containing '@').",

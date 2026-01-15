@@ -1,5 +1,6 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
+from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.utils.path import FSLocation, path_location
 
 
@@ -62,7 +63,7 @@ class SnapshotCountAlertSource(AlertSource):
 
     async def check(self):
         snapshot_counts = await self.middleware.call2(
-            self.middleware.services.zfs.resource.snapshot.count_impl, {"recursive": True}
+            self.middleware.services.zfs.resource.snapshot.count_impl, ZFSResourceSnapshotCountQuery(recursive=True),
         )
         alerts = await self._check_smb(snapshot_counts)
         alerts.extend(await self._check_total(snapshot_counts))

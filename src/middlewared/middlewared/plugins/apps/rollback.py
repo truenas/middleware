@@ -1,6 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
+    ZFSResourceSnapshotRollbackQuery,
 )
 from middlewared.service import job, Service, ValidationErrors
 
@@ -74,13 +75,13 @@ class AppService(Service):
                 snap_name = f'{app_volume_ds}@{options["app_version"]}'
                 if self.call_sync2(self.s.zfs.resource.snapshot.exists, snap_name):
                     job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
-                    self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, {
-                        'path': snap_name,
-                        'force': True,
-                        'recursive': True,
-                        'recursive_clones': True,
-                        'recursive_rollback': True,
-                    })
+                    self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                        path=snap_name,
+                        force=True,
+                        recursive=True,
+                        recursive_clones=True,
+                        recursive_rollback=True,
+                    ))
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:

@@ -5,8 +5,8 @@ import requests
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult,
-    ZFSResourceQuery
+    ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, ZFSResourceQuery,
+    ZFSResourceSnapshotCreateQuery,
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import CreateImplArgs
@@ -139,10 +139,10 @@ class ContainerImageService(Service):
 
                 # Create ZFS snapshot
                 job.set_progress(98, 'Creating ZFS snapshot...')
-                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
-                    'dataset': dataset_name,
-                    'name': 'image'
-                })
+                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+                    dataset=dataset_name,
+                    name='image'
+                ))
 
                 job.set_progress(100, 'Image pull completed successfully')
                 return snapshot_name

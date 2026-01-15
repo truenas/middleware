@@ -15,6 +15,8 @@ from middlewared.api.current import (
     DockerDeleteBackupArgs,
     DockerDeleteBackupResult,
     ZFSResourceQuery,
+    ZFSResourceSnapshotQuery,
+    ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
@@ -111,9 +113,10 @@ class DockerService(Service):
             return backups
 
         # Get snapshots for the dataset (properties: None for efficiency)
-        snapshots = self.call_sync2(self.s.zfs.resource.snapshot.query, {
-            'paths': [docker_config['dataset']], 'properties': ['creation']
-        })
+        snapshots = self.call_sync2(self.s.zfs.resource.snapshot.query, ZFSResourceSnapshotQuery(
+            paths=[docker_config['dataset']],
+            properties=['creation'],
+        ))
         if not snapshots:
             return backups
 
@@ -167,7 +170,11 @@ class DockerService(Service):
 
         self.call_sync2(
             self.s.zfs.resource.snapshot.destroy_impl,
-            {'path': backup['snapshot_name'], 'recursive': True, 'bypass': True},
+            ZFSResourceSnapshotDestroyQuery(
+                path=backup['snapshot_name'],
+                recursive=True,
+                bypass=True,
+            ),
         )
         shutil.rmtree(backup['backup_path'], True)
 

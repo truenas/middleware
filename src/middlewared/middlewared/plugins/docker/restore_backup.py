@@ -3,7 +3,7 @@ import logging
 import os
 
 from middlewared.api import api_method
-from middlewared.api.current import DockerRestoreBackupArgs, DockerRestoreBackupResult
+from middlewared.api.current import DockerRestoreBackupArgs, DockerRestoreBackupResult, ZFSResourceSnapshotRollbackQuery
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, job, Service
@@ -50,14 +50,13 @@ class DockerService(Service):
         docker_ds, snapshot_name = backup['snapshot_name'].split('@')
         skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
         for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
-            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, {
-                'path': f'{dataset}@{snapshot_name}',
-                'force': True,
-                'recursive': True,
-                'recursive_clones': True,
-                'bypass': True,
-                }
-            )
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                path=f'{dataset}@{snapshot_name}',
+                force=True,
+                recursive=True,
+                recursive_clones=True,
+                bypass=True,
+            ))
 
         job.set_progress(30, 'Rolled back snapshots')
 

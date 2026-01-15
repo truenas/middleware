@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dev tools
-        run: ./src/freenas/usr/bin/install-dev-tools
+        run: FAKE_ENV=1 ./src/freenas/usr/bin/install-dev-tools
 
       - name: Test
         run: |
           cd src/middlewared
-          FAKE_ENV=1 pytest-3 -v --disable-pytest-warnings /usr/lib/python3/dist-packages/middlewared/pytest
+          PYTHONPATH=. FAKE_ENV=1 pytest-3 -v --disable-pytest-warnings middlewared/pytest

@@ -56,8 +56,8 @@ class PeriodicSnapshotTaskEntry(BaseModel):
 
 
 class PoolSnapshotTaskDBEntry(PeriodicSnapshotTaskEntry):
+    vmware_sync: Excluded = excluded_field()
     state: str
-    """Current state of the task."""
 
 
 class PoolSnapshotTaskCreate(PeriodicSnapshotTaskEntry):
