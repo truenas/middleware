@@ -10,7 +10,10 @@ override_dh_auto_build:
 	python3 -m middlewared.scripts.generate_s3_providers
 	dh_auto_build
 	sqlite3 freenas-v1.db < middlewared/alembic/initial.sql
+ifeq ($(SKIP_MIGRATION),)
+    # This will crash when building a docker container for github actions since truenas_pylibzfs is not available there
 	cd middlewared && env PYTHONPATH=.. FREENAS_DATABASE=../freenas-v1.db alembic upgrade head
+endif
 
 override_dh_install:
 	dh_install

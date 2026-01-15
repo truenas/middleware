@@ -63,4 +63,5 @@ reinstall: stop_service install_deps clean build_deb install migrate start_servi
 
 # this is to be called in github actions running in a container (no systemd (pid 1))
 # so it's the same as `reinstall` but without the start/stop{_service} and migrate calls
+reinstall_container: export SKIP_MIGRATION=1
 reinstall_container: install_deps clean build_deb install
