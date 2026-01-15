@@ -1,6 +1,7 @@
 import logging
 from pyroute2 import IPRoute, NetlinkDumpInterrupted
 
+from .address.netlink import get_address_netlink
 from .bridge import create_bridge
 from .interface import Interface, CLONED_PREFIXES
 from .lagg import AggregationProtocol, create_lagg
@@ -9,8 +10,8 @@ from .vlan import create_vlan
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["AggregationProtocol", "create_vlan", "create_interface", "destroy_interface", "get_interface",
-           "list_interfaces", "CLONED_PREFIXES"]
+__all__ = ["AggregationProtocol", "create_vlan", "create_interface", "destroy_interface", "get_address_netlink",
+           "get_interface", "list_interfaces", "CLONED_PREFIXES"]
 
 
 def create_interface(name):
