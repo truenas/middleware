@@ -8,6 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AppEntry, AppCreateArgs, AppCreateResult, AppUpdateArgs, AppUpdateResult, AppDeleteArgs, AppDeleteResult,
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
+    ZFSResourceQuery
 )
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
@@ -344,7 +345,7 @@ class AppService(CRUDService):
         docker_ds = self.middleware.call_sync('docker.config')['dataset']
         apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
         rv = self.call_sync2(
-            self.s.zfs.resource.query_impl, {'paths': [apps_volume_ds], 'properties': None}
+            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
         )
         if rv:
             return rv[0]['name']

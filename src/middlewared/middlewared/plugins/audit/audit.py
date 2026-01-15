@@ -26,7 +26,8 @@ from .schema.system import AUDIT_EVENT_SYSTEM_JSON_SCHEMAS, AUDIT_EVENT_SYSTEM_P
 from middlewared.api import api_method
 from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
-    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
+    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
@@ -75,9 +76,9 @@ class AuditService(ConfigService):
         ds_name = self.audit_dataset_name()
         ds = self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {
-                'paths': [ds_name],
-                'properties': [
+            ZFSResourceQuery(
+                paths=[ds_name],
+                properties=[
                     'available',
                     'refreservation',
                     'refquota',
@@ -86,8 +87,8 @@ class AuditService(ConfigService):
                     'usedbyrefreservation',
                     'usedbysnapshots',
                 ],
-                'get_user_properties': True
-            }
+                get_user_properties=True
+            )
         )[0]
 
         for k, default in TNUserProp.quotas():
@@ -462,7 +463,7 @@ class AuditService(ConfigService):
         to_remove = set()
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
+            ZFSResourceQuery(paths=[boot_pool], properties=['refreservation'], get_children=True)
         ):
             if i['name'] == cur['name'] or i['name'] == parent or i['name'].startswith(f'{parent}/'):
                 continue

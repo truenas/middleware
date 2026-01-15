@@ -3,7 +3,7 @@ import shlex
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.model import model_subset
-from middlewared.api.current import CloudTaskAttributes
+from middlewared.api.current import CloudTaskAttributes, ZFSResourceQuery
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -74,7 +74,7 @@ class CloudTaskServiceMixin:
 
         if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
             zvol = zvol_path_to_name(path)
-            zz = await self.call2(self.s.zfs.resource.query_impl, {'paths': [zvol], 'properties': None})
+            zz = await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
             if not zz:
                 verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
             elif not zz[0]['type'] == 'VOLUME':
@@ -92,11 +92,11 @@ class CloudTaskServiceMixin:
         if data["snapshot"]:
             for i in await self.call2(
                 self.s.zfs.resource.query_impl,
-                {
-                    "paths": [data["path"].removeprefix("/mnt/")],
-                    "properties": None,
-                    "get_children": True
-                },
+                ZFSResourceQuery(
+                    paths=[data["path"].removeprefix("/mnt/")],
+                    properties=None,
+                    get_children=True
+                ),
             ):
                 if i["type"] == "FILESYSTEM":
                     verrors.add(

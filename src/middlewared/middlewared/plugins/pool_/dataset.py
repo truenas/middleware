@@ -7,6 +7,7 @@ from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
     PoolDatasetDeleteArgs, PoolDatasetDeleteResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
@@ -873,7 +874,7 @@ class PoolDatasetService(CRUDService):
         if not options['recursive']:
             ds = await self.call2(
                 self.s.zfs.resource.query_impl,
-                {'paths': [id_], 'properties': None, 'get_children': True}
+                ZFSResourceQuery(paths=[id_], properties=None, get_children=True)
             )
             if len(ds) > 1:
                 raise CallError(

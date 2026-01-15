@@ -16,6 +16,7 @@ from middlewared.api.current import (
     ContainerUpdateArgs, ContainerUpdateResult,
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
@@ -329,14 +330,14 @@ class ContainerService(CRUDService):
         imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
         for ds in await self.call2(
             self.s.zfs.resource.query_impl,
-            {
-                'paths': [
+            ZFSResourceQuery(
+                paths=[
                     p['name']
                     for p in imported_pools.values()
                     if p['name'] not in BOOT_POOL_NAME_VALID
                 ],
-                'properties': ['encryption'],
-            }
+                properties=['encryption'],
+            )
         ):
             enc = get_encryption_info(ds['properties'])
             if not enc.locked:

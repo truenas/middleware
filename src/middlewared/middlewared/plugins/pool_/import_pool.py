@@ -7,6 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult,
     PoolReimportArgs, PoolReimportResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
@@ -34,7 +35,7 @@ class PoolService(Service):
         container_ds = container_dataset(pool_name)
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [pool_name], 'properties': ['mountpoint'], 'max_depth': 1}
+            ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1)
         ):
             if i['type'] != 'FILESYSTEM':
                 continue
@@ -83,7 +84,7 @@ class PoolService(Service):
             # understand the implications fully.
             for i in await self.call2(
                 self.s.zfs.resource.query,
-                {'paths': to_inherit, 'properties': None, 'get_children': True}
+                ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
                 if i['type'] != 'FILESYSTEM':
                     continue
@@ -370,7 +371,7 @@ class PoolService(Service):
             self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
             ds = self.call_sync2(
                 self.s.zfs.resource.query_impl,
-                {'paths': [vol_name], 'properties': ['acltype', 'aclinherit', 'aclmode']}
+                ZFSResourceQuery(paths=[vol_name], properties=['acltype', 'aclinherit', 'aclmode'])
             )[0]['properties']
         except Exception:
             self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)

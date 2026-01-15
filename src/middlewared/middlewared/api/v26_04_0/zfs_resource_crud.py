@@ -1,17 +1,20 @@
 from typing import Literal
 
+from pydantic.json_schema import SkipJsonSchema
+
 from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     NotRequired,
-    single_argument_args,
     UniqueList,
 )
 
 __all__ = (
     "ZFSResourceEntry",
+    "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
     "ZFSResourceQueryResult",
 )
@@ -242,7 +245,7 @@ class ZFSResourceEntry(BaseModel):
 
 
 class ZFSResourceQuery(BaseModel):
-    paths: UniqueList[str] = list()
+    paths: UniqueList[str] | set[str] = list()
     """A list of zfs filesystem or volume paths to be queried. \
     In almost all scenarios, you should provide a path of what you \
     want to query. By providing path(s) here, it allows the API to \
@@ -295,10 +298,11 @@ class ZFSResourceQuery(BaseModel):
     Note: When max_depth > 0 is specified, it takes priority over get_children.
     The depth is measured from the specified path(s), not from the pool root.
     """
+    exclude_internal_paths: SkipJsonSchema[bool] = True
+    """Exclude internal paths."""
 
 
-@single_argument_args("zfs_resource_destroy_args")
-class ZFSResourceDestroyArgs(BaseModel):
+class ZFSResourceDestroyArgsData(BaseModel):
     path: NonEmptyString
     """Path of the zfs resource (dataset or volume) to be destroyed. \
     Snapshot paths (containing '@') are not accepted - use \
@@ -306,6 +310,11 @@ class ZFSResourceDestroyArgs(BaseModel):
     recursive: bool = False
     """Recursively destroy all descendants of the resource, including \
     child datasets, snapshots, clones, and holds."""
+
+
+class ZFSResourceDestroyArgs(BaseModel):
+    data: ZFSResourceDestroyArgsData
+    """Parameters."""
 
 
 class ZFSResourceDestroyResult(BaseModel):

@@ -8,6 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult, DockerNvidiaPresentArgs,
     DockerNvidiaPresentResult,
+    ZFSResourceQuery,
 )
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -103,7 +104,7 @@ class DockerService(ConfigService):
             else:
                 if await self.call2(
                     self.s.zfs.resource.query_impl,
-                    {'paths': [applications_ds_name(config['pool'])], 'properties': None}
+                    ZFSResourceQuery(paths=[applications_ds_name(config['pool'])], properties=None)
                 ):
                     verrors.add(
                         f'{schema}.migrate_applications',
@@ -113,10 +114,10 @@ class DockerService(ConfigService):
 
                 ix_apps_ds = await self.call2(
                     self.s.zfs.resource.query_impl,
-                    {
-                        'paths': [applications_ds_name(old_config['pool'])],
-                        'properties': ['encryption']
-                    }
+                    ZFSResourceQuery(
+                        paths=[applications_ds_name(old_config['pool'])],
+                        properties=['encryption']
+                    )
                 )
                 if not ix_apps_ds:
                     # Edge case but handled just to be sure
@@ -134,7 +135,7 @@ class DockerService(ConfigService):
                 # Now let's add some validation for destination
                 destination_root_ds = await self.call2(
                     self.s.zfs.resource.query_impl,
-                    {'paths': [config['pool']], 'properties': ['encryption']}
+                    ZFSResourceQuery(paths=[config['pool']], properties=['encryption'])
                 )
                 enc = get_encryption_info(destination_root_ds[0]['properties'])
                 if enc.encrypted:

@@ -6,6 +6,7 @@ import uuid
 
 from datetime import datetime
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, private, Service
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
@@ -31,7 +32,7 @@ class DockerSetupService(Service):
             i['name']
             for i in await self.call2(
                 self.s.zfs.resource.query_impl,
-                {'paths': docker_datasets(config['dataset']), 'properties': None}
+                ZFSResourceQuery(paths=docker_datasets(config['dataset']), properties=None)
             )
         }
         if missing_datasets := missing_required_datasets(ds, config['dataset']):
@@ -95,10 +96,10 @@ class DockerSetupService(Service):
         actual_docker_datasets = {
             i['name']: i['properties'] for i in self.call_sync2(
                 self.s.zfs.resource.query_impl,
-                {
-                    'paths': expected_docker_datasets,
-                    'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
-                }
+                ZFSResourceQuery(
+                    paths=expected_docker_datasets,
+                    properties=list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
+                )
             )
         }
         for dataset_name in expected_docker_datasets:

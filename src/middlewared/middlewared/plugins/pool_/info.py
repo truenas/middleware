@@ -3,7 +3,8 @@ import errno
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
-    PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult
+    PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult,
+    ZFSResourceQuery,
 )
 from middlewared.service import CallError, private, Service, ValidationError
 
@@ -87,7 +88,7 @@ class PoolService(Service):
         info = []
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
-            {'get_children': True, 'properties': None}
+            ZFSResourceQuery(get_children=True, properties=None)
         ):
             if i['type'] in types:
                 info.append(i['name'])

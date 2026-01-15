@@ -1,5 +1,6 @@
 import os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, private, Service
 from middlewared.plugins.pool_.utils import CreateImplArgs
 
@@ -22,7 +23,7 @@ class ContainerService(Service):
         existing_datasets = set()
         for dataset in await self.call2(
             self.s.zfs.resource.query_impl,
-            {'paths': [main_dataset] + datasets, 'properties': ['mountpoint']}
+            ZFSResourceQuery(paths=[main_dataset] + datasets, properties=['mountpoint'])
         ):
             if dataset['type'] != 'FILESYSTEM':
                 raise CallError(f'Expected dataset {dataset["name"]!r} to be FILESYSTEM, but it is {dataset["type"]}')

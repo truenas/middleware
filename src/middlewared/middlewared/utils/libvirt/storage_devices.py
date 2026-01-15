@@ -1,6 +1,7 @@
 import errno
 import os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -97,7 +98,7 @@ class DiskDelegate(StorageDelegate):
 
             zvol = self.middleware.call_sync2(
                 self.middleware.services.zfs.resource.query_impl,
-                {'paths': [device['attributes']['zvol_name']], 'properties': None}
+                ZFSResourceQuery(paths=[device['attributes']['zvol_name']], properties=None)
             )
             if zvol:
                 verrors.add('attributes.zvol_name', f'{zvol[0]["name"]!r} already exists.')
@@ -106,7 +107,8 @@ class DiskDelegate(StorageDelegate):
                 # message that is more intuitive for end-user
                 parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
                 if parentzvol and not self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.query_impl, {'paths': [parentzvol], 'properties': None}
+                    self.middleware.services.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=[parentzvol], properties=None),
                 ):
                     verrors.add(
                         'attributes.zvol_name',
@@ -125,7 +127,8 @@ class DiskDelegate(StorageDelegate):
             else:
                 zvol_name = zvol_path_to_name(path)
                 zvol = self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.query_impl, {'paths': [zvol_name], 'properties': None}
+                    self.middleware.services.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=[zvol_name], properties=None),
                 )
                 if not zvol:
                     verrors.add(

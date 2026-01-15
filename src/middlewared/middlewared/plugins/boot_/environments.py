@@ -16,6 +16,7 @@ from middlewared.api.current import (
     BootEnvironmentEntry,
     BootEnvironmentKeepArgs,
     BootEnvironmentKeepResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import filterable_api_method, Service, private
@@ -50,12 +51,12 @@ class BootEnvironmentService(Service):
         bp_name = self.middleware.call_sync('boot.pool_name')
         for i in self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {
-                "paths": [f"{bp_name}/ROOT"],
-                "get_children": True,
-                "properties": ["used", "creation"],
-                "get_user_properties": True,
-            }
+            ZFSResourceQuery(
+                paths=[f"{bp_name}/ROOT"],
+                get_children=True,
+                properties=["used", "creation"],
+                get_user_properties=True,
+            )
         ):
             if i["name"].count("/") == 2:
                 # boot-pool/ROOT/25.04.1

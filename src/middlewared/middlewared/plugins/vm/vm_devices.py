@@ -27,6 +27,7 @@ from middlewared.api.current import (
     VMDeviceUpdateResult,
     VMDeviceVirtualSizeArgs,
     VMDeviceVirtualSizeResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, CRUDService, job, private
@@ -188,7 +189,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
         ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
         zv = self.call_sync2(
             self.s.zfs.resource.query_impl,
-            {'paths': [ptn], 'properties': ['volsize']}
+            ZFSResourceQuery(paths=[ptn], properties=['volsize'])
         )
         if not zv:
             raise ValidationError(schema, f'{ptn!r} does not exist', errno.ENOENT)

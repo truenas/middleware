@@ -39,7 +39,7 @@ BASIC_CAPABILITIES = {
 
 
 def get_mountpoint(dataset):
-    rv = call("zfs.resource.query_impl", {"paths": [dataset], "properties": ["mountpoint"]})
+    rv = call("zfs.resource.query", {"paths": [dataset], "properties": ["mountpoint"]})
     return rv[0]["properties"]["mountpoint"]["value"]
 
 
