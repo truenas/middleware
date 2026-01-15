@@ -90,6 +90,12 @@ class NFS_CONFIG:
     }
 
 
+def has_static_ip():
+    """Used to skip tests that require an interface with a static IP"""
+    static_if = call('interface.query', [["type", "=", "PHYSICAL"], ["aliases", "!=", []]])
+    return static_if != []
+
+
 def parse_exports():
     exp = ssh("cat /etc/exports").splitlines()
     rv = []
@@ -494,6 +500,9 @@ def start_nfs():
     """ Class Fixture: The exit state is managed by init_nfs """
     with manage_start_nfs() as nfs_start:
         yield nfs_start
+
+
+static_ip_available = has_static_ip()
 
 
 # =====================================================================
@@ -1461,6 +1470,7 @@ class TestNFSops:
             res = call('nfs.get_debug')
             assert res == disabled
 
+    @pytest.mark.skipif(static_ip_available is False, reason="Test requires a static IP interface")
     @pytest.mark.parametrize("param,errmsg", [
         pp([""], None, id="basic settings"),
         pp(["1.2.3.4"], "Cannot use", id="Not in choices"),
