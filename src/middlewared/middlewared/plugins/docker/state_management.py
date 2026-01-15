@@ -9,6 +9,7 @@ from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIP
 # Docker can take a long time to start on systems with HDDs (2-3+ minutes)
 # We set a 16 minute timeout to accommodate slow disk initialization
 DOCKER_START_TIMEOUT = 16 * 60
+DOCKER_SHUTDOWN_TIMEOUT = 60  # This is seconds
 
 
 class DockerStateService(Service):
@@ -135,6 +136,28 @@ class DockerStateService(Service):
         if docker_config['enable_image_updates']:
             self.middleware.create_task(self.middleware.call('app.image.op.check_update'))
 
+    async def terminate_timeout(self):
+        """
+        Return timeout value for terminate method.
+        We give DOCKER_SHUTDOWN_TIMEOUT seconds for Docker to stop gracefully.
+        """
+        return DOCKER_SHUTDOWN_TIMEOUT
+
+    async def terminate(self):
+        """
+        Gracefully stop Docker service during system shutdown/reboot.
+        Only applies to single node systems (not HA).
+        Waits up to DOCKER_SHUTDOWN_TIMEOUT seconds for Docker to stop gracefully.
+        """
+        if not await self.middleware.call('failover.licensed') and await self.middleware.call(
+            'system.state'
+        ) == 'SHUTTING_DOWN' and await self.middleware.call('service.started', 'docker'):
+            try:
+                job_id = await self.middleware.call('service.control', 'STOP', 'docker')
+                await job_id.wait(DOCKER_SHUTDOWN_TIMEOUT)
+            except Exception as e:
+                self.middleware.logger.warning('Failed to gracefully stop Docker service: %s', e)
+
 
 async def _event_system_ready(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
@@ -148,11 +171,6 @@ async def _event_system_ready(middleware, event_type, args):
         await middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
 
-async def _event_system_shutdown(middleware, event_type, args):
-    if await middleware.call('service.started', 'docker'):
-        await middleware.call('service.control', 'STOP', 'docker')  # No need to wait for this to complete
-
-
 async def handle_license_update(middleware, *args, **kwargs):
     if not await middleware.call('docker.license_active'):
         # We will like to stop docker in this case
@@ -161,6 +179,5 @@ async def handle_license_update(middleware, *args, **kwargs):
 
 async def setup(middleware):
     middleware.event_subscribe('system.ready', _event_system_ready)
-    middleware.event_subscribe('system.shutdown', _event_system_shutdown)
     await middleware.call('docker.state.initialize')
     middleware.register_hook('system.post_license_update', handle_license_update)
