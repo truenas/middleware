@@ -97,7 +97,7 @@ async def resilver_scrub_start(middleware, pool_name):
         return
     scanwatch = ScanWatch(middleware, pool_name)
     SCAN_THREADS[pool_name] = scanwatch
-    start_daemon_thread(target=scanwatch.run)
+    start_daemon_thread(name=f"zfs_scan_{pool_name[:6]}", target=scanwatch.run)
 
 
 async def resilver_scrub_stop_abort(middleware, pool_name):

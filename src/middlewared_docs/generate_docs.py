@@ -1,7 +1,5 @@
 # -*- coding=utf-8 -*-
 import functools
-import tempfile
-
 import json
 import logging
 import multiprocessing
@@ -10,12 +8,16 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 import typing
 
 from bs4 import BeautifulSoup
 from json_schema_for_humans.generate import generate_from_filename
 from json_schema_for_humans.generation_configuration import GenerationConfiguration
+
+from middlewared.fake_env import setup_fake_middleware_env
+setup_fake_middleware_env()
 
 from middlewared.api.base.server.doc import APIDump, APIDumpMethod, APIDumpEvent
 
@@ -248,6 +250,7 @@ def main(output_dir):
         subprocess.run(
             ["middlewared", "--dump-api"],
             check=True,
+            env={"FAKE_ENV": "1"},
             stdout=subprocess.PIPE,
             text=True,
         ).stdout

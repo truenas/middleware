@@ -63,12 +63,13 @@ class CatalogService(ConfigService):
     @private
     async def dataset_mounted(self):
         if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
-            return bool(await self.middleware.call(
-                'filesystem.mount_info', [
-                    ['mount_source', '=', os.path.join(docker_ds, CATALOG_DATASET_NAME)],
-                    ['fs_type', '=', 'zfs'],
-                ],
-            ))
+            expected_source = os.path.join(docker_ds, CATALOG_DATASET_NAME)
+            catalog_path = catalog_ds_path()
+            try:
+                sfs = await self.middleware.call('filesystem.statfs', catalog_path)
+                return sfs['source'] == expected_source and sfs['fstype'] == 'zfs'
+            except Exception:
+                return False
 
         return False
 

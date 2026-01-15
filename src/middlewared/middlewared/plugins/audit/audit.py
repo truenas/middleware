@@ -26,15 +26,15 @@ from .schema.system import AUDIT_EVENT_SYSTEM_JSON_SCHEMAS, AUDIT_EVENT_SYSTEM_P
 from middlewared.api import api_method
 from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
-    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
+    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
 from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.mount import getmntinfo
-from middlewared.utils.filesystem.stat_x import statx
+from middlewared.utils.mount import statmount
 from middlewared.utils.functools_ import cache
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
@@ -69,17 +69,16 @@ class AuditService(ConfigService):
     @private
     @cache
     def audit_dataset_name(self):
-        audit_mnt_id = statx(AUDIT_DATASET_PATH).stx_mnt_id
-        return getmntinfo(mnt_id=audit_mnt_id)[audit_mnt_id]['mount_source']
+        return statmount(path=AUDIT_DATASET_PATH, as_dict=False).sb_source
 
     @private
     def get_audit_dataset(self):
         ds_name = self.audit_dataset_name()
-        ds = self.middleware.call_sync(
-            'zfs.resource.query_impl',
-            {
-                'paths': [ds_name],
-                'properties': [
+        ds = self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[ds_name],
+                properties=[
                     'available',
                     'refreservation',
                     'refquota',
@@ -88,8 +87,8 @@ class AuditService(ConfigService):
                     'usedbyrefreservation',
                     'usedbysnapshots',
                 ],
-                'get_user_properties': True
-            }
+                get_user_properties=True
+            )
         )[0]
 
         for k, default in TNUserProp.quotas():
@@ -462,9 +461,9 @@ class AuditService(ConfigService):
         # Get dataset names of any dataset on boot pool that isn't on the current
         # activated boot environment.
         to_remove = set()
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[boot_pool], properties=['refreservation'], get_children=True)
         ):
             if i['name'] == cur['name'] or i['name'] == parent or i['name'].startswith(f'{parent}/'):
                 continue
@@ -474,7 +473,7 @@ class AuditService(ConfigService):
                 to_remove.add(i['name'])
 
         if to_remove:
-            self.logger.debug(
+            self.logger.trace(
                 'Removing refreservations from the following datasets: %s',
                 ', '.join(to_remove)
             )

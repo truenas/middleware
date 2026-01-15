@@ -15,6 +15,7 @@ class Middleware(dict):
         self.call_hook_inline = Mock()
         self.event_register = Mock()
         self.send_event = Mock()
+        self.services = Mock()
 
         self.logger = logging.getLogger("middlewared")
 
@@ -28,6 +29,15 @@ class Middleware(dict):
 
     def call_sync(self, name, *args):
         return self[name](*args)
+
+    async def call2(self, f, *args, **kwargs):
+        result = f(*args)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
+
+    def call_sync2(self, f, *args, **kwargs):
+        return f(*args)
 
     async def run_in_executor(self, executor, method, *args, **kwargs):
         return method(*args, **kwargs)

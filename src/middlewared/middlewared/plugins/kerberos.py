@@ -301,6 +301,11 @@ class KerberosRealmService(CRUDService):
         """
         realm_name = (await self.get_instance(id_))['realm']
         audit_callback(realm_name)
+
+        ds_realm = (await self.middleware.call('directoryservices.config'))['kerberos_realm']
+        if realm_name == ds_realm:
+            raise CallError(f'{realm_name}: kerberos realm is used by directory services configuration')
+
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
 

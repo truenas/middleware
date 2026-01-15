@@ -5,6 +5,7 @@ import os
 import subprocess
 
 from middlewared.api import api_method
+from middlewared.utils.mount import statmount
 from middlewared.api.current import (
     BootEnvironmentActivateArgs,
     BootEnvironmentActivateResult,
@@ -15,6 +16,7 @@ from middlewared.api.current import (
     BootEnvironmentEntry,
     BootEnvironmentKeepArgs,
     BootEnvironmentKeepResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import filterable_api_method, Service, private
@@ -47,14 +49,14 @@ class BootEnvironmentService(Service):
     def zfs_get_props(self):
         rv = list()
         bp_name = self.middleware.call_sync('boot.pool_name')
-        for i in self.middleware.call_sync(
-            "zfs.resource.query_impl",
-            {
-                "paths": [f"{bp_name}/ROOT"],
-                "get_children": True,
-                "properties": ["used", "creation"],
-                "get_user_properties": True,
-            }
+        for i in self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[f"{bp_name}/ROOT"],
+                get_children=True,
+                properties=["used", "creation"],
+                get_user_properties=True,
+            )
         ):
             if i["name"].count("/") == 2:
                 # boot-pool/ROOT/25.04.1
@@ -99,9 +101,7 @@ class BootEnvironmentService(Service):
         except Exception:
             return results
 
-        active_be = self.middleware.call_sync(
-            "filesystem.mount_info", [["mountpoint", "=", "/"]], {"get": True}
-        )["mount_source"]
+        active_be = statmount(path='/')['mount_source']
         activated_be = self.middleware.call_sync(
             "zfs.pool.query", [["name", "=", bp_name]], {"get": True}
         )["properties"]["bootfs"]["value"]

@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult
+from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult, ZFSResourceQuery
 from middlewared.service import job, private, Service, ValidationErrors
 from middlewared.plugins.zfs.utils import get_encryption_info
 
@@ -36,9 +36,9 @@ class DockerService(Service):
             verrors.add('target_pool', 'Target pool cannot be the same as the current Docker pool')
         verrors.check()
 
-        target_root_ds = await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [target_pool], 'properties': ['encryption']}
+        target_root_ds = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[target_pool], properties=['encryption'])
         )
         if not target_root_ds:
             verrors.add('target_pool', 'Target pool does not exist')
@@ -60,13 +60,12 @@ class DockerService(Service):
             snap_name = await self.middleware.call(
                 'replication.new_snapshot_name', schema
             )
-            await self.middleware.call(
-                'zfs.resource.snapshot.create_impl', {
-                    'dataset': applications_ds_name(docker_config["pool"]),
-                    'name': snap_name,
-                    'recursive': True,
-                    'bypass': True,
-                }
+            await self.call2(self.s.zfs.resource.snapshot.create_impl, {
+                'dataset': applications_ds_name(docker_config["pool"]),
+                'name': snap_name,
+                'recursive': True,
+                'bypass': True,
+            }
             )
         finally:
             # We do this in try/finally block to ensure that docker service is started back
@@ -97,7 +96,7 @@ class DockerService(Service):
                 'retention_policy': 'SOURCE',
                 'replicate': True,
                 'readonly': 'IGNORE',
-                'exclude_mountpoint_property': False,
+                'exclude_mountpoint_property': True,
                 'mount': False,
             }
         )

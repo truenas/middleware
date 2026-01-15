@@ -1,5 +1,6 @@
 import errno
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 
@@ -16,20 +17,19 @@ class DockerFilesystemManageService(Service):
         if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
             try:
                 if mount:
-                    # Check if ix-apps dataset mount point needs updating
+                    # Ensure ix-apps has correct mountpoint set
                     await self.ensure_ix_apps_mount_point(docker_ds)
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.mount,
+                    await self.call2(
+                        self.s.zfs.resource.mount,
                         docker_ds,
                         recursive=True,
                         force=True,
                     )
                 else:
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.unmount,
-                        docker_ds,
-                        recursive=True,
-                        force=True,
+                    await self.call2(self.s.zfs.resource.unmount, docker_ds, recursive=True, force=True)
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=docker_ds, iprops={'mountpoint'})
                     )
                 try:
                     return await self.middleware.call('catalog.sync')
@@ -73,9 +73,9 @@ class DockerFilesystemManageService(Service):
         to newer TN version, we need to update the mount point of ix-apps dataset so it gets reflected
         properly.
         """
-        ds = await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [docker_ds], 'properties': ['mountpoint']}
+        ds = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[docker_ds], properties=['mountpoint'])
         )
         if not ds:
             return

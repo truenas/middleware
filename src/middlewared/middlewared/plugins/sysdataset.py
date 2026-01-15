@@ -14,7 +14,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemDatasetEntry, SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, SystemDatasetUpdateArgs,
-    SystemDatasetUpdateResult
+    SystemDatasetUpdateResult, ZFSResourceQuery
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
@@ -22,8 +22,8 @@ from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
-from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -58,21 +58,9 @@ class SystemDatasetService(ConfigService):
         and is called potentially quite frequently (once per ZFS event
         or pool.dataset.query, etc).
 
-        Best case scenario we have one cache lookup and one statvfs() call.
-        Worst case, a mount_info lookup is added to the mix.
-
         `None` indicates that there was an issue with filesystem mounted
         at SYSDATASET_PATH. Typically this could indicate a failed migration
         of system dataset or problem importing expected pool for system dataset.
-
-        Heuristic for wrong path is to first check result we cached from last time
-        we checked the past. If dataset name matches, then perform an statvfs() on
-        SYSDATASET_PATH to verify that the FSID matches.
-
-        If we lack a cache entry, then look up SYSDATASET_PATH in mountinfo
-        and make sure the two match. If they don't None is returned.
-
-        If the mountinfo and expected value match, cache fsid and dataset name.
         """
         if expected_datasetname is None:
             db_pool = self.middleware.call_sync(
@@ -85,37 +73,16 @@ class SystemDatasetService(ConfigService):
             ds_name = expected_datasetname
 
         try:
-            cached_entry = self.middleware.call_sync('cache.get', 'SYSDATASET_PATH')
-        except KeyError:
-            cached_entry = None
-
-        try:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
+            mntinfo = statmount(path=SYSDATASET_PATH, as_dict=False)
         except FileNotFoundError:
-            # SYSDATASET_PATH may not exist on first boot. Do not log.
-            return None
-        except OSError:
-            self.logger.warning('Failed to stat sysdataset fd', exc_info=True)
-            return None
-
-        if cached_entry and cached_entry['dataset'] == ds_name:
-            if fsid == cached_entry['fsid']:
-                return SYSDATASET_PATH
-
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['mountpoint', '=', SYSDATASET_PATH]]
-        )
-        if not mntinfo:
             self.logger.warning('%s: mountpoint not found', SYSDATASET_PATH)
             return None
 
-        if mntinfo[0]['mount_source'] != ds_name:
-            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected. fsid: %d',
-                                SYSDATASET_PATH, mntinfo[0]['mount_source'], ds_name, fsid)
+        if mntinfo.sb_source != ds_name:
+            self.logger.warning('Unexpected dataset mounted at %s, %r present, but %r expected.',
+                                SYSDATASET_PATH, mntinfo.sb_source, ds_name)
             return None
 
-        self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': ds_name, 'fsid': fsid})
         return SYSDATASET_PATH
 
     @private
@@ -214,15 +181,6 @@ class SystemDatasetService(ConfigService):
 
         verrors = ValidationErrors()
         if new['pool'] != config['pool']:
-            system_ready = await self.middleware.call('system.ready')
-            ds = await self.middleware.call('directoryservices.status')
-            if system_ready and ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
-                verrors.add(
-                    'sysdataset_update.pool',
-                    'System dataset location may not be moved while the Active Directory service is enabled.',
-                    errno.EPERM
-                )
-
             if new['pool']:
                 if error := await self.destination_pool_error(new['pool']):
                     verrors.add('sysdataset_update.pool', error)
@@ -265,25 +223,15 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('systemdataset.migrate', config['pool'], new['pool'])
 
         await self.middleware.call('systemdataset.setup', data['pool_exclude'])
-
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'MASTER':
-                try:
-                    await self.middleware.call(
-                        'failover.call_remote', 'system.reboot', ['Failover system dataset change'],
-                    )
-                except Exception as e:
-                    self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
-
         return await self.config()
 
     @private
     async def destination_pool_error(self, new_pool):
         config = await self.config()
         existing_dataset, new_dataset = None, None
-        for i in await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [config['basename'], new_pool], 'properties': ['used', 'available']}
+        for i in await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[config['basename'], new_pool], properties=['used', 'available'])
         ):
             if i['name'] == config['basename']:
                 existing_dataset = i
@@ -332,8 +280,8 @@ class SystemDatasetService(ConfigService):
         if (
             config['pool'] != boot_pool
             and config['pool'] not in pools_in_db
-            and not self.middleware.call_sync(
-                'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+            and not self.call_sync2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[config['pool']], properties=None)
             )
         ):
             # FIXME: this is badddddd. It's a DEADLOCK because this method (setup_impl)
@@ -356,12 +304,12 @@ class SystemDatasetService(ConfigService):
                 job.wait_sync(raise_error=True)
                 return
 
-        mntinfo = self.middleware.call_sync('filesystem.mount_info')
+        mntinfo = list(getmntinfo().values())
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
-                ds = self.middleware.call_sync(
-                    'zfs.resource.query_impl',
-                    {'paths': [config['basename']], 'properties': ['encryption']}
+                ds = self.call_sync2(
+                    self.s.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=[config['basename']], properties=['encryption'])
                 )
                 if not ds:
                     # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
@@ -402,8 +350,10 @@ class SystemDatasetService(ConfigService):
             self.middleware.call_sync('systemdataset.setup_datasets', config['pool'], config['uuid'])
 
         # refresh our mountinfo in case it changed
-        mntinfo = self.middleware.call_sync('filesystem.mount_info')
-        sysds_mntinfo = filter_list(mntinfo, [['mountpoint', "=", SYSDATASET_PATH]])
+        try:
+            sysds_mntinfo = [statmount(path=SYSDATASET_PATH)]
+        except FileNotFoundError:
+            sysds_mntinfo = []
 
         if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
             os.unlink(SYSDATASET_PATH)
@@ -414,9 +364,9 @@ class SystemDatasetService(ConfigService):
         if ds_mntinfo:
             acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
         else:
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
-                {'paths': [config['basename']], 'properties': ['acltype']}
+            ds = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[config['basename']], properties=['acltype'])
             )
             acl_enabled = ds and ds[0]['properties']['acltype']['raw'] != 'off'
 
@@ -431,7 +381,7 @@ class SystemDatasetService(ConfigService):
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
-            if self.middleware.call_sync('keyvalue.get', 'run_migration', False):
+            if self.call_sync2(self.s.keyvalue.get, 'run_migration', False):
                 try:
                     cores = Path(corepath)
                     for corefile in cores.iterdir():
@@ -462,9 +412,9 @@ class SystemDatasetService(ConfigService):
             ):
                 continue
 
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
-                {'paths': [i['name']], 'properties': ['encryption']}
+            ds = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[i['name']], properties=['encryption'])
             )
             if not ds:
                 continue
@@ -482,9 +432,9 @@ class SystemDatasetService(ConfigService):
         boot_pool = await self.middleware.call('boot.pool_name')
         root_dataset_is_passphrase_encrypted = False
         if pool != boot_pool:
-            p = await self.middleware.call(
-                'zfs.resource.query_impl',
-                {'paths': [pool], 'properties': ['encryption']}
+            p = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[pool], properties=['encryption'])
             )
             if not p:
                 raise ValidationError(
@@ -499,12 +449,12 @@ class SystemDatasetService(ConfigService):
         datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
             i['name']: i['properties']
-            for i in await self.middleware.call(
-                'zfs.resource.query_impl',
-                {
-                    'paths': list(datasets),
-                    'properties': ['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
-                }
+            for i in await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(
+                    paths=list(datasets),
+                    properties=['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                )
             )
         }
         for dataset, config in datasets.items():
@@ -522,9 +472,7 @@ class SystemDatasetService(ConfigService):
                 )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
-                    await self.middleware.call2(
-                        self.middleware.services.zfs.resource.destroy_impl, dataset, recursive=True
-                    )
+                    await self.call2(self.s.zfs.resource.destroy_impl, dataset, recursive=True)
                     await self.middleware.call(
                         'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)
                     )
@@ -596,10 +544,6 @@ class SystemDatasetService(ConfigService):
                 self.__create_relevant_paths(ds_config['name'], ds_config.get('create_paths', []))
                 self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
 
-        if mounted and path == SYSDATASET_PATH:
-            fsid = os.statvfs(SYSDATASET_PATH).f_fsid
-            self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': f'{path}/.system', 'fsid': fsid})
-
         return mounted
 
     def __post_mount_actions(self, ds_name, actions):
@@ -624,22 +568,18 @@ class SystemDatasetService(ConfigService):
 
         This is why mount info is checked before manipulating sysdataset_path.
         """
-        current = self.middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', SYSDATASET_PATH]])
-        if current and current[0]['mount_source'].split('/')[0] == pool:
-            try:
-                self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
-            except KeyError:
-                pass
+        # Find mount by source
+        mntinfo = None
+        for mount in iter_mountinfo():
+            if mount['mount_source'] == f'{pool}/.system':
+                mntinfo = mount
+                break
 
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['mount_source', '=', f'{pool}/.system']]
-        )
         if not mntinfo:
             # Pool's system dataset not mounted
             return
 
-        mp = mntinfo[0]['mountpoint']
+        mp = mntinfo['mountpoint']
         if retry:
             flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
         else:
@@ -736,8 +676,6 @@ class SystemDatasetService(ConfigService):
             restart = ['netdata']
             if self.middleware.call_sync('service.started', 'nfs'):
                 restart.append('nfs')
-            if self.middleware.call_sync('service.started', 'cifs'):
-                restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
 

@@ -14,7 +14,12 @@ def load_compound_service(name: str) -> 'Callable[[Middleware], CompoundService]
     lpm = LoadPluginsMixin()
     lpm.event_register = Mock()
     lpm.event_source_manager = Mock()
-    lpm._load_plugins()
+    lpm._load_plugins(whitelist=[
+        'middlewared.plugins.datastore',
+        'middlewared.plugins.system_advanced',
+        'middlewared.plugins.vm',
+        'middlewared.plugins.zettarepl',
+    ])
     service = lpm.get_service(name)
     return functools.partial(_compound_service_wrapper, service)
 

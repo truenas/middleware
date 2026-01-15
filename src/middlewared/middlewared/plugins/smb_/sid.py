@@ -2,7 +2,6 @@ import subprocess
 
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
-from middlewared.utils.functools_ import cache
 from middlewared.utils.sid import random_sid
 from .constants import SMBCmd
 
@@ -13,14 +12,15 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
-    @cache
     @private
     def local_server_sid(self):
-        if (db_sid := self.middleware.call_sync('smb.config')['server_sid']):
+        if (db_sid := self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_SID']):
             return db_sid
 
         new_sid = random_sid()
-        self.middleware.call_sync('datastore.update', 'services.cifs', 1, {'cifs_SID': new_sid})
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            self.middleware.call_sync('datastore.update', 'services.cifs', 1, {'cifs_SID': new_sid})
+
         return new_sid
 
     @private

@@ -1,7 +1,10 @@
 import collections
 
 from middlewared.api import api_method
-from middlewared.api.current import AppsIxVolumeEntry, AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult
+from middlewared.api.current import (
+    AppsIxVolumeEntry, AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult,
+    ZFSResourceQuery,
+)
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils.filter_list import filter_list
 
@@ -25,14 +28,14 @@ class AppsIxVolumeService(Service):
             return filter_list([], filters, options)
 
         docker_ds = (await self.middleware.call('docker.config'))['dataset']
-        datasets = await self.middleware.call(
-            'zfs.resource.query_impl',
-            {
-                'paths': [get_app_mounts_ds(docker_ds)],
-                'get_children': True,
-                'get_source': False,
-                'properties': None
-            }
+        datasets = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[get_app_mounts_ds(docker_ds)],
+                get_children=True,
+                get_source=False,
+                properties=None
+            )
         )
         apps = collections.defaultdict(list)
         for ds in filter(lambda x: x['name'].count('/') > 3, datasets):

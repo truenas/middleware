@@ -38,8 +38,7 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
-from middlewared.utils.filesystem.utils import timespec_convert_float
-from middlewared.utils.mount import getmntinfo
+from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
@@ -207,21 +206,7 @@ class FilesystemService(Service):
 
     @filterable_api_method(private=True)
     def mount_info(self, filters, options):
-        retries = 1
-        for i in range(retries):
-            try:
-                # getmntinfo() may be weird sometimes i.e check NAS-135584 where we might have a malformed line
-                # in mountinfo
-                mntinfo = getmntinfo()
-            except Exception as e:
-                if i >= retries:
-                    raise CallError(f'Unable to retrieve mount information: {e}')
-
-                time.sleep(0.25)
-            else:
-                break
-
-        return filter_list(list(mntinfo.values()), filters, options)
+        return filter_list(iter_mountinfo(), filters, options)
 
     @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
     def mkdir(self, data):
@@ -255,7 +240,7 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
-        st = stat_x.statx_entry_impl(p, None)
+        st = stat_x.statx_entry_impl(p)
         stat = st['st']
 
         if statlib.S_IMODE(stat.stx_mode) != mode:
@@ -442,7 +427,7 @@ class FilesystemService(Service):
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
 
-        st = stat_x.statx_entry_impl(path, None)
+        st = stat_x.statx_entry_impl(path)
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
@@ -456,12 +441,12 @@ class FilesystemService(Service):
             'mode': st['st'].stx_mode,
             'uid': st['st'].stx_uid,
             'gid': st['st'].stx_gid,
-            'atime': timespec_convert_float(st['st'].stx_atime),
-            'mtime': timespec_convert_float(st['st'].stx_mtime),
-            'ctime': timespec_convert_float(st['st'].stx_ctime),
-            'btime': timespec_convert_float(st['st'].stx_btime),
+            'atime': st['st'].stx_atime,
+            'mtime': st['st'].stx_mtime,
+            'ctime': st['st'].stx_ctime,
+            'btime': st['st'].stx_btime,
             'mount_id': st['st'].stx_mnt_id,
-            'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
+            'dev': st['st'].stx_dev,
             'inode': st['st'].stx_ino,
             'nlink': st['st'].stx_nlink,
             'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
@@ -560,23 +545,17 @@ class FilesystemService(Service):
         Raises:
             CallError(ENOENT) - Path not found
         """
-        if not path.startswith('/mnt/'):
-            raise CallError('Path must start with "/mnt/"')
-        elif path == '/mnt/':
-            raise CallError('Path must include more than "/mnt/"')
-
         try:
             fd = os.open(path, os.O_PATH)
             try:
                 st = os.fstatvfs(fd)
-                mntid = stat_x.statx('', dir_fd=fd, flags=stat_x.ATFlags.EMPTY_PATH.value).stx_mnt_id
+                mntinfo = statmount(fd=fd)
             finally:
                 os.close(fd)
 
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        mntinfo = getmntinfo(mnt_id=mntid)[mntid]
         flags = mntinfo['mount_opts']
         for flag in mntinfo['super_opts']:
             if flag in flags:

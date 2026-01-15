@@ -1,33 +1,10 @@
 import dataclasses
-from typing import TypedDict
+
+import truenas_pylibzfs
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotASnapshotException
 
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
-
-__all__ = ("hold_impl", "HoldArgs", "release_impl", "ReleaseArgs")
-
-
-class HoldArgs(TypedDict, total=False):
-    path: str
-    """Snapshot path to hold (e.g., 'pool/dataset@snapshot')."""
-    tag: str
-    """Hold tag name to apply."""
-    recursive: bool
-    """Apply hold recursively to matching snapshots in child datasets."""
-
-
-class ReleaseArgs(TypedDict, total=False):
-    path: str
-    """Snapshot path to release holds from (e.g., 'pool/dataset@snapshot')."""
-    tag: str | None
-    """Specific tag to release. If None, releases all hold tags."""
-    recursive: bool
-    """Release holds recursively from matching snapshots in child datasets."""
+__all__ = ("hold_impl", "release_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -91,21 +68,20 @@ def _collect_recursive_snapshots(tls, dataset: str, snap_name: str) -> list[str]
     return state.snapshots
 
 
-def hold_impl(tls, data: HoldArgs) -> None:
+def hold_impl(tls, path: str, tag: str = "truenas", recursive: bool = False) -> None:
     """Create a hold on ZFS snapshot(s).
 
     Args:
         tls: Thread local storage containing lzh (libzfs handle)
-        data: Hold parameters
+        path: Snapshot path to hold (e.g., 'pool/dataset@snapshot').
+        tag: Hold tag name to apply.
+        recursive: Apply hold recursively to matching snapshots in child datasets.
 
     Raises:
         ZFSPathNotFoundException: If the snapshot doesn't exist
         ZFSPathNotASnapshotException: If path is not a snapshot path
         ZFSCoreException: If hold creation fails
     """
-    path = data["path"]
-    tag = data.get("tag", "truenas")
-    recursive = data.get("recursive", False)
 
     # Parse snapshot path
     if "@" not in path:
@@ -139,21 +115,20 @@ def hold_impl(tls, data: HoldArgs) -> None:
         raise
 
 
-def release_impl(tls, data: ReleaseArgs) -> None:
+def release_impl(tls, path: str, tag: str | None = None, recursive: bool = False) -> None:
     """Release hold(s) from ZFS snapshot(s).
 
     Args:
         tls: Thread local storage containing lzh (libzfs handle)
-        data: Release parameters
+        path: Snapshot path to release holds from (e.g., 'pool/dataset@snapshot').
+        tag: Specific tag to release. If None, releases all hold tags.
+        recursive: Release holds recursively from matching snapshots in child datasets.
 
     Raises:
         ZFSPathNotFoundException: If the snapshot doesn't exist
         ZFSPathNotASnapshotException: If path is not a snapshot path
         ZFSCoreException: If hold release fails
     """
-    path = data["path"]
-    tag = data.get("tag")  # None means release all holds
-    recursive = data.get("recursive", False)
 
     # Parse snapshot path
     if "@" not in path:

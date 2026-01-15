@@ -68,10 +68,6 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def __ana_forbidden(self):
         return not await self.middleware.call('failover.licensed')
 
-    async def __spdk_forbidden(self):
-        # For now we'll disallow SPDK if any CPU is missing avx2
-        return AVX2_FLAG not in (await self.middleware.call('system.cpu_flags'))
-
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
@@ -87,11 +83,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                     'This platform does not support Asymmetric Namespace Access(ANA).'
                 )
         if old['kernel'] != data['kernel']:
-            if not data['kernel'] and await self.__spdk_forbidden():
-                verrors.add(
-                    f'{schema_name}.kernel',
-                    'Cannot switch nvmet backend because CPU lacks required capabilities.'
-                )
+            if not data['kernel']:
+                if not await self.middlewared.call('system.is_enterprise'):
+                    verrors.add(
+                        f'{schema_name}.kernel',
+                        'SPDK is limited to enterprise licensed systems only.'
+                    )
+                elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
+                    verrors.add(
+                        f'{schema_name}.kernel',
+                        'Cannot switch nvmet backend because CPU lacks required capabilities.'
+                    )
             elif await self.running():
                 verrors.add(
                     f'{schema_name}.kernel',

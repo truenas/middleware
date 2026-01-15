@@ -1,6 +1,6 @@
 import inspect
 from types import NoneType
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import Annotated, Any, Self, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Secret, create_model, Field, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
@@ -12,14 +12,37 @@ from pydantic_core import SchemaSerializer, core_schema
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
+from middlewared.utils.typing_ import is_union
 
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
-           "NotRequired", "model_subset"]
+           "NotRequired", "model_subset", "ensure_model_ready"]
 
 
-class _NotRequired:...
+def ensure_model_ready(model: type["BaseModel"]) -> None:
+    """
+    Ensures a Pydantic model is ready for use by rebuilding it if defer_build was used.
+    This should be called before first use of a model for validation or serialization.
+    """
+    if model is not None and not model.__pydantic_complete__:
+        model.model_rebuild()
+
+        # Also rebuild union members to fix https://github.com/pydantic/pydantic/issues/7713
+        for field in model.model_fields.values():
+            origin = get_origin(field.annotation)
+            if is_union(origin) or origin is Secret:
+                for submodel in get_args(field.annotation):
+                    if (
+                        isinstance(submodel, type) and
+                        issubclass(submodel, PydanticBaseModel) and
+                        not submodel.__pydantic_complete__
+                    ):
+                        ensure_model_ready(submodel)
+
+
+class _NotRequired:
+    pass
 
 
 NotRequired = _NotRequired()
@@ -178,12 +201,13 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         str_max_length=1024,
         use_attribute_docstrings=True,
         arbitrary_types_allowed=True,
+        defer_build=True,
     )
 
     @classmethod
     def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
         for k, v in cls.model_fields.items():
-            if get_origin(v.annotation) is Union:
+            if is_union(get_origin(v.annotation)):
                 for option in get_args(v.annotation):
                     if get_origin(option) is Secret:
                         def dump(t):
@@ -221,6 +245,26 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         :return: value of the same model in the preceding API version.
         """
         return value
+
+    def updated(self, value: "BaseModel") -> Self:
+        """
+        Returns an updated version of this model using All the fields that are present in the `value` model and are not
+        `undefined`.
+        :param value: model to update from.
+        :return: updated version of this model.
+        """
+        update = {}
+        for field in value.model_fields.keys():
+            if not hasattr(self, field):
+                continue
+
+            field_value = getattr(value, field)
+            if field_value is undefined:
+                continue
+
+            update[field] = field_value
+
+        return self.model_copy(update=update)
 
 
 def single_argument_args(name: str):
@@ -292,12 +336,12 @@ def single_argument_result(klass, klass_name=None):
 
 
 def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type[BaseModel]:
-    ResultItem = query_result_item(item)
+    item.__query_result_item__ = query_result_item(item)
     return create_model(
         name or item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[ResultItem] | ResultItem | int, Field()],
+        result=Annotated[list[item.__query_result_item__] | item.__query_result_item__ | int, Field()],
     )
 
 

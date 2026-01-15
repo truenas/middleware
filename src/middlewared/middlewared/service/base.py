@@ -34,6 +34,9 @@ def service_config(klass, config):
         'role_prefix': None,
         'role_separate_delete': False,
         'verbose_name': klass.__name__.replace('Service', ''),
+        # Set this to `true` if you inherit from `CRUDService[EntryModel]` so that `query` and `get_instance` return
+        # model classes. FIXME: eventually this will be true for all classes, and this setting must be removed.
+        'generic': False,
     }
     config_attrs.update({
         k: v
@@ -63,7 +66,12 @@ def validate_api_method_schema_class_names(klass):
 
     errors = []
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
-        if name.startswith('_') or getattr(method, '_private', False) or klass._config.private:
+        if (
+            name.startswith('_') or
+            name in {'call2', 'call_sync2'} or
+            getattr(method, '_private', False) or
+            klass._config.private
+        ):
             continue
 
         methods_will_be_wrapped_later = {

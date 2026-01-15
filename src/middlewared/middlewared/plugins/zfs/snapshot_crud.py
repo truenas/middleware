@@ -36,11 +36,11 @@ from .exceptions import (
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
 )
-from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl
+from .rename_promote_clone_impl import clone_impl, rename_impl
 from .snapshot_count_impl import count_snapshots_impl
-from .snapshot_create_impl import create_snapshots_impl, CreateSnapshotArgs
-from .snapshot_hold_release_impl import hold_impl, HoldArgs, release_impl, ReleaseArgs
-from .snapshot_rollback_impl import rollback_impl, RollbackArgs
+from .snapshot_create_impl import create_snapshots_impl
+from .snapshot_hold_release_impl import hold_impl, release_impl
+from .snapshot_rollback_impl import rollback_impl
 from .snapshot_query_impl import query_snapshots_impl
 from .utils import group_paths_by_parents, has_internal_path, open_resource
 
@@ -126,7 +126,7 @@ class ZFSResourceSnapshotService(Service):
         """
         self.validate_recursive_paths("zfs.resource.snapshot.query", data)
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.query_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.query_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.query", e.message, errno.ENOENT
@@ -144,10 +144,7 @@ class ZFSResourceSnapshotService(Service):
         """
         # Use properties=None for efficiency - we only care about existence
         try:
-            self.middleware.call_sync(
-                "zfs.resource.snapshot.query_impl",
-                {"paths": [snap_name], "properties": None}
-            )
+            self.call_sync2(self.s.zfs.resource.snapshot.query_impl, {"paths": [snap_name], "properties": None})
         except ZFSPathNotFoundException:
             return False
         return True
@@ -199,7 +196,7 @@ class ZFSResourceSnapshotService(Service):
         """
         self.validate_recursive_paths("zfs.resource.snapshot.count", data)
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.count_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.count_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.count", e.message, errno.ENOENT
@@ -285,9 +282,7 @@ class ZFSResourceSnapshotService(Service):
                 )
 
         try:
-            failed, errnum = self.middleware.call_sync(
-                "zfs.resource.snapshot.destroy_impl", data
-            )
+            failed, errnum = self.call_sync2(self.s.zfs.resource.snapshot.destroy_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.destroy", e.message, errno.ENOENT
@@ -386,7 +381,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.rename_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.rename_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rename", e.message, errno.ENOENT
@@ -413,13 +408,12 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(dataset):
                 raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
 
-        args: CloneArgs = {
-            "current_name": snapshot,
-            "new_name": dataset,
-        }
-        if data.get("properties"):
-            args["properties"] = data["properties"]
-        return clone_impl(tls, args)
+        return clone_impl(
+            tls,
+            current_name=snapshot,
+            new_name=dataset,
+            properties=data.get("properties"),
+        )
 
     @api_method(
         ZFSResourceSnapshotCloneArgs,
@@ -471,7 +465,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.clone_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.clone_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.clone", e.message, errno.ENOENT
@@ -497,15 +491,14 @@ class ZFSResourceSnapshotService(Service):
         if not bypass and has_internal_path(dataset):
             raise ValidationError(schema, f"{dataset!r} is a protected path.", errno.EACCES)
 
-        args: CreateSnapshotArgs = {
-            "dataset": dataset,
-            "name": data["name"],
-            "recursive": data.get("recursive", False),
-            "exclude": data.get("exclude", []),
-        }
-        if data.get("user_properties"):
-            args["user_properties"] = data["user_properties"]
-        return create_snapshots_impl(tls, args)
+        return create_snapshots_impl(
+            tls,
+            dataset=dataset,
+            name=data["name"],
+            recursive=data.get("recursive", False),
+            exclude=data.get("exclude"),
+            user_properties=data.get("user_properties"),
+        )
 
     @api_method(
         ZFSResourceSnapshotCreateArgs,
@@ -566,7 +559,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            return self.middleware.call_sync("zfs.resource.snapshot.create_impl", data)
+            return self.call_sync2(self.s.zfs.resource.snapshot.create_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.create", e.message, errno.ENOENT
@@ -593,12 +586,12 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(check_path):
                 raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        args: HoldArgs = {
-            "path": path,
-            "tag": data.get("tag", "truenas"),
-            "recursive": data.get("recursive", False),
-        }
-        return hold_impl(tls, args)
+        return hold_impl(
+            tls,
+            path=path,
+            tag=data.get("tag", "truenas"),
+            recursive=data.get("recursive", False),
+        )
 
     @api_method(
         ZFSResourceSnapshotHoldArgs,
@@ -644,7 +637,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.hold_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.hold_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.hold", e.message, errno.ENOENT
@@ -690,9 +683,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            holds = self.middleware.call_sync(
-                "zfs.resource.snapshot.holds_impl", path
-            )
+            holds = self.call_sync2(self.s.zfs.resource.snapshot.holds_impl, path)
             return list(holds)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
@@ -712,12 +703,12 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(check_path):
                 raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        args: ReleaseArgs = {
-            "path": path,
-            "tag": data.get("tag"),
-            "recursive": data.get("recursive", False),
-        }
-        return release_impl(tls, args)
+        return release_impl(
+            tls,
+            path=path,
+            tag=data.get("tag"),
+            recursive=data.get("recursive", False),
+        )
 
     @api_method(
         ZFSResourceSnapshotReleaseArgs,
@@ -760,7 +751,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.release_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.release_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.release", e.message, errno.ENOENT
@@ -779,14 +770,14 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(check_path):
                 raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        args: RollbackArgs = {
-            "path": path,
-            "recursive": data.get("recursive", False),
-            "recursive_clones": data.get("recursive_clones", False),
-            "force": data.get("force", False),
-            "recursive_rollback": data.get("recursive_rollback", False),
-        }
-        return rollback_impl(tls, args)
+        return rollback_impl(
+            tls,
+            path=path,
+            recursive=data.get("recursive", False),
+            recursive_clones=data.get("recursive_clones", False),
+            force=data.get("force", False),
+            recursive_rollback=data.get("recursive_rollback", False),
+        )
 
     @api_method(
         ZFSResourceSnapshotRollbackArgs,
@@ -834,7 +825,7 @@ class ZFSResourceSnapshotService(Service):
             )
 
         try:
-            self.middleware.call_sync("zfs.resource.snapshot.rollback_impl", data)
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, data)
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rollback", e.message, errno.ENOENT

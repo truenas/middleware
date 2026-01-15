@@ -2,7 +2,7 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    WebshareEntry, WebshareUpdateArgs, WebshareUpdateResult,
+    WebshareEntry, WebshareUpdate, WebshareUpdateArgs, WebshareUpdateResult,
 )
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
@@ -29,19 +29,17 @@ class WebshareService(ConfigService):
         role_prefix = 'SHARING_WEBSHARE'
         entry = WebshareEntry
 
-    @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration')
-    async def do_update(self, data):
+    @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration', check_annotations=True)
+    async def do_update(self, data: WebshareUpdate) -> WebshareEntry:
         """
         Update Webshare Service Configuration.
         """
-        old = await self.config()
+        old = WebshareEntry(**await self.config())
+        new = old.updated(data)
 
-        new = old.copy()
-        new.update(data)
+        await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
-        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new)
-
-        if old['search'] != new['search']:
+        if old.search != new.search:
             await self.middleware.call('truesearch.configure')
 
         await self._service_change(self._config.service, 'reload')
@@ -57,7 +55,7 @@ class WebshareService(ConfigService):
     @private
     async def urls(self):
         try:
-            hostnames = await self.middleware.call("keyvalue.get", HOSTNAMES_KEY)
+            hostnames = await self.call2(self.s.keyvalue.get, HOSTNAMES_KEY)
         except KeyError:
             hostnames = hostnames_from_config(await self.middleware.call("tn_connect.hostname.config"))
 
@@ -70,7 +68,7 @@ def hostnames_from_config(tn_connect_hostname_config):
 
 async def tn_connect_hostname_updated(middleware, tn_connect_hostname_config):
     hostnames = hostnames_from_config(tn_connect_hostname_config)
-    await middleware.call("keyvalue.set", HOSTNAMES_KEY, hostnames)
+    await middleware.call2(middleware.services.keyvalue.set, HOSTNAMES_KEY, hostnames)
     if not await middleware.call("service.started", "webshare"):
         # We do not want to reload webshare if it's not running
         # but we still however do want the hostnames key to be set

@@ -25,6 +25,7 @@ BASE_SMB_CONFIG = {
     'multichannel': False,
     'encryption': 'DEFAULT',
     'search_protocols': [],
+    'stateful_failover': False,
     'debug': False
 }
 

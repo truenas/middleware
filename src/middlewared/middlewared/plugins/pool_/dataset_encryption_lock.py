@@ -53,8 +53,8 @@ class PoolDatasetService(Service):
 
         # recursive doesn't apply to zvols
         recursive = ds['type'] != 'VOLUME'
-        await self.middleware.call2(
-            self.middleware.services.zfs.resource.unload_key,
+        await self.call2(
+            self.s.zfs.resource.unload_key,
             id_,
             recursive=recursive,
             force_unmount=options['force_umount'],
@@ -261,10 +261,7 @@ class PoolDatasetService(Service):
                             break
 
                 try:
-                    self.middleware.call_sync2(
-                        self.middleware.services.zfs.resource.mount,
-                        ds['name'],
-                    )
+                    self.call_sync2(self.s.zfs.resource.mount, ds['name'])
                 except Exception as e:
                     failed[ds['name']]['error'] = f'Failed to mount dataset: {e}'
                 else:

@@ -16,6 +16,7 @@ from middlewared.api.current import (
     ContainerUpdateArgs, ContainerUpdateResult,
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
@@ -245,8 +246,8 @@ class ContainerService(CRUDService):
                     'readonly': 'IGNORE',
                 }
             ))
-            await self.middleware.call(
-                'zfs.resource.snapshot.destroy_impl', {'path': f'{data["dataset"]}@{source_snapshot}'}
+            await self.call2(
+                self.s.zfs.resource.snapshot.destroy_impl, {'path': f'{data["dataset"]}@{source_snapshot}'}
             )
 
         return await self.create_with_dataset(data)
@@ -317,7 +318,7 @@ class ContainerService(CRUDService):
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
-        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl,container['dataset'])
+        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'])
@@ -327,16 +328,16 @@ class ContainerService(CRUDService):
         """
         pools = {}
         imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
-        for ds in await self.middleware.call(
-            'zfs.resource.query_impl',
-            {
-                'paths': [
+        for ds in await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[
                     p['name']
                     for p in imported_pools.values()
                     if p['name'] not in BOOT_POOL_NAME_VALID
                 ],
-                'properties': ['encryption'],
-            }
+                properties=['encryption'],
+            )
         ):
             enc = get_encryption_info(ds['properties'])
             if not enc.locked:

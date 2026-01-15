@@ -3,6 +3,7 @@ import pytest
 from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.docker import IX_APPS_MOUNT_PATH
 
 
 APP_NAME = 'actual-budget'
@@ -40,6 +41,12 @@ def test_docker_backup_to_another_pool(docker_pool, target_pool):
             'properties': None,
         }
     ) != []
+    # Verify backup target's ix-apps has inherited mountpoint (not /.ix-apps)
+    target_ix_apps = call(
+        'zfs.resource.query',
+        {'paths': [f'{TARGET_POOL_NAME}/ix-apps'], 'properties': ['mountpoint']}
+    )
+    assert target_ix_apps[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH
 
 
 def test_docker_incremental_backup(docker_pool, target_pool):

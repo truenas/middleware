@@ -8,6 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AppEntry, AppCreateArgs, AppCreateResult, AppUpdateArgs, AppUpdateResult, AppDeleteArgs, AppDeleteResult,
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
+    ZFSResourceQuery
 )
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
@@ -211,12 +212,7 @@ class AppService(CRUDService):
 
         if apps_volume_ds and remove_ds:
             try:
-                self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.destroy_impl,
-                    apps_volume_ds,
-                    recursive=True,
-                    bypass=True,
-                )
+                self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
             except Exception:
                 self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
 
@@ -334,12 +330,7 @@ class AppService(CRUDService):
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-            self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.destroy_impl,
-                apps_volume_ds,
-                recursive=True,
-                bypass=True,
-            )
+            self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
 
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
@@ -353,8 +344,8 @@ class AppService(CRUDService):
         # This will return volume dataset of app if it exists, otherwise null
         docker_ds = self.middleware.call_sync('docker.config')['dataset']
         apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
-        rv = self.middleware.call_sync(
-            'zfs.resource.query_impl', {'paths': [apps_volume_ds], 'properties': None}
+        rv = self.call_sync2(
+            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
         )
         if rv:
             return rv[0]['name']

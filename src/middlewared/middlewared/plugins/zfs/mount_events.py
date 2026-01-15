@@ -1,18 +1,9 @@
-import os
 import select
 import time
+import truenas_os
 
-from middlewared.utils.mount import __mntent_dict
+from middlewared.utils.mount import __statmount_dict
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
-
-
-def parse_mounts(lines: str) -> dict[str, dict]:
-    mounts = {}
-    for line in lines.splitlines():
-        mount = __mntent_dict(line)
-        mounts[mount['mountpoint']] = mount
-
-    return mounts
 
 
 def mount_events_process(middleware):
@@ -20,8 +11,8 @@ def mount_events_process(middleware):
     while True:
         try:
             with open('/proc/self/mountinfo', 'r') as f:
-                prev = parse_mounts(f.read())
-
+                # listmount() returns a list of mount ids
+                prev = set(truenas_os.listmount())
                 poller = select.poll()
                 poller.register(f, select.POLLERR | select.POLLPRI)
 
@@ -29,18 +20,22 @@ def mount_events_process(middleware):
                     # Block until the kernel signals a mount table change
                     poller.poll()  # returns on mount/umount/propagation/etc.
 
-                    # Rewind and read new snapshot
-                    os.lseek(f.fileno(), 0, os.SEEK_SET)
+                    cur = set(truenas_os.listmount())
+                    for new in (cur - prev):
+                        try:
+                            sm = truenas_os.statmount(new, mask=truenas_os.STATMOUNT_ALL)
+                        except FileNotFoundError:
+                            # we can in theory have race on listmount output and the statmount
+                            # call or this can maybe be a mount in a disconnected state.
+                            # Since the cause isn't 100% clear due to troubles reproducing,
+                            # we'll remove from our stored set of mounts and try again on
+                            # next iteration.
+                            cur.remove(new)
+                            continue
 
-                    cur = parse_mounts(f.read())
-
-                    for mountpoint, mount in cur.items():
-                        if mountpoint not in prev:
-                            if mount['fs_type'] == 'zfs':
-                                if '@' in mount['mount_source']:
-                                    continue
-
-                                middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
+                        if sm.fs_type == 'zfs' and '@' not in sm.sb_source:
+                            mount = __statmount_dict(sm)
+                            middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
 
                     prev = cur
         except Exception:
@@ -49,4 +44,4 @@ def mount_events_process(middleware):
 
 
 async def setup(middleware):
-    start_daemon_thread(target=mount_events_process, args=(middleware,))
+    start_daemon_thread(name="zfs_mnt_events", target=mount_events_process, args=(middleware,))

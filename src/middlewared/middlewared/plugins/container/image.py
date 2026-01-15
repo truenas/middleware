@@ -6,6 +6,7 @@ import requests
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult,
+    ZFSResourceQuery
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import CreateImplArgs
@@ -58,16 +59,16 @@ class ContainerImageService(Service):
         suffix = f'images/{image["name"]}:{image["version"]}'
         dataset_name = os.path.join(container_dataset(pool), suffix)
         snapshot_name = f'{dataset_name}@image'
-        if self.middleware.call_sync(
-            'zfs.resource.query_impl',
-            {'paths': [dataset_name], 'properties': None}
+        if self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[dataset_name], properties=None)
         ):
             # Check if the snapshot exists
-            if not self.middleware.call_sync('zfs.resource.snapshot.exists', snapshot_name):
+            if not self.call_sync2(self.s.zfs.resource.snapshot.exists, snapshot_name):
                 # Orphan dataset without a snapshot. Probably leftover from a
                 # previous `pull` attempt that failed and did not clean up
                 # properly. Delete it.
-                self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl, dataset_name)
+                self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name)
             else:
                 # Image dataset already exists, no action needed.
                 return snapshot_name
@@ -138,7 +139,7 @@ class ContainerImageService(Service):
 
                 # Create ZFS snapshot
                 job.set_progress(98, 'Creating ZFS snapshot...')
-                self.middleware.call_sync('zfs.resource.snapshot.create_impl', {
+                self.call_sync2(self.s.zfs.resource.snapshot.create_impl, {
                     'dataset': dataset_name,
                     'name': 'image'
                 })
@@ -150,7 +151,7 @@ class ContainerImageService(Service):
             except (tarfile.TarError, OSError) as e:
                 raise CallError(f'Failed to extract image tarball: {str(e)}')
         except Exception:
-            self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl, dataset_name)
+            self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name)
             raise
 
 

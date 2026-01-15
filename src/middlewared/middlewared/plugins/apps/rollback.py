@@ -72,17 +72,15 @@ class AppService(Service):
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
             ):
                 snap_name = f'{app_volume_ds}@{options["app_version"]}'
-                if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_name):
+                if self.call_sync2(self.s.zfs.resource.snapshot.exists, snap_name):
                     job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
-                    self.middleware.call_sync(
-                        'zfs.resource.snapshot.rollback_impl', {
-                            'path': snap_name,
-                            'force': True,
-                            'recursive': True,
-                            'recursive_clones': True,
-                            'recursive_rollback': True,
-                        }
-                    )
+                    self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, {
+                        'path': snap_name,
+                        'force': True,
+                        'recursive': True,
+                        'recursive_clones': True,
+                        'recursive_rollback': True,
+                    })
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:

@@ -9,6 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerStartArgs, ContainerStartResult,
     ContainerStopArgs, ContainerStopResult,
+    ZFSResourceQuery
 )
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, job, private, Service
@@ -74,7 +75,10 @@ class ContainerService(Service):
         pool = dataset.split("/")[0]
         container["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
         if check_ds:
-            datasets = self.middleware.call_sync('zfs.resource.query_impl', {'paths': [dataset], 'properties': None})
+            datasets = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[dataset], properties=None),
+            )
             if not datasets:
                 raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 

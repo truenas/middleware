@@ -1,5 +1,8 @@
 from middlewared.service import Service
 
+# Used by network.configuration
+DEFAULT_NETWORK_DOMAIN = 'local'
+
 
 class NetworkCommonService(Service):
 

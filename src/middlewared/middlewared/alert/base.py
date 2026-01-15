@@ -9,6 +9,7 @@ import html2text
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.lang import undefined
+from middlewared.utils.service.call_mixin import CallMixin
 
 __all__ = [
     "UnavailableException", "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
@@ -37,7 +38,7 @@ class AlertClassMeta(type):
             AlertClass.class_by_name[cls.name] = cls
 
 
-class AlertClass(metaclass=AlertClassMeta):
+class AlertClass(CallMixin, metaclass=AlertClassMeta):
     """
     Alert class: a description of a specific type of issue that can exist in the system.
 
@@ -299,7 +300,7 @@ class Alert:
             return self.text
 
 
-class AlertSource:
+class AlertSource(CallMixin):
     """
     Alert source: a class that periodically checks for a specific erroneous condition and returns one or multiple
     `Alert` instances.
@@ -346,7 +347,7 @@ class ThreadedAlertSource(AlertSource):
         raise NotImplementedError
 
 
-class AlertService:
+class AlertService(CallMixin):
     title = NotImplementedError
 
     schema = NotImplementedError

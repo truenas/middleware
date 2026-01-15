@@ -5,6 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
+    ZFSResourceQuery,
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
@@ -146,13 +147,13 @@ class ContainerService(Service):
     @private
     def migrate_specific_pool(self, job, pool, existing_containers):
         processed_parents_mountpoints = False
-        datasets = self.middleware.call_sync(
-            "zfs.resource.query_impl",
-            {
-                "paths": [f"{pool}/.ix-virt/containers"],
-                "get_children": True,
-                "properties": None
-            }
+        datasets = self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[f"{pool}/.ix-virt/containers"],
+                get_children=True,
+                properties=None
+            )
         )
         if datasets:
             self.middleware.call_sync("container.ensure_datasets", pool)
@@ -191,7 +192,7 @@ class ContainerService(Service):
                     "pool.dataset.update_impl",
                     UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
                 )
-                self.middleware.call_sync2(self.middleware.services.zfs.resource.mount, dataset["name"])
+                self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
                     manifest = yaml.safe_load(f.read())
@@ -210,11 +211,7 @@ class ContainerService(Service):
                 os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
                 os.rmdir(rootfs_path)
 
-                self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.rename,
-                    dataset["name"],
-                    dst_dataset,
-                )
+                self.call_sync2(self.s.zfs.resource.rename, dataset["name"], dst_dataset)
 
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",

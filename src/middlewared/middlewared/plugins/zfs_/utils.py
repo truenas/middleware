@@ -4,8 +4,7 @@ import os
 from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filesystem.stat_x import statx
-from middlewared.utils.mount import getmntinfo
+from middlewared.utils.mount import statmount
 from middlewared.utils.path import is_child
 
 __all__ = [
@@ -65,7 +64,6 @@ def zvol_path_to_name(path):
 
 def paths_to_datasets_impl(
     paths: list[str],
-    mntinfo: dict | None = None
 ) -> dict | dict[str, str | None]:
     """
     Convert `paths` to a dictionary of ZFS dataset names. This
@@ -79,19 +77,17 @@ def paths_to_datasets_impl(
     will be set to None in the dictionary.
     """
     rv = dict()
-    if mntinfo is None:
-        mntinfo = getmntinfo()
 
     for path in paths:
         try:
-            rv[path] = path_to_dataset_impl(path, mntinfo)
+            rv[path] = path_to_dataset_impl(path)
         except Exception:
             rv[path] = None
 
     return rv
 
 
-def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
+def path_to_dataset_impl(path: str) -> str:
     """
     Convert `path` to a ZFS dataset name. This
     performs lookup through mountinfo.
@@ -102,16 +98,11 @@ def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
     can be raised by a failed call to os.stat() are
     possible.
     """
-    stx = statx(path)
-    if mntinfo is None:
-        mntinfo = getmntinfo(stx.stx_mnt_id)[stx.stx_mnt_id]
-    else:
-        mntinfo = mntinfo[stx.stx_mnt_id]
-
-    ds_name = mntinfo['mount_source']
-    if mntinfo['fs_type'] != 'zfs':
+    sm = statmount(path=path, as_dict=False)
+    if sm.fs_type != 'zfs':
         raise CallError(f'{path}: path is not a ZFS filesystem')
 
+    ds_name = sm.sb_source
     for bp_name in BOOT_POOL_NAME_VALID:
         if is_child(ds_name, bp_name):
             raise CallError(f'{path}: path is on boot pool')

@@ -51,6 +51,9 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_requires_ip_or_interface(self, tnc_service):
         """Test that at least one IP or interface is required when enabled."""
+        # Mock system.is_ha_capable to return False for non-HA systems
+        tnc_service.middleware.call = AsyncMock(return_value=False)
+
         old_config = {
             'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
             'use_all_interfaces': True
@@ -70,7 +73,9 @@ class TestTNCInterfacesValidation:
 
         # Create a function that handles the calls appropriately
         def mock_middleware_call(method, *args, **kwargs):
-            if method == 'interface.query':
+            if method == 'system.is_ha_capable':
+                return False
+            elif method == 'interface.query':
                 return mock_interface_names
             elif method == 'interface.ip_in_use':
                 # Return empty list since we're testing interface validation error
@@ -98,6 +103,8 @@ class TestTNCInterfacesValidation:
         mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
         tnc_service.middleware.call = AsyncMock()
         tnc_service.middleware.call.side_effect = [
+            # system.is_ha_capable() call - return False for non-HA
+            False,
             # interface.query() call with retrieve_names_only=True
             mock_interface_names,
             # interface.ip_in_use() call - returns empty list for ens5
@@ -120,7 +127,15 @@ class TestTNCInterfacesValidation:
         """Test that interface without IPs is allowed if direct IPs are provided."""
         # When retrieve_names_only=True, interface.query returns only names
         mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
+
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'system.is_ha_capable':
+                return False
+            elif method == 'interface.query':
+                return mock_interface_names
+            return None
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
 
         old_config = {
             'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
@@ -175,7 +190,8 @@ class TestTNCUseAllInterfaces:
     @pytest.mark.asyncio
     async def test_validate_data_use_all_interfaces_no_ips_or_interfaces(self, tnc_service, mock_interfaces):
         """Test that use_all_interfaces=True allows enabling without specific IPs or interfaces."""
-        tnc_service.middleware.call = AsyncMock()
+        # Mock system.is_ha_capable to return False for non-HA systems
+        tnc_service.middleware.call = AsyncMock(return_value=False)
 
         old_config = {
             'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
@@ -189,7 +205,8 @@ class TestTNCUseAllInterfaces:
     @pytest.mark.asyncio
     async def test_validate_data_use_all_interfaces_false_requires_ips_or_interfaces(self, tnc_service):
         """Test that use_all_interfaces=False requires at least one IP or interface."""
-        tnc_service.middleware.call = AsyncMock()
+        # Mock system.is_ha_capable to return False for non-HA systems
+        tnc_service.middleware.call = AsyncMock(return_value=False)
 
         old_config = {
             'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
@@ -327,7 +344,9 @@ class TestTNCInterfacesUpdate:
 
         # Create a function that handles the calls appropriately
         def mock_middleware_call(method, *args, **kwargs):
-            if method == 'interface.query':
+            if method == 'system.is_ha_capable':
+                return False
+            elif method == 'interface.query':
                 return mock_interface_names
             elif method == 'interface.ip_in_use':
                 # Return IPs for the requested interfaces
@@ -436,7 +455,9 @@ class TestTNCInterfacesUpdate:
 
         # Create a function that handles the calls appropriately
         def mock_middleware_call(method, *args, **kwargs):
-            if method == 'interface.query':
+            if method == 'system.is_ha_capable':
+                return False
+            elif method == 'interface.query':
                 return mock_interface_names
             elif method == 'interface.ip_in_use':
                 # Return IPs for the requested interfaces (already filters link-local)
@@ -543,6 +564,8 @@ class TestTNCInterfacesUpdate:
         mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
 
         tnc_service.middleware.call.side_effect = [
+            # system.is_ha_capable() call - return False for non-HA
+            False,
             # interface.query() call in validate_data with retrieve_names_only=True
             mock_interface_names,
             # interface.ip_in_use() call in do_update (for ens4)
@@ -569,7 +592,7 @@ class TestTNCInterfacesUpdate:
         await tnc_service.do_update(data)
 
         # Verify hostname.register_update_ips was called with combined IPs
-        register_call = tnc_service.middleware.call.call_args_list[3]  # Updated index after cache.pop
+        register_call = tnc_service.middleware.call.call_args_list[4]  # Updated index after system.is_ha_capable
         assert register_call[0][0] == 'tn_connect.hostname.register_update_ips'
         combined_ips = register_call[0][1]
         assert set(combined_ips) == {'192.168.1.100', '10.0.0.10'}
@@ -677,11 +700,19 @@ class TestTNCHostnameService:
         from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 
         service = TNCHostnameService(MagicMock())
-        service.middleware.call = AsyncMock(return_value={
-            'ips': ['192.168.1.10'],
-            'interfaces_ips': ['10.0.0.10', '172.16.0.10'],
-            'jwt_token': 'test_token'
-        })
+
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'tn_connect.config_internal':
+                return {
+                    'ips': ['192.168.1.10'],
+                    'interfaces_ips': ['10.0.0.10', '172.16.0.10'],
+                    'jwt_token': 'test_token'
+                }
+            elif method == 'system.is_ha_capable':
+                return False
+            return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
 
         with patch('middlewared.plugins.truenas_connect.hostname.register_update_ips',
                    new_callable=AsyncMock) as mock_register:
@@ -700,11 +731,19 @@ class TestTNCHostnameService:
         from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 
         service = TNCHostnameService(MagicMock())
-        service.middleware.call = AsyncMock(return_value={
-            'ips': ['192.168.1.10'],
-            'interfaces_ips': ['10.0.0.10'],
-            'jwt_token': 'test_token'
-        })
+
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'tn_connect.config_internal':
+                return {
+                    'ips': ['192.168.1.10'],
+                    'interfaces_ips': ['10.0.0.10'],
+                    'jwt_token': 'test_token'
+                }
+            elif method == 'system.is_ha_capable':
+                return False
+            return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
 
         with patch('middlewared.plugins.truenas_connect.hostname.register_update_ips',
                    new_callable=AsyncMock) as mock_register:

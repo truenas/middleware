@@ -221,7 +221,7 @@ def test__check_root_level_dataset_properties():
     ds = call('pool.dataset.get_instance', pool_name)
     assert ds['acltype']['value'] == 'POSIX'
     assert ds['aclmode']['value'] == 'DISCARD'
-    assert ds['xattr']['value'] == 'SA'
+    assert ds['xattr']['value'] == 'ON'
     assert ds['deduplication']['value'] == 'OFF'
     assert ds['casesensitivity']['value'] == 'SENSITIVE'
     assert ds['compression']['value'] == 'LZ4'

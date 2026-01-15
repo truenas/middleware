@@ -1,6 +1,7 @@
 import dataclasses
 import errno
-from typing import TypedDict
+
+import truenas_pylibzfs
 
 from .exceptions import (
     ZFSPathAlreadyExistsException,
@@ -9,26 +10,7 @@ from .exceptions import (
 )
 from .snapshot_query_impl import query_snapshots_impl
 
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
-
-__all__ = ("create_snapshots_impl", "CreateSnapshotArgs")
-
-
-class CreateSnapshotArgs(TypedDict, total=False):
-    dataset: str
-    """The dataset path to snapshot (e.g., 'pool/dataset')."""
-    name: str
-    """The snapshot name (the part after @)."""
-    recursive: bool
-    """Create snapshots recursively for child datasets."""
-    exclude: list[str]
-    """Datasets to exclude when creating recursive snapshots."""
-    user_properties: dict[str, str]
-    """User properties to set on the snapshot."""
+__all__ = ("create_snapshots_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -62,12 +44,23 @@ def _collect_child_datasets(ds_hdl, exclude: set[str]) -> list[str]:
     return state.datasets
 
 
-def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
+def create_snapshots_impl(
+    tls,
+    dataset: str,
+    name: str,
+    recursive: bool = False,
+    exclude: list[str] | None = None,
+    user_properties: dict[str, str] | None = None,
+) -> dict:
     """Create ZFS snapshot(s).
 
     Args:
         tls: Thread local storage containing lzh (libzfs handle)
-        data: Create parameters
+        dataset: The dataset path to snapshot (e.g., 'pool/dataset').
+        name: The snapshot name (the part after @).
+        recursive: Create snapshots recursively for child datasets.
+        exclude: Datasets to exclude when creating recursive snapshots.
+        user_properties: User properties to set on the snapshot.
 
     Returns:
         Snapshot entry dict for the primary snapshot created
@@ -78,11 +71,8 @@ def create_snapshots_impl(tls, data: CreateSnapshotArgs) -> dict:
         ZFSPathInvalidException: If no datasets to snapshot (all excluded)
         ZFSCoreException: If snapshot creation fails
     """
-    dataset = data["dataset"]
-    snap_name = data["name"]
-    recursive = data.get("recursive", False)
-    exclude = set(data.get("exclude", []))
-    user_properties = data.get("user_properties")
+    snap_name = name
+    exclude = set(exclude or [])
 
     # Build list of datasets to snapshot
     datasets_to_snap = []

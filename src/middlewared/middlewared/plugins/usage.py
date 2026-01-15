@@ -7,8 +7,8 @@ from collections import defaultdict
 
 import aiohttp
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
-from middlewared.utils.mount import getmntinfo
 from middlewared.utils.time_utils import utc_now
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
@@ -87,13 +87,12 @@ class UsageService(Service):
             'total_datasets': 0,
             'total_zvols': 0,
             'services': [],
-            'mntinfo': getmntinfo(),
         }
         for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
             context['services'].append({'name': i['service'], 'enabled': i['enable']})
 
-        qry_ops = {'get_children': True, 'exclude_internal_paths': False}
-        for ds in self.middleware.call_sync('zfs.resource.query_impl', qry_ops):
+        qry_ops = ZFSResourceQuery(get_children=True, exclude_internal_paths=False)
+        for ds in self.call_sync2(self.s.zfs.resource.query_impl, qry_ops):
             if ds['name'] == ds['pool']:
                 context['root_datasets'][ds['pool']] = ds
                 context['total_datasets'] += 1
@@ -144,7 +143,7 @@ class UsageService(Service):
             opposite_namespace = 'rsynctask' if namespace == 'cloudsync' else 'cloudsync'
             for task in self.middleware.call_sync(f'{namespace}.query', filters):
                 try:
-                    task_ds = path_to_dataset_impl(task['path'], context['mntinfo'])
+                    task_ds = path_to_dataset_impl(task['path'])
                 except Exception:
                     self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
                 else:

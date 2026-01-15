@@ -9,7 +9,6 @@ import os
 import pytz
 import queue
 import re
-import setproctitle
 import signal
 import socket
 import threading
@@ -43,11 +42,12 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import create_zettarepl
 
+from middlewared.api.current import PeriodicSnapshotTaskEntry
 from middlewared.logger import setup_logging
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.cgroups import move_to_root_cgroups
-from middlewared.utils.prctl import die_with_parent
+from middlewared.utils.prctl import die_with_parent, set_cmdline, set_name
 from middlewared.utils.size import format_size
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
@@ -149,7 +149,8 @@ class ZettareplProcess:
 
     def __call__(self):
         try:
-            setproctitle.setproctitle('middlewared (zettarepl)')
+            set_name('mw-zettarepl')
+            set_cmdline('mw-zettarepl')
             die_with_parent()
             move_to_root_cgroups(os.getpid())
             if logging.getLevelName(self.debug_level) == logging.TRACE:
@@ -176,7 +177,7 @@ class ZettareplProcess:
             self.zettarepl.set_observer(self._observer)
             self.zettarepl.set_tasks(definition.tasks)
 
-            start_daemon_thread(target=self._process_command_queue)
+            start_daemon_thread(name="zr_cmd_queue", target=self._process_command_queue)
         except Exception:
             logging.getLogger("zettarepl").error("Unhandled exception during zettarepl startup", exc_info=True)
             self.startup_error.value = True
@@ -308,10 +309,12 @@ class ZettareplService(Service):
                 )
                 self.process = multiprocessing.Process(name="zettarepl", target=zettarepl_process)
                 self.process.start()
-                start_daemon_thread(target=self._join, args=(self.process, startup_error))
+                start_daemon_thread(name="zr_proc_join", target=self._join, args=(self.process, startup_error))
 
                 if self.observer_queue_reader is None:
-                    self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
+                    self.observer_queue_reader = start_daemon_thread(
+                        name="zr_obs_reader", target=self._observer_queue_reader
+                    )
 
                 self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
@@ -328,7 +331,7 @@ class ZettareplService(Service):
                         pass
                     event.set()
 
-                start_daemon_thread(target=target)
+                start_daemon_thread(name="zr_proc_stop", target=target)
                 if not event.wait(5):
                     self.logger.warning("Zettarepl was not joined in time, sending SIGKILL")
                     os.kill(self.process.pid, signal.SIGKILL)
@@ -618,13 +621,13 @@ class ZettareplService(Service):
         hold_tasks = {}
 
         periodic_snapshot_tasks = {}
-        for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["enabled", "=", True]]):
-            hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task["dataset"])
+        for periodic_snapshot_task in await self.call2(self.s.pool.snapshottask.query, [["enabled", "=", True]]):
+            hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task.dataset)
             if hold_task_reason:
-                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task['id']}"] = hold_task_reason
+                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task.id}"] = hold_task_reason
                 continue
 
-            periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = self.periodic_snapshot_task_definition(
+            periodic_snapshot_tasks[f"task_{periodic_snapshot_task.id}"] = self.periodic_snapshot_task_definition(
                 periodic_snapshot_task,
             )
 
@@ -665,21 +668,21 @@ class ZettareplService(Service):
 
         return definition, hold_tasks
 
-    def periodic_snapshot_task_definition(self, periodic_snapshot_task):
+    def periodic_snapshot_task_definition(self, periodic_snapshot_task: PeriodicSnapshotTaskEntry):
         return {
-            "dataset": periodic_snapshot_task["dataset"],
+            "dataset": periodic_snapshot_task.dataset,
 
-            "recursive": periodic_snapshot_task["recursive"],
-            "exclude": periodic_snapshot_task["exclude"],
+            "recursive": periodic_snapshot_task.recursive,
+            "exclude": periodic_snapshot_task.exclude,
 
-            "lifetime": lifetime_iso8601(periodic_snapshot_task["lifetime_value"],
-                                         periodic_snapshot_task["lifetime_unit"]),
+            "lifetime": lifetime_iso8601(periodic_snapshot_task.lifetime_value,
+                                         periodic_snapshot_task.lifetime_unit),
 
-            "naming-schema": periodic_snapshot_task["naming_schema"],
+            "naming-schema": periodic_snapshot_task.naming_schema,
 
-            "schedule": zettarepl_schedule(periodic_snapshot_task["schedule"]),
+            "schedule": zettarepl_schedule(periodic_snapshot_task.schedule.model_dump()),
 
-            "allow-empty": periodic_snapshot_task["allow_empty"],
+            "allow-empty": periodic_snapshot_task.allow_empty,
         }
 
     async def _replication_task_definition(self, pools, replication_task):

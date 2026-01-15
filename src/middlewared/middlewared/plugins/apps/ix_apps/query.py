@@ -140,28 +140,35 @@ def list_apps(
         return apps
 
     # We should now retrieve apps which are in stopped state
-    with os.scandir(get_app_parent_config_path()) as scan:
-        for entry in filter(
-            lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
-        ):
-            app_names.add(entry.name)
-            if entry.name not in metadata:
-                # The app is malformed or something is seriously wrong with it
-                continue
+    try:
+        with os.scandir(get_app_parent_config_path()) as scan:
+            for entry in filter(
+                lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
+            ):
+                app_names.add(entry.name)
+                if entry.name not in metadata:
+                    # The app is malformed or something is seriously wrong with it
+                    continue
 
-            app_metadata = metadata[entry.name]
-            upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
-            app_data = {
-                'name': entry.name,
-                'id': entry.name,
-                'active_workloads': get_default_workload_values(),
-                'state': AppState.STOPPED.value,
-                'upgrade_available': upgrade_available,
-                'latest_version': latest_version,
-                'image_updates_available': False,
-                **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
-            }
-            apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
+                app_metadata = metadata[entry.name]
+                upgrade_available, latest_version = upgrade_available_for_app(
+                    train_to_apps_version_mapping, app_metadata
+                )
+                app_data = {
+                    'name': entry.name,
+                    'id': entry.name,
+                    'active_workloads': get_default_workload_values(),
+                    'state': AppState.STOPPED.value,
+                    'upgrade_available': upgrade_available,
+                    'latest_version': latest_version,
+                    'image_updates_available': False,
+                    **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+                }
+                apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
+    except FileNotFoundError:
+        # Observed in failed CI runs. It's possible that .ix-apps fails to mount properly
+        # we don't want to crash here since it'll cause many operations to fail (including pool export).
+        pass
 
     return apps
 

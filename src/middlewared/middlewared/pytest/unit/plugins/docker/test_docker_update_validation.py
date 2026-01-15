@@ -10,12 +10,12 @@ from middlewared.pytest.unit.middleware import Middleware
 def mock_zfs_resource_query_impl(system_state):
     """Create a mock function for zfs.resource.query_impl."""
     def _query_impl(args):
-        paths = args.get('paths', [])
+        paths = args.paths
         if not paths:
             return []
 
         path = paths[0]
-        requested_properties = args.get('properties', [])
+        requested_properties = args.properties
 
         # Check if it's querying for ix-apps dataset
         if path.endswith('/ix-apps'):
@@ -355,7 +355,7 @@ async def test_docker_update_validation(system_state, new_values, old_values, er
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
-    m['zfs.resource.query_impl'] = mock_zfs_resource_query_impl(system_state)
+    m.services.zfs.resource.query_impl = mock_zfs_resource_query_impl(system_state)
     m['system.is_ha_capable'] = lambda *arg: False
     with patch('middlewared.plugins.docker.update.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']

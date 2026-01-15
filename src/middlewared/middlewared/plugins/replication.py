@@ -18,6 +18,7 @@ from middlewared.api.current import (
     ReplicationListNamingSchemasArgs, ReplicationListNamingSchemasResult,
     ReplicationCountEligibleManualSnapshotsArgs, ReplicationCountEligibleManualSnapshotsResult,
     ReplicationTargetUnmatchedSnapshotsArgs, ReplicationTargetUnmatchedSnapshotsResult,
+    PeriodicSnapshotTaskEntry,
 )
 from middlewared.auth import fake_app
 from middlewared.common.attachment import FSAttachmentDelegate
@@ -341,7 +342,12 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
-    async def _validate_direction(self, app_creds, data: dict, verrors: ValidationErrors) -> list[dict]:
+    async def _validate_direction(
+        self,
+        app_creds,
+        data: dict,
+        verrors: ValidationErrors,
+    ) -> list[PeriodicSnapshotTaskEntry]:
         """
         Validate direction-specific settings (PUSH vs PULL).
         Returns list of periodic snapshot tasks (empty for PULL).
@@ -485,7 +491,12 @@ class ReplicationService(CRUDService):
             except CallError as e:
                 verrors.add("ssh_credentials", str(e))
 
-    def _validate_source_datasets(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
+    def _validate_source_datasets(
+        self,
+        data: dict,
+        snapshot_tasks: list[PeriodicSnapshotTaskEntry],
+        verrors: ValidationErrors,
+    ):
         """Validate source datasets, exclusions, and full filesystem replication settings."""
         source_datasets = data["source_datasets"]
         recursive = data["recursive"]
@@ -494,9 +505,9 @@ class ReplicationService(CRUDService):
         # Validate that exclusions are consistent between replication task and snapshot tasks
         for i, src_ds in enumerate(source_datasets):
             for periodic_snapshot_task in snapshot_tasks:
-                task_ds = periodic_snapshot_task["dataset"]
+                task_ds = periodic_snapshot_task.dataset
                 if is_child(src_ds, task_ds):
-                    task_exclude = periodic_snapshot_task["exclude"]
+                    task_exclude = periodic_snapshot_task.exclude
                     if recursive:
                         # For recursive replication, snapshot task exclusions should be replicated in our exclude list
                         for task_exclude_item in task_exclude:
@@ -559,10 +570,10 @@ class ReplicationService(CRUDService):
         for i, periodic_snapshot_task in enumerate(snapshot_tasks):
             if (
                 not any(
-                    is_child(src_ds, periodic_snapshot_task["dataset"])
+                    is_child(src_ds, periodic_snapshot_task.dataset)
                     for src_ds in source_datasets
                 )
-                or not periodic_snapshot_task["recursive"]
+                or not periodic_snapshot_task.recursive
             ):
                 verrors.add(
                     f"periodic_snapshot_tasks.{i}",
@@ -570,7 +581,7 @@ class ReplicationService(CRUDService):
                     "that take recursive snapshots of the dataset being replicated (or its ancestor)"
                 )
 
-    def _validate_common(self, data: dict, snapshot_tasks: list[dict], verrors: ValidationErrors):
+    def _validate_common(self, data: dict, snapshot_tasks: list[PeriodicSnapshotTaskEntry], verrors: ValidationErrors):
         """Validate common settings (encryption, schedules, retention, naming)."""
         # When encryption is enabled but not inherited, must specify key details
         if data["encryption"] and not data["encryption_inherit"]:
@@ -635,7 +646,7 @@ class ReplicationService(CRUDService):
             return
 
         for i, snapshot_task in enumerate(snapshot_tasks):
-            if not snapshot_task["enabled"]:
+            if not snapshot_task.enabled:
                 verrors.add(
                     f"periodic_snapshot_tasks.{i}",
                     "You can't bind disabled periodic snapshot task to enabled replication task"
@@ -673,12 +684,12 @@ class ReplicationService(CRUDService):
     async def _query_periodic_snapshot_tasks(self, ids):
         verrors = ValidationErrors()
 
-        query_result = await self.middleware.call("pool.snapshottask.query", [["id", "in", ids]])
+        query_result = await self.call2(self.s.pool.snapshottask.query, [["id", "in", ids]])
 
         snapshot_tasks = []
         for i, task_id in enumerate(ids):
             for task in query_result:
-                if task["id"] == task_id:
+                if task.id == task_id:
                     snapshot_tasks.append(task)
                     break
             else:
@@ -707,8 +718,8 @@ class ReplicationService(CRUDService):
         List all naming schemas used in periodic snapshot and replication tasks.
         """
         naming_schemas = []
-        for snapshottask in await self.middleware.call("pool.snapshottask.query"):
-            naming_schemas.append(snapshottask["naming_schema"])
+        for snapshottask in await self.call2(self.s.pool.snapshottask.query):
+            naming_schemas.append(snapshottask.naming_schema)
         for replication in await self.middleware.call("replication.query"):
             naming_schemas.extend(replication["naming_schema"])
             naming_schemas.extend(replication["also_include_naming_schema"])

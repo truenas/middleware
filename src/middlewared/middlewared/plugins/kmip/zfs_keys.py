@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
@@ -40,9 +41,9 @@ class KMIPService(Service, KMIPServerMixin):
         if not ds_in_db:
             return rv
 
-        for i in self.middleware.call_sync(
-            'zfs.resource.query_impl',
-            {'paths': list(ds_in_db), 'get_children': True, 'properties': None}
+        for i in self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=list(ds_in_db), get_children=True, properties=None)
         ):
             if i['name'] in ds_in_db:
                 rv.append(ds_in_db[i['name']])

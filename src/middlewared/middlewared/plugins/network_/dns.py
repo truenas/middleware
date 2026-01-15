@@ -5,7 +5,6 @@ import subprocess
 import tempfile
 from typing import Literal
 
-import truenas_pynetif as netif
 from pydantic import Field
 
 from middlewared.api import api_method
@@ -15,6 +14,7 @@ from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
 from middlewared.service_exception import CallError, ValidationErrors
+from truenas_pynetif.netif import get_address_netlink
 
 
 class DNSNsUpdateOpA(BaseModel):
@@ -118,7 +118,10 @@ class DNSService(Service):
                 interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
             else:
                 ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
+                interfaces = list()
+                for ifname in get_address_netlink().get_links():
+                    if not ifname.startswith(ignore):
+                        interfaces.append(ifname)
 
             dns_from_dhcp = set()
             for iface in interfaces:

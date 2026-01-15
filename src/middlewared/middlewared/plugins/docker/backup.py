@@ -14,6 +14,7 @@ from middlewared.api.current import (
     DockerListBackupsResult,
     DockerDeleteBackupArgs,
     DockerDeleteBackupResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
@@ -55,7 +56,7 @@ class DockerService(Service):
 
         snap_name = BACKUP_NAME_PREFIX + name
         snap_path = f'{docker_config["dataset"]}@{snap_name}'
-        if self.middleware.call_sync('zfs.resource.snapshot.exists', snap_path):
+        if self.call_sync2(self.s.zfs.resource.snapshot.exists, snap_path):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
@@ -102,18 +103,17 @@ class DockerService(Service):
         backups_base_dir = backup_ds_path()
         backups = {}
         # Check if the dataset exists
-        ds = self.middleware.call_sync(
-            'zfs.resource.query_impl',
-            {'paths': [docker_config['dataset']], 'properties': None}
+        ds = self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[docker_config['dataset']], properties=None)
         )
         if not ds:
             return backups
 
         # Get snapshots for the dataset (properties: None for efficiency)
-        snapshots = self.middleware.call_sync(
-            'zfs.resource.snapshot.query',
-            {'paths': [docker_config['dataset']], 'properties': ['creation']}
-        )
+        snapshots = self.call_sync2(self.s.zfs.resource.snapshot.query, {
+            'paths': [docker_config['dataset']], 'properties': ['creation']
+        })
         if not snapshots:
             return backups
 
@@ -165,10 +165,9 @@ class DockerService(Service):
         if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
 
-        self.middleware.call_sync2(
-            self.middleware.services.zfs.resource.destroy_impl,
-            backup['snapshot_name'],
-            recursive=True,
+        self.call_sync2(
+            self.s.zfs.resource.snapshot.destroy_impl,
+            {'path': backup['snapshot_name'], 'recursive': True, 'bypass': True},
         )
         shutil.rmtree(backup['backup_path'], True)
 

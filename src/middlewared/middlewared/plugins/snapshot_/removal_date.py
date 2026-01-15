@@ -1,3 +1,4 @@
+from middlewared.api.current import PeriodicSnapshotTaskEntry
 from middlewared.service import Service, job, private
 
 
@@ -16,5 +17,5 @@ class PeriodicSnapshotTaskService(Service):
         # Lock by pool name
         lock=lambda args: "pool.snapshottask.fixate_removal_date:" + (list(args[0].keys()) + ['-'])[0].split('/')[0],
     )
-    async def fixate_removal_date(self, job, datasets, task):
+    async def fixate_removal_date(self, job, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry):
         await self.middleware.call("zettarepl.fixate_removal_date", datasets, task)

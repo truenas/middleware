@@ -30,8 +30,8 @@ class VMService(Service):
 
     @private
     async def periodic_snapshot_task_begin(self, task_id):
-        task = await self.middleware.call('pool.snapshottask.query', [['id', '=', task_id]], {'get': True})
-        return await self.query_snapshot_begin(task['dataset'], task['recursive'])
+        task = await self.call2(self.s.pool.snapshottask.get_instance, task_id)
+        return await self.query_snapshot_begin(task.dataset, task.recursive)
 
     @private
     async def query_snapshot_begin(self, dataset, recursive):

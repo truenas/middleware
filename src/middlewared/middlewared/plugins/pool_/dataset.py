@@ -2,11 +2,14 @@ import errno
 import os
 import pathlib
 
+from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
     PoolDatasetDeleteArgs, PoolDatasetDeleteResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
@@ -33,10 +36,6 @@ from .utils import (
     ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
-try:
-    from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
-except ImportError:
-    ZFSError = ZFSException = ZFSType = None
 
 
 class PoolDatasetEncryptionModel(sa.Model):
@@ -410,15 +409,15 @@ class PoolDatasetService(CRUDService):
         if mntpnt == 'legacy' or args.zprops.get('canmount', 'on') != 'on':
             return
         elif args.name == CONTAINER_DS_NAME and mntpnt.startswith(f'/{CONTAINER_DS_NAME}'):
-            self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.mount,
+            self.call_sync2(
+                self.s.zfs.resource.mount,
                 args.name,
                 mountpoint=f'/mnt{mntpnt}',  # FIXME: altroot not respected cf. NAS-138287
                 recursive=args.create_ancestors,
             )
         else:
-            self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.mount,
+            self.call_sync2(
+                self.s.zfs.resource.mount,
                 args.name,
                 recursive=args.create_ancestors,
             )
@@ -769,8 +768,8 @@ class PoolDatasetService(CRUDService):
                 existing_snapdev_prop = dataset[0]['snapdev']['parsed'].upper()
                 snapdev_prop = data.get('snapdev') or existing_snapdev_prop
                 if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
-                    if await self.middleware.call2(
-                        self.middleware.services.zfs.resource.unlocked_zvols_fast,
+                    if await self.call2(
+                        self.s.zfs.resource.unlocked_zvols_fast,
                         [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id_}@']],
                         {},
                         ['RO', 'ATTACHMENT']
@@ -871,9 +870,9 @@ class PoolDatasetService(CRUDService):
             raise ValidationError('pool.dataset.delete', f'{id_} is an invalid location')
 
         if not options['recursive']:
-            ds = await self.middleware.call(
-                'zfs.resource.query_impl',
-                {'paths': [id_], 'properties': None, 'get_children': True}
+            ds = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[id_], properties=None, get_children=True)
             )
             if len(ds) > 1:
                 raise CallError(
@@ -896,15 +895,15 @@ class PoolDatasetService(CRUDService):
                 'zfs_file_attributes': {'immutable': False}
             })
 
-        await self.middleware.call2(
-            self.middleware.services.zfs.resource.destroy_impl, id_, recursive=options['recursive']
+        await self.call2(
+            self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
         )
         return True
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""
-        return await self.middleware.call2(self.middleware.services.zfs.resource.promote, id_)
+        return await self.call2(self.s.zfs.resource.promote, id_)
 
     @api_method(
         PoolDatasetRenameArgs,
@@ -934,8 +933,8 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
-        return await self.middleware.call2(
-            self.middleware.services.zfs.resource.rename,
+        return await self.call2(
+            self.s.zfs.resource.rename,
             id_,
             options['new_name'],
             options['recursive'],

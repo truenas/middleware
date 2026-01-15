@@ -2,15 +2,11 @@ import pathlib
 from dataclasses import dataclass
 from typing import Literal
 
+import truenas_pylibzfs
+
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
-
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
 
 __all__ = (
     "get_encryption_info",

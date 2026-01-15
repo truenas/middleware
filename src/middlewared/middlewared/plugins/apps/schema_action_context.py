@@ -1,5 +1,6 @@
 import os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, Service
 from middlewared.plugins.pool_.utils import CreateImplArgs
 
@@ -20,8 +21,8 @@ class AppSchemaActions(Service):
 
         user_wants = {app_volume_ds: {'properties': {}}} | {os.path.join(app_volume_ds, v['name']): v for v in volumes}
         existing_datasets = {
-            d['name'] for d in await self.middleware.call(
-                'zfs.resource.query_impl', {'paths': list(user_wants), 'properties': None}
+            d['name'] for d in await self.call2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
             )
         }
         for create_ds in sorted(set(user_wants) - existing_datasets):
@@ -33,10 +34,7 @@ class AppSchemaActions(Service):
                     zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
                 )
             )
-            await self.middleware.call2(
-                self.middleware.services.zfs.resource.mount,
-                create_ds,
-            )
+            await self.call2(self.s.zfs.resource.mount, create_ds)
 
     async def apply_acls(self, acls_to_apply):
         bulk_job = await self.middleware.call(

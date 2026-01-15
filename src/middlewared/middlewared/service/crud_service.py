@@ -43,13 +43,12 @@ def get_instance_result(entry: type[BaseModel]) -> type[BaseModel]:
 
 
 class CRUDServiceMetabase(ServiceBase):
-
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
         if any(
             name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
-                ('CRUDService', ('ServiceChangeMixin', 'Service')),
+                ('CRUDService', ('ServiceChangeMixin', 'Service', 'Generic')),
                 ('SharingTaskService', ('CRUDService',)),
                 ('SharingService', ('SharingTaskService',)),
                 ('TaskPathService', ('SharingTaskService',)),
@@ -100,7 +99,7 @@ class CRUDServiceMetabase(ServiceBase):
         return klass
 
 
-class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
+class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     """
     CRUD service abstract class
 
@@ -139,7 +138,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         options['prefix'] = self._config.datastore_prefix
         return options
 
-    async def query(self, filters, options):
+    async def query(self, filters, options) -> list[E] | E | int:
         if not self._config.datastore:
             raise NotImplementedError(
                 f'{self._config.namespace}.query must be implemented or a '
@@ -161,13 +160,22 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
-            return await self.middleware.run_in_thread(
+            result = await self.middleware.run_in_thread(
                 filter_list, result, filters, options
             )
         else:
-            return await self.middleware.call(
+            result = await self.middleware.call(
                 'datastore.query', self._config.datastore, filters, options,
             )
+
+        if self._config.generic:
+            if not options['count']:
+                if options['get']:
+                    return self._config.entry.__query_result_item__(**result)
+                else:
+                    return [self._config.entry.__query_result_item__(**item) for item in result]
+
+        return result
 
     @pass_app(message_id=True)
     async def create(self, app, audit_callback, message_id, data):
@@ -223,7 +231,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         copy_function_metadata(func, nf)
         return nf
 
-    async def get_instance(self, id_, options=None):
+    async def get_instance(self, id_, options=None) -> E:
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
@@ -238,10 +246,11 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
+
         return instance[0]
 
     @private
-    def get_instance__sync(self, id_, options=None):
+    def get_instance__sync(self, id_, options=None) -> E:
         """
         Synchronous implementation of `get_instance`.
         """
@@ -254,6 +263,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
+
         return instance[0]
 
     async def _ensure_unique(self, verrors, schema_name, field_name, value, id_=None, query_field_name=None):

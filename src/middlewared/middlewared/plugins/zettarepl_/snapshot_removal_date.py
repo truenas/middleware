@@ -4,6 +4,7 @@ import subprocess
 from dateutil.tz import tzlocal
 import isodate
 
+from middlewared.api.current import PeriodicSnapshotTaskEntry
 from middlewared.service import Service
 from middlewared.utils.time_utils import utc_now
 
@@ -23,7 +24,7 @@ class ZettareplService(Service):
     removal_dates_loaded = False
 
     def load_removal_dates(self, pool=None):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         cmd = ["zfs", "list", "-t", "snapshot", "-H", "-o", f"name,{property_name}"]
         if pool is not None:
             cmd.extend(["-r", pool])
@@ -57,8 +58,8 @@ class ZettareplService(Service):
 
         return dict(sum([list(d.items()) for d in self.removal_dates.values()], []))
 
-    def periodic_snapshot_task_snapshots(self, task):
-        snapshots = list_snapshots(LocalShell(), task["dataset"], task["recursive"])
+    def periodic_snapshot_task_snapshots(self, task: PeriodicSnapshotTaskEntry):
+        snapshots = list_snapshots(LocalShell(), task.dataset, task.recursive)
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))
@@ -68,7 +69,7 @@ class ZettareplService(Service):
         for snapshot in snapshots:
             if snapshot_owner.owns_dataset(snapshot.dataset):
                 try:
-                    parsed_snapshot_name = parse_snapshot_name(snapshot.name, task["naming_schema"])
+                    parsed_snapshot_name = parse_snapshot_name(snapshot.name, task.naming_schema)
                 except ValueError:
                     pass
                 else:
@@ -77,18 +78,18 @@ class ZettareplService(Service):
 
         return task_snapshots
 
-    def fixate_removal_date(self, datasets, task):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+    def fixate_removal_date(self, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry):
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))
         for dataset, snapshots in datasets.items():
             for snapshot in snapshots:
                 try:
-                    parsed_snapshot_name = parse_snapshot_name(snapshot, task["naming_schema"])
+                    parsed_snapshot_name = parse_snapshot_name(snapshot, task.naming_schema)
                 except ValueError as e:
                     self.middleware.logger.error("Unexpected error parsing snapshot name %r with naming schema %r: %r",
-                                                 snapshot, task["naming_schema"], e)
+                                                 snapshot, task.naming_schema, e)
                 else:
                     destroy_at = parsed_snapshot_name.datetime + zettarepl_task.lifetime
 
@@ -110,12 +111,12 @@ class ZettareplService(Service):
                         self.removal_dates[k1][k2] = destroy_at
 
     def annotate_snapshots(self, snapshots: list[dict], pop_user_props: bool = False):
-        property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
+        property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         zettarepl_tasks = [
-            PeriodicSnapshotTask.from_data(task["id"], self.middleware.call_sync(
+            PeriodicSnapshotTask.from_data(task.id, self.middleware.call_sync(
                 "zettarepl.periodic_snapshot_task_definition", task,
             ))
-            for task in self.middleware.call_sync("pool.snapshottask.query", [["enabled", "=", True]])
+            for task in self.call_sync2(self.s.pool.snapshottask.query, [["enabled", "=", True]])
         ]
         snapshot_owners = [
             PeriodicSnapshotTaskSnapshotOwner(utc_now(), zettarepl_task)

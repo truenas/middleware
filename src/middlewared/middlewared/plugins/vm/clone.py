@@ -4,7 +4,7 @@ import re
 import uuid
 
 from middlewared.api import api_method
-from middlewared.api.current import VMCloneArgs, VMCloneResult
+from middlewared.api.current import VMCloneArgs, VMCloneResult, ZFSResourceQuery
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
@@ -32,18 +32,17 @@ class VMService(Service):
         return clone_name
 
     async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
-        zz = await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [zvol], 'properties': None}
+        zz = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[zvol], properties=None)
         )
         if not zz:
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
         # Get existing snapshots for this zvol (properties: None for efficiency)
-        existing_snaps = await self.middleware.call(
-            'zfs.resource.snapshot.query',
-            {'paths': [zvol], 'properties': None}
-        )
+        existing_snaps = await self.call2(self.s.zfs.resource.snapshot.query, {
+            'paths': [zvol], 'properties': None
+        })
         existing_snap_names = {s['name'] for s in existing_snaps}
 
         snapshot_name = name
@@ -59,15 +58,15 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.resource.snapshot.create_impl', {'dataset': zvol, 'name': snapshot_name})
+        await self.call2(self.s.zfs.resource.snapshot.create_impl, {'dataset': zvol, 'name': snapshot_name})
         created_snaps.append(zvol_snapshot)
 
         clone_suffix = name
         i = 0
         while True:
             clone_dst = f'{zvol}_{clone_suffix}'
-            if await self.middleware.call(
-                'zfs.resource.query_impl', {'paths': [clone_dst], 'properties': None}
+            if await self.call2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[clone_dst], properties=None)
             ):
                 if ZVOL_CLONE_RE.search(clone_suffix):
                     clone_suffix = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix)
@@ -77,7 +76,7 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.resource.snapshot.clone', {'snapshot': zvol_snapshot, 'dataset': clone_dst})
+        await self.call2(self.s.zfs.resource.snapshot.clone, {'snapshot': zvol_snapshot, 'dataset': clone_dst})
 
         created_clones.append(clone_dst)
 
@@ -142,7 +141,7 @@ class VMService(Service):
                 # the clone first before destroying the snap
                 if clone is not None:
                     try:
-                        self.middleware.call_sync2(self.middleware.services.zfs.resource.destroy_impl, clone)
+                        self.call_sync2(self.s.zfs.resource.destroy_impl, clone)
                     except Exception:
                         self.logger.exception('Failed to destroy cloned zvol %r', clone)
                         # failing to destroy the clone means destroying the snap will
@@ -151,8 +150,8 @@ class VMService(Service):
                     else:
                         if snap is not None:
                             try:
-                                await self.middleware.call(
-                                    'zfs.resource.snapshot.destroy_impl', {'path': snap}
+                                await self.call2(
+                                    self.s.zfs.resource.snapshot.destroy_impl, {'path': snap}
                                 )
                             except Exception:
                                 self.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)

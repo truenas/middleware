@@ -352,7 +352,7 @@ class FailoverService(Service):
         try:
             self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
             self.CLIENT.middleware = self.middleware
-            start_daemon_thread(target=self.CLIENT.run)
+            start_daemon_thread(name="fo_rem_client", target=self.CLIENT.run)
         except CallError:
             pass
 

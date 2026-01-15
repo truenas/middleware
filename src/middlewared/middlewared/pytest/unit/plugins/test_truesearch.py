@@ -18,7 +18,7 @@ from middlewared.plugins.truesearch import TrueSearchService
 ])
 async def test_process_directories(directories, datasets, result):
     middleware = Mock()
-    middleware.call = AsyncMock(return_value=[
+    middleware.call2 = AsyncMock(return_value=[
         {
             "type": "FILESYSTEM",
             "properties": {
@@ -38,7 +38,7 @@ async def test_process_directories(directories, datasets, result):
 @pytest.mark.asyncio
 async def test_legacy_mountpoint():
     middleware = Mock()
-    middleware.call = AsyncMock(return_value=[
+    middleware.call2 = AsyncMock(return_value=[
         {
             "type": "FILESYSTEM",
             "properties": {

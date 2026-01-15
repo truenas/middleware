@@ -2,6 +2,8 @@ import dataclasses
 import logging
 import os
 
+from truenas_pylibzfs import ZFSProperty, ZFSType
+
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.tdb import (
@@ -12,11 +14,6 @@ from middlewared.utils.tdb import (
     TDBOptions,
     TDBPathType,
 )
-
-try:
-    from truenas_pylibzfs import ZFSProperty, ZFSType
-except ImportError:
-    ZFSProperty = ZFSType = None
 
 from .utils import has_internal_path, open_resource
 

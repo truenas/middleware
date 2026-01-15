@@ -8,8 +8,7 @@ from middlewared.api.current import (
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
-from middlewared.utils.filesystem.stat_x import statx
-from middlewared.utils.mount import getmntinfo
+from middlewared.utils.mount import statmount
 
 
 class PoolDatasetService(Service):
@@ -67,15 +66,14 @@ class PoolDatasetService(Service):
         """
         filters, options = self.build_filters_and_options()
         datasets = self.middleware.call_sync('pool.dataset.query', filters, options)
-        mnt_info = getmntinfo()
-        info = self.build_details(mnt_info)
+        info = self.build_details()
         for dataset in datasets:
-            self.collapse_datasets(dataset, info, mnt_info)
+            self.collapse_datasets(dataset, info)
 
         return datasets
 
     @private
-    def normalize_dataset(self, dataset, info, mnt_info):
+    def normalize_dataset(self, dataset, info):
         dataset['thick_provisioned'] = any((dataset['reservation']['value'], dataset['refreservation']['value']))
         dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
@@ -91,43 +89,39 @@ class PoolDatasetService(Service):
         dataset['rsync_tasks_count'] = self.get_rsync_tasks_count(dataset, info['rsync'])
 
     @private
-    def collapse_datasets(self, dataset, info, mnt_info):
-        self.normalize_dataset(dataset, info, mnt_info)
+    def collapse_datasets(self, dataset, info):
+        self.normalize_dataset(dataset, info)
         for child in dataset.get('children', []):
-            self.collapse_datasets(child, info, mnt_info)
+            self.collapse_datasets(child, info)
 
     @private
-    def get_mount_info(self, path, mntinfo):
-        mount_info = {}
+    def get_mount_info(self, path):
         if path.startswith('zvol/'):
-            path = f'/dev/{path}'
+            return {}
 
         try:
-            mnt_id = statx(path).stx_mnt_id
+            mount_info = statmount(path=path)
         except Exception:
             # path deleted/umounted/locked etc
-            pass
-        else:
-            if mnt_id in mntinfo:
-                mount_info = mntinfo[mnt_id]
+            mount_info = {}
 
         return mount_info
 
-    def _parse_virtualization_device_info(self, dev_, mntinfo):
+    def _parse_virtualization_device_info(self, dev_):
         info = {}
         if dev_['attributes']['dtype'] == 'DISK':
             # disk type is always a zvol
             info['zvol'] = zvol_path_to_name(dev_['attributes']['path'])
         elif dev_['attributes']['dtype'] == 'RAW':
             # raw type is always a file
-            info['mount_info'] = self.get_mount_info(dev_['attributes']['path'], mntinfo)
+            info['mount_info'] = self.get_mount_info(dev_['attributes']['path'])
         else:
             # filesystem type is always a directory
-            info['mount_info'] = self.get_mount_info(dev_['attributes']['source'], mntinfo)
+            info['mount_info'] = self.get_mount_info(dev_['attributes']['source'])
         return info
 
     @private
-    def build_details(self, mntinfo):
+    def build_details(self):
         results = {
             'iscsi': [], 'nfs': [], 'nvmet': [], 'smb': [], 'webshare': [],
             'repl': [], 'snap': [], 'cloud': [],
@@ -147,20 +141,20 @@ class PoolDatasetService(Service):
             results['iscsi'].append({
                 'extent': e[i['extent']],
                 'target': t[i['target']],
-                'mount_info': self.get_mount_info(e[i['extent']]['path'], mntinfo),
+                'mount_info': self.get_mount_info(e[i['extent']]['path']),
             })
 
         # nfs, smb and webshare
         for key in ('nfs', 'smb', 'webshare'):
             for share in self.middleware.call_sync(f'sharing.{key}.query'):
-                share['mount_info'] = self.get_mount_info(share['path'], mntinfo)
+                share['mount_info'] = self.get_mount_info(share['path'])
                 results[key].append(share)
 
         # nvmet
         for ns in self.middleware.call_sync('nvmet.namespace.query'):
             results['nvmet'].append({
                 'namespace': ns,
-                'mount_info': self.get_mount_info(ns['device_path'], mntinfo),
+                'mount_info': self.get_mount_info(ns['device_path']),
             })
 
         # replication
@@ -176,18 +170,18 @@ class PoolDatasetService(Service):
 
         # cloud sync
         for task in self.middleware.call_sync('datastore.query', 'tasks.cloudsync'):
-            task['mount_info'] = self.get_mount_info(task['path'], mntinfo)
+            task['mount_info'] = self.get_mount_info(task['path'])
             results['cloud'].append(task)
 
         # rsync
         for task in self.middleware.call_sync('rsynctask.query'):
-            task['mount_info'] = self.get_mount_info(task['path'], mntinfo)
+            task['mount_info'] = self.get_mount_info(task['path'])
             results['rsync'].append(task)
 
         # vm
         vms = {vm['id']: vm for vm in self.middleware.call_sync('datastore.query', 'vm.vm')}
         for vm_device in self.middleware.call_sync('vm.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK']]]):
-            results['vm'].append(vm_device | self._parse_virtualization_device_info(vm_device, mntinfo) | {
+            results['vm'].append(vm_device | self._parse_virtualization_device_info(vm_device) | {
                 'vm_name': vms[vm_device['vm']]['name'],
             })
 
@@ -200,7 +194,7 @@ class PoolDatasetService(Service):
             'container.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK', 'FILESYSTEM']]]
         ):
             results['container'].append(
-                container_dev | self._parse_virtualization_device_info(container_dev, mntinfo) | {
+                container_dev | self._parse_virtualization_device_info(container_dev) | {
                     'container_name': containers[container_dev['container']]['name'],
                 }
             )
@@ -213,7 +207,7 @@ class PoolDatasetService(Service):
                 results['app'].append({
                     'name': app['name'],
                     'path': path_config['source'],
-                    'mount_info': self.get_mount_info(path_config['source'], mntinfo),
+                    'mount_info': self.get_mount_info(path_config['source']),
                 })
 
         return results

@@ -73,7 +73,7 @@ class PortService(Service):
         ) or (
             bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
         ):
-            return verrors
+            return verrors if not raise_error else None
 
         ip_errors = []
         for index, port_detail in enumerate(port_attachment.items()):
@@ -104,8 +104,8 @@ class PortService(Service):
 
         if raise_error:
             verrors.check()
-
-        return verrors
+        else:
+            return verrors
 
     async def ports_mapping(self, whitelist_namespace=None):
         ports = defaultdict(dict)

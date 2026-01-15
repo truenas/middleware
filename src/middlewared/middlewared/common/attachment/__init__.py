@@ -35,14 +35,18 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def get_attachment_name(self, attachment):
+    async def get_attachment_name(self, attachment) -> str:
         """
         Returns human-readable description of item (e.g. it's path). Will be combined with `cls.title`.
         I.e. if you return here `/mnt/tank/work`, user will see: `NFS Share "/mnt/tank/work"`
         :param attachment: one of the items returned by `query`
         :return: string described above
         """
-        return attachment[self.resource_name]
+        if isinstance(attachment, dict):
+            # FIXME: This must be eventually removed
+            return attachment[self.resource_name]
+        else:
+            return getattr(attachment, self.resource_name)
 
     async def delete(self, attachments):
         """

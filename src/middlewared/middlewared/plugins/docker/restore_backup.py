@@ -8,6 +8,8 @@ from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, job, Service
 
+from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
+
 
 logger = logging.getLogger('app_lifecycle')
 
@@ -39,22 +41,23 @@ class DockerService(Service):
         job.set_progress(20, 'Stopped Docker service')
 
         docker_config = self.middleware.call_sync('docker.config')
-        self.middleware.call_sync2(
-            self.middleware.services.zfs.resource.destroy_impl,
-            os.path.join(docker_config['dataset'], 'docker'),
-            bypass=True,
+        self.call_sync2(
+            self.s.zfs.resource.destroy_impl, os.path.join(docker_config['dataset'], 'docker'),
+            bypass=True, recursive=True,
         )
 
         job.set_progress(25, f'Rolling back to {backup_name!r} backup')
-        self.middleware.call_sync(
-            'zfs.resource.snapshot.rollback_impl', {
-                'path': backup['snapshot_name'],
+        docker_ds, snapshot_name = backup['snapshot_name'].split('@')
+        skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
+        for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, {
+                'path': f'{dataset}@{snapshot_name}',
                 'force': True,
                 'recursive': True,
                 'recursive_clones': True,
-                'recursive_rollback': True,
-            }
-        )
+                'bypass': True,
+                }
+            )
 
         job.set_progress(30, 'Rolled back snapshots')
 

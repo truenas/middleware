@@ -72,8 +72,7 @@ class SMBShareAclEntryWhoId(BaseModel):
 
 class SMBShareAclEntry(BaseModel):
     """ An SMB Share ACL Entry that grants or denies specific permissions to a principal.
-    You can identify the principal by a SID (`ae_who_sid`), Unix ID (`ae_who_id`), \
-    or name (`ae_who_str`). """
+    You can identify the principal by a SID (`ae_who_sid`) or Unix ID (`ae_who_id`). """
     ae_perm: Literal['FULL', 'CHANGE', 'READ']
     """ Permissions granted or denied to the principal. """
     ae_type: Literal['ALLOWED', 'DENIED']

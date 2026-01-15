@@ -1,21 +1,14 @@
-import asyncio
-import contextlib
 import ipaddress
-import os
 import re
-import signal
 import typing
 
-import truenas_pynetif as netif
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
-
-RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
-RE_RTSOLD_NUMBER_OF_VALID_RAS = re.compile(r'number of valid RAs: ([0-9]+)')
+import truenas_pynetif as netif
 
 
 class RouteService(Service):
@@ -52,7 +45,10 @@ class RouteService(Service):
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
                 ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
+                interfaces = list()
+                for iface in netif.get_address_netlink().get_links():
+                    if not iface.startswith(ignore):
+                        interfaces.append(iface)
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -135,14 +131,8 @@ class RouteService(Service):
                     ['int_ipv6auto', '=', True],
                 ]
             )
-            remove = False
             if not autoconfigured_interface:
                 self.logger.info('Removing IPv6 default route as there is no IPv6 autoconfiguration')
-                remove = True
-            elif not await self.middleware.call('route.has_valid_router_announcements', interface):
-                self.logger.info('Removing IPv6 default route as IPv6 autoconfiguration has not succeeded')
-                remove = True
-            if remove:
                 routing_table.delete(routing_table.default_route_ipv6)
 
     @private
@@ -155,20 +145,12 @@ class RouteService(Service):
             case _:
                 raise ValidationError('route.gw_reachable.ipv', f'Expected 4 or 6, got {ipv}')
 
-        ignore_nics = ('lo', 'tap', 'epair')
-        for if_name, iface in netif.list_interfaces().items():
-            if not if_name.startswith(ignore_nics):
-                for nic_address in iface.addresses:
-                    if nic_address.af == FAMILY:
-                        addr_dict = nic_address.asdict()
-                        address = addr_dict['address']
-
-                        with contextlib.suppress(KeyError):
-                            address = f'{address}/{addr_dict["netmask"]}'
-
-                        nic = InterfaceClass(address)
-                        if ipaddress.ip_address(gateway) in nic.network:
-                            return True
+        gw = ipaddress.ip_address(gateway)
+        for addr in netif.get_address_netlink().get_addresses():
+            if addr.family != FAMILY or addr.scope == 254:  # skip wrong family and loopback
+                continue
+            if gw in InterfaceClass(f'{addr.address}/{addr.prefixlen}').network:
+                return True
 
         return False
 
@@ -178,51 +160,3 @@ class RouteService(Service):
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
         return self.gateway_is_reachable(ipv4_gateway, ipv=4)
-
-    @private
-    async def has_valid_router_announcements(self, interface):
-        rtsold_dump_path = '/var/run/rtsold.dump'
-
-        try:
-            with open('/var/run/rtsold.pid') as f:
-                rtsold_pid = int(f.read().strip())
-        except (FileNotFoundError, ValueError):
-            self.logger.warning('rtsold pid file does not exist')
-            return False
-
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(rtsold_dump_path)
-
-        try:
-            os.kill(rtsold_pid, signal.SIGUSR1)
-        except ProcessLookupError:
-            self.logger.warning('rtsold is not running')
-            return False
-
-        for i in range(10):
-            await asyncio.sleep(0.2)
-            try:
-                with open(rtsold_dump_path) as f:
-                    dump = f.readlines()
-                    break
-            except FileNotFoundError:
-                continue
-        else:
-            self.logger.warning('rtsold has not dumped status')
-            return False
-
-        current_interface = None
-        for line in dump:
-            line = line.strip()
-
-            m = RE_RTSOLD_INTERFACE.match(line)
-            if m:
-                current_interface = m.group(1)
-
-            if current_interface == interface:
-                m = RE_RTSOLD_NUMBER_OF_VALID_RAS.match(line)
-                if m:
-                    return int(m.group(1)) > 0
-
-        self.logger.warning('Have not found %s status in rtsold dump', interface)
-        return False

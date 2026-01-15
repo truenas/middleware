@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
 from middlewared.utils.smb import SearchProtocol
 
@@ -57,11 +58,11 @@ class TrueSearchService(Service):
         pools = {directory.removeprefix('/mnt/').split('/')[0] for directory in directories}
 
         mountpoints = {}
-        for dataset in await self.middleware.call('zfs.resource.query_impl', {
-            'paths': pools,
-            'properties': ['encryption', 'mountpoint'],
-            'get_children': True,
-        }):
+        for dataset in await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(
+            paths=pools,
+            properties=['encryption', 'mountpoint'],
+            get_children=True,
+        )):
             if dataset['type'] != 'FILESYSTEM':
                 continue
 
@@ -159,7 +160,7 @@ class TrueSearchService(Service):
             self.RECONFIGURE_TIMER.cancel()
 
         enabled = await self.enabled()
-        running = (await self.middleware.call('service.get_state', 'truesearch')).running
+        running = await self.middleware.call('service.started', 'truesearch')
 
         if enabled and running:
             await (await self.middleware.call('service.control', 'RELOAD', 'truesearch')).wait(raise_error=True)

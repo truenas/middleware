@@ -47,7 +47,7 @@ from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SI
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from middlewared.utils.mount import getmnttree
+from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
@@ -133,9 +133,6 @@ class SMBService(ConfigService):
         else:
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
-            # If we're not the active storage controller, don't shift lockdir.
-            # This avoids races on system dataset setup.
-            smb_config['stateful_failover'] = False
 
         ds_config = self.middleware.call_sync('directoryservices.config')
         if ds_config['enable'] and ds_config['service_type'] == 'IPA':
@@ -531,7 +528,7 @@ class SMBService(ConfigService):
                     'NetBIOS aliases may not be changed while directory service is enabled.'
                 )
             else:
-                for idx, nbname in new['netbiosalias']:
+                for idx, nbname in enumerate(new['netbiosalias']):
                     if old['netbiosalias'][idx].casefold() != new['netbiosalias'][idx].casefold():
                         verrors.add(
                             f'smb_update.netbiosalias.{idx}',
@@ -617,6 +614,11 @@ class SMBService(ConfigService):
             (SearchProtocol.SPOTLIGHT in new['search_protocols'])
         ):
             await self.middleware.call('truesearch.configure')
+
+        if old['stateful_failover'] != new['stateful_failover']:
+            verb = 'START' if new['stateful_failover'] else 'STOP'
+            ctdb_job = await self.middleware.call('service.control', verb, 'ctdb')
+            await ctdb_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config
@@ -1127,9 +1129,6 @@ class SharingSMBService(SharingService):
                     schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
                 )
 
-            for c in mnt['children']:
-                validate_child(c)
-
         def get_acl_type(sb_info):
             if 'NFS4ACL' in sb_info:
                 return 'NFSV4'
@@ -1144,7 +1143,7 @@ class SharingSMBService(SharingService):
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
-        this_mnt = getmnttree(st['mount_id'])
+        this_mnt = statmount(path=path)
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fs_type"]}: path is not a ZFS dataset')
 
@@ -1161,7 +1160,7 @@ class SharingSMBService(SharingService):
 
         current_acltype = get_acl_type(this_mnt['super_opts'])
 
-        for child in this_mnt['children']:
+        for child in iter_mountinfo(target_mnt_id=this_mnt['mount_id']):
             # The child filesystem may or may not be mounted under the SMB share. Two relevant
             # cases:
             #
@@ -1548,7 +1547,7 @@ class SharingSMBService(SharingService):
                 'ae_who_sid': entry.get('ae_who_sid')
             }
 
-            if not set(entry.keys()) & set(['ae_who_str', 'ae_who_id']):
+            if not set(entry.keys()) & set(['ae_who_sid', 'ae_who_id']):
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.sid',
                     'Either a SID or Unix ID must be specified for ACL entry.'

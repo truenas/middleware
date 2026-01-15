@@ -10,7 +10,7 @@ __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "C
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
 QF_FIELD = Field(default=[], description=QF_DOC, examples=[
     [["name", "=", "bob"]],
-    [["OR", [[["name", "=", "bob"]], [["name", "=", "larry"]]]]],
+    [["OR", [["name", "=", "bob"], ["name", "=", "larry"]]]],
 ])
 QueryFilters = Annotated[list, QF_FIELD, AfterValidator(validate_filters)]
 
