@@ -50,7 +50,7 @@ class FailoverDisabledReasonsService(Service):
             return
 
         try:
-            iface = netif.list_interfaces()[heartbeat_iface_name]
+            iface = netif.list_interface_states()[heartbeat_iface_name]
             if iface.link_state != "LINK_STATE_UP":
                 reasons.add(DisabledReasonsEnum.NO_CARRIER_ON_HEARTBEAT.name)
         except KeyError:

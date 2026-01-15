@@ -50,7 +50,7 @@ class RouteService(Service):
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
                 ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
+                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interface_states().keys()))
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -149,11 +149,11 @@ class RouteService(Service):
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
         ignore_nics = ('lo', 'tap', 'epair')
-        for if_name, iface in list(netif.list_interfaces().items()):
+        for if_name, iface in list(netif.list_interface_states().items()):
             if not if_name.startswith(ignore_nics):
-                for nic_address in iface.addresses:
-                    if nic_address.af == netif.AddressFamily.INET:
-                        ipv4_nic = ipaddress.IPv4Interface(nic_address)
+                for addr in iface.addresses:
+                    if addr.family == netif.AddressFamily.INET:
+                        ipv4_nic = ipaddress.IPv4Interface(f"{addr.address}/{addr.prefixlen}")
                         if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
                             return True
         return False

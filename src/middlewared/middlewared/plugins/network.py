@@ -163,7 +163,7 @@ class InterfaceService(CRUDService):
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
         ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
-        for name, iface in netif.list_interfaces().items():
+        for name, iface in netif.list_interface_states().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
             elif ignore_usb_nics and iface.bus == 'usb':
@@ -1651,7 +1651,7 @@ class InterfaceService(CRUDService):
 
         internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
         dhclient_aws = []
-        for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
+        for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interface_states().items())):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
                 continue
@@ -1788,9 +1788,9 @@ class InterfaceService(CRUDService):
             static_ips['::1'] = '::1'
 
         ignore_nics = tuple(ignore_nics)
-        for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
+        for iface in filter(lambda x: not x.name.startswith(ignore_nics), list(netif.list_interface_states().values())):
             # Skip interfaces not in the specified list if interfaces were specified
-            if specified_interfaces and iface.orig_name not in specified_interfaces:
+            if specified_interfaces and iface.name not in specified_interfaces:
                 continue
             try:
                 aliases_list = iface.asdict()['aliases']
