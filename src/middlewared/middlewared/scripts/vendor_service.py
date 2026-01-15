@@ -43,7 +43,7 @@ def start_hexos_websocat():
 
     wsocat_path = "/usr/local/libexec/wsocat"
     wsocat_opts = (
-        "--buffer-size 1048576",
+        "--buffer-size 4194304",
         "--ping-interval 30",
         "--ping-timeout 60",
         "--exit-on-eof",
