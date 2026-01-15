@@ -1,6 +1,11 @@
 import contextlib
+import importlib.abc
+import importlib.util
 from logging.config import fileConfig
 import os
+import sys
+import types
+from unittest.mock import MagicMock
 
 from alembic import context
 from alembic.operations import ops
@@ -8,6 +13,30 @@ from alembic.operations.base import BatchOperations, Operations
 from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
 from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 import sqlalchemy as sa
+
+
+class FakeModule(types.ModuleType):
+    def __getattr__(self, name):
+        mock = MagicMock(name=f"{self.__name__}.{name}")
+        setattr(self, name, mock)
+        return mock
+
+
+class FakeImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    def find_spec(self, fullname, path, target=None):
+        if fullname.startswith(("truenas_pylibzfs",)):
+            return importlib.util.spec_from_loader(fullname, self)
+        return None
+
+    def create_module(self, spec):
+        return FakeModule(spec.name)
+
+    def exec_module(self, module):
+        pass
+
+# Middlewared package is built and migrations are run at the time importable truenas_pylibzfs might not be available
+# yet. Since we don't really need it, we can substitude it with a fake package.
+sys.meta_path.insert(0, FakeImporter())
 
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.sqlalchemy import EncryptedText, JSON, Model, MultiSelectField
