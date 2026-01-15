@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 from middlewared.service import private, Service
+from middlewared.utils.mount import umount
 
 from .utils import UPLOAD_LOCATION
 from .utils_linux import run_kw
@@ -36,4 +37,4 @@ class UpdateService(Service):
     @private
     def destroy_upload_location(self):
         if os.path.ismount(UPLOAD_LOCATION):
-            subprocess.run(["umount", UPLOAD_LOCATION], **run_kw)
+            umount(UPLOAD_LOCATION)

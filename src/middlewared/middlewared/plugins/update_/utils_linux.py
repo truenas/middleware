@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 
 from middlewared.service import CallError
+from middlewared.utils.mount import umount
 
 logger = logging.getLogger(__name__)
 
@@ -21,4 +22,4 @@ def mount_update(path):
         try:
             yield mounted
         finally:
-            subprocess.run(["umount", mounted], **run_kw)
+            umount(mounted)

@@ -23,7 +23,7 @@ from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
+from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo, umount
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -389,7 +389,13 @@ class SystemDatasetService(ConfigService):
                 except Exception:
                     self.logger.warning("Failed to clear old core files.", exc_info=True)
 
-            subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
+            try:
+                umount('/var/lib/systemd/coredump')
+            except (FileNotFoundError, ValueError):
+                pass
+            except Exception:
+                self.logger.exception('Unexpected error while unmounting coredump path')
+
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
 
@@ -581,35 +587,36 @@ class SystemDatasetService(ConfigService):
 
         mp = mntinfo['mountpoint']
         if retry:
-            flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
+            # lazy unmount for system dataset was added in NAS-113425 we are doing this because of need to not have
+            # system dataset move when exporting data pool on busy HA system not fail when doing failover.
+            force = not self.middleware.call_sync('failover.licensed')
+            detach = not force
         else:
             # We're doing a retry and have logged a warning message pointing fingers
             # at offending processes so that a dev can hopefully fix it later on.
-            flags = '-lf'
+            force = True
+            detach = True
 
         try:
-            subprocess.run(['umount', flags, '--recursive', mp], check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode()
-            if 'no mount point specified' in stderr:
-                return
-        else:
-            return
+            umount(mp, force=force, detach=detach, recursive=True)
+        except FileNotFoundError:
+            pass
+        except ValueError:
+            self.logger.debug('%s: specified path exists, but is not a mountpoint.', mp)
+        except OSError as e:
+            error = f'Unable to umount {mp}: {e}'
+            if e.errno == errno.EBUSY:
+                processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [mp], True, True)
 
-        error = f'Unable to umount {mp}: {stderr}'
-        if 'target is busy' in stderr:
-            # error message is of format "umount: <mountpoint>: target is busy"
-            ds_mp = stderr.split(':')[1].strip()
-            processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [ds_mp], True, True)
+                if retry:
+                    self.logger.warning(
+                        "The following processes are using %s: %s", mp, json.dumps(processes, indent=2)
+                    )
+                    return self.__umount(pool, uuid, False)
 
-            if retry:
-                self.logger.warning("The following processes are using %s: %s",
-                                    ds_mp, json.dumps(processes, indent=2))
-                return self.__umount(pool, uuid, False)
+                error += f'\nThe following processes are using {mp!r}: ' + json.dumps(processes, indent=2)
 
-            error += f'\nThe following processes are using {ds_mp!r}: ' + json.dumps(processes, indent=2)
-
-        raise CallError(error) from None
+            raise CallError(error) from None
 
     @private
     def migrate(self, _from, _to):
@@ -630,7 +637,13 @@ class SystemDatasetService(ConfigService):
                 os.mkdir(f'{MIDDLEWARE_RUN_DIR}/system.new')
             else:
                 # Make sure we clean up any previous attempts
-                subprocess.run(['umount', '-R', path], check=False)
+                try:
+                    umount(path, recursive=True)
+                except (FileNotFoundError, ValueError):
+                    # ValueError will be raised if the path isn't a mountpoint
+                    pass
+                except Exception:
+                    self.logger.exception('%s: unexpected exception when unmounting path', path)
         else:
             path = SYSDATASET_PATH
 
@@ -646,7 +659,13 @@ class SystemDatasetService(ConfigService):
                 )
                 if cp.returncode == 0:
                     # Let's make sure that we don't have coredump directory mounted
-                    subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
+                    try:
+                        umount('/var/lib/systemd/coredump')
+                    except (FileNotFoundError, ValueError):
+                        pass
+                    except Exception:
+                        self.logger.exception('Unexpected error while unmounting coredump dir')
+
                     self.__umount(_from, config['uuid'])
                     self.__umount(_to, config['uuid'])
                     self.__mount(_to, config['uuid'], SYSDATASET_PATH)

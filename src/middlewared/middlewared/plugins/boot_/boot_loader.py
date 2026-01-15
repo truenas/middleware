@@ -4,6 +4,7 @@ import tempfile
 
 from middlewared.service import Service, private
 from middlewared.utils import run
+from middlewared.utils.mount import umount
 
 
 class BootService(Service):
@@ -40,4 +41,4 @@ class BootService(Service):
                 os.path.join(mounted_efi_dir, 'debian/grubx64.efi'),
                 os.path.join(mounted_efi_dir, 'boot/bootx64.efi')
             )
-            await run('umount', efi_dir)
+            await self.middleware.run_in_thread(umount, efi_dir)
