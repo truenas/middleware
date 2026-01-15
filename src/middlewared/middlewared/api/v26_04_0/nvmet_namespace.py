@@ -43,15 +43,18 @@ class NVMetNamespaceEntry(BaseModel):
     * "FILE": `device_path` is e.g. "/mnt/poolmnt/path/to/file". The file will be created if necessary.
     """
     dataset: NonEmptyString | None
-    """The ZFS dataset name that contains the NVMe-oF namespace device path (for file-based namespaces). This is \
-    the dataset where the namespace file is stored. Returns `null` for ZVOL-based namespaces or if the path is not \
-    on a ZFS dataset. This is a read-only field that is automatically populated based on "device_path"."""
+    """The ZFS dataset name that contains the NVMe-oF namespace device. For file-based namespaces on filesystems \
+    (e.g., `/mnt/tank/nvme/namespace1.img`), this is the dataset where the namespace file is stored. For \
+    ZVOL-based namespaces with device_path format `zvol/pool/dataset`, this field returns `null` because the \
+    device_path is not a filesystem path. This is a read-only field that is automatically populated based on \
+    "device_path"."""
     relative_path: str | None
-    """The path of the namespace file relative to the dataset mountpoint (for file-based namespaces). For example, \
-    if the device path is `/mnt/tank/nvme/namespace1.img` and the dataset `tank/nvme` is mounted at \
-    `/mnt/tank/nvme`, then the relative path is "namespace1.img". An empty string indicates the file is at the \
-    dataset root. Returns `null` for ZVOL-based namespaces or if the path is not on a ZFS dataset. This is a \
-    read-only field that is automatically populated based on "device_path"."""
+    """The path of the namespace relative to the dataset mountpoint. For file-based namespaces on filesystems, if \
+    the device path is `/mnt/tank/nvme/namespace1.img` and the dataset `tank/nvme` is mounted at `/mnt/tank/nvme`, \
+    then the relative path is "namespace1.img". An empty string indicates the file is at the dataset root. For \
+    ZVOL-based namespaces with device_path format `zvol/pool/dataset`, this field returns `null` because the \
+    device_path is not a filesystem path. This is a read-only field that is automatically populated based on \
+    "device_path"."""
     filesize: int | None = None
     """When `device_type` is "FILE" then this will be the size of the file in bytes."""
     device_uuid: NonEmptyString

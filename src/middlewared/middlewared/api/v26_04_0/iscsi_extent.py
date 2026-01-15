@@ -33,16 +33,17 @@ class iSCSITargetExtentEntry(BaseModel):
     """Serial number for the extent or `null` to auto-generate."""
     path: str | None = None
     """File path for file-based extents or `null` if using a disk."""
-    dataset: NonEmptyString | None = None
-    """The ZFS dataset name that contains the iSCSI extent path (for file-based extents). This is the dataset \
-    where the extent file is stored. Returns `null` for disk-based extents or if the path is not on a ZFS dataset. \
-    This is a read-only field that is automatically populated based on "path"."""
-    relative_path: str | None = None
-    """The path of the extent file relative to the dataset mountpoint (for file-based extents). For example, if \
-    the extent path is `/mnt/tank/iscsi/extent1.img` and the dataset `tank/iscsi` is mounted at `/mnt/tank/iscsi`, \
-    then the relative path is "extent1.img". An empty string indicates the file is at the dataset root. Returns \
-    `null` for disk-based extents or if the path is not on a ZFS dataset. This is a read-only field that is \
-    automatically populated based on "path"."""
+    dataset: NonEmptyString | None
+    """The ZFS dataset name that contains the iSCSI extent. For file-based extents with filesystem paths \
+    (e.g., `/mnt/tank/iscsi/extent1.img`), this is the dataset where the extent file is stored. For disk-based \
+    extents using zvols with path format `zvol/pool/dataset`, this field returns `null` because the path is not a \
+    filesystem path. This is a read-only field that is automatically populated based on "path"."""
+    relative_path: str | None
+    """The path of the extent relative to the dataset mountpoint. For file-based extents on filesystems, if the \
+    extent path is `/mnt/tank/iscsi/extent1.img` and the dataset `tank/iscsi` is mounted at `/mnt/tank/iscsi`, \
+    then the relative path is "extent1.img". An empty string indicates the file is at the dataset root. For \
+    disk-based extents using zvols with path format `zvol/pool/dataset`, this field returns `null` because the \
+    path is not a filesystem path. This is a read-only field that is automatically populated based on "path"."""
     filesize: str | int = '0'
     """Size of the file-based extent in bytes."""
     blocksize: IscsiExtentBlockSize = 512

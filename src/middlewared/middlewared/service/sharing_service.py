@@ -2,6 +2,7 @@ import os.path
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.utils.mount import statmount
 from middlewared.utils.path import FSLocation, path_location
 
@@ -114,13 +115,21 @@ class SharingTaskService(CRUDService):
         # Calculate dataset and relative_path from path field
         try:
             path = data[self.path_field]
-            mntinfo = await self.middleware.run_in_thread(statmount, path=path, as_dict=False)
+            if path.startswith('/dev/zvol/'):
+                # Handle zvol
+                data.update(dataset=zvol_path_to_name(path), relative_path='')
+            elif path.startswith('zvol/'):
+                # /dev/ is stripped sometimes
+                data.update(dataset=path[5:], relative_path='')
+            else:
+                # Handle dataset
+                mntinfo = await self.middleware.run_in_thread(statmount, path=path, as_dict=False)
 
-            relative_path = os.path.relpath(path, mntinfo.mnt_point)
-            if relative_path == '.':
-                relative_path = ''
+                relative_path = os.path.relpath(path, mntinfo.mnt_point)
+                if relative_path == '.':
+                    relative_path = ''
 
-            data.update(dataset=mntinfo.sb_source, relative_path=relative_path)
+                data.update(dataset=mntinfo.sb_source, relative_path=relative_path)
         except Exception:
             data.update(dataset=None, relative_path=None)
 
