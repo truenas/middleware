@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict, namedtuple
 import threading
-from typing import Callable, Literal, Sequence
+from typing import Callable, Concatenate, Literal, Sequence
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import BaseModel, query_result
@@ -205,7 +205,7 @@ def pass_app(*, message_id: bool = False, require: bool = False):
     return wrapper
 
 
-def pass_thread_local_storage(fn):
+def pass_thread_local_storage[**P, R, X](fn: Callable[Concatenate[X, P], R]) -> Callable[P, R]:
     """
     Pass a thread-local storage object as a parameter to the method.
 
@@ -286,7 +286,7 @@ def periodic(interval: float, run_on_start: bool = True):
     return wrapper
 
 
-def private(fn):
+def private[T](fn: T) -> T:
     """Do not expose method in public API"""
     fn._private = True
     return fn

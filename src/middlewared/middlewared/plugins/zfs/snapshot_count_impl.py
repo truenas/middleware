@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import os
+from typing import Any
 
 from truenas_pylibzfs import ZFSProperty, ZFSType
 
@@ -31,7 +32,7 @@ SNAP_COUNT_TDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
 class SnapshotCountState:
     counts: dict[str, int]
     """Mapping of dataset names to snapshot counts."""
-    batch_ops: list
+    batch_ops: list[TDBBatchOperation]
     """Batch operations for TDB cache updates."""
     recursive: bool
     eip: bool
@@ -45,22 +46,22 @@ class SimpleCountState:
     count: int = 0
 
 
-def __simple_count_callback(snap_hdl, state: SimpleCountState) -> bool:
+def __simple_count_callback(snap_hdl: Any, state: SimpleCountState) -> bool:
     """Callback that simply increments the counter."""
     state.count += 1
     return True
 
 
-def __get_cached_count(cache_key: str) -> dict:
+def __get_cached_count(cache_key: str) -> dict[str, Any]:
     """Retrieve cached snapshot count from TDB."""
     try:
         with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
-            return hdl.get(cache_key)
+            return hdl.get(cache_key)  # type: ignore
     except MatchNotFound:
         return {"changed_ts": None, "cnt": -1}
 
 
-def __try_count_via_nlink(ds_hdl) -> int | None:
+def __try_count_via_nlink(ds_hdl: Any) -> int | None:
     """Try to get snapshot count via st_nlink for mounted filesystems.
 
     This is much faster than iterating snapshots when the dataset is mounted.
@@ -95,7 +96,7 @@ def __try_count_via_nlink(ds_hdl) -> int | None:
     return None
 
 
-def __count_dataset_snapshots_uncached(ds_hdl) -> int:
+def __count_dataset_snapshots_uncached(ds_hdl: Any) -> int:
     """Count snapshots for a single dataset using the most efficient method (no cache)."""
     # Try short-circuit via st_nlink first
     count = __try_count_via_nlink(ds_hdl)
@@ -108,7 +109,7 @@ def __count_dataset_snapshots_uncached(ds_hdl) -> int:
     return state.count
 
 
-def __count_dataset_snapshots_cached(ds_hdl, batch_ops: list) -> int:
+def __count_dataset_snapshots_cached(ds_hdl: Any, batch_ops: list[TDBBatchOperation]) -> int:
     """Count snapshots with TDB caching using snapshots_changed as invalidation key."""
     ds_name = ds_hdl.name
     cache_key = f"SNAPCNT%{ds_name}"
@@ -125,7 +126,7 @@ def __count_dataset_snapshots_cached(ds_hdl, batch_ops: list) -> int:
 
     if entry["changed_ts"] == changed_ts and entry["cnt"] >= 0:
         # Cache hit - return cached count
-        return entry["cnt"]
+        return entry["cnt"]  # type: ignore
 
     # Cache miss - count and update cache
     count = __count_dataset_snapshots_uncached(ds_hdl)
@@ -143,7 +144,7 @@ def __count_dataset_snapshots_cached(ds_hdl, batch_ops: list) -> int:
     return count
 
 
-def __dataset_count_callback(ds_hdl, state: SnapshotCountState) -> bool:
+def __dataset_count_callback(ds_hdl: Any, state: SnapshotCountState) -> bool:
     """Callback for iterating over datasets to count their snapshots."""
     ds_name = ds_hdl.name
 
@@ -170,7 +171,7 @@ def __should_exclude_internal_paths(data: ZFSResourceSnapshotCountQuery) -> bool
     return True
 
 
-def __commit_cache_updates(batch_ops: list) -> None:
+def __commit_cache_updates(batch_ops: list[TDBBatchOperation]) -> None:
     """Commit batch cache updates to TDB."""
     if not batch_ops:
         return
@@ -182,7 +183,7 @@ def __commit_cache_updates(batch_ops: list) -> None:
         logger.warning("Failed to update cached snapshot counts", exc_info=True)
 
 
-def count_snapshots_impl(tls, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
+def count_snapshots_impl(tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
     """Count ZFS snapshots per dataset.
 
     Uses TDB caching with snapshots_changed property as invalidation key.

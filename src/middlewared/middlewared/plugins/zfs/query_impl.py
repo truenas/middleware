@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Any
 
 from truenas_pylibzfs import ZFSError, ZFSException
 
@@ -12,8 +13,8 @@ __all__ = ("query_impl",)
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CallbackState:
-    results: list
-    query_args: dict
+    results: list[dict[str, Any]]
+    query_args: dict[str, Any]
     dp: DeterminedProperties
     eip: bool
     """(e)xclude (i)nternal (p)aths. Unless
@@ -23,7 +24,7 @@ class CallbackState:
     """Current recursion depth."""
 
 
-def __query_impl_callback(hdl, state):
+def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
     if state.eip and has_internal_path(hdl.name):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
@@ -65,7 +66,7 @@ def __query_impl_callback(hdl, state):
     return True
 
 
-def __query_impl_paths(hdl, state):
+def __query_impl_paths(hdl: Any, state: CallbackState) -> None:
     for path in state.query_args["paths"]:
         try:
             rsrc = hdl.open_resource(name=path)
@@ -79,11 +80,11 @@ def __query_impl_paths(hdl, state):
             raise
 
 
-def __query_impl_roots(hdl, state):
+def __query_impl_roots(hdl: Any, state: CallbackState) -> None:
     hdl.iter_root_filesystems(callback=__query_impl_callback, state=state)
 
 
-def __should_exclude_internal_paths(data):
+def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     for path in data["paths"]:
         if has_internal_path(path):
             # somone is explicilty querying an
@@ -95,10 +96,10 @@ def __should_exclude_internal_paths(data):
     #   NOTE: (the `exclude_internal_paths` is a private
     #   internal argument that is set internally within
     #   middleware. It's not exposed to public.)
-    return data.get("exclude_internal_paths", True)
+    return data.get("exclude_internal_paths", True)  # type: ignore
 
 
-def query_impl(hdl, data):
+def query_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
     if data["max_depth"] > 0 and data["get_children"] is False:
         # If max_depth > 0, enable get_children implicitly
         data["get_children"] = True

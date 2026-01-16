@@ -1,5 +1,7 @@
+from collections.abc import Collection
 import dataclasses
 import errno
+from typing import Any
 
 import truenas_pylibzfs
 
@@ -15,11 +17,11 @@ __all__ = ("create_snapshots_impl",)
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CollectDatasetsState:
-    datasets: list
-    exclude: set
+    datasets: list[str]
+    exclude: set[str]
 
 
-def __collect_datasets_callback(child_hdl, state: CollectDatasetsState) -> bool:
+def __collect_datasets_callback(child_hdl: Any, state: CollectDatasetsState) -> bool:
     """Callback for collecting child dataset names recursively."""
     name = child_hdl.name
     if name not in state.exclude:
@@ -29,7 +31,7 @@ def __collect_datasets_callback(child_hdl, state: CollectDatasetsState) -> bool:
     return True
 
 
-def _collect_child_datasets(ds_hdl, exclude: set[str]) -> list[str]:
+def _collect_child_datasets(ds_hdl: Any, exclude: set[str]) -> list[str]:
     """Collect all child dataset names recursively.
 
     Args:
@@ -45,13 +47,13 @@ def _collect_child_datasets(ds_hdl, exclude: set[str]) -> list[str]:
 
 
 def create_snapshots_impl(
-    tls,
+    tls: Any,
     dataset: str,
     name: str,
     recursive: bool = False,
-    exclude: list[str] | None = None,
+    exclude: Collection[str] | None = None,
     user_properties: dict[str, str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create ZFS snapshot(s).
 
     Args:
@@ -104,7 +106,7 @@ def create_snapshots_impl(
 
     # Create the snapshots
     # Note: lzc.create_snapshots is atomic - all succeed or all fail
-    kwargs = {"snapshot_names": snapshot_names}
+    kwargs: dict[str, Any] = {"snapshot_names": snapshot_names}
     if user_properties:
         kwargs["user_properties"] = user_properties
 

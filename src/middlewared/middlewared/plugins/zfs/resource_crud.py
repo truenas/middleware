@@ -60,10 +60,10 @@ class ZFSResourceService(Service):
     @private
     def unlocked_zvols_fast(
         self,
-        filters: list | None = None,
-        options: dict | None = None,
-        additional_information: list | None = None,
-    ):
+        filters: list[list[typing.Any]] | None = None,
+        options: dict[str, typing.Any] | None = None,
+        additional_information: list[str] | None = None,
+    ) -> list[dict[str, typing.Any]] | dict[str, typing.Any] | int:
         if filters is None:
             filters = list()
         if options is None:
@@ -83,7 +83,7 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def promote(self, tls, current_name: str) -> None:
+    def promote(self, tls: typing.Any, current_name: str) -> None:
         """
         Promote a ZFS clone to be independent of its origin snapshot.
 
@@ -106,7 +106,7 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def mount(
         self,
-        tls,
+        tls: typing.Any,
         filesystem: str,
         mountpoint: str | None = None,
         recursive: bool = False,
@@ -157,7 +157,7 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def unmount(
         self,
-        tls,
+        tls: typing.Any,
         filesystem: str,
         mountpoint: str | None = None,
         recursive: bool = False,
@@ -202,7 +202,7 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def unload_key(
-        self, tls, filesystem: str, recursive: bool = False, force_unmount: bool = False
+        self, tls: typing.Any, filesystem: str, recursive: bool = False, force_unmount: bool = False
     ) -> None:
         """
         Unload the encryption key from ZFS.
@@ -228,7 +228,7 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def rename(
         self,
-        tls,
+        tls: typing.Any,
         current_name: str,
         new_name: str,
         recursive: bool = False,
@@ -279,7 +279,7 @@ class ZFSResourceService(Service):
             raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
-    def validate_query_args(self, data: ZFSResourceQuery):
+    def validate_query_args(self, data: ZFSResourceQuery) -> None:
         for path in data.paths:
             if "@" in path:
                 raise ValidationError(
@@ -297,7 +297,7 @@ class ZFSResourceService(Service):
             )
 
     @private
-    def nest_paths(self, flat_list: dict) -> list[dict]:
+    def nest_paths(self, flat_list: list[dict[str, typing.Any]]) -> list[dict[str, typing.Any]]:
         """
         Convert a flat list of dictionaries with path-like
         names into a nested tree structure. Nodes are attached
@@ -340,7 +340,7 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls, data: ZFSResourceQuery):
+    def query_impl(self, tls: typing.Any, data: ZFSResourceQuery) -> list[dict[str, typing.Any]]:
         self.validate_query_args(data)
 
         results = query_impl(tls.lzh, data.model_dump())
@@ -353,13 +353,13 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def destroy_impl(
         self,
-        tls,
+        tls: typing.Any,
         path: str,
         recursive: bool = False,
         all_snapshots: bool = False,
         bypass: bool = False,
         defer: bool = False,
-    ):
+    ) -> tuple[str | None, int | None]:
         """
         Internal implementation for destroying a ZFS resource.
 
@@ -436,7 +436,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_WRITE"],
         check_annotations=True,
     )
-    def destroy(self, data: ZFSResourceDestroyArgsData):
+    def destroy(self, data: ZFSResourceDestroyArgsData) -> None:
         """
         Destroy a ZFS resource (filesystem or volume).
 
@@ -504,6 +504,7 @@ class ZFSResourceService(Service):
                 # operation is done atomically behind the scenes. This should
                 # only be happening if someone is recursively deleting a
                 # resource.
+                assert errnum is not None
                 raise ValidationError(schema, failed, errnum)
 
     @api_method(
@@ -546,6 +547,9 @@ class ZFSResourceService(Service):
             query({"paths": ["tank"], "nest_results": True, "get_children": True})
         """
         try:
-            return self.call_sync2(self.s.zfs.resource.query_impl, data)
+            return [
+                ZFSResourceEntry(**resource)
+                for resource in self.call_sync2(self.s.zfs.resource.query_impl, data)
+            ]
         except ZFSPathNotFoundException as e:
             raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)

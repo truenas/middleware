@@ -1,5 +1,6 @@
 import errno
 import os
+from typing import Any
 
 import truenas_pylibzfs
 
@@ -9,7 +10,7 @@ from .utils import open_resource
 __all__ = ("destroy_impl",)
 
 
-def destroy_nonrecursive_impl(tls, path: str, defer: bool):
+def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | None, int | None]:
     """
     Destroy a single ZFS resource non-recursively.
 
@@ -63,13 +64,13 @@ def destroy_nonrecursive_impl(tls, path: str, defer: bool):
 
 
 def destroy_impl(
-    tls,
+    tls: Any,
     path: str,
     recursive: bool,
     all_snapshots: bool,
     bypass: bool,
     defer: bool,
-):
+) -> tuple[str | None, int | None]:
     """
     Destroy a ZFS resource with optional recursive and snapshot handling.
 
@@ -90,22 +91,19 @@ def destroy_impl(
         return destroy_nonrecursive_impl(tls, path, defer)
 
     target = path.split("@")[0]
-    rcpa = {
-        "pool_name": target.split("/")[0],
-        "script": None,
-        "script_arguments_dict": {
-            "recursive": recursive,
-            "defer": defer,
-            "target": target,
-        },
-        "readonly": False,
+    pool_name = target.split("/")[0]
+    script_arguments_dict = {
+        "recursive": recursive,
+        "defer": defer,
+        "target": target,
     }
+    readonly = False
     mntpnts = list()
     if "@" in path:
-        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
-        rcpa["script_arguments_dict"].update({"pattern": path.split("@")[-1]})
+        script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
+        script_arguments_dict.update({"pattern": path.split("@")[-1]})
     elif all_snapshots:
-        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
+        script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
     else:
         rsrc = open_resource(tls, path)
         if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
@@ -113,10 +111,15 @@ def destroy_impl(
             if mnt.mountpoint.value != "legacy":
                 mntpnts.append(mnt)
             rsrc.unmount(recursive=recursive)
-        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
+        script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
     try_again = False
-    res = truenas_pylibzfs.lzc.run_channel_program(**rcpa)
+    res = truenas_pylibzfs.lzc.run_channel_program(
+        pool_name=pool_name,
+        script=script,
+        script_arguments_dict=script_arguments_dict,
+        readonly=readonly,
+    )
     if res["return"]["holds"]:
         try_again = True
         truenas_pylibzfs.lzc.release_holds(holds=set(res["return"]["holds"].items()))
@@ -134,7 +137,12 @@ def destroy_impl(
             # TODO: else raise ZFSException(err) if not EBUSY??
 
     if try_again:
-        res = truenas_pylibzfs.lzc.run_channel_program(**rcpa)
+        res = truenas_pylibzfs.lzc.run_channel_program(
+            pool_name=pool_name,
+            script=script,
+            script_arguments_dict=script_arguments_dict,
+            readonly=readonly,
+        )
 
     failed, errnum = None, None
     if res["return"]["failed"]:

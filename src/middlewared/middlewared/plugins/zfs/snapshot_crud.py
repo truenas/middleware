@@ -1,4 +1,5 @@
 import errno
+from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -86,7 +87,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls, data: ZFSResourceSnapshotQuery):
+    def query_impl(self, tls: Any, data: ZFSResourceSnapshotQuery) -> list[dict[str, Any]]:
         return query_snapshots_impl(tls.lzh, data.model_dump())
 
     @api_method(
@@ -132,7 +133,10 @@ class ZFSResourceSnapshotService(Service):
         """
         self.validate_recursive_paths("zfs.resource.snapshot.query", data)
         try:
-            return self.call_sync2(self.s.zfs.resource.snapshot.query_impl, data)
+            return [
+                ZFSResourceSnapshotEntry(**snapshot)
+                for snapshot in self.call_sync2(self.s.zfs.resource.snapshot.query_impl, data)
+            ]
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.query", e.message, errno.ENOENT
@@ -160,7 +164,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def count_impl(self, tls, data: ZFSResourceSnapshotCountQuery):
+    def count_impl(self, tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
         return count_snapshots_impl(tls, data)
 
     @api_method(
@@ -208,7 +212,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls, data: ZFSResourceSnapshotDestroyQuery):
+    def destroy_impl(self, tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> tuple[str | None, int | None]:
         schema = "zfs.resource.snapshot.destroy"
 
         # Check for internal path protection
@@ -303,7 +307,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rename_impl(self, tls, data: ZFSResourceSnapshotRenameQuery):
+    def rename_impl(self, tls: Any, data: ZFSResourceSnapshotRenameQuery) -> None:
         schema = "zfs.resource.snapshot.rename"
 
         # Check for internal path protection
@@ -389,7 +393,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def clone_impl(self, tls, data: ZFSResourceSnapshotCloneQuery) -> None:
+    def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> None:
         schema = "zfs.resource.snapshot.clone"
 
         # Check for internal path protection on BOTH source and destination
@@ -473,7 +477,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def create_impl(self, tls, data: ZFSResourceSnapshotCreateQuery):
+    def create_impl(self, tls: Any, data: ZFSResourceSnapshotCreateQuery) -> Any:
         schema = "zfs.resource.snapshot.create"
 
         # Check for internal path protection
@@ -562,7 +566,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def hold_impl(self, tls, data: ZFSResourceSnapshotHoldQuery):
+    def hold_impl(self, tls: Any, data: ZFSResourceSnapshotHoldQuery) -> None:
         schema = "zfs.resource.snapshot.hold"
 
         # Check for internal path protection
@@ -633,9 +637,9 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def holds_impl(self, tls, path: str) -> tuple:
+    def holds_impl(self, tls: Any, path: str) -> tuple[str, ...]:
         rsrc = open_resource(tls, path)
-        return rsrc.get_holds()
+        return rsrc.get_holds()  # type: ignore
 
     @api_method(
         ZFSResourceSnapshotHoldsArgs,
@@ -675,7 +679,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def release_impl(self, tls, data: ZFSResourceSnapshotReleaseQuery):
+    def release_impl(self, tls: Any, data: ZFSResourceSnapshotReleaseQuery) -> None:
         schema = "zfs.resource.snapshot.release"
 
         # Check for internal path protection
@@ -739,7 +743,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rollback_impl(self, tls, data: ZFSResourceSnapshotRollbackQuery):
+    def rollback_impl(self, tls: Any, data: ZFSResourceSnapshotRollbackQuery) -> None:
         schema = "zfs.resource.snapshot.rollback"
 
         # Check for internal path protection

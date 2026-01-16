@@ -1,6 +1,7 @@
+from collections.abc import Collection
 import pathlib
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import truenas_pylibzfs
 
@@ -40,7 +41,7 @@ class EncryptionInfo:
     """
 
 
-def has_internal_path(path):
+def has_internal_path(path: str) -> bool:
     """
     Check if a ZFS resource path is an internal path.
 
@@ -60,7 +61,7 @@ def has_internal_path(path):
     return len(components) > 1 and components[1] in INTERNAL_PATHS
 
 
-def get_encryption_info(data: dict) -> EncryptionInfo:
+def get_encryption_info(data: dict[str, dict[str, Any]]) -> EncryptionInfo:
     """
     Check the various zfs properties to determine if the underlying zfs
     resource is encrypted.
@@ -87,7 +88,7 @@ def get_encryption_info(data: dict) -> EncryptionInfo:
         )
 
 
-def group_paths_by_parents(paths: list[str]) -> dict[str, list[str]]:
+def group_paths_by_parents(paths: Collection[str]) -> dict[str, list[str]]:
     """
     Group paths by their parent directories, mapping each parent to
     all paths that are relative to it. For each path in the input list,
@@ -105,7 +106,7 @@ def group_paths_by_parents(paths: list[str]) -> dict[str, list[str]]:
         >>> group_paths_by_parents(['dozer/test', 'dozer/test/foo', 'tank', 'dozer/abc'])
         {'dozer/test': ['dozer/test/foo']}
     """
-    root_dict = dict()
+    root_dict: dict[str, list[str]] = dict()
     if not paths:
         return root_dict
 
@@ -119,7 +120,7 @@ def group_paths_by_parents(paths: list[str]) -> dict[str, list[str]]:
     return root_dict
 
 
-def open_resource(tls, path: str):
+def open_resource(tls: Any, path: str) -> Any:
     if not path:
         raise ZFSPathNotProvidedException()
 

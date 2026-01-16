@@ -1,3 +1,5 @@
+from typing import Any
+
 from truenas_pylibzfs import ZFSProperty, ZFSType
 
 from .exceptions import (
@@ -17,11 +19,11 @@ __all__ = (
 
 
 def clone_impl(
-    tls,
+    tls: Any,
     current_name: str,
     new_name: str,
     properties: dict[str, str | int] | None = None,
-):
+) -> None:
     """
     Clone a ZFS snapshot.
 
@@ -50,7 +52,7 @@ def clone_impl(
         rsrc.clone(name=new_name)
 
 
-def promote_impl(tls, current_name: str):
+def promote_impl(tls: Any, current_name: str) -> None:
     """
     Promote a ZFS clone to be independent of its origin snapshot.
 
@@ -65,13 +67,13 @@ def promote_impl(tls, current_name: str):
 
 
 def rename_impl(
-    tls,
+    tls: Any,
     current_name: str,
     new_name: str,
     recursive: bool,
     no_unmount: bool,
     force_unmount: bool,
-):
+) -> None:
     """
     Rename a ZFS resource.
 

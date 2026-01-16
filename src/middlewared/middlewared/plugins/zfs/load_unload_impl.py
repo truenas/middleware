@@ -1,3 +1,5 @@
+from typing import Any
+
 from .utils import open_resource
 
 __all__ = (
@@ -5,7 +7,7 @@ __all__ = (
 )
 
 
-def unload_key_impl(tls, filesystem: str, recursive: bool, force_unmount: bool):
+def unload_key_impl(tls: Any, filesystem: str, recursive: bool, force_unmount: bool) -> None:
     """
     Unload the encryption key from ZFS.
 

@@ -76,7 +76,7 @@ def calculate_args_index(f, audit_callback, check_annotations):
     return args_index
 
 
-def api_method(
+def api_method[**P, T](
     accepts: type[BaseModel],
     returns: type[BaseModel],
     *,
@@ -95,7 +95,7 @@ def api_method(
     skip_args: int | None = None,
     removed_in: str | None = None,
     check_annotations: bool = False,  # FIXME: Eventually must be `True` for all api methods.
-):
+) -> typing.Callable[[typing.Callable[P, T]], typing.Callable[P, T]]:
     """
     Mark a `Service` class method as an API method.
 

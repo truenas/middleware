@@ -1,0 +1,29 @@
+name: mypy static type checks
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/truenas/middleware:master
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dev tools
+        run: FAKE_ENV=1 ./src/freenas/usr/bin/install-dev-tools
+
+      - name: Install mypy
+        run: apt install -y mypy
+
+      - name: Test
+        run: |
+          cd src/middlewared
+          mypy middlewared/plugins/zfs/ --exclude middlewared/etc_files --follow-imports silent --strict

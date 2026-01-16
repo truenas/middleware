@@ -1,3 +1,5 @@
+from typing import Any, Literal
+
 import truenas_pylibzfs
 
 from .utils import open_resource
@@ -8,7 +10,7 @@ __all__ = (
 )
 
 
-def __mount_cb(hdl, state):
+def __mount_cb(hdl: Any, state: dict[str, Any]) -> Literal[True]:
     if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
         mounted = hdl.asdict(properties={truenas_pylibzfs.ZFSProperty.MOUNTED})
         if mounted["properties"]["mounted"]["raw"] == "no":
@@ -19,7 +21,7 @@ def __mount_cb(hdl, state):
 
 
 def mount_impl(
-    tls,
+    tls: Any,
     filesystem: str,
     mountpoint: str | None,
     recursive: bool,
@@ -50,7 +52,7 @@ def mount_impl(
             equivalent to executing zfs load-key before mounting it.
     """
     rsrc = open_resource(tls, filesystem)
-    mntopts = {}
+    mntopts: dict[str, Any] = {}
     if mountpoint is not None:
         mntopts["mountpoint"] = mountpoint
     if mount_options is not None:
@@ -64,7 +66,7 @@ def mount_impl(
 
 
 def unmount_impl(
-    tls,
+    tls: Any,
     filesystem: str,
     mountpoint: str | None,
     recursive: bool,
@@ -89,7 +91,7 @@ def unmount_impl(
         unload_encryption_key: Unload keys for any encryption roots unmounted by this operation.
     """
     rsrc = open_resource(tls, filesystem)
-    kwargs = {}
+    kwargs: dict[str, Any] = {}
     if mountpoint is not None:
         kwargs["mountpoint"] = mountpoint
     if recursive:
