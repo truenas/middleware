@@ -31,9 +31,12 @@ async def render(service, middleware):
             services_native.append(service)
     services = services_native + services
 
+    licensed = await middleware.call('failover.licensed')
     for service, is_enabled in zip(services, are_enabled):
         enable = services_enabled[service]
         is_enabled = {"enabled": True, "disabled": False}[is_enabled]
+        if service == "scst" and licensed:
+            enable = False
         if enable != is_enabled:
             await run(["systemctl", "enable" if enable else "disable", service])
 

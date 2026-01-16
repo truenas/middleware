@@ -599,7 +599,6 @@ class iSCSITargetService(CRUDService):
         :return: dict keyed by target name, with list of the unsurfaced disk names or None as the value
         """
         iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
@@ -638,24 +637,6 @@ class iSCSITargetService(CRUDService):
 
             # Regen existing as it should have now changed
             existing = await self.middleware.call('iscsi.target.logged_in_iqns')
-
-            # This below one does NOT have the desired impact, despite the output from 'iscsiadm -m node -o show'
-            # cmd = ['iscsiadm', '-m', 'node', '-o', 'update', '-n',
-            #        'node.session.timeo.replacement_timeout', '-v', '10']
-            # await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
-            # So instead do this.
-            if not await self.middleware.call(
-                'iscsi.target.set_ha_targets_sys',
-                f'{global_basename}:HA:',
-                'recovery_tmo', '10\n'
-            ):
-                # Failed to cleanly set.  Give the above LOGINs time to settle and then call again.
-                await asyncio.sleep(5)
-                await self.middleware.call(
-                    'iscsi.target.set_ha_targets_sys',
-                    f'{global_basename}:HA:',
-                    'recovery_tmo', '10\n'
-                )
 
         # Now calculate the result to hand back.
         result = {}
@@ -837,29 +818,41 @@ class iSCSITargetService(CRUDService):
     @private
     async def active_targets(self):
         """
-        Returns the names of all targets whose extents are neither disabled nor locked,
-        and which have at least one extent configured.
+        Returns a dict with key target name and value dict.  The value dict is
+        keyed by LUN number with the (active) extent name as the value.
+
+        If a target has no active LUNs then it will not be included in the
+        returned dict.
         """
-        filters = [['OR', [['enabled', '=', False], ['locked', '=', True]]]]
-        bad_extents = []
-        for extent in await self.middleware.call('iscsi.extent.query', filters):
-            bad_extents.append(extent['id'])
+        result = defaultdict(lambda: defaultdict(str))
 
-        targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
-        assoc = {a_tgt['extent']: a_tgt['target'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')}
-        for bad_extent in bad_extents:
-            # the disabled / locked extent may not have a target mapping and so we need additional check here before
-            # removing it from list of active targets to avoid crashing here
-            if bad_extent in assoc:
-                targets.pop(assoc[bad_extent], None)
+        # Get active (i.e. non-disabled and non-locked) extents only
+        filters = [['enabled', '=', True], ['locked', '=', False]]
+        extents = {ext['id']: ext['name'] for ext in await self.middleware.call('iscsi.extent.query',
+                                                                                filters,
+                                                                                {'select': ['id', 'name']})}
+        # Unfortunately if we are the STANDBY node in HA then the
+        # query will NOT return the correct state wrt locked. Get
+        # it from the ACTIVE node instead.
+        if await self.middleware.call('failover.status') == 'BACKUP':
+            locked_extents = await self.middleware.call(
+                'failover.call_remote',
+                'iscsi.extent.query',
+                [[['locked', '=', True]], {'select': ['id']}]
+            )
+            # Remove the locked extents from the previous query results
+            for locked in locked_extents:
+                extents.pop(locked['id'], None)
 
-        # Also discount targets that do not have any extents
-        targets_with_extents = assoc.values()
-        for target_id in list(targets.keys()):
-            if target_id not in targets_with_extents:
-                del targets[target_id]
+        targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query',
+                                                                          [],
+                                                                          {'select': ['id', 'name']})}
+        for assoc in await self.middleware.call('iscsi.targetextent.query'):
+            if assoc['extent'] in extents:
+                if targetname := targets[assoc['target']]:
+                    result[targetname][assoc['lunid']] = extents[assoc['extent']]
 
-        return list(targets.values())
+        return result
 
     @private
     async def active_ha_iqns(self):
@@ -910,3 +903,25 @@ class iSCSITargetService(CRUDService):
         except FileNotFoundError:
             pass
         return result
+
+    @private
+    async def wait_for_ha_lun_absent(self, target_name, lunid):
+        retries = 5
+        iqn = await self.middleware.call('iscsi.target.ha_iqn', target_name)
+        while retries:
+            if lunid not in await self.middleware.call('iscsi.target.iqn_ha_luns', iqn):
+                return
+            retries -= 1
+            await asyncio.sleep(1)
+        self.logger.warning('Failed to remove lun %r from internal target %r', lunid, iqn)
+
+    @private
+    async def wait_for_ha_lun_present(self, target_name, lunid):
+        retries = 5
+        iqn = await self.middleware.call('iscsi.target.ha_iqn', target_name)
+        while retries:
+            if lunid in await self.middleware.call('iscsi.target.iqn_ha_luns', iqn):
+                return
+            retries -= 1
+            await asyncio.sleep(1)
+        self.logger.warning('Failed to add lun %r to internal target %r', lunid, iqn)

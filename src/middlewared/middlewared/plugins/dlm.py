@@ -72,6 +72,13 @@ class DistributedLockManagerService(Service):
                 self.fully_created = True
 
     @private
+    async def recreate_comms_peer(self):
+        for nodeid, node in self.nodes.items():
+            if not node['local']:
+                await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
+                await self.middleware.call('dlm.kernel.comms_add_node', nodeid, node['ip'], node['local'])
+
+    @private
     async def lockspace_member(self, dest_nodeid, lockspace_name):
         await self.middleware.call('dlm.create')
         if dest_nodeid == self.nodeID:
@@ -331,7 +338,15 @@ class DistributedLockManagerService(Service):
         # Finally turn off cluster mode locally on all extents
         try:
             DistributedLockManagerService.resetting = True
-            await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
+            try:
+                await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
+            except BlockingIOError:
+                # If any lockspaces are stopped, then restart them
+                for lockspace in await self.middleware.call('dlm.lockspaces'):
+                    if await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace):
+                        self.logger.warning('Starting stopped lockspace %r', lockspace)
+                        await self.middleware.call('dlm.kernel.lockspace_start', lockspace)
+                await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
         finally:
             DistributedLockManagerService.resetting = False
         self.logger.info('local_reset done')
