@@ -79,7 +79,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                             [target_name, assoc['lunid'], extent['name'], False]
                         )
                     except Exception:
-                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        self.logger.exception('Failed to update STANDBY node')
                         # Better to continue than to raise the exception
                 # Now that all extents have been processed, reload STANDBY
                 await self.middleware.call(
@@ -113,7 +113,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                             [['id', '=', assoc['target']]],
                             {'select': ['name'], 'get': True}))['name']
                     except MatchNotFound:
-                        self.logger.warning('Failed up update extent %r %r',
+                        self.logger.warning('Failed to update extent %r %r',
                                             extent['id'], extent['name'])
                         continue
                     await self.middleware.call(
@@ -128,10 +128,9 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                             [target_name]
                         )
                     except Exception:
-                        self.logger.warning(
-                            'Failed up update STANDBY node for %r %r',
-                            extent['id'], extent['name'],
-                            exc_info=True
+                        self.logger.exception(
+                            'Failed to update STANDBY node for %r %r',
+                            extent['id'], extent['name']
                         )
                         # Better to continue than to raise the exception
                 # Now update the remote node
