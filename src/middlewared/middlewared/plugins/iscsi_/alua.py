@@ -759,6 +759,17 @@ class iSCSITargetAluaService(Service):
                 ('state', 'in', ['RUNNING', 'WAITING']),
             ]
         )
+        if bool(running_jobs):
+            return True
+
+        # Any RELOAD going on?
+        running_jobs = await self.middleware.call(
+            'core.get_jobs', [
+                ('method', '=', 'service.control'),
+                ('arguments', '=', ['RELOAD', 'iscsitarget']),
+                ('state', 'in', ['RUNNING', 'WAITING'])
+            ]
+        )
         return bool(running_jobs)
 
     async def settled(self):
