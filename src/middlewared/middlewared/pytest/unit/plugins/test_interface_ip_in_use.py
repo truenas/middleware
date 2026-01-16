@@ -6,37 +6,39 @@ from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 
 
-class MockInterface:
-    """Mock interface object that mimics netif.Interface behavior."""
-    def __init__(self, name, aliases):
-        self.orig_name = name
-        self._aliases = aliases
+class MockAddressFamily:
+    """Mock AddressFamily enum."""
+    INET = 2  # AF_INET
+    INET6 = 10  # AF_INET6
 
-    def asdict(self):
-        return {'aliases': self._aliases}
+
+class MockAddress:
+    """Mock address object that mimics netif address behavior."""
+    def __init__(self, ifname, family, address, prefixlen, broadcast=None):
+        self.ifname = ifname
+        self.family = family
+        self.address = address
+        self.prefixlen = prefixlen
+        self.broadcast = broadcast
 
 
 @pytest.fixture
 def mock_interfaces():
-    """Create a set of mock interfaces with various IPs."""
-    return {
-        'en0': MockInterface('en0', [
-            {'type': 'INET', 'address': '192.168.1.10', 'netmask': 24, 'broadcast': '192.168.1.255'},
-            {'type': 'INET6', 'address': '2001:db8::1', 'netmask': 64},
-            {'type': 'INET6', 'address': 'fe80::1', 'netmask': 64},  # link-local
-        ]),
-        'en1': MockInterface('en1', [
-            {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24, 'broadcast': '10.0.0.255'},
-            {'type': 'INET6', 'address': '2001:db8::2', 'netmask': 64},
-        ]),
-        'lo0': MockInterface('lo0', [
-            {'type': 'INET', 'address': '127.0.0.1', 'netmask': 8, 'broadcast': '127.255.255.255'},
-            {'type': 'INET6', 'address': '::1', 'netmask': 128},
-        ]),
-        'tap0': MockInterface('tap0', [  # Should be ignored by default
-            {'type': 'INET', 'address': '172.16.0.1', 'netmask': 24, 'broadcast': '172.16.0.255'},
-        ]),
-    }
+    """Create a list of mock address objects that mimics netif.get_address_netlink().get_addresses()."""
+    return [
+        # en0 addresses
+        MockAddress('en0', MockAddressFamily.INET, '192.168.1.10', 24, '192.168.1.255'),
+        MockAddress('en0', MockAddressFamily.INET6, '2001:db8::1', 64),
+        MockAddress('en0', MockAddressFamily.INET6, 'fe80::1', 64),  # link-local
+        # en1 addresses
+        MockAddress('en1', MockAddressFamily.INET, '10.0.0.10', 24, '10.0.0.255'),
+        MockAddress('en1', MockAddressFamily.INET6, '2001:db8::2', 64),
+        # lo0 addresses
+        MockAddress('lo0', MockAddressFamily.INET, '127.0.0.1', 8, '127.255.255.255'),
+        MockAddress('lo0', MockAddressFamily.INET6, '::1', 128),
+        # tap0 addresses (should be ignored by default)
+        MockAddress('tap0', MockAddressFamily.INET, '172.16.0.1', 24, '172.16.0.255'),
+    ]
 
 
 @pytest.fixture
@@ -75,7 +77,10 @@ def middleware_with_interfaces(mock_interfaces):
 def test_ip_in_use_default_behavior(middleware_with_interfaces, mock_interfaces):
     """Test default behavior returns all IPs from all non-internal interfaces."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -100,7 +105,10 @@ def test_ip_in_use_default_behavior(middleware_with_interfaces, mock_interfaces)
 def test_ip_in_use_with_single_interface(middleware_with_interfaces, mock_interfaces):
     """Test filtering by a single interface."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -124,7 +132,10 @@ def test_ip_in_use_with_single_interface(middleware_with_interfaces, mock_interf
 def test_ip_in_use_with_multiple_interfaces(middleware_with_interfaces, mock_interfaces):
     """Test filtering by multiple interfaces."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -148,7 +159,10 @@ def test_ip_in_use_with_multiple_interfaces(middleware_with_interfaces, mock_int
 def test_ip_in_use_with_empty_interfaces_list(middleware_with_interfaces, mock_interfaces):
     """Test that empty interfaces list behaves like default (all interfaces)."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -172,7 +186,10 @@ def test_ip_in_use_with_empty_interfaces_list(middleware_with_interfaces, mock_i
 def test_ip_in_use_with_nonexistent_interface(middleware_with_interfaces, mock_interfaces):
     """Test that non-existent interface names are ignored."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -198,7 +215,10 @@ def test_ip_in_use_with_loopback_and_interface_filter(middleware_with_interfaces
     middleware_with_interfaces['interface.internal_interfaces'] = Mock(return_value=['tap', 'epair', 'lo'])
 
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -222,7 +242,10 @@ def test_ip_in_use_with_loopback_and_interface_filter(middleware_with_interfaces
 def test_ip_in_use_with_static_filter_and_interfaces(middleware_with_interfaces, mock_interfaces):
     """Test combining static IP filter with interface filtering."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
@@ -246,7 +269,10 @@ def test_ip_in_use_with_static_filter_and_interfaces(middleware_with_interfaces,
 def test_ip_in_use_ipv6_link_local_with_interfaces(middleware_with_interfaces, mock_interfaces):
     """Test IPv6 link-local filtering with interface specification."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
 
@@ -284,7 +310,10 @@ def test_ip_in_use_ipv6_link_local_with_interfaces(middleware_with_interfaces, m
 def test_ip_in_use_any_option_not_affected_by_interfaces(middleware_with_interfaces, mock_interfaces):
     """Test that 'any' addresses (0.0.0.0, ::) are not affected by interface filter."""
     with patch('middlewared.plugins.network.netif') as mock_netif:
-        mock_netif.list_interfaces = Mock(return_value=mock_interfaces)
+        mock_netif.AddressFamily = MockAddressFamily
+        mock_address_netlink = Mock()
+        mock_address_netlink.get_addresses = Mock(return_value=mock_interfaces)
+        mock_netif.get_address_netlink = Mock(return_value=mock_address_netlink)
 
         service = create_service(middleware_with_interfaces, InterfaceService)
         result = service.ip_in_use({
