@@ -4,11 +4,13 @@ import os
 import contextlib
 import signal
 import asyncio
+import typing
+
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
-from middlewared.service import Service, filterable_api_method, private
+from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils import filter_list
 
@@ -50,7 +52,10 @@ class RouteService(Service):
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
                 ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interface_states().keys()))
+                interfaces = list()
+                for iface in netif.get_address_netlink().get_links():
+                    if not iface.startswith(ignore):
+                        interfaces.append(iface)
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -143,20 +148,31 @@ class RouteService(Service):
             if remove:
                 routing_table.delete(routing_table.default_route_ipv6)
 
+    @private
+    def gateway_is_reachable(self, gateway: str, ipv: typing.Literal[4, 6] = 4) -> bool:
+        match ipv:
+            case 4:
+                FAMILY, InterfaceClass = netif.AddressFamily.INET, ipaddress.IPv4Interface
+            case 6:
+                FAMILY, InterfaceClass = netif.AddressFamily.INET6, ipaddress.IPv6Interface
+            case _:
+                raise ValidationError('route.gw_reachable.ipv', f'Expected 4 or 6, got {ipv}')
+
+        gw = ipaddress.ip_address(gateway)
+        for addr in netif.get_address_netlink().get_addresses():
+            if addr.family != FAMILY or addr.scope == 254:  # skip wrong family and loopback
+                continue
+            if gw in InterfaceClass(f'{addr.address}/{addr.prefixlen}').network:
+                return True
+
+        return False
+
     @api_method(RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult, roles=['NETWORK_INTERFACE_READ'])
     def ipv4gw_reachable(self, ipv4_gateway):
         """
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
-        ignore_nics = ('lo', 'tap', 'epair')
-        for if_name, iface in list(netif.list_interface_states().items()):
-            if not if_name.startswith(ignore_nics):
-                for addr in iface.addresses:
-                    if addr.family == netif.AddressFamily.INET:
-                        ipv4_nic = ipaddress.IPv4Interface(f"{addr.address}/{addr.prefixlen}")
-                        if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
-                            return True
-        return False
+        return self.gateway_is_reachable(ipv4_gateway, ipv4=4)
 
     @private
     async def has_valid_router_announcements(self, interface):
