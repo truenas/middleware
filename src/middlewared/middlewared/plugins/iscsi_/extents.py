@@ -134,13 +134,14 @@ class iSCSITargetExtentService(SharingService):
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            await self.middleware.call(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(
-                    name=zvolname,
-                    zprops={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'}
+            if '@' not in zvolname:  # Snapshots don't support volthreading/readonly properties
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(
+                        name=zvolname,
+                        zprops={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'}
+                    )
                 )
-            )
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, {**data, 'vendor': EXTENT_DEFAULT_VENDOR},
@@ -177,13 +178,14 @@ class iSCSITargetExtentService(SharingService):
         zvolpath = new.get('path')
         if zvolpath is not None and zvolpath.startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
-            await self.middleware.call(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(
-                    name=zvolname,
-                    zprops={'readonly': 'on' if new['ro'] else 'off'}
+            if '@' not in zvolname:  # Snapshots don't support readonly property
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(
+                        name=zvolname,
+                        zprops={'readonly': 'on' if new['ro'] else 'off'}
+                    )
                 )
-            )
 
         await self.middleware.call(
             'datastore.update',
@@ -239,25 +241,26 @@ class iSCSITargetExtentService(SharingService):
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            if zvol := await self.call2(
-                self.s.zfs.resource.query_impl,
-                ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
-            ):
-                if (
-                    zvol[0]['type'] == 'VOLUME'
-                    and zvol[0]['properties']['volthreading']['raw'] == 'off'
+            if '@' not in zvolname:  # Snapshots don't support volthreading property
+                if zvol := await self.call2(
+                    self.s.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
                 ):
-                    # Only try to set volthreading if:
-                    # 1. volume still exists
-                    # 2. is a volume
-                    # 3. volthreading is currently off
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=zvolname,
-                            zprops={'volthreading': 'on'}
+                    if (
+                        zvol[0]['type'] == 'VOLUME'
+                        and zvol[0]['properties']['volthreading']['raw'] == 'off'
+                    ):
+                        # Only try to set volthreading if:
+                        # 1. volume still exists
+                        # 2. is a volume
+                        # 3. volthreading is currently off
+                        await self.middleware.call(
+                            'pool.dataset.update_impl',
+                            UpdateImplArgs(
+                                name=zvolname,
+                                zprops={'volthreading': 'on'}
+                            )
                         )
-                    )
 
         try:
             return await self.middleware.call(
