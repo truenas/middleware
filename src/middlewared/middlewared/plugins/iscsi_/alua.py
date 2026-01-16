@@ -812,7 +812,7 @@ class iSCSITargetAluaService(Service):
         job.set_progress(100, 'Complete force-close of iSCSI sessions')
         self.logger.debug('Complete force-close of iSCSI sessions')
 
-    @job(lock='reset_active', transient=True, lock_queue_size=1)
+    @job(lock='reset_active', lock_queue_size=1)
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
 
