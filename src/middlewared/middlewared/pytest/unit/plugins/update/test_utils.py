@@ -31,6 +31,10 @@ from middlewared.plugins.update_.utils import can_update
     ("TrueNAS-SCALE-22.02-MASTER-20211029-134913", "TrueNAS-SCALE-22.02-CUSTOM", True),
     ("22.02.0", "22.02.CUSTOM", True),
     ("22.12.2-INTERNAL.9", "22.12.2-INTERNAL.11", True),
+    # Once per year cadence
+    ("25.10.2", "26-BETA.1", True),
+    ("26-BETA.1", "26.0", True),
+    ("25.10.2", "26.0", True),
 ])
 def test__can_update(old_version, new_version, result):
     assert can_update(old_version, new_version) is result
