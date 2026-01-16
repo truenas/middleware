@@ -2136,6 +2136,7 @@ def _get_active_target_portal_group():
 
 def _wait_for_alua_settle(retries=20):
     print("Checking ALUA status...")
+    sleep(5)
     while retries:
         if call('iscsi.alua.settled'):
             print("ALUA is settled")
