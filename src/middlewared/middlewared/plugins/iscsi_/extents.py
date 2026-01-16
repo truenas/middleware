@@ -229,22 +229,21 @@ class iSCSITargetExtentService(SharingService):
                         'iscsi.alua.added_target_extent',
                         [target_name]
                     )
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        self.logger.exception('Failed to update STANDBY node')
-                        # Better to continue than to raise the exception
-                # Now update the remote node
-                await self.middleware.call(
-                    'failover.call_remote',
-                    'service.control',
-                    ['RELOAD', 'iscsitarget'],
-                    {'job': True},
-                )
-                await self.middleware.call(
-                    'iscsi.alua.wait_cluster_mode',
-                    assoc['target'],
-                    assoc['extent']
-                )
+                    # Now update the remote node.  Since it is
+                    # not the MASTER it will not propagate back.
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'service.control',
+                        ['RELOAD', 'iscsitarget'],
+                        {'job': True},
+                    )
+                    await self.middleware.call(
+                        'iscsi.alua.wait_cluster_mode',
+                        assoc['target'],
+                        assoc['extent']
+                    )
+                except Exception:
+                    self.logger.exception('Failed to update STANDBY node')
             else:
                 # Just disenabled the extent
                 await self.middleware.call(
@@ -259,13 +258,16 @@ class iSCSITargetExtentService(SharingService):
                         'iscsi.alua.removed_target_extent',
                         [target_name, assoc['lunid'], old['name']]
                     )
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        self.logger.exception('Failed to update STANDBY node')
-                        # Better to continue than to raise the exception
+                    # Now update the remote node.  Since it is
+                    # not the MASTER it will not propagate back.
                     await self.middleware.call(
-                        'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
+                        'failover.call_remote',
+                        'service.control',
+                        ['RELOAD', 'iscsitarget'],
+                        {'job': True},
                     )
+                except Exception:
+                    self.logger.exception('Failed to update STANDBY node')
             # Either way wait for ALUA settle
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
         else:

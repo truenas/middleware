@@ -133,7 +133,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                             extent['id'], extent['name']
                         )
                         # Better to continue than to raise the exception
-                # Now update the remote node
+                # Now that all extents have been processed, reload STANDBY
                 await self.middleware.call(
                     'failover.call_remote',
                     'service.control',

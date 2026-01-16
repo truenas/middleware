@@ -727,7 +727,8 @@ class iSCSITargetAluaService(Service):
                     rjob = await self.middleware.call(
                         'service.control',
                         'RELOAD',
-                        'iscsitarget'
+                        'iscsitarget',
+                        self.HA_PROPAGATE
                     )
                     await rjob.wait(raise_error=True)
 
