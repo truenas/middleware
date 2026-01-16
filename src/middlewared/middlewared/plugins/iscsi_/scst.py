@@ -1,8 +1,9 @@
 import asyncio
+import itertools
 import pathlib
 
 from middlewared.service import Service
-from .utils import chunker, ISCSI_TARGET_PARAMETERS, sanitize_extent
+from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
@@ -32,7 +33,7 @@ class iSCSITargetService(Service):
         text = f'{int(value)}\n'
         paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
         if paths:
-            for chunk in chunker(paths, 10):
+            for chunk in itertools.batched(paths, 10):
                 await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in chunk])
 
     def cluster_mode_paths(self):

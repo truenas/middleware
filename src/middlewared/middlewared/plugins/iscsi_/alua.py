@@ -6,7 +6,7 @@ from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 
-from .utils import chunker, delete_scsi_disk
+from .utils import delete_scsi_disk
 
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
@@ -535,7 +535,7 @@ class iSCSITargetAluaService(Service):
         device_to_srcextent = {v: k for k, v in logged_in_extents.items()}
         pruned_devices = [device for device in devices if device in device_to_srcextent]
         need_to_reload = False
-        for chunk in chunker(pruned_devices, 10):
+        for chunk in itertools.batched(pruned_devices, 10):
             # First wait to ensure cluster_mode paths are present (10 x 0.2 = 2 secs)
             retries = 10
             while retries:
