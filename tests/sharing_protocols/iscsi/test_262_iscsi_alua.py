@@ -47,6 +47,7 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             _debug('Checking ALUA status...')
         retries = 12
+        sleep(5)
         while retries:
             if call('iscsi.alua.settled'):
                 if self.VERBOSE:
