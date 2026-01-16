@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import pathlib
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import Service, job
@@ -700,14 +701,34 @@ class iSCSITargetAluaService(Service):
                 # Next we will disable cluster_mode for the extent
                 ha_iqn = f'{global_basename}:HA:{target_name}'
                 device = await self.middleware.call('iscsi.extent.logged_in_extent', ha_iqn, lun)
+                deleted = False
                 if device:
                     await self.middleware.call('iscsi.scst.set_devices_cluster_mode', [device], 0)
+                    try:
+                        # If this was *not* the last LUN associated with the iqn then we can
+                        # attempt to optimize.
+                        devices = (await self.middleware.call('iscsi.target.logged_in_iqns')).get(ha_iqn, [])
+                        if len(devices) > 1:
+                            await asyncio.sleep(2)
+                            try:
+                                p = pathlib.Path(f'/sys/class/scsi_disk/{device}/device/delete')
+                                p.write_text('1\n')
+                                await asyncio.sleep(1)
+                                if deleted := not p.exists():
+                                    self.logger.debug('Optimized removal of %r', device)
+                            except Exception:
+                                pass
+                    except Exception:
+                        self.logger.warning(
+                            'Exception when attempting to optimize %r %r',
+                            ha_iqn, lun, exc_info=True
+                        )
 
-                # If we have removed a LUN from a target, it'd be nice to think that we could just do one of the following
-                # - for i in /sys/class/scsi_device/*/device/rescan ; do echo 1 > $i ; done
-                # - iscsiadm -m node -R
-                # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
-                await self.middleware.call('iscsi.target.logout_ha_target', target_name)
+                if not deleted:
+                    # We have removed a LUN from a target, and failed to optimize.
+                    # Therefore logout the ENTIRE target.  The subsequent reload will
+                    # log back in again.
+                    await self.middleware.call('iscsi.target.logout_ha_target', target_name)
             finally:
                 if do_reload:
                     await (await self.middleware.call('service.control',
