@@ -27,7 +27,7 @@ class NIC(Device):
         return nic_attach
 
     def is_available(self):
-        return self.identity() in netif.list_interfaces()
+        return self.identity() in netif.list_interface_states()
 
     @staticmethod
     def random_mac():
@@ -38,7 +38,7 @@ class NIC(Device):
 
     def setup_nic_attach(self):
         nic_attach = self.data['attributes'].get('nic_attach')
-        interfaces = netif.list_interfaces()
+        interfaces = netif.list_interface_states()
         if nic_attach and nic_attach not in interfaces:
             raise CallError(f'{nic_attach} not found.')
         else:

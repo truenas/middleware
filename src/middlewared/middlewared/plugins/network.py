@@ -163,7 +163,7 @@ class InterfaceService(CRUDService):
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
         ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
-        for name, iface in netif.list_interfaces().items():
+        for name, iface in netif.list_interface_states().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
             elif ignore_usb_nics and iface.bus == 'usb':
@@ -1745,9 +1745,7 @@ class InterfaceService(CRUDService):
 
     @api_method(InterfaceIpInUseArgs, InterfaceIpInUseResult, roles=['NETWORK_INTERFACE_READ'])
     def ip_in_use(self, choices):
-        """
-        Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
-        """
+        """Get all IPv4 / IPv6 from all valid interfaces"""
         list_of_ip = []
         static_ips = {}
         # Filter by specified interfaces if provided
@@ -1788,27 +1786,48 @@ class InterfaceService(CRUDService):
             static_ips['::1'] = '::1'
 
         ignore_nics = tuple(ignore_nics)
-        for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
-            # Skip interfaces not in the specified list if interfaces were specified
-            if specified_interfaces and iface.orig_name not in specified_interfaces:
+        link_local_net = ipaddress.ip_network('fe80::/64')
+        for addr in netif.get_address_netlink().get_addresses():
+            # Skip if interface name couldn't be resolved
+            if not addr.ifname:
                 continue
-            try:
-                aliases_list = iface.asdict()['aliases']
-            except FileNotFoundError:
-                # This happens on freebsd where we have a race condition when the interface
-                # might no longer possibly exist when we try to retrieve data from it
-                pass
+
+            # Skip ignored interfaces
+            if addr.ifname.startswith(ignore_nics):
+                continue
+
+            # Skip interfaces not in the specified list if interfaces were specified
+            if specified_interfaces and addr.ifname not in specified_interfaces:
+                continue
+
+            # Determine address type
+            if addr.family == netif.AddressFamily.INET:
+                if not choices['ipv4']:
+                    continue
+                addr_type = 'INET'
+            elif addr.family == netif.AddressFamily.INET6:
+                if not choices['ipv6']:
+                    continue
+                # Skip link-local addresses if not requested
+                if not choices['ipv6_link_local']:
+                    if ipaddress.ip_address(addr.address) in link_local_net:
+                        continue
+                addr_type = 'INET6'
             else:
-                for alias_dict in filter(lambda d: not choices['static'] or d['address'] in static_ips, aliases_list):
+                continue
 
-                    if choices['ipv4'] and alias_dict['type'] == 'INET':
-                        list_of_ip.append(alias_dict)
+            # Skip non-static addresses if static filter is enabled
+            if choices['static'] and addr.address not in static_ips:
+                continue
 
-                    if choices['ipv6'] and alias_dict['type'] == 'INET6':
-                        if not choices['ipv6_link_local']:
-                            if ipaddress.ip_address(alias_dict['address']) in ipaddress.ip_network('fe80::/64'):
-                                continue
-                        list_of_ip.append(alias_dict)
+            entry = {
+                'type': addr_type,
+                'address': addr.address,
+                'netmask': addr.prefixlen,
+            }
+            if addr.broadcast:
+                entry['broadcast'] = addr.broadcast
+            list_of_ip.append(entry)
 
         return list_of_ip
 
