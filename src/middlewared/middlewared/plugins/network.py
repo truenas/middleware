@@ -1651,7 +1651,7 @@ class InterfaceService(CRUDService):
 
         internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
         dhclient_aws = []
-        for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interface_states().items())):
+        for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
                 continue
