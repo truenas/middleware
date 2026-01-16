@@ -118,7 +118,10 @@ class DNSService(Service):
                 interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
             else:
                 ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
-                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interface_states().keys()))
+                interfaces = list()
+                for ifname in netif.list_interface_states():
+                    if not ifname.startswith(ignore):
+                        interfaces.append(ifname)
 
             dns_from_dhcp = set()
             for iface in interfaces:
