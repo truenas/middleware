@@ -2,9 +2,11 @@ import asyncio
 import itertools
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
-from middlewared.service import CallError, Service, job
+from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
+
+from .utils import delete_scsi_disk
 
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
@@ -14,12 +16,6 @@ GET_UNIT_STATE_SECONDS = 2
 RELOAD_REMOTE_QUICK_RETRIES = 10
 STANDBY_ENABLE_DEVICES_RETRIES = 10
 REMOTE_RELOAD_LONG_DELAY_SECS = 300
-
-
-def chunker(it, size):
-    iterator = iter(it)
-    while chunk := list(itertools.islice(iterator, size)):
-        yield chunk
 
 
 class iSCSITargetAluaService(Service):
@@ -52,6 +48,7 @@ class iSCSITargetAluaService(Service):
         self.enabled = set()
         self.standby_starting = False
         self.standby_alua_ready = False
+        self.standby_skip_cluster_mode = False
 
         self.active_elected_job = None
         self.activate_extents_job = None
@@ -64,6 +61,7 @@ class iSCSITargetAluaService(Service):
         self._standby_write_empty_config = None
 
     async def before_start(self):
+        self.standby_skip_cluster_mode = True
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 self._standby_write_empty_config = True
@@ -76,6 +74,13 @@ class iSCSITargetAluaService(Service):
 
     async def before_stop(self):
         self.standby_starting = False
+
+    async def after_stop(self):
+        self.standby_skip_cluster_mode = True
+        if await self.middleware.call('failover.status') == 'BACKUP':
+            # Good hygiene
+            self._standby_write_empty_config = True
+            await self.middleware.call('etc.generate', 'scst')
 
     async def standby_enable_devices(self, devices):
         await self.middleware.call('iscsi.target.login_ha_targets')
@@ -233,6 +238,46 @@ class iSCSITargetAluaService(Service):
         if await self.middleware.call('iscsi.scst.clear_suspend'):
             self.logger.debug('iSCSI unsuspended')
 
+    async def check_luns(self):
+        try:
+
+            _active_targets = await self.middleware.call('iscsi.target.active_targets')
+            _active_iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+            _logged_in_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+            # Let's ensure that _active_targets has IQNs with all required LUNs
+            for _targetname, _lundict in _active_targets.items():
+                if _iqn := _active_iqns.get(_targetname):
+                    # Check that the LUNs match expected
+                    _luns_present_set = {int(dev.split(":")[-1]) for dev in _logged_in_iqns.get(_iqn, [])}
+                    _luns_required_set = set(_lundict.keys())
+                    _missing = _luns_required_set - _luns_present_set
+                    _extra = _luns_present_set - _luns_required_set
+                    if _missing or _extra:
+                        if _missing:
+                            self.logger.debug('HA IQN %r missing LUNs %r', _iqn, _missing)
+                        if _extra:
+                            self.logger.debug('HA IQN %r extra LUNs %r', _iqn, _extra)
+                        return False
+                else:
+                    self.logger.debug('HA IQN missing %r', _iqn)
+                    return False
+
+            # Now let's ensure that the devices surfaced all the way
+            _devices = set()
+            for devs in _logged_in_iqns.values():
+                _devices.update(devs)
+            _cm_devices = set(await self.middleware.call('iscsi.scst.copy_manager_devices'))
+            _missing = _devices - _cm_devices
+            if _missing:
+                self.logger.debug('Some devices did not surface through copy manager %r', _missing)
+                return False
+
+        except Exception:
+            self.logger.warning('Failed to check LUNs', exc_info=True)
+            return False
+        return True
+
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
         job.set_progress(0, 'ALUA starting on STANDBY')
@@ -285,29 +330,11 @@ class iSCSITargetAluaService(Service):
             job.set_progress(22, 'Remote iscsitarget is active')
             self.logger.debug('Remote iscsitarget is active')
 
-        # Next turn off cluster_mode for all the extents.
-        # this will avoid "ignore dlm msg because seq mismatch" errors when we reconnect
-        # Rather than try to execute in parallel, we will take our time
-        cr_opts = {'timeout': 10, 'connect_timeout': 10}
-        logged_enomethod = False
+        # Do cleanup of DLM on ACTIVE
         while self.standby_starting:
             try:
-                try:
-                    devices = await self.middleware.call('failover.call_remote', 'iscsi.scst.cluster_mode_devices_set', [], cr_opts)
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        raise
-                    # We have not yet upgraded the other node
-                    if not logged_enomethod:
-                        self.logger.debug('Awaiting the ACTIVE node being upgraded.')
-                        logged_enomethod = True
-                    await asyncio.sleep(SLOW_RETRY_SECONDS)
-                    continue
-                # We did manage to call cluster_mode_devices_set
-                if not devices:
-                    break
-                for device in devices:
-                    await self.middleware.call('failover.call_remote', 'iscsi.scst.set_device_cluster_mode', [device, 0], cr_opts)
+                await self.middleware.call('failover.call_remote', 'iscsi.alua.reset_active', [], {"job": True})
+                break
             except Exception:
                 # This is a fail-safe exception catch.  Should never occur.
                 self.logger.warning('Unexpected failure while cleaning up ACTIVE cluster_mode', exc_info=True)
@@ -393,7 +420,9 @@ class iSCSITargetAluaService(Service):
                 devices = list(itertools.chain.from_iterable([x for x in after_iqns.values() if x is not None]))
                 if await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', devices):
                     self.logger.debug(f'cluster_mode surfaced for {devices}')
-                    break
+                    if await self.check_luns():
+                        self.logger.debug('Required LUNs appear present')
+                        break
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
                 self._standby_write_empty_config = False
@@ -404,6 +433,7 @@ class iSCSITargetAluaService(Service):
                 self.logger.warning('Failed to login and surface HA targets', exc_info=True)
 
         # Now that the ground is cleared, start enabling cluster_mode on extents
+        self.standby_skip_cluster_mode = False
         while self.standby_starting:
             try:
                 # We'll refetch the extents each time round the loop in case more have been added
@@ -497,7 +527,7 @@ class iSCSITargetAluaService(Service):
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
-        if self._standby_write_empty_config is not False:
+        if self.standby_skip_cluster_mode or self._standby_write_empty_config is not False:
             self.logger.debug('Skipping standby_fix_cluster_mode')
             return
         job.set_progress(0, 'Fixing cluster_mode')
@@ -505,7 +535,7 @@ class iSCSITargetAluaService(Service):
         device_to_srcextent = {v: k for k, v in logged_in_extents.items()}
         pruned_devices = [device for device in devices if device in device_to_srcextent]
         need_to_reload = False
-        for chunk in chunker(pruned_devices, 10):
+        for chunk in itertools.batched(pruned_devices, 10):
             # First wait to ensure cluster_mode paths are present (10 x 0.2 = 2 secs)
             retries = 10
             while retries:
@@ -621,7 +651,7 @@ class iSCSITargetAluaService(Service):
             self.logger.debug(f'Completed wait for {lextent}/{rextent} to enter cluster_mode')
             return
 
-    async def removed_target_extent(self, target_name, lun, extent_name):
+    async def removed_target_extent(self, target_name, lun, extent_name, do_reload=True):
         """This is called on the STANDBY node to remove an extent from a target."""
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
             try:
@@ -670,16 +700,37 @@ class iSCSITargetAluaService(Service):
                 # Next we will disable cluster_mode for the extent
                 ha_iqn = f'{global_basename}:HA:{target_name}'
                 device = await self.middleware.call('iscsi.extent.logged_in_extent', ha_iqn, lun)
+                deleted = False
                 if device:
                     await self.middleware.call('iscsi.scst.set_devices_cluster_mode', [device], 0)
+                    try:
+                        # If this was *not* the last LUN associated with the iqn then we can
+                        # attempt to optimize.
+                        devices = (await self.middleware.call('iscsi.target.logged_in_iqns')).get(ha_iqn, [])
+                        if len(devices) > 1:
+                            await asyncio.sleep(2)
+                            if deleted := await self.middleware.run_in_thread(delete_scsi_disk, device):
+                                self.logger.debug('Optimized removal of %r', device)
+                    except Exception:
+                        self.logger.warning(
+                            'Exception when attempting to optimize %r %r',
+                            ha_iqn, lun, exc_info=True
+                        )
 
-                # If we have removed a LUN from a target, it'd be nice to think that we could just do one of the following
-                # - for i in /sys/class/scsi_device/*/device/rescan ; do echo 1 > $i ; done
-                # - iscsiadm -m node -R
-                # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
-                await self.middleware.call('iscsi.target.logout_ha_target', target_name)
+                if not deleted:
+                    # We have removed a LUN from a target, and failed to optimize.
+                    # Therefore logout the ENTIRE target.  The subsequent reload will
+                    # log back in again.
+                    await self.middleware.call('iscsi.target.logout_ha_target', target_name)
             finally:
-                await (await self.middleware.call('service.control', 'RELOAD', 'iscsitarget')).wait(raise_error=True)
+                if do_reload:
+                    rjob = await self.middleware.call(
+                        'service.control',
+                        'RELOAD',
+                        'iscsitarget',
+                        self.HA_PROPAGATE
+                    )
+                    await rjob.wait(raise_error=True)
 
     async def added_target_extent(self, target_name):
         """This is called on the STANDBY node after an extent has been added to a target."""
@@ -703,6 +754,17 @@ class iSCSITargetAluaService(Service):
                     'iscsi.alua.standby_fix_cluster_mode',
                 ]),
                 ('state', 'in', ['RUNNING', 'WAITING']),
+            ]
+        )
+        if bool(running_jobs):
+            return True
+
+        # Any RELOAD going on?
+        running_jobs = await self.middleware.call(
+            'core.get_jobs', [
+                ('method', '=', 'service.control'),
+                ('arguments', '=', ['RELOAD', 'iscsitarget']),
+                ('state', 'in', ['RUNNING', 'WAITING'])
             ]
         )
         return bool(running_jobs)
@@ -750,11 +812,20 @@ class iSCSITargetAluaService(Service):
         job.set_progress(100, 'Complete force-close of iSCSI sessions')
         self.logger.debug('Complete force-close of iSCSI sessions')
 
-    @job(lock='reset_active', transient=True, lock_queue_size=1)
+    @job(lock='reset_active', lock_queue_size=1)
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
-        job.set_progress(0, 'Start logout HA targets')
-        self.logger.debug('Start logout HA targets')
+
+        job.set_progress(0, 'Reset active')
+        self.logger.debug('Reset active')
+        await self.middleware.call('dlm.local_reset', False)
+        self.logger.debug('Reset local DLM')
+        job.set_progress(10, 'Reset local DLM')
+
+        # Kernel comms to the peer node might not be in a clean state.
+        await self.middleware.call('dlm.recreate_comms_peer')
+        self.logger.debug('Recreated peer comms')
+        job.set_progress(20, 'Recreated peer comms')
 
         # This is similar, but not identical to iscsi.target.logout_ha_targets
         # The main difference is these are logged out in series, to allow e.g. cluster_mode settle
@@ -764,6 +835,8 @@ class iSCSITargetAluaService(Service):
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
 
+        job.set_progress(50, 'Start logout HA targets')
+        self.logger.debug('Start logout HA targets')
         # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
         todo = set(iqn for iqn in iqns.values() if iqn in existing)
 
@@ -777,8 +850,4 @@ class iSCSITargetAluaService(Service):
                 self.logger.warning('Failed to logout %r', iqn, exc_info=True)
 
         self.logger.debug('Logged out %d HA targets', count)
-        job.set_progress(50, 'Logged out HA targets')
-
-        await self.middleware.call('dlm.eject_peer')
-        self.logger.debug('Ejected peer')
-        job.set_progress(10, 'Ejected peer')
+        job.set_progress(100, 'Logged out HA targets')

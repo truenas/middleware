@@ -181,12 +181,6 @@ class ISCSIGlobalService(SystemServiceService):
                 await self.middleware.call(
                     'failover.call_remote', 'service.control', ['START', 'iscsitarget'], {'job': True},
                 )
-            # Force a scst.conf update
-            # When turning off ALUA we want to clean up scst.conf, and when turning it on
-            # we want to give any existing target a kick to come up as a dev_disk
-            await self.middleware.call(
-                'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
-            )
 
         # If we have just turned off iSNS then work around a short-coming in scstadmin reload
         if old['isns_servers'] != new['isns_servers'] and not servers:

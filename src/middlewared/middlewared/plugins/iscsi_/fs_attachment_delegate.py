@@ -1,4 +1,5 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.service_exception import MatchNotFound
 
 from .extents import iSCSITargetExtentService
 
@@ -33,7 +34,119 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         await self._service_change('iscsitarget', 'reload')
 
     async def stop(self, attachments):
-        await self.restart_reload_services(attachments)
+        if attachments:
+            # Reload ACTIVE
+            await self._service_change(
+                'iscsitarget',
+                'reload',
+                options={'ha_propagate': False}
+            )
+            alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
+            if alua_enabled and await self.middleware.call('failover.remote_connected'):
+                for extent in attachments:
+                    try:
+                        assoc = await self.middleware.call(
+                            'iscsi.targetextent.query',
+                            [['extent', '=', extent['id']]],
+                            {'get': True}
+                        )
+                        target_name = (await self.middleware.call(
+                            'iscsi.target.query',
+                            [['id', '=', assoc['target']]],
+                            {'select': ['name'], 'get': True}))['name']
+                    except MatchNotFound:
+                        self.logger.debug(
+                            'Failed to obtain details for extent %r (%r)',
+                            extent['id'],
+                            extent['name']
+                        )
+                        continue
+
+                    # Check that the HA target is no longer offering the LUN that we just deleted.
+                    # Wait a short period if necessary (though this should not be required).
+                    await self.middleware.call(
+                        'iscsi.target.wait_for_ha_lun_absent',
+                        target_name,
+                        assoc['lunid']
+                    )
+                    try:
+                        # iscsi.alua.removed_target_extent includes a local service reload
+                        # Turn off the implicit RELOAD as we'll reload when finished the
+                        # attachments loop.
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.alua.removed_target_extent',
+                            [target_name, assoc['lunid'], extent['name'], False]
+                        )
+                    except Exception:
+                        self.logger.exception('Failed to update STANDBY node')
+                        # Better to continue than to raise the exception
+                # Now that all extents have been processed, reload STANDBY
+                await self.middleware.call(
+                    'failover.call_remote',
+                    'service.control',
+                    ['RELOAD', 'iscsitarget'],
+                    {'job': True},
+                )
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+
+    async def start(self, attachments):
+        if attachments:
+            alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
+            remote_connected = await self.middleware.call('failover.remote_connected')
+            service_started = await self.middleware.call('service.started', self.service)
+            if alua_enabled and remote_connected and service_started:
+                await self._service_change(
+                    'iscsitarget',
+                    'reload',
+                    options={'ha_propagate': False}
+                )
+                for extent in attachments:
+                    try:
+                        assoc = await self.middleware.call(
+                            'iscsi.targetextent.query',
+                            [['extent', '=', extent['id']]],
+                            {'get': True}
+                        )
+                        target_name = (await self.middleware.call(
+                            'iscsi.target.query',
+                            [['id', '=', assoc['target']]],
+                            {'select': ['name'], 'get': True}))['name']
+                    except MatchNotFound:
+                        self.logger.warning('Failed to update extent %r %r',
+                                            extent['id'], extent['name'])
+                        continue
+                    await self.middleware.call(
+                        'iscsi.target.wait_for_ha_lun_present',
+                        target_name,
+                        assoc['lunid']
+                    )
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.alua.added_target_extent',
+                            [target_name]
+                        )
+                    except Exception:
+                        self.logger.exception(
+                            'Failed to update STANDBY node for %r %r',
+                            extent['id'], extent['name']
+                        )
+                        # Better to continue than to raise the exception
+                # Now that all extents have been processed, reload STANDBY
+                await self.middleware.call(
+                    'failover.call_remote',
+                    'service.control',
+                    ['RELOAD', 'iscsitarget'],
+                    {'job': True},
+                )
+                await self.middleware.call(
+                    'iscsi.alua.wait_cluster_mode',
+                    assoc['target'],
+                    assoc['extent']
+                )
+            else:
+                await super().start(attachments)
 
 
 async def setup(middleware):

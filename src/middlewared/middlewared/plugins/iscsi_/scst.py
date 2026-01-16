@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import pathlib
 
 from middlewared.service import Service
@@ -7,6 +8,7 @@ from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
+COPY_MANAGER_LUNS_PATH = '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
 SCST_DEVICES = '/sys/kernel/scst_tgt/devices'
 SCST_SUSPEND = '/sys/kernel/scst_tgt/suspend'
 SCST_CONTROLLER_A_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
@@ -31,7 +33,8 @@ class iSCSITargetService(Service):
         text = f'{int(value)}\n'
         paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
         if paths:
-            await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in paths])
+            for chunk in itertools.batched(paths, 10):
+                await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in chunk])
 
     def cluster_mode_paths(self):
         scst_tgt_devices = pathlib.Path(SCST_DEVICES)
@@ -172,3 +175,16 @@ class iSCSITargetService(Service):
             self.logger.debug("Failed to apply SCST configuration", exc_info=True)
             return False
         return True
+
+    def copy_manager_devices(self):
+        result = []
+        try:
+            copy_manager_luns = pathlib.Path(COPY_MANAGER_LUNS_PATH)
+            for p in copy_manager_luns.glob('*/device'):
+                try:
+                    result.append(p.resolve().name)
+                except (FileNotFoundError, PermissionError):
+                    pass
+        except (FileNotFoundError, PermissionError):
+            pass
+        return result
