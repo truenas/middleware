@@ -257,7 +257,7 @@ class iSCSITargetAluaService(Service):
                         if _missing:
                             self.logger.debug('HA IQN %r missing LUNs %r', _iqn, _missing)
                         if _extra:
-                            self.logger.debug('HA IQN %r missing LUNs %r', _iqn, _extra)
+                            self.logger.debug('HA IQN %r extra LUNs %r', _iqn, _extra)
                         return False
                 else:
                     self.logger.debug('HA IQN missing %r', _iqn)
