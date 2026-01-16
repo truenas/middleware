@@ -1,6 +1,8 @@
 import itertools
+import pathlib
 import re
 from enum import StrEnum
+from time import sleep
 
 HBTL = re.compile('^\\d:\\d:\\d:\\d$')
 
@@ -45,3 +47,17 @@ def chunker(it, size):
     iterator = iter(it)
     while chunk := list(itertools.islice(iterator, size)):
         yield chunk
+
+
+def delete_scsi_disk(device):
+    """Delete the specified device.  Returns True on success, False otherwise."""
+    try:
+        p = pathlib.Path(f'/sys/class/scsi_disk/{device}/device/delete')
+        p.write_text('1\n')
+        sleep(1)
+        if p.exists():
+            return False
+        else:
+            return True
+    except Exception:
+        False

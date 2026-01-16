@@ -913,7 +913,7 @@ class iSCSITargetService(CRUDService):
                 return
             retries -= 1
             await asyncio.sleep(1)
-        self.logger.warning('Failed to remove lun %r from internal target %r', lunid, iqn, exc_info=True)
+        self.logger.warning('Failed to remove lun %r from internal target %r', lunid, iqn)
 
     @private
     async def wait_for_ha_lun_present(self, target_name, lunid):
@@ -924,4 +924,4 @@ class iSCSITargetService(CRUDService):
                 return
             retries -= 1
             await asyncio.sleep(1)
-        self.logger.warning('Failed to add lun %r to internal target %r', lunid, iqn, exc_info=True)
+        self.logger.warning('Failed to add lun %r to internal target %r', lunid, iqn)

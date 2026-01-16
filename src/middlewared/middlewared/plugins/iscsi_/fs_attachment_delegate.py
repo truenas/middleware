@@ -41,9 +41,8 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                 'reload',
                 options={'ha_propagate': False}
             )
-            if (await self.middleware.call(
-                    'iscsi.global.alua_enabled') and await self.middleware.call(
-                    'failover.remote_connected')):
+            alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
+            if alua_enabled and await self.middleware.call('failover.remote_connected'):
                 for extent in attachments:
                     try:
                         assoc = await self.middleware.call(
@@ -93,11 +92,10 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
     async def start(self, attachments):
         if attachments:
-            if (await self.middleware.call(
-                    'service.started', self.service) and await self.middleware.call(
-                    'iscsi.global.alua_enabled') and await self.middleware.call(
-                    'failover.remote_connected')):
-                pass
+            alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
+            remote_connected = await self.middleware.call('failover.remote_connected')
+            service_started = await self.middleware.call('service.started', self.service)
+            if alua_enabled and remote_connected and service_started:
                 await self._service_change(
                     'iscsitarget',
                     'reload',

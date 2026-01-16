@@ -231,7 +231,7 @@ class iSCSITargetExtentService(SharingService):
                     )
                 except CallError as e:
                     if e.errno != CallError.ENOMETHOD:
-                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        self.logger.exception('Failed to update STANDBY node')
                         # Better to continue than to raise the exception
                 # Now update the remote node
                 await self.middleware.call(
@@ -261,7 +261,7 @@ class iSCSITargetExtentService(SharingService):
                     )
                 except CallError as e:
                     if e.errno != CallError.ENOMETHOD:
-                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        self.logger.exception('Failed to update STANDBY node')
                         # Better to continue than to raise the exception
                     await self.middleware.call(
                         'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},

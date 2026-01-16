@@ -1,13 +1,12 @@
 import asyncio
 import itertools
-import pathlib
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 
-from .utils import chunker
+from .utils import chunker, delete_scsi_disk
 
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
@@ -710,14 +709,8 @@ class iSCSITargetAluaService(Service):
                         devices = (await self.middleware.call('iscsi.target.logged_in_iqns')).get(ha_iqn, [])
                         if len(devices) > 1:
                             await asyncio.sleep(2)
-                            try:
-                                p = pathlib.Path(f'/sys/class/scsi_disk/{device}/device/delete')
-                                p.write_text('1\n')
-                                await asyncio.sleep(1)
-                                if deleted := not p.exists():
-                                    self.logger.debug('Optimized removal of %r', device)
-                            except Exception:
-                                pass
+                            if deleted := await self.middleware.run_in_thread(delete_scsi_disk, device):
+                                self.logger.debug('Optimized removal of %r', device)
                     except Exception:
                         self.logger.warning(
                             'Exception when attempting to optimize %r %r',
@@ -731,9 +724,12 @@ class iSCSITargetAluaService(Service):
                     await self.middleware.call('iscsi.target.logout_ha_target', target_name)
             finally:
                 if do_reload:
-                    await (await self.middleware.call('service.control',
-                                                      'RELOAD',
-                                                      'iscsitarget')).wait(raise_error=True)
+                    rjob = await self.middleware.call(
+                        'service.control',
+                        'RELOAD',
+                        'iscsitarget'
+                    )
+                    await rjob.wait(raise_error=True)
 
     async def added_target_extent(self, target_name):
         """This is called on the STANDBY node after an extent has been added to a target."""
