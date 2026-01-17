@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 
 import isodate
@@ -6,16 +8,17 @@ from sqlalchemy import (
     Boolean, CHAR, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )  # noqa
 from sqlalchemy import JSON as NativeJSON  # noqa
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import relationship  # noqa
+from sqlalchemy.orm import declarative_base, relationship  # noqa
 from sqlalchemy.types import UserDefinedType, TypeDecorator
 
 from truenas_api_client import json
 
 from middlewared.utils.pwenc import encrypt, decrypt
 
+__all__ = ["Model", "Column", "Boolean", "Integer", "Text"]
 
-class Base(object):
+
+class Base:
     __table_args__ = {"sqlite_autoincrement": True}
 
 
@@ -32,7 +35,7 @@ Model.metadata.naming_convention = {
 class Column(_Column):
     inherit_cache = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> Column:
         kwargs.setdefault("nullable", False)
         super().__init__(*args, **kwargs)
 

@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 import time
+from typing import Any, Callable
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, private, Service
@@ -16,21 +17,26 @@ run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encodi
 STARTING_INSTALLER = "Starting installer"
 
 
-def get_hash(file_path, digest="sha1"):
+def get_hash(file_path: str, digest: str = "sha1") -> str:
     with open(file_path, 'rb') as f:
         return hashlib.file_digest(f, digest).hexdigest()
 
 
 class UpdateService(Service):
     @private
-    def install_scale(self, mounted, progress_callback, options):
+    def install_scale(
+        self,
+        mounted: str,
+        progress_callback: Callable[[float, str], None],
+        options: dict[str, Any],
+    ) -> None:
         raise_warnings = options.pop("raise_warnings", True)
 
         with open(os.path.join(mounted, "manifest.json")) as f:
             manifest = json.load(f)
 
         boot_pool_name = self.middleware.call_sync("boot.pool_name")
-        self.middleware.call_sync("update.ensure_free_space", boot_pool_name, manifest["size"])
+        self.call_sync2(self.s.update.ensure_free_space, boot_pool_name, manifest["size"])
 
         for file, checksum in manifest["checksums"].items():
             progress_callback(0, f"Verifying {file}")
@@ -62,15 +68,22 @@ class UpdateService(Service):
         }
         self._execute_truenas_install(mounted, command, progress_callback)
 
-    def _execute_truenas_install(self, cwd, command, progress_callback):
+    def _execute_truenas_install(
+        self,
+        cwd: str,
+        command: dict[str, Any],
+        progress_callback: Callable[[float, str], None],
+    ) -> str:
         p = subprocess.Popen(
             ["python3", "-m", "truenas_install"], cwd=cwd, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore",
         )
+        assert p.stdin
+        assert p.stdout
         p.stdin.write(json.dumps(command))
         p.stdin.close()
         stderr = ""
-        error = None
+        error: str | None = None
         for line in iter(p.stdout.readline, ""):
             try:
                 data = json.loads(line)
@@ -96,7 +109,7 @@ class UpdateService(Service):
             return result
 
     @private
-    def ensure_free_space(self, pool_name, size):
+    def ensure_free_space(self, pool_name: str, size: int) -> None:
         space_left = self._space_left(pool_name)
         if space_left > size:
             return
@@ -141,7 +154,7 @@ class UpdateService(Service):
             errno.ENOSPC,
         )
 
-    def _space_left(self, pool_name):
-        return self.call_sync2(
+    def _space_left(self, pool_name: str) -> int:
+        return self.call_sync2(  # type: ignore
             self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[pool_name], properties=['available'])
         )[0]['properties']['available']['value']

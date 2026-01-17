@@ -2,11 +2,12 @@ import asyncio
 import copy
 import functools
 import threading
+from typing import Callable
 
 from middlewared.utils.lang import undefined
 
 
-def cache(func):
+def cache[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     value = undefined
 
     if asyncio.iscoroutinefunction(func):

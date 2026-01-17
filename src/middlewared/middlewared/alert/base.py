@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 import enum
 import json
@@ -66,10 +68,10 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     classes = []
     class_by_name = {}
 
-    category = NotImplemented
-    level = NotImplemented
-    title = NotImplemented
-    text = None
+    category: AlertCategory = NotImplemented
+    level: AlertLevel = NotImplemented
+    title: str = NotImplemented
+    text: str | None = None
 
     exclude_from_list = False
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
@@ -265,8 +267,21 @@ class Alert:
     dismissed: bool
     mail: dict | None
 
-    def __init__(self, klass, args=None, key=undefined, datetime=None, last_occurrence=None, node=None, dismissed=None,
-                 mail=None, _uuid=None, _source=None, _key=None, _text=None):
+    def __init__(
+        self,
+        klass: type[AlertClass],
+        args: Any = None,
+        key: Any = undefined,
+        datetime: datetime | None = None,
+        last_occurrence: datetime | None = None,
+        node: str | None = None,
+        dismissed: bool | None = None,
+        mail: Any = None,
+        _uuid: str | None = None,
+        _source: Any = None,
+        _key: Any = None,
+        _text: Any = None,
+    ):
         self.uuid = _uuid
         self.source = _source
         self.klass = klass
@@ -330,7 +345,7 @@ class AlertSource(CallMixin):
     def name(self):
         return self.__class__.__name__.replace("AlertSource", "")
 
-    async def check(self):
+    async def check(self) -> list[Alert] | Alert | None:
         """
         This method will be called on the specific `schedule` to check for the alert conditions.
 

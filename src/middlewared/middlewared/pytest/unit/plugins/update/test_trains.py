@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, Mock
 
-from middlewared.plugins.update_.trains import UpdateService
+from middlewared.plugins.update_.trains import Trains, UpdateService
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -9,26 +9,30 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.parametrize("manifest,trains,result", [
     # Redirects current train if it was renamed
     (
-        {"train": "TrueNAS-Fangtooth-RC"},
+        Mock(train="TrueNAS-Fangtooth-RC"),
         {"trains": {"TrueNAS-SCALE-Fangtooth": {}},
          "trains_redirection": {"TrueNAS-Fangtooth-RC": "TrueNAS-SCALE-Fangtooth"}},
-        {"trains": {"TrueNAS-SCALE-Fangtooth": {}},
-         "trains_redirection": {"TrueNAS-Fangtooth-RC": "TrueNAS-SCALE-Fangtooth"}},
+        Trains.model_validate({
+            "trains": {"TrueNAS-SCALE-Fangtooth": {}},
+            "trains_redirection": {"TrueNAS-Fangtooth-RC": "TrueNAS-SCALE-Fangtooth"}
+        }),
     ),
     # Inserts current train as DEVELOPER profile if it does not exist
     # in the update trains file
     (
-        {"train": "TrueNAS-SCALE-Goldeye-Nightlies"},
+        Mock(train="TrueNAS-SCALE-Goldeye-Nightlies"),
         {"trains": {"TrueNAS-SCALE-Fangtooth": {}},
          "trains_redirection": {}},
-        {"trains": {"TrueNAS-SCALE-Fangtooth": {},
-                    "TrueNAS-SCALE-Goldeye-Nightlies": {}},
-         "trains_redirection": {}},
+        Trains.model_validate({
+            "trains": {"TrueNAS-SCALE-Fangtooth": {},
+                       "TrueNAS-SCALE-Goldeye-Nightlies": {}},
+            "trains_redirection": {}
+        }),
     ),
 ])
 async def test_update_get_trains(manifest, trains, result):
     middleware = Middleware()
-    middleware["update.get_manifest_file"] = Mock(return_value=manifest)
+    middleware.services.update.get_manifest_file = Mock(return_value=manifest)
 
     service = UpdateService(middleware)
     service.fetch = AsyncMock(return_value=trains)
@@ -40,19 +44,19 @@ async def test_update_get_trains(manifest, trains, result):
 @pytest.mark.parametrize("trains,current_train_name,result", [
     # Can be upgraded to tne next immediate train
     (
-        {"trains": {"TrueNAS-SCALE-Cobia": {},
-                    "TrueNAS-SCALE-Dragonfish": {},
-                    "TrueNAS-SCALE-ElectricEel": {},
-                    "TrueNAS-SCALE-Fangtooth": {}}},
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Cobia": {},
+                                          "TrueNAS-SCALE-Dragonfish": {},
+                                          "TrueNAS-SCALE-ElectricEel": {},
+                                          "TrueNAS-SCALE-Fangtooth": {}}}),
         "TrueNAS-SCALE-Dragonfish",
         ["TrueNAS-SCALE-ElectricEel", "TrueNAS-SCALE-Dragonfish"],
     ),
     # Already on the newest train
     (
-        {"trains": {"TrueNAS-SCALE-Cobia": {},
-                    "TrueNAS-SCALE-Dragonfish": {},
-                    "TrueNAS-SCALE-ElectricEel": {},
-                    "TrueNAS-SCALE-Fangtooth": {}}},
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Cobia": {},
+                                          "TrueNAS-SCALE-Dragonfish": {},
+                                          "TrueNAS-SCALE-ElectricEel": {},
+                                          "TrueNAS-SCALE-Fangtooth": {}}}),
         "TrueNAS-SCALE-Fangtooth",
         ["TrueNAS-SCALE-Fangtooth"],
     ),

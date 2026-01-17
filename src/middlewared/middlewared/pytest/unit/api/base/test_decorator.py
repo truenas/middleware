@@ -56,7 +56,7 @@ class TestCheckMethodAnnotations:
         def method(self, name, count: int) -> str:
             pass
 
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_wrong_parameter_annotation(self):
@@ -64,7 +64,7 @@ class TestCheckMethodAnnotations:
         def method(self, name: int, count: int) -> str:  # name should be str
             pass
 
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_missing_parameter(self):
@@ -72,7 +72,7 @@ class TestCheckMethodAnnotations:
         def method(self, name: str) -> str:  # missing count parameter
             pass
 
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_extra_parameter(self):
@@ -80,7 +80,7 @@ class TestCheckMethodAnnotations:
         def method(self, name: str, count: int, extra: str) -> str:
             pass
 
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_missing_return_annotation(self):
@@ -114,7 +114,7 @@ class TestCheckMethodAnnotations:
             pass
 
         # args_index=1 would try to validate app and job as name and count
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_complex_return_type(self):
@@ -130,7 +130,7 @@ class TestCheckMethodAnnotations:
         def method(self, count: int, name: str) -> str:  # wrong order
             pass
 
-        with pytest.raises(ValueError, match="must the following signature"):
+        with pytest.raises(ValueError, match="must have the following signature"):
             check_method_annotations(method, 1, SimpleArgs, SimpleResult)
 
     def test_annotated_type(self):

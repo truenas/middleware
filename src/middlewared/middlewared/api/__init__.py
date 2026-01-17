@@ -1,5 +1,6 @@
-# flake8: noqa F401
+from .base.decorator import api_method
 from .base.event import Event
-from .base.decorator import *
 
 API_LOADING_FORBIDDEN = False
+
+__all__ = ["api_method", "Event", "API_LOADING_FORBIDDEN"]
