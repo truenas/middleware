@@ -26,4 +26,9 @@ jobs:
       - name: Test
         run: |
           cd src/middlewared
-          mypy middlewared/plugins/zfs/ --exclude middlewared/etc_files --follow-imports silent --strict
+          mypy \
+            middlewared/plugins/update_/ \
+            middlewared/plugins/zfs/ \
+            --exclude middlewared/etc_files \
+            --follow-imports silent \
+            --strict

@@ -45,7 +45,7 @@ MB = 1048576
 RE_SIZE = re.compile(r'([\d\.]+)\s*([A-Za-z]*)')
 
 
-def format_size(size):
+def format_size(size: int) -> str:
     return humanfriendly.format_size(size, binary=True)
 
 

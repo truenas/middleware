@@ -45,6 +45,12 @@ class LongStringWrapper:
     def __len__(self):
         return len(self.value)
 
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __repr__(self):
+        return f"LongStringWrapper({self.value})"
+
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler

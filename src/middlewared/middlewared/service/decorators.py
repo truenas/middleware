@@ -59,7 +59,7 @@ def filterable_api_method(
     return filterable_internal
 
 
-def job(
+def job[**P, R, X](
     lock: Callable[[Sequence], str] | str | None = None,
     lock_queue_size: int | None = 5,
     logs: bool = False,
@@ -69,7 +69,7 @@ def job(
     description: Callable[..., str] | None = None,
     abortable: bool = False,
     read_roles: list[str] | None = None,
-):
+) -> Callable[[Callable[Concatenate[X, P], R]], Callable[P, R]]:
     """
     Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
     the last).
@@ -164,6 +164,7 @@ def job(
             'read_roles': read_roles or [],
         }
         return fn
+
     return check_job
 
 

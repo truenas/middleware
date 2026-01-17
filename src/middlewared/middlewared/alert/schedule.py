@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 
 
@@ -8,7 +8,7 @@ class BaseSchedule:
 
 
 class IntervalSchedule:
-    def __init__(self, interval):
+    def __init__(self, interval: timedelta):
         self.interval = interval
 
     def should_run(self, now, last_run):
