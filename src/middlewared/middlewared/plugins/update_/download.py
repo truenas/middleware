@@ -1,35 +1,50 @@
+from __future__ import annotations
+
 import errno
 import hashlib
 import itertools
 import os
 import time
 import threading
+import typing
 
 import requests
 import requests.exceptions
 
 from middlewared.api import api_method
-from middlewared.api.current import UpdateDownloadArgs, UpdateDownloadResult
+from middlewared.api.current import UpdateDownloadArgs, UpdateDownloadResult, UpdateDownloadProgress
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils.size import format_size
+from .trains import Release
 from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server, UPLOAD_LOCATION
+
+if typing.TYPE_CHECKING:
+    from middlewared.job import Job
+    from middlewared.main import Middleware
 
 
 class UpdateService(Service):
 
     download_update_lock = threading.Lock()
 
-    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=['SYSTEM_UPDATE_WRITE'], check_annotations=True)
     @job()
-    def download(self, job, train, version):
+    def download(self, job: Job, train: str | None, version: str | None) -> bool:
         """
         Download updates.
         """
-        location = self.middleware.call_sync('update.get_update_location')
+        location = self.call_sync2(self.s.update.get_update_location)
         return self.download_update(job, train, version, location, 100)
 
     @private
-    def download_update(self, job, train, version, location, progress_proportion):
+    def download_update(
+        self,
+        job: Job,
+        train: str | None,
+        version: str | None,
+        location: str,
+        progress_proportion: float,
+    ) -> bool:
         if not self.download_update_lock.acquire(False):
             raise CallError('Another update download is currently being performed.')
 
@@ -38,46 +53,47 @@ class UpdateService(Service):
 
             job.set_progress(0, "Retrieving update manifest")
 
-            update_status = self.middleware.call_sync('update.status_internal', True)
+            update_status = self.call_sync2(self.s.update.status_internal, True)
 
             if train is None and version is None:
-                if update_status['status']['new_version'] is None:
+                if update_status.status is None or update_status.status.new_version is None:
                     return False
 
-                train = update_status['status']['new_version']['manifest']['train']
-                version = update_status['status']['new_version']['version']
-                manifest = update_status['status']['new_version']['manifest']
+                train = update_status.status.new_version.manifest["train"]
+                version = update_status.status.new_version.version
+                manifest = Release.model_validate(update_status.status.new_version.manifest)
 
-                if not self.middleware.call_sync('update.can_update_to', version):
+                if not self.call_sync2(self.s.update.can_update_to, version):
                     return False
             elif train is not None and version is not None:
-                if not self.middleware.call_sync('update.can_update_to', version):
+                if not self.call_sync2(self.s.update.can_update_to, version):
                     raise CallError('Cannot update to specified version')
 
-                manifest = self.middleware.call_sync('update.get_train_releases', train).get(version)
-                if manifest is None:
+                if probe_manifest := self.call_sync2(self.s.update.get_train_releases, train).get(version):
+                    manifest = probe_manifest
+                else:
                     raise CallError('Specified version does not exist')
             else:
                 raise CallError('`train` and `version` must either both be `null` or both be non-`null`')
 
             try:
-                def set_progress(progress, description):
+                def set_progress(progress: float, description: str) -> None:
                     job.set_progress(progress * progress_proportion, description)
-                    self.middleware.call_sync('update.set_update_download_progress', {
-                        'description': description,
-                        'version': version,
-                        'percent': progress * 100,
-                    }, update_status)
+                    self.call_sync2(self.s.update.set_update_download_progress, UpdateDownloadProgress(
+                        description=description,
+                        version=version,
+                        percent=progress * 100,
+                    ), update_status)
 
                 dst = os.path.join(location, DOWNLOAD_UPDATE_FILE)
                 try:
-                    with open(dst, "rb") as f:
+                    with open(dst, "rb") as fr:
                         set_progress(0, "Verifying existing update")
-                        checksum = hashlib.file_digest(f, "sha256").hexdigest()
+                        checksum = hashlib.file_digest(fr, "sha256").hexdigest()
                 except FileNotFoundError:
                     pass
                 else:
-                    if checksum == manifest["checksum"]:
+                    if checksum == manifest.checksum:
                         set_progress(1, "Update downloaded.")
                         return True
                     else:
@@ -88,7 +104,7 @@ class UpdateService(Service):
                 avail = st.f_bavail * st.f_frsize
 
                 # make sure we have at least as the filesize plus 500MiB
-                required_size = manifest["filesize"] + 500 * 1024 ** 2
+                required_size = manifest.filesize + 500 * 1024 ** 2
                 if required_size > avail:
                     raise CallError(
                         f"{location}: insufficient available space: {format_size(avail)}, "
@@ -102,7 +118,7 @@ class UpdateService(Service):
                         try:
                             start = os.path.getsize(dst)
                             with requests.get(
-                                f"{scale_update_server()}/{train}/{manifest['filename']}",
+                                f"{scale_update_server()}/{train}/{manifest.filename}",
                                 stream=True,
                                 timeout=30,
                                 headers={"Range": f"bytes={start}-"}
@@ -115,7 +131,7 @@ class UpdateService(Service):
                                     set_progress(
                                         progress / total,
                                         f'Downloading update: {format_size(total)} at '
-                                        f'{format_size(progress / (time.monotonic() - download_start))}/s'
+                                        f'{format_size(int(progress / (time.monotonic() - download_start)))}/s'
                                     )
 
                                     f.write(chunk)
@@ -148,32 +164,33 @@ class UpdateService(Service):
                 set_progress(1, "Update downloaded.")
                 return True
             except Exception:
-                self.middleware.call_sync('update.set_update_download_progress', None, update_status)
+                self.call_sync2(self.s.update.set_update_download_progress, None, update_status)
                 raise
         finally:
             self.download_update_lock.release()
 
     @private
-    def verify_existing_update(self):
-        update_status = self.middleware.call_sync('update.status')
-        if update_status['status'] is None:
+    def verify_existing_update(self) -> None:
+        update_status = self.call_sync2(self.s.update.status)
+        if update_status.status is None:
             return
 
-        manifest = update_status["status"]["new_version"]["manifest"]
-        dst = os.path.join(self.middleware.call_sync("update.get_update_location"), DOWNLOAD_UPDATE_FILE)
+        assert update_status.status.new_version
+        manifest = update_status.status.new_version.manifest
+        dst = os.path.join(self.call_sync2(self.s.update.get_update_location), DOWNLOAD_UPDATE_FILE)
         if os.path.exists(dst) and os.path.getsize(dst) == manifest["filesize"]:
             with open(dst, "rb") as f:
                 checksum = hashlib.file_digest(f, "sha256").hexdigest()
 
             if checksum == manifest["checksum"]:
-                self.middleware.call_sync("update.set_update_download_progress", {
-                    "version": manifest["version"],
-                    "percent": 100,
-                    "description": "Update downloaded."
-                }, update_status)
+                self.call_sync2(self.s.update.set_update_download_progress, UpdateDownloadProgress(
+                    version=manifest["version"],
+                    percent=100,
+                    description="Update downloaded."
+                ), update_status)
 
     @private
-    def get_update_location(self):
+    def get_update_location(self) -> str:
         syspath = self.middleware.call_sync('systemdataset.config')['path']
         if syspath:
             path = f'{syspath}/update'
@@ -183,12 +200,12 @@ class UpdateService(Service):
         return path
 
 
-async def verify_existing_update(middleware, event_type, args):
+async def verify_existing_update(middleware: Middleware, event_type: str, args: typing.Any) -> None:
     try:
-        await middleware.call('update.verify_existing_update')
+        await middleware.call2(middleware.services.update.verify_existing_update)
     except Exception:
         pass
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     middleware.event_subscribe('system.ready', verify_existing_update)

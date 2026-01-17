@@ -1,9 +1,9 @@
 import asyncio
+from collections.abc import Awaitable
 import copy
 import functools
 import threading
-from collections.abc import Awaitable
-from typing import Any, Callable, TypeVar, overload
+from typing import Any, Callable, overload
 
 from middlewared.utils.lang import undefined, Undefined
 

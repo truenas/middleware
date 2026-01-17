@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import create_model, Field
 
@@ -42,7 +42,7 @@ class ConfigServiceMetabase(ServiceBase):
                 b.__name__ == c_b for b, c_b in zip(bases, c_bases)
             )
             for c_name, c_bases in (
-                ('ConfigService', ('ServiceChangeMixin', 'Service')),
+                ('ConfigService', ('ServiceChangeMixin', 'Service', 'Generic')),
                 ('SystemServiceService', ('ConfigService',)),
             )
         ):
@@ -79,7 +79,7 @@ class ConfigServiceMetabase(ServiceBase):
         return klass
 
 
-class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase):
+class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase):
     """
     Config service abstract class
 
@@ -87,7 +87,9 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
     updated or not.
     """
 
-    async def config(self):
+    _config: Any
+
+    async def config(self) -> E:
         options = {}
         options['extend'] = self._config.datastore_extend
         options['extend_context'] = self._config.datastore_extend_context
@@ -96,7 +98,7 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
         return await self._get_or_insert(self._config.datastore, options)
 
     @pass_app(message_id=True)
-    async def update(self, app, message_id, data):
+    async def update(self, app, message_id, data) -> E:
         rv = await self.middleware._call(
             f'{self._config.namespace}.update', self, self.do_update, [data], app=app, message_id=message_id,
         )
@@ -119,6 +121,9 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
                 rows = await self.middleware.call('datastore.query', datastore, [], options)
                 if not rows:
                     await self.middleware.call('datastore.insert', datastore, {})
-                    return await self.middleware.call('datastore.config', datastore, options)
+                    rows = [await self.middleware.call('datastore.config', datastore, options)]
+
+        if self._config.generic:
+            rows[0] = self._config.entry(**rows[0])
 
         return rows[0]

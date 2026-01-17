@@ -66,7 +66,7 @@ class ValidationErrors(CallException):
         for e in child.errors:
             self.add(f"{attribute}.{e.attribute}", e.errmsg, e.errno)
 
-    def check(self):
+    def check(self) -> None:
         if self:
             raise self
 

@@ -24,22 +24,32 @@ class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert] | Alert | None:
         try:
-            update_status = await self.middleware.call("update.status")
-            if update_status["status"]:
-                if not update_status["status"]["current_train"]["matches_profile"]:
-                    config = await self.middleware.call("update.config")
-                    profile_choices = await self.middleware.call("update.profile_choices")
+            update_status = await self.middleware.call2(self.middleware.services.update.status)
+            if update_status.status:
+                if not update_status.status.current_version.matches_profile:
+                    config = await self.middleware.call2(self.middleware.services.update.config)
+                    profile_choices = await self.middleware.call2(self.middleware.services.update.profile_choices)
+
+                    if running_profile := profile_choices.get(update_status.status.current_version.profile):
+                        running = running_profile.name
+                    else:
+                        running = "<Unknown>"
+
+                    if selected_profile := profile_choices.get(config.profile):
+                        selected = selected_profile.name
+                    else:
+                        selected = "<Unknown>"
+
                     return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlertClass, {
-                        "running": (
-                            profile_choices.get(update_status["status"]["current_train"]["profile"], {}).
-                            get("name", "<Unknown>")
-                        ),
-                        "selected": profile_choices.get(config["profile"], {}).get("name", "<Unknown>"),
+                        "running": running,
+                        "selected": selected,
                     })
 
-                if update_status["status"]["new_version"]:
+                if update_status.status.new_version:
                     return Alert(HasUpdateAlertClass)
         except Exception:
             pass
+
+        return None

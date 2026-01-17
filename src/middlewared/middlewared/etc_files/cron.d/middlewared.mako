@@ -67,7 +67,7 @@ ${resilver["end"].split(":")[1]} ${resilver["end"].split(":")[0]} * * * root \
     % endif
 
 ## Use `config_internal` since `update.config` will fail if there is no internet connection
-    % if middleware.call_sync("update.config_internal")["autocheck"]:
+    % if middleware.call_sync2(middleware.services.update.config_internal).autocheck:
 ${random.randint(0, 59)} \
 ${random.randint(1, 4)} \
 * * * root midclt call update.download > /dev/null 2>&1

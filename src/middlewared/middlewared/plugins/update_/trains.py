@@ -1,8 +1,9 @@
 import errno
-import json
 import time
+from typing import Any
 
 from aiohttp import ClientError, ClientConnectorError, ClientSession, ClientTimeout
+from pydantic import BaseModel
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils import MANIFEST_FILE, UPDATE_TRAINS_FILE_NAME
@@ -11,21 +12,51 @@ from middlewared.utils.functools_ import cache
 from .utils import scale_update_server
 
 
+class UpdateManifest(BaseModel):
+    buildtime: int
+    train: str
+    codename: str
+    version: str
+
+
+class TrainDescription(BaseModel):
+    description: str = ""
+
+
+class Trains(BaseModel):
+    trains: dict[str, TrainDescription]
+    trains_redirection: dict[str, str] = {}
+
+
+class Release(BaseModel):
+    filename: str
+    version: str
+    date: str
+    changelog: str
+    checksum: str
+    filesize: int
+    profile: str
+
+
+class ReleaseManifest(Release):
+    train: str
+
+
 class UpdateService(Service):
     opts = {'raise_for_status': True, 'trust_env': True, 'timeout': ClientTimeout(INTERNET_TIMEOUT)}
     update_srv = scale_update_server()
 
     @private
     @cache
-    def get_manifest_file(self):
+    def get_manifest_file(self) -> UpdateManifest:
         with open(MANIFEST_FILE) as f:
-            return json.load(f)
+            return UpdateManifest.model_validate_json(f.read())
 
     @private
-    async def fetch(self, url):
+    async def fetch(self, url: str) -> Any:
         await self.middleware.call('network.general.will_perform_activity', 'update')
 
-        async with ClientSession(**self.opts) as client:
+        async with ClientSession(**self.opts) as client:  # type: ignore
             try:
                 async with client.get(url) as resp:
                     return await resp.json()
@@ -40,7 +71,7 @@ class UpdateService(Service):
                 raise CallError('Connection timeout while fetching update manifest', errno.ETIMEDOUT)
 
     @private
-    async def get_trains(self):
+    async def get_trains(self) -> Trains:
         """
         Returns an ordered list of currently available trains in the following format:
 
@@ -57,28 +88,31 @@ class UpdateService(Service):
             }
         ```
         """
-        trains = await self.fetch(f"{self.update_srv}/{UPDATE_TRAINS_FILE_NAME}")
+        trains = Trains.model_validate(await self.fetch(f"{self.update_srv}/{UPDATE_TRAINS_FILE_NAME}"))
         current_train_name = await self.get_current_train_name(trains)
-        if current_train_name not in trains['trains']:
-            trains['trains'][current_train_name] = {}
+        if current_train_name not in trains.trains:
+            trains.trains[current_train_name] = TrainDescription()
 
         return trains
 
     @private
-    async def get_train_releases(self, name):
-        return await self.fetch(f"{self.update_srv}/{name}/releases.json")
+    async def get_train_releases(self, name: str) -> dict[str, Release]:
+        return {
+            k: Release.model_validate(v)
+            for k, v in (await self.fetch(f"{self.update_srv}/{name}/releases.json")).items()
+        }
 
     @private
-    async def get_current_train_name(self, trains):
-        manifest = await self.middleware.call('update.get_manifest_file')
+    async def get_current_train_name(self, trains: Trains) -> str:
+        manifest = await self.call2(self.s.update.get_manifest_file)
 
-        if manifest['train'] in trains['trains_redirection']:
-            return trains['trains_redirection'][manifest['train']]
+        if manifest.train in trains.trains_redirection:
+            return trains.trains_redirection[manifest.train]
         else:
-            return manifest['train']
+            return manifest.train
 
     @private
-    async def get_next_trains_names(self, trains):
+    async def get_next_trains_names(self, trains: Trains) -> list[str]:
         """
         Returns the names of trains to which this system can be upgraded, listed in descending order (most recent
         train first).
@@ -87,7 +121,7 @@ class UpdateService(Service):
         does not include a version that matches the requested update profile, the current train will also be considered.
         """
         current_train_name = await self.get_current_train_name(trains)
-        trains_names = list(trains['trains'].keys())
+        trains_names = list(trains.trains.keys())
         try:
             index = trains_names.index(current_train_name)
         except ValueError:
@@ -104,10 +138,10 @@ class UpdateService(Service):
 
         return next_trains_names
 
-    release_notes_cache = {}
+    release_notes_cache: dict[str, tuple[str | None, float]] = {}
 
     @private
-    async def release_notes(self, train, filename):
+    async def release_notes(self, train: str, filename: str) -> str | None:
         """
         Fetch release notes from the update server.
 
@@ -126,7 +160,7 @@ class UpdateService(Service):
         if url in self.release_notes_cache:
             return self.release_notes_cache[url][0]
 
-        async with ClientSession(**self.opts) as client:
+        async with ClientSession(**self.opts) as client:  # type: ignore
             try:
                 async with client.get(url) as resp:
                     release_notes = await resp.text()
