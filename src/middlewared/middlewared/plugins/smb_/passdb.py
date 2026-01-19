@@ -23,12 +23,13 @@ class SMBService(Service):
     @filterable_api_method(private=True)
     def passdb_list(self, filters, options):
         """ query existing passdb users """
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         try:
-            return query_passdb_entries(filters or [], options or {})
+            return query_passdb_entries(filters or [], options or {}, clustered)
         except PassdbMustReinit as err:
             self.logger.warning(err.errmsg)
             self.synchronize_passdb().wait_sync(raise_error=True)
-            return query_passdb_entries(filters or [], options or {})
+            return query_passdb_entries(filters or [], options or {}, clustered)
 
     @private
     def update_passdb_user(self, user: UserEntry):
