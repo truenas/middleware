@@ -84,7 +84,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                if not await self.middlewared.call('system.is_enterprise'):
+                if not await self.middleware.call('system.is_enterprise'):
                     verrors.add(
                         f'{schema_name}.kernel',
                         'SPDK is limited to enterprise licensed systems only.'
