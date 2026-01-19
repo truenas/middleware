@@ -456,6 +456,8 @@ class SMBService(Service):
                 comment=''
             ))
 
+        groupmap_file = GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED
+
         for entry in groupmap['local'].values():
             # delete entries that don't map to a local account
             if entry['gid'] in gid_set:
@@ -463,7 +465,7 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    GroupmapFile.DEFAULT,
+                    groupmap_file,
                     GroupmapEntryType.GROUP_MAPPING,
                     entry_sid=entry['sid'],
                 )
@@ -471,7 +473,7 @@ class SMBService(Service):
                 self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
 
         must_remove_cache = self.sync_builtins(entries)
-        insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, entries)
+        insert_groupmap_entries(groupmap_file, entries)
 
         self.sync_foreign_groups()
 
