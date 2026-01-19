@@ -172,7 +172,7 @@ class RouteService(Service):
         """
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
-        return self.gateway_is_reachable(ipv4_gateway, ipv4=4)
+        return self.gateway_is_reachable(ipv4_gateway, ipv=4)
 
     @private
     async def has_valid_router_announcements(self, interface):
