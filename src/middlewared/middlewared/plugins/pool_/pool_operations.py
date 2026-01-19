@@ -41,12 +41,12 @@ class PoolService(Service):
                 higher_prio = True
 
         if higher_prio:
-            resilver_min_time_ms = 9000
+            resilver_min_time_ms = 3000
             nia_credit = 10
             nia_delay = 2
             scrub_max_active = 8
         else:
-            resilver_min_time_ms = 3000
+            resilver_min_time_ms = 1500
             nia_credit = 5
             nia_delay = 5
             scrub_max_active = 3
