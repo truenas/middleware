@@ -627,7 +627,11 @@ class SMBService(ConfigService):
         if old['stateful_failover'] != new['stateful_failover']:
             # Forcibly regenerate smb.conf on standby controller so shell utilities behave
             # same on both nodes.
-            await self.middleware.call('failover.call_remote', 'etc.generate', ['smb'])
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['smb'])
+            except Exception:
+                pass
+
             verb = 'START' if new['stateful_failover'] else 'STOP'
             ctdb_job = await self.middleware.call('service.control', verb, 'ctdb')
             await ctdb_job.wait()
