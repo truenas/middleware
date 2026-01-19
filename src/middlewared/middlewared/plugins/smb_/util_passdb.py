@@ -66,8 +66,11 @@ USER_PREFIX = 'USER_'
 RID_PREFIX = 'RID_'
 
 PASSDB_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+PASSDB_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
 PASSDB_PATH = f'{SMBPath.PASSDB_DIR.path}/passdb.tdb'
 PASSDB_TIME_T_MAX = 2085923199  # observed in recent samba versions. Should be output of get_time_t_max()
+PASSDB_TDB_CONFIG = (PASSDB_PATH, PASSDB_TDB_OPTIONS)
+PASSDB_CTDB_CONFIG = ('passdb.tdb', PASSDB_CTDB_OPTIONS)
 
 
 class PassdbMustReinit(Exception):
@@ -130,11 +133,24 @@ class PDBEntry:
     times: PDBTimes
 
 
-def _add_version_info():
+def _get_pdb_config(clustered):
+    return PASSDB_CTDB_CONFIG if clustered else PASSDB_TDB_CONFIG
+
+
+def add_version_info(clustered):
     """ add version info to new file """
-    with get_tdb_handle(PASSDB_PATH, PASSDB_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         hdl.store(MINOR_VERSION_KEY, MINOR_VERSION_VAL)
         hdl.store(MAJOR_VERSION_KEY, MAJOR_VERSION_VAL)
+
+
+def reinit_passdb(clustered):
+    if clustered:
+        with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
+            hdl.clear()
+
+    else:
+        os.unlink(PASSDB_PATH)
 
 
 def _unpack_samba_pascal_string(entry_bytes: bytes, raw: bool = False) -> tuple[str, bytes]:
@@ -283,7 +299,7 @@ def _parse_passdb_entry(hdl: TDBHandle, tdb_key: str, tdb_val: str) -> PDBEntry:
     return _unpack_pdb_bytes(b64decode(pdb_bytes))
 
 
-def passdb_entries(as_dict: bool = False) -> Iterable[PDBEntry, dict]:
+def passdb_entries(as_dict: bool = False, clustered=False) -> Iterable[PDBEntry, dict]:
     """ Iterate the passdb.tdb file
 
     Each SMB user contains two TDB entries. One that maps a RID value to the username
@@ -302,10 +318,10 @@ def passdb_entries(as_dict: bool = False) -> Iterable[PDBEntry, dict]:
     Raises:
        PassdbMustReinit - internal inconsistencies in passdb file
     """
-    if not os.path.exists(PASSDB_PATH):
-        _add_version_info()
+    if not clustered and not os.path.exists(PASSDB_PATH):
+        add_version_info(clustered)
 
-    with get_tdb_handle(PASSDB_PATH, PASSDB_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         for entry in hdl.entries():
             if not entry['key'].startswith(RID_PREFIX):
                 continue
@@ -314,7 +330,7 @@ def passdb_entries(as_dict: bool = False) -> Iterable[PDBEntry, dict]:
             yield asdict(parsed) if as_dict else parsed
 
 
-def query_passdb_entries(filters: list, options: dict) -> list[dict]:
+def query_passdb_entries(filters: list, options: dict, clustered=False) -> list[dict]:
     """ Query passdb entries with default query-filters and query-options
 
     This provides a convenient query API for passdb entries. Wraps around
@@ -331,12 +347,12 @@ def query_passdb_entries(filters: list, options: dict) -> list[dict]:
        PassdbMustReinit - internal inconsistencies in passdb file
     """
     try:
-        return filter_list(passdb_entries(as_dict=True), filters, options)
+        return filter_list(passdb_entries(as_dict=True, clustered=clustered), filters, options)
     except FileNotFoundError:
         return []
 
 
-def insert_passdb_entries(entries: list[PDBEntry]) -> None:
+def insert_passdb_entries(entries: list[PDBEntry], clustered=False) -> None:
     """ Insert multiple groupmap entries under a transaction lock
 
     Each PDBEntry requires two TDB insertions and so the entire list
@@ -353,8 +369,8 @@ def insert_passdb_entries(entries: list[PDBEntry]) -> None:
         RuntimeError - TDB library error
     """
 
-    if not os.path.exists(PASSDB_PATH):
-        _add_version_info()
+    if not clustered and not os.path.exists(PASSDB_PATH):
+        add_version_info(clustered)
 
     batch_ops = []
 
@@ -380,17 +396,16 @@ def insert_passdb_entries(entries: list[PDBEntry]) -> None:
         # nothing to do, avoid taking lock
         return
 
-    with get_tdb_handle(PASSDB_PATH, PASSDB_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         hdl.batch_op(batch_ops)
 
 
-def delete_passdb_entry(username: str, rid: int) -> None:
+def delete_passdb_entry(username: str, rid: int, clustered=False) -> None:
     """ Delete a passdb entry under a transaction lock """
-    if not os.path.exists(PASSDB_PATH):
-        # passdb.tdb doesn't exist so nothing to do
+    if not clustered and not os.path.exists(PASSDB_PATH):
         return
 
-    with get_tdb_handle(PASSDB_PATH, PASSDB_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         # Do this under transaction lock to force atomicity of changes
         try:
             hdl.batch_op([
@@ -408,7 +423,7 @@ def delete_passdb_entry(username: str, rid: int) -> None:
             pass
 
 
-def update_passdb_entry(entry: PDBEntry) -> None:
+def update_passdb_entry(entry: PDBEntry, clustered=False) -> None:
     """ Update an existing passdb entry or insert a new one
 
     This method attempts to update an existing passdb entry with info in PDBEntry
@@ -427,10 +442,10 @@ def update_passdb_entry(entry: PDBEntry) -> None:
     if not isinstance(entry, PDBEntry):
         raise TypeError(f'{type(entry)}: expected PDBEntry type.')
 
-    if not os.path.exists(PASSDB_PATH):
-        _add_version_info()
+    if not clustered and not os.path.exists(PASSDB_PATH):
+        add_version_info(clustered)
 
-    with get_tdb_handle(PASSDB_PATH, PASSDB_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         batch_ops = []
         try:
             current_username = b64decode(hdl.get(f'{RID_PREFIX}{entry.user_rid:08x}'))[:-1].decode()

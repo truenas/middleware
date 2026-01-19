@@ -57,6 +57,7 @@ class SMBService(Service):
 
     @private
     def add_groupmap(self, group):
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         server_sid = self.middleware.call_sync('smb.local_server_sid')
         rid = db_id_to_rid(IDType.GROUP, group['id'])
         entry = SMBGroupMap(
@@ -66,14 +67,15 @@ class SMBService(Service):
             name=group['group'],
             comment=''
         )
-        insert_groupmap_entries(GroupmapFile.DEFAULT, [entry])
+        insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [entry])
 
     @private
     def del_groupmap(self, db_id):
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         server_sid = self.middleware.call_sync('smb.local_server_sid')
         rid = db_id_to_rid(IDType.GROUP, db_id)
         delete_groupmap_entry(
-            GroupmapFile.DEFAULT,
+            GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
             GroupmapEntryType.GROUP_MAPPING,
             entry_sid=f'{server_sid}-{rid}',
         )
@@ -115,8 +117,10 @@ class SMBService(Service):
         # and so we map the builtin_users account to a normal sid then make it
         # a member of S-1-5-32-545
         users = [groupmap['local'][SMBBuiltin.USERS.rid]['sid']]
+        smb_config = self.middleware.call('smb.config')
+        groupmap_file = GroupmapFile.DEFAULT if not smb_config['stateful_failover'] else GroupmapFile.CLUSTERED
 
-        if (admin_group := self.middleware.call_sync('smb.config')['admin_group']):
+        if (admin_group := smb_config['admin_group']):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
                 entries.append(SMBGroupMembership(
                     sid=found[0]['sid'],
@@ -135,7 +139,7 @@ class SMBService(Service):
 
         if ad_state == DSStatus.HEALTHY.name:
             try:
-                workgroup = self.middleware.call_sync('smb.config')['workgroup']
+                workgroup = smb_config['workgroup']
                 domain_info = self.middleware.call_sync('idmap.domain_info', workgroup)
                 domain_sid = domain_info['sid']
                 # add domain account SIDS
@@ -157,10 +161,10 @@ class SMBService(Service):
             except Exception:
                 self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
 
-        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
+        insert_groupmap_entries(groupmap_file, entries)
 
         # double-check that we have expected memberships now and no extras
-        unexpected_memberof_entries = query_groupmap_entries(GroupmapFile.DEFAULT, [
+        unexpected_memberof_entries = query_groupmap_entries(groupmap_file, [
             ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
             ['sid', 'nin', admins + guests + users]
         ], {})
@@ -177,7 +181,7 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    GroupmapFile.DEFAULT,
+                    groupmap_file,
                     GroupmapEntryType.MEMBERSHIP,
                     entry_sid=entry['sid'],
                 )
@@ -299,9 +303,10 @@ class SMBService(Service):
         rv = {"builtins": {}, "local": {}, "local_builtins": {}}
 
         localsid = self.middleware.call_sync('smb.local_server_sid')
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         entries_to_fix = []
 
-        for g in query_groupmap_entries(GroupmapFile.DEFAULT, [
+        for g in query_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [
             ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
         ], {}):
             gid = g['gid']
@@ -354,7 +359,7 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    GroupmapFile.DEFAULT,
+                    GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
                     GroupmapEntryType.GROUP_MAPPING,
                     entry_sid=entry['sid'],
                 )
@@ -379,10 +384,12 @@ class SMBService(Service):
         example, the administrators RID for a domain (remote and local) must be a member of S-1-5-32-544
         otherwise domain admins won't have DACL override privileges.
         """
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+
         if not sid_is_valid(sid):
             raise ValueError(f'{sid}: not a valid SID')
 
-        return list_foreign_group_memberships(GroupmapFile.DEFAULT, sid)
+        return list_foreign_group_memberships(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, sid)
 
     @private
     def sync_builtins(self, to_add):
@@ -424,6 +431,7 @@ class SMBService(Service):
         4) flush various caches if required.
         """
         entries = []
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
 
         if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
             raise CallError(
@@ -463,7 +471,7 @@ class SMBService(Service):
                 self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
 
         must_remove_cache = self.sync_builtins(entries)
-        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
+        insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, entries)
 
         self.sync_foreign_groups()
 
