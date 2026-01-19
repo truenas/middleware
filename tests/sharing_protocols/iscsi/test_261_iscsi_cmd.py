@@ -2662,17 +2662,31 @@ def test__iscsi_target_disk_login(iscsi_running):
                     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
+def _check_write_lba_limits(s, lunbytes, pattern):
+    max_lba = int(lunbytes / 512) - 1
+    s.write16(0, 1, pattern)
+    s.write16(max_lba, 1, pattern)
+    # Write => Check Condition
+    # - Sense key = Illegal Request(0x05)
+    # - ASCQ ==  ASC+Q:LOGICAL BLOCK ADDRESS OUT OF RANGE(0x2100)
+    with raises_check_condition(5, 0x2100):
+        s.write16(max_lba + 1, 1, pattern)
+
+
 def test__resize_target_zvol(iscsi_running):
     """
     Verify that an iSCSI client is notified when the size of a ZVOL underlying
     an iSCSI extent is modified.
     """
+    deadbeef = bytearray.fromhex('deadbeef') * 128
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol, volsize_mb=100) as config:
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 assert MB_100 == read_capacity16(s)
+                _check_write_lba_limits(s, MB_100, deadbeef)
+
                 # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
                 # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
                 zvol_resize(zvol, 256)
@@ -2680,13 +2694,58 @@ def test__resize_target_zvol(iscsi_running):
                 # But we can do better (in terms of test) ... turn AEN off,
                 # which means we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
-                zvol_resize(zvol, 512)
-                expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
-                assert MB_512 == read_capacity16(s)
-                # Try to shrink the ZVOL again.  Expect an error
-                with pytest.raises(ValidationErrors):
+                # Let's add a second client to ensure each gets the same CHECK CONDITION
+                with iscsi_scsi_connection(truenas_server.ip, iqn) as s2:
+                    zvol_resize(zvol, 512)
+                    expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+                    assert MB_512 == read_capacity16(s)
+                    expect_check_condition(s2, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+
+                    _check_write_lba_limits(s, MB_512, deadbeef)
+                    _check_write_lba_limits(s2, MB_512, deadbeef)
+
+                    # Try to shrink the ZVOL again.  Expect an error
+                    with pytest.raises(ValidationErrors):
+                        zvol_resize(zvol, 256)
+                    assert MB_512 == read_capacity16(s)
+
+
+@skip_ha_tests
+def test__ha_resize_target_zvol(iscsi_running):
+    """
+    Verify that iSCSI clients are notified when the size of a ZVOL underlying
+    an iSCSI extent is modified.
+    """
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol, volsize_mb=100) as config:
+            iqn = f'{basename}:{target_name}'
+            with alua_enabled():
+                _ensure_alua_state(True)
+                _wait_for_alua_settle()
+                with contextlib.ExitStack() as es:
+                    sa1 = es.enter_context(iscsi_scsi_connection(truenas_server.nodea_ip, iqn))
+                    sa2 = es.enter_context(iscsi_scsi_connection(truenas_server.nodea_ip, iqn))
+                    sb1 = es.enter_context(iscsi_scsi_connection(truenas_server.nodeb_ip, iqn))
+                    sb2 = es.enter_context(iscsi_scsi_connection(truenas_server.nodeb_ip, iqn))
+                    sessions = (sa1, sa2, sb1, sb2)
+                    for s in sessions:
+                        TUR(s)
+                        assert MB_100 == read_capacity16(s)
+                        _check_write_lba_limits(s, MB_100, deadbeef)
+
+                    # Again, for the purposes of this test we'll turn off AEN
+                    SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled",
+                             user, password, truenas_server.nodea_ip)
+                    SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled",
+                             user, password, truenas_server.nodeb_ip)
+
                     zvol_resize(zvol, 256)
-                assert MB_512 == read_capacity16(s)
+                    for s in sessions:
+                        expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+                        assert MB_256 == read_capacity16(s)
+                        _check_write_lba_limits(s, MB_256, deadbeef)
+            _wait_for_alua_settle()
 
 
 def test__resize_target_file(iscsi_running):
