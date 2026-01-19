@@ -1,4 +1,5 @@
-import truenas_pynetif as netif
+from truenas_pynetif.netif import get_interface
+from truenas_pynetif.vlan import create_vlan
 
 from middlewared.service import private, Service
 
@@ -12,16 +13,16 @@ class InterfaceService(Service):
     def vlan_setup(self, vlan, parent_interfaces):
         self.logger.info('Setting up %r', vlan['vlan_vint'])
         try:
-            iface = netif.get_interface(vlan['vlan_vint'])
+            iface = get_interface(vlan['vlan_vint'])
         except KeyError:
             try:
-                netif.create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
+                create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
             except FileNotFoundError:
                 self.logger.warning(
                     'VLAN %r parent interface %r not found, skipping.', vlan['vlan_vint'], vlan['vlan_pint']
                 )
                 return
-            iface = netif.get_interface(vlan['vlan_vint'])
+            iface = get_interface(vlan['vlan_vint'])
 
         if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
             iface.unconfigure()
@@ -34,7 +35,7 @@ class InterfaceService(Service):
                 return
 
         try:
-            parent_iface = netif.get_interface(iface.parent)
+            parent_iface = get_interface(iface.parent)
         except KeyError:
             self.logger.warning('Could not find %r from %r', iface.parent, vlan['vlan_vint'])
             return

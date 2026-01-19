@@ -2,7 +2,8 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-import truenas_pynetif as netif
+from truenas_pynetif.address.constants import IFOperState
+from truenas_pynetif.address.netlink import get_links, netlink_route
 
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
@@ -60,13 +61,14 @@ class FailoverDisabledService(Service):
             # crash since it's easily avoided
             return
 
-        links = netif.get_address_netlink().get_links()
+        with netlink_route() as sock:
+            links = get_links(sock)
         if heartbeat_iface_name not in links:
             # saw this on an internal m50 because the systemd-modules-load.service
             # timed out and was subsequently killed so the ntb kernel module didn't
             # get loaded
             reasons.add(DisabledReasonsEnum.NO_HEARTBEAT_IFACE.name)
-        elif links[heartbeat_iface_name].operstate != netif.IFOperState.UP:
+        elif links[heartbeat_iface_name].operstate != IFOperState.UP:
             reasons.add(DisabledReasonsEnum.NO_CARRIER_ON_HEARTBEAT.name)
 
     @private

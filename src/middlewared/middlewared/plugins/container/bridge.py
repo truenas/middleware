@@ -5,8 +5,8 @@ import tempfile
 import textwrap
 import threading
 
-from truenas_pynetif import get_interface
 from truenas_pynetif.bridge import create_bridge
+from truenas_pynetif.netif import get_interface
 
 from middlewared.service import private, Service
 from middlewared.utils.cgroups import move_to_root_cgroups
