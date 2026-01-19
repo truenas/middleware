@@ -345,6 +345,15 @@ class SMBService(ConfigService):
 
         config_job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
+
+        # If samba is clustered, we only want the cluster leader doing the
+        # synchronization between the DB and ctdb files.
+        clustered = (await self.middleware.call('smb.config'))['stateful_failover']
+        if clustered and await self.middleware.call('failover.is_single_master_node'):
+            await self.middleware.call('smb.set_configured')
+            config_job.set_progress(100, 'Finished configuring SMB.')
+            return
+
         await self.middleware.call('smb.apply_account_policy')
         pdb_job = await self.middleware.call("smb.synchronize_passdb")
         grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
@@ -616,9 +625,19 @@ class SMBService(ConfigService):
             await self.middleware.call('truesearch.configure')
 
         if old['stateful_failover'] != new['stateful_failover']:
+            # Forcibly regenerate smb.conf on standby controller so shell utilities behave
+            # same on both nodes.
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['smb'])
+            except Exception:
+                pass
+
             verb = 'START' if new['stateful_failover'] else 'STOP'
             ctdb_job = await self.middleware.call('service.control', verb, 'ctdb')
             await ctdb_job.wait()
+            # Now we also need to kick off jobs to resync our passdb and groupmap
+            config_job = await self.middleware.call('smb.configure')
+            await config_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config

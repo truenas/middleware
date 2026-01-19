@@ -2,6 +2,11 @@ import os
 import tdb
 import enum
 
+try:
+    import pyctdb
+except ImportError:
+    pyctdb = None
+
 from base64 import b64encode, b64decode
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
@@ -18,8 +23,9 @@ FD_CLOSED = -1
 MUTEX_LOCKING = 4096
 
 TDB_LOCKS = defaultdict(RLock)
-TDBOptions = namedtuple('TdbFileOptions', ['backend', 'data_type'])
+TDBOptions = namedtuple('TdbFileOptions', ['backend', 'data_type', 'clustered'], defaults=[None, None, False])
 TDB_HANDLES = {}
+CTDB_HANDLES = {}
 
 
 class TDBPathType(enum.Enum):
@@ -91,6 +97,15 @@ class TDBBatchOperation:
     value: str | dict = None
 
 
+@dataclass(slots=True, frozen=True)
+class TDBOps:
+    """ Function references for operations on a given handle """
+    fetch: callable
+    store: callable
+    delete: callable
+    clear: callable
+
+
 class TDBHandle:
     hdl = None
     name = None
@@ -100,6 +115,9 @@ class TDBHandle:
     opath_fd = FD_CLOSED
     keys_null_terminated = False
 
+    # function pointers for basic ops
+    ops = None
+
     def __enter__(self):
         return self
 
@@ -108,6 +126,7 @@ class TDBHandle:
 
     def close(self):
         """ Close the TDB handle and O_PATH open for the file """
+        self.ops = None
         if self.opath_fd == FD_CLOSED and self.hdl is None:
             return
 
@@ -133,6 +152,19 @@ class TDBHandle:
         # if file has been renamed or deleted from under us, readlink will show different path
         return os.readlink(f'/proc/self/fd/{self.opath_fd}') == self.full_path
 
+    def parse_value(self, tdb_val: bytes) -> dict | str:
+        match self.data_type:
+            case TDBDataType.BYTES:
+                out = b64encode(tdb_val).decode()
+            case TDBDataType.JSON:
+                out = json.loads(tdb_val.decode())
+            case TDBDataType.STRING:
+                out = tdb_val.decode()
+            case _:
+                raise ValueError(f'{self.data_type}: unknown data type')
+
+        return out
+
     def get(self, key: str) -> dict | str:
         """
         Retrieve the specified key
@@ -149,20 +181,15 @@ class TDBHandle:
         if self.keys_null_terminated:
             tdb_key += b"\x00"
 
-        if (tdb_val := self.hdl.get(tdb_key)) is None:
+        try:
+            tdb_val = self.ops.fetch(tdb_key)
+        except FileNotFoundError:
             raise MatchNotFound(key)
+        else:
+            if tdb_val is None:
+                raise MatchNotFound(key)
 
-        match self.data_type:
-            case TDBDataType.BYTES:
-                out = b64encode(tdb_val).decode()
-            case TDBDataType.JSON:
-                out = json.loads(tdb_val.decode())
-            case TDBDataType.STRING:
-                out = tdb_val.decode()
-            case _:
-                raise ValueError(f'{self.data_type}: unknown data type')
-
-        return out
+        return self.parse_value(tdb_val)
 
     def store(self, key: str, value: str | dict) -> None:
         """
@@ -186,7 +213,7 @@ class TDBHandle:
             case _:
                 raise ValueError(f'{self.data_type}: unknown data type')
 
-        self.hdl.store(tdb_key, tdb_val)
+        self.ops.store(tdb_key, tdb_val)
 
     def delete(self, key: str) -> None:
         """
@@ -199,7 +226,7 @@ class TDBHandle:
         if self.keys_null_terminated:
             tdb_key += b"\x00"
 
-        self.hdl.delete(tdb_key)
+        self.ops.delete(tdb_key)
 
     def clear(self) -> None:
         """
@@ -208,7 +235,7 @@ class TDBHandle:
         Raises:
             RuntimeError
         """
-        self.hdl.clear()
+        self.ops.clear()
 
     def entries(self, include_keys: bool = True, key_prefix: str = None) -> Iterable[dict]:
         """
@@ -327,11 +354,128 @@ class TDBHandle:
         self.hdl = tdb.Tdb(self.full_path, 0, tdb_flags, open_flags, open_mode)
         self.opath_fd = os.open(self.full_path, os.O_PATH)
         self.options = options
+        self.ops = TDBOps(
+            fetch=self.hdl.get,
+            store=self.hdl.store,
+            clear=self.hdl.clear,
+            delete=self.hdl.delete
+        )
+
+
+class CTDBHandle(TDBHandle):
+    def close(self):
+        """ decrement reference on handle and client """
+        del self.hdl
+        self.hdl = None
+        self.ops = None
+
+    def validate_handle(self) -> bool:
+        """ CTDB handles are basically always valid """
+        return self.hdl is not None
+
+    def entries(self, include_keys: bool = True, key_prefix: str = None) -> Iterable[dict]:
+        for ctdb_key, ctdb_val in self.hdl.iter():
+            key = ctdb_key.decode()
+            if key_prefix and not key.startswith(key_prefix):
+                continue
+
+            value = self.parse_value(ctdb_val)
+
+            if include_keys:
+                yield {'key': key, 'value': value}
+            else:
+                yield value
+
+    def batch_op(self, ops: list[TDBBatchOperation]) -> dict:
+        """
+        Perform batch operations on CTDB database.
+
+        Converts TDBBatchOperation objects to pyctdb.BatchOp format
+        and executes them atomically.
+        """
+        batch_ops = []
+
+        for op in ops:
+            tdb_key = op.key.encode()
+            if self.keys_null_terminated:
+                tdb_key += b'\x00'
+
+            match op.action:
+                case TDBBatchAction.GET:
+                    batch_ops.append(pyctdb.BatchOp('GET', tdb_key, None))
+                case TDBBatchAction.SET:
+                    match self.data_type:
+                        case TDBDataType.BYTES:
+                            tdb_val = b64decode(op.value)
+                        case TDBDataType.JSON:
+                            tdb_val = json.dumps(op.value).encode()
+                        case TDBDataType.STRING:
+                            tdb_val = op.value.encode()
+                        case _:
+                            raise ValueError(f'{self.data_type}: unknown data type')
+                    batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, tdb_val)))
+                case TDBBatchAction.DEL:
+                    batch_ops.append(pyctdb.BatchOp(('DEL', tdb_key, None)))
+                case _:
+                    raise ValueError(f'{op.action}: unknown batch operation type')
+
+        # Execute batch operations (returns dict with index -> bytes value)
+        raw_results = self.hdl.batch_op(batch_ops)
+
+        # Convert results back to user format
+        output = {}
+        for idx, op in enumerate(ops):
+            if op.action == TDBBatchAction.GET and idx in raw_results:
+                output[op.key] = self.parse_value(raw_results[idx])
+
+        return output
+
+    def __init__(self, name: str, options: TDBOptions):
+        if pyctdb is None:
+            raise RuntimeError('pyctdb module not available')
+
+        self.name = name
+        self.data_type = TDBDataType(options.data_type)
+        self.path_type = TDBPathType(options.backend)
+        self.options = options
+        self.keys_null_terminated = True
+
+        # lazy-initialize CTDB client
+        try:
+            client = CTDB_HANDLES['__client__']
+        except KeyError:
+            client = CTDB_HANDLES['__client__'] = pyctdb.Client()
+
+        persistent = self.path_type == TDBPathType.PERSISTENT
+
+        # Open or create the database. For now we're not interacting with volatile DBs
+        self.hdl = client.get_db(db_name=name, persistent=persistent, create_ok=True)
+        self.ops = TDBOps(
+            fetch=self.hdl.fetch,
+            store=self.hdl.store,
+            delete=self.hdl.delete,
+            clear=self.hdl.wipe_db
+        )
 
 
 @contextmanager
 def get_tdb_handle(name, tdb_options: TDBOptions):
     """ Open handle on TDB file under a threading lock """
+    if tdb_options.clustered:
+        if (entry := CTDB_HANDLES.get(name)) is None:
+            entry = CTDB_HANDLES.setdefault(name, CTDBHandle(name, tdb_options))
+
+        if entry.options != tdb_options:
+            raise ValueError('Inconsistent options')
+
+        if not entry.validate_handle():
+            entry.close()
+            entry = CTDBHandle(name, tdb_options)
+            CTDB_HANDLES[name] = entry
+
+        yield entry
+        return
+
     lock = TDB_LOCKS[name]
     with lock:
         if (entry := TDB_HANDLES.get(name)) is None:

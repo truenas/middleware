@@ -72,6 +72,7 @@ UNIX_GROUP_KEY_PREFIX = 'UNIXGROUP/'
 MEMBEROF_PREFIX = 'MEMBEROF/'
 
 GROUP_MAPPING_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+GROUP_MAPPING_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, clustered=True)
 
 
 class GroupmapEntryType(enum.Enum):
@@ -82,6 +83,7 @@ class GroupmapEntryType(enum.Enum):
 class GroupmapFile(enum.Enum):
     DEFAULT = f'{SMBPath.STATEDIR.path}/group_mapping.tdb'
     REJECT = f'{SMBPath.STATEDIR.path}/group_mapping_rejects.tdb'
+    CLUSTERED = 'group_mapping.tdb'
 
 
 @dataclass(frozen=True)
@@ -97,6 +99,13 @@ class SMBGroupMap:
 class SMBGroupMembership:
     sid: str
     groups: tuple[str]
+
+
+def _groupmap_file_to_options(gm: GroupmapFile) -> TDBOptions:
+    if gm is GroupmapFile.CLUSTERED:
+        return GROUP_MAPPING_CTDB_OPTIONS
+
+    return GROUP_MAPPING_TDB_OPTIONS
 
 
 def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
@@ -173,7 +182,7 @@ def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, str]:
 
 def groupmap_entries(
     groupmap_file: GroupmapFile,
-    as_dict: bool = False
+    as_dict: bool = False,
 ) -> Iterable[SMBGroupMap, SMBGroupMembership, dict]:
     """ iterate the specified group_mapping.tdb file
 
@@ -190,7 +199,7 @@ def groupmap_entries(
     if not isinstance(groupmap_file, GroupmapFile):
         raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
 
-    with get_tdb_handle(groupmap_file.value, GROUP_MAPPING_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(groupmap_file.value, _groupmap_file_to_options(groupmap_file)) as hdl:
         for entry in hdl.entries():
             if entry['key'].startswith(UNIX_GROUP_KEY_PREFIX):
                 parser_fn = _parse_unixgroup
@@ -236,7 +245,7 @@ def insert_groupmap_entries(
         # nothing to do, avoid taking lock
         return
 
-    with get_tdb_handle(groupmap_file.value, GROUP_MAPPING_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(groupmap_file.value, _groupmap_file_to_options(groupmap_file)) as hdl:
         hdl.batch_op(batch_ops)
 
 
@@ -259,7 +268,7 @@ def delete_groupmap_entry(
         case _:
             raise TypeError(f'{entry_type}: unexpected GroumapEntryType.')
 
-    with get_tdb_handle(groupmap_file.value, GROUP_MAPPING_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(groupmap_file.value, _groupmap_file_to_options(groupmap_file)) as hdl:
         hdl.delete(tdb_key)
 
 
