@@ -187,7 +187,7 @@ class DockerService(ConfigService):
 
         if migrate_apps:
             await self.middleware.call('docker.migrate_ix_apps_dataset', job, config, old_config, {})
-            return
+            return await self.config()
 
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
