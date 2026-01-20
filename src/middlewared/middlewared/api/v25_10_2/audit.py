@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from middlewared.api.base import BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field
 from .common import QueryFilters, QueryOptions
@@ -87,6 +87,8 @@ class AuditExport(AuditQuery):
 
 
 class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
+    model_config = ConfigDict(extra='allow')
+
     audit_id: UUID | None
     """GUID uniquely identifying this specific audit event."""
     message_timestamp: int
