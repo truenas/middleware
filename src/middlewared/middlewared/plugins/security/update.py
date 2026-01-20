@@ -61,6 +61,11 @@ class SystemSecurityService(ConfigService):
             self.logger.error('%s: reboot is already pending on other controller for same reason.', reason.name)
             await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [reason.name])
         else:
+            # We add a reboot reason here before rebooting the other node so that we are able to
+            # grab other node's boot id because we have seen in a support case that a reboot job failed
+            # for some reason where the other node actually rebooted already but we were unable to get
+            # it's boot id which meant that it needs to be rebooted again even though it has already been rebooted
+            await self.middleware.call('failover.reboot.add_remote_reason', reason.name, reason.value)
             try:
                 # Automatically reboot (and wait for) the other controller.
                 # NAS-137368: Previously, we were calling `failover.become_passive` on the standby node. This did not
@@ -73,10 +78,7 @@ class SystemSecurityService(ConfigService):
                 )
                 await job.wrap(reboot_job)
             except Exception:
-                # something extravagant happened, so we'll just play it safe and say that
-                # another reboot is required
-                await self.middleware.call('failover.reboot.add_remote_reason', reason.name,
-                                           reason.value)
+                self.logger.error('Failed to reboot other controller', exc_info=True)
 
     @private
     async def configure_stig(self, data=None):
