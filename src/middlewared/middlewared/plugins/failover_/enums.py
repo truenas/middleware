@@ -32,8 +32,6 @@ class DisabledReasonsEnum(StrEnum):
     REM_GPOSSTIG_REBOOT_REQ = "Other node needs to be rebooted to apply GPOS configuration"
     LOC_UPGRADE_REBOOT_REQ = "This node needs to be rebooted to complete the system upgrade"
     REM_UPGRADE_REBOOT_REQ = "Other node needs to be rebooted to complete the system upgrade"
-    # REM_UPGRADE_REBOOT_REQ is not used anywhere because of how failover.upgrade works
-    # TODO: Should we try to adjust this ?
     LOC_SYSTEM_DATASET_MIGRATION_IN_PROGRESS = (
         "This node is currently configuring the system dataset"
     )
