@@ -6,7 +6,6 @@ import tempfile
 from typing import Any
 
 from middlewared.service import CallError
-from middlewared.utils import Popen
 
 
 def env_mapping(prefix: str, mapping: dict[str, Any]) -> dict[str, str]:
@@ -43,8 +42,8 @@ async def run_script(job, script_name, hook: str = "", env: dict | None = None):
         f.write(hook)
         f.flush()
 
-        proc = await Popen(
-            shebang + [f.name],
+        proc = await asyncio.create_subprocess_exec(
+            *(shebang + [f.name]),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             env=dict(os.environ, **env),

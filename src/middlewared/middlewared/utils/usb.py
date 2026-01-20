@@ -1,7 +1,7 @@
 import pyudev
 
 
-def list_usb_devices() -> dict:
+def list_usb_devices() -> dict[str, dict[str, str | int]]:
     devices = {}
     context = pyudev.Context()
     for device in context.list_devices(subsystem='usb', DEVTYPE='usb_device'):

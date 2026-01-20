@@ -14,7 +14,7 @@ from types import MappingProxyType
 _4GiB = 4294967296
 
 
-ArcStatDescriptions: MappingProxyType = MappingProxyType(
+ArcStatDescriptions: MappingProxyType[str, str] = MappingProxyType(
     {
         # Copy and pasted directly from "arcstat" python
         # script shipped with openZFS. It'd be really nice
@@ -55,8 +55,8 @@ def do_round(dividend: int, divisor: int, to_decimal_place: int = 2) -> float:
     return round((dividend / divisor), to_decimal_place)
 
 
-def calculate_arc_demand_stats_impl(st: dict[str, int], intv: int) -> dict[str, int]:
-    v = dict()
+def calculate_arc_demand_stats_impl(st: dict[str, int], intv: int) -> dict[str, int | float]:
+    v: dict[str, int | float] = dict()
     v["dread"] = (
         do_round((st["demand_data_hits"] + st["demand_metadata_hits"]), intv)
         + do_round((st["demand_data_iohits"] + st["demand_metadata_iohits"]), intv)
@@ -66,26 +66,26 @@ def calculate_arc_demand_stats_impl(st: dict[str, int], intv: int) -> dict[str, 
     v["ddioh"] = do_round(st["demand_data_iohits"], intv)
     v["ddmis"] = do_round(st["demand_data_misses"], intv)
     v["ddread"] = v["ddhit"] + v["ddioh"] + v["ddmis"]
-    v["ddh%"] = v["ddi%"] = v["ddm%"] = 0
+    v["ddh%"] = v["ddi%"] = v["ddm%"] = 0.0
     if v["ddread"] > 0:
-        v["ddh%"] = do_round((100 * v["ddhit"]), v["ddread"])
-        v["ddi%"] = do_round((100 * v["ddioh"]), v["ddread"])
+        v["ddh%"] = do_round(int(100 * v["ddhit"]), int(v["ddread"]))
+        v["ddi%"] = do_round(int(100 * v["ddioh"]), int(v["ddread"]))
         v["ddm%"] = 100 - v["ddh%"] - v["ddi%"]
 
     v["dmhit"] = do_round(st["demand_metadata_hits"], intv)
     v["dmioh"] = do_round(st["demand_metadata_iohits"], intv)
     v["dmmis"] = do_round(st["demand_metadata_misses"], intv)
     v["dmread"] = v["dmhit"] + v["dmioh"] + v["dmmis"]
-    v["dmh%"] = v["dmi%"] = v["dmm%"] = 0
+    v["dmh%"] = v["dmi%"] = v["dmm%"] = 0.0
     if v["dmread"] > 0:
-        v["dmh%"] = do_round((100 * v["dmhit"]), v["dmread"])
-        v["dmi%"] = do_round((100 * v["dmioh"]), v["dmread"])
+        v["dmh%"] = do_round(int(100 * v["dmhit"]), int(v["dmread"]))
+        v["dmi%"] = do_round(int(100 * v["dmioh"]), int(v["dmread"]))
         v["dmm%"] = 100 - v["dmh%"] - v["dmi%"]
 
     return v
 
 
-def calculate_l2arc_stats_impl(st: dict[str, int], intv: int) -> dict[str, int]:
+def calculate_l2arc_stats_impl(st: dict[str, int], intv: int) -> dict[str, int | float]:
     v = {
         "l2hits": 0,
         "l2miss": 0,
@@ -101,21 +101,21 @@ def calculate_l2arc_stats_impl(st: dict[str, int], intv: int) -> dict[str, int]:
         v["l2hits"] = do_round(st["l2_hits"], intv)
         v["l2miss"] = do_round(st["l2_misses"], intv)
         v["l2read"] = v["l2hits"] + v["l2miss"]
-        v["l2hit%"] = v["l2miss%"] = 0
+        v["l2hit%"] = v["l2miss%"] = 0.0
         if v["l2read"] > 0:
-            v["l2hit%"] = do_round((100 * v["l2hits"]), v["l2read"])
+            v["l2hit%"] = do_round(int(100 * v["l2hits"]), int(v["l2read"]))
             v["l2miss%"] = 100 - v["l2hit%"]
     return v
 
 
-def calculate_arc_stats_impl(st: dict[str, int], intv: int):
-    v = {
+def calculate_arc_stats_impl(st: dict[str, int], intv: int) -> dict[str, tuple[int | float, str]]:
+    v: dict[str, int | float] = {
         "free": st["memory_free_bytes"],
         "avail": st["memory_available_bytes"],
         "size": st["size"],
     }
-    v.update(**calculate_arc_demand_stats_impl(st, intv))
-    v.update(**calculate_l2arc_stats_impl(st, intv))
+    v.update(calculate_arc_demand_stats_impl(st, intv))
+    v.update(calculate_l2arc_stats_impl(st, intv))
 
     return {vname: (val, ArcStatDescriptions[vname]) for vname, val in v.items()}
 
@@ -132,5 +132,5 @@ def read_procfs_st() -> dict[str, int]:
     return rv
 
 
-def get_arc_stats(intv: int = 1):
+def get_arc_stats(intv: int = 1) -> dict[str, tuple[int | float, str]]:
     return calculate_arc_stats_impl(read_procfs_st(), intv)

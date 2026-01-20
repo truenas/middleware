@@ -1,7 +1,8 @@
+from typing import Any
 from . import ldap_constants
 
 
-def search_base_data_to_params(data):
+def search_base_data_to_params(data: dict[str, Any]) -> list[str]:
     """
     This function converts the data from our schema key `search_bases` into
     sssd configuration information
@@ -24,7 +25,7 @@ def search_base_data_to_params(data):
     return search_params
 
 
-def attribute_maps_data_to_params(data):
+def attribute_maps_data_to_params(data: dict[str, Any]) -> list[str]:
     """
     This function converts the data from our schema key `attribute_maps` into
     sssd configuration information

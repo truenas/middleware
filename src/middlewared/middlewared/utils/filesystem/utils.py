@@ -8,7 +8,7 @@ from .constants import ZFSCTL
 from pathlib import Path
 
 
-def path_in_ctldir(path_in):
+def path_in_ctldir(path_in: str) -> bool:
     """
     Determine whether the given path is located within the ZFS
     ctldir. The intention for this is to determine whether a given

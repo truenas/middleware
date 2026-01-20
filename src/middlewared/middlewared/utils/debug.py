@@ -3,24 +3,25 @@ import linecache
 import sys
 import traceback
 import types
+from logging import Logger
+from typing import Any
 
 
-def get_frame_details(frame, logger):
-
+def get_frame_details(frame: types.FrameType | None, logger: Logger) -> dict[str, Any]:
     if not isinstance(frame, types.FrameType):
         return {}
 
-    cur_frame = {
+    cur_frame: dict[str, Any] = {
         'filename': frame.f_code.co_filename,
         'lineno': frame.f_lineno,
         'method': frame.f_code.co_name,
         'line': linecache.getline(frame.f_code.co_filename, frame.f_lineno),
     }
 
-    argspec = None
-    varargspec = None
-    keywordspec = None
-    _locals = {}
+    argspec: list[str] | None = None
+    varargspec: str | None = None
+    keywordspec: str | None = None
+    _locals: dict[str, Any] = {}
 
     try:
         arginfo = inspect.getargvalues(frame)
@@ -57,7 +58,7 @@ def get_frame_details(frame, logger):
     return cur_frame
 
 
-def get_threads_stacks():
+def get_threads_stacks() -> dict[int, list[str]]:
     return {
         thread_id: traceback.format_stack(frame)
         for thread_id, frame in sys._current_frames().items()

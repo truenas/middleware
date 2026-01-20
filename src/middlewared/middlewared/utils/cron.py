@@ -1,10 +1,13 @@
 # -*- coding=utf-8 -*-
+from typing import Any, Callable
+
 from middlewared.api.base.validators.cron import CRON_FIELDS
 
 DB_FIELDS = ('minute', 'hour', 'daymonth', 'month', 'dayweek')
 
 
-def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
+def convert_schedule_to_db_format(data_dict: dict[str, Any], schedule_name: str = 'schedule', key_prefix: str = '',
+                                  begin_end: bool = False) -> None:
     """
     Convert a schedule dictionary to database field format.
 
@@ -34,7 +37,8 @@ def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key
         )
 
 
-def convert_db_format_to_schedule(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
+def convert_db_format_to_schedule(data_dict: dict[str, Any], schedule_name: str = 'schedule', key_prefix: str = '',
+                                  begin_end: bool = False) -> None:
     """
     Convert database field format to a schedule dictionary.
 
@@ -47,7 +51,8 @@ def convert_db_format_to_schedule(data_dict: dict, schedule_name='schedule', key
     """
     data_dict[schedule_name] = {}
 
-    def add_field_to_schedule(db_field: str, cron_field: str | None = None, transform=lambda x: x):
+    def add_field_to_schedule(db_field: str, cron_field: str | None = None,
+                              transform: Callable[[Any], Any] = lambda x: x) -> None:
         key = key_prefix + db_field
         if key in data_dict:
             value = data_dict.pop(key)

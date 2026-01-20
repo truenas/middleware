@@ -1,6 +1,15 @@
 import ctypes
 import fcntl
 import os
+from typing import TypedDict
+
+
+class InquiryResult(TypedDict):
+    vendor: str
+    product: str
+    revision: str
+    serial: str
+
 
 # SG_IO ioctl command constant
 SG_IO = 0x2285
@@ -47,7 +56,9 @@ class sg_io_hdr_v3(ctypes.Structure):
     ]
 
 
-def get_sgio_hdr_structure(cdb, dxfer_len, timeout=60000):
+def get_sgio_hdr_structure(
+    cdb: ctypes.Array[ctypes.c_ubyte], dxfer_len: int, timeout: int = 60000
+) -> tuple[sg_io_hdr_v3, ctypes.Array[ctypes.c_ubyte], ctypes.Array[ctypes.c_ubyte]]:
     # Create a buffer for the sense data
     sense_buffer = (ctypes.c_ubyte * SG_MAX_SENSE)()
     results_buffer = (ctypes.c_ubyte * dxfer_len)()
@@ -66,7 +77,7 @@ def get_sgio_hdr_structure(cdb, dxfer_len, timeout=60000):
     return hdr, results_buffer, sense_buffer
 
 
-def do_io(device, hdr):
+def do_io(device: str, hdr: sg_io_hdr_v3) -> None:
     fd = os.open(device, os.O_RDONLY | os.O_NONBLOCK)
     try:
         # Make the ioctl call
@@ -79,7 +90,7 @@ def do_io(device, hdr):
         os.close(fd)
 
 
-def inquiry(device):
+def inquiry(device: str) -> InquiryResult:
     dxfer_len = 0x38
     cdb = (ctypes.c_ubyte * 6)(INQUIRY, 0x00, 0x00, 0x00, dxfer_len, 0x00)
     hdr, results_buffer, sense_buffer = get_sgio_hdr_structure(cdb, dxfer_len)

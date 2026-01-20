@@ -1,4 +1,7 @@
-def copy_function_metadata(f, nf):
+from typing import Any, Callable
+
+
+def copy_function_metadata(f: Callable[..., Any], nf: Callable[..., Any]) -> None:
     nf.__name__ = f.__name__
     nf.__doc__ = f.__doc__
     # Copy private attrs to new function so decorators can work on top of it

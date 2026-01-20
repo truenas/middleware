@@ -38,11 +38,12 @@ class ADUserAccountControl(enum.IntFlag):
     PARTIAL_SECRETS_ACCOUNT = 0x4000000  # account is a read-only domain controller computer account
 
     @classmethod
-    def parse_flags(cls, flags_in: int) -> list:
-        flags_list = []
+    def parse_flags(cls, flags_in: int) -> list[str]:
+        flags_list: list[str] = []
         for flag in cls:
             if flags_in & int(flag):
-                flags_list.append(flag.name)
+                if flag.name is not None:
+                    flags_list.append(flag.name)
 
         return flags_list
 
@@ -62,18 +63,20 @@ class ADEncryptionTypes(enum.IntFlag):
     AES256_CTS_HMAC_SHA1_96_SK = 0x20  # enforce AES session keys when legacy ciphers in use.
 
     @classmethod
-    def parse_flags(cls, flags_in: int) -> list:
+    def parse_flags(cls, flags_in: int) -> list[str]:
         if flags_in == 0:
             # It is technically possible for sysadmin to edit the supported
             # enctypes for our computer object and set SupportedEncTypes to `0`.
             # This is undefined, but according to some MS documentation defaults
             # to RC4_HMAC. This behavior has been observed in user bug ticket.
-            return [cls.ARCFOUR_HMAC.name]
+            name = cls.ARCFOUR_HMAC.name
+            return [name] if name is not None else []
 
-        flags_list = []
+        flags_list: list[str] = []
 
         for flag in cls:
             if flags_in & int(flag):
-                flags_list.append(flag.name)
+                if flag.name is not None:
+                    flags_list.append(flag.name)
 
         return flags_list

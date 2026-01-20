@@ -1,6 +1,9 @@
-import socket
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
+import socket
+from typing import TYPE_CHECKING, Any
+
+from aiohttp.web import Request
 from dataclasses import dataclass
 from ipaddress import ip_address
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
@@ -9,8 +12,9 @@ from struct import calcsize, unpack
 from pyroute2 import DiagSocket
 
 from .auth import get_login_uid, AUID_UNSET
+
 if TYPE_CHECKING:
-    from aiohttp.web import Request
+    from middlewared.api.base.server.app import App
 
 
 __all__ = ('ConnectionOrigin', 'is_external_call')
@@ -83,13 +87,14 @@ class ConnectionOrigin:
             # have been rebooted
             return
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_unix_family:
             return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
         elif self.family == AF_INET:
             return f"{self.rem_addr}:{self.rem_port}"
         elif self.family == AF_INET6:
             return f"[{self.rem_addr}]:{self.rem_port}"
+        return ""
 
     def match(self, origin: "ConnectionOrigin") -> bool:
         if self.is_unix_family:
@@ -98,8 +103,8 @@ class ConnectionOrigin:
             return self.rem_addr == origin.rem_addr
 
     @property
-    def repr(self):
-        return f"pid:{self.pid}" if self.is_unix_family else self.rem_addr
+    def repr(self) -> str:
+        return f"pid:{self.pid}" if self.is_unix_family else str(self.rem_addr)
 
     @property
     def session_is_interactive(self) -> bool:
@@ -128,11 +133,11 @@ class ConnectionOrigin:
         return self.family == AF_UNIX
 
     @property
-    def is_ha_connection(self):
+    def is_ha_connection(self) -> bool:
         return (
             self.family in (AF_INET, AF_INET6) and
-            self.rem_port and self.rem_port <= 1024 and
-            self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
+            self.rem_port is not None and self.rem_port <= 1024 and
+            self.rem_addr is not None and self.rem_addr in HA_HEARTBEAT_IPS
         )
 
     @property
@@ -147,6 +152,7 @@ class ConnectionOrigin:
 
         if self.is_tcp_ip_family:
             try:
+                assert self.rem_addr is not None
                 return ip_address(self.rem_addr).is_loopback
             except Exception:
                 pass
@@ -186,7 +192,10 @@ class ConnectionOrigin:
         return ppids
 
 
-def get_tcp_ip_info(sock: socket.socket, request: "Request") -> tuple:
+def get_tcp_ip_info(
+    sock: socket.socket,
+    request: Request,
+) -> tuple[Any, str | None, int | None, str | None, int | None, bool | None]:
     # All API connections are terminated by nginx reverse
     # proxy so the remote address is always 127.0.0.1. The
     # only exceptions to this are:
@@ -226,7 +235,7 @@ def get_tcp_ip_info(sock: socket.socket, request: "Request") -> tuple:
     return None, None, None, None, None, None
 
 
-def is_external_call(app):
+def is_external_call(app: App | None) -> bool:
     """
     Determine if this is an external API call that should be tracked.
     External calls are those which the system is not generating internally i.e self.middleware.call().

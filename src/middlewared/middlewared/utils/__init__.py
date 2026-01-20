@@ -28,7 +28,6 @@ class ProductNames:
 ProductType = ProductTypes()
 ProductName = ProductNames()
 
-MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
@@ -59,17 +58,10 @@ def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list
     return a, b
 
 
-def Popen(args, *, shell: bool = False, **kwargs):
-    if shell:
-        return asyncio.create_subprocess_shell(args, **kwargs)
-    else:
-        return asyncio.create_subprocess_exec(*args, **kwargs)
+currently_running_subprocesses: set[str] = set()
 
 
-currently_running_subprocesses = set()
-
-
-async def run(*args, **kwargs):
+async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     if isinstance(args[0], list):
         args = tuple(args[0])
 
@@ -100,7 +92,7 @@ async def run(*args, **kwargs):
 
 
 @functools.cache
-def sw_info():
+def sw_info() -> dict[str, Any]:
     """Returns the various software information from the manifest file."""
     with open(MANIFEST_FILE) as f:
         manifest = json.load(f)
@@ -114,7 +106,7 @@ def sw_info():
         }
 
 
-def sw_buildtime():
+def sw_buildtime() -> Any:
     return sw_info()['buildtime']
 
 
@@ -124,20 +116,20 @@ def sw_version() -> str:
 
 def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:
     """
-    Determine if the integers in an array form a consecutive sequence 
+    Determine if the integers in an array form a consecutive sequence
     with respect to their indices.
 
-    This function checks whether each integer at a given index position is 
-    exactly one greater than the integer at the previous index. In other 
-    words, it verifies that the sequence of numbers increases by exactly one 
+    This function checks whether each integer at a given index position is
+    exactly one greater than the integer at the previous index. In other
+    words, it verifies that the sequence of numbers increases by exactly one
     as you move from left to right through the array.
 
     Parameters:
-    arr (list[int]): A list of integers whose index-based order needs to be 
+    arr (list[int]): A list of integers whose index-based order needs to be
                      validated.
 
     Returns:
-    bool: 
+    bool:
         - True if the numbers are consecutive.
         - False if any number does not follow the previous number by exactly one.
 
@@ -155,7 +147,7 @@ def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:
     False
 
     Edge Cases:
-    - An empty array will return True as there are no elements to violate 
+    - An empty array will return True as there are no elements to violate
       the order.
     - A single-element array will also return True for the same reason.
 

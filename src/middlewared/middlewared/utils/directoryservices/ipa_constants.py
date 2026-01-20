@@ -17,11 +17,11 @@ class IPAPath(enum.Enum):
     CACERT = ('/etc/ipa/ca.crt', 0o644)
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self.value[0]
 
     @property
-    def perm(self):
+    def perm(self) -> int:
         return self.value[1]
 
 

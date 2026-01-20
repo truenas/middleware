@@ -57,7 +57,7 @@ from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run
+from middlewared.utils import run
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.crypto import ssl_random
 from middlewared.utils.lang import undefined
@@ -232,8 +232,8 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         await run_script(job, "Pre-script", cloud_sync["pre_script"], env)
 
         job.middleware.logger.trace("Running %r", args)
-        proc = await Popen(
-            args,
+        proc = await asyncio.create_subprocess_exec(
+            *args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )

@@ -25,14 +25,14 @@ class PidEntry:
             # part of linux's ABI and is stable
             return f.readline().split(b'\t', 1)[-1].strip()
 
-    def send_signal(self, sig: int):
+    def send_signal(self, sig: int) -> None:
         kill(self.pid, sig)
 
     def terminate(self, timeout: int = 10) -> bool:
         return terminate_pid(self.pid, timeout=timeout)
 
 
-def close_fds(low_fd, max_fd=None):
+def close_fds(low_fd: int, max_fd: int | None = None) -> None:
     if max_fd is None:
         max_fd = getrlimit(RLIMIT_NOFILE)[1]
         if max_fd == RLIM_INFINITY:
@@ -94,7 +94,7 @@ def terminate_pid(pid: int, timeout: int = 10, use_pgid: bool = False) -> bool:
         return True
 
 
-def get_pids() -> Generator[PidEntry] | None:
+def get_pids() -> Generator[PidEntry, None, None]:
     """Get the currently running processes on the OS"""
     with scandir("/proc/") as sdir:
         for i in filter(lambda x: x.name.isdigit(), sdir):

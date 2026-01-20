@@ -3,6 +3,7 @@ import functools
 import os
 import re
 import typing
+from typing import Any
 
 from middlewared.utils.sensors import SensorsWrapper
 
@@ -29,7 +30,7 @@ sensors = None
 class CpuInfo(typing.TypedDict):
     cpu_model: str | None
     """The CPU model"""
-    core_count: int
+    core_count: int | None
     """The total number of online CPUs"""
     physical_core_count: int
     """The total number of physical CPU cores"""
@@ -56,8 +57,8 @@ def cpu_info_impl() -> CpuInfo:
             cm = line.split(b':')[-1].strip().decode() or None
             break
 
-    pcc = set()
-    ht_map = dict()
+    pcc: set[str] = set()
+    ht_map: dict[str, str] = dict()
     with os.scandir('/sys/devices/system/cpu/') as sdir:
         for i in filter(lambda x: x.is_dir() and x.name.startswith('cpu'), sdir):
             try:
@@ -101,8 +102,8 @@ def cpu_info_impl() -> CpuInfo:
     )
 
 
-def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
-    temperatures = collections.defaultdict(dict)
+def generic_cpu_temperatures(cpu_metrics: dict[str, Any]) -> dict[int, float]:
+    temperatures: dict[str, dict[int, float]] = collections.defaultdict(dict)
     for chip_name in filter(lambda sen: sen.startswith('coretemp'), cpu_metrics):
         for label, temp in cpu_metrics[chip_name].items():
             if not (m := RE_CORE.match(label)):
@@ -118,19 +119,19 @@ def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     )))
 
 
-def amd_cpu_temperatures(amd_sensors: dict) -> dict:
+def amd_cpu_temperatures(amd_sensors: dict[str, Any]) -> dict[int, float] | None:
     cpu_model = cpu_info()['cpu_model']
     core_count = cpu_info()['physical_core_count']
 
-    ccds = []
+    ccds: list[float] = []
     for k, v in amd_sensors.items():
         if k.startswith('Tccd') and v:
             if isinstance(v, (int, float)):
-                ccds.append(v)
+                ccds.append(float(v))
     has_tdie = (
         'Tdie' in amd_sensors and amd_sensors['Tdie'] and isinstance(amd_sensors['Tdie'], (int, float))
     )
-    if cpu_model.startswith(AMD_PREFER_TDIE) and has_tdie:
+    if cpu_model and cpu_model.startswith(AMD_PREFER_TDIE) and has_tdie:
         return dict(enumerate([amd_sensors['Tdie']] * core_count))
     elif ccds and core_count % len(ccds) == 0:
         return dict(enumerate(sum([[t] * (core_count // len(ccds)) for t in ccds], [])))
@@ -146,8 +147,10 @@ def amd_cpu_temperatures(amd_sensors: dict) -> dict:
         elif 'temp1_input' in amd_sensors['temp1']:
             return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
 
+    return None
 
-def read_cpu_temps() -> dict:
+
+def read_cpu_temps() -> dict[str, Any]:
     """
     Read CPU temperatures using libsensors.
     Returns data in the format expected by existing temperature processing functions.
@@ -171,9 +174,9 @@ def read_cpu_temps() -> dict:
         return {}
 
 
-def get_cpu_temperatures() -> dict:
+def get_cpu_temperatures() -> dict[str, float]:
     chips = read_cpu_temps()
-    amd_sensors = {}
+    amd_sensors: dict[str, Any] = {}
     for key, vals in chips.items():
         if isinstance(vals, dict) and key.startswith(AMD_PREFIXES):
             amd_sensors.update(vals)
@@ -183,8 +186,8 @@ def get_cpu_temperatures() -> dict:
     else:
         cpu_data = generic_cpu_temperatures(chips) or {}
 
-    data = {}
-    total_temp = 0
+    data: dict[str, float] = {}
+    total_temp = 0.0
     cinfo = cpu_info()
     for core, temp in cpu_data.items():
         data[f'cpu{core}'] = temp
@@ -202,7 +205,7 @@ def get_cpu_temperatures() -> dict:
     if total_temp:
         data['cpu'] = total_temp / len(data)
 
-    return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
+    return data or ({f'cpu{i}': 0.0 for i in range(cinfo['core_count'])} | {'cpu': 0.0})
 
 
 @functools.cache

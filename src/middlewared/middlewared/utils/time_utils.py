@@ -3,7 +3,7 @@ from datetime import datetime, UTC, timedelta
 UTC_EPOCH = datetime.fromtimestamp(0, UTC)
 
 
-def utc_now(naive=True):
+def utc_now(naive: bool = True) -> datetime:
     """Wrapper for `datetime.now(UTC)`. Exclude timezone if `naive=True`."""
     dt = datetime.now(UTC)
     return dt.replace(tzinfo=None) if naive else dt

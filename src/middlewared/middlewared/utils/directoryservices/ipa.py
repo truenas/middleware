@@ -51,7 +51,7 @@ def generate_ipa_default_config(
         return buf.read().encode()
 
 
-def _write_ipa_file(ipa_path: IPAPath, data: bytes) -> None:
+def _write_ipa_file(ipa_path: IPAPath, data: bytes) -> str:
     with NamedTemporaryFile(dir=IPAPath.IPADIR.path, delete=False) as f:
         f.write(data)
         f.flush()
@@ -69,13 +69,13 @@ def write_ipa_default_config(
     domain: str,
     realm: str,
     server: str
-) -> None:
+) -> str:
     """ Write the freeipa default.conf file based on the specified arguments """
     config = generate_ipa_default_config(host, basedn, domain, realm, server)
     return _write_ipa_file(IPAPath.DEFAULTCONF, config)
 
 
-def write_ipa_cacert(cacert_bytes):
+def write_ipa_cacert(cacert_bytes: bytes) -> str:
     return _write_ipa_file(IPAPath.CACERT, cacert_bytes)
 
 

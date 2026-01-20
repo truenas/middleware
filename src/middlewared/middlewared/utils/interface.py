@@ -15,6 +15,7 @@ def get_default_interface() -> str | None:
                 with contextlib.suppress(ValueError):
                     if int(entry[3], 16) == (RTF_UP | RTF_GATEWAY):
                         return entry[0].strip()
+    return None
 
 
 def wait_on_interface_link_state_up(interface: str) -> bool:

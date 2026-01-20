@@ -1,7 +1,7 @@
 import os
 
 
-def query_imported_fast_impl(name_filters=None):
+def query_imported_fast_impl(name_filters: list[str] | None = None) -> dict[str, dict[str, str]]:
     # the equivalent of running `zpool list -H -o guid,name` from cli
     # name_filters will be a list of pool names
     out = dict()
@@ -18,7 +18,7 @@ def query_imported_fast_impl(name_filters=None):
     return out
 
 
-def guid_fast_impl(pool):
+def guid_fast_impl(pool: str) -> str:
     """
     Lockless read of zpool guid. Raises FileNotFoundError
     if pool not imported.
@@ -27,7 +27,7 @@ def guid_fast_impl(pool):
         return f.read().strip()
 
 
-def state_fast_impl(pool):
+def state_fast_impl(pool: str) -> str:
     """
     Lockless read of zpool state. Raises FileNotFoundError
     if pool not imported.
