@@ -391,7 +391,7 @@ class FailoverService(ConfigService):
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
-        self.send_small_file(PWENC_FILE_SECRET)
+        self.send_pwenc_secret()
         self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
         self.send_small_file('/root/.ssh/authorized_keys')
@@ -423,6 +423,14 @@ class FailoverService(ConfigService):
         Sync database and files from the other controller.
         """
         self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
+
+    @private
+    def send_pwenc_secret(self):
+        try:
+            with open(PWENC_FILE_SECRET, 'rb') as f:
+                self.middleware.call_sync('failover.call_remote', 'pwenc.replace', [base64.b64encode(f.read())])
+        except FileNotFoundError:
+            self.logger.error('Local pwenc secret not found')
 
     @private
     def send_small_file(self, path, dest=None):

@@ -1,5 +1,12 @@
-from middlewared.utils.pwenc import encrypt, decrypt, pwenc_generate_secret
-from middlewared.service import Service
+import os
+import truenas_pypwenc
+
+from base64 import b64decode
+from tempfile import NamedTemporaryFile
+from middlewared.auth import TruenasNodeSessionManagerCredentials
+from middlewared.utils.pwenc import encrypt, decrypt, pwenc_generate_secret, pwenc_rename, PWENC_FILE_SECRET
+from middlewared.service import pass_app, Service
+from middlewared.service_exception import CallError
 
 PWENC_CHECK = 'Donuts!'
 
@@ -54,12 +61,66 @@ class PWEncService(Service):
             self.middleware.call_sync('datastore.insert', 'system.settings', {})
             settings = self.middleware.call_sync('datastore.config', 'system.settings')
 
-        return decrypt(settings['stg_pwenc_check']) == PWENC_CHECK
+        try:
+            return decrypt(settings['stg_pwenc_check']) == PWENC_CHECK
+        except truenas_pypwenc.PwencError as exc:
+            # In principle on a totally fresh install it's expected that we need to generate a new
+            # secret. In this case we expect SECRET_NOT_FOUND. Other errors are unexpected and
+            # should be logged
+            if exc.code != truenas_pypwenc.PWENC_ERROR_SECRET_NOT_FOUND:
+                self.logger.exception('Failed to decrypt stg_pwenc_check')
+
+            return False
+        except Exception:
+            self.logger.exception('Unexpected error while trying to check pwenc secret')
+            return False
 
     def generate_secret(self):
         pwenc_generate_secret()
         self._reset_pwenc_check_field()
         self._reset_passwords()
+
+    @pass_app()
+    def replace(self, app, b64secret):
+        """ This method exists purely for use via failover.call_remote from active  controller on HA truenas
+        appliance. """
+        if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
+            raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
+
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            raise CallError('pwenc.replace called on controller that is not standby')
+
+        data = b64decode(b64secret)
+        if len(data) != truenas_pypwenc.PWENC_BLOCK_SIZE:
+            raise CallError('Unexpected data length for pwenc file')
+
+        with open(PWENC_FILE_SECRET, 'rb') as f:
+            # avoid triggering inotify / churning our pwenc file if possible. This is so that
+            # we don't create unnecessary backup files on a normal sync_to_peer request.
+            if f.read() == data:
+                return
+
+        self.middleware.logger.info('Received pwenc secret file. Replacing.')
+        with NamedTemporaryFile(
+            mode='wb',
+            dir='/data',
+            prefix='.pwenc_secret.',
+            suffix='.tmp',
+            delete=False
+        ) as f:
+            temp_path = f.name
+            f.write(data)
+            f.flush()
+
+        try:
+            pwenc_rename(temp_path)
+        except Exception:
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+            raise
 
 
 async def setup(middleware):
