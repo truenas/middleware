@@ -1,6 +1,6 @@
 <%
     from middlewared.utils import ctdb
-    if render_ctx['failover.status'] == 'SINGLE':
+    if not render_ctx['failover.licensed']:
         raise FileShouldNotExist
 %>
 
