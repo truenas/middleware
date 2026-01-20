@@ -1012,6 +1012,10 @@ async def interface_pre_sync_hook(middleware):
 
 async def hook_license_update(middleware, *args, **kwargs):
     await middleware.call('failover.status_refresh')
+    # ctdb's runstate depends on system being failover licensed and so we want to get its start / stop
+    # as close as possible to the actual event triggering it. Whether ctdb successfully starts depends
+    # on presence of the nodes file (which only gets generated if we're failover licensed).
+    await middleware.call('service.control', 'RESTART', 'ctdb')
 
 
 async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):

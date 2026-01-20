@@ -94,9 +94,7 @@ class EtcService(Service):
         ],
         'ctdb': {
             'ctx': [
-                {'method': 'failover.status'},
-                {'method': 'systemdataset.config'},
-                {'method': 'smb.config'},
+                {'method': 'failover.licensed'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'ctdb/nodes'},
