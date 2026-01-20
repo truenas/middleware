@@ -118,7 +118,7 @@ class DomainSecrets(Service):
 
         # Password changed field must be initialized (but otherwise is not required)
         store_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00", clustre)
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00", cluster)
         )
 
         setsecret = subprocess.run(
