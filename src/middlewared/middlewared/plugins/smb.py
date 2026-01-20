@@ -633,7 +633,7 @@ class SMBService(ConfigService):
                 pass
 
             # We need winbindd to reopen its tdb files as ctdb or vice-versa
-            wb_restart = await middleware.call('service.control', 'RESTART', 'idmap')
+            wb_restart = await self.middleware.call('service.control', 'RESTART', 'idmap')
             await wb_restart.wait()
 
             config_job = await self.middleware.call('smb.configure')
