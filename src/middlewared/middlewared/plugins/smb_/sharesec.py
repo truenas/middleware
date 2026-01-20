@@ -27,18 +27,18 @@ TDB_SHARE_INFO_CONFIG = (LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS)
 CTDB_SHARE_INFO_CONFIG = ('share_info.tdb', SHARE_INFO_CTDB_OPTIONS)
 
 
-def __share_info_db_config(cluster: bool) -> TDBOptions:
+def _share_info_db_config(cluster: bool) -> TDBOptions:
     return CTDB_SHARE_INFO_CONFIG if cluster else TDB_SHARE_INFO_CONFIG
 
 
 def fetch_share_acl(share_name: str, cluster: bool) -> str:
     """ fetch base64-encoded NT ACL for SMB share """
-    with get_tdb_handle(*__share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         return hdl.get(f'SECDESC/{share_name.lower()}')
 
 
 def set_version_share_info(cluster: bool):
-    with get_tdb_handle(*__share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
 
@@ -49,7 +49,7 @@ def store_share_acl(share_name: str, val: str, cluster: bool) -> None:
     else:
         set_version_key = not os.path.exists(LOCAL_SHARE_INFO_FILE)
 
-    with get_tdb_handle(*__share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         if set_version_key:
             hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
@@ -58,7 +58,7 @@ def store_share_acl(share_name: str, val: str, cluster: bool) -> None:
 
 def remove_share_acl(share_name: str, cluster: bool) -> None:
     """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
-    with get_tdb_handle(*__share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         hdl.delete(f'SECDESC/{share_name.lower()}')
 
 
@@ -78,7 +78,7 @@ class ShareSec(Service):
         # TDB file contains INFO/version key that we don't want to return
         cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         try:
-            with get_tdb_handle(*__share_info_db_config(cluster)) as hdl:
+            with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
                 return filter_list(
                     hdl.entries(),
                     filters + [['key', '^', 'SECDESC/']],
