@@ -1,67 +1,63 @@
 import os
-
-try:
-    import truenas_pypwenc
-except ImportError:
-    truenas_pypwenc = None
-
 import threading
 
+import truenas_pypwenc
 
-PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
-try:
-    PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
-except AttributeError:
-    # This is just a catchall for some CI that doesn't have truenas_pypwenc installed
-    PWENC_FILE_SECRET = '/data/pwenc_secret'
-
+PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
-pwenc_data = {'secret_ctx': None, 'lock': threading.Lock()}
+PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
+
+ctx = None
+lock = threading.Lock()
 
 
-def pwenc_get_ctx():
+def pwenc_get_ctx() -> truenas_pypwenc.PwencContext:
     """ Retrieve a truenas_pypwenc() context with secret key
     loaded in memfd secret. This will raise an exception if file
     does not exist. """
-    if pwenc_data['secret_ctx']:
-        return pwenc_data['secret_ctx']
+    global ctx
 
-    with pwenc_data['lock']:
-        pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=False)
+    if ctx is not None:
+        return ctx
 
-    return pwenc_data['secret_ctx']
+    with lock:
+        ctx = truenas_pypwenc.get_context(create=False)
+
+    return ctx
 
 
-def pwenc_reset_cache():
+def pwenc_reset_cache() -> None:
     """ Clear reference to pwenc secret allowing reopen with possibly different
     contents. This is primarily used by the remote node in HA after syncing to
     peer. """
-    with pwenc_data['lock']:
-        pwenc_data['secret_ctx'] = None
+    global ctx
+
+    with lock:
+        ctx = None
 
 
 def pwenc_encrypt(data_in: bytes) -> bytes:
     """ Encrypt and base64 encode the input bytes """
-    ctx = pwenc_get_ctx()
-    return ctx.encrypt(data_in)
+    return pwenc_get_ctx().encrypt(data_in)
 
 
 def pwenc_decrypt(data_in: bytes) -> bytes:
     """ Base64 decode and decrypt the input bytes """
-    ctx = pwenc_get_ctx()
-    return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
+    return pwenc_get_ctx().decrypt(data_in).rstrip(PWENC_PADDING)
 
 
-def pwenc_generate_secret():
+def pwenc_generate_secret() -> None:
     """ Create a new pwenc secret. """
-    with pwenc_data['lock']:
+    global ctx
+
+    with lock:
         try:
             os.unlink(truenas_pypwenc.DEFAULT_SECRET_PATH)
         except FileNotFoundError:
             pass
 
-        pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=True)
-        assert pwenc_data['secret_ctx'].created
+        ctx = truenas_pypwenc.get_context(create=True)
+        assert ctx.created
 
 
 def encrypt(decrypted: str) -> str:
@@ -71,7 +67,7 @@ def encrypt(decrypted: str) -> str:
     return encrypted.decode()
 
 
-def decrypt(encrypted: str, _raise=False) -> str:
+def decrypt(encrypted: str, _raise: bool = False) -> str:
     """ Decrypt the input base64 string and return a string """
     if not encrypted:
         return ''
