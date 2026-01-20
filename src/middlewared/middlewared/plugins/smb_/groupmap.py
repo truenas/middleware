@@ -117,7 +117,7 @@ class SMBService(Service):
         # and so we map the builtin_users account to a normal sid then make it
         # a member of S-1-5-32-545
         users = [groupmap['local'][SMBBuiltin.USERS.rid]['sid']]
-        smb_config = self.middleware.call('smb.config')
+        smb_config = self.middleware.call_sync('smb.config')
         groupmap_file = GroupmapFile.DEFAULT if not smb_config['stateful_failover'] else GroupmapFile.CLUSTERED
 
         if (admin_group := smb_config['admin_group']):
