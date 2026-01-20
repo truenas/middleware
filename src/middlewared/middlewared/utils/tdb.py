@@ -112,7 +112,6 @@ class TDBHandle:
     data_type = None
     path_type = None
     full_path = None
-    opath_fd = FD_CLOSED
     keys_null_terminated = False
 
     # function pointers for basic ops
@@ -125,32 +124,26 @@ class TDBHandle:
         self.close()
 
     def close(self):
-        """ Close the TDB handle and O_PATH open for the file """
+        """ Close the TDB handle """
         self.ops = None
-        if self.opath_fd == FD_CLOSED and self.hdl is None:
-            return
 
         if self.hdl is not None:
             self.hdl.close()
             self.hdl = None
-
-        if self.opath_fd != FD_CLOSED:
-            os.close(self.opath_fd)
-            self.opath_fd = FD_CLOSED
 
     def validate_handle(self) -> bool:
         """
         Check whether the TDB handle is still valid
         If it is invalid, then a new handle object should be created.
         """
-        if self.opath_fd == FD_CLOSED:
+        if not self.hdl or self.hdl.fd == FD_CLOSED:
             return False
 
-        if not os.path.exists(f'/proc/self/fd/{self.opath_fd}'):
+        if not os.path.exists(f'/proc/self/fd/{self.hdl.fd}'):
             return False
 
         # if file has been renamed or deleted from under us, readlink will show different path
-        return os.readlink(f'/proc/self/fd/{self.opath_fd}') == self.full_path
+        return os.readlink(f'/proc/self/fd/{self.hdl.fd}') == self.full_path
 
     def parse_value(self, tdb_val: bytes) -> dict | str:
         match self.data_type:
@@ -352,7 +345,6 @@ class TDBHandle:
                 self.full_path = f'{self.path_type.value}/{name}.tdb'
 
         self.hdl = tdb.Tdb(self.full_path, 0, tdb_flags, open_flags, open_mode)
-        self.opath_fd = os.open(self.full_path, os.O_PATH)
         self.options = options
         self.ops = TDBOps(
             fetch=self.hdl.get,
