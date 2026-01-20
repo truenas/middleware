@@ -111,7 +111,7 @@ class ShareSec(Service):
             set_version_share_info()
 
         try:
-            share_sd_bytes = b64decode(fetch_share_acl(share_name), cluster)
+            share_sd_bytes = b64decode(fetch_share_acl(share_name, cluster))
             share_acl = sd_bytes_to_share_acl(share_sd_bytes)
         except MatchNotFound:
             # Non-exist share ACL is treated as granting world FULL permissions
