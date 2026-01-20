@@ -70,18 +70,20 @@ class DomainConnection(
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).
+        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
 
-        close_sysdataset_tdb_handles()
         match (enabled_ds := self._get_enabled_ds()):
             case None:
                 self.logger.debug('activate_standby() called on controller that is not joined to a'
                                   'directory service.')
                 return
             case DSType.IPA:
-                self.middleware.call_sync('directoryservices.secrets.restore')
+                if not clustered:
+                    self.middleware.call_sync('directoryservices.secrets.restore')
                 activate_fn = self._ipa_activate
             case DSType.AD:
-                self.middleware.call_sync('directoryservices.secrets.restore')
+                if not clustered:
+                    self.middleware.call_sync('directoryservices.secrets.restore')
                 activate_fn = self._ad_activate
             case DSType.LDAP:
                 activate_fn = self._ldap_activate
