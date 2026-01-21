@@ -491,24 +491,28 @@ class iSCSITargetAluaService(Service):
 
         # No point trying to write a full config until we have HA targets
         self._standby_write_empty_config = False
+        self.logger.debug('Clustered extents: %r', await self.middleware.call('iscsi.target.clustered_extents'))
 
         if remote_requires_reload:
             try:
-                if local_requires_reload:
-                    await self.middleware.call(
-                        'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
-                    )
-                else:
-                    await self.middleware.call(
-                        'failover.call_remote',
-                        'service.control',
-                        ['RELOAD', 'iscsitarget', self.HA_PROPAGATE],
-                        {'job': True},
-                    )
+                await self.middleware.call(
+                    'failover.call_remote',
+                    'service.control',
+                    ['RELOAD', 'iscsitarget', self.HA_PROPAGATE],
+                    {'job': True},
+                )
+                self.logger.debug('Reloaded iscsitarget service (remote)')
             except Exception as e:
                 self.logger.warning('Failed to reload iscsitarget: %r', e, exc_info=True)
-        elif local_requires_reload:
-            await (await self.middleware.call('service.control', 'RELOAD', 'iscsitarget')).wait(raise_error=True)
+        if local_requires_reload:
+            rjob = await self.middleware.call(
+                'service.control',
+                'RELOAD',
+                'iscsitarget',
+                self.HA_PROPAGATE
+            )
+            await rjob.wait(raise_error=True)
+            self.logger.debug('Reloaded iscsitarget service (local)')
 
         job.set_progress(100, 'All targets in cluster_mode')
         self.standby_starting = False
@@ -580,9 +584,16 @@ class iSCSITargetAluaService(Service):
         if need_to_reload:
             job.set_progress(90, 'Fixed cluster_mode')
             await asyncio.sleep(1)
+            self.logger.debug('Clustered extents: %r', await self.middleware.call('iscsi.target.clustered_extents'))
             # Now that we have enabled cluster_mode, need to reload iscsitarget so that
             # it will now offer the targets to the world.
-            await (await self.middleware.call('service.control', 'RELOAD', 'iscsitarget')).wait(raise_error=True)
+            rjob = await self.middleware.call(
+                'service.control',
+                'RELOAD',
+                'iscsitarget',
+                self.HA_PROPAGATE
+            )
+            await rjob.wait(raise_error=True)
             job.set_progress(100, 'Reloaded iscsitarget service')
             self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents (reloaded)')
         else:
