@@ -987,9 +987,10 @@ class SharingSMBService(SharingService):
 
         # if share is currently active we need to gracefully clean up config and clients
         if share_name in share_list:
+            cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
             await self.toggle_share(share_name, False)
             try:
-                await self.middleware.run_in_thread(remove_share_acl, share_name)
+                await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:

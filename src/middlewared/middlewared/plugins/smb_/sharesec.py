@@ -20,40 +20,51 @@ from .constants import SAMBA_BOOTENV_DIR
 
 LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')
 SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+SHARE_INFO_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
 SHARE_INFO_VERSION_KEY = 'INFO/version'
 SHARE_INFO_VERSION_DATA = b64encode(pack('<I', 3))
+TDB_SHARE_INFO_CONFIG = (LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS)
+CTDB_SHARE_INFO_CONFIG = ('share_info.tdb', SHARE_INFO_CTDB_OPTIONS)
 
 
-def fetch_share_acl(share_name: str) -> str:
+def _share_info_db_config(cluster: bool) -> TDBOptions:
+    return CTDB_SHARE_INFO_CONFIG if cluster else TDB_SHARE_INFO_CONFIG
+
+
+def fetch_share_acl(share_name: str, cluster: bool) -> str:
     """ fetch base64-encoded NT ACL for SMB share """
-    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         return hdl.get(f'SECDESC/{share_name.lower()}')
 
 
-def set_version_share_info():
-    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+def set_version_share_info(cluster: bool):
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
 
-def store_share_acl(share_name: str, val: str) -> None:
+def store_share_acl(share_name: str, val: str, cluster: bool) -> None:
     """ write base64-encoded NT ACL for SMB share to server running configuration """
-    set_version_key = not os.path.exists(LOCAL_SHARE_INFO_FILE)
-    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+    if cluster:
+        set_version_key = True
+    else:
+        set_version_key = not os.path.exists(LOCAL_SHARE_INFO_FILE)
+
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         if set_version_key:
             hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
         return hdl.store(f'SECDESC/{share_name.lower()}', val)
 
 
-def remove_share_acl(share_name: str) -> None:
+def remove_share_acl(share_name: str, cluster: bool) -> None:
     """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
-    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         hdl.delete(f'SECDESC/{share_name.lower()}')
 
 
-def dup_share_acl(src: str, dst: str) -> None:
-    val = fetch_share_acl(src)
-    store_share_acl(dst, val)
+def dup_share_acl(src: str, dst: str, cluster: bool) -> None:
+    val = fetch_share_acl(src, cluster)
+    store_share_acl(dst, val, cluster)
 
 
 class ShareSec(Service):
@@ -65,8 +76,9 @@ class ShareSec(Service):
     @filterable_api_method(private=True)
     def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
+        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         try:
-            with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+            with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
                 return filter_list(
                     hdl.entries(),
                     filters + [['key', '^', 'SECDESC/']],
@@ -81,6 +93,8 @@ class ShareSec(Service):
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`.
         """
+        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+
         if share_name.upper() == 'HOMES':
             share_filter = [['options.home', '=', True]]
         else:
@@ -93,11 +107,11 @@ class ShareSec(Service):
         except MatchNotFound as exc:
             raise CallError(f'{share_name}: share does not exist') from exc
 
-        if not os.path.exists(LOCAL_SHARE_INFO_FILE):
+        if not cluster and not os.path.exists(LOCAL_SHARE_INFO_FILE):
             set_version_share_info()
 
         try:
-            share_sd_bytes = b64decode(fetch_share_acl(share_name))
+            share_sd_bytes = b64decode(fetch_share_acl(share_name, cluster))
             share_acl = sd_bytes_to_share_acl(share_sd_bytes)
         except MatchNotFound:
             # Non-exist share ACL is treated as granting world FULL permissions
@@ -123,6 +137,8 @@ class ShareSec(Service):
 
         `ae_type` can be ALLOWED or DENIED.
         """
+        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+
         if data['share_name'].upper() == 'HOMES':
             share_filter = [['options.home', '=', True]]
         else:
@@ -134,7 +150,7 @@ class ShareSec(Service):
             raise CallError(f'{data["share_name"]}: share does not exist') from exc
 
         share_sd_bytes = b64encode(share_acl_to_sd_bytes(data['share_acl'])).decode()
-        store_share_acl(data['share_name'], share_sd_bytes)
+        store_share_acl(data['share_name'], share_sd_bytes, cluster)
 
         self.middleware.call_sync(
             'datastore.update', 'sharing.cifs_share', config_share['id'],
@@ -146,14 +162,15 @@ class ShareSec(Service):
         Write stored share acls to share_info.tdb. This should only be called
         if share_info.tdb contains default entries.
         """
+        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         shares = self.middleware.call_sync('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for share in shares:
             share_name = 'HOMES' if share['home'] else share['name']
             if share['share_acl'] and share['share_acl'].startswith('S-1-'):
                 sd_bytes = legacy_share_acl_string_to_sd_bytes(share['share_acl'])
-                store_share_acl(share_name, sd_bytes)
+                store_share_acl(share_name, sd_bytes, cluster)
             elif share['share_acl']:
-                store_share_acl(share_name, share['share_acl'])
+                store_share_acl(share_name, share['share_acl'], cluster)
 
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):
