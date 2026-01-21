@@ -2151,9 +2151,12 @@ def _wait_for_alua_settle(retries=20):
     print("Checking ALUA status...")
     sleep(5)
     while retries:
-        if call('iscsi.alua.settled'):
-            print("ALUA is settled")
-            break
+        try:
+            if call('iscsi.alua.settled'):
+                print("ALUA is settled")
+                break
+        except Exception:
+            print('Failed to check settled')
         retries -= 1
         print("Waiting for ALUA to settle")
         sleep(5)
@@ -2338,6 +2341,7 @@ def test__alua_config(iscsi_running):
 
                             # Let's failover
                             _ha_reboot_master(description='first failover')
+                            _wait_for_alua_settle()
                             expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
                             expect_check_condition(s2, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -2378,6 +2382,7 @@ def test__alua_config(iscsi_running):
 
                                         # Reboot again (to failback to the original ACTIVE node)
                                         _ha_reboot_master(description='second failover')
+                                        _wait_for_alua_settle()
                                         for s in [s1, s2, s3, s4]:
                                             expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -2407,6 +2412,7 @@ def test__alua_config(iscsi_running):
 
             # Ensure ALUA is off again
             _ensure_alua_state(False)
+            _wait_for_alua_settle()
 
 
 @skip_persistent_reservations
