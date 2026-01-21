@@ -120,6 +120,8 @@ class PoolSnapshotCreateTemplate(BaseModel, ABC):
     """Array of dataset patterns to exclude from recursive snapshots."""
     vmware_sync: bool = False
     """Whether to sync VMware VMs before taking the snapshot."""
+    suspend_vms: bool = False
+    """Temporarily suspend VMs before taking snapshot."""
     properties: dict = {}
     """Object mapping ZFS property names to values to set on the snapshot."""
 

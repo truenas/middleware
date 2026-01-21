@@ -89,14 +89,18 @@ class CloudTaskServiceMixin:
             await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
+            dataset_name = data["path"].removeprefix("/mnt/")
             for i in await self.call2(
                 self.s.zfs.resource.query_impl,
                 ZFSResourceQuery(
-                    paths=[data["path"].removeprefix("/mnt/")],
+                    paths=[dataset_name],
                     properties=None,
                     get_children=True
                 ),
             ):
+                if i["name"] == dataset_name:
+                    continue
+
                 if i["type"] == "FILESYSTEM":
                     verrors.add(
                         f"{name}.snapshot",

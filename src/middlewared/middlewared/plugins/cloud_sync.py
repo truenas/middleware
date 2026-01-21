@@ -41,7 +41,8 @@ from middlewared.api.current import (
     CloudSyncSyncArgs, CloudSyncSyncResult,
     CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult,
     CloudSyncAbortArgs, CloudSyncAbortResult,
-    CloudSyncProvidersArgs, CloudSyncProvidersResult
+    CloudSyncProvidersArgs, CloudSyncProvidersResult,
+    ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
@@ -251,7 +252,10 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         if snapshot:
             try:
-                await middleware.call2(middleware.services.zfs.resource.destroy_impl, snapshot)
+                await middleware.call2(
+                    middleware.services.zfs.resource.snapshot.destroy_impl,
+                    ZFSResourceSnapshotDestroyQuery(path=snapshot),
+                )
             except Exception as e:
                 middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
 
