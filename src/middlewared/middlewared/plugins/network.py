@@ -24,7 +24,7 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, filter
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
-from truenas_pynetif.address.netlink import get_addresses, get_routes, netlink_route
+from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.netif import list_interfaces
@@ -387,10 +387,8 @@ class InterfaceService(CRUDService):
         # FIXME: What about IPv6??
         rtgw = None
         with netlink_route() as sock:
-            for route in get_routes(sock, family=AddressFamily.INET):
-                if route.dst is None and route.dst_len == 0:
-                    rtgw = route.gateway
-                    break
+            if default_route := get_default_route(sock):
+                rtgw = default_route.gateway
 
         netconfig = self.middleware.call_sync('network.configuration.config')
         will_be_removed = []
