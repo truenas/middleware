@@ -46,8 +46,10 @@ WINBIND_IDMAP_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTE
 WINBIND_IDMAP_TDB_CONFIG = (WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS)
 WINBIND_IDMAP_CTDB_CONFIG = ('winbindd_cache.tdb', WINBIND_IDMAP_CTDB_OPTIONS)
 
+
 def _get_winbind_idmap_cache_config(clustered):
     return WINBIND_IDMAP_CTDB_CONFIG if clustered else WINBIND_IDMAP_TDB_CONFIG
+
 
 def clear_winbind_idmap_cache(clustered):
     with get_tdb_handle(*_get_winbind_idmap_cache_config(clustered)) as hdl:
