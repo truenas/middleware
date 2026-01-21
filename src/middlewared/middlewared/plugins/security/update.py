@@ -219,6 +219,8 @@ class SystemSecurityService(ConfigService):
             bad_reasons = set(ha_disabled_reasons) - {
                 DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name,
                 DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name,
+                DisabledReasonsEnum.LOC_GPOSSTIG_REBOOT_REQ.name,
+                DisabledReasonsEnum.REM_GPOSSTIG_REBOOT_REQ.name,
             }
             if bad_reasons:
                 formatted = '\n'.join([DisabledReasonsEnum[i].value for i in bad_reasons])
