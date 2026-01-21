@@ -7,7 +7,7 @@ from time import sleep
 import pytest
 
 from middlewared.service_exception import (
-    ValidationError, ValidationErrors, InstanceNotFound
+    CallError, ValidationError, ValidationErrors, InstanceNotFound
 )
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
@@ -88,6 +88,10 @@ class NFS_CONFIG:
         "state": "STOPPED",
         "pids": []
     }
+
+
+default_user = user
+default_password = password
 
 
 def has_static_ip():
@@ -293,7 +297,20 @@ def confirm_nfs_version(expected=[]):
         ["4"] means NFSv4 only
         ["3","4"] means both NFSv3 and NFSv4
     '''
-    result = ssh("rpcinfo -s | grep ' nfs '").strip().split()[1]
+    # Confirm NFS is running, maybe slow to restart
+    for i in range(2):
+        nfs_is = get_nfs_service_state()
+        if nfs_is == 'RUNNING':
+            break
+        else:
+            sleep(0.5)
+
+    assert nfs_is == 'RUNNING', "NFS failed to start/restart"
+
+    result = ssh("rpcinfo -s | grep ' nfs '")
+    assert result, "Failed to get result from rpcinfo call"
+
+    result = result.strip().split()[1]
     for v in expected:
         assert v in result, result
 
@@ -304,8 +321,33 @@ def confirm_rpc_port(rpc_name, port_num):
     rpc_name = ('mountd', 'status', 'nlockmgr')
     '''
     line = ssh(f"rpcinfo -p | grep {rpc_name} | grep tcp")
+    assert line, "Failed to get line from rpcinfo call"
+
     # example:    '100005    3   tcp    618  mountd'
     assert int(line.split()[3]) == port_num, str(line)
+
+
+def confirm_nfs_config_settings(keyvals: list[tuple[list[str], str]], retry=True) -> dict:
+    '''
+    Confirm the expected value in the supplied key with retry
+    Example Usage: confirm_nfs_config_setting([['exportd','state-directory-path'],'/my/path'] )
+    '''
+    max_attempts = 2 if retry else 1
+    for attempt in range(max_attempts):
+        server_config = parse_server_config()
+        try:
+            for key, expected_val in keyvals:
+                val = server_config[key[0]][key[1]]
+                if val != expected_val:
+                    raise ValueError(f"{key} reported {val} but expected {expected_val}")
+
+            return server_config  # All validations passed
+
+        except (KeyError, ValueError):
+            if attempt < max_attempts - 1:
+                sleep(0.1)
+                continue  # Retry
+            raise  # Re-raise on last attempt
 
 
 def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, usrgrpInst):
@@ -393,6 +435,11 @@ def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
 
     _dataset = f"{_pool_name}/{name}"
 
+    # Sometimes the pool can still exist, delete it first
+    found_pool = call("pool.dataset.query", [["name", "=", _dataset]])
+    if found_pool != []:
+        call("pool.dataset.delete", found_pool[0]['id'])
+
     try:
         call("pool.dataset.create", {"name": _dataset, **(options or {})})
 
@@ -436,13 +483,33 @@ def nfs_db():
 @contextlib.contextmanager
 def nfs_config():
     ''' Use this to restore NFS settings '''
+    nfs_db_conf = {}
+    want_exit_run_state = get_nfs_service_state()
+    # Let things settle then collect the restore state
+    sleep(0.2)
+    for i in range(2):
+        # Very rare to get a CallError after the settle wait. Include a retry for resilience.
+        try:
+            nfs_db_conf = call("nfs.config")
+            excl = ['id', 'v4_krb_enabled', 'keytab_has_nfs_spn', 'managed_nfsd']
+            [nfs_db_conf.pop(key) for key in excl]
+            break
+        except CallError:
+            # Settle wait and retry
+            sleep(0.1)
+
     try:
-        nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'keytab_has_nfs_spn', 'managed_nfsd']
-        [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
+        # restore nfs.config
         call("nfs.update", nfs_db_conf)
+        # Wait a bit for NFS to return to initial run state
+        for i in range(2):
+            current_run_state = get_nfs_service_state()
+            if current_run_state == want_exit_run_state:
+                break
+            else:
+                sleep(1)
 
 
 @contextlib.contextmanager
@@ -560,13 +627,14 @@ class TestNFSops:
         sysds_path = call('systemdataset.sysdataset_path')
         assert sysds_path == '/var/db/system'
         nfs_state_dir = os.path.join(sysds_path, 'nfs')
-        s = parse_server_config()
-        assert s['exportd']['state-directory-path'] == nfs_state_dir, str(s)
-        assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
-        assert s['nfsdcltrack']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcltrack'), str(s)
-        assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
-        assert s['mountd']['state-directory-path'] == nfs_state_dir, str(s)
-        assert s['statd']['state-directory-path'] == nfs_state_dir, str(s)
+        confirm_nfs_config_settings([
+            [['exportd', 'state-directory-path'], nfs_state_dir],
+            [['nfsdcld', 'storagedir'], os.path.join(nfs_state_dir, 'nfsdcld')],
+            [['nfsdcltrack', 'storagedir'], os.path.join(nfs_state_dir, 'nfsdcltrack')],
+            [['nfsdcld', 'storagedir'], os.path.join(nfs_state_dir, 'nfsdcld')],
+            [['mountd', 'state-directory-path'], nfs_state_dir],
+            [['statd', 'state-directory-path'], nfs_state_dir],
+        ])
 
         # Confirm we have the mount point in the system dataset
         sysds = call('systemdataset.config')
@@ -618,8 +686,7 @@ class TestNFSops:
         expected_scope_value = call('system.global.id')
 
         # Confirm /etc/nfs.conf
-        conf = parse_server_config()
-        assert conf['nfsd']['scope'] == expected_scope_value
+        confirm_nfs_config_settings([[['nfsd', 'scope'], expected_scope_value]])
 
         # Confirm NFS reports the expected scope value
         p = async_SSH_start("tcpdump -A -v -t -i lo -s 1514 port nfs -c12", user, password, hostip)
@@ -678,9 +745,10 @@ class TestNFSops:
             if nfsd is None or nfsd in range(1, 257):
                 call("nfs.update", {"servers": nfsd})
 
-                s = parse_server_config()
-                assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
-                assert int(s['mountd']['threads']) == expected['mountd'], str(s)
+                confirm_nfs_config_settings([
+                    [['nfsd', 'threads'], str(expected['nfsd'])],
+                    [['mountd', 'threads'], str(expected['mountd'])],
+                ])
 
                 confirm_nfsd_processes(expected['nfsd'])
                 confirm_mountd_processes(expected['mountd'])
@@ -1151,7 +1219,7 @@ class TestNFSops:
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
             daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
             # This will log to both syslog and daemon.log
-            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect dmount messages ======"')
+            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect mount messages ======"')
 
             with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                          user=user, password=password, ip=truenas_server.ip) as n:
@@ -1317,18 +1385,20 @@ class TestNFSops:
             # Check existing config (both NFSv3 & NFSv4 configured)
             assert "NFSV3" in nfs_conf_orig['protocols'], nfs_conf_orig
             assert "NFSV4" in nfs_conf_orig['protocols'], nfs_conf_orig
-            s = parse_server_config()
-            assert s['nfsd']["vers3"] == 'y', str(s)
-            assert s['nfsd']["vers4"] == 'y', str(s)
+            confirm_nfs_config_settings([
+                [['nfsd', 'vers3'], 'y'],
+                [['nfsd', 'vers4'], 'y'],
+            ])
             confirm_nfs_version(['3', '4'])
 
             # Turn off NFSv4 (v3 on)
             new_config = call('nfs.update', {"protocols": ["NFSV3"]})
             assert "NFSV3" in new_config['protocols'], new_config
             assert "NFSV4" not in new_config['protocols'], new_config
-            s = parse_server_config()
-            assert s['nfsd']["vers3"] == 'y', str(s)
-            assert s['nfsd']["vers4"] == 'n', str(s)
+            confirm_nfs_config_settings([
+                [['nfsd', 'vers3'], 'y'],
+                [['nfsd', 'vers4'], 'n'],
+            ])
 
             # Confirm setting has taken effect: v4->off, v3->on
             confirm_nfs_version(['3'])
@@ -1343,9 +1413,10 @@ class TestNFSops:
             new_config = call('nfs.update', {"protocols": ["NFSV4"]})
             assert "NFSV3" not in new_config['protocols'], new_config
             assert "NFSV4" in new_config['protocols'], new_config
-            s = parse_server_config()
-            assert s['nfsd']["vers3"] == 'n', str(s)
-            assert s['nfsd']["vers4"] == 'y', str(s)
+            confirm_nfs_config_settings([
+                [['nfsd', 'vers3'], 'n'],
+                [['nfsd', 'vers4'], 'y'],
+            ])
 
             # Confirm setting has taken effect: v4->on, v3->off
             confirm_nfs_version(['4'])
@@ -1354,9 +1425,10 @@ class TestNFSops:
         nfs_conf = call('nfs.config')
         assert "NFSV3" in nfs_conf['protocols'], nfs_conf
         assert "NFSV4" in nfs_conf['protocols'], nfs_conf
-        s = parse_server_config()
-        assert s['nfsd']["vers3"] == 'y', str(s)
-        assert s['nfsd']["vers4"] == 'y', str(s)
+        confirm_nfs_config_settings([
+            [['nfsd', 'vers3'], 'y'],
+            [['nfsd', 'vers4'], 'y'],
+        ])
 
         # Confirm setting has taken effect: v4->on, v3->on
         confirm_nfs_version(['3', '4'])
@@ -1422,10 +1494,11 @@ class TestNFSops:
 
         # Compare DB with setting in /etc/nfs.conf
         with nfs_config() as config_db:
-            s = parse_server_config()
-            assert int(s['mountd']['port']) == config_db["mountd_port"], str(s)
-            assert int(s['statd']['port']) == config_db["rpcstatd_port"], str(s)
-            assert int(s['lockd']['port']) == config_db["rpclockd_port"], str(s)
+            confirm_nfs_config_settings([
+                [['mountd', 'port'], str(config_db["mountd_port"])],
+                [['statd', 'port'], str(config_db["rpcstatd_port"])],
+                [['lockd', 'port'], str(config_db["rpclockd_port"])],
+            ])
 
             # Confirm port settings are active
             confirm_rpc_port('mountd', config_db["mountd_port"])
@@ -1595,17 +1668,19 @@ class TestNFSops:
         xattr_nfs_path = f'/mnt/{pool_name}/test_nfs4_xattr'
         with nfs_dataset("test_nfs4_xattr"):
             with nfs_share(xattr_nfs_path):
-                with SSH_NFS(truenas_server.ip, xattr_nfs_path, vers=4.2,
-                             user=user, password=password, ip=truenas_server.ip) as n:
-                    n.create("testfile")
-                    n.setxattr("testfile", "user.testxattr", "the_contents")
-                    xattr_val = n.getxattr("testfile", "user.testxattr")
-                    assert xattr_val == "the_contents"
+                for i in range(2):
+                    with SSH_NFS(truenas_server.ip, xattr_nfs_path, vers=4.2,
+                                 user=user, password=password, ip=truenas_server.ip, timeout=20) as n:
+                        n.create("testfile")
+                        n.setxattr("testfile", "user.testxattr", "the_contents")
+                        xattr_val = n.getxattr("testfile", "user.testxattr")
+                        assert xattr_val == "the_contents"
 
-                    n.create("testdir", True)
-                    n.setxattr("testdir", "user.testxattr2", "the_contents2")
-                    xattr_val = n.getxattr("testdir", "user.testxattr2")
-                    assert xattr_val == "the_contents2"
+                        n.create("testdir", True)
+                        n.setxattr("testdir", "user.testxattr2", "the_contents2")
+                        xattr_val = n.getxattr("testdir", "user.testxattr2")
+                        assert xattr_val == "the_contents2"
+                        break
 
     class TestSubtreeShares:
         """
@@ -1839,43 +1914,48 @@ class TestNFSops:
                                     else:
                                         assert not nfs41_flags[flag], nfs41_flags
 
-    @pytest.mark.parametrize('state,expected', [
-        pp(None, 'n', id="default state"),
-        pp(True, 'y', id="enable"),
-        pp(False, 'n', id="disable")
-    ])
-    def test_manage_gids(self, start_nfs, state, expected):
-        '''
-        The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
-        It is that and, to a greater extent, defines the GIDs that are used for permissions.
+    class gids:
+        '''Using a class to avoid excessive NFS reconfiguration, restarts and false failures.'''
+        @pytest.fixture(scope="class")
+        def manage_nfs_config(self):
+            """pytest fixture version of nfs_config"""
+            with nfs_config() as config:
+                yield config
 
-        If NOT enabled, then the expectation is that the groups to which the user belongs
-        are defined on the _client_ and NOT the server.  It also means groups to which the user
-        belongs are passed in on the NFS commands from the client.  The file object GID is
-        checked against the passed in list of GIDs.  This is also where the 16 group
-        limitation is enforced.  The NFS protocol allows passing up to 16 groups per user.
+        @pytest.mark.parametrize('state,expected', [
+            pp(None, 'n', id="default state"),
+            pp(True, 'y', id="enable"),
+            pp(False, 'n', id="disable")
+        ])
+        def test_manage_gids(self, start_nfs, manage_nfs_config, state, expected):
+            '''
+            The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
+            It is that and, to a greater extent, defines the GIDs that are used for permissions.
 
-        If nfsd_manage_gids is enabled, the groups to which the user belong are defined
-        on the server.  In this condition, the server confirms the user is a member of
-        the file object GID.
+            If NOT enabled, the expectation is that the groups to which the user belongs
+            are defined on the _client_ and NOT the server.  It also means groups to which the user
+            belongs are passed in on the NFS commands from the client.  The file object GID is
+            checked against the passed in list of GIDs.  This is also where the 16 group
+            limitation is enforced.  The NFS protocol allows passing up to 16 groups per user.
 
-        NAS-126067:  Debian changed the 'default' setting to manage_gids in /etc/nfs.conf
-        from undefined to "manage_gids = y".
+            If nfsd_manage_gids is enabled, the groups to which the user belong are defined
+            on the server.  In this condition, the server confirms the user is a member of
+            the file object GID.
 
-        TEST:   Confirm manage_gids is set in /etc/nfs.conf for
-                both the enable and disable states
+            NAS-126067:  Debian changed the 'default' setting to manage_gids in /etc/nfs.conf
+            from undefined to "manage_gids = y".
 
-        TODO: Add client-side and server-side test from client when available
-        '''
-        assert start_nfs is True
-        with nfs_config():
+            TEST:   Confirm manage_gids is set in /etc/nfs.conf for
+                    both the enable and disable states
+
+            TODO: Add client-side and server-side test from client when available
+            '''
+            assert start_nfs is True
+            assert manage_nfs_config is not {}
 
             if state is not None:
-                sleep(3)  # In Cobia: Prevent restarting NFS too quickly.
                 call("nfs.update", {"userd_manage_gids": state})
-
-            s = parse_server_config()
-            assert s['mountd']['manage-gids'] == expected, str(s)
+            confirm_nfs_config_settings([[['mountd', 'manage-gids'], expected]])
 
     def test_rdma_config(self, start_nfs):
         '''
@@ -1902,10 +1982,12 @@ class TestNFSops:
             with mock("rdma.capable_protocols", return_value=['NFS']):
                 with nfs_config():
                     call("nfs.update", {"rdma": True})
-                    s = parse_server_config()
-                    assert s['nfsd']['rdma'] == 'y', str(s)
+
                     # 20049 is the default port for NFS over RDMA.
-                    assert s['nfsd']['rdma-port'] == '20049', str(s)
+                    confirm_nfs_config_settings([
+                        [['nfsd', 'rdma'], 'y'],
+                        [['nfsd', 'rdma-port'], '20049'],
+                    ])
 
     def test_prevent_shell_changes(self, start_nfs):
         '''
@@ -2048,10 +2130,19 @@ def test_pool_delete_with_attached_share():
             # Add some additional NFS stuff to make it interesting
             with nfs_dataset("deleteme", pool=new_pool['name']) as ds:
                 with nfs_share(f"/mnt/{ds}"):
+                    error_detected = None
                     with manage_start_nfs():
-                        # Delete the pool and confirm it's gone
+                        # Let the start settle then delete the pool and confirm it's gone
+                        sleep(1)
                         call("pool.export", new_pool["id"], {"destroy": True}, job=True)
-                        assert call("pool.query", [["name", "=", f"{new_pool['name']}"]]) == []
+
+                        # Expect to not find this pool
+                        found_pool = call(
+                            "pool.query",
+                            [["name", "=", f"{new_pool['name']}"]],
+                            {"select": ["id", "name", "path", "status"]}
+                        )
+                        assert found_pool == [], f"Pool {found_pool[0]['name']} failed to delete, {error_detected}"
 
 
 def test_threadpool_mode():
