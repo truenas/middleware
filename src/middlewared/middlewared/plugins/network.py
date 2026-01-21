@@ -24,11 +24,10 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, filter
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
-from truenas_pynetif.address.netlink import get_addresses, netlink_route
+from truenas_pynetif.address.netlink import get_addresses, get_routes, netlink_route
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.netif import list_interfaces
-from truenas_pynetif.routing import RoutingTable
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
@@ -386,7 +385,13 @@ class InterfaceService(CRUDService):
 
         """
         # FIXME: What about IPv6??
-        rtgw = RoutingTable().default_route_ipv4
+        rtgw = None
+        with netlink_route() as sock:
+            for route in get_routes(sock, family=AddressFamily.INET):
+                if route.dst is None and route.dst_len == 0:
+                    rtgw = route.gateway
+                    break
+
         netconfig = self.middleware.call_sync('network.configuration.config')
         will_be_removed = []
 
@@ -395,7 +400,7 @@ class InterfaceService(CRUDService):
             if not self.middleware.call_sync('datastore.query', 'network.interfaces'):
                 # no interfaces in database
                 will_be_removed.append('ipv4gateway')
-            elif netconfig['ipv4gateway'] != rtgw.gateway.exploded:
+            elif netconfig['ipv4gateway'] != rtgw:
                 # route specified in the database does not match the default route in the kernel
                 will_be_removed.append('ipv4gateway')
 

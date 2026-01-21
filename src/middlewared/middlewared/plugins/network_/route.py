@@ -9,7 +9,7 @@ from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableA
 from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
-from truenas_pynetif.address.netlink import get_addresses, get_links, netlink_route
+from truenas_pynetif.address.netlink import get_addresses, get_links, get_routes, netlink_route
 from truenas_pynetif.routing import Route, RouteFlags, RoutingTable
 
 
@@ -21,16 +21,45 @@ class RouteService(Service):
 
     @filterable_api_method(item=RouteSystemRoutesItem, roles=['NETWORK_INTERFACE_READ'])
     def system_routes(self, filters, options):
-        """
-        Get current/applied network routes.
-        """
-        rtable = RoutingTable()
-        return filter_list([r.asdict() for r in rtable.routes], filters, options)
+        """Query IPv4 and IPv6 routes from the kernel's main routing table.
 
-    @private
-    async def configured_default_ipv4_route(self):
-        route = RoutingTable().default_route_ipv4
-        return bool(route or (await self.middleware.call('network.configuration.config'))['ipv4gateway'])
+        Returns routes currently installed in the system, including static routes,
+        DHCP-learned routes, and directly connected networks. The default route
+        (0.0.0.0/0 or ::/0) will have both network and netmask set to all zeros.
+        """
+        routes = []
+        with netlink_route() as sock:
+            for route in get_routes(sock):
+                network, netmask = None, None
+                if route.family == AddressFamily.INET:
+                    if route.dst is None:
+                        network = "0.0.0.0"
+                        netmask = "0.0.0.0"
+                    else:
+                        network = route.dst
+                        netmask = str(ipaddress.IPv4Network(f"0.0.0.0/{route.dst_len}").netmask)
+                elif route.family == AddressFamily.INET6:
+                    if route.dst is None:
+                        network = "::"
+                        netmask = "::"
+                    else:
+                        network = route.dst
+                        netmask = str(ipaddress.IPv6Network(f"::/{route.dst_len}").netmask)
+
+                if network is not None and netmask is not None:
+                    routes.append(
+                        {
+                            'network': network,
+                            'netmask': netmask,
+                            'gateway': route.gateway,
+                            'interface': route.oif_name,
+                            'flags': [],
+                            'table_id': route.table,
+                            'scope': route.scope,
+                            'preferred_source': route.prefsrc,
+                        }
+                    )
+        return filter_list(routes, filters, options)
 
     @private
     async def sync(self):
