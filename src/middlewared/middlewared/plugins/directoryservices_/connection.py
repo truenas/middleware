@@ -69,7 +69,7 @@ class DomainConnection(
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        clustered = self.middleware.call_sync('smb.config')['stateful_failover']
 
         match (enabled_ds := self._get_enabled_ds()):
             case None:

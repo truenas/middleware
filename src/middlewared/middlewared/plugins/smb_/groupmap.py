@@ -42,10 +42,15 @@ assert MAPPED_WELL_KNOWN_SIDS_CNT + len(WINBINDD_AUTO_ALLOCATED) < WINBINDD_WELL
 
 WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.path}/winbindd_cache.tdb'
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+WINBIND_IDMAP_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
+WINBIND_IDMAP_TDB_CONFIG = (WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS)
+WINBIND_IDMAP_CTDB_CONFIG = ('winbindd_cache.tdb', WINBIND_IDMAP_CTDB_OPTIONS)
 
+def _get_winbind_idmap_cache_config(clustered):
+    return WINBIND_IDMAP_CTDB_CONFIG if clustered else WINBIND_IDMAP_TDB_CONFIG
 
-def clear_winbind_idmap_cache():
-    with get_tdb_handle(WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS) as hdl:
+def clear_winbind_idmap_cache(clustered):
+    with get_tdb_handle(*_get_winbind_idmap_cache_config(clustered)) as hdl:
         return hdl.clear()
 
 
@@ -215,7 +220,7 @@ class SMBService(Service):
         return tdb_handle
 
     @private
-    def validate_groupmap_hwm(self, low_range):
+    def validate_groupmap_hwm(self, low_range, clustered):
         """
         Middleware forces allocation of GIDs for Users, Groups, and Administrators
         to be deterministic with the default idmap backend. Bump up the idmap_tdb
@@ -290,6 +295,10 @@ class SMBService(Service):
 
         finally:
             tdb_handle.close()
+
+        if clustered:
+            with get_tdb_handle('winbind_idmap.tdb', WINBIND_IDMAP_CTDB_OPTIONS) as hdl:
+                hdl.sync_with_tdb(f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb")
 
         return must_reload
 
@@ -392,7 +401,7 @@ class SMBService(Service):
         return list_foreign_group_memberships(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, sid)
 
     @private
-    def sync_builtins(self, to_add):
+    def sync_builtins(self, to_add, clustered):
         """
         builtin groups are automatically allocated by winbindd / idmap_tdb. We want these
         mappings to be written deterministically so that if for some horrible reason an
@@ -417,7 +426,7 @@ class SMBService(Service):
                 comment=''
             ))
 
-        return self.validate_groupmap_hwm(low_range)
+        return self.validate_groupmap_hwm(low_range, clustered)
 
     @private
     @job(lock="groupmap_sync", lock_queue_size=1)
@@ -472,13 +481,13 @@ class SMBService(Service):
             except Exception:
                 self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
 
-        must_remove_cache = self.sync_builtins(entries)
+        must_remove_cache = self.sync_builtins(entries, clustered)
         insert_groupmap_entries(groupmap_file, entries)
 
         self.sync_foreign_groups()
 
         if must_remove_cache:
-            clear_winbind_idmap_cache()
+            clear_winbind_idmap_cache(clustered)
             try:
                 self.middleware.call_sync('idmap.gencache.flush')
             except Exception:
