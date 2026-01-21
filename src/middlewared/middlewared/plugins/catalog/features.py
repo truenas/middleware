@@ -12,8 +12,11 @@ class CatalogService(Service):
 
     @private
     def get_feature_map(self, cache=True):
-        if cache and self.middleware.call_sync('cache.has_key', 'catalog_feature_map'):
-            return self.middleware.call_sync('cache.get', 'catalog_feature_map')
+        if cache:
+            try:
+                return self.middleware.call_sync('cache.get', 'catalog_feature_map', 'PERSISTENT')
+            except KeyError:
+                pass
 
         catalog = self.middleware.call_sync('catalog.config')
 
@@ -24,7 +27,7 @@ class CatalogService(Service):
         with open(path, 'r') as f:
             mapping = json.loads(f.read())
 
-        self.middleware.call_sync('cache.put', 'catalog_feature_map', mapping, 86400)
+        self.middleware.call_sync('cache.put', 'catalog_feature_map', mapping, 86400, 'PERSISTENT')
 
         return mapping
 

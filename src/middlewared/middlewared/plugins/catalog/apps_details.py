@@ -71,7 +71,7 @@ class CatalogService(Service):
         if options['cache']:
             cache_key = get_cache_key(catalog['label'])
             try:
-                orig_cached_data = self.middleware.call_sync('cache.get', cache_key)
+                orig_cached_data = self.middleware.call_sync('cache.get', cache_key, 'PERSISTENT')
             except KeyError:
                 orig_cached_data = None
 
@@ -109,7 +109,7 @@ class CatalogService(Service):
             # happens after 24h - which means that for a small amount of time it's possible that user
             # come with a case where system is trying to access cached data but it has expired and it's
             # reading again from disk hence the extra 1 hour.
-            self.middleware.call_sync('cache.put', get_cache_key(catalog['label']), trains, 90000)
+            self.middleware.call_sync('cache.put', get_cache_key(catalog['label']), trains, 90000, 'PERSISTENT')
 
         return trains
 
@@ -179,10 +179,10 @@ class CatalogService(Service):
         cache_key = 'recommended_apps'
         if cache:
             with contextlib.suppress(KeyError):
-                return self.middleware.call_sync('cache.get', cache_key)
+                return self.middleware.call_sync('cache.get', cache_key, 'PERSISTENT')
 
         data = retrieve_recommended_apps(self.middleware.call_sync('catalog.config')['location'])
-        self.middleware.call_sync('cache.put', cache_key, data)
+        self.middleware.call_sync('cache.put', cache_key, data, 0, 'PERSISTENT')
         return data
 
     @private
