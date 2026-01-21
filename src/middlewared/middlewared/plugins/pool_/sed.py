@@ -1,6 +1,7 @@
 import asyncio
 
 from middlewared.service import private, Service
+from middlewared.utils.sed import SEDStatus
 from middlewared.utils.zfs.event import ZfsEvent, ZfsConfigSyncEvent
 
 
@@ -58,10 +59,14 @@ class PoolService(Service):
             # If all pools in db already have db row updated, there is nothing to be done here
             return
 
+        # We only want to consider disks that are SED-capable AND initialized (not UNINITIALIZED).
+        # A pool should only be marked as all_sed if all its disks are already SED-initialized.
+        # This prevents auto-marking pools as all_sed when disks are SED-capable but not yet initialized.
         sed_disks = {
             disk['name'] for disk in await self.middleware.call(
-                'disk.query', [['sed', '=', True]], {'force_sql_filters': True}
+                'disk.query', [['sed', '=', True]], {'force_sql_filters': True, 'extra': {'sed_status': True}}
             )
+            if disk.get('sed_status') and disk['sed_status'] != SEDStatus.UNINITIALIZED
         }
 
         for pool in db_pools:
