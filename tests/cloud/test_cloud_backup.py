@@ -454,7 +454,7 @@ def test_snapshot(s3_credential):
         snaps = call(
             "zfs.resource.snapshot.query",
             {"paths": [ds], "properties": None}
-        )[0]["snapshots"]
+        )
         assert len(snaps) == 0
 
 
