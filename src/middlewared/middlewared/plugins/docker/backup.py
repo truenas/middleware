@@ -122,7 +122,7 @@ class DockerService(Service):
 
         prefix = f'{docker_config["dataset"]}@{BACKUP_NAME_PREFIX}'
         for snap in snapshots:
-            snap_name = snap['name']
+            snap_name = snap.name
             if not snap_name.startswith(prefix):
                 continue
 
@@ -143,7 +143,7 @@ class DockerService(Service):
                 'snapshot_name': snap_name,
                 'created_on': str(
                     datetime.datetime.fromtimestamp(
-                        snap["properties"]["creation"]["value"],
+                        snap.properties.creation.value,
                         datetime.UTC
                     )
                 ),
