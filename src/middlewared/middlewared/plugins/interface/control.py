@@ -1,4 +1,4 @@
-import truenas_pynetif as netif
+from truenas_pynetif.netif import destroy_interface
 
 from middlewared.service import Service, private
 
@@ -10,4 +10,4 @@ class InterfaceService(Service):
 
     @private
     def destroy(self, name):
-        netif.destroy_interface(name)
+        destroy_interface(name)

@@ -23,7 +23,13 @@ from middlewared.api.current import (
 from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-import truenas_pynetif as netif
+from truenas_pynetif.address.constants import AddressFamily
+from truenas_pynetif.address.netlink import get_addresses, netlink_route
+from truenas_pynetif.interface import CLONED_PREFIXES
+from truenas_pynetif.interface_state import list_interface_states
+from truenas_pynetif.netif import list_interfaces
+from truenas_pynetif.routing import RoutingTable
+from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
@@ -163,7 +169,7 @@ class InterfaceService(CRUDService):
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
         ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
-        for name, iface in netif.list_interface_states().items():
+        for name, iface in list_interface_states().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
             elif ignore_usb_nics and iface.bus == 'usb':
@@ -380,7 +386,7 @@ class InterfaceService(CRUDService):
 
         """
         # FIXME: What about IPv6??
-        rtgw = netif.RoutingTable().default_route_ipv4
+        rtgw = RoutingTable().default_route_ipv4
         netconfig = self.middleware.call_sync('network.configuration.config')
         will_be_removed = []
 
@@ -1647,7 +1653,7 @@ class InterfaceService(CRUDService):
 
         internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
         dhclient_aws = []
-        for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
+        for name, iface in await self.middleware.run_in_thread(lambda: list(list_interfaces().items())):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
                 continue
@@ -1783,47 +1789,48 @@ class InterfaceService(CRUDService):
 
         ignore_nics = tuple(ignore_nics)
         link_local_net = ipaddress.ip_network('fe80::/64')
-        for addr in netif.get_address_netlink().get_addresses():
-            # Skip if interface name couldn't be resolved
-            if not addr.ifname:
-                continue
-
-            # Skip ignored interfaces
-            if addr.ifname.startswith(ignore_nics):
-                continue
-
-            # Skip interfaces not in the specified list if interfaces were specified
-            if specified_interfaces and addr.ifname not in specified_interfaces:
-                continue
-
-            # Determine address type
-            if addr.family == netif.AddressFamily.INET:
-                if not choices['ipv4']:
+        with netlink_route() as sock:
+            for addr in get_addresses(sock):
+                # Skip if interface name couldn't be resolved
+                if not addr.ifname:
                     continue
-                addr_type = 'INET'
-            elif addr.family == netif.AddressFamily.INET6:
-                if not choices['ipv6']:
+
+                # Skip ignored interfaces
+                if addr.ifname.startswith(ignore_nics):
                     continue
-                # Skip link-local addresses if not requested
-                if not choices['ipv6_link_local']:
-                    if ipaddress.ip_address(addr.address) in link_local_net:
+
+                # Skip interfaces not in the specified list if interfaces were specified
+                if specified_interfaces and addr.ifname not in specified_interfaces:
+                    continue
+
+                # Determine address type
+                if addr.family == AddressFamily.INET:
+                    if not choices['ipv4']:
                         continue
-                addr_type = 'INET6'
-            else:
-                continue
+                    addr_type = 'INET'
+                elif addr.family == AddressFamily.INET6:
+                    if not choices['ipv6']:
+                        continue
+                    # Skip link-local addresses if not requested
+                    if not choices['ipv6_link_local']:
+                        if ipaddress.ip_address(addr.address) in link_local_net:
+                            continue
+                    addr_type = 'INET6'
+                else:
+                    continue
 
-            # Skip non-static addresses if static filter is enabled
-            if choices['static'] and addr.address not in static_ips:
-                continue
+                # Skip non-static addresses if static filter is enabled
+                if choices['static'] and addr.address not in static_ips:
+                    continue
 
-            entry = {
-                'type': addr_type,
-                'address': addr.address,
-                'netmask': addr.prefixlen,
-            }
-            if addr.broadcast:
-                entry['broadcast'] = addr.broadcast
-            list_of_ip.append(entry)
+                entry = {
+                    'type': addr_type,
+                    'address': addr.address,
+                    'netmask': addr.prefixlen,
+                }
+                if addr.broadcast:
+                    entry['broadcast'] = addr.broadcast
+                list_of_ip.append(entry)
 
         return list_of_ip
 
@@ -1877,7 +1884,7 @@ async def udevd_ifnet_hook(middleware, data):
         return
 
     iface = data.get('INTERFACE')
-    ignore = netif.CLONED_PREFIXES + netif.INTERNAL_INTERFACES
+    ignore = CLONED_PREFIXES + INTERNAL_INTERFACES
     if iface is None or iface.startswith(ignore):
         # if the udevd event for the interface doesn't have a name (doubt this happens on SCALE)
         # or if the interface startswith CLONED_PREFIXES, then we return since we only care about

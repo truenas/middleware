@@ -1,4 +1,5 @@
-import truenas_pynetif as netif
+from truenas_pynetif.lagg import AggregationProtocol
+from truenas_pynetif.netif import create_interface, destroy_interface, get_interface
 
 from middlewared.service import private, Service
 
@@ -14,24 +15,24 @@ class InterfaceService(Service):
         self.logger.info('Setting up %s', name)
 
         try:
-            iface = netif.get_interface(name)
+            iface = get_interface(name)
         except KeyError:
             iface = None
         else:
             first_port = next(iter(iface.ports), None)
             if first_port is None or first_port[0] != members[0]['lagg_physnic']:
                 self.logger.info('Destroying %s because its first port has changed', name)
-                netif.destroy_interface(name)
+                destroy_interface(name)
                 iface = None
 
         if iface is None:
-            netif.create_interface(name)
-            iface = netif.get_interface(name)
+            create_interface(name)
+            iface = get_interface(name)
 
         info = {
             'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None, 'primary_interface': None, 'miimon': None,
         }
-        protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+        protocol = getattr(AggregationProtocol, lagg['lagg_protocol'].upper())
         if iface.protocol != protocol:
             info['protocol'] = protocol
 
@@ -109,7 +110,7 @@ class InterfaceService(Service):
 
         for port in iface.ports:
             try:
-                port_iface = netif.get_interface(port[0])
+                port_iface = get_interface(port[0])
             except KeyError:
                 self.logger.warning('Could not find %s from %s', port[0], name)
                 continue

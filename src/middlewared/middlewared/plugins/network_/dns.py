@@ -14,7 +14,7 @@ from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
 from middlewared.service_exception import CallError, ValidationErrors
-from truenas_pynetif.netif import get_address_netlink
+from truenas_pynetif.address.netlink import get_links, netlink_route
 
 
 class DNSNsUpdateOpA(BaseModel):
@@ -119,9 +119,10 @@ class DNSService(Service):
             else:
                 ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
                 interfaces = list()
-                for ifname in get_address_netlink().get_links():
-                    if not ifname.startswith(ignore):
-                        interfaces.append(ifname)
+                with netlink_route() as sock:
+                    for ifname in get_links(sock):
+                        if not ifname.startswith(ignore):
+                            interfaces.append(ifname)
 
             dns_from_dhcp = set()
             for iface in interfaces:

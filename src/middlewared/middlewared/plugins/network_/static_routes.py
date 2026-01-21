@@ -1,6 +1,6 @@
 from ipaddress import ip_interface, ip_address
 
-import truenas_pynetif as netif
+from truenas_pynetif.routing import Route, RoutingTable
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -96,7 +96,7 @@ class StaticRouteService(CRUDService):
         st = self.middleware.call_sync('staticroute.get_instance', id_)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
         try:
-            rt = netif.RoutingTable()
+            rt = RoutingTable()
             rt.delete(self._netif_route(st))
         except Exception:
             self.logger.exception('Failed to delete static route %r', st['destination'])
@@ -109,7 +109,7 @@ class StaticRouteService(CRUDService):
         for route in self.middleware.call_sync('staticroute.query'):
             new_routes.append(self._netif_route(route))
 
-        rt = netif.RoutingTable()
+        rt = RoutingTable()
         default_route_ipv4 = rt.default_route_ipv4
         default_route_ipv6 = rt.default_route_ipv6
         for route in rt.routes:
@@ -156,6 +156,6 @@ class StaticRouteService(CRUDService):
 
     def _netif_route(self, staticroute):
         ip_info = ip_interface(staticroute['destination'])
-        return netif.Route(
+        return Route(
             str(ip_info.ip), str(ip_info.netmask), gateway=staticroute['gateway']
         )

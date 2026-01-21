@@ -2,7 +2,11 @@ import ipaddress
 import re
 
 from middlewared.service import private, Service
-import truenas_pynetif as netif
+from truenas_pynetif.address.constants import AddressFamily
+from truenas_pynetif.address.netlink import get_link_addresses, netlink_route
+from truenas_pynetif.bits import InterfaceFlags
+from truenas_pynetif.netif import destroy_interface, get_interface
+from truenas_pynetif.netlink import AddressInfo
 
 from .interface_types import InterfaceType
 
@@ -14,11 +18,11 @@ class InterfaceService(Service):
 
     @private
     def __addrs_configured(self, name):
-        af = netif.get_address_netlink()
         ac = set()
-        for addr in af.get_link_addresses(name):
-            if addr.family != netif.AddressFamily.LINK:
-                ac.add(addr)
+        with netlink_route() as sock:
+            for addr in get_link_addresses(sock, name):
+                if addr.family != AddressFamily.LINK:
+                    ac.add(addr)
         return ac
 
     @private
@@ -71,7 +75,7 @@ class InterfaceService(Service):
                     {'address': alias_vip, 'netmask': '32' if alias['alias_version'] == 4 else '128'}
                 ))
 
-        iface = netif.get_interface(name)
+        iface = get_interface(name)
         for addr in addrs_configured:
             address = addr.address
             if address.startswith('fe80::'):
@@ -122,7 +126,7 @@ class InterfaceService(Service):
             except Exception:
                 self.logger.warning('Failed to set interface description on %s', name, exc_info=True)
 
-        if netif.InterfaceFlags.UP not in iface.flags:
+        if InterfaceFlags.UP not in iface.flags:
             iface.up()
 
         # If dhclient is not running and dhcp is configured, the caller should
@@ -136,7 +140,7 @@ class InterfaceService(Service):
         if not dhclient_running:
             # Make sure interface is UP before starting dhclient
             # NAS-103577
-            if netif.InterfaceFlags.UP not in iface.flags:
+            if InterfaceFlags.UP not in iface.flags:
                 iface.up()
             return self.middleware.call_sync('interface.dhclient_start', iface.name, wait_dhcp)
 
@@ -160,7 +164,7 @@ class InterfaceService(Service):
                 self.middleware.call_sync('interface.type', iface.asdict()) in [
                     InterfaceType.BRIDGE, InterfaceType.LINK_AGGREGATION, InterfaceType.VLAN,
                 ]):
-            netif.destroy_interface(name)
+            destroy_interface(name)
         elif name not in parent_interfaces:
             iface.down()
 
@@ -172,8 +176,8 @@ class InterfaceService(Service):
 
     @private
     def interface_to_addr(self, ip):
-        return netif.AddressInfo(
-            family=netif.AddressFamily.INET6 if ip.version == 6 else netif.AddressFamily.INET,
+        return AddressInfo(
+            family=AddressFamily.INET6 if ip.version == 6 else AddressFamily.INET,
             prefixlen=ip.network.prefixlen,
             address=str(ip.ip),
             broadcast=str(ip.network.broadcast_address),

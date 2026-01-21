@@ -1,4 +1,5 @@
-import truenas_pynetif as netif
+from truenas_pynetif.bits import InterfaceFlags
+from truenas_pynetif.netif import create_interface, get_interface
 
 from middlewared.service import private, Service
 
@@ -13,10 +14,10 @@ class InterfaceService(Service):
         name = bridge['interface']['int_interface']
         bridge_mtu = bridge['interface']['int_mtu'] or 1500
         try:
-            iface = netif.get_interface(name)
+            iface = get_interface(name)
         except KeyError:
-            netif.create_interface(name)
-            iface = netif.get_interface(name)
+            create_interface(name)
+            iface = get_interface(name)
 
         self.logger.info('Setting up %r', name)
 
@@ -46,8 +47,8 @@ class InterfaceService(Service):
                 continue
 
             # now make sure the bridge member is up
-            member_iface = netif.get_interface(member)
-            if netif.InterfaceFlags.UP not in member_iface.flags:
+            member_iface = get_interface(member)
+            if InterfaceFlags.UP not in member_iface.flags:
                 self.logger.info('Bringing up member interface %r in %r', member_iface.name, name)
                 member_iface.up()
 
@@ -61,6 +62,6 @@ class InterfaceService(Service):
             iface.toggle_stp(name, int(bridge['stp']))
 
         # finally we need to up the main bridge if it's not already up
-        if netif.InterfaceFlags.UP not in iface.flags:
+        if InterfaceFlags.UP not in iface.flags:
             self.logger.info('Bringing up %r', name)
             iface.up()

@@ -1,4 +1,4 @@
-import truenas_pynetif as netif
+from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from middlewared.service import private, Service
 
@@ -11,7 +11,7 @@ class InterfaceService(Service):
     @private
     async def internal_interfaces(self):
         # expicit call to list() is important here
-        result = list(netif.INTERNAL_INTERFACES)
+        result = list(INTERNAL_INTERFACES)
         result.extend(await self.middleware.call('failover.internal_interface.detect'))
         result.extend(await self.middleware.call('rdma.interface.internal_interfaces'))
         if (await self.middleware.call('truenas.get_chassis_hardware')).startswith('TRUENAS-F'):

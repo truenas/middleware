@@ -8,7 +8,9 @@ from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
-import truenas_pynetif as netif
+from truenas_pynetif.address.constants import AddressFamily
+from truenas_pynetif.address.netlink import get_addresses, get_links, netlink_route
+from truenas_pynetif.routing import Route, RouteFlags, RoutingTable
 
 
 class RouteService(Service):
@@ -22,12 +24,12 @@ class RouteService(Service):
         """
         Get current/applied network routes.
         """
-        rtable = netif.RoutingTable()
+        rtable = RoutingTable()
         return filter_list([r.asdict() for r in rtable.routes], filters, options)
 
     @private
     async def configured_default_ipv4_route(self):
-        route = netif.RoutingTable().default_route_ipv4
+        route = RoutingTable().default_route_ipv4
         return bool(route or (await self.middleware.call('network.configuration.config'))['ipv4gateway'])
 
     @private
@@ -46,9 +48,10 @@ class RouteService(Service):
             else:
                 ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
                 interfaces = list()
-                for iface in netif.get_address_netlink().get_links():
-                    if not iface.startswith(ignore):
-                        interfaces.append(iface)
+                with netlink_route() as sock:
+                    for iface in get_links(sock):
+                        if not iface.startswith(ignore):
+                            interfaces.append(iface)
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -60,11 +63,11 @@ class RouteService(Service):
                         ipv4_gateway = reg_routers.group(1).split(' ')[0]
                         break
 
-        routing_table = netif.RoutingTable()
+        routing_table = RoutingTable()
         if ipv4_gateway:
-            ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(str(ipv4_gateway)))
-            ipv4_gateway.flags.add(netif.RouteFlags.STATIC)
-            ipv4_gateway.flags.add(netif.RouteFlags.GATEWAY)
+            ipv4_gateway = Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(str(ipv4_gateway)))
+            ipv4_gateway.flags.add(RouteFlags.STATIC)
+            ipv4_gateway.flags.add(RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
             # Otherwise change it
             if not routing_table.default_route_ipv4:
@@ -108,9 +111,9 @@ class RouteService(Service):
                 ipv6_gateway, ipv6_gateway_interface = ipv6_gateway.split("%")
             else:
                 ipv6_gateway_interface = None
-            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)), ipv6_gateway_interface)
-            ipv6_gateway.flags.add(netif.RouteFlags.STATIC)
-            ipv6_gateway.flags.add(netif.RouteFlags.GATEWAY)
+            ipv6_gateway = Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)), ipv6_gateway_interface)
+            ipv6_gateway.flags.add(RouteFlags.STATIC)
+            ipv6_gateway.flags.add(RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
             # Otherwise change it
             if not routing_table.default_route_ipv6:
@@ -139,18 +142,19 @@ class RouteService(Service):
     def gateway_is_reachable(self, gateway: str, ipv: typing.Literal[4, 6] = 4) -> bool:
         match ipv:
             case 4:
-                FAMILY, InterfaceClass = netif.AddressFamily.INET, ipaddress.IPv4Interface
+                FAMILY, InterfaceClass = AddressFamily.INET, ipaddress.IPv4Interface
             case 6:
-                FAMILY, InterfaceClass = netif.AddressFamily.INET6, ipaddress.IPv6Interface
+                FAMILY, InterfaceClass = AddressFamily.INET6, ipaddress.IPv6Interface
             case _:
                 raise ValidationError('route.gw_reachable.ipv', f'Expected 4 or 6, got {ipv}')
 
         gw = ipaddress.ip_address(gateway)
-        for addr in netif.get_address_netlink().get_addresses():
-            if addr.family != FAMILY or addr.scope == 254:  # skip wrong family and loopback
-                continue
-            if gw in InterfaceClass(f'{addr.address}/{addr.prefixlen}').network:
-                return True
+        with netlink_route() as sock:
+            for addr in get_addresses(sock):
+                if addr.family != FAMILY or addr.scope == 254:  # skip wrong family and loopback
+                    continue
+                if gw in InterfaceClass(f'{addr.address}/{addr.prefixlen}').network:
+                    return True
 
         return False
 
