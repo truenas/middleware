@@ -356,6 +356,14 @@ class NVMetPortService(CRUDService):
                 if RDMAprotocols.NVMET.value not in await self.middleware.call('rdma.capable_protocols'):
                     return choices
                 rdma_netdevs = [link['netdev'] for link in await self.middleware.call('rdma.get_link_choices', True)]
+                vlans = await self.middleware.call(
+                    'interface.query',
+                    [
+                        ['type', '=', 'VLAN'],
+                        ['vlan_parent_interface', 'in', rdma_netdevs]
+                    ],
+                    {'select': ['aliases', 'failover_aliases', 'failover_virtual_aliases']}
+                )
 
                 if force_ana or (await self.middleware.call('nvmet.global.config'))['ana']:
                     # If ANA is enabled we actually want to show the user the IPs of each node
@@ -369,6 +377,16 @@ class NVMetPortService(CRUDService):
                     for i in await self.middleware.call('datastore.query', 'network.alias', filters):
                         if i['alias_interface'].get('int_interface') in rdma_netdevs:
                             choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
+
+                    for vlan in vlans:
+                        try:
+                            addr = vlan['aliases'][0]['address']
+                            addr_b = vlan['failover_aliases'][0]['address']
+                            addr_fo = vlan['failover_virtual_aliases'][0]['address']
+                            if addr and addr_b and addr_fo:
+                                choices[addr_fo] = f'{addr}/{addr_b}'
+                        except (KeyError, IndexError):
+                            pass
                 else:
                     filters = [('name', 'in', rdma_netdevs)]
                     if await self.middleware.call('failover.licensed'):
@@ -376,11 +394,27 @@ class NVMetPortService(CRUDService):
                         for i in await self.middleware.call('interface.query', filters):
                             for alias in i.get('failover_virtual_aliases') or []:
                                 choices[alias['address']] = alias['address']
+
+                        for vlan in vlans:
+                            try:
+                                addr_fo = vlan['failover_virtual_aliases'][0]['address']
+                                if addr_fo:
+                                    choices[addr_fo] = addr_fo
+                            except (KeyError, IndexError):
+                                pass
                     else:
                         # Non-HA system should offer all addresses
                         for i in await self.middleware.call('interface.query', filters):
                             for alias in i['aliases']:
                                 choices[alias['address']] = alias['address']
+
+                        for vlan in vlans:
+                            try:
+                                addr = vlan['aliases'][0]['address']
+                                if addr:
+                                    choices[addr] = f'{addr}/{addr}'
+                            except (KeyError, IndexError):
+                                pass
 
                 return choices
 
