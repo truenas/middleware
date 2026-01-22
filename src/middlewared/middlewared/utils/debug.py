@@ -4,18 +4,18 @@ import sys
 import traceback
 import types
 from logging import Logger
-from typing import Any, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 
-class FrameDetails(TypedDict):
-    filename: NotRequired[str]
-    lineno: NotRequired[Any]
-    method: NotRequired[str]
-    line: NotRequired[str]
-    argspec: NotRequired[list[str]]
-    varargspec: NotRequired[str]
-    keywordspec: NotRequired[str]
-    locals: NotRequired[dict[str, Any]]
+class FrameDetails(TypedDict, total=False):
+    filename: str
+    lineno: Any
+    method: str
+    line: str
+    argspec: list[str]
+    varargspec: str
+    keywordspec: str
+    locals: dict[str, Any]
 
 
 def get_frame_details(frame: types.FrameType | None, logger: Logger) -> FrameDetails:
