@@ -52,7 +52,7 @@ The common practice is to define the corresponding roles like this:
     }
 
 @api_method decorator
-==================
+=====================
 
 Roles for an arbitrary method can be specified using `roles` parameter of the `@api_method` decorator:
 
@@ -63,7 +63,7 @@ Roles for an arbitrary method can be specified using `roles` parameter of the `@
 When multiple roles are specified, each of them will have access to the decorated method (without requiring others).
 
 @filterable_api_method decorator
-=====================
+================================
 
 Roles for methods that are decorated with `@filterable_api_method` may be specified using the `roles` parameter:
 
