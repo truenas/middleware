@@ -12,9 +12,28 @@ from middlewared.utils.pwenc import (
     encrypt,
     decrypt,
     pwenc_rename,
+    pwenc_data,
     PWENC_FILE_SECRET,
     PWENC_FILE_SECRET_MODE,
 )
+
+
+@pytest.fixture(scope='function')
+def pwenc_test_file():
+    """
+    Create a temporary file in the same directory as PWENC_FILE_SECRET
+    to avoid cross-device link errors. Cleans up after the test.
+    """
+    pwenc_dir = os.path.dirname(PWENC_FILE_SECRET)
+    test_path = os.path.join(pwenc_dir, 'test_secret.tmp')
+
+    try:
+        yield test_path
+    finally:
+        try:
+            os.unlink(test_path)
+        except FileNotFoundError:
+            pass
 
 
 @pytest.fixture(scope='module')
@@ -191,20 +210,19 @@ def test__pwenc_backup_files_cleanup(backup_pwenc_and_db):
             assert os.path.getsize(backup_file) == truenas_pypwenc.PWENC_BLOCK_SIZE
 
 
-def test__pwenc_rename_with_tmpdir(backup_pwenc_and_db, tmpdir):
-    """Test pwenc_rename functionality using tmpdir"""
-    # Create a test file in tmpdir with valid pwenc secret size
-    test_secret = os.path.join(tmpdir, 'test_secret.tmp')
-    with open(test_secret, 'wb') as f:
-        # Write a valid-sized secret (32 bytes)
+def test__pwenc_rename_with_tmpdir(backup_pwenc_and_db, pwenc_test_file):
+    """Test pwenc_rename functionality"""
+    # Write test data to the test file
+    with open(pwenc_test_file, 'wb') as f:
         f.write(b'X' * truenas_pypwenc.PWENC_BLOCK_SIZE)
+        f.flush()
 
     # Get list of existing backups
     existing_backups = glob.glob(f'{PWENC_FILE_SECRET}_old.*')
     initial_count = len(existing_backups)
 
     # Perform rename
-    pwenc_rename(test_secret)
+    pwenc_rename(pwenc_test_file)
 
     # Verify backup was created
     new_backups = glob.glob(f'{PWENC_FILE_SECRET}_old.*')
@@ -217,31 +235,32 @@ def test__pwenc_rename_with_tmpdir(backup_pwenc_and_db, tmpdir):
     assert stat_info.st_gid == 0
 
     # Verify the source file was moved (no longer exists)
-    assert not os.path.exists(test_secret)
+    assert not os.path.exists(pwenc_test_file)
 
 
 @pytest.mark.parametrize('wrong_mode', [0o644, 0o666, 0o755])
-def test__pwenc_rename_fixes_permissions(backup_pwenc_and_db, tmpdir, wrong_mode):
+def test__pwenc_rename_fixes_permissions(backup_pwenc_and_db, pwenc_test_file, wrong_mode):
     """Test that pwenc_rename corrects file permissions"""
-    # Create a test file with wrong permissions
-    test_secret = os.path.join(tmpdir, f'test_secret_{wrong_mode}.tmp')
-    with open(test_secret, 'wb') as f:
+    # Write test data with wrong permissions
+    with open(pwenc_test_file, 'wb') as f:
         f.write(b'Y' * truenas_pypwenc.PWENC_BLOCK_SIZE)
+        f.flush()
 
     # Set wrong permissions
-    os.chmod(test_secret, wrong_mode)
+    os.chmod(pwenc_test_file, wrong_mode)
 
     # Perform rename
-    pwenc_rename(test_secret)
+    pwenc_rename(pwenc_test_file)
 
     # Verify the new secret file has correct permissions (not the wrong ones)
     stat_info = os.stat(PWENC_FILE_SECRET)
     assert stat_info.st_mode & 0o777 == PWENC_FILE_SECRET_MODE
 
 
-def test__pwenc_rename_nonexistent_file(backup_pwenc_and_db, tmpdir):
+def test__pwenc_rename_nonexistent_file(backup_pwenc_and_db):
     """Test that pwenc_rename raises error for nonexistent file"""
-    nonexistent_path = os.path.join(tmpdir, 'nonexistent.tmp')
+    pwenc_dir = os.path.dirname(PWENC_FILE_SECRET)
+    nonexistent_path = os.path.join(pwenc_dir, 'nonexistent.tmp')
 
     with pytest.raises(FileNotFoundError):
         pwenc_rename(nonexistent_path)
