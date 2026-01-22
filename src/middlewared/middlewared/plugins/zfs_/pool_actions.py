@@ -5,8 +5,6 @@ import functools
 
 from middlewared.service import CallError, Service
 from middlewared.service_exception import ValidationError
-from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 
@@ -227,25 +225,6 @@ class ZFSPoolService(Service):
                     self.logger.error(
                         'Failed to mount datasets after importing "%s" pool: %s', name_or_guid, str(e), exc_info=True
                     )
-
-    def ddt_prefetch(self, pool_name):
-        with libzfs.ZFS() as zfs:
-            try:
-                zfs.get(pool_name).ddt_prefetch()
-            except libzfs.ZFSException as e:
-                raise CallError(str(e), e.code)
-
-    def ddt_prefetch_pools(self):
-        # We have this method so to avoid making excessive calls to process pool service
-        for pool_info in query_imported_fast_impl().values():
-            if pool_info['name'] in BOOT_POOL_NAME_VALID:
-                continue
-
-            try:
-                self.middleware.logger.info('Prefetching ddt table of %r pool', pool_info['name'])
-                self.ddt_prefetch(pool_info['name'])
-            except CallError as e:
-                self.logger.error('Failed to prefetch DDT for pool %r: %s', pool_info['name'], e)
 
     def ddt_prune(self, options):
         if options['percentage'] and options['days']:

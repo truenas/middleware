@@ -19,7 +19,8 @@ __all__ = [
     "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult", "PoolReimportArgs", "PoolReimportResult",
     "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
     "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
-    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions",
+    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions", "PoolPrefetchArgs",
+    "PoolPrefetchResult",
 ]
 
 
@@ -351,6 +352,16 @@ class PoolDdtPrefetchArgs(BaseModel):
 class PoolDdtPrefetchResult(BaseModel):
     result: None
     """Returns `null` on successful deduplication table prefetch."""
+
+
+class PoolPrefetchArgs(BaseModel):
+    pool_name: NonEmptyString
+    """Name of the pool to prefetch metadata for."""
+
+
+class PoolPrefetchResult(BaseModel):
+    result: None
+    """Returns `null` on successful metadata prefetch."""
 
 
 class PoolAttachArgs(BaseModel):
