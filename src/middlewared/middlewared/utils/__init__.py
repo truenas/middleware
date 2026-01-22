@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 import errno
 import functools
 import logging
@@ -61,7 +62,7 @@ def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list
 currently_running_subprocesses: set[str] = set()
 
 
-async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
+async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | str]:
     if isinstance(args[0], list):
         args = tuple(args[0])
 
@@ -91,27 +92,36 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
         raise
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
+class SwInfo:
+    stable: bool
+    codename: str
+    version: str
+    fullname: str
+    buildtime: int
+
+
 @functools.cache
-def sw_info() -> dict[str, Any]:
+def sw_info() -> SwInfo:
     """Returns the various software information from the manifest file."""
     with open(MANIFEST_FILE) as f:
         manifest = json.load(f)
         version = manifest['version']
-        return {
-            'stable': 'MASTER' not in manifest['version'],
-            'codename': manifest['codename'],
-            'version': version,
-            'fullname': f'{BRAND}-{version}',
-            'buildtime': manifest['buildtime'],
-        }
+        return SwInfo(
+            stable='MASTER' not in manifest['version'],
+            codename=manifest['codename'],
+            version=version,
+            fullname=f'{BRAND}-{version}',
+            buildtime=manifest['buildtime'],
+        )
 
 
-def sw_buildtime() -> Any:
-    return sw_info()['buildtime']
+def sw_buildtime() -> int:
+    return sw_info().buildtime
 
 
 def sw_version() -> str:
-    return sw_info()['fullname']
+    return sw_info().fullname
 
 
 def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:

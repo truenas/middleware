@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from struct import unpack
 from middlewared.utils.time_utils import utc_now
-from typing import Iterator
+from typing import Generator
 
 
 FAILLOCK_DIR = '/var/run/faillock'
@@ -66,7 +66,7 @@ def reset_tally(username: str) -> None:
             os.close(fd)
 
 
-def iter_tally(username: str) -> Iterator[TallyEntry]:
+def iter_tally(username: str) -> Generator[TallyEntry]:
     try:
         with open(os.path.join(FAILLOCK_DIR, username), 'rb') as f:
             while data := f.read(TALLY_ENTRY_SZ):

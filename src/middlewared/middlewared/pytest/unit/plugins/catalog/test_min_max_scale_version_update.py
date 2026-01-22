@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import Mock
 
 import pytest
 
@@ -153,6 +154,6 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
 ])
 @unittest.mock.patch('middlewared.plugins.catalog.apps_util.sw_info')
 def test_min_max_scale_version_update(sw_info, version_data, expected):
-    sw_info.return_value = {'version': '25.04.0'}
+    sw_info.return_value = Mock(version='25.04.0')
     result = minimum_scale_version_check_update(version_data)
     assert result == expected

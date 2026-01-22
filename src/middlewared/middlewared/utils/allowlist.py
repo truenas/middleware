@@ -1,17 +1,23 @@
 import fnmatch
 import re
+import typing
 
 from middlewared.api.base.types import HttpVerb
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 
 
+class AllowListItem(typing.TypedDict):
+    method: HttpVerb
+    resource: str
+
+
 class Allowlist:
-    def __init__(self, allowlist: list[dict[str, str]]) -> None:
+    def __init__(self, allowlist: list[AllowListItem]) -> None:
         self.exact: dict[HttpVerb, set[str]] = {}
         self.full_admin = ALLOW_LIST_FULL_ADMIN in allowlist
         self.patterns: dict[HttpVerb, list[re.Pattern[str]]] = {}
         for entry in allowlist:
-            method: HttpVerb = entry["method"]  # type: ignore
+            method = entry["method"]
             resource = entry["resource"]
             if "*" in resource:
                 self.patterns.setdefault(method, [])

@@ -4,14 +4,25 @@ import sys
 import traceback
 import types
 from logging import Logger
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 
-def get_frame_details(frame: types.FrameType | None, logger: Logger) -> dict[str, Any]:
+class FrameDetails(TypedDict):
+    filename: NotRequired[str]
+    lineno: NotRequired[Any]
+    method: NotRequired[str]
+    line: NotRequired[str]
+    argspec: NotRequired[list[str]]
+    varargspec: NotRequired[str]
+    keywordspec: NotRequired[str]
+    locals: NotRequired[dict[str, Any]]
+
+
+def get_frame_details(frame: types.FrameType | None, logger: Logger) -> FrameDetails:
     if not isinstance(frame, types.FrameType):
         return {}
 
-    cur_frame: dict[str, Any] = {
+    cur_frame: FrameDetails = {
         'filename': frame.f_code.co_filename,
         'lineno': frame.f_lineno,
         'method': frame.f_code.co_name,
@@ -55,6 +66,7 @@ def get_frame_details(frame: types.FrameType | None, logger: Logger) -> dict[str
             # repr() may fail since it may be one of the reasons
             # of the exception
             cur_frame['locals'] = {}
+
     return cur_frame
 
 

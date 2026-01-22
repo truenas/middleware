@@ -47,7 +47,7 @@ class UpdateService(Service):
             with open(os.path.join(mounted, "manifest.json")) as f:
                 manifest = json.load(f)
 
-            old_version = sw_info()['version']
+            old_version = sw_info().version
             new_version = manifest["version"]
             if old_version == new_version:
                 raise CallError(f'You already are using {new_version}')
