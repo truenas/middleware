@@ -72,13 +72,14 @@ class FailoverDisabledReasonsService(Service):
             return
 
         reboot_info = self.middleware.call_sync("failover.reboot.info")
-        if reboot_info["this_node"]["reboot_required_reasons"]:
-            reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
-        if (
-            reboot_info["other_node"] is not None
-            and reboot_info["other_node"]["reboot_required_reasons"]
-        ):
-            reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
+        for key in ("this_node", "other_node"):
+            node = "LOC" if key == "this_node" else "REM"
+            for reason_details in (reboot_info[key] or {}).get("reboot_required_reasons", []):
+                disabled_reason = f"{node}_{reason_details['code']}_REBOOT_REQ"
+                if hasattr(DisabledReasonsEnum, disabled_reason):
+                    reasons.add(disabled_reason)
+                else:
+                    self.logger.error("Unknown reboot reason received: %s", disabled_reason)
 
         if self.SYSTEM_DATASET_SETUP_IN_PROGRESS:
             reasons.add(

@@ -42,6 +42,8 @@ class FailoverRebootService(Service):
         :param code: unique identifier for the reason.
         :param reason: text explanation for the reason.
         """
+        # Consumers of this endpoint should call this before actually attempting a reboot of the
+        # remote node so we can grab its boot id before the reboot actually happens
         if not self.loaded:
             raise CallError(f'Cannot add remote reboot reason before they are loaded: ({code},{reason})')
 

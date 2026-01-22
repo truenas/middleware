@@ -28,6 +28,10 @@ class DisabledReasonsEnum(StrEnum):
     NO_CARRIER_ON_HEARTBEAT = "Local heartbeat interface is down."
     LOC_FIPS_REBOOT_REQ = "This node needs to be rebooted to apply FIPS configuration"
     REM_FIPS_REBOOT_REQ = "Other node needs to be rebooted to apply FIPS configuration"
+    LOC_GPOSSTIG_REBOOT_REQ = "This node needs to be rebooted to apply GPOS configuration"
+    REM_GPOSSTIG_REBOOT_REQ = "Other node needs to be rebooted to apply GPOS configuration"
+    LOC_UPGRADE_REBOOT_REQ = "This node needs to be rebooted to complete the system upgrade"
+    REM_UPGRADE_REBOOT_REQ = "Other node needs to be rebooted to complete the system upgrade"
     LOC_SYSTEM_DATASET_MIGRATION_IN_PROGRESS = (
         "This node is currently configuring the system dataset"
     )
