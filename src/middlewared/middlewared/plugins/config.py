@@ -1,5 +1,5 @@
-import contextlib
 from datetime import datetime
+import contextlib
 import glob
 import os
 import pathlib
@@ -16,7 +16,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.utils.pwenc import PWENC_FILE_SECRET
+from middlewared.utils.pwenc import pwenc_generate_secret, pwenc_rename, PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -171,6 +171,8 @@ class ConfigService(Service):
 
                 if i.name == 'pwenc_secret':
                     shutil.move(abspath, PWENC_UPLOADED)
+                    os.chmod(PWENC_UPLOADED, PWENC_FILE_SECRET_MODE)
+                    os.chown(PWENC_UPLOADED, 0, 0)
                     send_to_remote.append(PWENC_UPLOADED)
 
                 if i.name == 'admin_authorized_keys':
@@ -283,15 +285,21 @@ class ConfigService(Service):
         shutil.copy(FREENAS_DATABASE, newfile)
 
 
-def setup(middleware):
+def handle_db_upload_path(middleware):
     if os.path.exists(UPLOADED_DB_PATH):
+        middleware.logger.info('Handling uploaded database')
+
         shutil.move(UPLOADED_DB_PATH, FREENAS_DATABASE)
 
         if os.path.exists(PWENC_UPLOADED):
-            shutil.move(PWENC_UPLOADED, PWENC_FILE_SECRET)
+            pwenc_rename(PWENC_UPLOADED)
         else:
             with contextlib.suppress(FileNotFoundError):
-                os.unlink(PWENC_FILE_SECRET)
+                middleware.logger.debug('Database uploaded without pwenc secret. Forcing generation of new secret.')
+                # We immediately generate a fresh (incorrect) secret so that any calls to read an encrypted field
+                # between datastore plugin load and pwenc plugin load (where we reset) will not raise a
+                # truenas_pypwenc.PwencError with code PWENC_ERROR_SECRET_NOT_FOUND
+                pwenc_generate_secret()
 
         if os.path.exists(ADMIN_KEYS_UPLOADED):
             shutil.move(ADMIN_KEYS_UPLOADED, CONFIG_FILES['admin_authorized_keys'])
@@ -310,3 +318,9 @@ def setup(middleware):
         else:
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(CONFIG_FILES['root_authorized_keys'])
+
+
+async def setup(middleware):
+    # WARNING: the order in which this setup method is run is critical. It must be executed
+    # prior to setup of the datastore plugin.
+    await middleware.run_in_thread(handle_db_upload_path, middleware)

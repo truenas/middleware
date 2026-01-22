@@ -1,20 +1,13 @@
 import os
 
-try:
-    import truenas_pypwenc
-except ImportError:
-    truenas_pypwenc = None
+import truenas_pypwenc
 
 import threading
+import uuid
 
 
 PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
-try:
-    PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
-except AttributeError:
-    # This is just a catchall for some CI that doesn't have truenas_pypwenc installed
-    PWENC_FILE_SECRET = '/data/pwenc_secret'
-
+PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
 pwenc_data = {'secret_ctx': None, 'lock': threading.Lock()}
 
@@ -23,45 +16,102 @@ def pwenc_get_ctx():
     """ Retrieve a truenas_pypwenc() context with secret key
     loaded in memfd secret. This will raise an exception if file
     does not exist. """
-    if pwenc_data['secret_ctx']:
-        return pwenc_data['secret_ctx']
+    if (ctx := pwenc_data['secret_ctx']) is not None:
+        return ctx
 
     with pwenc_data['lock']:
-        pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=False)
+        # check again under lock to ensure we don't have a race on another thread generating a context
+        if not pwenc_data['secret_ctx']:
+            pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=False, watch=True)
 
     return pwenc_data['secret_ctx']
 
 
-def pwenc_reset_cache():
-    """ Clear reference to pwenc secret allowing reopen with possibly different
-    contents. This is primarily used by the remote node in HA after syncing to
-    peer. """
+def pwenc_rename(source_path: str):
+    """ Atomically replace pwenc secret file and reset cache.
+
+    This function:
+    - Acquires lock to prevent concurrent access
+    - Ensures source file has correct permissions
+    - Uses atomic rename to replace the pwenc secret file
+    - Resets cache after successful rename
+
+    Args:
+        source_path: Path to file that will replace the pwenc secret
+
+    Raises:
+        OSError: If chmod/chown/rename fails
+        FileNotFoundError: If source_path doesn't exist
+    """
     with pwenc_data['lock']:
-        pwenc_data['secret_ctx'] = None
+        # In addition to validating the permissions, this ensures
+        # that the source_path actually exists
+        os.chmod(source_path, PWENC_FILE_SECRET_MODE)
+        os.chown(source_path, 0, 0)
+        backup_name = f'{PWENC_FILE_SECRET}_old.{uuid.uuid4()}'
+        backup_created = False
+
+        try:
+            os.rename(PWENC_FILE_SECRET, backup_name)
+            backup_created = True
+        except FileNotFoundError:
+            pass
+
+        try:
+            os.rename(source_path, PWENC_FILE_SECRET)
+        except Exception:
+            # Someone maybe removed source_path from under us put the original file back and re-raise error
+            if backup_created:
+                os.rename(backup_name, PWENC_FILE_SECRET)
+            raise
 
 
 def pwenc_encrypt(data_in: bytes) -> bytes:
     """ Encrypt and base64 encode the input bytes """
     ctx = pwenc_get_ctx()
-    return ctx.encrypt(data_in)
+    try:
+        return ctx.encrypt(data_in)
+    except truenas_pypwenc.PwencError as exc:
+        if exc.code != truenas_pypwenc.PWENC_ERROR_SECRET_RELOAD_FAILED:
+            raise
+
+        # If we fail to reload secret after change out from under us force creation of new pwenc handle and retry.
+        # This may be a simple toctou issue, but minimally it will give the caller a descriptive error in case the
+        # secrets file doesn't exist anymore
+        pwenc_data['secret_ctx'] = None
+        ctx = pwenc_get_ctx()
+        return ctx.encrypt(data_in)
 
 
 def pwenc_decrypt(data_in: bytes) -> bytes:
     """ Base64 decode and decrypt the input bytes """
     ctx = pwenc_get_ctx()
-    return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
+    try:
+        return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
+    except truenas_pypwenc.PwencError as exc:
+        if exc.code != truenas_pypwenc.PWENC_ERROR_SECRET_RELOAD_FAILED:
+            raise
+
+        # If we fail to reload secret after change out from under us force creation of new pwenc handle and retry.
+        # This may be a simple toctou issue, but minimally it will give the caller a descriptive error in case the
+        # secrets file doesn't exist anymore
+        pwenc_data['secret_ctx'] = None
+        ctx = pwenc_get_ctx()
+        return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
 
 
 def pwenc_generate_secret():
     """ Create a new pwenc secret. """
     with pwenc_data['lock']:
         try:
-            os.unlink(truenas_pypwenc.DEFAULT_SECRET_PATH)
+            os.rename(PWENC_FILE_SECRET, f'{PWENC_FILE_SECRET}_old.{uuid.uuid4()}')
         except FileNotFoundError:
             pass
 
-        pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=True)
-        assert pwenc_data['secret_ctx'].created
+        # We do not store this pwenc context since it was created with the create=True flag and we don't want the watch
+        # to recreate on reload. Next caller can get the context properly
+        ctx = truenas_pypwenc.get_context(create=True, watch=True)
+        assert ctx.created
 
 
 def encrypt(decrypted: str) -> str:

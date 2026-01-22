@@ -29,7 +29,7 @@ from middlewared.api.current import (
     FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
 from middlewared.event import EventSource
-from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, pwenc_reset_cache
+from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
@@ -480,22 +480,23 @@ class FilesystemService(Service):
 
         `content` must be a base 64 encoded file content.
         """
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if path == PWENC_FILE_SECRET:
+            raise CallError(
+                'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
+                errno.EINVAL
+            )
+
+        dirname = os.path.dirname(path)
+        os.makedirs(dirname, exist_ok=True)
+
         with open(path, 'ab' if options.get('append') else 'wb+') as f:
             f.write(binascii.a2b_base64(content))
-            if path == PWENC_FILE_SECRET:
-                # don't allow someone to clobber mode/ownership
-                os.fchmod(f.fileno(), PWENC_FILE_SECRET_MODE)
-                os.fchown(f.fileno(), 0, 0)
-            else:
-                if mode := options.get('mode'):
-                    os.fchmod(f.fileno(), mode)
-                # -1 means don't change uid/gid if the one provided is
-                # the same that is on disk already
-                os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
-
-        if path == PWENC_FILE_SECRET:
-            pwenc_reset_cache()
+            if mode := options.get('mode'):
+                os.fchmod(f.fileno(), mode)
+            # -1 means don't change uid/gid if the one provided is
+            # the same that is on disk already
+            os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
+            f.flush()
 
         return True
 
@@ -518,6 +519,12 @@ class FilesystemService(Service):
         """
         Job to put contents to `path`.
         """
+        if path == PWENC_FILE_SECRET:
+            raise CallError(
+                'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
+                errno.EINVAL
+            )
+
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -526,15 +533,17 @@ class FilesystemService(Service):
         else:
             openmode = 'wb+'
 
+        mode = options.get('mode')
+
         try:
             with open(path, openmode) as f:
+                if mode:
+                    os.fchmod(f.fileno(), mode)
+
                 shutil.copyfileobj(job.pipes.input.r, f)
         except PermissionError:
             raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
 
-        mode = options.get('mode')
-        if mode:
-            os.chmod(path, mode)
         return True
 
     @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'])
