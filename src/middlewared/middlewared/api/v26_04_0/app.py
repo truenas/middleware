@@ -109,6 +109,8 @@ class AppEntry(BaseModel):
     """Whether a newer version of the application is available for upgrade."""
     latest_version: NonEmptyString | None
     """The latest available version string, or `null` if no updates are available."""
+    latest_app_version: NonEmptyString | None
+    """The latest application version string, or `null` if no updates are available."""
     image_updates_available: bool
     """Whether newer Docker images are available for the containers in this application."""
     custom_app: bool
