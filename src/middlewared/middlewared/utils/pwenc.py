@@ -1,33 +1,35 @@
 import os
-
-import truenas_pypwenc
-
 import threading
 import uuid
+
+import truenas_pypwenc
 
 
 PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
 PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
-pwenc_data = {'secret_ctx': None, 'lock': threading.Lock()}
+global_ctx = None
+lock = threading.Lock()
 
 
-def pwenc_get_ctx():
+def pwenc_get_ctx() -> truenas_pypwenc.PwencContext:
     """ Retrieve a truenas_pypwenc() context with secret key
     loaded in memfd secret. This will raise an exception if file
     does not exist. """
-    if (ctx := pwenc_data['secret_ctx']) is not None:
-        return ctx
+    global global_ctx
 
-    with pwenc_data['lock']:
+    if global_ctx is not None:
+        return global_ctx
+
+    with lock:
         # check again under lock to ensure we don't have a race on another thread generating a context
-        if not pwenc_data['secret_ctx']:
-            pwenc_data['secret_ctx'] = truenas_pypwenc.get_context(create=False, watch=True)
+        if global_ctx is None:
+            global_ctx = truenas_pypwenc.get_context(create=False, watch=True)
 
-    return pwenc_data['secret_ctx']
+    return global_ctx
 
 
-def pwenc_rename(source_path: str):
+def pwenc_rename(source_path: str) -> None:
     """ Atomically replace pwenc secret file and reset cache.
 
     This function:
@@ -43,7 +45,7 @@ def pwenc_rename(source_path: str):
         OSError: If chmod/chown/rename fails
         FileNotFoundError: If source_path doesn't exist
     """
-    with pwenc_data['lock']:
+    with lock:
         # In addition to validating the permissions, this ensures
         # that the source_path actually exists
         os.chmod(source_path, PWENC_FILE_SECRET_MODE)
@@ -68,6 +70,8 @@ def pwenc_rename(source_path: str):
 
 def pwenc_encrypt(data_in: bytes) -> bytes:
     """ Encrypt and base64 encode the input bytes """
+    global global_ctx
+
     ctx = pwenc_get_ctx()
     try:
         return ctx.encrypt(data_in)
@@ -78,13 +82,15 @@ def pwenc_encrypt(data_in: bytes) -> bytes:
         # If we fail to reload secret after change out from under us force creation of new pwenc handle and retry.
         # This may be a simple toctou issue, but minimally it will give the caller a descriptive error in case the
         # secrets file doesn't exist anymore
-        pwenc_data['secret_ctx'] = None
+        global_ctx = None
         ctx = pwenc_get_ctx()
         return ctx.encrypt(data_in)
 
 
 def pwenc_decrypt(data_in: bytes) -> bytes:
     """ Base64 decode and decrypt the input bytes """
+    global global_ctx
+
     ctx = pwenc_get_ctx()
     try:
         return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
@@ -95,14 +101,14 @@ def pwenc_decrypt(data_in: bytes) -> bytes:
         # If we fail to reload secret after change out from under us force creation of new pwenc handle and retry.
         # This may be a simple toctou issue, but minimally it will give the caller a descriptive error in case the
         # secrets file doesn't exist anymore
-        pwenc_data['secret_ctx'] = None
+        global_ctx = None
         ctx = pwenc_get_ctx()
         return ctx.decrypt(data_in).rstrip(PWENC_PADDING)
 
 
-def pwenc_generate_secret():
+def pwenc_generate_secret() -> None:
     """ Create a new pwenc secret. """
-    with pwenc_data['lock']:
+    with lock:
         try:
             os.rename(PWENC_FILE_SECRET, f'{PWENC_FILE_SECRET}_old.{uuid.uuid4()}')
         except FileNotFoundError:
@@ -121,7 +127,7 @@ def encrypt(decrypted: str) -> str:
     return encrypted.decode()
 
 
-def decrypt(encrypted: str, _raise=False) -> str:
+def decrypt(encrypted: str, _raise: bool = False) -> str:
     """ Decrypt the input base64 string and return a string """
     if not encrypted:
         return ''
