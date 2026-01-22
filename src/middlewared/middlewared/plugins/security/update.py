@@ -353,28 +353,26 @@ class SystemSecurityService(ConfigService):
 
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
 
-        reboot_reasons = []
+        reboot_reason = None
         reboot_other_node = False
         if new['enable_fips'] != old['enable_fips']:
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
-            reboot_reasons.append(RebootReason.FIPS)
+            reboot_reason = RebootReason.FIPS
             await self.middleware.call('etc.generate', 'fips')
-            reboot_other_node |= await self.configure_reboot_reason_on_ha(is_ha, RebootReason.FIPS)
 
         if new['enable_gpos_stig'] != old['enable_gpos_stig']:
-            reboot_reasons.append(RebootReason.GPOSSTIG)
-            reboot_other_node |= await self.configure_reboot_reason_on_ha(is_ha, RebootReason.GPOSSTIG)
+            reboot_reason = RebootReason.GPOSSTIG
             await self.configure_stig(new)
 
-        for reboot_reason in reboot_reasons:
+        if reboot_reason:
             await self.middleware.call(
                 'system.reboot.toggle_reason', reboot_reason.name, reboot_reason.value
             )
+            reboot_other_node |= await self.configure_reboot_reason_on_ha(is_ha, reboot_reason)
 
-        if reboot_other_node:
+        if reboot_reason and reboot_other_node:
             # Let's pick the first reboot reason when rebooting the other node
-            reason = reboot_reasons[0]
             try:
                 # Send the datastore to the remote node to ensure that the
                 # FIPS/STIG configuration has been synced up before reboot
@@ -392,7 +390,7 @@ class SystemSecurityService(ConfigService):
                 # before rebooting.
                 reboot_job = await self.middleware.call(
                     'failover.reboot.other_node',
-                    {'reason': reason.value, 'graceful': True},
+                    {'reason': reboot_reason.value, 'graceful': True},
                 )
                 await job.wrap(reboot_job)
             except Exception:
