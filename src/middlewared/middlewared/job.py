@@ -791,7 +791,7 @@ class Job:
 
         :param subjob: The job to wrap.
         :param raise_error_forward_classes: tuple containing classes to re-raise from
-        the job result. If the exception type does not match, then a CallError will be raised
+            the job result. If the exception type does not match, then a CallError will be raised
         """
         self.set_progress(**subjob.progress)
         subjob.wrapped.append(self)
