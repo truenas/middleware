@@ -428,7 +428,9 @@ class FailoverService(ConfigService):
     def send_pwenc_secret(self):
         try:
             with open(PWENC_FILE_SECRET, 'rb') as f:
-                self.middleware.call_sync('failover.call_remote', 'pwenc.replace', [base64.b64encode(f.read())])
+                self.middleware.call_sync(
+                    'failover.call_remote', 'pwenc.replace', [base64.b64encode(f.read()).decode()]
+                )
         except FileNotFoundError:
             self.logger.error('Local pwenc secret not found')
 

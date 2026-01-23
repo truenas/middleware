@@ -87,9 +87,6 @@ class PWEncService(Service):
         if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
             raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
 
-        if self.middleware.call_sync('failover.is_single_master_node'):
-            raise CallError('pwenc.replace called on controller that is not standby')
-
         data = b64decode(b64secret)
         if len(data) != truenas_pypwenc.PWENC_BLOCK_SIZE:
             raise CallError('Unexpected data length for pwenc file')
