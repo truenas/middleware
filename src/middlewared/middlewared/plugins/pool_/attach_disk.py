@@ -63,7 +63,26 @@ class PoolService(Service):
             )
             verrors.check()
 
+            if pool['all_sed']:
+                disk = await self.middleware.call(
+                    'disk.query', [['name', '=', options['new_disk']]], {'get': True, 'force_sql_filters': True}
+                )
+                if disk['sed'] is False:
+                    verrors.add(
+                        'pool_attach.new_disk',
+                        f'{options["new_disk"]} must be SED capable because {pool["name"]} is all SED.'
+                    )
+                    verrors.check()
+
             job.set_progress(3, 'Completed validation')
+
+            if pool['all_sed']:
+                # Initialize/unlock SED disk if pool is marked as all_sed now that
+                # validation has been completed
+                job.set_progress(4, 'Setting up SED disk')
+                await self.middleware.call(
+                    'disk.setup_sed_disks_for_pool', [options['new_disk']], 'pool_attach.new_disk'
+                )
 
             if vdev['type'] in ('DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'):
                 guid = vdev['guid']
