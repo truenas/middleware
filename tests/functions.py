@@ -81,6 +81,8 @@ def SSH_TEST(command, username, passwrd, host=None, timeout=120):
         "UserKnownHostsFile=/dev/null",
         "-o",
         "VerifyHostKeyDNS=no",
+        "-o",
+        "LogLevel=error",
         f"{username}@{target}",
         command
     ]
