@@ -70,7 +70,7 @@ class PoolService(Service):
                 if disk['sed'] is False:
                     verrors.add(
                         'pool_attach.new_disk',
-                        f'{options["new_disk"] must be SED capable because {pool["name"} is all SED.'
+                        f'{options["new_disk"] must be SED capable because {pool["name"]} is all SED.'
                     )
                     verrors.check()
 
