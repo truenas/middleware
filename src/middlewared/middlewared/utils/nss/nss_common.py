@@ -1,6 +1,7 @@
 import enum
 import ctypes
 import os
+from typing import Any
 
 from collections import defaultdict
 
@@ -11,23 +12,24 @@ SSS_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_sss.so.2')
 WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_winbind.so.2')
 
 
-class NSSModuleFN(defaultdict):
+class NSSModuleFN(defaultdict[str, Any]):
     """ Default dictionary containing references to C function pointers for a specific NSS module.
     Example: '_nss_files_getpwnam_r' """
-    cddl = None
-    module_name = None
+    cdll: ctypes.CDLL | None = None
+    module_name: str | None = None
 
-    def __missing__(self, key):
+    def __missing__(self, key: str) -> Any:
+        assert self.cdll is not None
         fn = getattr(self.cdll, f'_nss_{self.module_name}_{key}')
         self[key] = fn
         return fn
 
 
-class NSSModuleCDLL(defaultdict):
+class NSSModuleCDLL(defaultdict[str, NSSModuleFN]):
     """ A default dictionary that holds references to loaded shared libaries for the NSS modules above.
     For example, '/usr/lib/x86_64-linux-gnu/libnss_files.so.2'. The returned value is an NSSModuleFN
     that will hold references to lazy-initialized C function pointers."""
-    def __missing__(self, key):
+    def __missing__(self, key: str) -> NSSModuleFN:
         mod, path = key.split('.', 1)
         cdll = ctypes.CDLL(path, use_errno=True)
         self[key] = NSSModuleFN()
@@ -71,13 +73,13 @@ class NssOperation(enum.Enum):
 
 
 class NssError(Exception):
-    def __init__(self, errno, nssop, return_code, module):
+    def __init__(self, errno: int, nssop: NssOperation, return_code: NssReturnCode, module: NssModule) -> None:
         self.errno = errno
         self.nssop = nssop.value
         self.return_code = return_code
         self.mod_name = module.name
 
-    def __str__(self):
+    def __str__(self) -> str:
         errmsg = f'NSS operation {self.nssop} failed with errno {self.errno}: {self.return_code}'
         if self.mod_name != 'ALL':
             errmsg += f' on module [{self.mod_name.lower()}].'
@@ -85,7 +87,7 @@ class NssError(Exception):
         return errmsg
 
 
-def get_nss_func(nss_op: NssOperation, nss_module: NssModule):
+def get_nss_func(nss_op: NssOperation, nss_module: NssModule) -> Any:
     """ Get the C function pointer for the particular NSS operation for the NSS module. The cache
     is lazy-initialized as different modules are used. Standalone servers will only ever use the
     files module. """

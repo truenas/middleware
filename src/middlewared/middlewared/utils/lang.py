@@ -2,4 +2,4 @@ class Undefined:
     pass
 
 
-undefined = Undefined()
+undefined: Undefined = Undefined()

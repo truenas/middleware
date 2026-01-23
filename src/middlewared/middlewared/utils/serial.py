@@ -2,14 +2,23 @@ import re
 import os
 import glob
 import subprocess
+from typing import TypedDict
 
 RE_PORT_UART = re.compile(r'at\s*(\w*).*is a\s*(\w+)')
 
 
-def serial_port_choices():
-    devices = []
+class SerialDevice(TypedDict):
+    name: str | None
+    location: str | None
+    drivername: str
+    description: str | None
+    start: str | None
+
+
+def serial_port_choices() -> list[SerialDevice]:
+    devices: list[SerialDevice] = []
     for tty in map(lambda t: os.path.basename(t), glob.glob('/dev/ttyS*')):
-        serial_dev = {
+        serial_dev: SerialDevice = {
             'name': None,
             'location': None,
             'drivername': 'uart',

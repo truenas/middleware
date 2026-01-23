@@ -8,7 +8,6 @@ from middlewared.job import JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError
-from middlewared.utils import Popen
 
 
 @dataclass
@@ -38,8 +37,8 @@ def get_restic_config(cloud_backup):
 
 async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
     await job.logs_fd_write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
-    proc = await Popen(
-        cmd,
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
         cwd=cwd,
         env=env,
         stdin=stdin,

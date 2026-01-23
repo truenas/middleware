@@ -1,4 +1,4 @@
-def make_sentence(s):
+def make_sentence(s: str) -> str:
     if not s:
         return s
 

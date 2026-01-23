@@ -21,7 +21,7 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, str]: ...
 
 def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, str]] | Callable[P, str]:
     if asyncio.iscoroutinefunction(func):
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
             pr = cProfile.Profile()
             pr.enable()
             rv = await func(*args, **kwargs)
@@ -29,8 +29,9 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, st
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats(SortKey.CUMULATIVE).print_stats()
             return s.getvalue() + '\n' + str(rv)
+        return wrapper
     else:
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
             pr = cProfile.Profile()
             pr.enable()
             rv = func(*args, **kwargs)
@@ -38,4 +39,4 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, st
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats(SortKey.CUMULATIVE).print_stats()
             return s.getvalue() + '\n' + str(rv)
-    return wrapper
+        return wrapper

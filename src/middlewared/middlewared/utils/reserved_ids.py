@@ -7,7 +7,7 @@ LOCKED_XID_TTL = 3600
 
 @dataclass(slots=True)
 class ReservedXid:
-    in_flight: dict[int, int]
+    in_flight: dict[int, float]
 
     def available(self, xid: int) -> bool:
         if (expiry := self.in_flight.get(xid)) is None:
@@ -26,5 +26,5 @@ class ReservedXid:
     def remove_entry(self, xid: int) -> None:
         self.in_flight.pop(xid, None)
 
-    def in_use(self) -> set:
+    def in_use(self) -> set[int]:
         return set([entry for entry in list(self.in_flight.keys()) if not self.available(entry)])

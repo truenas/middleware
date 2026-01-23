@@ -10,6 +10,7 @@ we are limited here by what is supported by JSON1 in sqlite. Any changes or expa
 will need to be validated against what is supported by the library: https://sqlite.org/json1.html
 """
 from json import dumps
+from typing import Any
 
 JSON_PATH_ROOT_NODE_ID = '$'
 JSON_PATH_DOT_SEGMENT = '.'
@@ -56,7 +57,7 @@ def dot_notation_to_json_path(str_in: str) -> str:
     return JSON_PATH_PREFIX + str_in
 
 
-def query_filters_json_path_parse(filters_in: list) -> list:
+def query_filters_json_path_parse(filters_in: list[Any]) -> list[Any]:
     """ This function validates the query-filters passed in and converts the filter_list style
     dot notation for dictionary elements into JSONPath notation to be used for SQL Alchemy
     query """
@@ -135,7 +136,7 @@ def json_path_parse(str_in: str) -> tuple[str, str]:
         return column, relative_path
 
 
-def query_select_json_path_parse(select_in: list) -> list:
+def query_select_json_path_parse(select_in: list[Any]) -> list[Any]:
     """ Convert select query-options into JSONPath syntax. This allows picking out
     fields from JSON data returned and assigning them as new fields. E.g.:
 
@@ -146,7 +147,7 @@ def query_select_json_path_parse(select_in: list) -> list:
       json_extract(data.payload, '$.metadata.last_login') AS last_login
     FROM data;
     """
-    out = []
+    out: list[Any] = []
     if not select_in:
         return out
 

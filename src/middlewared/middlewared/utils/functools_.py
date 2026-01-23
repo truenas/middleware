@@ -2,38 +2,52 @@ import asyncio
 import copy
 import functools
 import threading
+from collections.abc import Awaitable
+from typing import Any, Callable, TypeVar, overload
 
-from middlewared.utils.lang import undefined
+from middlewared.utils.lang import undefined, Undefined
 
 
-def cache(func):
-    value = undefined
+@overload
+def cache[T](func: Callable[[Any], Awaitable[T]]) -> Callable[[Any], Awaitable[T]]: ...
+
+
+@overload
+def cache[T](func: Callable[[Any], T]) -> Callable[[Any], T]: ...
+
+
+def cache[T](
+    func: Callable[[Any], T] | Callable[[Any], Awaitable[T]]
+) -> Callable[[Any], T] | Callable[[Any], Awaitable[T]]:
+    value: T | Undefined = undefined
 
     if asyncio.iscoroutinefunction(func):
-        lock = asyncio.Lock()
+        async_lock = asyncio.Lock()
 
         @functools.wraps(func)
-        async def wrapped(self):
+        async def wrapped_async(self: Any) -> T:
             nonlocal value
 
             if value == undefined:
-                async with lock:
+                async with async_lock:
                     if value == undefined:
                         value = await func(self)
 
             return copy.deepcopy(value)
+
+        return wrapped_async
     else:
-        lock = threading.Lock()
+        threading_lock = threading.Lock()
 
         @functools.wraps(func)
-        def wrapped(self):
+        def wrapped_sync(self: Any) -> T:
             nonlocal value
 
             if value == undefined:
-                with lock:
+                with threading_lock:
                     if value == undefined:
                         value = func(self)
 
             return copy.deepcopy(value)
 
-    return wrapped
+        return wrapped_sync

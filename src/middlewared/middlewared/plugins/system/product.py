@@ -82,7 +82,7 @@ class SystemService(Service):
     )
     def version_short(self):
         """Returns the short name of the software version of the system."""
-        return sw_info()['version']
+        return sw_info().version
 
     @api_method(
         SystemReleaseNotesUrlArgs,
@@ -116,7 +116,7 @@ class SystemService(Service):
     )
     def version(self):
         """Returns the full name of the software version of the system."""
-        return sw_info()['fullname']
+        return sw_info().fullname
 
     @private
     async def platform(self):

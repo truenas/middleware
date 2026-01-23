@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+from collections.abc import AsyncGenerator
 import contextlib
 import logging
 
@@ -8,5 +9,5 @@ __all__ = ["asyncnullcontext"]
 
 
 @contextlib.asynccontextmanager
-async def asyncnullcontext(enter_result=None):
+async def asyncnullcontext[T](enter_result: T = None) -> AsyncGenerator[T]:
     yield enter_result

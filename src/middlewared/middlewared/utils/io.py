@@ -17,7 +17,7 @@ class FileChanges(enum.IntFlag):
     GID = enum.auto()
     PERMS = enum.auto()
 
-    def dump(mask):
+    def dump(mask: int) -> list[str]:
         if unmapped := mask & ~int(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
             raise ValueError(f'{unmapped}: unsupported flags in mask')
 
@@ -27,12 +27,12 @@ class FileChanges(enum.IntFlag):
 
 
 class UnexpectedFileChange(Exception):
-    def __init__(self, path, changes):
+    def __init__(self, path: str, changes: int) -> None:
         self.changes = changes
         self.path = path
         self.changes_str = ', '.join(FileChanges.dump(self.changes))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.path}: unexpected change in the following file attributes: {self.changes_str}'
 
 
@@ -51,7 +51,8 @@ def set_io_uring_enabled(enabled_val: bool) -> bool:
     return get_io_uring_enabled()
 
 
-def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_error=False):
+def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
+                     dirfd: int | None = None, raise_error: bool = False) -> int:
     """
     Commit changes to a configuration file.
     `path` - path to configuration file. May be relative to a specified `dirfd`

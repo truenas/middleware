@@ -59,10 +59,10 @@ def set_cmdline(cmdline: str) -> None:
     ctypes.memset(arg_start + len(encoded), 0, available - len(encoded))
 
 
-def set_pdeath_sig(sig=signal.SIGKILL):
+def set_pdeath_sig(sig: signal.Signals = signal.SIGKILL) -> None:
     libc = ctypes.CDLL("libc.so.6")
     libc.prctl(PR_SET_PDEATHSIG, signal.Signals(sig).value, 0, 0, 0)
 
 
-def die_with_parent():
+def die_with_parent() -> None:
     set_pdeath_sig()

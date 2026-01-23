@@ -41,7 +41,7 @@ RFC_852_RESERVED_WORDS = frozenset([
 RESERVED_WORDS = frozenset(MS_RESERVED_WORDS | RFC_852_RESERVED_WORDS)
 
 
-def __validate_netbios_name(val: str, regex: re.Pattern) -> str:
+def __validate_netbios_name(val: str, regex: re.Pattern[str]) -> str:
     if not regex.match(val):
         raise ValueError(
             'Invalid NetBIOS name. NetBIOS names must be between 1 and 15 characters in '

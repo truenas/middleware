@@ -2,6 +2,7 @@ import datetime
 import json
 import subprocess
 import time
+from typing import Any
 
 __all__ = (
     "format_journal_record",
@@ -10,7 +11,7 @@ __all__ = (
 )
 
 
-def query_journal(match_args: list[str], since: str | None = None) -> list[dict]:
+def query_journal(match_args: list[str], since: str | None = None) -> list[dict[str, Any]]:
     """
     Query journalctl and return parsed JSON records.
 
@@ -30,7 +31,7 @@ def query_journal(match_args: list[str], since: str | None = None) -> list[dict]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
-    records = []
+    records: list[dict[str, Any]] = []
     if result.returncode != 0:
         return records
 
@@ -45,7 +46,7 @@ def query_journal(match_args: list[str], since: str | None = None) -> list[dict]
     return records
 
 
-def format_journal_record(record: dict) -> str:
+def format_journal_record(record: dict[str, Any]) -> str:
     """Format a journal record as a log line."""
     ts = datetime.datetime.fromtimestamp(
         int(record.get("__REALTIME_TIMESTAMP", 0)) / 1_000_000

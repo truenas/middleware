@@ -8,6 +8,7 @@
 # Tests are provided in pytest/unit/utils/test_security_descriptor.py
 
 import enum
+from typing import Any
 
 from samba.ndr import ndr_pack, ndr_unpack
 from samba.dcerpc import security
@@ -43,7 +44,7 @@ def security_descriptor_to_bytes(sd: security.descriptor) -> bytes:
     return ndr_pack(sd)
 
 
-def share_acl_to_sd_bytes(share_acl: list[dict]) -> bytes:
+def share_acl_to_sd_bytes(share_acl: list[dict[str, Any]]) -> bytes:
     """ Convert share_acl list to SDDL string and then to security descriptor bytes """
     sddl_str = 'D:'
     for ace in share_acl:
@@ -60,7 +61,7 @@ def share_acl_to_sd_bytes(share_acl: list[dict]) -> bytes:
     return security_descriptor_to_bytes(sd_obj)
 
 
-def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict]:
+def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict[str, str]]:
     """ Convert security descriptor bytes to share middleware SMB share ACL """
     sd = security_descriptor_from_bytes(sd_bytes)
     share_acl = []

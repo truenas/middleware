@@ -20,7 +20,7 @@ def calculate_cpu_usage(cur_cpu_times: list[int], old_cpu_times: list[int]) -> f
     return 0.0
 
 
-def get_cpu_usage(old_stats: dict | None = None) -> (dict[str, float], dict[str, list]):
+def get_cpu_usage(old_stats: dict[str, list[int]] | None = None) -> tuple[dict[str, float], dict[str, list[int]]]:
     """
     Retrieve CPU usage statistics from /proc/stat.
 
