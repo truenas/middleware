@@ -81,9 +81,14 @@ class iSCSITargetAuthCredentialService(CRUDService):
         new.update(data)
 
         orig_peerusers = await self.middleware.call('iscsi.auth.da_mutual_chap_peerusers')
+        num_peerusers = len(orig_peerusers)
+        if old['discovery_auth'] == IscsiAuthType.CHAP_MUTUAL:
+            # Don't count this entry for validation since we're not adding
+            # a new Mutual CHAP peeruser, only updating an existing one
+            num_peerusers -= 1
 
         verrors = ValidationErrors()
-        await self.validate(new, 'iscsi_auth_update', verrors, len(orig_peerusers))
+        await self.validate(new, 'iscsi_auth_update', verrors, num_peerusers)
         if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag']], ['id', '!=', id_]]):
             usages = await self.is_in_use(id_)
             if usages['in_use']:
