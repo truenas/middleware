@@ -2427,7 +2427,30 @@ class GroupService(CRUDService):
                 )
                 return
 
+        # Get root user ID and group associated with pk for use by the remaining tests
+        root_user = await self.middleware.call(
+            'user.query',
+            [('username', '=', 'root')],
+            {'get': True}
+        )
+        root_user_id = root_user['id']
+        if pk:
+            pk_groupname = (await self.middleware.call('group.get_instance', pk)).get('group')
+        else:
+            pk_groupname = None
+
         if 'users' in data:
+            # Block root user from new groups or
+            # added to any groups other than BUILTIN_ADMINISTRATORS
+            if (
+                (schema == 'group_create' or (pk_groupname != 'builtin_administrators'))
+                and (root_user_id in data['users'])
+            ):
+                verrors.add(
+                    f'{schema}.users',
+                    'Cannot add the root user to this group'
+                )
+
             existing = {
                 i['id']
                 for i in await self.middleware.call(
@@ -2461,15 +2484,7 @@ class GroupService(CRUDService):
 
         # Special handling for builtin_administrators group
         if pk and 'users' in data:
-            group = await self.middleware.call('group.get_instance', pk)
-            if group['group'] == 'builtin_administrators':
-                # Get root user ID
-                root_user = await self.middleware.call(
-                    'user.query',
-                    [('username', '=', 'root')],
-                    {'get': True}
-                )
-                root_user_id = root_user['id']
+            if pk_groupname == 'builtin_administrators':
 
                 # Check if root is being removed from builtin_administrators
                 if root_user_id not in data['users']:
