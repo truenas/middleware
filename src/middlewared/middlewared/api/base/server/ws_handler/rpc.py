@@ -50,6 +50,7 @@ class RpcWebSocketApp(App):
         self.softhardsemaphore = SoftHardSemaphore(10, 20)
         self.callbacks: defaultdict[int, list[Callable]] = defaultdict(list)
         self.subscriptions: dict[str, str] = {}
+        self.pending_tasks: set[asyncio.Task] = set()
 
     def send(self, data):
         try:
@@ -279,6 +280,13 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                     )
                     break
         finally:
+            # Cancel any pending method calls from this connection
+            for task in app.pending_tasks:
+                task.cancel()
+
+            if app.pending_tasks:
+                await asyncio.gather(*app.pending_tasks, return_exceptions=True)
+
             await app.run_callback(RpcWebSocketAppEvent.CLOSE)
 
             await self.middleware.event_source_manager.unsubscribe_app(app)
@@ -343,9 +351,11 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 method.name
             )
 
-        asyncio.ensure_future(
+        task = asyncio.create_task(
             self.process_method_call(app, id_, method, message["params"])
         )
+        app.pending_tasks.add(task)
+        task.add_done_callback(app.pending_tasks.discard)
 
     def _can_call_private_methods(self, app: RpcWebSocketApp) -> bool:
         if app.origin.uid == 33:
