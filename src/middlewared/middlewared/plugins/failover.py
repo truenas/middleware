@@ -1211,7 +1211,12 @@ async def service_remote(middleware, service, verb, options):
         # to not replicate to the remote controller
         return
 
-    if service in BACKUP_STOP_SERVICES:
+    to_skip = set(BACKUP_STOP_SERVICES)
+
+    if (await middleware.call('smb.config'))['stateful_failover']:
+        to_skip.remove('cifs')
+
+    if service in to_skip:
         # service should not run on standby controller
         return
 
