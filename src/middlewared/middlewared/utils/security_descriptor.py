@@ -63,6 +63,9 @@ def share_acl_to_sd_bytes(share_acl: list[dict[str, Any]]) -> bytes:
 
 def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict[str, str]]:
     """ Convert security descriptor bytes to share middleware SMB share ACL """
+    if not sd_bytes:
+        return []
+
     sd = security_descriptor_from_bytes(sd_bytes)
     share_acl = []
 
