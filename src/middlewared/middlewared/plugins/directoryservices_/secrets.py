@@ -82,7 +82,7 @@ class DomainSecrets(Service):
         """
         Check whether running version of secrets.tdb has our machine account password
         """
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         try:
             fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}", cluster)
         except MatchNotFound:
@@ -95,7 +95,7 @@ class DomainSecrets(Service):
         Retrieve the last password change timestamp for the specified domain.
         Raises MatchNotFound if entry is not present in secrets.tdb
         """
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         encoded_change_ts = fetch_secrets_entry(
             f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}]", cluster
         )
@@ -111,7 +111,7 @@ class DomainSecrets(Service):
 
     def set_ipa_secret(self, domain, secret):
         # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00", cluster)
         )
@@ -136,7 +136,7 @@ class DomainSecrets(Service):
         Some idmap backends (ldap and rfc2307) store credentials in secrets.tdb.
         This method is used by idmap plugin to write the password.
         """
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}',
             b64encode(secret.encode() + b'\x00', cluster)
@@ -146,27 +146,27 @@ class DomainSecrets(Service):
         """
         Retrieve idmap secret for the specifed domain and user dn.
         """
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}', cluster)
 
     def get_machine_secret(self, domain):
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', cluster)
 
     def get_salting_principal(self, realm):
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}', cluster)
 
     def dump(self):
         """
         Dump contents of secrets.tdb. Values are base64-encoded
         """
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         entries = query_secrets_entries([], {}, cluster)
         return {entry['key']: entry['value'] for entry in entries}
 
     def sync_to_ctdb(self):
-        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         if not cluster:
             raise CallError("Stateful failover is not enabled")
 
