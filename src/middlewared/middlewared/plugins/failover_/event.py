@@ -156,7 +156,7 @@ class FailoverEventsService(Service):
         exceptions = await asyncio.gather(
             *[
                 self.service_action(svc, data['timeout'], 'STOP')
-                for svc in to_stop 
+                for svc in to_stop
             ],
             return_exceptions=True
         )
