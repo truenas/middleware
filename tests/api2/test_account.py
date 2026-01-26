@@ -356,3 +356,18 @@ def test_cannot_add_root_to_other_groups(root_user):
         root_user_after = call("user.query", [["username", "=", "root"]], {"get": True})
         assert root_user_after["groups"] == root_user["groups"], \
             "root user's groups were incorrectly modified"
+
+
+def test_groups_cannot_add_root_to_other_groups(root_user):
+    """Confirm we cannot add root to other groups via group management"""
+
+    # Attempt create a test group that includes root
+    with pytest.raises(ValidationErrors, match="Cannot add the root user"):
+        # use contextmgr for automatic cleanup
+        with group({"name": "not_for_root", "users": [root_user['id']]}):
+            pass  # should not get here
+
+    # Create a group then attempt add root to the group
+    with group({"name": "not_for_root"}) as test_grp:
+        with pytest.raises(ValidationErrors, match="Cannot add the root user"):
+            call("group.update", test_grp['id'], {"users": [root_user['id']]})
