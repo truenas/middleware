@@ -1629,8 +1629,9 @@ class SharingSMBService(SharingService):
 
         verrors.check()
         if not normalized_acl:
+            clustered = (await self.middleware.call('smb.config'))['stateful_failover']
             try:
-                await self.middleware.run_in_thread(remove_share_acl, data['share_name'])
+                await self.middleware.run_in_thread(remove_share_acl, data['share_name'], clustered)
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:
