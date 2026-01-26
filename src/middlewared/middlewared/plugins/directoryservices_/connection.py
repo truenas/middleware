@@ -16,7 +16,6 @@ from middlewared.utils.directoryservices.dns import (
     NSUPDATE_LOCK, dns_record_is_expired, update_dns_record_state, remove_dns_record_state
 )
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, kdc_saf_cache_set
-from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from os import curdir as dot
 
 
@@ -70,16 +69,18 @@ class DomainConnection(
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).
+        clustered = self.middleware.call_sync('smb.config')['stateful_failover']
 
-        close_sysdataset_tdb_handles()
         match (enabled_ds := self._get_enabled_ds()):
             case None:
                 return
             case DSType.IPA:
-                self.middleware.call_sync('directoryservices.secrets.restore')
+                if not clustered:
+                    self.middleware.call_sync('directoryservices.secrets.restore')
                 activate_fn = self._ipa_activate
             case DSType.AD:
-                self.middleware.call_sync('directoryservices.secrets.restore')
+                if not clustered:
+                    self.middleware.call_sync('directoryservices.secrets.restore')
                 activate_fn = self._ad_activate
             case DSType.LDAP:
                 activate_fn = self._ldap_activate

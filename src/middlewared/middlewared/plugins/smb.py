@@ -632,6 +632,20 @@ class SMBService(ConfigService):
             except Exception:
                 pass
 
+            if new['stateful_failover']:
+                # We need to move our secrets.tdb file to ctdb.
+                try:
+                    await self.middleware.call('directoryservices.secrets.sync_to_ctdb')
+                except Exception:
+                    self.logger.exception('Failed to sync local directory services secrets')
+            else:
+                # There's not a clean equivalent for CTDB -> TDB and so we just have
+                # to rely on restoring from our DB
+                try:
+                    await self.middleware.call('directoryservices.secrets.restore')
+                except Exception:
+                    self.logger.exception('Failed to restore local directory services secrets')
+
             # We need winbindd to reopen its tdb files as ctdb or vice-versa
             wb_restart = await self.middleware.call('service.control', 'RESTART', 'idmap')
             await wb_restart.wait()

@@ -422,6 +422,14 @@ class CTDBHandle(TDBHandle):
 
         return output
 
+    def sync_with_tdb(self, tdb_path: str) -> None:
+        """ Sync up ctdb contents with the specified tdb file. This is useful for
+        cases where we're transitioning from non-clustered to clustered."""
+        if not os.path.exists(tdb_path):
+            raise FileNotFoundError(tdb_path)
+
+        self.hdl.sync_with_tdb_file(tdb_path)
+
     def __init__(self, name: str, options: TDBOptions):
         if pyctdb is None:
             raise RuntimeError('pyctdb module not available')

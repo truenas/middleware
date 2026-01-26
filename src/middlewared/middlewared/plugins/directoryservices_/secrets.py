@@ -18,6 +18,9 @@ from middlewared.utils.tdb import (
 
 SECRETS_FILE = os.path.join(SMBPath.PRIVATEDIR.path, 'secrets.tdb')
 SECRETS_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+SECRETS_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
+SECRETS_TDB_CONFIG = (SECRETS_FILE, SECRETS_TDB_OPTIONS)
+SECRETS_CTDB_CONFIG = ('secrets.tdb', SECRETS_CTDB_OPTIONS)
 
 
 # c.f. source3/include/secrets.h
@@ -44,19 +47,28 @@ class Secrets(enum.Enum):
     AUTH_PASSWORD = 'SECRETS/AUTH_PASSWORD'
 
 
-def fetch_secrets_entry(key: str) -> str:
-    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+def _secrets_config(cluster: bool) -> tuple[str, TDBOptions]:
+    return SECRETS_CTDB_CONFIG if cluster else SECRETS_TDB_CONFIG
+
+
+def fetch_secrets_entry(key: str, cluster: bool) -> str:
+    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
         return hdl.get(key)
 
 
-def store_secrets_entry(key: str, val: str) -> str:
-    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+def store_secrets_entry(key: str, val: str, cluster: bool) -> str:
+    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
         return hdl.store(key, val)
 
 
-def query_secrets_entries(filters: list, options: dict) -> list:
-    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+def query_secrets_entries(filters: list, options: dict, cluster: bool) -> list:
+    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
         return filter_list(hdl.entries(), filters, options)
+
+
+def sync_with_tdb_secrets() -> None:
+    with get_tdb_handle(*_secrets_config(True)) as hdl:
+        hdl.sync_with_tdb(SECRETS_FILE)
 
 
 class DomainSecrets(Service):
@@ -70,8 +82,9 @@ class DomainSecrets(Service):
         """
         Check whether running version of secrets.tdb has our machine account password
         """
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         try:
-            fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}")
+            fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}", cluster)
         except MatchNotFound:
             return False
 
@@ -82,8 +95,9 @@ class DomainSecrets(Service):
         Retrieve the last password change timestamp for the specified domain.
         Raises MatchNotFound if entry is not present in secrets.tdb
         """
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         encoded_change_ts = fetch_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}"
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}]", cluster
         )
         try:
             bytes_passwd_chng = b64decode(encoded_change_ts)
@@ -97,13 +111,14 @@ class DomainSecrets(Service):
 
     def set_ipa_secret(self, domain, secret):
         # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
-            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00")
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00", cluster)
         )
 
         # Password changed field must be initialized (but otherwise is not required)
         store_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00")
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00", cluster)
         )
 
         setsecret = subprocess.run(
@@ -121,29 +136,48 @@ class DomainSecrets(Service):
         Some idmap backends (ldap and rfc2307) store credentials in secrets.tdb.
         This method is used by idmap plugin to write the password.
         """
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}',
-            b64encode(secret.encode() + b'\x00')
+            b64encode(secret.encode() + b'\x00', cluster)
         )
 
     def get_ldap_idmap_secret(self, domain, user_dn):
         """
         Retrieve idmap secret for the specifed domain and user dn.
         """
-        return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}')
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}', cluster)
 
     def get_machine_secret(self, domain):
-        return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', cluster)
 
     def get_salting_principal(self, realm):
-        return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}', cluster)
 
     def dump(self):
         """
         Dump contents of secrets.tdb. Values are base64-encoded
         """
-        entries = query_secrets_entries([], {})
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        entries = query_secrets_entries([], {}, cluster)
         return {entry['key']: entry['value'] for entry in entries}
+
+    def sync_to_ctdb(self):
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        if not cluster:
+            raise CallError("Stateful failover is not enabled")
+
+        if not self.middleware.call_sync('failover.is_single_master_node'):
+            raise CallError("This may only be called by active controller")
+
+        try:
+            sync_with_tdb_secrets()
+        except FileNotFoundError:
+            self.logger.info("Local secrets file not found. Falling back to restore from database.")
+            self.middleware.call_sync("directoryservices.secrets.restore")
 
     async def get_db_secrets(self):
         """
