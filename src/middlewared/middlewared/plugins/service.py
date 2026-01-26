@@ -344,6 +344,13 @@ class ServiceService(CRUDService):
 
                 await self.middleware.call('service.generate_etc', service_object)
 
+                # Check if service is running before attempting reload
+                state = await service_object.get_state()
+                if not state.running:
+                    # Service is not running, nothing to reload
+                    # Config was regenerated above, so just return
+                    return False
+
                 if service_object.reloadable:
                     await service_object.before_reload()
                     await service_object.reload()
