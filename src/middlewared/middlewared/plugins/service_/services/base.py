@@ -89,11 +89,14 @@ async def _get_unit_property(router, unit_path: str, interface: str, prop: str):
     return unwrap_msg(reply)[0][1]
 
 
-async def _verify_service_started(
+async def _verify_service_running(
     router, unit_path: str, service_name: str, action: str
 ) -> None:
     """
-    Verify service is running after Start/Restart, log warnings if not.
+    Verify service is in expected running state after action, log warnings if not.
+
+    For Start/Restart: expects "active" or "activating"
+    For Reload: expects "active" or "reloading"
 
     NOTE: There is an inherent race condition with D-Bus service management.
     Services that crash very quickly after starting (e.g., nut-server.service
@@ -114,7 +117,15 @@ async def _verify_service_started(
         logger.warning("%s %s: service is crash-looping", service_name, action)
         return
 
-    if state in ("active", "activating"):
+    # Determine acceptable states based on action
+    if action == "Reload":
+        # For reload, service should be active or still reloading
+        acceptable_states = ("active", "reloading")
+    else:
+        # For start/restart, service should be active or still activating
+        acceptable_states = ("active", "activating")
+
+    if state in acceptable_states:
         return
 
     conditions = await _get_unit_property(
@@ -301,10 +312,13 @@ async def call_unit_action_and_wait(
                                     action,
                                     result,
                                 )
-                                return
+                                # Don't return early - still verify actual service state
+                                # Job result "invalid" can occur when job is superseded
+                                # but service may still be running fine
 
-                            if action in ("Start", "Restart"):
-                                await _verify_service_started(
+                            # Verify service state for all actions except Stop
+                            if action != "Stop":
+                                await _verify_service_running(
                                     router, unit_path, service_name, action
                                 )
                             return
