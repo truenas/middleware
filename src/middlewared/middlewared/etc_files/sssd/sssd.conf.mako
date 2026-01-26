@@ -51,7 +51,6 @@
 % if ds_type == DSType.LDAP.value:
 [sssd]
 domains = ${domain}
-services = nss, pam
 config_file_version = 2
 
 [domain/${domain}]
@@ -93,7 +92,6 @@ ${'\n'.join(aux)}
 % elif ds_type == DSType.IPA.value:
 [sssd]
 domains = ${ds_config['configuration']['domain']}
-services = nss, pam
 
 [domain/${ds_config['configuration']['domain']}]
 id_provider = ipa
