@@ -74,8 +74,6 @@ class DomainConnection(
         close_sysdataset_tdb_handles()
         match (enabled_ds := self._get_enabled_ds()):
             case None:
-                self.logger.debug('activate_standby() called on controller that is not joined to a'
-                                  'directory service.')
                 return
             case DSType.IPA:
                 self.middleware.call_sync('directoryservices.secrets.restore')

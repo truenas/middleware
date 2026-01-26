@@ -14,7 +14,7 @@ from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
 
 PREREQUISITE_SERVICES = ('auth-rpcgss-module',)
-DEPENDENT_SERVICES = ('smb', 'nfs', 'ssh', 'ftp')
+DEPENDENT_SERVICES = ('cifs', 'nfs', 'ssh', 'ftp')
 
 
 class DirectoryServices(Service):
@@ -120,23 +120,31 @@ class DirectoryServices(Service):
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
     @private
-    def restart_dependent_services(self):
+    def restart_dependent_services(self, reload_services=None):
         # System services that should be started
         for svc in PREREQUISITE_SERVICES:
             self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
+
+        to_reload = reload_services or []
 
         # Dependent protocols
         for svc in self.middleware.call_sync('service.query', [['OR', [
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
         ]], ['service', 'in', DEPENDENT_SERVICES]]):
+
+            if svc['state'] == 'RUNNING' and svc['service'] in to_reload:
+                verb = 'RELOAD'
+            else:
+                verb = 'RESTART'
+
             self.middleware.call_sync(
-                'service.control', 'RESTART', svc['service'], DEF_SVC_OPTS
+                'service.control', verb, svc['service'], DEF_SVC_OPTS
             ).wait_sync(raise_error=True)
 
     @private
     @job(lock='ds_init', lock_queue_size=1)
-    def setup(self, job):
+    def setup(self, job, init=False):
         """
         Set up directory services and NSS for the server. This handles NFS and SMB startup as well
         on the active storage controller
@@ -165,13 +173,18 @@ class DirectoryServices(Service):
                 cache_refresh.wait_sync()
 
             job.set_progress(75, 'Restarting dependent services')
-            self.restart_dependent_services()
+            reload_services = []
+            if not init:
+                if self.middleware.call_sync('smb.config')['stateful_failover']:
+                    reload_services.append('cifs')
+
+            self.restart_dependent_services(reload_services)
 
         job.set_progress(100, 'Setup complete')
 
 
 async def __init_directory_services(middleware, event_type, args):
-    await middleware.call('directoryservices.setup')
+    await middleware.call('directoryservices.setup', True)
 
 
 async def setup(middleware):

@@ -15,6 +15,7 @@ from collections import defaultdict
 from middlewared.utils.filter_list import filter_list
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
+from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
 from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
@@ -101,7 +102,12 @@ class FailoverEventsService(Service):
         """
         data.setdefault('critical', False)
         data.setdefault('timeout', 15)
-        to_restart = await self.middleware.call('datastore.query', 'services_services')
+
+        # Services that depend on healthy directory services state have their restart
+        # deferred until called within directoryservices.setup
+        to_restart = await self.middleware.call('datastore.query', 'services_services', [
+            ['srv_service', 'nin', DEPENDENT_SERVICES]
+        ])
         to_restart = [i['srv_service'] for i in to_restart if i['srv_enable']]
         if data['critical']:
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
@@ -142,14 +148,19 @@ class FailoverEventsService(Service):
         be running on the standby controller
         """
         data.setdefault('timeout', 15)
+        to_stop = set(BACKUP_STOP_SERVICES)
+        # Avoid stopping cifs service on standby controller if stateful failover is enabled.
+        if (await self.middleware.call('smb.config'))['stateful_failover']:
+            to_stop.remove('cifs')
+
         exceptions = await asyncio.gather(
             *[
                 self.service_action(svc, data['timeout'], 'STOP')
-                for svc in BACKUP_STOP_SERVICES
+                for svc in to_stop 
             ],
             return_exceptions=True
         )
-        for svc, exc in zip(BACKUP_STOP_SERVICES, exceptions):
+        for svc, exc in zip(to_stop, exceptions):
             if isinstance(exc, asyncio.TimeoutError):
                 logger.error(
                     'Failed to stop service "%s" after %d seconds',
