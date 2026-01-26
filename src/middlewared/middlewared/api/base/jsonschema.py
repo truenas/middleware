@@ -1,3 +1,4 @@
+import logging
 from typing import TypeVar, TYPE_CHECKING
 
 from middlewared.utils.pydantic_ import model_json_schema
@@ -5,6 +6,7 @@ from middlewared.utils.pydantic_ import model_json_schema
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
 
+logger = logging.getLogger(__name__)
 
 _PartialSchema = TypeVar("_PartialSchema")
 
@@ -14,7 +16,20 @@ def get_json_schema(model: type["BaseModel"]) -> list:
     schema = replace_refs(schema)
     schema = add_attrs(schema)
 
-    return [schema["properties"][name] for name in model.schema_model_fields()]
+    properties = schema.get("properties", {})
+    result = []
+    for name in model.schema_model_fields():
+        if name not in properties:
+            logger.error(
+                "Model %r field %r not found in schema properties. Schema: %r",
+                model.__name__,
+                name,
+                schema,
+            )
+            continue
+        result.append(properties[name])
+
+    return result
 
 
 def replace_refs(data: _PartialSchema, defs: dict | None = None) -> _PartialSchema:
