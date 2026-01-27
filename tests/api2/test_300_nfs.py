@@ -579,12 +579,6 @@ class TestNFSops:
         current_nfs_entries = set(list(ssh(f'ls {nfs_state_dir}').splitlines()))
         assert required_nfs_entries.issubset(current_nfs_entries)
 
-        # Confirm proc entry reports expected value after nfs restart
-        call('service.control', 'RESTART', 'nfs', job=True)
-        sleep(1)
-        recovery_dir = ssh('cat /proc/fs/nfsd/nfsv4recoverydir').strip()
-        assert recovery_dir == os.path.join(nfs_state_dir, 'v4recovery'), \
-            f"Expected {nfs_state_dir + '/v4recovery'} but found {recovery_dir}"
         # ----------------------------------------------------------------------
         # NOTE: Test fresh-install and upgrade.
         # ----------------------------------------------------------------------

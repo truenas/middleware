@@ -30,15 +30,7 @@ class NFSService(SimpleService):
         else:
             await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir')
 
-    async def before_start(self):
-        # If available, make sure the procfs nfsv4recoverydir entry has the correct info.
-        # Usually the update should be done _before_ nfsd is running.
-        # Sometimes, after a reboot, the proc entry may not exist and that's ok.
-        await self.middleware.call('nfs.update_procfs_v4recoverydir')
-
     async def after_start(self):
-        # This is to cover the case where the proc entry did not exist
-        await self.middleware.call('nfs.update_procfs_v4recoverydir')
         await self._systemd_unit("rpc-statd", "start")
 
     async def stop(self):
