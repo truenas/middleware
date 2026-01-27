@@ -108,7 +108,7 @@ class ShareSec(Service):
             raise CallError(f'{share_name}: share does not exist') from exc
 
         if not cluster and not os.path.exists(LOCAL_SHARE_INFO_FILE):
-            set_version_share_info()
+            set_version_share_info(False)
 
         try:
             share_sd_bytes = b64decode(fetch_share_acl(share_name, cluster))
