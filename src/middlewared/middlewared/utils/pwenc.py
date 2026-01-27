@@ -4,6 +4,9 @@ import uuid
 
 import truenas_pypwenc
 
+__all__ = ['PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'pwenc_rename', 'pwenc_encrypt', 'pwenc_decrypt',
+           'pwenc_generate_secret']
+
 
 PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
 PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
