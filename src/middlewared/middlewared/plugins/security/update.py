@@ -42,16 +42,24 @@ class SystemSecurityService(ConfigService):
         entry = SystemSecurityEntry
 
     @private
-    async def configure_security_on_ha(self, is_ha, job, reason: RebootReason):
+    async def configure_reboot_reason_on_ha(self, is_ha: bool, reason: RebootReason) -> bool:
+        """
+        This should return boolean true if the remote node is to be rebooted
+        """
+        # TODO: Validate if this should be done, because if we do this - then local operations
+        #  will correctly reflect that local node needs to be rebooted etc because of relevant fips/stig
+        #  change but if this fails for whatever reason, that won't be true and it won't reflect
         if not is_ha:
-            return
+            return False
 
-        # Send the datastore to the remote node to ensure that the
-        # FIPS configuration has been synced up before reboot
-        await self.middleware.call('failover.datastore.send')
-        await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
-        await self.middleware.call('failover.call_remote', 'system.security.configure_stig')
+        try:
+            return await self.configure_reboot_reason_on_ha_impl(reason)
+        except Exception:
+            self.logger.error('Failed to configure security on HA', exc_info=True)
+            return False
 
+    @private
+    async def configure_reboot_reason_on_ha_impl(self, reason: RebootReason) -> bool:
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:
             # This means that we're toggling a change in security settings but other node is
@@ -60,23 +68,14 @@ class SystemSecurityService(ConfigService):
             # This is an edge case and means someone or something is doing things behind our backs
             self.logger.error('%s: reboot is already pending on other controller for same reason.', reason.name)
             await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [reason.name])
+            return False
         else:
-            try:
-                # Automatically reboot (and wait for) the other controller.
-                # NAS-137368: Previously, we were calling `failover.become_passive` on the standby node. This did not
-                # give the OS ample opportunity to write the FIPS configuration changes made above to disk, and the file
-                # changes were lost on reboot. Passing {'graceful': True} allows the OS to write pending changes to disk
-                # before rebooting.
-                reboot_job = await self.middleware.call(
-                    'failover.reboot.other_node',
-                    {'reason': reason.value, 'graceful': True},
-                )
-                await job.wrap(reboot_job)
-            except Exception:
-                # something extravagant happened, so we'll just play it safe and say that
-                # another reboot is required
-                await self.middleware.call('failover.reboot.add_remote_reason', reason.name,
-                                           reason.value)
+            # We add a reboot reason here before rebooting the other node so that we are able to
+            # grab other node's boot id because we have seen in a support case that a reboot job failed
+            # for some reason where the other node actually rebooted already but we were unable to get
+            # it's boot id which meant that it needs to be rebooted again even though it has already been rebooted
+            await self.middleware.call('failover.reboot.add_remote_reason', reason.name, reason.value)
+            return True
 
     @private
     async def configure_stig(self, data=None):
@@ -220,6 +219,8 @@ class SystemSecurityService(ConfigService):
             bad_reasons = set(ha_disabled_reasons) - {
                 DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name,
                 DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name,
+                DisabledReasonsEnum.LOC_GPOSSTIG_REBOOT_REQ.name,
+                DisabledReasonsEnum.REM_GPOSSTIG_REBOOT_REQ.name,
             }
             if bad_reasons:
                 formatted = '\n'.join([DisabledReasonsEnum[i].value for i in bad_reasons])
@@ -330,8 +331,6 @@ class SystemSecurityService(ConfigService):
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
-        fips_toggled = False
-        reboot_reason = None
 
         old = await self.config()
         new = old.copy()
@@ -354,28 +353,48 @@ class SystemSecurityService(ConfigService):
 
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
 
+        reboot_reason = None
+        reboot_other_node = False
         if new['enable_fips'] != old['enable_fips']:
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
             reboot_reason = RebootReason.FIPS
             await self.middleware.call('etc.generate', 'fips')
-            await self.configure_security_on_ha(is_ha, job, RebootReason.FIPS)
-            fips_toggled = True
 
         if new['enable_gpos_stig'] != old['enable_gpos_stig']:
-            if not fips_toggled:
-                reboot_reason = RebootReason.GPOSSTIG
-                # Trigger reboot on standby to apply STIG-related configuration
-                # This should only happen if user already set FIPS and is subsequently changing
-                # STIG as a separate operation.
-                await self.configure_security_on_ha(is_ha, job, RebootReason.GPOSSTIG)
-
+            reboot_reason = RebootReason.GPOSSTIG
             await self.configure_stig(new)
 
         if reboot_reason:
             await self.middleware.call(
                 'system.reboot.toggle_reason', reboot_reason.name, reboot_reason.value
             )
+            reboot_other_node |= await self.configure_reboot_reason_on_ha(is_ha, reboot_reason)
+
+        if reboot_reason and reboot_other_node:
+            # Let's pick the first reboot reason when rebooting the other node
+            try:
+                # Send the datastore to the remote node to ensure that the
+                # FIPS/STIG configuration has been synced up before reboot
+                await self.middleware.call('failover.datastore.send')
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
+                await self.middleware.call('failover.call_remote', 'system.security.configure_stig')
+
+                # Reboot reasons are already added at this point, as necessary configuration has been generated
+                # Let's go ahead and reboot the remote node
+
+                # Automatically reboot (and wait for) the other controller.
+                # NAS-137368: Previously, we were calling `failover.become_passive` on the standby node. This did not
+                # give the OS ample opportunity to write the FIPS configuration changes made above to disk, and the file
+                # changes were lost on reboot. Passing {'graceful': True} allows the OS to write pending changes to disk
+                # before rebooting.
+                reboot_job = await self.middleware.call(
+                    'failover.reboot.other_node',
+                    {'reason': reboot_reason.value, 'graceful': True},
+                )
+                await job.wrap(reboot_job)
+            except Exception:
+                self.logger.error('Failed to sync security configuration changes on remote node', exc_info=True)
 
         if must_update_account_policy:
             await self.middleware.call('etc.generate', 'shadow')

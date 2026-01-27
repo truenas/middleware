@@ -6,6 +6,7 @@ from middlewared.service import private, Service
 
 
 class RebootReason(enum.Enum):
+    # Ensure when a reason is added here, we update disabled reasons in HA to account for the new/removed knob
     FIPS = 'FIPS configuration was changed.'
     GPOSSTIG = 'General Purpose OS STIG configuration was changed.'
     GPU_ISOLATION = (
