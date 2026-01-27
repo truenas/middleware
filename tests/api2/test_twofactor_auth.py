@@ -247,17 +247,13 @@ def test_login_with_otp_failure(clear_ratelimit):
                     'password': TEST_PASSWORD,
                 })
                 assert resp['response_type'] == 'OTP_REQUIRED'
-                retry_cnt = 0
 
-                while retry_cnt < 3:
-                    resp = c.call('auth.login_ex_continue', {
-                        'mechanism': 'OTP_TOKEN',
-                        'otp_token': 'canary'
-                    })
-                    assert resp['response_type'] == 'OTP_REQUIRED', retry_cnt
-                    retry_cnt += 1
+                resp = c.call('auth.login_ex_continue', {
+                    'mechanism': 'OTP_TOKEN',
+                    'otp_token': 'canary'
+                })
+                assert resp['response_type'] == 'OTP_REQUIRED', retry_cnt
 
-                # We've now exhausted any grace from server. Hammer is dropped.
                 resp = c.call('auth.login_ex_continue', {
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'
