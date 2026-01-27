@@ -158,7 +158,7 @@ class DiskEntry:
                         r'[\x00-\x1f\x7f"\\]',
                         lambda m: '' if m.group(0) == '\x00' else f'{ord(m.group(0)):02x}',
                         serial_txt
-                    )
+                    ).strip()
                 else:
                     serial = ""
 
