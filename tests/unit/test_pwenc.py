@@ -12,7 +12,6 @@ from middlewared.utils.pwenc import (
     encrypt,
     decrypt,
     pwenc_rename,
-    pwenc_data,
     PWENC_FILE_SECRET,
     PWENC_FILE_SECRET_MODE,
 )
