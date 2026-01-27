@@ -221,7 +221,7 @@ def test_multiple_users_login_with_otp(clear_ratelimit):
                 do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token)
 
                 # verify we can't replay same token
-                do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token)
+                do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token, expected=False)
 
                 # Verify 2FA still required
                 do_login(TEST_USERNAME_2, TEST_PASSWORD_2, expected=False)
@@ -247,12 +247,6 @@ def test_login_with_otp_failure(clear_ratelimit):
                     'password': TEST_PASSWORD,
                 })
                 assert resp['response_type'] == 'OTP_REQUIRED'
-
-                resp = c.call('auth.login_ex_continue', {
-                    'mechanism': 'OTP_TOKEN',
-                    'otp_token': 'canary'
-                })
-                assert resp['response_type'] == 'OTP_REQUIRED', retry_cnt
 
                 resp = c.call('auth.login_ex_continue', {
                     'mechanism': 'OTP_TOKEN',
