@@ -1,7 +1,7 @@
 import errno
 
 from middlewared.api.current import ZFSResourceQuery
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, ValidationError
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 
 from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
@@ -26,7 +26,24 @@ class DockerFilesystemManageService(Service):
                         force=True,
                     )
                 else:
-                    await self.call2(self.s.zfs.resource.unmount, docker_ds, recursive=True, force=True)
+                    try:
+                        await self.call2(
+                            self.s.zfs.resource.unmount,
+                            docker_ds,
+                            recursive=True,
+                            force=True
+                        )
+                    except ValidationError as e:
+                        if e.errno == errno.ENOENT:
+                            # who cares, failing here is not ideal
+                            # but it just means the underlying zfs
+                            # dataset that houses the apps stuff is
+                            # gone. if we crash here, we prevent users
+                            # from using our API to move zpools that
+                            # have the system dataset....dont do that
+                            return
+                        raise
+
                     await self.middleware.call(
                         'pool.dataset.update_impl',
                         UpdateImplArgs(name=docker_ds, iprops={'mountpoint'})

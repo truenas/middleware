@@ -1,18 +1,21 @@
-import errno
-
 from urllib.parse import urlparse
-from truenas_pylibvirt.utils.gpu import get_gpus
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult, DockerNvidiaPresentArgs,
+    DockerEntry,
+    DockerStatusArgs,
+    DockerStatusResult,
+    DockerUpdateArgs,
+    DockerUpdateResult,
+    DockerNvidiaPresentArgs,
     DockerNvidiaPresentResult,
     ZFSResourceQuery,
 )
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
+from truenas_pylibvirt.utils.gpu import get_gpus
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -211,13 +214,12 @@ class DockerService(ConfigService):
 
                 catalog_sync_job = None
                 try:
+                    job.set_progress(30, 'Umounting docker apps dataset')
                     catalog_sync_job = await self.middleware.call('docker.fs_manage.umount')
-                except CallError as e:
-                    # We handle this specially, if for whatever reason ix-apps dataset is not there,
-                    # we don't make it fatal to change pools etc - however if some dataset other then
-                    # boot pool is mounted at ix-apps dir, then we will error out as it's a problem
-                    # and needs to be fixed before we can proceed
-                    if e.errno != errno.ENOENT or await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
+                except Exception:
+                    self.logger.exception('Unexpected failure umounting apps dataset')
+                    if await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
+                        # still mounted after umount
                         raise
                 finally:
                     if catalog_sync_job:
