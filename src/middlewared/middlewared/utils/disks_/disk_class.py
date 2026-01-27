@@ -153,7 +153,12 @@ class DiskEntry:
 
                     # Extract only the serial number data, skipping the 4-byte header
                     serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
-                    serial = serial_txt.rstrip('\x00').strip()
+                    # Remove invalid characters (control characters, double-quote and backslash)
+                    serial = re.sub(
+                        r'[\x00-\x1f\x7f"\\]',
+                        lambda m: '' if m.group(0) == '\x00' else f'{ord(m.group(0)):02x}',
+                        serial_txt
+                    )
                 else:
                     serial = ""
 
