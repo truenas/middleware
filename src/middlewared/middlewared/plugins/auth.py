@@ -847,7 +847,7 @@ class AuthService(Service):
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
                     auth_ctx.next_mech = AuthMech.OTP_TOKEN
-                    auth_ctx.auth_data = {'user': resp['user_data']}
+                    auth_ctx.auth_data = {'user': {'username': data['username']}}
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
                         'username': data['username']
@@ -1007,6 +1007,10 @@ class AuthService(Service):
                     data['otp_token']
                 )
                 resp = {'pam_response': {'code': pam_resp.code, 'reason': pam_resp.reason}}
+                auth_data = auth_ctx.auth_data
+
+                auth_ctx.auth_data = None
+                auth_ctx.next_mech = None
 
                 if pam_resp.code == PAMCode.PAM_SUCCESS:
                     # Per feedback to NEP-053 it was decided to only request second
@@ -1025,7 +1029,7 @@ class AuthService(Service):
                         'credentials': {
                             'credentials': 'LOGIN_TWOFACTOR',
                             'credentials_data': {
-                                'username': auth_data['user']['username'],
+                                'username': auth_data['username'],
                             },
                         },
                         'error': f'One-time token validation failed: {pam_resp.reason}'
