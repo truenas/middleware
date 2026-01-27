@@ -26,11 +26,11 @@ class HasUpdateAlertSource(AlertSource):
 
     async def check(self) -> list[Alert] | Alert | None:
         try:
-            update_status = await self.middleware.call2(self.middleware.services.update.status)
+            update_status = await self.call2(self.s.update.status)
             if update_status.status:
                 if not update_status.status.current_version.matches_profile:
-                    config = await self.middleware.call2(self.middleware.services.update.config)
-                    profile_choices = await self.middleware.call2(self.middleware.services.update.profile_choices)
+                    config = await self.call2(self.s.update.config)
+                    profile_choices = await self.call2(self.s.update.profile_choices)
 
                     if running_profile := profile_choices.get(update_status.status.current_version.profile):
                         running = running_profile.name

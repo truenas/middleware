@@ -5,6 +5,8 @@ from middlewared.utils.filter_list import filter_list
 
 from .compound_service import CompoundService
 from .config_service import ConfigService
+from .config_service_part import ConfigServicePart
+from .context import ServiceContext
 from .crud_service import CRUDService
 from .decorators import (
     job, no_auth_required,
@@ -32,6 +34,7 @@ __all__ = [
     'filter_list',
     'CompoundService',
     'ConfigService',
+    'ConfigServicePart',
     'CRUDService',
     'job',
     'no_auth_required',
@@ -42,6 +45,7 @@ __all__ = [
     'filterable_api_method',
     'Service',
     'ServiceChangeMixin',
+    'ServiceContext',
     'ServicePartBase',
     'SharingService',
     'SharingTaskService',

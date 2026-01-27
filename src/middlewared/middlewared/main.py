@@ -93,7 +93,7 @@ if typing.TYPE_CHECKING:
 
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
-from middlewared.plugins.update_.config import UpdateService
+from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]

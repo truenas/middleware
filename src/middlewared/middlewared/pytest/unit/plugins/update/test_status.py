@@ -1,9 +1,10 @@
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock
 
 from middlewared.api.current import UpdateStatus
-from middlewared.plugins.update_.config import UpdateService
-from middlewared.plugins.update_.trains import Release
+from middlewared.plugins.update_ import UpdateService
+from middlewared.plugins.update_.trains import Release, UpdateManifest
 from middlewared.pytest.unit.middleware import Middleware
 
 CURRENT_CONFIG = Mock(profile="MISSION_CRITICAL")
@@ -151,18 +152,24 @@ async def test_update_status(train_releases, result):
     middleware = Middleware()
     middleware["cache.get"] = Mock(return_value=False)
     middleware["failover.licensed"] = Mock(return_value=False)
+    middleware["network.general.will_perform_activity"] = Mock()
     middleware["system.release_notes_url"] = Mock(return_value="<release notes url>")
     middleware["system.version_short"] = Mock(return_value=CURRENT_VERSION)
     middleware.services.update.config = Mock(return_value=CURRENT_CONFIG)
-    middleware.services.update.get_trains = Mock()
-    middleware.services.update.get_current_train_name = Mock(return_value=CURRENT_TRAIN_NAME)
-    middleware.services.update.current_version_profile = Mock(return_value=CURRENT_VERSION_PROFILE)
-    middleware.services.update.profile_matches = Mock(side_effect=UpdateService(middleware).profile_matches)
-    middleware.services.update.get_next_trains_names = Mock(return_value=NEXT_TRAIN_NAMES)
-    middleware.services.update.get_train_releases = Mock(side_effect=lambda train: train_releases[train])
-    middleware.services.update.release_notes = Mock(return_value="<release notes>")
-    middleware.services.update.version_from_manifest = Mock(side_effect=UpdateService(middleware).version_from_manifest)
-    middleware.services.update.can_update_to = Mock(side_effect=UpdateService(middleware).can_update_to)
     service = UpdateService(middleware)
 
-    assert await service.status() == result
+    with (
+        patch('middlewared.plugins.update_.status.get_trains'),
+        patch('middlewared.plugins.update_.status.get_current_train_name', return_value=CURRENT_TRAIN_NAME),
+        patch('middlewared.plugins.update_.status.current_version_profile', return_value=CURRENT_VERSION_PROFILE),
+        patch('middlewared.plugins.update_.status.get_next_trains_names', return_value=NEXT_TRAIN_NAMES),
+        patch('middlewared.plugins.update_.status.get_train_releases',
+              side_effect=lambda ctx, train: train_releases[train]),
+        patch('middlewared.plugins.update_.version.release_notes', return_value="<release notes>"),
+        patch('middlewared.plugins.update_.profile_.get_manifest_file',
+              return_value=UpdateManifest(train=CURRENT_TRAIN_NAME, buildtime=0, codename='', version=CURRENT_VERSION)),
+        patch('middlewared.plugins.update_.profile_.get_train_releases',
+              side_effect=lambda ctx, train: train_releases.get(train, {}))
+    ):
+
+        assert await service.status() == result

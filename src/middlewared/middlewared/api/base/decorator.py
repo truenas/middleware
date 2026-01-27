@@ -312,5 +312,6 @@ def normalize_annotation(annotation, parent_model=None):
         else:
             result = repr(result)
 
-        result = re.sub(r"middlewared\.api\.[^.]+.[^.]+.", "", result)
+        result = re.sub(r"middlewared\.api\.[^.]+\.[^.]+\.", "", result)
+        result = result.replace("typing.", "")
         return result

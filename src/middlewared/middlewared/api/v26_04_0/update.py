@@ -8,7 +8,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "UpdateEntry",
+    "UpdateConfigSafeEntry", "UpdateEntry",
     "UpdateUpdate", "UpdateUpdateArgs", "UpdateUpdateResult",
     "UpdateProfileChoice", "UpdateProfileChoicesArgs", "UpdateProfileChoicesResult",
     "UpdateStatus", "UpdateStatusCurrentVersion", "UpdateStatusError", "UpdateStatusNewVersion", "UpdateStatusStatus",
@@ -21,11 +21,16 @@ __all__ = [
 ]
 
 
-class UpdateEntry(BaseModel):
+class UpdateConfigSafeEntry(BaseModel):
     id: int
     """Unique identifier for the update configuration."""
     autocheck: bool
     """Automatically check and download updates every night."""
+    profile: str | None
+    """Update profile used for the system."""
+
+
+class UpdateEntry(UpdateConfigSafeEntry):
     profile: str
     """Update profile used for the system."""
 

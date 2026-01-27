@@ -2,20 +2,11 @@ from __future__ import annotations
 
 import typing
 
-from middlewared.api import api_method
-from middlewared.api.current import UpdateEntry, UpdateUpdate, UpdateUpdateArgs, UpdateUpdateResult
-from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.api.current import UpdateConfigSafeEntry, UpdateEntry, UpdateUpdate
+from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
+from .profile_ import UpdateProfiles, current_version_profile
 
-from .download import UpdateService as DownloadUpdateService
-from .install import UpdateService as InstallUpdateService
-from .install_linux import UpdateService as InstallLinuxUpdateService
-from .profile_ import UpdateProfiles, UpdateService as ProfileUpdateService
-from .status import UpdateService as StatusUpdateService
-from .trains import UpdateService as TrainsUpdateService
-from .update import UpdateService as UpdateUpdateService
-from .upload_location_linux import UpdateService as UploadLocationLinuxUpdateService
-from .version import UpdateService as VersionUpdateService
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -29,26 +20,33 @@ class UpdateModel(sa.Model):  # type: ignore
     upd_profile = sa.Column(sa.Text(), nullable=True)
 
 
-class UpdateService(DownloadUpdateService, InstallUpdateService, InstallLinuxUpdateService, ProfileUpdateService,
-                    StatusUpdateService, TrainsUpdateService, UpdateUpdateService, UploadLocationLinuxUpdateService,
-                    VersionUpdateService, ConfigService[UpdateEntry]):
-
-    class Config:
-        datastore = 'system.update'
-        datastore_prefix = 'upd_'
-        cli_namespace = 'system.update'
-        role_prefix = 'SYSTEM_UPDATE'
-        entry = UpdateEntry
-        generic = True
+class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
+    _datastore = 'system_update'
+    _datastore_prefix = 'upd_'
+    _entry = UpdateEntry
 
     async def config(self) -> UpdateEntry:
-        return await self.config_internal(allow_null_profile=False)
+        return await self.config_internal(allow_null_profile=False)  # type: ignore
 
-    @api_method(UpdateUpdateArgs, UpdateUpdateResult, check_annotations=True)
+    async def config_safe(self) -> UpdateConfigSafeEntry:
+        return await self.config_internal(allow_null_profile=True)
+
+    async def config_internal(self, *, allow_null_profile: bool) -> UpdateConfigSafeEntry:
+        data = await super().config()
+
+        if data.profile is None and not allow_null_profile:
+            await self.middleware.call(
+                'datastore.update',
+                self._datastore,
+                data.id,
+                {'profile': await current_version_profile(self)},
+                {'prefix': self._datastore_prefix},
+            )
+            return await super().config()
+
+        return data
+
     async def do_update(self, data: UpdateUpdate) -> UpdateEntry:
-        """
-        Update update configuration.
-        """
         old = await self.config()
 
         new = old.updated(data)
@@ -64,10 +62,10 @@ class UpdateService(DownloadUpdateService, InstallUpdateService, InstallLinuxUpd
 
         await self.middleware.call(
             'datastore.update',
-            self._config.datastore,
+            self._datastore,
             old.id,
             new.model_dump(),
-            {'prefix': self._config.datastore_prefix},
+            {'prefix': self._datastore_prefix},
         )
 
         if new.autocheck != old.autocheck:
@@ -82,35 +80,18 @@ class UpdateService(DownloadUpdateService, InstallUpdateService, InstallLinuxUpd
 
         return await self.config()
 
-    @private
     async def set_profile(self, name: str) -> None:
         # This must be used for setting update profile when internet connection might be unavailable.
 
-        old = await self.config_internal()
+        old = await self.config_safe()
 
         await self.middleware.call(
             'datastore.update',
-            self._config.datastore,
+            self._datastore,
             old.id,
             {'profile': UpdateProfiles[name].name},
-            {'prefix': self._config.datastore_prefix},
+            {'prefix': self._datastore_prefix},
         )
-
-    @private
-    async def config_internal(self, *, allow_null_profile: bool = True) -> UpdateEntry:
-        data = await super().config()
-
-        if data.profile is None and not allow_null_profile:
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                data.id,
-                {'profile': await self.call2(self.s.update.current_version_profile)},
-                {'prefix': self._config.datastore_prefix},
-            )
-            return await super().config()
-
-        return data
 
 
 async def setup(middleware: Middleware) -> None:
