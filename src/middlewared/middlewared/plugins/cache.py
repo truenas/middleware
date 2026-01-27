@@ -11,10 +11,10 @@ from middlewared.utils.tdb import (
 )
 
 
-CACHE_LOCAL_PERSISTENT_OPTS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
+CACHE_FILE_NAME = 'middleware_cache'
+CACHE_LOCAL_PERSISTENT_OPTS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
 CACHE_LOCAL_VOLATILE_OPTS = TDBOptions(TDBPathType.VOLATILE, TDBDataType.JSON)
 CACHE_CLUSTER_OPTS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON, True)
-LOCAL_PERSISTENT_PATH = f'{MIDDLEWARE_BOOT_ENV_STATE_DIR}/middlewared_cache'
 
 
 class CacheType(StrEnum):
@@ -168,9 +168,9 @@ class CacheService(Service):
 
     def __init__(self, *args, **kwargs):
         super(CacheService, self).__init__(*args, **kwargs)
-        self.volatile = KVCache('middleware_cache', CACHE_LOCAL_VOLATILE_OPTS, monotonic)
-        self.persistent = KVCache(LOCAL_PERSISTENT_PATH, CACHE_LOCAL_PERSISTENT_OPTS, time)
-        self.cluster = KVCache('middleware_cache', CACHE_CLUSTER_OPTS, time)
+        self.volatile = KVCache(CACHE_FILE_NAME, CACHE_LOCAL_VOLATILE_OPTS, monotonic)
+        self.persistent = KVCache(CACHE_FILE_NAME, CACHE_LOCAL_PERSISTENT_OPTS, time)
+        self.cluster = KVCache(CACHE_FILE_NAME, CACHE_CLUSTER_OPTS, time)
 
     def __get_cache(self, cache_type: CacheType) -> KVCache:
         match cache_type:
