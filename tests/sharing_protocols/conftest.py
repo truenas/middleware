@@ -105,6 +105,35 @@ def set_interfaces():
         pass
 
 
+def set_static_interface():
+    # For non-HA we want a static IP
+
+    # First let's copy in any DHCP provided default route, and DNS
+    payload = {}
+    conf = call('network.configuration.config')
+    for key, val in conf.get('state', {}).items():
+        if val and key in conf:
+            payload[key] = val
+    call('network.configuration.update', payload)
+
+    # Next update the interface to turn off DHCP
+    payload = {
+        'ipv4_dhcp': False,
+        'ipv6_auto': False,
+        'aliases': [
+            {
+                'type': 'INET',
+                'address': os.environ['MIDDLEWARE_TEST_IP'],
+                'netmask': int(netmask)
+            }
+        ],
+    }
+    call('interface.update', interface, payload)
+    call('interface.commit')
+    call('interface.checkin')
+    time.sleep(3)
+
+
 def create_permanent_pool():
     # Create a pool if one doesn't already exist
     if [] == call('pool.query', [["name", "=", pool]]):
@@ -148,6 +177,8 @@ def setup_server_single():
         setup_ssh()
         stage = 'SETUP_NETINFO'
         set_netinfo_single()
+        stage = 'SETUP_INTERFACE'
+        set_static_interface()
         stage = 'SETUP_POOL'
         create_permanent_pool()
     except Exception as exc:
