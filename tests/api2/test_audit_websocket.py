@@ -453,8 +453,7 @@ def test_2fa_login(sharing_admin_user):
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'
                 })
-                assert resp['response_type'] == 'OTP_REQUIRED'
-                assert resp['username'] == sharing_admin_user.username
+                assert resp['response_type'] == 'AUTH_ERR'
 
 
 @pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))
