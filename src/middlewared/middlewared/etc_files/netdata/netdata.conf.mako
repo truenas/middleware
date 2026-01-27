@@ -39,6 +39,10 @@
 	access = off
 
 [plugins]
+	debugfs = no
+	ebpf = no
+	systemd-journal = no
+	network-viewer = no
 	proc = yes
 	diskspace = no
 	cgroups = yes
