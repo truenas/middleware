@@ -1029,7 +1029,7 @@ class AuthService(Service):
                         'credentials': {
                             'credentials': 'LOGIN_TWOFACTOR',
                             'credentials_data': {
-                                'username': auth_data['username'],
+                                'username': auth_data['user']['username'],
                             },
                         },
                         'error': f'One-time token validation failed: {pam_resp.reason}'
