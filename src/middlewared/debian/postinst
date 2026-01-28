@@ -23,6 +23,10 @@ case "$1" in
         if [ ! -f /data/freenas-v1.db ]; then
             cp /data/factory-v1.db /data/freenas-v1.db
         fi
+
+        # Generate methods cache for faster startup
+        mkdir -p /usr/share/middlewared
+        FAKE_ENV=1 middlewared --dump-methods > /usr/share/middlewared/methods.json
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
