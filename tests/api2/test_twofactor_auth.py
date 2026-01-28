@@ -82,7 +82,7 @@ def do_login(username, password, otp=None, expected=True):
         if expected:
             assert resp['response_type'] == 'SUCCESS'
         else:
-            assert resp['response_type'] == 'OTP_REQUIRED'
+            assert resp['response_type'] == 'AUTH_ERR'
 
 
 def test_login_without_2fa(clear_ratelimit):

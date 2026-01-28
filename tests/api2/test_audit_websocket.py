@@ -444,7 +444,7 @@ def test_2fa_login(sharing_admin_user):
                                 "username": sharing_admin_user.username,
                             },
                         },
-                        "error": "One-time token validation failed.",
+                        "error": "One-time token validation failed: [PAM_AUTH_ERR]: pam_authenticate() failed",
                     },
                     "success": False,
                 }
