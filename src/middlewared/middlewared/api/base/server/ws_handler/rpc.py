@@ -418,8 +418,9 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                                        str(error) or repr(error), sys.exc_info(), extra)
 
             if not adapted and not app.py_exceptions and not isinstance(e, (MatchNotFound,)):
-                self.middleware.logger.warning(f"Exception while calling {method.name}(*{method.dump_args(params)!r})",
-                                               exc_info=True)
+                self.middleware.logger.warning(
+                    "Exception while calling %s(*%r)", method.name, method.dump_args(params), exc_info=True,
+                )
         else:
             if id_ != undefined:
                 app.send({
