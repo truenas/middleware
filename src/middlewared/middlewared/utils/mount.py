@@ -212,3 +212,49 @@ def umount(
 
     # Unmount the target path itself
     truenas_os.umount2(target=path, flags=flags)
+
+
+def move_tree(
+    source_path: str,
+    destination_path: str,
+    *,
+    open_tree_flags: int = truenas_os.OPEN_TREE_CLOEXEC,
+    move_mount_flags: int = truenas_os.MOVE_MOUNT_BENEATH
+):
+    """
+    Atomically move a mount tree from source to destination.
+
+    This uses open_tree() to get a handle to the source mount tree, then
+    move_mount() to atomically place it at the destination. When using
+    MOVE_MOUNT_BENEATH, the new mount is placed underneath any existing
+    mount at the destination.
+
+    Args:
+        source_path: Path to the source mount tree
+        destination_path: Path where the mount tree should be moved
+        open_tree_flags: Flags for open_tree() (default: OPEN_TREE_CLOEXEC)
+        move_mount_flags: Flags for move_mount() (default: MOVE_MOUNT_BENEATH)
+                         Will be ORed with MOVE_MOUNT_F_EMPTY_PATH
+
+    Raises:
+        Any exception from open_tree() or move_mount()
+
+    Example:
+        # Atomically replace /system with contents from /tmp/newsystem
+        move_tree('/tmp/newsystem', '/system')
+        # Caller should then unmount the old layer if using MOVE_MOUNT_BENEATH
+    """
+    tree_fd = truenas_os.open_tree(
+        path=source_path,
+        flags=open_tree_flags
+    )
+
+    try:
+        truenas_os.move_mount(
+            from_dirfd=tree_fd,
+            from_path="",
+            to_path=destination_path,
+            flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH | move_mount_flags
+        )
+    finally:
+        os.close(tree_fd)
