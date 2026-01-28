@@ -9,6 +9,8 @@ from .utils import POOL_SYSDATASET_PREFIX, SYSDATASET_PATH, TMP_SYSDATASET_PREFI
 
 SYSDATASET_LOCK = Lock()
 
+bind_tree_flags = truenas_os.OPEN_TREE_CLONE|truenas_os.OPEN_TREE_CLOEXEC|truenas_os.AT_RECURSIVE
+
 
 def switch_system_dataset_pool(new_pool_name: str) -> bool:
     """
@@ -36,7 +38,7 @@ def switch_system_dataset_pool(new_pool_name: str) -> bool:
         move_tree(
             from_path,
             SYSDATASET_PATH,
-            open_tree_flags=truenas_os.OPEN_TREE_CLONE|truenas_os.OPEN_TREE_CLOEXEC,
+            open_tree_flags=bind_tree_flags,
             move_mount_flags=move_flags
         )
 
