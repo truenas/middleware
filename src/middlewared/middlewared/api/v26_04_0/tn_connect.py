@@ -1,3 +1,5 @@
+from typing import Literal
+
 from middlewared.api.base import (
     BaseModel, ForUpdateMetaclass, HttpsOnlyURL, IPvAnyAddress, NonEmptyString, single_argument_args,
 )
@@ -43,6 +45,8 @@ class TrueNASConnectEntry(BaseModel):
     """Base URL for the TrueNAS Connect service."""
     heartbeat_url: HttpsOnlyURL
     """URL endpoint for sending heartbeat signals to maintain connection status."""
+    tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None
+    """TrueNAS Connect tier."""
 
 
 @single_argument_args('tn_connect_update')
