@@ -20,8 +20,8 @@ def switch_system_dataset_pool(new_pool_name: str) -> bool:
     from_path = f'{POOL_SYSDATASET_PREFIX}{new_pool_name}'
 
     with SYSDATASET_LOCK:
-        source_sm = statmount(from_path)
-        victim_sm = statmount(SYSDATASET_PATH)
+        source_sm = statmount(path=from_path)
+        victim_sm = statmount(path=SYSDATASET_PATH)
         victim_pool = victim_sm.sb_source.split('/')[0]
 
         # We may in theory have boot pool that just has directory and no
