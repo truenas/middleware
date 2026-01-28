@@ -264,3 +264,99 @@ def test_run_onetime__no_mount():
             assert ssh(f"zfs get -H -o value mounted {pool}/dst").strip() == "no"
         finally:
             ssh(f"zfs destroy -r {pool}/dst", check=False)
+
+
+def test_disable_task_preserves_state():
+    """
+    Test that disabling a replication task preserves the last run and state information.
+
+    This test verifies the bug where disabling a replication task incorrectly clears
+    all information about the last run and the last snapshot sent, replacing it with
+    "never" and "No snapshots sent yet".
+
+    Bug reproduction steps:
+    1. Create a replication task
+    2. Run it successfully
+    3. Verify state contains execution history (datetime, last_snapshot)
+    4. Disable the task
+    5. BUG: State is cleared to PENDING and last_snapshot is removed
+    """
+    with dataset("src") as src:
+        with dataset("dst") as dst:
+            # Create a snapshot
+            call("pool.snapshot.create", {
+                "dataset": src,
+                "name": "2022-01-01-00-00-00",
+            })
+
+            # Create a replication task
+            task_data = {
+                "name": "test_disable_preserves_state",
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": [src],
+                "target_dataset": dst,
+                "recursive": False,
+                "auto": False,
+                "retention_policy": "NONE",
+                "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
+                "enabled": True,
+            }
+
+            with replication_task(task_data) as task:
+                # Run the replication task manually
+                call("replication.run", task["id"], job=True)
+
+                # Get the task state after run
+                task_after_run = call("replication.get_instance", task["id"])
+
+                # Verify that state information exists after the run
+                assert task_after_run["state"] is not None, "State should not be None after run"
+                assert isinstance(task_after_run["state"], dict), "State should be a dict"
+
+                # Store the state information before disabling
+                # The state dict typically contains: 'state', 'datetime', 'last_snapshot', etc.
+                state_before_disable = task_after_run["state"].copy()
+
+                # Verify that the task has some state information indicating it ran
+                # The state field should not be PENDING after a successful run
+                task_state_value = state_before_disable.get("state", "PENDING")
+                assert task_state_value != "PENDING", \
+                    f"Task state should not be PENDING after manual run, got: {task_state_value}. " \
+                    f"Full state: {state_before_disable}"
+
+                # Check that we have meaningful state info - both datetime AND last_snapshot should be present
+                assert "datetime" in state_before_disable, \
+                    f"State should contain 'datetime' after run. State: {state_before_disable}"
+                assert "last_snapshot" in state_before_disable, \
+                    f"State should contain 'last_snapshot' after run. State: {state_before_disable}"
+
+                # Disable the task
+                call("replication.update", task["id"], {"enabled": False})
+
+                # Get the task state after disabling
+                task_after_disable = call("replication.get_instance", task["id"])
+
+                # This is the bug: the state information should be preserved after disabling
+                # but currently it gets cleared
+                assert task_after_disable["state"] is not None, "State should not be None after disabling"
+
+                # Check if critical state information is preserved
+                # The bug causes the state to be reset to PENDING and removes last_snapshot
+                state_after_disable = task_after_disable["state"]
+
+                # Verify state field is preserved
+                assert state_after_disable.get("state") == state_before_disable.get("state"), \
+                    f"State 'state' field should be preserved after disabling. " \
+                    f"Before: {state_before_disable.get('state')}, " \
+                    f"After: {state_after_disable.get('state')}"
+
+                # Verify datetime is preserved
+                assert "datetime" in state_after_disable, \
+                    f"State 'datetime' field should be preserved after disabling. " \
+                    f"Before: {state_before_disable}, After: {state_after_disable}"
+
+                # Verify last_snapshot is preserved
+                assert "last_snapshot" in state_after_disable, \
+                    f"State 'last_snapshot' field should be preserved after disabling. " \
+                    f"Before: {state_before_disable}, After: {state_after_disable}"

@@ -290,6 +290,9 @@ class ReplicationService(CRUDService):
             id_
         )
 
+        # Remove task state from zettarepl before updating tasks
+        await self.middleware.call("zettarepl.remove_task", f"replication_task_{id_}")
+
         await self.middleware.call("zettarepl.update_tasks")
 
         return response
