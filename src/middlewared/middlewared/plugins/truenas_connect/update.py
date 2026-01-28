@@ -1,4 +1,5 @@
 import contextlib
+import enum
 import logging
 
 from truenas_connect_utils.config import get_account_id_and_system_id
@@ -18,8 +19,13 @@ from .mixin import TNCAPIMixin
 from .private_models import TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload, TNC_IPS_CACHE_KEY
 
-
 logger = logging.getLogger('truenas_connect')
+
+
+class TrueNASConnectTier(enum.IntEnum):
+    FOUNDATION = 1
+    PLUS = 2
+    BUSINESS = 3
 
 
 class TrueNASConnectModel(sa.Model):
@@ -77,6 +83,12 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
+
+        try:
+            config['tier'] = TrueNASConnectTier(config['registration_details']['tier']).name
+        except (KeyError, ValueError):
+            config['tier'] = None
+
         return config
 
     @private
