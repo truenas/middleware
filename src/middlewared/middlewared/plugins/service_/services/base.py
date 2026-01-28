@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import time
 import types
 
 # NOTE: We prefer to minimize third-party dependencies in critical service management code.
@@ -266,6 +267,122 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
         return unwrap_msg(reply)[0]
 
 
+async def _stop_unit_and_wait_for_exit(
+    router,
+    unit_path: str,
+    service_name: str,
+    timeout: float,
+    start_time: float,
+) -> None:
+    """
+    Stop a systemd unit and wait for all processes to exit.
+
+    Issues a Stop command, waits for systemd to send SIGTERM (JobRemoved signal),
+    then polls until MainPID=0 or ActiveState=inactive to ensure all processes
+    have fully exited.
+
+    This prevents race conditions where services with slow shutdown (e.g., netdata
+    flushing databases) still have open file handles when subsequent operations
+    (umount, zfs destroy) are attempted.
+
+    Args:
+        router: Open D-Bus router
+        unit_path: D-Bus object path for the unit
+        service_name: Service name for logging
+        timeout: Maximum time to wait for job completion
+        start_time: Start time from time.monotonic() for elapsed calculation
+    """
+    with router.filter(_JOB_REMOVED_FILTER_RULE) as job_queue:
+        # Issue the stop action
+        unit = DBusAddress(
+            unit_path,
+            bus_name="org.freedesktop.systemd1",
+            interface="org.freedesktop.systemd1.Unit",
+        )
+
+        msg = new_method_call(unit, "Stop", "s", ("replace",))
+        reply = await router.send_and_get_reply(msg)
+        job_path = unwrap_msg(reply)[0]
+
+        # Wait for JobRemoved
+        try:
+            async with asyncio.timeout(timeout):
+                while True:
+                    msg = await job_queue.get()
+                    if msg.body[1] == job_path:
+                        result = msg.body[3]
+                        if result != "done":
+                            logger.warning(
+                                "%s Stop job finished with result: %s",
+                                service_name,
+                                result,
+                            )
+                        break
+        except TimeoutError:
+            logger.warning(
+                "%s Stop job timed out after %.1fs, continuing to wait for process exit",
+                service_name,
+                timeout,
+            )
+
+        # Wait for processes to actually exit by polling state
+        elapsed = time.monotonic() - start_time
+        timeout_remaining = max(5.0, timeout - elapsed)
+        poll_deadline = time.monotonic() + timeout_remaining
+        check_interval = 0.1  # Check every 100ms
+
+        while time.monotonic() < poll_deadline:
+            try:
+                main_pid = await _get_unit_property(
+                    router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
+                )
+                active_state = await _get_unit_property(
+                    router,
+                    unit_path,
+                    "org.freedesktop.systemd1.Unit",
+                    "ActiveState",
+                )
+
+                if main_pid == 0 or active_state == "inactive":
+                    # Service fully stopped - only log if abnormally slow
+                    elapsed_total = time.monotonic() - start_time
+                    if elapsed_total > 3.0:
+                        logger.warning(
+                            "%s took %.2fs to stop (abnormally slow)",
+                            service_name,
+                            elapsed_total,
+                        )
+                    return
+
+                # Not stopped yet, wait before next check
+                await asyncio.sleep(check_interval)
+            except Exception:
+                logger.exception("%s: Error checking status", service_name)
+                await asyncio.sleep(check_interval)
+
+        # Timeout - check final state
+        try:
+            final_main_pid = await _get_unit_property(
+                router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
+            )
+            final_state = await _get_unit_property(
+                router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
+            )
+            logger.warning(
+                "Timeout waiting for %s processes to exit after %.1fs (final: MainPID=%s, ActiveState=%s)",
+                service_name,
+                timeout_remaining,
+                final_main_pid,
+                final_state,
+            )
+        except Exception:
+            logger.exception(
+                "Timeout waiting for %s processes to exit after %.1fs (unable to check final state)",
+                service_name,
+                timeout_remaining,
+            )
+
+
 async def call_unit_action_and_wait(
     service_name: str | bytes, action: str, timeout: float = 10.0
 ) -> None:
@@ -275,6 +392,9 @@ async def call_unit_action_and_wait(
     Subscribes to JobRemoved signals before calling the action to avoid
     race conditions where the job completes before we start listening.
 
+    For Stop actions, delegates to _stop_unit_and_wait_for_exit() which waits
+    for processes to actually exit by polling the service state.
+
     Args:
         service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
         action: The action to perform (Start, Stop, Restart, Reload)
@@ -283,49 +403,54 @@ async def call_unit_action_and_wait(
     if isinstance(service_name, bytes):
         service_name = service_name.decode()
 
+    start_time = time.monotonic()
+
     async with open_dbus_router(bus="SYSTEM") as router:
         await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
 
-        with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
-            unit_path = await _load_unit_path(router, service_name)
+        unit_path = await _load_unit_path(router, service_name)
 
-            unit = DBusAddress(
-                unit_path,
-                bus_name="org.freedesktop.systemd1",
-                interface="org.freedesktop.systemd1.Unit",
+        if action == "Stop":
+            await _stop_unit_and_wait_for_exit(
+                router, unit_path, service_name, timeout, start_time
             )
+        else:
+            # For non-Stop actions, use original flow
+            with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
+                # Issue the action
+                unit = DBusAddress(
+                    unit_path,
+                    bus_name="org.freedesktop.systemd1",
+                    interface="org.freedesktop.systemd1.Unit",
+                )
 
-            msg = new_method_call(unit, action, "s", ("replace",))
-            reply = await router.send_and_get_reply(msg)
-            job_path = unwrap_msg(reply)[0]
+                msg = new_method_call(unit, action, "s", ("replace",))
+                reply = await router.send_and_get_reply(msg)
+                job_path = unwrap_msg(reply)[0]
 
-            try:
-                async with asyncio.timeout(timeout):
-                    while True:
-                        msg = await queue.get()
-                        if msg.body[1] == job_path:
-                            result = msg.body[3]
-                            if result != "done":
-                                logger.warning(
-                                    "%s %s job finished with result: %s",
-                                    service_name,
-                                    action,
-                                    result,
-                                )
-                                # Don't return early - still verify actual service state
-                                # Job result "invalid" can occur when job is superseded
-                                # but service may still be running fine
+                # Wait for JobRemoved
+                try:
+                    async with asyncio.timeout(timeout):
+                        while True:
+                            msg = await queue.get()
+                            if msg.body[1] == job_path:
+                                result = msg.body[3]
+                                if result != "done":
+                                    logger.warning(
+                                        "%s %s job finished with result: %s",
+                                        service_name,
+                                        action,
+                                        result,
+                                    )
+                                break
+                except TimeoutError:
+                    logger.warning(
+                        "%s %s job timed out after %.1fs", service_name, action, timeout
+                    )
+                    return
 
-                            # Verify service state for all actions except Stop
-                            if action != "Stop":
-                                await _verify_service_running(
-                                    router, unit_path, service_name, action
-                                )
-                            return
-            except TimeoutError:
-                # Timeout expired before our job's signal arrived. This is unlikely
-                # but could happen if many other jobs complete during the wait period.
-                pass
+            # Verify service is running
+            await _verify_service_running(router, unit_path, service_name, action)
 
 
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
@@ -339,7 +464,11 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def get_state(self):
         unit_name = self._get_systemd_unit_name()
         state, main_pid = await get_service_state(unit_name)
-        if state == b"active" or (self.systemd_async_start and state == b"activating") or state == b"reloading":
+        if (
+            state == b"active"
+            or (self.systemd_async_start and state == b"activating")
+            or state == b"reloading"
+        ):
             return ServiceState(True, list(filter(None, [main_pid])))
         else:
             return ServiceState(False, [])
