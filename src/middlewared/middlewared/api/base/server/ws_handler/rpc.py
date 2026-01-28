@@ -16,7 +16,7 @@ from truenas_api_client import json
 from truenas_api_client.jsonrpc import JSONRPCError
 
 from middlewared.service_exception import (
-    CallException, CallError, ValidationError, ValidationErrors, adapt_exception, get_errname
+    CallException, CallError, MatchNotFound, ValidationError, ValidationErrors, adapt_exception, get_errname
 )
 from middlewared.utils.auth import AUID_UNSET, AUID_FAULTED
 from middlewared.utils.debug import get_frame_details
@@ -417,9 +417,10 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", errno_,
                                        str(error) or repr(error), sys.exc_info(), extra)
 
-            if not adapted and not app.py_exceptions:
-                self.middleware.logger.warning(f"Exception while calling {method.name}(*{method.dump_args(params)!r})",
-                                               exc_info=True)
+            if not adapted and not app.py_exceptions and not isinstance(e, (MatchNotFound,)):
+                self.middleware.logger.warning(
+                    "Exception while calling %s(*%r)", method.name, method.dump_args(params), exc_info=True,
+                )
         else:
             if id_ != undefined:
                 app.send({
