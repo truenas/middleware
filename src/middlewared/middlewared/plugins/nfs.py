@@ -27,9 +27,6 @@ from middlewared.plugins.nfs_.validators import (
 )
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
-# Support the nfsv4recoverydir procfs entry.  This may deprecate.
-NFSV4_RECOVERY_DIR_PROCFS_PATH = '/proc/fs/nfsd/nfsv4recoverydir'
-
 
 class NFSServicePathInfo(enum.Enum):
     # nfs conf sections that use STATEDIR: exportd, mountd, statd
@@ -117,28 +114,6 @@ class NFSService(SystemServiceService):
             else:
                 self.logger.error('Unexpected error resolving builtin %s %r', name_type, name, exc_info=True)
             return name
-
-    @private
-    def update_procfs_v4recoverydir(self):
-        '''
-        The proc file /proc/fs/nfsd/nfsv4recoverydir is part of the legacy NFS client management.
-        It's usefulness is debatable and by default it reports a path that TrueNAS does not use.
-        While this entry exists TrueNAS will attempt to make it consistent with actual.
-        NOTE: NFS will function correctly even if this is reporting an inconsistent value.
-        '''
-        procfs_path = NFSV4_RECOVERY_DIR_PROCFS_PATH
-        try:
-            with open(procfs_path, 'r+') as fp:
-                fp.write(f'{NFSServicePathInfo.V4RECOVERYDIR.path()}\n')
-        except FileNotFoundError:
-            # This usually happens after a reboot
-            self.logger.info("%r: Missing or has been removed", procfs_path)
-        except Exception as e:
-            # errno=EBUSY usually happens on a system dataset move
-            if e.errno != errno.EBUSY:
-                self.logger.info("Unable to update %r: %r", procfs_path, str(e))
-        else:
-            self.logger.debug("%r: updated with %r", procfs_path, NFSServicePathInfo.V4RECOVERYDIR.path())
 
     @private
     def setup_directories(self):
