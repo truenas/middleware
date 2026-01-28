@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import threading
-import truenas_pyos
+import truenas_os
 import uuid
 
 from contextlib import contextmanager, suppress
