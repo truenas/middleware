@@ -92,7 +92,7 @@ class ValidationErrors(CallException):
         return item in [e.attribute for e in self.errors]
 
 
-def adapt_exception(e) -> CallError | None:
+def adapt_exception(e: Exception) -> CallError | None:
     from .utils.shell import join_commandline
 
     if isinstance(e, subprocess.CalledProcessError):
@@ -110,6 +110,8 @@ def adapt_exception(e) -> CallError | None:
         output = ''.join([stdout, stderr]).rstrip()
 
         return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')
+
+    return None
 
 
 class InstanceNotFound(ValidationError):
