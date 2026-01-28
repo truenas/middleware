@@ -345,10 +345,21 @@ class SystemDatasetService(ConfigService):
         if mounted_pool and mounted_pool.split('/')[0] != config['pool']:
             self.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
             with self.release_system_dataset():
-                do_postmount_actions = switch_system_dataset_pool(config['pool'])
+                try:
+                    do_postmount_actions = switch_system_dataset_pool(config['pool'])
+                except OSError as exc:
+                    if exc.errno != errno.EBUSY:
+                        raise
+
+                    # we did a mountpoint switcheroo and failed to cleanly umount the
+                    # temporary mountpoint of old system dataset under /var/run. This isn't
+                    # inherently a problem unless we're trying to export the pool.
+                    self.logger.exception('Umount of temporary mount failed')
+                    do_postmount_actions = True
+
         else:
             self.middleware.call_sync('systemdataset.setup_datasets', config['pool'], config['uuid'])
-            self.__mount(config['pool'], uuid, f'{POOL_SYSDATASET_PREFIX}{config["pool"]}')
+            self.__mount(config['pool'], config['uuid'], f'{POOL_SYSDATASET_PREFIX}{config["pool"]}')
 
         if do_postmount_actions:
             self.__do_postmount_actions(config['pool'], config['uuid'])
@@ -599,7 +610,14 @@ class SystemDatasetService(ConfigService):
                     capture_output=True
                 )
                 if cp.returncode == 0:
-                    do_postmount_actions = switch_system_dataset_pool(_to)
+                    try:
+                        do_postmount_actions = switch_system_dataset_pool(_to)
+                    except OSError as exc:
+                        if exc.errno != errno.EBUSY:
+                            raise
+
+                        self.logger.error("Failed to cleanly umount old system dataset from temporary mount")
+
                 else:
                     raise CallError(f'Failed to rsync from {source_path} to {target_path}: {cp.stderr.decode()}')
 
