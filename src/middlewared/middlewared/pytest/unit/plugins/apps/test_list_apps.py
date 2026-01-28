@@ -66,7 +66,7 @@ def common_impl(
     mock_get_collective_metadata.return_value = METADATA
     mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
     mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
-    mock_upgrade_available_for_app.return_value = (False, '1.21.0')
+    mock_upgrade_available_for_app.return_value = (False, '1.21.0', '1.0.0')
     mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
     scandir.return_value.__enter__.return_value = [mock_entry1]
 

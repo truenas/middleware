@@ -1,10 +1,11 @@
+import contextlib
 import logging
 import os
 import subprocess
 import tempfile
 import yaml
 
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -256,9 +257,28 @@ class AppService(Service):
         await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
 
         # Get all apps with updates
-        apps_with_updates = [
-            app['id'] for app in await self.middleware.call('app.query', [['upgrade_available', '=', True]])
-        ]
+        # We only raise alerts in 2 cases:
+        # 1) app version changed
+        # 2) major/minor version change of catalog app version (ignore patch)
+        apps_with_updates = []
+        for app in await self.middleware.call('app.query', [['upgrade_available', '=', True]]):
+            latest_app_version = app.get('latest_app_version')
+            current_app_version = app.get('metadata', {}).get('app_version')
+            latest_version = app.get('latest_version')
+            current_version = app.get('version')
+
+            # Case 1: App version changed
+            if latest_app_version and current_app_version and latest_app_version != current_app_version:
+                apps_with_updates.append(app['id'])
+                continue
+
+            # Case 2: Major/minor catalog version change (ignore patch)
+            if latest_version and current_version:
+                with contextlib.suppress(InvalidVersion):
+                    latest_v = Version(latest_version)
+                    current_v = Version(current_version)
+                    if (latest_v.major, latest_v.minor) != (current_v.major, current_v.minor):
+                        apps_with_updates.append(app['id'])
 
         # Create single alert if updates exist
         if apps_with_updates:
