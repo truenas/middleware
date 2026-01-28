@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from threading import Lock
 
@@ -48,8 +49,7 @@ def switch_system_dataset_pool(new_pool_name: str) -> bool:
             # while the system dataset possibly lazily umounts.
             victim_tmp_mp = f'{TMP_SYSDATASET_PREFIX}{victim_pool}'
             os.makedirs(victim_tmp_mp, exist_ok=True)
-
-            move_tree(SYSDATASET_PATH, victim_tmp_mp)
+            subprocess.run(['mount', '--move', SYSDATASET_PATH, victim_tmp_mp])
             umount(victim_tmp_mp, detach=True, recursive=True)
 
         return True
