@@ -90,6 +90,10 @@ source s_tn_auditd {
   unix-stream("/var/run/syslog-ng/auditd.sock" create-dirs(yes) perm(0600));
 };
 
+source s_tn_audit_handler {
+  unix-stream("/var/run/syslog-ng/audit_handler.sock" create-dirs(yes) perm(0600));
+};
+
 ##################
 # filters
 ##################
@@ -140,7 +144,11 @@ log {
 ########################
 % for tnlog in ALL_LOG_FILES:
 log {
-  source(s_tn_middleware); filter(f_${tnlog.name or "middleware"});
+<%
+  # Use dedicated socket for audit_handler to avoid middleware.sock
+  source_name = 's_tn_audit_handler' if tnlog.name == 'audit_handler' else 's_tn_middleware'
+%>\
+  source(${source_name}); filter(f_${tnlog.name or "middleware"});
   destination { file(${tnlog.logfile} ${syslog_template}); };
 };
 % endfor

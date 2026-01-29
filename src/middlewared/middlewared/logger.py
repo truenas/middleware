@@ -68,6 +68,7 @@ logging.TRACE = 6
 
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
 APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
+AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
 DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 LOGFILE = '/var/log/middlewared.log'
@@ -117,6 +118,7 @@ ALL_LOG_FILES = (
     TNLog(None, LOGFILE),
     TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE),
     TNLog('app_migration', APP_MIGRATION_LOGFILE),
+    TNLog('audit_handler', AUDIT_HANDLER_LOGFILE),
     TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
     TNLog('failover', FAILOVER_LOGFILE),
     TNLog('netdata_api', NETDATA_API_LOGFILE),
