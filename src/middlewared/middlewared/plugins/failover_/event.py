@@ -389,6 +389,19 @@ class FailoverEventsService(Service):
         suspended = cleaned = False
         try:
             try:
+                # Ensure the internal (inter-node) target sessions
+                # are stopped, as otherwise inflight IO could
+                # prevent the suspend from completing.
+                logger.info('Reset active start')
+                rajob = self.run_call('dlm.reset_active')
+                rajob.wait_sync(timeout=10)
+                logger.info('Reset active job done')
+            except TimeoutError:
+                logger.warning('Reset active job is continuing')
+            except Exception:
+                logger.exception('Reset active failed')
+
+            try:
                 logger.info('Suspending iSCSI')
                 self.run_call('iscsi.scst.suspend', 30)
                 suspended = True
@@ -755,8 +768,6 @@ class FailoverEventsService(Service):
                     logger.info('Clearing iSCSI suspend')
                     if self.run_call('iscsi.scst.clear_suspend'):
                         logger.info('Cleared iSCSI suspend')
-                # Kick off a job to start clearing up HA targets from when we were STANDBY
-                self.run_call('iscsi.alua.reset_active')
             except Exception:
                 logger.exception('Failed to complete iSCSI bringup')
 
