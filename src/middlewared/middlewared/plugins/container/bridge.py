@@ -12,7 +12,10 @@ from middlewared.service import private, Service
 from middlewared.utils.cgroups import move_to_root_cgroups
 
 BRIDGE_NAME = "truenasbr0"
-FS_PATH = "/var/db/system/vm/dnsmasq"
+# This is intentionally kept on the boot drive because placing it on the system dataset prevents unmounting during
+# system dataset migration.
+# We don't care about DHCP lease files being persistent across updates or HA failovers.
+FS_PATH = "/var/lib/dnsmasq"
 DOMAIN_NAME = "tn-container"
 
 
