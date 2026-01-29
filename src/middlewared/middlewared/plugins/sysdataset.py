@@ -676,6 +676,22 @@ async def pool_post_import(middleware, pool):
     await middleware.call('systemdataset.setup')
 
 
+
+def umount_system_dataset(middleware, pool):
+    remaining = 10
+    while remaining:
+        try:
+            umount_system_dataset_ref(pool)
+        except OSError as exc:
+            if exc.errno == errno.EBUSY:
+                middleware.logger.debug("Failed to unmount pool [%s] system dataset. Waiting for "
+                                        "services that hold references in files to stop.", pool)
+            else:
+                middleware.logger.exception("Failed to unmount pool [%s] system dataset.", pool)
+
+        remaining -= 1
+
+
 async def pool_pre_export(middleware, pool, options, job):
     sysds = await middleware.call('systemdataset.config')
     if sysds['pool'] == pool:
@@ -687,7 +703,7 @@ async def pool_pre_export(middleware, pool, options, job):
         if sysds_job.error:
             raise CallError(f'This pool contains system dataset, but its reconfiguration failed: {sysds_job.error}')
 
-    await middleware.run_in_thread(unmount_system_dataset_ref, pool)
+    await middleware.run_in_thread(unmount_system_dataset, pool)
 
 
 async def setup(middleware):

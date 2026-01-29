@@ -57,7 +57,7 @@ def switch_system_dataset_pool(new_pool_name: str) -> bool:
 
 def unmount_system_dataset_ref(pool_name) -> None:
     """ Unmount per-pool sysdataset """
-    for prefix in (POOL_SYSDATASET_PREFIX, TMP_SYSDATASET_PREFIX):
+    for prefix in (TMP_SYSDATASET_PREFIX, POOL_SYSDATASET_PREFIX):
         path = f'{prefix}{pool_name}'
         if os.path.ismount(path):
             # If this is busy, there's not much we can do
