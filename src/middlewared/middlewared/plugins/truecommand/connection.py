@@ -1,7 +1,8 @@
 import asyncio
-import json
 
 import aiohttp
+
+from middlewared.utils import ajson
 
 
 class TruecommandAPIMixin:
@@ -15,15 +16,18 @@ class TruecommandAPIMixin:
         options = options or {}
         timeout = options.get('timeout', 15)
         response = {'error': None, 'response': {}}
+        if not payload:
+            data = {}
+        else:
+            data = await ajson.dumps(payload)
+
         try:
             async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(
                     raise_for_status=True, trust_env=True,
                 ) as session:
                     req = await session.post(
-                        self.PORTAL_URI,
-                        data=json.dumps(payload or {}),
-                        headers={'Content-type': 'application/json'},
+                        self.PORTAL_URI, data=data, headers={'Content-type': 'application/json'},
                     )
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with iX portal in {timeout} seconds.'

@@ -1,14 +1,13 @@
 import asyncio
-import json
 import os
 import random
-import subprocess
 from collections import defaultdict
 
 import aiohttp
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
+from middlewared.utils import ajson
 from middlewared.utils.time_utils import utc_now
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
@@ -69,7 +68,7 @@ class UsageService(Service):
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             await session.post(
                 USAGE_URL,
-                data=json.dumps(data, sort_keys=True),
+                data=await ajson.dumps(data, sort_keys=True),
                 headers={'Content-type': 'application/json'},
                 proxy=os.environ.get('http_proxy'),
             )
@@ -419,21 +418,6 @@ class UsageService(Service):
             })
 
         return {'vms': vms}
-
-    def gather_nspawn_containers(self, context):
-        nspawn_containers = list()
-        try:
-            cmd = subprocess.run(['machinectl', 'list', '-o', 'json'], capture_output=True)
-            if cmd.returncode == 0:
-                nspawn_containers = json.loads(cmd.stdout.decode())
-        except Exception:
-            return {'nspawn_containers': 0}
-
-        return {
-            'nspawn_containers': len([
-                i for i in nspawn_containers if i.get('service') == 'systemd-nspawn'
-            ])
-        }
 
 
 async def setup(middleware):

@@ -1,11 +1,13 @@
-import typing
-
-import aiohttp
-import aiohttp.client_exceptions
 import asyncio
 import contextlib
 import json
 import logging
+import typing
+
+import aiohttp
+import aiohttp.client_exceptions
+
+from middlewared.utils import ajson
 
 from .exceptions import ApiException, ClientConnectError
 from .utils import NETDATA_URI, NETDATA_REQUEST_TIMEOUT
@@ -30,7 +32,6 @@ class ClientMixin:
                 async with session.get(uri) as resp:
                     if resp.status != 200:
                         raise ApiException(f'Received {resp.status!r} response code from {uri!r}')
-
                     yield resp
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {resource!r} call: {e!r}')
@@ -44,7 +45,14 @@ class ClientMixin:
                 output = ''
                 async for line in resp.content.iter_any():
                     output += line.decode(errors='ignore')
-                return json.loads(output)
+                # our incessant desire to make everything async bites us in
+                # scenarios like this if the developer isn't careful. There
+                # is potential the `output` variable is a HUGE string. The
+                # json.loads/dumps methods are NOT async safe (at time of writing).
+                # So on _LARGE_ strings that need to be decoded, this means
+                # the main event loop "not responding" or "lagging" becomes
+                # measurable.
+                return await ajson.loads(output)
         except aiohttp.client_exceptions.ContentTypeError as e:
             raise ApiException(f'Malformed response received from {resource!r} endpoint: {e}')
 
@@ -59,8 +67,7 @@ class ClientMixin:
                 try:
                     async for line in call_resp.content.iter_any():
                         output += line.decode(errors='ignore')
-
-                    response['data'] = json.loads(output)
+                    response['data'] = await ajson.loads(output)
                 except aiohttp.client_exceptions.ContentTypeError as e:
                     response['error'] = f'Malformed response received from {uri!r} endpoint: {e}'
                 except json.JSONDecodeError:
