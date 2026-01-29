@@ -1123,6 +1123,57 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     'authorized': authorized,
                 }, success)
 
+    def _build_audit_message_sync(
+        self,
+        remote_addr: str,
+        origin: str | None,
+        session_id: str,
+        authenticated_credentials,
+        websocket: bool,
+        event: str,
+        event_data: dict,
+        success: bool,
+    ) -> str:
+        """
+        Synchronous helper to build audit message with all JSON serialization.
+
+        This method performs all CPU-bound JSON serialization in a single call,
+        which can then be offloaded to a thread pool to prevent blocking the event loop.
+        """
+        svc_data_dict = {
+            "vers": {
+                "major": 0,
+                "minor": 1,
+            },
+            "origin": origin,
+            "protocol": "WEBSOCKET" if websocket else "REST",
+            "credentials": {
+                "credentials": authenticated_credentials.class_name(),
+                "credentials_data": authenticated_credentials.dump(),
+            } if authenticated_credentials else None,
+        }
+
+        audit_dict = {
+            "TNAUDIT": {
+                "aid": str(uuid.uuid4()),
+                "vers": {
+                    "major": 0,
+                    "minor": 1
+                },
+                "addr": remote_addr,
+                "user": audit_username_from_session(authenticated_credentials),
+                "sess": session_id,
+                "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "svc": "MIDDLEWARE",
+                "svc_data": json.dumps(svc_data_dict),
+                "event": event,
+                "event_data": json.dumps(event_data),
+                "success": success,
+            }
+        }
+
+        return f"@cee:{json.dumps(audit_dict)}"
+
     async def log_audit_message(
         self,
         app: App,
@@ -1136,35 +1187,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             if app.origin.is_tcp_ip_family:
                 remote_addr = origin
 
-        message = "@cee:" + json.dumps({
-            "TNAUDIT": {
-                "aid": str(uuid.uuid4()),
-                "vers": {
-                    "major": 0,
-                    "minor": 1
-                },
-                "addr": remote_addr,
-                "user": audit_username_from_session(app.authenticated_credentials),
-                "sess": app.session_id,
-                "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
-                "svc": "MIDDLEWARE",
-                "svc_data": json.dumps({
-                    "vers": {
-                        "major": 0,
-                        "minor": 1,
-                    },
-                    "origin": origin,
-                    "protocol": "WEBSOCKET" if app.websocket else "REST",
-                    "credentials": {
-                        "credentials": app.authenticated_credentials.class_name(),
-                        "credentials_data": app.authenticated_credentials.dump(),
-                    } if app.authenticated_credentials else None,
-                }),
-                "event": event,
-                "event_data": json.dumps(event_data),
-                "success": success,
-            }
-        })
+        # Offload all JSON serialization to thread pool in a single call
+        message = await asyncio.to_thread(
+            self._build_audit_message_sync,
+            remote_addr,
+            origin,
+            app.session_id,
+            app.authenticated_credentials,
+            app.websocket,
+            event,
+            event_data,
+            success,
+        )
 
         self.__audit_logger.info(message)
 
@@ -1610,7 +1644,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 (await APIDumper(version, version_title, api, self.role_manager).dump()).model_dump()
             )
 
-        json.dump(result, stream)
+        # Use async-safe json.dump to prevent blocking on file I/O
+        await asyncio.to_thread(json.dump, result, stream)
 
     def run(
         self,
