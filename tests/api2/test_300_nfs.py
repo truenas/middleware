@@ -580,19 +580,21 @@ def nfs_running():
     if enter_nfs_run_state != 'RUNNING':
         set_nfs_service_state('start')
 
-    yield
-    # First try to wait for NFS to recover, then attempt action to re-start
-    for i in range(2):
-        exit_nfs_run_state = get_nfs_service_state()
-        if exit_nfs_run_state == enter_nfs_run_state:
-            break
-        else:
+    try:
+        yield
+    finally:
+        # First try to wait for NFS to recover, then attempt action to re-start
+        for i in range(2):
+            exit_nfs_run_state = get_nfs_service_state()
+            if exit_nfs_run_state == 'RUNNING':
+                break
+            else:
+                sleep(1)
+        # Make sure we exit running
+        if exit_nfs_run_state != 'RUNNING':
+            # This will report a failure if we cannot start
             sleep(1)
-    # Make sure we exit running
-    if exit_nfs_run_state != enter_nfs_run_state:
-        # This will report a failure if we cannot start
-        sleep(1)
-        set_nfs_service_state('start')
+            set_nfs_service_state('start')
 
 
 static_ip_available = has_static_ip()
