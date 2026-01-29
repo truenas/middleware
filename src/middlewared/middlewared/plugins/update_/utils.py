@@ -14,6 +14,8 @@ SEP = re.compile(r"[-.]")
 
 
 def can_update(old_version: str, new_version: str) -> bool:
+    prev_x = None
+    prev_y = None
     for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''):
         if x.startswith('U') and x[1:].isdigit():
             x = x[1:]
@@ -39,6 +41,13 @@ def can_update(old_version: str, new_version: str) -> bool:
         if (x == 'INTERNAL') != (y == 'INTERNAL'):
             return True
 
+        # 26.04 -> 26.0.0 update
+        if prev_x is not None and prev_y is not None and prev_x == 26 and prev_y == 26:
+            if x == '04' and y == '0':
+                return True
+            elif x == '0' and y == '04':
+                return False
+
         if x.isdigit() and y.isdigit():
             x = int(x)
             y = int(y)
@@ -47,6 +56,9 @@ def can_update(old_version: str, new_version: str) -> bool:
             return True
         if x > y:
             return False
+
+        prev_x = x
+        prev_y = y
 
     return False
 
