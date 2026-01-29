@@ -19,7 +19,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import POOL_SYSDATASET_PREFIX, SYSDATASET_PATH
-from middlewared.plugins.system_dataset.mount import switch_system_dataset_pool
+from middlewared.plugins.system_dataset.mount import switch_system_dataset_pool, unmount_system_dataset_ref
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
@@ -686,6 +686,8 @@ async def pool_pre_export(middleware, pool, options, job):
         await sysds_job.wait()
         if sysds_job.error:
             raise CallError(f'This pool contains system dataset, but its reconfiguration failed: {sysds_job.error}')
+
+    await middleware.run_in_thread(unmount_system_dataset_ref, pool)
 
 
 async def setup(middleware):
