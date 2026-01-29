@@ -206,7 +206,13 @@ class iSCSITargetAluaService(Service):
         # become ready, instead we will need to restart iscsitarget
         if not self.standby_alua_ready:
             self.logger.debug('STANDBY node was not yet ready, skip become_active shortcut')
-            await (await self.middleware.call('service.control', 'RESTART', 'iscsitarget')).wait(raise_error=True)
+            rjob = await self.middleware.call(
+                'service.control',
+                'RESTART',
+                'iscsitarget',
+                self.HA_PROPAGATE
+            )
+            await rjob.wait(raise_error=True)
             self.logger.debug('iscsitarget restarted')
             return
 
