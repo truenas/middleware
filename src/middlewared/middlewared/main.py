@@ -1125,11 +1125,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     def _build_audit_message_sync(
         self,
-        remote_addr: str,
-        origin: str | None,
-        session_id: str,
-        authenticated_credentials,
-        websocket: bool,
+        app: App,
         event: str,
         event_data: dict,
         success: bool,
@@ -1140,18 +1136,24 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         This method performs all CPU-bound JSON serialization in a single call,
         which can then be offloaded to a thread pool to prevent blocking the event loop.
         """
+        remote_addr, origin = "127.0.0.1", None
+        if app is not None and app.origin is not None:
+            origin = app.origin.repr
+            if app.origin.is_tcp_ip_family:
+                remote_addr = origin
+
         credentials = None
-        if authenticated_credentials:
+        if app.authenticated_credentials:
             credentials = {
-                "credentials": authenticated_credentials.class_name(),
-                "credentials_data": authenticated_credentials.dump(),
+                "credentials": app.authenticated_credentials.class_name(),
+                "credentials_data": app.authenticated_credentials.dump(),
             }
 
         vers = {"major": 0, "minor": 1}
         svc_data_dict = {
             "vers": vers,
             "origin": origin,
-            "protocol": "WEBSOCKET" if websocket else "REST",
+            "protocol": "WEBSOCKET" if app.websocket else "REST",
             "credentials": credentials,
         }
         audit_dict = {
@@ -1159,8 +1161,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 "aid": str(uuid.uuid4()),
                 "vers": vers,
                 "addr": remote_addr,
-                "user": audit_username_from_session(authenticated_credentials),
-                "sess": session_id,
+                "user": audit_username_from_session(app.authenticated_credentials),
+                "sess": app.session_id,
                 "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",
                 "svc_data": json.dumps(svc_data_dict),
@@ -1178,20 +1180,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         event_data: dict,
         success: bool,
     ) -> None:
-        remote_addr, origin = "127.0.0.1", None
-        if app is not None and app.origin is not None:
-            origin = app.origin.repr
-            if app.origin.is_tcp_ip_family:
-                remote_addr = origin
-
-        # Offload all JSON serialization to thread pool in a single call
         message = await asyncio.to_thread(
             self._build_audit_message_sync,
-            remote_addr,
-            origin,
-            app.session_id,
-            app.authenticated_credentials,
-            app.websocket,
+            app,
             event,
             event_data,
             success,
