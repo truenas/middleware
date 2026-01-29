@@ -90,10 +90,6 @@ class NFS_CONFIG:
     }
 
 
-default_user = user
-default_password = password
-
-
 def has_static_ip():
     """Used to skip tests that require an interface with a static IP"""
     static_if = call('interface.query', [["type", "=", "PHYSICAL"], ["aliases", "!=", []]])
@@ -496,20 +492,28 @@ def nfs_config():
             break
         except CallError:
             # Settle wait and retry
-            sleep(0.1)
+            sleep(0.2)
 
     try:
         yield copy(nfs_db_conf)
     finally:
         # restore nfs.config
-        call("nfs.update", nfs_db_conf)
         # Wait a bit for NFS to return to initial run state
+        current_run_state = None
+        sleep(0.2)
         for i in range(2):
-            current_run_state = get_nfs_service_state()
-            if current_run_state == want_exit_run_state:
-                break
-            else:
-                sleep(1)
+            try:
+                call("nfs.update", nfs_db_conf)
+                current_run_state = get_nfs_service_state()
+                if current_run_state == want_exit_run_state:
+                    break
+                else:
+                    # Didn't make it to the desired runstate:  Sleep and retry
+                    sleep(0.2)
+            except CallError:
+                # Probably reported a failed to start: Sleep and retry
+                sleep(0.2)
+        assert current_run_state == want_exit_run_state
 
 
 @contextlib.contextmanager
@@ -567,6 +571,28 @@ def start_nfs():
     """ Class Fixture: The exit state is managed by init_nfs """
     with manage_start_nfs() as nfs_start:
         yield nfs_start
+
+
+@pytest.fixture(scope="function")
+def nfs_running():
+    """The NFS ops tests need to enter and exit with NFS running"""
+    enter_nfs_run_state = get_nfs_service_state()
+    if enter_nfs_run_state != 'RUNNING':
+        set_nfs_service_state('start')
+
+    yield
+    # First try to wait for NFS to recover, then attempt action to re-start
+    for i in range(2):
+        exit_nfs_run_state = get_nfs_service_state()
+        if exit_nfs_run_state == enter_nfs_run_state:
+            break
+        else:
+            sleep(1)
+    # Make sure we exit running
+    if exit_nfs_run_state != enter_nfs_run_state:
+        # This will report a failure if we cannot start
+        sleep(1)
+        set_nfs_service_state('start')
 
 
 static_ip_available = has_static_ip()
@@ -1322,7 +1348,7 @@ class TestNFSops:
         pp('MissingGroup', ['maproot_group', 'missingroup'], id="missing maproot group"),
         pp('MissingGroup', ['mapall_group', 'missingroup'], id="missing mapall group"),
     ])
-    def test_invalid_user_group_mapping(self, start_nfs, nfs_dataset_and_share, type, data):
+    def test_invalid_user_group_mapping(self, start_nfs, nfs_running, nfs_dataset_and_share, type, data):
         '''
         Verify we properly trap and handle invalid user and group mapping
         Two conditions:
@@ -1362,7 +1388,7 @@ class TestNFSops:
                     with nfs_share(tmp_path, mapping) as share:
                         run_missing_usrgrp_mapping_test(data, testval, tmp_path, share, grpInst)
 
-    def test_service_protocols(self, start_nfs):
+    def test_service_protocols(self, start_nfs, nfs_running):
         """
         This test verifies that changing the `protocols` option generates expected
         changes in nfs kernel server config.  In most cases we will also confirm
@@ -1467,7 +1493,7 @@ class TestNFSops:
             ], id="excluded ports"
         ),
     ])
-    def test_service_ports(self, start_nfs, test_port):
+    def test_service_ports(self, start_nfs, nfs_running, test_port):
         """
         This test verifies that we can set custom port and the
         settings are reflected in the relevant files and are active.
