@@ -46,7 +46,8 @@ class ZettareplService(Service, TaskStateMixin):
         return self.state.get(task_id)
 
     def _known_tasks_ids(self):
-        return set(self.state.keys()) | set(self.definition_errors.keys()) | set(self.hold_tasks.keys())
+        return (set(self.state.keys()) | set(self.definition_errors.keys()) |
+                set(self.hold_tasks.keys()) | set(self.serializable_state.keys()))
 
     def _get_state_context(self):
         return self.middleware.call_sync("zettarepl.get_task_state_context")
@@ -61,14 +62,33 @@ class ZettareplService(Service, TaskStateMixin):
         if task_id in self.hold_tasks:
             return self.hold_tasks[task_id]
 
-        state = self.state.get(task_id, {}).copy()
+        # Try to get runtime state first (for active tasks)
+        state = self.state.get(task_id)
+
+        if state is None:
+            # Task is not active (e.g., disabled) - use persisted state from serializable_state
+            if task_id in self.serializable_state:
+                state = self.serializable_state[task_id].get("state", {}).copy()
+            else:
+                # No persisted state, return empty state
+                state = {}
+        else:
+            state = state.copy()
 
         if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
-            state["last_snapshot"] = self.last_snapshot.get(task_id)
+            # Prefer last_snapshot from memory, fall back to persisted
+            state["last_snapshot"] = self.last_snapshot.get(
+                task_id,
+                self.serializable_state.get(task_id, {}).get("last_snapshot")
+            )
 
         if m := RE_REPLICATION_TASK_ID.match(task_id):
             state["job"] = self.middleware.call_sync("zettarepl.get_task_state_job", context, int(m.group(1)))
-            state["last_snapshot"] = self.last_snapshot.get(task_id)
+            # Prefer last_snapshot from memory, fall back to persisted
+            state["last_snapshot"] = self.last_snapshot.get(
+                task_id,
+                self.serializable_state.get(task_id, {}).get("last_snapshot")
+            )
 
         return state
 
@@ -91,20 +111,25 @@ class ZettareplService(Service, TaskStateMixin):
         for task_id in set(old_hold_tasks.keys()) | set(self.hold_tasks.keys()):
             self._notify_state_change(task_id)
 
-        task_ids = (
+        # Active tasks (enabled tasks from definition)
+        active_task_ids = (
             {f"periodic_snapshot_{k}" for k in definition["periodic-snapshot-tasks"]} |
             {f"replication_{k}" for k in definition["replication-tasks"]} |
             set(hold_tasks.keys())
         )
+
+        # Clear runtime state for tasks that are no longer active (but may still exist in DB as disabled)
         for task_id in list(self.state.keys()):
-            if task_id not in task_ids:
+            if task_id not in active_task_ids:
                 self.state.pop(task_id, None)
+
+        # Clear last_snapshot from memory for tasks that are no longer active
         for task_id in list(self.last_snapshot.keys()):
-            if task_id not in task_ids:
+            if task_id not in active_task_ids:
                 self.last_snapshot.pop(task_id, None)
-        for task_id in list(self.serializable_state.keys()):
-            if task_id not in task_ids:
-                self.serializable_state.pop(task_id, None)
+
+        # DO NOT clear serializable_state here - it should persist for disabled tasks
+        # serializable_state will be cleared when tasks are explicitly deleted via remove_task()
 
     def get_internal_task_state(self, task_id):
         return self.state[task_id]
@@ -113,6 +138,8 @@ class ZettareplService(Service, TaskStateMixin):
         self.state[task_id] = state
 
         if state["state"] in ("ERROR", "FINISHED"):
+            if task_id not in self.serializable_state:
+                self.serializable_state[task_id] = {}
             self.serializable_state[task_id]["state"] = state
             self.middleware.call_sync("zettarepl.flush_state")
 
@@ -121,10 +148,23 @@ class ZettareplService(Service, TaskStateMixin):
     def set_last_snapshot(self, task_id, last_snapshot):
         self.last_snapshot[task_id] = last_snapshot
 
+        if task_id not in self.serializable_state:
+            self.serializable_state[task_id] = {}
         self.serializable_state[task_id]["last_snapshot"] = last_snapshot
         self.middleware.call_sync("zettarepl.flush_state")
 
         self._notify_state_change(task_id)
+
+    def remove_task(self, task_id):
+        """
+        Remove all state for a task that has been deleted.
+        This should be called when a task is deleted from the database.
+        """
+        self.state.pop(task_id, None)
+        self.last_snapshot.pop(task_id, None)
+        self.serializable_state.pop(task_id, None)
+        self.definition_errors.pop(task_id, None)
+        self.hold_tasks.pop(task_id, None)
 
     def _notify_state_change(self, task_id):
         state = self._get_task_state(task_id, self._get_state_context())
@@ -133,17 +173,25 @@ class ZettareplService(Service, TaskStateMixin):
     async def load_state(self):
         for snapshot in await self.middleware.call("datastore.query", "storage.task"):
             state = ejson.loads(snapshot["task_state"])
+            task_id = f"periodic_snapshot_task_{snapshot['id']}"
+            # Load into serializable_state to preserve state for disabled tasks
+            if state:
+                self.serializable_state[task_id] = state
             if "last_snapshot" in state:
-                self.last_snapshot[f"periodic_snapshot_task_{snapshot['id']}"] = state["last_snapshot"]
+                self.last_snapshot[task_id] = state["last_snapshot"]
             if "state" in state:
-                self.state[f"periodic_snapshot_task_{snapshot['id']}"] = state["state"]
+                self.state[task_id] = state["state"]
 
         for replication in await self.middleware.call("datastore.query", "storage.replication"):
             state = ejson.loads(replication["repl_state"])
+            task_id = f"replication_task_{replication['id']}"
+            # Load into serializable_state to preserve state for disabled tasks
+            if state:
+                self.serializable_state[task_id] = state
             if "last_snapshot" in state:
-                self.last_snapshot[f"replication_task_{replication['id']}"] = state["last_snapshot"]
+                self.last_snapshot[task_id] = state["last_snapshot"]
             if "state" in state:
-                self.state[f"replication_task_{replication['id']}"] = state["state"]
+                self.state[task_id] = state["state"]
 
     async def flush_state(self):
         for task_id, state in self.serializable_state.items():
