@@ -24,6 +24,9 @@ RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 MODE_FC_CAPABLE = ['FC', 'BOTH']
 ISCSI_RELTGT_LOCK = Lock()
 
+# From iscsiadm man page
+ISCSI_ERR_NO_OBJS_FOUND = 21
+
 
 class iSCSITargetModel(sa.Model):
     __tablename__ = 'services_iscsitarget'
@@ -539,6 +542,19 @@ class iSCSITargetService(CRUDService):
             if cp.returncode != 0:
                 err += f' ERROR: {cp.stdout}'
                 raise OSError(cp.returncode, os.strerror(cp.returncode), err)
+
+    @private
+    async def logout_all(self, ip, no_wait=False, timeout=30):
+        cmd = ['iscsiadm', '-m', 'node', '-p', ip, '--logoutall=all']
+        if no_wait:
+            cmd.append('--no_wait')
+
+        try:
+            await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8', timeout=timeout)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == ISCSI_ERR_NO_OBJS_FOUND:
+                return
+            raise
 
     @private
     async def rescan_iqn(self, iqn, timeout=30):
