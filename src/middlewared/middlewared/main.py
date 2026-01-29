@@ -1140,26 +1140,24 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         This method performs all CPU-bound JSON serialization in a single call,
         which can then be offloaded to a thread pool to prevent blocking the event loop.
         """
-        svc_data_dict = {
-            "vers": {
-                "major": 0,
-                "minor": 1,
-            },
-            "origin": origin,
-            "protocol": "WEBSOCKET" if websocket else "REST",
-            "credentials": {
+        credentials = None
+        if authenticated_credentials:
+            credentials = {
                 "credentials": authenticated_credentials.class_name(),
                 "credentials_data": authenticated_credentials.dump(),
-            } if authenticated_credentials else None,
-        }
+            }
 
+        vers = {"major": 0, "minor": 1}
+        svc_data_dict = {
+            "vers": vers,
+            "origin": origin,
+            "protocol": "WEBSOCKET" if websocket else "REST",
+            "credentials": credentials,
+        }
         audit_dict = {
             "TNAUDIT": {
                 "aid": str(uuid.uuid4()),
-                "vers": {
-                    "major": 0,
-                    "minor": 1
-                },
+                "vers": vers,
                 "addr": remote_addr,
                 "user": audit_username_from_session(authenticated_credentials),
                 "sess": session_id,
@@ -1171,7 +1169,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 "success": success,
             }
         }
-
         return f"@cee:{json.dumps(audit_dict)}"
 
     async def log_audit_message(
