@@ -1,7 +1,8 @@
 import asyncio
-import json
 
 import aiohttp
+
+from middlewared.utils import ajson
 
 
 class TruecommandAPIMixin:
@@ -18,7 +19,7 @@ class TruecommandAPIMixin:
         if not payload:
             data = {}
         else:
-            data = await json.dumps(payload)
+            data = await ajson.dumps(payload)
 
         try:
             async with asyncio.timeout(timeout):

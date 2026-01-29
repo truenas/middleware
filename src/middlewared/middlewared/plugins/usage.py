@@ -7,7 +7,7 @@ import aiohttp
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
-from middlewared.utils.ajson import json
+from middlewared.utils import ajson
 from middlewared.utils.time_utils import utc_now
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
@@ -68,7 +68,7 @@ class UsageService(Service):
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             await session.post(
                 USAGE_URL,
-                data=await json.dumps(data, sort_keys=True),
+                data=await ajson.dumps(data, sort_keys=True),
                 headers={'Content-type': 'application/json'},
                 proxy=os.environ.get('http_proxy'),
             )
