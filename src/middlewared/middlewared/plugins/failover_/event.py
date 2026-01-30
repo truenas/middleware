@@ -542,8 +542,11 @@ class FailoverEventsService(Service):
 
         # Ensure that middleware pam configuration and API key material is generated
         # as well as local account configuration and OATH information
-        self.run_call('etc.generate', 'user')
-        self.run_call('etc.generate', 'pam_middleware')
+        try:
+            self.run_call('etc.generate', 'user')
+            self.run_call('etc.generate', 'pam_middleware')
+        except Exception:
+            logger.exception("Failed to regenerate user info")
 
         # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
         logger.info('Verifying iSCSI service')
