@@ -96,6 +96,9 @@ systemctl mask ipa-epn.service
 # Prevent systemd management of users and accounts: NAS-137910
 systemctl mask systemd-sysusers.service
 
+# NAS-139257: Mask SSSD sockets - services are explicitly managed by middleware
+systemctl mask sssd-nss.socket sssd-pam-priv.socket sssd-pam.socket
+
 systemctl set-default truenas.target
 
 sed -i.bak 's/CHARMAP="ISO-8859-15"/CHARMAP="UTF-8"/' /etc/default/console-setup
