@@ -14,7 +14,7 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
 
     task_attributes = ["acknowledge_abuse"]
 
-    async def get_credentials_extra(self, credentials):
+    def get_credentials_extra(self, credentials):
         if credentials["provider"].get("team_drive"):
             return dict()
 

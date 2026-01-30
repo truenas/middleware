@@ -12,5 +12,5 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "azureblob"
 
-    async def get_task_extra(self, task):
+    def get_task_extra(self, task):
         return {"chunk_size": "100Mi"}

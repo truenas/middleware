@@ -13,20 +13,22 @@ class CloudBackupService(Service):
 
     @api_method(CloudBackupRestoreArgs, CloudBackupRestoreResult, roles=["FILESYSTEM_DATA_WRITE"])
     @job(logs=True)
-    async def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
+    def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
         """
         Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder`
         created by the cloud backup job `id`.
         """
-        await self.middleware.call("network.general.will_perform_activity", "cloud_backup")
+        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
         verrors = ValidationErrors()
 
-        await check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
+        self.middleware.run_coroutine(
+            check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
+        )
 
         verrors.check()
 
-        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
+        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
 
         restic_config = get_restic_config(cloud_backup)
 
@@ -36,7 +38,7 @@ class CloudBackupService(Service):
         if limit := (options["rate_limit"] or cloud_backup["rate_limit"]):
             cmd.append(f"--limit-download={limit}")
 
-        await run_restic(
+        run_restic(
             job,
             restic_config.cmd + cmd,
             restic_config.env,

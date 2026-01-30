@@ -26,28 +26,28 @@ class BaseRcloneRemote:
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def create_bucket(self, credentials, name):
+    def create_bucket(self, credentials, name):
         raise NotImplementedError
 
-    async def list_buckets(self, credentials):
+    def list_buckets(self, credentials):
         raise NotImplementedError
 
-    async def validate_task_basic(self, task, credentials, verrors):
+    def validate_task_basic(self, task, credentials, verrors):
         pass
 
-    async def validate_task_full(self, task, credentials, verrors):
+    def validate_task_full(self, task, credentials, verrors):
         pass
 
-    async def get_credentials_extra(self, credentials):
+    def get_credentials_extra(self, credentials):
         return {}
 
-    async def get_task_extra(self, task):
+    def get_task_extra(self, task):
         return {}
 
-    async def get_task_extra_args(self, task):
+    def get_task_extra_args(self, task):
         return []
 
-    async def cleanup(self, task, config):
+    def cleanup(self, task, config):
         pass
 
     def get_restic_config(self, task):

@@ -14,9 +14,9 @@ from middlewared.utils.privilege import credential_has_full_admin
 class CloudTaskServiceMixin:
     allow_zvol = False
 
-    async def _get_credentials(self, credentials_id):
+    def _get_credentials(self, credentials_id):
         try:
-            return await self.middleware.call("cloudsync.credentials.get_instance", credentials_id)
+            return self.middleware.call_sync("cloudsync.credentials.get_instance", credentials_id)
         except InstanceNotFound:
             return None
 
@@ -36,13 +36,13 @@ class CloudTaskServiceMixin:
 
         return attributes
 
-    async def _basic_validate(self, verrors, name, data):
+    def _basic_validate(self, verrors, name, data):
         try:
             shlex.split(data["args"])
         except ValueError as e:
             verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
 
-        credentials = await self._get_credentials(data["credentials"])
+        credentials = self._get_credentials(data["credentials"])
         if not credentials:
             verrors.add(f"{name}.credentials", "Invalid credentials")
 
@@ -59,21 +59,23 @@ class CloudTaskServiceMixin:
         except ValidationErrors as e:
             verrors.add_child(f"{name}.attributes", e)
         else:
-            await provider.validate_task_basic(data, credentials, verrors)
+            provider.validate_task_basic(data, credentials, verrors)
 
-    async def _validate(self, app, verrors, name, data):
-        await self._basic_validate(verrors, name, data)
+    def _validate(self, app, verrors, name, data):
+        self._basic_validate(verrors, name, data)
 
         if not verrors:
-            credentials = await self._get_credentials(data["credentials"])
+            credentials = self._get_credentials(data["credentials"])
 
             provider = REMOTES[credentials["provider"]["type"]]
 
-            await provider.validate_task_full(data, credentials, verrors)
+            provider.validate_task_full(data, credentials, verrors)
 
-        if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
+        if self.allow_zvol and (
+            path := self.middleware.run_coroutine(self.get_path_field(data))
+        ).startswith("/dev/zvol/"):
             zvol = zvol_path_to_name(path)
-            zz = await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
+            zz = self.call_sync2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
             if not zz:
                 verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
             elif not zz[0]['type'] == 'VOLUME':
@@ -82,15 +84,15 @@ class CloudTaskServiceMixin:
                 verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is an invalid location')
             else:
                 try:
-                    await self.middleware.call(f'{self._config.namespace}.validate_zvol', path)
+                    self.middleware.call_sync(f'{self._config.namespace}.validate_zvol', path)
                 except CallError as e:
                     verrors.add(f'{name}.{self.path_field}', e.errmsg)
         else:
-            await self.validate_path_field(data, name, verrors)
+            self.middleware.run_coroutine(self.validate_path_field(data, name, verrors))
 
         if data["snapshot"]:
             dataset_name = data["path"].removeprefix("/mnt/")
-            for i in await self.call2(
+            for i in self.call_sync2(
                 self.s.zfs.resource.query_impl,
                 ZFSResourceQuery(
                     paths=[dataset_name],

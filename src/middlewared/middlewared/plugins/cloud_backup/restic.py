@@ -1,10 +1,10 @@
-import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 import json
 import subprocess
+import threading
 
-from middlewared.job import JobProgressBuffer
+from middlewared.job import JobCancelledException, JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError
@@ -35,31 +35,39 @@ def get_restic_config(cloud_backup):
     return ResticConfig(cmd, env)
 
 
-async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
-    await job.logs_fd_write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
-    proc = await asyncio.create_subprocess_exec(
-        *cmd,
+def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
+    job.logs_fd.write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
+    proc = subprocess.Popen(
+        cmd,
         cwd=cwd,
         env=env,
         stdin=stdin,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    check_progress = asyncio.ensure_future(restic_check_progress(job, proc, track_progress))
-    cancelled_error = None
-    try:
-        await proc.wait()
-    except asyncio.CancelledError as e:
-        cancelled_error = e
-        try:
-            await job.middleware.call("service.terminate_process", proc.pid)
-        except CallError as e:
-            job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
-    finally:
-        await asyncio.wait_for(check_progress, None)
 
-    if cancelled_error is not None:
-        raise cancelled_error
+    # Run progress check in a thread
+    check_progress_thread = threading.Thread(
+        target=restic_check_progress,
+        args=(job, proc, track_progress)
+    )
+    check_progress_thread.start()
+
+    aborted = False
+    try:
+        while proc.poll() is None:
+            if job.aborted_event.wait(timeout=0.2):
+                aborted = True
+                try:
+                    job.middleware.call_sync("service.terminate_process", proc.pid)
+                except CallError as e:
+                    job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
+                    break
+    finally:
+        check_progress_thread.join()
+
+    if aborted:
+        raise JobCancelledException()
     if proc.returncode != 0:
         message = "\n".join(job.internal_data.get("messages", []))
         if message and proc.returncode != 1:
@@ -69,7 +77,7 @@ async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=Fals
         raise CallError(message)
 
 
-async def restic_check_progress(job, proc, track_progress=False):
+def restic_check_progress(job, proc, track_progress=False):
     """Record progress of restic backup, restore, and forget commands.
 
     `track_progress` cannot be set when running "restic forget".
@@ -78,8 +86,8 @@ async def restic_check_progress(job, proc, track_progress=False):
 
     """
     if not track_progress:
-        read = await proc.stdout.read()
-        await job.logs_fd_write(read)
+        read = proc.stdout.read()
+        job.logs_fd.write(read)
         return
 
     # backup or restore
@@ -88,7 +96,7 @@ async def restic_check_progress(job, proc, track_progress=False):
     time_delta = ""
     action = ""
     while True:
-        read = (await proc.stdout.readline()).decode("utf-8", "ignore")
+        read = proc.stdout.readline().decode("utf-8", "ignore")
         if read == "":
             break
 
@@ -97,7 +105,7 @@ async def restic_check_progress(job, proc, track_progress=False):
         except json.JSONDecodeError:
             # Can happen with some error messages
             job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
-            await job.logs_fd_write((read + "\n").encode("utf-8", "ignore"))
+            job.logs_fd.write((read + "\n").encode("utf-8", "ignore"))
             continue
 
         msg = None
@@ -124,7 +132,7 @@ async def restic_check_progress(job, proc, track_progress=False):
                 msg = action
 
             case "summary":
-                await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+                job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
                 job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
                 continue
 
@@ -137,7 +145,7 @@ async def restic_check_progress(job, proc, track_progress=False):
                     ": ",
                     action
                 ])
-                await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+                job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
 
         if msg:
             job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
