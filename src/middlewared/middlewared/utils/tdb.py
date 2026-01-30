@@ -159,7 +159,7 @@ class TDBHandle:
         return out
 
     def flush(self) -> None:
-        """ Ensure snyc of file to disk """
+        """ Ensure sync of file to disk """
         os.fdatasync(self.hdl.fd)
 
     def get(self, key: str) -> dict | str:

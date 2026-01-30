@@ -81,7 +81,7 @@ class SMBShareAclEntry(BaseModel):
     ae_perm: Literal['FULL', 'CHANGE', 'READ', 'CUSTOM']
     """ Permissions granted or denied to the principal. \
     NOTE: this may appear as CUSTOM on read if user has manually edited the share ACL through unsupported means. \
-    In this case use will be required to set it to a supported value on update."""
+    In this case users will be required to set it to a supported value on update."""
     ae_type: Literal['ALLOWED', 'DENIED']
     """ The type of SMB share ACL entry.
     This value determines whether the permissions (ae_perm) are granted (ALLOWED) or denied (DENIED). """

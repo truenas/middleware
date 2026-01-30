@@ -50,7 +50,7 @@ from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewraed.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
+from middlewared.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
 from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
 
