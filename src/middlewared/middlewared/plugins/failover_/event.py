@@ -550,6 +550,11 @@ class FailoverEventsService(Service):
         self.run_call('vrrpthread.unpause_events')
         logger.info('Done unpausing failover event processing')
 
+        # Ensure that middleware pam configuration and API key material is generated
+        # as well as local account configuration and OATH information
+        self.run_call('etc.generate', 'user')
+        self.run_call('etc.generate', 'pam_middleware')
+
         # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
         logger.info('Verifying iSCSI service')
         iscsi_suspended = iscsi_cleaned = False
