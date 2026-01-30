@@ -403,7 +403,7 @@ class FailoverEventsService(Service):
                 # are stopped, as otherwise inflight IO could
                 # prevent the suspend from completing.
                 logger.info('Reset active start')
-                rajob = self.run_call('dlm.reset_active')
+                rajob = self.run_call('iscsi.alua.reset_active')
                 rajob.wait_sync(timeout=10)
                 logger.info('Reset active job done')
             except TimeoutError:
@@ -424,9 +424,6 @@ class FailoverEventsService(Service):
                 logger.info('Closing iSCSI sessions')
                 self.run_call('iscsi.alua.force_close_sessions')
                 logger.info('Closed iSCSI sessions')
-                logger.info('calling iscsi ALUA active elected')
-                self.run_call('iscsi.alua.active_elected')
-                logger.info('done calling iscsi ALUA active elected')
                 cleaned = True
         except Exception:
             logger.exception('Unexpected failure setting up iscsi')
