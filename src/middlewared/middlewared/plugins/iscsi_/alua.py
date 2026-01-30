@@ -330,6 +330,7 @@ class iSCSITargetAluaService(Service):
         while self.standby_starting:
             try:
                 await self.middleware.call('failover.call_remote', 'iscsi.alua.reset_active', [], {"job": True})
+                await self.middleware.call('dlm.recreate_comms_peer')
                 break
             except Exception:
                 # This is a fail-safe exception catch.  Should never occur.
