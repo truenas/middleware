@@ -50,6 +50,7 @@ from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewraed.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
 from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
 
@@ -1001,16 +1002,17 @@ class SharingSMBService(SharingService):
 
         # if share is currently active we need to gracefully clean up config and clients
         if share_name in share_list:
-            cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
             await self.toggle_share(share_name, False)
-            try:
-                await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
-            except RuntimeError as e:
-                # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
-                if e.args[0] != TDBError.NOEXIST:
-                    self.logger.warning('%s: Failed to remove share ACL', share_name, exc_info=True)
-            except Exception:
-                self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
+
+        cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
+        try:
+            await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
+        except RuntimeError as e:
+            # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
+            if e.args[0] != TDBError.NOEXIST:
+                self.logger.warning('%s: Failed to remove share ACL', share_name, exc_info=True)
+        except Exception:
+            self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
             await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
@@ -1580,6 +1582,16 @@ class SharingSMBService(SharingService):
                 'ae_type': entry['ae_type'],
                 'ae_who_sid': entry.get('ae_who_sid')
             }
+
+            if entry['ae_perm'] == CUSTOM_ACCESS_MASK_STRING:
+                verrors.add(
+                    f'sharing_smb_setacl.share_acl.{idx}.ae_perm',
+                    'CUSTOM permissions set is not valid for set. This '
+                    'can appear if the permissions were set through an unsupported '
+                    'or unexpected mechanism. Please select one of: '
+                    'READ, CHANGE, or FULL.'
+                )
+                continue
 
             if not set(entry.keys()) & set(['ae_who_sid', 'ae_who_id']):
                 verrors.add(

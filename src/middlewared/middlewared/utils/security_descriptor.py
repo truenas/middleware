@@ -14,6 +14,9 @@ from samba.ndr import ndr_pack, ndr_unpack
 from samba.dcerpc import security
 
 
+CUSTOM_ACCESS_MASK_STRING = "CUSTOM"
+
+
 class SDDLAceType(enum.Enum):
     """ defined in MS-DTYP """
     ALLOWED = 'A'
@@ -48,6 +51,14 @@ def share_acl_to_sd_bytes(share_acl: list[dict[str, Any]]) -> bytes:
     """ Convert share_acl list to SDDL string and then to security descriptor bytes """
     sddl_str = 'D:'
     for ace in share_acl:
+        if ace['ae_perm'] == CUSTOM_ACCESS_MASK_STRING:
+            raise ValueError(
+                'CUSTOM perm is not supported for writing an ACL. The '
+                'presence of this value indicates that the share ACL was '
+                'written outside of the TrueNAS API / UI and so should be '
+                'adjusted to a supported value'
+            )
+
         sddl_ace_type = SDDLAceType[ace['ae_type']].value
         sddl_access = hex(SDDLAccessMaskStandard[ace['ae_perm']].value)
         sddl_sid = ace['ae_who_sid']
@@ -71,7 +82,17 @@ def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict[str, str]]:
 
     for ace in sd.dacl.aces:
         dom_sid = str(ace.trustee)
-        perm = SDDLAccessMaskStandard(ace.access_mask).name
+
+        try:
+            perm = SDDLAccessMaskStandard(ace.access_mask).name
+        except ValueError:
+            # See NAS-139535 -- non-standard access mask is set in share ACL
+            # We'll present it with CUSTOM string, but it won't be valid
+            # on update so that we force user to fix it and set it to something
+            # supported. This can happen if user plays around with sharesec from
+            # shell or has a domain admin hack settings via Computer Management MMC.
+            perm = CUSTOM_ACCESS_MASK_STRING
+
         match ace.type:
             case security.SEC_ACE_TYPE_ACCESS_ALLOWED:
                 ace_type = 'ALLOWED'

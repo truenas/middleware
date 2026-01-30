@@ -158,6 +158,10 @@ class TDBHandle:
 
         return out
 
+    def flush(self) -> None:
+        """ Ensure snyc of file to disk """
+        os.fdatasync(self.hdl.fd)
+
     def get(self, key: str) -> dict | str:
         """
         Retrieve the specified key
@@ -377,6 +381,10 @@ class CTDBHandle(TDBHandle):
                 yield {'key': key, 'value': value}
             else:
                 yield value
+
+    def flush(self) -> None:
+        """ This doesn't really make sense for ctdb so we'll just NO-OP it for API consistency """
+        pass
 
     def batch_op(self, ops: list[TDBBatchOperation]) -> dict:
         """

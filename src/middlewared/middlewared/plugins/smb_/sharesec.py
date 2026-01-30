@@ -53,18 +53,15 @@ def store_share_acl(share_name: str, val: str, cluster: bool) -> None:
         if set_version_key:
             hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
-        return hdl.store(f'SECDESC/{share_name.lower()}', val)
+        hdl.store(f'SECDESC/{share_name.lower()}', val)
+        hdl.flush()
 
 
 def remove_share_acl(share_name: str, cluster: bool) -> None:
     """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
     with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
         hdl.delete(f'SECDESC/{share_name.lower()}')
-
-
-def dup_share_acl(src: str, dst: str, cluster: bool) -> None:
-    val = fetch_share_acl(src, cluster)
-    store_share_acl(dst, val, cluster)
+        hdl.flush()
 
 
 class ShareSec(Service):
