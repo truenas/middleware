@@ -1126,7 +1126,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _build_audit_message_sync(
         self,
         app: App,
-        event: str,
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
         event_data: dict,
         success: bool,
     ) -> str:
