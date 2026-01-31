@@ -127,7 +127,8 @@ class TrueSearchService(Service):
 
         shares = await self.middleware.call(
             'sharing.smb.query',
-            [['enabled', '=', True], ['locked', '=', False], ['path', '!=', 'EXTERNAL']],
+            [['enabled', '=', True], ['locked', '=', False], ['path', '!=', 'EXTERNAL'],
+             ['purpose', '!=', 'TIMEMACHINE_SHARE']],
         )
 
         return {share['path'] for share in shares}
