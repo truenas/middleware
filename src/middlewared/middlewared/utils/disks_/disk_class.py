@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
+RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f]')
 # sda, pmem0, vda, xvda, nvme0n1 but not sda1/vda1/xvda1/nvme0n1p1
 VALID_WHOLE_DISK = re.compile(r"^pmem\d+$|sd[a-z]+$|^vd[a-z]+$|^xvd[a-z]+$|^nvme\d+n\d+$")
 
@@ -153,7 +154,12 @@ class DiskEntry:
 
                     # Extract only the serial number data, skipping the 4-byte header
                     serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
-                    serial = serial_txt.rstrip('\x00').strip()
+                    # Remove control characters (0x00-0x1F) and DEL (0x7F) which are either:
+                    # 1. UTF-16LE encoding artifacts from buggy USB bridge firmware
+                    # 2. Firmware corruption/garbage data
+                    # Per SPC-4, only 0x00 and 0x20-0x7E are valid, but interleaved 0x00s
+                    # from UTF-16LE should also be stripped along with other control chars.
+                    serial = RE_SERIAL_STRIP.sub('', serial_txt).strip()
                 else:
                     serial = ""
 

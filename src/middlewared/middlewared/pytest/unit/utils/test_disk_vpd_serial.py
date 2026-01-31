@@ -126,17 +126,24 @@ def mock_sysfs(tmp_path):
         ({"sda/device/vpd_pg80": b""},
          None),
 
-        # VPD with null bytes in serial (rstrip removes trailing nulls)
+        # VPD with null bytes in serial (control chars now stripped)
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x0a" + b"TEST\x00\x00MORE"},
-         "TEST\x00\x00MORE"),
+         "TESTMORE"),
 
         # VPD with trailing null bytes
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x08" + b"SERIAL\x00\x00"},
          "SERIAL"),
 
-        # Non-ASCII bytes (should be ignored)
+        # Control characters (0x00-0x1F, 0x7F) should be stripped
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x10" + b"TEST\x00\x01\x02SERIAL\x00\x03\x04\x05"},
-         "TEST\x00\x01\x02SERIAL\x00\x03\x04"),
+         "TESTSERIAL"),
+
+        # UTF-16LE encoded serial from buggy USB bridge firmware (NAS-139489)
+        # The bridge incorrectly copies UTF-16LE data into VPD page 80 which expects ASCII.
+        # Pattern: ASCII chars interleaved with 0x00 high bytes, plus garbage prefix.
+        # Real world example: b"\x22\x03\x38\x00\x39\x00..." should become "89..."
+        ({"sda/device/vpd_pg80": b"\x00\x80\x00\x10" + b"\x22\x03" + b"8\x009\x001\x005\x002\x008\x009"},
+         "\"8915289"),
 
         # VPD with trailing spaces that should be stripped
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x08" + b"SERIAL  "},
