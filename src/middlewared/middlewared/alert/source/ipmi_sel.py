@@ -79,7 +79,7 @@ class IPMISELAlertSource(AlertSource):
 
         sensor_events_to_ignore = (
             ("Redundancy State", "Fully Redundant"),
-            ("Processor", "Presence detected"),
+            ("Processor", "Processor Presence detected"),
             ("Power Supply", "Presence detected"),
             ("Power Supply", "Fully Redundant"),
         )
