@@ -292,6 +292,9 @@ async def _stop_unit_and_wait_for_exit(
         timeout: Maximum time to wait for job completion
         start_time: Start time from time.monotonic() for elapsed calculation
     """
+    # Only service units have MainPID property. Socket, target, timer, etc.
+    # units don't have the org.freedesktop.systemd1.Service interface.
+    is_service_unit = service_name.endswith(".service")
     with router.filter(_JOB_REMOVED_FILTER_RULE) as job_queue:
         # Issue the stop action
         unit = DBusAddress(
@@ -333,9 +336,6 @@ async def _stop_unit_and_wait_for_exit(
 
         while time.monotonic() < poll_deadline:
             try:
-                main_pid = await _get_unit_property(
-                    router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
-                )
                 active_state = await _get_unit_property(
                     router,
                     unit_path,
@@ -343,8 +343,15 @@ async def _stop_unit_and_wait_for_exit(
                     "ActiveState",
                 )
 
+                # For service units, also check MainPID to ensure process exited
+                main_pid = 0
+                if is_service_unit:
+                    main_pid = await _get_unit_property(
+                        router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
+                    )
+
                 if main_pid == 0 or active_state == "inactive":
-                    # Service fully stopped - only log if abnormally slow
+                    # Unit fully stopped - only log if abnormally slow
                     elapsed_total = time.monotonic() - start_time
                     if elapsed_total > 3.0:
                         logger.warning(
@@ -362,19 +369,27 @@ async def _stop_unit_and_wait_for_exit(
 
         # Timeout - check final state
         try:
-            final_main_pid = await _get_unit_property(
-                router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
-            )
             final_state = await _get_unit_property(
                 router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
             )
-            logger.warning(
-                "Timeout waiting for %s processes to exit after %.1fs (final: MainPID=%s, ActiveState=%s)",
-                service_name,
-                timeout_remaining,
-                final_main_pid,
-                final_state,
-            )
+            if is_service_unit:
+                final_main_pid = await _get_unit_property(
+                    router, unit_path, "org.freedesktop.systemd1.Service", "MainPID"
+                )
+                logger.warning(
+                    "Timeout waiting for %s processes to exit after %.1fs (final: MainPID=%s, ActiveState=%s)",
+                    service_name,
+                    timeout_remaining,
+                    final_main_pid,
+                    final_state,
+                )
+            else:
+                logger.warning(
+                    "Timeout waiting for %s to stop after %.1fs (final: ActiveState=%s)",
+                    service_name,
+                    timeout_remaining,
+                    final_state,
+                )
         except Exception:
             logger.exception(
                 "Timeout waiting for %s processes to exit after %.1fs (unable to check final state)",
