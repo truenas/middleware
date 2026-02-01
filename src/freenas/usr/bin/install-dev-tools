@@ -35,6 +35,9 @@ PACKAGES=(
     sshpass
     # Unpack core dumps (https://jira.ixsystems.com/browse/NAS-113855)
     zstd
+    # Need following packages to be able to install cython-iscsi Python package
+    pkg-config
+    libiscsi-dev
 )
 PIP_PACKAGES=()
 
