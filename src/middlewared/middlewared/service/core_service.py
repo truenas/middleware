@@ -3,6 +3,7 @@ from collections import defaultdict
 import errno
 import inspect
 import ipaddress
+import json
 import os
 import re
 import socket
@@ -51,6 +52,9 @@ from .config_service import ConfigService
 from .crud_service import CRUDService
 from .decorators import filterable_api_method, job, no_authz_required, private
 from .service import Service
+
+
+METHODS_CACHE_PATH = '/usr/share/middlewared/methods.json'
 
 
 def is_service_class(service, klass):
@@ -252,19 +256,13 @@ class CoreService(Service):
 
         return services
 
-    @api_method(CoreGetMethodsArgs, CoreGetMethodsResult, authorization_required=False, pass_app=True)
-    def get_methods(self, app, service, target):
+    def _get_all_methods(self):
         """
-        Return methods metadata of every available service.
+        Generate methods metadata for all services without any filtering.
+        This is used for caching and by --dump-methods.
         """
         data = {}
         for name, svc in list(self.middleware.get_services().items()):
-            if service is not None and name != service:
-                continue
-
-            if not self._should_list_service(name, svc, target):
-                continue
-
             for attr in dir(svc):
                 if attr.startswith('_') or attr in {'call2', 'call_sync2', 's'}:
                     continue
@@ -305,10 +303,12 @@ class CoreService(Service):
                 if method is None or not callable(method):
                     continue
 
+                # Skip methods that don't have new_style_accepts/returns (not decorated with @api_method)
+                if not hasattr(method, 'new_style_accepts') or not hasattr(method, 'new_style_returns'):
+                    continue
+
                 # Skip private methods
                 if hasattr(method, '_private') and method._private is True:
-                    continue
-                if target == 'CLI' and getattr(method, '_cli_private', False):
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
@@ -318,15 +318,7 @@ class CoreService(Service):
                 method_name = f'{name}.{attr}'
                 no_auth_required = hasattr(method, '_no_auth_required')
                 no_authz_required = hasattr(method, '_no_authz_required')
-
-                # Skip methods that are not allowed for the currently authenticated credentials
-                if app is not None:
-                    if not no_auth_required:
-                        if not app.authenticated_credentials:
-                            continue
-
-                        if not no_authz_required and not app.authenticated_credentials.authorize('CALL', method_name):
-                            continue
+                cli_private = getattr(method, '_cli_private', False)
 
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
@@ -369,6 +361,8 @@ class CoreService(Service):
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
                     'no_auth_required': no_auth_required,
+                    'no_authz_required': no_authz_required,
+                    'cli_private': cli_private,
                     'filterable': issubclass(method.new_style_accepts, QueryArgs),
                     'filterable_schema': None,
                     'pass_application': hasattr(method, '_pass_app'),
@@ -379,6 +373,54 @@ class CoreService(Service):
                     'roles': self.middleware.role_manager.roles_for_method(method_name),
                     **method_schemas,
                 }
+
+        return data
+
+    @api_method(CoreGetMethodsArgs, CoreGetMethodsResult, authorization_required=False, pass_app=True)
+    def get_methods(self, app, service, target):
+        """
+        Return methods metadata of every available service.
+        """
+        # Try to load from cache first
+        all_methods = None
+        if os.path.exists(METHODS_CACHE_PATH):
+            try:
+                with open(METHODS_CACHE_PATH, 'r') as f:
+                    all_methods = json.load(f)
+            except Exception as e:
+                self.logger.warning('Failed to load methods cache from %s: %s', METHODS_CACHE_PATH, e)
+
+        # If cache doesn't exist or failed to load, generate at runtime
+        if all_methods is None:
+            all_methods = self._get_all_methods()
+
+        services = self.middleware.get_services()
+
+        # Now filter the methods based on the parameters
+        data = {}
+        for method_name, method_info in all_methods.items():
+            svc_name = method_name.rsplit('.', 1)[0]
+
+            if service is not None and svc_name != service:
+                continue
+
+            if not self._should_list_service(svc_name, services[svc_name], target):
+                continue
+
+            if target == 'CLI' and method_info['cli_private']:
+                continue
+
+            if app is not None:
+                no_auth_required = method_info['no_auth_required']
+                if not no_auth_required:
+                    if not app.authenticated_credentials:
+                        continue
+
+                    no_authz_required = method_info['no_authz_required']
+                    if not no_authz_required and not app.authenticated_credentials.authorize('CALL', method_name):
+                        continue
+
+            data[method_name] = method_info
 
         return data
 

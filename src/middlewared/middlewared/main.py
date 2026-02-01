@@ -1635,6 +1635,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         # Use async-safe json.dump to prevent blocking on file I/O
         await asyncio.to_thread(json.dump, result, stream)
 
+    async def dump_methods(self, stream: typing.TextIO):
+        self.__plugins_load()
+
+        # Access the core service directly and call the private method
+        core_service = self.get_services()['core']
+        methods = core_service._get_all_methods()
+
+        json.dump(methods, stream)
+
     def run(
         self,
         single_task: typing.Callable[[], typing.Coroutine[typing.Any, typing.Any, int]] | None = None,
@@ -1820,6 +1829,9 @@ def main():
     # This generates a complete JSON representation of all API versions, methods, and models
     # that is consumed by the middlewared_docs package builder to generate API documentation.
     parser.add_argument('--dump-api', action='store_true', help=argparse.SUPPRESS)
+    # Hidden argument for dumping all methods metadata to JSON
+    # This generates the complete output of CoreService.get_methods() without any filtering.
+    parser.add_argument('--dump-methods', action='store_true', help=argparse.SUPPRESS)
     # Hidden argument for running test commands with a fully initialized middleware
     # Usage: middlewared --test -- python3 runtest.py --ip localhost --password testpass --test test_zfs_snapshot.py
     # This allows running test commands (like pytest) with access to a running middleware instance.
@@ -1852,11 +1864,15 @@ def main():
         debug_level=args.debug_level,
         log_handler=args.log_handler,
         # Otherwise will crash since `/data/manifest.json` does not exist at that build stage
-        print_version=not args.dump_api,
+        print_version=not (args.dump_api or args.dump_methods),
     )
 
     if args.dump_api:
         asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
+        return
+
+    if args.dump_methods:
+        asyncio.get_event_loop().run_until_complete(middleware.dump_methods(sys.stdout))
         return
 
     set_name('middlewared')
