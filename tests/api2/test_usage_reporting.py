@@ -30,7 +30,6 @@ class GatherTypes:
         'ftp': ['FTP'],
         'sharing': ['shares'],
         'vms': ['vms'],
-        'nspawn_containers': ['nspawn_containers'],
         'vendor_info': ['is_vendored', 'vendor_name'],
         'hypervisor': ['hypervisor', 'is_virtualized'],
         'method_stats': ['method_stats']
