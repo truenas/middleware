@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.service import Service, private
+from middlewared.service import Service, job, private
 
 
 class DistributedLockManagerService(Service):
@@ -76,6 +76,18 @@ class DistributedLockManagerService(Service):
         for nodeid, node in self.nodes.items():
             if not node['local']:
                 await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
+                await self.middleware.call('dlm.kernel.comms_add_node', nodeid, node['ip'], node['local'])
+
+    @private
+    async def remove_comms_peer(self):
+        for nodeid, node in self.nodes.items():
+            if not node['local']:
+                await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
+
+    @private
+    async def add_comms_peer(self):
+        for nodeid, node in self.nodes.items():
+            if not node['local']:
                 await self.middleware.call('dlm.kernel.comms_add_node', nodeid, node['ip'], node['local'])
 
     @private
@@ -350,6 +362,33 @@ class DistributedLockManagerService(Service):
         finally:
             DistributedLockManagerService.resetting = False
         self.logger.info('local_reset done')
+
+    @private
+    @job(lock='dlm_reset_active', lock_queue_size=1)
+    async def reset_active(self, job):
+        """Reset the ACTIVE node by removing all vestiges of the STANDBY node."""
+        await self.eject_peer()
+        self.logger.debug('Peer(s) ejected')
+
+        await self.remove_comms_peer()
+        self.logger.debug('Removed comms peer')
+        try:
+            try:
+                DistributedLockManagerService.resetting = True
+                for lockspace in await self.middleware.call('dlm.lockspaces'):
+                    if await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace):
+                        self.logger.warning('Starting stopped lockspace %r', lockspace)
+                        await self.middleware.call('dlm.kernel.lockspace_start', lockspace)
+
+                self.logger.debug('Logout all HA targets')
+                remote_ip = await self.middleware.call('failover.remote_ip')
+                await self.middleware.call('iscsi.target.logout_all', remote_ip)
+                self.logger.debug('Logged out all HA targets')
+            finally:
+                DistributedLockManagerService.resetting = False
+        finally:
+            await self.add_comms_peer()
+            self.logger.debug('Restored comms peer')
 
     @private
     async def is_local_reset_complete(self):

@@ -159,6 +159,19 @@ class ISCSIGlobalService(SystemServiceService):
                 await self.middleware.call(
                     'failover.call_remote', 'service.control', ['STOP', 'iscsitarget'], {'job': True}
                 )
+                # Ensure we have actually fully unloaded before we proceed
+                for retry in range(0, 20):
+                    loaded = await self.middleware.call(
+                        'failover.call_remote',
+                        'iscsi.scst.is_kernel_module_loaded'
+                    )
+                    if not loaded:
+                        if retry > 5:
+                            self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
+                        break
+                    await asyncio.sleep(1)
+                if loaded:
+                    self.logger.warning('Insufficent unload delay when turning off ALUA')
                 await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
 
         await self._update_service(old, new, options={'ha_propagate': False})

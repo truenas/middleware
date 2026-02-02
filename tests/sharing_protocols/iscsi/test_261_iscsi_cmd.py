@@ -286,11 +286,21 @@ def _config_to_groups(config):
 
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize_mb=512, extent_name='extent'):
+def configured_target_to_file_extent(
+    config,
+    target_name,
+    pool_name,
+    dataset_name,
+    file_name,
+    alias=None,
+    filesize_mb=512,
+    extent_name='extent',
+    dsargs={}
+):
     groups = _config_to_groups(config)
     with target(target_name, groups, alias) as target_config:
         target_id = target_config['id']
-        with dataset(dataset_name) as dataset_config:
+        with dataset(dataset_name, dsargs) as dataset_config:
             with file_extent(pool_name, dataset_name, file_name, filesize_mb=filesize_mb, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id):
@@ -2305,7 +2315,8 @@ def test__alua_config(iscsi_running):
                                                       target_name,
                                                       pool_name,
                                                       dataset_name,
-                                                      file_name
+                                                      file_name,
+                                                      dsargs={'sync': 'ALWAYS'}
                                                       ) as iscsi_config:
                     iqn = f'{basename}:{target_name}'
                     api_serial_number = iscsi_config['extent']['serial']
