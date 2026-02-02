@@ -16,7 +16,7 @@ CONFIG_CRUD_METHODS = frozenset([
     'create', 'update', 'delete',
     'query', 'get_instance', 'config'
 ])
-MAJOR_VERSION = re.compile(r"^v([0-9]{2})\.([0-9]{2})$")
+MAJOR_VERSION = re.compile(r"^v([0-9]{2})$")
 
 
 def function_arg_names(f):
@@ -212,7 +212,7 @@ def api_method[**P, T](
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(
-                    f'{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX.YY'
+                    f'{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX'
                 )
 
             wrapped._removed_in = removed_in
