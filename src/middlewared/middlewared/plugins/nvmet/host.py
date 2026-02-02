@@ -30,6 +30,7 @@ class NVMetHostModel(sa.Model):
     nvmet_host_dhchap_ctrl_key = sa.Column(sa.EncryptedText(), nullable=True)
     nvmet_host_dhchap_dhgroup = sa.Column(sa.Integer(), default=0)
     nvmet_host_dhchap_hash = sa.Column(sa.Integer(), default=0)
+    nvmet_host_description = sa.Column(sa.String(255))
 
 
 class NVMetHostService(CRUDService):
