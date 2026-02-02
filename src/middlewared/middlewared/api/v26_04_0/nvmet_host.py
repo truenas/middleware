@@ -29,6 +29,8 @@ class NVMetHostEntry(BaseModel):
     """Unique identifier for the NVMe-oF host."""
     hostnqn: NonEmptyString
     """ NQN of the host that will connect to this TrueNAS. """
+    description: str = ''
+    """Description of the NVMet host."""
     dhchap_key: Secret[NonEmptyString | None] = None
     """
     If set, the secret that the host must present when connecting.
