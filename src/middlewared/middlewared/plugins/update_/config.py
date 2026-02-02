@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class UpdateModel(sa.Model):  # type: ignore
+class UpdateModel(sa.Model):
     __tablename__ = 'system_update'
 
     id = sa.Column(sa.Integer(), primary_key=True)
