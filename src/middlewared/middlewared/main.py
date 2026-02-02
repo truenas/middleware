@@ -93,6 +93,7 @@ if typing.TYPE_CHECKING:
 
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
@@ -159,6 +160,7 @@ class ServiceContainer(BaseServiceContainer):
 
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
+        self.update = UpdateService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
         self.methods = get_methods(self)
@@ -630,7 +632,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def unregister_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, *, blockable=False, inline=False, order=0, raise_error=False, sync=True):
+    def register_hook(self, name: str, method: typing.Callable, *, blockable=False, inline=False, order=0,
+                      raise_error=False, sync=True):
         """
         Register a hook under `name`.
 

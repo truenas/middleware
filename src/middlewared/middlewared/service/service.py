@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 from .base import ServiceBase
+from .context import ServiceContext
 
 
 class Service(CallMixin, metaclass=ServiceBase):
@@ -17,6 +18,7 @@ class Service(CallMixin, metaclass=ServiceBase):
     def __init__(self, middleware: "Middleware"):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
+        self.context = ServiceContext(self.middleware, self.logger)
 
         for event in self._config.events:
             self.middleware.event_register(

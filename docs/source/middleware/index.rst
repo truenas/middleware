@@ -8,6 +8,7 @@ Middleware Daemon
     development.rst
     session.rst
     state.rst
+    service.rst
     process_pool.rst
     jobs.rst
     roles.rst

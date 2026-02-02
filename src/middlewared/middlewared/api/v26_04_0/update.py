@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Literal
 
 from middlewared.api.base import (
@@ -6,22 +8,29 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "UpdateEntry", "UpdateUpdateArgs", "UpdateUpdateResult",
-    "UpdateProfileChoicesArgs", "UpdateProfileChoicesResult",
-    "UpdateStatusArgs", "UpdateStatusResult", "UpdateStatusChangedEvent",
-    "UpdateAvailableVersionsArgs", "UpdateAvailableVersionsResult",
+    "UpdateConfigSafeEntry", "UpdateEntry",
+    "UpdateUpdate", "UpdateUpdateArgs", "UpdateUpdateResult",
+    "UpdateProfileChoice", "UpdateProfileChoicesArgs", "UpdateProfileChoicesResult",
+    "UpdateStatus", "UpdateStatusCurrentVersion", "UpdateStatusError", "UpdateStatusNewVersion", "UpdateStatusStatus",
+    "UpdateDownloadProgress", "UpdateStatusArgs", "UpdateStatusResult", "UpdateStatusChangedEvent",
+    "UpdateAvailableVersion", "UpdateAvailableVersionsArgs", "UpdateAvailableVersionsResult",
     "UpdateDownloadArgs", "UpdateDownloadResult",
-    "UpdateFileArgs", "UpdateFileResult",
-    "UpdateManualArgs", "UpdateManualResult",
-    "UpdateRunArgs", "UpdateRunResult",
+    "UpdateFileOptions", "UpdateFileArgs", "UpdateFileResult",
+    "UpdateManualOptions", "UpdateManualArgs", "UpdateManualResult",
+    "UpdateRunAttrs", "UpdateRunArgs", "UpdateRunResult",
 ]
 
 
-class UpdateEntry(BaseModel):
+class UpdateConfigSafeEntry(BaseModel):
     id: int
     """Unique identifier for the update configuration."""
     autocheck: bool
     """Automatically check and download updates every night."""
+    profile: str | None
+    """Update profile used for the system."""
+
+
+class UpdateEntry(UpdateConfigSafeEntry):
     profile: str
     """Update profile used for the system."""
 
@@ -45,7 +54,7 @@ class UpdateProfileChoicesArgs(BaseModel):
 
 
 class UpdateProfileChoicesResult(BaseModel):
-    result: dict[str, "UpdateProfileChoice"]
+    result: dict[str, UpdateProfileChoice]
     """Object of available update profiles with their configuration details."""
 
 
@@ -137,7 +146,7 @@ class UpdateAvailableVersionsArgs(BaseModel):
 
 
 class UpdateAvailableVersionsResult(BaseModel):
-    result: list["UpdateAvailableVersion"]
+    result: list[UpdateAvailableVersion]
     """Array of available system update versions across all trains."""
 
 

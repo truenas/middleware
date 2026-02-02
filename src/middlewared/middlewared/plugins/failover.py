@@ -677,7 +677,7 @@ class FailoverService(ConfigService):
         else:
             updatefile = options['resume_manual']
 
-        local_path = self.middleware.call_sync('update.get_update_location')
+        local_path = self.call_sync2(self.s.update.get_update_location)
         updatefile_name = 'updatefile.sqsh'
         updatefile_localpath = os.path.join(local_path, updatefile_name)
         if not options['resume'] and updatefile:
@@ -700,8 +700,8 @@ class FailoverService(ConfigService):
                         None, j['progress']['description'] or 'Downloading upgrade files'
                     )
 
-                djob = self.middleware.call_sync('update.download', options['train'], options['version'],
-                                                 job_on_progress_cb=download_callback)
+                djob = self.call_sync2(self.s.update.download, options['train'], options['version'],
+                                       job_on_progress_cb=download_callback)
                 djob.wait_sync(raise_error=True)
                 if not djob.result:
                     raise CallError('No updates available.')

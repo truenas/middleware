@@ -1,4 +1,5 @@
-# -*- coding=utf-8 -*-
+from __future__ import annotations
+
 import configparser
 import itertools
 import os
@@ -12,7 +13,7 @@ UPLOAD_LOCATION = os.path.join(MIDDLEWARE_RUN_DIR, "upload_image")
 SEP = re.compile(r"[-.]")
 
 
-def can_update(old_version, new_version):
+def can_update(old_version: str, new_version: str) -> bool:
     for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''):
         if x.startswith('U') and x[1:].isdigit():
             x = x[1:]
@@ -50,7 +51,7 @@ def can_update(old_version, new_version):
     return False
 
 
-def scale_update_server():
+def scale_update_server() -> str:
     cfp = configparser.ConfigParser()
     cfp.read("/data/update.conf")
     return cfp.get("Defaults", "url", fallback=DEFAULT_SCALE_UPDATE_SERVER)

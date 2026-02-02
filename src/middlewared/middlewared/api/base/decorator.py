@@ -2,6 +2,7 @@ import asyncio
 import functools
 import inspect
 import re
+import sys
 import typing
 
 from .handler.accept import accept_params
@@ -17,10 +18,23 @@ CONFIG_CRUD_METHODS = frozenset([
     'query', 'get_instance', 'config'
 ])
 MAJOR_VERSION = re.compile(r"^v([0-9]{2})$")
+ANNOTATION_PREFIX = re.compile(r"middlewared\.api\.[^.]+\.[^.]+\.")
 
 
 def function_arg_names(f):
     return list(f.__code__.co_varnames)[:f.__code__.co_argcount]
+
+
+def process_annotation(annotation):
+    from middlewared.api.base.server.app import App
+    from middlewared.job import Job
+
+    if annotation == "App":
+        return App
+    if annotation == "Job":
+        return Job
+
+    return annotation
 
 
 def calculate_args_index(f, audit_callback, check_annotations):
@@ -47,7 +61,7 @@ def calculate_args_index(f, audit_callback, check_annotations):
     # FIXME: Get rid of the cases where `check_annotations` is `False`
     if check_annotations:
         signature_args_with_annotations = [
-            (name, f.__annotations__.get(name))
+            (name, process_annotation(f.__annotations__.get(name)))
             for name in signature_args[:len(expected_args)]
         ]
         if signature_args_with_annotations[:len(expected_args)] != expected_args:
@@ -264,25 +278,41 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
 
     if expected_annotations != func_annotations:
         expected = ", ".join([
-            f"{name}: {annotation!r}" if annotation is not None else name
+            f"{name}: {annotation}" if annotation is not None else name
             for name, annotation in expected_args
         ])
         signature = inspect.signature(func)
         found = ", ".join([str(signature.parameters[name]) for name, _ in func_args])
-        raise ValueError(f"{func.__name__}: must the following signature: {expected!r}. "
+        raise ValueError(f"{func.__name__}: must have the following signature: {expected!r}. "
                          f"Got {found!r}.")
 
-    expected_return_annotation = returns.model_fields["result"].annotation
-    return_annotation = func.__annotations__.get("return")
-    if return_annotation is None:
-        return_annotation = type(None)
-    if normalize_annotation(return_annotation) != normalize_annotation(expected_return_annotation):
+    expected_return_annotation = normalize_annotation(returns.model_fields["result"].annotation, returns)
+    return_annotation = normalize_annotation(func.__annotations__.get("return"), returns)
+    if return_annotation != expected_return_annotation:
         raise ValueError(f"{func.__name__}: must have a `return` annotation of {expected_return_annotation!r}. "
                          f"Got {return_annotation!r}.")
 
 
-def normalize_annotation(annotation):
+def normalize_annotation(annotation, parent_model=None):
+    result = annotation
     if typing.get_origin(annotation) is typing.Annotated:
-        return typing.get_args(annotation)[0]
+        result = typing.get_args(annotation)[0]
+    elif parent_model is not None and isinstance(annotation, typing.ForwardRef):
+        result = annotation._evaluate(globals(), sys.modules[parent_model.__module__].__dict__,
+                                      recursive_guard=frozenset())
 
-    return annotation
+    if result is None or result is type(None) or result == "None":
+        return None
+    elif result is bool:
+        return "bool"
+    elif isinstance(result, str):
+        return result
+    else:
+        if isinstance(result, type):
+            result = result.__name__
+        else:
+            result = repr(result)
+
+        result = re.sub(ANNOTATION_PREFIX, "", result)
+        result = result.replace("typing.", "")
+        return result

@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict, namedtuple
 import threading
-from typing import Callable, Concatenate, Literal, Sequence
+from typing import Any, Callable, Concatenate, Literal, Sequence
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import BaseModel, query_result
@@ -59,7 +59,7 @@ def filterable_api_method(
     return filterable_internal
 
 
-def job(
+def job[**P, R](
     lock: Callable[[Sequence], str] | str | None = None,
     lock_queue_size: int | None = 5,
     logs: bool = False,
@@ -69,7 +69,7 @@ def job(
     description: Callable[..., str] | None = None,
     abortable: bool = False,
     read_roles: list[str] | None = None,
-):
+) -> Callable[[Callable[Concatenate[Any, P], R]], Callable[P, R]]:
     """
     Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
     the last).
@@ -164,6 +164,7 @@ def job(
             'read_roles': read_roles or [],
         }
         return fn
+
     return check_job
 
 
