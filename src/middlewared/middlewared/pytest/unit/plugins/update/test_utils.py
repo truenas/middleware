@@ -36,7 +36,7 @@ from middlewared.plugins.update_.utils import can_update
     ("26-BETA.1", "26.0", True),
     ("25.10.2", "26.0", True),
     # 26.04 to 26.0
-    ("26.04.0-MASTER-20260129-020159", "26.0.0-MASTER-20260130-020159", True),
+    ("26.04.0-MASTER-20260129-020159", "26.0.0-MASTER+20260130-020159", True),
 ])
 def test__can_update(old_version, new_version, result):
     assert can_update(old_version, new_version) is result
