@@ -18,6 +18,7 @@ CONFIG_CRUD_METHODS = frozenset([
     'query', 'get_instance', 'config'
 ])
 MAJOR_VERSION = re.compile(r"^v([0-9]{2})$")
+ANNOTATION_PREFIX = re.compile(r"middlewared\.api\.[^.]+\.[^.]+\.")
 
 
 def function_arg_names(f):
@@ -312,6 +313,6 @@ def normalize_annotation(annotation, parent_model=None):
         else:
             result = repr(result)
 
-        result = re.sub(r"middlewared\.api\.[^.]+\.[^.]+\.", "", result)
+        result = re.sub(ANNOTATION_PREFIX, "", result)
         result = result.replace("typing.", "")
         return result
