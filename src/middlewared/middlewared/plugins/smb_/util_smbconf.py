@@ -196,6 +196,8 @@ def __apply_purpose_and_options(
             if opts[share_field.TIMEMACHINE_QUOTA]:
                 out['fruit:time machine max size'] = opts[share_field.TIMEMACHINE_QUOTA]
 
+            out['spotlight'] = False
+
         case SMBSharePurpose.MULTIPROTOCOL_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
             vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
