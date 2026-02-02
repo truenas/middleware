@@ -113,12 +113,12 @@ class DomainSecrets(Service):
         # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
         cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
-            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00", cluster)
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00").decode(), cluster
         )
 
         # Password changed field must be initialized (but otherwise is not required)
         store_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00", cluster)
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00").decode(), cluster
         )
 
         setsecret = subprocess.run(
@@ -139,7 +139,7 @@ class DomainSecrets(Service):
         cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}',
-            b64encode(secret.encode() + b'\x00', cluster)
+            b64encode(secret.encode() + b'\x00').decode(), cluster
         )
 
     def get_ldap_idmap_secret(self, domain, user_dn):
@@ -237,8 +237,9 @@ class DomainSecrets(Service):
                                 netbios_name)
             return False
 
+        cluster = (await self.middleware.call('smb.config'))['stateful_failover']
         self.logger.debug('Restoring secrets.tdb for %s', netbios_name)
         for key, value in server_secrets.items():
-            await self.middleware.run_in_thread(store_secrets_entry, key, value)
+            await self.middleware.run_in_thread(store_secrets_entry, key, value, cluster)
 
         return True
