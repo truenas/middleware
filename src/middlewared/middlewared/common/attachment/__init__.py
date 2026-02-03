@@ -129,8 +129,14 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
+            if isinstance(attachment, dict):
+                # FIXME: This must be eventually removed
+                attachment_id = attachment['id']
+            else:
+                attachment_id = attachment.id
+
             await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment['id'], {
+                'datastore.update', self.datastore_model, attachment_id, {
                     f'{self.datastore_prefix}{self.enabled_field}': enabled
                 }
             )
@@ -143,7 +149,13 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
 
     async def delete(self, attachments):
         for attachment in attachments:
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+            if isinstance(attachment, dict):
+                # FIXME: This must be eventually removed
+                attachment_id = attachment['id']
+            else:
+                attachment_id = attachment.id
+
+            await self.middleware.call('datastore.delete', self.datastore_model, attachment_id)
             await self.remove_alert(attachment)
         if attachments:
             await self.restart_reload_services(attachments)
@@ -155,7 +167,13 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         raise NotImplementedError
 
     async def remove_alert(self, attachment):
-        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
+        if isinstance(attachment, dict):
+            # FIXME: This must be eventually removed
+            attachment_id = attachment['id']
+        else:
+            attachment_id = attachment.id
+
+        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment_id)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         # What this is essentially doing is testing if resource in question is a child of queried path
