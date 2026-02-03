@@ -43,9 +43,3 @@ static domain_name_servers=${nameservers}
 
 # Disable IPv4LL (169.254.x.x addresses)
 noipv4ll
-
-# Background immediately
-background
-
-# Be quiet
-quiet
