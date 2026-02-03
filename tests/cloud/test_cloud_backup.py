@@ -174,6 +174,20 @@ def test_cloud_backup_abort(cloud_backup_task):
 
     assert call("cloud_backup.abort", task_id)
 
+    for i in range(100):
+        time.sleep(0.1)
+        state = call("cloud_backup.query", [["id", "=", task_id]], {"get": True})["job"]["state"]
+        if state == "RUNNING":
+            continue
+        elif state == "ABORTED":
+            break
+        else:
+            assert False, f"Cloud backup task is {state}"
+    else:
+        assert False, "Cloud backup task was not aborted"
+
+    assert "restic" not in ssh("ps ax")
+
     # Ensure backup works after an abort
     ssh(f"echo '' > {testfile}")
     run_task(cloud_backup_task.task)

@@ -13,11 +13,11 @@ class CloudSyncService(Service):
         CloudSyncRestoreResult,
         roles=["CLOUD_SYNC_WRITE"],
     )
-    async def restore(self, id_, data):
+    def restore(self, id_, data):
         """
         Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).
         """
-        cloud_sync = await self.middleware.call(
+        cloud_sync = self.middleware.call_sync(
             "cloudsync.query", [["id", "=", id_]], {"get": True, "extra": {"retrieve_locked_info": False}}
         )
         credentials = cloud_sync["credentials"]
@@ -35,4 +35,4 @@ class CloudSyncService(Service):
 
         data["enabled"] = False  # Do not run it automatically
 
-        return await self.middleware.call("cloudsync.create", data)
+        return self.middleware.call_sync("cloudsync.create", data)

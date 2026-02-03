@@ -26,7 +26,7 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
 
     extra_methods = ["list_drives"]
 
-    async def get_task_extra(self, task):
+    def get_task_extra(self, task):
         return {
             "drive_type": DRIVES_TYPES.get(task["credentials"]["provider"]["drive_type"], ""),
             # Subject to change as Microsoft changes rate limits; please watch `forum.rclone.org`

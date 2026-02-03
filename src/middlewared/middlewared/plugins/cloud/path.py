@@ -13,11 +13,11 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-async def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
+def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
     error_text_path = error_text_path or path
 
     try:
-        info = await middleware.run_in_thread(os.stat, path)
+        info = os.stat(path)
     except FileNotFoundError:
         raise CallError(f"Directory {error_text_path!r} does not exist")
     else:
@@ -25,5 +25,5 @@ async def check_local_path(middleware, path, *, check_mountpoint=True, error_tex
             raise CallError(f"{error_text_path!r} is not a directory")
 
     if check_mountpoint:
-        if not await middleware.call("filesystem.is_dataset_path", path):
+        if not middleware.call_sync("filesystem.is_dataset_path", path):
             raise CallError(f"Directory {error_text_path!r} must reside within volume mount point")

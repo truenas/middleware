@@ -11,7 +11,7 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote):
 
     refresh_credentials = ["token"]
 
-    async def validate_task_full(self, task, credentials, verrors):
+    def validate_task_full(self, task, credentials, verrors):
         # `/media/by-day` contains a huge tree of empty directories for all days starting from 2000-01-01. Listing
         # them all will never complete due to the API rate limits.
 

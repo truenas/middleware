@@ -36,6 +36,11 @@ logger = logging.getLogger(__name__)
 LOGS_DIR = '/var/log/jobs'
 
 
+class JobCancelledException(Exception):
+    """Sync job must raise this exception after handling `job.aborted_event`"""
+    pass
+
+
 def send_job_event(
     middleware: Middleware, event_type: EventType, job: Job, fields: dict
 ) -> None:
@@ -339,6 +344,8 @@ class Job:
         self.exception: str | None = None
         self.exc_info: ExcInfo | None = None
         self.aborted: bool = False
+        # Synchronous job must watch this event and shut down and raise `JobCancelledException` when this event is set
+        self.aborted_event = threading.Event()
         self.state: State = State.WAITING
         self.description = None
         self.progress = {
@@ -539,8 +546,12 @@ class Job:
         return self.result
 
     def abort(self):
+        self.aborted_event.set()
         if self.loop is not None and self.future is not None:
-            self.loop.call_soon_threadsafe(self.future.cancel)
+            # Only cancel the future for coroutine methods
+            # For non-coroutine methods, it's the method's responsibility to watch `aborted_event` and shut down
+            if asyncio.iscoroutinefunction(self.method):
+                self.loop.call_soon_threadsafe(self.future.cancel)
         elif self.state == State.WAITING:
             self.aborted = True
 
@@ -570,7 +581,7 @@ class Job:
                     raise handled
                 else:
                     raise
-        except asyncio.CancelledError:
+        except (asyncio.CancelledError, JobCancelledException):
             self.set_state('ABORTED')
         except Exception as e:
             self.set_state('FAILED')

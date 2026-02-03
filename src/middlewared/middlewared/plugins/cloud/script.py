@@ -1,8 +1,8 @@
-import asyncio
 import os
 import shlex
 import subprocess
 import tempfile
+import threading
 from typing import Any
 
 from middlewared.service import CallError
@@ -24,7 +24,7 @@ def env_mapping(prefix: str, mapping: dict[str, Any]) -> dict[str, str]:
     return env
 
 
-async def run_script(job, script_name, hook: str = "", env: dict | None = None):
+def run_script(job, script_name, hook: str = "", env: dict | None = None):
     env = env or {}
 
     hook = hook.strip()
@@ -42,22 +42,23 @@ async def run_script(job, script_name, hook: str = "", env: dict | None = None):
         f.write(hook)
         f.flush()
 
-        proc = await asyncio.create_subprocess_exec(
-            *(shebang + [f.name]),
+        proc = subprocess.Popen(
+            shebang + [f.name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             env=dict(os.environ, **env),
         )
-        future = asyncio.ensure_future(_run_script_check(job, proc, script_name))
-        await proc.wait()
-        await asyncio.wait_for(future, None)
+        thread = threading.Thread(target=_run_script_check, args=(job, proc, script_name))
+        thread.start()
+        proc.wait()
+        thread.join()
         if proc.returncode != 0:
             raise CallError(f"{script_name} failed with exit code {proc.returncode}")
 
 
-async def _run_script_check(job, proc, name):
+def _run_script_check(job, proc, name):
     while True:
-        read = await proc.stdout.readline()
+        read = proc.stdout.readline()
         if read == b"":
             break
-        await job.logs_fd_write(f"[{name}] ".encode("utf-8") + read)
+        job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)

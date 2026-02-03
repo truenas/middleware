@@ -1,48 +1,10 @@
 # flake8: noqa
 import io
 import textwrap
-from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.cloud_sync import FsLockManager, lsjson_error_excerpt, RcloneVerboseLogCutter
-
-
-def lock_mock(*args, **kwargs):
-    m = Mock(*args, **kwargs)
-    m._reader_lock._lock = Mock()
-    m._writer_lock._lock = Mock()
-    return m
-
-
-def test__fs_lock_manager_1():
-    flm = FsLockManager()
-    flm._lock = lock_mock
-    flm._choose_lock = lambda lock, direction: lock
-
-    lock = flm.lock("/mnt/tank/work", Mock())
-
-    assert flm.lock("/mnt/tank", Mock()) == lock
-
-
-def test__fs_lock_manager_2():
-    flm = FsLockManager()
-    flm._lock = lock_mock
-    flm._choose_lock = lambda lock, direction: lock
-
-    lock = flm.lock("/mnt/tank/work", Mock())
-
-    assert flm.lock("/mnt/tank/work/temp", Mock()) == lock
-
-
-def test__fs_lock_manager_3():
-    flm = FsLockManager()
-    flm._lock = lock_mock
-    flm._choose_lock = lambda lock, direction: lock
-
-    lock = flm.lock("/mnt/tank/work", Mock())
-
-    assert flm.lock("/mnt/tank/temp", Mock()) != lock
+from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter
 
 
 @pytest.mark.parametrize("error,excerpt", [

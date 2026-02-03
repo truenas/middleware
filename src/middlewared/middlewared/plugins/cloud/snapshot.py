@@ -4,7 +4,7 @@ from middlewared.api.current import ZFSResourceSnapshotCreateQuery
 from middlewared.utils.time_utils import utc_now
 
 
-async def create_snapshot(
+def create_snapshot(
     middleware, path, name="cloud_task-onetime"
 ) -> tuple[str, str]:
     """Create a ZFS snapshot for the dataset containing the specified path.
@@ -63,9 +63,9 @@ async def create_snapshot(
         #       "/mnt/tank/users/.zfs/snapshot/cloud_task-onetime-20240115120530/alice/documents"
         #   )
     """
-    st = await middleware.call("filesystem.statfs", path)
+    st = middleware.call_sync("filesystem.statfs", path)
     snapshot_name = f"{name}-{utc_now().strftime('%Y%m%d%H%M%S')}"
-    snapshot = await middleware.call2(
+    snapshot = middleware.call_sync2(
         middleware.services.zfs.resource.snapshot.create_impl,
         ZFSResourceSnapshotCreateQuery(
             dataset=st["source"],

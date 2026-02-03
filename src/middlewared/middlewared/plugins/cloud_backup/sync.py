@@ -1,5 +1,6 @@
-import asyncio
 import itertools
+import subprocess
+import time
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -12,12 +13,11 @@ from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import run
 from middlewared.utils.time_utils import utc_now
 
 
-async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = False, rate_limit: int | None = None):
-    await middleware.call("network.general.will_perform_activity", "cloud_backup")
+def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = False, rate_limit: int | None = None):
+    middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
     snapshot = None
     clone = None
@@ -25,10 +25,10 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
     try:
         local_path = cloud_backup["path"]
         if local_path.startswith("/dev/zvol"):
-            await middleware.call("cloud_backup.validate_zvol", local_path)
+            middleware.call_sync("cloud_backup.validate_zvol", local_path)
 
             name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{utc_now().strftime('%Y%m%d%H%M%S')}"
-            snapshot = (await middleware.call("pool.snapshot.create", {
+            snapshot = (middleware.call_sync("pool.snapshot.create", {
                 "dataset": zvol_path_to_name(local_path),
                 "name": name,
                 "suspend_vms": True,
@@ -37,7 +37,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
             clone = zvol_path_to_name(local_path) + f"-{name}"
             try:
-                await middleware.call2(
+                middleware.call_sync2(
                     middleware.services.zfs.resource.snapshot.clone,
                     ZFSResourceSnapshotCloneQuery(snapshot=snapshot, dataset=clone),
                 )
@@ -48,22 +48,22 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
             # zvol device might take a while to appear
             for i in itertools.count():
                 try:
-                    stdin = await middleware.run_in_thread(open, zvol_name_to_path(clone), "rb")
+                    stdin = open(zvol_name_to_path(clone), "rb")
                 except FileNotFoundError:
                     if i >= 5:
                         raise
 
-                    await asyncio.sleep(1)
+                    time.sleep(1)
                 else:
                     break
 
             cwd = None
             cmd = ["--stdin", "--stdin-filename", "volume"]
         else:
-            await check_local_path(middleware, local_path)
+            check_local_path(middleware, local_path)
             if cloud_backup["snapshot"]:
                 snapshot_name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}"
-                snapshot, local_path = await create_snapshot(middleware, local_path, snapshot_name)
+                snapshot, local_path = create_snapshot(middleware, local_path, snapshot_name)
 
             if cloud_backup["absolute_paths"]:
                 cwd = None
@@ -72,7 +72,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
                 cwd = local_path
                 cmd = ["."]
 
-        args = await middleware.call("cloud_backup.transfer_setting_args")
+        args = middleware.call_sync("cloud_backup.transfer_setting_args")
         cmd.extend(args[cloud_backup["transfer_setting"]])
 
         if dry_run:
@@ -93,14 +93,15 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
             **cloud_backup["attributes"],
             "path": local_path
         })
-        await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
+        run_script(job, "Pre-script", cloud_backup["pre_script"], env)
 
-        await run_restic(job, cmd, restic_config.env, cwd=cwd, stdin=stdin, track_progress=True)
+        run_restic(job, cmd, restic_config.env, cwd=cwd, stdin=stdin, track_progress=True)
 
         if cloud_backup["cache_path"]:
-            await run(["restic", "--cache-dir", cloud_backup["cache_path"]], "cache", "--cleanup", check=False)
+            subprocess.run(["restic", "--cache-dir", cloud_backup["cache_path"], "cache", "--cleanup"], check=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        await run_script(job, "Post-script", cloud_backup["post_script"], env)
+        run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:
         if stdin:
             try:
@@ -110,7 +111,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if clone is not None:
             try:
-                await middleware.call2(
+                middleware.call_sync2(
                     middleware.services.zfs.resource.destroy_impl,
                     clone,
                 )
@@ -119,7 +120,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if snapshot is not None:
             try:
-                await middleware.call2(
+                middleware.call_sync2(
                     middleware.services.zfs.resource.snapshot.destroy_impl,
                     ZFSResourceSnapshotDestroyQuery(path=snapshot),
                 )
@@ -135,27 +136,27 @@ class CloudBackupService(Service):
 
     @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=['CLOUD_BACKUP_WRITE'])
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
-    async def sync(self, job, id_, options):
+    def sync(self, job, id_, options):
         """
         Run the cloud backup job `id`.
         """
-        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
+        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
         if cloud_backup["locked"]:
-            await self.middleware.call("cloud_backup.generate_locked_alert", id_)
+            self.middleware.call_sync("cloud_backup.generate_locked_alert", id_)
             raise CallError("Dataset is locked")
 
-        await self._sync(cloud_backup, options, job)
+        self._sync(cloud_backup, options, job)
 
-    async def _sync(self, cloud_backup: dict, options: dict, job):
+    def _sync(self, cloud_backup: dict, options: dict, job):
         job.set_progress(0, "Starting")
         try:
-            await self.middleware.call("cloud_backup.ensure_initialized", cloud_backup)
+            self.middleware.call_sync("cloud_backup.ensure_initialized", cloud_backup)
 
-            await restic_backup(self.middleware, job, cloud_backup, **options)
+            restic_backup(self.middleware, job, cloud_backup, **options)
 
             job.set_progress(100, "Cleaning up")
             restic_config = get_restic_config(cloud_backup)
-            await run_restic(
+            run_restic(
                 job,
                 restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"]), "--group-by", "",
                                      "--prune"],
@@ -163,22 +164,22 @@ class CloudBackupService(Service):
             )
 
             if "id" in cloud_backup:
-                await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
+                self.middleware.call_sync("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
             job.set_progress(description="Done")
         except Exception:
             if "id" in cloud_backup:
-                await self.middleware.call("alert.oneshot_create", "CloudBackupTaskFailed", {
+                self.middleware.call_sync("alert.oneshot_create", "CloudBackupTaskFailed", {
                     "id": cloud_backup["id"],
                     "name": cloud_backup["description"],
                 })
             raise
 
     @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
-    async def abort(self, id_):
+    def abort(self, id_):
         """
         Abort a running cloud backup task.
         """
-        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
+        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
 
         if cloud_backup["job"] is None:
             return False
@@ -186,14 +187,14 @@ class CloudBackupService(Service):
         if cloud_backup["job"]["state"] not in ["WAITING", "RUNNING"]:
             return False
 
-        await self.middleware.call("core.job_abort", cloud_backup["job"]["id"])
+        self.middleware.call_sync("core.job_abort", cloud_backup["job"]["id"])
         return True
 
     @private
-    async def validate_zvol(self, path):
+    def validate_zvol(self, path):
         dataset = zvol_path_to_name(path)
         if not (
-            await self.middleware.call("vm.query_snapshot_begin", dataset, False) or
-            await self.middleware.call("vmware.dataset_has_vms", dataset, False)
+            self.middleware.call_sync("vm.query_snapshot_begin", dataset, False) or
+            self.middleware.call_sync("vmware.dataset_has_vms", dataset, False)
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")

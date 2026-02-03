@@ -15,7 +15,7 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     task_attributes = ["bucket_policy_only"]
 
-    async def get_credentials_extra(self, credentials):
+    def get_credentials_extra(self, credentials):
         return dict(
             service_account_credentials=(credentials["provider"]["service_account_credentials"].
                                          replace("\r", "").

@@ -33,18 +33,16 @@ class S3RcloneRemote(BaseRcloneRemote):
         )
         return client
 
-    async def validate_task_basic(self, task, credentials, verrors):
+    def validate_task_basic(self, task, credentials, verrors):
         if task["attributes"]["encryption"] not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
 
         if not credentials["provider"].get("skip_region", False):
             if not credentials["provider"].get("region", "").strip():
-                response = await self.middleware.run_in_thread(
-                    self._get_client(credentials).get_bucket_location, Bucket=task["attributes"]["bucket"]
-                )
+                response = self._get_client(credentials).get_bucket_location(Bucket=task["attributes"]["bucket"])
                 task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
-    async def get_credentials_extra(self, credentials):
+    def get_credentials_extra(self, credentials):
         result = {"provider": credentials["provider"].get("provider", "Other")}
 
         if (credentials["provider"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
@@ -53,7 +51,7 @@ class S3RcloneRemote(BaseRcloneRemote):
 
         return result
 
-    async def get_task_extra(self, task):
+    def get_task_extra(self, task):
         result = dict(
             encryption=undefined,
             server_side_encryption=task["attributes"].get("encryption") or "",

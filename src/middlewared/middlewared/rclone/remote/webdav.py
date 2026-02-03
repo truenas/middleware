@@ -7,5 +7,5 @@ class WebDavRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "webdav"
 
-    async def get_task_extra(self, task):
+    def get_task_extra(self, task):
         return dict(vendor=task["credentials"]["provider"]["vendor"].lower())
