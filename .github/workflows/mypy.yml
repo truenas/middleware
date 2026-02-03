@@ -27,6 +27,8 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
+            middlewared/plugins/truesearch.py \
+            middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \
             middlewared/plugins/zfs/ \
             --exclude middlewared/etc_files \

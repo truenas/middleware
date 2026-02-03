@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 import asyncio
 import os
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
 from middlewared.utils.smb import SearchProtocol
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class TrueSearchService(Service):
@@ -32,7 +38,7 @@ class TrueSearchService(Service):
         """
         Whether the truesearch service can be used.
         """
-        return not bool(await self.middleware.call('truesearch.unavailable_reasons'))
+        return not bool(await self.call2(self.s.truesearch.unavailable_reasons))
 
     async def enabled(self) -> bool:
         """
@@ -140,20 +146,21 @@ class TrueSearchService(Service):
         if not await self.middleware.call('service.started_or_enabled', 'webshare'):
             return set()
 
-        webshare_config = await self.middleware.call('webshare.config')
-        if not webshare_config['search']:
+        webshare_config = await self.call2(self.s.webshare.config)
+        if not webshare_config.search:
             return set()
 
-        shares = await self.middleware.call(
-            'sharing.webshare.query',
+        shares = await self.call2(
+            self.s.sharing.webshare.query,
             [['enabled', '=', True], ['locked', '=', False]],
         )
+        assert isinstance(shares, list)
 
-        return {share['path'] for share in shares}
+        return {share.path for share in shares}
 
     RECONFIGURE_TIMER = None
 
-    async def configure(self):
+    async def configure(self) -> None:
         """
         Start or stop the service based on whether it should be started or stopped.
         """
@@ -170,7 +177,7 @@ class TrueSearchService(Service):
         elif not enabled and running:
             await (await self.middleware.call('service.control', 'STOP', 'truesearch')).wait(raise_error=True)
 
-    async def schedule_reconfigure(self):
+    async def schedule_reconfigure(self) -> None:
         """
         Reconfigure TrueSearch in 5 seconds. This is to prevent it being reconfigured too often when too many datasets
         are mounted at the time.
@@ -184,14 +191,19 @@ class TrueSearchService(Service):
         )
 
 
-async def post_license_update(middleware, prev_license, *args, **kwargs):
-    await middleware.call('truesearch.configure')
+async def post_license_update(
+    middleware: Middleware,
+    prev_license: Any,
+    *args: tuple[Any],
+    **kwargs: dict[str, Any],
+) -> None:
+    await middleware.call2(middleware.services.truesearch.configure)
 
 
-async def on_dataset_mounted(middleware, data):
+async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> None:
     mount = data
 
-    for directory in await middleware.call('truesearch.raw_directories'):
+    for directory in await middleware.call2(middleware.services.truesearch.raw_directories):
         paths = {directory, mount['mountpoint']}
         # If the mounted path is a child of the share, or the share is a child of the mounted path, reconfigure TS
         if os.path.commonpath(list(paths)) in paths:
@@ -199,18 +211,18 @@ async def on_dataset_mounted(middleware, data):
                 f"Mounted path {mount['mountpoint']!r} intersects with indexed directory {directory}. "
                 "Scheduling TrueSearch reload."
             )
-            await middleware.call('truesearch.schedule_reconfigure')
+            await middleware.call2(middleware.services.truesearch.schedule_reconfigure)
             break
 
 
-async def on_system_ready(middleware, event_type, args):
+async def on_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:
     if await middleware.call('failover.licensed'):
         return
 
-    await middleware.call('truesearch.configure')
+    await middleware.call2(middleware.services.truesearch.configure)
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     middleware.register_hook("system.post_license_update", post_license_update)
     middleware.register_hook("zfs.dataset.mounted", on_dataset_mounted)
     middleware.event_subscribe("system.ready", on_system_ready)

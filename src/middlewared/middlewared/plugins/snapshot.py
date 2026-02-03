@@ -18,6 +18,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import is_child
+from middlewared.utils.service.call_mixin import AuditCallback
 
 from .snapshot_.removal_date import PeriodicSnapshotTaskService as RemovalDateService
 from .snapshot_.task_retention import PeriodicSnapshotTaskService as TaskRetentionService
@@ -138,7 +139,12 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_update(self, audit_callback, id_: int, data: PoolSnapshotTaskUpdate) -> PeriodicSnapshotTaskEntry:
+    async def do_update(
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        data: PoolSnapshotTaskUpdate,
+    ) -> PeriodicSnapshotTaskEntry:
         """
         Update a Periodic Snapshot Task with specific `id`.
         """
@@ -199,7 +205,12 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_delete(self, audit_callback, id_: int, options: PoolSnapshotTaskDeleteOptions) -> typing.Literal[True]:
+    async def do_delete(
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        options: PoolSnapshotTaskDeleteOptions,
+    ) -> typing.Literal[True]:
         """
         Delete a Periodic Snapshot Task with specific `id`.
         """

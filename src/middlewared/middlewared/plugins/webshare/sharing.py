@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import errno
+from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -7,10 +10,12 @@ from middlewared.api.current import (
     SharingWebshareDeleteArgs, SharingWebshareDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import private, SharingService
 from middlewared.service import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
+from middlewared.utils.service.call_mixin import AuditCallback
 
 
 class SharingWebshareModel(sa.Model):
@@ -23,7 +28,7 @@ class SharingWebshareModel(sa.Model):
     enabled = sa.Column(sa.Boolean())
 
 
-class SharingWebshareService(SharingService):
+class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
     share_task_type = 'Webshare'
     allowed_path_types = [FSLocation.LOCAL]
@@ -33,6 +38,7 @@ class SharingWebshareService(SharingService):
         datastore = 'sharing.webshare_share'
         cli_namespace = 'sharing.webshare'
         role_prefix = 'SHARING_WEBSHARE'
+        generic = True
         entry = SharingWebshareEntry
 
     @api_method(
@@ -52,7 +58,7 @@ class SharingWebshareService(SharingService):
 
         await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
         return await self.get_instance(id_)
 
@@ -62,8 +68,13 @@ class SharingWebshareService(SharingService):
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_update(self, audit_callback, id_: int, data: SharingWebshareUpdate) -> SharingWebshareEntry:
-        old = SharingWebshareEntry(**await self.get_instance(id_))
+    async def do_update(
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        data: SharingWebshareUpdate,
+    ) -> SharingWebshareEntry:
+        old = await self.get_instance(id_)
         audit_callback(old.name)
 
         verrors = ValidationErrors()
@@ -78,7 +89,7 @@ class SharingWebshareService(SharingService):
 
         await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
         return await self.get_instance(id_)
 
@@ -88,23 +99,29 @@ class SharingWebshareService(SharingService):
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_delete(self, audit_callback, id_: int):
+    async def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
         """
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
-        share = SharingWebshareEntry(**await self.get_instance(id_))
+        share = await self.get_instance(id_)
         audit_callback(share.name)
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors, old: SharingWebshareEntry | None = None):
-        filters = [['name', 'C=', name]]
+    async def validate_share_name(
+        self,
+        name: str,
+        schema_name: str,
+        verrors: ValidationErrors,
+        old: SharingWebshareEntry | None = None,
+    ) -> None:
+        filters: list[list[int | str]] = [['name', 'C=', name]]
         if old:
             filters.append(['id', '!=', old.id])
 
@@ -114,7 +131,13 @@ class SharingWebshareService(SharingService):
             )
 
     @private
-    async def validate(self, data: SharingWebshareEntry, schema_name, verrors, old: SharingWebshareEntry | None = None):
+    async def validate(
+        self,
+        data: SharingWebshareEntry,
+        schema_name: str,
+        verrors: ValidationErrors,
+        old: SharingWebshareEntry | None = None,
+    ) -> None:
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors)
@@ -132,23 +155,26 @@ class SharingWebshareService(SharingService):
                 )
 
     @private
-    def compress(self, data: SharingWebshareEntry):
-        data = data.model_dump()
-        data.pop(self.locked_field, None)
-        return data
+    def compress(self, data: SharingWebshareEntry) -> dict[str, Any]:
+        compressed = data.model_dump()
+        compressed.pop(self.locked_field, None)
+        return compressed
 
 
-class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate):
+class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareEntry]):
     name = 'webshare'
     title = 'Webshare Share'
     service = 'webshare'
     service_class = SharingWebshareService
 
-    async def restart_reload_services(self, attachments):
+    async def restart_reload_services(self, attachments: list[SharingWebshareEntry]) -> None:
         await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
 
-async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', WebshareFSAttachmentDelegate(middleware))
+async def setup(middleware: Middleware) -> None:
+    await middleware.call(
+        'pool.dataset.register_attachment_delegate',
+        WebshareFSAttachmentDelegate(middleware),  # type: ignore[no-untyped-call]
+    )

@@ -93,6 +93,9 @@ if typing.TYPE_CHECKING:
 
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.plugins.webshare.config import WebshareService
+from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
@@ -148,6 +151,12 @@ class PoolServicesContainer(BaseServiceContainer):
         self.snapshottask = PeriodicSnapshotTaskService(middleware)
 
 
+class SharingServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.webshare = SharingWebshareService(middleware)
+
+
 class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -160,7 +169,10 @@ class ServiceContainer(BaseServiceContainer):
 
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
+        self.sharing = SharingServicesContainer(middleware)
+        self.truesearch = TrueSearchService(middleware)
         self.update = UpdateService(middleware)
+        self.webshare = WebshareService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
         self.methods = get_methods(self)
@@ -793,7 +805,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         kwargs: dict | None = None,
         *,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
         message_id: str | None = None,
         pipes: Pipes | None = None,
@@ -874,7 +886,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         kwargs: dict | None = None,
         *,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
         message_id: str | None = None,
         pipes: Pipes | None = None,
@@ -1198,7 +1210,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         name: str,
         *params,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
         pipes: Pipes | None = None,
         profile: bool = False,
@@ -1219,7 +1231,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         *params,
         job_on_progress_cb: JobProgressCallback = None,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         background: bool = False,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
@@ -1256,7 +1268,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
         pipes: Pipes | None = None,
         profile: bool = False,
@@ -1280,7 +1292,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
         app: App | None = None,
-        audit_callback: AuditCallback = None,
+        audit_callback: AuditCallback | None = None,
         background: bool = False,
         job_on_progress_cb: JobProgressCallback = None,
         **kwargs: typing.Any,

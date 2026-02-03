@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -7,6 +10,9 @@ from middlewared.api.current import (
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 HOSTNAMES_KEY = "webshare_hostnames"
 
@@ -19,7 +25,7 @@ class WebshareModel(sa.Model):
     passkey = sa.Column(sa.String(20), default='DISABLED')
 
 
-class WebshareService(ConfigService):
+class WebshareService(ConfigService[WebshareEntry]):
 
     class Config:
         service = 'webshare'
@@ -27,6 +33,7 @@ class WebshareService(ConfigService):
         datastore = 'services.webshare'
         cli_namespace = 'service.webshare'
         role_prefix = 'SHARING_WEBSHARE'
+        generic = True
         entry = WebshareEntry
 
     @api_method(WebshareUpdateArgs, WebshareUpdateResult, audit='Update Webshare configuration', check_annotations=True)
@@ -34,26 +41,26 @@ class WebshareService(ConfigService):
         """
         Update Webshare Service Configuration.
         """
-        old = WebshareEntry(**await self.config())
+        old = await self.config()
         new = old.updated(data)
 
         await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
         if old.search != new.search:
-            await self.middleware.call('truesearch.configure')
+            await self.call2(self.s.truesearch.configure)
 
         await self._service_change(self._config.service, 'reload')
 
         return new
 
     @private
-    def setup_directories(self):
+    def setup_directories(self) -> None:
         os.makedirs(WEBSHARE_BULK_DOWNLOAD_PATH, mode=0o700, exist_ok=True)
 
         os.makedirs(WEBSHARE_DATA_PATH, mode=0o700, exist_ok=True)
 
     @private
-    async def urls(self):
+    async def urls(self) -> list[str]:
         try:
             hostnames = await self.call2(self.s.keyvalue.get, HOSTNAMES_KEY)
         except KeyError:
@@ -62,11 +69,11 @@ class WebshareService(ConfigService):
         return [f"https://{hostname}:755" for hostname in hostnames]
 
 
-def hostnames_from_config(tn_connect_hostname_config):
+def hostnames_from_config(tn_connect_hostname_config: dict[str, Any]) -> list[str]:
     return sorted(list(tn_connect_hostname_config["hostname_details"].keys()))
 
 
-async def tn_connect_hostname_updated(middleware, tn_connect_hostname_config):
+async def tn_connect_hostname_updated(middleware: Middleware, tn_connect_hostname_config: dict[str, Any]) -> None:
     hostnames = hostnames_from_config(tn_connect_hostname_config)
     await middleware.call2(middleware.services.keyvalue.set, HOSTNAMES_KEY, hostnames)
     if not await middleware.call("service.started", "webshare"):
@@ -77,5 +84,5 @@ async def tn_connect_hostname_updated(middleware, tn_connect_hostname_config):
     await middleware.call("service.control", "RELOAD", "webshare")
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     middleware.register_hook("tn_connect.hostname.updated", tn_connect_hostname_updated)

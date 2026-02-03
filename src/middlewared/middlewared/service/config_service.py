@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import create_model, Field
 
@@ -86,8 +86,6 @@ class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetab
     Meant for services that provide a single set of attributes which can be
     updated or not.
     """
-
-    _config: Any
 
     async def config(self) -> E:
         options = {}

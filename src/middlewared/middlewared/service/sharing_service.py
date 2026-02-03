@@ -4,16 +4,17 @@ from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
+from ..service_exception import ValidationErrors
 
 
-class SharingTaskService(CRUDService):
+class SharingTaskService[E](CRUDService[E]):
 
     path_field = 'path'
     allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
-    locked_alert_class = NotImplemented
-    share_task_type = NotImplemented
+    locked_alert_class: str = NotImplemented
+    share_task_type: str = NotImplemented
 
     @private
     async def get_path_field(self, data):
@@ -62,7 +63,7 @@ class SharingTaskService(CRUDService):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
     @private
-    async def validate_path_field(self, data, schema, verrors):
+    async def validate_path_field(self, data: dict | object, schema: str, verrors: ValidationErrors):
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -153,7 +154,7 @@ class SharingTaskService(CRUDService):
     delete.audit_callback = True
 
 
-class SharingService(SharingTaskService):
+class SharingService[E](SharingTaskService[E]):
     locked_alert_class = 'ShareLocked'
 
     @private
@@ -161,7 +162,7 @@ class SharingService(SharingTaskService):
         return share_task['name']
 
 
-class TaskPathService(SharingTaskService):
+class TaskPathService[E](SharingTaskService[E]):
     locked_alert_class = 'TaskLocked'
 
     @private
