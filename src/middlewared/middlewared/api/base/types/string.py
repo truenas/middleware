@@ -46,7 +46,7 @@ class LongStringWrapper:
         return len(self.value)
 
     def __eq__(self, other):
-        return self.value == other.value
+        return isinstance(other, LongStringWrapper) and self.value == other.value
 
     def __repr__(self):
         return f"LongStringWrapper({self.value})"
