@@ -19,6 +19,8 @@ class SharingWebshareModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
     path = sa.Column(sa.String(255))
+    dataset = sa.Column(sa.String(255), nullable=True)
+    relative_path = sa.Column(sa.String(255), nullable=True)
     is_home_base = sa.Column(sa.Boolean())
     enabled = sa.Column(sa.Boolean())
 
@@ -117,7 +119,7 @@ class SharingWebshareService(SharingService):
     async def validate(self, data: SharingWebshareEntry, schema_name, verrors, old: SharingWebshareEntry | None = None):
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
-        await self.validate_path_field(data, schema_name, verrors)
+        await self.validate_path_field(data, schema_name, verrors, split_path=True)
 
         if data.is_home_base:
             filters = [['is_home_base', '=', True]]

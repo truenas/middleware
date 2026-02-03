@@ -26,6 +26,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import secrets
+from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
 
@@ -53,6 +54,8 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_serial = sa.Column(sa.String(16))
     iscsi_target_extent_type = sa.Column(sa.String(120))
     iscsi_target_extent_path = sa.Column(sa.String(120))
+    iscsi_target_extent_dataset = sa.Column(sa.String(255), nullable=True)
+    iscsi_target_extent_relative_path = sa.Column(sa.String(255), nullable=True)
     iscsi_target_extent_filesize = sa.Column(sa.String(120), default=0)
     iscsi_target_extent_blocksize = sa.Column(sa.Integer(), default=512)
     iscsi_target_extent_pblocksize = sa.Column(sa.Boolean(), default=False)
@@ -71,6 +74,7 @@ class iSCSITargetExtentModel(sa.Model):
 class iSCSITargetExtentService(SharingService):
 
     share_task_type = 'iSCSI Extent'
+    path_resolution_filters = [['iscsi_target_extent_type', '=', 'FILE']]
 
     class Config:
         namespace = 'iscsi.extent'
@@ -544,6 +548,11 @@ class iSCSITargetExtentService(SharingService):
             if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
                 verrors.add(f'{schema_name}.path',
                             f'File currently in use by extent {used[0]["name"]}')
+
+            # Split path into dataset and relative_path for FILE type extents
+            # May return None if path exists but can't be authoritatively resolved yet
+            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
+            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
 
         return data
 

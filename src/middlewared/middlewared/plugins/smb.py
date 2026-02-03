@@ -55,7 +55,9 @@ from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpos
 from middlewared.utils.tdb import TDBError
 
 
-BASE_SHARE_PARAMS = frozenset(['id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit', 'path'])
+BASE_SHARE_PARAMS = frozenset([
+    'id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit', 'path', 'dataset', 'relative_path'
+])
 
 
 class SMBModel(sa.Model):
@@ -679,6 +681,8 @@ class SharingSMBModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     cifs_purpose = sa.Column(sa.String(120))
     cifs_path = sa.Column(sa.String(255), nullable=True)
+    cifs_dataset = sa.Column(sa.String(255), nullable=True)
+    cifs_relative_path = sa.Column(sa.String(255), nullable=True)
     cifs_path_suffix = sa.Column(sa.String(255), nullable=False)
     cifs_home = sa.Column(sa.Boolean(), default=False)
     cifs_name = sa.Column(sa.String(120))
@@ -714,6 +718,7 @@ class SharingSMBService(SharingService):
 
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
+    path_resolution_filters = [['cifs_purpose', '!=', 'EXTERNAL_SHARE']]
 
     class Config:
         namespace = 'sharing.smb'
@@ -1253,11 +1258,11 @@ class SharingSMBService(SharingService):
             await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
 
     @private
-    async def validate(self, data, schema_name, verrors, old=None):
+    async def validate(self, data: dict, schema_name: str, verrors: ValidationErrors, old: dict | None = None) -> None:
         if await self.query([[share_field.NAME, 'C=', data[share_field.NAME]], ['id', '!=', data.get('id', 0)]]):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
-        await self.validate_path_field(data, schema_name, verrors)
+        await self.validate_path_field(data, schema_name, verrors, split_path=True)
         timemachine = is_time_machine_share(data)
 
         if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
@@ -1402,9 +1407,7 @@ class SharingSMBService(SharingService):
 
     @private
     async def extend(self, data):
-        out = {}
-        for key in BASE_SHARE_PARAMS:
-            out[key] = data.pop(key)
+        out = {key: data.pop(key) for key in BASE_SHARE_PARAMS}
 
         out[share_field.RO] = out.pop('ro')
         out[share_field.ABE] = out.pop('abe')

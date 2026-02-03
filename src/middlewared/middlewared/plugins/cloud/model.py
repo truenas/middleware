@@ -7,6 +7,8 @@ class CloudTaskModelMixin:
     id = sa.Column(sa.Integer(), primary_key=True)
     description = sa.Column(sa.String(150))
     path = sa.Column(sa.String(255))
+    dataset = sa.Column(sa.String(255), nullable=True)
+    relative_path = sa.Column(sa.String(255), nullable=True)
 
     @declared_attr
     def credential_id(cls):

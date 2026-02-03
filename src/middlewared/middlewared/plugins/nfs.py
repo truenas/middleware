@@ -385,6 +385,8 @@ class NFSShareModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_path = sa.Column(sa.Text())
+    nfs_dataset = sa.Column(sa.String(255), nullable=True)
+    nfs_relative_path = sa.Column(sa.String(255), nullable=True)
     nfs_aliases = sa.Column(sa.JSON(list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
@@ -549,6 +551,9 @@ class SharingNFSService(SharingService):
         await check_path_resides_within_volume(
             verrors, self.middleware, f'{schema_name}.path', data['path'],
         )
+
+        # Split path into dataset and relative_path components
+        await self.validate_path_field(data, schema_name, verrors, split_path=True)
 
         filters = []
         if old:
