@@ -83,7 +83,7 @@ def configure_bond_impl(
 
     # Mark members to skip MTU (handled by bond)
     for member_name in member_names:
-        sync_interface_opts[member_name]["skip_mtu"] = True
+        sync_interface_opts[member_name]['skip_mtu'] = True
         parent_interfaces.append(member_name)
 
     # Map xmit_hash_policy to enum
