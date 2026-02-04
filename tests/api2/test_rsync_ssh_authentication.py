@@ -236,6 +236,9 @@ def test_ssh_credentials_key(cleanup, localuser, remoteuser, src, dst, ssh_crede
         "mode": "SSH",
         "remotepath": dst,
     }) as t:
+        assert t['dataset'] == src.removeprefix('/mnt/')
+        assert t['relative_path'] == ''
+
         run_task(t)
 
     assert ssh(f"ls -1 {dst}") == "test\n"

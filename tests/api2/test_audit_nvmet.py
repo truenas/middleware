@@ -301,6 +301,10 @@ def test_nvmet_namespace_audit():
                         'device_path': f'zvol/{zvol_name}'
                     }
                     _config = call('nvmet.namespace.create', payload)
+
+                    assert _config['dataset'] is None
+                    assert _config['relative_path'] is None
+
                 # UPDATE
                 with expect_audit_method_calls([{
                     'method': 'nvmet.namespace.update',

@@ -59,6 +59,10 @@ def test_smb_share_audit(smb_audit_dataset):
         }]):
             share_config = call('sharing.smb.create', payload)
 
+        # Verify dataset and relative_path resolution
+        assert share_config['dataset'] == smb_audit_dataset
+        assert share_config['relative_path'] == ''
+
         # UPDATE
         payload = {
             "purpose": "DEFAULT_SHARE",

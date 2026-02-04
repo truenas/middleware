@@ -36,6 +36,10 @@ def share():
 
                 share = call('sharing.webshare.create', {'name': 'Share', 'path': f'/mnt/{ds}'})
 
+                # Verify dataset and relative_path resolution
+                assert share['dataset'] == ds
+                assert share['relative_path'] == ''
+
                 try:
                     yield {
                         'dataset': ds,

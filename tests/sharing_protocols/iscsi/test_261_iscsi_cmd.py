@@ -173,6 +173,10 @@ def file_extent(pool_name, dataset_name, file_name, filesize_mb=512, extent_name
         payload.update({'serial': serial})
     extent_config = call('iscsi.extent.create', payload)
 
+    # Verify dataset and relative_path resolution for FILE-type extents
+    assert extent_config['dataset'] == f'{pool_name}/{dataset_name}'
+    assert extent_config['relative_path'] == file_name
+
     try:
         yield extent_config
     finally:

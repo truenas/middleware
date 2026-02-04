@@ -60,6 +60,11 @@ def test_nfs_share_audit(nfs_audit_dataset):
             'description': f'NFS share create {nfs_export_path}',
         }]):
             share_config = call('sharing.nfs.create', payload)
+
+        # Verify dataset and relative_path resolution
+        assert share_config['dataset'] == nfs_audit_dataset
+        assert share_config['relative_path'] == ''
+
         # UPDATE
         payload = {
             "security": []
