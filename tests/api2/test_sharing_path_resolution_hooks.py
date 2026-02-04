@@ -14,7 +14,7 @@ from middlewared.test.integration.utils import call, ssh
 PASSPHRASE = 'test_passphrase_12345'
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def encrypted_dataset():
     """Create an encrypted dataset that will be locked/unlocked during tests."""
     with dataset('encrypted_share_test', {
@@ -57,7 +57,7 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
     share = call('sharing.smb.create', {
         'name': 'test_locked_smb',
         'path': share_path,
-        'purpose': 'NO_PRESET',
+        'purpose': 'DEFAULT_SHARE',
     })
 
     try:
