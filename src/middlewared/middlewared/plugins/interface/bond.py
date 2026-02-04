@@ -14,7 +14,7 @@ def configure_bonds_impl(
     ctx: ServiceContext,
     sock,
     parent_interfaces: list[str],
-    sync_interface_opts: dict,
+    sync_interface_opts: dict
 ) -> list[str]:
     """Configure all bond interfaces from database.
 
@@ -44,7 +44,6 @@ def configure_bonds_impl(
             configured.append(name)
         except Exception:
             ctx.logger.error("Error configuring bond %s", name, exc_info=True)
-
     return configured
 
 
