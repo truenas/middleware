@@ -30,9 +30,9 @@ from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.netif import list_interfaces
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
-from .interface.bond import configure_bonds_impl
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
+from .interface.sync import sync_impl
 
 
 class NetworkAliasModel(sa.Model):
@@ -1578,32 +1578,6 @@ class InterfaceService(CRUDService):
         })
 
     @private
-    def sync_impl(self, parent_interfaces, sync_interface_opts):
-        """Synchronous implementation of network sync.
-
-        Runs in thread to avoid blocking event loop with socket I/O.
-
-        Args:
-            parent_interfaces: List to track parent interfaces
-            sync_interface_opts: Dict of interface sync options
-
-        Returns:
-            List of configured interface names
-        """
-        configured = []
-        with netlink_route() as sock:
-            # Configure bonds
-            configured.extend(
-                configure_bonds_impl(
-                    self.context,
-                    sock,
-                    parent_interfaces,
-                    sync_interface_opts
-                )
-            )
-        return configured
-
-    @private
     async def sync(self, wait_dhcp=False):
         """
         Sync interfaces configured in database to the OS.
@@ -1623,7 +1597,8 @@ class InterfaceService(CRUDService):
         # We create "virtual" interfaces first (bond, vlan, bridge, etc)
         cloned_interfaces.extend(
             await self.middleware.run_in_thread(
-                self.sync_impl,
+                sync_impl,
+                self,
                 parent_interfaces,
                 sync_interface_opts
             )
