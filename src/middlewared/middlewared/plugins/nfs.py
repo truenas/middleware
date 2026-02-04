@@ -26,6 +26,7 @@ from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
 )
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.utils.mount import resolve_dataset_path
 
 
 class NFSServicePathInfo(enum.Enum):
@@ -553,7 +554,7 @@ class SharingNFSService(SharingService):
         )
 
         # Split path into dataset and relative_path components
-        await self.validate_path_field(data, schema_name, verrors, split_path=True)
+        data['dataset'], data['relative_path'] = resolve_dataset_path(data['path'])
 
         filters = []
         if old:
