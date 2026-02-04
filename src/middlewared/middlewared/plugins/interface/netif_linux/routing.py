@@ -136,6 +136,54 @@ RTM_F_CLONED = 0x200
 
 
 class RoutingTable:
+    @staticmethod
+    def _decode_netlink_ip(data, prefix_len=None):
+        """
+        Decode IP address from netlink attribute data.
+
+        pyroute2 sometimes returns raw netlink attribute data that includes
+        a 4-byte header (length + type) before the actual IP address bytes.
+        This function handles both cases.
+
+        Always returns a tuple: (network, netmask)
+        If prefix_len is not provided, netmask will be None.
+        Returns (None, None) if the data cannot be decoded.
+        """
+        try:
+            if not isinstance(data, bytes):
+                # Already decoded (string) - convert to bytes
+                data = ipaddress.ip_address(data).packed
+
+            # Valid IP addresses are exactly 4 bytes (IPv4) or 16 bytes (IPv6)
+            if len(data) not in (4, 16):
+                # Assume this is raw netlink attribute data with a 4-byte header
+                if len(data) < 4:
+                    return None, None
+
+                # Strip the 4-byte netlink attribute header (length + type)
+                data = data[4:]
+
+                # Validate the result is a valid IP address length
+                if len(data) not in (4, 16):
+                    return None, None
+
+            # Now data is clean IP bytes (4 for IPv4, 16 for IPv6)
+            if prefix_len is None:
+                # No prefix - just decode to IP address (ONE call)
+                return ipaddress.ip_address(data), None
+
+            # With prefix - create network directly from bytes (ONE call)
+            int_addr = int.from_bytes(data, 'big')
+            if len(data) == 4:
+                net_obj = ipaddress.IPv4Network((int_addr, prefix_len), strict=False)
+            else:
+                net_obj = ipaddress.IPv6Network((int_addr, prefix_len), strict=False)
+
+            return net_obj.network_address, net_obj.netmask
+
+        except (ValueError, TypeError):
+            return None, None
+
     @property
     def routes(self):
         return self.routes_internal()
@@ -151,19 +199,28 @@ class RoutingTable:
             attrs = dict(r["attrs"])
 
             if "RTA_DST" in attrs:
-                network = ipaddress.ip_address(attrs["RTA_DST"])
-                netmask = ipaddress.ip_network(f"{attrs['RTA_DST']}/{r['dst_len']}").netmask
+                network, netmask = self._decode_netlink_ip(attrs["RTA_DST"], r["dst_len"])
+                if network is None:
+                    continue
             else:
                 network, netmask = {
                     socket.AF_INET: (ipaddress.IPv4Address(0), ipaddress.IPv4Address(0)),
                     socket.AF_INET6: (ipaddress.IPv6Address(0), ipaddress.IPv6Address(0)),
                 }[r["family"]]
 
+            gateway = None
+            if "RTA_GATEWAY" in attrs:
+                gateway, _ = self._decode_netlink_ip(attrs["RTA_GATEWAY"])
+
+            oif = None
+            if "RTA_OIF" in attrs and attrs["RTA_OIF"] in interfaces:
+                oif = interfaces[attrs["RTA_OIF"]]
+
             result.append(Route(
                 network,
                 netmask,
-                ipaddress.ip_address(attrs["RTA_GATEWAY"]) if "RTA_GATEWAY" in attrs else None,
-                interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs and attrs["RTA_OIF"] in interfaces else None,
+                gateway,
+                oif,
                 table_id=attrs["RTA_TABLE"],
                 preferred_source=attrs.get("RTA_PREFSRC"),
                 scope=r["scope"],
