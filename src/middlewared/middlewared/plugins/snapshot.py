@@ -18,7 +18,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import is_child
-from middlewared.utils.service.call_mixin import AuditCallback
+from middlewared.utils.types import AuditCallback
 
 from .snapshot_.removal_date import PeriodicSnapshotTaskService as RemovalDateService
 from .snapshot_.task_retention import PeriodicSnapshotTaskService as TaskRetentionService

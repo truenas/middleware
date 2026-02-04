@@ -15,7 +15,7 @@ from middlewared.service import private, SharingService
 from middlewared.service import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
-from middlewared.utils.service.call_mixin import AuditCallback
+from middlewared.utils.types import AuditCallback
 
 
 class SharingWebshareModel(sa.Model):

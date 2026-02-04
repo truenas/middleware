@@ -33,7 +33,7 @@ from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
-from .utils.service.call_mixin import AuditCallback, CallMixin, JobProgressCallback
+from .utils.service.call_mixin import CallMixin
 from .utils.service.crud import real_crud_method
 from .utils.systemd import SystemdNotifier
 from .utils.threading import (
@@ -43,6 +43,7 @@ from .utils.threading import (
     io_thread_pool_executor,
     thread_local_storage,
 )
+from .utils.types import AuditCallback, JobProgressCallback
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .utils.web_app import SiteManager

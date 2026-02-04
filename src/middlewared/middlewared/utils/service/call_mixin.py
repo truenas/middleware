@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import typing
 
+from middlewared.utils.types import AuditCallback, JobProgressCallback
+
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     import middlewared.main
     from middlewared.pipe import Pipes
-
-AuditCallback = typing.Callable[[str], None]
-JobProgressCallback = typing.Callable[[dict], None] | None
 
 
 class CallMixin:

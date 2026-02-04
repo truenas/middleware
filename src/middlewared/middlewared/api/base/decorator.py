@@ -11,7 +11,7 @@ from ..base.model import BaseModel
 
 __all__ = ["api_method"]
 
-from ...utils.service.call_mixin import AuditCallback
+from ...utils.types import AuditCallback
 
 CONFIG_CRUD_METHODS = frozenset([
     'do_create', 'do_update', 'do_delete',
