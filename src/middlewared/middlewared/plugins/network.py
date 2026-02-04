@@ -1595,19 +1595,15 @@ class InterfaceService(CRUDService):
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
-        laggs = await self.middleware.call('datastore.query', 'network.lagginterface')
-        for lagg in laggs:
-            name = lagg['lagg_interface']['int_interface']
-            members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
-                                                 [('lagg_interfacegroup_id', '=', lagg['id'])],
-                                                 {'order_by': ['lagg_ordernum']})
-            cloned_interfaces.append(name)
-            try:
+        with netlink_route() as sock:
+            cloned_interfaces.extend(
                 await self.middleware.call(
-                    'interface.lag_setup', lagg, members, parent_interfaces, sync_interface_opts
+                    'interface.configure_bonds',
+                    sock,
+                    parent_interfaces,
+                    sync_interface_opts
                 )
-            except Exception:
-                self.logger.error('Error setting up LAG %s', name, exc_info=True)
+            )
 
         vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
