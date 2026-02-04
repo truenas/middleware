@@ -8,7 +8,6 @@ from truenas_pynetif.bits import InterfaceFlags
 from truenas_pynetif.netif import destroy_interface, get_interface
 from truenas_pynetif.netlink import AddressInfo
 
-from .bond import configure_bond_impl, configure_bonds_impl
 from .interface_types import InterfaceType
 
 
@@ -204,13 +203,3 @@ class InterfaceService(Service):
         for lag in ds['laggmembers']:
             result.add(lag['lagg_physnic'])
         return list(result)
-
-    @private
-    def configure_bonds(self, sock, parent_interfaces, sync_interface_opts):
-        """Configure all bond interfaces from database."""
-        return configure_bonds_impl(self.context, sock, parent_interfaces, sync_interface_opts)
-
-    @private
-    def configure_bond(self, sock, lagg, members, parent_interfaces, sync_interface_opts):
-        """Configure a single bond interface."""
-        return configure_bond_impl(self.context, sock, lagg, members, parent_interfaces, sync_interface_opts)

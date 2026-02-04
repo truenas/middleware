@@ -4,7 +4,7 @@ from truenas_pynetif.configure import BondConfig, configure_bond as pynetif_conf
 from truenas_pynetif.address.bond import BondXmitHashPolicy, BondLacpRate
 from middlewared.service import ServiceContext
 
-__all__ = ("configure_bond_impl", "configure_bonds_impl")
+__all__ = ("configure_bonds_impl",)
 
 
 def configure_bonds_impl(
