@@ -1577,6 +1577,7 @@ class InterfaceService(CRUDService):
             'exclude_types': [InterfaceType.BRIDGE.value, InterfaceType.VLAN.value],
         })
 
+    @private
     def sync_impl(self, parent_interfaces, sync_interface_opts):
         """Synchronous implementation of network sync.
 
