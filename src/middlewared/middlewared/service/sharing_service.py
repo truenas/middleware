@@ -63,6 +63,7 @@ class SharingTaskService(CRUDService):
             ]
         )
         if not unresolved:
+            middleware.logger.info(f"No {namespace} entries to resolve")
             return
 
         for entry in unresolved:

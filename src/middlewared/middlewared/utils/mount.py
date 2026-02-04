@@ -58,7 +58,6 @@ def __statmount_dict(sm: truenas_os.StatmountResult) -> dict:
     }
 
 
-
 def iter_mountinfo(
     *, target_mnt_id: int | None = None,
     reverse: bool = False,
@@ -236,27 +235,27 @@ def umount(
 
 def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[None, None]:
     """
-    Authoritatively resolve a filesystem path to its ZFS dataset and relative path.                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                            
-    This function determines which ZFS dataset contains a given path using a multi-level                                                                                                                                                                                                                                                   
-    approach that handles both mounted and unmounted datasets:                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                            
-    1. **Mounted paths**: Uses statx + statmount to get mount information from the kernel                                                                                                                                                                                                                                                  
-    2. **Unmounted dataset placeholders**: Uses statx IMMUTABLE attribute + libzfs lookup                                                                                                                                                                                                                                                  
-    3. **Unresolvable paths**: Returns (None, None) for paths that can't be resolved yet                                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                                                                                                                            
-    Common reasons for unresolvable paths:                                                                                                                                                                                                                                                                                                 
-    - Encrypted dataset not yet unlocked                                                                                                                                                                                                                                                                                                   
-    - Hardware issues (disk offline, pool degraded)                                                                                                                                                                                                                                                                                        
-    - Path doesn't exist (will be created later)                                                                                                                                                                                                                                                                                           
-    - Permission issues preventing stat                                                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                                                                            
-    Args:                                                                                                                                                                                                                                                                                                                                  
-        path: Absolute filesystem path to resolve (e.g., '/mnt/tank/share/data')                                                                                                                                                                                                                                                           
-        middleware: Middleware instance (required for libzfs lookup of unmounted datasets)                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                                                            
-    Returns:                                                                                                                                                                                                                                                                                                                               
-        ('pool/dataset', 'relative/path') if successfully resolved                                                                                                                                                                                                                                                                         
+    Authoritatively resolve a filesystem path to its ZFS dataset and relative path.
+
+    This function determines which ZFS dataset contains a given path using a multi-level
+    approach that handles both mounted and unmounted datasets:
+
+    1. **Mounted paths**: Uses statx + statmount to get mount information from the kernel
+    2. **Unmounted dataset placeholders**: Uses statx IMMUTABLE attribute + libzfs lookup
+    3. **Unresolvable paths**: Returns (None, None) for paths that can't be resolved yet
+
+    Common reasons for unresolvable paths:
+    - Encrypted dataset not yet unlocked
+    - Hardware issues (disk offline, pool degraded)
+    - Path doesn't exist (will be created later)
+    - Permission issues preventing stat
+
+    Args:
+        path: Absolute filesystem path to resolve (e.g., '/mnt/tank/share/data')
+        middleware: Middleware instance (required for libzfs lookup of unmounted datasets)
+
+    Returns:
+        ('pool/dataset', 'relative/path') if successfully resolved
         (None, None) if path cannot be resolved yet
     """
     try:
