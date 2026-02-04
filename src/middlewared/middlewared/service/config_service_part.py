@@ -39,6 +39,6 @@ class ConfigServicePart[E](ServicePart):
                     await self.middleware.call('datastore.insert', datastore, {})
                     rows = [await self.middleware.call('datastore.config', datastore, options)]
 
-        rows[0] = self._entry(**rows[0])
+        rows[0] = self._entry.model_construct(**rows[0])
 
         return rows[0]
