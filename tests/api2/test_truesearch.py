@@ -58,13 +58,20 @@ def test_index_and_search(share):
 
 
 def test_index_new_dataset(share):
-    with dataset('truesearch/nested', data={'share_type': 'SMB'}) as ds:
-        ssh(f"touch /mnt/{ds}/anothertest.txt")
+    try:
+        with dataset('truesearch/nested', data={'share_type': 'SMB'}) as ds:
+            ssh(f"touch /mnt/{ds}/anothertest.txt")
 
-        # truesearch.schedule_reconfigure will take 5 seconds
-        time.sleep(5)
+            # truesearch.schedule_reconfigure will take 5 seconds
+            time.sleep(5)
 
-        expect_search_result(["mytest.txt", "nested/anothertest.txt"])
+            expect_search_result(["mytest.txt", "nested/anothertest.txt"])
+    except Exception:
+        print(ssh("fuser /mnt/tank/truesearch/nested"))
+        print(ssh("fuser /mnt/tank/truesearch/nested/*"))
+        print(ssh("lsof /mnt/tank/truesearch/nested"))
+        print(ssh("lsof /mnt/tank/truesearch/nested/*"))
+        print(ssh("ps ax"))
 
 
 def test_user_cannot_read_file(share):
