@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import errno
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -10,12 +10,14 @@ from middlewared.api.current import (
     SharingWebshareDeleteArgs, SharingWebshareDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import private, SharingService
 from middlewared.service import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class SharingWebshareModel(sa.Model):

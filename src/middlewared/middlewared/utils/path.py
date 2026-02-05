@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ["is_child", "is_child_realpath", "path_location"]
+__all__ = ["FSLocation", "is_child", "is_child_realpath", "path_location"]
 
 logger = logging.getLogger(__name__)
 
