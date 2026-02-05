@@ -44,7 +44,7 @@ def security_descriptor_to_bytes(sd: security.descriptor) -> bytes:
     method to convert security descriptor to bytes for insertion into
     share_info.tdb and SMB share configuration
     """
-    return ndr_pack(sd)
+    return ndr_pack(sd)  # type: ignore[no-any-return]
 
 
 def share_acl_to_sd_bytes(share_acl: list[dict[str, Any]]) -> bytes:

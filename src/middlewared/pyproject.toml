@@ -30,7 +30,7 @@ start_vendor_service = "middlewared.scripts.vendor_service:main"
 plugins = ["sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
-module = ["pyroute2", "pyroute2.*"]
+module = ["pyroute2", "pyroute2.*", "samba.*"]
 ignore_missing_imports = true
 
 [tool.setuptools.packages.find]

@@ -1,5 +1,8 @@
-import os
+from collections.abc import Generator
 import logging
+import os
+from typing import Any, Literal, TypedDict, overload
+
 import truenas_os
 
 logger = logging.getLogger(__name__)
@@ -7,7 +10,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["getmntinfo", "iter_mountinfo", "statmount", "umount"]
 
 
-def __parse_mnt_attr(attr: int) -> list:
+def __parse_mnt_attr(attr: int) -> list[str]:
     out = []
     if attr & truenas_os.MOUNT_ATTR_NOATIME:
         out.append('NOATIME')
@@ -38,36 +41,72 @@ def __parse_mnt_attr(attr: int) -> list:
     return out
 
 
-def __statmount_dict(sm: truenas_os.StatmountResult) -> dict:
+class StatmountResultDictDeviceId(TypedDict):
+    major: int | None
+    minor: int | None
+    dev_t: int
+
+
+class StatmountResultDict(TypedDict):
+    mount_id: int | None
+    parent_id: int | None
+    device_id: StatmountResultDictDeviceId
+    root: str | None
+    mountpoint: str | None
+    mount_opts: list[str]
+    fs_type: str | None
+    mount_source: str | None
+    super_opts: list[str]
+
+
+def __statmount_dict(sm: truenas_os.StatmountResult) -> StatmountResultDict:
     return {
         'mount_id': sm.mnt_id,
         'parent_id': sm.mnt_parent_id,
         'device_id': {
             'major': sm.sb_dev_major,
             'minor': sm.sb_dev_minor,
-            'dev_t': os.makedev(sm.sb_dev_major, sm.sb_dev_minor)
+            'dev_t': os.makedev(sm.sb_dev_major, sm.sb_dev_minor)  # type: ignore[arg-type]
         },
         'root': sm.mnt_root,
         'mountpoint': sm.mnt_point,
-        'mount_opts': __parse_mnt_attr(sm.mnt_attr),
+        'mount_opts': __parse_mnt_attr(sm.mnt_attr),  # type: ignore[arg-type]
         'fs_type': sm.fs_type,
         'mount_source': sm.sb_source,
         'super_opts': sm.mnt_opts.upper().split(',') if sm.mnt_opts else []
     }
 
 
+@overload
+def iter_mountinfo(
+    *,
+    target_mnt_id: int | None = None,
+    reverse: bool = False,
+    as_dict: Literal[True] = True,
+) -> Generator[StatmountResultDict]: ...
+
+
+@overload
+def iter_mountinfo(
+    *,
+    target_mnt_id: int | None = None,
+    reverse: bool = False,
+    as_dict: Literal[False],
+) -> Generator[truenas_os.StatmountResult]: ...
+
 
 def iter_mountinfo(
-    *, target_mnt_id: int | None = None,
+    *,
+    target_mnt_id: int | None = None,
     reverse: bool = False,
     as_dict: bool = True
-):
+) -> Generator[StatmountResultDict] | Generator[truenas_os.StatmountResult]:
     """
     Iterate mountpoints on the server. If `target_mnt_id` is provided then only children of the specified mount id
     will be iterated. If `reverse` is specified, then they will be iterated in reverse order. If `as_dict` is
     specified, then iterator will yield dictionary of legacy format.
     """
-    iter_kwargs = {'reverse': reverse, 'statmount_flags': truenas_os.STATMOUNT_ALL}
+    iter_kwargs: dict[str, Any] = {'reverse': reverse, 'statmount_flags': truenas_os.STATMOUNT_ALL}
     if target_mnt_id:
         iter_kwargs['mnt_id'] = target_mnt_id
 
@@ -78,12 +117,30 @@ def iter_mountinfo(
             yield sm
 
 
+@overload
 def statmount(
     *,
-    path: str|None = None,
-    fd: int|None = None,
+    path: str | None = None,
+    fd: int | None = None,
+    as_dict: Literal[True] = True
+) -> StatmountResultDict: ...
+
+
+@overload
+def statmount(
+    *,
+    path: str | None = None,
+    fd: int | None = None,
+    as_dict: Literal[False]
+) -> truenas_os.StatmountResult: ...
+
+
+def statmount(
+    *,
+    path: str | None = None,
+    fd: int | None = None,
     as_dict: bool = True
-) -> dict|truenas_os.StatmountResult:
+) -> truenas_os.StatmountResult | StatmountResultDict:
     """
     Get mount information about the given path or open file. If as_dict
     is set, then we return a dictionary with same keys and formatting
@@ -96,7 +153,7 @@ def statmount(
         mnt_id = truenas_os.statx(path, mask=truenas_os.STATX_MNT_ID_UNIQUE).stx_mnt_id
     else:
         mnt_id = truenas_os.statx(
-            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=truenas_os.STATX_MNT_ID_UNIQUE
+            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=truenas_os.STATX_MNT_ID_UNIQUE  # type: ignore[arg-type]
         ).stx_mnt_id
 
     sm = truenas_os.statmount(mnt_id, mask=truenas_os.STATMOUNT_ALL)
@@ -106,7 +163,7 @@ def statmount(
     return __statmount_dict(sm)
 
 
-def getmntinfo(mnt_id=None):
+def getmntinfo(mnt_id: int | None = None) -> dict[int, StatmountResultDict]:
     """
     Get mount information. Takes the following arguments for faster lookup of
     information for a mounted filesystem.
@@ -139,15 +196,14 @@ def getmntinfo(mnt_id=None):
 
     `super_opts` - per-superblock options (see mount(2)).
     """
-    info = {}
+    info: dict[int, StatmountResultDict] = {}
     # special handling for mnt_id
     if mnt_id:
         sm = truenas_os.statmount(mnt_id)
         info[mnt_id] = __statmount_dict(sm)
     else:
         for entry in iter_mountinfo():
-            mnt_id = entry['mount_id']
-            info[mnt_id] = entry
+            info[entry['mount_id']] = entry  # type: ignore[index]
 
     return info
 
@@ -208,6 +264,7 @@ def umount(
 
         # Unmount all child mounts first
         for mnt in iter_mountinfo(target_mnt_id=mnt_id, reverse=True):
+            assert mnt['mountpoint'] is not None
             truenas_os.umount2(target=mnt['mountpoint'], flags=flags)
 
     # Unmount the target path itself
