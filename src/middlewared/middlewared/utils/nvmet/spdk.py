@@ -4,7 +4,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 
-from spdk import rpc
+from spdk.rpc.client import JSONRPCClient
 
 from middlewared.plugins.nvmet.constants import (
     NAMESPACE_DEVICE_TYPE,
@@ -49,7 +49,7 @@ def nvmf_ready(cheap=False):
             return True
         try:
             client = make_client()
-            rpc.framework_wait_init(client)
+            client.call('framework_wait_init')
             return True
         except Exception:
             pass
@@ -121,11 +121,11 @@ class NvmetSubsysConfig(NvmetConfig):
             return str(config_item[self.query_key])
 
     def get_live(self, client, render_ctx):
-        return {subsys['nqn']: subsys for subsys in rpc.nvmf.nvmf_get_subsystems(client)}
+        return {subsys['nqn']: subsys for subsys in client.call('nvmf_get_subsystems')}
 
     def add(self, client, config_item, render_ctx):
 
-        kwargs = {
+        params = {
             'nqn': config_item['subnqn'],
             'serial_number': config_item['serial'],
             'allow_any_host': config_item['allow_any_host'],
@@ -135,22 +135,32 @@ class NvmetSubsysConfig(NvmetConfig):
         # Perhaps inject some values
         match render_ctx['failover.node']:
             case 'A':
-                kwargs['max_cntlid'] = NVMET_NODE_A_MAX_CONTROLLER_ID
+                params['max_cntlid'] = NVMET_NODE_A_MAX_CONTROLLER_ID
             case 'B':
-                kwargs['min_cntlid'] = NVMET_NODE_B_MIN_CONTROLLER_ID
+                params['min_cntlid'] = NVMET_NODE_B_MIN_CONTROLLER_ID
 
         if render_ctx['failover.licensed']:
-            kwargs['ana_reporting'] = True
+            params['ana_reporting'] = True
 
-        rpc.nvmf.nvmf_create_subsystem(client, **kwargs)
+        client.call('nvmf_create_subsystem', params)
 
     def update(self, client, config_item, live_item, render_ctx):
         if config_item['allow_any_host'] != live_item['allow_any_host']:
-            # The wrapper function inverts the parameter, so use NOT
-            rpc.nvmf.nvmf_subsystem_allow_any_host(client, config_item['subnqn'], not config_item['allow_any_host'])
+            client.call(
+                'nvmf_subsystem_allow_any_host',
+                {
+                    'nqn': config_item['subnqn'],
+                    'allow_any_host': config_item['allow_any_host']
+                }
+            )
 
     def delete(self, client, live_item, render_ctx):
-        rpc.nvmf.nvmf_delete_subsystem(client, nqn=live_item['nqn'])
+        client.call(
+            'nvmf_delete_subsystem',
+            {
+                'nqn': live_item['nqn']
+            }
+        )
 
 
 class NvmetTransportConfig:
@@ -162,9 +172,16 @@ class NvmetTransportConfig:
     def render(self, client, render_ctx: dict):
         # Create a set of the transports demanded by the config
         required = set([port['addr_trtype'] for port in render_ctx['nvmet.port.query']])
-        current = set([transport['trtype'] for transport in rpc.nvmf.nvmf_get_transports(client)])
+        current = set([transport['trtype'] for transport in client.call('nvmf_get_transports')])
         for transport in required - current:
-            rpc.nvmf.nvmf_create_transport(client, trtype=transport)
+            client.call(
+                'nvmf_create_transport',
+                {
+                    'trtype': transport,
+                    'no_srq': False,        # default in former wrapper
+                    'c2h_success': True,    # default in former wrapper
+                }
+            )
         yield
 
 
@@ -222,30 +239,36 @@ class NvmetPortConfig(NvmetConfig):
 
     def get_live(self, client, render_ctx):
         live = {}
-        for entry in rpc.nvmf.nvmf_subsystem_get_listeners(client, nqn=NVMET_DISCOVERY_NQN):
+        listeners = client.call(
+            'nvmf_subsystem_get_listeners',
+            {'nqn': NVMET_DISCOVERY_NQN}
+        )
+        for entry in listeners:
             live[self.live_address_to_key(entry['address'], render_ctx)] = entry
         return live
 
     def add_to_nqn(self, client, config_item, nqn, render_ctx):
-        kwargs = {
+        params = {
             'nqn': nqn,
-            'trtype': config_item['addr_trtype'],
-            'adrfam': PORT_ADDR_FAMILY.by_api(config_item['addr_adrfam']).spdk,
-            'traddr': addr_traddr_to_address(
-                config_item['index'],
-                config_item['addr_trtype'],
-                config_item['addr_traddr'],
-                render_ctx
-            ),
-            'trsvcid': str(config_item['addr_trsvcid'])
+            'listen_address': {
+                'trtype': config_item['addr_trtype'],
+                'adrfam': PORT_ADDR_FAMILY.by_api(config_item['addr_adrfam']).spdk,
+                'traddr': addr_traddr_to_address(
+                    config_item['index'],
+                    config_item['addr_trtype'],
+                    config_item['addr_traddr'],
+                    render_ctx
+                ),
+                'trsvcid': str(config_item['addr_trsvcid'])
+            }
         }
         # The API will generate the listen_address from its constituents - hence flat here
-        rpc.nvmf.nvmf_subsystem_add_listener(client, **kwargs)
+        client.call('nvmf_subsystem_add_listener', params)
 
         if nqn != NVMET_DISCOVERY_NQN and config_item['index'] > ANA_PORT_INDEX_OFFSET:
-            kwargs['ana_state'] = ana_state(render_ctx)
-            kwargs.update({'anagrpid': ana_grpid(render_ctx)})
-            rpc.nvmf.nvmf_subsystem_listener_set_ana_state(client, **kwargs)
+            params['ana_state'] = ana_state(render_ctx)
+            params.update({'anagrpid': ana_grpid(render_ctx)})
+            client.call('nvmf_subsystem_listener_set_ana_state', params)
 
     def add(self, client, config_item, render_ctx):
         self.add_to_nqn(client, config_item, NVMET_DISCOVERY_NQN, render_ctx)
@@ -265,9 +288,8 @@ class NvmetPortConfig(NvmetConfig):
             self.add(client, config_item, render_ctx)
 
     def delete_from_nqn(self, client, laddr, nqn, render_ctx):
-        kwargs = {'nqn': nqn}
-        kwargs.update(laddr)
-        rpc.nvmf.nvmf_subsystem_remove_listener(client, **kwargs)
+        params = {'nqn': nqn, 'listen_address': laddr}
+        client.call('nvmf_subsystem_remove_listener', params)
 
     def delete(self, client, live_item, render_ctx):
         self.delete_from_nqn(client, live_item['address'], NVMET_DISCOVERY_NQN, render_ctx)
@@ -310,27 +332,28 @@ class NvmetPortAnaReferralConfig(NvmetConfig):
                 if peer_addr:
                     # Make the entry a valid listen address to simplify implementation of add()
                     config[f"{entry['addr_trtype']}:{peer_addr}:{entry['addr_trsvcid']}"] = {
-                        'trtype': entry['addr_trtype'],
-                        'adrfam': PORT_ADDR_FAMILY.by_api(entry['addr_adrfam']).spdk,
-                        'traddr': peer_addr,
-                        'trsvcid': str(entry['addr_trsvcid']),
+                        'address': {
+                            'trtype': entry['addr_trtype'],
+                            'adrfam': PORT_ADDR_FAMILY.by_api(entry['addr_adrfam']).spdk,
+                            'traddr': peer_addr,
+                            'trsvcid': str(entry['addr_trsvcid']),
+                        }
                     }
         return config
 
     def add(self, client, config_item, render_ctx):
-        rpc.nvmf.nvmf_discovery_add_referral(client, **config_item)
+        client.call('nvmf_discovery_add_referral', config_item)
 
     def update(self, client, config_item, live_item, render_ctx):
         # Update is a no-op because all the relevant data is in the key
         pass
 
     def delete(self, client, live_item, render_ctx):
-        rpc.nvmf.nvmf_discovery_remove_referral(client, **live_item)
-        pass
+        client.call('nvmf_discovery_remove_referral', {'address': live_item})
 
     def get_live(self, client, render_ctx):
         result = {}
-        for entry in rpc.nvmf.nvmf_discovery_get_referrals(client):
+        for entry in client.call('nvmf_discovery_get_referrals'):
             laddr = entry['address']
             result[f"{laddr['trtype']}:{laddr['traddr']}:{laddr['trsvcid']}"] = laddr
         return result
@@ -362,7 +385,7 @@ class NvmetPortSubsysConfig(NvmetPortConfig):
 
     def get_live(self, client, render_ctx):
         result = {}
-        for subsys in rpc.nvmf.nvmf_get_subsystems(client):
+        for subsys in client.call('nvmf_get_subsystems'):
             if subsys['nqn'] == NVMET_DISCOVERY_NQN:
                 continue
             for address in subsys['listen_addresses']:
@@ -402,22 +425,22 @@ class NvmetKeyringDhchapKeyConfig(NvmetConfig):
             return tmp_file.name
 
     def get_live(self, client, render_ctx):
-        return {item['name']: item for item in rpc.keyring.keyring_get_keys(client)
+        return {item['name']: item for item in client.call('keyring_get_keys')
                 if item['name'].startswith(f'{self.key_type}-')}
 
     def add(self, client, config_item, render_ctx):
-        kwargs = {
+        params = {
             'name': self.config_key(config_item, render_ctx),
             'path': self._write_keyfile(config_item[self.key_type]),
         }
-        rpc.keyring.keyring_file_add_key(client, **kwargs)
+        client.call('keyring_file_add_key', params)
 
     def update(self, client, config_item, live_item, render_ctx):
         # Because the key contains a hash, we only need to handle add and remove.
         pass
 
     def delete(self, client, live_item, render_ctx):
-        rpc.keyring.keyring_file_remove_key(client, name=live_item['name'])
+        client.call('keyring_file_remove_key', {'name': live_item['name']})
         os.unlink(live_item['path'])
 
 
@@ -435,7 +458,7 @@ class NvmetHostSubsysConfig(NvmetConfig):
 
     def get_live(self, client, render_ctx):
         result = {}
-        for subsys in rpc.nvmf.nvmf_get_subsystems(client):
+        for subsys in client.call('nvmf_get_subsystems'):
             if subsys['nqn'] == NVMET_DISCOVERY_NQN:
                 continue
             for host in subsys['hosts']:
@@ -451,20 +474,20 @@ class NvmetHostSubsysConfig(NvmetConfig):
         return result
 
     def add(self, client, config_item, render_ctx):
-        kwargs = {
+        params = {
             'nqn': config_item['subsys']['subnqn'],
             'host': config_item['host']['hostnqn'],
         }
 
         if config_item['host']['dhchap_key']:
-            kwargs.update({'dhchap_key': host_config_key(config_item['host'], 'dhchap_key')})
+            params.update({'dhchap_key': host_config_key(config_item['host'], 'dhchap_key')})
 
         if config_item['host']['dhchap_ctrl_key']:
             # Yes, the SPDK name is different from the name in our config:
             # dhchap_ctrlr_key vs dhchap_ctrl_key
-            kwargs.update({'dhchap_ctrlr_key': host_config_key(config_item['host'], 'dhchap_ctrl_key')})
+            params.update({'dhchap_ctrlr_key': host_config_key(config_item['host'], 'dhchap_ctrl_key')})
 
-        rpc.nvmf.nvmf_subsystem_add_host(client, **kwargs)
+        client.call('nvmf_subsystem_add_host', params)
 
     def update(self, client, config_item, live_item, render_ctx):
         # We cannot update, so need to remove and reattach if the contents are wrong.
@@ -487,11 +510,11 @@ class NvmetHostSubsysConfig(NvmetConfig):
         self.add(client, config_item, render_ctx)
 
     def delete(self, client, live_item, render_ctx):
-        kwargs = {
+        params = {
             'nqn': live_item['nqn'],
             'host': live_item['hostnqn'],
         }
-        rpc.nvmf.nvmf_subsystem_remove_host(client, **kwargs)
+        client.call('nvmf_subsystem_remove_host', params)
 
 
 class NvmetBdevConfig(NvmetConfig):
@@ -517,7 +540,7 @@ class NvmetBdevConfig(NvmetConfig):
 
     def get_live(self, client, render_ctx):
         result = {}
-        for entry in rpc.bdev.bdev_get_bdevs(client):
+        for entry in client.call('bdev_get_bdevs'):
             if key := self.live_key(entry):
                 result[key] = entry
         return result
@@ -538,35 +561,49 @@ class NvmetBdevConfig(NvmetConfig):
             case NAMESPACE_DEVICE_TYPE.FILE.api:
                 return f"FILE:{config_item['device_path']}"
 
+    def device_path_to_path(self, config_item):
+        match config_item['device_type']:
+            case NAMESPACE_DEVICE_TYPE.ZVOL.api:
+                return f"/dev/{config_item['device_path'].replace(' ', '+')}"
+            case NAMESPACE_DEVICE_TYPE.FILE.api:
+                return config_item['device_path']
+
     def add(self, client, config_item, render_ctx):
         name = self.bdev_name(config_item, render_ctx)
         if not name:
             return
 
         if render_ctx['failover.status'] == 'BACKUP':
-            rpc.bdev.bdev_null_create(
-                client,
-                block_size=4096,
-                num_blocks=1,
-                name=name
+            client.call(
+                'bdev_null_create',
+                {
+                    'num_blocks': 1,
+                    'block_size': 4096,
+                    'name': name
+                }
             )
             return
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
-                rpc.bdev.bdev_uring_create(
-                    client,
-                    filename=f"/dev/{config_item['device_path'].replace(' ', '+')}",
-                    name=name
+                _path = self.device_path_to_path(config_item)
+                client.call(
+                    'bdev_uring_create',
+                    {
+                        'filename': _path,
+                        'name': name
+                    }
                 )
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
-                _path = config_item['device_path']
-                rpc.bdev.bdev_aio_create(
-                    client,
-                    filename=_path,
-                    block_size=render_ctx.get('path_to_recordsize', {}).get(_path, 512),
-                    name=name
+                _path = self.device_path_to_path(config_item)
+                client.call(
+                    'bdev_aio_create',
+                    {
+                        'filename': _path,
+                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, 512),
+                        'name': name
+                    }
                 )
 
     def update(self, client, config_item, live_item, render_ctx):
@@ -575,13 +612,13 @@ class NvmetBdevConfig(NvmetConfig):
     def delete(self, client, live_item, render_ctx):
         match live_item['product_name']:
             case 'URING bdev':
-                rpc.bdev.bdev_uring_delete(client, name=live_item['name'])
+                client.call('bdev_uring_delete', {'name': live_item['name']})
 
             case 'AIO disk':
-                rpc.bdev.bdev_aio_delete(client, name=live_item['name'])
+                client.call('bdev_aio_delete', {'name': live_item['name']})
 
             case 'Null disk':
-                rpc.bdev.bdev_null_delete(client, name=live_item['name'])
+                client.call('bdev_null_delete', {'name': live_item['name']})
 
     def lock(self, client, config_item, render_ctx):
         key = self.config_key(config_item, render_ctx)
@@ -603,10 +640,10 @@ class NvmetBdevConfig(NvmetConfig):
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
-                rpc.bdev.bdev_uring_rescan(client, name=name)
+                client.call('bdev_uring_rescan', {'name': name})
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
-                rpc.bdev.bdev_aio_rescan(client, name=name)
+                client.call('bdev_aio_rescan', {'name': name})
 
 
 class NvmetNamespaceConfig(NvmetBdevConfig):
@@ -619,7 +656,7 @@ class NvmetNamespaceConfig(NvmetBdevConfig):
 
     def get_live(self, client, render_ctx):
         result = {}
-        for subsys in rpc.nvmf.nvmf_get_subsystems(client):
+        for subsys in client.call('nvmf_get_subsystems'):
             _nqn = subsys['nqn']
             for ns in subsys.get('namespaces', []):
                 _nsid = ns['nsid']
@@ -634,28 +671,33 @@ class NvmetNamespaceConfig(NvmetBdevConfig):
 
         # If HA always use the per-node anagrpid, just to save
         # having to toggle it later if we toggle ANA
-        kwargs = {
-            'nqn': config_item['subsys']['subnqn'],
+        namespace = {
             'bdev_name': name,
             'uuid': config_item['device_uuid'],
             'nguid': config_item['device_nguid'].replace('-', ''),
             'anagrpid': ana_grpid(render_ctx),
         }
         if nsid := config_item.get('nsid'):
-            kwargs.update({'nsid': nsid})
+            namespace['nsid'] = nsid
 
-        rpc.nvmf.nvmf_subsystem_add_ns(client, **kwargs)
+        params = {
+            'nqn': config_item['subsys']['subnqn'],
+            'namespace': namespace,
+        }
+        client.call('nvmf_subsystem_add_ns', params)
 
     def delete(self, client, live_item, render_ctx):
-        kwargs = {
-            'nqn': live_item['nqn'],
-            'nsid': live_item['nsid']
-        }
-        rpc.nvmf.nvmf_subsystem_remove_ns(client, **kwargs)
+        client.call(
+            'nvmf_subsystem_remove_ns',
+            {
+                'nqn': live_item['nqn'],
+                'nsid': live_item['nsid']
+            }
+        )
 
 
 def make_client():
-    return rpc.client.JSONRPCClient(
+    return JSONRPCClient(
         SPDK_RPC_SERVER_ADDR,
         SPDK_RPC_PORT,
         SPDK_RPC_TIMEOUT,
@@ -665,7 +707,10 @@ def make_client():
 
 
 def nvmf_subsystem_get_qpairs(client, nqn):
-    return rpc.nvmf.nvmf_subsystem_get_qpairs(client, nqn=nqn)
+    return client.call(
+        'nvmf_subsystem_get_qpairs',
+        {'nqn': nqn}
+    )
 
 
 class NvmetAnaStateConfig:
@@ -683,26 +728,27 @@ class NvmetAnaStateConfig:
         for subsys in render_ctx['nvmet.subsys.query']:
             if subsys_ana(subsys, render_ctx):
                 nqn = subsys['subnqn']
-                for listener in rpc.nvmf.nvmf_subsystem_get_listeners(client, nqn):
+                _listeners = client.call('nvmf_subsystem_get_listeners', {'nqn': nqn})
+                for listener in _listeners:
                     if cur_state := next(filter(lambda x: x['ana_group'] == _anagrpid, listener['ana_states']), None):
                         if cur_state['ana_state'] != new_state:
-                            kwargs = {
+                            params = {
                                 'nqn': nqn,
                                 'ana_state': new_state,
                                 'anagrpid': _anagrpid
                             }
-                            kwargs.update(listener['address'])
-                            updates.append(kwargs)
+                            params.update(listener['address'])
+                            updates.append(params)
 
         if new_state == ANA_INACCESSIBLE_STATE:
-            for kwargs in updates:
-                rpc.nvmf.nvmf_subsystem_listener_set_ana_state(client, **kwargs)
+            for params in updates:
+                client.call('nvmf_subsystem_listener_set_ana_state', params)
 
         yield
 
         if new_state == ANA_OPTIMIZED_STATE:
-            for kwargs in updates:
-                rpc.nvmf.nvmf_subsystem_listener_set_ana_state(client, **kwargs)
+            for params in updates:
+                client.call('nvmf_subsystem_listener_set_ana_state', params)
 
 
 def write_config(config):
