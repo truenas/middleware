@@ -35,13 +35,14 @@ class PoolService(Service):
         container_ds = container_dataset(pool_name)
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1)
+            ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1, get_source=True)
         ):
             if i['type'] != 'FILESYSTEM':
                 continue
             mntpnt = i['properties']['mountpoint']['value']
+            mntpnt_source = (i['properties']['mountpoint']['source'] or {}).get('type')
             if i["name"] == pool_name:
-                if mntpnt != f'/mnt/{pool_name}':
+                if mntpnt != f'/mnt/{pool_name}' or mntpnt_source != 'DEFAULT':
                     # yikes, someone messed with mountpoint of root dataset
                     # or this is a zpool from a non-truenas system. we have
                     # to iterate over everything and reset mountpoint before
@@ -50,7 +51,7 @@ class PoolService(Service):
                     # we'll need iterate all children no matter what.
                     await self.middleware.call(
                         'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/mnt/{pool_name}'})
+                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
                     )
                     to_inherit.append(pool_name)
                     break
@@ -86,15 +87,15 @@ class PoolService(Service):
                 self.s.zfs.resource.query,
                 ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
-                if i['type'] != 'FILESYSTEM':
+                if i.type != 'FILESYSTEM':
                     continue
                 try:
                     await self.middleware.call(
                         'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
+                        UpdateImplArgs(name=i.name, iprops={'mountpoint'})
                     )
                 except Exception:
-                    self.logger.exception('Failed inheriting mountpoint property for %r', i['name'])
+                    self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
 
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
