@@ -36,24 +36,21 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
     """
     Test that SMB share dataset/relative_path are resolved after unlocking.
 
-    1. Create encrypted dataset with a directory
-    2. Lock the dataset
-    3. Create SMB share pointing to directory in locked dataset
-    4. Verify dataset and relative_path are NULL
+    This test simulates what happens when migration 0018_resolve_dataset_paths.py
+    runs while a dataset is locked - the migration leaves dataset/relative_path as NULL,
+    and the hook system should resolve them when the dataset is later unlocked.
+
+    1. Create SMB share with unlocked dataset
+    2. Verify dataset and relative_path are set correctly
+    3. Lock the dataset
+    4. Manually set dataset and relative_path to NULL (simulating migration 0018 running on locked dataset)
     5. Unlock the dataset
-    6. Verify dataset and relative_path are now resolved
+    6. Verify hook automatically resolves dataset and relative_path
     """
     ds_name = encrypted_dataset['name']
     share_path = encrypted_dataset['path']
 
-    # Lock the dataset
-    call('pool.dataset.lock', ds_name, job=True)
-
-    # Verify dataset is locked
-    ds = call('pool.dataset.get_instance', ds_name)
-    assert ds['locked'] is True
-
-    # Create SMB share while dataset is locked
+    # Create SMB share while dataset is unlocked
     share = call('sharing.smb.create', {
         'name': 'test_locked_smb',
         'path': share_path,
@@ -61,11 +58,30 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
     })
 
     try:
-        # Verify dataset and relative_path are NULL (can't resolve locked dataset)
+        # Verify dataset and relative_path were set correctly on creation
+        assert share['dataset'] == ds_name
+        assert share['relative_path'] == 'share_dir'
+
+        # Lock the dataset
+        call('pool.dataset.lock', ds_name, job=True)
+
+        # Verify dataset is locked
+        ds = call('pool.dataset.get_instance', ds_name)
+        assert ds['locked'] is True
+
+        # Manually set dataset and relative_path to NULL, simulating what happens
+        # when migration 0018 runs and encounters a locked dataset
+        call('datastore.update', 'sharing.cifs.share', share['id'], {
+            'cifs_dataset': None,
+            'cifs_relative_path': None,
+        })
+
+        # Verify fields are now NULL
+        share = call('sharing.smb.get_instance', share['id'])
         assert share['dataset'] is None
         assert share['relative_path'] is None
 
-        # Unlock the dataset
+        # Unlock the dataset - this should trigger the dataset.post_unlock hook
         call('pool.dataset.unlock', ds_name, {
             'recursive': True,
             'datasets': [{
@@ -81,7 +97,7 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
         # Query the share again to check if hook resolved the path
         share = call('sharing.smb.get_instance', share['id'])
 
-        # Verify dataset and relative_path are now resolved
+        # Verify dataset and relative_path were resolved by the hook
         assert share['dataset'] == ds_name
         assert share['relative_path'] == 'share_dir'
 
@@ -92,23 +108,51 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
 def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
     """
     Test that NFS share dataset/relative_path are resolved after unlocking.
+
+    This test simulates what happens when migration 0018_resolve_dataset_paths.py
+    runs while a dataset is locked - the migration leaves dataset/relative_path as NULL,
+    and the hook system should resolve them when the dataset is later unlocked.
+
+    1. Create NFS share with unlocked dataset
+    2. Verify dataset and relative_path are set correctly
+    3. Lock the dataset
+    4. Manually set dataset and relative_path to NULL (simulating migration 0018 running on locked dataset)
+    5. Unlock the dataset
+    6. Verify hook automatically resolves dataset and relative_path
     """
     ds_name = encrypted_dataset['name']
     share_path = encrypted_dataset['path']
 
-    call('pool.dataset.lock', ds_name, job=True)
-
-    ds = call('pool.dataset.get_instance', ds_name)
-    assert ds['locked'] is True
-
+    # Create NFS share while dataset is unlocked
     share = call('sharing.nfs.create', {
         'path': share_path,
     })
 
     try:
+        # Verify dataset and relative_path were set correctly on creation
+        assert share['dataset'] == ds_name
+        assert share['relative_path'] == 'share_dir'
+
+        # Lock the dataset
+        call('pool.dataset.lock', ds_name, job=True)
+
+        # Verify dataset is locked
+        ds = call('pool.dataset.get_instance', ds_name)
+        assert ds['locked'] is True
+
+        # Manually set dataset and relative_path to NULL, simulating what happens
+        # when migration 0018 runs and encounters a locked dataset
+        call('datastore.update', 'sharing.nfs.share', share['id'], {
+            'nfs_dataset': None,
+            'nfs_relative_path': None,
+        })
+
+        # Verify fields are now NULL
+        share = call('sharing.nfs.get_instance', share['id'])
         assert share['dataset'] is None
         assert share['relative_path'] is None
 
+        # Unlock the dataset - this should trigger the dataset.post_unlock hook
         call('pool.dataset.unlock', ds_name, {
             'recursive': True,
             'datasets': [{
@@ -117,11 +161,14 @@ def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
             }]
         }, job=True)
 
+        # Verify dataset is unlocked
         ds = call('pool.dataset.get_instance', ds_name)
         assert ds['locked'] is False
 
+        # Query the share again to check if hook resolved the path
         share = call('sharing.nfs.get_instance', share['id'])
 
+        # Verify dataset and relative_path were resolved by the hook
         assert share['dataset'] == ds_name
         assert share['relative_path'] == 'share_dir'
 
