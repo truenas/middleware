@@ -61,10 +61,7 @@ def configure_vlan_impl(
     ctx.logger.info("Configuring VLAN %s", vlan["vlan_vint"])
     # Create VlanConfig
     config = VlanConfig(
-        name=vlan["vlan_vint"],
-        parent=vlan["vlan_pint"],
-        tag=vlan["vlan_tag"],
-        mtu=None,
+        name=vlan["vlan_vint"], parent=vlan["vlan_pint"], tag=vlan["vlan_tag"]
     )
     ctx.logger.debug("Configuring %s with config: %r", vlan["vlan_vint"], config)
     pynetif_configure_vlan(sock, config)
