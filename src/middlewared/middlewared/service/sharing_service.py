@@ -146,7 +146,7 @@ class SharingTaskService[E](CRUDService[E]):
     ) -> 'ValidationErrors':
         """Validate the path field and optionally split it into dataset and relative_path components.
 
-        Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally                                                          
+        Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
         resolves the path to its ZFS dataset components."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
