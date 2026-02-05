@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from truenas_pynetif.configure import VlanConfig, configure_vlan as pynetif_configure_vlan
+from truenas_pynetif.configure import (
+    VlanConfig,
+    configure_vlan as pynetif_configure_vlan,
+)
 from truenas_pynetif.netlink import ParentInterfaceNotFound
 from middlewared.service import ServiceContext
 
@@ -22,18 +25,21 @@ def configure_vlans_impl(
     Returns:
         List of configured VLAN interface names
     """
-    vlans = ctx.middleware.call_sync('datastore.query', 'network.vlan')
+    vlans = ctx.middleware.call_sync("datastore.query", "network.vlan")
     configured = []
-
     for vlan in vlans:
-        name = vlan['vlan_vint']
-
+        name = vlan["vlan_vint"]
         try:
             configure_vlan_impl(ctx, sock, vlan, parent_interfaces)
             configured.append(name)
+        except ParentInterfaceNotFound:
+            ctx.logger.error(
+                "VLAN %r parent interface %r not found, skipping.",
+                name,
+                vlan["vlan_pint"],
+            )
         except Exception:
-            ctx.logger.error('Error configuring VLAN %s', name, exc_info=True)
-
+            ctx.logger.error("Error configuring VLAN %s", name, exc_info=True)
     return configured
 
 
@@ -51,29 +57,17 @@ def configure_vlan_impl(
         vlan: Database record for the VLAN interface
         parent_interfaces: List to track parent interfaces
     """
-    name = vlan['vlan_vint']
-    parent = vlan['vlan_pint']
-
-    ctx.logger.info('Configuring VLAN %s', name)
-
+    name = vlan["vlan_vint"]
+    parent = vlan["vlan_pint"]
+    ctx.logger.info("Configuring VLAN %s", name)
     # Track parent interface
     parent_interfaces.append(parent)
-
     # Create VlanConfig
     config = VlanConfig(
         name=name,
         parent=parent,
-        tag=vlan['vlan_tag'],
+        tag=vlan["vlan_tag"],
         mtu=None,
     )
-
-    ctx.logger.debug('VLAN config for %s: parent=%s, tag=%s', name, parent, config.tag)
-
-    # Configure the VLAN using truenas_pynetif
-    try:
-        pynetif_configure_vlan(sock, config)
-    except ParentInterfaceNotFound:
-        ctx.logger.warning(
-            'VLAN %r parent interface %r not found, skipping.',
-            name, parent
-        )
+    ctx.logger.debug("Configuring %s with config: %r", name, config)
+    pynetif_configure_vlan(sock, config)

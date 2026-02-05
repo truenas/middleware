@@ -29,8 +29,6 @@ def sync_impl(
         )
 
         # Configure VLANs
-        configured.extend(
-            configure_vlans_impl(ctx, sock, parent_interfaces)
-        )
+        configured.extend(configure_vlans_impl(ctx, sock, parent_interfaces))
 
     return configured
