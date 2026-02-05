@@ -1615,21 +1615,15 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
-        bridges = await self.middleware.call('datastore.query', 'network.bridge')
-        for bridge in bridges:
-            name = bridge['interface']['int_interface']
-
-            cloned_interfaces.append(name)
-            try:
-                await self.middleware.call('interface.bridge_setup', bridge, parent_interfaces)
-            except Exception:
-                self.logger.error('Error setting up bridge %s', name, exc_info=True)
-            # Finally sync bridge interface
+        # Sync bridge interfaces (IP addresses, DHCP, etc.)
+        for name in cloned_interfaces:
+            if not name.startswith("br"):
+                continue
             try:
                 if await self.sync_interface(name, sync_interface_opts[name]):
                     run_dhcp.append(name)
             except Exception:
-                self.logger.error('Failed to configure {}'.format(name), exc_info=True)
+                self.logger.error("Failed to configure %s", name, exc_info=True)
 
         if run_dhcp:
             # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
