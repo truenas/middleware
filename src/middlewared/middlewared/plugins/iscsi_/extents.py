@@ -549,11 +549,6 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.path',
                             f'File currently in use by extent {used[0]["name"]}')
 
-            # Split path into dataset and relative_path for FILE type extents
-            # May return None if path exists but can't be authoritatively resolved yet
-            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
-            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
-
         return data
 
     @private
@@ -665,6 +660,10 @@ class iSCSITargetExtentService(SharingService):
                         verrors.add(f'{schema_name}.filesize',
                                     'Shrinking an extent is not allowed. This can lead to data loss.')
 
+            # Split path into dataset and relative_path for FILE type extents
+            # May return None if path exists but can't be authoritatively resolved yet
+            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
+            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
             data.pop('disk', None)
         else:
             data['path'] = data.pop('disk', None)

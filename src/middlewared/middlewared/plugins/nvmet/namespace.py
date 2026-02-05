@@ -225,6 +225,11 @@ class NVMetNamespaceService(SharingService):
                             verrors.add(f'{schema_name}.filesize',
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
 
+            # Split path into dataset and relative_path for FILE type extents
+            # May return None if path exists but can't be authoritatively resolved yet
+            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
+            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
+
     @private
     def _is_dataset_path(self, pathstr: str) -> bool:
         if not pathstr.startswith('/mnt'):
@@ -261,11 +266,6 @@ class NVMetNamespaceService(SharingService):
                 elif os.path.isdir(device_path):
                     verrors.add(f'{schema_name}.device_path',
                                 f'FILE device_path must not be a directory: {device_path}')
-
-                # Split path into dataset and relative_path for FILE type extents
-                # May return None if path exists but can't be authoritatively resolved yet
-                # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
-                data['dataset'], data['relative_path'] = resolve_dataset_path(device_path, self.middleware)
             case _:
                 verrors.add(f'{schema_name}.device_type', 'Invalid device_type supplied')
 
