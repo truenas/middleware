@@ -12,7 +12,7 @@ class WebShareService(SimpleService):
     systemd_async_start = True
 
     async def after_start(self):
-        await self.middleware.call("truesearch.configure")
+        await self.call2(self.s.truesearch.configure)
 
     async def after_stop(self):
-        await self.middleware.call("truesearch.configure")
+        await self.call2(self.s.truesearch.configure)

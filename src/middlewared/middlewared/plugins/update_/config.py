@@ -24,6 +24,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
     _datastore = 'system_update'
     _datastore_prefix = 'upd_'
     _entry = UpdateEntry
+    _default_entry = UpdateConfigSafeEntry
 
     async def config(self) -> UpdateEntry:
         return await self.config_internal(allow_null_profile=False)  # type: ignore

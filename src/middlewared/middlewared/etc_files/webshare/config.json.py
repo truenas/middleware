@@ -9,15 +9,18 @@ def render(service, middleware):
     if not os.path.exists("/var/db/system/webshare"):
         raise FileShouldNotExist()
 
-    shares = middleware.call_sync("sharing.webshare.query", [["enabled", "=", True], ["locked", "=", False]])
+    shares = middleware.call_sync2(
+        middleware.services.sharing.webshare.query,
+        [["enabled", "=", True], ["locked", "=", False]],
+    )
 
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
         "shares": [
             {
-                "name": share["name"],
-                "path": share["path"],
-                "is_home_base": share["is_home_base"],
+                "name": share.name,
+                "path": share.path,
+                "is_home_base": share.is_home_base,
             }
             for share in shares
         ],

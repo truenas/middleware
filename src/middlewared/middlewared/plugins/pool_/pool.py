@@ -460,10 +460,10 @@ class PoolService(CRUDService):
 
         fsoptions = {
             'atime': 'off',
-            'aclmode': 'discard',
             'acltype': 'posix',
+            'aclinherit': 'discard',
+            'aclmode': 'discard',
             'compression': 'lz4',
-            'aclinherit': 'passthrough',
             'xattr': 'sa',
             'mountpoint': f'/{data["name"]}',
             **encryption_dict

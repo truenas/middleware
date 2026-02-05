@@ -9,7 +9,7 @@ def render(service, middleware):
     if not os.path.exists(WEBSHARE_PATH):
         raise FileShouldNotExist()
 
-    config = middleware.call_sync("webshare.config")
+    config = middleware.call_sync2(middleware.services.webshare.config)
     hostname = middleware.call_sync("system.hostname")
     rp_name = f"TrueNAS WebShare @ {hostname}"
 
@@ -33,7 +33,7 @@ def render(service, middleware):
             "request_burst": 20,
         },
         "truesearch": {
-            "enabled": config["search"],
+            "enabled": config.search,
         },
         "proxy": {
             "enabled": True,
@@ -52,7 +52,7 @@ def render(service, middleware):
             },
         },
         "passkey": {
-            "mode": config["passkey"].lower(),
+            "mode": config.passkey.lower(),
             "rp_name": rp_name,
             "rp_display_name": rp_name,
             "rp_id": "truenas.direct",

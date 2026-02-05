@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.logger import Logger
 from middlewared.utils.service.call_mixin import CallMixin
@@ -10,6 +10,8 @@ from .context import ServiceContext
 
 
 class Service(CallMixin, metaclass=ServiceBase):
+    _config: Any
+
     """
     Generic service abstract class
 

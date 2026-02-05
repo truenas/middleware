@@ -9,7 +9,7 @@ def render(service, middleware):
     if not os.path.exists("/var/db/system/truesearch"):
         raise FileShouldNotExist()
 
-    directories = middleware.call_sync("truesearch.directories")
+    directories = middleware.call_sync2(middleware.services.truesearch.directories)
     if not directories:
         raise FileShouldNotExist()
 

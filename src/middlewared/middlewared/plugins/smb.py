@@ -560,7 +560,7 @@ class SMBService(ConfigService):
                 )
 
         if SearchProtocol.SPOTLIGHT in new['search_protocols']:
-            if reasons := await self.middleware.call('truesearch.unavailable_reasons'):
+            if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
                 verrors.add(
                     'smb_update.search_protocols',
                     'Share indexing service is not available. ' + ' '.join(reasons)
@@ -625,7 +625,7 @@ class SMBService(ConfigService):
             (SearchProtocol.SPOTLIGHT in old['search_protocols']) !=
             (SearchProtocol.SPOTLIGHT in new['search_protocols'])
         ):
-            await self.middleware.call('truesearch.configure')
+            await self.call2(self.s.truesearch.configure)
 
         if old['stateful_failover'] != new['stateful_failover']:
             # Forcibly regenerate smb.conf on standby controller so shell utilities behave
@@ -804,7 +804,7 @@ class SharingSMBService(SharingService):
             # Failure to reload mDNS shouldn't be passed to API consumer
             await mdns_reload.wait()
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
         return await self.get_instance(data['id'])
 
@@ -983,7 +983,7 @@ class SharingSMBService(SharingService):
         if check_mdns:
             await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
         return await self.get_instance(id_)
 
@@ -1024,7 +1024,7 @@ class SharingSMBService(SharingService):
 
         await self.middleware.call('etc.generate', 'smb')
 
-        await self.middleware.call('truesearch.configure')
+        await self.call2(self.s.truesearch.configure)
 
         return result
 

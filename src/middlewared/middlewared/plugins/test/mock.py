@@ -35,7 +35,7 @@ class TestService(Service):
             keys = set(description.keys())
             if keys == {"exception"}:
                 def method(*args, **kwargs):
-                    raise Exception()
+                    raise Exception(description["exception"])
             elif keys == {"return_value"}:
                 def method(*args, **kwargs):
                     return description["return_value"]

@@ -7,6 +7,7 @@ from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
     from . import ValidationErrors
@@ -17,14 +18,14 @@ class PathModel(Protocol):
     relative_path: str | None
 
 
-class SharingTaskService(CRUDService):
+class SharingTaskService[E](CRUDService[E]):
 
     path_field = 'path'
     allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
-    locked_alert_class = NotImplemented
-    share_task_type = NotImplemented
+    locked_alert_class: str = NotImplemented
+    share_task_type: str = NotImplemented
     path_resolution_filters = None
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
@@ -144,8 +145,8 @@ class SharingTaskService(CRUDService):
         self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
     ) -> 'ValidationErrors':
         """Validate the path field and optionally split it into dataset and relative_path components.
-                                            
-        Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally                                                                                                                                                                                                                                                   
+
+        Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally                                                          
         resolves the path to its ZFS dataset components."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
@@ -253,7 +254,7 @@ class SharingTaskService(CRUDService):
     delete.audit_callback = True
 
 
-class SharingService(SharingTaskService):
+class SharingService[E](SharingTaskService[E]):
     locked_alert_class = 'ShareLocked'
 
     @private
@@ -261,7 +262,7 @@ class SharingService(SharingTaskService):
         return share_task['name']
 
 
-class TaskPathService(SharingTaskService):
+class TaskPathService[E](SharingTaskService[E]):
     locked_alert_class = 'TaskLocked'
 
     @private

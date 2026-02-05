@@ -15,7 +15,7 @@ from truenas_api_client import json
 
 from middlewared.utils.pwenc import encrypt, decrypt
 
-__all__ = ["Model", "Column", "Boolean", "Integer", "Text"]
+__all__ = ["Model", "Column", "Boolean", "Integer", "String", "Text"]
 
 
 class Base:

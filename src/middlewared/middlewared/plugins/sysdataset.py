@@ -465,7 +465,7 @@ class SystemDatasetService(ConfigService):
                 props['encryption'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
-                props['quota'] = '1G'
+                props['quota'] = '1073741824'  # 1G, needs to be raw value for update_props_dict comparison to work
             if dataset not in datasets_prop:
                 await self.middleware.call(
                     'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)

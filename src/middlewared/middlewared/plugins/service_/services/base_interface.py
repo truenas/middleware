@@ -1,9 +1,12 @@
 from typing import TYPE_CHECKING
+
+from middlewared.utils.service.call_mixin import CallMixin
+
 if TYPE_CHECKING:
     from .base_state import ServiceState
 
 
-class ServiceInterface:
+class ServiceInterface(CallMixin):
     name = NotImplemented
 
     etc = []

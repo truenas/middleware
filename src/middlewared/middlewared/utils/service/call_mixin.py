@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import typing
 
+from middlewared.utils.types import AuditCallback, JobProgressCallback
+
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     import middlewared.main
     from middlewared.pipe import Pipes
-
-AuditCallback = typing.Callable[[str], None] | None
-JobProgressCallback = typing.Callable[[dict], None] | None
 
 
 class CallMixin:
@@ -43,7 +42,7 @@ class CallMixin:
         **kwargs: typing.Any,
     ) -> typing.Any:
         app: App | None = kwargs.pop("app", None)
-        audit_callback: AuditCallback = kwargs.pop("audit_callback", None)
+        audit_callback: AuditCallback | None = kwargs.pop("audit_callback", None)
         job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
         pipes: Pipes | None = kwargs.pop("pipes", None)
         profile: bool = kwargs.pop("profile", False)
@@ -83,7 +82,7 @@ class CallMixin:
         **kwargs: typing.Any,
     ) -> typing.Any:
         app: App | None = kwargs.pop("app", None)
-        audit_callback: AuditCallback = kwargs.pop("audit_callback", None)
+        audit_callback: AuditCallback | None = kwargs.pop("audit_callback", None)
         background: bool = kwargs.pop("background", False)
         job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
         return self.middleware.call_sync2(
