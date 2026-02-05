@@ -44,7 +44,6 @@ def configure_bonds_impl(
             configured.append(name)
         except Exception:
             ctx.logger.error("Error configuring bond %s", name, exc_info=True)
-
     return configured
 
 

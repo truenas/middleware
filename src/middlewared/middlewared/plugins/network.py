@@ -1604,14 +1604,6 @@ class InterfaceService(CRUDService):
             )
         )
 
-        vlans = await self.middleware.call('datastore.query', 'network.vlan')
-        for vlan in vlans:
-            cloned_interfaces.append(vlan['vlan_vint'])
-            try:
-                await self.middleware.call('interface.vlan_setup', vlan, parent_interfaces)
-            except Exception:
-                self.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
-
         run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
