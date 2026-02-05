@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import socket
-
 from middlewared.service import ServiceContext
 from truenas_pynetif.address.get_links import get_links
 from truenas_pynetif.address.netlink import netlink_route
