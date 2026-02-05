@@ -798,7 +798,7 @@ class FailoverService(ConfigService):
                 update_remote_args = [os.path.join(remote_path, updatefile_name), update_options]
                 update_local_args = [updatefile_localpath, update_options]
             else:
-                update_method = 'update.update'
+                update_method = 'update.run'
                 update_remote_args = [update_options]
                 update_local_args = [update_options]
 
@@ -832,7 +832,12 @@ class FailoverService(ConfigService):
 
             # check the remote (standby) controller upgrade job
             if rjob:
-                rjob.result()
+                try:
+                    rjob.result()
+                except Exception:
+                    # Remove the successful update flag if the remote update failed
+                    self.middleware.call_sync('cache.pop', 'update.applied')
+                    raise
 
             self.middleware.call_sync(
                 'failover.call_remote', 'system.reboot', [SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 5}], {'job': True},
