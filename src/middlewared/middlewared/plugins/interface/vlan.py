@@ -28,18 +28,19 @@ def configure_vlans_impl(
     vlans = ctx.middleware.call_sync("datastore.query", "network.vlan")
     configured = []
     for vlan in vlans:
-        name = vlan["vlan_vint"]
         try:
             configure_vlan_impl(ctx, sock, vlan, parent_interfaces)
-            configured.append(name)
+            configured.append(vlan["vlan_vint"])
         except ParentInterfaceNotFound:
             ctx.logger.error(
                 "VLAN %r parent interface %r not found, skipping.",
-                name,
+                vlan["vlan_vint"],
                 vlan["vlan_pint"],
             )
         except Exception:
-            ctx.logger.error("Error configuring VLAN %s", name, exc_info=True)
+            ctx.logger.error(
+                "Error configuring VLAN %s", vlan["vlan_vint"], exc_info=True
+            )
     return configured
 
 
@@ -57,17 +58,14 @@ def configure_vlan_impl(
         vlan: Database record for the VLAN interface
         parent_interfaces: List to track parent interfaces
     """
-    name = vlan["vlan_vint"]
-    parent = vlan["vlan_pint"]
-    ctx.logger.info("Configuring VLAN %s", name)
-    # Track parent interface
-    parent_interfaces.append(parent)
+    ctx.logger.info("Configuring VLAN %s", vlan["vlan_vint"])
+    parent_interfaces.append(vlan["vlan_pint"])
     # Create VlanConfig
     config = VlanConfig(
-        name=name,
-        parent=parent,
+        name=vlan["vlan_vint"],
+        parent=vlan["vlan_pint"],
         tag=vlan["vlan_tag"],
         mtu=None,
     )
-    ctx.logger.debug("Configuring %s with config: %r", name, config)
+    ctx.logger.debug("Configuring %s with config: %r", vlan["vlan_vint"], config)
     pynetif_configure_vlan(sock, config)
