@@ -59,7 +59,6 @@ def configure_vlan_impl(
         parent_interfaces: List to track parent interfaces
     """
     ctx.logger.info("Configuring VLAN %s", vlan["vlan_vint"])
-    parent_interfaces.append(vlan["vlan_pint"])
     # Create VlanConfig
     config = VlanConfig(
         name=vlan["vlan_vint"],
@@ -69,3 +68,4 @@ def configure_vlan_impl(
     )
     ctx.logger.debug("Configuring %s with config: %r", vlan["vlan_vint"], config)
     pynetif_configure_vlan(sock, config)
+    parent_interfaces.append(vlan["vlan_pint"])
