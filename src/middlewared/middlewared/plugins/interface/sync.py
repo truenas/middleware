@@ -4,6 +4,7 @@ from middlewared.service import ServiceContext
 from truenas_pynetif.address.netlink import netlink_route
 
 from .bond import configure_bonds_impl
+from .vlan import configure_vlans_impl
 
 __all__ = ("sync_impl",)
 
@@ -22,7 +23,14 @@ def sync_impl(
     """
     configured = []
     with netlink_route() as sock:
+        # Configure bonds
         configured.extend(
             configure_bonds_impl(ctx, sock, parent_interfaces, sync_interface_opts)
         )
+
+        # Configure VLANs
+        configured.extend(
+            configure_vlans_impl(ctx, sock, parent_interfaces)
+        )
+
     return configured

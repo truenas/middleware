@@ -1,46 +1,79 @@
-from truenas_pynetif.netif import get_interface
-from truenas_pynetif.vlan import create_vlan
+from __future__ import annotations
 
-from middlewared.service import private, Service
+from truenas_pynetif.configure import VlanConfig, configure_vlan as pynetif_configure_vlan
+from truenas_pynetif.netlink import ParentInterfaceNotFound
+from middlewared.service import ServiceContext
+
+__all__ = ("configure_vlans_impl",)
 
 
-class InterfaceService(Service):
+def configure_vlans_impl(
+    ctx: ServiceContext,
+    sock,
+    parent_interfaces: list[str],
+) -> list[str]:
+    """Configure all VLAN interfaces from database.
 
-    class Config:
-        namespace_alias = 'interfaces'
+    Args:
+        ctx: Service context for middleware access
+        sock: Netlink socket from netlink_route()
+        parent_interfaces: List to track parent interfaces
 
-    @private
-    def vlan_setup(self, vlan, parent_interfaces):
-        self.logger.info('Setting up %r', vlan['vlan_vint'])
-        try:
-            iface = get_interface(vlan['vlan_vint'])
-        except KeyError:
-            try:
-                create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
-            except FileNotFoundError:
-                self.logger.warning(
-                    'VLAN %r parent interface %r not found, skipping.', vlan['vlan_vint'], vlan['vlan_pint']
-                )
-                return
-            iface = get_interface(vlan['vlan_vint'])
+    Returns:
+        List of configured VLAN interface names
+    """
+    vlans = ctx.middleware.call_sync('datastore.query', 'network.vlan')
+    configured = []
 
-        if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
-            iface.unconfigure()
-            try:
-                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
-            except FileNotFoundError:
-                self.logger.warning(
-                    'VLAN %r parent interface %r not found, skipping.', vlan['vlan_vint'], vlan['vlan_pint']
-                )
-                return
+    for vlan in vlans:
+        name = vlan['vlan_vint']
 
         try:
-            parent_iface = get_interface(iface.parent)
-        except KeyError:
-            self.logger.warning('Could not find %r from %r', iface.parent, vlan['vlan_vint'])
-            return
+            configure_vlan_impl(ctx, sock, vlan, parent_interfaces)
+            configured.append(name)
+        except Exception:
+            ctx.logger.error('Error configuring VLAN %s', name, exc_info=True)
 
-        parent_interfaces.append(iface.parent)
-        parent_iface.up()
+    return configured
 
-        iface.up()
+
+def configure_vlan_impl(
+    ctx: ServiceContext,
+    sock,
+    vlan: dict,
+    parent_interfaces: list[str],
+) -> None:
+    """Configure a single VLAN interface.
+
+    Args:
+        ctx: Service context for middleware access
+        sock: Netlink socket from netlink_route()
+        vlan: Database record for the VLAN interface
+        parent_interfaces: List to track parent interfaces
+    """
+    name = vlan['vlan_vint']
+    parent = vlan['vlan_pint']
+
+    ctx.logger.info('Configuring VLAN %s', name)
+
+    # Track parent interface
+    parent_interfaces.append(parent)
+
+    # Create VlanConfig
+    config = VlanConfig(
+        name=name,
+        parent=parent,
+        tag=vlan['vlan_tag'],
+        mtu=None,
+    )
+
+    ctx.logger.debug('VLAN config for %s: parent=%s, tag=%s', name, parent, config.tag)
+
+    # Configure the VLAN using truenas_pynetif
+    try:
+        pynetif_configure_vlan(sock, config)
+    except ParentInterfaceNotFound:
+        ctx.logger.warning(
+            'VLAN %r parent interface %r not found, skipping.',
+            name, parent
+        )
