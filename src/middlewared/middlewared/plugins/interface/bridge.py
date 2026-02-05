@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import socket
+
 from truenas_pynetif.configure import (
     BridgeConfig,
     configure_bridge as pynetif_configure_bridge,
 )
+from truenas_pynetif.netlink import LinkInfo
 from middlewared.service import ServiceContext
 
 __all__ = ("configure_bridges_impl",)
@@ -11,7 +14,8 @@ __all__ = ("configure_bridges_impl",)
 
 def configure_bridges_impl(
     ctx: ServiceContext,
-    sock,
+    sock: socket.socket,
+    links: dict[str, LinkInfo],
     parent_interfaces: list[str],
 ) -> list[str]:
     """Configure all bridge interfaces from database.
@@ -19,6 +23,7 @@ def configure_bridges_impl(
     Args:
         ctx: Service context for middleware access
         sock: Netlink socket from netlink_route()
+        links: Dict of LinkInfo objects from get_links()
         parent_interfaces: List to track parent interfaces
 
     Returns:
@@ -28,7 +33,7 @@ def configure_bridges_impl(
     configured = []
     for bridge in bridges:
         try:
-            configure_bridge_impl(ctx, sock, bridge, parent_interfaces)
+            configure_bridge_impl(ctx, sock, links, bridge, parent_interfaces)
             configured.append(bridge["interface"]["int_interface"])
         except Exception:
             ctx.logger.error(
@@ -41,7 +46,8 @@ def configure_bridges_impl(
 
 def configure_bridge_impl(
     ctx: ServiceContext,
-    sock,
+    sock: socket.socket,
+    links: dict[str, LinkInfo],
     bridge: dict,
     parent_interfaces: list[str],
 ) -> None:
@@ -50,6 +56,7 @@ def configure_bridge_impl(
     Args:
         ctx: Service context for middleware access
         sock: Netlink socket from netlink_route()
+        links: Dict of LinkInfo objects from get_links()
         bridge: Database record for the bridge interface
         parent_interfaces: List to track parent interfaces
     """
@@ -64,5 +71,5 @@ def configure_bridge_impl(
         preserve_member_prefixes=("vnet",),
     )
     ctx.logger.debug("Configuring %s with config: %r", name, config)
-    pynetif_configure_bridge(sock, config)
+    pynetif_configure_bridge(sock, config, links)
     parent_interfaces.extend(bridge["members"])

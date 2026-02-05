@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import socket
+
 from truenas_pynetif.configure import (
     BondConfig,
     configure_bond as pynetif_configure_bond,
 )
 from truenas_pynetif.address.bond import BondXmitHashPolicy, BondLacpRate
+from truenas_pynetif.netlink import LinkInfo
 from middlewared.service import ServiceContext
 
 __all__ = ("configure_bonds_impl",)
@@ -12,7 +15,8 @@ __all__ = ("configure_bonds_impl",)
 
 def configure_bonds_impl(
     ctx: ServiceContext,
-    sock,
+    sock: socket.socket,
+    links: dict[str, LinkInfo],
     parent_interfaces: list[str],
     sync_interface_opts: dict,
 ) -> list[str]:
@@ -21,6 +25,7 @@ def configure_bonds_impl(
     Args:
         ctx: Service ctx for middleware access
         sock: Netlink socket from netlink_route()
+        links: Dict of LinkInfo objects from get_links()
         parent_interfaces: List to track parent interfaces
         sync_interface_opts: Dict of interface sync options
 
@@ -39,7 +44,7 @@ def configure_bonds_impl(
         )
         try:
             configure_bond_impl(
-                ctx, sock, bond, members, parent_interfaces, sync_interface_opts
+                ctx, sock, links, bond, members, parent_interfaces, sync_interface_opts
             )
             configured.append(name)
         except Exception:
@@ -49,7 +54,8 @@ def configure_bonds_impl(
 
 def configure_bond_impl(
     ctx: ServiceContext,
-    sock,
+    sock: socket.socket,
+    links: dict[str, LinkInfo],
     bond: dict,
     members: list[dict],
     parent_interfaces: list[str],
@@ -60,6 +66,7 @@ def configure_bond_impl(
     Args:
         ctx: Service ctx for middleware access
         sock: Netlink socket from netlink_route()
+        links: Dict of LinkInfo objects from get_links()
         bond: Database record for the bond interface
         members: List of member interface records
         parent_interfaces: List to track parent interfaces
@@ -115,4 +122,4 @@ def configure_bond_impl(
     )
 
     ctx.logger.debug("Configuring %s with config: %r", name, config)
-    pynetif_configure_bond(sock, config)
+    pynetif_configure_bond(sock, config, links)
