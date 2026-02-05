@@ -11,6 +11,7 @@ from ..base.model import BaseModel
 
 __all__ = ["api_method"]
 
+from ...utils.types import AuditCallback
 
 CONFIG_CRUD_METHODS = frozenset([
     'do_create', 'do_update', 'do_delete',
@@ -31,6 +32,8 @@ def process_annotation(annotation):
 
     if annotation == "App":
         return App
+    if annotation == "AuditCallback":
+        return AuditCallback
     if annotation == "Job":
         return Job
 
@@ -52,7 +55,7 @@ def calculate_args_index(f, audit_callback, check_annotations):
     if hasattr(f, '_job'):
         expected_args.append(('job', Job))
     if audit_callback:
-        expected_args.append(('audit_callback', None))  # FIXME: Replace `None` with proper annotation
+        expected_args.append(('audit_callback', AuditCallback))
     if hasattr(f, '_pass_thread_local_storage'):
         expected_args.append(('tls', None))
     if pass_app and f._pass_app['message_id']:

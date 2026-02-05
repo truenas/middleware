@@ -19,14 +19,14 @@ class KeyValueService(Service):
     class Config:
         private = True
 
-    async def has_key(self, key: str):
+    async def has_key(self, key: str) -> bool:
         try:
             await self.get(key)
             return True
         except KeyError:
             return False
 
-    async def get(self, key: str, default: Any | None = None):
+    async def get(self, key: str, default: Any | None = None) -> Any:
         try:
             return json.loads(
                 (await self.middleware.call(
@@ -37,7 +37,7 @@ class KeyValueService(Service):
 
             raise KeyError(key)
 
-    async def set(self, key: str, value: Any, options: dict | None = None):
+    async def set(self, key: str, value: Any, options: dict[str, Any] | None = None) -> None:
         opts = options if options is not None else dict()
         try:
             row = await self.middleware.call("datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True})
@@ -50,8 +50,6 @@ class KeyValueService(Service):
                 "datastore.update", "system.keyvalue", row["id"], {"value": json.dumps(value)}, opts
             )
 
-        return value
-
-    async def delete(self, key: str, options: dict | None = None):
+    async def delete(self, key: str, options: dict[str, Any] | None = None) -> None:
         opts = options if options is not None else dict()
         await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]], opts)

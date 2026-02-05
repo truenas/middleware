@@ -1,4 +1,4 @@
-from middlewared.service import ServiceChangeMixin
+from middlewared.service import ServiceChangeMixin, SharingTaskService
 
 
 class FSAttachmentDelegate(ServiceChangeMixin):
@@ -8,11 +8,11 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     """
 
     # Unique identifier among all FSAttachmentDelegate classes
-    name = NotImplementedError
+    name: str = NotImplementedError
     # Human-readable name of item handled by this delegate (e.g. "NFS Share")
-    title = NotImplementedError
+    title: str = NotImplementedError
     # If is not None, corresponding service will be restarted after performing tasks on item
-    service = None
+    service: str | None = None
     # attribute which is used to identify human readable description of an attachment
     resource_name = 'name'
     # Priority for ordering delegate operations
@@ -81,13 +81,13 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         await self.toggle(attachments, False)
 
 
-class LockableFSAttachmentDelegate(FSAttachmentDelegate):
+class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
     """
     Represents a share/task/resource which is affected if the dataset underlying is locked
     """
 
     # service object
-    service_class = NotImplementedError
+    service_class: type[SharingTaskService[E]] = NotImplementedError
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -129,8 +129,14 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
+            if isinstance(attachment, dict):
+                # FIXME: This must be eventually removed
+                attachment_id = attachment['id']
+            else:
+                attachment_id = attachment.id
+
             await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment['id'], {
+                'datastore.update', self.datastore_model, attachment_id, {
                     f'{self.datastore_prefix}{self.enabled_field}': enabled
                 }
             )
@@ -143,19 +149,31 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def delete(self, attachments):
         for attachment in attachments:
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+            if isinstance(attachment, dict):
+                # FIXME: This must be eventually removed
+                attachment_id = attachment['id']
+            else:
+                attachment_id = attachment.id
+
+            await self.middleware.call('datastore.delete', self.datastore_model, attachment_id)
             await self.remove_alert(attachment)
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def restart_reload_services(self, attachments):
+    async def restart_reload_services(self, attachments: list[E]) -> None:
         """
         Common method for post delete/toggle which child classes can use to restart/reload services
         """
         raise NotImplementedError
 
     async def remove_alert(self, attachment):
-        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
+        if isinstance(attachment, dict):
+            # FIXME: This must be eventually removed
+            attachment_id = attachment['id']
+        else:
+            attachment_id = attachment.id
+
+        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment_id)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         # What this is essentially doing is testing if resource in question is a child of queried path

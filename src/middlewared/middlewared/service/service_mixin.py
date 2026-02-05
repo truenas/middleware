@@ -1,8 +1,16 @@
+from typing import Literal
+
 from middlewared.service_exception import CallError
+from middlewared.utils.service.call_mixin import CallMixin
 
 
-class ServiceChangeMixin:
-    async def _service_change(self, service, verb, options=None):
+class ServiceChangeMixin(CallMixin):
+    async def _service_change(
+        self,
+        service: str,
+        verb: Literal['restart', 'reload'],
+        options: dict | None = None,
+    ) -> None:
 
         svc_state = (await self.middleware.call(
             'service.query',

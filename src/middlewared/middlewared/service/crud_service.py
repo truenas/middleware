@@ -49,9 +49,9 @@ class CRUDServiceMetabase(ServiceBase):
             name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
                 ('CRUDService', ('ServiceChangeMixin', 'Service', 'Generic')),
-                ('SharingTaskService', ('CRUDService',)),
-                ('SharingService', ('SharingTaskService',)),
-                ('TaskPathService', ('SharingTaskService',)),
+                ('SharingTaskService', ('CRUDService', 'Generic')),
+                ('SharingService', ('SharingTaskService', 'Generic')),
+                ('TaskPathService', ('SharingTaskService', 'Generic')),
             )
         ):
             return klass
@@ -138,7 +138,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options['prefix'] = self._config.datastore_prefix
         return options
 
-    async def query(self, filters, options) -> list[E] | E | int:
+    async def query(self, filters: list | None = None, options: dict | None = None) -> list[E] | E | int:
         if not self._config.datastore:
             raise NotImplementedError(
                 f'{self._config.namespace}.query must be implemented or a '
