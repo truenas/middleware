@@ -188,7 +188,7 @@ class TDBHandle:
 
         return self.parse_value(tdb_val)
 
-    def store(self, key: str, value: str | dict) -> None:
+    def store(self, key: str, value: str | dict | bytes) -> None:
         """
         Set the specified `key` to the specified `value`.
 

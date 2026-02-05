@@ -1,23 +1,22 @@
 import subprocess
 import shutil
 import textwrap
-import typing
 
 from middlewared.service import CallError
 
 
 def clone_repository(
-    repository_uri: str, destination: str, branch: typing.Optional[str] = None, depth: typing.Optional[int] = None
+    repository_uri: str, destination: str, branch: str | None = None, depth: int | None = None
 ) -> None:
     shutil.rmtree(destination, ignore_errors=True)
-    args = []
+    args: list[str] = []
     for arg, var in filter(
         lambda e: e[1] is not None, (
             (['--branch', branch], branch),
             (['--depth', str(depth)], depth),
         )
     ):
-        args.extend(arg)
+        args.extend(arg)  # type: ignore[arg-type]
 
     cp = subprocess.run(['git', 'clone'] + args + [repository_uri, destination], capture_output=True)
     if cp.returncode:
