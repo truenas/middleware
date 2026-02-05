@@ -32,6 +32,7 @@ from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
+from .interface.sync import sync_impl
 
 
 class NetworkAliasModel(sa.Model):
@@ -1593,21 +1594,15 @@ class InterfaceService(CRUDService):
         parent_interfaces = []
         sync_interface_opts = defaultdict(dict)
 
-        # First of all we need to create the virtual interfaces
-        # LAGG comes first and then VLAN
-        laggs = await self.middleware.call('datastore.query', 'network.lagginterface')
-        for lagg in laggs:
-            name = lagg['lagg_interface']['int_interface']
-            members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
-                                                 [('lagg_interfacegroup_id', '=', lagg['id'])],
-                                                 {'order_by': ['lagg_ordernum']})
-            cloned_interfaces.append(name)
-            try:
-                await self.middleware.call(
-                    'interface.lag_setup', lagg, members, parent_interfaces, sync_interface_opts
-                )
-            except Exception:
-                self.logger.error('Error setting up LAG %s', name, exc_info=True)
+        # We create "virtual" interfaces first (bond, vlan, bridge, etc)
+        cloned_interfaces.extend(
+            await self.middleware.run_in_thread(
+                sync_impl,
+                self,
+                parent_interfaces,
+                sync_interface_opts
+            )
+        )
 
         vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
