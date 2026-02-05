@@ -48,8 +48,6 @@ class UpdateService(ConfigService[UpdateEntry]):
         ]
         generic = True
 
-    _config: UpdateConfigPart
-
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self._update_config_part = UpdateConfigPart(self.context)
@@ -106,7 +104,7 @@ class UpdateService(ConfigService[UpdateEntry]):
 
     @private
     async def set_profile(self, name: str) -> None:
-        return await self._config.set_profile(name)
+        return await self._update_config_part.set_profile(name)
 
     @private
     async def current_version_profile(self) -> str:

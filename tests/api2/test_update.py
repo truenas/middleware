@@ -7,7 +7,7 @@ from middlewared.test.integration.utils import call, mock
 
 @pytest.fixture(autouse=True)
 def null_profile():
-    profile = call("update.config_internal")["profile"]
+    profile = call("update.config_safe")["profile"]
     call("datastore.update", "system.update", 1, {"upd_profile": None})
     yield
     call("datastore.update", "system.update", 1, {"upd_profile": profile})
@@ -40,8 +40,8 @@ def test_update_invalid_profile():
 
 
 def test_config_internal(offline):
-    # `update.config_internal` should allow null profile
-    config = call("update.config_internal")
+    # `update.config_safe` should allow null profile
+    config = call("update.config_safe")
     assert config["profile"] is None
 
 
