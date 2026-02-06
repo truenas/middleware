@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 __all__ = ("SyncData",)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class SyncData:
     """All database data needed for interface sync, queried once."""
 
