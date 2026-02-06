@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from middlewared.service import ServiceContext
+from truenas_pynetif.address.get_links import get_links
 from truenas_pynetif.address.netlink import netlink_route
+from truenas_pynetif.netlink import LinkInfo
 
 from .bond import configure_bonds_impl
 from .bridge import configure_bridges_impl
@@ -24,15 +26,17 @@ def sync_impl(
     """
     configured = []
     with netlink_route() as sock:
+        links: dict[str, LinkInfo] = get_links(sock)
+
         # Configure bonds
         configured.extend(
-            configure_bonds_impl(ctx, sock, parent_interfaces, sync_interface_opts)
+            configure_bonds_impl(ctx, sock, links, parent_interfaces, sync_interface_opts)
         )
 
         # Configure VLANs
-        configured.extend(configure_vlans_impl(ctx, sock, parent_interfaces))
+        configured.extend(configure_vlans_impl(ctx, sock, links, parent_interfaces))
 
         # Configure bridges
-        configured.extend(configure_bridges_impl(ctx, sock, parent_interfaces))
+        configured.extend(configure_bridges_impl(ctx, sock, links, parent_interfaces))
 
     return configured
