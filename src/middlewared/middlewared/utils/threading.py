@@ -81,7 +81,7 @@ def initializer(thread_name: str, tls: threading.local) -> None:
         )
 
 
-def start_daemon_thread(*args: Any, name: str, **kwargs: Any) -> threading.Thread:
+def start_daemon_thread(*, name: str, **kwargs: Any) -> threading.Thread:
     """
     Start a daemon thread with the given arguments.
 
@@ -100,15 +100,15 @@ def start_daemon_thread(*args: Any, name: str, **kwargs: Any) -> threading.Threa
     if not kwargs["daemon"]:
         raise ValueError("`start_daemon_thread` called with `daemon=False`")
 
-    t = threading.Thread(*args, name=name, **kwargs)
+    t = threading.Thread(name=name, **kwargs)
     t.start()
     return t
 
 
-class IoThreadPoolExecutor[T](concurrent.futures.Executor):
+class IoThreadPoolExecutor(concurrent.futures.Executor):
     _cnt: Callable[[], int] = itertools.count(1).__next__
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.executor = concurrent.futures.ThreadPoolExecutor(
             thread_name_prefix="IoThread",
             initializer=initializer,
@@ -122,11 +122,11 @@ class IoThreadPoolExecutor[T](concurrent.futures.Executor):
         # time.
         self.thread_count: int = self.executor._max_workers
 
-    def submit(self, fn: Callable[..., T], *args: Any, **kwargs: Any) -> concurrent.futures.Future[T]:
+    def submit[**P, T](self, fn: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs) -> concurrent.futures.Future[T]:
         if len(self.executor._threads) == self.thread_count:
             if self.executor._idle_semaphore._value - 1 <= 1:
                 fut: concurrent.futures.Future[T] = concurrent.futures.Future()
-                logger.trace("Calling %r in a single-use thread", fn)
+                logger.trace("Calling %r in a single-use thread", fn)  # type: ignore[attr-defined]
                 start_daemon_thread(
                     name=f"ExtraIoThread_{self._cnt()}",
                     target=worker,
@@ -146,4 +146,4 @@ def worker[T](fut: concurrent.futures.Future[T], fn: Callable[..., T], tls: thre
         fut.set_exception(e)
 
 
-io_thread_pool_executor = IoThreadPoolExecutor()
+io_thread_pool_executor: IoThreadPoolExecutor = IoThreadPoolExecutor()
