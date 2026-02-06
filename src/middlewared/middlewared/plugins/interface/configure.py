@@ -5,10 +5,8 @@ from middlewared.service import private, Service
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_link_addresses, netlink_route
 from truenas_pynetif.bits import InterfaceFlags
-from truenas_pynetif.netif import destroy_interface, get_interface
+from truenas_pynetif.netif import get_interface
 from truenas_pynetif.netlink import AddressInfo
-
-from .interface_types import InterfaceType
 
 
 class InterfaceService(Service):
@@ -143,30 +141,6 @@ class InterfaceService(Service):
             if InterfaceFlags.UP not in iface.flags:
                 iface.up()
             return self.middleware.call_sync('interface.dhclient_start', iface.name, wait_dhcp)
-
-    @private
-    def unconfigure(self, iface, cloned_interfaces, parent_interfaces):
-        name = iface.name
-        self.logger.info('Unconfiguring interface %r', name)
-
-        # Interface not in database lose addresses
-        iface.flush()
-
-        dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
-        # Stop DHCP if it's running for this interface
-        if dhclient_running:
-            # Use dhcp_stop for proper cleanup with dhcpcd
-            self.middleware.call_sync('interface.dhcp_stop', name)
-
-        # If we have bridge/vlan/lagg not in the database at all
-        # it gets destroy, otherwise just bring it down.
-        if (name not in cloned_interfaces and
-                self.middleware.call_sync('interface.type', iface.asdict()) in [
-                    InterfaceType.BRIDGE, InterfaceType.LINK_AGGREGATION, InterfaceType.VLAN,
-                ]):
-            destroy_interface(name)
-        elif name not in parent_interfaces:
-            iface.down()
 
     @private
     def alias_to_addr(self, alias):

@@ -96,7 +96,7 @@ def configure_addresses_impl(
                 )
             else:
                 ctx.logger.info(
-                    "Unable to get address from dhclient lease file for %r", name
+                    "Unable to get address from dhcpcd lease file for %r", name
                 )
 
     # Add primary address from database
