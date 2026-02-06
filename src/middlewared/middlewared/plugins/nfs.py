@@ -554,7 +554,7 @@ class SharingNFSService(SharingService):
         )
 
         # Split path into dataset and relative_path components
-        data['dataset'], data['relative_path'] = resolve_dataset_path(data['path'])
+        data['dataset'], data['relative_path'] = resolve_dataset_path(data['path'], self.middleware)
 
         filters = []
         if old:

@@ -33,6 +33,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
     share_task_type = "CloudBackup"
     allowed_path_types = [FSLocation.LOCAL]
+    path_resolution_filters = [['path', '!^', '/dev/zvol/']]
     task_state_methods = ["cloud_backup.sync", "cloud_backup.restore"]
 
     class Config:

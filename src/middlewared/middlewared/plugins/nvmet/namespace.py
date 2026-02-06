@@ -68,7 +68,7 @@ class NVMetNamespaceService(SharingService):
 
     # For SharingService
     path_field = 'device_path'
-    path_resolution_filters = [['nvmet_namespace_device_type', '=', 'FILE']]
+    path_resolution_filters = [['nvmet_namespace_device_type', '=', NAMESPACE_DEVICE_TYPE.FILE.db]]
 
     class Config:
         namespace = 'nvmet.namespace'

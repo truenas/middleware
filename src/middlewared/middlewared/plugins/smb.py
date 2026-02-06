@@ -718,7 +718,7 @@ class SharingSMBService(SharingService):
 
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
-    path_resolution_filters = [['cifs_purpose', '!=', 'EXTERNAL_SHARE']]
+    path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
 
     class Config:
         namespace = 'sharing.smb'
