@@ -525,7 +525,7 @@ def nfs_share_config(nfsid: int):
         share_config = configs[0]
         yield copy(share_config)
     finally:
-        excl = ['id', 'path', 'locked']
+        excl = ['id', 'path', 'locked', 'dataset', 'relative_path']
         [share_config.pop(key) for key in excl]
         call("sharing.nfs.update", nfsid, share_config)
 
