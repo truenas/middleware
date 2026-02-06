@@ -49,9 +49,9 @@ class SharingWebshareEntry(BaseModel):
     path: NonEmptyString
     """Local server path to share by using the Webshare protocol. The path must start with `/mnt/` and must be in a \
     ZFS pool."""
-    dataset: str | None = None
+    dataset: str | None
     """Dataset name component of the path (e.g., 'tank/webshare'). Null if path cannot be resolved."""
-    relative_path: str | None = None
+    relative_path: str | None
     """Relative path component within the dataset (e.g., 'subdir/data'). Null if path cannot be resolved."""
     enabled: bool = True
     """If unset, the Webshare share is not available."""

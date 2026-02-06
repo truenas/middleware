@@ -292,13 +292,12 @@ def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[
             )
 
             # Verify it has sb_source (ZFS datasets will have this)
-            if hasattr(mntinfo, 'sb_source') and mntinfo.sb_source and mntinfo.mnt_point:
+            if mntinfo.sb_source and mntinfo.mnt_point:
                 dataset = mntinfo.sb_source
                 relative_path = os.path.relpath(path, mntinfo.mnt_point)
                 if relative_path == '.':
                     relative_path = ''
 
-                logger.debug(f"Resolved (mounted): {path} -> {dataset}@'{relative_path}'")
                 return dataset, relative_path
         except Exception as e:
             logger.debug(f"statmount failed for {path}: {e}")
@@ -307,7 +306,6 @@ def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[
     # This handles ZFS datasets that create immutable directories when unmounted
     if is_mountroot and is_immutable:
         if middleware is None:
-            logger.debug(f"Cannot resolve immutable mountpoint without middleware: {path}")
             return None, None
 
         try:
@@ -315,12 +313,10 @@ def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[
             datasets = middleware.call_sync('pool.dataset.query', [['mountpoint', '=', path]])
             if datasets:
                 dataset_name = datasets[0]['id']
-                logger.debug(f"Resolved (immutable): {path} -> {dataset_name}@''")
                 return dataset_name, ''
         except Exception as e:
             logger.debug(f"libzfs lookup failed for {path}: {e}")
 
     # Case 3: Cannot authoritatively resolve - defer for later
     # This includes: encrypted datasets not yet unlocked, hardware issues, etc.
-    logger.debug(f"Deferred resolution: {path}")
     return None, None

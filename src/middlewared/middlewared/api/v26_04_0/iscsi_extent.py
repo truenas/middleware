@@ -33,11 +33,11 @@ class iSCSITargetExtentEntry(BaseModel):
     """Serial number for the extent or `null` to auto-generate."""
     path: str | None = None
     """File path for file-based extents or `null` if using a disk."""
-    dataset: str | None = None
+    dataset: str | None
     """The ZFS dataset containing the file-based extent (e.g., 'tank/iscsi'). Returns `null` for non-FILE \
 extent types (DISK, ZVOL) or if the FILE path cannot be resolved yet (encrypted dataset not unlocked, etc.). \
 This is a read-only field automatically populated from "path"."""
-    relative_path: str | None = None
+    relative_path: str | None
     """The path of the file-based extent relative to the dataset mountpoint (e.g., 'extents/lun0.img'). \
 An empty string indicates the file is at the dataset root. Returns `null` for non-FILE types or if the path \
 cannot be resolved yet. This is a read-only field automatically populated from "path"."""

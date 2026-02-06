@@ -42,11 +42,11 @@ class NVMetNamespaceEntry(BaseModel):
     * "ZVOL": `device_path` is e.g. "zvol/poolname/zvolname"
     * "FILE": `device_path` is e.g. "/mnt/poolmnt/path/to/file". The file will be created if necessary.
     """
-    dataset: str | None = None
+    dataset: str | None
     """The ZFS dataset containing the file-based namespace (e.g., 'tank/nvmet'). Returns `null` for ZVOL-based \
 namespaces or if the FILE path cannot be resolved yet (encrypted dataset not unlocked, etc.). This is a read-only \
 field automatically populated from "device_path"."""
-    relative_path: str | None = None
+    relative_path: str | None
     """The path of the file-based namespace relative to the dataset mountpoint (e.g., 'namespaces/ns1.img'). \
 An empty string indicates the file is at the dataset root. Returns `null` for ZVOL-based namespaces or if the \
 path cannot be resolved yet. This is a read-only field automatically populated from "device_path"."""

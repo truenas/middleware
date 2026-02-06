@@ -25,11 +25,11 @@ class RsyncTaskEntry(BaseModel):
     """Unique identifier for the rsync task."""
     path: str = Field(max_length=RSYNC_PATH_LIMIT)
     """Local filesystem path to synchronize."""
-    dataset: str | None = None
+    dataset: str | None
     """The ZFS dataset containing the rsync task path (e.g., 'tank/data'). Returns `null` if the path \
 cannot be resolved yet (encrypted dataset not unlocked, etc.). This is a read-only field automatically \
 populated from "path"."""
-    relative_path: str | None = None
+    relative_path: str | None
     """The path of the rsync task relative to the dataset mountpoint (e.g., 'backups/daily'). An empty string \
 indicates the task path is at the dataset root. Returns `null` if the path cannot be resolved yet. This is a \
 read-only field automatically populated from "path"."""

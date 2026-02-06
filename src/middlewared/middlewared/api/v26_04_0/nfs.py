@@ -132,9 +132,9 @@ class SharingNFSEntry(BaseModel):
     """Unique identifier for the NFS share."""
     path: NonEmptyString
     """ Local path to be exported. """
-    dataset: str | None = None
+    dataset: str | None
     """Dataset name component of the path (e.g., 'tank/share'). Null if path cannot be resolved."""
-    relative_path: str | None = None
+    relative_path: str | None
     """Relative path component within the dataset (e.g., 'subdir/data'). Null if path cannot be resolved."""
     aliases: list[NonEmptyString] = []
     """ IGNORED for now. """

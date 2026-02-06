@@ -54,14 +54,12 @@ class BaseCloudEntry(BaseModel):
     """The name of the task to display in the UI."""
     path: str
     """The local path to back up beginning with `/mnt` or `/dev/zvol`."""
-    dataset: str | None = None
-    """The ZFS dataset containing this path (e.g., 'tank/backup'). This field is initially `null` and is \
-asynchronously populated when the dataset becomes available. This is a read-only field automatically \
-resolved from "path"."""
-    relative_path: str | None = None
-    """The path relative to the dataset mountpoint (e.g., 'subdir/data'). An empty string indicates the path \
-is at the dataset root. This field is initially `null` and is asynchronously populated when the dataset becomes \
-available. This is a read-only field automatically resolved from "path"."""
+    dataset: str | None
+    """The ZFS dataset containing this path (e.g., 'tank/backup'). This is a read-only field automatically resolved \
+    from "path". May be `null` if dataset is unavailable."""
+    relative_path: str | None
+    """The path relative to the dataset mountpoint (e.g., 'subdir/data'). This is a read-only field automatically \
+    resolved from "path". May be `null` if dataset is unavailable."""
     credentials: CredentialsEntry
     """Cloud credentials to use for each backup."""
     attributes: CloudTaskAttributes
