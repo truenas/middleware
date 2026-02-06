@@ -5,38 +5,75 @@ from truenas_pynetif.address.get_links import get_links
 from truenas_pynetif.address.netlink import netlink_route
 from truenas_pynetif.netlink import LinkInfo
 
+from .addresses import configure_addresses_impl
 from .bond import configure_bonds_impl
 from .bridge import configure_bridges_impl
+from .sync_data import SyncData
 from .vlan import configure_vlans_impl
 
 __all__ = ("sync_impl",)
 
 
 def sync_impl(
-    ctx: ServiceContext, parent_interfaces: list, sync_interface_opts: dict
-) -> list[str]:
-    """Configure interfaces that are in the database to the OS.
+    ctx: ServiceContext,
+    sync_data: SyncData,
+) -> tuple[list[str], list[str]]:
+    """Configure all interfaces from database to OS.
 
     Args:
-        parent_interfaces: List to track parent interfaces
-        sync_interface_opts: Dict of interface sync options
+        ctx: Service context
+        sync_data: Combined database data
 
     Returns:
-        List of configured interface names
+        Tuple of (configured_interface_names, interfaces_needing_dhcp)
     """
     configured = []
+    run_dhcp = []
+
     with netlink_route() as sock:
         links: dict[str, LinkInfo] = get_links(sock)
 
-        # Configure bonds
-        configured.extend(
-            configure_bonds_impl(ctx, sock, links, parent_interfaces, sync_interface_opts)
-        )
+        # 1. Configure bonds
+        bond_names = configure_bonds_impl(ctx, sock, links, sync_data)
+        for name in bond_names:
+            configured.append(name)
+            if name in sync_data.interfaces:
+                try:
+                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                        run_dhcp.append(name)
+                except Exception:
+                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
 
-        # Configure VLANs
-        configured.extend(configure_vlans_impl(ctx, sock, links, parent_interfaces))
+        # 2. Configure physical interfaces (addresses only, no creation needed)
+        for name, iface_config in sync_data.interfaces.items():
+            if name.startswith(("bond", "vlan", "br")):
+                continue  # Virtual interfaces handled separately
+            try:
+                if configure_addresses_impl(ctx, sock, links, name, iface_config, sync_data):
+                    run_dhcp.append(name)
+            except Exception:
+                ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
 
-        # Configure bridges
-        configured.extend(configure_bridges_impl(ctx, sock, links, parent_interfaces))
+        # 3. Configure VLANs (after physical interfaces so parent MTU is set)
+        vlan_names = configure_vlans_impl(ctx, sock, links, sync_data)
+        for name in vlan_names:
+            configured.append(name)
+            if name in sync_data.interfaces:
+                try:
+                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                        run_dhcp.append(name)
+                except Exception:
+                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
 
-    return configured
+        # 4. Configure bridges
+        bridge_names = configure_bridges_impl(ctx, sock, links, sync_data)
+        for name in bridge_names:
+            configured.append(name)
+            if name in sync_data.interfaces:
+                try:
+                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                        run_dhcp.append(name)
+                except Exception:
+                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
+
+    return configured, run_dhcp
