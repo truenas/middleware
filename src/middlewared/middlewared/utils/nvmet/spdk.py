@@ -535,6 +535,8 @@ class NvmetBdevConfig(NvmetConfig):
                 if filename := live_item.get('driver_specific', {}).get('aio', {}).get('filename'):
                     if filename.startswith('/mnt'):
                         return f'FILE:{filename}'
+                    elif filename.startswith('/dev/zvol/'):
+                        return f'ZVOL:{filename[5:].replace("+", " ")}'
             case 'Null disk':
                 return live_item['name']
 
@@ -588,7 +590,8 @@ class NvmetBdevConfig(NvmetConfig):
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
                 _path = self.device_path_to_path(config_item)
                 client.call(
-                    'bdev_uring_create',
+                    # 'bdev_uring_create', # NAS-139283: Temporarily switch to AIO
+                    'bdev_aio_create',
                     {
                         'filename': _path,
                         'name': name
@@ -640,7 +643,8 @@ class NvmetBdevConfig(NvmetConfig):
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
-                client.call('bdev_uring_rescan', {'name': name})
+                # client.call('bdev_uring_rescan', {'name': name}) # NAS-139283 Temporarily switch to AIO
+                client.call('bdev_aio_rescan', {'name': name})
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
                 client.call('bdev_aio_rescan', {'name': name})
