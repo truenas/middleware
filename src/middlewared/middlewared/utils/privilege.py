@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
@@ -7,7 +9,7 @@ if TYPE_CHECKING:
     from middlewared.auth import SessionManagerCredentials
 
 
-def privilege_has_webui_access(privilege: dict) -> bool:
+def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:
     """
     This method determines whether the specified privilege is sufficient
     to grant WebUI access. Current check is whether any of the roles for
@@ -24,8 +26,8 @@ def privilege_has_webui_access(privilege: dict) -> bool:
     return any(ROLES[role].builtin is False for role in privilege['roles'])
 
 
-def credential_has_full_admin(credential: 'SessionManagerCredentials') -> bool:
-    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
+def credential_has_full_admin(credential: SessionManagerCredentials) -> bool:
+    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:  # type: ignore
         return True
 
     if isinstance(credential, TruenasNodeSessionManagerCredentials):
@@ -38,20 +40,20 @@ def credential_has_full_admin(credential: 'SessionManagerCredentials') -> bool:
 
 
 def credential_full_admin_or_user(
-    credential: 'SessionManagerCredentials | None',
+    credential: SessionManagerCredentials | None,
     username: str
 ) -> bool:
     if credential is None:
         return False
 
-    elif credential_has_full_admin(credential):
+    if credential_has_full_admin(credential):
         return True
 
-    return credential.user['username'] == username
+    return credential.user['username'] == username  # type: ignore[attr-defined, no-any-return]
 
 
 def app_credential_full_admin_or_user(
-    app: 'App',
+    app: App,
     username: str
 ) -> bool:
     """
@@ -73,10 +75,10 @@ def app_credential_full_admin_or_user(
 
 
 def privileges_group_mapping(
-    privileges: list[dict],
-    group_ids: list,
+    privileges: list[dict[str, Any]],
+    group_ids: list[int],
     groups_key: str,
-) -> dict:
+) -> dict[str, Any]:
     roles = set()
     privileges_out = []
 
@@ -92,16 +94,16 @@ def privileges_group_mapping(
     }
 
 
-def credential_is_limited_to_own_jobs(credential: 'SessionManagerCredentials | None') -> bool:
+def credential_is_limited_to_own_jobs(credential: SessionManagerCredentials | None) -> bool:
     if credential is None or not credential.is_user_session:
         return False
 
     return not credential_has_full_admin(credential)
 
 
-def credential_is_root_or_equivalent(credential: 'SessionManagerCredentials | None') -> bool:
+def credential_is_root_or_equivalent(credential: SessionManagerCredentials | None) -> bool:
     if credential is None or not credential.is_user_session:
         return False
 
     # SYS_ADMIN is set when user UID is 0 (root) or 950 (truenas_admin).
-    return 'SYS_ADMIN' in credential.user['account_attributes']
+    return 'SYS_ADMIN' in credential.user['account_attributes']  # type: ignore[attr-defined]

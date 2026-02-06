@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import socket
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from aiohttp.web import Request
 from dataclasses import dataclass
@@ -25,7 +25,7 @@ UIDS_TO_CHECK = (33, 0)
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class ConnectionOrigin:
-    family: AF_INET | AF_INET6 | AF_UNIX
+    family: socket.AddressFamily
     """The address family associated to the API connection"""
     loc_addr: str | None = None
     """If `family` is not of type AF_UNIX, this represents
@@ -57,9 +57,13 @@ class ConnectionOrigin:
     """Nginx reports that https was used for connection"""
 
     @classmethod
-    def create(cls, request: "Request") -> "ConnectionOrigin | None":
+    def create(cls, request: Request) -> ConnectionOrigin | None:
         try:
-            sock = request.transport.get_extra_info("socket")
+            transport = request.transport
+            if transport is None:
+                return None
+
+            sock = transport.get_extra_info("socket")
             if sock.family == AF_UNIX:
                 pid, uid, gid = unpack("3i", sock.getsockopt(SOL_SOCKET, SO_PEERCRED, calcsize("3i")))
                 login_uid = get_login_uid(pid)
@@ -73,19 +77,24 @@ class ConnectionOrigin:
             elif sock.family in (AF_INET, AF_INET6):
                 fam, la, lp, ra, rp, ssl = get_tcp_ip_info(sock, request)
 
+                if fam is None:
+                    return None
+
                 return cls(
                     family=fam,
                     loc_addr=la,
                     loc_port=lp,
                     rem_addr=ra,
                     rem_port=rp,
-                    ssl=ssl
+                    ssl=ssl if ssl is not None else False
                 )
+
+            return None
         except AttributeError:
             # request.transport can be None by the time this is
             # called on HA systems because remote node could
             # have been rebooted
-            return
+            return None
 
     def __str__(self) -> str:
         if self.is_unix_family:
@@ -164,20 +173,20 @@ class ConnectionOrigin:
         if self.pid is None:
             return set()
 
-        pid = self.pid
-        ppids = set()
-        while True:
+        pid: int | None = self.pid
+        ppids: set[int] = set()
+        while pid is not None:
             try:
                 with open(f"/proc/{pid}/status") as f:
-                    pid = None
+                    found_ppid: int | None = None
                     for line in f:
                         if line.startswith("PPid:"):
                             try:
-                                pid = int(line.split(":")[1].strip())
+                                found_ppid = int(line.split(":")[1].strip())
                             except ValueError:
                                 pass
-
                             break
+                    pid = found_ppid
             except FileNotFoundError:
                 break
 
@@ -186,8 +195,6 @@ class ConnectionOrigin:
                     break
 
                 ppids.add(pid)
-            else:
-                break
 
         return ppids
 
@@ -195,7 +202,7 @@ class ConnectionOrigin:
 def get_tcp_ip_info(
     sock: socket.socket,
     request: Request,
-) -> tuple[Any, str | None, int | None, str | None, int | None, bool | None]:
+) -> tuple[socket.AddressFamily | None, str | None, int | None, str | None, int | None, bool | None]:
     # All API connections are terminated by nginx reverse
     # proxy so the remote address is always 127.0.0.1. The
     # only exceptions to this are:

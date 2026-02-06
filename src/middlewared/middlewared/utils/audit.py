@@ -1,6 +1,5 @@
 from middlewared.auth import (
     SessionManagerCredentials,
-    TokenSessionManagerCredentials,
     TruenasNodeSessionManagerCredentials
 )
 
@@ -18,13 +17,9 @@ def audit_username_from_session(cred: SessionManagerCredentials | None) -> str:
 
     # This works for regular user session and tokens formed on them
     if cred.is_user_session:
-        return cred.user['username']
+        return cred.user['username']  # type: ignore[no-any-return, attr-defined]
 
-    # Track back to root credential if necessary (token session)
-    if isinstance(cred, TokenSessionManagerCredentials):
-        cred = cred.root_credentials
-
-    elif isinstance(cred, TruenasNodeSessionManagerCredentials):
+    if isinstance(cred, TruenasNodeSessionManagerCredentials):
         return NODE_SESSION
 
     return UNKNOWN_SESSION

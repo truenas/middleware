@@ -9,5 +9,5 @@ __all__ = ["asyncnullcontext"]
 
 
 @contextlib.asynccontextmanager
-async def asyncnullcontext[T](enter_result: T = None) -> AsyncGenerator[T]:
+async def asyncnullcontext[T](enter_result: T | None = None) -> AsyncGenerator[T | None]:
     yield enter_result
