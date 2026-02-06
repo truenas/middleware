@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import ipaddress
-from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
@@ -33,6 +32,7 @@ from truenas_pynetif.utils import INTERNAL_INTERFACES
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 from .interface.sync import sync_impl
+from .interface.sync_data import SyncData
 
 
 class NetworkAliasModel(sa.Model):
@@ -1589,41 +1589,41 @@ class InterfaceService(CRUDService):
         # already been updated by the time this is called.
         await self.middleware.call('vrrpthread.set_non_crit_ifaces')
 
-        interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
-        cloned_interfaces = []
-        parent_interfaces = []
-        sync_interface_opts = defaultdict(dict)
+        # Query all database data once
+        interfaces_db = await self.middleware.call('datastore.query', 'network.interfaces')
+        aliases_db = await self.middleware.call('datastore.query', 'network.alias')
+        bonds_db = await self.middleware.call('datastore.query', 'network.lagginterface')
+        bond_members_db = await self.middleware.call('datastore.query', 'network.lagginterfacemembers')
+        vlans_db = await self.middleware.call('datastore.query', 'network.vlan')
+        bridges_db = await self.middleware.call('datastore.query', 'network.bridge')
+        node = await self.middleware.call('failover.node')
 
-        # We create "virtual" interfaces first (bond, vlan, bridge, etc)
-        cloned_interfaces.extend(
-            await self.middleware.run_in_thread(
-                sync_impl,
-                self,
-                parent_interfaces,
-                sync_interface_opts
-            )
+        # Build combined interface configs
+        iface_configs = {}
+        for iface in interfaces_db:
+            name = iface['int_interface']
+            iface_configs[name] = {
+                "interface": iface,
+                "aliases": [a for a in aliases_db if a['alias_interface_id'] == iface['id']],
+            }
+
+        sync_data = SyncData(
+            interfaces=iface_configs,
+            bonds=bonds_db,
+            bond_members=bond_members_db,
+            vlans=vlans_db,
+            bridges=bridges_db,
+            node=node,
         )
 
-        run_dhcp = []
-        # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
-        for interface in sorted(
-            filter(lambda i: not i.startswith('br'), interfaces), key=lambda x: x.startswith('vlan')
-        ):
-            try:
-                if await self.sync_interface(interface, sync_interface_opts[interface]):
-                    run_dhcp.append(interface)
-            except Exception:
-                self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
+        # Configure all interfaces (virtual and physical) and get DHCP list
+        cloned_interfaces, run_dhcp = await self.middleware.run_in_thread(
+            sync_impl,
+            self,
+            sync_data,
+        )
 
-        # Sync bridge interfaces (IP addresses, DHCP, etc.)
-        for name in cloned_interfaces:
-            if not name.startswith("br"):
-                continue
-            try:
-                if await self.sync_interface(name, sync_interface_opts[name]):
-                    run_dhcp.append(name)
-            except Exception:
-                self.logger.error("Failed to configure %s", name, exc_info=True)
+        interfaces = list(iface_configs.keys())
 
         if run_dhcp:
             # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
@@ -1653,7 +1653,9 @@ class InterfaceService(CRUDService):
                 # 5) Rollback happens where the only nic is removed from database
                 # 6) If we don't unconfigure, autoconfigure is called which is supposed to start dhclient on the
                 #    interface. However this will result in the static ip still being set.
-                await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
+                await self.middleware.call(
+                    'interface.unconfigure', iface, cloned_interfaces, sync_data.parent_interfaces
+                )
                 if not iface.cloned:
                     # We only autoconfigure physical interfaces because if this is a delete operation
                     # and the interface that was deleted is a "clone" (vlan/br/bond) interface, then
@@ -1669,7 +1671,9 @@ class InterfaceService(CRUDService):
                 if name in interfaces:
                     continue
 
-                await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
+                await self.middleware.call(
+                    'interface.unconfigure', iface, cloned_interfaces, sync_data.parent_interfaces
+                )
 
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
