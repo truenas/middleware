@@ -4,7 +4,7 @@ import socket
 
 from truenas_pynetif.address.address import flush_addresses
 from truenas_pynetif.address.link import delete_link, set_link_down
-from truenas_pynetif.netlink import LinkInfo
+from truenas_pynetif.netlink import DeviceNotFound, LinkInfo
 
 from middlewared.service import ServiceContext
 
@@ -44,13 +44,21 @@ def unconfigure_impl(
     link = links[name]
     ctx.logger.info("Unconfiguring interface %r", name)
 
-    flush_addresses(sock, index=link.index)
-
+    # Stop DHCP first, then flush addresses
     dhclient_running, _ = ctx.middleware.call_sync("interface.dhclient_status", name)
     if dhclient_running:
         ctx.middleware.call_sync("interface.dhcp_stop", name)
 
-    if name not in cloned_interfaces and name.startswith(_VIRTUAL_PREFIXES):
-        delete_link(sock, index=link.index)
-    elif name not in sync_data.parent_interfaces:
-        set_link_down(sock, index=link.index)
+    try:
+        flush_addresses(sock, index=link.index)
+    except DeviceNotFound:
+        ctx.logger.debug("Interface %r already gone, skipping", name)
+        return
+
+    try:
+        if name not in cloned_interfaces and name.startswith(_VIRTUAL_PREFIXES):
+            delete_link(sock, index=link.index)
+        elif name not in sync_data.parent_interfaces:
+            set_link_down(sock, index=link.index)
+    except DeviceNotFound:
+        ctx.logger.debug("Interface %r already gone", name)
