@@ -49,6 +49,8 @@ def unconfigure_impl(
     if dhclient_running:
         ctx.middleware.call_sync("interface.dhcp_stop", name)
 
+    # DeviceNotFound can occur when a VLAN on a bond is auto-removed by kernel
+    # after the bond is deleted
     try:
         flush_addresses(sock, index=link.index)
     except DeviceNotFound:
