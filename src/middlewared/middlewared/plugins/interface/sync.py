@@ -33,9 +33,7 @@ def sync_impl(
         Tuple of (configured_interfaces, interfaces_needing_dhcp, interfaces_to_autoconfigure)
     """
     configured = []
-    # run_dhcp: interfaces configured in database with int_dhcp=True
-    run_dhcp = []
-
+    run_dhcp = []  # interfaces configured in database with int_dhcp=True
     with netlink_route() as sock:
         links: dict[str, LinkInfo] = get_links(sock)
 
@@ -45,20 +43,28 @@ def sync_impl(
             configured.append(name)
             if name in sync_data.interfaces:
                 try:
-                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                    if configure_addresses_impl(
+                        ctx, sock, links, name, sync_data.interfaces[name], sync_data
+                    ):
                         run_dhcp.append(name)
                 except Exception:
-                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
+                    ctx.logger.error(
+                        "Failed to configure addresses for %s", name, exc_info=True
+                    )
 
         # 2. Configure physical interfaces (addresses only, no creation needed)
         for name, iface_config in sync_data.interfaces.items():
             if name.startswith(_VIRTUAL_PREFIXES):
                 continue  # Virtual interfaces handled separately
             try:
-                if configure_addresses_impl(ctx, sock, links, name, iface_config, sync_data):
+                if configure_addresses_impl(
+                    ctx, sock, links, name, iface_config, sync_data
+                ):
                     run_dhcp.append(name)
             except Exception:
-                ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
+                ctx.logger.error(
+                    "Failed to configure addresses for %s", name, exc_info=True
+                )
 
         # 3. Configure VLANs (after physical interfaces so parent MTU is set)
         vlan_names = configure_vlans_impl(ctx, sock, links, sync_data)
@@ -66,10 +72,14 @@ def sync_impl(
             configured.append(name)
             if name in sync_data.interfaces:
                 try:
-                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                    if configure_addresses_impl(
+                        ctx, sock, links, name, sync_data.interfaces[name], sync_data
+                    ):
                         run_dhcp.append(name)
                 except Exception:
-                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
+                    ctx.logger.error(
+                        "Failed to configure addresses for %s", name, exc_info=True
+                    )
 
         # 4. Configure bridges
         bridge_names = configure_bridges_impl(ctx, sock, links, sync_data)
@@ -77,29 +87,32 @@ def sync_impl(
             configured.append(name)
             if name in sync_data.interfaces:
                 try:
-                    if configure_addresses_impl(ctx, sock, links, name, sync_data.interfaces[name], sync_data):
+                    if configure_addresses_impl(
+                        ctx, sock, links, name, sync_data.interfaces[name], sync_data
+                    ):
                         run_dhcp.append(name)
                 except Exception:
-                    ctx.logger.error("Failed to configure addresses for %s", name, exc_info=True)
+                    ctx.logger.error(
+                        "Failed to configure addresses for %s", name, exc_info=True
+                    )
 
-        # 5. Unconfigure interfaces not in database
-        interfaces_in_db = set(sync_data.interfaces.keys())
-        # autoconfigure: no interfaces in database, start dhcpcd on all physical NICs as fallback
+        # this is filled when there are NO interfaces in database
+        # so we start dhcpcd on all physical NICs as fallback
         autoconfigure = []
 
+        # 5. Unconfigure interfaces not in database
         for name in links:
             if name.startswith(internal_interfaces):
                 continue
 
-            if not interfaces_in_db:
-                # No interfaces configured in database - unconfigure all and
+            if not sync_data.interfaces:
+                # NO interfaces configured in database so unconfigure all and
                 # autoconfigure physical interfaces (fresh install / rollback)
                 unconfigure_impl(ctx, sock, links, name, configured, sync_data)
                 if not name.startswith(_VIRTUAL_PREFIXES):
                     autoconfigure.append(name)
-            elif name not in interfaces_in_db:
+            elif name not in sync_data.interfaces:
+                # Interface is not in database, so unconfigure it
                 unconfigure_impl(ctx, sock, links, name, configured, sync_data)
-
-        # dhcpcd brings interfaces up automatically, no need to do it here
 
     return configured, run_dhcp, autoconfigure
