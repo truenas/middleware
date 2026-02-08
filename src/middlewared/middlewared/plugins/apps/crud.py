@@ -75,7 +75,9 @@ class AppService(CRUDService):
         if not retrieve_app_schema:
             return filter_list(apps, filters, options)
 
-        questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
+        questions_context = self.context.run_coroutine(
+            get_normalized_questions_context(self.context)
+        ).model_dump(by_alias=True)
         for app in apps:
             if app['custom_app']:
                 version_details = get_version_details()
