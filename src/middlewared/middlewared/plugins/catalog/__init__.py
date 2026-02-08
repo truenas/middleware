@@ -6,14 +6,15 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
     CatalogTrainsArgs, CatalogTrainsResult, CatalogUpdate,
-    CatalogUpdateArgs, CatalogUpdateResult,
+    CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
 )
 from middlewared.plugins.docker.state_utils import catalog_ds_path
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigService, job, private
 
 from .config import CatalogConfigPart
 from .apps_details import apps
 from .state import dataset_mounted
+from .sync import sync
 from .utils import TMP_IX_APPS_CATALOGS
 
 
@@ -21,6 +22,7 @@ __all__ = ('CatalogService',)
 
 
 if TYPE_CHECKING:
+    from middlewared.job import Job
     from middlewared.main import Middleware
 
 
@@ -45,6 +47,14 @@ class CatalogService(ConfigService):
         Update catalog preferences.
         """
         return await self._config_part.do_update(data)
+
+    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'])
+    @job(lock='official_catalog_sync', lock_queue_size=0)
+    async def sync(self, job: Job) -> None:
+        """
+        Sync truenas catalog to retrieve latest changes from upstream.
+        """
+        return await sync(self.context, job)
 
     @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
     def apps(self, options: CatalogApps) -> CatalogAppsResponse:
