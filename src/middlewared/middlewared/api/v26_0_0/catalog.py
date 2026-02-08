@@ -6,9 +6,9 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 
 
 __all__ = [
-    'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',
-    'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult',
-    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
+    'CatalogTrainsResult', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs',
+    'CatalogAppsResult', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
 ]
 
 
@@ -23,10 +23,12 @@ class CatalogEntry(BaseModel):
     """Git repository URL or local path to the catalog."""
 
 
-@single_argument_args('catalog_update')
-class CatalogUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+class CatalogUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
     """Updated array of preferred train names for the catalog."""
+
+class CatalogUpdateArgs(BaseModel):
+    data: CatalogUpdate
 
 
 class CatalogUpdateResult(BaseModel):
