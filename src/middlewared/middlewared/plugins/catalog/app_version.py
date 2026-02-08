@@ -8,7 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult
 from middlewared.service import CallError, Service
 
-from .apps_details_new import get_normalized_questions_context, retrieve_recommended_apps
+from .apps_details import get_normalized_questions_context, retrieve_recommended_apps
 from .apps_util import get_app_details
 
 

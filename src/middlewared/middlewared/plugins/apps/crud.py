@@ -10,7 +10,7 @@ from middlewared.api.current import (
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
     ZFSResourceQuery
 )
-from middlewared.plugins.catalog.apps_details_new import (
+from middlewared.plugins.catalog.apps_details import (
     app_version_details as get_app_version_details, get_normalized_questions_context, train_to_apps_version_mapping,
 )
 from middlewared.service import (
