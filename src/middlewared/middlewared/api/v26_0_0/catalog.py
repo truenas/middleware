@@ -9,7 +9,7 @@ __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
     'CatalogTrainsResult', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs',
     'CatalogAppsResult', 'CatalogAppsResponse', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
-    'CatalogApps',
+    'CatalogApps', 'CatalogAppVersionDetails',
 ]
 
 
