@@ -16,7 +16,8 @@ __all__ = [
     'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
     'AppContainerConsoleChoicesResult', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppIpChoices', 'AppCertificateChoices',
+    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
     'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
@@ -343,8 +344,11 @@ class AppCertificate(BaseModel):
     """Display name of the certificate."""
 
 
+AppCertificateChoices = list[AppCertificate]
+
+
 class AppCertificateChoicesResult(BaseModel):
-    result: list[AppCertificate]
+    result: AppCertificateChoices
     """Array of available certificates that can be used by applications."""
 
 
@@ -370,8 +374,11 @@ class AppIpChoicesArgs(BaseModel):
     pass
 
 
+AppIpChoices = dict[NonEmptyString, NonEmptyString]
+
+
 class AppIpChoicesResult(BaseModel):
-    result: dict[NonEmptyString, NonEmptyString]
+    result: AppIpChoices
     """Object mapping IP addresses to their descriptive names."""
 
 
