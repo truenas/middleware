@@ -19,8 +19,6 @@ class CatalogService(Service):
     class Config:
         cli_namespace = 'app.catalog'
 
-    CATEGORIES_SET = set()
-
     @private
     def train_to_apps_version_mapping(self):
         mapping = {}
@@ -36,19 +34,3 @@ class CatalogService(Service):
                 }
 
         return mapping
-
-    @private
-    def cached(self, label):
-        return self.middleware.call_sync('cache.has_key', get_cache_key(label))
-
-    @private
-    def app_version_details(self, version_path, questions_context=None):
-        if not questions_context:
-            questions_context = self.context.run_coroutine(
-                get_normalized_questions_context(self.context)
-            ).model_dump(by_alias=True)
-        return get_app_version_details(version_path, questions_context)
-
-    @private
-    def retrieve_mapped_categories(self):
-        return self.CATEGORIES_SET
