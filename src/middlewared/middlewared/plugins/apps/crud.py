@@ -10,6 +10,7 @@ from middlewared.api.current import (
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
     ZFSResourceQuery
 )
+from middlewared.plugins.catalog.apps_details_new import get_normalized_questions_context
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
@@ -74,7 +75,7 @@ class AppService(CRUDService):
         if not retrieve_app_schema:
             return filter_list(apps, filters, options)
 
-        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+        questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
         for app in apps:
             if app['custom_app']:
                 version_details = get_version_details()

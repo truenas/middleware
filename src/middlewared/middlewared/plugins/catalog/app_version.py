@@ -8,6 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult
 from middlewared.service import CallError, Service
 
+from .apps_details_new import get_normalized_questions_context
 from .apps_util import get_app_details
 
 
@@ -38,7 +39,7 @@ class CatalogService(Service):
         elif app_name not in train_data[options['train']]:
             raise CallError(f'Unable to locate {app_name!r} app in {options["train"]!r} train')
 
-        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+        questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
 
         app_details = get_app_details(app_location, train_data[options['train']][app_name], questions_context)
         recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
