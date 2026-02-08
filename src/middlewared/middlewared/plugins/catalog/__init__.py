@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CatalogApps, CatalogAppsArgs, CatalogAppsResult, CatalogEntry, CatalogUpdate,
+    CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult,
 )
 from middlewared.plugins.docker.state_utils import catalog_ds_path
@@ -46,7 +46,7 @@ class CatalogService(ConfigService):
         return await self._config_part.do_update(data)
 
     @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
-    def apps(self, options: CatalogApps):
+    def apps(self, options: CatalogApps) -> CatalogAppsResponse:
         """
         Retrieve apps details for `label` catalog.
 

@@ -16,7 +16,8 @@ from jsonschema import validate as json_schema_validate, ValidationError as Json
 from pydantic import BaseModel, ConfigDict, Field
 
 from middlewared.api.current import (
-    AppCertificateChoices, AppIpChoices, CatalogApps, CatalogEntry, SystemGeneralEntry, SystemGeneralTimezoneChoices,
+    AppCertificateChoices, AppIpChoices, CatalogApps, CatalogAppsResponse, CatalogEntry,
+    SystemGeneralEntry, SystemGeneralTimezoneChoices,
 )
 from middlewared.service import ServiceContext
 
@@ -36,7 +37,7 @@ class NormalizedQuestions(BaseModel):
     gpu_choices: list[dict[str, Any]]
 
 
-def apps(context: ServiceContext, options: CatalogApps):
+def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     catalog = context.call_sync2(context.s.catalog.config)
     all_trains = options.retrieve_all_trains
     cache_available = False
@@ -51,7 +52,7 @@ def apps(context: ServiceContext, options: CatalogApps):
         cache_available = orig_cached_data is not None
 
     if options.cache and options.cache_only and not cache_available:
-        return {}
+        return CatalogAppsResponse.model_validate({})
 
     if options.cache and cache_available:
         cached_data = {}
@@ -65,9 +66,9 @@ def apps(context: ServiceContext, options: CatalogApps):
 
             cached_data[train] = train_data
 
-        return cached_data
+        return CatalogAppsResponse.model_validate(cached_data)
     elif not os.path.exists(catalog.location):
-        return {}
+        return CatalogAppsResponse.model_validate({})
 
     if all_trains:
         # We can only safely say that the catalog is healthy if we retrieve data for all trains
@@ -84,7 +85,7 @@ def apps(context: ServiceContext, options: CatalogApps):
         # reading again from disk hence the extra 1 hour.
         context.middleware.call_sync('cache.put', get_cache_key(catalog.label), trains, 90000)
 
-    return trains
+    return CatalogAppsResponse.model_validate(trains)
 
 
 def get_trains(context: ServiceContext, catalog: CatalogEntry, options: CatalogApps) -> dict[str, dict]:
