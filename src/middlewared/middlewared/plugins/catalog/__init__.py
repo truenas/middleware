@@ -7,12 +7,15 @@ from middlewared.api.current import (
     CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
     CatalogTrainsArgs, CatalogTrainsResult, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
+    CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
+    CatalogAppInfo,
 )
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, job, private
 
 from .config import CatalogConfigPart
 from .apps_details import apps
+from .app_version import get_app_details
 from .state import dataset_mounted
 from .sync import sync
 from .utils import TMP_IX_APPS_CATALOGS
@@ -47,6 +50,16 @@ class CatalogService(ConfigService):
         Update catalog preferences.
         """
         return await self._config_part.do_update(data)
+
+    @api_method(
+        CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
+        roles=['CATALOG_READ'], check_annotations=True,
+    )
+    def get_app_details(self, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppInfo:
+        """
+        Retrieve information of `app_name` `app_version_details.catalog` catalog app.
+        """
+        return get_app_details(self.context, app_name, options)
 
     @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'])
     @job(lock='official_catalog_sync', lock_queue_size=0)
