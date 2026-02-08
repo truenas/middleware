@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import typing
-
 import middlewared.sqlalchemy as sa
-from middlewared.api.current import CatalogEntry
+from middlewared.api.current import CatalogEntry, CatalogUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
+from middlewared.utils import ProductType
 
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
+from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL
 
 
 class CatalogModel(sa.Model):
@@ -23,3 +20,30 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
     _datastore_extend = 'catalog.extend'
     _datastore_extend_context = 'catalog.extend_context'
     _entry = CatalogEntry
+
+    async def do_update(self, data: CatalogUpdate) -> CatalogEntry:
+        verrors = ValidationErrors()
+        if not data.preferred_trains:
+            verrors.add(
+                'catalog_update.preferred_trains',
+                'At least 1 preferred train must be specified.'
+            )
+        if (
+            await self.middleware.call('system.product_type') == ProductType.ENTERPRISE and
+            OFFICIAL_ENTERPRISE_TRAIN not in data.preferred_trains
+        ):
+            verrors.add(
+                'catalog_update.preferred_trains',
+                f'Enterprise systems must at least have {OFFICIAL_ENTERPRISE_TRAIN!r} train enabled'
+            )
+
+        verrors.check()
+
+        await self.middleware.call(
+            'datastore.update',
+            self._datastore,
+            OFFICIAL_LABEL,
+            data.model_dump(),
+        )
+
+        return await self.config()

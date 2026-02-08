@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
-from middlewared.api.current import CatalogEntry
+from middlewared.api.current import CatalogEntry, CatalogUpdate, CatalogUpdateArgs, CatalogUpdateResult
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, private
 
@@ -33,6 +33,13 @@ class CatalogService(ConfigService):
 
     async def config(self) -> CatalogEntry:
         return await self._config_part.config()
+
+    @api_method(CatalogUpdateArgs, CatalogUpdateResult, check_annotations=True)
+    async def do_update(self, data: CatalogUpdate) -> CatalogEntry:
+        """
+        Update catalog preferences.
+        """
+        return await self._config_part.do_update(data)
 
     @private
     def extend(self, data, context):
