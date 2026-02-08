@@ -13,6 +13,7 @@ from middlewared.api.current import (
 from middlewared.plugins.catalog.apps_details import (
     app_version_details as get_app_version_details, get_normalized_questions_context, train_to_apps_version_mapping,
 )
+from middlewared.plugins.catalog.features import version_supported_error_check
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
@@ -155,7 +156,7 @@ class AppService(CRUDService):
         self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
     ):
         app_version_details = complete_app_details['versions'][version]
-        self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
+        self.context.run_coroutine(version_supported_error_check(self.context, app_version_details))
 
         app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
