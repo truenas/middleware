@@ -127,6 +127,39 @@ class ContainerService(Service):
                             f"device: {e!r}.\n".encode()
                         )
 
+    @private
+    async def maybe_migrate_legacy(self):
+        """Check for legacy incus containers and auto-migrate if found.
+
+        Called on system ready. If virt_global.pool is set, legacy containers
+        exist and need migration. On success, sets preferred_pool and clears
+        virt_global.pool so migration does not re-trigger on next boot.
+        """
+        legacy_config = await self.middleware.call("datastore.config", "virt.global")
+        if legacy_config["pool"] is None:
+            return
+
+        self.logger.info("Legacy incus container configuration found, starting migration")
+        try:
+            migration_job = await self.middleware.call("container.migrate")
+            await migration_job.wait(raise_error=True)
+        except Exception:
+            self.logger.error("Legacy container migration failed", exc_info=True)
+            return
+
+        container_config = await self.middleware.call("datastore.config", "container.config")
+        if container_config["preferred_pool"] is None:
+            await self.middleware.call(
+                "datastore.update", "container.config", container_config["id"],
+                {"preferred_pool": legacy_config["pool"]},
+            )
+
+        await self.middleware.call(
+            "datastore.update", "virt.global", legacy_config["id"],
+            {"pool": None},
+        )
+        self.logger.info("Legacy container migration completed")
+
     @api_method(ContainerMigrateArgs, ContainerMigrateResult, roles=["CONTAINER_WRITE"])
     @job(lock="container.migrate", logs=True)
     async def migrate(self, job):
@@ -164,6 +197,9 @@ class ContainerService(Service):
 
             split = dataset["name"].split("/")
             if len(split) != 4:
+                job.logs_fd.write(
+                    f"Skipping dataset {dataset['name']} during migration (not a container dataset)".encode(),
+                )
                 continue
 
             name = split[-1]
@@ -194,8 +230,14 @@ class ContainerService(Service):
                 )
                 self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
 
-                with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
-                    manifest = yaml.safe_load(f.read())
+                try:
+                    with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
+                        manifest = yaml.safe_load(f.read())
+                except Exception:
+                    job.logs_fd.write(
+                        f"Failed to read backup.yaml for container {name!r}, skipping.\n".encode()
+                    )
+                    continue
 
                 config = manifest["container"]["config"]
 
