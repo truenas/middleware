@@ -38,6 +38,22 @@ class NormalizedQuestions(BaseModel):
     gpu_choices: list[dict[str, typing.Any]]
 
 
+def train_to_apps_version_mapping(context: ServiceContext) -> dict[str, dict[str, dict[str, str]]]:
+    mapping = {}
+    for train, train_data in apps(context, CatalogApps(
+        cache=True,
+        cache_only=True,
+    )).root.items():
+        mapping[train] = {}
+        for app_data in train_data.root.values():
+            mapping[train][app_data.name] = {
+                'version': app_data.latest_version,
+                'app_version': app_data.latest_app_version,
+            }
+
+    return mapping
+
+
 def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     catalog = context.call_sync2(context.s.catalog.config)
     all_trains = options.retrieve_all_trains
