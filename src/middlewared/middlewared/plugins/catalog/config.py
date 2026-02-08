@@ -47,3 +47,25 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
         )
 
         return await self.config()
+
+    async def update_train_for_enterprise(self) -> None:
+        catalog = await self.config()
+        if await self.middleware.call('system.product_type') == ProductType.ENTERPRISE:
+            preferred_trains = []
+            # Logic coming from here
+            # https://github.com/truenas/middleware/blob/e7f2b29b6ff8fadcc9fdd8d7f104cbbf5172fc5a/src/middlewared
+            # /middlewared/plugins/catalogs_linux/update.py#L341
+            can_have_multiple_trains = not await self.middleware.call('system.is_ha_capable') and not (
+                await self.middleware.call('failover.hardware')
+            ).startswith('TRUENAS-R')
+            if OFFICIAL_ENTERPRISE_TRAIN not in catalog.preferred_trains and can_have_multiple_trains:
+                preferred_trains = catalog.preferred_trains + [OFFICIAL_ENTERPRISE_TRAIN]
+            elif not can_have_multiple_trains:
+                preferred_trains = [OFFICIAL_ENTERPRISE_TRAIN]
+
+            if preferred_trains:
+                await self.middleware.call(
+                    'datastore.update', self._datastore, OFFICIAL_LABEL, {
+                        'preferred_trains': preferred_trains,
+                    },
+                )

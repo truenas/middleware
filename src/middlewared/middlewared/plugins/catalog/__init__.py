@@ -61,6 +61,10 @@ class CatalogService(ConfigService):
             'catalog_dir': catalog_dir,
         }
 
+    @private
+    async def update_train_for_enterprise(self) -> None:
+        return await self._config_part.update_train_for_enterprise()
+
 
 async def setup(middleware):
     await middleware.call('network.general.register_activity', 'catalog', 'Catalog(s) information')
