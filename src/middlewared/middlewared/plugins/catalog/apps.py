@@ -7,6 +7,7 @@ from middlewared.service import filterable_api_method, Service
 from middlewared.utils.filter_list import filter_list
 
 from .apps_details import CATEGORIES_SET
+from .sync import sync_state
 from .utils import IX_APP_NAME
 
 
@@ -33,10 +34,9 @@ class AppService(Service):
         """
         Retrieve all available applications from all configured catalogs.
         """
-        if not self.middleware.call_sync('catalog.synced'):
+        if not sync_state.synced:
             self.middleware.call_sync('catalog.sync').wait_sync()
 
-        apps_popularity = self.middleware.call_sync('catalog.popularity_cache')
         results = []
         installed_apps = [
             (app['metadata']['name'], app['metadata']['train'])
@@ -53,7 +53,7 @@ class AppService(Service):
                     'catalog': catalog['label'],
                     'installed': (app_data['name'], train) in installed_apps,
                     'train': train,
-                    'popularity_rank': apps_popularity.get(train, {}).get(app_data['name']),
+                    'popularity_rank': sync_state.popularity_info.get(train, {}).get(app_data['name']),
                     **app_data,
                 })
 
