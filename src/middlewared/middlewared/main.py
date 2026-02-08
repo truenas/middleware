@@ -92,6 +92,7 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -169,6 +170,7 @@ class ServiceContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super(ServiceContainer, self).__init__(middleware)
 
+        self.catalog = CatalogService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
