@@ -26,7 +26,6 @@ from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
-from truenas_pynetif.netif import list_interfaces
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
@@ -1616,11 +1615,14 @@ class InterfaceService(CRUDService):
             node=node,
         )
 
-        # Configure all interfaces (virtual and physical) and get DHCP list
-        cloned_interfaces, run_dhcp = await self.middleware.run_in_thread(
+        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
+
+        # Configure all interfaces and unconfigure those not in database
+        cloned_interfaces, run_dhcp, autoconfigure = await self.middleware.run_in_thread(
             sync_impl,
             self,
             sync_data,
+            internal_interfaces,
         )
 
         interfaces = list(iface_configs.keys())
@@ -1635,48 +1637,16 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
-        dhclient_aws = []
-        for name, iface in await self.middleware.run_in_thread(lambda: list(list_interfaces().items())):
-            # Skip internal interfaces
-            if name.startswith(internal_interfaces):
-                continue
-
-            # If there are no interfaces configured we start DHCP on all
-            if not interfaces:
-                # We should unconfigure interface first before doing autoconfigure. This can be required for cases
-                # like the following:
-                # 1) Fresh install with system having 1 NIC
-                # 2) Configure static ip for the NIC leaving dhcp checked
-                # 3) Test changes
-                # 4) Do not save changes and wait for time out
-                # 5) Rollback happens where the only nic is removed from database
-                # 6) If we don't unconfigure, autoconfigure is called which is supposed to start dhclient on the
-                #    interface. However this will result in the static ip still being set.
-                await self.middleware.call(
-                    'interface.unconfigure', iface, cloned_interfaces, sync_data.parent_interfaces
+        # Autoconfigure interfaces (start DHCP on physical interfaces with no database config)
+        if autoconfigure:
+            dhclient_aws = [
+                asyncio.ensure_future(
+                    self.middleware.call('interface.dhclient_start', name, wait_dhcp)
                 )
-                if not iface.cloned:
-                    # We only autoconfigure physical interfaces because if this is a delete operation
-                    # and the interface that was deleted is a "clone" (vlan/br/bond) interface, then
-                    # interface.unconfigure deletes the interface. Physical interfaces can't be "deleted"
-                    # like virtual interfaces.
-                    dhclient_aws.append(asyncio.ensure_future(
-                        self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
-                    ))
-            else:
-                # Destroy interfaces which are not in database
-
-                # Skip interfaces in database
-                if name in interfaces:
-                    continue
-
-                await self.middleware.call(
-                    'interface.unconfigure', iface, cloned_interfaces, sync_data.parent_interfaces
-                )
-
-        if wait_dhcp and dhclient_aws:
-            await asyncio.wait(dhclient_aws, timeout=30)
+                for name in autoconfigure
+            ]
+            if wait_dhcp:
+                await asyncio.wait(dhclient_aws, timeout=30)
 
         # first interface that is configured, we kill dhclient on _all_ interfaces
         # but dhclient could have added items to /etc/resolv.conf. To "fix" this
