@@ -66,5 +66,5 @@ class CatalogService(ConfigService):
         return await self._config_part.update_train_for_enterprise()
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     await middleware.call('network.general.register_activity', 'catalog', 'Catalog(s) information')

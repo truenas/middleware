@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import typing
+
 import middlewared.sqlalchemy as sa
 from middlewared.api.current import CatalogEntry, CatalogUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
 from middlewared.utils import ProductType
 
 from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL
+
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class CatalogModel(sa.Model):
@@ -69,3 +74,11 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
                         'preferred_trains': preferred_trains,
                     },
                 )
+
+
+async def enterprise_train_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
+    await middleware.call('catalog.update_train_for_enterprise')
+
+
+async def setup(middleware: Middleware) -> None:
+    middleware.register_hook('system.post_license_update', enterprise_train_update)
