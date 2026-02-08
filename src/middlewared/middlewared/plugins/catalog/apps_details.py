@@ -136,7 +136,7 @@ class CatalogService(Service):
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
         if catalog['label'] == OFFICIAL_LABEL:
-            recommended_apps = self.middleware.run_coroutine(retrieve_recommended_apps(self.context, False))
+            recommended_apps = self.context.run_coroutine(retrieve_recommended_apps(self.context, False))
         else:
             recommended_apps = {}
 
@@ -175,7 +175,9 @@ class CatalogService(Service):
     @private
     def app_version_details(self, version_path, questions_context=None):
         if not questions_context:
-            questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
+            questions_context = self.context.run_coroutine(
+                get_normalized_questions_context(self.context)
+            ).model_dump(by_alias=True)
         return get_app_version_details(version_path, questions_context)
 
     @private

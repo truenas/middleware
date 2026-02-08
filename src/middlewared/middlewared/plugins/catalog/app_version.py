@@ -39,10 +39,12 @@ class CatalogService(Service):
         elif app_name not in train_data[options['train']]:
             raise CallError(f'Unable to locate {app_name!r} app in {options["train"]!r} train')
 
-        questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
+        questions_context = self.context.run_coroutine(
+            get_normalized_questions_context(self.context)
+        ).model_dump(by_alias=True)
 
         app_details = get_app_details(app_location, train_data[options['train']][app_name], questions_context)
-        recommended_apps = self.middleware.run_coroutine(retrieve_recommended_apps(self.context))
+        recommended_apps = self.context.run_coroutine(retrieve_recommended_apps(self.context))
         if options['train'] in recommended_apps and app_name in recommended_apps[options['train']]:
             app_details['recommended'] = True
 
