@@ -6,6 +6,7 @@ from middlewared.api.current import (
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils.filter_list import filter_list
 
+from .apps_details_new import CATEGORIES_SET
 from .utils import IX_APP_NAME
 
 
@@ -63,7 +64,7 @@ class AppService(Service):
         """
         Retrieve list of valid categories which have associated applications.
         """
-        return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
+        return sorted(list(CATEGORIES_SET))
 
     @api_method(AppSimilarArgs, AppSimilarResult, roles=['CATALOG_READ'])
     def similar(self, app_name, train):

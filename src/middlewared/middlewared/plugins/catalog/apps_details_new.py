@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
-from typing import Any
+import typing
 
 from apps_ci.names import CACHED_CATALOG_FILE_NAME
 from apps_validation.json_schema_utils import CATALOG_JSON_SCHEMA
@@ -21,6 +21,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import ServiceContext
 
+from .apps_util import get_app_version_details
 from .utils import get_cache_key, OFFICIAL_LABEL
 
 
@@ -34,7 +35,7 @@ class NormalizedQuestions(BaseModel):
     general_config: SystemGeneralEntry = Field(alias='system.general.config')
     certificates: AppCertificateChoices
     ip_choices: AppIpChoices
-    gpu_choices: list[dict[str, Any]]
+    gpu_choices: list[dict[str, typing.Any]]
 
 
 def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
@@ -170,3 +171,12 @@ async def retrieve_recommended_apps(context: ServiceContext, cache: bool = True)
     data = retrieve_recommended_apps_from_catalog_reader((await context.call2(context.s.catalog.config)).location)
     await context.middleware.call('cache.put', cache_key, data)
     return data
+
+
+def app_version_details(
+    context: ServiceContext, version_path: str, questions_context: NormalizedQuestions | None = None
+) -> dict[str, typing.Any]:
+    if questions_context is None:
+        questions_context = context.run_coroutine(get_normalized_questions_context(context))
+
+    return get_app_version_details(version_path, questions_context.model_dump(by_alias=True))
