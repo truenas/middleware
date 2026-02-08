@@ -15,6 +15,7 @@ from middlewared.api import api_method
 from middlewared.api.current import CatalogAppsArgs, CatalogAppsResult
 from middlewared.service import private, Service
 
+from .apps_details_new import get_normalized_questions_context
 from .apps_util import get_app_version_details
 from .utils import get_cache_key, OFFICIAL_LABEL
 
@@ -171,7 +172,7 @@ class CatalogService(Service):
     @private
     def app_version_details(self, version_path, questions_context=None):
         if not questions_context:
-            questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+            questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
         return get_app_version_details(version_path, questions_context)
 
     @private
@@ -184,16 +185,6 @@ class CatalogService(Service):
         data = retrieve_recommended_apps(self.middleware.call_sync('catalog.config')['location'])
         self.middleware.call_sync('cache.put', cache_key, data)
         return data
-
-    @private
-    async def get_normalized_questions_context(self):
-        return {
-            'timezones': await self.middleware.call('system.general.timezone_choices'),
-            'system.general.config': await self.middleware.call('system.general.config'),
-            'certificates': await self.middleware.call('app.certificate_choices'),
-            'ip_choices': await self.middleware.call('app.ip_choices'),
-            'gpu_choices': await self.middleware.call('app.gpu_choices_internal'),
-        }
 
     @private
     def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
