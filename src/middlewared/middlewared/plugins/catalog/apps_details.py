@@ -181,9 +181,5 @@ class CatalogService(Service):
         return get_app_version_details(version_path, questions_context)
 
     @private
-    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
-        return retrieve_train_names(get_train_path(location), all_trains, trains_filter)
-
-    @private
     def retrieve_mapped_categories(self):
         return self.CATEGORIES_SET
