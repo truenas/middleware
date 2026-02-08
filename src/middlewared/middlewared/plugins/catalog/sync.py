@@ -5,6 +5,7 @@ from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils.network import check_internet_connectivity
 
+from .apps_details_new import retrieve_recommended_apps
 from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
 
@@ -53,7 +54,7 @@ class CatalogService(Service):
             job.set_progress(15, 'Reading catalog information')
             # Update feature map cache whenever official catalog is updated
             await self.middleware.call('catalog.get_feature_map', False)
-            await self.middleware.call('catalog.retrieve_recommended_apps', False)
+            await retrieve_recommended_apps(self.context, False)
 
             await self.middleware.call('catalog.apps', {
                 'cache': False,

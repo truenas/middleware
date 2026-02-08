@@ -7,7 +7,6 @@ from apps_validation.json_schema_utils import CATALOG_JSON_SCHEMA
 from catalog_reader.app_utils import get_app_details_base
 from catalog_reader.catalog import retrieve_train_names
 from catalog_reader.train_utils import get_train_path
-from catalog_reader.recommended_apps import retrieve_recommended_apps
 from datetime import datetime
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
@@ -15,7 +14,7 @@ from middlewared.api import api_method
 from middlewared.api.current import CatalogAppsArgs, CatalogAppsResult
 from middlewared.service import private, Service
 
-from .apps_details_new import get_normalized_questions_context
+from .apps_details_new import get_normalized_questions_context, retrieve_recommended_apps
 from .apps_util import get_app_version_details
 from .utils import get_cache_key, OFFICIAL_LABEL
 
@@ -136,7 +135,11 @@ class CatalogService(Service):
 
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
-        recommended_apps = self.retrieve_recommended_apps(False) if catalog['label'] == OFFICIAL_LABEL else {}
+        if catalog['label'] == OFFICIAL_LABEL:
+            recommended_apps = self.middleware.run_coroutine(retrieve_recommended_apps(self.context, False))
+        else:
+            recommended_apps = {}
+
         unhealthy_apps = set()
         for train in data:
             for app in data[train]:
@@ -174,17 +177,6 @@ class CatalogService(Service):
         if not questions_context:
             questions_context = self.middleware.run_coroutine(get_normalized_questions_context(self.context))
         return get_app_version_details(version_path, questions_context)
-
-    @private
-    def retrieve_recommended_apps(self, cache=True):
-        cache_key = 'recommended_apps'
-        if cache:
-            with contextlib.suppress(KeyError):
-                return self.middleware.call_sync('cache.get', cache_key)
-
-        data = retrieve_recommended_apps(self.middleware.call_sync('catalog.config')['location'])
-        self.middleware.call_sync('cache.put', cache_key, data)
-        return data
 
     @private
     def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
