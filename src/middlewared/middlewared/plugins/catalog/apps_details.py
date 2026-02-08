@@ -3,11 +3,6 @@ import json
 import os
 
 from apps_ci.names import CACHED_CATALOG_FILE_NAME
-from apps_validation.json_schema_utils import CATALOG_JSON_SCHEMA
-from catalog_reader.app_utils import get_app_details_base
-from catalog_reader.catalog import retrieve_train_names
-from catalog_reader.train_utils import get_train_path
-from datetime import datetime
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.api import api_method
@@ -112,65 +107,6 @@ class CatalogService(Service):
             self.middleware.call_sync('cache.put', get_cache_key(catalog['label']), trains, 90000)
 
         return trains
-
-    @private
-    def get_trains(self, catalog, options):
-        if os.path.exists(os.path.join(catalog['location'], CACHED_CATALOG_FILE_NAME)):
-            # If the data is malformed or something similar, let's read the data then from filesystem
-            try:
-                return self.retrieve_trains_data_from_json(catalog, options)
-            except (json.JSONDecodeError, JsonValidationError):
-                self.logger.error('Invalid catalog json file specified for %r catalog', catalog['id'])
-
-        return {}
-
-    @private
-    def retrieve_trains_data_from_json(self, catalog, options):
-        trains_to_traverse = retrieve_train_names(
-            get_train_path(catalog['location']), options['retrieve_all_trains'], options['trains']
-        )
-        with open(os.path.join(catalog['location'], CACHED_CATALOG_FILE_NAME), 'r') as f:
-            catalog_data = json.loads(f.read())
-            json_schema_validate(catalog_data, CATALOG_JSON_SCHEMA)
-
-            data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
-
-        if catalog['label'] == OFFICIAL_LABEL:
-            recommended_apps = self.context.run_coroutine(retrieve_recommended_apps(self.context, False))
-        else:
-            recommended_apps = {}
-
-        unhealthy_apps = set()
-        for train in data:
-            for app in data[train]:
-                # We normalize keys here, why this needs to be done is that specifying some keys which probably
-                # will be monotonous for an app dev to specify in each version of the app if he is not consuming them
-                # in his app. This way we can ensure that we have all the keys present for each app in each train
-                # from our consumers perspective.
-                data[train][app].update({
-                    **{k: v for k, v in get_app_details_base(False).items() if k not in data[train][app]},
-                    'location': os.path.join(get_train_path(catalog['location']), train, app),
-                })
-                if data[train][app]['last_update']:
-                    data[train][app]['last_update'] = datetime.strptime(
-                        data[train][app]['last_update'], '%Y-%m-%d %H:%M:%S'
-                    )
-
-                if data[train][app]['healthy'] is False:
-                    unhealthy_apps.add(f'{app} ({train} train)')
-                if train in recommended_apps and app in recommended_apps[train]:
-                    data[train][app]['recommended'] = True
-
-                self.CATEGORIES_SET.update(data[train][app].get('categories') or [])
-
-        if unhealthy_apps:
-            self.middleware.call_sync(
-                'alert.oneshot_create', 'CatalogNotHealthy', {
-                    'catalog': catalog['id'], 'apps': ', '.join(unhealthy_apps)
-                }
-            )
-
-        return data
 
     @private
     def app_version_details(self, version_path, questions_context=None):

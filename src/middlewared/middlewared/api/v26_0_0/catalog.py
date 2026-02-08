@@ -8,7 +8,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
     'CatalogTrainsResult', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs',
-    'CatalogAppsResult', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    'CatalogAppsResult', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps',
 ]
 
 
@@ -108,8 +108,7 @@ class CatalogAppInfo(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
-@single_argument_args('catalog_apps_options')
-class CatalogAppsArgs(BaseModel):
+class CatalogApps(BaseModel):
     cache: bool = True
     """Whether to use cached catalog data if available."""
     cache_only: bool = False
@@ -118,6 +117,10 @@ class CatalogAppsArgs(BaseModel):
     """Whether to retrieve apps from all available trains."""
     trains: list[NonEmptyString] = Field(default_factory=list)
     """Specific train names to retrieve apps from (empty array means all trains)."""
+
+
+class CatalogAppsArgs(BaseModel):
+    data: CatalogApps
 
 
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
