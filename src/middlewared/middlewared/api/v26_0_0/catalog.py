@@ -2,13 +2,14 @@ from datetime import datetime
 
 from pydantic import ConfigDict, Field, RootModel
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args, LongString
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, LongString
 
 
 __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
     'CatalogTrainsResult', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs',
-    'CatalogAppsResult', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps',
+    'CatalogAppsResult', 'CatalogAppsResponse', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    'CatalogApps',
 ]
 
 
@@ -127,8 +128,12 @@ class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
     pass
 
 
+class CatalogAppsResponse(RootModel[dict[str, CatalogTrainInfo]]):
+    pass
+
+
 class CatalogAppsResult(BaseModel):
-    result: dict[str, CatalogTrainInfo]
+    result: CatalogAppsResponse
     """Object mapping train names to their app information."""
 
 
