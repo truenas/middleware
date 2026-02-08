@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry, CatalogUpdate,
+    CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
+    CatalogTrainsArgs, CatalogTrainsResult, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult,
 )
 from middlewared.plugins.docker.state_utils import catalog_ds_path
@@ -64,6 +65,13 @@ class CatalogService(ConfigService):
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
         return apps(self.context, options)
+
+    @api_method(CatalogTrainsArgs, CatalogTrainsResult, check_annotations=True, roles=['CATALOG_READ'])
+    def trains(self) -> list[str]:
+        """
+        Retrieve available trains.
+        """
+        return list(apps(self.context, CatalogApps(cache=True, cache_only=True)).root)
 
     @private
     def extend(self, data, context):
