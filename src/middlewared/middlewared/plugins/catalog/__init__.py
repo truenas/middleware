@@ -3,11 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
-from middlewared.api.current import CatalogEntry, CatalogUpdate, CatalogUpdateArgs, CatalogUpdateResult
+from middlewared.api.current import (
+    CatalogApps, CatalogAppsArgs, CatalogAppsResult, CatalogEntry, CatalogUpdate,
+    CatalogUpdateArgs, CatalogUpdateResult,
+)
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, private
 
 from .config import CatalogConfigPart
+from .apps_details_new import apps
 from .state import dataset_mounted
 from .utils import TMP_IX_APPS_CATALOGS
 
@@ -40,6 +44,26 @@ class CatalogService(ConfigService):
         Update catalog preferences.
         """
         return await self._config_part.do_update(data)
+
+    @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
+    def apps(self, options: CatalogApps):
+        """
+        Retrieve apps details for `label` catalog.
+
+        `options.cache` is a boolean which when set will try to get apps details for `label` catalog from cache
+        if available.
+
+        `options.cache_only` is a boolean which when set will force usage of cache only for retrieving catalog
+        information. If the content for the catalog in question is not cached, no content would be returned. If
+        `options.cache` is unset, this attribute has no effect.
+
+        `options.retrieve_all_trains` is a boolean value which when set will retrieve information for all the trains
+        present in the catalog ( it is set by default ).
+
+        `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
+        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
+        """
+        return apps(self.context, options)
 
     @private
     def extend(self, data, context):
