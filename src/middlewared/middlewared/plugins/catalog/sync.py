@@ -5,7 +5,7 @@ from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils.network import check_internet_connectivity
 
-from .apps_details_new import retrieve_recommended_apps
+from .apps_details import retrieve_recommended_apps
 from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
 

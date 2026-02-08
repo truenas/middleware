@@ -3,7 +3,7 @@ from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
     ZFSResourceSnapshotRollbackQuery,
 )
-from middlewared.plugins.catalog.apps_details_new import app_version_details
+from middlewared.plugins.catalog.apps_details import app_version_details
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action

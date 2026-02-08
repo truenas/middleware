@@ -11,7 +11,7 @@ from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, private
 
 from .config import CatalogConfigPart
-from .apps_details_new import apps
+from .apps_details import apps
 from .state import dataset_mounted
 from .utils import TMP_IX_APPS_CATALOGS
 
