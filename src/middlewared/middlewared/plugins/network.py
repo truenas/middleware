@@ -1822,7 +1822,7 @@ def udevd_ifnet_hook(middleware, data):
         middleware.call_sync('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
         return
 
-    ignore = await middleware.call('interface.internal_interfaces')
+    ignore = middleware.call_sync('interface.internal_interfaces')
     if any((i.startswith(iface) for i in ignore)):
         return
 
