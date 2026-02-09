@@ -1,7 +1,7 @@
 import ctypes
 import errno
 
-from collections import namedtuple
+from typing import Any, Generator, Literal, NamedTuple, TypedDict, overload
 from .nss_common import get_nss_func, NssError, NssModule, NssOperation, NssReturnCode
 
 PASSWD_INIT_BUFLEN = 1024
@@ -19,12 +19,27 @@ class Passwd(ctypes.Structure):
     ]
 
 
-pwd_struct = namedtuple('struct_passwd', [
-    'pw_name', 'pw_uid', 'pw_gid', 'pw_gecos', 'pw_dir', 'pw_shell', 'source'
-])
+class pwd_struct(NamedTuple):
+    pw_name: str
+    pw_uid: int
+    pw_gid: int
+    pw_gecos: str
+    pw_dir: str
+    pw_shell: str
+    source: str
 
 
-def __parse_nss_result(result, as_dict, module_name):
+class PasswdDict(TypedDict):
+    pw_name: str
+    pw_uid: int
+    pw_gid: int
+    pw_gecos: str
+    pw_dir: str
+    pw_shell: str
+    source: str
+
+
+def __parse_nss_result(result: Passwd, as_dict: bool, module_name: str) -> pwd_struct | PasswdDict | None:
     try:
         name = result.pw_name.decode()
         gecos = result.pw_gecos.decode()
@@ -34,20 +49,20 @@ def __parse_nss_result(result, as_dict, module_name):
         return None
 
     if as_dict:
-        return {
-            'pw_name': name,
-            'pw_uid': result.pw_uid,
-            'pw_gid': result.pw_gid,
-            'pw_gecos': gecos,
-            'pw_dir': homedir,
-            'pw_shell': shell,
-            'source': module_name
-        }
+        return PasswdDict(
+            pw_name=name,
+            pw_uid=result.pw_uid,
+            pw_gid=result.pw_gid,
+            pw_gecos=gecos,
+            pw_dir=homedir,
+            pw_shell=shell,
+            source=module_name
+        )
 
     return pwd_struct(name, result.pw_uid, result.pw_gid, gecos, homedir, shell, module_name)
 
 
-def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
+def __getpwnam_r(name: str, result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getpwnam_r(const char *name,
                                              struct passwd *result,
@@ -66,13 +81,13 @@ def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
     ]
 
     err = ctypes.c_int()
-    name = name.encode('utf-8')
-    res = func(ctypes.c_char_p(name), result_p, buffer_p, buflen, ctypes.byref(err))
+    name_bytes = name.encode('utf-8')
+    res = func(ctypes.c_char_p(name_bytes), result_p, buffer_p, buflen, ctypes.byref(err))
 
     return (int(res), err.value, result_p)
 
 
-def __getpwuid_r(uid, result_p, buffer_p, buflen, nss_module):
+def __getpwuid_r(uid: int, result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getpwuid_r(uid_t uid,
                                              struct passwd *result,
@@ -95,7 +110,7 @@ def __getpwuid_r(uid, result_p, buffer_p, buflen, nss_module):
     return (int(res), err.value, result_p)
 
 
-def __getpwent_r(result_p, buffer_p, buflen, nss_module):
+def __getpwent_r(result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getpwent_r(struct passwd *result,
                                              char *buffer, size_t buflen,
@@ -116,7 +131,7 @@ def __getpwent_r(result_p, buffer_p, buflen, nss_module):
     return (int(res), err.value, result_p)
 
 
-def __setpwent(nss_module):
+def __setpwent(nss_module: NssModule) -> None:
     """
     enum nss_status _nss_#module#_setpwent(void)
     """
@@ -129,7 +144,7 @@ def __setpwent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.SETPWENT, res, nss_module)
 
 
-def __endpwent(nss_module):
+def __endpwent(nss_module: NssModule) -> None:
     """
     enum nss_status _nss_#module#_endpwent(void)
     """
@@ -142,7 +157,11 @@ def __endpwent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.ENDPWENT, res, nss_module)
 
 
-def __getpwent_impl(mod, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
+def __getpwent_impl(
+        mod: NssModule,
+        as_dict: bool,
+        buffer_len: int = PASSWD_INIT_BUFLEN
+) -> pwd_struct | PasswdDict | None:
     result = Passwd()
     buf = ctypes.create_string_buffer(buffer_len)
 
@@ -155,7 +174,7 @@ def __getpwent_impl(mod, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getpwent_impl(mod, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETPWENT, res, mod)
+            raise NssError(error, NssOperation.GETPWENT, NssReturnCode(res), mod)
 
     if res != NssReturnCode.SUCCESS:
         return None
@@ -163,7 +182,7 @@ def __getpwent_impl(mod, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getpwall_impl(module, as_dict):
+def __getpwall_impl(module: str, as_dict: bool) -> list[pwd_struct | PasswdDict]:
     mod = NssModule[module]
     __setpwent(mod)
     pwd_list = []
@@ -175,7 +194,12 @@ def __getpwall_impl(module, as_dict):
     return pwd_list
 
 
-def __getpwnam_impl(name, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
+def __getpwnam_impl(
+        name: str,
+        module: str,
+        as_dict: bool,
+        buffer_len: int = PASSWD_INIT_BUFLEN
+) -> pwd_struct | PasswdDict | None:
     mod = NssModule[module]
     result = Passwd()
     buf = ctypes.create_string_buffer(buffer_len)
@@ -189,7 +213,7 @@ def __getpwnam_impl(name, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getpwnam_impl(name, module, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETPWNAM, res, mod)
+            raise NssError(error, NssOperation.GETPWNAM, NssReturnCode(res), mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -197,7 +221,12 @@ def __getpwnam_impl(name, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getpwuid_impl(uid, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
+def __getpwuid_impl(
+        uid: int,
+        module: str,
+        as_dict: bool,
+        buffer_len: int = PASSWD_INIT_BUFLEN
+) -> pwd_struct | PasswdDict | None:
     mod = NssModule[module]
     result = Passwd()
     buf = ctypes.create_string_buffer(buffer_len)
@@ -211,7 +240,7 @@ def __getpwuid_impl(uid, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getpwuid_impl(uid, module, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETPWUID, res, mod)
+            raise NssError(error, NssOperation.GETPWUID, NssReturnCode(res), mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -219,7 +248,15 @@ def __getpwuid_impl(uid, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def getpwuid(uid, module=NssModule.ALL.name, as_dict=False):
+@overload
+def getpwuid(uid: int, module: str = ..., *, as_dict: Literal[True]) -> PasswdDict: ...
+
+
+@overload
+def getpwuid(uid: int, module: str = ..., as_dict: Literal[False] = False) -> pwd_struct: ...
+
+
+def getpwuid(uid: int, module: str = NssModule.ALL.name, as_dict: bool = False) -> pwd_struct | PasswdDict:
     """
     Return the password database entry for the given user by uid.
 
@@ -247,7 +284,15 @@ def getpwuid(uid, module=NssModule.ALL.name, as_dict=False):
     raise KeyError(f"getpwuid(): uid not found: '{uid}'")
 
 
-def getpwnam(name, module=NssModule.ALL.name, as_dict=False):
+@overload
+def getpwnam(name: str, module: str = ..., *, as_dict: Literal[True]) -> PasswdDict: ...
+
+
+@overload
+def getpwnam(name: str, module: str = ..., as_dict: Literal[False] = False) -> pwd_struct: ...
+
+
+def getpwnam(name: str, module: str = NssModule.ALL.name, as_dict: bool = False) -> pwd_struct | PasswdDict:
     """
     Return the password database entry for the given user by name.
 
@@ -276,7 +321,7 @@ def getpwnam(name, module=NssModule.ALL.name, as_dict=False):
     raise KeyError(f"getpwnam(): name not found: '{name}'")
 
 
-def getpwall(module=NssModule.ALL.name, as_dict=False):
+def getpwall(module: str = NssModule.ALL.name, as_dict: bool = False) -> dict[str, list[pwd_struct | PasswdDict]]:
     """
     Returns all password entries on server (similar to pwd.getpwall()).
 
@@ -306,7 +351,7 @@ def getpwall(module=NssModule.ALL.name, as_dict=False):
     return results
 
 
-def iterpw(module=NssModule.FILES.name, as_dict=False):
+def iterpw(module: str = NssModule.FILES.name, as_dict: bool = False) -> Generator[pwd_struct | PasswdDict, None, None]:
     """
     Generator that yields password entries on server
 
