@@ -9,6 +9,8 @@ import os
 import stat as statlib
 import truenas_os
 from enum import IntFlag, StrEnum
+from pathlib import Path
+from typing import TypedDict
 from .utils import path_in_ctldir
 
 
@@ -35,7 +37,15 @@ class StatxAttr(IntFlag):
 STATX_DEFAULT_MASK = truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE
 
 
-def statx_entry_impl(entry, dir_fd=truenas_os.AT_FDCWD, get_ctldir=True):
+class StatxEntryResult(TypedDict, total=False):
+    """Return type for statx_entry_impl"""
+    st: truenas_os.StatxResult
+    etype: str | None
+    attributes: list[str]
+    is_ctldir: bool  # Optional: only present if entry is absolute
+
+
+def statx_entry_impl(entry: Path, dir_fd: int = truenas_os.AT_FDCWD) -> StatxEntryResult | None:
     """
     This is a convenience wrapper around stat_x that was originally
     located within the filesystem plugin
@@ -55,12 +65,10 @@ def statx_entry_impl(entry, dir_fd=truenas_os.AT_FDCWD, get_ctldir=True):
     Warning: this method is blocking and includes data that is not JSON
     serializable
     """
-    out = {'st': None, 'etype': None, 'attributes': []}
-
     path = entry.as_posix()
     try:
         # This is equivalent to lstat() call
-        out['st'] = truenas_os.statx(
+        st = truenas_os.statx(
             path,
             dir_fd=dir_fd,
             flags=truenas_os.AT_SYMLINK_NOFOLLOW,
@@ -69,9 +77,12 @@ def statx_entry_impl(entry, dir_fd=truenas_os.AT_FDCWD, get_ctldir=True):
     except FileNotFoundError:
         return None
 
+    out = StatxEntryResult(st=st, etype=None, attributes=[])
+
     for attr in StatxAttr:
         if out['st'].stx_attributes & attr.value:
-            out['attributes'].append(attr.name)
+            if attr.name is not None:
+                out['attributes'].append(attr.name)
 
     if statlib.S_ISDIR(out['st'].stx_mode):
         out['etype'] = StatxEtype.DIRECTORY.name

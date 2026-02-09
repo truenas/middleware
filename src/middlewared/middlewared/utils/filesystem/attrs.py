@@ -53,7 +53,7 @@ SUPPORTED_ATTRS = (
 )
 
 
-def zfs_attributes_dump(attr_mask: int) -> list:
+def zfs_attributes_dump(attr_mask: int) -> list[str]:
     """
     Convert bitmask of supported ZFS attributes to list
     """
@@ -62,12 +62,13 @@ def zfs_attributes_dump(attr_mask: int) -> list:
     out = []
     for attr in ZFSAttr:
         if attr_mask & int(attr):
-            out.append(attr.name)
+            if attr.name is not None:
+                out.append(attr.name)
 
     return out
 
 
-def zfs_attributes_to_dict(attr_mask: int) -> dict:
+def zfs_attributes_to_dict(attr_mask: int) -> dict[str, bool]:
     """
     Convert bitmask of supported ZFS attributes to dict.
     """
@@ -75,12 +76,13 @@ def zfs_attributes_to_dict(attr_mask: int) -> dict:
 
     out = {}
     for attr in SUPPORTED_ATTRS:
-        out[attr.name.lower()] = bool(attr_mask & int(attr))
+        if attr.name is not None:
+            out[attr.name.lower()] = bool(attr_mask & int(attr))
 
     return out
 
 
-def dict_to_zfs_attributes_mask(attr_dict: dict) -> int:
+def dict_to_zfs_attributes_mask(attr_dict: dict[str, bool]) -> int:
     """
     Convert dictionary specification of ZFS attributes to bitmask
     for setting on file.
@@ -103,7 +105,7 @@ def dict_to_zfs_attributes_mask(attr_dict: dict) -> int:
     return int(attr_mask)
 
 
-def zfs_attributes_to_mask(attr_list: list) -> int:
+def zfs_attributes_to_mask(attr_list: list[str]) -> int:
     """
     Convert ZFS attribute list to bitmask for setting
     """
@@ -130,7 +132,7 @@ def fget_zfs_file_attributes(fd: int) -> int:
     if not fl:
         raise RuntimeError('Unable to retrieve zfs file attributes')
 
-    return fl[0]
+    return int(fl[0])
 
 
 def fset_zfs_file_attributes(fd: int, attr_mask: int) -> int:
@@ -146,7 +148,7 @@ def fset_zfs_file_attributes(fd: int, attr_mask: int) -> int:
     return fget_zfs_file_attributes(fd)
 
 
-def set_zfs_file_attributes_dict(path: str, attrs_in: dict) -> dict:
+def set_zfs_file_attributes_dict(path: str, attrs_in: dict[str, bool | None]) -> dict[str, bool]:
     """
     Set zfs file attributes on a given `path` by using the dictionary `attrs`
 

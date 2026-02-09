@@ -6,6 +6,7 @@
 #
 # NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_directory.py
 
+from __future__ import annotations
 
 import enum
 import errno
@@ -13,11 +14,13 @@ import os
 import pathlib
 
 from collections import namedtuple
+from collections.abc import Callable
+from typing import Any, Generic, Literal, TypeVar, overload
 from truenas_os import AT_EMPTY_PATH, statx, StatxResult
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import statx_entry_impl, STATX_DEFAULT_MASK
+from .stat_x import statx_entry_impl, StatxEntryResult, STATX_DEFAULT_MASK
 from .utils import path_in_ctldir
 
 
@@ -56,9 +59,11 @@ ALL_ATTRS = (
     DirectoryRequestMask.ZFS_ATTRS
 )
 
-dirent_struct = namedtuple('struct_dirent', [
+dirent_struct = namedtuple('dirent_struct', [
     'name', 'path', 'realpath', 'stat', 'etype', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
 ])
+
+T_DirEntry = TypeVar('T_DirEntry', dict[str, Any], dirent_struct)
 
 
 class DirectoryFd():
@@ -66,18 +71,18 @@ class DirectoryFd():
     Wrapper for O_DIRECTORY open of a file that allows for automatic closing
     when object is garbage collected.
     """
-    def __init__(self, path, dir_fd=None):
+    def __init__(self, path: str | pathlib.Path, dir_fd: int | None = None) -> None:
         self.__path = path
-        self.__dir_fd = None
+        self.__dir_fd: int | None = None
         self.__dir_fd = os.open(path, os.O_DIRECTORY, dir_fd=dir_fd)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<DirectoryFd path='{self.__path}' fileno={self.fileno}>"
 
-    def close(self):
+    def close(self) -> None:
         if self.__dir_fd is None:
             return
 
@@ -85,11 +90,11 @@ class DirectoryFd():
         self.__dir_fd = None
 
     @property
-    def fileno(self) -> int:
+    def fileno(self) -> int | None:
         return self.__dir_fd
 
 
-class DirectoryIterator():
+class DirectoryIterator(Generic[T_DirEntry]):
     """
     A simple wrapper around os.scandir that provides additional features
     such as statx output, xattr, and acl presence.
@@ -125,44 +130,80 @@ class DirectoryIterator():
        entries.
     """
 
-    def __init__(self, path, file_type=None, request_mask=None, dir_fd=None, as_dict=True):
-        self.__dir_fd = None
-        self.__path_iter = None
+    @overload
+    def __init__(
+            self: DirectoryIterator[dict[str, Any]],
+            path: str | pathlib.Path,
+            file_type: FileType | None = None,
+            request_mask: DirectoryRequestMask | None = None,
+            dir_fd: int | None = None,
+            *,
+            as_dict: Literal[True] = True,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+            self: DirectoryIterator[dirent_struct],
+            path: str | pathlib.Path,
+            file_type: FileType | None = None,
+            request_mask: DirectoryRequestMask | None = None,
+            dir_fd: int | None = None,
+            *,
+            as_dict: Literal[False],
+    ) -> None: ...
+
+    def __init__(
+            self,
+            path: str | pathlib.Path,
+            file_type: FileType | None = None,
+            request_mask: DirectoryRequestMask | None = None,
+            dir_fd: int | None = None,
+            as_dict: bool = True,
+    ) -> None:
+        self.__dir_fd: DirectoryFd | None = None
+        self.__path_iter: os._ScandirIterator[str] | None = None
         self.__path = path
 
         self.__dir_fd = DirectoryFd(path, dir_fd)
         self.__file_type = FileType(file_type).name if file_type else None
-        self.__path_iter = os.scandir(self.__dir_fd.fileno)
-        self.__stat = statx('', dir_fd=self.__dir_fd.fileno, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
+        dir_fd_num = self.__dir_fd.fileno
+        assert dir_fd_num is not None
+        self.__path_iter = os.scandir(dir_fd_num)
+        self.__stat = statx('', dir_fd=dir_fd_num, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
 
-        self.__return_fn = self.__return_dict if as_dict else self.__return_dirent
+        self.__as_dict = as_dict
+        self.__return_fn: Callable[..., T_DirEntry] = (
+            self.__return_dict if as_dict else self.__return_dirent  # type: ignore[assignment]
+        )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<DirectoryIterator path='{self.__path}' "
             f"file_type='{'ALL' if self.__file_type is None else self.__file_type}' "
             f"request_mask={self.__request_mask}>"
         )
 
-    def __iter__(self):
+    def __iter__(self) -> DirectoryIterator[T_DirEntry]:
         return self
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def __enter__(self):
+    def __enter__(self) -> DirectoryIterator[T_DirEntry]:
         return self
 
-    def __exit__(self, tp, value, traceback):
+    def __exit__(self, tp: object, value: object, traceback: object) -> None:
         # Since we know we're leaving scope of context manager
         # we can more aggressively close resources
         self.close(force=True)
 
-    def __check_dir_entry(self, dirent):
-        stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=self.dir_fd)
+    def __check_dir_entry(self, dirent: os.DirEntry[str]) -> StatxEntryResult | None:
+        dir_fd = self.dir_fd
+        assert dir_fd is not None
+        stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=dir_fd)
         if stat_info is None:
             # path doesn't exist anymore
             return None
@@ -175,7 +216,14 @@ class DirectoryIterator():
 
         return stat_info
 
-    def __return_dirent(self, dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir):
+    def __return_dirent(
+            self,
+            dirent: os.DirEntry[str],
+            st: StatxEntryResult,
+            realpath: str | None, xattrs: list[str] | None,
+            acl: bool | None, zfs_attrs: list[str] | None,
+            is_in_ctldir: bool | None,
+    ) -> dirent_struct:
         """
         More memory-efficient objects for case where dictionary isn't needed or desired.
         """
@@ -191,7 +239,16 @@ class DirectoryIterator():
             is_in_ctldir
         )
 
-    def __return_dict(self, dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir):
+    def __return_dict(
+            self,
+            dirent: os.DirEntry[str],
+            st: StatxEntryResult,
+            realpath: str | None,
+            xattrs: list[str] | None,
+            acl: bool | None,
+            zfs_attrs: list[str] | None,
+            is_in_ctldir: bool | None,
+    ) -> dict[str, Any]:
         stat = st['st']
         return {
             'name': dirent.name,
@@ -212,8 +269,9 @@ class DirectoryIterator():
             'zfs_attrs': zfs_attrs
         }
 
-    def __next__(self):
+    def __next__(self) -> T_DirEntry:
         # dirent here is os.DirEntry yielded from os.scandir()
+        assert self.__path_iter is not None
         dirent = next(self.__path_iter)
         while (st := self.__check_dir_entry(dirent)) is None:
             dirent = next(self.__path_iter)
@@ -277,7 +335,7 @@ class DirectoryIterator():
         return self.__return_fn(dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir)
 
     @property
-    def dir_fd(self) -> int:
+    def dir_fd(self) -> int | None:
         """
         File descriptor for O_DIRECTORY open for target directory.
         """
@@ -294,7 +352,7 @@ class DirectoryIterator():
     def stat(self) -> StatxResult:
         return self.__stat
 
-    def close(self, force=False) -> None:
+    def close(self, force: bool = False) -> None:
         try:
             if self.__path_iter is not None:
                 self.__path_iter.close()
@@ -312,10 +370,10 @@ class DirectoryIterator():
             self.__dir_fd = None
 
 
-def directory_is_empty(path):
+def directory_is_empty(path: str) -> bool:
     """
     This is a more memory-efficient way of determining whether a directory is empty
     than looking at os.listdir results.
     """
-    with DirectoryIterator(path, request_mask=0, as_dict=False) as d_iter:
+    with DirectoryIterator(path, request_mask=DirectoryRequestMask(0), as_dict=False) as d_iter:
         return not any(d_iter)
