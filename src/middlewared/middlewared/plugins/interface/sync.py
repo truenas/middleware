@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from middlewared.service import ServiceContext
-from truenas_pynetif.address.get_links import get_links
+from truenas_pynetif.address.get_links import get_link, get_links
 from truenas_pynetif.address.netlink import netlink_route
-from truenas_pynetif.netlink import LinkInfo
+from truenas_pynetif.netlink import DeviceNotFound, LinkInfo
 
 from .addresses import configure_addresses_impl
 from .bond import configure_bonds_impl
@@ -12,7 +12,7 @@ from .sync_data import SyncData
 from .unconfigure import unconfigure_impl
 from .vlan import configure_vlans_impl
 
-__all__ = ("sync_impl",)
+__all__ = ("sync_impl", "sync_interface_impl")
 
 _VIRTUAL_PREFIXES = ("br", "bond", "vlan")
 
@@ -116,3 +116,53 @@ def sync_impl(
                 unconfigure_impl(ctx, sock, links, name, configured, sync_data)
 
     return configured, run_dhcp, autoconfigure
+
+
+def sync_interface_impl(
+    ctx: ServiceContext, name: str, node: str | None = None
+) -> bool:
+    """Configure a single interface.
+
+    Args:
+        ctx: Service context
+        name: Interface name
+        node: controller position in an HA system (None otherwise)
+
+    Returns:
+        None
+    """
+    try:
+        data = ctx.middleware.call_sync(
+            "datastore.query",
+            "network.interfaces",
+            [("int_interface", "=", name)],
+            {"get": True},
+        )
+    except IndexError:
+        return
+
+    aliases = ctx.middleware.call_sync(
+        "datastore.query", "network.alias", [("alias_interface_id", "=", data["id"])]
+    )
+    if node is None:
+        node = ctx.middleware.call_sync("failover.node")
+
+    iface_config = {"interface": data, "aliases": aliases}
+    # Physical hot-plugged interfaces are never bond members
+    with netlink_route() as sock:
+        try:
+            link = get_link(sock, name)
+        except DeviceNotFound:
+            ctx.logger.warning("Interface %s not found", name)
+            return None
+
+        if configure_addresses_impl(
+            ctx,
+            sock,
+            {name: link},
+            name,
+            iface_config,
+            SyncData(interfaces={name: iface_config}, node=node),
+        ):
+            ctx.middleware.call_sync("interface.dhclient_start", name, False)
+    return None
