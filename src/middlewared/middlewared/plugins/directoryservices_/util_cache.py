@@ -267,6 +267,15 @@ class DSCacheFill:
             # Now iterate members of 100 for insertion
             for u in users:
                 user_data = u['nss']
+
+                # Apparently, some semi-broken AD deployments may return invalid
+                # name information for accounts and we can end up with empty string here.
+                # In this case we can't really do anything other than ignore it.
+                # Inserting entries with empty strings for names will break our API response
+                # validation
+                if not user_data.pw_name:
+                    continue
+
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
                     'uid': user_data.pw_uid,
@@ -315,6 +324,11 @@ class DSCacheFill:
         ):
             for g in groups:
                 group_data = g['nss']
+
+                # Handle some broken AD responses. See note above.
+                if not group_data.gr_name:
+                    continue
+
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + group_data.gr_gid,
                     'gid': group_data.gr_gid,
