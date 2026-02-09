@@ -13,6 +13,7 @@ from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 
 __all__ = [
+    "PoolAttachment",
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
     "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResult",
     "PoolDatasetEncryptionSummaryArgs", "PoolDatasetEncryptionSummaryResult", "PoolDatasetExportKeysArgs",

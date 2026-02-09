@@ -1,7 +1,13 @@
+from abc import ABCMeta
 import inspect
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
+    from middlewared.api.base.handler.model_provider import ModelFactory
 
 
-def service_config(klass, config):
+def service_config(klass: 'ServiceBase', config: dict):
     namespace = klass.__name__
     if namespace.endswith('Service'):
         namespace = namespace[:-7]
@@ -47,7 +53,7 @@ def service_config(klass, config):
     return type('Config', (), config_attrs)
 
 
-def get_service_name(klass):
+def get_service_name(klass: type) -> str:
     service_name = klass.__name__
     if service_name.endswith('Service'):
         service_name = service_name[:-7]
@@ -55,92 +61,119 @@ def get_service_name(klass):
     return service_name
 
 
-def validate_api_method_schema_class_names(klass):
+def _validate_schema_name(service_name: str, method_name: str, method, errors: list) -> None:
+    # Remove do_ prefix only for do_create, do_update, do_delete
+    if method_name in ('do_create', 'do_update', 'do_delete'):
+        method_name = method_name[3:]
+
+    # Convert snake_case to CamelCase
+    method_name = ''.join(word.capitalize() for word in method_name.split('_'))
+    expected_accepts = f'{service_name}{method_name}Args'
+    expected_returns = f'{service_name}{method_name}Result'
+
+    accepts_name = method.new_style_accepts.__name__
+    if accepts_name not in ('QueryArgs', expected_accepts):
+        errors.append(
+            f'API method {method!r} has incorrect accepts class name. '
+            f'Expected {expected_accepts}, got {accepts_name}.'
+        )
+
+    returns_name = method.new_style_returns.__name__
+    if returns_name != expected_returns:
+        errors.append(
+            f'API method {method!r} has incorrect returns class name. '
+            f'Expected {expected_returns}, got {returns_name}.'
+        )
+
+
+def validate_api_method_schema_class_names(klass: 'ServiceBase') -> None:
     """
     Validate that API method argument class names follow the required format:
-    - accepts class should be named f"{ServiceName}{MethodName}Args"
-    - returns class should be named f"{ServiceName}{MethodName}Result"
+    - accepts class should be named f'{ServiceName}{MethodName}Args'
+    - returns class should be named f'{ServiceName}{MethodName}Result'
     where MethodName is the method name converted from snake_case to CamelCase
     """
-    service_name = get_service_name(klass)
+    if klass._config.private:
+        return
+
+    base_names = frozenset(b.__name__ for b in (klass,) + klass.__bases__)
+    skip_methods = {'call2', 'call_sync2'}
+
+    # These methods are wrapped later in their respective metaclasses
+    if base_names & {'ConfigService', 'SystemServiceService'}:
+        skip_methods |= {'config', 'update'}
+    if base_names & {'CRUDService', 'SharingService', 'SharingTaskService', 'TaskPathService'}:
+        skip_methods |= {'query', 'get_instance', 'create', 'update', 'delete'}
 
     errors = []
+    service_name = get_service_name(klass)
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
         if (
-            name.startswith('_') or
-            name in {'call2', 'call_sync2'} or
-            getattr(method, '_private', False) or
-            klass._config.private
+            name.startswith('_')
+            or getattr(method, '_private', False)
+            or name in skip_methods
         ):
-            continue
-
-        methods_will_be_wrapped_later = {
-            "ConfigService": {"config", "update"},
-            "CRUDService": {"query", "get_instance", "create", "update", "delete"},
-        }
-        methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
-        methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
-        methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
-        methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
-        will_be_wrapped_later = False
-        for base in (klass,) + klass.__bases__:
-            if name in methods_will_be_wrapped_later.get(base.__name__, set()):
-                will_be_wrapped_later = True
-                break
-        if will_be_wrapped_later:
             continue
 
         if not hasattr(method, 'new_style_accepts'):
             raise RuntimeError(
-                f"API method {method!r} is public, but has no @api_method."
+                f'API method {method!r} is public, but has no @api_method.'
             )
 
-        # Remove do_ prefix only for do_create, do_update, do_delete
-        method_name = name[3:] if name in ('do_create', 'do_update', 'do_delete') else name
-
-        # Convert snake_case to CamelCase
-        method_name = ''.join(word.capitalize() for word in method_name.split('_'))
-        expected_accepts = f"{service_name}{method_name}Args"
-        expected_returns = f"{service_name}{method_name}Result"
-
-        if method.new_style_accepts.__name__ != 'QueryArgs':
-            if method.new_style_accepts.__name__ != expected_accepts:
-                errors.append(
-                    f"API method {method!r} has incorrect accepts class name. "
-                    f"Expected {expected_accepts}, got {method.new_style_accepts.__name__}."
-                )
-
-        if method.new_style_returns.__name__ != expected_returns:
-            errors.append(
-                f"API method {method!r} has incorrect returns class name. "
-                f"Expected {expected_returns}, got {method.new_style_returns.__name__}."
-            )
+        _validate_schema_name(service_name, name, method, errors)
 
     if errors:
         raise RuntimeError(
-            f"Service {klass.__name__} has API method schema class name validation errors:\n" + '\n'.join(errors)
+            f'Service {klass.__name__} has API method schema class name validation errors:\n' + '\n'.join(errors)
         )
 
 
-def validate_entry_schema_class_names(klass):
+def validate_entry_schema_class_names(klass: 'ServiceBase') -> None:
+    """
+    Validate that `Config.entry` model is named `{ServiceName}Entry`.
+
+    Example: UserService must have entry model named UserEntry.
+    """
+    model = klass._config.entry
+    if model is None:
+        return
+
     service_name = get_service_name(klass)
-    if klass._config.entry is not None:
-        model = klass._config.entry
-        model_name = f'{service_name}Entry'
-        if model.__name__ != model_name:
-            raise RuntimeError(
-                f"Service {klass.__name__} has incorrect entry schema class name. Expected {model_name}, "
-                f"got {model.__name__}."
-            )
+    model_name = f'{service_name}Entry'
+    if model.__name__ != model_name:
+        raise RuntimeError(
+            f'Service {klass.__name__} has incorrect entry schema class name. Expected {model_name}, '
+            f'got {model.__name__}.'
+        )
 
 
-def validate_event_schema_class_names(klass):
+def validate_event_schema_class_names(klass: 'ServiceBase') -> None:
+    """
+    Validate that event model class names follow the required naming convention.
+
+    Events are defined in `Config.events` with models for each event type (ADDED, CHANGED, REMOVED).
+    This function ensures model class names follow the pattern:
+
+    For events within the service namespace (event name starts with "{namespace}."):
+        {ServiceName}{EventSuffix}{EventType}Event
+        Example: AlertService with event "alert.list" expects:
+            - AlertListAddedEvent
+            - AlertListChangedEvent
+            - AlertListRemovedEvent
+
+    For events outside the service namespace:
+        {FullEventName}{EventType}Event (all parts capitalized)
+        Example: event "system.shutdown" expects SystemShutdownAddedEvent, etc.
+
+    Called by `ServiceBase.__new__` during service class creation. Raises RuntimeError
+    if any event models have incorrect names.
+    """
     service_name = get_service_name(klass)
+    prefix = f'{klass._config.namespace}.'
 
     errors = []
     for event in klass._config.events:
         for event_type, model in event.models.items():
-            prefix = f'{klass._config.namespace}.'
             if event.name.startswith(prefix):
                 model_name = service_name + ''.join(
                     word.capitalize()
@@ -155,17 +188,17 @@ def validate_event_schema_class_names(klass):
 
             if model.__name__ != model_name:
                 errors.append(
-                    f"Event {event.name!r} has incorrect {event_type} model class name. "
-                    f"Expected {model_name}, got {model.__name__}."
+                    f'Event {event.name!r} has incorrect {event_type} model class name. '
+                    f'Expected {model_name}, got {model.__name__}.'
                 )
 
     if errors:
         raise RuntimeError(
-            f"Service {klass.__name__} has API event schema class name validation errors:\n" + '\n'.join(errors)
+            f'Service {klass.__name__} has API event schema class name validation errors:\n' + '\n'.join(errors)
         )
 
 
-class ServiceBase(type):
+class ServiceBase(ABCMeta):
     """
     Metaclass of all services
 
@@ -174,7 +207,7 @@ class ServiceBase(type):
 
     class MyService(Service):
 
-        class Meta:
+        class Config:
             namespace = 'foo'
             private = False
 
@@ -195,8 +228,22 @@ class ServiceBase(type):
       - cli_namespace: replace namespace identifier for CLI
       - cli_private: if the service is not private, this flags whether or not the service is visible in the CLI
     """
+    _config: type
+    """Full `Config` class generated by `service_config`."""
+    _config_specified: dict
+    """All non-private attributes explicitly set in the `Config` class. Used by `CompoundService`."""
+    _register_models: list[tuple[type['BaseModel'], 'ModelFactory', str]]
+    """
+    List of models to register with API versions for backwards compatibility.
 
-    def __new__(cls, name, bases, attrs):
+    Each tuple contains `(model_class, model_factory, entry_model_name)`. This list is
+    populated by collecting `_register_models` from all methods decorated with `@api_method`,
+    as well as from CRUD/Config service metaclasses. During middleware initialization in
+    `main.py`, these are iterated over to call `api_version.register_model()` for each
+    API version, enabling version-specific model transformations.
+    """
+
+    def __new__(cls, name: str, bases: tuple[type, ...], attrs: dict):
         super_new = super(ServiceBase, cls).__new__
         if name == 'Service' and bases == ():
             return super_new(cls, name, bases, attrs)
@@ -212,11 +259,8 @@ class ServiceBase(type):
         klass._config = service_config(klass, klass._config_specified)
         klass._register_models = sum([getattr(getattr(klass, m), '_register_models', []) for m in dir(klass)], [])
 
-        # Validate API method argument class names
         validate_api_method_schema_class_names(klass)
-        # Validate entry schema class names
         validate_entry_schema_class_names(klass)
-        # Validate event schemas class names
         validate_event_schema_class_names(klass)
 
         return klass

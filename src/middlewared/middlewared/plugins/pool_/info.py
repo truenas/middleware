@@ -2,6 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    PoolAttachment,
     PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
     PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult,
     ZFSResourceQuery,
@@ -41,8 +42,8 @@ class PoolService(Service):
 
         return found
 
-    @api_method(PoolAttachmentsArgs, PoolAttachmentsResult, roles=['POOL_READ'])
-    async def attachments(self, oid):
+    @api_method(PoolAttachmentsArgs, PoolAttachmentsResult, roles=['POOL_READ'], check_annotations=True)
+    async def attachments(self, oid: int) -> list[PoolAttachment]:
         """
         Return a list of services dependent of this pool.
 
@@ -50,7 +51,7 @@ class PoolService(Service):
         share, asking for confirmation.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
+        return await self.call2(self.s.pool.dataset.attachments_with_path, pool['path'])
 
     @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):

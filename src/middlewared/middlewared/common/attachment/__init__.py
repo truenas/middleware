@@ -1,31 +1,40 @@
-from middlewared.service import ServiceChangeMixin, SharingTaskService
+from abc import ABC, abstractmethod
+from typing import ClassVar, Iterable, TYPE_CHECKING
+
+from middlewared.service import ServiceChangeMixin
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from middlewared.service.sharing_service import SharingTaskService
 
 
-class FSAttachmentDelegate(ServiceChangeMixin):
+class FSAttachmentDelegate(ABC, ServiceChangeMixin):
     """
     Represents something (share, automatic task, etc.) that needs to be enabled or disabled when dataset
     becomes available or unavailable (due to import/export, encryption/decryption, etc.)
     """
-
-    # Unique identifier among all FSAttachmentDelegate classes
-    name: str = NotImplementedError
-    # Human-readable name of item handled by this delegate (e.g. "NFS Share")
-    title: str = NotImplementedError
-    # If is not None, corresponding service will be restarted after performing tasks on item
+    name: str = NotImplemented
+    """Unique identifier among all FSAttachmentDelegate classes"""
+    title: str = NotImplemented
+    """Human-readable name of item handled by this delegate (e.g. "NFS Share")"""
     service: str | None = None
-    # attribute which is used to identify human readable description of an attachment
-    resource_name = 'name'
-    # Priority for ordering delegate operations
-    # On start: delegates are processed high-to-low priority (infrastructure starts first)
-    # On stop: delegates are processed low-to-high priority (dependent services stop first)
-    # Delegates with same priority maintain registration order among themselves.
-    priority = 0
+    """If is not None, corresponding service will be restarted after performing tasks on item"""
+    resource_name: str = 'name'
+    """Attribute which is used to identify human-readable description of an attachment"""
+    priority: int = 0
+    """Priority for ordering delegate operations:
 
-    def __init__(self, middleware):
+    - On start: delegates are processed high-to-low priority (infrastructure starts first)
+    - On stop: delegates are processed low-to-high priority (dependent services stop first)
+
+    Delegates with same priority maintain registration order among themselves.
+    """
+
+    def __init__(self, middleware: 'Middleware'):
         self.middleware = middleware
         self.logger = middleware.logger
 
-    async def query(self, path, enabled, options=None):
+    @abstractmethod
+    async def query(self, path: str, enabled: bool, options: dict | None = None) -> list[dict]:
         """
         Lists enabled/disabled items that depend on a dataset
         :param path: mountpoint of the dataset (e.g. "/mnt/tank/work")
@@ -35,7 +44,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def get_attachment_name(self, attachment) -> str:
+    async def get_attachment_name(self, attachment: object) -> str:
         """
         Returns human-readable description of item (e.g. it's path). Will be combined with `cls.title`.
         I.e. if you return here `/mnt/tank/work`, user will see: `NFS Share "/mnt/tank/work"`
@@ -48,7 +57,8 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         else:
             return getattr(attachment, self.resource_name)
 
-    async def delete(self, attachments):
+    @abstractmethod
+    async def delete(self, attachments: Iterable[dict]) -> None:
         """
         Permanently delete said items
         :param attachments: list of the items returned by `query`
@@ -56,7 +66,8 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def toggle(self, attachments, enabled):
+    @abstractmethod
+    async def toggle(self, attachments: Iterable[dict], enabled: bool) -> None:
         """
         Enable or disable said items
         :param attachments: list of the items returned by `query`
@@ -65,13 +76,13 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def start(self, attachments):
+    async def start(self, attachments: Iterable[dict]) -> None:
         pass
 
-    async def stop(self, attachments):
+    async def stop(self, attachments: Iterable[dict]) -> None:
         pass
 
-    async def disable(self, attachments):
+    async def disable(self, attachments: Iterable[dict]) -> None:
         """
         Disable said items, this is used when we export pool but do not want to delete
         related attachments
@@ -85,12 +96,11 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
     """
     Represents a share/task/resource which is affected if the dataset underlying is locked
     """
-
     # service object
-    service_class: type[SharingTaskService[E]] = NotImplementedError
+    service_class: type['SharingTaskService[E]'] = NotImplementedError
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, middleware: 'Middleware'):
+        super().__init__(middleware)
         self.enabled_field = self.service_class.enabled_field
         self.locked_field = self.service_class.locked_field
         self.path_field = self.service_class.path_field
@@ -100,14 +110,14 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         if not self.service:
             self.service = self.service_class._config.service
 
-    async def get_query_filters(self, enabled, options=None):
+    async def get_query_filters(self, enabled: bool, options: dict | None = None) -> list[list]:
         options = options or {}
         filters = [[self.enabled_field, '=', enabled]]
         if 'locked' in options:
             filters += [[self.locked_field, '=', options['locked']]]
         return filters
 
-    async def start_service(self):
+    async def start_service(self) -> None:
         if not (
             service_obj := await self.middleware.call('service.query', [['service', '=', self.service]])
         ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
@@ -115,7 +125,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
 
         await (await self.middleware.call('service.control', 'START', self.service)).wait(raise_error=True)
 
-    async def query(self, path, enabled, options=None):
+    async def query(self, path: str, enabled: bool, options: dict | None = None) -> list[dict]:
         results = []
         options = options or {}
         check_parent = options.get('check_parent', False)
@@ -127,7 +137,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
                 results.append(resource)
         return results
 
-    async def toggle(self, attachments, enabled):
+    async def toggle(self, attachments: Iterable[dict], enabled: bool) -> None:
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
@@ -147,7 +157,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         else:
             await self.stop(attachments)
 
-    async def delete(self, attachments):
+    async def delete(self, attachments: Iterable[dict]) -> None:
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
@@ -160,7 +170,8 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def restart_reload_services(self, attachments: list[E]) -> None:
+    @abstractmethod
+    async def restart_reload_services(self, attachments: Iterable[E]) -> None:
         """
         Common method for post delete/toggle which child classes can use to restart/reload services
         """
@@ -175,23 +186,24 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
 
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment_id)
 
-    async def is_child_of_path(self, resource, path, check_parent, exact_match):
-        # What this is essentially doing is testing if resource in question is a child of queried path
-        # and not vice versa. While this is desirable in most cases, there are cases we also want to see
-        # if path is a child of the resource in question. In that case we want the following:
-        # 1) When parent of configured path is specified we return true
-        # 2) When configured path itself is specified we return true
-        # 3) When path is child of configured path, we return true as the path
-        #    is being consumed by service in question
-        #
-        # In most cases we want to cater to above child cases with resource path and the path specified
-        # but there can also be cases when we just want to be sure if the resource path and the path to check
-        # are equal and for that case `exact_match` is used where we do not try to see if one is the child of
-        # another or vice versa. We just check if they are equal.
-        #
-        # `check_parent` flag when set can be used to check for the case when share path is the parent
-        # of the path to check.
+    async def is_child_of_path(self, resource: dict, path: str, check_parent: bool, exact_match: bool) -> bool:
+        """
+        What this is essentially doing is testing if resource in question is a child of queried path
+        and not vice versa. While this is desirable in most cases, there are cases we also want to see
+        if path is a child of the resource in question. In that case we want the following:
+        1) When parent of configured path is specified we return true
+        2) When configured path itself is specified we return true
+        3) When path is child of configured path, we return true as the path
+           is being consumed by service in question
 
+        In most cases we want to cater to above child cases with resource path and the path specified
+        but there can also be cases when we just want to be sure if the resource path and the path to check
+        are equal and for that case `exact_match` is used where we do not try to see if one is the child of
+        another or vice versa. We just check if they are equal.
+
+        `check_parent` flag, when set, can be used to check for the case when share path is the parent
+        of the path to check.
+        """
         share_path = await self.service_class.get_path_field(self.service_class, resource)
         if exact_match or share_path == path:
             return share_path == path
@@ -202,13 +214,13 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         else:
             return is_child
 
-    async def start(self, attachments):
+    async def start(self, attachments: Iterable[dict]) -> None:
         await self.start_service()
         for attachment in attachments:
             await self.remove_alert(attachment)
         if attachments:
             await self.restart_reload_services(attachments)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments: Iterable[dict]) -> None:
         if attachments:
             await self.restart_reload_services(attachments)
