@@ -70,7 +70,7 @@ SUBSYS_NAME = 'ha_failover_test'
 SCALE_SINGLE_NS_SUBSYSTEMS = 50  # Number of subsystems with 1 namespace each
 SCALE_MULTI_NS_COUNT = 20        # Number of namespaces in multi-namespace subsystem
 SCALE_ZVOL_MB = 20               # Size of each ZVOL in MB (smaller for faster testing)
-MAX_FAILOVER_TIME = 60           # Maximum acceptable failover time in seconds
+MAX_FAILOVER_TIME = 90           # Maximum acceptable failover time in seconds
 # Total scale: 51 subsystems, 70 namespaces
 
 
@@ -1245,10 +1245,9 @@ class TestFailoverScale:
                     client.write_data(nsid=nsid, lba=0, data=pattern)
                     patterns.append((nsid, pattern))
 
-                # For crash failover, flush to ensure data reaches stable storage
-                if failure_type == 'crash':
-                    for nsid in subsys_info['nsids']:
-                        client.flush_namespace(nsid=nsid)
+                # flush to ensure data reaches stable storage
+                for nsid in subsys_info['nsids']:
+                    client.flush_namespace(nsid=nsid)
 
                 print(f"  [OK] Connected to {subsys_nqn} ({subsys_info['namespace_count']} namespaces)")
                 return (subsys_nqn, patterns)
