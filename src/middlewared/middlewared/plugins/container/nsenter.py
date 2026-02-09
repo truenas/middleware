@@ -45,6 +45,7 @@ class ContainerService(Service):
         if caps:
             capsh.append(f"--caps={','.join(caps)}+ep")
 
-        return [
-            "/usr/bin/nsenter", "--target", f"{pid}", "--mount", "--uts", "--ipc", "--net", "--pid", "--user", "--",
-            "capsh"] + capsh + ["--", "-c"]
+        nsenter_cmd = ["/usr/bin/nsenter", "--target", f"{pid}", "--mount", "--uts", "--ipc", "--net", "--pid"]
+        if container["idmap"]:
+            nsenter_cmd.append("--user")
+        return nsenter_cmd + ["--", "capsh"] + capsh + ["--", "-c"]
