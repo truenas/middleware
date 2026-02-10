@@ -26,6 +26,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
 
+from .nsenter import CAPABILITIES
 from .utils import container_dataset
 
 RE_NAME = re.compile(r'^[a-zA-Z_0-9\-]+$')
@@ -163,6 +164,12 @@ class ContainerService(CRUDService):
                             break
 
                     data['idmap']['slice'] = idmap_slice
+
+        if invalid_caps := set(data['capabilities_state']) - CAPABILITIES:
+            verrors.add(
+                f'{schema_name}.capabilities_state',
+                f'Invalid capabilities: {", ".join(sorted(invalid_caps))}'
+            )
 
         # Validate cpuset format if provided
         if data.get('cpuset'):
