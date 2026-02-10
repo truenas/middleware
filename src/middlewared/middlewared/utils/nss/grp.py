@@ -1,7 +1,7 @@
 import ctypes
 import errno
 
-from collections import namedtuple
+from typing import Any, Generator, Literal, NamedTuple, TypedDict, overload
 from .nss_common import get_nss_func, NssError, NssModule, NssOperation, NssReturnCode
 
 GROUP_INIT_BUFLEN = 1024
@@ -16,14 +16,25 @@ class Group(ctypes.Structure):
     ]
 
 
-group_struct = namedtuple('struct_group', ['gr_name', 'gr_gid', 'gr_mem', 'source'])
+class group_struct(NamedTuple):
+    gr_name: str
+    gr_gid: int
+    gr_mem: list[str]
+    source: str
 
 
-def __parse_nss_result(result, as_dict, module_name):
+class GroupDict(TypedDict):
+    gr_name: str
+    gr_gid: int
+    gr_mem: list[str]
+    source: str
+
+
+def __parse_nss_result(result: Group, as_dict: bool, module_name: str) -> group_struct | GroupDict | None:
     if result.gr_name is None:
         return None
     name = result.gr_name.decode()
-    members = list()
+    members: list[str] = []
 
     i = 0
     while result.gr_mem[i]:
@@ -31,17 +42,17 @@ def __parse_nss_result(result, as_dict, module_name):
         i += 1
 
     if as_dict:
-        return {
-            'gr_name': name,
-            'gr_gid': result.gr_gid,
-            'gr_mem': members,
-            'source': module_name
-        }
+        return GroupDict(
+            gr_name=name,
+            gr_gid=result.gr_gid,
+            gr_mem=members,
+            source=module_name
+        )
 
     return group_struct(name, result.gr_gid, members, module_name)
 
 
-def __getgrnam_r(name, result_p, buffer_p, buflen, nss_module):
+def __getgrnam_r(name: str, result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getgrnam_r(const char *name,
                                              struct group *result,
@@ -60,13 +71,13 @@ def __getgrnam_r(name, result_p, buffer_p, buflen, nss_module):
     ]
 
     err = ctypes.c_int()
-    name = name.encode('utf-8')
-    res = func(ctypes.c_char_p(name), result_p, buffer_p, buflen, ctypes.byref(err))
+    name_bytes = name.encode('utf-8')
+    res = func(ctypes.c_char_p(name_bytes), result_p, buffer_p, buflen, ctypes.byref(err))
 
     return (int(res), err.value, result_p)
 
 
-def __getgrgid_r(gid, result_p, buffer_p, buflen, nss_module):
+def __getgrgid_r(gid: int, result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getgrgid_r(gid_t gid,
                                              struct group *result,
@@ -89,7 +100,7 @@ def __getgrgid_r(gid, result_p, buffer_p, buflen, nss_module):
     return (int(res), err.value, result_p)
 
 
-def __getgrent_r(result_p, buffer_p, buflen, nss_module):
+def __getgrent_r(result_p: Any, buffer_p: Any, buflen: int, nss_module: NssModule) -> tuple[int, int, Any]:
     """
     enum nss_status _nss_#module#_getgrent_r(struct group *result,
                                              char *buffer,
@@ -111,7 +122,7 @@ def __getgrent_r(result_p, buffer_p, buflen, nss_module):
     return (int(res), err.value, result_p)
 
 
-def __setgrent(nss_module):
+def __setgrent(nss_module: NssModule) -> None:
     """
     enum nss_status _nss_#module#_setgrent(void)
     """
@@ -124,7 +135,7 @@ def __setgrent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.SETGRENT, res, nss_module)
 
 
-def __endgrent(nss_module):
+def __endgrent(nss_module: NssModule) -> None:
     """
     enum nss_status _nss_#module#_endgrent(void)
     """
@@ -137,7 +148,11 @@ def __endgrent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.ENDGRENT, res, nss_module)
 
 
-def __getgrent_impl(mod, as_dict, buffer_len=GROUP_INIT_BUFLEN):
+def __getgrent_impl(
+        mod: NssModule,
+        as_dict: bool,
+        buffer_len: int = GROUP_INIT_BUFLEN
+) -> group_struct | GroupDict | None:
     result = Group()
 
     buf = ctypes.create_string_buffer(buffer_len)
@@ -152,7 +167,7 @@ def __getgrent_impl(mod, as_dict, buffer_len=GROUP_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getgrent_impl(mod, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETGRENT, res, mod)
+            raise NssError(error, NssOperation.GETGRENT, NssReturnCode(res), mod)
 
     if res != NssReturnCode.SUCCESS:
         return None
@@ -160,7 +175,7 @@ def __getgrent_impl(mod, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getgrall_impl(module, as_dict):
+def __getgrall_impl(module: str, as_dict: bool) -> list[group_struct | GroupDict]:
     mod = NssModule[module]
     __setgrent(mod)
     group_list = []
@@ -172,7 +187,12 @@ def __getgrall_impl(module, as_dict):
     return group_list
 
 
-def __getgrnam_impl(name, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
+def __getgrnam_impl(
+        name: str,
+        module: str,
+        as_dict: bool,
+        buffer_len: int = GROUP_INIT_BUFLEN
+) -> group_struct | GroupDict | None:
     mod = NssModule[module]
     result = Group()
 
@@ -187,7 +207,7 @@ def __getgrnam_impl(name, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getgrnam_impl(name, module, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETGRNAM, res, mod)
+            raise NssError(error, NssOperation.GETGRNAM, NssReturnCode(res), mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -195,7 +215,12 @@ def __getgrnam_impl(name, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getgrgid_impl(gid, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
+def __getgrgid_impl(
+        gid: int,
+        module: str,
+        as_dict: bool,
+        buffer_len: int = GROUP_INIT_BUFLEN
+) -> group_struct | GroupDict | None:
     mod = NssModule[module]
     result = Group()
     buf = ctypes.create_string_buffer(buffer_len)
@@ -209,7 +234,7 @@ def __getgrgid_impl(gid, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
             # Our buffer was too small, increment
             return __getgrgid_impl(gid, module, as_dict, buffer_len * 2)
         case _:
-            raise NssError(error, NssOperation.GETGRGID, res, mod)
+            raise NssError(error, NssOperation.GETGRGID, NssReturnCode(res), mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -217,7 +242,15 @@ def __getgrgid_impl(gid, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def getgrgid(gid, module=NssModule.ALL.name, as_dict=False):
+@overload
+def getgrgid(gid: int, module: str = ..., *, as_dict: Literal[True]) -> GroupDict: ...
+
+
+@overload
+def getgrgid(gid: int, module: str = ..., as_dict: Literal[False] = False) -> group_struct: ...
+
+
+def getgrgid(gid: int, module: str = NssModule.ALL.name, as_dict: bool = False) -> group_struct | GroupDict:
     """
     Return the group database entry for the given group by gid.
 
@@ -245,7 +278,15 @@ def getgrgid(gid, module=NssModule.ALL.name, as_dict=False):
     raise KeyError(f"getgrgid(): gid not found: '{gid}'")
 
 
-def getgrnam(name, module=NssModule.ALL.name, as_dict=False):
+@overload
+def getgrnam(name: str, module: str = ..., *, as_dict: Literal[True]) -> GroupDict: ...
+
+
+@overload
+def getgrnam(name: str, module: str = ..., as_dict: Literal[False] = False) -> group_struct: ...
+
+
+def getgrnam(name: str, module: str = NssModule.ALL.name, as_dict: bool = False) -> group_struct | GroupDict:
     """
     Return the group database entry for the given group by name.
 
@@ -273,7 +314,7 @@ def getgrnam(name, module=NssModule.ALL.name, as_dict=False):
     raise KeyError(f"getgrnam(): name not found: '{name}'")
 
 
-def getgrall(module=NssModule.ALL.name, as_dict=False):
+def getgrall(module: str = NssModule.ALL.name, as_dict: bool = False) -> dict[str, list[group_struct | GroupDict]]:
     """
     Returns all group entries on server (similar to grp.getgrall()).
 
@@ -303,7 +344,10 @@ def getgrall(module=NssModule.ALL.name, as_dict=False):
     return results
 
 
-def itergrp(module=NssModule.FILES.name, as_dict=False):
+def itergrp(
+        module: str = NssModule.FILES.name,
+        as_dict: bool = False
+) -> Generator[group_struct | GroupDict, None, None]:
     """
     Generator that yields group entries on server
 
