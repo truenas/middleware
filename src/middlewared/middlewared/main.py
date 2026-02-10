@@ -645,8 +645,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def unregister_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name: str, method: typing.Callable, *, blockable=False, inline=False, order=0,
-                      raise_error=False, sync=True):
+    def register_hook(
+        self,
+        name: str,
+        method: typing.Callable,
+        *,
+        blockable: bool = False,
+        inline: bool = False,
+        order: int = 0,
+        raise_error: bool = False,
+        sync: bool = True
+    ):
         """
         Register a hook under `name`.
 
@@ -660,7 +669,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             raise_error(bool): whether an exception should be raised if a sync hook call fails
             sync(bool): whether the method should be called in a sync way
         """
-
         for hook in self.__hooks[name]:
             if hook['blockable'] != blockable:
                 qualname = hook['method'].__qualname__

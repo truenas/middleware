@@ -30,7 +30,7 @@ from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
-from .interface.sync import sync_impl
+from .interface.sync import sync_impl, sync_interface_impl
 from .interface.sync_data import SyncData
 
 
@@ -1677,25 +1677,6 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def sync_interface(self, name, options=None):
-        options = options or {}
-
-        try:
-            data = await self.middleware.call(
-                'datastore.query', 'network.interfaces',
-                [('int_interface', '=', name)], {'get': True}
-            )
-        except IndexError:
-            return
-
-        aliases = await self.middleware.call(
-            'datastore.query', 'network.alias',
-            [('alias_interface_id', '=', data['id'])]
-        )
-
-        return await self.middleware.call('interface.configure', data, aliases, options)
-
-    @private
     async def run_dhcp(self, name, wait_dhcp):
         self.logger.debug('Starting DHCP for {}'.format(name))
         try:
@@ -1807,27 +1788,7 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     await middleware.call('core.environ_update', update)
 
 
-async def attach_interface(middleware, iface):
-    platform, node_position = await middleware.call('failover.ha_mode')
-    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
-        # The f-series platform is an AMD system. This means it's using a different
-        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
-        # operates subtly differently than the Intel driver. If the A controller
-        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
-        # When the A controller comes back online, the ntb0 interface is hot-plugged
-        # (i.e. added). For this platform we need to re-add the ip address.
-        await middleware.call('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
-        return
-
-    ignore = await middleware.call('interface.internal_interfaces')
-    if any((i.startswith(iface) for i in ignore)):
-        return
-
-    if await middleware.call('interface.sync_interface', iface):
-        await middleware.call('interface.run_dhcp', iface, False)
-
-
-async def udevd_ifnet_hook(middleware, data):
+def udevd_ifnet_hook(middleware, data):
     """
     This hook is called on udevd interface type events. It's purpose
     is to:
@@ -1844,12 +1805,28 @@ async def udevd_ifnet_hook(middleware, data):
     iface = data.get('INTERFACE')
     ignore = CLONED_PREFIXES + INTERNAL_INTERFACES
     if iface is None or iface.startswith(ignore):
-        # if the udevd event for the interface doesn't have a name (doubt this happens on SCALE)
-        # or if the interface startswith CLONED_PREFIXES, then we return since we only care about
-        # physical interfaces that are hot-plugged into the system.
+        # if the udevd event for the interface doesn't have a name
+        # or if the interface startswith CLONED_PREFIXES, then we
+        # return since we only care about physical interfaces that
+        # are hot-plugged into the system.
         return
 
-    await attach_interface(middleware, iface)
+    platform, node_position = middleware.call_sync('failover.ha_mode')
+    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
+        # The f-series platform is an AMD system. This means it's using a different
+        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
+        # operates subtly differently than the Intel driver. If the A controller
+        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
+        # When the A controller comes back online, the ntb0 interface is hot-plugged
+        # (i.e. added). For this platform we need to re-add the ip address.
+        middleware.call_sync('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
+        return
+
+    ignore = middleware.call_sync('interface.internal_interfaces')
+    if any((i.startswith(iface) for i in ignore)):
+        return
+
+    sync_interface_impl(middleware, iface, node_position)
 
 
 async def __activate_service_announcements(middleware, event_type, args):
@@ -1864,7 +1841,7 @@ async def setup(middleware):
     middleware.create_task(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
     middleware.event_subscribe('system.ready', __activate_service_announcements)
-    middleware.register_hook('udev.net', udevd_ifnet_hook)
+    middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.
