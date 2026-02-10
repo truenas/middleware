@@ -1,14 +1,13 @@
 import asyncio
+import typing
 from dataclasses import dataclass
 import errno
 import functools
+import json
 import logging
-
 import subprocess
 import time
-import json
-from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Sequence, TypeVar
+from typing import Any, Callable, Iterable, Sequence, TypeVar, overload
 
 from .prctl import die_with_parent
 from .threading import io_thread_pool_executor
@@ -60,6 +59,14 @@ def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list
 
 
 currently_running_subprocesses: set[str] = set()
+
+
+@typing.overload
+async def run(*args: Any, encoding: None = None, **kwargs: Any) -> subprocess.CompletedProcess[bytes]: ...
+
+
+@typing.overload
+async def run(*args: Any, encoding: str, **kwargs: Any) -> subprocess.CompletedProcess[str]: ...
 
 
 async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | str]:

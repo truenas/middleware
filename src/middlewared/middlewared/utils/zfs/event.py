@@ -149,11 +149,11 @@ def parse_zfs_event(data: dict[str, typing.Any]) -> ZfsEvent | None:
 
         case 'sysevent.fs.zfs.pool_import':
             if pool := data.get('pool'):
-                return ZfsPoolImportEvent(class_=event_class, pool=pool, guid=data.get('guid'))
+                return ZfsPoolImportEvent(class_=event_class, pool=pool, guid=data.get('guid') or '')
 
         case 'sysevent.fs.zfs.pool_destroy':
             if pool := data.get('pool'):
-                return ZfsPoolDestroyEvent(class_=event_class, pool=pool, guid=data.get('guid'))
+                return ZfsPoolDestroyEvent(class_=event_class, pool=pool, guid=data.get('guid') or '')
 
         case 'sysevent.fs.zfs.history_event':
             if (dsname := data.get('history_dsname')) and (internal_name := data.get('history_internal_name')):

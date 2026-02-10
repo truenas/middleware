@@ -60,9 +60,9 @@ class TempEntry:
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class DiskEntry:
-    name: str | None = None
+    name: str
     """The disk's name (i.e. 'sda')"""
-    devpath: str | None = None
+    devpath: str
     """The disk's /dev path (i.e. '/dev/sda')"""
 
     def __opener(

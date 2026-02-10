@@ -55,11 +55,11 @@ class WellKnownSid(enum.Enum):
     BUILTIN_GUESTS = 'S-1-5-32-546'
 
     @property
-    def sid(self):
+    def sid(self) -> str:
         return self.value
 
     @property
-    def valid_for_mapping(self):
+    def valid_for_mapping(self) -> bool:
         """
         Put full mapping in the winbind_idmap.tdb file so that all TrueNAS servers are consistent.
         There is special behavior for builtins and so they are also excluded from this list because
