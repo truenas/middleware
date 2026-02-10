@@ -645,7 +645,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def unregister_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self,
+    def register_hook(
+        self,
         name: str,
         method: typing.Callable,
         *,
