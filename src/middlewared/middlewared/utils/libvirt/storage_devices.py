@@ -1,9 +1,10 @@
 import errno
 import os
+from typing import Any
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.service_exception import ValidationErrors
 
@@ -18,14 +19,14 @@ class StorageDelegate(DeviceDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         identity = device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name'])
-        if not disk_uniqueness_integrity_check(device, instance):
+        if instance and not disk_uniqueness_integrity_check(device, instance):
             verrors.add(
                 'attributes.path',
                 f'{instance["name"]} has "{identity}" already configured'
@@ -36,10 +37,10 @@ class RAWDelegate(StorageDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
@@ -67,10 +68,10 @@ class DiskDelegate(StorageDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         create_zvol = device['attributes'].get('create_zvol')

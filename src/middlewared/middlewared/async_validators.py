@@ -1,11 +1,20 @@
+from __future__ import annotations
+
 import asyncio
 import ipaddress
 import socket
+from typing import TYPE_CHECKING
 
 from middlewared.utils.path import check_path_resides_within_volume_sync
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from middlewared.service_exception import ValidationErrors
 
-async def check_path_resides_within_volume(verrors, middleware, schema_name, path, must_be_dir=False):
+
+async def check_path_resides_within_volume(
+    verrors: ValidationErrors, middleware: Middleware, schema_name: str, path: str, must_be_dir: bool = False
+) -> bool:
     """
     async wrapper around synchronous general-purpose path validation function
     """
@@ -37,7 +46,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
     if not result:
         verrors.add(
             name,
-            'Couldn\'t resolve hostname'
+            "Couldn't resolve hostname"
         )
 
 

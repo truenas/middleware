@@ -1,6 +1,8 @@
+from typing import Any
+
 from urllib.parse import urlencode, quote_plus
 
-from truenas_pylibvirt.device import DisplayDevice
+from truenas_pylibvirt.device import Device, DisplayDevice
 
 from middlewared.service_exception import ValidationErrors
 
@@ -17,14 +19,14 @@ class DisplayDelegate(DeviceDelegate):
     ]
 
     @staticmethod
-    def web_uri(data: dict, host: str, protocol='http'):
+    def web_uri(data: dict[str, Any], host: str, protocol: str = 'http') -> str:
         path = DisplayDelegate.get_webui_info(data)['path'][1:]
         params = {'path': path, 'autoconnect': 1}
         get_params = f'?{urlencode(params, quote_via=quote_plus)}'
         return f'{protocol}://{host}/{path}spice_auto.html{get_params}'
 
     @staticmethod
-    def get_webui_info(data: dict) -> dict:
+    def get_webui_info(data: dict[str, Any]) -> dict[str, Any]:
         return {
             'id': data['id'],
             'path': f'{NGINX_PREFIX}/{data["id"]}/',
@@ -33,10 +35,10 @@ class DisplayDelegate(DeviceDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         if instance:
@@ -56,7 +58,7 @@ class DisplayDelegate(DeviceDelegate):
         if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
             verrors.add('attributes.bind', 'Requested bind address is not valid')
 
-    def validate_port_attrs(self, device, verrors=None):
+    def validate_port_attrs(self, device: dict[str, Any], verrors: ValidationErrors | None = None) -> ValidationErrors:
         verrors = ValidationErrors() if verrors is None else verrors
         display_devices_ports = self.middleware.call_sync(
             'vm.all_used_display_device_ports', [['id', '!=', device.get('id') or self.id]]
@@ -86,7 +88,8 @@ class DisplayDelegate(DeviceDelegate):
                 device['attributes'][key] = new_ports.pop(0)
         return verrors
 
-    def is_available(self, device: DisplayDevice):
+    def is_available(self, device: Device) -> bool:
+        assert isinstance(device, DisplayDevice)
         bind_ip_available = device.bind in self.middleware.call_sync('vm.device.bind_choices')
         return bind_ip_available and not self.validate_port_attrs({
             'attributes': device.__dict__

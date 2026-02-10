@@ -1,14 +1,16 @@
+from typing import Any
+
 from truenas_pylibvirt.device import (
     Device, CDROMDevice, DisplayDevice, DisplayDeviceType, FilesystemDevice, NICDevice, NICDeviceType, NICDeviceModel,
     PCIDevice, DiskStorageDevice, GPUDevice, RawStorageDevice, StorageDeviceType, StorageDeviceIoType, USBDevice
 )
 
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
+from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 
 from .delegate import DeviceDelegate
 
 
-def get_device(device: dict, delegate: DeviceDelegate) -> Device:
+def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
     match device['attributes']['dtype']:
         case 'DISK':
             return DiskStorageDevice(

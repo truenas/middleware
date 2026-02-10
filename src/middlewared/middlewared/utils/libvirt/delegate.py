@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from truenas_pylibvirt.device.delegate import DeviceDelegate as BaseDeviceDelegate
 
@@ -21,15 +21,15 @@ class DeviceDelegate(BaseDeviceDelegate, ABC):
 
     @property
     @abstractmethod
-    def schema_model(self):
+    def schema_model(self) -> type:
         ...
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         pass
