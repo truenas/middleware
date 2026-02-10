@@ -14,6 +14,7 @@ from middlewared.api.current import (
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, job, private, Service
 
+from .bridge import container_bridge_name, configure_container_bridge
 from .utils import container_instance_dataset_mountpoint
 
 
@@ -41,9 +42,7 @@ class ContainerService(Service):
     def start(self, id_):
         """Start container."""
         container = self.middleware.call_sync("container.get_instance", id_)
-
-        self.middleware.call_sync("container.configure_bridge")
-
+        configure_container_bridge(self)
         self.middleware.libvirt_domains_manager.containers.start(self.pylibvirt_container(container, True))
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
@@ -97,7 +96,7 @@ class ContainerService(Service):
             devices.append(
                 NICDevice(
                     type_=NICDeviceType.BRIDGE,
-                    source=self.middleware.call_sync("container.bridge_name"),
+                    source=container_bridge_name(self),
                     model=None,
                     mac=None,
                     trust_guest_rx_filters=False,
