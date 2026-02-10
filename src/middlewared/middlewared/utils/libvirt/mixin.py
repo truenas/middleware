@@ -1,24 +1,38 @@
+from __future__ import annotations
+
 import copy
+from logging import Logger
 import os
+import typing
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, private, ValidationErrors
 from middlewared.utils import run
+from middlewared.utils.types import AuditCallback
 
 from .storage_devices import IOTYPE_CHOICES
 from .utils import ACTIVE_STATES
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from .device_factory import DeviceFactory
+
 
 class DeviceMixin:
+    device_factory: DeviceFactory
+    get_instance: typing.Callable[[int], typing.Awaitable[dict[str, typing.Any]]]
+    logger: Logger
+    middleware: Middleware
+    _config: typing.Any
 
     @property
     def _service_type(self) -> str:
-        ...
+        raise NotImplementedError
 
-    async def _create_impl(self, data):
+    async def _create_impl(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         data = await self._validate_device(data, update=False)
         data = await self._update_device(data)
 
@@ -29,7 +43,12 @@ class DeviceMixin:
 
         return await self.get_instance(id_)
 
-    async def _update_impl(self, id_, data, audit_callback):
+    async def _update_impl(
+        self,
+        id_: int,
+        data: dict[str, typing.Any],
+        audit_callback: AuditCallback,
+    ) -> dict[str, typing.Any]:
         device = await self.get_instance(id_)
         new = copy.deepcopy(device)
         new_attrs = data.pop('attributes', {})
@@ -52,7 +71,12 @@ class DeviceMixin:
 
         return await self.get_instance(id_)
 
-    async def _delete_impl(self, id_, options, audit_callback):
+    async def _delete_impl(
+        self,
+        id_: int,
+        options: dict[str, typing.Any],
+        audit_callback: AuditCallback,
+    ) -> bool:
         device = await self.get_instance(id_)
         audit_callback(device["attributes"]["dtype"])
         status = (
@@ -70,9 +94,9 @@ class DeviceMixin:
             if not options['force']:
                 raise
 
-        return await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        return bool(await self.middleware.call('datastore.delete', self._config.datastore, id_))
 
-    async def __reorder_devices(self, id_, instance_id, order):
+    async def __reorder_devices(self, id_: int, instance_id: int, order: int | None) -> None:
         if order is None:
             return
         filters = [(self._service_type, '=', instance_id), ('id', '!=', id_)]
@@ -94,7 +118,7 @@ class DeviceMixin:
                 used_order.append(device['order'])
                 await self.middleware.call('datastore.update', self._config.datastore, device['id'], device)
 
-    async def _delete_resource(self, options, device):
+    async def _delete_resource(self, options: dict[str, typing.Any], device: dict[str, typing.Any]) -> None:
         device_dtype = device['attributes']['dtype']
         if options['zvol']:
             if device_dtype != 'DISK':
@@ -116,7 +140,11 @@ class DeviceMixin:
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
-    async def _update_device(self, data, old=None):
+    async def _update_device(
+        self,
+        data: dict[str, typing.Any],
+        old: dict[str, typing.Any] | None = None,
+    ) -> dict[str, typing.Any]:
         device_dtype = data['attributes']['dtype']
         if device_dtype == 'DISK':
             create_zvol = data['attributes'].pop('create_zvol', False)
@@ -144,11 +172,16 @@ class DeviceMixin:
             path = data['attributes']['path']
             cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
             if cp.returncode:
-                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr}')
+                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr.decode()}')
 
         return data
 
-    async def _validate_device(self, device, old=None, update=True):
+    async def _validate_device(
+        self,
+        device: dict[str, typing.Any],
+        old: dict[str, typing.Any] | None = None,
+        update: bool = True,
+    ) -> dict[str, typing.Any]:
         svc_instance = await self.middleware.call(f'{self._service_type}.get_instance', device[self._service_type])
         verrors = ValidationErrors()
         if old and old['attributes']['dtype'] != device['attributes']['dtype']:
@@ -159,7 +192,7 @@ class DeviceMixin:
         await self.middleware.run_in_thread(device_adapter.validate, old, svc_instance, update)
         return device
 
-    async def _disk_choices(self):
+    async def _disk_choices(self) -> dict[str, str]:
         out = {}
         zvols = await self.middleware.call2(
             self.middleware.services.zfs.resource.unlocked_zvols_fast, [
@@ -174,17 +207,22 @@ class DeviceMixin:
 
         return out
 
-    def _iotype_choices(self):
+    def _iotype_choices(self) -> dict[str, str]:
         return {key: key for key in IOTYPE_CHOICES}
 
     @private
-    async def validate_path_field(self, verrors, schema, path):
+    async def validate_path_field(self, verrors: ValidationErrors, schema: str, path: str) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
 
     @private
-    async def register_pylibvirt_device(self, device_key, device_klass, delegate_klass):
+    async def register_pylibvirt_device(
+        self,
+        device_key: str,
+        device_klass: typing.Any,
+        delegate_klass: typing.Any,
+    ) -> None:
         self.device_factory.register(device_key, device_klass, delegate_klass)
 
     @private
-    def get_pylibvirt_device(self, device_data):
+    def get_pylibvirt_device(self, device_data: dict[str, typing.Any]) -> typing.Any:
         return self.device_factory.get_device(device_data)

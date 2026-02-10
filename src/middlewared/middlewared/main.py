@@ -778,7 +778,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
-    async def run_in_thread(self, method, *args, **kwargs):
+    async def run_in_thread[**P, T](self, method: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
 
     def __init_procpool(self):

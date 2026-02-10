@@ -1,4 +1,6 @@
 # -*- coding=utf-8 -*-
+from __future__ import annotations
+
 import enum
 import logging
 import os
@@ -31,7 +33,7 @@ def path_location(path: str) -> FSLocation:
 
 
 def check_path_resides_within_volume_sync(
-    verrors: 'ValidationErrors', schema_name: str, path: str, vol_names: Iterable[str], must_be_dir: bool = False
+    verrors: ValidationErrors, schema_name: str, path: str, vol_names: Iterable[str], must_be_dir: bool = False
 ) -> None:
     """This provides basic validation of whether a given `path` is allowed to be exposed to end-users.
 

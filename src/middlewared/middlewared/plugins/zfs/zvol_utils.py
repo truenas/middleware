@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 __all__ = (
+    "zvol_name_to_path",
+    "zvol_path_to_name",
     "get_zvol_attachments_impl",
     "unlocked_zvols_fast_impl",
 )

@@ -1,5 +1,7 @@
 import os
 
+from typing import Any
+
 from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.path import check_path_resides_within_volume_sync
@@ -13,10 +15,10 @@ class CDROMDelegate(DeviceDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
@@ -25,7 +27,7 @@ class CDROMDelegate(DeviceDelegate):
                 i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
             ]
         )
-        if not disk_uniqueness_integrity_check(device, instance):
+        if instance and not disk_uniqueness_integrity_check(device, instance):
             verrors.add(
                 'attributes.path',
                 f'{instance["name"]} has {path!r} already configured'
