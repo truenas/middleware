@@ -2,6 +2,8 @@ import enum
 import errno
 import os
 
+from typing import Any
+
 from middlewared.service_exception import ValidationErrors
 
 ACL_UNDEFINED_ID = -1
@@ -19,7 +21,7 @@ ACL_XATTRS = frozenset([xat.value for xat in ACLXattr])
 ACCESS_ACL_XATTRS = frozenset([ACLXattr.POSIX_ACCESS.value, ACLXattr.ZFS_NATIVE.value])
 
 
-def acl_is_present(xat_list: list) -> bool:
+def acl_is_present(xat_list: list[str]) -> bool:
     """
     This method returns boolean value if ACL is present in a list of extended
     attribute names. Both POSIX1E and our NFSv4 ACL implementations omit the
@@ -144,7 +146,7 @@ POSIX_SPECIAL_ENTRIES = frozenset([
 ])
 
 
-def validate_nfs4_ace_full(ace_in: dict, schema_prefix: str, verrors: ValidationErrors) -> None:
+def validate_nfs4_ace_full(ace_in: dict[str, Any], schema_prefix: str, verrors: ValidationErrors) -> None:
     """
     This is further validation that occurs in filesystem.setacl. By this point
     ACE should have already passed through `validate_nfs4_ace_model` above.
@@ -196,7 +198,7 @@ def path_get_acltype(path: str) -> FS_ACL_Type:
         raise
 
 
-def normalize_acl_ids(setacl_data: dict) -> None:
+def normalize_acl_ids(setacl_data: dict[str, Any]) -> None:
     for key in ('uid', 'gid'):
         if setacl_data[key] is None:
             setacl_data[key] = ACL_UNDEFINED_ID

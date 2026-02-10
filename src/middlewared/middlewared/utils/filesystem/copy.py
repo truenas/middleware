@@ -4,6 +4,7 @@
 import enum
 import os
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from errno import EXDEV
 from middlewared.job import Job
@@ -118,7 +119,7 @@ class CopyTreeStats:
 
 def _copytree_conf_to_dir_request_mask(config: CopyTreeConfig) -> DirectoryRequestMask:
     """ internal method to convert CopyTreeConfig to a DirectoryRequestMask """
-    mask_out = 0
+    mask_out = DirectoryRequestMask(0)
     if config.flags.value & CopyFlags.XATTRS.value:
         mask_out |= DirectoryRequestMask.XATTRS
 
@@ -189,7 +190,7 @@ def copy_xattrs(src_fd: int, dst_fd: int, xattr_list: list[str]) -> None:
         setxattr(dst_fd, xat_name, xat_buf)
 
 
-def copy_file_userspace(src_fd: int, dst_fd: int) -> None:
+def copy_file_userspace(src_fd: int, dst_fd: int) -> int:
     """ wrapper around copyfilobj that uses file descriptors
 
     params:
@@ -212,7 +213,7 @@ def copy_file_userspace(src_fd: int, dst_fd: int) -> None:
     return fstat(dst_fd).st_size
 
 
-def copy_sendfile(src_fd: int, dst_fd: int) -> None:
+def copy_sendfile(src_fd: int, dst_fd: int) -> int:
     """ Optimized copy of file. First try sendfile and if that fails
     perform userspace copy of file.
 
@@ -239,7 +240,7 @@ def copy_sendfile(src_fd: int, dst_fd: int) -> None:
     return offset
 
 
-def clone_file(src_fd: int, dst_fd: int) -> None:
+def clone_file(src_fd: int, dst_fd: int) -> int:
     """ block cloning is implemented via copy_file_range
 
     params:
@@ -270,7 +271,7 @@ def clone_file(src_fd: int, dst_fd: int) -> None:
     return offset
 
 
-def clone_or_copy_file(src_fd: int, dst_fd: int) -> None:
+def clone_or_copy_file(src_fd: int, dst_fd: int) -> int:
     """ try to clone file via copy_file_range and if fails fall back to
     shutil.copyfileobj
 
@@ -301,7 +302,7 @@ def _do_mkfile(
     dst_fd: int,
     config: CopyTreeConfig,
     stats: CopyTreeStats,
-    c_fn: callable
+    c_fn: Callable[[int, int], int]
 ) -> None:
     """ Perform copy / clone of file, possibly preserving metadata.
 
@@ -400,14 +401,14 @@ def _do_mkdir(
 
 
 def _copytree_impl(
-    d_iter: DirectoryIterator,
+    d_iter: DirectoryIterator[dirent_struct],
     dst_str: str,
     dst_fd: int,
     depth: int,
     config: CopyTreeConfig,
     target_st: stat_result,
     stats: CopyTreeStats
-):
+) -> None:
     """ internal implementation of our copytree method
 
     NOTE: this method is called recursively for each directory to walk down tree.
@@ -532,9 +533,9 @@ def _copytree_impl(
 
             case StatxEtype.SYMLINK.name:
                 stats.symlinks += 1
-                dst = readlink(entry.name, dir_fd=d_iter.dir_fd)
+                link_dst = readlink(entry.name, dir_fd=d_iter.dir_fd)
                 try:
-                    symlink(dst, entry.name, dir_fd=dst_fd)
+                    symlink(link_dst, entry.name, dir_fd=dst_fd)
                 except FileExistsError:
                     if not config.exist_ok:
                         raise
@@ -597,17 +598,19 @@ def copytree(
     stats = CopyTreeStats()
 
     try:
-        with DirectoryIterator(src, request_mask=int(dir_request_mask), as_dict=False) as d_iter:
+        with DirectoryIterator(src, request_mask=dir_request_mask, as_dict=False) as d_iter:
             _copytree_impl(d_iter, dst, dst_fd, CLONETREE_ROOT_DEPTH, config, fstat(dst_fd), stats)
 
             # Ensure that root level directory also gets metadata copied
             try:
-                xattrs = listxattr(d_iter.dir_fd)
+                iter_dir_fd = d_iter.dir_fd
+                assert iter_dir_fd is not None
+                xattrs = listxattr(iter_dir_fd)
                 if config.flags.value & CopyFlags.PERMISSIONS.value:
-                    copy_permissions(d_iter.dir_fd, dst_fd, xattrs, d_iter.stat.stx_mode)
+                    copy_permissions(iter_dir_fd, dst_fd, xattrs, d_iter.stat.stx_mode)
 
                 if config.flags.value & CopyFlags.XATTRS.value:
-                    copy_xattrs(d_iter.dir_fd, dst_fd, xattrs)
+                    copy_xattrs(iter_dir_fd, dst_fd, xattrs)
 
                 if config.flags.value & CopyFlags.OWNER.value:
                     fchown(dst_fd, d_iter.stat.stx_uid, d_iter.stat.stx_gid)

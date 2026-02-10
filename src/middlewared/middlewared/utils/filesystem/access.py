@@ -1,9 +1,9 @@
 import errno
 import os
 import pathlib
+from typing import Any
 
 from middlewared.service_exception import CallError
-
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.user_context import set_user_context
 
@@ -12,7 +12,7 @@ from middlewared.utils.user_context import set_user_context
 SYNTHETIC_UID = 2 ** 32 - 2
 
 
-def check_access(path: str, check_perms: dict) -> bool:
+def check_access(path: str, check_perms: dict[str, bool | None]) -> bool:
     flag = True
     for perm, check_flag in filter(
         lambda v: v[0] is not None, (
@@ -27,7 +27,7 @@ def check_access(path: str, check_perms: dict) -> bool:
     return flag
 
 
-def get_user_details(id_type: str, xid: int) -> dict | None:
+def get_user_details(id_type: str, xid: int) -> dict[str, Any] | None:
     if id_type not in ['USER', 'GROUP']:
         raise CallError(f'{id_type}: invalid ID type. Must be "USER" or "GROUP"')
 
@@ -73,7 +73,7 @@ def get_user_details(id_type: str, xid: int) -> dict | None:
     }
 
 
-def check_acl_execute_impl(path: str, acl: list, uid: int, gid: int, path_must_exist: bool):
+def check_acl_execute_impl(path: str, acl: list[dict[str, Any]], uid: int, gid: int, path_must_exist: bool) -> None:
     """
     WARNING: The only way this method should be called is within context of `run_with_user_context`
     """
@@ -92,27 +92,33 @@ def check_acl_execute_impl(path: str, acl: list, uid: int, gid: int, path_must_e
         if entry.get('type', 'ALLOW') != 'ALLOW':
             continue
 
-        id_info = {'id_type': None, 'xid': entry['id']}
+        # Determine id_type and xid based on the tag
+        id_type: str | None = None
+        xid: int | None = None
 
         if entry['tag'] == 'GROUP':
-            id_info['id_type'] = 'GROUP'
+            id_type = 'GROUP'
+            xid = entry['id']
 
         elif entry['tag'] == 'USER':
-            id_info['id_type'] = 'USER'
+            id_type = 'USER'
+            xid = entry['id']
 
         elif entry['tag'] in ('owner@', 'USER_OBJ'):
-            id_info['id_type'] = 'USER'
-            id_info['xid'] = uid
+            id_type = 'USER'
+            xid = uid
 
         elif entry['tag'] in ('group@', 'GROUP_OBJ'):
-            id_info['id_type'] = 'GROUP'
-            id_info['xid'] = gid
+            id_type = 'GROUP'
+            xid = gid
 
-        if (user_details := get_user_details(**id_info)) is None:
-            # Account does not exist on server. Skip validation
+        # Skip if we couldn't determine the type or id
+        if id_type is None or xid is None:
             continue
 
-        id_type = id_info['id_type']
+        if (user_details := get_user_details(id_type, xid)) is None:
+            # Account does not exist on server. Skip validation
+            continue
 
         for idx, part in enumerate(parts):
             if idx < 2:
