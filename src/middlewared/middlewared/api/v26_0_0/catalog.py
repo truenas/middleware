@@ -7,9 +7,9 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 
 __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
-    'CatalogTrainsResult', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs',
-    'CatalogAppsResult', 'CatalogAppsResponse', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
-    'CatalogApps', 'CatalogAppVersionDetails',
+    'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo',
+    'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse', 'CatalogGetAppDetailsArgs',
+    'CatalogGetAppDetailsResult', 'CatalogApps', 'CatalogAppVersionDetails',
 ]
 
 
@@ -28,8 +28,10 @@ class CatalogUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
     """Updated array of preferred train names for the catalog."""
 
+
 class CatalogUpdateArgs(BaseModel):
     data: CatalogUpdate
+    """Catalog update parameters."""
 
 
 class CatalogUpdateResult(BaseModel):
@@ -41,8 +43,12 @@ class CatalogTrainsArgs(BaseModel):
     pass
 
 
+class CatalogTrainsResponse(RootModel[list[NonEmptyString]]):
+    pass
+
+
 class CatalogTrainsResult(BaseModel):
-    result: list[NonEmptyString]
+    result: CatalogTrainsResponse
     """Array of available train names in the catalog."""
 
 
@@ -122,6 +128,7 @@ class CatalogApps(BaseModel):
 
 class CatalogAppsArgs(BaseModel):
     data: CatalogApps
+    """Catalog apps query parameters."""
 
 
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):

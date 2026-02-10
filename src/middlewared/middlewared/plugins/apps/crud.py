@@ -144,9 +144,9 @@ class AppService(CRUDService):
         })
         version = data['version']
         if version == 'latest':
-            version = get_latest_version_from_app_versions(complete_app_details['versions'])
+            version = get_latest_version_from_app_versions(complete_app_details.versions)
 
-        if version not in complete_app_details['versions']:
+        if version not in complete_app_details.versions:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
@@ -155,7 +155,7 @@ class AppService(CRUDService):
     def create_internal(
         self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
     ):
-        app_version_details = complete_app_details['versions'][version]
+        app_version_details = complete_app_details.versions[version]
         self.context.run_coroutine(version_supported_error_check(self.context, app_version_details))
 
         app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))

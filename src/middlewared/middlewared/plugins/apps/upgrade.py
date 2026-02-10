@@ -226,9 +226,9 @@ class AppService(Service):
         )
         new_version = options['app_version']
         if new_version == 'latest':
-            new_version = get_latest_version_from_app_versions(app_details['versions'])
+            new_version = get_latest_version_from_app_versions(app_details.versions)
 
-        if new_version not in app_details['versions']:
+        if new_version not in app_details.versions:
             raise CallError(f'Unable to locate {new_version!r} version for {metadata["name"]!r} app')
 
         verrors = ValidationErrors()
@@ -238,9 +238,9 @@ class AppService(Service):
         verrors.check()
 
         return {
-            'specified_version': app_details['versions'][new_version],
-            'versions': app_details['versions'],
-            'latest_version': app_details['versions'][get_latest_version_from_app_versions(app_details['versions'])],
+            'specified_version': app_details.versions[new_version],
+            'versions': app_details.versions,
+            'latest_version': app_details.versions[get_latest_version_from_app_versions(app_details.versions)],
         }
 
     @private

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from middlewared.api import api_method
 from middlewared.api.current import (
     CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
-    CatalogTrainsArgs, CatalogTrainsResult, CatalogUpdate,
+    CatalogTrainsArgs, CatalogTrainsResult, CatalogTrainsResponse, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
     CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
     CatalogAppInfo,
@@ -14,10 +14,10 @@ from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, job, private
 
 from .config import CatalogConfigPart
-from .apps_details import apps
+from .apps_details import apps as apps_impl
 from .app_version import get_app_details
 from .state import dataset_mounted
-from .sync import sync
+from .sync import sync as sync_impl
 from .utils import TMP_IX_APPS_CATALOGS
 
 
@@ -67,7 +67,7 @@ class CatalogService(ConfigService):
         """
         Sync truenas catalog to retrieve latest changes from upstream.
         """
-        return await sync(self.context, job)
+        return await sync_impl(self.context, job)
 
     @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
     def apps(self, options: CatalogApps) -> CatalogAppsResponse:
@@ -87,14 +87,16 @@ class CatalogService(ConfigService):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
-        return apps(self.context, options)
+        return apps_impl(self.context, options)
 
     @api_method(CatalogTrainsArgs, CatalogTrainsResult, check_annotations=True, roles=['CATALOG_READ'])
-    def trains(self) -> list[str]:
+    def trains(self) -> CatalogTrainsResponse:
         """
         Retrieve available trains.
         """
-        return list(apps(self.context, CatalogApps(cache=True, cache_only=True)).root)
+        return CatalogTrainsResponse.model_validate(
+            list(apps_impl(self.context, CatalogApps(cache=True, cache_only=True)).root)
+        )
 
     @private
     def extend(self, data, context):

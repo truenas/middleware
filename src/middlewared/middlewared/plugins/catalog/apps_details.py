@@ -119,8 +119,6 @@ def get_trains(context: ServiceContext, catalog: CatalogEntry, options: CatalogA
 def retrieve_trains_data_from_json(
     context: ServiceContext, catalog: CatalogEntry, options: CatalogApps
 ) -> dict[str, dict]:
-    global CATEGORIES_SET
-
     trains_to_traverse = retrieve_train_names(
         get_train_path(catalog.location), options.retrieve_all_trains, options.trains
     )
