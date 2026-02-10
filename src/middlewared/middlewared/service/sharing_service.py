@@ -139,8 +139,15 @@ class SharingTaskService[E](CRUDService[E]):
     @pass_app(message_id=True)
     async def update(self, app, audit_callback, message_id, id_, data):
         rv = await super().update(app, audit_callback, message_id, id_, data)
-        if not rv[self.enabled_field] or not rv[self.locked_field]:
-            await self.remove_locked_alert(rv['id'])
+        if isinstance(rv, dict):
+            # FIXME: Remove all the cases where this is dict
+            enabled = rv[self.enabled_field]
+            locked = rv[self.locked_field]
+        else:
+            enabled = getattr(rv, self.enabled_field)
+            locked = getattr(rv, self.locked_field)
+        if not enabled or not locked:
+            await self.remove_locked_alert(id_)
         return rv
 
     update.audit_callback = True
@@ -159,7 +166,11 @@ class SharingService[E](SharingTaskService[E]):
 
     @private
     async def human_identifier(self, share_task):
-        return share_task['name']
+        if isinstance(share_task, dict):
+            # FIXME: Remove all the cases where this is dict
+            return share_task['name']
+        else:
+            return share_task.name
 
 
 class TaskPathService[E](SharingTaskService[E]):
