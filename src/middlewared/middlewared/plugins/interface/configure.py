@@ -1,5 +1,6 @@
 import ipaddress
 import re
+import subprocess
 
 from middlewared.service import private, Service
 from truenas_pynetif.address.constants import AddressFamily
@@ -86,7 +87,15 @@ class InterfaceService(Service):
             elif addr not in addrs_database:
                 # Remove addresses configured and not in database
                 self.logger.debug('%s: removing %s', name, addr)
-                iface.remove_address(addr)
+                try:
+                    iface.remove_address(addr)
+                except subprocess.CalledProcessError as e:
+                    # In HA systems with VRRP/keepalived, addresses may be removed by other processes
+                    # (e.g., keepalived, VRRP state transitions) between the time we query addresses
+                    # and attempt removal. This race condition can also occur during fresh installs
+                    # when installer-configured IPs conflict with user-configured IPs.
+                    # If the address is already gone, log and continue - this is expected behavior.
+                    self.logger.debug('%s: failed to remove %s (may already be removed): %s', name, addr, e)
             elif not data['int_dhcp']:
                 self.logger.debug('%s: removing possible valid_lft and preferred_lft on %s', name, addr)
                 iface.replace_address(addr)
