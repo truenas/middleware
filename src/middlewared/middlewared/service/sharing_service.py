@@ -1,7 +1,11 @@
+from abc import abstractmethod
+from typing import Iterable
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.path import FSLocation, path_location
 
+from . import ValidationErrors
 from .crud_service import CRUDService
 from .decorators import pass_app, private
 from ..service_exception import ValidationErrors
@@ -9,15 +13,15 @@ from ..service_exception import ValidationErrors
 
 class SharingTaskService[E](CRUDService[E]):
 
-    path_field = 'path'
-    allowed_path_types = [FSLocation.LOCAL]
-    enabled_field = 'enabled'
-    locked_field = 'locked'
+    path_field: str = 'path'
+    allowed_path_types: list[FSLocation] = [FSLocation.LOCAL]
+    enabled_field: str = 'enabled'
+    locked_field: str = 'locked'
     locked_alert_class: str = NotImplemented
     share_task_type: str = NotImplemented
 
     @private
-    async def get_path_field(self, data):
+    async def get_path_field(self, data: object) -> str:
         if isinstance(data, dict):
             # FIXME: Remove all the cases where this is dict
             return data[self.path_field]
@@ -25,7 +29,7 @@ class SharingTaskService[E](CRUDService[E]):
             return getattr(data, self.path_field)
 
     @private
-    async def sharing_task_extend_context(self, rows, extra):
+    async def sharing_task_extend_context(self, rows: Iterable[dict], extra: dict) -> dict:
         if extra.get('select'):
             select_fields = []
             for entry in extra['select']:
@@ -48,9 +52,11 @@ class SharingTaskService[E](CRUDService[E]):
         }
 
     @private
-    async def validate_external_path(self, verrors, name, path):
-        # Services with external paths must implement their own
-        # validation here because we can't predict what is required.
+    async def validate_external_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
+        """
+        Services with external paths must implement their own
+        validation here because we can't predict what is required.
+        """
         raise NotImplementedError
 
     @private
@@ -63,7 +69,14 @@ class SharingTaskService[E](CRUDService[E]):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
     @private
-    async def validate_path_field(self, data: dict | object, schema: str, verrors: ValidationErrors):
+    async def validate_path_field(self, data: object, schema: str, verrors: ValidationErrors) -> ValidationErrors:
+        """
+        Validate path field ensuring it's not a boot pool zvol, is an
+        allowed path type, and passes location-specific checks.
+
+        If the path can be an "EXTERNAL" path, `validate_external_path`
+        must be defined to call this method.
+        """
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -118,6 +131,7 @@ class SharingTaskService[E](CRUDService[E]):
             'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
         }
 
+    @abstractmethod
     @private
     async def human_identifier(self, share_task):
         raise NotImplementedError
@@ -158,7 +172,7 @@ class SharingService[E](SharingTaskService[E]):
     locked_alert_class = 'ShareLocked'
 
     @private
-    async def human_identifier(self, share_task):
+    async def human_identifier(self, share_task: dict) -> str:
         return share_task['name']
 
 
@@ -166,5 +180,5 @@ class TaskPathService[E](SharingTaskService[E]):
     locked_alert_class = 'TaskLocked'
 
     @private
-    async def human_identifier(self, share_task):
+    async def human_identifier(self, share_task: object) -> str:
         return await self.get_path_field(share_task)

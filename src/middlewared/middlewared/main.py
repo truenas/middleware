@@ -93,6 +93,7 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.pool_.dataset_attachments import PoolDatasetService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.webshare.config import WebshareService
@@ -150,6 +151,7 @@ class PoolServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.snapshottask = PeriodicSnapshotTaskService(middleware)
+        self.dataset = PoolDatasetService(middleware)
 
 
 class SharingServicesContainer(BaseServiceContainer):

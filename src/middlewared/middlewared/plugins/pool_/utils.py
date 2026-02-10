@@ -110,7 +110,7 @@ def _null(x):
     return x
 
 
-def dataset_mountpoint(dataset):
+def dataset_mountpoint(dataset: dict) -> str | None:
     if dataset['mountpoint'] == 'legacy':
         return None
 

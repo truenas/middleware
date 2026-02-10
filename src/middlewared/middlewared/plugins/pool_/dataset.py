@@ -203,9 +203,9 @@ class PoolDatasetService(CRUDService):
                     acltype = parent['acltype']['value']
 
                 if acltype and acltype != cur_dataset['acltype']['value']:
-                    ds_attachments = await self.middleware.call('pool.dataset.attachments', data['name'])
-                    if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
-                        share_names = [smb_share['attachments'] for smb_share in smb_attachments]
+                    ds_attachments = await self.call2(self.s.pool.dataset.attachments, data['name'])
+                    if smb_attachments := [share for share in ds_attachments if share.type == "SMB Share"]:
+                        share_names = [smb_share.attachments for smb_share in smb_attachments]
 
                         verrors.add(
                             f'{schema}.acltype',

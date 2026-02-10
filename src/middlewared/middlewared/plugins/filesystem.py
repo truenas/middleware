@@ -190,7 +190,14 @@ class FilesystemService(Service):
         return attrs.zfs_attributes_to_dict(attr_mask)
 
     @private
-    def is_child(self, child, parent):
+    def is_child(self, child: str | list[str], parent: str | list[str]) -> bool:
+        """
+        Check if child path is within parent path hierarchy using realpath resolution.
+
+        Supports checking multiple paths by passing lists. Returns True if any
+        child/parent combination matches after resolving symlinks.
+
+        """
         for to_check in product(
             child if isinstance(child, list) else [child],
             parent if isinstance(parent, list) else [parent]
