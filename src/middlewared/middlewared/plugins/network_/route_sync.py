@@ -20,6 +20,7 @@ __all__ = ("sync_impl",)
 def _get_default_ip4_route_from_dhcpcd(
     ctx: ServiceContext, sock: socket.socket
 ) -> str | None:
+    """Return the IPv4 gateway from DHCP leases, or None if not found."""
     ifaces = ctx.middleware.call_sync("datastore.query", "network.interfaces")
     if ifaces:
         ifaces = [i["int_interface"] for i in ifaces if i["int_dhcp"]]
@@ -44,6 +45,7 @@ def _get_default_ip4_route_from_dhcpcd(
 
 
 def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
+    """Synchronize the kernel's IPv4 default route with the database configuration."""
     cur_gw = get_default_route(sock, family=AddressFamily.INET)
     if not dbgw:
         # no gateway specified in db, so let's see if one
@@ -95,6 +97,7 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
 
 
 def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
+    """Synchronize the kernel's IPv6 default route with the database configuration."""
     cur_gw = get_default_route(sock, family=AddressFamily.INET6)
     dbgw_iface = None
     if dbgw and dbgw.count("%") == 1:
@@ -135,6 +138,7 @@ def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
 
 
 def sync_impl(ctx: ServiceContext):
+    """Synchronize the kernel's default routes with the database configuration."""
     # Generate dhcpcd.conf so we can ignore routes (def gw) option
     # in case there is one explicitly set in network config
     ctx.middleware.call_sync("etc.generate", "dhcpcd")

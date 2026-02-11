@@ -64,6 +64,7 @@ class RouteService(Service):
 
     @private
     def sync(self):
+        """Synchronize the kernel's default routes with the database configuration."""
         route_sync_impl(self)
 
     @private
