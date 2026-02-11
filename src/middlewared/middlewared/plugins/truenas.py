@@ -121,6 +121,6 @@ class TrueNASService(Service):
                 "criticality": "Inquiry",
                 "environment": "Production",
                 "name": "Automatic Alert",
-                "email": "auto-support@ixsystems.com",
+                "email": "auto-support@truenas.com",
                 "phone": "-",
             }))

@@ -24,7 +24,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
 from middlewared.utils.network import INTERNET_TIMEOUT
 
-ADDRESS = 'support-proxy.ixsystems.com'
+ADDRESS = 'support-proxy.truenas.com'
 
 
 async def post(url, data, timeout=INTERNET_TIMEOUT):

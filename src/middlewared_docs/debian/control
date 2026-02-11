@@ -1,7 +1,7 @@
 Source: middlewared-docs
 Section: admin
 Priority: optional
-Maintainer: iX Engineering <dev@ixsystems.net>
+Maintainer: TrueNAS Engineering <dev@truenas.com>
 Build-Depends: debhelper-compat (= 12),
                middlewared,
                python3-virtualenv
