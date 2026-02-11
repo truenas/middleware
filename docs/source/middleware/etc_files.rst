@@ -1,5 +1,5 @@
 etc_files Directory
-==================
+===================
 
 This directory contains template and script files used by the ``etc`` plugin to generate system configuration files in
 ``/etc/``. The plugin manages configuration file generation, change detection, and proper file permissions.
@@ -58,8 +58,8 @@ Render Context
 The ``render_ctx`` is a dictionary of pre-fetched API call results passed to templates and scripts. It is defined in the
 group configuration in ``etc.py``.
 
-Configuration
-^^^^^^^^^^^^^
+Render Context Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Groups in ``etc.py`` can specify a ``ctx`` list to pre-fetch data::
 
