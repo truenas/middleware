@@ -82,16 +82,16 @@ def atomic_replace(
         data: Binary data to write to the file.
         uid: User ID for file ownership (default: 0/root).
         gid: Group ID for file ownership (default: 0/root).
-        perms: File permissions as octal integer (default: 0o755).
+        perms: File permissions as octal integer (default: 0o644).
 
     Raises:
         OSError: If openat2/renameat2 operations fail.
-        ValueError: If paths contain symlinks (RESOLVE_NO_SYMLINKS).
 
     Note:
         - temp_path and target_file must be on the same filesystem for rename to work
-        - All file descriptors are properly closed even on error
         - If target_file doesn't exist, uses regular rename instead of exchange
+        - If an intermediate symlink is detected during openat2 call then errno
+          will be set to ELOOP
     """
     with atomic_write(target_file, "wb", tmppath=temp_path, uid=uid, gid=gid, perms=perms) as f:
         f.write(data)
@@ -118,20 +118,20 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
                  Must be on same filesystem as target and must not contain symlinks.
         uid: User ID for file ownership (default: 0/root).
         gid: Group ID for file ownership (default: 0/root).
-        perms: File permissions as octal integer (default: 0o755).
+        perms: File permissions as octal integer (default: 0o644).
 
     Yields:
         File-like object for writing
 
     Raises:
         OSError: If openat2/renameat2 operations fail.
-        ValueError: If paths contain symlinks (RESOLVE_NO_SYMLINKS) or mode is invalid.
 
     Note:
         - tmppath and target must be on the same filesystem for rename to work
         - If target doesn't exist, uses regular rename instead of exchange
         - File is only replaced if the context manager exits successfully
-        - All file descriptors are properly closed even on error
+        - If an intermediate symlink is detected during openat2 call then errno
+          will be set to ELOOP
 
     Example:
         with atomic_write('/etc/config.conf') as f:
