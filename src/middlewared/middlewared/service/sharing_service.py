@@ -1,4 +1,4 @@
-from typing import Protocol, TYPE_CHECKING
+from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -26,7 +26,7 @@ class SharingTaskService[E](CRUDService[E]):
     locked_field = 'locked'
     locked_alert_class: str = NotImplemented
     share_task_type: str = NotImplemented
-    path_resolution_filters = None
+    path_resolution_filters: Iterable[Sequence] | None = None
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
     table (including `datastore_prefix`)."""
