@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
-from typing import Any, TYPE_CHECKING
+from typing import Any, AsyncGenerator, TYPE_CHECKING
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
@@ -189,6 +190,38 @@ class TrueSearchService(Service):
             5,
             lambda: asyncio.create_task(self.configure())
         )
+
+    @contextlib.asynccontextmanager
+    async def remove_mountpoint(self, mountpoint: str | None) -> AsyncGenerator[None, None]:
+        """
+        Stop TrueSearch if it uses `mountpoint`. That will allow us to unmount it.
+        """
+        resume = False
+        try:
+            if mountpoint is not None:
+                running = await self.middleware.call('service.started', 'truesearch')
+                if running:
+                    stop = False
+                    for directory in await self.raw_directories():
+                        paths = {directory, mountpoint}
+                        if os.path.commonpath(list(paths)) in paths:
+                            self.logger.info(
+                                f"Deleting indexed directory {mountpoint!r}. Will stop TrueSearch service temporarily."
+                            )
+                            stop = True
+                            break
+
+                    if stop:
+                        await (
+                            await self.middleware.call('service.control', 'STOP', 'truesearch')
+                        ).wait(raise_error=True)
+                        resume = True
+
+            yield
+        finally:
+            if resume:
+                self.logger.info("Resuming TrueSearch service.")
+                await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
 
 
 async def post_license_update(

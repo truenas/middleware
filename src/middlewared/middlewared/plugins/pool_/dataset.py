@@ -881,6 +881,7 @@ class PoolDatasetService(CRUDService):
 
         dataset = await self.get_instance(id_)
         audit_callback(dataset['name'])
+
         if mountpoint := dataset_mountpoint(dataset):
             for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop'):
                 attachments = await delegate.query(mountpoint, True)
@@ -895,9 +896,11 @@ class PoolDatasetService(CRUDService):
                 'zfs_file_attributes': {'immutable': False}
             })
 
-        await self.call2(
-            self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
-        )
+        async with self.s.truesearch.remove_mountpoint(mountpoint):
+            await self.call2(
+                self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
+            )
+
         return True
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
