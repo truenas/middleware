@@ -11,6 +11,8 @@ import textwrap
 import libzfs
 import pyudev
 
+from middlewared.utils.io import atomic_write
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ def update_zfs_default(root, readonly_rootfs):
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
         readonly_rootfs.make_writeable()
-        with open(zfs_config_path, "w") as f:
+        with atomic_write(zfs_config_path, "w") as f:
             f.write(new_config)
 
         return True
@@ -103,13 +105,13 @@ def update_pci_module_files(root, config):
                 "etc/modules",
             ]
         ):
-            with open(path, "w"):
+            with atomic_write(path, "w", tmppath=get_path("etc")):
                 pass
 
         return
 
     for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
-        with open(path, "w") as f:
+        with atomic_write(path, "w", tmppath=get_path("etc")) as f:
             f.write(textwrap.dedent("""\
                 vfio
                 vfio_iommu_type1
@@ -117,17 +119,17 @@ def update_pci_module_files(root, config):
                 vfio_pci
             """))
 
-    with open(get_path("etc/modprobe.d/kvm.conf"), "w") as f:
+    with atomic_write(get_path("etc/modprobe.d/kvm.conf"), "w", tmppath=get_path("etc")) as f:
         f.write("options kvm ignore_msrs=1\n")
 
-    with open(get_path("etc/modprobe.d/nvidia.conf"), "w") as f:
+    with atomic_write(get_path("etc/modprobe.d/nvidia.conf"), "w", tmppath=get_path("etc")) as f:
         f.write(textwrap.dedent("""\
             softdep nouveau pre: vfio-pci
             softdep nvidia pre: vfio-pci
             softdep nvidia* pre: vfio-pci
         """))
 
-    with open(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), "w") as f:
+    with atomic_write(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), "w", tmppath=get_path("etc"), perms=0o755) as f:
         f.write(textwrap.dedent(f"""\
             #!/bin/sh
             PREREQS=""
@@ -137,7 +139,6 @@ def update_pci_module_files(root, config):
             done
             modprobe -i vfio-pci
         """))
-    os.chmod(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), 0o755)
 
 
 def update_pci_initramfs_config(root, readonly_rootfs, database):
@@ -153,7 +154,7 @@ def update_pci_initramfs_config(root, readonly_rootfs, database):
     if initramfs_config != original_config:
         readonly_rootfs.make_writeable()
 
-        with open(initramfs_config_path, "w") as f:
+        with atomic_write(initramfs_config_path, "w", tmppath=os.path.join(root, "boot")) as f:
             f.write(json.dumps(initramfs_config))
 
         update_pci_module_files(root, initramfs_config)
@@ -190,7 +191,7 @@ def update_zfs_module_config(root, readonly_rootfs, database):
         if config is None:
             os.unlink(config_path)
         else:
-            with open(config_path, "w") as f:
+            with atomic_write(config_path, "w", tmppath=os.path.join(root, "etc")) as f:
                 f.write(config)
 
         return True
