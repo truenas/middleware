@@ -221,7 +221,7 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
     if changes & FileChanges.CONTENTS:
         atomic_replace(
             temp_dir=parent_dir,
-            target_path=path,
+            target_file=path,
             perms=perms,
             data=data,
             uid=uid,
