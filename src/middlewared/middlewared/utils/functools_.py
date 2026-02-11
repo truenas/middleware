@@ -16,9 +16,7 @@ def cache[T](func: Callable[[Any], Awaitable[T]]) -> Callable[[Any], Awaitable[T
 def cache[T](func: Callable[[Any], T]) -> Callable[[Any], T]: ...
 
 
-def cache[T](
-    func: Callable[[Any], T] | Callable[[Any], Awaitable[T]]
-) -> Callable[[Any], T] | Callable[[Any], Awaitable[T]]:
+def cache[T](func: Callable[[Any], T]) -> Callable[[Any], T]:
     value: T | Undefined = undefined
 
     if asyncio.iscoroutinefunction(func):
@@ -33,9 +31,10 @@ def cache[T](
                     if value == undefined:
                         value = await func(self)
 
+            assert not isinstance(value, Undefined)
             return copy.deepcopy(value)
 
-        return wrapped_async
+        return wrapped_async  # type: ignore[return-value]
     else:
         threading_lock = threading.Lock()
 
@@ -48,6 +47,7 @@ def cache[T](
                     if value == undefined:
                         value = func(self)
 
+            assert not isinstance(value, Undefined)
             return copy.deepcopy(value)
 
         return wrapped_sync

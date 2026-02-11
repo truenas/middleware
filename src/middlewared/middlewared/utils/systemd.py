@@ -12,7 +12,7 @@ __all__ = ("SystemdNotifier",)
 class SystemdNotifier:
     _socket: socket.socket | None = dataclasses.field(init=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         addr = os.getenv("NOTIFY_SOCKET")
         if not addr:
             return

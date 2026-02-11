@@ -94,7 +94,7 @@ class RateLimit:
         """Sleep a random amount of seconds."""
         await sleep(round(uniform(RateLimitConfig.sleep_start, RateLimitConfig.sleep_end), 2))
 
-    async def cache_get(self) -> RL_CACHE:
+    async def cache_get(self) -> dict[str, RateLimitObject]:
         """Return the global cache."""
         return RL_CACHE
 
