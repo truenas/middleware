@@ -7,6 +7,7 @@ from middlewared.api.current import (
     CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
     CatalogTrainsArgs, CatalogTrainsResult, CatalogTrainsResponse, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
+    CatalogSyncedArgs, CatalogSyncedResult,
     CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
     CatalogAppInfo,
 )
@@ -17,7 +18,7 @@ from .config import CatalogConfigPart
 from .apps_details import apps as apps_impl
 from .app_version import get_app_details
 from .state import dataset_mounted
-from .sync import sync as sync_impl
+from .sync import get_synced_state, sync as sync_impl
 from .utils import TMP_IX_APPS_CATALOGS
 
 
@@ -68,6 +69,13 @@ class CatalogService(ConfigService):
         Sync truenas catalog to retrieve latest changes from upstream.
         """
         return await sync_impl(self.context, job)
+
+    @api_method(CatalogSyncedArgs, CatalogSyncedResult, check_annotations=True, roles=['CATALOG_READ'])
+    def synced(self) -> bool:
+        """
+        Return whether the catalog has been synced at least once.
+        """
+        return get_synced_state()
 
     @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
     def apps(self, options: CatalogApps) -> CatalogAppsResponse:

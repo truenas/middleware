@@ -29,6 +29,11 @@ class SyncState:
 sync_state = SyncState()
 
 
+def get_synced_state() -> bool:
+    """Return whether the catalog has been synced at least once."""
+    return sync_state.synced
+
+
 async def update_popularity_cache(context: ServiceContext) -> None:
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         try:
