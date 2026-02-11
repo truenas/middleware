@@ -85,5 +85,5 @@ if __name__ == "__main__":
     # We are specifying the temppath as "/etc/default" rather than "/etc/default/grub.d"
     # because we want to avoid any situation in which unintended files can exist in
     # the grub.d directory.
-    with atomic_write(TRUENAS_GRUB_CFG, "w", temppath="/etc/default") as f:
+    with atomic_write(TRUENAS_GRUB_CFG, "w", tmppath="/etc/default") as f:
         f.write("\n".join(config))

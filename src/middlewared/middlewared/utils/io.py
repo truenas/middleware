@@ -6,7 +6,7 @@ import fcntl
 import os
 import enum
 import stat
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 
 ID_MAX = 2 ** 32 - 2
@@ -101,7 +101,7 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
 
         dst_dirfd = os.open(dst_dirpath, os.O_DIRECTORY)
         try:
-            src_dirfd = os.openat(tmpdir, os.O_DIRECTORY)
+            src_dirfd = os.open(tmpdir, os.O_DIRECTORY)
             try:
 
                 temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
