@@ -7,9 +7,9 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 
 __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
-    'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo',
-    'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse', 'CatalogGetAppDetailsArgs',
-    'CatalogGetAppDetailsResult', 'CatalogApps', 'CatalogAppVersionDetails',
+    'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogSyncedArgs',
+    'CatalogSyncedResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse',
+    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps', 'CatalogAppVersionDetails',
 ]
 
 
@@ -59,6 +59,15 @@ class CatalogSyncArgs(BaseModel):
 class CatalogSyncResult(BaseModel):
     result: None
     """Returns `null` when the catalog sync is successfully completed."""
+
+
+class CatalogSyncedArgs(BaseModel):
+    pass
+
+
+class CatalogSyncedResult(BaseModel):
+    result: bool
+    """Returns `true` if the catalog has been synced at least once, `false` otherwise."""
 
 
 class Maintainer(BaseModel):
