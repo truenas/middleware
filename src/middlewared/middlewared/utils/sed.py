@@ -27,11 +27,11 @@ class UnlockResponses:
     """Does the disk support SED or is it valid?"""
     locked: bool | None = None
     """Is the disk locked?"""
-    query_cp: CompletedProcess | None = None
+    query_cp: CompletedProcess[bytes] | None = None
     """The response of `sedutil-cli --query` command"""
-    unlock_cp: CompletedProcess | None = None
+    unlock_cp: CompletedProcess[bytes] | None = None
     """The response of `sedutil-cli --setLockingRange` command."""
-    mbr_cp: CompletedProcess | None = None
+    mbr_cp: CompletedProcess[bytes] | None = None
     """The response of `sedutil-cli --setMBREnable off` command."""
 
 
@@ -42,7 +42,7 @@ class SEDStatus(StrEnum):
     UNLOCKED = 'UNLOCKED'
 
 
-async def run_sedutil_cmd(cmd: list[str]) -> CompletedProcess:
+async def run_sedutil_cmd(cmd: list[str]) -> CompletedProcess[bytes]:
     return await run(["sedutil-cli"] + cmd, check=False)
 
 
@@ -104,7 +104,7 @@ async def is_sed_disk(disk_name: str) -> bool:
     return b' SED ' in cp.stdout
 
 
-async def sed_status(disk_name: str):
+async def sed_status(disk_name: str) -> SEDStatus:
     # FIXME: We have a problem here, enterprise drives still show lockingenabled = Y
     #  after a revert with psid which means we will not be flagging them properly
     #  and that needs to be handled

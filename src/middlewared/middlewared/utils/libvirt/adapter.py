@@ -14,12 +14,13 @@ if TYPE_CHECKING:
 class DeviceAdapter:
 
     def __init__(self, device: Device, data: dict[str, Any]):
-        self.pylibvirt_device: Device = device
-        self.delegate: DeviceDelegate = device.device_delegate
+        self.pylibvirt_device = device
+        assert isinstance(device.device_delegate, DeviceDelegate)
+        self.delegate = device.device_delegate
         self.data = data
 
     def validate(
-        self, old: dict | None = None, instance: dict | None = None, update: bool = True
+        self, old: dict[str, Any] | None = None, instance: dict[str, Any] | None = None, update: bool = True
     ) -> None:
         verrors = ValidationErrors()
 

@@ -15,7 +15,7 @@ SECTOR_SIZE = 512
 logger = logging.getLogger(__name__)
 
 
-def get_disk_stats() -> dict[str, dict]:
+def get_disk_stats() -> dict[str, dict[str, float | int]]:
     available_disks = {d.name: d for d in iterate_disks()}
     stats = {}
     with contextlib.suppress(IOError):

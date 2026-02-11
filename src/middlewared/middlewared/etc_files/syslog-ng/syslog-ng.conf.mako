@@ -1,5 +1,5 @@
 <%
-from middlewared.logger import DEFAULT_SYSLOG_PATH, NGINX_LOG_PATH, ALL_LOG_FILES
+from middlewared.logger import DEFAULT_SYSLOG_PATH, NGINX_LOG_PATH, ALL_LOG_FILES, AUDIT_HANDLER_LOGFILE
 
 logger = middleware.logger
 
@@ -139,11 +139,21 @@ log {
 # Middlewared-related log files
 ########################
 % for tnlog in ALL_LOG_FILES:
+% if tnlog.name != 'audit_handler':
 log {
   source(s_tn_middleware); filter(f_${tnlog.name or "middleware"});
   destination { file(${tnlog.logfile} ${syslog_template}); };
 };
+% endif
 % endfor
+
+# Audit handler logs from journal (via /dev/log)
+# This captures audit_handler messages that log to journald instead of middleware.sock
+# Note: audit_handler is excluded from the s_tn_middleware loop above to avoid duplicate destinations
+log {
+  source(s_src); filter(f_audit_handler);
+  destination { file("${AUDIT_HANDLER_LOGFILE}" ${syslog_template}); };
+};
 
 log { source(s_src); filter(f_auth); destination(d_auth); };
 log { source(s_src); filter(f_cron); destination(d_cron); };

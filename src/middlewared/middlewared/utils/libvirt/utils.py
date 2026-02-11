@@ -1,4 +1,6 @@
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
+from typing import Any
+
+from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 
 
 ACTIVE_STATES = ('RUNNING', 'SUSPENDED')
@@ -6,14 +8,14 @@ LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
 
 
-def translate_device(dev: dict) -> str:
+def translate_device(dev: dict[str, Any]) -> str:
     # A disk should have a path configured at all times, when that is not the case, that means `dtype` is DISK
     # and end user wants to create a new zvol in this case.
     zvol_name = zvol_name_to_path(dev['attributes']['zvol_name']) if dev['attributes'].get('zvol_name') else None
-    return dev['attributes'].get('path') or zvol_name or dev['attributes']['target']
+    return str(dev['attributes'].get('path') or zvol_name or dev['attributes']['target'])
 
 
-def disk_uniqueness_integrity_check(device: dict, instance: dict):
+def disk_uniqueness_integrity_check(device: dict[str, Any], instance: dict[str, Any]) -> bool:
     # This ensures that the disk is not already present for `instance`
     disks = [
         d for d in instance['devices']
@@ -33,6 +35,6 @@ def disk_uniqueness_integrity_check(device: dict, instance: dict):
         return not bool(disks[0].get('id'))
     elif device.get('id'):
         # The device is being updated, if the device is same as we have in db, we are okay
-        return device['id'] == disks[0].get('id')
+        return bool(device['id'] == disks[0].get('id'))
     else:
         return False

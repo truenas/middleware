@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import ipaddress
-from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
@@ -27,12 +26,12 @@ from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
-from truenas_pynetif.netif import list_interfaces
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
-from .interface.sync import sync_impl
+from .interface.sync import sync_impl, sync_interface_impl
+from .interface.sync_data import SyncData
 
 
 class NetworkAliasModel(sa.Model):
@@ -1589,47 +1588,44 @@ class InterfaceService(CRUDService):
         # already been updated by the time this is called.
         await self.middleware.call('vrrpthread.set_non_crit_ifaces')
 
-        interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
-        cloned_interfaces = []
-        parent_interfaces = []
-        sync_interface_opts = defaultdict(dict)
+        # Query all database data once
+        interfaces_db = await self.middleware.call('datastore.query', 'network.interfaces')
+        aliases_db = await self.middleware.call('datastore.query', 'network.alias')
+        bonds_db = await self.middleware.call('datastore.query', 'network.lagginterface')
+        bond_members_db = await self.middleware.call('datastore.query', 'network.lagginterfacemembers')
+        vlans_db = await self.middleware.call('datastore.query', 'network.vlan')
+        bridges_db = await self.middleware.call('datastore.query', 'network.bridge')
+        node = await self.middleware.call('failover.node')
 
-        # We create "virtual" interfaces first (bond, vlan, bridge, etc)
-        cloned_interfaces.extend(
-            await self.middleware.run_in_thread(
-                sync_impl,
-                self,
-                parent_interfaces,
-                sync_interface_opts
-            )
+        # Build combined interface configs
+        iface_configs = {}
+        for iface in interfaces_db:
+            name = iface['int_interface']
+            iface_configs[name] = {
+                "interface": iface,
+                "aliases": [a for a in aliases_db if a['alias_interface_id'] == iface['id']],
+            }
+
+        sync_data = SyncData(
+            interfaces=iface_configs,
+            bonds=bonds_db,
+            bond_members=bond_members_db,
+            vlans=vlans_db,
+            bridges=bridges_db,
+            node=node,
         )
 
-        run_dhcp = []
-        # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
-        for interface in sorted(
-            filter(lambda i: not i.startswith('br'), interfaces), key=lambda x: x.startswith('vlan')
-        ):
-            try:
-                if await self.sync_interface(interface, sync_interface_opts[interface]):
-                    run_dhcp.append(interface)
-            except Exception:
-                self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
+        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
 
-        bridges = await self.middleware.call('datastore.query', 'network.bridge')
-        for bridge in bridges:
-            name = bridge['interface']['int_interface']
+        # Configure all interfaces and unconfigure those not in database
+        cloned_interfaces, run_dhcp, autoconfigure = await self.middleware.run_in_thread(
+            sync_impl,
+            self,
+            sync_data,
+            internal_interfaces,
+        )
 
-            cloned_interfaces.append(name)
-            try:
-                await self.middleware.call('interface.bridge_setup', bridge, parent_interfaces)
-            except Exception:
-                self.logger.error('Error setting up bridge %s', name, exc_info=True)
-            # Finally sync bridge interface
-            try:
-                if await self.sync_interface(name, sync_interface_opts[name]):
-                    run_dhcp.append(name)
-            except Exception:
-                self.logger.error('Failed to configure {}'.format(name), exc_info=True)
+        interfaces = list(iface_configs.keys())
 
         if run_dhcp:
             # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
@@ -1641,44 +1637,16 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
-        dhclient_aws = []
-        for name, iface in await self.middleware.run_in_thread(lambda: list(list_interfaces().items())):
-            # Skip internal interfaces
-            if name.startswith(internal_interfaces):
-                continue
-
-            # If there are no interfaces configured we start DHCP on all
-            if not interfaces:
-                # We should unconfigure interface first before doing autoconfigure. This can be required for cases
-                # like the following:
-                # 1) Fresh install with system having 1 NIC
-                # 2) Configure static ip for the NIC leaving dhcp checked
-                # 3) Test changes
-                # 4) Do not save changes and wait for time out
-                # 5) Rollback happens where the only nic is removed from database
-                # 6) If we don't unconfigure, autoconfigure is called which is supposed to start dhclient on the
-                #    interface. However this will result in the static ip still being set.
-                await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
-                if not iface.cloned:
-                    # We only autoconfigure physical interfaces because if this is a delete operation
-                    # and the interface that was deleted is a "clone" (vlan/br/bond) interface, then
-                    # interface.unconfigure deletes the interface. Physical interfaces can't be "deleted"
-                    # like virtual interfaces.
-                    dhclient_aws.append(asyncio.ensure_future(
-                        self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
-                    ))
-            else:
-                # Destroy interfaces which are not in database
-
-                # Skip interfaces in database
-                if name in interfaces:
-                    continue
-
-                await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
-
-        if wait_dhcp and dhclient_aws:
-            await asyncio.wait(dhclient_aws, timeout=30)
+        # Autoconfigure interfaces (start DHCP on physical interfaces with no database config)
+        if autoconfigure:
+            dhclient_aws = [
+                asyncio.ensure_future(
+                    self.middleware.call('interface.dhclient_start', name, wait_dhcp)
+                )
+                for name in autoconfigure
+            ]
+            if wait_dhcp:
+                await asyncio.wait(dhclient_aws, timeout=30)
 
         # first interface that is configured, we kill dhclient on _all_ interfaces
         # but dhclient could have added items to /etc/resolv.conf. To "fix" this
@@ -1707,25 +1675,6 @@ class InterfaceService(CRUDService):
             self.logger.info('Failed to sync routes', exc_info=True)
 
         await self.middleware.call_hook('interface.post_sync')
-
-    @private
-    async def sync_interface(self, name, options=None):
-        options = options or {}
-
-        try:
-            data = await self.middleware.call(
-                'datastore.query', 'network.interfaces',
-                [('int_interface', '=', name)], {'get': True}
-            )
-        except IndexError:
-            return
-
-        aliases = await self.middleware.call(
-            'datastore.query', 'network.alias',
-            [('alias_interface_id', '=', data['id'])]
-        )
-
-        return await self.middleware.call('interface.configure', data, aliases, options)
 
     @private
     async def run_dhcp(self, name, wait_dhcp):
@@ -1839,27 +1788,7 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     await middleware.call('core.environ_update', update)
 
 
-async def attach_interface(middleware, iface):
-    platform, node_position = await middleware.call('failover.ha_mode')
-    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
-        # The f-series platform is an AMD system. This means it's using a different
-        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
-        # operates subtly differently than the Intel driver. If the A controller
-        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
-        # When the A controller comes back online, the ntb0 interface is hot-plugged
-        # (i.e. added). For this platform we need to re-add the ip address.
-        await middleware.call('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
-        return
-
-    ignore = await middleware.call('interface.internal_interfaces')
-    if any((i.startswith(iface) for i in ignore)):
-        return
-
-    if await middleware.call('interface.sync_interface', iface):
-        await middleware.call('interface.run_dhcp', iface, False)
-
-
-async def udevd_ifnet_hook(middleware, data):
+def udevd_ifnet_hook(middleware, data):
     """
     This hook is called on udevd interface type events. It's purpose
     is to:
@@ -1876,12 +1805,28 @@ async def udevd_ifnet_hook(middleware, data):
     iface = data.get('INTERFACE')
     ignore = CLONED_PREFIXES + INTERNAL_INTERFACES
     if iface is None or iface.startswith(ignore):
-        # if the udevd event for the interface doesn't have a name (doubt this happens on SCALE)
-        # or if the interface startswith CLONED_PREFIXES, then we return since we only care about
-        # physical interfaces that are hot-plugged into the system.
+        # if the udevd event for the interface doesn't have a name
+        # or if the interface startswith CLONED_PREFIXES, then we
+        # return since we only care about physical interfaces that
+        # are hot-plugged into the system.
         return
 
-    await attach_interface(middleware, iface)
+    platform, node_position = middleware.call_sync('failover.ha_mode')
+    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
+        # The f-series platform is an AMD system. This means it's using a different
+        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
+        # operates subtly differently than the Intel driver. If the A controller
+        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
+        # When the A controller comes back online, the ntb0 interface is hot-plugged
+        # (i.e. added). For this platform we need to re-add the ip address.
+        middleware.call_sync('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
+        return
+
+    ignore = middleware.call_sync('interface.internal_interfaces')
+    if any((i.startswith(iface) for i in ignore)):
+        return
+
+    sync_interface_impl(middleware, iface, node_position)
 
 
 async def __activate_service_announcements(middleware, event_type, args):
@@ -1896,7 +1841,7 @@ async def setup(middleware):
     middleware.create_task(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
     middleware.event_subscribe('system.ready', __activate_service_announcements)
-    middleware.register_hook('udev.net', udevd_ifnet_hook)
+    middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

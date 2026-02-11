@@ -1,6 +1,8 @@
 import itertools
 import random
 
+from typing import Any
+
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
@@ -9,7 +11,7 @@ from .delegate import DeviceDelegate
 class NICDelegate(DeviceDelegate):
 
     @property
-    def nic_choices_endpoint(self):
+    def nic_choices_endpoint(self) -> str:
         raise NotImplementedError()
 
     @staticmethod
@@ -21,10 +23,10 @@ class NICDelegate(DeviceDelegate):
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         nic = device['attributes'].get('nic_attach')

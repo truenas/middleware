@@ -35,9 +35,12 @@ def udev_events(middleware):
             monitor.filter_by(subsystem='dlm')
             monitor.filter_by(subsystem='net')
             for device in iter(monitor.poll, None):
-                middleware.call_hook_sync(
-                    f'udev.{device.subsystem}', data={**dict(device), 'SYS_NAME': device.sys_name}
-                )
+                data = dict(device) | {'SYS_NAME': device.sys_name}
+                mw_method = middleware.call_hook_sync
+                if device.subsystem == 'net':
+                    # udev.net hook is inline=True
+                    mw_method = middleware.call_hook_inline
+                mw_method(f'udev.{device.subsystem}', data=data)
         except Exception:
             middleware.logger.error('Polling udev failed', exc_info=True)
             time.sleep(10)

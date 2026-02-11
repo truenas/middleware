@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiohttp import web
 
 
@@ -7,11 +9,11 @@ class SiteManager:
     immediately.
     """
 
-    def __init__(self):
-        self.sites: list[tuple[type[web.BaseSite], tuple, dict]] = []
+    def __init__(self) -> None:
+        self.sites: list[tuple[type[web.BaseSite], tuple[Any, ...], dict[str, Any]]] = []
         self.runner: web.AppRunner | None = None
 
-    async def add_site(self, klass: type[web.BaseSite], *args, **kwargs):
+    async def add_site(self, klass: type[web.BaseSite], *args: Any, **kwargs: Any) -> None:
         """
         Adds a site to the manager. If `start_sites` has already been called, this site will be started immediately.
 
@@ -25,7 +27,7 @@ class SiteManager:
         if self.runner:
             await self._start_site(klass, *args, **kwargs)
 
-    async def start_sites(self, runner: web.AppRunner):
+    async def start_sites(self, runner: web.AppRunner) -> None:
         """
         Starts all added sites. Any sites added afterward will be started automatically.
 
@@ -36,6 +38,7 @@ class SiteManager:
         for klass, args, kwargs in self.sites:
             await self._start_site(klass, *args, **kwargs)
 
-    async def _start_site(self, klass: type[web.BaseSite], *args, **kwargs):
+    async def _start_site(self, klass: type[web.BaseSite], *args: Any, **kwargs: Any) -> None:
+        assert self.runner is not None
         site = klass(self.runner, *args, **kwargs)
         await site.start()

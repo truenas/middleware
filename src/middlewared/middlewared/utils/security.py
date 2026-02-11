@@ -1,4 +1,5 @@
 import enum
+from typing import Any
 
 from string import punctuation
 from .time_utils import datetime_to_epoch_days
@@ -78,9 +79,9 @@ def system_security_config_to_stig_type(config: dict[str, bool]) -> STIGType:
 
 
 def shadow_parse_aging(
-    user: dict,
-    security: dict,
-    max_age_overrides: set | None = None
+    user: dict[str, Any],
+    security: dict[str, Any],
+    max_age_overrides: set[str] | None = None
 ) -> str:
     """
     Convert user entry to the password aging related portion of the shadow file
@@ -158,8 +159,8 @@ def shadow_parse_aging(
     return outstr
 
 
-def check_password_complexity(ruleset: set, password: str) -> set:
-    unmet = set()
+def check_password_complexity(ruleset: set[str], password: str) -> set[PasswordComplexity]:
+    unmet: set[PasswordComplexity] = set()
 
     if not isinstance(password, str):
         raise TypeError(f'{type(password)}: password expected to be string')

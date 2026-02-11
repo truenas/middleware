@@ -1,7 +1,9 @@
+from typing import Any
+
 from .disks_.disk_class import iterate_disks
 
 
-def get_disks_temperatures_for_snmp(netdata_metrics) -> dict[str, int | None]:
+def get_disks_temperatures_for_snmp(netdata_metrics: dict[str, Any]) -> dict[str, int | None]:
     """Returns temperatures in millicelsius keyed by disk name (e.g., 'sda')"""
     temperatures = {}
     disk_mapping = {disk.identifier: disk.name for disk in iterate_disks()}

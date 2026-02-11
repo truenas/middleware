@@ -4,6 +4,8 @@ from functools import cached_property
 import json
 import os
 import subprocess
+from types import TracebackType
+from typing import Any, Self
 
 from middlewared.utils.mount import statmount
 
@@ -21,7 +23,7 @@ class Dataset:
     readonly: ReadonlyState
 
     @cached_property
-    def readonly_source(self):
+    def readonly_source(self) -> str:
         return subprocess.run(
             ["zfs", "get", "-H", "-o", "source", "readonly", self.name],
             capture_output=True,
@@ -31,17 +33,17 @@ class Dataset:
 
 
 class ReadonlyRootfsManager:
-    def __init__(self, root="/", force_usr_rw=False):
+    def __init__(self, root: str = "/", force_usr_rw: bool = False):
         self.root = root
         self.initialized = False
         self.datasets: dict[str, Dataset] = {}
         self.use_functioning_dpkg_sysext = False
         self.force_usr_rw = force_usr_rw
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def make_writeable(self):
+    def make_writeable(self) -> None:
         self._initialize()
         self._set_state({
             name: False
@@ -50,7 +52,12 @@ class ReadonlyRootfsManager:
         })
         self._set_dpkg_sysext_state(True)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None
+    ) -> None:
         if not self.initialized:
             return
 
@@ -61,14 +68,14 @@ class ReadonlyRootfsManager:
         })
         self._set_dpkg_sysext_state(False)
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         if self.initialized:
             return
 
         with open(os.path.join(self.root, "conf/truenas_root_ds.json"), "r") as f:
-            conf = json.loads(f.read())
+            conf: list[dict[str, Any]] = json.loads(f.read())
 
-        usr_ds = next((i for i in conf if i["fhs_entry"]["name"] == "usr"))["ds"]
+        usr_ds: str = next((i for i in conf if i["fhs_entry"]["name"] == "usr"))["ds"]
         for dataset, name in [
             ("", usr_ds.rsplit("/", 1)[0]),
             ("usr", usr_ds),
@@ -93,7 +100,7 @@ class ReadonlyRootfsManager:
 
         self.initialized = True
 
-    def _set_state(self, state: dict[str, bool]):
+    def _set_state(self, state: dict[str, bool]) -> None:
         if state.get("usr") is True:
             self._handle_usr(True)
 
@@ -119,7 +126,7 @@ class ReadonlyRootfsManager:
         if state.get("usr") is False:
             self._handle_usr(False)
 
-    def _handle_usr(self, readonly):
+    def _handle_usr(self, readonly: bool) -> None:
         binaries = (
             # Some initramfs scripts use `dpkg --print-architecture` or similar calls
             "dpkg",
@@ -137,7 +144,7 @@ class ReadonlyRootfsManager:
                     os.rename(os.path.join(self.root, f"usr/local/bin/{binary}"),
                               os.path.join(self.root, f"usr/local/bin/{binary}.bak"))
 
-    def _set_dpkg_sysext_state(self, enabled):
+    def _set_dpkg_sysext_state(self, enabled: bool) -> None:
         if self.use_functioning_dpkg_sysext:
             os.makedirs("/run/extensions", exist_ok=True)
             sysext_dst = "/run/extensions/functioning-dpkg.raw"

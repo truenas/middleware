@@ -1,5 +1,9 @@
 from middlewared.api import api_method
-from middlewared.api.current import PoolDdtPrefetchArgs, PoolDdtPrefetchResult, PoolDdtPruneArgs, PoolDdtPruneResult
+from middlewared.api.current import (
+    PoolDdtPruneArgs, PoolDdtPruneResult, PoolDdtPrefetchArgs, PoolDdtPrefetchResult, PoolPrefetchArgs,
+    PoolPrefetchResult
+)
+
 from middlewared.service import job, Service
 
 
@@ -20,23 +24,29 @@ class PoolService(Service):
         """
         return await self.middleware.call('zfs.pool.ddt_prune', options)
 
-    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=['POOL_WRITE'])
+    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=['POOL_WRITE'], removed_in='v26')
     @job(lock=lambda args: f'ddt_prefetch_{args[0]}')
     async def ddt_prefetch(self, job, pool_name):
         """
         Prefetch DDT entries in pool `pool_name`.
+
+        .. deprecated::
+            Use `pool.prefetch` instead, which prefetches both DDT and BRT metadata.
         """
-        return await self.middleware.call('zfs.pool.ddt_prefetch', pool_name)
+        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
 
+    @api_method(PoolPrefetchArgs, PoolPrefetchResult, roles=['POOL_WRITE'])
+    @job(lock=lambda args: f'pool_prefetch_{args[0]}')
+    async def prefetch(self, job, pool_name):
+        """
+        Prefetch pool metadata (DDT and BRT) into ARC.
 
-async def pool_post_import(middleware, pool):
-    if pool:
-        middleware.logger.info('Prefetching ddt table of %r pool', pool['name'])
-        middleware.create_task(middleware.call('zfs.pool.ddt_prefetch', pool['name']))
-    else:
-        # This is to handle the case when pools are imported on boot time when pool attr is none
-        middleware.create_task(middleware.call('zfs.pool.ddt_prefetch_pools'))
+        Loads both the Deduplication Table (DDT) and Block Reference Table (BRT)
+        into the ARC to reduce latency of subsequent operations. This is useful
+        for warming up the cache before performing operations that benefit from
+        having this metadata readily available.
 
-
-async def setup(middleware):
-    middleware.register_hook('pool.post_import', pool_post_import)
+        The DDT tracks deduplication metadata, while the BRT tracks block cloning
+        metadata used for efficient copy-on-write operations.
+        """
+        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)

@@ -15,6 +15,8 @@ from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
 
+from .bridge import container_bridge_name
+
 
 class ContainerDeviceModel(sa.Model):
     __tablename__ = 'container_device'
@@ -85,15 +87,17 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return await self._delete_impl(id_, options, audit_callback)
 
     @api_method(
-        ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult, roles=['CONTAINER_DEVICE_READ']
+        ContainerDeviceNicAttachChoicesArgs,
+        ContainerDeviceNicAttachChoicesResult,
+        roles=['CONTAINER_DEVICE_READ']
     )
-    async def nic_attach_choices(self):
+    def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.
         """
-        container_bridge = await self.middleware.call('container.bridge_name')
+        container_bridge = container_bridge_name(self)
         nic_choices = {'BRIDGE': [container_bridge], 'MACVLAN': []}
-        for inf in (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})):
+        for inf in self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']}):
             if inf.startswith('br'):
                 nic_choices['BRIDGE'].append(inf)
             else:
@@ -101,7 +105,8 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return nic_choices
 
     @api_method(
-        ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
+        ContainerDeviceUsbChoicesArgs,
+        ContainerDeviceUsbChoicesResult,
         roles=['CONTAINER_DEVICE_READ']
     )
     def usb_choices(self):
