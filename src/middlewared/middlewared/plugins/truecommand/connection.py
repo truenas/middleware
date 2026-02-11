@@ -7,7 +7,7 @@ from middlewared.utils import ajson
 
 class TruecommandAPIMixin:
 
-    PORTAL_URI = 'https://portal.ixsystems.com/api'
+    PORTAL_URI = 'https://portal.truenas.com/api'
 
     async def _post_call(self, options=None, payload=None):
         if not await self.middleware.call('network.general.can_perform_activity', 'truecommand'):
@@ -30,7 +30,7 @@ class TruecommandAPIMixin:
                         self.PORTAL_URI, data=data, headers={'Content-type': 'application/json'},
                     )
         except asyncio.TimeoutError:
-            response['error'] = f'Unable to connect with iX portal in {timeout} seconds.'
+            response['error'] = f'Unable to connect with TrueNAS portal in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
             response['error'] = f'Error Code ({req.status}): {e}'
         else:
@@ -39,4 +39,4 @@ class TruecommandAPIMixin:
 
 
 async def setup(middleware):
-    await middleware.call('network.general.register_activity', 'truecommand', 'TrueCommand iX portal')
+    await middleware.call('network.general.register_activity', 'truecommand', 'TrueCommand TrueNAS portal')
