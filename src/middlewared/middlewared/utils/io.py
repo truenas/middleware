@@ -145,40 +145,40 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
         tmppath = os.path.dirname(target)
 
     with TemporaryDirectory(dir=tmppath) as tmpdir:
-        # Get directory file descriptors with symlink protection
+        # We're using absolute paths here initially to open dir fds for the write and rename operations. This is
+        # generally susceptible to symlink races and so it's being mitigated by setting RESOLVE_NO_SYMLINKS. *IF* an
+        # intermediate symlink is discovered during path resolution in kernel (e.g. /etc/default/foo and the
+        # `/etc/default` component is a symlink), then this will fail with an OSError with errno set to ELOOP
         dst_dirpath = os.path.dirname(target)
         target_filename = os.path.basename(target)
 
-        # Open directory fds and register cleanup
         dst_dirfd = truenas_os.openat2(dst_dirpath, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
         try:
             src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
             try:
-                # Check if target exists to determine rename strategy
-                try:
-                    os.lstat(target_filename, dir_fd=dst_dirfd)
-                    rename_flags = truenas_os.AT_RENAME_EXCHANGE
-                except FileNotFoundError:
-                    rename_flags = 0
 
-                # Create temporary file
                 temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
-
                 try:
-                    # Set ownership and permissions
                     os.fchown(temp_fd, uid, gid)
                     os.fchmod(temp_fd, perms)
                 except Exception:
                     os.close(temp_fd)
                     raise
 
-                # Yield file handle for writing
+                # From this point onward, the open context manager handles closing temp_fd
                 with open(temp_fd, mode) as f:
                     yield f
                     f.flush()
                     os.fsync(temp_fd)
 
-                # Perform atomic rename
+                # We now need to construct our renameat2 flags. We're using lstat because
+                # renamat2 AT_RENAME_EXCHANGE is OK with replacing a symlink.
+                try:
+                    os.lstat(target_filename, dir_fd=dst_dirfd)
+                    rename_flags = truenas_os.AT_RENAME_EXCHANGE
+                except FileNotFoundError:
+                    rename_flags = 0
+
                 truenas_os.renameat2(
                     src=target_filename,
                     dst=target_filename,
