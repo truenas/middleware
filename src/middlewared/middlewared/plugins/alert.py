@@ -108,10 +108,10 @@ class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
 class AutomaticAlertFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Failed to Notify iXsystems About Alert"
+    title = "Failed to Notify TrueNAS About Alert"
     text = textwrap.dedent("""\
-        Creating an automatic alert for iXsystems about system %(serial)s failed: %(error)s.
-        Please contact iXsystems Support: https://www.ixsystems.com/support/
+        Creating an automatic alert for TrueNAS about system %(serial)s failed: %(error)s.
+        Please contact TrueNAS Support: https://www.truenas.com/support/
 
         Alert:
 
@@ -629,7 +629,7 @@ class AlertService(Service):
                                 "criticality": "Loss of Functionality",
                                 "environment": "Production",
                                 "name": "Automatic Alert",
-                                "email": "auto-support@ixsystems.com",
+                                "email": "auto-support@truenas.com",
                                 "phone": "-",
                             })
                             await job.wait()
