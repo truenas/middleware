@@ -6,7 +6,7 @@ import logging
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
-from middlewared.utils.io import atomic_replace
+from middlewared.utils.io import atomic_write
 from middlewared.utils.vendor import Vendors
 from middlewared.utils.memory import get_memory_info
 
@@ -82,4 +82,5 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    atomic_replace(temp_path="/etc/default", target_file=TRUENAS_GRUB_CFG, data="\n".join(config).encode())
+    with atomic_write(TRUENAS_GRUB_CFG, "w", temppath="/etc/default") as f:
+        f.write("\n".join(config))
