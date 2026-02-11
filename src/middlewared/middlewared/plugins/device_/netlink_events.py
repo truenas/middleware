@@ -1,12 +1,14 @@
+import asyncio
 import dataclasses
 import select
 import socket
 import struct
 import time
 
-from middlewared.utils import run
+from middlewared.plugins.service_.services.base import call_unit_action_and_wait
 from middlewared.utils.threading import start_daemon_thread
 
+IX_VEND_LOCK = asyncio.Lock()
 
 # Netlink constants
 AF_NETLINK = 16
@@ -417,8 +419,13 @@ def netlink_events(middleware):
 
 
 async def _systemctl_restart_ixvendor(middleware):
-    if await middleware.call("system.vendor.is_vendored"):
-        await run(["systemctl", "restart", "ix-vendor"], check=False)
+    if IX_VEND_LOCK.locked():
+        # A restart is already in progress; skip to avoid piling up
+        return
+
+    async with IX_VEND_LOCK:
+        if await middleware.call("system.vendor.is_vendored"):
+            await call_unit_action_and_wait("ix-vendor.service", "Restart")
 
 
 async def _restart_vendor_service(middleware, event_type, args):
