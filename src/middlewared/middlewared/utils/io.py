@@ -60,7 +60,7 @@ def atomic_replace(
     data: bytes,
     uid: int = 0,
     gid: int = 0,
-    perms: int = 0o755
+    perms: int = 0o644
 ) -> None:
     """Atomically replace a file's contents with symlink race protection.
 
@@ -99,7 +99,7 @@ def atomic_replace(
 
 @contextmanager
 def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
-                 uid: int = 0, gid: int = 0, perms: int = 0o755):
+                 uid: int = 0, gid: int = 0, perms: int = 0o644):
     """Context manager for atomic file writes with symlink race protection.
 
     Yields a file-like object for writing. On successful context manager exit,
