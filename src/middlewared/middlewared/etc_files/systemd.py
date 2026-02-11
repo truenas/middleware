@@ -1,6 +1,5 @@
 import json
 import re
-import os
 
 from middlewared.service import CallError
 from middlewared.utils import run
