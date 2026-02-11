@@ -127,6 +127,7 @@ def atomic_replace(
 
         try:
             os.fchown(target_fd, uid, gid)
+            os.fchmod(target_fd, perms)
         except Exception:
             os.close(dst_dirfd)
             os.close(src_dirfd)
@@ -211,11 +212,13 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         # tempfile API does not permit using a file descriptor
         # so we'll get the underlying directory name from procfs
         parent_dir = os.readlink(f'/proc/self/fd/{dirfd}')
+        absolute_path = os.path.join(parent_dir, path)
     else:
         if not os.path.isabs(path):
             raise ValueError(f'{path}: relative paths may not be used without a `dirfd`')
 
         parent_dir = os.path.dirname(path)
+        absolute_path = path
 
     changes = 0
 
@@ -252,7 +255,7 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
     if changes & FileChanges.CONTENTS:
         atomic_replace(
             temp_path=parent_dir,
-            target_file=path,
+            target_file=absolute_path,
             perms=perms,
             data=data,
             uid=uid,
