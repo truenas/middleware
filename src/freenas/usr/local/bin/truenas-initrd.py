@@ -129,7 +129,11 @@ def update_pci_module_files(root, config):
             softdep nvidia* pre: vfio-pci
         """))
 
-    with atomic_write(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), "w", tmppath=get_path("etc"), perms=0o755) as f:
+    with atomic_write(
+        get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), "w",
+        tmppath=get_path("etc"),
+        perms=0o755
+    ) as f:
         f.write(textwrap.dedent(f"""\
             #!/bin/sh
             PREREQS=""
