@@ -18,6 +18,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
+from middlewared.utils.io import atomic_write
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
@@ -74,12 +75,12 @@ class DockerService(Service):
         shutil.copy(get_collective_metadata_path(), os.path.join(backup_dir, 'collective_metadata.yaml'))
         shutil.copy(get_collective_config_path(), os.path.join(backup_dir, 'collective_config.yaml'))
 
-        with open(backup_apps_state_file_path(name), 'w') as f:
+        with atomic_write(backup_apps_state_file_path(name), 'w') as f:
             f.write(dump_yaml(
                 {app['name']: app for app in self.middleware.call_sync('app.query')})
             )
 
-        with open(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
+        with atomic_write(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
             f.write(dump_yaml(docker_config))
 
         job.set_progress(95, 'Taking snapshot of ix-applications')

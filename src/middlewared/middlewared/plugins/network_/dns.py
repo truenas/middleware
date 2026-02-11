@@ -13,6 +13,7 @@ from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.io import atomic_write
 from middlewared.service_exception import CallError, ValidationErrors
 from truenas_pynetif.address.netlink import get_links, netlink_route
 
@@ -96,7 +97,7 @@ class DNSService(Service):
         resolvconf += self.middleware.call_sync('dns.configure_nameservers', nameservers)
 
         try:
-            with open('/etc/resolv.conf', 'w') as f:
+            with atomic_write('/etc/resolv.conf', 'w') as f:
                 f.write(resolvconf)
         except Exception:
             self.logger.error('Failed to write /etc/resolv.conf', exc_info=True)
