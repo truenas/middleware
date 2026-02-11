@@ -39,7 +39,7 @@ def format_server(address: str | None) -> str | None:
     try:
         ipaddress.IPv6Address(address)
         return f'[{address}]'
-    except (ipaddress.AddressValueError, ValueError):
+    except ValueError:
         return address
 
 
