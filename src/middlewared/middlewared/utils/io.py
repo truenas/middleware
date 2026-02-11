@@ -1,11 +1,12 @@
-# NOTE: tests are provided in src/middlewared/middlewared/pytest/unit/utils/test_write_if_changed.py
+# NOTE: tests are provided in tests/unit/test_write_if_changed.py
 # Any updates to this file should have corresponding updates to tests
 
+from contextlib import contextmanager
 import fcntl
 import os
 import enum
 import stat
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 
 ID_MAX = 2 ** 32 - 2
@@ -49,6 +50,83 @@ def set_io_uring_enabled(enabled_val: bool) -> bool:
         f.flush()
 
     return get_io_uring_enabled()
+
+
+@contextmanager
+def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
+                 uid: int = 0, gid: int = 0, perms: int = 0o644):
+    """Context manager for atomic file writes with symlink race protection.
+
+    Yields a file-like object for writing. On successful context manager exit,
+    replaces the target file using renameat with proper synchronization.
+
+    Args:
+        target: Absolute path to the file to write/replace. Path must not contain
+                symlinks.
+        mode: File open mode, either "w" (text) or "wb" (binary). Defaults to "w".
+        tmppath: Directory for temporary file creation. If None, uses dirname(target).
+                 Must be on same filesystem as target and must not contain symlinks.
+        uid: User ID for file ownership (default: 0/root).
+        gid: Group ID for file ownership (default: 0/root).
+        perms: File permissions as octal integer (default: 0o644).
+
+    Yields:
+        File-like object for writing
+
+    Raises:
+        OSError: If openat/renameat operations fail.
+
+    Note:
+        - tmppath and target must be on the same filesystem for rename to work
+        - If target doesn't exist, uses regular rename instead of exchange
+        - File is only replaced if the context manager exits successfully
+
+    Example:
+        with atomic_write('/etc/config.conf') as f:
+            f.write("config data")
+        # File is atomically replaced here
+
+    WARNING: this version is not symlink race resistent. In 26.04 such a feature will
+    be added.
+    """
+    if mode not in ("w", "wb"):
+        raise ValueError(f'{mode}: invalid mode. Only "w" and "wb" are supported.')
+
+    if tmppath is None:
+        tmppath = os.path.dirname(target)
+
+    with TemporaryDirectory(dir=tmppath) as tmpdir:
+        dst_dirpath = os.path.dirname(target)
+        target_filename = os.path.basename(target)
+
+        dst_dirfd = os.open(dst_dirpath, os.O_DIRECTORY)
+        try:
+            src_dirfd = os.open(tmpdir, os.O_DIRECTORY)
+            try:
+
+                temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
+                try:
+                    os.fchown(temp_fd, uid, gid)
+                    os.fchmod(temp_fd, perms)
+                except Exception:
+                    os.close(temp_fd)
+                    raise
+
+                with open(temp_fd, mode) as f:
+                    yield f
+                    f.flush()
+                    os.fsync(temp_fd)
+
+                os.rename(
+                    src=target_filename,
+                    dst=target_filename,
+                    src_dir_fd=src_dirfd,
+                    dst_dir_fd=dst_dirfd,
+                )
+            finally:
+                os.close(src_dirfd)
+        finally:
+            os.close(dst_dirfd)
 
 
 def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_error=False):
