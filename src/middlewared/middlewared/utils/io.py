@@ -149,67 +149,48 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
         dst_dirpath = os.path.dirname(target)
         target_filename = os.path.basename(target)
 
+        # Open directory fds and register cleanup
         dst_dirfd = truenas_os.openat2(dst_dirpath, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-
         try:
             src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-        except Exception:
-            os.close(dst_dirfd)
-            raise
+            try:
+                # Check if target exists to determine rename strategy
+                try:
+                    os.lstat(target_filename, dir_fd=dst_dirfd)
+                    rename_flags = truenas_os.AT_RENAME_EXCHANGE
+                except FileNotFoundError:
+                    rename_flags = 0
 
-        # Check if target exists to determine rename strategy
-        try:
-            os.lstat(target_filename, dir_fd=dst_dirfd)
-            rename_flags = truenas_os.AT_RENAME_EXCHANGE
-        except FileNotFoundError:
-            rename_flags = 0
-        except Exception:
-            os.close(dst_dirfd)
-            os.close(src_dirfd)
-            raise
+                # Create temporary file
+                temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
 
-        # Create temporary file
-        try:
-            temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
-        except Exception:
-            os.close(dst_dirfd)
-            os.close(src_dirfd)
-            raise
+                try:
+                    # Set ownership and permissions
+                    os.fchown(temp_fd, uid, gid)
+                    os.fchmod(temp_fd, perms)
+                except Exception:
+                    os.close(temp_fd)
+                    raise
 
-        # Set ownership and permissions
-        try:
-            os.fchown(temp_fd, uid, gid)
-            # Explicitly set permissions to ensure they're correct regardless of umask
-            os.fchmod(temp_fd, perms)
-        except Exception:
-            os.close(dst_dirfd)
-            os.close(src_dirfd)
-            raise
+                # Yield file handle for writing
+                with open(temp_fd, mode) as f:
+                    yield f
+                    # Ensure data is written to disk
+                    f.flush()
+                    os.fsync(temp_fd)
 
-        # Yield file handle for writing
-        try:
-            with open(temp_fd, mode) as f:
-                yield f
-                # Ensure data is written to disk
-                f.flush()
-                os.fsync(temp_fd)
-        except Exception:
-            os.close(dst_dirfd)
-            os.close(src_dirfd)
-            raise
-
-        # Perform atomic rename
-        try:
-            truenas_os.renameat2(
-                src=target_filename,
-                dst=target_filename,
-                src_dir_fd=src_dirfd,
-                dst_dir_fd=dst_dirfd,
-                flags=rename_flags
-            )
+                # Perform atomic rename
+                truenas_os.renameat2(
+                    src=target_filename,
+                    dst=target_filename,
+                    src_dir_fd=src_dirfd,
+                    dst_dir_fd=dst_dirfd,
+                    flags=rename_flags
+                )
+            finally:
+                os.close(src_dirfd)
         finally:
             os.close(dst_dirfd)
-            os.close(src_dirfd)
 
 
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
