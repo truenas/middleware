@@ -175,7 +175,6 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
                 # Yield file handle for writing
                 with open(temp_fd, mode) as f:
                     yield f
-                    # Ensure data is written to disk
                     f.flush()
                     os.fsync(temp_fd)
 
