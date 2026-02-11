@@ -7,6 +7,8 @@ from middlewared.utils.io import atomic_replace, atomic_write
 
 
 TEST_DIR = 'test-atomic-replace'
+TEST_UID = 8675309
+TEST_GID = 8675310
 
 
 @pytest.fixture(scope='module')
@@ -528,5 +530,299 @@ def test__atomic_write_multiple_operations(test_directory):
 
     file_stat = os.stat(target)
     assert stat.S_IMODE(file_stat.st_mode) == 0o600
+
+    os.unlink(target)
+
+
+# Tests for -1 uid/gid preservation feature
+
+
+def test__atomic_replace_preserves_uid_when_minus_one(test_directory):
+    """Test that atomic_replace preserves existing uid when uid=-1."""
+    target = os.path.join(test_directory, 'preserve_uid_file.txt')
+
+    # Create initial file with specific ownership
+    initial_data = b"Initial content"
+
+    with open(target, 'wb') as f:
+        f.write(initial_data)
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace file with uid=-1 to preserve existing uid, but change gid
+    new_data = b"New content"
+    new_gid = 1000
+
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=new_data,
+        uid=-1,  # Should preserve existing uid
+        gid=new_gid
+    )
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID  # Should be preserved
+    assert file_stat.st_gid == new_gid  # Should be changed
+
+    with open(target, 'rb') as f:
+        assert f.read() == new_data
+
+    os.unlink(target)
+
+
+def test__atomic_replace_preserves_gid_when_minus_one(test_directory):
+    """Test that atomic_replace preserves existing gid when gid=-1."""
+    target = os.path.join(test_directory, 'preserve_gid_file.txt')
+
+    # Create initial file with specific ownership
+    initial_data = b"Initial content"
+
+    with open(target, 'wb') as f:
+        f.write(initial_data)
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace file with gid=-1 to preserve existing gid, but change uid
+    new_data = b"New content"
+    new_uid = 1000
+
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=new_data,
+        uid=new_uid,
+        gid=-1  # Should preserve existing gid
+    )
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == new_uid  # Should be changed
+    assert file_stat.st_gid == TEST_GID  # Should be preserved
+
+    with open(target, 'rb') as f:
+        assert f.read() == new_data
+
+    os.unlink(target)
+
+
+def test__atomic_replace_preserves_both_uid_gid_when_minus_one(test_directory):
+    """Test that atomic_replace preserves both uid and gid when both are -1."""
+    target = os.path.join(test_directory, 'preserve_both_file.txt')
+
+    # Create initial file with specific ownership
+    initial_data = b"Initial content"
+
+    with open(target, 'wb') as f:
+        f.write(initial_data)
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace file with both uid=-1 and gid=-1
+    new_data = b"New content preserving ownership"
+
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=new_data,
+        uid=-1,  # Should preserve existing uid
+        gid=-1   # Should preserve existing gid
+    )
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID  # Should be preserved
+    assert file_stat.st_gid == TEST_GID  # Should be preserved
+
+    with open(target, 'rb') as f:
+        assert f.read() == new_data
+
+    os.unlink(target)
+
+
+def test__atomic_replace_defaults_to_zero_when_minus_one_no_file(test_directory):
+    """Test that atomic_replace defaults to 0 when uid/gid=-1 and file doesn't exist."""
+    target = os.path.join(test_directory, 'new_file_minus_one.txt')
+    data = b"New file with -1 ownership"
+
+    # File doesn't exist, so -1 should default to 0
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=data,
+        uid=-1,
+        gid=-1
+    )
+
+    assert os.path.exists(target)
+    file_stat = os.stat(target)
+    # When file doesn't exist, -1 should default to 0
+    assert file_stat.st_uid == 0
+    assert file_stat.st_gid == 0
+
+    os.unlink(target)
+
+
+def test__atomic_replace_preserves_ownership_across_multiple_updates(test_directory):
+    """Test that ownership preservation works across multiple updates."""
+    target = os.path.join(test_directory, 'multi_update_preserve.txt')
+
+    # Create initial file
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=b"First version",
+        uid=TEST_UID,
+        gid=TEST_GID
+    )
+
+    # Update 1: Preserve both
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=b"Second version",
+        uid=-1,
+        gid=-1
+    )
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    # Update 2: Preserve both again
+    atomic_replace(
+        temp_path=test_directory,
+        target_file=target,
+        data=b"Third version",
+        uid=-1,
+        gid=-1
+    )
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    os.unlink(target)
+
+
+def test__atomic_write_preserves_uid_when_minus_one(test_directory):
+    """Test that atomic_write preserves existing uid when uid=-1."""
+    target = os.path.join(test_directory, 'preserve_uid_write.txt')
+
+    # Create initial file
+    with open(target, 'w') as f:
+        f.write("Initial content")
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace with uid=-1
+    new_gid = 1000
+    with atomic_write(target, uid=-1, gid=new_gid) as f:
+        f.write("New content")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == new_gid
+
+    os.unlink(target)
+
+
+def test__atomic_write_preserves_gid_when_minus_one(test_directory):
+    """Test that atomic_write preserves existing gid when gid=-1."""
+    target = os.path.join(test_directory, 'preserve_gid_write.txt')
+
+    # Create initial file
+    with open(target, 'w') as f:
+        f.write("Initial content")
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace with gid=-1
+    new_uid = 1000
+    with atomic_write(target, uid=new_uid, gid=-1) as f:
+        f.write("New content")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == new_uid
+    assert file_stat.st_gid == TEST_GID
+
+    os.unlink(target)
+
+
+def test__atomic_write_preserves_both_uid_gid_when_minus_one(test_directory):
+    """Test that atomic_write preserves both uid and gid when both are -1."""
+    target = os.path.join(test_directory, 'preserve_both_write.txt')
+
+    # Create initial file
+    with open(target, 'w') as f:
+        f.write("Initial content")
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace with both -1
+    with atomic_write(target, uid=-1, gid=-1) as f:
+        f.write("New content")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    os.unlink(target)
+
+
+def test__atomic_write_defaults_to_zero_when_minus_one_no_file(test_directory):
+    """Test that atomic_write defaults to 0 when uid/gid=-1 and file doesn't exist."""
+    target = os.path.join(test_directory, 'new_write_minus_one.txt')
+
+    # File doesn't exist, so -1 should default to 0
+    with atomic_write(target, uid=-1, gid=-1) as f:
+        f.write("New file content")
+
+    assert os.path.exists(target)
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == 0
+    assert file_stat.st_gid == 0
+
+    os.unlink(target)
+
+
+def test__atomic_write_preserves_ownership_across_multiple_updates(test_directory):
+    """Test that atomic_write ownership preservation works across multiple updates."""
+    target = os.path.join(test_directory, 'multi_write_preserve.txt')
+
+    # Create initial file
+    with atomic_write(target, uid=TEST_UID, gid=TEST_GID) as f:
+        f.write("First version")
+
+    # Update 1: Preserve both
+    with atomic_write(target, uid=-1, gid=-1) as f:
+        f.write("Second version")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    # Update 2: Preserve both again
+    with atomic_write(target, uid=-1, gid=-1) as f:
+        f.write("Third version")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    os.unlink(target)
+
+
+def test__atomic_write_binary_preserves_ownership_when_minus_one(test_directory):
+    """Test that atomic_write in binary mode preserves ownership when uid/gid=-1."""
+    target = os.path.join(test_directory, 'preserve_binary_write.bin')
+
+    # Create initial file
+    with open(target, 'wb') as f:
+        f.write(b"Initial binary content")
+    os.chown(target, TEST_UID, TEST_GID)
+
+    # Replace with both -1 in binary mode
+    with atomic_write(target, "wb", uid=-1, gid=-1) as f:
+        f.write(b"New binary content")
+
+    file_stat = os.stat(target)
+    assert file_stat.st_uid == TEST_UID
+    assert file_stat.st_gid == TEST_GID
+
+    with open(target, 'rb') as f:
+        assert f.read() == b"New binary content"
 
     os.unlink(target)

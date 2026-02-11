@@ -80,8 +80,8 @@ def atomic_replace(
         target_file: Absolute path to the file to replace. Path must not contain
                      symlinks.
         data: Binary data to write to the file.
-        uid: User ID for file ownership (default: 0/root).
-        gid: Group ID for file ownership (default: 0/root).
+        uid: User ID for file ownership (default: 0/root). Use -1 to preserve existing file's uid.
+        gid: Group ID for file ownership (default: 0/root). Use -1 to preserve existing file's gid.
         perms: File permissions as octal integer (default: 0o644).
 
     Raises:
@@ -92,6 +92,7 @@ def atomic_replace(
         - If target_file doesn't exist, uses regular rename instead of exchange
         - If an intermediate symlink is detected during openat2 call then errno
           will be set to ELOOP
+        - When uid/gid are -1, the existing file's ownership is preserved if it exists
     """
     with atomic_write(target_file, "wb", tmppath=temp_path, uid=uid, gid=gid, perms=perms) as f:
         f.write(data)
@@ -156,6 +157,18 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
         try:
             src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
             try:
+                # Check if target file exists and get its stat
+                existing_stat = None
+                try:
+                    existing_stat = os.lstat(target_filename, dir_fd=dst_dirfd)
+                    if uid == -1:
+                        uid = existing_stat.st_uid
+
+                    if gid == -1:
+                        gid = existing_stat.st_gid
+
+                except FileNotFoundError:
+                    pass
 
                 temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
                 try:
@@ -171,13 +184,8 @@ def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
                     f.flush()
                     os.fsync(temp_fd)
 
-                # We now need to construct our renameat2 flags. We're using lstat because
-                # renamat2 AT_RENAME_EXCHANGE is OK with replacing a symlink.
-                try:
-                    os.lstat(target_filename, dir_fd=dst_dirfd)
-                    rename_flags = truenas_os.AT_RENAME_EXCHANGE
-                except FileNotFoundError:
-                    rename_flags = 0
+                # Determine rename flags based on whether target exists
+                rename_flags = truenas_os.AT_RENAME_EXCHANGE if existing_stat else 0
 
                 truenas_os.renameat2(
                     src=target_filename,
