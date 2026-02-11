@@ -81,6 +81,7 @@ class AppService(Service):
                         recursive=True,
                         recursive_clones=True,
                         recursive_rollback=True,
+                        bypass=True,
                     ))
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
