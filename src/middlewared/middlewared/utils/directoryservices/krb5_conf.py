@@ -7,6 +7,7 @@
 # Tests that require access to a KDC are provided as part of API
 # test suite.
 
+import ipaddress
 import logging
 import os
 
@@ -24,6 +25,22 @@ KRB5_VALUE_END = '}'
 APPDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_AppDefaults)
 LIBDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_LibDefaults)
 SUPPORTED_ETYPES = set(e.value for e in KRB_ETYPE)
+
+
+def format_server(address: str | None) -> str | None:
+    """
+    Format a server address for use in krb5.conf.
+    IPv6 addresses must be enclosed in brackets.
+    """
+    if address is None:
+        return None
+
+    address = address.strip()
+    try:
+        ipaddress.IPv6Address(address)
+        return f'[{address}]'
+    except (ipaddress.AddressValueError, ValueError):
+        return address
 
 
 class KRB5ConfSection(Enum):
@@ -260,10 +277,10 @@ class KRB5Conf():
 
         return {realm_info['realm']: {
             'realm': realm_info['realm'],
-            'primary_kdc': realm_info[KRB_RealmProperty.PRIMARY_KDC.parm],
-            'admin_server': realm_info[KRB_RealmProperty.ADMIN_SERVER.parm].copy(),
-            'kdc': realm_info[KRB_RealmProperty.KDC.parm].copy(),
-            'kpasswd_server': realm_info[KRB_RealmProperty.KPASSWD_SERVER.parm].copy(),
+            'primary_kdc': format_server(realm_info[KRB_RealmProperty.PRIMARY_KDC.parm]),
+            'admin_server': [format_server(s) for s in realm_info[KRB_RealmProperty.ADMIN_SERVER.parm]],
+            'kdc': [format_server(s) for s in realm_info[KRB_RealmProperty.KDC.parm]],
+            'kpasswd_server': [format_server(s) for s in realm_info[KRB_RealmProperty.KPASSWD_SERVER.parm]],
         }}
 
     def add_realms(self, realms: list) -> None:
