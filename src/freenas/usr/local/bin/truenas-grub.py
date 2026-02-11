@@ -4,10 +4,9 @@ import os
 import json
 import logging
 
-from tempfile import NamedTemporaryFile
-
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
+from middlewared.utils.io import atomic_replace
 from middlewared.utils.vendor import Vendors
 from middlewared.utils.memory import get_memory_info
 
@@ -83,27 +82,4 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    # Write the new grub configuration to a temporary file in /etc/default,
-    # flush its contents, then atomically rename over existing grub config.
-    # This ensures we never have a partially written or empty file in that path.
-    with NamedTemporaryFile(
-        mode='w',
-        dir="/etc/default",
-        prefix=".truenas_grub.",
-        suffix=".tmp"
-        delete=False
-    ) as f:
-        temp_path = f.name
-        f.write("\n".join(config))
-        f.flush()
-        os.fsync(f.fileno())
-
-    try:
-        os.rename(temp_path, TRUENAS_GRUB_CFG)
-    except Exception as exc:
-        try:
-            os.unlink(temp_path)
-        except FileNotFoundError:
-            pass
-
-        raise exc
+    atomic_replace(temp_path="/etc/default", target_file=TRUENAS_GRUB_CONFIG, data="\n".join(config).encode())

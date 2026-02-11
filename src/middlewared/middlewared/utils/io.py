@@ -5,7 +5,8 @@ import fcntl
 import os
 import enum
 import stat
-from tempfile import NamedTemporaryFile
+import truenas_os
+from tempfile import TemporaryDirectory
 
 
 ID_MAX = 2 ** 32 - 2
@@ -49,6 +50,80 @@ def set_io_uring_enabled(enabled_val: bool) -> bool:
         f.flush()
 
     return get_io_uring_enabled()
+
+
+def atomic_replace(
+    *,
+    temp_path: str,
+    target_file: str,
+    data: bytes,
+    uid: int = 0,
+    gid: int = 0,
+    perms: int = 0o755
+) -> None:
+    with TemporaryDirectory(temp_path) as tmpdir:
+        # First get our source and destination dir fds
+        dst_dirpath = os.path.dirname(target_file)
+        target_filename = os.path.basename(target_file)
+
+        dst_dirfd = truenas_os.openat2(dst_dirpath, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+
+        try:
+            src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        except Exception:
+            os.close(dst_dirfd)
+            raise
+
+        # Use lstat to determine with the target actually exists
+        # and we should use an atomic replace.
+        try:
+            os.lstat(target_file, dir_fd=dst_dirfd))
+            rename_flags = truenas_os.AT_RENAME_EXCHANGE
+        except FileNotFoundError:
+            rename_flags = 0
+        except Exception:
+            os.close(dst_dirfd)
+            os.close(src_dirfd)
+            raise
+
+        # now open create our temporary file with open() will close this for us when we're done with it
+        try:
+            target_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
+        except Exception:
+            os.close(dst_dirfd)
+            os.close(src_dirfd)
+            raise
+
+        try:
+            os.fchown(target_fd, uid, gid)
+        except Exception:
+            os.close(dst_dirfd)
+            os.close(src_dirfd)
+            raise
+
+        with open(target_fd, 'wb') as f:
+            try:
+                f.write(data)
+                f.flush()
+                os.fsync(target_fd)
+            except Exception:
+                os.close(dst_dirfd)
+                os.close(src_dirfd)
+                raise
+
+        # Finally perform the rename
+        try:
+            truenas_os.renameat2(
+                src=target_filename,
+                dst=target_filename,
+                src_dir_fd=src_dirfd,
+                dst_dir_fd=dst_dirfd,
+                flags=rename_flags
+            )
+        finally:
+            os.close(dst_dirfd)
+            os.close(src_dirfd)
+
 
 
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
@@ -144,20 +219,14 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         changes = FileChanges.CONTENTS
 
     if changes & FileChanges.CONTENTS:
-        with NamedTemporaryFile(mode='wb+', dir=parent_dir, delete=False) as tmp:
-            tmp.file.write(data)
-            tmp.file.flush()
-            os.fsync(tmp.file.fileno())
-            os.fchmod(tmp.file.fileno(), perms)
-            os.fchown(tmp.file.fileno(), uid, gid)
-            source_path = tmp.name
-
-        if dirfd is not None:
-            os.rename(source_path, path, src_dir_fd=dirfd, dst_dir_fd=dirfd)
-
-        else:
-            os.rename(source_path, path)
-
+        atomic_replace(
+            temp_dir=parent_dir,
+            target_path=path,
+            perms=perms,
+            data=data,
+            uid=uid,
+            gid=gid
+        )
     elif changes != 0 and raise_error:
         raise UnexpectedFileChange(path, changes)
 
