@@ -157,7 +157,6 @@ def atomic_replace(
             os.close(src_dirfd)
 
 
-
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
                      dirfd: int | None = None, raise_error: bool = False) -> int:
     """
