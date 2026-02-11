@@ -61,7 +61,38 @@ def atomic_replace(
     gid: int = 0,
     perms: int = 0o755
 ) -> None:
-    with TemporaryDirectory(temp_path) as tmpdir:
+    """Atomically replace a file's contents with symlink race protection.
+
+    Uses openat2 with RESOLVE_NO_SYMLINKS and renameat2 with AT_RENAME_EXCHANGE
+    to safely replace a file's contents without risk of:
+    - Partially written files visible to readers
+    - Symlink race conditions (TOCTOU attacks)
+    - Data loss if write operation fails
+
+    The function creates a temporary file in a secure temporary directory,
+    writes the data with proper ownership and permissions, syncs to disk,
+    then atomically exchanges it with the target file.
+
+    Args:
+        temp_path: Directory for temporary file creation. Must be on the same
+                   filesystem as target_file and must not contain symlinks in path.
+        target_file: Absolute path to the file to replace. Path must not contain
+                     symlinks.
+        data: Binary data to write to the file.
+        uid: User ID for file ownership (default: 0/root).
+        gid: Group ID for file ownership (default: 0/root).
+        perms: File permissions as octal integer (default: 0o755).
+
+    Raises:
+        OSError: If openat2/renameat2 operations fail.
+        ValueError: If paths contain symlinks (RESOLVE_NO_SYMLINKS).
+
+    Note:
+        - temp_path and target_file must be on the same filesystem for rename to work
+        - All file descriptors are properly closed even on error
+        - If target_file doesn't exist, uses regular rename instead of exchange
+    """
+    with TemporaryDirectory(dir=temp_path) as tmpdir:
         # First get our source and destination dir fds
         dst_dirpath = os.path.dirname(target_file)
         target_filename = os.path.basename(target_file)
@@ -77,7 +108,7 @@ def atomic_replace(
         # Use lstat to determine with the target actually exists
         # and we should use an atomic replace.
         try:
-            os.lstat(target_file, dir_fd=dst_dirfd))
+            os.lstat(target_file, dir_fd=dst_dirfd)
             rename_flags = truenas_os.AT_RENAME_EXCHANGE
         except FileNotFoundError:
             rename_flags = 0
@@ -220,7 +251,7 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
 
     if changes & FileChanges.CONTENTS:
         atomic_replace(
-            temp_dir=parent_dir,
+            temp_path=parent_dir,
             target_file=path,
             perms=perms,
             data=data,

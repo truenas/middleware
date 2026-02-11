@@ -82,4 +82,4 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    atomic_replace(temp_path="/etc/default", target_file=TRUENAS_GRUB_CONFIG, data="\n".join(config).encode())
+    atomic_replace(temp_path="/etc/default", target_file=TRUENAS_GRUB_CFG, data="\n".join(config).encode())
