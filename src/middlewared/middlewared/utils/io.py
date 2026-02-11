@@ -1,4 +1,4 @@
-# NOTE: tests are provided in src/middlewared/middlewared/pytest/unit/utils/test_write_if_changed.py
+# NOTE: tests are provided in tests/unit/test_write_if_changed.py
 # Any updates to this file should have corresponding updates to tests
 
 from contextlib import contextmanager
