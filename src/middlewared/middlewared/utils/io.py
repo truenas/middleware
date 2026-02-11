@@ -1,11 +1,13 @@
-# NOTE: tests are provided in src/middlewared/middlewared/pytest/unit/utils/test_write_if_changed.py
+# NOTE: tests are provided in tests/unit/test_write_if_changed.py
 # Any updates to this file should have corresponding updates to tests
 
+from contextlib import contextmanager
 import fcntl
 import os
 import enum
 import stat
-from tempfile import NamedTemporaryFile
+import truenas_os
+from tempfile import TemporaryDirectory
 
 
 ID_MAX = 2 ** 32 - 2
@@ -49,6 +51,145 @@ def set_io_uring_enabled(enabled_val: bool) -> bool:
         f.flush()
 
     return get_io_uring_enabled()
+
+
+def atomic_replace(
+    *,
+    temp_path: str,
+    target_file: str,
+    data: bytes,
+    uid: int = 0,
+    gid: int = 0,
+    perms: int = 0o644
+) -> None:
+    """Atomically replace a file's contents with symlink race protection.
+
+    Uses openat2 with RESOLVE_NO_SYMLINKS and renameat2 with AT_RENAME_EXCHANGE
+    to safely replace a file's contents without risk of:
+    - Partially written files visible to readers
+    - Symlink race conditions (TOCTOU attacks)
+    - Data loss if write operation fails
+
+    The function creates a temporary file in a secure temporary directory,
+    writes the data with proper ownership and permissions, syncs to disk,
+    then atomically exchanges it with the target file.
+
+    Args:
+        temp_path: Directory for temporary file creation. Must be on the same
+                   filesystem as target_file and must not contain symlinks in path.
+        target_file: Absolute path to the file to replace. Path must not contain
+                     symlinks.
+        data: Binary data to write to the file.
+        uid: User ID for file ownership (default: 0/root).
+        gid: Group ID for file ownership (default: 0/root).
+        perms: File permissions as octal integer (default: 0o644).
+
+    Raises:
+        OSError: If openat2/renameat2 operations fail.
+
+    Note:
+        - temp_path and target_file must be on the same filesystem for rename to work
+        - If target_file doesn't exist, uses regular rename instead of exchange
+        - If an intermediate symlink is detected during openat2 call then errno
+          will be set to ELOOP
+    """
+    with atomic_write(target_file, "wb", tmppath=temp_path, uid=uid, gid=gid, perms=perms) as f:
+        f.write(data)
+
+
+@contextmanager
+def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
+                 uid: int = 0, gid: int = 0, perms: int = 0o644):
+    """Context manager for atomic file writes with symlink race protection.
+
+    Yields a file-like object for writing. On successful context manager exit,
+    atomically replaces the target file using renameat2 with proper synchronization.
+    Uses openat2 with RESOLVE_NO_SYMLINKS and renameat2 with AT_RENAME_EXCHANGE
+    to safely replace a file's contents without risk of:
+    - Partially written files visible to readers
+    - Symlink race conditions (TOCTOU attacks)
+    - Data loss if write operation fails
+
+    Args:
+        target: Absolute path to the file to write/replace. Path must not contain
+                symlinks.
+        mode: File open mode, either "w" (text) or "wb" (binary). Defaults to "w".
+        tmppath: Directory for temporary file creation. If None, uses dirname(target).
+                 Must be on same filesystem as target and must not contain symlinks.
+        uid: User ID for file ownership (default: 0/root).
+        gid: Group ID for file ownership (default: 0/root).
+        perms: File permissions as octal integer (default: 0o644).
+
+    Yields:
+        File-like object for writing
+
+    Raises:
+        OSError: If openat2/renameat2 operations fail.
+
+    Note:
+        - tmppath and target must be on the same filesystem for rename to work
+        - If target doesn't exist, uses regular rename instead of exchange
+        - File is only replaced if the context manager exits successfully
+        - If an intermediate symlink is detected during openat2 call then errno
+          will be set to ELOOP
+
+    Example:
+        with atomic_write('/etc/config.conf') as f:
+            f.write("config data")
+        # File is atomically replaced here
+    """
+    if mode not in ("w", "wb"):
+        raise ValueError(f'{mode}: invalid mode. Only "w" and "wb" are supported.')
+
+    if tmppath is None:
+        tmppath = os.path.dirname(target)
+
+    with TemporaryDirectory(dir=tmppath) as tmpdir:
+        # We're using absolute paths here initially to open dir fds for the write and rename operations. This is
+        # generally susceptible to symlink races and so it's being mitigated by setting RESOLVE_NO_SYMLINKS. *IF* an
+        # intermediate symlink is discovered during path resolution in kernel (e.g. /etc/default/foo and the
+        # `/etc/default` component is a symlink), then this will fail with an OSError with errno set to ELOOP
+        dst_dirpath = os.path.dirname(target)
+        target_filename = os.path.basename(target)
+
+        dst_dirfd = truenas_os.openat2(dst_dirpath, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+            try:
+
+                temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
+                try:
+                    os.fchown(temp_fd, uid, gid)
+                    os.fchmod(temp_fd, perms)
+                except Exception:
+                    os.close(temp_fd)
+                    raise
+
+                # From this point onward, the open context manager handles closing temp_fd
+                with open(temp_fd, mode) as f:
+                    yield f
+                    f.flush()
+                    os.fsync(temp_fd)
+
+                # We now need to construct our renameat2 flags. We're using lstat because
+                # renamat2 AT_RENAME_EXCHANGE is OK with replacing a symlink.
+                try:
+                    os.lstat(target_filename, dir_fd=dst_dirfd)
+                    rename_flags = truenas_os.AT_RENAME_EXCHANGE
+                except FileNotFoundError:
+                    rename_flags = 0
+
+                truenas_os.renameat2(
+                    src=target_filename,
+                    dst=target_filename,
+                    src_dir_fd=src_dirfd,
+                    dst_dir_fd=dst_dirfd,
+                    flags=rename_flags
+                )
+            finally:
+                os.close(src_dirfd)
+        finally:
+            os.close(dst_dirfd)
 
 
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
@@ -105,11 +246,14 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         # tempfile API does not permit using a file descriptor
         # so we'll get the underlying directory name from procfs
         parent_dir = os.readlink(f'/proc/self/fd/{dirfd}')
+        # Construct absolute path for atomic_replace
+        absolute_path = os.path.join(parent_dir, path)
     else:
         if not os.path.isabs(path):
             raise ValueError(f'{path}: relative paths may not be used without a `dirfd`')
 
         parent_dir = os.path.dirname(path)
+        absolute_path = path
 
     changes = 0
 
@@ -144,20 +288,14 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         changes = FileChanges.CONTENTS
 
     if changes & FileChanges.CONTENTS:
-        with NamedTemporaryFile(mode='wb+', dir=parent_dir, delete=False) as tmp:
-            tmp.file.write(data)
-            tmp.file.flush()
-            os.fsync(tmp.file.fileno())
-            os.fchmod(tmp.file.fileno(), perms)
-            os.fchown(tmp.file.fileno(), uid, gid)
-            source_path = tmp.name
-
-        if dirfd is not None:
-            os.rename(source_path, path, src_dir_fd=dirfd, dst_dir_fd=dirfd)
-
-        else:
-            os.rename(source_path, path)
-
+        atomic_replace(
+            temp_path=parent_dir,
+            target_file=absolute_path,
+            perms=perms,
+            data=data,
+            uid=uid,
+            gid=gid
+        )
     elif changes != 0 and raise_error:
         raise UnexpectedFileChange(path, changes)
 

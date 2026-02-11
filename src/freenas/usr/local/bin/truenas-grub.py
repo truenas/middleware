@@ -6,10 +6,14 @@ import logging
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
+from middlewared.utils.io import atomic_write
 from middlewared.utils.vendor import Vendors
 from middlewared.utils.memory import get_memory_info
 
 logger = logging.getLogger(__name__)
+
+TRUENAS_GRUB_CFG = "/etc/default/grub.d/truenas.cfg"
+
 
 def get_serial_ports():
     return {e['start']: e['name'].replace('uart', 'ttyS') for e in serial_port_choices()}
@@ -78,5 +82,8 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    with open("/etc/default/grub.d/truenas.cfg",  "w") as f:
+    # We are specifying the temppath as "/etc/default" rather than "/etc/default/grub.d"
+    # because we want to avoid any situation in which unintended files can exist in
+    # the grub.d directory.
+    with atomic_write(TRUENAS_GRUB_CFG, "w", temppath="/etc/default") as f:
         f.write("\n".join(config))
