@@ -55,7 +55,7 @@ class VMWareModel(sa.Model):
     password = sa.Column(sa.EncryptedText())
     filesystem = sa.Column(sa.String(200))
     datastore = sa.Column(sa.String(200))
-    state = sa.Column(sa.JSON())
+    state = sa.Column(sa.JSON(dict))
 
 
 class VMWareService(CRUDService):

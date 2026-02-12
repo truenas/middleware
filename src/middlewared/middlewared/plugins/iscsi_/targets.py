@@ -37,7 +37,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
     iscsi_target_auth_networks = sa.Column(sa.JSON(list))
     iscsi_target_rel_tgt_id = sa.Column(sa.Integer(), unique=True)
-    iscsi_target_iscsi_parameters = sa.Column(sa.JSON(), nullable=True)
+    iscsi_target_iscsi_parameters = sa.Column(sa.JSON(dict), nullable=True)
 
 
 class iSCSITargetGroupModel(sa.Model):

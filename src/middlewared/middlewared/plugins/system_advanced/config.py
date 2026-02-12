@@ -49,7 +49,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_audit = sa.Column(sa.Boolean(), default=False)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
-    adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
+    adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(list), default=[])
     adv_kernel_extra_options = sa.Column(sa.Text(), default='', nullable=False)
     adv_nvidia = sa.Column(sa.Boolean(), default=False)
 

@@ -22,7 +22,7 @@ class ContainerDeviceModel(sa.Model):
     __tablename__ = 'container_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    attributes = sa.Column(sa.JSON(encrypted=True))
+    attributes = sa.Column(sa.JSON(dict, encrypted=True))
     container_id = sa.Column(sa.ForeignKey('container_container.id'), index=True)
 
 

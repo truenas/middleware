@@ -12,7 +12,7 @@ class CloudTaskModelMixin:
     def credential_id(cls):
         return sa.Column(sa.ForeignKey("system_cloudcredentials.id"), index=True)
 
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(dict))
     minute = sa.Column(sa.String(100), default="00")
     hour = sa.Column(sa.String(100), default="*")
     daymonth = sa.Column(sa.String(100), default="*")

@@ -44,7 +44,7 @@ class VMDeviceModel(sa.Model):
     __tablename__ = 'vm_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    attributes = sa.Column(sa.JSON(encrypted=True))
+    attributes = sa.Column(sa.JSON(dict, encrypted=True))
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
 

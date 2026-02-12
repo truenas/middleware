@@ -82,7 +82,7 @@ class ReplicationModel(sa.Model):
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
     repl_properties_exclude = sa.Column(sa.JSON(list))
-    repl_properties_override = sa.Column(sa.JSON())
+    repl_properties_override = sa.Column(sa.JSON(dict))
     repl_replicate = sa.Column(sa.Boolean())
     repl_encryption = sa.Column(sa.Boolean())
     repl_encryption_inherit = sa.Column(sa.Boolean(), nullable=True)

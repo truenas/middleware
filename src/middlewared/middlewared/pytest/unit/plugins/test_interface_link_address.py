@@ -64,7 +64,7 @@ class VMDeviceModel(Model):
     __tablename__ = 'vm_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(dict))
 
 
 @pytest.mark.parametrize("before,after", [
