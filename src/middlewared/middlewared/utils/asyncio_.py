@@ -14,7 +14,7 @@ async def asyncio_map[T, R](
 
     if limit is not None or semaphore is not None:
         if semaphore is None:
-            semaphore = asyncio.BoundedSemaphore(limit)
+            semaphore = asyncio.BoundedSemaphore(limit)  # type: ignore[arg-type]
 
         real_func = func
 

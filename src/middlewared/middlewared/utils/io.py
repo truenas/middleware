@@ -8,6 +8,7 @@ import enum
 import stat
 import truenas_os
 from tempfile import TemporaryDirectory
+import typing
 
 
 ID_MAX = 2 ** 32 - 2
@@ -19,12 +20,13 @@ class FileChanges(enum.IntFlag):
     GID = enum.auto()
     PERMS = enum.auto()
 
+    @staticmethod
     def dump(mask: int) -> list[str]:
         if unmapped := mask & ~int(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
             raise ValueError(f'{unmapped}: unsupported flags in mask')
 
         return [
-            change.name for change in FileChanges if mask & change
+            change.name for change in FileChanges if mask & change and change.name is not None
         ]
 
 
@@ -98,9 +100,21 @@ def atomic_replace(
         f.write(data)
 
 
+@typing.overload
 @contextmanager
-def atomic_write(target: str, mode: str = "w", *, tmppath: str | None = None,
-                 uid: int = 0, gid: int = 0, perms: int = 0o644):
+def atomic_write(target: str, mode: typing.Literal["w"] = "w", *, tmppath: str | None = None,
+                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.TextIO, None, None]: ...
+
+
+@typing.overload
+@contextmanager
+def atomic_write(target: str, mode: typing.Literal["wb"], *, tmppath: str | None = None,
+                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.BinaryIO, None, None]: ...
+
+
+@contextmanager
+def atomic_write(target: str, mode: typing.Literal["w", "wb"] = "w", *, tmppath: str | None = None,
+                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.IO[typing.Any], None, None]:
     """Context manager for atomic file writes with symlink race protection.
 
     Yields a file-like object for writing. On successful context manager exit,

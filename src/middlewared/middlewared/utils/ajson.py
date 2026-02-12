@@ -8,7 +8,7 @@ __all__ = (
 )
 
 
-async def dumps(obj: typing.Any, **kwargs) -> str:
+async def dumps(obj: typing.Any, **kwargs: typing.Any) -> str:
     """
     Async wrapper for json.dumps() that offloads serialization to a thread pool.
 
@@ -25,7 +25,7 @@ async def dumps(obj: typing.Any, **kwargs) -> str:
     return await asyncio.to_thread(json.dumps, obj, **kwargs)
 
 
-async def loads(s: str | bytes, **kwargs) -> typing.Any:
+async def loads(s: str | bytes, **kwargs: typing.Any) -> typing.Any:
     """
     Async wrapper for json.loads() that offloads parsing to a thread pool.
 
