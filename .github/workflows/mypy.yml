@@ -27,6 +27,7 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
+            middlewared/plugins/catalog/ \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/webshare/ \
