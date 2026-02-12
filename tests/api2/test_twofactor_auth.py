@@ -82,7 +82,7 @@ def do_login(username, password, otp=None, expected=True):
         if expected:
             assert resp['response_type'] == 'SUCCESS'
         else:
-            assert resp['response_type'] == 'OTP_REQUIRED'
+            assert resp['response_type'] == 'AUTH_ERR'
 
 
 def test_login_without_2fa(clear_ratelimit):
@@ -221,7 +221,7 @@ def test_multiple_users_login_with_otp(clear_ratelimit):
                 do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token)
 
                 # verify we can't replay same token
-                do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token)
+                do_login(TEST_USERNAME_2, TEST_PASSWORD_2, otp_token, expected=False)
 
                 # Verify 2FA still required
                 do_login(TEST_USERNAME_2, TEST_PASSWORD_2, expected=False)
@@ -247,17 +247,7 @@ def test_login_with_otp_failure(clear_ratelimit):
                     'password': TEST_PASSWORD,
                 })
                 assert resp['response_type'] == 'OTP_REQUIRED'
-                retry_cnt = 0
 
-                while retry_cnt < 3:
-                    resp = c.call('auth.login_ex_continue', {
-                        'mechanism': 'OTP_TOKEN',
-                        'otp_token': 'canary'
-                    })
-                    assert resp['response_type'] == 'OTP_REQUIRED', retry_cnt
-                    retry_cnt += 1
-
-                # We've now exhausted any grace from server. Hammer is dropped.
                 resp = c.call('auth.login_ex_continue', {
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'

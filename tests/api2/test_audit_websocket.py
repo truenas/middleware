@@ -431,9 +431,6 @@ def test_2fa_login(sharing_admin_user):
             assert resp['response_type'] == 'OTP_REQUIRED'
             assert resp['username'] == sharing_admin_user.username
 
-            # simulate user fat-fingering the OTP token and then getting it correct on second attempt
-            otp = get_2fa_totp_token(secret)
-
             with expect_audit_log([
                 {
                     "event": "AUTHENTICATION",
@@ -444,7 +441,7 @@ def test_2fa_login(sharing_admin_user):
                                 "username": sharing_admin_user.username,
                             },
                         },
-                        "error": "One-time token validation failed.",
+                        "error": "One-time token validation failed: [PAM_AUTH_ERR]: pam_authenticate() failed",
                     },
                     "success": False,
                 }
@@ -453,32 +450,7 @@ def test_2fa_login(sharing_admin_user):
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'
                 })
-                assert resp['response_type'] == 'OTP_REQUIRED'
-                assert resp['username'] == sharing_admin_user.username
-
-            with expect_audit_log([
-                {
-                    "event": "AUTHENTICATION",
-                    "event_data": {
-                        "credentials": {
-                            "credentials": "LOGIN_TWOFACTOR",
-                            "credentials_data": {
-                                "username": sharing_admin_user.username,
-                                "login_at": ANY,
-                                "login_id": ANY,
-                            },
-                        },
-                        "error": None,
-                    },
-                    "success": True,
-                }
-            ], include_logins=True):
-                resp = c.call('auth.login_ex', {
-                    'mechanism': 'OTP_TOKEN',
-                    'otp_token': otp
-                })
-
-                assert resp['response_type'] == 'SUCCESS'
+                assert resp['response_type'] == 'AUTH_ERR'
 
 
 @pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))

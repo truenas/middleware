@@ -139,13 +139,13 @@ class PoolDatasetService(Service):
         # We're transforming dictionaries returned so that we have the following hierarchy
         #
         # datasets
-        # ├── "dozer/A" (dataset dict) (encryption root)
-        # |   └── "children" (list)
-        # │        ├── "dozer/A/B" (dataset dict) (encryption root = dozer/A)
-        # │        └── "dozer/A/B/C" (dataset dict) (encryption root = dozer/A)
+        # |-- "dozer/A" (dataset dict) (encryption root)
+        # |   +-- "children" (list)
+        # |        |-- "dozer/A/B" (dataset dict) (encryption root = dozer/A)
+        # |        +-- "dozer/A/B/C" (dataset dict) (encryption root = dozer/A)
         # |
-        # └── "dozer/A/B/C/D" (dataset dict) (encryption root)
-        #     └── "children" (list)
+        # +-- "dozer/A/B/C/D" (dataset dict) (encryption root)
+        #     +-- "children" (list)
         #
         # e.g. at top level will be encryption roots. Only children that have same
         # encryption root as parent will be in the "children" list. The reason for this is that
