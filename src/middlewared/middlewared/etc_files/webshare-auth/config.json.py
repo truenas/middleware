@@ -13,6 +13,8 @@ def render(service, middleware):
     hostname = middleware.call_sync("system.hostname")
     rp_name = f"TrueNAS WebShare @ {hostname}"
 
+    bind_addrs = config.bindip or ["0.0.0.0", "::"]
+
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
         "pam_service_name": "webshare",
@@ -38,7 +40,7 @@ def render(service, middleware):
         "proxy": {
             "enabled": True,
             "port": 755,
-            "bind_addrs": ["0.0.0.0"],
+            "bind_addrs": bind_addrs,
             "cert_path": "/etc/certificates",
             "cert_prefix": "truenas_connect",
             "dhparam_path": "/data/dhparam.pem",
