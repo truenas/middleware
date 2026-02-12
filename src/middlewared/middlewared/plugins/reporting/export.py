@@ -18,7 +18,7 @@ class ReportingExportsModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean())
     name = sa.Column(sa.String())
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(dict))
 
 
 class ReportingExportsService(CRUDService):

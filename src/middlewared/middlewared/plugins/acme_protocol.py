@@ -219,7 +219,7 @@ class ACMEDNSAuthenticatorModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(64), unique=True)
-    attributes = sa.Column(sa.JSON(encrypted=True))
+    attributes = sa.Column(sa.JSON(dict, encrypted=True))
 
 
 class DNSAuthenticatorService(CRUDService):

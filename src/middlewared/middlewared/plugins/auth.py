@@ -251,7 +251,7 @@ class UserWebUIAttributeModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     uid = sa.Column(sa.Integer(), unique=True)
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(dict))
 
 
 class AuthService(Service):

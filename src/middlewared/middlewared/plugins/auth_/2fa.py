@@ -26,7 +26,7 @@ class TwoFactorAuthModel(sa.Model):
     __tablename__ = 'system_twofactorauthentication'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    services = sa.Column(sa.JSON(), default={})
+    services = sa.Column(sa.JSON(dict), default={})
     enabled = sa.Column(sa.Boolean(), default=False)
     window = sa.Column(sa.Integer(), default=0)
 

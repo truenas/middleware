@@ -1042,7 +1042,7 @@ class AlertServiceModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(120))
     type = sa.Column(sa.String(20))
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(dict))
     enabled = sa.Column(sa.Boolean())
     level = sa.Column(sa.String(20))
 
@@ -1207,7 +1207,7 @@ class AlertClassesModel(sa.Model):
     __tablename__ = 'system_alertclasses'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    classes = sa.Column(sa.JSON())
+    classes = sa.Column(sa.JSON(dict))
 
 
 class AlertClassesService(ConfigService):
