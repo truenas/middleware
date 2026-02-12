@@ -16,7 +16,7 @@ Tables updated:
 - services_nvmet_namespace (NVMe-oF FILE namespaces)
 
 Revision ID: a8f5d9e2c1b7
-Revises: 9202ee4732cf
+Revises: 055cfee51499
 Create Date: 2026-01-27 20:27:00.000000+00:00
 
 """
@@ -26,7 +26,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'a8f5d9e2c1b7'
-down_revision = '9202ee4732cf'
+down_revision = '055cfee51499'
 branch_labels = None
 depends_on = None
 
