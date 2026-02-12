@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -14,13 +14,13 @@ BAD_ROUTE = {"destination": "fe80:aaaa:bbbb:cccc::1/64", "gateway": ROUTE["gatew
 
 @pytest.fixture()
 def cleanup_test():
-    init_ids = set([d['id'] for d in call("staticroute.query")])
+    init_ids = set([d["id"] for d in call("staticroute.query")])
     try:
         yield
     finally:
-        final_ids = set([d['id'] for d in call("staticroute.query")])
+        final_ids = set([d["id"] for d in call("staticroute.query")])
         # Delete any newly created static routes
-        for id in (final_ids - init_ids):
+        for id in final_ids - init_ids:
             call("staticroute.delete", id)
 
 
@@ -35,20 +35,28 @@ def test_staticroute(cleanup_test):
     NOTE: On create, update and delete we also validate audit entries
     """
     # try to create bad route
-    with expect_audit_method_calls([{
-        'method': 'staticroute.create',
-        'params': [BAD_ROUTE],
-        'description': 'Static route create'
-    }]):
-        with pytest.raises(ValidationErrors):
+    with expect_audit_method_calls(
+        [
+            {
+                "method": "staticroute.create",
+                "params": [BAD_ROUTE],
+                "description": "Static route create",
+            }
+        ]
+    ):
+        with pytest.raises(ValidationError):
             call("staticroute.create", BAD_ROUTE)
 
     # now create valid one
-    with expect_audit_method_calls([{
-        'method': 'staticroute.create',
-        'params': [ROUTE],
-        'description': 'Static route create'
-    }]):
+    with expect_audit_method_calls(
+        [
+            {
+                "method": "staticroute.create",
+                "params": [ROUTE],
+                "description": "Static route create",
+            }
+        ]
+    ):
         id_ = call("staticroute.create", ROUTE)["id"]
 
     # validate query
@@ -62,20 +70,28 @@ def test_staticroute(cleanup_test):
     assert f"{ROUTE['destination']} via {ROUTE['gateway']}" in results["stdout"]
 
     # update it with bad data
-    with expect_audit_method_calls([{
-        'method': 'staticroute.update',
-        'params': [id_, {"destination": BAD_ROUTE["destination"]}],
-        'description': 'Static route update'
-    }]):
-        with pytest.raises(ValidationErrors):
+    with expect_audit_method_calls(
+        [
+            {
+                "method": "staticroute.update",
+                "params": [id_, {"destination": BAD_ROUTE["destination"]}],
+                "description": "Static route update",
+            }
+        ]
+    ):
+        with pytest.raises(ValidationError):
             call("staticroute.update", id_, {"destination": BAD_ROUTE["destination"]})
 
     # now delete
-    with expect_audit_method_calls([{
-        'method': 'staticroute.delete',
-        'params': [id_],
-        'description': 'Static route delete'
-    }]):
+    with expect_audit_method_calls(
+        [
+            {
+                "method": "staticroute.delete",
+                "params": [id_],
+                "description": "Static route delete",
+            }
+        ]
+    ):
         assert call("staticroute.delete", id_)
 
     assert not call("staticroute.query", [["id", "=", id_]])
