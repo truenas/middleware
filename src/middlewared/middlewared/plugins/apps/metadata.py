@@ -1,6 +1,7 @@
 import os
 
 from middlewared.service import job, Service
+from middlewared.utils.io import atomic_write
 
 from .ix_apps.lifecycle import get_current_app_config
 from .ix_apps.metadata import get_app_metadata
@@ -28,11 +29,10 @@ class AppMetadataService(Service):
                 metadata[entry.name] = app_metadata
                 config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
 
-        with open(get_collective_metadata_path(), 'w') as f:
+        with atomic_write(get_collective_metadata_path(), 'w') as f:
             f.write(dump_yaml(metadata))
 
-        with open(get_collective_config_path(), 'w') as f:
-            os.fchmod(f.fileno(), 0o600)
+        with atomic_write(get_collective_config_path(), 'w', perms=0o600) as f:
             f.write(dump_yaml(config))
 
         job.set_progress(100, 'Updated metadata configuration for apps')

@@ -13,6 +13,7 @@ import errno
 from collections import defaultdict
 
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.io import atomic_write
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
@@ -940,10 +941,8 @@ class FailoverEventsService(Service):
         # So if we panic here, middleware will check for this file and send an appropriate email.
         # ticket 39114
         with contextlib.suppress(Exception):
-            with open(WATCHDOG_ALERT_FILE, 'w') as f:
+            with atomic_write(WATCHDOG_ALERT_FILE, 'w') as f:
                 f.write(f'{time.time()}')
-                f.flush()  # be sure it goes straight to disk
-                os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
         # setup the zpool cachefile
         # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')

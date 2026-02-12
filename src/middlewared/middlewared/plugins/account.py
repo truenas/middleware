@@ -59,6 +59,7 @@ from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_st
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.io import atomic_write
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
@@ -1800,9 +1801,7 @@ class UserService(CRUDService):
             'options': {'recursive': True, 'stripacl': True}
         }).wait_sync(raise_error=True)
 
-        with open(keysfile, 'w') as f:
-            os.fchmod(f.fileno(), 0o600)
-            os.fchown(f.fileno(), user['uid'], gid)
+        with atomic_write(keysfile, 'w', uid=user['uid'], gid=gid, perms=0o600) as f:
             f.write(f'{pubkey}\n')
 
     @api_method(UserSetPasswordArgs, UserSetPasswordResult,
