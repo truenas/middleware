@@ -19,7 +19,14 @@ from middlewared.api.current import (
     InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
     InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
 )
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, private
+from middlewared.service import (
+    CallError,
+    CRUDService,
+    ServiceContext,
+    ValidationErrors,
+    filterable_api_method,
+    private
+)
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
@@ -1826,7 +1833,11 @@ def udevd_ifnet_hook(middleware, data):
     if any((i.startswith(iface) for i in ignore)):
         return
 
-    sync_interface_impl(middleware, iface, node_position)
+    sync_interface_impl(
+        ServiceContext(middleware, middleware.logger),
+        iface,
+        node_position
+    )
 
 
 async def __activate_service_announcements(middleware, event_type, args):
