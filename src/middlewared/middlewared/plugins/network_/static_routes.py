@@ -138,5 +138,3 @@ class StaticRouteService(CRUDService):
         else:
             data["destination"] = dst.exploded
             data["gateway"] = gw.exploded
-
-
