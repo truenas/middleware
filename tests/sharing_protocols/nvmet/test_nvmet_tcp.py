@@ -14,17 +14,35 @@ from auto_config import ha, pool_name
 
 from middlewared.service_exception import MatchNotFound, ValidationErrors
 from middlewared.test.integration.assets.iscsi import iscsi_extent
-from middlewared.test.integration.assets.nvmet import (NVME_DEFAULT_TCP_PORT, nvmet_ana, nvmet_host, nvmet_host_subsys,
-                                                       nvmet_namespace, nvmet_port, nvmet_port_subsys, nvmet_subsys,
-                                                       nvmet_xport_referral)
+from middlewared.test.integration.assets.nvmet import (
+    NVME_DEFAULT_TCP_PORT,
+    nvmet_ana,
+    nvmet_host,
+    nvmet_host_subsys,
+    nvmet_namespace,
+    nvmet_port,
+    nvmet_port_subsys,
+    nvmet_subsys,
+    nvmet_xport_referral,
+)
 from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
+from middlewared.test.integration.utils.client import (
+    truenas_server,
+    host as init_truenas_server,
+)
 
 digits = ''.join(random.choices(string.digits, k=3))
 
 # [i.api for i in DHCHAP_DHGROUP]
-DHCHAP_DHGROUP_API_RANGE = [None, '2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
+DHCHAP_DHGROUP_API_RANGE = [
+    None,
+    '2048-BIT',
+    '3072-BIT',
+    '4096-BIT',
+    '6144-BIT',
+    '8192-BIT',
+]
 # [i.api for i in DHCHAP_HASH]
 DHCHAP_HASH_API_RANGE = ['SHA-256', 'SHA-384', 'SHA-512']
 
@@ -105,17 +123,21 @@ def space_zvol():
 
 @pytest.fixture(scope='module')
 def encrypted_zvol():
-    with dataset(NVMET_ENCRYPTED_ZVOL, {
-        'type': 'VOLUME',
-        'volsize': NVMET_ENCRYPTED_MB * MB,
-        'volblocksize': '16K',
-        'encryption': True,
-        'inherit_encryption': False,
-        'encryption_options': {
-            'algorithm': 'AES-128-CCM',
-            'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
-        }
-    }, delete=True) as ds:
+    with dataset(
+        NVMET_ENCRYPTED_ZVOL,
+        {
+            'type': 'VOLUME',
+            'volsize': NVMET_ENCRYPTED_MB * MB,
+            'volblocksize': '16K',
+            'encryption': True,
+            'inherit_encryption': False,
+            'encryption_options': {
+                'algorithm': 'AES-128-CCM',
+                'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
+            },
+        },
+        delete=True,
+    ) as ds:
         config = call('pool.dataset.query', [['name', '=', ds]], {'get': True})
         yield config
 
@@ -135,7 +157,9 @@ def assert_validation_errors(attribute: str, errmsg: str):
     assert ve.value.errors[0].errmsg.startswith(errmsg)
 
 
-def wait_for_session_count(count: int, retries: int = 5, delay: int = 1, raise_error: bool = False):
+def wait_for_session_count(
+    count: int, retries: int = 5, delay: int = 1, raise_error: bool = False
+):
     sessions = []
     for i in range(retries):
         sessions = call('nvmet.global.sessions')
@@ -196,13 +220,17 @@ class NVMeCLIClient:
     def discover(self, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp'):
         if addr is None:
             addr = truenas_server.ip
-        command = f'nvme discover -t {transport} -a {addr} -s {port} --output-format=json'
+        command = (
+            f'nvme discover -t {transport} -a {addr} -s {port} --output-format=json'
+        )
         return json.loads(self.run_command(command))
 
     def hostnqn(self):
         return self.run_command('cat /etc/nvme/hostnqn').strip()
 
-    def connect(self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs):
+    def connect(
+        self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs
+    ):
         if addr is None:
             addr = truenas_server.ip
         command = f'nvme connect -t {transport} -a {addr} -s {port} -n {nqn}'
@@ -214,7 +242,7 @@ class NVMeCLIClient:
             command += f' --dhchap-ctrl-secret={dhchap_ctrl_secret}'
 
         if self.DEBUG:
-            print("COMMAND:", command)
+            print('COMMAND:', command)
         return self.run_command(command)
 
     def disconnect(self, nqn):
@@ -236,8 +264,10 @@ class NVMeCLIClient:
         return json.loads(self.run_command(command))
 
     def nvme_devices(self):
-        serial_to_name = {s['serial']: s['name'] for s in call('nvmet.subsys.query',
-                                                               [], {'select': ['name', 'serial']})}
+        serial_to_name = {
+            s['serial']: s['name']
+            for s in call('nvmet.subsys.query', [], {'select': ['name', 'serial']})
+        }
         name_to_nqn = {name: f'{basenqn()}:{name}' for name in serial_to_name.values()}
         result = defaultdict(lambda: defaultdict(dict))
         for device in self.nvme_list().get('Devices'):
@@ -255,7 +285,9 @@ class NVMeCLIClient:
         return json.loads(self.run_command(command))
 
     @contextlib.contextmanager
-    def connect_ctx(self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs):
+    def connect_ctx(
+        self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs
+    ):
         if self.DEBUG:
             print('Connecting:', nqn)
         self.connect(nqn, addr, port, transport, **kwargs)
@@ -293,7 +325,7 @@ class NVMeCLIClient:
 class LoopbackClient(NVMeCLIClient):
     def run_command(self, command):
         if self.DEBUG:
-            print("COMMAND:", command)
+            print('COMMAND:', command)
         return ssh(command)
 
 
@@ -303,7 +335,6 @@ def loopback_client():
 
 
 class NVMeRunning:
-
     @pytest.fixture(params=['kernel', 'SPDK'], scope='class')
     def fixture_nvmet_running(self, request):
         with nvmet_implementation(request.param):
@@ -323,12 +354,10 @@ class NVMeRunning:
                             'id': subsys['id'],
                             'nqn': nqn,
                             'subsys': subsys,
-                            'namespace': ns}
+                            'namespace': ns,
+                        }
                 else:
-                    yield {
-                        'id': subsys['id'],
-                        'nqn': nqn,
-                        'subsys': subsys}
+                    yield {'id': subsys['id'], 'nqn': nqn, 'subsys': subsys}
 
     def assert_subsys_namespaces(self, data: dict, subnqn: str, sizes: list):
         assert len(data[subnqn]['namespace']) == len(sizes)
@@ -356,12 +385,15 @@ class NVMeRunning:
     def subsys_path_count(self, data: dict, subnqn: str):
         return len(self.subsys_paths(data, subnqn))
 
-    def subsys_path_present(self, data: dict,
-                            subnqn: str,
-                            traddr: str,
-                            trsvcid: str | int,
-                            state: str | None = 'live',
-                            transport: str = 'tcp'):
+    def subsys_path_present(
+        self,
+        data: dict,
+        subnqn: str,
+        traddr: str,
+        trsvcid: str | int,
+        state: str | None = 'live',
+        transport: str = 'tcp',
+    ):
         # Example data
         # [{'HostID': '91867c06-1d92-4b39-8316-3ca4b98aa5eb',
         #   'HostNQN': 'nqn.2014-08.org.nvmexpress:uuid:e8039519-21ec-49db-a7e2-422ab997abc0',
@@ -372,7 +404,9 @@ class NVMeRunning:
         #                              'State': 'live',
         #                              'Transport': 'tcp'}]}]}]
         for path in self.subsys_paths(data, subnqn):
-            if not path.get('Address').startswith(f'traddr={traddr},trsvcid={trsvcid},src_addr='):
+            if not path.get('Address').startswith(
+                f'traddr={traddr},trsvcid={trsvcid},src_addr='
+            ):
                 continue
             if state is not None:
                 if path.get('State') != state:
@@ -411,10 +445,20 @@ class TestNVMe(NVMeRunning):
         return loopback_client.hostnqn()
 
     def test__service_stopped(self):
-        assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
+        assert (
+            call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})[
+                'state'
+            ]
+            == 'STOPPED'
+        )
 
     def test__no_sessions_when_service_stopped(self):
-        assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
+        assert (
+            call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})[
+                'state'
+            ]
+            == 'STOPPED'
+        )
         assert call('nvmet.global.sessions') == []
 
     def test__discover_fail_not_running(self, loopback_client: NVMeCLIClient):
@@ -423,9 +467,16 @@ class TestNVMe(NVMeRunning):
             nc.discover()
 
     def test__service_started(self, fixture_nvmet_running):
-        assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'RUNNING'
+        assert (
+            call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})[
+                'state'
+            ]
+            == 'RUNNING'
+        )
 
-    def test__discover_fail_no_port(self, fixture_nvmet_running, loopback_client: NVMeCLIClient):
+    def test__discover_fail_no_port(
+        self, fixture_nvmet_running, loopback_client: NVMeCLIClient
+    ):
         nc = loopback_client
         with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
@@ -447,7 +498,9 @@ class TestNVMe(NVMeRunning):
             else:
                 assert record['subtype'] == 'nvme subsystem', record
             expected_subnqns.remove(subnqn)
-        assert len(expected_subnqns) == 0, f'Did not find all expected subnqns: {",".join(expected_subnqns)}'
+        assert len(expected_subnqns) == 0, (
+            f'Did not find all expected subnqns: {",".join(expected_subnqns)}'
+        )
 
     def discovery_present(self, data: dict, needle: dict):
         """
@@ -464,7 +517,9 @@ class TestNVMe(NVMeRunning):
                 return True
         return False
 
-    def test__discover_subsys(self, fixture_port, loopback_client: NVMeCLIClient, hostnqn: str):
+    def test__discover_subsys(
+        self, fixture_port, loopback_client: NVMeCLIClient, hostnqn: str
+    ):
         """
         Test that we can discover a subsystem.
 
@@ -479,15 +534,11 @@ class TestNVMe(NVMeRunning):
             with nvmet_port_subsys(subsys_id, port['id']):
                 self.assert_discovery(nc.discover())
                 # Now allow ANYONE to discover the subsystem
-                call('nvmet.subsys.update',
-                     subsys_id,
-                     {'allow_any_host': True})
+                call('nvmet.subsys.update', subsys_id, {'allow_any_host': True})
                 self.assert_discovery(nc.discover(), [subsys1_nqn])
 
                 # Turn off allow_any_host, and replace by a host
-                call('nvmet.subsys.update',
-                     subsys_id,
-                     {'allow_any_host': False})
+                call('nvmet.subsys.update', subsys_id, {'allow_any_host': False})
                 self.assert_discovery(nc.discover())
 
                 with nvmet_host(hostnqn) as host:
@@ -496,23 +547,31 @@ class TestNVMe(NVMeRunning):
                     self.assert_discovery(nc.discover())
                 self.assert_discovery(nc.discover())
 
-    def test__discover_two_subsys(self, fixture_port, loopback_client: NVMeCLIClient, hostnqn: str):
+    def test__discover_two_subsys(
+        self, fixture_port, loopback_client: NVMeCLIClient, hostnqn: str
+    ):
         """
         Test that we can discover two subsystems.
         """
         nc = loopback_client
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys1:
             self.assert_discovery(nc.discover(), [subsys1['nqn']])
-            with self.subsys(SUBSYS_NAME2, fixture_port, allow_any_host=True) as subsys2:
+            with self.subsys(
+                SUBSYS_NAME2, fixture_port, allow_any_host=True
+            ) as subsys2:
                 self.assert_discovery(nc.discover(), [subsys1['nqn'], subsys2['nqn']])
             self.assert_discovery(nc.discover(), [subsys1['nqn']])
             with self.subsys(SUBSYS_NAME2, fixture_port) as subsys2:
                 self.assert_discovery(nc.discover(), [subsys1['nqn']])
                 with nvmet_host(hostnqn) as host:
                     with nvmet_host_subsys(host['id'], subsys2['id']):
-                        self.assert_discovery(nc.discover(), [subsys1['nqn'], subsys2['nqn']])
+                        self.assert_discovery(
+                            nc.discover(), [subsys1['nqn'], subsys2['nqn']]
+                        )
 
-    def test__zvol_namespace(self, fixture_port, loopback_client, zvol1, zvol2, space_zvol):
+    def test__zvol_namespace(
+        self, fixture_port, loopback_client, zvol1, zvol2, space_zvol
+    ):
         """
         Test that we can connect to a subsystem and see associated namespace.
 
@@ -526,8 +585,8 @@ class TestNVMe(NVMeRunning):
 
         # Check dataset details before we use the zvol
         details = call('pool.dataset.details')
-        assert pick_dataset_details(details, zvol1["name"])['nvmet_shares'] == []
-        assert pick_dataset_details(details, zvol2["name"])['nvmet_shares'] == []
+        assert pick_dataset_details(details, zvol1['name'])['nvmet_shares'] == []
+        assert pick_dataset_details(details, zvol2['name'])['nvmet_shares'] == []
 
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys1:
             subsys1_id = subsys1['id']
@@ -535,10 +594,14 @@ class TestNVMe(NVMeRunning):
             with nvmet_namespace(subsys1_id, zvol1_path):
                 # Check dataset details now that ZVOL1 is in use, but ZVOL2 is not
                 details = call('pool.dataset.details')
-                zvol1_nvmet_shares = pick_dataset_details(details, zvol1["name"])['nvmet_shares']
+                zvol1_nvmet_shares = pick_dataset_details(details, zvol1['name'])[
+                    'nvmet_shares'
+                ]
                 assert len(zvol1_nvmet_shares) == 1
                 assert_nvmet_share(zvol1_nvmet_shares[0], f'/dev/{zvol1_path}')
-                assert pick_dataset_details(details, zvol2["name"])['nvmet_shares'] == []
+                assert (
+                    pick_dataset_details(details, zvol2['name'])['nvmet_shares'] == []
+                )
 
                 with nc.connect_ctx(subsys1_nqn):
                     devices = nc.nvme_devices()
@@ -547,70 +610,98 @@ class TestNVMe(NVMeRunning):
                     # Ensure it has the namespaces we expect
                     self.assert_subsys_namespaces(devices, subsys1_nqn, [(1, ZVOL1_MB)])
                 # Try to add the volume a second time, ensure that fails
-                with assert_validation_errors('nvmet_namespace_create.device_path',
-                                              f'This device_path already used by subsystem: {SUBSYS_NAME1}'):
+                with assert_validation_errors(
+                    'nvmet_namespace_create.device_path',
+                    f'This device_path already used by subsystem: {SUBSYS_NAME1}',
+                ):
                     with nvmet_namespace(subsys1_id, zvol1_path):
                         pass
 
                 # Add another subsystem
-                with self.subsys(SUBSYS_NAME2, fixture_port, allow_any_host=True) as subsys2:
+                with self.subsys(
+                    SUBSYS_NAME2, fixture_port, allow_any_host=True
+                ) as subsys2:
                     subsys2_id = subsys2['id']
                     subsys2_nqn = subsys2['nqn']
                     # Try to add the volume to it, ensure it fails
-                    with assert_validation_errors('nvmet_namespace_create.device_path',
-                                                  f'This device_path already used by subsystem: {SUBSYS_NAME1}'):
+                    with assert_validation_errors(
+                        'nvmet_namespace_create.device_path',
+                        f'This device_path already used by subsystem: {SUBSYS_NAME1}',
+                    ):
                         with nvmet_namespace(subsys2_id, zvol1_path):
                             pass
 
                     # Instead add a volume that has a space in its name, ensure that works
-                    with nvmet_namespace(subsys2_id, f'zvol/{space_zvol["name"]}') as ns:
+                    with nvmet_namespace(
+                        subsys2_id, f'zvol/{space_zvol["name"]}'
+                    ) as ns:
                         with nc.connect_ctx(subsys2_nqn):
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys2_nqn, [(1, NVMET_SPACE_MB)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys2_nqn, [(1, NVMET_SPACE_MB)]
+                            )
 
                             # Now connect BOTH subsystems
                             with nc.connect_ctx(subsys1_nqn):
                                 devices = nc.nvme_devices()
                                 assert len(devices) == 2, devices
-                                self.assert_subsys_namespaces(devices, subsys1_nqn, [(1, ZVOL1_MB)])
-                                self.assert_subsys_namespaces(devices, subsys2_nqn, [(1, NVMET_SPACE_MB)])
+                                self.assert_subsys_namespaces(
+                                    devices, subsys1_nqn, [(1, ZVOL1_MB)]
+                                )
+                                self.assert_subsys_namespaces(
+                                    devices, subsys2_nqn, [(1, NVMET_SPACE_MB)]
+                                )
 
                             # Ensure we can't update a namespace with an already used ZVOL
-                            with assert_validation_errors('nvmet_namespace_update.device_path',
-                                                          'This device_path already used by '
-                                                          f'subsystem: {SUBSYS_NAME1}'):
-                                call('nvmet.namespace.update', ns['id'], {'device_path': zvol1_path})
+                            with assert_validation_errors(
+                                'nvmet_namespace_update.device_path',
+                                'This device_path already used by '
+                                f'subsystem: {SUBSYS_NAME1}',
+                            ):
+                                call(
+                                    'nvmet.namespace.update',
+                                    ns['id'],
+                                    {'device_path': zvol1_path},
+                                )
 
                             iscsi_extent_payload = {
                                 'type': 'DISK',
                                 'disk': zvol2_path,
-                                'name': 'nvmet_test_extent'
+                                'name': 'nvmet_test_extent',
                             }
 
                             with nvmet_namespace(subsys2_id, zvol2_path):
                                 # Ensure we can't create iSCSI using a ZVOL used by us
-                                with assert_validation_errors('iscsi_extent_create.disk',
-                                                              'Disk currently in use by NVMe-oF '
-                                                              f'subsystem {SUBSYS_NAME2} NSID 2'):
+                                with assert_validation_errors(
+                                    'iscsi_extent_create.disk',
+                                    'Disk currently in use by NVMe-oF '
+                                    f'subsystem {SUBSYS_NAME2} NSID 2',
+                                ):
                                     with iscsi_extent(iscsi_extent_payload):
                                         pass
 
                             with iscsi_extent(iscsi_extent_payload):
                                 # Ensure we can't create using a ZVOL used by iSCSI
                                 in_use_msg = 'This device_path already used by iSCSI extent: nvmet_test_extent'
-                                with assert_validation_errors('nvmet_namespace_create.device_path', in_use_msg):
+                                with assert_validation_errors(
+                                    'nvmet_namespace_create.device_path', in_use_msg
+                                ):
                                     with nvmet_namespace(subsys2_id, zvol2_path):
                                         pass
                                 # Ensure we can't update using a ZVOL used by iSCSI
-                                with assert_validation_errors('nvmet_namespace_update.device_path', in_use_msg):
-                                    call('nvmet.namespace.update', ns['id'], {'device_path': zvol2_path})
+                                with assert_validation_errors(
+                                    'nvmet_namespace_update.device_path', in_use_msg
+                                ):
+                                    call(
+                                        'nvmet.namespace.update',
+                                        ns['id'],
+                                        {'device_path': zvol2_path},
+                                    )
 
-    def test__multiple_namespaces(self,
-                                  fixture_port,
-                                  loopback_client: NVMeCLIClient,
-                                  zvol1,
-                                  zvol2):
+    def test__multiple_namespaces(
+        self, fixture_port, loopback_client: NVMeCLIClient, zvol1, zvol2
+    ):
         """
         Test that we can connect to a subsystem and see multiple
         associated namespaces.
@@ -638,21 +729,25 @@ class TestNVMe(NVMeRunning):
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, ZVOL2_MB)])
+                        self.assert_subsys_namespaces(
+                            devices, subsys_nqn, [(1, ZVOL1_MB), (2, ZVOL2_MB)]
+                        )
 
                     details = call('pool.dataset.details')
-                    nvmet_shares = pick_dataset_details(details, zvol1["name"])['nvmet_shares']
+                    nvmet_shares = pick_dataset_details(details, zvol1['name'])[
+                        'nvmet_shares'
+                    ]
                     assert len(nvmet_shares) == 1
                     assert_nvmet_share(nvmet_shares[0], f'/dev/zvol/{zvol1["name"]}')
-                    nvmet_shares = pick_dataset_details(details, zvol2["name"])['nvmet_shares']
+                    nvmet_shares = pick_dataset_details(details, zvol2['name'])[
+                        'nvmet_shares'
+                    ]
                     assert len(nvmet_shares) == 1
                     assert_nvmet_share(nvmet_shares[0], f'/dev/zvol/{zvol2["name"]}')
 
-    def test__zvol_locked_namespace(self,
-                                    fixture_port,
-                                    loopback_client: NVMeCLIClient,
-                                    zvol1,
-                                    encrypted_zvol):
+    def test__zvol_locked_namespace(
+        self, fixture_port, loopback_client: NVMeCLIClient, zvol1, encrypted_zvol
+    ):
         """
         Test that we can lock and unlock a ZVOL used for a subsystem namespace,
         and that an attached client sees the namespace disappear and reappear.
@@ -680,31 +775,50 @@ class TestNVMe(NVMeRunning):
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, NVMET_ENCRYPTED_MB)])
+                        self.assert_subsys_namespaces(
+                            devices,
+                            subsys_nqn,
+                            [(1, ZVOL1_MB), (2, NVMET_ENCRYPTED_MB)],
+                        )
 
                     # Lock the ZVOL
-                    call('pool.dataset.lock', encrypted_zvol['id'], {'force_umount': True}, job=True)
+                    call(
+                        'pool.dataset.lock',
+                        encrypted_zvol['id'],
+                        {'force_umount': True},
+                        job=True,
+                    )
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+                        self.assert_subsys_namespaces(
+                            devices, subsys_nqn, [(1, ZVOL1_MB)]
+                        )
 
                     # Unlock the ZVOL again
-                    call('pool.dataset.unlock',
-                         encrypted_zvol['id'], {
-                             'datasets': [{
-                                 'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
-                                 'name': encrypted_zvol['name']}]
-                         },
-                         job=True)
+                    call(
+                        'pool.dataset.unlock',
+                        encrypted_zvol['id'],
+                        {
+                            'datasets': [
+                                {
+                                    'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
+                                    'name': encrypted_zvol['name'],
+                                }
+                            ]
+                        },
+                        job=True,
+                    )
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, NVMET_ENCRYPTED_MB)])
+                        self.assert_subsys_namespaces(
+                            devices,
+                            subsys_nqn,
+                            [(1, ZVOL1_MB), (2, NVMET_ENCRYPTED_MB)],
+                        )
 
-    def test__zvol_resize_namespace(self,
-                                    fixture_port,
-                                    loopback_client: NVMeCLIClient):
+    def test__zvol_resize_namespace(self, fixture_port, loopback_client: NVMeCLIClient):
         """
         Test that we can resize a ZVOL used for a subsystem namespace,
         and that an attached client sees the namespace change size.
@@ -725,28 +839,42 @@ class TestNVMe(NVMeRunning):
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_START_MB)])
+                        self.assert_subsys_namespaces(
+                            devices, subsys_nqn, [(1, ZVOL_RESIZE_START_MB)]
+                        )
 
                         # Update the size of the ZVOL, give an extra list to allow size change to propagate
-                        call('pool.dataset.update', zvol_config['id'], {'volsize': ZVOL_RESIZE_END_MB * MB})
+                        call(
+                            'pool.dataset.update',
+                            zvol_config['id'],
+                            {'volsize': ZVOL_RESIZE_END_MB * MB},
+                        )
 
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)])
+                        self.assert_subsys_namespaces(
+                            devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)]
+                        )
 
                         # Try to shrink the volume aagain, ensure that fails
-                        with assert_validation_errors('pool_dataset_update.volsize',
-                                                      'You cannot shrink a zvol from GUI, this may lead to data loss.'):
-                            call('pool.dataset.update', zvol_config['id'], {'volsize': ZVOL_RESIZE_START_MB * MB})
+                        with assert_validation_errors(
+                            'pool_dataset_update.volsize',
+                            'You cannot shrink a zvol from GUI, this may lead to data loss.',
+                        ):
+                            call(
+                                'pool.dataset.update',
+                                zvol_config['id'],
+                                {'volsize': ZVOL_RESIZE_START_MB * MB},
+                            )
 
                         # Check the size from the client perspective again
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
-                        self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)])
+                        self.assert_subsys_namespaces(
+                            devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)]
+                        )
 
-    def test__file_namespaces(self,
-                              fixture_port,
-                              loopback_client: NVMeCLIClient):
+    def test__file_namespaces(self, fixture_port, loopback_client: NVMeCLIClient):
         """
         Test FILE based namespaces.
 
@@ -762,14 +890,15 @@ class TestNVMe(NVMeRunning):
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
             subsys_id = subsys['id']
             subsys_nqn = subsys['nqn']
-            with nvmet_namespace(subsys_id,
-                                 file1,
-                                 DEVICE_TYPE_FILE,
-                                 filesize=MB_100,
-                                 delete_options={'remove': True}) as ns:
+            with nvmet_namespace(
+                subsys_id,
+                file1,
+                DEVICE_TYPE_FILE,
+                filesize=MB_100,
+                delete_options={'remove': True},
+            ) as ns:
                 assert ns['dataset'] == pool_name
                 assert ns['relative_path'] == f'file1_{digits}'
-
                 # Check dataset details now that we have a file in use
                 details = call('pool.dataset.details')
                 nvmet_shares = pick_dataset_details(details, pool_name)['nvmet_shares']
@@ -791,43 +920,70 @@ class TestNVMe(NVMeRunning):
                     assert len(devices) == 1, devices
                     self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200)])
                     # Ensure we can't shrink it
-                    with assert_validation_errors('nvmet_namespace_update.filesize',
-                                                  'Shrinking an namespace file is not allowed. '
-                                                  'This can lead to data loss.'):
+                    with assert_validation_errors(
+                        'nvmet_namespace_update.filesize',
+                        'Shrinking an namespace file is not allowed. '
+                        'This can lead to data loss.',
+                    ):
                         call('nvmet.namespace.update', ns['id'], {'filesize': MB_100})
 
                     # Now let's add a namespace base on a file on an encrypted volume
-                    with dataset(f'ds_nvme{digits}', data={
-                        'encryption': True,
-                        'inherit_encryption': False,
-                        'encryption_options': {'passphrase': NVMET_ENCRYPTED_PASSPHRASE}
-                    }, delete=True) as ds:
+                    with dataset(
+                        f'ds_nvme{digits}',
+                        data={
+                            'encryption': True,
+                            'inherit_encryption': False,
+                            'encryption_options': {
+                                'passphrase': NVMET_ENCRYPTED_PASSPHRASE
+                            },
+                        },
+                        delete=True,
+                    ) as ds:
                         file2 = f'/mnt/{ds}/file2_{digits}'
-                        with nvmet_namespace(subsys_id,
-                                             file2,
-                                             DEVICE_TYPE_FILE,
-                                             filesize=MB_100,
-                                             delete_options={'remove': True}):
+                        with nvmet_namespace(
+                            subsys_id,
+                            file2,
+                            DEVICE_TYPE_FILE,
+                            filesize=MB_100,
+                            delete_options={'remove': True},
+                        ):
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200), (2, 100)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, 200), (2, 100)]
+                            )
                             # Lock the dataset
-                            call('pool.dataset.lock', ds, {'force_umount': True}, job=True)
+                            call(
+                                'pool.dataset.lock',
+                                ds,
+                                {'force_umount': True},
+                                job=True,
+                            )
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, 200)]
+                            )
 
                             # Unlock the dataset again
-                            call('pool.dataset.unlock',
-                                 ds, {
-                                     'datasets': [{
-                                         'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
-                                         'name': ds}]
-                                 },
-                                 job=True)
+                            call(
+                                'pool.dataset.unlock',
+                                ds,
+                                {
+                                    'datasets': [
+                                        {
+                                            'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
+                                            'name': ds,
+                                        }
+                                    ]
+                                },
+                                job=True,
+                            )
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200), (2, 100)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, 200), (2, 100)]
+                            )
                     # Dataset destroyed
                     devices = nc.nvme_devices()
                     assert len(devices) == 1, devices
@@ -836,13 +992,14 @@ class TestNVMe(NVMeRunning):
                 iscsi_extent_payload = {
                     'type': 'FILE',
                     'path': file1,
-                    'name': 'nvmet_test_extent'
+                    'name': 'nvmet_test_extent',
                 }
 
                 # Ensure we can't create iSCSI using a FILE used by us
-                with assert_validation_errors('iscsi_extent_create.path',
-                                              'File currently in use by NVMe-oF '
-                                              f'subsystem {SUBSYS_NAME1} NSID 1'):
+                with assert_validation_errors(
+                    'iscsi_extent_create.path',
+                    f'File currently in use by NVMe-oF subsystem {SUBSYS_NAME1} NSID 1',
+                ):
                     with iscsi_extent(iscsi_extent_payload):
                         pass
 
@@ -851,24 +1008,32 @@ class TestNVMe(NVMeRunning):
                     'type': 'FILE',
                     'path': file2,
                     'name': 'nvmet_test_extent',
-                    'filesize': MB_100
+                    'filesize': MB_100,
                 }
 
                 with iscsi_extent(iscsi_extent_payload, True):
                     # Ensure we can't create using a FILE used by iSCSI
                     in_use_msg = 'This device_path already used by iSCSI extent: nvmet_test_extent'
-                    with assert_validation_errors('nvmet_namespace_create.device_path', in_use_msg):
-                        with nvmet_namespace(subsys_id,
-                                             file2,
-                                             DEVICE_TYPE_FILE,
-                                             filesize=MB_100,
-                                             delete_options={'remove': True}):
+                    with assert_validation_errors(
+                        'nvmet_namespace_create.device_path', in_use_msg
+                    ):
+                        with nvmet_namespace(
+                            subsys_id,
+                            file2,
+                            DEVICE_TYPE_FILE,
+                            filesize=MB_100,
+                            delete_options={'remove': True},
+                        ):
                             pass
                     # Ensure we can't update using a FILE used by iSCSI
-                    with assert_validation_errors('nvmet_namespace_update.device_path', in_use_msg):
+                    with assert_validation_errors(
+                        'nvmet_namespace_update.device_path', in_use_msg
+                    ):
                         call('nvmet.namespace.update', ns['id'], {'device_path': file2})
 
-    def test__pool_export_import(self, fixture_port, loopback_client: NVMeCLIClient, zvol1):
+    def test__pool_export_import(
+        self, fixture_port, loopback_client: NVMeCLIClient, zvol1
+    ):
         """
         Test that we can export and import a pool underlying subsystem namespaces.
         """
@@ -888,48 +1053,64 @@ class TestNVMe(NVMeRunning):
                 # Now create another pool
                 with another_pool() as pool2:
                     # Test with a ZVOL based namespace
-                    with zvol("pool2zvol1", 50, pool2['name']) as zvol_config:
+                    with zvol('pool2zvol1', 50, pool2['name']) as zvol_config:
                         with nvmet_namespace(subsys_id, f'zvol/{zvol_config["name"]}'):
                             with nc.connect_ctx(subsys_nqn):
                                 devices = nc.nvme_devices()
                                 assert len(devices) == 1, devices
-                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)])
-                            call("pool.export", pool2["id"], job=True)
+                                self.assert_subsys_namespaces(
+                                    devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)]
+                                )
+                            call('pool.export', pool2['id'], job=True)
                             with nc.connect_ctx(subsys_nqn):
                                 devices = nc.nvme_devices()
                                 assert len(devices) == 1, devices
-                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+                                self.assert_subsys_namespaces(
+                                    devices, subsys_nqn, [(1, ZVOL1_MB)]
+                                )
                             call('pool.import_pool', {'guid': pool2['guid']}, job=True)
                             with nc.connect_ctx(subsys_nqn):
                                 devices = nc.nvme_devices()
                                 assert len(devices) == 1, devices
-                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)])
+                                self.assert_subsys_namespaces(
+                                    devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)]
+                                )
                     # Lookup the pool again, the id may have changed
                     try:
-                        pool2 = call('pool.query', [['guid', '=', pool2['guid']]], {'get': True})
+                        pool2 = call(
+                            'pool.query', [['guid', '=', pool2['guid']]], {'get': True}
+                        )
                     except MatchNotFound:
                         pass
                     # Test with a FILE based namespace
                     file2 = f'/mnt/{pool2["name"]}/file_{digits}'
-                    with nvmet_namespace(subsys_id,
-                                         file2,
-                                         DEVICE_TYPE_FILE,
-                                         filesize=MB_150,
-                                         delete_options={'remove': True}):
+                    with nvmet_namespace(
+                        subsys_id,
+                        file2,
+                        DEVICE_TYPE_FILE,
+                        filesize=MB_150,
+                        delete_options={'remove': True},
+                    ):
                         with nc.connect_ctx(subsys_nqn):
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)])
-                        call("pool.export", pool2["id"], job=True)
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)]
+                            )
+                        call('pool.export', pool2['id'], job=True)
                         with nc.connect_ctx(subsys_nqn):
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, ZVOL1_MB)]
+                            )
                         call('pool.import_pool', {'guid': pool2['guid']}, job=True)
                         with nc.connect_ctx(subsys_nqn):
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
-                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)])
+                            self.assert_subsys_namespaces(
+                                devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)]
+                            )
 
     def test__discovery_referrals(self, fixture_port, loopback_client: NVMeCLIClient):
         """
@@ -950,10 +1131,12 @@ class TestNVMe(NVMeRunning):
             'adrfam': 'ipv4',
             'traddr': truenas_server.ip,
             'trsvcid': f'{NVME_DEFAULT_TCP_PORT}',
-            'subnqn': DISCOVERY_NQN
+            'subnqn': DISCOVERY_NQN,
         }
         SUBSYS1_DEFAULT_PORT = DISCOVERY_DEFAULT_PORT | {'subnqn': subsys1_nqn}
-        DISCOVERY_ALT1_PORT = DISCOVERY_DEFAULT_PORT | {'trsvcid': f'{NVME_ALT1_TCP_PORT}'}
+        DISCOVERY_ALT1_PORT = DISCOVERY_DEFAULT_PORT | {
+            'trsvcid': f'{NVME_ALT1_TCP_PORT}'
+        }
         SUBSYS1_ALT1_PORT = DISCOVERY_ALT1_PORT | {'subnqn': subsys1_nqn}
         with nvmet_subsys(SUBSYS_NAME1, allow_any_host=True) as subsys:
             subsys_id = subsys['id']
@@ -965,7 +1148,9 @@ class TestNVMe(NVMeRunning):
                     assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
 
                     # Add another port
-                    with nvmet_port(truenas_server.ip, addr_trsvcid=NVME_ALT1_TCP_PORT) as port2:
+                    with nvmet_port(
+                        truenas_server.ip, addr_trsvcid=NVME_ALT1_TCP_PORT
+                    ) as port2:
                         with nvmet_port_subsys(subsys_id, port2['id']):
                             # Check that we can see each port point at the other
                             data = nc.discover()
@@ -981,7 +1166,9 @@ class TestNVMe(NVMeRunning):
 
                             if use_spdk:
                                 assert len(data['records']) == 4
-                                assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
+                                assert self.discovery_present(
+                                    data, SUBSYS1_DEFAULT_PORT
+                                )
                             else:
                                 assert len(data['records']) == 3
                             assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
@@ -993,8 +1180,12 @@ class TestNVMe(NVMeRunning):
                                 # Check that we can see each port point at the other
                                 data = nc.discover()
                                 assert len(data['records']) == 2 if not use_spdk else 4
-                                assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
-                                assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
+                                assert self.discovery_present(
+                                    data, DISCOVERY_DEFAULT_PORT
+                                )
+                                assert self.discovery_present(
+                                    data, SUBSYS1_DEFAULT_PORT
+                                )
                                 data = nc.discover(port=NVME_ALT1_TCP_PORT)
                                 assert len(data['records']) == 2 if not use_spdk else 4
                                 assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
@@ -1003,34 +1194,76 @@ class TestNVMe(NVMeRunning):
                             if ha:
                                 data = nc.discover()
                                 assert len(data['records']) == 3 if not use_spdk else 4
-                                assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
-                                assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
+                                assert self.discovery_present(
+                                    data, DISCOVERY_DEFAULT_PORT
+                                )
+                                assert self.discovery_present(
+                                    data, SUBSYS1_DEFAULT_PORT
+                                )
                                 assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
                                 data = nc.discover(port=NVME_ALT1_TCP_PORT)
                                 assert len(data['records']) == 3 if not use_spdk else 4
-                                assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
+                                assert self.discovery_present(
+                                    data, DISCOVERY_DEFAULT_PORT
+                                )
                                 assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
                                 assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
                                 with nvmet_ana(True):
                                     # With ANA enabled we won't use the VIP
-                                    for node_ip, other_node_ip in [(truenas_server.nodea_ip, truenas_server.nodeb_ip),
-                                                                   (truenas_server.nodeb_ip, truenas_server.nodea_ip)]:
+                                    for node_ip, other_node_ip in [
+                                        (
+                                            truenas_server.nodea_ip,
+                                            truenas_server.nodeb_ip,
+                                        ),
+                                        (
+                                            truenas_server.nodeb_ip,
+                                            truenas_server.nodea_ip,
+                                        ),
+                                    ]:
                                         this_node = {'traddr': node_ip}
                                         other_node = {'traddr': other_node_ip}
                                         data = nc.discover(addr=node_ip)
-                                        assert len(data['records']) == 4 if not use_spdk else 6
-                                        assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | this_node)
-                                        assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT | this_node)
-                                        assert self.discovery_present(data, DISCOVERY_ALT1_PORT | this_node)
-                                        assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | other_node)
-                                        data = nc.discover(addr=node_ip, port=NVME_ALT1_TCP_PORT)
-                                        assert len(data['records']) == 4 if not use_spdk else 6
-                                        assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | this_node)
-                                        assert self.discovery_present(data, SUBSYS1_ALT1_PORT | this_node)
-                                        assert self.discovery_present(data, DISCOVERY_ALT1_PORT | this_node)
-                                        assert self.discovery_present(data, DISCOVERY_ALT1_PORT | other_node)
+                                        assert (
+                                            len(data['records']) == 4
+                                            if not use_spdk
+                                            else 6
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_DEFAULT_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, SUBSYS1_DEFAULT_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_ALT1_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_DEFAULT_PORT | other_node
+                                        )
+                                        data = nc.discover(
+                                            addr=node_ip, port=NVME_ALT1_TCP_PORT
+                                        )
+                                        assert (
+                                            len(data['records']) == 4
+                                            if not use_spdk
+                                            else 6
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_DEFAULT_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, SUBSYS1_ALT1_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_ALT1_PORT | this_node
+                                        )
+                                        assert self.discovery_present(
+                                            data, DISCOVERY_ALT1_PORT | other_node
+                                        )
 
-    def test__connect_all_referrals(self, fixture_port, loopback_client: NVMeCLIClient, zvol1):
+    def test__connect_all_referrals(
+        self, fixture_port, loopback_client: NVMeCLIClient, zvol1
+    ):
         """
         Test that when a client does a nvme connect-all, it adds the paths defined
         by the referrals.
@@ -1052,23 +1285,41 @@ class TestNVMe(NVMeRunning):
                 with nc.connect_all_ctx():
                     data = nc.nvme_list_subsys()
                     assert self.subsys_path_count(data, subsys_nqn) == 1
-                    assert self.subsys_path_present(data, subsys_nqn, truenas_server.ip, NVME_DEFAULT_TCP_PORT)
+                    assert self.subsys_path_present(
+                        data, subsys_nqn, truenas_server.ip, NVME_DEFAULT_TCP_PORT
+                    )
                 assert len(nc.nvme_list_subsys()) == 0
 
                 # Add another port
-                with nvmet_port(truenas_server.ip, addr_trsvcid=NVME_ALT1_TCP_PORT) as port2:
+                with nvmet_port(
+                    truenas_server.ip, addr_trsvcid=NVME_ALT1_TCP_PORT
+                ) as port2:
                     with nvmet_port_subsys(subsys_id, port2['id']):
                         with nc.connect_all_ctx():
                             data = nc.nvme_list_subsys()
                             assert self.subsys_path_count(data, subsys_nqn) == 2
-                            assert self.subsys_path_present(data, subsys_nqn, truenas_server.ip, NVME_DEFAULT_TCP_PORT)
-                            assert self.subsys_path_present(data, subsys_nqn, truenas_server.ip, NVME_ALT1_TCP_PORT)
+                            assert self.subsys_path_present(
+                                data,
+                                subsys_nqn,
+                                truenas_server.ip,
+                                NVME_DEFAULT_TCP_PORT,
+                            )
+                            assert self.subsys_path_present(
+                                data, subsys_nqn, truenas_server.ip, NVME_ALT1_TCP_PORT
+                            )
 
                         with nc.connect_all_ctx(port=NVME_ALT1_TCP_PORT):
                             data = nc.nvme_list_subsys()
                             assert self.subsys_path_count(data, subsys_nqn) == 2
-                            assert self.subsys_path_present(data, subsys_nqn, truenas_server.ip, NVME_DEFAULT_TCP_PORT)
-                            assert self.subsys_path_present(data, subsys_nqn, truenas_server.ip, NVME_ALT1_TCP_PORT)
+                            assert self.subsys_path_present(
+                                data,
+                                subsys_nqn,
+                                truenas_server.ip,
+                                NVME_DEFAULT_TCP_PORT,
+                            )
+                            assert self.subsys_path_present(
+                                data, subsys_nqn, truenas_server.ip, NVME_ALT1_TCP_PORT
+                            )
 
                         # Check HA when xport_referral and ANA are both True
                         if ha:
@@ -1086,51 +1337,123 @@ class TestNVMe(NVMeRunning):
                                 with nc.connect_all_ctx(active_ip):
                                     data = nc.nvme_list_subsys()
                                     assert self.subsys_path_count(data, subsys_nqn) == 4
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT)
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        active_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT
+                                    )
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        standby_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT
+                                    )
 
                                 with nc.connect_all_ctx(active_ip, NVME_ALT1_TCP_PORT):
                                     data = nc.nvme_list_subsys()
                                     assert self.subsys_path_count(data, subsys_nqn) == 4
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT)
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        active_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT
+                                    )
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        standby_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT
+                                    )
 
                                 with nc.connect_all_ctx(standby_ip):
                                     data = nc.nvme_list_subsys()
                                     assert self.subsys_path_count(data, subsys_nqn) == 4
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT)
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        active_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT
+                                    )
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        standby_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT
+                                    )
 
                                 with nc.connect_all_ctx(standby_ip, NVME_ALT1_TCP_PORT):
                                     data = nc.nvme_list_subsys()
                                     assert self.subsys_path_count(data, subsys_nqn) == 4
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_DEFAULT_TCP_PORT)
-                                    assert self.subsys_path_present(data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT)
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        active_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, active_ip, NVME_ALT1_TCP_PORT
+                                    )
+                                    assert self.subsys_path_present(
+                                        data,
+                                        subsys_nqn,
+                                        standby_ip,
+                                        NVME_DEFAULT_TCP_PORT,
+                                    )
+                                    assert self.subsys_path_present(
+                                        data, subsys_nqn, standby_ip, NVME_ALT1_TCP_PORT
+                                    )
 
                             # ANA is off again
                             with nc.connect_all_ctx():
                                 data = nc.nvme_list_subsys()
                                 assert self.subsys_path_count(data, subsys_nqn) == 2
-                                assert self.subsys_path_present(data, subsys_nqn,
-                                                                truenas_server.ip, NVME_DEFAULT_TCP_PORT)
-                                assert self.subsys_path_present(data, subsys_nqn,
-                                                                truenas_server.ip, NVME_ALT1_TCP_PORT)
+                                assert self.subsys_path_present(
+                                    data,
+                                    subsys_nqn,
+                                    truenas_server.ip,
+                                    NVME_DEFAULT_TCP_PORT,
+                                )
+                                assert self.subsys_path_present(
+                                    data,
+                                    subsys_nqn,
+                                    truenas_server.ip,
+                                    NVME_ALT1_TCP_PORT,
+                                )
 
                         # Turn off xport_referral
                         with nvmet_xport_referral(False):
                             with nc.connect_all_ctx():
                                 data = nc.nvme_list_subsys()
-                                assert self.subsys_path_count(data, subsys_nqn) == 1 if not use_spdk else 2
-                                assert self.subsys_path_present(data, subsys_nqn,
-                                                                truenas_server.ip, NVME_DEFAULT_TCP_PORT)
+                                assert (
+                                    self.subsys_path_count(data, subsys_nqn) == 1
+                                    if not use_spdk
+                                    else 2
+                                )
+                                assert self.subsys_path_present(
+                                    data,
+                                    subsys_nqn,
+                                    truenas_server.ip,
+                                    NVME_DEFAULT_TCP_PORT,
+                                )
 
                             # Check HA when xport_referral is False and ANA is True
                             if ha:
@@ -1147,51 +1470,91 @@ class TestNVMe(NVMeRunning):
                                             assert False, 'Unexpected failover.node'
                                     with nc.connect_all_ctx(active_ip):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        active_ip,
-                                                                        NVME_DEFAULT_TCP_PORT)
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        standby_ip,
-                                                                        NVME_DEFAULT_TCP_PORT)
+                                        assert (
+                                            self.subsys_path_count(data, subsys_nqn)
+                                            == 2
+                                            if not use_spdk
+                                            else 4
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            active_ip,
+                                            NVME_DEFAULT_TCP_PORT,
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            standby_ip,
+                                            NVME_DEFAULT_TCP_PORT,
+                                        )
 
-                                    with nc.connect_all_ctx(active_ip, NVME_ALT1_TCP_PORT):
+                                    with nc.connect_all_ctx(
+                                        active_ip, NVME_ALT1_TCP_PORT
+                                    ):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        active_ip,
-                                                                        NVME_ALT1_TCP_PORT)
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        standby_ip,
-                                                                        NVME_ALT1_TCP_PORT)
+                                        assert (
+                                            self.subsys_path_count(data, subsys_nqn)
+                                            == 2
+                                            if not use_spdk
+                                            else 4
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            active_ip,
+                                            NVME_ALT1_TCP_PORT,
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            standby_ip,
+                                            NVME_ALT1_TCP_PORT,
+                                        )
 
                                     with nc.connect_all_ctx(standby_ip):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        active_ip,
-                                                                        NVME_DEFAULT_TCP_PORT)
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        standby_ip,
-                                                                        NVME_DEFAULT_TCP_PORT)
+                                        assert (
+                                            self.subsys_path_count(data, subsys_nqn)
+                                            == 2
+                                            if not use_spdk
+                                            else 4
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            active_ip,
+                                            NVME_DEFAULT_TCP_PORT,
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            standby_ip,
+                                            NVME_DEFAULT_TCP_PORT,
+                                        )
 
-                                    with nc.connect_all_ctx(standby_ip, NVME_ALT1_TCP_PORT):
+                                    with nc.connect_all_ctx(
+                                        standby_ip, NVME_ALT1_TCP_PORT
+                                    ):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        active_ip,
-                                                                        NVME_ALT1_TCP_PORT)
-                                        assert self.subsys_path_present(data,
-                                                                        subsys_nqn,
-                                                                        standby_ip,
-                                                                        NVME_ALT1_TCP_PORT)
+                                        assert (
+                                            self.subsys_path_count(data, subsys_nqn)
+                                            == 2
+                                            if not use_spdk
+                                            else 4
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            active_ip,
+                                            NVME_ALT1_TCP_PORT,
+                                        )
+                                        assert self.subsys_path_present(
+                                            data,
+                                            subsys_nqn,
+                                            standby_ip,
+                                            NVME_ALT1_TCP_PORT,
+                                        )
 
     def test__verbose_subsys_query(self, fixture_port, zvol1, zvol2):
         """
@@ -1358,15 +1721,19 @@ class TestNVMe(NVMeRunning):
 
     def test__port_validation(self, fixture_port):
         # Create -> duplicate
-        with assert_validation_errors('nvmet_port_create.addr_traddr',
-                                      'There already is a port using the same transport and address'):
+        with assert_validation_errors(
+            'nvmet_port_create.addr_traddr',
+            'There already is a port using the same transport and address',
+        ):
             with nvmet_port(truenas_server.ip):
                 pass
 
         # Update
         with nvmet_port(truenas_server.ip, 4444) as port2:
-            with assert_validation_errors('nvmet_port_update.addr_traddr',
-                                          'There already is a port using the same transport and address'):
+            with assert_validation_errors(
+                'nvmet_port_update.addr_traddr',
+                'There already is a port using the same transport and address',
+            ):
                 call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4420})
 
             call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4421})
@@ -1374,16 +1741,20 @@ class TestNVMe(NVMeRunning):
             # Associate port with subsys
             with nvmet_subsys(SUBSYS_NAME1) as subsys:
                 with nvmet_port_subsys(subsys['id'], port2['id']):
-                    with assert_validation_errors('nvmet_port_update.addr_trsvcid',
-                                                  'Cannot change addr_trsvcid on an active port.  '
-                                                  'Disable first to allow change.'):
+                    with assert_validation_errors(
+                        'nvmet_port_update.addr_trsvcid',
+                        'Cannot change addr_trsvcid on an active port.  '
+                        'Disable first to allow change.',
+                    ):
                         call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
 
                 call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
 
-            with assert_validation_errors('nvmet_port_update.addr_trtype',
-                                          'This platform cannot support NVMe-oF(RDMA) or '
-                                          'is missing an RDMA capable NIC.'):
+            with assert_validation_errors(
+                'nvmet_port_update.addr_trtype',
+                'This platform cannot support NVMe-oF(RDMA) or '
+                'is missing an RDMA capable NIC.',
+            ):
                 call('nvmet.port.update', port2['id'], {'addr_trtype': 'RDMA'})
 
     def test__ana_settings(self, fixture_port, loopback_client, zvol1, zvol2):
@@ -1396,27 +1767,29 @@ class TestNVMe(NVMeRunning):
         nc = loopback_client
 
         if not ha:
-            with assert_validation_errors('nvmet_global_update.ana',
-                                          'This platform does not support Asymmetric Namespace Access(ANA).'):
+            with assert_validation_errors(
+                'nvmet_global_update.ana',
+                'This platform does not support Asymmetric Namespace Access(ANA).',
+            ):
                 call('nvmet.global.update', {'ana': True})
 
         # Make two subsystems.  We will only modify the ANA setting of
         # subsystem 2
-        with self.subsys(SUBSYS_NAME1,
-                         fixture_port,
-                         allow_any_host=True,
-                         zvol_name=zvol1["name"]) as subsys1:
-            with self.subsys(SUBSYS_NAME2,
-                             fixture_port,
-                             allow_any_host=True,
-                             zvol_name=zvol2["name"]) as subsys2:
+        with self.subsys(
+            SUBSYS_NAME1, fixture_port, allow_any_host=True, zvol_name=zvol1['name']
+        ) as subsys1:
+            with self.subsys(
+                SUBSYS_NAME2, fixture_port, allow_any_host=True, zvol_name=zvol2['name']
+            ) as subsys2:
                 subsys1_nqn = subsys1['nqn']
                 subsys2_id = subsys2['id']
                 subsys2_nqn = subsys2['nqn']
 
                 if not ha:
-                    with assert_validation_errors('nvmet_subsys_update.ana',
-                                                  'This platform does not support Asymmetric Namespace Access(ANA).'):
+                    with assert_validation_errors(
+                        'nvmet_subsys_update.ana',
+                        'This platform does not support Asymmetric Namespace Access(ANA).',
+                    ):
                         call('nvmet.subsys.update', subsys2_id, {'ana': True})
                     # Now return from the test (for non-HA)
                     return
@@ -1492,7 +1865,9 @@ class TestNVMe(NVMeRunning):
                     assert_nqn_access(False, subsys1_nqn)
                     assert_nqn_access(False, subsys2_nqn)
 
-    def test__global_sessions_loopback(self, fixture_port, loopback_client, zvol1, zvol2, hostnqn):
+    def test__global_sessions_loopback(
+        self, fixture_port, loopback_client, zvol1, zvol2, hostnqn
+    ):
         """
         Test that session reporting seems reasonable when using a loopback client.
         """
@@ -1505,18 +1880,22 @@ class TestNVMe(NVMeRunning):
             assert session['subsys_id'] == subsys_id
 
         # Make two subsystems.
-        with self.subsys(SUBSYS_NAME1,
-                         fixture_port,
-                         allow_any_host=True,
-                         zvol_name=zvol1["name"]) as subsys1:
-            with self.subsys(SUBSYS_NAME2,
-                             fixture_port,
-                             allow_any_host=True,
-                             zvol_name=zvol2["name"]) as subsys2:
+        with self.subsys(
+            SUBSYS_NAME1, fixture_port, allow_any_host=True, zvol_name=zvol1['name']
+        ) as subsys1:
+            with self.subsys(
+                SUBSYS_NAME2, fixture_port, allow_any_host=True, zvol_name=zvol2['name']
+            ) as subsys2:
                 # Ensure no sessions are currently reported
                 assert call('nvmet.global.sessions') == []
-                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]) == []
-                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]) == []
+                assert (
+                    call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    == []
+                )
+                assert (
+                    call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    == []
+                )
 
                 # Now connect to one subsystem
                 with nc.connect_ctx(subsys1['nqn']):
@@ -1524,11 +1903,15 @@ class TestNVMe(NVMeRunning):
                     assert len(sessions) == 1
                     assert_session(sessions[0], fixture_port['id'], subsys1['id'])
 
-                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    sessions = call(
+                        'nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]
+                    )
                     assert len(sessions) == 1
                     assert_session(sessions[0], fixture_port['id'], subsys1['id'])
 
-                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    sessions = call(
+                        'nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]
+                    )
                     assert len(sessions) == 0
 
                     # Now connect to the other subsystem
@@ -1536,17 +1919,29 @@ class TestNVMe(NVMeRunning):
                         sessions = call('nvmet.global.sessions')
                         assert len(sessions) == 2
                         if sessions[0]['subsys_id'] == subsys1['id']:
-                            assert_session(sessions[0], fixture_port['id'], subsys1['id'])
-                            assert_session(sessions[1], fixture_port['id'], subsys2['id'])
+                            assert_session(
+                                sessions[0], fixture_port['id'], subsys1['id']
+                            )
+                            assert_session(
+                                sessions[1], fixture_port['id'], subsys2['id']
+                            )
                         else:
-                            assert_session(sessions[0], fixture_port['id'], subsys2['id'])
-                            assert_session(sessions[1], fixture_port['id'], subsys1['id'])
+                            assert_session(
+                                sessions[0], fixture_port['id'], subsys2['id']
+                            )
+                            assert_session(
+                                sessions[1], fixture_port['id'], subsys1['id']
+                            )
 
-                        sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                        sessions = call(
+                            'nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]
+                        )
                         assert len(sessions) == 1
                         assert_session(sessions[0], fixture_port['id'], subsys1['id'])
 
-                        sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                        sessions = call(
+                            'nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]
+                        )
                         assert len(sessions) == 1
                         assert_session(sessions[0], fixture_port['id'], subsys2['id'])
 
@@ -1556,22 +1951,31 @@ class TestNVMe(NVMeRunning):
                     assert len(sessions) == 1
                     assert_session(sessions[0], fixture_port['id'], subsys1['id'])
 
-                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    sessions = call(
+                        'nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]
+                    )
                     assert len(sessions) == 1
                     assert_session(sessions[0], fixture_port['id'], subsys1['id'])
 
-                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    sessions = call(
+                        'nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]
+                    )
                     assert len(sessions) == 0
 
                 # back to having no sessions
                 wait_for_session_count(0)
                 assert call('nvmet.global.sessions') == []
-                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]) == []
-                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]) == []
+                assert (
+                    call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    == []
+                )
+                assert (
+                    call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    == []
+                )
 
 
 class TestNVMeHostAuth(NVMeRunning):
-
     @pytest.fixture(scope='class')
     def fixture_port(self, fixture_nvmet_running):
         assert truenas_server.ip in call('nvmet.port.transport_address_choices', 'TCP')
@@ -1592,20 +1996,27 @@ class TestNVMeHostAuth(NVMeRunning):
                     with nvmet_host_subsys(host['id'], subsys_id):
                         yield subsys1 | {'host_id': host['id'], 'host': host}
 
-    @pytest.mark.parametrize('group,hash,bidirectional', itertools.product(DHCHAP_DHGROUP_API_RANGE,
-                                                                           DHCHAP_HASH_API_RANGE,
-                                                                           [False, True]))
-    def test__host_auth(self, group, hash, bidirectional, loopback_client, host_auth_fixture, hostnqn):
+    @pytest.mark.parametrize(
+        'group,hash,bidirectional',
+        itertools.product(
+            DHCHAP_DHGROUP_API_RANGE, DHCHAP_HASH_API_RANGE, [False, True]
+        ),
+    )
+    def test__host_auth(
+        self, group, hash, bidirectional, loopback_client, host_auth_fixture, hostnqn
+    ):
         nc = loopback_client
         subnqn = host_auth_fixture['nqn']
 
         dhchap_secret = call('nvmet.host.generate_key', hash, hostnqn)
-        dhchap_ctrl_secret = call('nvmet.host.generate_key', hash, hostnqn) if bidirectional else None
+        dhchap_ctrl_secret = (
+            call('nvmet.host.generate_key', hash, hostnqn) if bidirectional else None
+        )
         payload = {
             'dhchap_dhgroup': group,
             'dhchap_hash': hash,
             'dhchap_key': dhchap_secret,
-            'dhchap_ctrl_key': dhchap_ctrl_secret
+            'dhchap_ctrl_key': dhchap_ctrl_secret,
         }
         call('nvmet.host.update', host_auth_fixture['host_id'], payload)
         # First ensure that without supplying credentials we cannot connect.
@@ -1614,29 +2025,32 @@ class TestNVMeHostAuth(NVMeRunning):
                 pass
 
         # Then verify that with the correct creds, we CAN connect
-        self.assert_single_namespace(nc, subnqn, ZVOL1_MB, dhchap_secret=dhchap_secret,
-                                     dhchap_ctrl_secret=dhchap_ctrl_secret)
+        self.assert_single_namespace(
+            nc,
+            subnqn,
+            ZVOL1_MB,
+            dhchap_secret=dhchap_secret,
+            dhchap_ctrl_secret=dhchap_ctrl_secret,
+        )
 
     def test__host_dhchap_dhgroup_choices(self):
-        assert set(call('nvmet.host.dhchap_dhgroup_choices')) == set(['2048-BIT',
-                                                                      '3072-BIT',
-                                                                      '4096-BIT',
-                                                                      '6144-BIT',
-                                                                      '8192-BIT'])
+        assert set(call('nvmet.host.dhchap_dhgroup_choices')) == set(
+            ['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
+        )
 
     def test__host_dhchap_hash_choices(self):
-        assert set(call('nvmet.host.dhchap_hash_choices')) == set(['SHA-256',
-                                                                   'SHA-384',
-                                                                   'SHA-512'])
+        assert set(call('nvmet.host.dhchap_hash_choices')) == set(
+            ['SHA-256', 'SHA-384', 'SHA-512']
+        )
 
 
 class TestForceDelete(NVMeRunning):
-
     def test__host_force_delete(self, fixture_nvmet_running):
         """
         Verify that trying to delete a host linked to a subsys will
         raise an excception.  Also verify that force option works.
         """
+
         def _expected_msg(subsystems):
             count = len(subsystems)
             match count:
@@ -1656,38 +2070,59 @@ class TestForceDelete(NVMeRunning):
             with nvmet_host(FAKE_HOSTNQN, delete_exist_precheck=True) as host:
                 host_id = host['id']
                 assert len(call('nvmet.host.query')) == 1
-                with nvmet_host_subsys(host_id, subsys1['id'], delete_exist_precheck=True):
+                with nvmet_host_subsys(
+                    host_id, subsys1['id'], delete_exist_precheck=True
+                ):
                     # Linked then we cannot delete
-                    with assert_validation_errors('nvmet_host_delete.id',
-                                                  _expected_msg([SUBSYS_NAME1])):
+                    with assert_validation_errors(
+                        'nvmet_host_delete.id', _expected_msg([SUBSYS_NAME1])
+                    ):
                         call('nvmet.host.delete', host_id)
                     assert len(call('nvmet.host.query')) == 1
                     with nvmet_subsys(SUBSYS_NAME2) as subsys2:
                         with nvmet_host_subsys(host_id, subsys2['id']):
-                            with assert_validation_errors('nvmet_host_delete.id',
-                                                          _expected_msg([SUBSYS_NAME1,
-                                                                         SUBSYS_NAME2])):
+                            with assert_validation_errors(
+                                'nvmet_host_delete.id',
+                                _expected_msg([SUBSYS_NAME1, SUBSYS_NAME2]),
+                            ):
                                 call('nvmet.host.delete', host_id)
                                 with nvmet_subsys(SUBSYS_NAME3) as subsys3:
                                     with nvmet_host_subsys(host_id, subsys3['id']):
-                                        with assert_validation_errors('nvmet_host_delete.id',
-                                                                      _expected_msg([SUBSYS_NAME1,
-                                                                                     SUBSYS_NAME2,
-                                                                                     SUBSYS_NAME3])):
+                                        with assert_validation_errors(
+                                            'nvmet_host_delete.id',
+                                            _expected_msg(
+                                                [
+                                                    SUBSYS_NAME1,
+                                                    SUBSYS_NAME2,
+                                                    SUBSYS_NAME3,
+                                                ]
+                                            ),
+                                        ):
                                             call('nvmet.host.delete', host_id)
                                             with nvmet_subsys(SUBSYS_NAME4) as subsys4:
-                                                with nvmet_host_subsys(host_id, subsys4['id']):
-                                                    with assert_validation_errors('nvmet_host_delete.id',
-                                                                                  _expected_msg([SUBSYS_NAME1,
-                                                                                                 SUBSYS_NAME2,
-                                                                                                 SUBSYS_NAME3,
-                                                                                                 SUBSYS_NAME4])):
-
-                                                        call('nvmet.host.delete', host_id)
+                                                with nvmet_host_subsys(
+                                                    host_id, subsys4['id']
+                                                ):
+                                                    with assert_validation_errors(
+                                                        'nvmet_host_delete.id',
+                                                        _expected_msg(
+                                                            [
+                                                                SUBSYS_NAME1,
+                                                                SUBSYS_NAME2,
+                                                                SUBSYS_NAME3,
+                                                                SUBSYS_NAME4,
+                                                            ]
+                                                        ),
+                                                    ):
+                                                        call(
+                                                            'nvmet.host.delete', host_id
+                                                        )
                     assert len(call('nvmet.host.query')) == 1
                     # Linked then we cannot delete
-                    with assert_validation_errors('nvmet_host_delete.id',
-                                                  f'Host {FAKE_HOSTNQN} used by 1 subsystem: {SUBSYS_NAME1}'):
+                    with assert_validation_errors(
+                        'nvmet_host_delete.id',
+                        f'Host {FAKE_HOSTNQN} used by 1 subsystem: {SUBSYS_NAME1}',
+                    ):
                         call('nvmet.host.delete', host_id)
                     assert len(call('nvmet.host.query')) == 1
                     # Force the deletion
@@ -1708,19 +2143,33 @@ class TestForceDelete(NVMeRunning):
         # themselves).
         with nvmet_port(truenas_server.ip, delete_exist_precheck=True) as port:
             with nvmet_subsys(SUBSYS_NAME1) as subsys:
-                with nvmet_port_subsys(subsys['id'], port['id'], delete_exist_precheck=True) as port_subsys:
-                    assert 1 == call('nvmet.port_subsys.query', [['id', '=', port_subsys['id']]], {'count': True})
+                with nvmet_port_subsys(
+                    subsys['id'], port['id'], delete_exist_precheck=True
+                ) as port_subsys:
+                    assert 1 == call(
+                        'nvmet.port_subsys.query',
+                        [['id', '=', port_subsys['id']]],
+                        {'count': True},
+                    )
                     # Now try to delete the port -> fails
-                    with assert_validation_errors('nvmet_port_delete.id',
-                                                  f'Port #1 used by 1 subsystem: {SUBSYS_NAME1}'):
+                    with assert_validation_errors(
+                        'nvmet_port_delete.id',
+                        f'Port #1 used by 1 subsystem: {SUBSYS_NAME1}',
+                    ):
                         call('nvmet.port.delete', port['id'])
                     # Force delete the port
                     call('nvmet.port.delete', port['id'], {'force': True})
 
                     # Ensure that the associated port_subsys has also been deleted
-                    assert 0 == call('nvmet.port_subsys.query', [['id', '=', port_subsys['id']]], {'count': True})
+                    assert 0 == call(
+                        'nvmet.port_subsys.query',
+                        [['id', '=', port_subsys['id']]],
+                        {'count': True},
+                    )
 
-    def test__subsys_force_delete(self, fixture_nvmet_running, zvol1, zvol2, zvol3, zvol4):
+    def test__subsys_force_delete(
+        self, fixture_nvmet_running, zvol1, zvol2, zvol3, zvol4
+    ):
         """
         Verify that trying to delete a subsys that has an attached namespace
         will raise an excception.  Also verify that force option works.
@@ -1731,40 +2180,74 @@ class TestForceDelete(NVMeRunning):
         # themselves).
         with nvmet_subsys(SUBSYS_NAME1, delete_exist_precheck=True) as subsys:
             subsys_id = subsys['id']
-            with nvmet_namespace(subsys_id, f'zvol/{zvol1["name"]}', delete_exist_precheck=True):
+            with nvmet_namespace(
+                subsys_id, f'zvol/{zvol1["name"]}', delete_exist_precheck=True
+            ):
                 # Because of the way that foreign keys get expanded we query using
                 # 'subsys.id' rather than 'subsys_id'
-                assert 1 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
+                assert 1 == call(
+                    'nvmet.namespace.query',
+                    [['subsys.id', '=', subsys_id]],
+                    {'count': True},
+                )
                 # Now try to delete the subsys -> fails
-                with assert_validation_errors('nvmet_subsys_delete.id',
-                                              f'Subsystem {SUBSYS_NAME1} contains 1 namespace: 1'):
+                with assert_validation_errors(
+                    'nvmet_subsys_delete.id',
+                    f'Subsystem {SUBSYS_NAME1} contains 1 namespace: 1',
+                ):
                     call('nvmet.subsys.delete', subsys_id)
 
                 with nvmet_namespace(subsys_id, f'zvol/{zvol2["name"]}'):
-                    assert 2 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
-                    with assert_validation_errors('nvmet_subsys_delete.id',
-                                                  f'Subsystem {SUBSYS_NAME1} contains 2 namespaces: 1,2'):
+                    assert 2 == call(
+                        'nvmet.namespace.query',
+                        [['subsys.id', '=', subsys_id]],
+                        {'count': True},
+                    )
+                    with assert_validation_errors(
+                        'nvmet_subsys_delete.id',
+                        f'Subsystem {SUBSYS_NAME1} contains 2 namespaces: 1,2',
+                    ):
                         call('nvmet.subsys.delete', subsys_id)
 
                     with nvmet_namespace(subsys_id, f'zvol/{zvol3["name"]}', nsid=10):
-                        assert 3 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
-                        with assert_validation_errors('nvmet_subsys_delete.id',
-                                                      f'Subsystem {SUBSYS_NAME1} contains 3 namespaces: 1,2,10'):
+                        assert 3 == call(
+                            'nvmet.namespace.query',
+                            [['subsys.id', '=', subsys_id]],
+                            {'count': True},
+                        )
+                        with assert_validation_errors(
+                            'nvmet_subsys_delete.id',
+                            f'Subsystem {SUBSYS_NAME1} contains 3 namespaces: 1,2,10',
+                        ):
                             call('nvmet.subsys.delete', subsys_id)
 
                         with nvmet_namespace(subsys_id, f'zvol/{zvol4["name"]}'):
-                            assert 4 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
-                            with assert_validation_errors('nvmet_subsys_delete.id',
-                                                          f'Subsystem {SUBSYS_NAME1} contains 4 namespaces: 1,2,3,...'):
+                            assert 4 == call(
+                                'nvmet.namespace.query',
+                                [['subsys.id', '=', subsys_id]],
+                                {'count': True},
+                            )
+                            with assert_validation_errors(
+                                'nvmet_subsys_delete.id',
+                                f'Subsystem {SUBSYS_NAME1} contains 4 namespaces: 1,2,3,...',
+                            ):
                                 call('nvmet.subsys.delete', subsys_id)
 
-                assert 1 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
+                assert 1 == call(
+                    'nvmet.namespace.query',
+                    [['subsys.id', '=', subsys_id]],
+                    {'count': True},
+                )
 
                 # Force delete the subsys
                 call('nvmet.subsys.delete', subsys_id, {'force': True})
 
                 # Ensure that the associated namespace has also been deleted
-                assert 0 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
+                assert 0 == call(
+                    'nvmet.namespace.query',
+                    [['subsys.id', '=', subsys_id]],
+                    {'count': True},
+                )
 
 
 class TestManySubsystems:
@@ -1786,16 +2269,26 @@ class TestManySubsystems:
         with contextlib.ExitStack() as es:
             for i in range(self.SUBSYS_COUNT):
                 filename = f'/mnt/{pool_name}/file{i}'
-                subsys_config = es.enter_context(nvmet_subsys(f'bar{i}', allow_any_host=True))
-                es.enter_context(nvmet_port_subsys(subsys_config['id'], fixture_port['id']))
-                es.enter_context(nvmet_namespace(subsys_config['id'],
-                                                 filename,
-                                                 DEVICE_TYPE_FILE,
-                                                 filesize=MB_10,
-                                                 delete_options={'remove': True}))
+                subsys_config = es.enter_context(
+                    nvmet_subsys(f'bar{i}', allow_any_host=True)
+                )
+                es.enter_context(
+                    nvmet_port_subsys(subsys_config['id'], fixture_port['id'])
+                )
+                es.enter_context(
+                    nvmet_namespace(
+                        subsys_config['id'],
+                        filename,
+                        DEVICE_TYPE_FILE,
+                        filesize=MB_10,
+                        delete_options={'remove': True},
+                    )
+                )
             yield
 
-    def test__start_many_nvme(self, loopback_client: NVMeCLIClient, fixture_100_nvme_subsystems):
+    def test__start_many_nvme(
+        self, loopback_client: NVMeCLIClient, fixture_100_nvme_subsystems
+    ):
         nc = loopback_client
         with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()

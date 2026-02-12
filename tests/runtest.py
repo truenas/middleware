@@ -65,6 +65,7 @@ Optional option
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
     --test_dir <api2>           - Name of the tests directory from which to run tests
+    --extended_tests            - Run extended tests
     """ % argv[0]
 
 # if have no argument stop
@@ -91,7 +92,8 @@ option_list = [
     "tests=",
     "ha_license=",
     "hostname=",
-    "show_locals"
+    "show_locals",
+    "extended_tests",
 ]
 
 # look if all the argument are there.
@@ -119,6 +121,7 @@ gateway = None
 ha_license = ''
 hostname = None
 show_locals = False
+extended_tests = False
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -165,6 +168,8 @@ for output, arg in myopts:
         ha_license = arg
     elif output == '--show_locals':
         show_locals = True
+    elif extended_tests == '--extended_tests':
+        extended_tests = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -276,6 +281,7 @@ ha_license = "{ha_license}"
 update = {update}
 artifacts = "{artifacts}"
 isns_ip = "{isns_ip}"
+extended_tests = {extended_tests}
 """
 
 cfg_file = open("auto_config.py", 'w')

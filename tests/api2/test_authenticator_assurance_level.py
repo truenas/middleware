@@ -32,8 +32,8 @@ def sharing_admin_user(unprivileged_user_fixture):
 
 
 @pytest.mark.parametrize('level,expected', [
-    ('LEVEL_1', ['API_KEY_PLAIN', 'TOKEN_PLAIN', 'PASSWORD_PLAIN']),
-    ('LEVEL_2', ['PASSWORD_PLAIN']),
+    ('LEVEL_1', ['API_KEY_PLAIN', 'TOKEN_PLAIN', 'PASSWORD_PLAIN', 'SCRAM']),
+    ('LEVEL_2', ['PASSWORD_PLAIN', 'SCRAM']),
 ])
 def test_mechanism_choices(level, expected):
     with authenticator_assurance_level(level):

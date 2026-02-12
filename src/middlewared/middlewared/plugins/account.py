@@ -2,7 +2,6 @@ import errno
 import glob
 import json
 import os
-import pam
 import shlex
 import shutil
 import stat
@@ -59,6 +58,7 @@ from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_st
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.io import atomic_write
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
@@ -84,6 +84,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
 from threading import Lock
+from truenas_pypam import PAMCode
 
 
 SYNC_NEXT_UID_LOCK = Lock()
@@ -301,7 +302,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['uid'] == ADMIN_UID)
-        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'].get(user['id']))
 
         if user['userns_idmap'] == USERNS_IDMAP_DIRECT:
             user['userns_idmap'] = 'DIRECT'
@@ -1800,9 +1801,7 @@ class UserService(CRUDService):
             'options': {'recursive': True, 'stripacl': True}
         }).wait_sync(raise_error=True)
 
-        with open(keysfile, 'w') as f:
-            os.fchmod(f.fileno(), 0o600)
-            os.fchown(f.fileno(), user['uid'], gid)
+        with atomic_write(keysfile, 'w', uid=user['uid'], gid=gid, perms=0o600) as f:
             f.write(f'{pubkey}\n')
 
     @api_method(UserSetPasswordArgs, UserSetPasswordResult,
@@ -1887,11 +1886,11 @@ class UserService(CRUDService):
                 # Create a temporary authentication context. Calling into auth.libpam_authenticate
                 # would try to re-authenticate under the current session's authentication context,
                 # which would fail.
-                pam_hdl = UserPamAuthenticator()
+                pam_hdl = UserPamAuthenticator(username=username, origin=app.origin)
                 pam_resp = await self.middleware.run_in_thread(
-                    pam_hdl.authenticate, username, data['old_password'], origin=app.origin
+                    pam_hdl.authenticate, username, data['old_password']
                 )
-                if pam_resp.code != pam.PAM_SUCCESS:
+                if pam_resp.code != PAMCode.PAM_SUCCESS:
                     verrors.add(
                         'user.set_password.old_password',
                         f'{username}: failed to validate password.'

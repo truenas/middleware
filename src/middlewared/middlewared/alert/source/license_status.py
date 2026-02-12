@@ -117,68 +117,67 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                                                               local_license['system_serial_ha']])))
                 contract_start = local_license['contract_start'].strftime("%B %-d, %Y")
                 contract_expiration = local_license['contract_end'].strftime("%B %-d, %Y")
-                contract_type = local_license['contract_type'].lower()
+                contract_type = local_license['contract_type']  # Display as stored, usually upper case.
                 customer_name = local_license['customer_name']
 
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlertClass
                     alert_text = textwrap.dedent("""\
-                        SUPPORT CONTRACT EXPIRATION. To reactivate and continue to receive technical support and
-                        assistance, contact iXsystems @ telephone: 1-855-473-7449
+                        SUPPORT CONTRACT EXPIRATION: Please reactivate and continue to receive technical support and
+                        assistance. Contact by email: sales@TrueNAS.com, or telephone: 1-855-473-7449
                     """)
                     subject = "Your TrueNAS support contract has expired"
                     opening = textwrap.dedent("""\
-                        As of today, your support contract has ended. You will no longer be eligible for technical
-                        support and assistance for your TrueNAS system.
+                        Your support contract has ended. A support contract may be renewed after contract expiration.
+                        Please contact your authorized reseller or TrueNAS (sales@TrueNAS.com).
                     """)
                     encouraging = textwrap.dedent("""\
-                        It is still not too late to renew your contract but you must do so as soon as possible by
-                        contacting your authorized TrueNAS Reseller or iXsystems (sales@iXsystems.com) today to avoid
-                        additional costs and lapsed-contract fees.
+                        Please renew the support contract for your TrueNAS product as soon as possible to maintain support services.
+                        Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com, phone: 1-855-473-7449).
                     """)
                 else:
                     alert_klass = LicenseIsExpiringAlertClass
                     alert_text = textwrap.dedent(f"""\
-                        RENEW YOUR SUPPORT contract. To continue to receive technical support and assistance without
-                        any service interruptions, please renew your support contract by {contract_expiration}.
+                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire on {contract_expiration}.
+                        Please avoid service interruptions, contact your authorized reseller or
+                        email: sales@TrueNAS.com, phone: 1-855-473-7449.
                     """)
                     days_left = (local_license['contract_end'] - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
                     if days == 14:
                         opening = textwrap.dedent(f"""\
-                            This is the final reminder regarding the impending expiration of your TrueNAS
-                            {contract_type} support contract. As of today, it is set to expire in 2 weeks.
+                            The support contracts for the following TrueNAS products are expiring in 14 days:
+                            {serial_numbers}
+                            This is a reminder regarding the impending expiration of your TrueNAS
+                            {contract_type} support contract.
                         """)
                         encouraging = textwrap.dedent("""\
-                            We encourage you to urgently contact your authorized TrueNAS Reseller or iXsystems
-                            (sales@iXsystems.com) directly to renew your contract before expiration so that you continue
-                            to enjoy the peace of mind and benefits that come with our support contracts.
+                            We encourage you to urgently contact your authorized reseller or TrueNAS
+                            (email: sales@TrueNAS.com, telephone: 1-855-473-7449) and renew your support contracts.
                         """)
                     else:
                         opening = textwrap.dedent(f"""\
                             Your TrueNAS {contract_type} support contract will expire in {days_left} days.
-                            When that happens, technical support and assistance for this particular TrueNAS storage
-                            array will no longer be available. Please review the wide array of services that are
-                            available to you as an active support contract customer at:
-                            https://www.ixsystems.com/support/ and click on the “TrueNAS Arrays” tab.
+                            Please consider renewing your support contract now.  Contact your authorized
+                            reseller or TrueNAS.  email: sales@TrueNAS.com, telephone: 1-855-473-7449.
                         """)
                         encouraging = textwrap.dedent("""\
-                            We encourage you to contact your authorized TrueNAS Reseller or iXsystems directly
-                            (sales@iXsystems.com) to renew your contract before expiration. Doing so ensures that
-                            you continue to enjoy the peace of mind and benefits that come with support coverage.
+                            Please contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com,
+                            telephone: 1-855-473-7449) to renew your contract before expiration.
                         """)
 
                 alerts.append(Alert(
                     alert_klass,
                     alert_text,
                     mail={
-                        "cc": ["support-renewal@ixsystems.com"],
+                        "cc": ["support-renewal@truenas.com"],
                         "subject": subject,
                         "text": textwrap.dedent("""\
                             Hello, {customer_name}
 
                             {opening}
 
+                            Support Level: {contract_type}
                             Product: {chassis_hardware}
                             Serial Numbers: {serial_numbers}
                             Support Contract Start Date: {contract_start}
@@ -186,20 +185,21 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                             {encouraging}
 
-                            If the contract expires, you will still be able to access your TrueNAS systems. However,
-                            you will no longer be eligible for support from iXsystems. If you choose to renew your
-                            support contract after it has expired, there are additional costs associated with
-                            contract reactivation and lapsed-contract fees.
+                            Your TrueNAS system will remain accessible after the support contract expires.
+                            However, after expiration it will no longer be eligible for support from TrueNAS.
+                            A support contract may be renewed after it has expired and there may be additional
+                            costs associated with contract reactivation and lapsed-contract fees.
 
                             Sincerely,
 
-                            iXsystems
-                            Web: support.iXsystems.com
-                            Email: support@iXsystems.com
+                            TrueNAS
+                            Web: support.TrueNAS.com
+                            Email: support@TrueNAS.com
                             Telephone: 1-855-473-7449
                         """).format(**{
                             "customer_name": customer_name,
                             "opening": opening,
+                            "contract_type": contract_type,
                             "chassis_hardware": model,
                             "serial_numbers": serial_numbers,
                             "contract_start": contract_start,

@@ -1,9 +1,9 @@
 import json
 import re
-import os
 
 from middlewared.service import CallError
 from middlewared.utils import run
+from middlewared.utils.io import atomic_write
 
 RE_IS_NOT_A_NATIVE_SERVICE = re.compile(r"(.+)\.service is not a native service, redirecting to systemd-sysv-install\.")
 
@@ -41,6 +41,5 @@ async def render(service, middleware):
             await run(["systemctl", "enable" if enable else "disable", service])
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
-    with open('/data/user-services.json', 'w') as f:
-        os.fchmod(f.fileno(), 0o600)
+    with atomic_write('/data/user-services.json', 'w', perms=0o600) as f:
         f.write(json.dumps(services_enabled))
