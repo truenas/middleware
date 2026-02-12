@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ipaddress
-import re
 import socket
 
 from truenas_pynetif.address.address import add_address, remove_address, replace_address
@@ -10,14 +9,12 @@ from truenas_pynetif.address.get_ipaddresses import get_link_addresses
 from truenas_pynetif.address.link import set_link_alias, set_link_mtu, set_link_up
 from truenas_pynetif.netlink import AddressInfo, LinkInfo
 
+from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop
 from middlewared.service import ServiceContext
 
 from .sync_data import SyncData
 
 __all__ = ("configure_addresses_impl",)
-
-_DHCP_FIXED_ADDR_RE = re.compile(r"fixed-address\s+(.+);")
-_DHCP_SUBNET_MASK_RE = re.compile(r"option subnet-mask\s+(.+);")
 
 
 def _alias_to_addr(alias: dict) -> AddressInfo:
@@ -74,30 +71,25 @@ def configure_addresses_impl(
     addrs_database = set()
 
     # Check DHCP status
-    dhclient_run, dhclient_pid = ctx.middleware.call_sync(
-        "interface.dhclient_status", name
-    )
-    if dhclient_run and not data["int_dhcp"]:
+    status = dhcp_status(name)
+    if status["running"] and not data["int_dhcp"]:
         ctx.logger.debug("Stopping DHCP for %r", name)
-        ctx.middleware.call_sync("interface.dhcp_stop", name)
-    elif dhclient_run and data["int_dhcp"]:
-        lease = ctx.middleware.call_sync("interface.dhclient_leases", name)
-        if lease:
-            _addr = _DHCP_FIXED_ADDR_RE.search(lease)
-            _net = _DHCP_SUBNET_MASK_RE.search(lease)
-            if _addr and _net:
-                addrs_database.add(
-                    _alias_to_addr(
-                        {
-                            "address": _addr.group(1),
-                            "netmask": _net.group(1),
-                        }
-                    )
+        ctx.middleware.run_coroutine(dhcp_stop(name))
+    elif status["running"] and data["int_dhcp"]:
+        lease = dhcp_leases(name)
+        if lease and "new_ip_address" in lease and "new_subnet_mask" in lease:
+            addrs_database.add(
+                _alias_to_addr(
+                    {
+                        "address": lease["new_ip_address"],
+                        "netmask": lease["new_subnet_mask"],
+                    }
                 )
-            else:
-                ctx.logger.info(
-                    "Unable to get address from dhcpcd lease file for %r", name
-                )
+            )
+        else:
+            ctx.logger.info(
+                "Unable to get address from dhcpcd lease for %r", name
+            )
 
     # Add primary address from database
     if data[addr_key] and not data["int_dhcp"]:
@@ -216,4 +208,4 @@ def configure_addresses_impl(
         set_link_up(sock, index=link_index)
 
     # Return True if DHCP should be started
-    return not dhclient_run and data["int_dhcp"]
+    return not status["running"] and data["int_dhcp"]

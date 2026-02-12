@@ -1,137 +1,135 @@
+from __future__ import annotations
+
 import os
+import socket
+import struct
 from contextlib import suppress
-from subprocess import run
 
 from middlewared.plugins.service_.services.base import (
+    call_unit_action,
     call_unit_action_and_wait,
-    get_unit_active_state,
 )
-from middlewared.service import private, Service
+
+__all__ = ("dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
+
+_SIZEOF_SIZE_T = 8
+_SOCK_TIMEOUT = 5.0
 
 
-class InterfaceService(Service):
-    class Config:
-        namespace_alias = "interfaces"
+def _get_dhcpcd_pid_for_interface(interface: str) -> int | None:
+    """Get the PID of the dhcpcd daemon for a specific interface."""
+    pidfile = f"/run/dhcpcd/{interface}.pid"
+    with suppress(FileNotFoundError, ValueError):
+        with open(pidfile) as f:
+            pid = int(f.read().strip())
+            try:
+                os.kill(pid, 0)
+                return pid
+            except OSError:
+                pass
+    return None
 
-    @private
-    def _get_dhcpcd_pid_for_interface(self, interface):
-        """Get the PID of the dhcpcd daemon for a specific interface."""
-        pidfile = f"/run/dhcpcd/{interface}.pid"
-        with suppress(FileNotFoundError, ValueError):
-            with open(pidfile) as f:
-                pid = int(f.read().strip())
-                try:
-                    os.kill(pid, 0)
-                    return pid
-                except OSError:
-                    pass
-        return None
 
-    @private
-    def _parse_dhcpcd_output(self, output):
-        """Parse dhcpcd -U output which returns shell variable format."""
-        lease_info = {}
-        for line in output.strip().split("\n"):
-            if "=" in line:
-                key, value = line.split("=", 1)
-                # Remove quotes if present
-                value = value.strip("'\"")
-                lease_info[key] = value
-        return lease_info
+def _recv_exact(sock: socket.socket, n: int) -> bytes:
+    buf = b""
+    while len(buf) < n:
+        chunk = sock.recv(n - len(buf))
+        if not chunk:
+            raise ConnectionError("Connection closed prematurely")
+        buf += chunk
+    return buf
 
-    @private
-    async def dhcp_start(self, interface, wait=False):
-        """Start DHCP on the specified interface using systemd."""
-        unit_name = f"ix-dhcpcd@{interface}.service"
+
+def _parse_env_block(data: bytes) -> dict[str, str]:
+    """Parse a NULL-separated block of KEY=VALUE env strings from dhcpcd."""
+    result = {}
+    for item in data.split(b"\0"):
+        if not item:
+            continue
+        decoded = item.decode("utf-8", errors="replace")
+        if "=" in decoded:
+            key, _, value = decoded.partition("=")
+            result[key] = value
+    return result
+
+
+def _connect_dhcpcd(interface: str) -> socket.socket:
+    """Connect to the dhcpcd control socket for an interface."""
+    sock_path = f"/run/dhcpcd/{interface}.sock"
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(_SOCK_TIMEOUT)
+    s.connect(sock_path)
+    return s
+
+
+async def dhcp_start(interface: str, wait: int | None = None) -> None:
+    """Start the ix-dhcpcd systemd service for an interface via D-Bus.
+
+    Args:
+        interface: Network interface name (e.g. "ens1").
+        wait: If None, fire-and-forget. If an int, wait up to that many
+              seconds (clamped to [5, 120]) for the service to start.
+    """
+    unit_name = f"ix-dhcpcd@{interface}.service"
+    if wait is None:
+        await call_unit_action(unit_name, "Start")
+    else:
         await call_unit_action_and_wait(
-            unit_name, "Start", timeout=30.0 if wait else 5.0
+            unit_name, "Start", timeout=min(120, max(5, wait))
         )
 
-    @private
-    async def dhcp_status(self, interface):
-        """
-        Get the current status of DHCP for a given `interface`.
 
-        Args:
-            interface (str): name of the interface
+def dhcp_status(interface: str) -> dict[str, bool | int | None]:
+    """Check if dhcpcd is running for an interface by probing its control socket.
 
-        Returns:
-            tuple(bool, pid): if DHCP is active for the interface and the daemon pid.
-        """
-        unit_name = f"ix-dhcpcd@{interface}.service"
-        state = await get_unit_active_state(unit_name)
+    Attempts to connect to /run/dhcpcd/{interface}.sock. If the socket
+    accepts the connection, dhcpcd is running. The PID is read from the
+    corresponding pidfile.
 
-        if state == "active":
-            pid = self._get_dhcpcd_pid_for_interface(interface)
-            return True, pid
+    Returns:
+        {"running": bool, "pid": int | None}
+    """
+    try:
+        with _connect_dhcpcd(interface):
+            pass
+        pid = _get_dhcpcd_pid_for_interface(interface)
+        return {"running": True, "pid": pid}
+    except OSError:
+        return {"running": False, "pid": None}
 
-        return False, None
 
-    @private
-    async def dhcp_stop(self, interface):
-        """Stop DHCP on a specific interface."""
-        unit_name = f"ix-dhcpcd@{interface}.service"
-        await call_unit_action_and_wait(unit_name, "Stop")
+async def dhcp_stop(interface: str) -> None:
+    """Stop the ix-dhcpcd systemd service for an interface via D-Bus.
 
-    @private
-    def dhcp_leases(self, interface):
-        """
-        Get the lease information for `interface`.
+    Waits for the service to fully stop and all processes to exit.
+    """
+    unit_name = f"ix-dhcpcd@{interface}.service"
+    await call_unit_action_and_wait(unit_name, "Stop")
 
-        Args:
-            interface (str): name of the interface.
 
-        Returns:
-            str: lease information in text format (for compatibility).
-        """
-        # Get lease info using dhcpcd -U
-        result = run(["dhcpcd", "-U", interface], capture_output=True, text=True)
-        if result.returncode == 0 and result.stdout.strip():
-            # Convert to a format similar to dhclient leases for compatibility
-            lease_info = self._parse_dhcpcd_output(result.stdout)
+def dhcp_leases(interface: str) -> dict[str, str] | None:
+    """Query dhcpcd lease information via the control socket.
 
-            # Build a dhclient-like lease format for backward compatibility
-            lease_text = []
-            if "ip_address" in lease_info:
-                # Extract just the IP without the subnet
-                ip = lease_info["ip_address"].split("/")[0]
-                lease_text.append(f"fixed-address {ip};")
+    Sends the --getinterfaces command to /run/dhcpcd/{interface}.sock and
+    parses the response. Returns the env dict for the active DHCP lease
+    (the entry with protocol=dhcp), or None if dhcpcd is not running or
+    no lease has been obtained.
 
-            if "subnet_mask" in lease_info:
-                lease_text.append(f"option subnet-mask {lease_info['subnet_mask']};")
-            elif "ip_address" in lease_info and "/" in lease_info["ip_address"]:
-                # Calculate subnet mask from CIDR if available
-                cidr = int(lease_info["ip_address"].split("/")[1])
-                mask_int = (0xFFFFFFFF << (32 - cidr)) & 0xFFFFFFFF
-                mask = ".".join(
-                    [str((mask_int >> (8 * (3 - i))) & 0xFF) for i in range(4)]
-                )
-                lease_text.append(f"option subnet-mask {mask};")
+    Lease keys are prefixed with ``new_`` by dhcpcd (e.g. new_ip_address,
+    new_subnet_mask, new_routers, new_domain_name_servers).
+    """
+    try:
+        with _connect_dhcpcd(interface) as s:
+            s.sendall(b"--getinterfaces\0")
 
-            if "routers" in lease_info:
-                lease_text.append(f"option routers {lease_info['routers']};")
-
-            if "domain_name_servers" in lease_info:
-                lease_text.append(
-                    f"option domain-name-servers {lease_info['domain_name_servers'].replace(' ', ', ')};"
-                )
-
-            return "\n".join(lease_text) if lease_text else None
+            nifaces = struct.unpack("@Q", _recv_exact(s, _SIZEOF_SIZE_T))[0]
+            for _ in range(nifaces):
+                data_len = struct.unpack("@Q", _recv_exact(s, _SIZEOF_SIZE_T))[0]
+                data = _recv_exact(s, data_len)
+                env = _parse_env_block(data)
+                if env.get("protocol") == "dhcp":
+                    return env
 
         return None
-
-    # Compatibility aliases for old method names during transition
-    @private
-    async def dhclient_start(self, interface, wait=False):
-        """Compatibility wrapper for dhcp_start."""
-        return await self.dhcp_start(interface, wait)
-
-    @private
-    async def dhclient_status(self, interface):
-        """Compatibility wrapper for dhcp_status."""
-        return await self.dhcp_status(interface)
-
-    @private
-    def dhclient_leases(self, interface):
-        """Compatibility wrapper for dhcp_leases."""
-        return self.dhcp_leases(interface)
+    except OSError:
+        return None

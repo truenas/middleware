@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from middlewared.plugins.interface.dhcp import dhcp_start
 from middlewared.service import ServiceContext
 from truenas_pynetif.address.get_links import get_link, get_links
 from truenas_pynetif.address.netlink import netlink_route
@@ -164,5 +165,5 @@ def sync_interface_impl(
             iface_config,
             SyncData(interfaces={name: iface_config}, node=node),
         ):
-            ctx.middleware.call_sync("interface.dhclient_start", name, False)
+            ctx.middleware.run_coroutine(dhcp_start(name))
     return None

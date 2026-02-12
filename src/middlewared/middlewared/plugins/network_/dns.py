@@ -1,6 +1,5 @@
 import contextlib
 import ipaddress
-import re
 import subprocess
 import tempfile
 from typing import Literal
@@ -8,6 +7,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api import api_method
+from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status
 from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IPv4Nameserver, IPv6Nameserver
 from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
@@ -127,12 +127,12 @@ class DNSService(Service):
 
             dns_from_dhcp = set()
             for iface in interfaces:
-                dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', iface)
-                if dhclient_running:
-                    leases = self.middleware.call_sync('interface.dhclient_leases', iface)
-                    for dns_srvs in re.findall(r'option domain-name-servers (.+)', leases or ''):
-                        for dns in dns_srvs.split(';')[0].split(','):
-                            dns_from_dhcp.add(f'nameserver {dns.strip()}\n')
+                if not dhcp_status(iface)["running"]:
+                    continue
+                lease = dhcp_leases(iface)
+                if lease and "new_domain_name_servers" in lease:
+                    for dns in lease["new_domain_name_servers"].split():
+                        dns_from_dhcp.add(f'nameserver {dns.strip()}\n')
 
             for dns in dns_from_dhcp:
                 result += dns

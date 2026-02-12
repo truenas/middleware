@@ -5,6 +5,7 @@ from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
 from middlewared.api import api_method
+from middlewared.plugins.interface.dhcp import dhcp_start
 from middlewared.api.current import (
     InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
@@ -1584,7 +1585,7 @@ class InterfaceService(CRUDService):
         })
 
     @private
-    async def sync(self, wait_dhcp=False):
+    async def sync(self, wait_dhcp: int | None = None):
         """
         Sync interfaces configured in database to the OS.
         """
@@ -1646,25 +1647,23 @@ class InterfaceService(CRUDService):
 
         # Autoconfigure interfaces (start DHCP on physical interfaces with no database config)
         if autoconfigure:
-            dhclient_aws = [
-                asyncio.ensure_future(
-                    self.middleware.call('interface.dhclient_start', name, wait_dhcp)
-                )
+            dhcp_aws = [
+                asyncio.ensure_future(dhcp_start(name, wait=wait_dhcp))
                 for name in autoconfigure
             ]
             if wait_dhcp:
-                await asyncio.wait(dhclient_aws, timeout=30)
+                await asyncio.wait(dhcp_aws, timeout=30)
 
-        # first interface that is configured, we kill dhclient on _all_ interfaces
-        # but dhclient could have added items to /etc/resolv.conf. To "fix" this
+        # first interface that is configured, we kill dhcpcd on _all_ interfaces
+        # but dhcpcd could have added items to /etc/resolv.conf. To "fix" this
         # we run dns.sync which will wipe the contents of resolv.conf and it is
         # expected that the end-user fills this out via the network global webUI page
         # OR if this is a system that has been freshly migrated from CORE to SCALE
         # then we need to make sure that if the user didn't have network configured
         # but left interfaces configured as DHCP only, then we need to generate the
         # /etc/resolv.conf here. In practice, this is a potential race condition
-        # here because dhclient could not have received a lease from the dhcp server
-        # for all the interfaces that have dhclient running. There is, currently,
+        # here because dhcpcd could not have received a lease from the dhcp server
+        # for all the interfaces that have dhcpcd running. There is, currently,
         # no better solution unless we redesigned significant portions of our network
         # API to account for this...
         await self.middleware.call('dns.sync')
@@ -1684,10 +1683,10 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def run_dhcp(self, name, wait_dhcp):
+    async def run_dhcp(self, name, wait_dhcp: int | None = None):
         self.logger.debug('Starting DHCP for {}'.format(name))
         try:
-            await self.middleware.call('interface.dhclient_start', name, wait_dhcp)
+            await dhcp_start(name, wait=wait_dhcp)
         except Exception:
             self.logger.error('Failed to run DHCP for {}'.format(name), exc_info=True)
 

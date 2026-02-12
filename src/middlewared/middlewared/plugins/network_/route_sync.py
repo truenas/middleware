@@ -1,6 +1,6 @@
-import re
 import socket
 
+from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status
 from middlewared.service import ServiceContext
 
 from truenas_pynetif.address.constants import AddressFamily
@@ -32,15 +32,12 @@ def _get_default_ip4_route_from_dhcpcd(
                 ifaces.append(iface)
 
     for i in ifaces:
-        dhclient_running, dhclient_pid = ctx.middleware.call_sync(
-            "interface.dhclient_status", i
-        )
-        if dhclient_running:
-            leases = ctx.middleware.call_sync("interface.dhclient_leases", i)
-            reg_routers = re.search(r"option routers (.+);", leases or "")
-            if reg_routers:
-                # Make sure to get first route only
-                return reg_routers.group(1).split(" ")[0]
+        if not dhcp_status(i)["running"]:
+            continue
+        lease = dhcp_leases(i)
+        if lease and "new_routers" in lease:
+            # Make sure to get first route only
+            return lease["new_routers"].split()[0]
     return None
 
 
@@ -68,7 +65,7 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
                 #   2. interface.sync() gets called and starts dhcp
                 #       on all interfaces detected on the system
                 #   3. route.sync() gets called which eventually
-                #       calls dhclient_leases which reads a file on
+                #       calls dhcp_leases which reads a file on
                 #       disk to see if we have any previously
                 #       defined default gateways from DHCP.
                 #       However, by the time we read this file,
