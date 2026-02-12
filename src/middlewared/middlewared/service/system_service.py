@@ -2,7 +2,7 @@ from .config_service import ConfigService
 from .decorators import private
 
 
-class SystemServiceService(ConfigService):
+class SystemServiceService[E](ConfigService):
     """
     System service class
 

@@ -401,7 +401,7 @@ class UPSBase(GraphBase):
     async def export_multiple_identifiers(
         self, query_params: dict, identifiers: list, aggregate: bool = True
     ) -> typing.List[dict]:
-        self.UPS_IDENTIFIER = f"local_{(await self.middleware.call('ups.config'))['identifier']}"
+        self.UPS_IDENTIFIER = f"local_{(await self.middleware.call('ups.config')).identifier}"
         return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
 
     def query_parameters(self) -> dict:
