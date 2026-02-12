@@ -7,16 +7,16 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 trueNas MODULE-IDENTITY
-    LAST-UPDATED "202212211800Z"
-    ORGANIZATION "www.ixsystems.com"
+    LAST-UPDATED "202602111800Z"
+    ORGANIZATION "www.truenas.com"
     CONTACT-INFO
-        "postal:   2490 Kruse Dr
-                   San Jose, CA 95131
+        "postal:   541 Division Street
+                   Campbell, CA 95008
 
-         email:    support@iXsystems.com"
+         email:    support@TrueNAS.com"
     DESCRIPTION
         "TrueNAS Specific MIBs"
-    REVISION     "202212211800Z"
+    REVISION     "202602111800Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
