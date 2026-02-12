@@ -1,4 +1,5 @@
 from collections import defaultdict
+import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -6,7 +7,7 @@ from middlewared.api.current import (
     PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
     PeriodicSnapshotTaskEntry, PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
 
 class PeriodicSnapshotTaskService(Service):
@@ -35,7 +36,14 @@ class PeriodicSnapshotTaskService(Service):
 
         result = defaultdict(list)
         if old != new:
-            old_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", old)
+            try:
+                old_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", old)
+            except CallError as e:
+                if e.errno == errno.ENOENT:
+                    return result
+
+                raise
+
             new_snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", new)
             if diff := old_snapshots - new_snapshots:
                 for snapshot in sorted(diff):
@@ -58,7 +66,14 @@ class PeriodicSnapshotTaskService(Service):
         task = await self.call2(self.s.pool.snapshottask.get_instance, id_)
 
         result = defaultdict(list)
-        snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", task)
+        try:
+            snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", task)
+        except CallError as e:
+            if e.errno == errno.ENOENT:
+                return result
+
+            raise
+
         for snapshot in sorted(snapshots):
             dataset, snapshot = snapshot.split("@", 1)
             result[dataset].append(snapshot)
