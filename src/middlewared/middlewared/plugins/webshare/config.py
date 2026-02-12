@@ -6,8 +6,9 @@ from typing import Any, TYPE_CHECKING
 from middlewared.api import api_method
 from middlewared.api.current import (
     WebshareEntry, WebshareUpdate, WebshareUpdateArgs, WebshareUpdateResult,
+    WebshareBindipChoicesArgs, WebshareBindipChoicesResult,
 )
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigService, private, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH
 
@@ -21,6 +22,7 @@ class WebshareModel(sa.Model):
     __tablename__ = 'services_webshare'
 
     id = sa.Column(sa.Integer(), primary_key=True)
+    bindip = sa.Column(sa.JSON(list), default=[])
     search = sa.Column(sa.Boolean(), default=False)
     passkey = sa.Column(sa.String(20), default='DISABLED')
 
@@ -44,6 +46,11 @@ class WebshareService(ConfigService[WebshareEntry]):
         old = await self.config()
         new = old.updated(data)
 
+        bindip_choices = await self.bindip_choices()
+        for i, bindip in enumerate(new.bindip):
+            if bindip not in bindip_choices:
+                raise ValidationError(f'bindip.{i}', f'Cannot use {bindip}. Please provide a valid ip address.')
+
         await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
         if old.search != new.search:
@@ -52,6 +59,16 @@ class WebshareService(ConfigService[WebshareEntry]):
         await self._service_change(self._config.service, 'reload')
 
         return new
+
+    @api_method(WebshareBindipChoicesArgs, WebshareBindipChoicesResult, check_annotations=True)
+    async def bindip_choices(self) -> dict[str, str]:
+        """
+        Returns ip choices for NFS service to use
+        """
+        return {
+            d['address']: d['address']
+            for d in await self.middleware.call('interface.ip_in_use', {'static': True})
+        }
 
     @private
     def setup_directories(self) -> None:
