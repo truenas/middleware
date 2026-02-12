@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import socket
 import struct
-from contextlib import suppress
 
 from middlewared.plugins.service_.services.base import (
     call_unit_action,
@@ -14,20 +14,6 @@ __all__ = ("dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
 
 _SIZEOF_SIZE_T = 8
 _SOCK_TIMEOUT = 5.0
-
-
-def _get_dhcpcd_pid_for_interface(interface: str) -> int | None:
-    """Get the PID of the dhcpcd daemon for a specific interface."""
-    pidfile = f"/run/dhcpcd/{interface}.pid"
-    with suppress(FileNotFoundError, ValueError):
-        with open(pidfile) as f:
-            pid = int(f.read().strip())
-            try:
-                os.kill(pid, 0)
-                return pid
-            except OSError:
-                pass
-    return None
 
 
 def _recv_exact(sock: socket.socket, n: int) -> bytes:
@@ -53,13 +39,14 @@ def _parse_env_block(data: bytes) -> dict[str, str]:
     return result
 
 
-def _connect_dhcpcd(interface: str) -> socket.socket:
+@contextlib.contextmanager
+def _connect_dhcpcd(interface: str):
     """Connect to the dhcpcd control socket for an interface."""
     sock_path = f"/run/dhcpcd/{interface}.sock"
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.settimeout(_SOCK_TIMEOUT)
-    s.connect(sock_path)
-    return s
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+        s.settimeout(_SOCK_TIMEOUT)
+        s.connect(sock_path)
+        yield s
 
 
 async def dhcp_start(interface: str, wait: int | None = None) -> None:
@@ -83,19 +70,23 @@ def dhcp_status(interface: str) -> dict[str, bool | int | None]:
     """Check if dhcpcd is running for an interface by probing its control socket.
 
     Attempts to connect to /run/dhcpcd/{interface}.sock. If the socket
-    accepts the connection, dhcpcd is running. The PID is read from the
-    corresponding pidfile.
+    accepts the connection, dhcpcd is running. The PID is extracted from
+    lease data and validated with a signal check.
 
     Returns:
         {"running": bool, "pid": int | None}
     """
-    try:
-        with _connect_dhcpcd(interface):
-            pass
-        pid = _get_dhcpcd_pid_for_interface(interface)
-        return {"running": True, "pid": pid}
-    except OSError:
+    lease = dhcp_leases(interface)
+    if lease is None:
         return {"running": False, "pid": None}
+
+    pid = None
+    with contextlib.suppress(KeyError, ValueError, OSError):
+        candidate = int(lease["pid"])
+        os.kill(candidate, 0)
+        pid = candidate
+
+    return {"running": True, "pid": pid}
 
 
 async def dhcp_stop(interface: str) -> None:
@@ -121,7 +112,6 @@ def dhcp_leases(interface: str) -> dict[str, str] | None:
     try:
         with _connect_dhcpcd(interface) as s:
             s.sendall(b"--getinterfaces\0")
-
             nifaces = struct.unpack("@Q", _recv_exact(s, _SIZEOF_SIZE_T))[0]
             for _ in range(nifaces):
                 data_len = struct.unpack("@Q", _recv_exact(s, _SIZEOF_SIZE_T))[0]
@@ -129,7 +119,6 @@ def dhcp_leases(interface: str) -> dict[str, str] | None:
                 env = _parse_env_block(data)
                 if env.get("protocol") == "dhcp":
                     return env
-
         return None
     except OSError:
         return None
