@@ -667,6 +667,7 @@ class iSCSITargetExtentService(SharingService):
             data.pop('disk', None)
         else:
             data['path'] = data.pop('disk', None)
+            data['dataset'] = data['relative_path'] = None  # in case type was updated
 
     @private
     async def logged_in_extents(self):

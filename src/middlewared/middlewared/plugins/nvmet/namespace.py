@@ -229,6 +229,9 @@ class NVMetNamespaceService(SharingService):
             # May return None if path exists but can't be authoritatively resolved yet
             # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
             data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
+        else:
+            # In case device_type was updated
+            data['dataset'] = data['relative_path'] = None
 
     @private
     def _is_dataset_path(self, pathstr: str) -> bool:
