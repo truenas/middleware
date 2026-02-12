@@ -677,7 +677,7 @@ class AuthService(Service):
         # The currently authenticated credential may actually restrict whether it can
         # generate authentication tokens. This is used by UI as a hint that it shouldn't
         # try to generate tokens for this user.
-        if app and not app.authenticated_credentials.may_create_auth_token:
+        if app and app.authenticated_credentials and not app.authenticated_credentials.may_create_auth_token:
             cred_allows_token = False
 
         choices = [mech.name for mech in aal.mechanisms]

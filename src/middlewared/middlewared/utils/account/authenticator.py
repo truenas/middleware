@@ -46,6 +46,7 @@ class AccountFlag(enum.StrEnum):
     # Flags about how authenticated
     TWOFACTOR = '2FA'  # Account requires 2FA (NOTE: PAM currently isn't evaluating second factor)
     API_KEY = 'API_KEY'  # Account authenticated by API key
+    SCRAM = 'SCRAM'
     OTPW = 'OTPW'  # Account authenticated by a single-use password
     PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
 
@@ -515,6 +516,8 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         passwd = self.truenas_user_obj
         if self.dbid:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
+
+        passwd['account_attributes'].append(AccountFlag.SCRAM)
 
         # send final message to close out the authentication
         self.auth_continue([''])
