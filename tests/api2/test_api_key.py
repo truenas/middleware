@@ -112,7 +112,7 @@ def test_api_key_expired(sharing_admin_user):
         call('datastore.update', 'account.api_key', key_id, {'expiry': 1})
 
         # update our pam_tdb file with new expiration
-        call('etc.generate', 'pam_middleware')
+        call('etc.generate', 'pam_truenas')
 
         with client(auth=None) as c:
             resp = c.call('auth.login_ex', {
@@ -130,7 +130,7 @@ def test_key_revoked(sharing_admin_user):
         call('datastore.update', 'account.api_key', key_id, {'expiry': -1})
 
         # update our pam_tdb file with revocation
-        call('etc.generate', 'pam_middleware')
+        call('etc.generate', 'pam_truenas')
 
         revoked = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['revoked']
         assert revoked is True

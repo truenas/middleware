@@ -50,7 +50,7 @@ class AuthService(Service):
         # error out cleanly.
         if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
             self.logger.error('PAM service file is missing. Attempting to regenerate')
-            self.middleware.call_sync('etc.generate', 'pam_middleware')
+            self.middleware.call_sync('etc.generate', 'pam_truenas')
             if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
                 self.logger.error(
                     '%s: Unable to generate PAM service file for middleware. Denying '

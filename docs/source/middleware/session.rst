@@ -143,14 +143,14 @@ Adding a new authentication mechanism
 
 There are various steps that need to happen before adding a new authentication mechanism to the middlewared
 backend. The constants defining available authentication mechanisms must be updated, the API schema must
-be updated, a new MiddlewarePamFile may be required, a new UserPamAuthenticator class may be required,
+be updated, a new TruenasPamFile may be required, a new UserPamAuthenticator class may be required,
 and a new SessionManagerCredentials class may be required.
 
 
-New MiddlewarePamFile
+New TruenasPamFile
 =====================
 
-The MiddlewarePamFile class is defined in `utils/account/authenticator.py` and contains all middleware-related
+The TruenasPamFile class is defined in `utils/account/authenticator.py` and contains all middleware-related
 PAM configuration files. There should be corresponding files in the `etc_files/pam.d` source directory.
 
 

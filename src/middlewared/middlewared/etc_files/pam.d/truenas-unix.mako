@@ -14,4 +14,4 @@ account 	requisite	pam_deny.so
 account		required	pam_permit.so
 %endif
 password	required	pam_deny.so
-@include middleware-session
+@include truenas-session

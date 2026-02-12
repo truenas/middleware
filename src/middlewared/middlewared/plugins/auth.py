@@ -30,7 +30,7 @@ from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionMa
                               LoginTwofactorSessionManagerCredentials, AuthenticationContext,
                               TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
                               LoginOnetimePasswordSessionManagerCredentials, dump_credentials)
-from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
+from middlewared.plugins.account_.constants import TRUENAS_PAM_SERVICE, TRUENAS_PAM_API_KEY_SERVICE
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, CallError,
@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from middlewared.utils.origin import ConnectionOrigin
 
 
-PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
+PAM_SERVICES = {TRUENAS_PAM_SERVICE, TRUENAS_PAM_API_KEY_SERVICE}
 
 
 class TokenManager:
@@ -964,7 +964,7 @@ class AuthService(Service):
                         self.logger.warning('%s: unexpected PAM_AUTHINFO_UNAVAIL response '
                                             'for API key. Forcibly regenerating API keys.',
                                             key['name'])
-                        await self.middleware.call('etc.generate', 'pam_middleware')
+                        await self.middleware.call('etc.generate', 'pam_truenas')
 
                 if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
                     if not app.origin.secure_transport:
@@ -1217,13 +1217,13 @@ class AuthService(Service):
 
                 if cred and cred.login_id.startswith('<ERROR'):
                     # If we get here, it means that pam_truenas.so isn't present in
-                    # the middleware-session PAM configuration. Log an error and regenerate.
+                    # the truenas-session PAM configuration. Log an error and regenerate.
                     self.logger.error(
                         'PAM stack failed to allocate session UUID. This may indicate a '
                         'configuration error: %s. Attempting to recover. Error: %s', cred.dump(),
                         auth_ctx.pam_hdl.session_error
                     )
-                    await self.middleware.call('etc.generate', 'pam_middleware')
+                    await self.middleware.call('etc.generate', 'pam_truenas')
 
                 # Remove reference to pam handle. This ensures that logout occurs when
                 # the SessionManagerCredential is deallocated or logout() explicitly called
@@ -1447,7 +1447,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
             'PAM stack failed to allocate session UUID. This may indicate a configuration error. Attempting to '
             'recover. Error: %s', authenticator.session_error
         )
-        await middleware.call('etc.generate', 'pam_middleware')
+        await middleware.call('etc.generate', 'pam_truenas')
 
 
 def setup(middleware: Middleware):

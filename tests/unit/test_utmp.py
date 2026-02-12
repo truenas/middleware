@@ -44,7 +44,7 @@ def pam_stig():
     with Client() as c:
         c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': True})
         c.call('etc.generate', 'pam')
-        c.call('etc.generate', 'pam_middleware')
+        c.call('etc.generate', 'pam_truenas')
         c.call('auth.twofactor.update', {'enabled': True, 'services': {'ssh': True}})
         c.call('etc.generate', 'ssh')
         try:
@@ -52,7 +52,7 @@ def pam_stig():
         finally:
             c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': False})
             c.call('etc.generate', 'pam')
-            c.call('etc.generate', 'pam_middleware')
+            c.call('etc.generate', 'pam_truenas')
             c.call('auth.twofactor.update', {'enabled': False, 'services': {'ssh': False}})
             c.call('etc.generate', 'ssh')
 
@@ -170,7 +170,7 @@ def test__interactive_unix_login():
         session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
         assert session is not None
         assert session.username == 'root'
-        assert session.service == 'middleware-unix'
+        assert session.service == 'truenas-unix'
         assert session.origin_family == 'AF_UNIX'
         assert session.origin.pid == unix_origin_interactive.pid
         assert session.origin.uid == unix_origin_interactive.uid
@@ -207,7 +207,7 @@ def test__ipv4_login(admin_user):
         session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
         assert session is not None
         assert session.username == admin_user['username']
-        assert session.service == 'middleware'
+        assert session.service == 'truenas'
         assert session.origin_family == 'AF_INET'
         assert str(session.origin.remote_addr) == str(v4_origin.rem_addr)
         assert session.origin.ssl is False
@@ -228,7 +228,7 @@ def test__ipv6_login(admin_user):
         session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
         assert session is not None
         assert session.username == admin_user['username']
-        assert session.service == 'middleware'
+        assert session.service == 'truenas'
         assert session.origin_family == 'AF_INET6'
         assert str(session.origin.remote_addr) == str(v6_origin.rem_addr)
         assert session.origin.ssl is False
@@ -249,7 +249,7 @@ def test__wss_login(admin_user):
         session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
         assert session is not None
         assert session.username == admin_user['username']
-        assert session.service == 'middleware'
+        assert session.service == 'truenas'
         assert session.origin_family == 'AF_INET'
         assert str(session.origin.remote_addr) == str(ssl_origin.rem_addr)
         assert session.origin.ssl is True
