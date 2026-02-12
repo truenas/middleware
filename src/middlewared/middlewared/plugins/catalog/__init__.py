@@ -62,7 +62,7 @@ class CatalogService(ConfigService):
         """
         return get_app_details(self.context, app_name, options)
 
-    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'])
+    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'], check_annotations=True)
     @job(lock='official_catalog_sync', lock_queue_size=0)
     async def sync(self, job: Job) -> None:
         """
