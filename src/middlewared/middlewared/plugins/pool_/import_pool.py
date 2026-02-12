@@ -539,7 +539,7 @@ class PoolService(Service):
             # event logic
             return
 
-        if self.middleware.call_sync('truenas.is_ix_hardware'):
+        if self.middleware.call_sync('truenas.is_supported_hardware'):
             # Attach NVMe/RoCE - wait up to 10 seconds
             self.logger.info('Start bring up of NVMe/RoCE')
             try:

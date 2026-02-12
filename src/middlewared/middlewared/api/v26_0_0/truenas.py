@@ -7,7 +7,7 @@ __all__ = [
     'TrueNASAcceptEulaArgs', 'TrueNASAcceptEulaResult',
     'TrueNASIsEulaAcceptedArgs', 'TrueNASIsEulaAcceptedResult',
     'TrueNASGetEulaArgs', 'TrueNASGetEulaResult',
-    'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
+    'TrueNASIsSupportedHardwareArgs', 'TrueNASIsSupportedHardwareResult',
     'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
     'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult'
 ]
@@ -31,13 +31,13 @@ class TrueNASGetChassisHardwareResult(BaseModel):
     """Hardware chassis model identifier for this TrueNAS system."""
 
 
-class TrueNASIsIxHardwareArgs(BaseModel):
+class TrueNASIsSupportedHardwareArgs(BaseModel):
     pass
 
 
-class TrueNASIsIxHardwareResult(BaseModel):
+class TrueNASIsSupportedHardwareResult(BaseModel):
     result: bool
-    """Whether this system is running on iXsystems hardware."""
+    """Whether this system is running on supported hardware."""
 
 
 class TrueNASGetEulaArgs(BaseModel):

@@ -10,7 +10,7 @@ from middlewared.api.current import (
     TrueNASAcceptEulaArgs, TrueNASAcceptEulaResult,
     TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult,
     TrueNASGetEulaArgs, TrueNASGetEulaResult,
-    TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult,
+    TrueNASIsSupportedHardwareArgs, TrueNASIsSupportedHardwareResult,
     TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
     TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult, TruecommandStatus,
 )
@@ -53,9 +53,9 @@ class TrueNASService(Service):
         return get_chassis_hardware()
 
     @api_method(TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult, roles=['READONLY_ADMIN'])
-    async def is_ix_hardware(self):
+    async def is_supported_hardware(self):
         """
-        Return a boolean value on whether this is hardware that iXsystems sells.
+        Return a boolean value on whether this is supported hardware.
         """
         return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 

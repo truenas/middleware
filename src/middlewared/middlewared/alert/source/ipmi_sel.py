@@ -157,7 +157,7 @@ class IPMISELAlertSource(AlertSource):
         return alert
 
     async def check(self):
-        if not await self.middleware.call("truenas.is_ix_hardware"):
+        if not await self.middleware.call("truenas.is_supported_hardware"):
             return
 
         alerts = []

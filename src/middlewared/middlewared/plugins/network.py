@@ -1251,7 +1251,7 @@ class InterfaceService(CRUDService):
 
             if iface['type'] == 'PHYSICAL':
                 link_address_update = {'link_address': iface['state']['hardware_link_address']}
-                if await self.middleware.call('truenas.is_ix_hardware'):
+                if await self.middleware.call('truenas.is_supported_hardware'):
                     if await self.middleware.call('failover.node') == 'B':
                         link_address_update = {'link_address_b': iface['state']['hardware_link_address']}
                 link_address_row = await self.middleware.call(

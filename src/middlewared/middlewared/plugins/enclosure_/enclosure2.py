@@ -137,8 +137,8 @@ class Enclosure2Service(Service):
     @filterable_api_method(roles=['ENCLOSURE_READ'], item=Enclosure2Entry)
     def query(self, filters, options):
         enclosures = []
-        if not self.middleware.call_sync('truenas.is_ix_hardware'):
-            # this feature is only available on hardware that ix sells
+        if not self.middleware.call_sync('truenas.is_supported_hardware'):
+            # this feature is only available on supported hardware
             return enclosures
 
         labels = self.middleware.call_sync('enclosure.label.get_all')
