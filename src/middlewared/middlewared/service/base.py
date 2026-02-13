@@ -1,4 +1,8 @@
 import inspect
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
+    from middlewared.api.base.handler.model_provider import ModelFactory
 
 
 def service_config(klass, config):
@@ -195,6 +199,9 @@ class ServiceBase(type):
       - cli_namespace: replace namespace identifier for CLI
       - cli_private: if the service is not private, this flags whether or not the service is visible in the CLI
     """
+    _config: type
+    _config_specified: dict
+    _register_models: list[tuple[type['BaseModel'], 'ModelFactory', str]]
 
     def __new__(cls, name, bases, attrs):
         super_new = super(ServiceBase, cls).__new__

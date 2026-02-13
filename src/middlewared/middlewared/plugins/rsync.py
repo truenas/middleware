@@ -70,6 +70,8 @@ class RsyncTaskModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     rsync_path = sa.Column(sa.String(255))
+    rsync_dataset = sa.Column(sa.String(255), nullable=True)
+    rsync_relative_path = sa.Column(sa.String(255), nullable=True)
     rsync_remotehost = sa.Column(sa.String(120), nullable=True)
     rsync_remoteport = sa.Column(sa.SmallInteger(), nullable=True)
     rsync_remotemodule = sa.Column(sa.String(120), nullable=True)
@@ -390,7 +392,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
             raise verrors
 
-        await self.validate_path_field(data, schema, verrors)
+        await self.validate_path_field(data, schema, verrors, split_path=True)
 
         data['extra'] = ' '.join(data['extra'])
         try:

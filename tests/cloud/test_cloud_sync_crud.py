@@ -41,6 +41,9 @@ def task(credentials):
                 "folder": "",
             },
         }) as t:
+            assert t['dataset'] == local_dataset
+            assert t['relative_path'] == ''
+
             yield t
 
 

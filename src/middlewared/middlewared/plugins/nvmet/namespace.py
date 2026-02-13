@@ -17,6 +17,7 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.mount import resolve_dataset_path
 from .constants import NAMESPACE_DEVICE_TYPE
 from middlewared.utils.nvmet.kernel import lock_namespace as kernel_lock_namespace
 from middlewared.utils.nvmet.kernel import unlock_namespace as kernel_unlock_namespace
@@ -55,6 +56,8 @@ class NVMetNamespaceModel(sa.Model):
     nvmet_namespace_subsys_id = sa.Column(sa.ForeignKey('services_nvmet_subsys.id'), index=True)
     nvmet_namespace_device_type = sa.Column(sa.Integer())
     nvmet_namespace_device_path = sa.Column(sa.String(255), unique=True)
+    nvmet_namespace_dataset = sa.Column(sa.String(255), nullable=True)
+    nvmet_namespace_relative_path = sa.Column(sa.String(255), nullable=True)
     nvmet_namespace_filesize = sa.Column(sa.Integer(), nullable=True)
     nvmet_namespace_device_uuid = sa.Column(sa.String(40), unique=True)
     nvmet_namespace_device_nguid = sa.Column(sa.String(40), unique=True)
@@ -65,6 +68,7 @@ class NVMetNamespaceService(SharingService):
 
     # For SharingService
     path_field = 'device_path'
+    path_resolution_filters = [['nvmet_namespace_device_type', '=', NAMESPACE_DEVICE_TYPE.FILE.db]]
 
     class Config:
         namespace = 'nvmet.namespace'
@@ -220,6 +224,14 @@ class NVMetNamespaceService(SharingService):
                         elif old_size > new_size:
                             verrors.add(f'{schema_name}.filesize',
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
+
+            # Split path into dataset and relative_path for FILE type extents
+            # May return None if path exists but can't be authoritatively resolved yet
+            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
+            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
+        else:
+            # In case device_type was updated
+            data['dataset'] = data['relative_path'] = None
 
     @private
     def _is_dataset_path(self, pathstr: str) -> bool:

@@ -897,6 +897,8 @@ class TestNVMe(NVMeRunning):
                 filesize=MB_100,
                 delete_options={'remove': True},
             ) as ns:
+                assert ns['dataset'] == pool_name
+                assert ns['relative_path'] == f'file1_{digits}'
                 # Check dataset details now that we have a file in use
                 details = call('pool.dataset.details')
                 nvmet_shares = pick_dataset_details(details, pool_name)['nvmet_shares']

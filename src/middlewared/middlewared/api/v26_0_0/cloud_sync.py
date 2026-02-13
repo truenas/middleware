@@ -88,6 +88,8 @@ class CloudSyncEntry(BaseCloudEntry):
 
 class CloudSyncCreate(CloudSyncEntry):
     id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    relative_path: Excluded = excluded_field()
     credentials: int
     """ID of the cloud credential."""
     job: Excluded = excluded_field()

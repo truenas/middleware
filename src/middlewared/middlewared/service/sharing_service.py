@@ -1,10 +1,21 @@
+from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
-from ..service_exception import ValidationErrors
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from . import ValidationErrors
+
+
+class PathModel(Protocol):
+    dataset: str | None
+    relative_path: str | None
 
 
 class SharingTaskService[E](CRUDService[E]):
@@ -15,6 +26,72 @@ class SharingTaskService[E](CRUDService[E]):
     locked_field = 'locked'
     locked_alert_class: str = NotImplemented
     share_task_type: str = NotImplemented
+    path_resolution_filters: Iterable[Sequence] | None = None
+    """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
+    default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
+    table (including `datastore_prefix`)."""
+
+    def __init__(self, middleware: 'Middleware'):
+        super().__init__(middleware)
+        # Register path resolution hooks for all SharingTaskService subclasses
+        middleware.register_hook('dataset.post_unlock', self.resolve_paths, sync=True)
+        middleware.register_hook('pool.post_import', self.resolve_paths, sync=True)
+
+    @classmethod
+    @private
+    async def resolve_paths(cls, middleware: 'Middleware', *_args, **_kwargs) -> None:
+        """
+        Attempt resolution of NULL dataset paths.
+
+        Note: *_args and **_kwargs are accepted but unused. They're required because hooks
+        are called with varying arguments (pool.post_import passes pool, dataset.post_unlock
+        passes datasets=[...]), but this hook queries for NULL paths independently.
+
+        IMPORTANT: Used by migration/0018_resolve_dataset_paths.py
+        """
+        config = cls._config
+        namespace = config.namespace
+        datastore = config.datastore
+        prefix = config.datastore_prefix
+
+        # Query entries with unresolved dataset paths
+        unresolved = await middleware.call(
+            'datastore.query',
+            datastore,
+            [
+                [prefix + 'dataset', '=', None],
+                *(cls.path_resolution_filters or [])
+            ]
+        )
+        if not unresolved:
+            return
+
+        for entry in unresolved:
+            try:
+                entry_id = entry['id']
+                path = entry[prefix + cls.path_field]
+
+                dataset, relative_path = await middleware.run_in_thread(resolve_dataset_path, path, middleware)
+                if dataset:
+                    # Successfully resolved - update database
+                    await middleware.call(
+                        'datastore.update',
+                        datastore,
+                        entry_id,
+                        {
+                            prefix + 'dataset': dataset,
+                            prefix + 'relative_path': relative_path
+                        }
+                    )
+                    middleware.logger.info(f"Resolved {namespace} id={entry_id}: {dataset}@'{relative_path}'")
+                else:
+                    # Cannot resolve yet (encrypted dataset, etc.) - leave as NULL
+                    middleware.logger.info(f"Deferred {namespace} id={entry_id}: {path}")
+
+            except Exception as e:
+                middleware.logger.debug(
+                    f"Failed to resolve {namespace} id={entry_id} path={path}: {e}"
+                )
 
     @private
     async def get_path_field(self, data):
@@ -63,7 +140,13 @@ class SharingTaskService[E](CRUDService[E]):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
     @private
-    async def validate_path_field(self, data: dict | object, schema: str, verrors: ValidationErrors):
+    async def validate_path_field(
+        self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
+    ) -> 'ValidationErrors':
+        """Validate the path field and optionally split it into dataset and relative_path components.
+
+        Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
+        resolves the path to its ZFS dataset components."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -74,9 +157,25 @@ class SharingTaskService[E](CRUDService[E]):
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, path)
+            if split_path:
+                if isinstance(data, dict):
+                    # FIXME: Remove when this method no longer passed a dict
+                    data.update(dataset=None, relative_path=None)
+                else:
+                    data.dataset = data.relative_path = None
 
         elif loc is FSLocation.LOCAL:
             await self.validate_local_path(verrors, name, path)
+            if split_path:
+                ds, rel_path = await self.middleware.run_in_thread(
+                    resolve_dataset_path, path, self.middleware
+                )
+                if isinstance(data, dict):
+                    # FIXME: Remove when this method no longer passed a dict
+                    data.update(dataset=ds, relative_path=rel_path)
+                else:
+                    data.dataset = ds
+                    data.relative_path = rel_path
 
         else:
             self.logger.error('%s: unknown location type', loc.name)

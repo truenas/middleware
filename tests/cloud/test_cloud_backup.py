@@ -104,6 +104,9 @@ def test_cloud_backup(cloud_backup_task):
     task_id_ = task_["id"]
     local_dataset_ = cloud_backup_task.local_dataset
 
+    assert task_['dataset'] == local_dataset_
+    assert task_['relative_path'] == ''
+
     assert call("cloud_backup.list_snapshots", task_id_) == []
 
     ssh(f"dd if=/dev/urandom of=/mnt/{local_dataset_}/blob1 bs=1M count=1")

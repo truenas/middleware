@@ -88,7 +88,7 @@ class CloudTaskServiceMixin:
                 except CallError as e:
                     verrors.add(f'{name}.{self.path_field}', e.errmsg)
         else:
-            self.middleware.run_coroutine(self.validate_path_field(data, name, verrors))
+            self.middleware.run_coroutine(self.validate_path_field(data, name, verrors, split_path=True))
 
         if data["snapshot"]:
             dataset_name = data["path"].removeprefix("/mnt/")

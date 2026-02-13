@@ -26,6 +26,7 @@ from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
 )
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.utils.mount import resolve_dataset_path
 
 
 class NFSServicePathInfo(enum.Enum):
@@ -385,6 +386,8 @@ class NFSShareModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_path = sa.Column(sa.Text())
+    nfs_dataset = sa.Column(sa.String(255), nullable=True)
+    nfs_relative_path = sa.Column(sa.String(255), nullable=True)
     nfs_aliases = sa.Column(sa.JSON(list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
@@ -548,6 +551,11 @@ class SharingNFSService(SharingService):
         # need to make sure that the nfs share is within the zpool mountpoint
         await check_path_resides_within_volume(
             verrors, self.middleware, f'{schema_name}.path', data['path'],
+        )
+
+        # Split path into dataset and relative_path components
+        data['dataset'], data['relative_path'] = await self.middleware.run_in_thread(
+            resolve_dataset_path, data['path'], self.middleware
         )
 
         filters = []
