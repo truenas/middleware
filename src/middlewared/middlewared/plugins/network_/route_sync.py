@@ -1,6 +1,6 @@
 import socket
 
-from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status
+from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import ServiceContext
 
 from truenas_pynetif.address.constants import AddressFamily
@@ -32,8 +32,6 @@ def _get_default_ip4_route_from_dhcpcd(
                 ifaces.append(iface)
 
     for i in ifaces:
-        if not dhcp_status(i)["running"]:
-            continue
         lease = dhcp_leases(i)
         if lease and "new_routers" in lease:
             # Make sure to get first route only

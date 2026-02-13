@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api import api_method
-from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status
+from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IPv4Nameserver, IPv6Nameserver
 from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
@@ -127,8 +127,6 @@ class DNSService(Service):
 
             dns_from_dhcp = set()
             for iface in interfaces:
-                if not dhcp_status(iface)["running"]:
-                    continue
                 lease = dhcp_leases(iface)
                 if lease and "new_domain_name_servers" in lease:
                     for dns in lease["new_domain_name_servers"].split():
