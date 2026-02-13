@@ -5,7 +5,7 @@ from .disks_.disk_class import iterate_disks
 
 def get_disks_temperatures_for_snmp(netdata_metrics: dict[str, Any]) -> dict[str, int | None]:
     """Returns temperatures in millicelsius keyed by disk name (e.g., 'sda')"""
-    temperatures = {}
+    temperatures: dict[str, int | None] = {}
     disk_mapping = {disk.identifier: disk.name for disk in iterate_disks()}
     for disk_temperature in filter(lambda k: 'truenas_disk_temp' in k, netdata_metrics):
         disk_ident = disk_temperature.rsplit('.', 1)[-1]

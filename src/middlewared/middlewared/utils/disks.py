@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Any
 
 import pyudev
 
@@ -9,7 +10,7 @@ DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
 
 
-def safe_retrieval(prop, key, default, as_int=False):
+def safe_retrieval(prop: dict[str, Any], key: str, default: str, as_int: bool = False) -> str | int:
     value = prop.get(key)
     if value is not None:
         if isinstance(value, bytes):
@@ -22,14 +23,14 @@ def safe_retrieval(prop, key, default, as_int=False):
 
 
 def get_disk_serial_from_block_device(block_device: pyudev.Device) -> str:
-    return (
+    return str(
         safe_retrieval(block_device.properties, 'ID_SCSI_SERIAL', '') or
         safe_retrieval(block_device.properties, 'ID_SERIAL_SHORT', '') or
         safe_retrieval(block_device.properties, 'ID_SERIAL', '')
     )
 
 
-def valid_zfs_partition_uuids():
+def valid_zfs_partition_uuids() -> tuple[str, str]:
     # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
     # 516e7cba was being used by freebsd and 6a898cc3 is being used by linux
     return (
@@ -38,7 +39,7 @@ def valid_zfs_partition_uuids():
     )
 
 
-def dev_to_ident(name, sys_disks):
+def dev_to_ident(name: str, sys_disks: dict[str, dict[str, Any]]) -> str:
     """Map a disk device (i.e. sda5) to its respective "identifier"
     (i.e. "{serial_lunid}AAAA_012345")"""
     try:
@@ -51,6 +52,7 @@ def dev_to_ident(name, sys_disks):
         elif dev['serial']:
             return f'{{serial}}{dev["serial"]}'
         elif dev.get('parts'):
+            part: dict[str, Any]
             for part in filter(lambda x: x['partition_type'] in valid_zfs_partition_uuids(), dev['parts']):
                 return f'{{uuid}}{part["partition_uuid"]}'
 
@@ -69,7 +71,7 @@ def get_disk_names() -> list[str]:
 
 
 def get_disks_with_identifiers(
-    disks_identifier_required: list[str] | None = None, block_devices_data: dict[str, dict] | None = None,
+    disks_identifier_required: list[str] | None = None, block_devices_data: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, str]:
     disks = {}
     available_disks = get_disk_names()
@@ -95,7 +97,9 @@ def get_disks_with_identifiers(
                 serial, lunid = block_device_data['serial'], block_device_data['lunid']
             else:
                 serial = get_disk_serial_from_block_device(block_device)
-                lunid = safe_retrieval(block_device.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.')
+                lunid = str(
+                    safe_retrieval(block_device.properties, 'ID_WWN', '')
+                ).removeprefix('0x').removeprefix('eui.')
 
             parts = []
             for partition in filter(

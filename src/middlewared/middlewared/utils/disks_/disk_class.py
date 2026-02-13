@@ -65,32 +65,49 @@ class DiskEntry:
     devpath: str
     """The disk's /dev path (i.e. '/dev/sda')"""
 
+    @typing.overload
     def __opener(
         self,
         *,
         relative_path: str | None = None,
         absolute_path: str | None = None,
-        mode: str = "r",
-    ) -> str | None:
-        if relative_path is None and absolute_path is None:
-            raise ValueError("relative_path or absolute_path is required")
+        mode: typing.Literal["r"] = "r",
+    ) -> str | None: ...
 
+    @typing.overload
+    def __opener(
+        self,
+        *,
+        relative_path: str | None = None,
+        absolute_path: str | None = None,
+        mode: typing.Literal["rb"],
+    ) -> bytes | None: ...
+
+    def __opener(
+        self,
+        *,
+        relative_path: str | None = None,
+        absolute_path: str | None = None,
+        mode: typing.Literal["r", "rb"] = "r",
+    ) -> str | bytes | None:
         if relative_path is not None:
             path = f"/sys/block/{self.name}/{relative_path}"
-        else:
+        elif absolute_path is not None:
             path = absolute_path
+        else:
+            raise ValueError("relative_path or absolute_path is required")
 
         try:
             with open(path, mode) as f:
-                return f.read().strip()
+                return f.read()  # type: ignore[no-any-return]
         except Exception:
-            pass
+            return None
 
     @functools.cached_property
     def lbs(self) -> int:
         """The disk's logical block size as reported by sysfs"""
         try:
-            return int(self.__opener(relative_path="queue/logical_block_size"))
+            return int(self.__opener(relative_path="queue/logical_block_size"))  # type: ignore[arg-type]
         except Exception:
             # fallback to 512 always
             return 512
@@ -99,7 +116,7 @@ class DiskEntry:
     def pbs(self) -> int:
         """The disk's physical block size as reported by sysfs"""
         try:
-            return int(self.__opener(relative_path="queue/physical_block_size"))
+            return int(self.__opener(relative_path="queue/physical_block_size"))  # type: ignore[arg-type]
         except Exception:
             # fallback to 512 always
             return 512
@@ -113,7 +130,7 @@ class DiskEntry:
         # regardless of the disk's reported
         # block size.
         try:
-            return int(self.__opener(relative_path="size"))
+            return int(self.__opener(relative_path="size"))  # type: ignore[arg-type]
         except Exception:
             # rare but dont crash here
             return 0
@@ -313,7 +330,13 @@ class DiskEntry:
                 raise OSError(f"{cmd!r} failed for {self.name} ({cp.returncode!r}):\n{cp.stderr}")
         return cp.stdout
 
-    def smartctl_info(self, return_json: bool = False, raise_alert: bool = True) -> dict | str:
+    @typing.overload
+    def smartctl_info(self, return_json: typing.Literal[True], raise_alert: bool = True) -> dict[str, typing.Any]: ...
+
+    @typing.overload
+    def smartctl_info(self, return_json: typing.Literal[False] = False, raise_alert: bool = True) -> str: ...
+
+    def smartctl_info(self, return_json: bool = False, raise_alert: bool = True) -> dict[str, typing.Any] | str:
         """Return smartctl -x information.
 
         Args:
@@ -329,7 +352,7 @@ class DiskEntry:
 
         stdout = self.__run_smartctl_cmd_impl(cmd, raise_alert)
         if return_json:
-            return json.loads(stdout)
+            return json.loads(stdout)  # type: ignore[no-any-return]
         else:
             return stdout
 
@@ -357,7 +380,8 @@ class DiskEntry:
         else:
             path = f"{base}/device/hwmon"
 
-        rv = {"temp_c": None, "crit": None}
+        temp_c: float | None = None
+        crit: float | None = None
         try:
             with os.scandir(path) as sdir:
                 for i in filter(
@@ -372,7 +396,7 @@ class DiskEntry:
 
                     try:
                         milli_c = int(
-                            self.__opener(absolute_path=f"{i.path}/temp1_input")
+                            self.__opener(absolute_path=f"{i.path}/temp1_input")  # type: ignore[arg-type]
                         )
                     except Exception:
                         # if we can't get the temperature
@@ -381,22 +405,22 @@ class DiskEntry:
                         continue
                     else:
                         # sysfs values are stored in millidegrees celsius
-                        rv["temp_c"] = milli_c / 1000
+                        temp_c = milli_c / 1000
 
                     try:
-                        crit = int(self.__opener(absolute_path=f"{i.path}/temp1_crit"))
+                        crit = int(self.__opener(absolute_path=f"{i.path}/temp1_crit"))  # type: ignore[arg-type]
                     except Exception:
                         pass
                     else:
                         # syfs values are stored in millidegrees celsius
-                        rv["crit"] = crit / 1000
+                        crit = crit / 1000
         except FileNotFoundError:
             # pmem devices dont have this, for example
             pass
 
-        return TempEntry(**rv)
+        return TempEntry(temp_c=temp_c, crit=crit)
 
-    def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
+    def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry, ...] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
         try:
@@ -417,6 +441,8 @@ class DiskEntry:
                 pass
             else:
                 logger.exception("Unexpected error reading partitions for device: %r", self.devpath)
+
+            return None
 
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.

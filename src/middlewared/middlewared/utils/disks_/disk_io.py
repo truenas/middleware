@@ -50,7 +50,7 @@ def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
         os.write(dev_fd, to_write)
 
 
-def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
+def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry, ...]:
     """Read GPT partition entries from a device.
 
     Reads and parses the GPT (GUID Partition Table) from the specified device

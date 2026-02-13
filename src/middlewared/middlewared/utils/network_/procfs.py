@@ -15,7 +15,7 @@ class InetInfoEntry:
     protocol: str
 
 
-def hex_to_ipv6(hex_addr):
+def hex_to_ipv6(hex_addr: str) -> str:
     """ hex address to standard IPv6 format
     Process:
         Convert hex to binary
@@ -23,27 +23,27 @@ def hex_to_ipv6(hex_addr):
         Pack as 4 32-bit integers in native byte order
         Use inet_ntop (standard network API) to format the address
     """
-    addr = decode(hex_addr, "hex")
-    addr = unpack('!LLLL', addr)
-    addr = pack('@IIII', *addr)
-    addr = inet_ntop(AF_INET6, addr)
+    addr_bytes = decode(hex_addr, "hex")
+    addr_tuple = unpack('!LLLL', addr_bytes)
+    addr_packed = pack('@IIII', *addr_tuple)
+    addr = inet_ntop(AF_INET6, addr_packed)
     return addr
 
 
-def hex_to_ipv4(hex_addr):
+def hex_to_ipv4(hex_addr: str) -> str:
     """ hex address to standard IPv4 format
     Process:
         Convert hex to binary (decode and unpack)
         Pack 32-bit integer in native byte order
         Use inet_ntop (standard network API) to format address
     """
-    addr = int(hex_addr, 16)
-    addr = pack("=L", addr)
-    addr = inet_ntop(AF_INET, addr)
+    addr_int = int(hex_addr, 16)
+    addr_packed = pack("=L", addr_int)
+    addr = inet_ntop(AF_INET, addr_packed)
     return addr
 
 
-def parse_address(hex_address, ipversion):
+def parse_address(hex_address: str, ipversion: str) -> tuple[str, int]:
     ip_hex, port_hex = hex_address.split(':')
     if ipversion == '4':
         ip = hex_to_ipv4(ip_hex)
@@ -53,7 +53,7 @@ def parse_address(hex_address, ipversion):
     return ip, port
 
 
-def read_proc_net(local_port=None, remote_port=None) -> InetInfoEntry | list[InetInfoEntry]:
+def read_proc_net(local_port: int | None = None, remote_port: int | None = None) -> InetInfoEntry | list[InetInfoEntry]:
     """Parse the /proc/net/{tcp/udp(6)} directories from
     procfs and gather the local and remote ip/ports connected
     to the system.
