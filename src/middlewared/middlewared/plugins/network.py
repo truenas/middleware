@@ -1651,8 +1651,8 @@ class InterfaceService(CRUDService):
                 asyncio.ensure_future(dhcp_start(name, wait=wait_dhcp))
                 for name in autoconfigure
             ]
-            if wait_dhcp:
-                await asyncio.wait(dhcp_aws, timeout=30)
+            if wait_dhcp is not None:
+                await asyncio.wait(dhcp_aws, timeout=wait_dhcp)
 
         # first interface that is configured, we kill dhcpcd on _all_ interfaces
         # but dhcpcd could have added items to /etc/resolv.conf. To "fix" this

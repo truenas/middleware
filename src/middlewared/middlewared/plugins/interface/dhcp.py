@@ -4,13 +4,20 @@ import contextlib
 import os
 import socket
 import struct
+import typing
 
 from middlewared.plugins.service_.services.base import (
     call_unit_action,
     call_unit_action_and_wait,
 )
 
-__all__ = ("dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
+__all__ = ("DHCPStatus", "dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
+
+
+class DHCPStatus(typing.TypedDict):
+    running: bool
+    pid: int | None
+
 
 _SIZEOF_SIZE_T = 8
 _SOCK_TIMEOUT = 5.0
@@ -66,7 +73,7 @@ async def dhcp_start(interface: str, wait: int | None = None) -> None:
         )
 
 
-def dhcp_status(interface: str) -> dict[str, bool | int | None]:
+def dhcp_status(interface: str) -> DHCPStatus:
     """Check if dhcpcd is running for an interface by probing its control socket.
 
     Attempts to connect to /run/dhcpcd/{interface}.sock. If the socket
