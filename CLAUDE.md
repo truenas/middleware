@@ -162,7 +162,7 @@ job_id = await self.middleware.call('service.long_running_method', arg1)
 | `src/middlewared/middlewared/service/` | Service base classes and decorators |
 | `src/middlewared/middlewared/utils/` | Shared utilities |
 | `src/middlewared/middlewared/alert/` | Alert/notification system |
-| `src/middlewared/middlewared/etc_files/` | Config file templates (Mako) |
+| `src/middlewared/middlewared/etc_files/` | Config file templates (Mako and Python scripts) |
 | `src/middlewared/middlewared/alembic/` | Database migrations |
 | `tests/` | Integration and API test suites |
 | `tests/api2/` | Main API tests (200+ tests) |
@@ -219,6 +219,7 @@ Common test patterns:
 - Do not use `select.select`; use `poll` instead
 - All async code should use proper `async`/`await` patterns
 - Follow existing code style in the repository
+- **Atomic file writes**: Use `atomic_write` from `middlewared.utils.io` when writing system config files, security-sensitive files (SSH keys, credentials), or files that other processes may be reading concurrently. It provides atomic replacement with symlink race protection. Use standard `open()` for regular application data, logs, or temporary files.
 
 ## Logging Guidelines
 

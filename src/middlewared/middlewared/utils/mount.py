@@ -298,12 +298,17 @@ def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[
     """
     try:
         # Get file stats with mount ID and attributes
-        stx = truenas_os.statx(
-            path,
-            dir_fd=truenas_os.AT_FDCWD,
-            flags=0,
-            mask=truenas_os.STATX_BASIC_STATS | truenas_os.STATX_MNT_ID_UNIQUE
-        )
+        path = os.path.normpath(path)
+        fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            stx = truenas_os.statx(
+                "",
+                dir_fd=fd,
+                flags=truenas_os.AT_EMPTY_PATH,
+                mask=truenas_os.STATX_BASIC_STATS | truenas_os.STATX_MNT_ID_UNIQUE
+            )
+        finally:
+            os.close(fd)
     except FileNotFoundError:
         # Path doesn't exist - likely encrypted dataset or temporarily unavailable
         logger.debug(f"Path not found (deferred): {path}")
