@@ -88,7 +88,7 @@ def test__convert_raw_key_valid(root_api_key):
         result = c.call('api_key.convert_raw_key', root_api_key['key'])
 
     # Verify all expected fields are present
-    assert result['id'] == root_api_key['id']
+    assert result['api_key_id'] == root_api_key['id']
     assert 'iterations' in result
     assert 'salt' in result
     assert 'client_key' in result
@@ -114,20 +114,20 @@ def test__convert_raw_key_invalid_format():
         with pytest.raises(Exception, match='Not a valid raw API key'):
             c.call('api_key.convert_raw_key', 'abc-validkeydata' + 'x' * 51)
 
-        # Empty string
-        with pytest.raises(Exception, match='Not a valid raw API key'):
+        # Empty string (caught by pydantic NonEmptyString validation)
+        with pytest.raises(Exception, match='String should have at least 1 character'):
             c.call('api_key.convert_raw_key', '')
 
 
 def test__convert_raw_key_wrong_size():
-    """Test that keys with incorrect size are rejected."""
+    """Test that keys with incorrect size are rejected by regex pattern."""
     with Client() as c:
-        # Key too short (63 chars instead of 64)
-        with pytest.raises(Exception, match='Unexpected key size'):
+        # Key too short (63 chars instead of 64) - caught by regex pattern
+        with pytest.raises(Exception, match='Not a valid raw API key'):
             c.call('api_key.convert_raw_key', '123-' + 'a' * 63)
 
-        # Key too long (65 chars instead of 64)
-        with pytest.raises(Exception, match='Unexpected key size'):
+        # Key too long (65 chars instead of 64) - caught by regex pattern
+        with pytest.raises(Exception, match='Not a valid raw API key'):
             c.call('api_key.convert_raw_key', '123-' + 'a' * 65)
 
 
@@ -182,12 +182,12 @@ def test__convert_raw_key_whitespace_handling(root_api_key):
     with Client() as c:
         # Test with leading whitespace
         result = c.call('api_key.convert_raw_key', '  ' + root_api_key['key'])
-        assert result['id'] == root_api_key['id']
+        assert result['api_key_id'] == root_api_key['id']
 
         # Test with trailing whitespace
         result = c.call('api_key.convert_raw_key', root_api_key['key'] + '  ')
-        assert result['id'] == root_api_key['id']
+        assert result['api_key_id'] == root_api_key['id']
 
         # Test with both
         result = c.call('api_key.convert_raw_key', '  ' + root_api_key['key'] + '  ')
-        assert result['id'] == root_api_key['id']
+        assert result['api_key_id'] == root_api_key['id']
