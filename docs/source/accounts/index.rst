@@ -6,3 +6,4 @@ Accounts
    :caption: Contents:
 
    implementation.rst
+   scram_authentication.rst
