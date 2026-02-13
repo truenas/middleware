@@ -233,6 +233,220 @@ users and groups in a directory service and inserting the entries. For a better 
 cache entries as accounts are looked up for various reasons (for example when loading permissions forms).
 
 
+PAM Configuration
+=================
+
+TrueNAS uses Linux Pluggable Authentication Modules (PAM) for authentication and session management. While NSS
+modules provide account information (passwd/group entries), PAM handles the authentication flow and session
+lifecycle. TrueNAS provides three primary PAM service configurations that applications should use depending on
+their authentication requirements.
+
+
+TrueNAS PAM Service Files
+--------------------------
+
+All TrueNAS PAM configuration files are defined as Mako templates in
+``src/middlewared/middlewared/etc_files/pam.d/`` and are rendered during system configuration to generate the
+actual PAM configuration files in ``/etc/pam.d/``. The rendering incorporates system settings such as directory
+service authentication state (a licensed feature), STIG mode security settings (including faillock
+configuration), and two-factor authentication configuration.
+
+
+/etc/pam.d/truenas
+^^^^^^^^^^^^^^^^^^
+
+This is the primary PAM service for standard username/password authentication through the Web UI and API.
+
+**Authentication flow:**
+
+* When directory service authentication is enabled (licensed feature): Uses the configured directory service
+  provider (Active Directory, LDAP, or FreeIPA) and will fall through to local accounts if the directory
+  service authentication fails
+* When directory service authentication is disabled: Uses local Unix authentication
+* Faillock support is enabled when STIG mode is active (independent of directory services)
+* Supports optional 2FA via OATH TOTP when enabled
+* Includes account validation and session management
+* Password changes are denied through this service
+
+**Use this service when:** Your application needs to authenticate users with username and password credentials
+in the same manner as the TrueNAS Web UI and API. This is the most common authentication method for interactive
+user sessions.
+
+
+/etc/pam.d/truenas-api-key
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This PAM service is used for authentication with API keys and SCRAM credentials.
+
+**Authentication flow:**
+
+* Authenticates via ``pam_truenas.so`` with support for:
+
+  * Raw API key authentication
+  * SCRAM-SHA512 authentication (requires multistep PAM conversation)
+
+* Includes account validation based on directory service configuration
+* Faillock support is enabled when STIG mode is active
+* Password changes are denied through this service
+
+**Use this service when:** Your application needs to authenticate API requests using API keys or SCRAM-SHA512
+authentication. This is appropriate for programmatic access where users have generated API keys through the
+TrueNAS interface.
+
+
+/etc/pam.d/truenas-unix
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This PAM service is used for authentication via Unix socket, delegating authentication to the calling
+application.
+
+**Authentication flow:**
+
+* Uses ``pam_access.so`` for access control
+* No password verification - delegates authentication to the calling application
+* Includes account validation based on directory service configuration
+* Password changes are denied through this service
+
+**Use this service when:**
+
+* Your application has already authenticated the user through another method (e.g., file upload/download tokens
+  where the user authenticated via the Web UI/API first)
+* Your application uses SO_PEERCRED to validate the identity of AF_UNIX socket connections
+* Your application implements an authentication protocol not currently supported in the PAM layer (e.g., passkey
+  authentication)
+
+**Security warning:** This service should not be used without robust security evaluation of the calling
+application, as it trusts the application to have performed authentication. The PAM configuration provides no
+password verification itself.
+
+
+Session Management
+------------------
+
+All three TrueNAS PAM services support session management through the shared ``/etc/pam.d/truenas-session``
+configuration. Applications using these PAM services **must** call ``pam_open_session()`` and
+``pam_close_session()`` to properly manage sessions.
+
+Proper session management ensures that:
+
+* Sessions appear in the ``system.security.sessions`` API output
+* Sessions are tracked correctly by the middleware
+* Session-related security controls (such as concurrent session limits in STIG mode) function properly
+* Proper audit trails are maintained
+
+Example session lifecycle in a PAM application::
+
+    pam_handle_t *pamh = NULL;
+
+    // Initialize PAM
+    pam_start("truenas", username, &conv, &pamh);
+
+    // Authenticate user
+    pam_authenticate(pamh, 0);
+
+    // Validate account
+    pam_acct_mgmt(pamh, 0);
+
+    // REQUIRED: Open session
+    pam_open_session(pamh, 0);
+
+    // ... application logic ...
+
+    // REQUIRED: Close session
+    pam_close_session(pamh, 0);
+
+    // Clean up
+    pam_end(pamh, PAM_SUCCESS);
+
+
+Guidelines for TrueNAS Applications
+------------------------------------
+
+TrueNAS-developed applications should follow these guidelines when implementing authentication:
+
+1. **Use TrueNAS PAM services**: Always use one of the three TrueNAS PAM service files (``truenas``,
+   ``truenas-api-key``, or ``truenas-unix``) rather than creating custom PAM configurations. This ensures
+   consistency with TrueNAS security policies and proper integration with features like directory services, 2FA,
+   and STIG mode.
+
+2. **Choose the appropriate service**: Select the PAM service that matches your authentication method:
+
+   * Interactive username/password authentication → ``truenas``
+   * API key or SCRAM authentication → ``truenas-api-key``
+   * Pre-authenticated or alternative authentication → ``truenas-unix``
+
+3. **Always manage sessions**: Call ``pam_open_session()`` after successful authentication and
+   ``pam_close_session()`` when the session ends. Failing to do so will result in sessions not appearing in
+   middleware tracking and potential security policy violations.
+
+4. **Respect account validation**: Always call ``pam_acct_mgmt()`` after authentication to ensure the account is
+   valid and not locked or expired. Do not bypass this step.
+
+5. **Handle faillock correctly**: When STIG mode is enabled, failed authentication attempts are tracked via
+   faillock. Applications must properly handle PAM authentication failures to ensure users are locked out after
+   repeated failures.
+
+6. **Do not implement custom authentication**: If you need an authentication method not supported by the existing
+   TrueNAS PAM services, discuss with the middleware team rather than implementing a custom solution. The
+   ``truenas-unix`` service exists for cases where authentication happens outside PAM, but this requires careful
+   security review.
+
+
+Example: Simple PAM Authentication
+-----------------------------------
+
+Here is a minimal example of authenticating a user via the ``truenas`` PAM service in Python using the
+``truenas_authenticator`` library::
+
+    from truenas_authenticator import UserPamAuthenticator
+    from middlewared.utils.account.authenticator import TruenasPamFile
+
+    # Create authenticator
+    auth = UserPamAuthenticator(username, TruenasPamFile.DEFAULT.service)
+
+    try:
+        # Perform authentication
+        response = auth.authenticate(password)
+
+        if response.pam_code == PAMCode.PAM_SUCCESS:
+            # Open session (REQUIRED)
+            session_response = auth.start_session()
+
+            if session_response.pam_code == PAMCode.PAM_SUCCESS:
+                # Session is now active and tracked
+                # ... application logic ...
+
+                # Close session when done (REQUIRED)
+                auth.end_session()
+        else:
+            # Authentication failed
+            print(f"Authentication failed: {response.message}")
+
+    finally:
+        # Clean up PAM handle
+        auth.close()
+
+
+Common Pitfalls
+---------------
+
+1. **Forgetting session management**: Applications that authenticate but don't call ``pam_open_session()`` will
+   not appear in ``system.security.sessions`` and will not be subject to session-based security controls.
+
+2. **Using the wrong service file**: Using ``truenas-unix`` when you should use ``truenas`` bypasses password
+   verification entirely. Only use ``truenas-unix`` when authentication has already occurred through a secure
+   alternative mechanism.
+
+3. **Creating custom PAM configurations**: Don't create application-specific PAM files like
+   ``/etc/pam.d/myapp``. Use the TrueNAS services to ensure consistency with system security policies.
+
+4. **Ignoring account validation**: Always call ``pam_acct_mgmt()`` after authentication. An account may
+   authenticate successfully but still be locked, expired, or otherwise invalid.
+
+5. **Hardcoding PAM service names**: Use the constants defined in
+   ``middlewared.utils.account.authenticator.TruenasPamFile`` rather than hardcoding service names as strings.
+
+
 Identity providers and TrueNAS features
 =======================================
 
