@@ -80,3 +80,114 @@ def test__api_key_scram(root_api_key):
             server_final=server_final_response,
             server_key=truenas_pyscram.CryptoDatum(b64decode(root_api_key['server_key']))
         )
+
+
+def test__convert_raw_key_valid(root_api_key):
+    """Test converting a valid raw API key to SCRAM components."""
+    with Client() as c:
+        result = c.call('api_key.convert_raw_key', root_api_key['key'])
+
+    # Verify all expected fields are present
+    assert result['id'] == root_api_key['id']
+    assert 'iterations' in result
+    assert 'salt' in result
+    assert 'client_key' in result
+    assert 'stored_key' in result
+    assert 'server_key' in result
+
+    # Verify the SCRAM data matches the original
+    assert result['iterations'] == root_api_key['iterations']
+    assert result['salt'] == root_api_key['salt']
+    assert result['client_key'] == root_api_key['client_key']
+    assert result['stored_key'] == root_api_key['stored_key']
+    assert result['server_key'] == root_api_key['server_key']
+
+
+def test__convert_raw_key_invalid_format():
+    """Test that invalid raw key format is rejected."""
+    with Client() as c:
+        # Missing hyphen separator
+        with pytest.raises(Exception, match='Not a valid raw API key'):
+            c.call('api_key.convert_raw_key', '123invalidkey')
+
+        # Non-numeric ID
+        with pytest.raises(Exception, match='Not a valid raw API key'):
+            c.call('api_key.convert_raw_key', 'abc-validkeydata' + 'x' * 51)
+
+        # Empty string
+        with pytest.raises(Exception, match='Not a valid raw API key'):
+            c.call('api_key.convert_raw_key', '')
+
+
+def test__convert_raw_key_wrong_size():
+    """Test that keys with incorrect size are rejected."""
+    with Client() as c:
+        # Key too short (63 chars instead of 64)
+        with pytest.raises(Exception, match='Unexpected key size'):
+            c.call('api_key.convert_raw_key', '123-' + 'a' * 63)
+
+        # Key too long (65 chars instead of 64)
+        with pytest.raises(Exception, match='Unexpected key size'):
+            c.call('api_key.convert_raw_key', '123-' + 'a' * 65)
+
+
+def test__convert_raw_key_nonexistent():
+    """Test that non-existent key ID is rejected."""
+    with Client() as c:
+        # Use a very high ID that's unlikely to exist
+        with pytest.raises(Exception, match='Key does not exist'):
+            c.call('api_key.convert_raw_key', '999999999-' + 'a' * 64)
+
+
+def test__convert_raw_key_invalid_id():
+    """Test that invalid key IDs are rejected."""
+    with Client() as c:
+        # Zero ID
+        with pytest.raises(Exception, match='Invalid key id'):
+            c.call('api_key.convert_raw_key', '0-' + 'a' * 64)
+
+        # Negative ID
+        with pytest.raises(Exception, match='Not a valid raw API key'):
+            c.call('api_key.convert_raw_key', '-1-' + 'a' * 64)
+
+
+def test__convert_raw_key_revoked():
+    """Test that revoked keys are rejected."""
+    # Create a temporary key and revoke it
+    with Client() as c:
+        temp_key = c.call('api_key.create', {
+            'username': 'root',
+            'name': 'TEMP_REVOKED_KEY_TEST'
+        })
+
+    try:
+        with Client() as c:
+            # Revoke the key
+            c.call('datastore.update', 'account.api_key', temp_key['id'], {
+                'expiry': -1,
+                'revoked_reason': 'Test revocation'
+            })
+
+            # Try to convert the revoked key
+            with pytest.raises(Exception, match='Key is revoked'):
+                c.call('api_key.convert_raw_key', temp_key['key'])
+    finally:
+        # Clean up
+        with Client() as c:
+            c.call('api_key.delete', temp_key['id'])
+
+
+def test__convert_raw_key_whitespace_handling(root_api_key):
+    """Test that leading/trailing whitespace is handled correctly."""
+    with Client() as c:
+        # Test with leading whitespace
+        result = c.call('api_key.convert_raw_key', '  ' + root_api_key['key'])
+        assert result['id'] == root_api_key['id']
+
+        # Test with trailing whitespace
+        result = c.call('api_key.convert_raw_key', root_api_key['key'] + '  ')
+        assert result['id'] == root_api_key['id']
+
+        # Test with both
+        result = c.call('api_key.convert_raw_key', '  ' + root_api_key['key'] + '  ')
+        assert result['id'] == root_api_key['id']
