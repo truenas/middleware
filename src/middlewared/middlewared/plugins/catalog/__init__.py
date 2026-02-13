@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -15,8 +15,14 @@ from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, job, private
 
 from .config import CatalogConfigPart
-from .apps_details import apps as apps_impl
+from .apps_details import (
+    apps as apps_impl,
+    app_version_details as app_version_details_impl,
+    get_normalized_questions_context as get_nqc_impl,
+    train_to_apps_version_mapping as train_to_apps_version_mapping_impl,
+)
 from .app_version import get_app_details
+from .features import version_supported_error_check as version_supported_error_check_impl
 from .state import dataset_mounted
 from .sync import get_synced_state, sync as sync_impl
 from .utils import TMP_IX_APPS_CATALOGS
@@ -107,7 +113,23 @@ class CatalogService(ConfigService):
         )
 
     @private
-    def extend(self, data, context):
+    def train_to_apps_version_mapping(self) -> dict[str, dict[str, dict[str, str]]]:
+        return train_to_apps_version_mapping_impl(self.context)
+
+    @private
+    async def get_normalized_questions_context(self) -> Any:
+        return await get_nqc_impl(self.context)
+
+    @private
+    def app_version_details(self, version_path: str, questions_context: Any = None) -> dict[str, Any]:
+        return app_version_details_impl(self.context, version_path, questions_context)
+
+    @private
+    async def version_supported_error_check(self, version_details: dict[str, Any]) -> None:
+        await version_supported_error_check_impl(self.context, version_details)
+
+    @private
+    def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         data.update({
             'id': data['label'],
             'location': context['catalog_dir'],
@@ -115,7 +137,7 @@ class CatalogService(ConfigService):
         return data
 
     @private
-    async def extend_context(self, rows, extra):
+    async def extend_context(self, rows: Any, extra: Any) -> dict[str, Any]:
         if await dataset_mounted(self.context):
             catalog_dir = catalog_ds_path()
         else:

@@ -3,7 +3,6 @@ from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
     ZFSResourceSnapshotRollbackQuery,
 )
-from middlewared.plugins.catalog.apps_details import app_version_details
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -42,8 +41,8 @@ class AppService(Service):
 
         verrors.check()
 
-        rollback_version = app_version_details(
-            self.context, get_installed_app_version_path(app_name, options['app_version'])
+        rollback_version = self.middleware.call_sync(
+            'catalog.app_version_details', get_installed_app_version_path(app_name, options['app_version']),
         )
         config = get_current_app_config(app_name, options['app_version'])
         new_values = self.middleware.call_sync(

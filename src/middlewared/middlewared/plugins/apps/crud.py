@@ -10,10 +10,6 @@ from middlewared.api.current import (
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
     ZFSResourceQuery
 )
-from middlewared.plugins.catalog.apps_details import (
-    app_version_details as get_app_version_details, get_normalized_questions_context, train_to_apps_version_mapping,
-)
-from middlewared.plugins.catalog.features import version_supported_error_check
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
@@ -72,19 +68,20 @@ class AppService(CRUDService):
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs['specific_app'] = filters[0][2]
 
-        available_apps_mapping = train_to_apps_version_mapping(self.context)
+        available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
 
         apps = list_apps(available_apps_mapping, **kwargs)
         if not retrieve_app_schema:
             return filter_list(apps, filters, options)
 
-        questions_context = self.context.run_coroutine(get_normalized_questions_context(self.context))
+        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
         for app in apps:
             if app['custom_app']:
                 version_details = get_version_details()
             else:
-                version_details = get_app_version_details(
-                    self.context, get_installed_app_version_path(app['name'], app['version']), questions_context
+                version_details = self.middleware.call_sync(
+                    'catalog.app_version_details',
+                    get_installed_app_version_path(app['name'], app['version']), questions_context,
                 )
 
             app['version_details'] = version_details
@@ -156,7 +153,7 @@ class AppService(CRUDService):
         self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
     ):
         app_version_details = complete_app_details.versions[version]
-        self.context.run_coroutine(version_supported_error_check(self.context, app_version_details))
+        self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
         app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
@@ -175,8 +172,8 @@ class AppService(CRUDService):
         # 3) Have docker compose deploy the app in question
         try:
             setup_install_app_dir(app_name, app_version_details)
-            app_version_details = get_app_version_details(
-                self.context, get_installed_app_version_path(app_name, version)
+            app_version_details = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app_name, version),
             )
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
@@ -252,8 +249,8 @@ class AppService(CRUDService):
             # We use update=False because we want defaults to be populated again if they are not present in the payload
             # Why this is not dangerous is because the defaults will be added only if they are not present/configured
             # for the app in question
-            app_version_details = get_app_version_details(
-                self.context, get_installed_app_version_path(app_name, app['version'])
+            app_version_details = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app_name, app['version']),
             )
 
             new_values = self.middleware.call_sync(
