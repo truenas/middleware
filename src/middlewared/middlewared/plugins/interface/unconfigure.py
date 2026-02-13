@@ -46,7 +46,7 @@ def unconfigure_impl(
     ctx.logger.info("Unconfiguring interface %r", name)
 
     # Stop DHCP first, then flush addresses
-    if dhcp_status(name)["running"]:
+    if dhcp_status(name).running:
         ctx.middleware.run_coroutine(dhcp_stop(name))
 
     # DeviceNotFound can occur when a VLAN on a bond is auto-removed by kernel

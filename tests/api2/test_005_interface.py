@@ -69,7 +69,7 @@ def get_payload(ws_client):
 def test_001_check_ipvx(request):
     # Verify that DHCP is running
     # The static IP are configured in test_002 (below)
-    result = ssh(f"python3 -c 'from middlewared.plugins.interface.dhcp import dhcp_status; print(dhcp_status(\"{interface}\")[\"running\"])'")
+    result = ssh(f"python3 -c 'from middlewared.plugins.interface.dhcp import dhcp_status; print(dhcp_status(\"{interface}\").running)'")
     assert "True" in result
 
     # Some explanation of IPv6 routing...

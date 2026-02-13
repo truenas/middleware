@@ -33,9 +33,9 @@ def _get_default_ip4_route_from_dhcpcd(
 
     for i in ifaces:
         lease = dhcp_leases(i)
-        if lease and "new_routers" in lease:
+        if lease and lease.routers:
             # Make sure to get first route only
-            return lease["new_routers"].split()[0]
+            return lease.routers.split()[0]
     return None
 
 

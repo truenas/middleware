@@ -72,17 +72,17 @@ def configure_addresses_impl(
 
     # Check DHCP status
     status = dhcp_status(name)
-    if status["running"] and not data["int_dhcp"]:
+    if status.running and not data["int_dhcp"]:
         ctx.logger.debug("Stopping DHCP for %r", name)
         ctx.middleware.run_coroutine(dhcp_stop(name))
-    elif status["running"] and data["int_dhcp"]:
+    elif status.running and data["int_dhcp"]:
         lease = dhcp_leases(name)
-        if lease and "new_ip_address" in lease and "new_subnet_mask" in lease:
+        if lease and lease.ip_address and lease.subnet_mask:
             addrs_database.add(
                 _alias_to_addr(
                     {
-                        "address": lease["new_ip_address"],
-                        "netmask": lease["new_subnet_mask"],
+                        "address": lease.ip_address,
+                        "netmask": lease.subnet_mask,
                     }
                 )
             )
@@ -208,4 +208,4 @@ def configure_addresses_impl(
         set_link_up(sock, index=link_index)
 
     # Return True if DHCP should be started
-    return not status["running"] and data["int_dhcp"]
+    return not status.running and data["int_dhcp"]

@@ -128,8 +128,8 @@ class DNSService(Service):
             dns_from_dhcp = set()
             for iface in interfaces:
                 lease = dhcp_leases(iface)
-                if lease and "new_domain_name_servers" in lease:
-                    for dns in lease["new_domain_name_servers"].split():
+                if lease and lease.domain_name_servers:
+                    for dns in lease.domain_name_servers.split():
                         dns_from_dhcp.add(f'nameserver {dns.strip()}\n')
 
             for dns in dns_from_dhcp:
