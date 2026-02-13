@@ -32,7 +32,7 @@ class CertificateModel(sa.Model):
     cert_privatekey = sa.Column(sa.EncryptedText(), nullable=True)
     cert_CSR = sa.Column(sa.Text(), nullable=True)
     cert_acme_uri = sa.Column(sa.String(200), nullable=True)
-    cert_domains_authenticators = sa.Column(sa.JSON(encrypted=True), nullable=True)
+    cert_domains_authenticators = sa.Column(sa.JSON(dict, encrypted=True), nullable=True)
     cert_renew_days = sa.Column(sa.Integer(), nullable=True, default=10)
     cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
     cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)

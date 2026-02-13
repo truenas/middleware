@@ -40,3 +40,24 @@ def test_snapshot_task_is_deleted_when_deleting_a_parent_dataset():
 
                 with pytest.raises(InstanceNotFound):
                     assert call("pool.snapshottask.get_instance", t["id"])
+
+
+def test_snapshot_task_can_be_deleted_after_dataset_rename():
+    """Deleting a periodic snapshot task should succeed even if the dataset was renamed."""
+    with dataset("snap_orig") as ds:
+        renamed = ds.rsplit("/", 1)[0] + "/snap_renamed"
+        with snapshot_task({
+            "dataset": ds,
+            "recursive": True,
+            "lifetime_value": 1,
+            "lifetime_unit": "DAY",
+            "naming_schema": "%Y%m%d%H%M",
+        }) as t:
+            call("pool.dataset.rename", ds, {"new_name": renamed, "force": True})
+            try:
+                call("pool.snapshottask.delete", t["id"], {"fixate_removal_date": True})
+
+                with pytest.raises(InstanceNotFound):
+                    call("pool.snapshottask.get_instance", t["id"])
+            finally:
+                call("pool.dataset.delete", renamed, {"recursive": True})

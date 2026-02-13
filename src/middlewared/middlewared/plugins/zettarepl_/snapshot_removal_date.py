@@ -1,17 +1,19 @@
 from collections import defaultdict
+import errno
 import subprocess
 
 from dateutil.tz import tzlocal
 import isodate
 
 from middlewared.api.current import PeriodicSnapshotTaskEntry
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.utils.time_utils import utc_now
 
 from zettarepl.snapshot.list import list_snapshots
 from zettarepl.snapshot.name import parse_snapshot_name
 from zettarepl.snapshot.task.snapshot_owner import PeriodicSnapshotTaskSnapshotOwner
 from zettarepl.snapshot.task.task import PeriodicSnapshotTask
+from zettarepl.transport.interface import ExecException
 from zettarepl.transport.local import LocalShell
 
 
@@ -59,7 +61,10 @@ class ZettareplService(Service):
         return dict(sum([list(d.items()) for d in self.removal_dates.values()], []))
 
     def periodic_snapshot_task_snapshots(self, task: PeriodicSnapshotTaskEntry):
-        snapshots = list_snapshots(LocalShell(), task.dataset, task.recursive)
+        try:
+            snapshots = list_snapshots(LocalShell(), task.dataset, task.recursive)
+        except ExecException:
+            raise CallError(f'Dataset {task.dataset!r} does not exist', errno.ENOENT)
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))

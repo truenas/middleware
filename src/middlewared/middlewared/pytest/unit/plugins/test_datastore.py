@@ -394,7 +394,7 @@ class JSONModel(Model):
     __tablename__ = 'test_json'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    json_dict = sa.Column(JSON())
+    json_dict = sa.Column(JSON(dict))
     json_list = sa.Column(JSON(list))
 
 
@@ -422,7 +422,7 @@ class EncryptedJSONModel(Model):
     __tablename__ = 'test_encryptedjson'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    json_dict = sa.Column(JSON(encrypted=True))
+    json_dict = sa.Column(JSON(dict, encrypted=True))
     json_list = sa.Column(JSON(list, encrypted=True))
 
 
