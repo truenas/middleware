@@ -168,7 +168,7 @@ for output, arg in myopts:
         ha_license = arg
     elif output == '--show_locals':
         show_locals = True
-    elif extended_tests == '--extended_tests':
+    elif output == '--extended_tests':
         extended_tests = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
