@@ -87,10 +87,50 @@ def generate_nt_hash(passwd):
     return md4_hash_bytes.hex().upper()
 
 
-def generate_api_key_auth_data(passwd):
-    rounds = 500000
+def generate_api_key_auth_data(
+    passwd: str,
+    salt_in: bytes | None = None,
+    rounds: int = 500000
+) -> dict[str, str | int]:
+    """
+    Generate SCRAM authentication data for API key using PBKDF2-SHA512.
+
+    This function derives SCRAM authentication components (client_key, stored_key,
+    server_key) from a password using PBKDF2-SHA512 key derivation and SCRAM-SHA-512.
+
+    Args:
+        passwd: The password/API key to derive authentication data from.
+        salt_in: Optional 16-byte salt. If not provided, a random salt is generated.
+        rounds: Number of PBKDF2 iterations (default: 500000).
+
+    Returns:
+        Dictionary containing base64-encoded SCRAM authentication components:
+            - iterations: Number of PBKDF2 rounds used
+            - salt: Base64-encoded salt (16 bytes)
+            - client_key: Base64-encoded SCRAM ClientKey
+            - stored_key: Base64-encoded SCRAM StoredKey
+            - server_key: Base64-encoded SCRAM ServerKey
+
+    Raises:
+        ValueError: If salt_in is provided but not exactly 16 bytes.
+        TypeError: If rounds is not an integer.
+
+    Note:
+        To regenerate the same SCRAM keys for an existing API key, the original
+        salt must be provided via salt_in parameter.
+    """
     salt_length = 16
-    salt = CryptoDatum(generate_string(string_size=salt_length, extra_chars='./').encode())
+    if salt_in:
+        if len(salt_in) != salt_length:
+            raise ValueError(f'{len(salt_in)}: unexpected salt length')
+
+        salt = CryptoDatum(salt_in)
+    else:
+        salt = CryptoDatum(generate_string(string_size=salt_length, extra_chars='./').encode())
+
+    if not isinstance(rounds, int):
+        raise TypeError(f'Expected int for rounds, got {type(rounds)}')
+
     thehash = CryptoDatum(pbkdf2_hmac('sha512', passwd.encode(), salt, rounds))
     scram_auth = generate_scram_auth_data(salted_password=thehash, salt=salt, iterations=rounds)
 

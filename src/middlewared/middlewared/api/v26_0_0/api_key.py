@@ -12,6 +12,7 @@ from middlewared.api.base import (
 __all__ = [
     "ApiKeyEntry", "ApiKeyCreateArgs", "ApiKeyCreateResult", "ApiKeyUpdateArgs", "ApiKeyUpdateResult",
     "ApiKeyDeleteArgs", "ApiKeyDeleteResult", "ApiKeyMyKeysArgs", "ApiKeyMyKeysResult",
+    "ApiKeyConvertRawKeyArgs", "ApiKeyConvertRawKeyResult",
 ]
 
 
@@ -117,3 +118,28 @@ class ApiKeyMyKeysArgs(BaseModel):
 class ApiKeyMyKeysResult(BaseModel):
     result: list[ApiKeyEntry]
     """Array of API keys owned by the current authenticated user."""
+
+
+class ApiKeyConvertRawKeyArgs(BaseModel):
+    raw_key: Secret[NonEmptyString]
+    """The raw API key to convert (format: id-key)."""
+
+
+class ApiKeyScramData(BaseModel):
+    api_key_id: int
+    """API key ID."""
+    iterations: int
+    """Number of iterations of PBKDF2-SHA512."""
+    salt: str
+    """Base64 encoded salt for API key."""
+    client_key: str
+    """Pre-computed SCRAM ClientKey."""
+    stored_key: str
+    """SCRAM StoredKey for API key."""
+    server_key: str
+    """SCRAM ServerKey for API key."""
+
+
+class ApiKeyConvertRawKeyResult(BaseModel):
+    result: ApiKeyScramData
+    """SCRAM authentication data derived from the raw API key."""

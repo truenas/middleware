@@ -1,5 +1,7 @@
 import errno
+import re
 
+from base64 import b64decode
 from typing import Literal
 
 from datetime import datetime, UTC
@@ -7,6 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ApiKeyEntry, ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs, ApiKeyUpdateResult,
     ApiKeyDeleteArgs, ApiKeyDeleteResult, ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
+    ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult,
 )
 from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
@@ -20,6 +23,9 @@ from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
 from truenas_pypam import PAMCode
+
+RAW_KEY_SZ = 64
+RAW_KEY_PATTERN = re.compile(rf'^\d+-[a-zA-Z0-9]{{{RAW_KEY_SZ}}}$')
 
 
 class APIKeyModel(sa.Model):
@@ -201,7 +207,7 @@ class ApiKeyService(CRUDService):
             # to our synthesized DB ID (which is derived
             # from the UID of user)
             user_identifier = str(user[0]['id'])
-        key = generate_string(string_size=64)
+        key = generate_string(string_size=RAW_KEY_SZ)
         auth_data = generate_api_key_auth_data(key)
         data.update(auth_data)
 
@@ -392,3 +398,44 @@ class ApiKeyService(CRUDService):
     @private
     async def check_status(self) -> None:
         await self.middleware.call("alert.alert_source_clear_run", "ApiKeyRevoked")
+
+    @api_method(ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult, roles=['API_KEY_READ'])
+    def convert_raw_key(self, raw_key):
+        """
+        Convert a raw API key into its SCRAM authentication components.
+
+        This allows API key consumers to transform a raw API key (format: id-key)
+        into the precomputed SCRAM authentication material for improved performance.
+
+        NOTE: this is a convenience function for API consumers. It does not impact
+        API key stored server-side.
+        """
+        raw_key = raw_key.strip()
+        key_data = ''
+        key_id = 0
+        salt = None
+
+        verrors = ValidationErrors()
+        if not RAW_KEY_PATTERN.match(raw_key):
+            verrors.add('api_key_convert_raw_key', 'Not a valid raw API key')
+        else:
+            key_id, key_data = raw_key.split('-', 1)
+            key_id = int(key_id)
+
+            if key_id <= 0:
+                verrors.add('api_key_convert_raw_key', 'Invalid key id')
+
+            if len(key_data) != RAW_KEY_SZ:
+                verrors.add('api_key_convert_raw_key', 'Unexpected key size.')
+
+            key_info = self.middleware.call_sync('api_key.query', [['id', '=', key_id]])
+            if not key_info:
+                verrors.add('api_key_convert_raw_key', 'Key does not exist.')
+            elif key_info[0]['revoked']:
+                verrors.add('api_key_convert_raw_key', 'Key is revoked.')
+            else:
+                salt = b64decode(key_info[0]['salt'])
+
+        verrors.check()
+
+        return {'api_key_id': key_id} | generate_api_key_auth_data(key_data, salt_in=salt)
