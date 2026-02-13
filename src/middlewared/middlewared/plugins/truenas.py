@@ -52,7 +52,7 @@ class TrueNASService(Service):
         """
         return get_chassis_hardware()
 
-    @api_method(TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult, roles=['READONLY_ADMIN'])
+    @api_method(TrueNASIsSupportedHardwareArgs, TrueNASIsSupportedHardwareResult, roles=['READONLY_ADMIN'])
     async def is_supported_hardware(self):
         """
         Return a boolean value on whether this is supported hardware.
