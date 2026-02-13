@@ -64,13 +64,6 @@ def configure_addresses_impl(
         addr_key = "int_address"
         alias_key = "alias_address"
 
-    # Get currently configured addresses using
-    # index to avoid name lookup syscall
-    addrs_configured = {
-        addr
-        for addr in get_link_addresses(sock, index=link_index)
-        if addr.family != AddressFamily.LINK
-    }
     addrs_database = set()
 
     # Check DHCP status
@@ -134,6 +127,14 @@ def configure_addresses_impl(
             addrs_database.add(
                 _alias_to_addr({"address": alias_vip, "netmask": netmask})
             )
+
+    # Get currently configured addresses using
+    # index to avoid name lookup syscall
+    addrs_configured = {
+        addr
+        for addr in get_link_addresses(sock, index=link_index)
+        if addr.family != AddressFamily.LINK
+    }
 
     # Remove addresses not in database
     for addr in addrs_configured:
