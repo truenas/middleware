@@ -19,14 +19,14 @@ from socket import AF_INET, AF_INET6, AF_UNIX
 from .faillock import is_tally_locked
 
 
-class MiddlewarePamFile(enum.StrEnum):
-    DEFAULT = '/etc/pam.d/middleware'
+class TruenasPamFile(enum.StrEnum):
+    DEFAULT = '/etc/pam.d/truenas'
     """ used for regular username / password authentication """
-    API_KEY = '/etc/pam.d/middleware-api-key'
+    API_KEY = '/etc/pam.d/truenas-api-key'
     """ used for authentication with API key """
-    UNIX = '/etc/pam.d/middleware-unix'
+    UNIX = '/etc/pam.d/truenas-unix'
     """ used for authentication via unix socket """
-    COMMON_SESSION = '/etc/pam.d/middleware-session'
+    COMMON_SESSION = '/etc/pam.d/truenas-session'
     """ session-related modules common to all middleware authenticators """
 
     @property
@@ -149,7 +149,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 else:
                     passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
 
-        if self.state.service == MiddlewarePamFile.API_KEY.service:
+        if self.state.service == TruenasPamFile.API_KEY.service:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
@@ -164,7 +164,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         # Retrieve via property getter to ensure we're returning a proper copy
         return self.truenas_user_obj
 
-    def __init__(self, *, username: str, origin: ConnectionOrigin, service=MiddlewarePamFile.DEFAULT):
+    def __init__(self, *, username: str, origin: ConnectionOrigin, service=TruenasPamFile.DEFAULT):
         # NOTE: we are limiting ourselves to non-blocking calls here because these objects are
         # created potentially in async co-routines. This means we input the username as sent by client.
         # We can later normalize when processing authentication requests.
@@ -342,7 +342,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         # pass the normalized name to the PAM stack when authenticating
         resp = self.pam_authenticate_simple(pw['pw_name'], password)
         if resp.code != PAMCode.PAM_SUCCESS:
-            if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service == MiddlewarePamFile.DEFAULT.service:
+            if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service == TruenasPamFile.DEFAULT.service:
                 # This is possibly due to tally lock. In this case we'll change PAM code to reflect locked
                 # status
                 if is_tally_locked(pw['pw_name']):
@@ -355,7 +355,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                         if code == PAMCode.PAM_SUCCESS:
                             # swap out our pam service with UNIX to properly initialize
                             # underlying PAM context.
-                            self.state.service = MiddlewarePamFile.UNIX.service
+                            self.state.service = TruenasPamFile.UNIX.service
                             resp = self.pam_authenticate_simple(pw['pw_name'], '')
                             resp.user_info = pw
                         else:
@@ -396,7 +396,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
         if not origin.is_tcp_ip_family:
             raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
 
-        super().__init__(username=username, origin=origin, service=MiddlewarePamFile.API_KEY)
+        super().__init__(username=username, origin=origin, service=TruenasPamFile.API_KEY)
         self.otpw_possible = False
 
     def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
@@ -422,7 +422,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             # Fill in some dummy values that will not grant access. We initialize here
             # so that we can minimally provide reasonable error responses to subsequent
             # calls and not fial in init.
-            super().__init__(username='nobody', origin=origin, service=MiddlewarePamFile.API_KEY)
+            super().__init__(username='nobody', origin=origin, service=TruenasPamFile.API_KEY)
             self.scram_error = exc
             self.sent_server_first = False
             self.sent_server_final = False
@@ -431,7 +431,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             self.scram_error = None
 
         super().__init__(
-            username=self.client_first.username, origin=origin, service=MiddlewarePamFile.API_KEY
+            username=self.client_first.username, origin=origin, service=TruenasPamFile.API_KEY
         )
 
         self.sent_server_first = False
@@ -533,7 +533,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
 class InternalPamAuthenticator(UserPamAuthenticator):
     """ Authenticator for handling AF_UNIX connections, API token authentication, and HA connections. """
     def __init__(self, *, username: str, origin: ConnectionOrigin):
-        super().__init__(username=username, origin=origin, service=MiddlewarePamFile.UNIX)
+        super().__init__(username=username, origin=origin, service=TruenasPamFile.UNIX)
         self.otpw_possible = False
 
     def authenticate(self, username: str) -> TrueNASAuthenticatorResponse:

@@ -252,7 +252,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'security/limits.conf'},
             ]
         },
-        'pam_middleware': {
+        'pam_truenas': {
             'ctx': [
                 {'method': 'datastore.config', 'args': ['system.settings']},
                 {'method': 'system.security.config'},
@@ -260,10 +260,10 @@ class EtcService(Service):
                 {'method': 'api_key.query', 'args': [[['revoked', '=', False]]]}
             ],
             'entries': [
-                {'type': 'mako', 'path': 'pam.d/middleware'},
-                {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
-                {'type': 'mako', 'path': 'pam.d/middleware-session'},
-                {'type': 'mako', 'path': 'pam.d/middleware-unix'},
+                {'type': 'mako', 'path': 'pam.d/truenas'},
+                {'type': 'mako', 'path': 'pam.d/truenas-api-key'},
+                {'type': 'mako', 'path': 'pam.d/truenas-session'},
+                {'type': 'mako', 'path': 'pam.d/truenas-unix'},
                 {'type': 'py', 'path': 'pam_keyring'},
             ]
         },

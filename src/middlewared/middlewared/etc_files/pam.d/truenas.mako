@@ -21,4 +21,4 @@ auth    [success=ok user_unknown=ignore default=die]    pam_oath.so    usersfile
 % endif
 @include common-account
 password	required	pam_deny.so
-@include middleware-session
+@include truenas-session

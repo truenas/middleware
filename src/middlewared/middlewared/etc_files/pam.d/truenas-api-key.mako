@@ -26,4 +26,4 @@ ${FAILLOCK_AUTH_SUCC.as_conf()}
 %endif
 %endif
 password	required			pam_deny.so
-@include middleware-session
+@include truenas-session
