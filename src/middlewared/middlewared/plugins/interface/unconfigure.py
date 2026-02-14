@@ -6,6 +6,7 @@ from truenas_pynetif.address.address import flush_addresses
 from truenas_pynetif.address.link import delete_link, set_link_down
 from truenas_pynetif.netlink import DeviceNotFound, LinkInfo
 
+from middlewared.plugins.interface.dhcp import dhcp_status, dhcp_stop
 from middlewared.service import ServiceContext
 
 from .sync_data import SyncData
@@ -45,9 +46,8 @@ def unconfigure_impl(
     ctx.logger.info("Unconfiguring interface %r", name)
 
     # Stop DHCP first, then flush addresses
-    dhclient_running, _ = ctx.middleware.call_sync("interface.dhclient_status", name)
-    if dhclient_running:
-        ctx.middleware.call_sync("interface.dhcp_stop", name)
+    if dhcp_status(name).running:
+        ctx.middleware.run_coroutine(dhcp_stop(name))
 
     # DeviceNotFound can occur when a VLAN on a bond is auto-removed by kernel
     # after the bond is deleted
