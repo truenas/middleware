@@ -37,7 +37,6 @@ if TYPE_CHECKING:
 
 
 class CatalogService(ConfigService):
-
     class Config:
         cli_namespace = 'app.catalog'
         role_prefix = 'CATALOG'
@@ -113,7 +112,7 @@ class CatalogService(ConfigService):
         )
 
     @private
-    def train_to_apps_version_mapping(self) -> dict[str, dict[str, dict[str, str]]]:
+    def train_to_apps_version_mapping(self) -> dict[str, dict[str, dict[str, str | None]]]:
         return train_to_apps_version_mapping_impl(self.context)
 
     @private

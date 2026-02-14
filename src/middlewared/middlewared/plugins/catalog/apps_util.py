@@ -1,9 +1,10 @@
 import errno
 import json
-import jsonschema
 import os
 import re
+from typing import Any
 
+import jsonschema
 from apps_ci.names import CACHED_VERSION_FILE_NAME
 from apps_validation.json_schema_utils import VERSION_VALIDATION_SCHEMA
 from catalog_reader.app import get_app_version_details as get_catalog_app_version_details
@@ -18,7 +19,7 @@ from middlewared.utils import sw_info
 RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{2}(?:\.\d)*)')  # We are only interested in XX.XX here
 
 
-def get_app_default_values(version_details: dict) -> dict:
+def get_app_default_values(version_details: dict[str, Any]) -> dict[str, Any]:
     return construct_schema(version_details, {}, False)['new_values']
 
 
@@ -43,7 +44,7 @@ def custom_scale_version_checks(min_scale_version: str, max_scale_version: str, 
     return ''
 
 
-def min_max_scale_version_check_update_impl(version_details: dict, check_supported_key: bool = True) -> str:
+def min_max_scale_version_check_update_impl(version_details: dict[str, Any], check_supported_key: bool = True) -> str:
     # `check_supported_key` is used because when catalog validation returns the data it only checks the
     # missing features and based on that makes the decision. So if something is not already supported
     # we do not want to validate minimum scale version in that case. However, when we want to report to
@@ -80,18 +81,18 @@ def min_max_scale_version_check_update_impl(version_details: dict, check_support
     return ''
 
 
-def minimum_scale_version_check_update(version_details: dict) -> dict:
+def minimum_scale_version_check_update(version_details: dict[str, Any]) -> dict[str, Any]:
     version_details['supported'] = not bool(min_max_scale_version_check_update_impl(version_details))
     return version_details
 
 
-def get_app_version_details(version_path: str, questions_context: dict) -> dict:
+def get_app_version_details(version_path: str, questions_context: dict[str, Any]) -> dict[str, Any]:
     return minimum_scale_version_check_update(get_catalog_app_version_details(version_path, questions_context, {
         'default_values_callable': get_app_default_values,
     }))
 
 
-def get_app_details(app_location: str, app_data: dict, questions_context: dict) -> dict:
+def get_app_details(app_location: str, app_data: dict[str, Any], questions_context: dict[str, Any]) -> dict[str, Any]:
     app_name = os.path.basename(app_location)
     app_data['versions'] = retrieve_cached_versions_data(os.path.join(app_location, CACHED_VERSION_FILE_NAME), app_name)
 
@@ -110,7 +111,7 @@ def get_app_details(app_location: str, app_data: dict, questions_context: dict) 
     return app_data
 
 
-def retrieve_cached_versions_data(version_path: str, app_name: str) -> dict:
+def retrieve_cached_versions_data(version_path: str, app_name: str) -> dict[str, Any]:
     try:
         with open(version_path, 'r') as f:
             data = json.loads(f.read())
