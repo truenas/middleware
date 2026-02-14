@@ -38,8 +38,8 @@ class NormalizedQuestions(BaseModel):
     gpu_choices: list[dict[str, typing.Any]]
 
 
-def train_to_apps_version_mapping(context: ServiceContext) -> dict[str, dict[str, dict[str, str]]]:
-    mapping = {}
+def train_to_apps_version_mapping(context: ServiceContext) -> dict[str, dict[str, dict[str, str | None]]]:
+    mapping: dict[str, dict[str, dict[str, str | None]]] = {}
     for train, train_data in apps(context, CatalogApps(
         cache=True,
         cache_only=True,
@@ -105,7 +105,9 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     return CatalogAppsResponse.model_validate(trains)
 
 
-def get_trains(context: ServiceContext, catalog: CatalogEntry, options: CatalogApps) -> dict[str, dict]:
+def get_trains(
+    context: ServiceContext, catalog: CatalogEntry, options: CatalogApps,
+) -> dict[str, dict[str, typing.Any]]:
     if os.path.exists(os.path.join(catalog.location, CACHED_CATALOG_FILE_NAME)):
         # If the data is malformed or something similar, let's read the data then from filesystem
         try:
@@ -118,7 +120,7 @@ def get_trains(context: ServiceContext, catalog: CatalogEntry, options: CatalogA
 
 def retrieve_trains_data_from_json(
     context: ServiceContext, catalog: CatalogEntry, options: CatalogApps
-) -> dict[str, dict]:
+) -> dict[str, dict[str, typing.Any]]:
     trains_to_traverse = retrieve_train_names(
         get_train_path(catalog.location), options.retrieve_all_trains, options.trains
     )
@@ -181,8 +183,9 @@ async def retrieve_recommended_apps(context: ServiceContext, cache: bool = True)
     if cache:
         with contextlib.suppress(KeyError):
             return await context.middleware.call('cache.get', cache_key)
-
-    data = retrieve_recommended_apps_from_catalog_reader((await context.call2(context.s.catalog.config)).location)
+    data: dict[str, list[str]] = retrieve_recommended_apps_from_catalog_reader(
+        (await context.call2(context.s.catalog.config)).location
+    )
     await context.middleware.call('cache.put', cache_key, data)
     return data
 

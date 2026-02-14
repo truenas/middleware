@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import aiohttp
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api.current import CatalogApps
 from middlewared.service import CallError, ServiceContext
@@ -23,7 +23,7 @@ STATS_URL: str = 'https://telemetry.sys.truenas.net/apps/truenas-apps-stats.json
 @dataclass
 class SyncState:
     synced: bool = False
-    popularity_info: dict = field(default_factory=dict)
+    popularity_info: dict[str, Any] = field(default_factory=dict)
 
 
 sync_state = SyncState()

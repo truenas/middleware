@@ -12,7 +12,7 @@ async def dataset_mounted(context: ServiceContext) -> bool:
         catalog_path = catalog_ds_path()
         try:
             sfs = await context.middleware.call('filesystem.statfs', catalog_path)
-            return sfs['source'] == expected_source and sfs['fstype'] == 'zfs'
+            return bool(sfs['source'] == expected_source and sfs['fstype'] == 'zfs')
         except Exception:
             return False
 
