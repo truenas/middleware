@@ -33,7 +33,7 @@ class SyncData:
 
     def get_bond_members_for(self, bond_id: int) -> list[dict]:
         """Get member records for a specific bond."""
-        return [m for m in self.bond_members if m["lagg_interfacegroup_id"] == bond_id]
+        return [m for m in self.bond_members if m["lagg_interfacegroup"]["id"] == bond_id]
 
     @property
     def parent_interfaces(self) -> set[str]:

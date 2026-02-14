@@ -1610,7 +1610,7 @@ class InterfaceService(CRUDService):
             name = iface['int_interface']
             iface_configs[name] = {
                 "interface": iface,
-                "aliases": [a for a in aliases_db if a['alias_interface_id'] == iface['id']],
+                "aliases": [a for a in aliases_db if a['alias_interface']['id'] == iface['id']],
             }
 
         sync_data = SyncData(
