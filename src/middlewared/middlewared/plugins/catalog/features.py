@@ -13,7 +13,10 @@ from .apps_util import min_max_scale_version_check_update_impl
 
 def get_feature_map(context: ServiceContext, cache: bool = True) -> dict[str, dict[str, dict[str, typing.Any]]]:
     if cache and context.middleware.call_sync('cache.has_key', 'catalog_feature_map'):
-        return context.middleware.call_sync('cache.get', 'catalog_feature_map')
+        cached: dict[str, dict[str, dict[str, typing.Any]]] = context.middleware.call_sync(
+            'cache.get', 'catalog_feature_map',
+        )
+        return cached
     catalog = context.call_sync2(context.s.catalog.config)
 
     path = os.path.join(catalog.location, 'features_capability.json')
@@ -21,7 +24,7 @@ def get_feature_map(context: ServiceContext, cache: bool = True) -> dict[str, di
         raise CallError('Unable to retrieve feature capability mapping for SCALE versions', errno=errno.ENOENT)
 
     with open(path, 'r') as f:
-        mapping = json.loads(f.read())
+        mapping: dict[str, dict[str, dict[str, typing.Any]]] = json.loads(f.read())
 
     context.middleware.call_sync('cache.put', 'catalog_feature_map', mapping, 86400)
 

@@ -86,4 +86,4 @@ async def sync(context: ServiceContext, job: Job) -> None:
         await context.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', OFFICIAL_LABEL)
         job.set_progress(100, f'Synced {OFFICIAL_LABEL!r} catalog')
         sync_state.synced = True
-        context.middleware.create_task(context.middleware.call('app.check_upgrade_alerts'))
+        context.create_task(context.middleware.call('app.check_upgrade_alerts'))

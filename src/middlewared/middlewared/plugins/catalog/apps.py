@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -19,7 +19,7 @@ class AppService(Service):
         cli_namespace = 'app'
 
     @filterable_api_method(item=AppLatestItem, roles=['CATALOG_READ'])
-    async def latest(self, filters: list[Any], options: dict[str, Any]) -> list[dict[str, Any]]:
+    async def latest(self, filters: list[Any], options: dict[str, Any]) -> Any:
         """
         Retrieve latest updated apps.
         """
@@ -32,7 +32,7 @@ class AppService(Service):
         )
 
     @filterable_api_method(item=AppAvailableItem, roles=['CATALOG_READ'])
-    def available(self, filters: list[Any], options: dict[str, Any]) -> list[dict[str, Any]]:
+    def available(self, filters: list[Any], options: dict[str, Any]) -> Any:
         """
         Retrieve all available applications from all configured catalogs.
         """
@@ -74,9 +74,9 @@ class AppService(Service):
         Retrieve applications which are similar to `app_name`.
         """
         available_apps = self.available([], {})
-        app: dict[str, Any] = filter_list(
+        app = cast(dict[str, Any], filter_list(
             available_apps, [['name', '=', app_name], ['train', '=', train]], {'get': True}
-        )
+        ))
         similar_apps: dict[str, dict[str, Any]] = {}
 
         # Calculate the number of common categories/tags between app and other apps

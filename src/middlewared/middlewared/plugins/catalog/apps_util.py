@@ -20,14 +20,15 @@ RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{2}(?:\.\d)*)')  # We are only inter
 
 
 def get_app_default_values(version_details: dict[str, Any]) -> dict[str, Any]:
-    return construct_schema(version_details, {}, False)['new_values']
+    result: dict[str, Any] = construct_schema(version_details, {}, False)['new_values']
+    return result
 
 
 def custom_scale_version_checks(min_scale_version: str, max_scale_version: str, system_scale_version: str) -> str:
-    if not (normalized_system_version := RE_VERSION_PATTERN.findall(system_scale_version)):
+    if not (matches := RE_VERSION_PATTERN.findall(system_scale_version)):
         return 'Unable to determine your TrueNAS system version'
 
-    normalized_system_version = normalized_system_version[0]
+    normalized_system_version: str = matches[0]
 
     if min_scale_version and min_scale_version != normalized_system_version and not can_update(
         min_scale_version, normalized_system_version
@@ -114,7 +115,7 @@ def get_app_details(app_location: str, app_data: dict[str, Any], questions_conte
 def retrieve_cached_versions_data(version_path: str, app_name: str) -> dict[str, Any]:
     try:
         with open(version_path, 'r') as f:
-            data = json.loads(f.read())
+            data: dict[str, Any] = json.loads(f.read())
             jsonschema.validate(data, VERSION_VALIDATION_SCHEMA)
     except FileNotFoundError:
         raise CallError(f'Unable to locate {app_name!r} versions', errno=errno.ENOENT)
