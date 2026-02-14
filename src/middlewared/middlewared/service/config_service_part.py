@@ -1,3 +1,6 @@
+import inspect
+from typing import Any
+
 from .config_service import get_or_insert_lock
 from .part import ServicePart
 
@@ -8,21 +11,21 @@ class ConfigServicePart[E](ServicePart):
     __slots__ = ()
 
     _datastore: str = NotImplemented
-    _datastore_extend: str | None = None
-    _datastore_extend_context: str | None = None
-    _datastore_extend_fk: str | None = None
     _datastore_prefix: str = ''
     _entry: type[E] = NotImplemented
 
     async def config(self) -> E:
-        options = {}
-        options['extend'] = self._datastore_extend
-        options['extend_context'] = self._datastore_extend_context
-        options['extend_fk'] = self._datastore_extend_fk
-        options['prefix'] = self._datastore_prefix
-        return await self._get_or_insert(self._datastore, options)
+        return await self._get_or_insert(
+            self._datastore, {'prefix': self._datastore_prefix},
+        )
 
-    async def _get_or_insert(self, datastore, options):
+    def extend(self, data: dict[str, Any]) -> dict[str, Any]:
+        return data
+
+    def compress(self, data: dict[str, Any]) -> dict[str, Any]:
+        return data
+
+    async def _get_or_insert(self, datastore: str, options: dict[str, Any]) -> E:
         rows = await self.middleware.call('datastore.query', datastore, [], options)
         if not rows:
             async with get_or_insert_lock:
@@ -39,6 +42,7 @@ class ConfigServicePart[E](ServicePart):
                     await self.middleware.call('datastore.insert', datastore, {})
                     rows = [await self.middleware.call('datastore.config', datastore, options)]
 
-        rows[0] = self._entry.model_construct(**rows[0])
-
-        return rows[0]
+        data = self.extend(rows[0])
+        if inspect.isawaitable(data):
+            data = await data
+        return self._entry.model_construct(**data)

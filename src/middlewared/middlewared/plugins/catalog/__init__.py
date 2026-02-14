@@ -11,7 +11,6 @@ from middlewared.api.current import (
     CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
     CatalogAppInfo,
 )
-from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigService, job, private
 
 from .config import CatalogConfigPart
@@ -23,9 +22,7 @@ from .apps_details import (
 )
 from .app_version import get_app_details
 from .features import version_supported_error_check as version_supported_error_check_impl
-from .state import dataset_mounted
 from .sync import get_synced_state, sync as sync_impl
-from .utils import TMP_IX_APPS_CATALOGS
 
 
 __all__ = ('CatalogService',)
@@ -126,26 +123,6 @@ class CatalogService(ConfigService[CatalogEntry]):
     @private
     async def version_supported_error_check(self, version_details: dict[str, Any]) -> None:
         await version_supported_error_check_impl(self.context, version_details)
-
-    @private
-    def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        data.update({
-            'id': data['label'],
-            'location': context['catalog_dir'],
-        })
-        return data
-
-    @private
-    async def extend_context(self, rows: Any, extra: Any) -> dict[str, Any]:
-        if await dataset_mounted(self.context):
-            catalog_dir = catalog_ds_path()
-        else:
-            # FIXME: This can eat lots of memory if it's a large catalog
-            catalog_dir = TMP_IX_APPS_CATALOGS
-
-        return {
-            'catalog_dir': catalog_dir,
-        }
 
     @private
     async def update_train_for_enterprise(self) -> None:
