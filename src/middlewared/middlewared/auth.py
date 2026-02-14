@@ -244,8 +244,11 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         This also generates utmp entry for the token-based session. """
         assert self.pam_authenticated is False
 
-        username = self.user['username'] if self.is_user_session else 'root'
-        pam_resp = self.authenticator.authenticate(username)
+        if self.is_user_session:
+            pam_resp = self.authenticator.authenticate(self.user['username'])
+        else:
+            pam_resp = TrueNASAuthenticatorResponse(code=PAMCode.PAM_SUCCESS, reason=None)
+
         self.pam_authenticated = pam_resp.code == PAMCode.PAM_SUCCESS
         return pam_resp
 
