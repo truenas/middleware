@@ -4,10 +4,12 @@ import typing
 
 import middlewared.sqlalchemy as sa
 from middlewared.api.current import CatalogEntry, CatalogUpdate
+from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigServicePart, ValidationErrors
 from middlewared.utils import ProductType
 
-from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL
+from .state import dataset_mounted
+from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -22,9 +24,19 @@ class CatalogModel(sa.Model):
 
 class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
     _datastore = 'services.catalog'
-    _datastore_extend = 'catalog.extend'
-    _datastore_extend_context = 'catalog.extend_context'
     _entry = CatalogEntry
+
+    async def extend(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        if await dataset_mounted(self):
+            catalog_dir = catalog_ds_path()
+        else:
+            catalog_dir = TMP_IX_APPS_CATALOGS
+
+        data.update({
+            'id': data['label'],
+            'location': catalog_dir,
+        })
+        return data
 
     async def do_update(self, data: CatalogUpdate) -> CatalogEntry:
         verrors = ValidationErrors()
