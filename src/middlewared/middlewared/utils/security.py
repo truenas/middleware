@@ -105,9 +105,14 @@ def shadow_parse_aging(
     outstr = ''
 
     # Special cases
-    if user['password_disabled']:
+    if user['password_disabled'] or user['username'] == 'root':
         # NAS-135872, NAS-135863: Prevent a password disabled account from being
         # disabled due to password change requirements.
+        #
+        # NAS-139800: Do not apply password aging rules to the root account ever
+        # This account is used internally for various purposes (in addition to
+        # middleware, it is used by cronjobs). Breaking the root account will
+        # basically kill replication, cloudsync, and HA.
         return '::::::'
 
     # man (5) shadow "date of last password change"
