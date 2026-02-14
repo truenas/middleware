@@ -182,7 +182,8 @@ async def retrieve_recommended_apps(context: ServiceContext, cache: bool = True)
     cache_key = 'recommended_apps'
     if cache:
         with contextlib.suppress(KeyError):
-            return await context.middleware.call('cache.get', cache_key)
+            cached: dict[str, list[str]] = await context.middleware.call('cache.get', cache_key)
+            return cached
     data: dict[str, list[str]] = retrieve_recommended_apps_from_catalog_reader(
         (await context.call2(context.s.catalog.config)).location
     )

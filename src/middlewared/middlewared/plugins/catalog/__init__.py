@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class CatalogService(ConfigService):
+class CatalogService(ConfigService[CatalogEntry]):
     class Config:
         cli_namespace = 'app.catalog'
         role_prefix = 'CATALOG'

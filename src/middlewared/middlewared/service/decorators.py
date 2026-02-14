@@ -14,7 +14,7 @@ PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_
 THREADING_LOCKS = defaultdict(threading.Lock)
 
 
-def filterable_api_method(
+def filterable_api_method[**P, T](
     *,
     roles: list[str] | None = None,
     item: type[BaseModel] | None = None,
@@ -24,8 +24,8 @@ def filterable_api_method(
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_thread_local_storage: bool = False,
-):
-    def filterable_internal(fn):
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    def filterable_internal(fn: Callable[P, T]) -> Callable[P, T]:
         register_models = []
         if item:
             name = item.__name__

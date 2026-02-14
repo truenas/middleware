@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from logging import Logger
 from typing import Any, Callable, Coroutine, TYPE_CHECKING
 
@@ -21,3 +22,6 @@ class ServiceContext(CallMixin):
 
     def run_coroutine[T](self, coro: Coroutine[Any, Any, T]) -> T:
         return self.middleware.run_coroutine(coro)
+
+    def create_task[T](self, coro: Coroutine[Any, Any, T], *, name: str | None = None) -> asyncio.Task[T]:
+        return self.middleware.create_task(coro, name=name)
