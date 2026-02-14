@@ -4,13 +4,12 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, LongString,
-    single_argument_args,
 )
 
 
 __all__ = [
     'UPSEntry', 'UPSPortChoicesArgs', 'UPSPortChoicesResult', 'UPSDriverChoicesArgs',
-    'UPSDriverChoicesResult', 'UPSUpdateArgs', 'UPSUpdateResult',
+    'UPSDriverChoicesResult', 'UPSUpdateArgs', 'UPSUpdateResult', 'UPSUpdate',
 ]
 
 
@@ -61,12 +60,16 @@ class UPSEntry(BaseModel):
     """Complete UPS identifier including hostname for network monitoring."""
 
 
-@single_argument_args('ups_update')
-class UPSUpdateArgs(UPSEntry, metaclass=ForUpdateMetaclass):
+class UPSUpdate(UPSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()
     monpwd: NonEmptyString
     """Password for UPS monitoring authentication (required for updates)."""
+
+
+class UPSUpdateArgs(BaseModel):
+    data: UPSUpdate
+    """Data to update the UPS configuration."""
 
 
 class UPSUpdateResult(BaseModel):

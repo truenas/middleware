@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from middlewared.plugins.ups import UPS_POWERDOWN_FLAG_FILE
+from middlewared.plugins.ups.utils import UPS_POWERDOWN_FLAG_FILE
 
 
 UPS_CONFPATH = '/etc/nut'
@@ -18,7 +18,7 @@ def ups_config_perms(middleware):
     master_mode_files = (UPS_CONFIG, UPS_USERSFILE, UPS_DAEMONFILE)
 
     for file in master_mode_files:
-        if ups_config['mode'].lower() != 'master':
+        if ups_config.mode.lower() != 'master':
             os.remove(file)
 
     pathlib.Path(UPS_POWERDOWN_FLAG_FILE).unlink(missing_ok=True)

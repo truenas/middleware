@@ -91,7 +91,7 @@ class SystemAdvancedService(ConfigService):
                     'Serial port specified has not been identified by the system'
                 )
 
-            ups_port = (await self.middleware.call('ups.config'))['port']
+            ups_port = (await self.middleware.call('ups.config')).port
             if f'/dev/{serialport}' == ups_port:
                 verrors.add(
                     'serialport',

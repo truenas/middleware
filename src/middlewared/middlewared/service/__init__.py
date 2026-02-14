@@ -18,6 +18,7 @@ from .service_mixin import ServiceChangeMixin
 from .service_part import ServicePartBase
 from .sharing_service import SharingService, SharingTaskService, TaskPathService
 from .system_service import SystemServiceService
+from .system_service_part import SystemServicePart
 
 ABSTRACT_SERVICES = (
     CompoundService, ConfigService, CRUDService, SharingService, SharingTaskService,
@@ -49,6 +50,7 @@ __all__ = [
     'ServicePartBase',
     'SharingService',
     'SharingTaskService',
+    'SystemServicePart',
     'TaskPathService',
     'SystemServiceService',
     'ABSTRACT_SERVICES',

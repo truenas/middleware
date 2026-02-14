@@ -1,8 +1,11 @@
 import pytest
 
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import patch, mock_open
 
-from middlewared.plugins.ups import UPSService
+from middlewared.plugins.ups.utils import driver_choices, normalize_driver_string
+
+
+ALL_TEST_DRIVERS = {'victronups', 'genericups', 'blazer_usb', 'tripplite_usb'}
 
 
 @pytest.mark.parametrize('config_line,key,value', [
@@ -35,8 +38,10 @@ from middlewared.plugins.ups import UPSService
 ])
 @patch('os.path.exists', lambda x: True)
 def test__services_ups_service__driver_choices(config_line, key, value):
-    with patch('builtins.open', mock_open(read_data=config_line)):
-        assert UPSService(Mock()).driver_choices() == {key: value}
+    driver_choices.cache_clear()
+    with patch('middlewared.plugins.ups.utils.drivers_available', return_value=ALL_TEST_DRIVERS):
+        with patch('builtins.open', mock_open(read_data=config_line)):
+            assert driver_choices() == {key: value}
 
 
 @pytest.mark.parametrize('driver_str,normalized', [
@@ -47,6 +52,5 @@ def test__services_ups_service__driver_choices(config_line, key, value):
     ('blazer_usb$Alpha 1200Sx', 'driver = blazer_usb'),
     ('tripplite_usb$SMART500RT1U', 'driver = tripplite_usb'),
 ])
-@patch('os.path.exists', lambda x: True)
 def test__services_ups_service__driver_string_normalization(driver_str, normalized):
-    assert UPSService(Mock()).normalize_driver_string(driver_str) == normalized
+    assert normalize_driver_string(driver_str) == normalized
