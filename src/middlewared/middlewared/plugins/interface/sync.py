@@ -143,7 +143,7 @@ def sync_interface_impl(
         return
 
     aliases = ctx.middleware.call_sync(
-        "datastore.query", "network.alias", [("alias_interface_id", "=", data["id"])]
+        "datastore.query", "network.alias", [("alias_interface", "=", data["id"])]
     )
     if node is None:
         node = ctx.middleware.call_sync("failover.node")
