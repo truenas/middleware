@@ -1,11 +1,28 @@
 from collections import defaultdict
-
-import requests
+from typing import Any, TypedDict, cast
 
 from .utils import get_docker_client, PROJECT_KEY
 
 
-def get_default_stats():
+class BlkioStats(TypedDict):
+    read: int
+    write: int
+
+
+class NetworkStats(TypedDict):
+    rx_bytes: int
+    tx_bytes: int
+
+
+class ResourceStats(TypedDict):
+    cpu_usage: int
+    memory: int
+    networks: dict[str, NetworkStats]
+    blkio: BlkioStats
+
+
+def get_default_stats() -> dict[str, ResourceStats]:
+    """Returns the default dictionary structure for project stats."""
     return defaultdict(lambda: {
         'cpu_usage': 0,
         'memory': 0,
@@ -14,39 +31,87 @@ def get_default_stats():
     })
 
 
-def list_resources_stats_by_project(project_name: str | None = None) -> dict:
-    retries = 2
-    while retries > 0:
-        # We do this because when an app is being stopped, we can run into a race condition
-        # where the container got listed but when we queried it's stats we were not able
-        # to get them as the container by that time had been nuked (this is similar to what we
-        # do when we list resources by project)
-        try:
-            return list_resources_stats_by_project_internal(project_name)
-        except requests.exceptions.HTTPError:
-            retries -= 1
-            if retries == 0:
-                raise
+def _parse_blkio(stats: dict[str, Any]) -> BlkioStats:
+    """Parses Block IO stats, accumulating read/write values."""
+    result: BlkioStats = {'read': 0, 'write': 0}
+    raw_blkio = stats.get('blkio_stats', {}).get('io_service_bytes_recursive') or []
+    if isinstance(raw_blkio, list):
+        for entry in raw_blkio:
+            op = entry.get('op')
+            if op in ('read', 'write'):
+                result[op] += int(entry.get('value', 0))
+    return result
 
 
-def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict:
+def _parse_networks(stats: dict[str, Any]) -> dict[str, NetworkStats]:
+    """Parses Network stats."""
+    parsed: dict[str, NetworkStats] = {}
+    raw_networks = cast(dict[str, Any], stats.get('networks') or {})
+    for name, values in raw_networks.items():
+        net_entry: NetworkStats = {
+            'rx_bytes': int(values.get('rx_bytes', 0)),
+            'tx_bytes': int(values.get('tx_bytes', 0))
+        }
+        parsed[name] = net_entry
+    return parsed
+
+
+def get_container_stats(container: Any) -> tuple[str, ResourceStats] | None:
+    """Extract resource usage stats for a single Docker container."""
+    try:
+        project = container.attrs.get('Labels', {}).get(PROJECT_KEY)
+        if not project:
+            return None
+        stats = container.stats(stream=False, decode=None, one_shot=True)
+        container_stats: ResourceStats = {
+            'cpu_usage': int(stats.get('cpu_stats', {}).get('cpu_usage', {}).get('total_usage', 0)),
+            'memory': int(stats.get('memory_stats', {}).get('usage', 0)),
+            'blkio': _parse_blkio(stats),
+            'networks': _parse_networks(stats),
+        }
+        return project, container_stats
+    except Exception:
+        return None
+
+
+def list_resources_stats_by_project(project_name: str | None = None) -> dict[str, ResourceStats]:
+    """
+    Aggregate resource statistics for Docker containers grouped by project.
+
+    This function retrieves and aggregates CPU, memory, network I/O,
+    and block I/O statistics for all containers associated with projects. If a
+    project_name is specified, it filters the results to only that project.
+
+    Args:
+        project_name (str, optional): The name of the project to filter by. If None,
+            statistics for all projects are returned.
+
+    Returns:
+        dict[str, ResourceStats]: A dictionary where keys are project names and
+            values are aggregated ResourceStats for all containers in that project.
+    """
     projects = get_default_stats()
+    label_filter = {
+        'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY
+    }
     with get_docker_client() as client:
-        label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}
-        for container in client.containers.list(all=True, filters=label_filter, sparse=False):
-            stats = container.stats(stream=False, decode=None, one_shot=True)
-            project = container.labels.get(PROJECT_KEY)
-            if not project:
-                continue
+        try:
+            containers = list(client.containers.list(all=True, filters=label_filter, sparse=True))
+            for container in containers:
+                result = get_container_stats(container)
+                if not result:
+                    continue
+                project, stats = result
+                p_stats = projects[project]
+                p_stats['cpu_usage'] += stats['cpu_usage']
+                p_stats['memory'] += stats['memory']
+                p_stats['blkio']['read'] += stats['blkio']['read']
+                p_stats['blkio']['write'] += stats['blkio']['write']
+                for net_name, net_stats in stats['networks'].items():
+                    p_stats['networks'][net_name]['rx_bytes'] += net_stats['rx_bytes']
+                    p_stats['networks'][net_name]['tx_bytes'] += net_stats['tx_bytes']
+        except Exception:
+            # Return what we have, or empty
+            pass
 
-            blkio_container_stats = stats.get('blkio_stats', {}).get('io_service_bytes_recursive') or {}
-            project_stats = projects[project]
-            project_stats['cpu_usage'] += stats.get('cpu_stats', {}).get('cpu_usage', {}).get('total_usage', 0)
-            project_stats['memory'] += stats.get('memory_stats', {}).get('usage', 0)
-            for entry in filter(lambda x: x['op'] in ('read', 'write'), blkio_container_stats):
-                project_stats['blkio'][entry['op']] += entry['value']
-            for net_name, net_values in stats.get('networks', {}).items():
-                project_stats['networks'][net_name]['rx_bytes'] += net_values.get('rx_bytes', 0)
-                project_stats['networks'][net_name]['tx_bytes'] += net_values.get('tx_bytes', 0)
-
-    return projects
+    return dict(projects)
