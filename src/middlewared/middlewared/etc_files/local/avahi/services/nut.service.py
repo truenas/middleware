@@ -9,7 +9,7 @@ def render(service, middleware, render_ctx):
         raise FileShouldNotExist()
 
     try:
-        return mdns.generate_avahi_srv_record('NUT', custom_port=conf['remoteport'])
+        return mdns.generate_avahi_srv_record('NUT', custom_port=conf.remoteport)
     except Exception:
         middleware.logger.error(
             'Failed to generate mDNS SRV record for the nut service',

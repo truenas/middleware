@@ -1,6 +1,6 @@
 <%
 	ups_config = middleware.call_sync('ups.config')
-	shutdown = ups_config['shutdown']
+	shutdown = ups_config.shutdown
 	sudo_path = "/usr/bin/sudo"
 %>\
 CMDSCRIPT   "${sudo_path} /usr/local/bin/custom-upssched-cmd"
@@ -17,7 +17,7 @@ AT ONLINE   * EXECUTE NOTIFY-ONLINE
 AT REPLBATT * EXECUTE NOTIFY-REPLBATT
 AT SHUTDOWN * EXECUTE NOTIFY-SHUTDOWN
 % if shutdown.lower() == 'batt':
-AT ONBATT   * START-TIMER SHUTDOWN ${ups_config['shutdowntimer']}
+AT ONBATT   * START-TIMER SHUTDOWN ${ups_config.shutdowntimer}
 AT ONLINE   * CANCEL-TIMER SHUTDOWN
 % elif shutdown.lower() == 'lowbatt':
 AT LOWBATT  * EXECUTE SHUTDOWN

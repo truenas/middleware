@@ -94,8 +94,8 @@ def dummy_ups_driver_configured():
     write_fake_data()
     remove_file(SHUTDOWN_MARKER_FILE)
     old_config = call('ups.config')
-    del old_config['complete_identifier']
-    del old_config['id']
+    # Exclude fields that can't be passed to ups.update
+    old_config_dict = {k: v for k, v in old_config.items() if k not in ('complete_identifier', 'id')}
     payload = {
         'mode': 'MASTER',
         'driver': 'dummy-ups',
@@ -109,7 +109,8 @@ def dummy_ups_driver_configured():
         try:
             yield
         finally:
-            call('ups.update', old_config)
+            # Reuse the same mock for teardown (don't create a nested mock!)
+            call('ups.update', old_config_dict)
             remove_file(SHUTDOWN_MARKER_FILE)
             remove_file(DUMMY_FAKEDATA_DEV)
 
