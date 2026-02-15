@@ -510,7 +510,8 @@ def test__alert_admin_lockout(old_root, old_admin):
             alerts = c.call('alert.list')
             assert any([alert['klass'] == 'AllAdminAccountsExpired' for alert in alerts]), str(alerts)
 
-            shadow = get_shadow_entry('root')
+            # When all admins expired, they get lockout prevention exemption
+            shadow = get_shadow_entry(old_admin['username'])
             assert shadow['max_password_age'] is None
 
             c.call('user.set_password', {'username': old_admin['username'], 'new_password': 'testing'})
@@ -519,8 +520,8 @@ def test__alert_admin_lockout(old_root, old_admin):
             alerts = c.call('alert.list')
             assert not any([alert['klass'] == 'AllAdminAccountsExpired' for alert in alerts]), str(alerts)
 
-            # Password reset for admin should now revert password aging behavior
-            shadow = get_shadow_entry('root')
+            # Password reset for admin should now apply password aging behavior
+            shadow = get_shadow_entry(old_admin['username'])
             assert shadow['max_password_age'] is not None
 
 
