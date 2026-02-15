@@ -7,7 +7,7 @@ from middlewared.service import CallError
 from middlewared.utils.git import clone_repository, checkout_repository, update_repo, validate_git_repo
 
 
-GIT_LOCK = defaultdict(threading.Lock)
+GIT_LOCK: defaultdict[str, threading.Lock] = defaultdict(threading.Lock)
 logger = logging.getLogger('catalog_utils')
 
 
@@ -15,7 +15,7 @@ def convert_repository_to_path(git_repository_uri: str, branch: str) -> str:
     return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_') + f'_{branch}'
 
 
-def pull_clone_repository(repository_uri: str, destination: str, branch: str, depth: typing.Optional[int] = 1):
+def pull_clone_repository(repository_uri: str, destination: str, branch: str, depth: typing.Optional[int] = 1) -> bool:
     with GIT_LOCK[repository_uri]:
         valid_repo = validate_git_repo(destination)
         clone_repo = not bool(valid_repo)

@@ -80,8 +80,8 @@ class AppService(CRUDService):
                 version_details = get_version_details()
             else:
                 version_details = self.middleware.call_sync(
-                    'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
-                    questions_context,
+                    'catalog.app_version_details',
+                    get_installed_app_version_path(app['name'], app['version']), questions_context,
                 )
 
             app['version_details'] = version_details
@@ -141,9 +141,9 @@ class AppService(CRUDService):
         })
         version = data['version']
         if version == 'latest':
-            version = get_latest_version_from_app_versions(complete_app_details['versions'])
+            version = get_latest_version_from_app_versions(complete_app_details.versions)
 
-        if version not in complete_app_details['versions']:
+        if version not in complete_app_details.versions:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
@@ -152,7 +152,7 @@ class AppService(CRUDService):
     def create_internal(
         self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
     ):
-        app_version_details = complete_app_details['versions'][version]
+        app_version_details = complete_app_details.versions[version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
         app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
@@ -173,7 +173,7 @@ class AppService(CRUDService):
         try:
             setup_install_app_dir(app_name, app_version_details)
             app_version_details = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app_name, version)
+                'catalog.app_version_details', get_installed_app_version_path(app_name, version),
             )
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
@@ -250,7 +250,7 @@ class AppService(CRUDService):
             # Why this is not dangerous is because the defaults will be added only if they are not present/configured
             # for the app in question
             app_version_details = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app_name, app['version'])
+                'catalog.app_version_details', get_installed_app_version_path(app_name, app['version']),
             )
 
             new_values = self.middleware.call_sync(
