@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import socket
-from typing import TYPE_CHECKING
-
-from aiohttp.web import Request
 from dataclasses import dataclass
 from ipaddress import ip_address
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
+from typing import TYPE_CHECKING
 
-from pyroute2 import DiagSocket
+from aiohttp.web import Request
+
+from truenas_pynetif.diag import netlink_diag, get_inet_diag
 
 from .auth import get_login_uid, AUID_UNSET
 
@@ -229,15 +229,14 @@ def get_tcp_ip_info(
         ssl = False
         check_uids = False
 
-    with DiagSocket() as ds:
-        ds.bind()
-        for i in ds.get_sock_stats(family=family):
-            if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
+    with netlink_diag() as ds:
+        for info in get_inet_diag(ds, family=family):
+            if info.dst == ra and info.dport == rp:
                 if check_uids:
-                    if i['idiag_uid'] in UIDS_TO_CHECK:
-                        return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+                    if info.uid in UIDS_TO_CHECK:
+                        return family, info.src, info.sport, info.dst, info.dport, ssl
                 else:
-                    return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+                    return family, info.src, info.sport, info.dst, info.dport, ssl
 
     return None, None, None, None, None, None
 
