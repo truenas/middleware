@@ -3,10 +3,16 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import ipaddress
 from pathlib import Path
 
-from pyroute2 import NDB
+from truenas_pynetif.address.address import add_address
+from truenas_pynetif.address.constants import RTNType
+from truenas_pynetif.address.get_links import get_link
+from truenas_pynetif.address.link import set_link_up
+from truenas_pynetif.address.route import add_route
+from truenas_pynetif.netlink._core import netlink_route
+from truenas_pynetif.netlink._exceptions import NetlinkError, RouteAlreadyExists
+from truenas_pynetif.netlink import DeviceNotFound
 
 from middlewared.service import Service
 from middlewared.utils.functools_ import cache
@@ -69,12 +75,16 @@ class InternalInterfaceService(Service):
         await self.middleware.run_in_thread(self.sync, iface, internal_ip)
 
     def sync(self, iface, internal_ip):
-        default_table, rtn_blackhole = 254, 6
-        with NDB(log='off') as ndb:
+        with netlink_route() as sock:
             try:
-                with ndb.interfaces[iface] as dev:
-                    dev.add_ip(f'{internal_ip}/24').set(state='up')
-            except KeyError:
+                link = get_link(sock, iface)
+            except DeviceNotFound:
+                return
+
+            try:
+                add_address(sock, internal_ip, 24, index=link.index)
+                set_link_up(sock, index=link.index)
+            except NetlinkError:
                 # ip address already exists on this interface
                 pass
 
@@ -87,10 +97,14 @@ class InternalInterfaceService(Service):
             # of last resort (default route). Since this is internal traffic, we
             # obviously don't want to forward this traffic to the default gateway.
             # This just routes the data into oblivion (drops it).
-            dst_network = ipaddress.ip_interface(f'{internal_ip}/23').network.exploded
             try:
-                ndb.routes.create(dst=dst_network, table=default_table, type=rtn_blackhole).commit()
-            except KeyError:
+                add_route(
+                    sock,
+                    dst='169.254.10.0',
+                    dst_len=23,
+                    route_type=RTNType.BLACKHOLE,
+                )
+            except RouteAlreadyExists:
                 # blackhole route already exists
                 pass
 
