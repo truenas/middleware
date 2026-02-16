@@ -11,7 +11,7 @@ class App:
     def __init__(self, origin: ConnectionOrigin):
         self.origin = origin
         self.session_id = str(ssl_uuid4())
-        self.authentication_context = AuthenticationContext()
+        self.authentication_context: AuthenticationContext | None = AuthenticationContext()
         self.authenticated_credentials: SessionManagerCredentials | None = None
         self.legacy_jobs = True
         self.private_methods = False

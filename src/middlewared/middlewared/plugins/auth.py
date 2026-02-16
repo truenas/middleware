@@ -25,22 +25,26 @@ from middlewared.api.current import (
     AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
     AuthSessionsAddedEvent, AuthSessionsRemovedEvent,
 )
-from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
-                              ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
-                              LoginTwofactorSessionManagerCredentials, AuthenticationContext,
-                              TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
-                              LoginOnetimePasswordSessionManagerCredentials, dump_credentials)
+from middlewared.auth import (
+    UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
+    AuthenticationContext, TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
+    dump_credentials
+)
 from middlewared.plugins.account_.constants import TRUENAS_PAM_SERVICE, TRUENAS_PAM_API_KEY_SERVICE
+from middlewared.plugins.auth_.login_ex_impl import (
+    login_ex_password_plain,
+    login_ex_api_key_plain,
+    login_ex_oath_token,
+    login_ex_token_plain,
+    login_ex_scram,
+)
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, CallError,
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.account.authenticator import (
-    ApiKeyPamAuthenticator, UnixPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag,
-    ScramPamAuthenticator,
-)
+from middlewared.utils.account.authenticator import TokenPamAuthenticator, UnixPamAuthenticator
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
     AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, OTPW_MANAGER,
@@ -503,6 +507,9 @@ class AuthService(Service):
             raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
 
         cred = token.root_credentials()
+        if cred is None:
+            raise CallError('Token has no root credentials - this indicates a serious system error')
+
         if cred.is_user_session:
             username = cred.dump()['username']
         else:
@@ -585,15 +592,15 @@ class AuthService(Service):
         self.logger.warning('Setting AAL to %s', level)
         match level:
             case 'LEVEL_1':
-                level = AA_LEVEL1
+                aal_level = AA_LEVEL1
             case 'LEVEL_2':
-                level = AA_LEVEL2
+                aal_level = AA_LEVEL2
             case 'LEVEL_3':
-                level = AA_LEVEL3
+                aal_level = AA_LEVEL3
             case _:
                 raise CallError(f'{level}: unknown authenticator assurance level')
 
-        CURRENT_AAL.level = level
+        CURRENT_AAL.level = aal_level
 
     @private
     async def get_authenticator_assurance_level(self):
@@ -679,6 +686,9 @@ class AuthService(Service):
         # try to generate tokens for this user.
         if app and app.authenticated_credentials and not app.authenticated_credentials.may_create_auth_token:
             cred_allows_token = False
+
+        if aal.mechanisms is None:
+            return []
 
         choices = [mech.name for mech in aal.mechanisms]
         if not cred_allows_token and AuthMech.TOKEN_PLAIN in choices:
@@ -841,166 +851,25 @@ class AuthService(Service):
             case AuthMech.PASSWORD_PLAIN:
                 # Both of these mechanisms are de-factor username + password
                 # combinations and pass through libpam.
-                cred_type = 'LOGIN_PASSWORD'
-                auth_ctx.pam_hdl = UserPamAuthenticator(username=data['username'], origin=app.origin)
-                resp = await self.get_login_user(
-                    app,
-                    data['username'],
-                    data['password'],
+                auth_resp, cred = await self.middleware.run_in_thread(
+                    login_ex_password_plain, self.middleware, app=app, auth_ctx=auth_ctx, auth_data=data
                 )
 
-                if resp['otp_required']:
-                    # A one-time password is required for this user account and so
-                    # we should request it from API client.
-                    auth_ctx.next_mech = AuthMech.OTP_TOKEN
-                    auth_ctx.auth_data = {'user': {'username': data['username']}}
+                if auth_resp.code == PAMCode.PAM_CONV_AGAIN:
+                    # We have request for second factor and so we'll short-circuit response
+                    # here and prompt client for OATH token
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
                         'username': data['username']
                     }
-                elif resp['otpw_used']:
-                    cred_type = 'ONETIME_PASSWORD'
-                elif CURRENT_AAL.level.otp_mandatory:
-                    # If we're here it means either:
-                    #
-                    # 1) correct username and password, but 2FA isn't enabled for user
-                    # or
-                    # 2) bad username or password
-                    #
-                    # We must not include information in response to indicate which case
-                    # the situation is because it would divulge privileged information about
-                    # the account to an unauthenticated user.
-                    if resp['pam_response'] == 'SUCCESS':
-                        # Insert a failure delay so that we don't leak information about
-                        # the PAM response
-                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                            'credentials': {
-                                'credentials': cred_type,
-                                'credentials_data': {'username': data['username']},
-                            },
-                            'error': 'User does not have two factor authentication enabled.'
-                        }, False)
-
-                    else:
-                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                            'credentials': {
-                                'credentials': cred_type,
-                                'credentials_data': {'username': data['username']},
-                            },
-                            'error': 'Bad username or password'
-                        }, False)
-
-                    return response
-
-                match resp['pam_response']['code']:
-                    case PAMCode.PAM_SUCCESS:
-                        if cred_type == 'ONETIME_PASSWORD':
-                            cred = LoginOnetimePasswordSessionManagerCredentials(
-                                resp['user_data'],
-                                CURRENT_AAL.level,
-                                auth_ctx.pam_hdl
-                            )
-                        else:
-                            cred = LoginPasswordSessionManagerCredentials(
-                                resp['user_data'],
-                                CURRENT_AAL.level,
-                                auth_ctx.pam_hdl
-                            )
-
-                        await login_fn(app, cred)
-                    case PAMCode.PAM_AUTH_ERR:
-                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                            'credentials': {
-                                'credentials': cred_type,
-                                'credentials_data': {'username': data['username']},
-                            },
-                            'error': 'Bad username or password'
-                        }, False)
-                    case _:
-                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                            'credentials': {
-                                'credentials': cred_type,
-                                'credentials_data': {'username': data['username']},
-                            },
-                            'error': resp['pam_response']['reason'] or resp['pam_response']['otpw_response']
-                        }, False)
 
             case AuthMech.API_KEY_PLAIN:
                 # API key that we receive over wire is concatenation of the
                 # datastore `id` of the particular key with the key itself,
                 # delimited by a dash. <id>-<key>.
-                auth_ctx.pam_hdl = ApiKeyPamAuthenticator(username=data['username'], origin=app.origin)
-                resp = await self.get_login_user(
-                    app,
-                    data['username'],
-                    data['api_key'],
+                auth_resp, cred = await self.middleware.run_in_thread(
+                    login_ex_api_key_plain, self.middleware, app=app, auth_ctx=auth_ctx, auth_data=data
                 )
-
-                # Retrieve the API key here so that we can upgrade the underlying
-                # hash type and iterations if needed (since we have plain-text).
-                # We also need the key info so that we can generate a useful
-                # audit entry in case of failure.
-                try:
-                    key_id = int(data['api_key'].split('-')[0])
-                    key = await self.middleware.call(
-                        'api_key.query', [['id', '=', key_id]],
-                        {'get': True, 'select': ['id', 'name', 'expires_at', 'revoked']}
-                    )
-                except Exception:
-                    key = None
-
-                if key and resp['pam_response']['code'] == PAMCode.PAM_AUTHINFO_UNAVAIL:
-                    # Key may be expired or revoked. In both of these cases we won't
-                    # have a key in the user's keyring. There's no way to differentiate
-                    # at PAM level because both fail with ENOKEY.
-                    if key['expires_at']:
-                        resp['pam_response']['reason'] = 'Api key is expired.'
-                        resp['pam_response']['code'] = PAMCode.PAM_CRED_EXPIRED
-                    elif key['revoked']:
-                        resp['pam_response']['reason'] = 'Api key is revoked.'
-                    else:
-                        self.logger.warning('%s: unexpected PAM_AUTHINFO_UNAVAIL response '
-                                            'for API key. Forcibly regenerating API keys.',
-                                            key['name'])
-                        await self.middleware.call('etc.generate', 'pam_truenas')
-
-                if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
-                    if not app.origin.secure_transport:
-                        # Per NEP if plain API key auth occurs over insecure transport
-                        # the key should be automatically revoked.
-                        await self.middleware.call(
-                            'api_key.revoke',
-                            key_id,
-                            'Attempt to use over an insecure transport',
-                        )
-                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                            'credentials': {
-                                'credentials': 'API_KEY',
-                                'credentials_data': {'username': data['username']},
-                            },
-                            'error': 'API key revoked due to insecure transport.'
-                        }, False)
-
-                        response['response_type'] = AuthResp.EXPIRED.name
-                        # Revoke the pam handle and clean it up
-                        auth_ctx.pam_hdl.end()
-                        return response
-
-                    cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl)
-                    await login_fn(app, cred)
-                else:
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'API_KEY',
-                            'credentials_data': {
-                                'username': data['username'],
-                                'api_key': key,
-                            }
-                        },
-                        'error': resp['pam_response']['reason'],
-                    }, False)
 
             case AuthMech.OTP_TOKEN:
                 # We've received a one-time password token based in response to our
@@ -1008,42 +877,9 @@ class AuthService(Service):
                 # context has user information. We don't re-request username from the
                 # client as this would open possibility of user trivially bypassing
                 # 2FA.
-                pam_resp = await self.middleware.run_in_thread(
-                    auth_ctx.pam_hdl.authenticate_oath,
-                    data['otp_token']
+                auth_resp, cred = await self.middleware.run_in_thread(
+                    login_ex_oath_token, self.middleware, app=app, auth_ctx=auth_ctx, auth_data=data
                 )
-                resp = {'pam_response': {'code': pam_resp.code, 'reason': pam_resp.reason}}
-                auth_data = auth_ctx.auth_data
-
-                auth_ctx.auth_data = None
-                auth_ctx.next_mech = None
-
-                if pam_resp.code == PAMCode.PAM_SUCCESS:
-                    # Per feedback to NEP-053 it was decided to only request second
-                    # factor for password-based logins (not user-linked API keys).
-                    # Hence we don't have to worry about whether this is based on
-                    # an API key.
-                    user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
-                    if user_info is None:
-                        # user is unprivileged
-                        return response
-
-                    cred = LoginTwofactorSessionManagerCredentials(
-                        user_info, CURRENT_AAL.level, auth_ctx.pam_hdl
-                    )
-                    await login_fn(app, cred)
-                else:
-                    # Add a sleep like pam_delay() would add for pam_oath
-                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'LOGIN_TWOFACTOR',
-                            'credentials_data': {
-                                'username': auth_data['user']['username'],
-                            },
-                        },
-                        'error': f'One-time token validation failed: {pam_resp.reason}'
-                    }, False)
 
             case AuthMech.TOKEN_PLAIN:
                 # We've received a authentication token that _should_ have been
@@ -1051,149 +887,39 @@ class AuthService(Service):
                 # authentication methods a failure delay has been added, but this
                 # may be removed more safely than for other authentication methods
                 # since the tokens are short-lived.
-                token_str = data['token']
-                token = self.token_manager.get(token_str, app.origin)
-                if token is None:
-                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'TOKEN',
-                            'credentials_data': {
-                                'token': token_str,
-                            }
-                        },
-                        'error': 'Invalid token',
-                    }, False)
-                    return response
-
-                if token.attributes:
-                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'TOKEN',
-                            'credentials_data': {
-                                'token': token.token,
-                            }
-                        },
-                        'error': 'Bad token',
-                    }, False)
-                    return response
-
-                # Use the AF_UNIX style authenticator with username from base auth
-                cred = token.root_credentials()
-                if cred.is_user_session:
-                    username = cred.dump()['username']
-                else:
-                    username = 'root'
-
-                auth_ctx.pam_hdl = TokenPamAuthenticator(username=username, origin=app.origin)
-
-                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
-                pam_resp = await self.middleware.run_in_thread(cred.pam_authenticate)
-                if pam_resp.code != PAMCode.PAM_SUCCESS:
-                    # Account may have gotten locked between when token originally generated and when it was used.
-                    # Alternatively we may have hit session limits.
-                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-
-                    # Unlike other failure types we can't print the token in the audit log
-                    # since it is actually still valid
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'TOKEN',
-                            'credentials_data': cred.dump()
-                        },
-                        'error': pam_resp.reason,
-                    }, False)
-                    return response
-
-                await login_fn(app, cred)
-                if token.single_use:
-                    self.token_manager.destroy(token)
-
-                resp = {
-                    'pam_response': {
-                        'code': PAMCode.PAM_SUCCESS,
-                        'reason': None
-                    }
-                }
+                auth_resp, cred = await self.middleware.run_in_thread(
+                    login_ex_token_plain,
+                    self.middleware, app=app, auth_ctx=auth_ctx, auth_data=data, token_manager=self.token_manager
+                )
 
             case AuthMech.SCRAM:
+                auth_resp, cred = await self.middleware.run_in_thread(
+                    login_ex_scram, self.middleware, app=app, auth_ctx=auth_ctx, auth_data=data
+                )
+
                 match data['scram_type']:
                     case 'CLIENT_FIRST_MESSAGE':
-                        auth_ctx.pam_hdl = ScramPamAuthenticator(
-                            client_first_message=data['rfc_str'],
-                            origin=app.origin
-                        )
+                        if auth_resp.code == PAMCode.PAM_CONV_AGAIN:
+                            return {
+                                'response_type': AuthResp.SCRAM_RESPONSE,
+                                'scram_type': 'SERVER_FIRST_RESPONSE',
+                                'rfc_str': auth_resp.reason,
+                                'user_info': None
+                            }
 
-                        resp = await self.middleware.run_in_thread(
-                            auth_ctx.pam_hdl.handle_first_message,
-                        )
-                        if resp.code != PAMCode.PAM_CONV_AGAIN:
-                            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                                'credentials': {
-                                    'credentials': 'SCRAM',
-                                    'credentials_data': {}
-                                },
-                                'error': resp.reason,
-                            }, False)
-                            return response
-
-                        auth_ctx.next_mech = AuthMech.SCRAM
-
-                        return {
-                            'response_type': AuthResp.SCRAM_RESPONSE,
-                            'scram_type': 'SERVER_FIRST_RESPONSE',
-                            'rfc_str': resp.reason,
-                            'user_info': None
-                        }
                     case 'CLIENT_FINAL_MESSAGE':
-                        if auth_ctx.next_mech != AuthMech.SCRAM:
-                            raise CallError('SCRAM authentication is not in progress')
-
-                        auth_ctx.next_mech = None
-
-                        pam_resp = await self.middleware.run_in_thread(
-                            auth_ctx.pam_hdl.handle_final_message,
-                            data['rfc_str']
-                        )
-
-                        if pam_resp.code != PAMCode.PAM_SUCCESS:
-                            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                                'credentials': {
-                                    'credentials': 'SCRAM',
-                                    'credentials_data': {}
-                                },
-                                'error': pam_resp.reason,
-                            }, False)
-                            return response
-
-                        user_info = await self.middleware.call('auth.authenticate_user', pam_resp.user_info)
-                        if user_info is None:
-                            # User is unprivileged:
+                        if auth_resp.code != PAMCode.PAM_SUCCESS:
                             return response
 
                         resp = {
                             'response_type': AuthResp.SCRAM_RESPONSE,
                             'scram_type': 'SERVER_FINAL_RESPONSE',
-                            'rfc_str': pam_resp.reason,
+                            'rfc_str': auth_resp.reason,
                         }
-
-                        # SCRAM authentication can in theory be either an API key or
-                        if auth_ctx.pam_hdl.dbid:
-                            key = await self.middleware.call(
-                                'api_key.query', [['id', '=', auth_ctx.pam_hdl.dbid]],
-                                {'get': True, 'select': ['id', 'name']}
-                            )
-                            cred = ApiKeySessionManagerCredentials(
-                                user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl
-                            )
-                        else:
-                            cred = UserSessionManagerCredentials(
-                                user_info, CURRENT_AAL.level, auth_ctx.pam_hdl
-                            )
 
                         await login_fn(app, cred)
                         resp['user_info'] = await self.me(app)
+                        auth_ctx.pam_hdl = None
                         return resp
 
                     case _:
@@ -1205,8 +931,10 @@ class AuthService(Service):
                 self.logger.error('%s: unexpected authentication mechanism', mechanism)
                 raise CallError(f'{mechanism}: unexpected authentication mechanism')
 
-        match resp['pam_response']['code']:
+        match auth_resp.code:
             case PAMCode.PAM_SUCCESS:
+                await login_fn(app, cred)
+
                 response['response_type'] = AuthResp.SUCCESS
                 if data['login_options']['user_info']:
                     response['user_info'] = await self.me(app)
@@ -1229,6 +957,9 @@ class AuthService(Service):
                 # the SessionManagerCredential is deallocated or logout() explicitly called
                 auth_ctx.pam_hdl = None
 
+            case PAMCode.PAM_PERM_DENIED:
+                # Special error code indicating that user lacks API access
+                response['response_type'] = AuthResp.DENIED.name
             case PAMCode.PAM_AUTH_ERR | PAMCode.PAM_USER_UNKNOWN:
                 # We have to squash AUTH_ERR and USER_UNKNOWN into a generic response
                 # to prevent unauthenticated remote clients from guessing valid usernames.
@@ -1240,35 +971,11 @@ class AuthService(Service):
                 # so that we can better handle in the future.
                 self.logger.debug(
                     '%s: unexpected response code [%d] to authentication request',
-                    mechanism, resp['pam_response']['code']
+                    mechanism, auth_resp.code
                 )
                 response['response_type'] = AuthResp.AUTH_ERR
 
         return response
-
-    @private
-    @pass_app()
-    async def get_login_user(self, app, username, password):
-        """
-        This is a private endpoint that performs the actual validation of username/password
-        combination and returns user information and whether additional OTP is required.
-        """
-        otp_required = False
-        otpw_used = False
-
-        resp = await self.middleware.call(
-            'auth.authenticate_plain',
-            username, password,
-            app=app
-        )
-        if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
-            if AccountFlag.OTPW in resp['user_data']['account_attributes']:
-                otpw_used = True
-
-        elif resp['pam_response']['code'] == PAMCode.PAM_CONV_AGAIN:
-            otp_required = True
-
-        return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
     @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, cli_private=True, authentication_required=False,
                 pass_app=True)
