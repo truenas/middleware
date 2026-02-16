@@ -2,13 +2,14 @@ from datetime import datetime
 
 from pydantic import ConfigDict, Field, RootModel
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args, LongString
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, LongString
 
 
 __all__ = [
-    'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',
-    'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult',
-    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
+    'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogSyncedArgs',
+    'CatalogSyncedResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse',
+    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps', 'CatalogAppVersionDetails',
 ]
 
 
@@ -23,10 +24,14 @@ class CatalogEntry(BaseModel):
     """Git repository URL or local path to the catalog."""
 
 
-@single_argument_args('catalog_update')
-class CatalogUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+class CatalogUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
     """Updated array of preferred train names for the catalog."""
+
+
+class CatalogUpdateArgs(BaseModel):
+    data: CatalogUpdate
+    """Catalog update parameters."""
 
 
 class CatalogUpdateResult(BaseModel):
@@ -38,8 +43,12 @@ class CatalogTrainsArgs(BaseModel):
     pass
 
 
+class CatalogTrainsResponse(RootModel[list[NonEmptyString]]):
+    pass
+
+
 class CatalogTrainsResult(BaseModel):
-    result: list[NonEmptyString]
+    result: CatalogTrainsResponse
     """Array of available train names in the catalog."""
 
 
@@ -50,6 +59,15 @@ class CatalogSyncArgs(BaseModel):
 class CatalogSyncResult(BaseModel):
     result: None
     """Returns `null` when the catalog sync is successfully completed."""
+
+
+class CatalogSyncedArgs(BaseModel):
+    pass
+
+
+class CatalogSyncedResult(BaseModel):
+    result: bool
+    """Returns `true` if the catalog has been synced at least once, `false` otherwise."""
 
 
 class Maintainer(BaseModel):
@@ -106,8 +124,7 @@ class CatalogAppInfo(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
-@single_argument_args('catalog_apps_options')
-class CatalogAppsArgs(BaseModel):
+class CatalogApps(BaseModel):
     cache: bool = True
     """Whether to use cached catalog data if available."""
     cache_only: bool = False
@@ -118,12 +135,21 @@ class CatalogAppsArgs(BaseModel):
     """Specific train names to retrieve apps from (empty array means all trains)."""
 
 
+class CatalogAppsArgs(BaseModel):
+    data: CatalogApps
+    """Catalog apps query parameters."""
+
+
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
     pass
 
 
+class CatalogAppsResponse(RootModel[dict[str, CatalogTrainInfo]]):
+    pass
+
+
 class CatalogAppsResult(BaseModel):
-    result: dict[str, CatalogTrainInfo]
+    result: CatalogAppsResponse
     """Object mapping train names to their app information."""
 
 
