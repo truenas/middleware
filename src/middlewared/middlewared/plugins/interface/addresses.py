@@ -140,9 +140,9 @@ def configure_addresses_impl(
                 remove_address(sock, addr.address, addr.prefixlen, index=link_index)
             except AddressDoesNotExist:
                 # addresses not existing at this point could
-                # be because of dhcpcd being stopped but also
-                # in any other myriad of situations. Just
-                # ignore it
+                # be because of dhcpcd being stopped which
+                # removes the ips but also because of any
+                # other myriad of reasons. Just ignore it
                 pass
             except Exception as e:
                 ctx.logger.debug("%s: unexpected error removing %s: %e", name, addr, e)
