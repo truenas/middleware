@@ -7,7 +7,7 @@ from truenas_pynetif.address.address import add_address, remove_address, replace
 from truenas_pynetif.address.constants import AddressFamily, IFFlags
 from truenas_pynetif.address.get_ipaddresses import get_link_addresses
 from truenas_pynetif.address.link import set_link_alias, set_link_mtu, set_link_up
-from truenas_pynetif.netlink import AddressInfo, LinkInfo
+from truenas_pynetif.netlink import AddressDoesNotExist, AddressInfo, LinkInfo
 
 from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop
 from middlewared.service import ServiceContext
@@ -87,9 +87,7 @@ def configure_addresses_impl(
                 )
             )
         else:
-            ctx.logger.info(
-                "Unable to get address from dhcpcd lease for %r", name
-            )
+            ctx.logger.info("Unable to get address from dhcpcd lease for %r", name)
 
     # Add primary address from database
     if data[addr_key] and not data["int_dhcp"]:
@@ -135,8 +133,20 @@ def configure_addresses_impl(
         elif address == vip or address in alias_vips:
             continue
         elif addr not in addrs_database:
-            ctx.logger.debug("%s: removing %s", name, addr)
-            remove_address(sock, addr.address, addr.prefixlen, index=link_index)
+            ctx.logger.debug("%s: removing %s", name, addr.address)
+            try:
+                remove_address(sock, addr.address, addr.prefixlen, index=link_index)
+            except AddressDoesNotExist:
+                # addresses not existing at this point could
+                # be because of dhcpcd being stopped which
+                # removes the ips but also because of any
+                # other myriad of reasons. Just ignore it
+                pass
+            except Exception as e:
+                ctx.logger.debug(
+                    "%s: unexpected error removing %s: %e", name, addr.address, e
+                )
+
         elif not data["int_dhcp"]:
             ctx.logger.debug(
                 "%s: removing possible valid_lft and preferred_lft on %s", name, addr
