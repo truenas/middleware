@@ -233,13 +233,26 @@ def test_event_subscribe(docker_pool):
         expected_event_order = ['STOPPING', 'STOPPED', 'DEPLOYING']
         events = []
         event_types = []
+        track_states = False
 
         def callback(event_type, **message):
-            nonlocal events, event_types
-            if not events or events[-1] != message['fields']['state']:
-                events.append(message['fields']['state'])
+            nonlocal events, event_types, track_states
+            state = message['fields']['state']
+            # Always track event types (for the outer assertion)
             if not event_types or event_types[-1] != event_type:
                 event_types.append(event_type)
+
+            # Start tracking states when we see STOPPING.
+            # This is deterministic because STOPPING only comes from app.stop,
+            # avoiding the race condition of clearing events at the right time.
+            if state == 'STOPPING':
+                track_states = True
+
+            if not track_states:
+                return
+
+            if not events or events[-1] != state:
+                events.append(state)
 
         c.subscribe('app.query', callback, sync=True)
 
@@ -247,7 +260,6 @@ def test_event_subscribe(docker_pool):
             'train': 'community',
             'catalog_app': 'ipfs'
         }):
-            events = []
             call('app.stop', 'ipfs', job=True)
             call('app.start', 'ipfs', job=True)
             assert expected_event_order == events
