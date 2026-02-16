@@ -87,9 +87,7 @@ def configure_addresses_impl(
                 )
             )
         else:
-            ctx.logger.info(
-                "Unable to get address from dhcpcd lease for %r", name
-            )
+            ctx.logger.info("Unable to get address from dhcpcd lease for %r", name)
 
     # Add primary address from database
     if data[addr_key] and not data["int_dhcp"]:
@@ -135,7 +133,7 @@ def configure_addresses_impl(
         elif address == vip or address in alias_vips:
             continue
         elif addr not in addrs_database:
-            ctx.logger.debug("%s: removing %s", name, addr)
+            ctx.logger.debug("%s: removing %s", name, addr.address)
             try:
                 remove_address(sock, addr.address, addr.prefixlen, index=link_index)
             except AddressDoesNotExist:
@@ -145,7 +143,9 @@ def configure_addresses_impl(
                 # other myriad of reasons. Just ignore it
                 pass
             except Exception as e:
-                ctx.logger.debug("%s: unexpected error removing %s: %e", name, addr, e)
+                ctx.logger.debug(
+                    "%s: unexpected error removing %s: %e", name, addr.address, e
+                )
 
         elif not data["int_dhcp"]:
             ctx.logger.debug(
