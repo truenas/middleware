@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import socket
-from typing import TYPE_CHECKING
-
-from aiohttp.web import Request
 from dataclasses import dataclass
 from ipaddress import ip_address
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
+from typing import TYPE_CHECKING
 
-from pyroute2 import DiagSocket
+from aiohttp.web import Request
+
+from truenas_pynetif.diag import netlink_diag, get_inet_diag
 
 from .auth import get_login_uid, AUID_UNSET
 
@@ -75,19 +75,7 @@ class ConnectionOrigin:
                     gid=gid,
                 )
             elif sock.family in (AF_INET, AF_INET6):
-                fam, la, lp, ra, rp, ssl = get_tcp_ip_info(sock, request)
-
-                if fam is None:
-                    return None
-
-                return cls(
-                    family=fam,
-                    loc_addr=la,
-                    loc_port=lp,
-                    rem_addr=ra,
-                    rem_port=rp,
-                    ssl=ssl if ssl is not None else False
-                )
+                return get_tcp_ip_info(sock, request)
 
             return None
         except AttributeError:
@@ -202,7 +190,7 @@ class ConnectionOrigin:
 def get_tcp_ip_info(
     sock: socket.socket,
     request: Request,
-) -> tuple[socket.AddressFamily | None, str | None, int | None, str | None, int | None, bool | None]:
+) -> ConnectionOrigin | None:
     # All API connections are terminated by nginx reverse
     # proxy so the remote address is always 127.0.0.1. The
     # only exceptions to this are:
@@ -229,17 +217,21 @@ def get_tcp_ip_info(
         ssl = False
         check_uids = False
 
-    with DiagSocket() as ds:
-        ds.bind()
-        for i in ds.get_sock_stats(family=family):
-            if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
-                if check_uids:
-                    if i['idiag_uid'] in UIDS_TO_CHECK:
-                        return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
-                else:
-                    return family, i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+    with netlink_diag() as ds:
+        for info in get_inet_diag(ds, family=family):
+            if info.dst == ra and info.dport == rp:
+                if check_uids and info.uid not in UIDS_TO_CHECK:
+                    continue
+                return ConnectionOrigin(
+                    family=family,
+                    loc_addr=info.src,
+                    loc_port=info.sport,
+                    rem_addr=info.dst,
+                    rem_port=info.dport,
+                    ssl=ssl,
+                )
 
-    return None, None, None, None, None, None
+    return None
 
 
 def is_external_call(app: App | None) -> bool:
