@@ -438,21 +438,22 @@ def login_ex_scram(
     cred: ApiKeySessionManagerCredentials | UserSessionManagerCredentials | None = None
     cred_type = CredentialType.SCRAM
 
-    # SCRAM authentication never has OATH plumbing
-    if not _auth_ctx_check(middleware, app=app, auth_ctx=auth_ctx, cred_type=cred_type, oath_file_check=False):
-        sleep(CURRENT_AAL.get_delay_interval())
-        resp = TrueNASAuthenticatorResponse(
-            stage=TrueNASAuthenticatorStage.AUTH,
-            code=PAMCode.PAM_ABORT,
-            reason='Failed authentication configuration precheck'
-        )
-        return (resp, cred)
-
     match auth_data['scram_type']:
         case 'CLIENT_FIRST_MESSAGE':
+            # Initialize PAM handle before auth context check
             auth_ctx.pam_hdl = ScramPamAuthenticator(
                 client_first_message=auth_data['rfc_str'], origin=app.origin
             )
+
+            # SCRAM authentication never has OATH plumbing
+            if not _auth_ctx_check(middleware, app=app, auth_ctx=auth_ctx, cred_type=cred_type, oath_file_check=False):
+                sleep(CURRENT_AAL.get_delay_interval())
+                resp = TrueNASAuthenticatorResponse(
+                    stage=TrueNASAuthenticatorStage.AUTH,
+                    code=PAMCode.PAM_ABORT,
+                    reason='Failed authentication configuration precheck'
+                )
+                return (resp, cred)
 
             resp = auth_ctx.pam_hdl.handle_first_message()
             if resp.code == PAMCode.PAM_CONV_AGAIN:
@@ -465,6 +466,16 @@ def login_ex_scram(
                 }, False)
 
         case 'CLIENT_FINAL_MESSAGE':
+            # SCRAM authentication never has OATH plumbing
+            if not _auth_ctx_check(middleware, app=app, auth_ctx=auth_ctx, cred_type=cred_type, oath_file_check=False):
+                sleep(CURRENT_AAL.get_delay_interval())
+                resp = TrueNASAuthenticatorResponse(
+                    stage=TrueNASAuthenticatorStage.AUTH,
+                    code=PAMCode.PAM_ABORT,
+                    reason='Failed authentication configuration precheck'
+                )
+                return (resp, cred)
+
             if auth_ctx.next_mech != AuthMech.SCRAM:
                 raise CallError('SCRAM authentication is not in progress')
 
