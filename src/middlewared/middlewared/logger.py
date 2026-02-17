@@ -38,11 +38,6 @@ for level, names in {
         'httpx._client',  # Prevent httpx debug spam
         'kmip.services.kmip_client',  # Prevent kmip client spam
     ),
-    logging.CRITICAL: (
-        'pyroute2.ndb',  # pyroute2.ndb is chatty....only log errors
-        'pyroute2.netlink',
-        'pyroute2.netlink.nlsocket',
-    ),
 }.items():
     for name in names:
         logging.getLogger(name).setLevel(level)
