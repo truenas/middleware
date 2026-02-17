@@ -228,7 +228,7 @@ def login_ex_api_key_plain(
         elif key['revoked']:
             resp = TrueNASAuthenticatorResponse(
                 stage=TrueNASAuthenticatorStage.AUTH,
-                code=PAMCode.PAM_CRED_EXPIRED,
+                code=PAMCode.PAM_AUTH_ERR,
                 reason='API key is revoked'
             )
 
@@ -406,6 +406,11 @@ def login_ex_token_plain(
     auth_ctx.pam_hdl = TokenPamAuthenticator(username=username, origin=app.origin)
     cred = TokenSessionManagerCredentials(token_manager, token, auth_ctx.pam_hdl)
     pam_resp = cred.pam_authenticate()
+
+    # Destroy single-use tokens after successful authentication
+    if pam_resp.code == PAMCode.PAM_SUCCESS and token.single_use:
+        token_manager.destroy(token)
+
     if pam_resp.code != PAMCode.PAM_SUCCESS:
         # Account may have gotten locked between when token originally generated and when it was used.
         # Alternatively we may have hit session limits.
