@@ -116,7 +116,7 @@ def adapt_exception(e: Exception) -> CallError | None:
 
 class InstanceNotFound(ValidationError):
     """Raised when `get_instance` failed to locate specific object"""
-    def __init__(self, errmsg):
+    def __init__(self, errmsg: str) -> None:
         super().__init__(None, errmsg, errno.ENOENT)
 
 

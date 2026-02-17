@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -74,9 +74,9 @@ class AppService(Service):
         Retrieve applications which are similar to `app_name`.
         """
         available_apps = self.available([], {})
-        app = cast(dict[str, Any], filter_list(
+        app = filter_list(
             available_apps, [['name', '=', app_name], ['train', '=', train]], {'get': True}
-        ))
+        )
         similar_apps: dict[str, dict[str, Any]] = {}
 
         # Calculate the number of common categories/tags between app and other apps

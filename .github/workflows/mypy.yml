@@ -28,6 +28,7 @@ jobs:
           cd src/middlewared
           mypy \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/webshare/ \

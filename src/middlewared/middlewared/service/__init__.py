@@ -8,6 +8,7 @@ from .config_service import ConfigService
 from .config_service_part import ConfigServicePart
 from .context import ServiceContext
 from .crud_service import CRUDService
+from .crud_service_part import CRUDServicePart
 from .decorators import (
     job, no_auth_required,
     no_authz_required, pass_app, periodic, private,
@@ -37,6 +38,7 @@ __all__ = [
     'ConfigService',
     'ConfigServicePart',
     'CRUDService',
+    'CRUDServicePart',
     'job',
     'no_auth_required',
     'no_authz_required',
