@@ -8,10 +8,13 @@ The TrueNAS audit subsystem traps and reports the following keys:
 See truenas_audit_handler.py
 """
 
+import contextlib
 import pytest
 
-from auto_config import pool_name
+from auto_config import pool_name, password, user as runuser
+from functions import async_SSH_done, async_SSH_start
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils import call, ssh
 from os.path import join as path_join
 from time import sleep
@@ -27,13 +30,13 @@ STIG_PWD = 'auditdtesting'
 PRIVILEGED_RULE_FILE = '/conf/audit_rules/31-privileged.rules'
 
 
-def config_auditd(maybe_stig: bool):
+def config_auditd(maybe_stig: bool, check=True):
     """
     This configures auditd rules
     """
     cmd = 'python3 -c "from middlewared.utils import auditd;'
     cmd += f'auditd.set_audit_rules({maybe_stig})"'
-    ssh(cmd)
+    ssh(cmd, check=check)
 
 
 def assert_auditd_event(data: list, cmd: str, auid=None, euid=None):
@@ -67,26 +70,35 @@ def assert_auditd_event(data: list, cmd: str, auid=None, euid=None):
     assert found_proctitle, f"Did not find proctitle entry for {cmd}"
 
 
+@contextlib.contextmanager
+def stig_mode_audit(check=True):
+    """Configure STIG mode level auditing without entering STIG mode"""
+    try:
+        config_auditd(WITH_GPOS_STIG, check=check)
+        rules = ssh('auditctl -l')
+        yield rules.splitlines()
+    finally:
+        config_auditd(WITHOUT_GPOS_STIG)
+
+
 @pytest.fixture(scope='module')
 def auditd_gpos_stig_enable():
     """Fixture to manage auditd configuration"""
-    config_auditd(WITH_GPOS_STIG)
-    try:
-        rules = ssh('auditctl -l')
-        with user({
-            'username': STIG_USER,
-            'full_name': STIG_USER,
-            'password': STIG_PWD,
-            'home': f'/mnt/{pool_name}',
-            'group_create': True,
-            'shell': '/usr/bin/bash',
-            'ssh_password_enabled': True,
-        }):
-            yield rules.splitlines()
-    finally:
-        config_auditd(WITHOUT_GPOS_STIG)
-        # Cleanup auditd search info in /tmp
-        ssh('rm -f /tmp/auditd_test')
+    with stig_mode_audit() as rules:
+        try:
+            with user({
+                'username': STIG_USER,
+                'full_name': STIG_USER,
+                'password': STIG_PWD,
+                'home': f'/mnt/{pool_name}',
+                'group_create': True,
+                'shell': '/usr/bin/bash',
+                'ssh_password_enabled': True,
+            }):
+                yield rules
+        finally:
+            # Cleanup auditd search info in /tmp
+            ssh('rm -f /tmp/auditd_test')
 
 
 @pytest.mark.parametrize('test_rule,param,key', [
@@ -141,3 +153,29 @@ def test_privileged_and_escalation_events(test_rule, param, key, auditd_gpos_sti
     event = call('audit.query', payload)
     event_user = event['event_data']['syscall']['AUID']
     assert event_user == STIG_USER, f"Expected {STIG_USER} but found {event_user!r}"
+
+
+def test_missing_watched_directory():
+    """Confirm truenas_audit_handler can handle a missing or renamed watched directory"""
+    watched_dir = "/etc/proftpd/conf.d"
+
+    try:
+        # Setup the condition
+        ssh(f"mv {watched_dir} {watched_dir}.MOVED")
+
+        ah_log_tail = async_SSH_start("tail -n 0 -F /var/log/audit/audit_handler.log", runuser, password, truenas_server.ip)
+
+        with stig_mode_audit(check=False):
+            # Nothing to do here
+            pass
+
+        ah_log_data, errs = async_SSH_done(ah_log_tail, 5)    # 5 second timeout
+
+        # We should detect no exceptions
+        assert "PYTHON_EXCEPTION" not in ah_log_data
+
+        # We log the missing directory detection
+        assert "Watched directory is missing" in ah_log_data
+
+    finally:
+        ssh(f"mv {watched_dir}.MOVED {watched_dir}")
