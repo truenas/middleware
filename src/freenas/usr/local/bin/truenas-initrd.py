@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+# WARNING: this script is executed within a host system during upgrades. This means that it
+# may be initially running on a version of TrueNAS that does not match the git branch in
+# which you currently find this code. We need to keep imports at the head of this file
+# to an absolute minimum (base cpython modules for example) and lazy-import anything else
+# down below where comment "# LAZY IMPORTS" is located
 import argparse
 import contextlib
 import json
@@ -10,8 +16,6 @@ import textwrap
 
 import libzfs
 import pyudev
-
-from middlewared.utils.io import atomic_write
 
 
 logger = logging.getLogger(__name__)
@@ -213,11 +217,16 @@ if __name__ == "__main__":
     if root != "/":
         sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
 
+    # BEGIN LAZY IMPORTS
+    # ------------------
     from truenas_pylibvirt.utils.gpu import get_gpus
 
     from middlewared.service_exception import CallError
     from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
+    from middlewared.utils.io import atomic_write
     from middlewared.utils.rootfs import ReadonlyRootfsManager
+    # ------------------
+    # END LAZY IMPORTS
 
     with ReadonlyRootfsManager(root) as readonly_rootfs:
         try:
