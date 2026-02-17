@@ -131,7 +131,7 @@ def test_method_stats_via_loopback_client():
     be counted in the usage statistics.
     """
     with count_calls('system.version'):
-        with client(host_ip='127.0.0.1', ssl=False) as c:
+        with client(ssl=False) as c:
             c.call('system.version')
 
 
@@ -202,5 +202,5 @@ def test_method_stats_mixed_connection_types():
         ssh('midclt call system.product_type')
 
         # Make 1 call via WebSocket client
-        with client(host_ip='127.0.0.1', ssl=False) as c:
+        with client(ssl=False) as c:
             c.call('system.product_type')
