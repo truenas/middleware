@@ -1883,9 +1883,8 @@ class UserService(CRUDService):
                     'FULL_ADMIN role is required in order to bypass check for current password.'
                 )
             else:
-                # Create a temporary authentication context. Calling into auth.libpam_authenticate
-                # would try to re-authenticate under the current session's authentication context,
-                # which would fail.
+                # Create a temporary PAM authenticator to verify the old password.
+                # We can't use the current session's authentication context as it would fail.
                 pam_hdl = UserPamAuthenticator(username=username, origin=app.origin)
                 pam_resp = await self.middleware.run_in_thread(
                     pam_hdl.authenticate, username, data['old_password']

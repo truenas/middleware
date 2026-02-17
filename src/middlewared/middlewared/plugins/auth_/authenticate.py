@@ -11,10 +11,9 @@ class AuthService(Service):
     async def authenticate_user(self, user):
         """
         Return information for middleware credential based on the specified `user`.
-        This is currently called from one of two places:
-        1. auth.authenticate_plain -- implements username + password or API key authentication
-           for remote users.
-        2. check_permission (plugins/auth.py) called by `core.on_connect` for AF_UNIX based sessions.
+        This is currently called from authentication helper functions in auth_/login_ex_impl.py
+        which implement username + password or API key authentication for remote users,
+        and from check_permission (plugins/auth.py) called by `core.on_connect` for AF_UNIX based sessions.
 
         Params:
             user: fully populated passwd dict containing optional `grouplist` key

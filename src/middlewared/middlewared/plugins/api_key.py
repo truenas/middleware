@@ -11,6 +11,8 @@ from middlewared.api.current import (
     ApiKeyDeleteArgs, ApiKeyDeleteResult, ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
     ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult,
 )
+from middlewared.auth import AuthenticationContext
+from middlewared.plugins.auth_.login_ex_impl import login_ex_api_key_plain
 from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -359,16 +361,23 @@ class ApiKeyService(CRUDService):
 
         entry = await self.get_instance(key_id)
 
-        auth_ctx.pam_hdl = ApiKeyPamAuthenticator(username=entry['username'] or 'root', origin=origin)
+        # Call the authentication helper directly
+        pam_resp, cred = await self.middleware.run_in_thread(
+            login_ex_api_key_plain,
+            self.middleware,
+            app=app,
+            auth_ctx=auth_ctx,
+            auth_data={
+                'username': entry['username'] or 'root',
+                'api_key': key
+            }
+        )
 
-        resp = await self.middleware.call('auth.authenticate_plain',
-                                          entry['username'],
-                                          key, app=app)
-
-        if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
+        if pam_resp.code != PAMCode.PAM_SUCCESS or cred is None:
             return None
 
-        return (resp['user_data'], {
+        # Return user_info and key metadata (cred.user contains the authenticated user info)
+        return (cred.user, {
             'id': entry['id'],
             'name': entry['name'],
         })
