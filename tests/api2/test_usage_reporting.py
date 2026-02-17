@@ -1,12 +1,8 @@
 import pytest
 import time
 from itertools import chain
-from middlewared.test.integration.assets.nfs import nfs_server
-from middlewared.test.integration.assets.ftp import ftp_server
-from middlewared.test.integration.assets.pool import dataset as nfs_dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, client
-from protocols import ftp_connection, SSH_NFS, nfs_share
 
 from auto_config import password, pool_name, user
 
@@ -61,6 +57,10 @@ def test_nfs_reporting(get_usage_sample):
     # Initial state should have NFSv[3,4] and possibly some stale NFSv3 connections from previous tests
     assert set(get_usage_sample['NFS']['enabled_protocols']) == set(["NFSV3", "NFSV4"])
 
+    from middlewared.test.integration.assets.nfs import nfs_server
+    from middlewared.test.integration.assets.pool import dataset as nfs_dataset
+    from protocols import SSH_NFS, nfs_share
+
     nfs_path = f'/mnt/{pool_name}/test_nfs'
     with nfs_dataset("test_nfs"):
         with nfs_share(nfs_path):
@@ -80,6 +80,9 @@ def test_ftp_reporting(get_usage_sample):
     """ Confirm we are correctly reporting the number of connections """
     # Initial state should have no connections
     assert get_usage_sample['FTP']['num_connections'] == 0
+
+    from middlewared.test.integration.assets.ftp import ftp_server
+    from protocols import ftp_connection
 
     # Establish two connections
     with ftp_server():
