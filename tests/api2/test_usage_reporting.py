@@ -205,9 +205,9 @@ def test_method_stats_different_methods():
 
     # Track counts for multiple methods
     methods_to_test = [
-        'system.is_freenas',
         'system.product_type',
-        'truenas.is_ix_hardware',
+        'system.version',
+        'failover.licensed',
     ]
 
     baseline_counts = {
@@ -263,22 +263,22 @@ def test_method_stats_mixed_connection_types():
     """
     # Get baseline stats
     baseline_stats = call('usage.gather')['method_stats']
-    baseline_count = baseline_stats.get('system.product_name', 0)
+    baseline_count = baseline_stats.get('system.product_type', 0)
 
     # Make 1 call via SSH
-    ssh('midclt call system.product_name')
+    ssh('midclt call system.product_type')
 
     # Make 1 call via WebSocket client
     with client(host_ip='127.0.0.1', ssl=False) as c:
-        c.call('system.product_name')
+        c.call('system.product_type')
 
     # Get updated stats
     updated_stats = call('usage.gather')['method_stats']
-    updated_count = updated_stats.get('system.product_name', 0)
+    updated_count = updated_stats.get('system.product_type', 0)
 
     # Both calls should be tracked, so count should increase by exactly 2
     assert updated_count == baseline_count + 2, (
-        f"Expected system.product_name count to increase by exactly 2 "
+        f"Expected system.product_type count to increase by exactly 2 "
         f"from {baseline_count}, but got {updated_count} "
         f"(increase of {updated_count - baseline_count})"
     )
