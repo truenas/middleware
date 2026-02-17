@@ -1201,15 +1201,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         }
         return f"@cee:{json.dumps(audit_dict)}"
 
-    async def log_audit_message(
+    def log_audit_message_sync(
         self,
         app: App,
         event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
         event_data: dict,
         success: bool,
     ) -> None:
-        message = await asyncio.to_thread(
-            self._build_audit_message_sync,
+        message = self._build_audit_message_sync(
             app,
             event,
             event_data,
@@ -1217,6 +1216,21 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         )
 
         self.__audit_logger.info(message)
+
+    async def log_audit_message(
+        self,
+        app: App,
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event_data: dict,
+        success: bool,
+    ) -> None:
+        await asyncio.to_thread(
+            self.log_audit_message_sync,
+            app,
+            event,
+            event_data,
+            success,
+        )
 
     async def call(
         self,

@@ -25,6 +25,7 @@ class AuthResp(enum.StrEnum):
     OTP_REQUIRED = 'OTP_REQUIRED'
     REDIRECT = 'REDIRECT'
     SCRAM_RESPONSE = 'SCRAM_RESPONSE'
+    DENIED = 'DENIED'
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)

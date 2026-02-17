@@ -9,12 +9,13 @@ from aiohttp import web
 from middlewared.api.base.server.app import App
 from middlewared.auth import (
     ApiKeySessionManagerCredentials,
+    AuthenticationContext,
     LoginPasswordSessionManagerCredentials,
     TokenSessionManagerCredentials,
 )
 from middlewared.pipe import Pipes, InputPipes
+from middlewared.plugins.auth_.login_ex_impl import login_ex_password_plain
 from middlewared.service_exception import CallError
-from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
@@ -157,24 +158,29 @@ async def authenticate(
             if twofactor_auth['enabled']:
                 raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-            app.authentication_context.pam_hdl = UserPamAuthenticator(
-                username=credentials['credentials_data']['username'],
-                origin=origin
+            # Initialize authentication context if needed
+            if app.authentication_context is None:
+                app.authentication_context = AuthenticationContext()
+
+            # Call the authentication helper directly
+            pam_resp, cred = await middleware.run_in_thread(
+                login_ex_password_plain,
+                middleware,
+                app=app,
+                auth_ctx=app.authentication_context,
+                auth_data={
+                    'username': credentials['credentials_data']['username'],
+                    'password': credentials['credentials_data']['password']
+                }
             )
-            resp = await middleware.call(
-                'auth.authenticate_plain',
-                credentials['credentials_data']['username'],
-                credentials['credentials_data']['password'],
-                app=app
-            )
-            if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
+
+            if pam_resp.code != PAMCode.PAM_SUCCESS:
                 raise web.HTTPUnauthorized(text='Bad username or password')
 
-            return LoginPasswordSessionManagerCredentials(
-                resp['user_data'],
-                assurance=CURRENT_AAL.level,
-                authenticator=app.authentication_context.pam_hdl
-            )
+            if cred is None:
+                raise web.HTTPUnauthorized(text='Authentication failed')
+
+            return cred
 
         case 'API_KEY':
             if CURRENT_AAL.level is not AA_LEVEL1:

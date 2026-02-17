@@ -192,6 +192,11 @@ class AuthRespExpired(BaseModel):
     """Authentication response type indicating the session or token has expired."""
 
 
+class AuthRespDenied(BaseModel):
+    response_type: Literal["DENIED"]
+    """Authentication response type indicating that the credential lacks API access."""
+
+
 class AuthRespOTPRequired(BaseModel):
     response_type: Literal["OTP_REQUIRED"]
     """Authentication response type indicating one-time password is required."""
@@ -317,7 +322,8 @@ class AuthLoginExContinueArgs(BaseModel):
 
 class AuthLoginExContinueResult(BaseModel):
     result: Union[
-        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect
+        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
+        AuthRespDenied,
     ] = Field(discriminator='response_type')
     """Authentication response after continuing with OTP token."""
 
