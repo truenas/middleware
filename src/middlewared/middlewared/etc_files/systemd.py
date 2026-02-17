@@ -34,7 +34,12 @@ async def render(service, middleware):
     licensed = await middleware.call('failover.licensed')
     for service, is_enabled in zip(services, are_enabled):
         enable = services_enabled[service]
-        is_enabled = {"enabled": True, "disabled": False}[is_enabled]
+        if is_enabled not in ("enabled", "disabled"):
+            middleware.logger.warning(
+                "Unexpected systemctl is-enabled state %r for %s", is_enabled, service
+            )
+            continue
+        is_enabled = is_enabled == "enabled"
         if service == "scst" and licensed:
             enable = False
         if enable != is_enabled:
