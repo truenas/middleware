@@ -294,7 +294,7 @@ def test_password_login_failed():
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "invalid"},
                 },
-                "error": "Bad username or password",
+                "error": "invalid: user does not exist",
             },
             "success": False,
         }
