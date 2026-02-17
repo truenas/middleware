@@ -1,49 +1,31 @@
 import json
-import re
 
-from middlewared.service import CallError
-from middlewared.utils import run
+from middlewared.plugins.service_.services.base import get_unit_file_state, set_unit_file_state
 from middlewared.utils.io import atomic_write
-
-RE_IS_NOT_A_NATIVE_SERVICE = re.compile(r"(.+)\.service is not a native service, redirecting to systemd-sysv-install\.")
 
 
 async def render(service, middleware):
-    services = []
     services_enabled = {}
     for service in await middleware.call("datastore.query", "services.services", [], {"prefix": "srv_"}):
         for unit in await middleware.call("service.systemd_units", service["service"]):
-            services.append(unit)
             services_enabled[unit] = service["enable"]
 
-    p = await run(["systemctl", "is-enabled"] + services, check=False, encoding="utf-8", errors="ignore")
-    are_enabled = p.stdout.strip().split()
-    if len(are_enabled) != len(services):
-        raise CallError(p.stderr.strip())
-
-    # sysv inits are handled first by systemd
-    # https://github.com/systemd/systemd/blob/161bc1b62777b3f32ce645a8e128007a654a2300/src/systemctl/systemctl.c#L7093
-    services_native = []
-    for line in p.stderr.splitlines():
-        if m := RE_IS_NOT_A_NATIVE_SERVICE.match(line):
-            service = m.group(1)
-            services.remove(service)
-            services_native.append(service)
-    services = services_native + services
-
     licensed = await middleware.call('failover.licensed')
-    for service, is_enabled in zip(services, are_enabled):
-        enable = services_enabled[service]
-        if is_enabled not in ("enabled", "disabled"):
+
+    for unit, enable in services_enabled.items():
+        state = await get_unit_file_state(unit)
+        if state not in ("enabled", "disabled"):
             middleware.logger.warning(
-                "Unexpected systemctl is-enabled state %r for %s", is_enabled, service
+                "Unexpected unit file state %r for %s", state, unit
             )
             continue
-        is_enabled = is_enabled == "enabled"
-        if service == "scst" and licensed:
+
+        is_enabled = state == "enabled"
+        if unit == "scst" and licensed:
             enable = False
+
         if enable != is_enabled:
-            await run(["systemctl", "enable" if enable else "disable", service])
+            await set_unit_file_state(unit, enable)
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
     with atomic_write('/data/user-services.json', 'w', perms=0o600) as f:

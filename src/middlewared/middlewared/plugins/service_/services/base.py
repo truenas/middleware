@@ -12,7 +12,7 @@ import types
 from jeepney import DBusAddress, new_method_call
 from jeepney.bus_messages import message_bus, MatchRule
 from jeepney.io.asyncio import open_dbus_router, Proxy
-from jeepney.wrappers import unwrap_msg
+from jeepney.wrappers import DBusErrorResponse, unwrap_msg
 
 from middlewared.utils.journal import (
     format_journal_record,
@@ -151,6 +151,15 @@ async def _verify_service_running(
         logger.warning("%s %s completed but service is %s", service_name, action, state)
 
 
+def _normalize_unit_name(service_name: str | bytes) -> str:
+    """Decode bytes and ensure unit name has a suffix (defaults to .service)."""
+    if isinstance(service_name, bytes):
+        service_name = service_name.decode()
+    if not service_name.endswith(_UNIT_SUFFIXES):
+        service_name = f"{service_name}.service"
+    return service_name
+
+
 @contextlib.asynccontextmanager
 async def open_unit(service_name: str | bytes):
     """
@@ -162,8 +171,7 @@ async def open_unit(service_name: str | bytes):
         - unit_path: The D-Bus object path for the unit
         - props: DBusAddress for accessing unit properties
     """
-    if isinstance(service_name, bytes):
-        service_name = service_name.decode()
+    service_name = _normalize_unit_name(service_name)
 
     async with open_dbus_router(bus="SYSTEM") as router:
         unit_path = await _load_unit_path(router, service_name)
@@ -242,6 +250,54 @@ async def get_unit_active_state(service_name: str | bytes) -> str:
         )
         reply = await router.send_and_get_reply(msg)
         return reply.body[0][1]
+
+
+async def get_unit_file_state(service_name: str | bytes) -> str:
+    """
+    Get UnitFileState for a systemd unit via D-Bus.
+
+    Uses the Manager.GetUnitFileState method rather than loading the unit and
+    reading its property, because LoadUnit creates stub units for non-existent
+    services (returning an empty string) instead of reporting "not-found".
+
+    Args:
+        service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
+
+    Returns:
+        Unit file state as string (e.g., "enabled", "disabled", "static", "masked", "not-found")
+    """
+    service_name = _normalize_unit_name(service_name)
+    async with open_dbus_router(bus="SYSTEM") as router:
+        try:
+            msg = new_method_call(_SYSTEMD_MANAGER, "GetUnitFileState", "s", (service_name,))
+            reply = await router.send_and_get_reply(msg)
+            return unwrap_msg(reply)[0]
+        except DBusErrorResponse as e:
+            if e.name == "org.freedesktop.DBus.Error.FileNotFound":
+                return "not-found"
+            raise
+
+
+async def set_unit_file_state(service_name: str | bytes, enabled: bool) -> None:
+    """
+    Enable or disable a systemd unit file via D-Bus.
+
+    Args:
+        service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
+        enabled: True to enable, False to disable
+    """
+    service_name = _normalize_unit_name(service_name)
+
+    async with open_dbus_router(bus="SYSTEM") as router:
+        if enabled:
+            msg = new_method_call(
+                _SYSTEMD_MANAGER, "EnableUnitFiles", "asbb", ([service_name], False, True)
+            )
+        else:
+            msg = new_method_call(
+                _SYSTEMD_MANAGER, "DisableUnitFiles", "asb", ([service_name], False)
+            )
+        await router.send_and_get_reply(msg)
 
 
 async def call_unit_action(service_name: str | bytes, action: str) -> str:
@@ -415,8 +471,7 @@ async def call_unit_action_and_wait(
         action: The action to perform (Start, Stop, Restart, Reload)
         timeout: Maximum time to wait for job completion in seconds
     """
-    if isinstance(service_name, bytes):
-        service_name = service_name.decode()
+    service_name = _normalize_unit_name(service_name)
 
     start_time = time.monotonic()
 
@@ -570,8 +625,4 @@ async def systemd_unit(unit, verb):
     if action is None:
         raise ValueError(f"Unsupported systemd verb: {verb}")
 
-    # D-Bus LoadUnit requires full unit name with suffix
-    if not unit.endswith(_UNIT_SUFFIXES):
-        unit = f"{unit}.service"
-
-    await call_unit_action_and_wait(unit, action)
+    await call_unit_action_and_wait(_normalize_unit_name(unit), action)
