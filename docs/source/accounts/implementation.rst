@@ -447,6 +447,160 @@ Common Pitfalls
    ``middlewared.utils.account.authenticator.TruenasPamFile`` rather than hardcoding service names as strings.
 
 
+TrueNAS PAM Module Environmental Variables
+===========================================
+
+The TrueNAS PAM module (``pam_truenas.so``) uses environmental variables for session data exchange with PAM
+applications. For full implementation details, see https://github.com/truenas/pam_truenas
+
+Application to PAM Module
+--------------------------
+
+pam_truenas_session_data
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Value:** JSON string
+
+**Purpose:** Provides session origin and metadata for kernel keyring session tracking.
+
+**Read by:** ``pam_truenas.so`` (``json.c``)
+
+**Notes:**
+
+* The ``extra`` field is application-specific scratch space. Applications may use this to store additional
+  session metadata such as HTTP User-Agent strings, client identifiers, or other contextual information
+  relevant to the application's session tracking needs.
+
+* **Security Warning:** Session data (including the ``extra`` field) is visible to API users with the
+  ``SYSTEM_SECURITY_READ`` role via the ``system.security.sessions.query`` endpoint. Do not store secrets,
+  credentials, tokens, or other sensitive data in this field.
+
+**Format Examples:**
+
+AF_UNIX connection::
+
+    {
+        "origin_family": "AF_UNIX",
+        "origin": {
+            "pid": 12345,
+            "uid": 0,
+            "gid": 0,
+            "loginuid": 1000,
+            "sec": "unconfined"
+        },
+        "extra": {
+            "secure_transport": true
+        }
+    }
+
+AF_INET connection::
+
+    {
+        "origin_family": "AF_INET",
+        "origin": {
+            "loc_addr": "192.168.1.100",
+            "loc_port": 443,
+            "rem_addr": "192.168.1.50",
+            "rem_port": 54321,
+            "ssl": true
+        },
+        "extra": {
+            "secure_transport": true
+        }
+    }
+
+AF_INET6 connection::
+
+    {
+        "origin_family": "AF_INET6",
+        "origin": {
+            "loc_addr": "fd00::1",
+            "loc_port": 443,
+            "rem_addr": "fd00::100",
+            "rem_port": 54321,
+            "ssl": true
+        },
+        "extra": {
+            "secure_transport": true
+        }
+    }
+
+
+PAM Module to Application
+--------------------------
+
+pam_truenas_session_uuid
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Value:** UUID string (RFC 4122 format)
+
+**Purpose:** Unique session identifier assigned by the PAM module.
+
+**Set by:** ``pam_truenas.so`` (``kr_session.c``)
+
+**Example:** ``550e8400-e29b-41d4-a716-446655440000``
+
+**Notes:**
+
+* Generated using OpenSSL RAND_bytes(). Session stored in kernel keyring with key description "UUID:pid".
+* The module provides session UUIDs as required by STIG guidelines.
+* **Applications must use the provided UUID to uniquely identify sessions.**
+
+
+Python Usage Example
+^^^^^^^^^^^^^^^^^^^^
+
+Using ``truenas_pypam`` library (assumes existing valid PAM context)::
+
+    import json
+    import truenas_pypam
+
+    # Prepare session data
+    session_data = {
+        "origin_family": "AF_INET",
+        "origin": {
+            "loc_addr": "192.168.1.100",
+            "loc_port": 443,
+            "rem_addr": "192.168.1.50",
+            "rem_port": 54321,
+            "ssl": True
+        },
+        "extra": {
+            "secure_transport": True
+        }
+    }
+
+    # Set session data before opening session
+    ctx.set_env(name='pam_truenas_session_data', value=json.dumps(session_data))
+
+    # Open PAM session (pam_truenas generates UUID)
+    ctx.open_session()
+
+    # Retrieve session UUID assigned by pam_truenas
+    session_uuid = ctx.get_env('pam_truenas_session_uuid')
+    print(f"Session UUID: {session_uuid}")
+
+    # ... application logic ...
+
+    # Close session when done
+    ctx.close_session()
+
+
+Middleware Usage
+^^^^^^^^^^^^^^^^
+
+Middleware sets ``pam_truenas_session_data`` in ``UserPamAuthenticator.__init__()``
+(``utils/account/authenticator.py``).
+
+Middleware reads ``pam_truenas_session_uuid`` in ``UserPamAuthenticator.login()``
+(``utils/account/authenticator.py``).
+
+PAM session information is presented to API consumers through the ``system.security.sessions.query`` endpoint. This
+endpoint queries the kernel keyring to retrieve active session data including session UUIDs, user credentials,
+connection origin details, and session creation timestamps. Sessions are automatically tracked when applications
+properly call ``pam_open_session()`` and cleaned up when ``pam_close_session()`` is called.
+
+
 Identity providers and TrueNAS features
 =======================================
 
