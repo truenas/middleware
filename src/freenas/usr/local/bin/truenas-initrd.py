@@ -4,7 +4,7 @@
 # may be initially running on a version of TrueNAS that does not match the git branch in
 # which you currently find this code. We need to keep imports at the head of this file
 # to an absolute minimum (base cpython modules for example) and lazy-import anything else
-# down below where comment "# LAZY IMPORTS" is located
+# down below where comment "# BEGIN LAZY IMPORTS" is located
 import argparse
 import contextlib
 import json
