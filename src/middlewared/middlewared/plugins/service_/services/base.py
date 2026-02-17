@@ -278,7 +278,7 @@ async def get_unit_file_state(service_name: str | bytes) -> str:
             raise
 
 
-async def set_unit_file_enabled(service_name: str | bytes, enabled: bool) -> None:
+async def set_unit_file_state(service_name: str | bytes, enabled: bool) -> None:
     """
     Enable or disable a systemd unit file via D-Bus.
 

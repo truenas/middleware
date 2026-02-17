@@ -1,6 +1,6 @@
 import json
 
-from middlewared.plugins.service_.services.base import get_unit_file_state, set_unit_file_enabled
+from middlewared.plugins.service_.services.base import get_unit_file_state, set_unit_file_state
 from middlewared.utils.io import atomic_write
 
 
@@ -25,7 +25,7 @@ async def render(service, middleware):
             enable = False
 
         if enable != is_enabled:
-            await set_unit_file_enabled(unit, enable)
+            await set_unit_file_state(unit, enable)
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
     with atomic_write('/data/user-services.json', 'w', perms=0o600) as f:
