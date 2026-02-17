@@ -11,13 +11,11 @@ from middlewared.api.current import (
     ApiKeyDeleteArgs, ApiKeyDeleteResult, ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
     ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult,
 )
-from middlewared.auth import AuthenticationContext
 from middlewared.plugins.auth_.login_ex_impl import login_ex_api_key_plain
 from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
 from middlewared.utils.origin import ConnectionOrigin

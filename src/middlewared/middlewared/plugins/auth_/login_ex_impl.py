@@ -10,7 +10,6 @@ from middlewared.auth import (
     LoginTwofactorSessionManagerCredentials, TokenSessionManagerCredentials,
     LoginOnetimePasswordSessionManagerCredentials, UserSessionManagerCredentials
 )
-from middlewared.main import Middleware
 from middlewared.service import CallError
 from middlewared.utils.account.authenticator import (
     ApiKeyPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag,
@@ -21,6 +20,7 @@ from middlewared.utils.auth import AuthMech, CURRENT_AAL
 from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
+    from middlewared.main import Middleware
     from middlewared.plugins.auth import TokenManager
 
 
@@ -71,9 +71,6 @@ def _auth_ctx_check(
 
 
 def _login_ex_base_args_check(middleware: Middleware, app: App, auth_ctx: AuthenticationContext) -> None:
-    if not isinstance(middleware, Middleware):
-        raise TypeError(f'{type(middleware)}: expected Middleware type')
-
     if not isinstance(app, App):
         raise TypeError(f'{type(app)}: expected App type')
 

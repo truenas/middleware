@@ -16,7 +16,6 @@ from middlewared.auth import (
 from middlewared.pipe import Pipes, InputPipes
 from middlewared.plugins.auth_.login_ex_impl import login_ex_password_plain
 from middlewared.service_exception import CallError
-from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
