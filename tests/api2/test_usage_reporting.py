@@ -1,4 +1,3 @@
-import contextlib
 from itertools import chain
 import time
 
@@ -44,20 +43,6 @@ class GatherTypes:
 def get_usage_sample():
     sample = call('usage.gather')
     yield sample
-
-
-@contextlib.contextmanager
-def count_calls(method: str, num_calls: int = 1):
-    baseline_stats = call('usage.gather')['method_stats']
-    baseline_count = baseline_stats.get(method, 0)
-
-    yield baseline_count
-
-    updated_stats = call('usage.gather')['method_stats']
-    updated_count = updated_stats.get(method, 0)
-
-    measured = updated_count - baseline_count
-    assert measured == num_calls, f'Expected {num_calls} call(s) to {method}, got {measured} instead'
 
 
 def test_gather_types(get_usage_sample):
@@ -106,98 +91,52 @@ def test_ftp_reporting(get_usage_sample):
                 assert usage_sample['FTP']['num_connections'] == 2
 
 
-# Possible TODO:  Add validation of the entries
-
-
-def test_method_stats_via_midclt_ssh():
+def test_count_method_calls():
     """
-    Verify that midclt calls via SSH are tracked in method_stats.
+    Make a bunch of API calls using SSH, websocket, and webshell connections
+    to verify that usage.gather counts them all in its method_stats dictionary.
 
-    midclt calls over SSH are considered external/interactive sessions and should
-    be counted in the usage statistics.
+    Call usage.gather once at the beginning and once at the end.
     """
-    with count_calls('system.info'):
-        ssh('midclt call system.info')
-
-
-def test_method_stats_via_loopback_client():
-    """
-    Verify that WebSocket client connections via loopback are tracked in method_stats.
-
-    Client connections over TCP/IP (even loopback) are considered external and should
-    be counted in the usage statistics.
-    """
-    with count_calls('system.version'):
-        with client(ssl=False) as c:
-            c.call('system.version')
-
-
-def test_method_stats_via_webshell_midclt():
-    """
-    Verify that midclt calls through webshell are tracked.
-
-    This tests sending commands through the webshell WebSocket terminal interface.
-    Commands run through the webshell are considered external/interactive.
-    """
-    with count_calls('system.ready'):
-        # Execute midclt command through the webshell
-        output = webshell_exec('midclt call system.ready')
-        # Verify the command executed successfully (output should contain "true" or "false")
-        assert 'true' in output.lower() or 'false' in output.lower()
-
-
-def test_method_stats_multiple_calls():
-    """
-    Verify that method_stats correctly accumulates multiple calls to the same method.
-    """
-    num_calls = 3
-    with count_calls('system.host_id', num_calls):
-        for _ in range(num_calls):
-            ssh('midclt call system.host_id')
-
-
-def test_method_stats_different_methods():
-    """
-    Verify that method_stats tracks different methods independently.
-    """
-    # Get baseline stats
     baseline_stats = call('usage.gather')['method_stats']
 
-    # Track counts for multiple methods
-    methods_to_test = [
-        'system.product_type',
-        'system.version',
-        'failover.licensed',
-    ]
+    # SSH
+    ssh('midclt call system.info')
 
-    baseline_counts = {
-        method: baseline_stats.get(method, 0)
-        for method in methods_to_test
+    # Websocket client
+    with client(ssl=False) as c:
+        c.call('system.version')
+
+    # Webshell
+    output = webshell_exec('midclt call system.ready')
+    assert 'true' in output.lower() or 'false' in output.lower()
+
+    # Multiple calls in the same SSH session
+    ssh('midclt call system.host_id;' * 3)
+    ssh('midclt call system.product_type; midclt call system.version; midclt call failover.licensed')
+
+    # Reopen websocket connection
+    with client(ssl=False) as c:
+        c.call('system.product_type')
+
+    # Check the reported number of calls against the
+    # expected number for each method that was called
+    COUNTS = {
+        'system.info': 1,
+        'system.version': 2,
+        'system.ready': 1,
+        'system.host_id': 3,
+        'system.product_type': 2,
+        'failover.licensed': 1,
     }
+    latest_stats = call('usage.gather')['method_stats']
+    inconsistencies = []
+    for method, expected_count in COUNTS.items():
+        actual_count = latest_stats.get(method, 0) - baseline_stats.get(method, 0)
+        if actual_count != expected_count:
+            inconsistencies.append((method, expected_count, actual_count))
 
-    # Make exactly one call to each method via midclt
-    for method in methods_to_test:
-        ssh(f'midclt call {method}')
-
-    # Get updated stats
-    updated_stats = call('usage.gather')['method_stats']
-
-    # Verify each method's count increased by exactly 1 independently
-    for method in methods_to_test:
-        updated_count = updated_stats.get(method, 0)
-        baseline_count = baseline_counts[method]
-        assert updated_count == baseline_count + 1
-
-
-def test_method_stats_mixed_connection_types():
-    """
-    Verify that method_stats tracks calls from different connection types correctly.
-
-    Tests both SSH (midclt) and WebSocket client connections for the same method.
-    """
-    with count_calls('system.product_type', 2):
-        ssh('midclt call system.product_type')
-
-        # Make 1 call via WebSocket client
-        with client(ssl=False) as c:
-            c.call('system.product_type')
+    assert not inconsistencies, '\n'.join(
+        f'{method}: expected {expected_count}, got {actual_count}'
+        for method, expected_count, actual_count in inconsistencies
+    )
