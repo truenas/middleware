@@ -19,6 +19,7 @@ from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
 from .ransomwared import RansomwaredService
+from .truenas_zfsrewrited import TruenasZfsrewritedService
 from .webshare import WebShareService
 
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
@@ -90,6 +91,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasZfsrewritedService,
     UserService,
     WebShareService,
 ]

@@ -1,9 +1,22 @@
 import os
+from enum import StrEnum
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
 from middlewared.utils.truesearch import TRUESEARCH_UID, TRUESEARCH_GID
 
 from .utils import SYSDATASET_PATH
+
+
+class SystemDatasetZfsProperties(StrEnum):
+    ATIME = 'atime'
+    CANMOUNT = 'canmount'
+    MOUNTPOINT = 'mountpoint'
+    PREFETCH = 'prefetch'
+    PRIMARYCACHE = 'primarycache'
+    READONLY = 'readonly'
+    RECORDSIZE = 'recordsize'
+    SECONDARYCACHE = 'secondarycache'
+    SNAPDIR = 'snapdir'
 
 
 SYSTEM_DATASET_JSON_SCHEMA = {
@@ -86,9 +99,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'mountpoint': SYSDATASET_PATH,
             'chown_config': {
@@ -108,9 +121,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system/cores'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': 0,
@@ -121,9 +134,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system/nfs'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': 0,
@@ -140,9 +153,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system/samba4'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': 0,
@@ -154,11 +167,29 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             ],
         },
         {
+            'name': os.path.join(pool_name, '.system/truenas_zfsrewrited'),
+            'props': {
+                SystemDatasetZfsProperties.ATIME: 'off',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
+                SystemDatasetZfsProperties.PREFETCH: 'none',
+                SystemDatasetZfsProperties.PRIMARYCACHE: 'metadata',
+                SystemDatasetZfsProperties.SECONDARYCACHE: 'none',
+                SystemDatasetZfsProperties.RECORDSIZE: '32k',
+            },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o700,
+            },
+        },
+        {
             'name': os.path.join(pool_name, '.system/truesearch'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': TRUESEARCH_UID,
@@ -175,9 +206,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system/vm'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': LIBVIRT_QEMU_UID,
@@ -200,9 +231,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system/webshare'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': 0,
@@ -219,9 +250,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, f'.system/configs-{uuid}'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
             },
             'chown_config': {
                 'uid': 0,
@@ -232,10 +263,10 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, f'.system/netdata-{uuid}'),
             'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
-                'canmount': 'noauto',
+                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+                SystemDatasetZfsProperties.READONLY: 'off',
+                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
+                SystemDatasetZfsProperties.CANMOUNT: 'noauto',
             },
             'chown_config': {
                 'uid': 999,

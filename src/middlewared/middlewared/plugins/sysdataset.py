@@ -16,7 +16,7 @@ from middlewared.api.current import (
     SystemDatasetEntry, SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, SystemDatasetUpdateArgs,
     SystemDatasetUpdateResult, ZFSResourceQuery
 )
-from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
+from middlewared.plugins.system_dataset.hierarchy import SystemDatasetZfsProperties, get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
@@ -453,7 +453,7 @@ class SystemDatasetService(ConfigService):
                 self.s.zfs.resource.query_impl,
                 ZFSResourceQuery(
                     paths=list(datasets),
-                    properties=['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                    properties=['encryption', 'quota', 'used'] + list(SystemDatasetZfsProperties)
                 )
             )
         }
@@ -679,7 +679,7 @@ class SystemDatasetService(ConfigService):
             # the system dataset so any service that could potentially open
             # a file descriptor underneath /var/log will no longer need to be
             # stopped/restarted to allow the system dataset to migrate
-            restart = ['netdata']
+            restart = ['netdata', 'truenas_zfsrewrited']
             if self.middleware.call_sync('service.started', 'nfs'):
                 restart.append('nfs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):

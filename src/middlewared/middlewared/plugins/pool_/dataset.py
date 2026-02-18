@@ -126,11 +126,14 @@ class PoolDatasetService(CRUDService):
         for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
         if `null` is specified all properties of the snapshot would be retrieved in this case.
         """
+        tier_enabled = self.call_sync2(self.s.zfs.tier.config)['enabled']
+
         return generic_query(
             tls.lzh.iter_root_filesystems,
             filters,
             options,
-            options.pop("extra", {})
+            options.pop("extra", {}),
+            tier_enabled=tier_enabled,
         )
 
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
