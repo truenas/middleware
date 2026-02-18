@@ -1,7 +1,11 @@
-from typing import Literal, Optional
+from __future__ import annotations
 
-from pyroute2 import NDB
-from pyroute2.ndb.transaction import CheckProcessException
+from typing import Literal
+
+from truenas_pynetif.address.address import add_address, remove_address
+from truenas_pynetif.address.link import set_link_up, set_link_down, set_link_mtu
+from truenas_pynetif.address.netlink import IFOperState, get_link, get_link_addresses
+from truenas_pynetif.netlink import AddressAlreadyExists, AddressDoesNotExist, DeviceNotFound, netlink_route
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPvAnyAddress
@@ -25,7 +29,7 @@ class RdmaInterfaceCreateCheck(BaseModel):
 
 class RdmaInterfaceCreate(RDMAInterfaceEntry):
     id: Excluded = excluded_field()
-    check: Optional[RdmaInterfaceCreateCheck] = None
+    check: RdmaInterfaceCreateCheck | None = None
 
 
 class RdmaInterfaceUpdate(RdmaInterfaceCreate, metaclass=ForUpdateMetaclass):
@@ -56,18 +60,6 @@ class RdmaInterfaceDeleteArgs(BaseModel):
 
 class RdmaInterfaceDeleteResult(BaseModel):
     result: Literal[True]
-
-
-class ConnectionChecker:
-    def __init__(self, middleware, ifname, ip, mac=None):
-        self.middleware = middleware
-        self.ifname = ifname
-        self.ip = ip
-        self.mac = mac
-
-    def commit(self):
-        if not self.middleware.call_sync('rdma.interface.local_ping', self.ifname, self.ip, self.mac):
-            raise CheckProcessException('CheckProcess failed')
 
 
 class RDMAInterfaceModel(sa.Model):
@@ -170,54 +162,121 @@ class RDMAInterfaceService(CRUDService):
                 self.logger.warning('Failed to configure remote RDMA interface')
                 return False
 
+    def _apply_config(self, sock, idx, address, prefixlen, mtu, current_addresses):
+        """Idempotently add the desired address, remove stale addresses,
+        set mtu and bring the link up. Adds the desired address first so
+        that existing RDMA traffic is never interrupted by a remove-then-add
+        cycle when the config hasn't changed."""
+        if mtu:
+            set_link_mtu(sock, mtu, index=idx)
+
+        try:
+            add_address(sock, address, prefixlen, index=idx)
+        except AddressAlreadyExists:
+            pass
+
+        for addr in current_addresses:
+            if addr.address != address or addr.prefixlen != prefixlen:
+                try:
+                    remove_address(sock, addr.address, addr.prefixlen, index=idx)
+                except AddressDoesNotExist:
+                    pass
+
+        set_link_up(sock, index=idx)
+
+    def _deconfigure(self, sock, idx, current_addresses):
+        """Remove all addresses and bring the link down.
+
+        Called when deleting an RDMA interface configuration."""
+        for addr in current_addresses:
+            try:
+                remove_address(sock, addr.address, addr.prefixlen, index=idx)
+            except AddressDoesNotExist:
+                pass
+
+        set_link_down(sock, index=idx)
+
+    def _rollback(self, sock, idx, prev_addresses, prev_mtu, was_up):
+        """Best-effort restore of interface to its previous state.
+
+        Re-adds original addresses first (before removing new ones)
+        to avoid disrupting traffic that may still be flowing on a
+        previously-valid address."""
+        try:
+            for addr in prev_addresses:
+                try:
+                    add_address(sock, addr.address, addr.prefixlen, index=idx)
+                except AddressAlreadyExists:
+                    pass
+
+            prev_set = {(a.address, a.prefixlen) for a in prev_addresses}
+            for addr in get_link_addresses(sock, index=idx):
+                if (addr.address, addr.prefixlen) not in prev_set:
+                    try:
+                        remove_address(sock, addr.address, addr.prefixlen, index=idx)
+                    except AddressDoesNotExist:
+                        pass
+
+            set_link_mtu(sock, prev_mtu, index=idx)
+
+            if was_up:
+                set_link_up(sock, index=idx)
+            else:
+                set_link_down(sock, index=idx)
+        except Exception:
+            self.logger.error('Rollback of RDMA interface configuration failed', exc_info=True)
+
     def local_configure_interface(self, ifname, address, prefixlen=None, mtu=None, check=None):
-        """Configure the interface."""
+        """Configure an RDMA-capable network interface.
+
+        If address is provided, ensure it is applied (along with mtu)
+        and remove any stale addresses, then bring the link up.
+        If address is None, remove all addresses and bring the link down.
+
+        On failure the interface is rolled back to its previous state.
+        """
         netdev = self.middleware.call_sync('rdma.interface.ifname_to_netdev', ifname)
         if not netdev:
             self.logger.error('Could not find netdev associated with %s', ifname)
             return False
 
         try:
-            with NDB(log='off') as ndb:
-                with ndb.interfaces[netdev] as dev:
-                    with ndb.begin() as ctx:
-                        # First we will check to see if any change is required
-                        dirty = True
-                        if address:
-                            for addr in dev.ipaddr:
-                                if address == addr['address'] and prefixlen == addr['prefixlen']:
-                                    dirty = False
-                        if mtu and not dirty:
-                            dirty = mtu != dev['mtu']
+            with netlink_route() as sock:
+                try:
+                    link = get_link(sock, netdev)
+                except DeviceNotFound:
+                    self.logger.error('Network device %s does not exist', netdev)
+                    return False
 
-                        # Now reconfigure if necessary
-                        if dirty:
-                            for addr in dev.ipaddr:
-                                ctx.push(dev.del_ip(address=addr['address'],
-                                                    prefixlen=addr['prefixlen'],
-                                                    family=addr['family']))
-                            if mtu:
-                                dev['mtu'] = mtu
-                            if address:
-                                ctx.push(dev.add_ip(address=address, prefixlen=prefixlen).set('state', 'up'))
-                        else:
-                            # not dirty
-                            if dev['state'] != 'up':
-                                ctx.push(dev.set('state', 'up'))
-                        if check:
-                            ctx.push(ConnectionChecker(self.middleware,
-                                                       ifname,
-                                                       check['ping_ip'],
-                                                       check.get('ping_mac')))
-            if dirty and not address:
-                with NDB(log='off') as ndb:
-                    with ndb.interfaces[netdev] as dev:
-                        dev.set('state', 'down')
-            if check:
-                self.logger.info(f'Validated communication of {netdev} with IP {check["ping_ip"]}')
+                idx = link.index
+                prev_addresses = get_link_addresses(sock, index=idx)
+                prev_mtu = link.mtu
+                was_up = link.operstate == IFOperState.UP
+
+                try:
+                    if address:
+                        self._apply_config(sock, idx, address, prefixlen, mtu, prev_addresses)
+                    else:
+                        self._deconfigure(sock, idx, prev_addresses)
+                except Exception:
+                    self.logger.error('Failed to configure RDMA interface, attempting rollback', exc_info=True)
+                    self._rollback(sock, idx, prev_addresses, prev_mtu, was_up)
+                    return False
+
+                if check:
+                    msg = f'communication of {netdev} with IP {check["ping_ip"]}'
+                    if not self.middleware.call_sync(
+                        'rdma.interface.local_ping',
+                        ifname,
+                        check['ping_ip'],
+                        check.get('ping_mac')
+                    ):
+                        self.logger.warning('Failed to validate %s, attempting rollback', msg)
+                        self._rollback(sock, idx, prev_addresses, prev_mtu, was_up)
+                        return False
+                    self.logger.info('Validated %s', msg)
+
             return True
-        except CheckProcessException:
-            self.logger.info(f'Failed to validate communication of {netdev} with IP {check["ping_ip"]}')
         except Exception:
             self.logger.error('Failed to configure RDMA interface', exc_info=True)
 
