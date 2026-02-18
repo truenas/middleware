@@ -10,6 +10,9 @@ from .netdata import NetdataService
 from .nfs import NFSService
 from .nscd import NSCDService
 from .openipmi import OpenIpmiService
+from .truenas_zfstierd import TruenasZfstierdService
+from .webshare import WebShareService
+
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
@@ -83,6 +86,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasZfstierdService,
     UserService,
     WebShareService,
 ]
