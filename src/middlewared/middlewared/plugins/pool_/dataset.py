@@ -141,12 +141,15 @@ class PoolDatasetService(CRUDService):
         """
         extra = options.pop('extra', {})
         exclude_internal_datasets = extra.pop('exclude_internal_datasets', True)
+        tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
+
         return generic_query(
             tls.lzh.iter_root_filesystems,
             filters,
             options,
             extra,
             exclude_internal_datasets=exclude_internal_datasets,
+            tier_enabled=tier_enabled,
         )
 
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):

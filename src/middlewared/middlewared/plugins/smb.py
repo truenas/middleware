@@ -746,6 +746,7 @@ class SharingSMBModel(sa.Model):
 
 class SharingSMBService(SharingService):
 
+    include_tier_info = True
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
     path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
@@ -1555,6 +1556,7 @@ class SharingSMBService(SharingService):
                 data[param] = True
 
         data.pop(self.locked_field, None)
+        data.pop('tier', None)
         data.update(opts)
 
         # hosts allow and hosts deny are space-delimited
