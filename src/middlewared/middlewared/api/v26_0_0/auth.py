@@ -93,8 +93,8 @@ class AuthCommonOptions(BaseModel):
     user_info: bool = True  # include auth.me in successful result
     """Whether to include detailed user information in the authentication response."""
     reconnect_token: bool = False
-    """Whether to include a reauthentication token in the authentication response. The `ttl` for the
-    generated token depends on the TrueNAS webui setting for preferences->lifetime, with a default
+    """Whether to include a reauthentication token in the authentication response. The `ttl` for the \
+    generated token depends on the TrueNAS webui setting for preferences->lifetime, with a default \
     value of 600 seconds."""
 
 
