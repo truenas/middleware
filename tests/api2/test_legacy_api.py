@@ -150,6 +150,7 @@ def test_config_method(legacy_api_client, config_method):
             "update.config",
             "ups.config",
             "webshare.config",
+            "zfs.tier.config",
         )
     ):
         return
@@ -159,6 +160,7 @@ def test_config_method(legacy_api_client, config_method):
         and config_method in {
             "lxc.config",
             "webshare.config",
+            "zfs.tier.config",
         }
     ):
         return

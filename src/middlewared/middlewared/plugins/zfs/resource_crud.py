@@ -353,7 +353,11 @@ class ZFSResourceService(Service):
     def query_impl(self, tls: typing.Any, data: ZFSResourceQuery) -> list[dict[str, typing.Any]]:
         self.validate_query_args(data)
 
-        results = query_impl(tls.lzh, data.model_dump())
+        tier_enabled = False
+        if data.get_tier:
+            tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
+
+        results = query_impl(tls.lzh, data.model_dump(), tier_enabled=tier_enabled)
         if data.nest_results:
             return self.nest_paths(results)
         else:
