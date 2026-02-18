@@ -274,7 +274,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 **connect_kwargs,
                 options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
             ) as conn:
-                print(await conn.run(f'test -d {shlex.quote(remote_path)}', check=True))
+                await conn.run(f'ls -d {shlex.quote(remote_path)}', check=True)
         except asyncio.TimeoutError:
             verrors.add(
                 f'{schema}.remotehost',
@@ -306,19 +306,12 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 f'{connect_kwargs["username"]}.'
             )
         except asyncssh.ProcessError as e:
-            if e.code == 1:
-                verrors.add(
-                    f'{schema}.remotepath',
-                    'The Remote Path you specified does not exist or is not a directory. '
-                    'Either create one yourself on the remote machine or uncheck the '
-                    'validate_rpath field'
-                )
-            else:
-                verrors.add(
-                    f'{schema}.remotepath',
-                    f'Connection to Remote Host was successful but failed to verify '
-                    f'Remote Path. {e.__str__()}'
-                )
+            verrors.add(
+                f'{schema}.remotepath',
+                'The Remote Path you specified does not exist or is not a directory. '
+                'Either create one yourself on the remote machine or uncheck the '
+                f'validate_rpath field. {e.stderr.strip()}'
+            )
         except asyncssh.Error as e:
             if e.__class__.__name__ in e.__str__():
                 exception_reason = e.__str__()
@@ -331,10 +324,15 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
     @private
     async def validate_ssh_task(self, verrors: ValidationErrors, data: dict, schema: str, user: dict) -> None:
+        ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
+        known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
+
         if data['ssh_credentials']:
             connect_kwargs = await self.get_ssh_credentials_connnect_kwargs(verrors, data['ssh_credentials'], schema)
+            known_hosts_location = 'SSH Connection Settings'
         else:
             connect_kwargs = self.get_connect_kwargs(verrors, data, schema, user['pw_dir'])
+            known_hosts_location = known_hosts_path
 
         remote_path = data.get('remotepath')
         if not remote_path:
@@ -342,9 +340,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         if not (data['enabled'] and connect_kwargs):
             return
-
-        ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
-        known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
 
         if 'known_hosts' not in connect_kwargs:
             if known_hosts := await self.get_known_hosts(
@@ -359,6 +354,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 user['pw_gid']
             ):
                 connect_kwargs['known_hosts'] = known_hosts
+                known_hosts_location = known_hosts_path
 
         verrors.check()
 
@@ -367,7 +363,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         elif not connect_kwargs['known_hosts'].match(connect_kwargs['host'], '', None)[0]:
             verrors.add(
                 f'{schema}.remotehost',
-                f'Host key not found in {known_hosts_path}',
+                f'Host key not found in {known_hosts_location}',
                 CallError.ESSLCERTVERIFICATIONERROR,
             )
 

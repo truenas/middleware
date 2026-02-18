@@ -324,6 +324,18 @@ def test_ipv6_ssh_credentials(cleanup, localuser, remoteuser, src, dst, ipv6_ssh
     assert ssh(f"ls -1 {dst}") == "test\n"
 
 
+def test_validate_rpath(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": f"{dst}/",
+        "validate_rpath": True,
+    }):
+        pass
+
+
 def test_validate_rpath_does_not_exist(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
     with pytest.raises(ValidationErrors) as e:
         with task({
@@ -343,3 +355,15 @@ def test_validate_rpath_does_not_exist(cleanup, localuser, remoteuser, src, dst,
             errno.EINVAL,
         )
     ]
+
+
+def test_keyscan(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": f"{dst}/",
+        "validate_rpath": False,
+    }):
+        pass
