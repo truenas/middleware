@@ -358,6 +358,7 @@ class AlertService(Service):
                             "id": alert_class.name,
                             "title": alert_class.title,
                             "level": alert_class.level.name,
+                            "product_types": list(alert_class.products),
                             "proactive_support": alert_class.proactive_support,
                         }
                         for alert_class in classes
