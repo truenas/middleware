@@ -18,6 +18,7 @@ from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
+from .truenas_zfstierd import TruenasZfstierdService
 from .webshare import WebShareService
 
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
@@ -88,6 +89,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasZfstierdService,
     UserService,
     WebShareService,
 ]
