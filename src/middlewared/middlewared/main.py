@@ -93,6 +93,7 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -171,6 +172,7 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.catalog = CatalogService(middleware)
+        self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)

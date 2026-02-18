@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Iterable, NamedTuple, overload, Protocol, Sequence, TypeVar
+from typing import Any, Iterable, NamedTuple, overload, Protocol, Sequence, TypeVar, Literal, Required, TypedDict
 
 from middlewared.api.base.validators.filters import validate_filters
 from middlewared.api.base.validators.filter_ops import opmap
@@ -342,6 +342,61 @@ def do_get(rv: list[_Entry]) -> _Entry:
         return rv[0]
     except IndexError:
         raise MatchNotFound() from None
+
+
+class _FilterListBaseOptions(TypedDict, total=False):
+    select: list[str | list]
+    order_by: list[str]
+    offset: int
+    limit: int
+    force_sql_filters: bool
+    relationships: bool
+    extend: str | None
+    extend_context: str | None
+    prefix: str | None
+    extra: dict
+
+
+class _FilterListGetOptions(_FilterListBaseOptions, total=False):
+    get: Required[Literal[True]]
+    count: Literal[False]
+
+
+class _FilterListCountOptions(_FilterListBaseOptions, total=False):
+    count: Required[Literal[True]]
+    get: Literal[False]
+
+
+@overload
+def filter_list(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence] | None = None,
+    options: _FilterListCountOptions = ...,
+) -> int: ...
+
+
+@overload
+def filter_list(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence] | None = None,
+    options: _FilterListGetOptions = ...,
+) -> _Entry: ...
+
+
+@overload
+def filter_list(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence] | None = None,
+    options: None = None,
+) -> list[_Entry]: ...
+
+
+@overload
+def filter_list(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence] | None = None,
+    options: dict | None = None,
+) -> list[_Entry] | _Entry | int: ...
 
 
 def filter_list(

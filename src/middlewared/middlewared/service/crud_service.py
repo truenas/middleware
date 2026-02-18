@@ -109,7 +109,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
     CRUD stands for Create Retrieve Update Delete.
     """
 
-    def __init__(self, middleware):
+    def __init__(self, middleware) -> None:
         super().__init__(middleware)
         if self._config.event_register and self._config.entry:
             if self._config.role_prefix:
@@ -209,6 +209,8 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
 
     async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
         def send_event(rv):
+            if isinstance(rv, BaseModel):
+                rv = rv.model_dump()
             if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
                 kwargs = {'id': oid or rv['id']}
                 if isinstance(rv, dict):
