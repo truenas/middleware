@@ -62,6 +62,8 @@ if TYPE_CHECKING:
 
 
 PAM_SERVICES = {TRUENAS_PAM_SERVICE, TRUENAS_PAM_API_KEY_SERVICE}
+DEFAULT_TOKEN_TTL = 600
+MIN_RECONNECT_TOKEN_TTL = 60
 
 
 class TokenManager:
@@ -444,7 +446,7 @@ class AuthService(Service):
             )
 
         if ttl is None:
-            ttl = 600
+            ttl = DEFAULT_TOKEN_TTL
 
         # FIXME: we need to properly define attrs in the schema
         if (job_id := attrs.get('job')) is not None:
@@ -565,7 +567,7 @@ class AuthService(Service):
             'mechanism': AuthMech.PASSWORD_PLAIN,
             'username': username,
             'password': password,
-            'login_options': {'user_info': False},
+            'login_options': {'user_info': False, 'reconnect_token': False},
         })
 
         match resp['response_type']:
@@ -764,6 +766,7 @@ class AuthService(Service):
 
             login_options
             user_info: boolean - include auth.me output in successful responses.
+            reconnect_token: boolean - include a reconnect token in successful responses.
 
         raises:
             CallError: a middleware CallError may be raised in the following
@@ -795,9 +798,12 @@ class AuthService(Service):
         Notes about response types:
 
         SUCCESS:
-        additional key:
+        additional keys:
             user_info: includes auth.me output for the resulting authenticated
             credentials.
+            reconnect_token: token that can be used to reauthenticate if the
+            websocket session is interrupted, or null if not requested or not
+            supported by the credential type.
 
         OTP_REQUIRED
         additional key:
@@ -934,10 +940,12 @@ class AuthService(Service):
         match auth_resp.code:
             case PAMCode.PAM_SUCCESS:
                 await login_fn(app, cred)
+                me = None
 
                 response['response_type'] = AuthResp.SUCCESS
                 if data['login_options']['user_info']:
-                    response['user_info'] = await self.me(app)
+                    me = await self.me(app)
+                    response['user_info'] = me
                 else:
                     response['user_info'] = None
 
@@ -956,6 +964,30 @@ class AuthService(Service):
                 # Remove reference to pam handle. This ensures that logout occurs when
                 # the SessionManagerCredential is deallocated or logout() explicitly called
                 auth_ctx.pam_hdl = None
+
+                if data['login_options']['reconnect_token'] and cred.may_create_auth_token:
+                    ttl = DEFAULT_TOKEN_TTL
+                    if not me:
+                        me = await self.me(app)
+
+                    if 'preferences' in me['attributes']:
+                        # Apply UI preferences to TTL for token
+                        ui_ttl = me['attributes']['preferences'].get('lifetime', DEFAULT_TOKEN_TTL)
+                        if isinstance(ui_ttl, int) and ui_ttl >= MIN_RECONNECT_TOKEN_TTL:
+                            ttl = ui_ttl
+
+                    # adjust potentially large UI lifetime down to the maximum session age
+                    ttl = min(ttl, CURRENT_AAL.max_session_age)
+
+                    response['reconnect_token'] = await self.middleware.call('auth.generate_token',
+                        ttl,  # ttl
+                        {},  # Attributes should not be set for reconnect tokens
+                        True,  # match origin
+                        response['authenticator'] == 'LEVEL_2'  # single-use (required if STIG enabled),
+                        app=app
+                    )
+                else:
+                    response['reconnect_token'] = None
 
             case PAMCode.PAM_PERM_DENIED:
                 # Special error code indicating that user lacks API access
@@ -1007,7 +1039,7 @@ class AuthService(Service):
             'mechanism': AuthMech.API_KEY_PLAIN,
             'username': key_entry[0]['username'],
             'api_key': api_key,
-            'login_options': {'user_info': False},
+            'login_options': {'user_info': False, 'reconnect_token': False},
         })
 
         return resp['response_type'] == AuthResp.SUCCESS
@@ -1021,7 +1053,7 @@ class AuthService(Service):
         resp = await self.login_ex(app, {
             'mechanism': AuthMech.TOKEN_PLAIN,
             'token': token_str,
-            'login_options': {'user_info': False},
+            'login_options': {'user_info': False, 'reconnect_token': False},
         })
         return resp['response_type'] == AuthResp.SUCCESS
 
@@ -1061,6 +1093,13 @@ class AuthService(Service):
         Set current user's `attributes` dictionary `key` to `value`.
 
         e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
+
+        Attributes set here will appear in the `auth.me` API response under the `attributes` field.
+
+        WARNING: this API endpoint exists solely for the use of the TrueNAS UX team. The data stored in
+        these attributes *must* be considered opaque from the perspective of the middleware backend,
+        with specific documented exceptions. This endpoint should not be used or relied on by any
+        third-party scripts or workflows.
         """
         user = await self._me(app)
 

@@ -47,6 +47,20 @@ def test_onetime_password_auth_reuse_fail(onetime_password):
         assert resp['response_type'] == 'AUTH_ERR'
 
 
+def test_reconnect_token_null_for_onetime_password(onetime_password):
+    """reconnect_token is null when authenticated via one-time password."""
+    user, otpw = onetime_password
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': user.username,
+            'password': otpw,
+            'login_options': {'reconnect_token': True},
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        assert resp['reconnect_token'] is None
+
+
 def test_onetime_password_generate_token_fail(onetime_password):
     user, otpw = onetime_password
     with client(auth=None) as c:

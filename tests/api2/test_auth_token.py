@@ -7,7 +7,7 @@ import requests
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, client, ssh
-from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.client import truenas_server, password
 from middlewared.test.integration.utils.shell import assert_shell_works
 from middlewared.service_exception import CallError
 
@@ -131,3 +131,59 @@ def test_token_job_validation(job_with_pipe):
     with unprivileged_user_client(roles=['READONLY_ADMIN']) as c:
         with pytest.raises(CallError, match='Job is not owned by current session'):
             c.call("auth.generate_token", 300, {'job': job_with_pipe})
+
+
+def test_reconnect_token_not_requested():
+    """reconnect_token is null by default when not explicitly requested."""
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password(),
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        assert resp['reconnect_token'] is None
+
+
+def test_reconnect_token_returned_on_request():
+    """reconnect_token is a 64-character url-safe token when explicitly requested."""
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password(),
+            'login_options': {'reconnect_token': True},
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        assert isinstance(resp['reconnect_token'], str)
+        assert len(resp['reconnect_token']) == 64
+
+
+def test_reconnect_token_can_reauthenticate():
+    """A reconnect token returned from login_ex can be used to authenticate a new session."""
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password(),
+            'login_options': {'reconnect_token': True},
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        token = resp['reconnect_token']
+
+    with client(auth=None) as c:
+        assert c.call('auth.login_with_token', token)
+
+
+def test_reconnect_token_with_user_info_false():
+    """reconnect_token is still returned when user_info=False (exercises the lazy auth.me fetch)."""
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password(),
+            'login_options': {'user_info': False, 'reconnect_token': True},
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        assert resp['user_info'] is None
+        assert len(resp['reconnect_token']) == 64
