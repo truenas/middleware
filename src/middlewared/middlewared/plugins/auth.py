@@ -983,7 +983,7 @@ class AuthService(Service):
                         ttl,  # ttl
                         {},  # Attributes should not be set for reconnect tokens
                         True,  # match origin
-                        response['authenticator'] == 'LEVEL_2'  # single-use (required if STIG enabled),
+                        response['authenticator'] == 'LEVEL_2',  # single-use (required if STIG enabled)
                         app=app
                     )
                 else:
