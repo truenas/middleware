@@ -208,6 +208,14 @@ class EtcService(Service):
         'truenas_nvdimm': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='truenas_nvdimm', checkpoint=Checkpoint.POST_INIT),
         )),
+        'truenas_zfstierd': EtcGroup(entries=(
+            EtcEntry(
+                renderer_type=RendererType.PY,
+                path='truenas_zfstierd_internal.conf',
+                local_path='truenas_zfstierd',
+                checkpoint=None,
+            ),
+        )),
         'shadow': EtcGroup(
             ctx=(
                 CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
