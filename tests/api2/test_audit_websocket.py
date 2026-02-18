@@ -359,7 +359,7 @@ def test_login_ex_2fa_abandoned(sharing_admin_user):
                             },
                         },
                         "error": (
-                            "Abandoning login attempt after being presented wtih "
+                            "Abandoning login attempt after being presented with "
                             "requirement for second factor for authentication."
                         ),
                     },

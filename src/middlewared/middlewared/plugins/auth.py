@@ -645,7 +645,7 @@ class AuthService(Service):
 
             if auth_ctx.next_mech is AuthMech.OTP_TOKEN:
                 errmsg = (
-                    'Abandoning login attempt after being presented wtih '
+                    'Abandoning login attempt after being presented with '
                     'requirement for second factor for authentication.'
                 )
 
