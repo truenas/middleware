@@ -120,13 +120,14 @@ def test_disk_wipe_abort():
     else:
         assert False, result
 
+
 def test_disk_format():
     """Explicitly test the `disk.format` method since
     this is the endpoint that is eventually called when
     a disk is added to a zpool using our public API."""
     disk = call("disk.get_unused")[0]["name"]
-    # create a GPT label and a 100MiB EXT4 partition
-    ssh(f"parted -s /dev/{disk} mklabel gpt mkpart ext4 16384s 100MiB; mkfs.ext4 /dev/{disk}1")
+    # create a GPT label and an EXT4 partition (100MiB total)
+    ssh(f"sgdisk -o -n 1:16384:+92M -c 1:ext4 /dev/{disk}; mkfs.ext4 /dev/{disk}1")
     for i in range(20):
         # Depending on the load of the CI infrastructure
         # this can take a bit of time for the partition
