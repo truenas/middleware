@@ -753,6 +753,11 @@ class SharingSMBEntry(BaseModel):
     ])
     """ Additional configuration related to the configured SMB share purpose. If null, then the default \
     options related to the share purpose will be applied. """
+    tier: Literal['REGULAR', 'FAST'] | None = None
+    """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
+    managed through API endpoints in the `pool.dataset` namespace.
+
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed or if tiering is disabled."""
 
     @classmethod
     def normalize_legacy_fields(cls, data_in: dict) -> dict:
@@ -828,6 +833,7 @@ class SmbShareCreate(SharingSMBEntry):
     dataset: Excluded = excluded_field()
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
     @model_validator(mode='after')
     def check_purpose_options(self) -> Self:
