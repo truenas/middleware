@@ -310,7 +310,7 @@ class AuthLoginExArgs(BaseModel):
 class AuthLoginExResult(BaseModel):
     result: Union[
         AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
-        AuthRespScram
+        AuthRespScram, AuthRespDenied
     ] = Field(discriminator='response_type')
     """Authentication response indicating success, failure, or additional steps required."""
 
