@@ -121,7 +121,7 @@ def sync_impl(
 
 def sync_interface_impl(
     ctx: ServiceContext, name: str, node: str | None = None
-) -> bool:
+) -> None:
     """Configure a single interface.
 
     Args:

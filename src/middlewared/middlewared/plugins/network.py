@@ -1628,7 +1628,7 @@ class InterfaceService(CRUDService):
         # Configure all interfaces and unconfigure those not in database
         cloned_interfaces, run_dhcp, autoconfigure = await self.middleware.run_in_thread(
             sync_impl,
-            self,
+            self.context,
             sync_data,
             internal_interfaces,
         )
