@@ -1101,6 +1101,12 @@ class AuthService(Service):
         these attributes *must* be considered opaque from the perspective of the middleware backend,
         with specific documented exceptions. This endpoint should not be used or relied on by any
         third-party scripts or workflows.
+
+        WARNING: this API endpoint is not intended for storing security-sensitive information. The
+        backend storage for this data is not encrypted and it is indexed by unix user id rather than
+        database ID, which exposes a risk of stale settings being reused if a new user gets assigned
+        the same unix user id as an previously-existing one. This is of particular concern when users
+        are provided by directory services.
         """
         user = await self._me(app)
 
