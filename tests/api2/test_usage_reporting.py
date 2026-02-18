@@ -1,14 +1,16 @@
-import pytest
-import time
 from itertools import chain
-from middlewared.test.integration.assets.nfs import nfs_server
-from middlewared.test.integration.assets.ftp import ftp_server
-from middlewared.test.integration.assets.pool import dataset as nfs_dataset
-from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.client import truenas_server
-from protocols import ftp_connection, SSH_NFS, nfs_share
+import time
+
+import pytest
 
 from auto_config import password, pool_name, user
+from middlewared.test.integration.assets.ftp import ftp_server
+from middlewared.test.integration.assets.nfs import nfs_server
+from middlewared.test.integration.assets.pool import dataset as nfs_dataset
+from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server, client
+from middlewared.test.integration.utils.shell import webshell_exec
+from protocols import SSH_NFS, ftp_connection, nfs_share
 
 
 class GatherTypes:
@@ -89,4 +91,52 @@ def test_ftp_reporting(get_usage_sample):
                 assert usage_sample['FTP']['num_connections'] == 2
 
 
-# Possible TODO:  Add validation of the entries
+def test_count_method_calls():
+    """
+    Make a bunch of API calls using SSH, websocket, and webshell connections
+    to verify that usage.gather counts them all in its method_stats dictionary.
+
+    Call usage.gather once at the beginning and once at the end.
+    """
+    baseline_stats = call('usage.gather')['method_stats']
+
+    # SSH
+    ssh('midclt call system.info')
+
+    # Websocket client
+    with client(ssl=False) as c:
+        c.call('system.version')
+
+    # Webshell
+    output = webshell_exec('midclt call system.ready')
+    assert 'true' in output.lower() or 'false' in output.lower()
+
+    # Multiple calls in the same SSH session
+    ssh('midclt call system.host_id;' * 3)
+    ssh('midclt call system.product_type; midclt call system.version; midclt call failover.licensed')
+
+    # Reopen websocket connection
+    with client(ssl=False) as c:
+        c.call('system.product_type')
+
+    # Check the reported number of calls against the
+    # expected number for each method that was called
+    COUNTS = {
+        'system.info': 1,
+        'system.version': 2,
+        'system.ready': 1,
+        'system.host_id': 3,
+        'system.product_type': 2,
+        'failover.licensed': 1,
+    }
+    latest_stats = call('usage.gather')['method_stats']
+    inconsistencies = []
+    for method, expected_count in COUNTS.items():
+        actual_count = latest_stats.get(method, 0) - baseline_stats.get(method, 0)
+        if actual_count != expected_count:
+            inconsistencies.append((method, expected_count, actual_count))
+
+    assert not inconsistencies, '\n'.join(
+        f'{method}: expected {expected_count}, got {actual_count}'
+        for method, expected_count, actual_count in inconsistencies
+    )
