@@ -56,6 +56,8 @@ class AlertCategoryClass(BaseModel):
     """Human-readable title for the alert class."""
     level: str
     """Default severity level for alerts in this class."""
+    product_types: list[Literal["COMMUNITY_EDITION", "ENTERPRISE"]]
+    """Product types where this alert class is available."""
     proactive_support: bool
     """Whether this alert class is included in proactive support monitoring."""
 
