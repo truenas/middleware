@@ -303,6 +303,37 @@ def test_password_login_failed():
             pass
 
 
+def test_login_ex_denied():
+    """A local user with valid credentials but no TrueNAS privilege receives DENIED."""
+    password = "test1234"
+    with user({
+        "username": "noapiuser",
+        "full_name": "No API Access User",
+        "group_create": True,
+        "password": password,
+    }) as u:
+        with client(auth=None) as c:
+            with expect_audit_log([
+                {
+                    "event": "AUTHENTICATION",
+                    "event_data": {
+                        "credentials": {
+                            "credentials": "LOGIN_PASSWORD",
+                            "credentials_data": {"username": u["username"]},
+                        },
+                        "error": "User lacks API access.",
+                    },
+                    "success": False,
+                }
+            ], include_logins=True):
+                resp = c.call("auth.login_ex", {
+                    "mechanism": "PASSWORD_PLAIN",
+                    "username": u["username"],
+                    "password": password,
+                })
+                assert resp["response_type"] == "DENIED"
+
+
 def test_token_login():
     token = call("auth.generate_token", 300, {}, True)
 
