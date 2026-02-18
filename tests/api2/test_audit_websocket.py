@@ -334,6 +334,81 @@ def test_login_ex_denied():
                 assert resp["response_type"] == "DENIED"
 
 
+def test_login_ex_2fa_abandoned(sharing_admin_user):
+    """After OTP_REQUIRED, sending a non-OTP mechanism logs a LOGIN_TWOFACTOR
+    abandonment audit entry and restarts the auth flow."""
+    with enabled_twofactor_auth():
+        call("user.renew_2fa_secret", sharing_admin_user.username, {"interval": 60})
+
+        with client(auth=None) as c:
+            resp = c.call("auth.login_ex", {
+                "mechanism": "PASSWORD_PLAIN",
+                "username": sharing_admin_user.username,
+                "password": sharing_admin_user.password,
+            })
+            assert resp["response_type"] == "OTP_REQUIRED"
+
+            with expect_audit_log([
+                {
+                    "event": "AUTHENTICATION",
+                    "event_data": {
+                        "credentials": {
+                            "credentials": "LOGIN_TWOFACTOR",
+                            "credentials_data": {
+                                "username": sharing_admin_user.username,
+                            },
+                        },
+                        "error": (
+                            "Abandoning login attempt after being presented wtih "
+                            "requirement for second factor for authentication."
+                        ),
+                    },
+                    "success": False,
+                }
+            ], include_logins=True):
+                # Sending PASSWORD_PLAIN while OTP is pending triggers abandonment
+                # and restarts the flow, so the response is OTP_REQUIRED again.
+                resp = c.call("auth.login_ex", {
+                    "mechanism": "PASSWORD_PLAIN",
+                    "username": sharing_admin_user.username,
+                    "password": sharing_admin_user.password,
+                })
+                assert resp["response_type"] == "OTP_REQUIRED"
+
+
+def test_login_ex_expired_api_key():
+    """An API key with a past expiry returns EXPIRED and logs an audit entry."""
+    with api_key() as key_str:
+        key_id = int(key_str.split("-")[0])
+        # Bypass the future-only validation by writing the expiry directly to
+        # the datastore (epoch = 1970-01-01, unambiguously in the past).
+        call("datastore.update", "account.api_key", key_id, {"expiry": 1})
+        # Regenerate the PAM keyring so pam_truenas sees the past expiry
+        # and returns PAM_AUTHINFO_UNAVAIL on the next auth attempt.
+        call("etc.generate", "pam_truenas")
+
+        with client(auth=None) as c:
+            with expect_audit_log([
+                {
+                    "event": "AUTHENTICATION",
+                    "event_data": {
+                        "credentials": {
+                            "credentials": "API_KEY",
+                            "credentials_data": {"username": "root", "api_key": ANY},
+                        },
+                        "error": "Api key is expired",
+                    },
+                    "success": False,
+                }
+            ], include_logins=True):
+                resp = c.call("auth.login_ex", {
+                    "mechanism": "API_KEY_PLAIN",
+                    "username": "root",
+                    "api_key": key_str,
+                })
+                assert resp["response_type"] == "EXPIRED"
+
+
 def test_token_login():
     token = call("auth.generate_token", 300, {}, True)
 
