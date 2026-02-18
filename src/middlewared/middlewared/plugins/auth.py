@@ -977,7 +977,7 @@ class AuthService(Service):
                             ttl = ui_ttl
 
                     # adjust potentially large UI lifetime down to the maximum session age
-                    ttl = min(ttl, CURRENT_AAL.max_session_age)
+                    ttl = min(ttl, CURRENT_AAL.level.max_session_age)
 
                     response['reconnect_token'] = await self.middleware.call(
                         'auth.generate_token',
