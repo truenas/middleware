@@ -7,6 +7,7 @@ from truenas_pynetif.address.address import add_address, remove_address, replace
 from truenas_pynetif.address.constants import AddressFamily, IFFlags
 from truenas_pynetif.address.get_ipaddresses import get_link_addresses
 from truenas_pynetif.address.link import set_link_alias, set_link_mtu, set_link_up
+from truenas_pynetif.ethtool import DeviceNotFound, get_ethtool, OperationNotSupported
 from truenas_pynetif.netlink import AddressDoesNotExist, AddressInfo, LinkInfo
 
 from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop
@@ -203,6 +204,15 @@ def configure_addresses_impl(
                 set_link_mtu(sock, data["int_mtu"], index=link_index)
         elif link.mtu != 1500:
             set_link_mtu(sock, 1500, index=link_index)
+
+    # Apply FEC mode (physical interfaces only; virtual interfaces never have int_fec_mode set)
+    if fec_mode := data.get("int_fec_mode"):
+        try:
+            get_ethtool().set_fec(name, fec_mode)
+        except (OperationNotSupported, DeviceNotFound):
+            pass
+        except Exception:
+            ctx.logger.warning("Failed to set FEC mode on %s", name, exc_info=True)
 
     # Set interface description
     if data["int_name"]:

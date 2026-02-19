@@ -81,6 +81,7 @@ class NetworkInterfaceModel(sa.Model):
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
+    int_fec_mode = sa.Column(sa.String(10), nullable=True)
 
 
 class NetworkInterfaceLinkAddressModel(sa.Model):
@@ -254,6 +255,9 @@ class InterfaceService(CRUDService):
             'description': config['int_name'],
             'mtu': config['int_mtu'],
         })
+        if itype == InterfaceType.PHYSICAL:
+            if fec_mode := config.get('int_fec_mode'):
+                iface['fec_mode'] = fec_mode
 
         if ha_hardware:
             info = ('INET', 32) if config['int_version'] == 4 else ('INET6', 128)
@@ -1088,6 +1092,7 @@ class InterfaceService(CRUDService):
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'mtu': data.get('mtu') or None,
+            'fec_mode': data.get('fec_mode'),
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1221,6 +1226,8 @@ class InterfaceService(CRUDService):
         )
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+        if 'fec_mode' in data and new['type'] != 'PHYSICAL':
+            verrors.add('interface.update.fec_mode', 'FEC mode can only be set on physical interfaces.')
 
         verrors.check()
 

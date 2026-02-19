@@ -117,6 +117,8 @@ class InterfaceEntryState(BaseModel):
     pcp: int | None = NotRequired
     """Priority Code Point for VLAN traffic prioritization. Values 0-7 map to different QoS priority levels, \
     with 0 being lowest and 7 highest priority."""
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] | None = NotRequired
+    """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces."""
 
 
 class InterfaceEntry(BaseModel):
@@ -140,6 +142,8 @@ class InterfaceEntry(BaseModel):
     """Human-readable description of the interface."""
     mtu: int | None
     """Maximum transmission unit size for the interface."""
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] = NotRequired
+    """Forward Error Correction (FEC) mode. Only valid for physical interfaces."""
     vlan_parent_interface: str | None = NotRequired
     """Parent interface for VLAN configuration."""
     vlan_tag: int | None = NotRequired
@@ -291,6 +295,16 @@ class InterfaceServicesRestartedOnSyncItem(BaseModel):
 
 class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"]
+    """
+    Forward Error Correction (FEC) mode. Only valid for physical interfaces.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
 
 
 # -------------------   Args and Results   ------------------- #
