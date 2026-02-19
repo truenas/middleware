@@ -315,3 +315,15 @@ def test_incorrect_image_version(ubuntu_image):
             pass
 
     assert ve.value.errors[0].attribute == 'container_create.image.version'
+
+
+def test_container_device_nic_crud(ubuntu_container):
+    device = call("container.device.create", {
+        "container": ubuntu_container["id"],
+        "attributes": {"dtype": "NIC"},
+    })
+    try:
+        assert device["attributes"]["dtype"] == "NIC"
+        assert device["attributes"]["mac"]  # auto-generated
+    finally:
+        call("container.device.delete", device["id"])
