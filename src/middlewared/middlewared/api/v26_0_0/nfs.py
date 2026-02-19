@@ -12,6 +12,7 @@ from middlewared.api.base import (
     TcpPort,
     exclude_tcp_ports,
 )
+from .zfs_tier import SharingTierInfo
 
 __all__ = [
     "NFSGetNfs3ClientsEntry",
@@ -175,7 +176,7 @@ class SharingNFSEntry(BaseModel):
     Enterprise feature to enable access to the ZFS snapshot directory for the export.
     Export path must be the root directory of a ZFS dataset.
     """
-    tier: Literal['REGULAR', 'FAST'] | None = None
+    tier: SharingTierInfo | None = None
     """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
     managed through API endpoints in the `pool.dataset` namespace.
 

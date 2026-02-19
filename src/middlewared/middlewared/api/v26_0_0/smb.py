@@ -21,6 +21,7 @@ from middlewared.plugins.smb_.constants import LEGACY_SHARE_FIELDS
 from middlewared.utils.lang import undefined
 from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, SearchProtocol, validate_smb_path_suffix
 from .common import QueryFilters, QueryOptions
+from .zfs_tier import SharingTierInfo
 
 
 __all__ = [
@@ -753,7 +754,7 @@ class SharingSMBEntry(BaseModel):
     ])
     """ Additional configuration related to the configured SMB share purpose. If null, then the default \
     options related to the share purpose will be applied. """
-    tier: Literal['REGULAR', 'FAST'] | None = None
+    tier: SharingTierInfo | None = None
     """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
     managed through API endpoints in the `pool.dataset` namespace.
 

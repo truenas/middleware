@@ -11,7 +11,7 @@ from middlewared.api.base import (
     query_result,
     single_argument_args,
 )
-from .common import QueryFilters, QueryOptions
+from .common import DatasetTier, QueryFilters, QueryOptions
 
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
     'ZfsTierRewriteJobRecoverArgs', 'ZfsTierRewriteJobRecoverResult',
     'ZfsTierRewriteJobStatusArgs', 'ZfsTierRewriteJobStatusResult',
+    'SharingTierInfo',
 ]
 
 TierRewriteJobStatus = Literal['COMPLETE', 'RUNNING', 'QUEUED', 'CANCELLED', 'STOPPED', 'ERROR']
@@ -96,6 +97,13 @@ class ZfsTierRewriteJobEntry(BaseModel):
     * `ERROR` - Job halted due to an unrecoverable error. Use `zfs_tier_job.recover` to \
     retry failed files.
     """
+
+
+class SharingTierInfo(BaseModel):
+    tier_type: DatasetTier
+    """Storage performance tier for this share."""
+    tier_job: ZfsTierRewriteJobEntry | None = None
+    """Most recent rewrite job for this share's dataset, or `null` if no job history exists."""
 
 
 class ZfsTierRewriteJobStatusEntry(ZfsTierRewriteJobEntry):
