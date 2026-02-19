@@ -70,14 +70,6 @@ class UPSService(SystemServiceService[UPSEntry]):
         return port_choices(adv_config['serialconsole'], adv_config['serialport'])
 
     @private
-    async def ups_config_extend(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
-        data['mode'] = data['mode'].upper()
-        data['shutdown'] = data['shutdown'].upper()
-        host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
-        data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
-        return data
-
-    @private
     async def dismiss_alerts(self) -> None:
         alerts = list(alerts_mapping().values())
         await self.middleware.call('alert.oneshot_delete', alerts)
