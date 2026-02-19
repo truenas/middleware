@@ -227,8 +227,8 @@ class AuthRespSuccess(BaseModel):
     authenticator: Literal['LEVEL_1', 'LEVEL_2']
     """Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor)."""
     reconnect_token: str | None
-    """Token that can be used to reauthenticate to the truenas server in case websocket session is interrupted. This \
-    will be `null` in the following situations:
+    """Single-use token that can be used to reauthenticate to the truenas server in case websocket session is \
+    interrupted. This will be `null` in the following situations:
 
     1) The initiating authentication request set `reconnect_token` to `false` (default).
     2) The user authenticated via a one-time password, which does not support reconnect token creation.
