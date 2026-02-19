@@ -9,7 +9,8 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "InterfaceEntry", "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
+    "InterfaceEntry", "InterfaceAvailableFecModesArgs", "InterfaceAvailableFecModesResult",
+    "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
     "InterfaceCancelRollbackArgs", "InterfaceCancelRollbackResult", "InterfaceCheckinArgs", "InterfaceCheckinResult",
     "InterfaceCheckinWaitingArgs", "InterfaceCheckinWaitingResult", "InterfaceChoicesArgs", "InterfaceChoicesResult",
     "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
@@ -535,3 +536,13 @@ class InterfaceXmitHashPolicyChoicesResult(BaseModel):
     """Use MAC and IP addresses for traffic distribution across bond members."""
     LAYER3_4: Literal["LAYER3+4"] = Field(alias="LAYER3+4")
     """Use MAC, IP, and TCP/UDP port information for traffic distribution across bond members."""
+
+
+class InterfaceAvailableFecModesArgs(BaseModel):
+    id: str
+    """ID of the interface to query for supported FEC modes."""
+
+
+class InterfaceAvailableFecModesResult(BaseModel):
+    result: list[Literal["AUTO", "RS", "BASER", "OFF", "LLRS"]]
+    """List of FEC modes supported by the interface. Empty list if FEC is not supported."""

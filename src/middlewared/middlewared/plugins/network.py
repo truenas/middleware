@@ -7,7 +7,8 @@ from ipaddress import ip_address, ip_interface
 from middlewared.api import api_method
 from middlewared.plugins.interface.dhcp import dhcp_start
 from middlewared.api.current import (
-    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
+    InterfaceEntry, InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult,
+    InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
     InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
     InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,
@@ -32,6 +33,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
+from truenas_pynetif.ethtool import get_ethtool
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.utils import INTERNAL_INTERFACES
@@ -1227,7 +1229,11 @@ class InterfaceService(CRUDService):
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
         if 'fec_mode' in data and new['type'] != 'PHYSICAL':
-            verrors.add('interface.update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+            verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+        elif 'fec_mode' in data:
+            available = await self.middleware.call('interface.available_fec_modes', oid)
+            if available and data['fec_mode'] not in available:
+                verrors.add('interface_update.fec_mode', f'Unsupported FEC mode. Available: {available}')
 
         verrors.check()
 
@@ -1471,6 +1477,20 @@ class InterfaceService(CRUDService):
         Available lacpdu rate policies for the LACP lagg type interfaces.
         """
         return {i.value: i.value for i in LacpduRateChoices}
+
+    @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
+    async def available_fec_modes(self, id_):
+        """
+        Returns FEC modes supported by physical interface `id`.
+
+        Returns an empty list for non-physical interfaces or interfaces without FEC support.
+        """
+        iface = await self.get_instance(id_)
+        if iface['type'] != 'PHYSICAL':
+            return []
+        return await self.middleware.run_in_thread(
+            lambda: get_ethtool().get_fec_modes(iface['name'])
+        )
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):
