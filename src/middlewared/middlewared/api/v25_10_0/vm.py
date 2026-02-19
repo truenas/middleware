@@ -77,9 +77,9 @@ class VMEntry(BaseModel):
     trusted_platform_module: bool = False
     """Whether to enable virtual Trusted Platform Module (TPM) for the VM."""
     memory: int = Field(ge=20)
-    """Amount of memory allocated to the VM in megabytes."""
+    """Amount of memory allocated to the VM in mebibytes (MiB)."""
     min_memory: int | None = Field(ge=20, default=None)
-    """Minimum memory allocation for dynamic memory ballooning in megabytes. Allows VM memory to shrink \
+    """Minimum memory allocation for dynamic memory ballooning in mebibytes (MiB). Allows VM memory to shrink \
     during low usage but guarantees this minimum. `null` to disable ballooning."""
     hyperv_enlightenments: bool = False
     """Whether to enable Hyper-V enlightenments for improved Windows guest performance."""
@@ -502,11 +502,11 @@ class VMGetVmemoryInUseArgs(BaseModel):
 @single_argument_result
 class VMGetVmemoryInUseResult(BaseModel):
     RNP: int
-    """Running but not provisioned"""
+    """Running but not provisioned, in bytes"""
     PRD: int
-    """Provisioned but not running"""
+    """Provisioned but not running, in bytes"""
     RPRD: int
-    """Running and provisioned"""
+    """Running and provisioned, in bytes"""
 
 
 class VMGetAvailableMemoryArgs(BaseModel):
@@ -516,7 +516,7 @@ class VMGetAvailableMemoryArgs(BaseModel):
 
 class VMGetAvailableMemoryResult(BaseModel):
     result: int
-    """Available memory for virtual machines in megabytes."""
+    """Available memory for virtual machines in bytes."""
 
 
 class VMGetVmMemoryInfoArgs(BaseModel):
