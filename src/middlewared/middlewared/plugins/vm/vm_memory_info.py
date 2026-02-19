@@ -14,7 +14,7 @@ class VMService(Service):
     @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=['VM_READ'])
     async def get_vmemory_in_use(self):
         """
-        The total amount of virtual memory in MB used by guests
+        The total amount of virtual memory in bytes used by guests
 
             Returns a dict with the following information:
                 RNP - Running but not provisioned
