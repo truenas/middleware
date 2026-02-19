@@ -211,9 +211,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 await self.middleware.call('cache.pop', TNC_IPS_CACHE_KEY)
 
             # Send combined IPs to TNC service
-            response = await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
-            if response['error']:
-                raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
+            await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
