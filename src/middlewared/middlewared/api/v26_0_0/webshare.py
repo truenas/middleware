@@ -22,7 +22,7 @@ class WebshareEntry(BaseModel):
     id: int
     """Unique identifier for the Webshare service configuration."""
     bindip: list[str]
-    """ List of IP addresses used by the TrueNAS SMB server. """
+    """List of IP addresses used by the TrueNAS Webshare server."""
     search: bool
     """Search indexing is enabled."""
     passkey: Literal["ENABLED", "DISABLED", "REQUIRED"]

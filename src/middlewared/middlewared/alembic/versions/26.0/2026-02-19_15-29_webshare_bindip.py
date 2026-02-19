@@ -1,7 +1,7 @@
 """Webshare bindip
 
 Revision ID: f2caf540c93f
-Revises: 055cfee51499
+Revises: a8f5d9e2c1b7
 Create Date: 2026-02-12 15:29:26.410524+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f2caf540c93f'
-down_revision = '055cfee51499'
+down_revision = 'a8f5d9e2c1b7'
 branch_labels = None
 depends_on = None
 
