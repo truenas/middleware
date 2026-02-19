@@ -17,6 +17,7 @@ from .common import DatasetTier, QueryFilters, QueryOptions
 __all__ = [
     'ZfsTierEntry', 'ZfsTierUpdateArgs', 'ZfsTierUpdateResult',
     'ZfsTierRewriteJobStats', 'ZfsTierRewriteJobEntry', 'ZfsTierRewriteJobStatusEntry',
+    'ZfsTierRewriteJobChangedEvent',
     'ZfsTierRewriteJobCreateArgs', 'ZfsTierRewriteJobCreateResult',
     'ZfsTierRewriteJobAbortArgs', 'ZfsTierRewriteJobAbortResult',
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
@@ -111,6 +112,11 @@ class ZfsTierRewriteJobStatusEntry(ZfsTierRewriteJobEntry):
     """Progress statistics, or `null` if no statistics have been recorded yet."""
     error: str | None
     """Error message describing why the job entered `ERROR` state, otherwise `null`."""
+
+
+class ZfsTierRewriteJobChangedEvent(BaseModel):
+    fields: list[ZfsTierRewriteJobStatusEntry]
+    """All rewrite jobs whose status or statistics have changed since the previous event."""
 
 
 class ZfsTierRewriteJobCreateArgs(BaseModel):
