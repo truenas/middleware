@@ -18,7 +18,7 @@ from middlewared.utils.filter_list import filter_list
 from .compose_utils import collect_logs, compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
-from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
+from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
@@ -145,6 +145,21 @@ class AppService(CRUDService):
 
         if version not in complete_app_details.versions:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
+
+        if complete_app_details.versions[version].get('app_metadata', {}).get(
+            'annotations', {}
+        ).get('disallow_multiple_instances'):
+            installed_metadata = get_collective_metadata()
+            if any(
+                app_meta.get('metadata', {}).get('name') == data['catalog_app']
+                and app_meta.get('metadata', {}).get('train') == data['train']
+                for app_meta in installed_metadata.values()
+            ):
+                verrors.add(
+                    'app_create.catalog_app',
+                    f'{data["catalog_app"]!r} app does not allow multiple instances',
+                )
+                verrors.check()
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
 
