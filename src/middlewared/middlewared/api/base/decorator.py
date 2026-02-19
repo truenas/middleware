@@ -111,7 +111,7 @@ def api_method[**P, T](
     pass_thread_local_storage: bool = False,
     skip_args: int | None = None,
     removed_in: str | None = None,
-    check_annotations: bool = False,  # FIXME: Eventually must be `True` for all api methods.
+    check_annotations: bool = True,
 ) -> typing.Callable[[typing.Callable[P, T]], typing.Callable[P, T]]:
     """
     Mark a `Service` class method as an API method.
