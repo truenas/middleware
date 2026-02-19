@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import re
+import typing
 
 import middlewared.sqlalchemy as sa
 from middlewared.api.current import UPSEntry, UPSUpdate
 from middlewared.service import SystemServicePart, ValidationErrors
-
-from .utils import driver_choices
 
 
 class UPSModel(sa.Model):
@@ -38,7 +37,6 @@ class UPSModel(sa.Model):
 class UPSServicePart(SystemServicePart[UPSEntry]):
     _datastore = 'services.ups'
     _datastore_prefix = 'ups_'
-    _datastore_extend = 'ups.ups_config_extend'
     _entry = UPSEntry
     _service = 'ups'
     _service_verb = 'restart'
@@ -67,7 +65,7 @@ class UPSServicePart(SystemServicePart[UPSEntry]):
         verrors = ValidationErrors()
 
         if data.driver:
-            if data.driver not in (await self.middleware.run_in_thread(driver_choices)):
+            if data.driver not in (await self.call2(self.s.ups.driver_choices)):
                 verrors.add(
                     'ups_update.driver',
                     'Driver selected does not match local machine\'s driver list'
@@ -110,3 +108,10 @@ class UPSServicePart(SystemServicePart[UPSEntry]):
                 )
 
         verrors.check()
+
+    async def extend(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        data['mode'] = data['mode'].upper()
+        data['shutdown'] = data['shutdown'].upper()
+        host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
+        data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
+        return data
