@@ -15,8 +15,7 @@ class DeviceAdapter:
 
     def __init__(self, device: Device, data: dict[str, Any]):
         self.pylibvirt_device = device
-        assert isinstance(device.device_delegate, DeviceDelegate)
-        self.delegate = device.device_delegate
+        self.delegate: DeviceDelegate = device.device_delegate
         self.data = data
 
     def validate(
