@@ -1228,12 +1228,18 @@ class InterfaceService(CRUDService):
         )
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
-        if 'fec_mode' in data and new['type'] != 'PHYSICAL':
-            verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
-        elif 'fec_mode' in data:
-            available = await self.middleware.call('interface.available_fec_modes', oid)
-            if available and data['fec_mode'] not in available:
-                verrors.add('interface_update.fec_mode', f'Unsupported FEC mode. Available: {available}')
+        if 'fec_mode' in data:
+            if new['type'] == 'PHYSICAL':
+                if available := await self.available_fec_modes(oid):
+                    if data['fec_mode'] not in available:
+                        verrors.add(
+                            'interface_update.fec_mode',
+                            f'Unsupported FEC mode. Available: {", ".join(available)}'
+                        )
+                else:
+                    verrors.add('interface_update.fec_mode', 'This interface does not support FEC mode configuration.')
+            else:
+                verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
 
         verrors.check()
 
@@ -1488,9 +1494,7 @@ class InterfaceService(CRUDService):
         iface = await self.get_instance(id_)
         if iface['type'] != 'PHYSICAL':
             return []
-        return await self.middleware.run_in_thread(
-            lambda: get_ethtool().get_fec_modes(iface['name'])
-        )
+        return await self.middleware.run_in_thread(get_ethtool().get_fec_modes, iface['name'])
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):

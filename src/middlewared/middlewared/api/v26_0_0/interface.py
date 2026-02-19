@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
+from truenas_pynetif.ethtool import FecModeName
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
     single_argument_args, single_argument_result, NotRequired, NonEmptyString,
@@ -544,5 +545,5 @@ class InterfaceAvailableFecModesArgs(BaseModel):
 
 
 class InterfaceAvailableFecModesResult(BaseModel):
-    result: list[Literal["AUTO", "RS", "BASER", "OFF", "LLRS"]]
+    result: list[FecModeName]
     """List of FEC modes supported by the interface. Empty list if FEC is not supported."""
