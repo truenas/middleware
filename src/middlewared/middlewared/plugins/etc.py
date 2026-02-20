@@ -525,6 +525,7 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.MAKO, path='subgid', checkpoint=None),
         )),
     })
+
     class Config:
         private = True
 
