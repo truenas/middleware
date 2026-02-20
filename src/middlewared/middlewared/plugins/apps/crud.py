@@ -146,20 +146,21 @@ class AppService(CRUDService):
         if version not in complete_app_details.versions:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
 
-        if complete_app_details.versions[version].get('app_metadata', {}).get(
-            'annotations', {}
-        ).get('disallow_multiple_instances'):
-            installed_metadata = get_collective_metadata()
-            if any(
-                app_meta.get('metadata', {}).get('name') == data['catalog_app']
-                and app_meta.get('metadata', {}).get('train') == data['train']
-                for app_meta in installed_metadata.values()
-            ):
-                verrors.add(
-                    'app_create.catalog_app',
-                    f'{data["catalog_app"]!r} app does not allow multiple instances',
-                )
-                verrors.check()
+        app_metadata = complete_app_details.versions[version].get('app_metadata') or {}
+        annotations = app_metadata.get('annotations') or {}
+        if annotations.get('disallow_multiple_instances'):
+            # We will like to raise validation error if multiple instances of the app in question cannot
+            # be installed at the same time
+            catalog_app = data['catalog_app']
+            train = data['train']
+            for installed_app in get_collective_metadata().values():
+                installed_app_metadata = installed_app.get('metadata') or {}
+                if installed_app_metadata.get('name') == catalog_app and installed_app_metadata.get('train') == train:
+                    verrors.add(
+                        'app_create.catalog_app',
+                        f'{catalog_app!r} app does not allow multiple instances',
+                    )
+                    verrors.check()
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
 
