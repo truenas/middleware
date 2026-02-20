@@ -95,7 +95,7 @@ class EtcGroup:
     lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, compare=False, hash=False, repr=False)
 
 
-class MakoRenderer(object):
+class MakoRenderer:
 
     def __init__(self, service):
         self.service = service
@@ -119,13 +119,12 @@ class MakoRenderer(object):
         except FileShouldNotExist:
             raise
         except Exception:
-            self.service.logger.debug('Failed to render mako template: {0}'.format(
-                exceptions.text_error_template().render()
-            ))
+            self.service.logger.debug('Failed to render mako template: %s',
+                                      exceptions.text_error_template().render())
             raise
 
 
-class PyRenderer(object):
+class PyRenderer:
 
     def __init__(self, service):
         self.service = service
@@ -530,7 +529,7 @@ class EtcService(Service):
         private = True
 
     def __init__(self, *args, **kwargs):
-        super(EtcService, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.files_dir = os.path.realpath(
             os.path.join(os.path.dirname(__file__), '..', 'etc_files')
         )
@@ -539,7 +538,7 @@ class EtcService(Service):
             RendererType.PY: PyRenderer(self),
         })
 
-    async def gather_ctx(self, methods: list[CtxMethod]) -> dict:
+    async def gather_ctx(self, methods: tuple[CtxMethod, ...]) -> dict:
         rv = {}
         for m in methods:
             key = f'{m.ctx_prefix}.{m.method}' if m.ctx_prefix else m.method
@@ -577,7 +576,7 @@ class EtcService(Service):
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
-            raise ValueError('{0} group not found'.format(name))
+            raise ValueError(f'{name!r} group not found')
 
         output = []
         async with group.lock:
@@ -596,7 +595,7 @@ class EtcService(Service):
                 except FileShouldNotExist:
                     try:
                         await self.middleware.run_in_thread(os.unlink, outfile)
-                        self.logger.debug(f'{entry.renderer_type}:{entry.path} file removed.')
+                        self.logger.debug('%s:%s file removed.', entry.renderer_type, entry.path)
                         output.append({
                             'path': outfile,
                             'status': 'REMOVED',
