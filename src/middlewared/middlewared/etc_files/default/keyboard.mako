@@ -1,7 +1,7 @@
 <%
     layout = None
     variant = None
-    config = middleware.call_sync("system.general.config")
+    config = render_ctx['system.general.config']
     if config["kbdmap"] in middleware.call_sync("system.general.kbdmap_choices"):
         if "." in config["kbdmap"]:
             layout, variant = config["kbdmap"].split(".", 1)

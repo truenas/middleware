@@ -278,14 +278,24 @@ class EtcService(Service):
         'fips': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='fips', checkpoint=None),
         )),
-        'keyboard': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='default/keyboard'),
-            EtcEntry(renderer_type=RendererType.MAKO, path='vconsole.conf'),
-        )),
-        'ldap': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/openldap/ldap.conf'),
-            EtcEntry(renderer_type=RendererType.MAKO, path='sssd/sssd.conf', mode=0o0600),
-        )),
+        'keyboard': EtcGroup(
+            ctx=(
+                CtxMethod(method='system.general.config'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.MAKO, path='default/keyboard'),
+                EtcEntry(renderer_type=RendererType.MAKO, path='vconsole.conf'),
+            ),
+        ),
+        'ldap': EtcGroup(
+            ctx=(
+                CtxMethod(method='directoryservices.config'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/openldap/ldap.conf'),
+                EtcEntry(renderer_type=RendererType.MAKO, path='sssd/sssd.conf', mode=0o0600),
+            ),
+        ),
         'dhcpcd': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='dhcpcd.conf'),
         )),
@@ -412,10 +422,16 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.MAKO, path='scst.direct',
                      checkpoint=Checkpoint.POOL_IMPORT, mode=0o600),
         )),
-        'scst_targets': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='initiators.allow', checkpoint=Checkpoint.POOL_IMPORT),
-            EtcEntry(renderer_type=RendererType.MAKO, path='initiators.deny', checkpoint=Checkpoint.POOL_IMPORT),
-        )),
+        'scst_targets': EtcGroup(
+            ctx=(
+                CtxMethod(method='iscsi.global.config'),
+                CtxMethod(method='iscsi.target.query', args=[[['auth_networks', '!=', []]]]),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.MAKO, path='initiators.allow', checkpoint=Checkpoint.POOL_IMPORT),
+                EtcEntry(renderer_type=RendererType.MAKO, path='initiators.deny', checkpoint=Checkpoint.POOL_IMPORT),
+            ),
+        ),
         'udev': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='udev'),
         )),
@@ -457,20 +473,27 @@ class EtcService(Service):
         'wsd': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='local/wsdd.conf', checkpoint=Checkpoint.POST_INIT),
         )),
-        'ups': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_config'),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/ups.conf', owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.conf',
-                     owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.users',
-                     owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsmon.conf',
-                     owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upssched.conf',
-                     owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/nut.conf', owner='root', group='nut', mode=0o440),
-            EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_perms'),
-        )),
+        'ups': EtcGroup(
+            ctx=(
+                CtxMethod(method='ups.config'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_config'),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/ups.conf',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.conf',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.users',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsmon.conf',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upssched.conf',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/nut.conf',
+                         owner='root', group='nut', mode=0o440),
+                EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_perms'),
+            ),
+        ),
         'smb': EtcGroup(
             ctx=(
                 CtxMethod(method='smb.generate_smb_configuration'),

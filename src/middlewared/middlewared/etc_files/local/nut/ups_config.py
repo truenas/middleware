@@ -22,5 +22,5 @@ def generate_ups_config(middleware):
     os.chmod(UPSSCHED_VARPATH, 0o770)
 
 
-def render(service, middleware):
+def render(service, middleware, render_ctx):
     generate_ups_config(middleware)
