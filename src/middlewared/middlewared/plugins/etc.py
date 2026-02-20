@@ -44,7 +44,7 @@ class RendererType(StrEnum):
     PY = 'py'
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, frozen=True, kw_only=True)
 class CtxMethod:
     """A middleware method call whose result is shared across all renderers in an EtcGroup.
 
@@ -59,7 +59,7 @@ class CtxMethod:
     ctx_prefix: str | None = None
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, frozen=True, kw_only=True)
 class EtcEntry:
     """A single config file to be generated.
 
@@ -82,7 +82,7 @@ class EtcEntry:
     group: str | None = None
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, frozen=True, kw_only=True)
 class EtcGroup:
     """A named set of config files that share render context.
 
