@@ -554,9 +554,6 @@ class EtcService(Service):
         return {'uid': uid, 'gid': gid, 'perms': entry.mode}
 
     def make_changes(self, full_path, entry: EtcEntry, rendered):
-        def opener(path, flags):
-            return os.open(path, os.O_CREAT | os.O_RDWR, mode=entry.mode)
-
         outfile_dirname = os.path.dirname(full_path)
         if outfile_dirname != '/etc':
             os.makedirs(outfile_dirname, exist_ok=True)
