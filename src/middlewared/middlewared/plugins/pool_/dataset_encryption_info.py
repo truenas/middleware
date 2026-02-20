@@ -210,22 +210,42 @@ class PoolDatasetService(Service):
         found, otherwise False.
 
         Parameters:
-            path (str): The filesystem path to be checked.
+            path (str): Path to check. Accepted forms:
+                - '/dev/zvol/<dataset>': True if the zvol is locked.
+                - '/mnt/<dataset>': True if the dataset in which the path
+                  resides, or any of its parent datasets, is locked.
+                - '<dataset>': True if the named dataset is locked.
 
         Returns:
-            bool: True if the path or any parent component
-                of the path is locked, False otherwise.
+            bool: True if a locked component is found, False otherwise.
 
         Raises:
-            ZFSException/Exception: If an unexpected error occurs
+            ZFSException: If an unexpected ZFS error occurs (any error
+                other than EZFS_NOENT).
         """
         # WARNING: _EXTREMELY_ hot code path. Do not add more
         # things here unless you fully understand the side-effects.
+        path_authoritative = True
         if path.startswith('/dev/zvol/'):
             # 10 comes from len("/dev/zvol/")
             path = path[10:].replace('+', ' ')
-        else:
+        elif os.path.isabs(path):
             path = path.removeprefix('/mnt/')
+            path_authoritative = False
+
+        if path_authoritative:
+            # Optimized lookup for when we know that the path in question
+            # is a ZFS resource name. We don't need O(<depth>) lookups.
+            try:
+                crypto = tls.lzh.open_resource(name=path).crypto()
+            except ZFSException as e:
+                if ZFSError(e.code) != ZFSError.EZFS_NOENT:
+                    raise
+
+                # For this case we'll treat missing dataset as unlocked
+                crypto = None
+
+            return crypto and not crypto.info().key_is_loaded
 
         for i in [path.removesuffix('/')] + get_dataset_parents(path):
             try:
