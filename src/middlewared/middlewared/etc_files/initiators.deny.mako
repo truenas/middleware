@@ -1,6 +1,6 @@
 <%
-    base_name = middleware.call_sync('iscsi.global.config')['basename']
-    targets = middleware.call_sync('iscsi.target.query', [['auth_networks', '!=', []]])
+    base_name = render_ctx['iscsi.global.config']['basename']
+    targets = render_ctx['iscsi.target.query']
 %>\
 % for target in targets:
 ${base_name}:${target['name']} ALL

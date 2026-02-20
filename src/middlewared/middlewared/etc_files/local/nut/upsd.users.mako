@@ -1,7 +1,7 @@
 <%
 	import re
 
-	ups_config = middleware.call_sync('ups.config')
+	ups_config = render_ctx['ups.config']
 	user = re.sub(r'([#="$])', r'\\\1', ups_config.monuser)
 %>\
 [${user}]
