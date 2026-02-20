@@ -138,6 +138,11 @@ class ContainerService(Service):
         return ContainerDomain(ContainerDomainConfiguration(**container))
 
 
+async def __migrate_and_start(middleware):
+    await middleware.call('container.maybe_migrate_legacy')
+    await middleware.call('container.start_on_boot')
+
+
 async def __event_system_ready(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service, however, the containers still need to be
@@ -145,7 +150,7 @@ async def __event_system_ready(middleware, event_type, args):
     if await middleware.call('failover.licensed'):
         return
 
-    middleware.create_task(middleware.call('container.start_on_boot'))
+    middleware.create_task(__migrate_and_start(middleware))
 
 
 async def __event_system_shutdown(middleware, event_type, args):
