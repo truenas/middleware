@@ -259,7 +259,7 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
     changes = 0
 
     try:
-        with open(os.open(path, os.O_RDONLY), 'rb+') as f:
+        with open(truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS), 'rb+') as f:
             current = f.read()
             if current != data:
                 changes |= FileChanges.CONTENTS
