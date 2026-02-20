@@ -1,12 +1,12 @@
 import asyncio
 from dataclasses import dataclass, field
 from enum import StrEnum
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 import importlib.util
 import os
-import sys
 
 from mako import exceptions
+from mako.template import Template
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import write_if_changed, FileChanges
@@ -99,16 +99,27 @@ class MakoRenderer(object):
 
     def __init__(self, service):
         self.service = service
+        self._templates: dict[str, Template] = {}
+
+    def initialize(self, groups: MappingProxyType, files_dir: str) -> None:
+        for group in groups.values():
+            for entry in group.entries:
+                if entry.renderer_type != RendererType.MAKO:
+                    continue
+
+                path = os.path.join(files_dir, entry.local_path or entry.path)
+                if path in self._templates:
+                    continue
+
+                self._templates[path] = get_template(
+                    os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + '.mako'
+                )
 
     async def render(self, path, ctx):
         try:
             # Mako is not asyncio friendly so run it within a thread
             def do():
-                # Get the template by its relative path
-                tmpl = get_template(os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + ".mako")
-
-                # Render the template
-                return tmpl.render(
+                return self._templates[path].render(
                     middleware=self.service.middleware,
                     service=self.service,
                     FileShouldNotExist=FileShouldNotExist,
@@ -129,23 +140,30 @@ class PyRenderer(object):
 
     def __init__(self, service):
         self.service = service
+        self._modules: dict[str, types.ModuleType] = {}
+
+    def initialize(self, groups: MappingProxyType, files_dir: str) -> None:
+        for group in groups.values():
+            for entry in group.entries:
+                if entry.renderer_type != RendererType.PY:
+                    continue
+
+                path = os.path.join(files_dir, entry.local_path or entry.path)
+                if path in self._modules:
+                    continue
+
+                filepath = f'{path}.py'
+                name = os.path.basename(path)
+                spec = importlib.util.spec_from_file_location(name, filepath)
+                if spec is None or spec.loader is None:
+                    raise RuntimeError(f'Cannot load spec for {name!r} from {filepath!r}')
+
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                self._modules[path] = mod
 
     async def render(self, path, ctx):
-        name = os.path.basename(path)
-        filepath = f"{path}.py"
-
-        spec = importlib.util.spec_from_file_location(name, filepath)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load spec for {name!r} from {filepath!r}")
-
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod
-        try:
-            spec.loader.exec_module(mod)
-        except Exception:
-            sys.modules.pop(name, None)
-            raise
-
+        mod = self._modules[path]
         args = [self.service, self.service.middleware]
         if ctx is not None:
             args.append(ctx)
@@ -642,6 +660,10 @@ class EtcService(Service):
             except Exception:
                 self.logger.exception('Failed to generate %s group', name)
 
+    def initialize_renderers(self):
+        for renderer in self._renderers.values():
+            renderer.initialize(self.GROUPS, self.files_dir)
+
 
 async def __event_system_ready(middleware, event_type, args):
     middleware.create_task(middleware.call('etc.generate_checkpoint', Checkpoint.POST_INIT))
@@ -653,6 +675,7 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
+    await middleware.call('etc.initialize_renderers')
     middleware.event_subscribe('system.ready', __event_system_ready)
     # Generate `etc` files before executing other post-boot-time-pool-import actions.
     # There are no explicit requirements for that, we are just preserving execution order
