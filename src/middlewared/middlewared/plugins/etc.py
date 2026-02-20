@@ -140,7 +140,7 @@ class PyRenderer(object):
 
     def __init__(self, service):
         self.service = service
-        self._modules: dict[str, types.ModuleType] = {}
+        self._modules: dict[str, ModuleType] = {}
 
     def initialize(self, groups: MappingProxyType, files_dir: str) -> None:
         for group in groups.values():
