@@ -1,7 +1,7 @@
 import asyncio
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 import importlib.util
 import os
 import sys
@@ -92,6 +92,7 @@ class EtcGroup:
     """
     entries: tuple[EtcEntry, ...]
     ctx: tuple[CtxMethod, ...] = field(default_factory=tuple)
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, compare=False, hash=False, repr=False)
 
 
 class MakoRenderer(object):
@@ -157,7 +158,7 @@ class PyRenderer(object):
 
 class EtcService(Service):
 
-    GROUPS: dict[str, EtcGroup] = {
+    GROUPS: MappingProxyType[str, EtcGroup] = MappingProxyType({
         'audit': EtcGroup(
             ctx=(CtxMethod(method='system.security.config'),),
             entries=(
@@ -523,9 +524,7 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.MAKO, path='subuid', checkpoint=None),
             EtcEntry(renderer_type=RendererType.MAKO, path='subgid', checkpoint=None),
         )),
-    }
-    LOCKS: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
-
+    })
     class Config:
         private = True
 
@@ -583,7 +582,7 @@ class EtcService(Service):
             raise ValueError('{0} group not found'.format(name))
 
         output = []
-        async with self.LOCKS[name]:
+        async with group.lock:
             ctx = await self.gather_ctx(group.ctx) if group.ctx else None
 
             for entry in group.entries:
