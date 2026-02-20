@@ -69,7 +69,7 @@ class AppService(Service):
                 continue
 
             self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
-                datase=dataset,
+                dataset=dataset,
                 name=get_upgrade_snap_name(app_info["name"], app_info["version"]),
                 bypass=True,
             ))
