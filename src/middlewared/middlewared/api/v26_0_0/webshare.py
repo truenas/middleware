@@ -10,6 +10,7 @@ from middlewared.api.base import (
 
 __all__ = [
     "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdate", "WebshareUpdateResult",
+    "WebshareBindipChoicesArgs", "WebshareBindipChoicesResult",
     "SharingWebshareEntry", "SharingWebshareCreate", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
     "SharingWebshareUpdate", "SharingWebshareUpdateArgs", "SharingWebshareUpdateResult",
     "SharingWebshareDeleteArgs", "SharingWebshareDeleteResult",
@@ -20,6 +21,8 @@ class WebshareEntry(BaseModel):
     """TrueNAS Webshare server configuration. """
     id: int
     """Unique identifier for the Webshare service configuration."""
+    bindip: list[str]
+    """List of IP addresses used by the TrueNAS Webshare server."""
     search: bool
     """Search indexing is enabled."""
     passkey: Literal["ENABLED", "DISABLED", "REQUIRED"]
@@ -38,6 +41,15 @@ class WebshareUpdateArgs(BaseModel):
 class WebshareUpdateResult(BaseModel):
     result: WebshareEntry
     """The updated Webshare service configuration."""
+
+
+class WebshareBindipChoicesArgs(BaseModel):
+    pass
+
+
+class WebshareBindipChoicesResult(BaseModel):
+    result: dict[str, str]
+    """Available IP addresses that Webshare service can bind to."""
 
 
 class SharingWebshareEntry(BaseModel):
