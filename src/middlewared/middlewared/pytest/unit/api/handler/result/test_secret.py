@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Union
 
-from pydantic import Discriminator, Field, Secret
+from pydantic import Discriminator, Field, Secret, ValidationError
 import pytest
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args, single_argument_result
@@ -327,4 +327,35 @@ def test_remove_secrets_union_with_none_in_discriminated():
         "connection": None,
     }) == {
         "connection": None,
+    }
+
+
+def test_crashes_without_fallback():
+    class NestedModel(BaseModel):
+        field: Literal["TEST"]
+
+    class Model(BaseModel):
+        child: Secret[NestedModel]
+
+    with pytest.raises(ValidationError):
+        serialize_result(Model, {
+            "child": {
+                "field": "TEST2",
+            },
+        }, False, False)
+
+
+def test_fallback_works():
+    class NestedModel(BaseModel):
+        field: Literal["TEST"]
+
+    class Model(BaseModel):
+        child: Secret[NestedModel]
+
+    assert serialize_result(Model, {
+        "child": {
+            "field": "TEST2",
+        },
+    }, False, True) == {
+        "child": "********",
     }
