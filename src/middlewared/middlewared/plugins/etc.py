@@ -534,10 +534,10 @@ class EtcService(Service):
         self.files_dir = os.path.realpath(
             os.path.join(os.path.dirname(__file__), '..', 'etc_files')
         )
-        self._renderers = {
+        self._renderers = MappingProxyType({
             RendererType.MAKO: MakoRenderer(self),
             RendererType.PY: PyRenderer(self),
-        }
+        })
 
     async def gather_ctx(self, methods: list[CtxMethod]) -> dict:
         rv = {}
@@ -554,16 +554,13 @@ class EtcService(Service):
         return {'uid': uid, 'gid': gid, 'perms': entry.mode}
 
     def make_changes(self, full_path, entry: EtcEntry, rendered):
-        def opener(path, flags):
-            return os.open(path, os.O_CREAT | os.O_RDWR, mode=entry.mode)
-
         outfile_dirname = os.path.dirname(full_path)
         if outfile_dirname != '/etc':
             os.makedirs(outfile_dirname, exist_ok=True)
 
         payload = self.get_perms_and_ownership(entry)
         try:
-            changes = write_if_changed(full_path, rendered, **payload)
+            changes = write_if_changed(full_path, rendered, tmpdir='/etc', **payload)
         except Exception:
             changes = 0
             self.logger.warning('%s: failed to write changes to configuration file', full_path, exc_info=True)
@@ -587,19 +584,12 @@ class EtcService(Service):
             ctx = await self.gather_ctx(group.ctx) if group.ctx else None
 
             for entry in group.entries:
-                renderer = self._renderers.get(entry.renderer_type)
-                if renderer is None:
-                    raise ValueError(f'Unknown type: {entry.renderer_type}')
-
-                if checkpoint:
-                    if entry.checkpoint != checkpoint:
-                        continue
+                renderer = self._renderers[entry.renderer_type]
+                if checkpoint and entry.checkpoint != checkpoint:
+                    continue
 
                 path = os.path.join(self.files_dir, entry.local_path or entry.path)
-                entry_path = entry.path
-                if entry_path.startswith('local/'):
-                    entry_path = entry_path[len('local/'):]
-                outfile = f'/etc/{entry_path}'
+                outfile = '/etc/' + entry.path.removeprefix('local/')
 
                 try:
                     rendered = await renderer.render(path, ctx)
@@ -618,7 +608,7 @@ class EtcService(Service):
 
                     continue
                 except Exception:
-                    self.logger.error(f'Failed to render {entry.renderer_type}:{entry.path}', exc_info=True)
+                    self.logger.exception('Failed to render %s: %s', entry.renderer_type, entry.path)
                     continue
 
                 if rendered is None:
@@ -650,16 +640,16 @@ class EtcService(Service):
             try:
                 await self.generate(name, checkpoint)
             except Exception:
-                self.logger.error(f'Failed to generate {name} group', exc_info=True)
+                self.logger.exception('Failed to generate %s group', name)
 
 
 async def __event_system_ready(middleware, event_type, args):
-    middleware.create_task(middleware.call('etc.generate_checkpoint', 'post_init'))
+    middleware.create_task(middleware.call('etc.generate_checkpoint', Checkpoint.POST_INIT))
 
 
 async def pool_post_import(middleware, pool):
     if pool is None:
-        await middleware.call('etc.generate_checkpoint', 'pool_import')
+        await middleware.call('etc.generate_checkpoint', Checkpoint.POOL_IMPORT)
 
 
 async def setup(middleware):
