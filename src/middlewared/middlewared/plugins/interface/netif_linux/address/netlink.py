@@ -183,6 +183,8 @@ class AddressNetlink:
                                 raise DeviceNotFound("No such device")
                             elif error == 95:  # EOPNOTSUPP
                                 raise OperationNotSupported("Operation not supported")
+                            elif error == 16:  # EBUSY
+                                raise DumpInterrupted("Netlink socket busy")
                             raise NetlinkError(f"Netlink error: {error}")
                     done = True
                 elif nlmsg_type == NLMsgType.DONE:
