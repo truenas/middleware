@@ -1487,14 +1487,11 @@ class InterfaceService(CRUDService):
     @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
     async def available_fec_modes(self, id_):
         """
-        Returns FEC modes supported by physical interface `id`.
+        Returns FEC modes supported by interface `id`.
 
-        Returns an empty list for non-physical interfaces or interfaces without FEC support.
+        Returns an empty list if the interface does not exist or does not support FEC.
         """
-        iface = await self.get_instance(id_)
-        if iface['type'] != 'PHYSICAL':
-            return []
-        return await self.middleware.run_in_thread(get_ethtool().get_fec_modes, iface['name'])
+        return await self.middleware.run_in_thread(get_ethtool().get_fec_modes, id_)
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):
