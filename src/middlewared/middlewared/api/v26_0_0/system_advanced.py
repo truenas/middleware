@@ -16,6 +16,7 @@ __all__ = [
     "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
     "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
     "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
+    "SystemAdvancedNvidiaPresentArgs", "SystemAdvancedNvidiaPresentResult",
 ]
 
 
@@ -189,3 +190,12 @@ class SystemAdvancedUpdateGpuPciIdsArgs(BaseModel):
 
 class SystemAdvancedUpdateGpuPciIdsResult(BaseModel):
     result: None
+
+
+class SystemAdvancedNvidiaPresentArgs(BaseModel):
+    pass
+
+
+class SystemAdvancedNvidiaPresentResult(BaseModel):
+    result: bool
+    """Whether a non-isolated NVIDIA GPU is present in the system."""
