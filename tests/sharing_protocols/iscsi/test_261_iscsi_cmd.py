@@ -28,7 +28,7 @@ from middlewared.service_exception import CallError, InstanceNotFound, Validatio
 from middlewared.test.integration.assets.iscsi import iscsi_extent, target_login_test
 from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_data
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
@@ -2227,26 +2227,8 @@ def _ha_reboot_master(delay=900, description=''):
     if not new_backup:
         raise RuntimeError('Backup controller did not surface.')
 
-    # Ensure that a failover is still not in progress
-    in_progress = True
-    while in_progress:
-        try:
-            in_progress = _get_ha_failover_in_progress()
-            if not in_progress:
-                break
-        except Exception:
-            pass
-        delay = delay - 5
-        if delay <= 0:
-            break
-        print("Waiting while in progress")
-        sleep(5)
-
-    if in_progress:
-        raise RuntimeError('Failover never completed.')
-
-    # Finally check the ALUA status
-    _wait_for_alua_settle()
+    settle_ha(retries=36)
+    _wait_for_alua_settle
 
 
 def _ensure_alua_state(state):
