@@ -233,6 +233,18 @@ class PoolDatasetService(Service):
             path = path.removeprefix('/mnt/')
             path_authoritative = False
 
+        # Check if this path is in a dataset that's about to be locked.
+        # This allows services to see the dataset as locked during delegate.stop()
+        # even though the key hasn't been unloaded yet.
+        try:
+            about_to_lock = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
+            if about_to_lock:
+                dataset_name = path.removesuffix('/')
+                if dataset_name == about_to_lock or dataset_name.startswith(f'{about_to_lock}/'):
+                    return True
+        except KeyError:
+            pass
+
         if path_authoritative:
             # Optimized lookup for when we know that the path in question
             # is a ZFS resource name. We don't need O(<depth>) lookups.

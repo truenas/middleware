@@ -49,16 +49,25 @@ class PoolDatasetService(Service):
 
         mountpoint = dataset_mountpoint(ds)
 
-        await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
+        try:
+            # Mark dataset as "about to be locked" so services can treat it as locked
+            # during delegate.stop() even though the key hasn't been unloaded yet
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
 
-        # recursive doesn't apply to zvols
-        recursive = ds['type'] != 'VOLUME'
-        await self.call2(
-            self.s.zfs.resource.unload_key,
-            id_,
-            recursive=recursive,
-            force_unmount=options['force_umount'],
-        )
+            await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
+
+            # recursive doesn't apply to zvols
+            recursive = ds['type'] != 'VOLUME'
+            await self.call2(
+                self.s.zfs.resource.unload_key,
+                id_,
+                recursive=recursive,
+                force_unmount=options['force_umount'],
+            )
+        finally:
+            # We do this after unload key to make sure that if anything queries shares/datasets etc, the dataset/share
+            # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
+            await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         if ds['mountpoint']:
             await self.middleware.call('filesystem.set_zfs_attributes', {
