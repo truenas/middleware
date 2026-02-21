@@ -1,6 +1,13 @@
 import os
 import subprocess
 
+from truenas_pylibvirt.utils.gpu import get_gpus
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemAdvancedNvidiaPresentArgs,
+    SystemAdvancedNvidiaPresentResult,
+)
 from middlewared.service import private, Service
 
 
@@ -9,6 +16,21 @@ class SystemAdvancedService(Service):
     class Config:
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
+
+    @api_method(
+        SystemAdvancedNvidiaPresentArgs,
+        SystemAdvancedNvidiaPresentResult,
+        roles=['SYSTEM_ADVANCED_READ'],
+    )
+    def nvidia_present(self):
+        """Returns whether a non-isolated NVIDIA GPU is present in the system."""
+        adv_config = self.middleware.call_sync('system.advanced.config')
+        for gpu in get_gpus():
+            if gpu['addr']['pci_slot'] in adv_config['isolated_gpu_pci_ids']:
+                continue
+            if gpu['vendor'] == 'NVIDIA':
+                return True
+        return False
 
     @private
     async def handle_nvidia_toggle(self):
