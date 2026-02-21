@@ -1,7 +1,8 @@
 import operator
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, cast
 
 from sqlalchemy import Column, ForeignKey, Table, func
+from sqlalchemy.sql.elements import ColumnElement
 
 from truenas_api_client import ejson as json
 from middlewared.utils.jsonpath import JSON_PATH_PREFIX, json_path_parse
@@ -9,18 +10,28 @@ from .schema import SchemaMixin
 
 
 def in_(col: Column, value: Iterable):
+    """Return a SQLAlchemy expression matching rows where col is in value.
+
+    NULL entries in value are handled separately via IS NULL because SQL
+    equality comparisons with NULL never match via the IN operator.
+    """
     has_nulls = None in value
     value = [v for v in value if v is not None]
-    expr = col.in_(value)
+    expr: ColumnElement[bool] = col.in_(value)
     if has_nulls:
         expr = expr | (col == None)  # noqa
     return expr
 
 
 def nin(col: Column, value: Iterable):
+    """Return a SQLAlchemy expression matching rows where col is not in value.
+
+    NULL entries in value are handled separately via IS NOT NULL because SQL
+    equality comparisons with NULL never match via the NOT IN operator.
+    """
     has_nulls = None in value
     value = [v for v in value if v is not None]
-    expr = ~col.in_(value)
+    expr: ColumnElement[bool] = ~col.in_(value)
     if has_nulls:
         expr = expr & (col != None)  # noqa
     return expr
@@ -31,6 +42,7 @@ FiltersList = Iterable[list | tuple[str, str, Any] | tuple[Literal['OR'], 'Filte
 
 class FilterMixin(SchemaMixin):
     def _filters_contains_foreign_key(self, filters: FiltersList) -> bool:
+        """Return True if any filter references a joined table via __ or . syntax."""
         for f in filters:
             if not isinstance(f, (list, tuple)):
                 raise ValueError('Filter must be a list or tuple: {0}'.format(f))
@@ -47,6 +59,12 @@ class FilterMixin(SchemaMixin):
         prefix: str | None,
         aliases: dict[ForeignKey, Table]
     ) -> list:
+        """Translate a middleware filter list into SQLAlchemy WHERE clause expressions.
+
+        Handles simple comparisons, JSONPath extraction ($.field), foreign-key
+        traversal via __ or . separators, and OR conjunctions. Returns a list of
+        SQLAlchemy column expressions suitable for passing to and_().
+        """
         opmap = {
             '=': operator.eq,
             '!=': operator.ne,
@@ -81,7 +99,7 @@ class FilterMixin(SchemaMixin):
                     col = func.json_extract(col, json_target)
                     is_json_extract = True
                 elif matched := next((x for x in ['__', '.'] if x in name), False):
-                    fk, name = name.split(matched, 1)
+                    fk, name = name.split(cast(str, matched), 1)
                     col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
                 else:
                     col = self._get_col(table, name, prefix)

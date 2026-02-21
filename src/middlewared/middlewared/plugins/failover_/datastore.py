@@ -9,7 +9,6 @@ import time
 
 from middlewared.service import Service
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.plugins.datastore.connection import thread_pool
 from middlewared.utils.threading import start_daemon_thread, set_thread_name
 from middlewared.utils import db as db_utils
 
@@ -22,7 +21,6 @@ class FailoverDatastoreService(Service):
     class Config:
         namespace = 'failover.datastore'
         private = True
-        thread_pool = thread_pool
 
     async def sql(self, data, sql, params):
         if await self.middleware.call('system.version') != data['version']:
@@ -151,6 +149,26 @@ class FailoverDatastoreService(Service):
 
 
 def hook_datastore_execute_write(middleware, sql, params, options):
+    """Replicate a committed write to the backup controller.
+
+    Registered as an inline hook on `datastore.post_execute_write`, so this runs
+    synchronously on the SQLite thread while the datastore write_lock is still
+    held. That serialisation is deliberate: it prevents a second local write from
+    reaching the database before the first one has been forwarded to the remote,
+    which would cause the backup to apply writes out of order.
+
+    Because write_lock is non-reentrant, any write operation (execute/execute_write)
+    called from within this hook would deadlock. Reads via fetchall() are safe as
+    they do not acquire the lock.
+
+    We do not query local failover.status here because that would require yielding
+    to the async event loop, which is not permitted from a synchronous inline hook.
+    Instead we always forward the SQL and let the backup node check its own status
+    upon receipt; non-BACKUP nodes silently discard the replicated write.
+
+    On failure the SQL is not retried individually. Instead the failure flag is set
+    and a full database file transfer to the backup is attempted as recovery.
+    """
     # This code is executed in SQLite thread and blocks it (in order to avoid replication query race conditions)
     # No switching to the async context that will yield to database queries is allowed here as it will result in
     # a deadlock. That's why we can't query failover status and will always try to replicate all queries to the other
