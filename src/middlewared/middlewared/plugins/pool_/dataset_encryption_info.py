@@ -245,7 +245,7 @@ class PoolDatasetService(Service):
                 # For this case we'll treat missing dataset as unlocked
                 crypto = None
 
-            return crypto and not crypto.info().key_is_loaded
+            return crypto is not None and not crypto.info().key_is_loaded
 
         for i in [path.removesuffix('/')] + get_dataset_parents(path):
             try:
