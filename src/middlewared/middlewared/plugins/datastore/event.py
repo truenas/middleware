@@ -19,7 +19,7 @@ class DatastoreService(Service):
     class Config:
         private = True
 
-    events = defaultdict(list)
+    events: dict[str, list] = defaultdict(list)
 
     async def register_event(self, options: dict) -> None:
         options = asdict(DatastoreRegisterEventArgs(**options))
@@ -35,6 +35,12 @@ class DatastoreService(Service):
             )
 
     async def send_update_events(self, datastore, id_):
+        """Fire a CHANGED event for each plugin registered against datastore.
+
+        Re-fetches the row via plugin.query to get the current state. If the row
+        is gone by the time the event fires (deleted concurrently with the update),
+        the event is silently skipped rather than raising an error.
+        """
         for options in self.events[datastore]:
             fields = await self._fields(options, {options["prefix"] + options["id"]: id_}, False)
             if not fields:
@@ -65,6 +71,12 @@ class DatastoreService(Service):
         )
 
     async def _send_event(self, options, type_, **kwargs):
+        """Dispatch a single datastore event, optionally transforming it first.
+
+        If process_event is configured, calls it with (type_, kwargs) and uses
+        the returned (type_, kwargs) pair instead. Returning None from process_event
+        suppresses the event entirely.
+        """
         if options["process_event"]:
             processed = await self.middleware.call(options["process_event"], type_, kwargs)
             if processed is None:
