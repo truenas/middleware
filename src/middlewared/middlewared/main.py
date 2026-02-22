@@ -93,6 +93,7 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
@@ -172,6 +173,7 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.catalog = CatalogService(middleware)
+        self.cronjob = CronJobService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
