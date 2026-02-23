@@ -478,7 +478,7 @@ class FailoverService(ConfigService):
         try:
             local_nics = await self.middleware.call('interface.query')
             local_nonphysical_names = {i['name'] for i in local_nics if i['type'] != 'PHYSICAL'}
-            local_physical_mac_to_name = {i['state']['link_address']: i['name']
+            local_physical_mac_to_name = {i['state']['hardware_link_address']: i['name']
                                           for i in local_nics
                                           if i['type'] == 'PHYSICAL'}
         except Exception:
@@ -495,7 +495,7 @@ class FailoverService(ConfigService):
         else:
             if remote_nics is not None:
                 remote_nonphysical_names = {i['name'] for i in remote_nics if i['type'] != 'PHYSICAL'}
-                remote_physical_mac_to_name = {i['state']['link_address']: i['name']
+                remote_physical_mac_to_name = {i['state']['hardware_link_address']: i['name']
                                                for i in remote_nics
                                                if i['type'] == 'PHYSICAL'}
 
