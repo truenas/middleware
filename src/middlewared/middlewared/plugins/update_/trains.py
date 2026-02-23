@@ -17,7 +17,6 @@ from .utils import scale_update_server
 class UpdateManifest(BaseModel):
     buildtime: int
     train: str
-    codename: str
     version: str
 
 
