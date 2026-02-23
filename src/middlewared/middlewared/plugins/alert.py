@@ -338,15 +338,21 @@ class AlertService(Service):
         return POLICIES
 
     @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=['ALERT_LIST_READ'])
-    async def list_categories(self):
+    async def list_categories(self, options):
         """
         List all types of alerts which the system can issue.
         """
 
         product_type = await self.middleware.call("alert.product_type")
 
-        classes = [alert_class for alert_class in AlertClass.classes
-                   if product_type in alert_class.products and not alert_class.exclude_from_list]
+        classes = [
+            alert_class
+            for alert_class in AlertClass.classes
+            if (
+                (options["include_all_products"] or product_type in alert_class.products) and
+                (options["include_hidden_classes"] or not alert_class.exclude_from_list)
+            )
+        ]
 
         return [
             {

@@ -116,8 +116,15 @@ class AlertListResult(BaseModel):
     """Array of all current alerts in the system."""
 
 
+class AlertListCategoriesOptions(BaseModel):
+    include_all_products: bool = False
+    """Include alert classes for all products, not just the current one."""
+    include_hidden_classes: bool = False
+    """Include hidden alert classes."""
+
+
 class AlertListCategoriesArgs(BaseModel):
-    pass
+    options: AlertListCategoriesOptions = AlertListCategoriesOptions()
 
 
 class AlertListCategoriesResult(BaseModel):
