@@ -195,7 +195,7 @@ class PoolDatasetService(Service):
         encryption_dict.pop('encryption')
         key = encryption_dict.pop('key')
 
-        change_key(self.context, id_, encryption_dict, False, key)
+        await self.middleware.run_in_thread(change_key, self.context, id_, encryption_dict, False, key)
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
@@ -257,6 +257,6 @@ class PoolDatasetService(Service):
                             'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                         )
 
-        change_encryption_root(id_, False)
+        await self.middleware.run_in_thread(change_encryption_root, id_, False)
         await self.middleware.call('pool.dataset.sync_db_keys', id_)
         await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id_)
