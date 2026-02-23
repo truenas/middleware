@@ -102,13 +102,10 @@ class PoolDatasetService(Service):
                     ds_key = bytes.fromhex(ds_key)
             to_check.append((name, {'key': ds_key}))
 
-        check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
-        check_job.wait_sync()
-        if check_job.error:
-            raise CallError(f'Failed to retrieve encryption summary for {id_}: {check_job.error}')
+        statuses = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
 
         results = []
-        for ds_data, status in zip(to_check, check_job.result):
+        for ds_data, status in zip(to_check, statuses):
             ds_name = ds_data[0]
             data = datasets[ds_name]
             results.append({
@@ -180,16 +177,16 @@ class PoolDatasetService(Service):
                 'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot']}}
             ) if d['name'] == d['encryption_root']
         }
-        to_remove = []
-        check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
-            (name, {'key': db_datasets[name]}) for name in db_datasets
-        ])
-        check_key_job.wait_sync()
-        if check_key_job.error:
-            self.logger.error(f'Failed to sync database keys: {check_key_job.error}')
+        try:
+            statuses = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
+                (name, {'key': db_datasets[name]}) for name in db_datasets
+            ])
+        except Exception as exc:
+            self.logger.error(f'Failed to sync database keys: {exc}')
             return
 
-        for dataset, status in zip(db_datasets, check_key_job.result):
+        to_remove = []
+        for dataset, status in zip(db_datasets, statuses):
             if not status['result']:
                 to_remove.append(dataset)
             elif status['error']:
