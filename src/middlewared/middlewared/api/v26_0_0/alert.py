@@ -125,6 +125,7 @@ class AlertListCategoriesOptions(BaseModel):
 
 class AlertListCategoriesArgs(BaseModel):
     options: AlertListCategoriesOptions = AlertListCategoriesOptions()
+    """List options."""
 
 
 class AlertListCategoriesResult(BaseModel):

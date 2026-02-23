@@ -345,14 +345,15 @@ class AlertService(Service):
 
         product_type = await self.middleware.call("alert.product_type")
 
-        classes = [
-            alert_class
-            for alert_class in AlertClass.classes
-            if (
-                (options["include_all_products"] or product_type in alert_class.products) and
-                (options["include_hidden_classes"] or not alert_class.exclude_from_list)
-            )
-        ]
+        classes: list[type[AlertClass]] = []
+        for alert_class in AlertClass.classes:
+            if not (options["include_all_products"] or product_type in alert_class.products):
+                continue
+
+            if not (options["include_hidden_classes"] or not alert_class.exclude_from_list):
+                continue
+
+            classes.append(alert_class)
 
         return [
             {
