@@ -30,7 +30,13 @@ class UpdateService(Service):
                 async with client.get(url) as resp:
                     return await resp.json()
             except ClientError as e:
-                if isinstance(e, ClientConnectorError) and e.os_error.errno == errno.ENETUNREACH:
+                # Some `aiohttp.ClientConnectorError` subclasses (i.e. `ClientConnectorCertificateError`) do not have
+                # `os_error` attribute despite the parent class having one.
+                if (
+                    isinstance(e, ClientConnectorError) and
+                    hasattr(e, 'os_error') and
+                    e.os_error.errno == errno.ENETUNREACH
+                ):
                     error = errno.ENETUNREACH
                 else:
                     error = errno.ECONNRESET
