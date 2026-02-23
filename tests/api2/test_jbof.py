@@ -5,19 +5,6 @@ import pytest
 from middlewared.test.integration.utils import call, mock
 from middlewared.service_exception import ValidationError, ValidationErrors
 
-jbof_query_one = [
-    {
-        'id': 1,
-        'description': 'ES24N - 1234',
-        'index': 0,
-        'uuid': '244c0e5f-bf7b-4a68-bd40-80e3f1a5b4ed',
-        'mgmt_ip1': '1.2.3.4',
-        'mgmt_ip2': '1.2.3.5',
-        'mgmt_username': 'Admin',
-        'mgmt_password': 'SomePassword',
-    }
-]
-
 FAKE_DATA = {
     'mgmt_ip1': '2.3.4.5',
     'mgmt_username': 'AdminUser',
