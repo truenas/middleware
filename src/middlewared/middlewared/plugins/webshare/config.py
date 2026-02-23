@@ -56,6 +56,7 @@ class WebshareService(ConfigService[WebshareEntry]):
             if not (await self.middleware.call('system.general.config'))['ds_auth']:
                 raise ValidationError('groups', 'Directory Service authentication is disabled.')
             else:
+                groups = []
                 for i, group in enumerate(new.groups):
                     try:
                         group_obj = await self.middleware.call('group.get_group_obj', {'groupname': group})
@@ -64,6 +65,10 @@ class WebshareService(ConfigService[WebshareEntry]):
                     else:
                         if group_obj['local']:
                             raise ValidationError(f'groups.{i}', f'{group}: group must be an Directory Service group.')
+
+                        groups.append(group_obj['gr_name'])
+
+                new.groups = groups
 
         await self.middleware.call('datastore.update', self._config.datastore, new.id, new.model_dump())
 
