@@ -27,6 +27,8 @@ class WebshareEntry(BaseModel):
     """Search indexing is enabled."""
     passkey: Literal["ENABLED", "DISABLED", "REQUIRED"]
     """Passkey authentication mode."""
+    groups: list[str]
+    """A list of AD/LDAP group names whose members will be granted access to Webshare."""
 
 
 class WebshareUpdate(WebshareEntry, metaclass=ForUpdateMetaclass):
