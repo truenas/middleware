@@ -1,23 +1,17 @@
-from typing import Any, Callable, Iterable, ParamSpec, Sequence, TypedDict, TYPE_CHECKING
+from typing import Any, Iterable, Sequence, TypedDict, TYPE_CHECKING
 
-import libzfs
+import truenas_pylibzfs
+from truenas_pylibzfs import ZFSException
 from middlewared.service import CallError
+
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
-
-
-P = ParamSpec('P')
 
 
 class EncryptionProperties(TypedDict, total=False):
     keyformat: Any
     keylocation: str
     pbkdf2iters: Any
-
-
-def _common_encryption_checks(id_: str, ds: libzfs.ZFSDataset):
-    if not ds.encrypted:
-        raise CallError(f'{id_} is not encrypted')
 
 
 def load_key(
@@ -28,13 +22,14 @@ def load_key(
     key_location: str | bytes | None = None
 ) -> None:
     try:
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset(id_)
-            _common_encryption_checks(id_, ds)
-            if ds.key_loaded:
-                raise CallError(f'{id_} key is already loaded')
-            ds.load_key(key=key, key_location=key_location)
-    except libzfs.ZFSException as e:
+        lz = truenas_pylibzfs.open_handle()
+        rsrc = lz.open_resource(name=id_)
+        if (crypto := rsrc.crypto()) is None:
+            raise CallError(f'{id_} is not encrypted')
+        if crypto.info().key_is_loaded:
+            raise CallError(f'{id_} key is already loaded')
+        crypto.load_key(key=key, key_location=key_location)
+    except ZFSException as e:
         ctx.logger.error(f'Failed to load key for {id_}', exc_info=True)
         raise CallError(f'Failed to load key for {id_}: {e}')
     else:
@@ -49,11 +44,12 @@ def check_key(
     key_location: str | bytes | None = None
 ) -> bool:
     try:
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset(id_)
-            _common_encryption_checks(id_, ds)
-            return ds.check_key(key, key_location)
-    except libzfs.ZFSException as e:
+        lz = truenas_pylibzfs.open_handle()
+        rsrc = lz.open_resource(name=id_)
+        if (crypto := rsrc.crypto()) is None:
+            raise CallError(f'{id_} is not encrypted')
+        return crypto.check_key(key=key, key_location=key_location)
+    except ZFSException as e:
         ctx.logger.error(f'Failed to check key for {id_}', exc_info=True)
         raise CallError(f'Failed to check key for {id_}: {e}')
 
@@ -66,21 +62,29 @@ def change_key(
     key: str | bytes | None = None
 ) -> None:
     try:
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset(id_)
-            _common_encryption_checks(id_, ds)
-            ds.change_key(props=properties, load_key=load_key, key=key)
-    except libzfs.ZFSException as e:
+        lz = truenas_pylibzfs.open_handle()
+        rsrc = lz.open_resource(name=id_)
+        if (crypto := rsrc.crypto()) is None:
+            raise CallError(f'{id_} is not encrypted')
+        config = lz.resource_cryptography_config(**(properties or {}), key=key)
+        crypto.change_key(info=config)
+        if load_key:
+            crypto.load_key()
+    except ZFSException as e:
         ctx.logger.error(f'Failed to change key for {id_}', exc_info=True)
         raise CallError(f'Failed to change key for {id_}: {e}')
 
 
 def change_encryption_root(id_: str, load_key: bool = True) -> None:
     try:
-        with libzfs.ZFS() as zfs:
-            ds = zfs.get_dataset(id_)
-            ds.change_key(load_key=load_key, inherit=True)
-    except libzfs.ZFSException as e:
+        lz = truenas_pylibzfs.open_handle()
+        rsrc = lz.open_resource(name=id_)
+        if (crypto := rsrc.crypto()) is None:
+            raise CallError(f'{id_} is not encrypted')
+        crypto.inherit_key()
+        if load_key:
+            crypto.load_key()
+    except ZFSException as e:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
 
