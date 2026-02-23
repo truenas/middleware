@@ -42,20 +42,13 @@ def _vacuumed_db_copy():
     """Yield the path to a temporary vacuumed copy of the database.
 
     Uses VACUUM INTO so the copy is produced in a single read pass without
-    modifying the source. The destination file must not exist beforehand, so
-    the temp file created by mkstemp is unlinked before handing the path to
-    SQLite. The copy is removed on exit regardless of success or failure.
+    modifying the source.
     """
-    fd, tmp_path = tempfile.mkstemp(suffix='.db', dir=os.path.dirname(FREENAS_DATABASE))
-    os.close(fd)
-    os.unlink(tmp_path)
-    try:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = os.path.join(tmp_dir, 'freenas-v1.db')
         with sqlite3.connect(FREENAS_DATABASE) as conn:
             conn.execute(f"VACUUM INTO '{tmp_path}'")
         yield tmp_path
-    finally:
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(tmp_path)
 
 
 class ConfigService(Service):
