@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.api.current import ZFSResourceQuery
+from middlewared.plugins.zfs.dataset_encryption import check_key
 from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
@@ -59,8 +60,9 @@ class KMIPService(Service, KMIPServerMixin):
                 if not ds['encryption_key']:
                     # We want to make sure we have the KMIP server's keys and in-memory keys in sync
                     try:
-                        if ds['name'] in self.zfs_keys and self.middleware.call_sync(
-                            'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                        if (
+                            ds['name'] in self.zfs_keys
+                            and check_key(self.context, ds['name'], self.zfs_keys[ds['name']])
                         ):
                             continue
                         else:
@@ -99,8 +101,9 @@ class KMIPService(Service, KMIPServerMixin):
             try:
                 if ds['encryption_key']:
                     key = ds['encryption_key']
-                elif ds['name'] in self.zfs_keys and self.middleware.call_sync(
-                    'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                elif (
+                    ds['name'] in self.zfs_keys
+                    and check_key(self.context, ds['name'], self.zfs_keys[ds['name']])
                 ):
                     key = self.zfs_keys[ds['name']]
                 elif connection_successful:

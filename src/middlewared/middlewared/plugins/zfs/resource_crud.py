@@ -15,12 +15,11 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
 )
 from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
-from middlewared.service import CallError, Service, private
+from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_encryption import bulk_process, change_encryption_root, change_key, check_key, load_key
 from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
@@ -554,30 +553,3 @@ class ZFSResourceService(Service):
             ]
         except ZFSPathNotFoundException as e:
             raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)
-
-    @private
-    def load_key(self, id_: str, options: dict | None = None) -> None:
-        return load_key(self.context, id_, **(options or {}))
-
-    @private
-    def check_key(self, id_: str, options: dict | None = None) -> bool:
-        """
-        Returns `true` if the `key` is valid, `false` otherwise.
-        """
-        return check_key(self.context, id_, **(options or {}))
-
-    @private
-    def change_key(self, id_: str, options: dict | None = None) -> None:
-        return change_key(self.context, id_, **(options or {}))
-
-    @private
-    def change_encryption_root(self, id_: str, options: dict | None = None) -> None:
-        return change_encryption_root(id_, **(options or {}))
-
-    @private
-    def bulk_process(self, name: str, params: list) -> list[dict]:
-        f = getattr(self, name, None)
-        if not f:
-            raise CallError(f'{name} method not found in zfs.resource')
-
-        return bulk_process(f, params)

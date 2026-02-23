@@ -84,12 +84,12 @@ def change_encryption_root(id_: str, load_key: bool = True) -> None:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
 
-def bulk_process(f: Callable, params: Iterable[Sequence]) -> list[dict]:
+def bulk_check(ctx: 'ServiceContext', params: Iterable[Sequence]) -> list[dict]:
     statuses = []
     for i in params:
         result = error = None
         try:
-            result = f(*i)
+            result = check_key(ctx, *i)
         except Exception as e:
             error = str(e)
         finally:

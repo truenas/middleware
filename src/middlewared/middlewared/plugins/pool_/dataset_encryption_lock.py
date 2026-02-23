@@ -10,6 +10,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
 )
+from middlewared.plugins.zfs.dataset_encryption import load_key
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
 
@@ -209,9 +210,7 @@ class PoolDatasetService(Service):
 
             job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
-                self.middleware.call_sync(
-                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
-                )
+                load_key(self.context, name, key=datasets[name]['key'], mount_ds=False)
             except CallError as e:
                 failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
                 continue
