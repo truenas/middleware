@@ -15,7 +15,6 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
-from truenas_pylibvirt.utils.gpu import get_gpus
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -277,14 +276,6 @@ class DockerService(ConfigService):
         return await self.middleware.call('docker.state.get_status_dict')
 
     @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'])
-    def nvidia_present(self):
-        adv_config = self.middleware.call_sync("system.advanced.config")
-
-        for gpu in get_gpus():
-            if gpu["addr"]["pci_slot"] in adv_config["isolated_gpu_pci_ids"]:
-                continue
-
-            if gpu["vendor"] == "NVIDIA":
-                return True
-
-        return False
+    async def nvidia_present(self):
+        """Returns whether a non-isolated NVIDIA GPU is present in the system."""
+        return await self.middleware.call('system.advanced.nvidia_present')
