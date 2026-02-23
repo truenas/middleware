@@ -6,7 +6,8 @@ from .common import CronModel
 
 __all__ = [
     "CronJobEntry", "CronJobCreateArgs", "CronJobCreateResult", "CronJobUpdateArgs", "CronJobUpdateResult",
-    "CronJobDeleteArgs", "CronJobDeleteResult", "CronJobRunArgs", "CronJobRunResult"
+    "CronJobDeleteArgs", "CronJobDeleteResult", "CronJobRunArgs", "CronJobRunResult",
+    "CronJobCreate", "CronJobUpdate", "CronJobSchedule",
 ]
 
 
