@@ -31,7 +31,9 @@ async def check_internet_connectivity() -> str | None:
                     return None
                 return f'Unexpected response from connectivity check: HTTP {resp.status}'
     except aiohttp.ClientConnectorError as e:
-        if isinstance(e.os_error, socket.gaierror):
+        # Some `aiohttp.ClientConnectorError` subclasses (i.e. `ClientConnectorCertificateError`) do not have `os_error`
+        # attribute despite the parent class having one.
+        if hasattr(e, 'os_error') and isinstance(e.os_error, socket.gaierror):
             return f'DNS resolution failed: {e.os_error.strerror}'
         return f'Network connectivity error: {e}'
     except aiohttp.ClientError as e:
