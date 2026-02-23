@@ -482,9 +482,7 @@ class FailoverService(ConfigService):
                 if i['type'] != 'PHYSICAL':
                     local_nonphysical_names.add(i['name'])
                 else:
-                    local_physical_mac_to_name.update(
-                        {i['state']['hardware_link_address']: i['name']}
-                    )
+                    local_physical_mac_to_name[i['state']['hardware_link_address']] = i['name']
         except Exception:
             self.logger.error('Unhandled exception querying ifaces on local controller', exc_info=True)
             return result
@@ -504,9 +502,7 @@ class FailoverService(ConfigService):
                     if i['type'] != 'PHYSICAL':
                         remote_nonphysical_names.add(i['name'])
                     else:
-                        remote_physical_mac_to_name.update(
-                            {i['state']['hardware_link_address']: i['name']}
-                        )
+                        remote_physical_mac_to_name[i['state']['hardware_link_address']] = i['name']
 
                 # Physical NICs can't be just matched by name, because names can change due to OS kernel upgrades.
                 # Match them by hardware addresses instead.
