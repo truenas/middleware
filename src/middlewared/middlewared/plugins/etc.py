@@ -284,7 +284,6 @@ class EtcService(Service):
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='default/keyboard'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='vconsole.conf'),
             ),
         ),
         'ldap': EtcGroup(
