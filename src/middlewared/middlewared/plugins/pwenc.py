@@ -62,7 +62,7 @@ class PWEncService(Service):
             settings = self.middleware.call_sync('datastore.config', 'system.settings')
 
         try:
-            return decrypt(settings['stg_pwenc_check']) == PWENC_CHECK
+            return decrypt(settings['stg_pwenc_check'], _raise=True) == PWENC_CHECK
         except truenas_pypwenc.PwencError as exc:
             # In principle on a totally fresh install it's expected that we need to generate a new
             # secret. In this case we expect SECRET_NOT_FOUND. Other errors are unexpected and
