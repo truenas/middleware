@@ -135,10 +135,11 @@ class ContainerService(Service):
         exist and need migration. On success, sets preferred_pool and clears
         virt_global.pool so migration does not re-trigger on next boot.
         """
-        legacy_config = await self.middleware.call("datastore.config", "virt.global")
-        if legacy_config["pool"] is None:
+        legacy_config = await self.middleware.call("datastore.query", "virt.global")
+        if not legacy_config or legacy_config[0]["pool"] is None:
             return
 
+        legacy_config = legacy_config[0]
         self.logger.info("Legacy incus container configuration found, starting migration")
         try:
             migration_job = await self.middleware.call("container.migrate")
@@ -165,12 +166,12 @@ class ContainerService(Service):
     async def migrate(self, job):
         """Migrate incus containers to new API."""
 
-        legacy_configuration = await self.middleware.call("datastore.config", "virt.global")
-        pool = legacy_configuration["pool"]
-        if pool is None:
+        legacy_configuration = await self.middleware.call("datastore.query", "virt.global")
+        if not legacy_configuration or legacy_configuration[0]["pool"] is None:
             raise CallError("Legacy containers configuration pool is not set.")
+        pool = legacy_configuration[0]["pool"]
 
-        storage_pools = {pool} | set(filter(bool, (legacy_configuration["storage_pools"] or "").split()))
+        storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]["storage_pools"] or "").split()))
         existing_containers = {
             container["name"]: container for container in await self.middleware.call("container.query")
         }
