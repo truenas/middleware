@@ -3,6 +3,7 @@ import functools
 import inspect
 import re
 import sys
+import types
 import typing
 
 from .handler.accept import accept_params
@@ -297,12 +298,31 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
 
 
 def normalize_annotation(annotation, parent_model=None):
+    origin = typing.get_origin(annotation)
+
+    # Recurse into union members (handles both `X | Y` and `typing.Union[X, Y]`)
+    if origin is types.UnionType or origin is typing.Union:
+        args = typing.get_args(annotation)
+        normalized = [normalize_annotation(arg, parent_model) for arg in args]
+        non_none = [a for a in normalized if a is not None]
+        has_none = None in normalized
+        if not non_none:
+            return None
+        result = " | ".join(non_none)
+        if has_none:
+            result += " | None"
+        return result
+
     result = annotation
-    if typing.get_origin(annotation) is typing.Annotated:
+    if origin is typing.Annotated:
         result = typing.get_args(annotation)[0]
     elif parent_model is not None and isinstance(annotation, typing.ForwardRef):
         result = annotation._evaluate(globals(), sys.modules[parent_model.__module__].__dict__,
                                       recursive_guard=frozenset())
+
+    # Allow types to declare their annotation-check equivalent
+    if isinstance(result, type) and hasattr(result, '__normalize_as__'):
+        result = result.__normalize_as__
 
     if result is None or result is type(None) or result == "None":
         return None

@@ -29,6 +29,7 @@ class LongStringWrapper:
     """
 
     max_length = 2048000  # historic maximum length of string in filesystem.file_receive
+    __normalize_as__ = str
 
     def __init__(self, value):
         if isinstance(value, LongStringWrapper):
