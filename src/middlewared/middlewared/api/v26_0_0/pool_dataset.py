@@ -13,20 +13,28 @@ from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 
 __all__ = [
+    "PoolAttachment",
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
+    "PoolDatasetCreateFilesystem", "PoolDatasetCreateVolume",
     "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResult",
+    "PoolDatasetEncryptionSummary", "PoolDatasetEncryptionSummaryOptions",
     "PoolDatasetEncryptionSummaryArgs", "PoolDatasetEncryptionSummaryResult", "PoolDatasetExportKeysArgs",
     "PoolDatasetExportKeysResult", "PoolDatasetExportKeysForReplicationArgs",
     "PoolDatasetExportKeysForReplicationResult", "PoolDatasetExportKeyArgs", "PoolDatasetExportKeyResult",
+    "PoolDatasetLockOptions", "PoolDatasetUnlockOptions",
     "PoolDatasetLockArgs", "PoolDatasetLockResult", "PoolDatasetUnlockArgs", "PoolDatasetUnlockResult",
+    "PoolDatasetChangeKeyOptions",
+    "PoolDatasetInsertOrUpdateEncryptedRecordData",
     "PoolDatasetInsertOrUpdateEncryptedRecordArgs", "PoolDatasetInsertOrUpdateEncryptedRecordResult",
     "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
-    "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
-    "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
-    "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
+    "PoolDatasetInheritParentEncryptionPropertiesResult",
+    "PoolDatasetChecksumChoices", "PoolDatasetChecksumChoicesArgs", "PoolDatasetChecksumChoicesResult",
+    "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
+    "PoolDatasetEncryptionAlgorithmChoices", "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
     "PoolDatasetRecommendedZvolBlocksizeArgs", "PoolDatasetRecommendedZvolBlocksizeResult", "PoolDatasetProcessesArgs",
     "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordsizeChoicesArgs", "PoolDatasetRecordsizeChoicesResult",
+    "PoolDatasetUpdate",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
     "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
     "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult",
@@ -239,8 +247,6 @@ class PoolDatasetCreate(BaseModel):
     protection but use more CPU."""
     readonly: Literal["ON", "OFF", "INHERIT"] = "INHERIT"
     """Whether the dataset is read-only."""
-    share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
-    """Optimization type for the dataset based on its intended use."""
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
     """Configuration for encryption of dataset for `name` pool."""
     encryption: bool = False
@@ -260,6 +266,8 @@ class PoolDatasetCreate(BaseModel):
 class PoolDatasetCreateFilesystem(PoolDatasetCreate):
     type: Literal["FILESYSTEM"] = "FILESYSTEM"
     """Type of dataset to create - filesystem."""
+    share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
+    """Optimization type for the dataset based on its intended use."""
     aclmode: Literal["PASSTHROUGH", "RESTRICTED", "DISCARD", "INHERIT"] = NotRequired
     """How Access Control Lists are handled when chmod is used."""
     acltype: Literal["OFF", "NFSV4", "POSIX", "INHERIT"] = NotRequired
@@ -511,16 +519,20 @@ class PoolDatasetChecksumChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
+class PoolDatasetChecksumChoices(BaseModel):
+    ON: Literal["ON"] = "ON"
+    FLETCHER2: Literal["FLETCHER2"] = "FLETCHER2"
+    FLETCHER4: Literal["FLETCHER4"] = "FLETCHER4"
+    SHA256: Literal["SHA256"] = "SHA256"
+    SHA512: Literal["SHA512"] = "SHA512"
+    SKEIN: Literal["SKEIN"] = "SKEIN"
+    EDONR: Literal["EDONR"] = "EDONR"
+    BLAKE3: Literal["BLAKE3"] = "BLAKE3"
+
+
 class PoolDatasetChecksumChoicesResult(BaseModel):
-    ON: Literal["ON"]
-    FLETCHER2: Literal["FLETCHER2"]
-    FLETCHER4: Literal["FLETCHER4"]
-    SHA256: Literal["SHA256"]
-    SHA512: Literal["SHA512"]
-    SKEIN: Literal["SKEIN"]
-    EDONR: Literal["EDONR"]
-    BLAKE3: Literal["BLAKE3"]
+    result: PoolDatasetChecksumChoices
+    """Object mapping checksum algorithm names to their values."""
 
 
 class PoolDatasetCompressionChoicesArgs(BaseModel):
@@ -577,14 +589,18 @@ class PoolDatasetEncryptionAlgorithmChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
+class PoolDatasetEncryptionAlgorithmChoices(BaseModel):
+    AES_128_CCM: Literal["AES-128-CCM"] = Field(default="AES-128-CCM", alias="AES-128-CCM")
+    AES_192_CCM: Literal["AES-192-CCM"] = Field(default="AES-192-CCM", alias="AES-192-CCM")
+    AES_256_CCM: Literal["AES-256-CCM"] = Field(default="AES-256-CCM", alias="AES-256-CCM")
+    AES_128_GCM: Literal["AES-128-GCM"] = Field(default="AES-128-GCM", alias="AES-128-GCM")
+    AES_192_GCM: Literal["AES-192-GCM"] = Field(default="AES-192-GCM", alias="AES-192-GCM")
+    AES_256_GCM: Literal["AES-256-GCM"] = Field(default="AES-256-GCM", alias="AES-256-GCM")
+
+
 class PoolDatasetEncryptionAlgorithmChoicesResult(BaseModel):
-    AES_128_CCM: Literal["AES-128-CCM"] = Field(alias="AES-128-CCM")
-    AES_192_CCM: Literal["AES-192-CCM"] = Field(alias="AES-192-CCM")
-    AES_256_CCM: Literal["AES-256-CCM"] = Field(alias="AES-256-CCM")
-    AES_128_GCM: Literal["AES-128-GCM"] = Field(alias="AES-128-GCM")
-    AES_192_GCM: Literal["AES-192-GCM"] = Field(alias="AES-192-GCM")
-    AES_256_GCM: Literal["AES-256-GCM"] = Field(alias="AES-256-GCM")
+    result: PoolDatasetEncryptionAlgorithmChoices
+    """Object mapping encryption algorithm names to their values."""
 
 
 class PoolDatasetEncryptionSummaryArgs(BaseModel):
@@ -656,8 +672,7 @@ class PoolDatasetInheritParentEncryptionPropertiesResult(BaseModel):
     """Returns `null` on successful inheritance of parent encryption properties."""
 
 
-@single_argument_args("data")
-class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
+class PoolDatasetInsertOrUpdateEncryptedRecordData(BaseModel):
     encryption_key: Any = None
     """The encryption key data to insert or update."""
     id: int | None = None
@@ -666,6 +681,12 @@ class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
     """The dataset name for the encryption record."""
     key_format: str | None = Field(examples=['hex', 'raw', 'passphrase'])
     """The format of the encryption key."""
+
+
+@single_argument_args("data")
+class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
+    data: PoolDatasetInsertOrUpdateEncryptedRecordData
+    """Encryption record data to insert or update."""
 
 
 class PoolDatasetInsertOrUpdateEncryptedRecordResult(BaseModel):

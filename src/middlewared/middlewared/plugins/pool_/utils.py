@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import enum
 import itertools
@@ -7,12 +9,15 @@ import re
 import typing
 
 from pathlib import Path
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.size import MB
 from middlewared.utils.filesystem.directory import directory_is_empty
+
+if TYPE_CHECKING:
+    from middlewared.api.current import PoolDatasetEntry
 
 
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
@@ -45,9 +50,9 @@ ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
 
 class CreateImplArgs(typing.TypedDict, total=False):
-    name: str
+    name: typing.Required[str]
     """The name of the resource being created."""
-    ztype: typing.Literal["FILESYSTEM", "VOLUME"]
+    ztype: typing.Required[typing.Literal["FILESYSTEM", "VOLUME"]]
     """The type of the resource to be created."""
     zprops: dict[str, str]
     """ZFS data properties to be applied during creation."""
@@ -110,11 +115,19 @@ def _null(x):
     return x
 
 
-def dataset_mountpoint(dataset):
-    if dataset['mountpoint'] == 'legacy':
+def dataset_mountpoint(dataset: PoolDatasetEntry | dict) -> str | None:
+    """Get the mountpoint for a dataset, supporting both BaseModel and dict inputs."""
+    if isinstance(dataset, dict):
+        mountpoint = dataset['mountpoint']
+        name = dataset['name']
+    else:
+        mountpoint = dataset.mountpoint
+        name = dataset.name
+
+    if mountpoint == 'legacy':
         return None
 
-    return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
+    return mountpoint or os.path.join('/mnt', name)
 
 
 def dataset_can_be_mounted(ds_name, ds_mountpoint):
@@ -190,7 +203,7 @@ def retrieve_keys_from_file(job):
     return data
 
 
-def get_dataset_parents(dataset: str) -> list:
+def get_dataset_parents(dataset: str) -> list[str]:
     return [parent.as_posix() for parent in Path(dataset).parents][:-1]
 
 

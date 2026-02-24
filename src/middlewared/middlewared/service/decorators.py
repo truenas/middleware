@@ -24,8 +24,9 @@ def filterable_api_method[**P, T](
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_thread_local_storage: bool = False,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    def filterable_internal(fn: Callable[P, T]) -> Callable[P, T]:
+    check_annotations: bool = False,
+):
+    def filterable_internal(fn):
         register_models = []
         if item:
             name = item.__name__
@@ -51,7 +52,7 @@ def filterable_api_method[**P, T](
         wrapped = api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
-            pass_thread_local_storage=pass_thread_local_storage,
+            pass_thread_local_storage=pass_thread_local_storage, check_annotations=check_annotations
         )(fn)
         wrapped._register_models = register_models
         return wrapped

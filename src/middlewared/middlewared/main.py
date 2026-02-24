@@ -96,6 +96,7 @@ from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.pool_ import PoolDatasetService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -155,6 +156,7 @@ class PoolServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.snapshottask = PeriodicSnapshotTaskService(middleware)
+        self.dataset = PoolDatasetService(middleware)
 
 
 class SharingServicesContainer(BaseServiceContainer):
