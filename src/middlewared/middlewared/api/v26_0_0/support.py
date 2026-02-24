@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, NotRequired, single_argument_args, LongString, EmailString, single_argument_result
+    BaseModel, ForUpdateMetaclass, NotRequired, single_argument_args, LongString, EmailString,
 )
 
 
@@ -12,7 +12,7 @@ __all__ = [
     "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult", "SupportIsAvailableArgs",
     "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs", "SupportIsAvailableAndEnabledResult",
     "SupportNewTicketArgs", "SupportNewTicketResult", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
-    "SupportUpdateArgs", "SupportUpdateResult",
+    "SupportUpdateArgs", "SupportUpdateResult", "SupportNewTicket"
 ]
 
 
@@ -147,14 +147,18 @@ class SupportNewTicketArgs(BaseModel):
     """Support ticket data for either enterprise or community support."""
 
 
-@single_argument_result
-class SupportNewTicketResult(BaseModel):
+class SupportNewTicket(BaseModel):
     ticket: int | None
     """Ticket number if successfully created. `null` if creation failed."""
     url: str | None
     """URL to view the created ticket. `null` if not available."""
     has_debug: bool
     """Whether debug information was attached to the ticket."""
+
+
+class SupportNewTicketResult(BaseModel):
+    result: SupportNewTicket
+    """Created support ticket details."""
 
 
 class SupportSimilarIssuesArgs(BaseModel):

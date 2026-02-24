@@ -1,5 +1,7 @@
 from middlewared.api.base import BaseModel, LongString
 
+from .support import SupportNewTicket
+
 
 __all__ = [
     'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
@@ -84,5 +86,5 @@ class TrueNASSetProductionArgs(BaseModel):
 
 
 class TrueNASSetProductionResult(BaseModel):
-    result: dict | None
-    """Result object containing production configuration details. `null` if transition failed."""
+    result: SupportNewTicket | None
+    """Support ticket details if system was newly marked as production. `null` otherwise."""

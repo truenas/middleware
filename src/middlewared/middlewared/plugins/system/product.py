@@ -21,7 +21,7 @@ from middlewared.api.current import (
     SystemVersionShortArgs,
     SystemVersionShortResult,
 )
-from middlewared.plugins.truenas import EULA_PENDING_PATH
+from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string

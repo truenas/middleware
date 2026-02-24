@@ -70,6 +70,66 @@ _VERB_TO_ACTION = types.MappingProxyType(
     }
 )
 
+# systemd's compiled-in default timeout (90 seconds)
+_SYSTEMD_DEFAULT_TIMEOUT_SEC = 90.0
+
+# Buffer added on top of systemd's timeout to avoid racing it
+_TIMEOUT_BUFFER_SEC = 5.0
+
+# systemd's USEC_INFINITY means "no timeout"
+_USEC_INFINITY = 2**64 - 1
+
+# Mapping from unit action to the relevant timeout property name(s)
+# on the org.freedesktop.systemd1.Service interface.
+_ACTION_TIMEOUT_PROPERTIES = types.MappingProxyType({
+    "Start": ("TimeoutStartUSec",),
+    "Reload": ("TimeoutStartUSec",),
+    "Stop": ("TimeoutStopUSec",),
+    "Restart": ("TimeoutStopUSec", "TimeoutStartUSec"),
+})
+
+
+async def _get_unit_timeout(
+    router, unit_path: str, service_name: str, action: str
+) -> float:
+    """
+    Query systemd via D-Bus for the effective timeout of a unit action.
+
+    For .service units, reads TimeoutStartUSec / TimeoutStopUSec from the
+    org.freedesktop.systemd1.Service interface. For other unit types or on
+    error, falls back to the systemd compiled-in default (90s).
+
+    Returns the timeout in seconds with a buffer added to avoid racing systemd.
+    """
+    props = _ACTION_TIMEOUT_PROPERTIES.get(action)
+    if props is None:
+        return _SYSTEMD_DEFAULT_TIMEOUT_SEC + _TIMEOUT_BUFFER_SEC
+
+    # Only .service units expose TimeoutStart/StopUSec on the Service interface.
+    if not service_name.endswith(".service"):
+        return _SYSTEMD_DEFAULT_TIMEOUT_SEC + _TIMEOUT_BUFFER_SEC
+
+    total_usec = 0
+    try:
+        for prop_name in props:
+            usec = await _get_unit_property(
+                router, unit_path, "org.freedesktop.systemd1.Service", prop_name
+            )
+            if usec >= _USEC_INFINITY:
+                total_usec += int(_SYSTEMD_DEFAULT_TIMEOUT_SEC * 1_000_000)
+            else:
+                total_usec += usec
+    except Exception:
+        logger.debug(
+            "%s: failed to query %s timeout from D-Bus, using default",
+            service_name,
+            action,
+            exc_info=True,
+        )
+        return _SYSTEMD_DEFAULT_TIMEOUT_SEC + _TIMEOUT_BUFFER_SEC
+
+    return total_usec / 1_000_000 + _TIMEOUT_BUFFER_SEC
+
 
 async def _load_unit_path(router, service_name: str) -> str:
     """Load a systemd unit and return its D-Bus object path."""
@@ -329,6 +389,7 @@ async def _stop_unit_and_wait_for_exit(
     service_name: str,
     timeout: float,
     start_time: float,
+    timeout_is_explicit: bool = False,
 ) -> None:
     """
     Stop a systemd unit and wait for all processes to exit.
@@ -347,6 +408,8 @@ async def _stop_unit_and_wait_for_exit(
         service_name: Service name for logging
         timeout: Maximum time to wait for job completion
         start_time: Start time from time.monotonic() for elapsed calculation
+        timeout_is_explicit: True if the caller provided the timeout (log at DEBUG),
+                             False if auto-detected from systemd (log at WARNING)
     """
     # Only service units have MainPID property. Socket, target, timer, etc.
     # units don't have the org.freedesktop.systemd1.Service interface.
@@ -378,11 +441,18 @@ async def _stop_unit_and_wait_for_exit(
                             )
                         break
         except TimeoutError:
-            logger.warning(
-                "%s Stop job timed out after %.1fs, continuing to wait for process exit",
-                service_name,
-                timeout,
-            )
+            if timeout_is_explicit:
+                logger.debug(
+                    "%s Stop: stopped waiting after %.1fs (job still running)",
+                    service_name,
+                    timeout,
+                )
+            else:
+                logger.warning(
+                    "%s Stop job timed out after %.1fs, continuing to wait for process exit",
+                    service_name,
+                    timeout,
+                )
 
         # Wait for processes to actually exit by polling state
         elapsed = time.monotonic() - start_time
@@ -455,7 +525,7 @@ async def _stop_unit_and_wait_for_exit(
 
 
 async def call_unit_action_and_wait(
-    service_name: str | bytes, action: str, timeout: float = 10.0
+    service_name: str | bytes, action: str, timeout: float | None = None
 ) -> None:
     """
     Call a unit action and wait for job completion via D-Bus signals.
@@ -469,9 +539,12 @@ async def call_unit_action_and_wait(
     Args:
         service_name: The systemd unit name (e.g., 'smbd.service' or b'smbd.service')
         action: The action to perform (Start, Stop, Restart, Reload)
-        timeout: Maximum time to wait for job completion in seconds
+        timeout: Maximum time to wait for job completion in seconds.
+                 If None, auto-detects from the unit's systemd timeout
+                 properties via D-Bus, with a small buffer.
     """
     service_name = _normalize_unit_name(service_name)
+    timeout_is_explicit = timeout is not None
 
     start_time = time.monotonic()
 
@@ -480,9 +553,13 @@ async def call_unit_action_and_wait(
 
         unit_path = await _load_unit_path(router, service_name)
 
+        if not timeout_is_explicit:
+            timeout = await _get_unit_timeout(router, unit_path, service_name, action)
+
         if action == "Stop":
             await _stop_unit_and_wait_for_exit(
-                router, unit_path, service_name, timeout, start_time
+                router, unit_path, service_name, timeout, start_time,
+                timeout_is_explicit,
             )
         else:
             # For non-Stop actions, use original flow
@@ -514,9 +591,20 @@ async def call_unit_action_and_wait(
                                     )
                                 break
                 except TimeoutError:
-                    logger.warning(
-                        "%s %s job timed out after %.1fs", service_name, action, timeout
-                    )
+                    if timeout_is_explicit:
+                        logger.debug(
+                            "%s %s: stopped waiting after %.1fs (job still running)",
+                            service_name,
+                            action,
+                            timeout,
+                        )
+                    else:
+                        logger.warning(
+                            "%s %s job timed out after %.1fs",
+                            service_name,
+                            action,
+                            timeout,
+                        )
                     return
 
             # Verify service is running
@@ -526,7 +614,6 @@ async def call_unit_action_and_wait(
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     systemd_unit = NotImplemented
     systemd_async_start = False
-    systemd_unit_timeout = 5
 
     async def systemd_extra_units(self):
         return []
@@ -575,13 +662,11 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def _unit_action(self, action, wait=True):
         unit_name = self._get_systemd_unit_name()
         if wait:
-            await self._call_unit_action_and_wait(
-                unit_name, action, self.systemd_unit_timeout
-            )
+            await self._call_unit_action_and_wait(unit_name, action)
         else:
             await call_unit_action(unit_name, action)
 
-    async def _call_unit_action_and_wait(self, service_name, action, timeout):
+    async def _call_unit_action_and_wait(self, service_name, action, timeout=None):
         await call_unit_action_and_wait(service_name, action, timeout)
 
     async def _systemd_unit(self, unit, verb):

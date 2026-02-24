@@ -31,6 +31,7 @@ jobs:
             middlewared/plugins/cron/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
+            middlewared/plugins/truenas/ \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \

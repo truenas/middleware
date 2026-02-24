@@ -1,7 +1,7 @@
 import pytest
 from typing import Annotated
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, LongString
 from middlewared.api.base.decorator import check_method_annotations
 
 
@@ -181,6 +181,26 @@ class TestCheckMethodAnnotations:
 
         # Should not raise
         check_method_annotations(method, 1, SimpleArgs, SimpleResult)
+
+    def test_longstring_return_matches_str(self):
+        """Test that model with LongString result accepts str annotation."""
+        class LongStringResult(BaseModel):
+            result: LongString
+
+        def method(self, name: str, count: int) -> str:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, LongStringResult)
+
+    def test_longstring_optional_return_matches_str_optional(self):
+        """Test that model with LongString | None result accepts str | None annotation."""
+        class LongStringOptionalResult(BaseModel):
+            result: LongString | None
+
+        def method(self, name: str, count: int) -> str | None:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, LongStringOptionalResult)
 
     def test_error_message_includes_function_name(self):
         """Test that error messages include the function name."""

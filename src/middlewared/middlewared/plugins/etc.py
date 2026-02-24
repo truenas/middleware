@@ -284,7 +284,6 @@ class EtcService(Service):
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='default/keyboard'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='vconsole.conf'),
             ),
         ),
         'ldap': EtcGroup(
@@ -303,7 +302,6 @@ class EtcService(Service):
             ctx=(
                 CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True), ('locked', '=', False)]]),
                 CtxMethod(method='nfs.config'),
-                CtxMethod(method='system.global.id'),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='nfs.conf'),

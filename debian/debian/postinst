@@ -91,7 +91,7 @@ systemctl mask mdadm.service mdmonitor.service
 systemctl mask lvm2-monitor.service
 
 # ipa-epn.service is in conflict with our implementation of support for IPA
-systemctl mask ipa-epn.service
+systemctl mask ipa-epn.service ipa-epn.timer
 
 # Prevent systemd management of users and accounts: NAS-137910
 systemctl mask systemd-sysusers.service

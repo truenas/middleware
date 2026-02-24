@@ -476,11 +476,13 @@ class FailoverService(ConfigService):
         """Determine if NICs match between both controllers."""
         result = {'missing_local': list(), 'missing_remote': list()}
         try:
-            local_nics = await self.middleware.call('interface.query')
-            local_nonphysical_names = {i['name'] for i in local_nics if i['type'] != 'PHYSICAL'}
-            local_physical_mac_to_name = {i['state']['link_address']: i['name']
-                                          for i in local_nics
-                                          if i['type'] == 'PHYSICAL'}
+            local_nonphysical_names = set()
+            local_physical_mac_to_name = dict()
+            for i in await self.middleware.call('interface.query'):
+                if i['type'] != 'PHYSICAL':
+                    local_nonphysical_names.add(i['name'])
+                else:
+                    local_physical_mac_to_name[i['state']['hardware_link_address']] = i['name']
         except Exception:
             self.logger.error('Unhandled exception querying ifaces on local controller', exc_info=True)
             return result
@@ -494,10 +496,13 @@ class FailoverService(ConfigService):
             self.logger.error('Unhandled exception querying ifaces on remote controller', exc_info=True)
         else:
             if remote_nics is not None:
-                remote_nonphysical_names = {i['name'] for i in remote_nics if i['type'] != 'PHYSICAL'}
-                remote_physical_mac_to_name = {i['state']['link_address']: i['name']
-                                               for i in remote_nics
-                                               if i['type'] == 'PHYSICAL'}
+                remote_nonphysical_names = set()
+                remote_physical_mac_to_name = dict()
+                for i in remote_nics:
+                    if i['type'] != 'PHYSICAL':
+                        remote_nonphysical_names.add(i['name'])
+                    else:
+                        remote_physical_mac_to_name[i['state']['hardware_link_address']] = i['name']
 
                 # Physical NICs can't be just matched by name, because names can change due to OS kernel upgrades.
                 # Match them by hardware addresses instead.
