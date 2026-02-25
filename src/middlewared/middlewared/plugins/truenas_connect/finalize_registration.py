@@ -71,7 +71,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                     try:
                         decoded_token = decode_and_validate_token(token)
                     except ValueError as e:
-                        logger.error('Failed to validate received token: %r', str(e))
+                        logger.error('Failed to validate received token: %s', e)
                         await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
                         return
 
