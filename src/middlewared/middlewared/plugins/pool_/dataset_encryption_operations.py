@@ -257,6 +257,6 @@ class PoolDatasetService(Service):
                             'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                         )
 
-        await self.middleware.run_in_thread(change_encryption_root, id_, False)
+        await self.middleware.run_in_thread(change_encryption_root, id_)
         await self.middleware.call('pool.dataset.sync_db_keys', id_)
         await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id_)

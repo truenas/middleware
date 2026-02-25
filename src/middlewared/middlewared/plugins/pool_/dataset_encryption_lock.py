@@ -210,7 +210,7 @@ class PoolDatasetService(Service):
 
             job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
-                load_key(self.context, name, key=datasets[name]['key'], mount_ds=False)
+                load_key(self.context, name, key=datasets[name]['key'])
             except CallError as e:
                 failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
                 continue

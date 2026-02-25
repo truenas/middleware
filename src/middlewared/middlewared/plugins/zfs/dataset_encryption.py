@@ -19,17 +19,11 @@ class CheckKeyResult(TypedDict):
     error: str | None
 
 
-def load_key(
-    ctx: 'ServiceContext', id_: str, *,
-    mount_ds: bool = True,
-    recursive: bool = False,
-    **kwargs
-) -> None:
+def load_key(ctx: 'ServiceContext', id_: str, **kwargs) -> None:
     """Load the encryption key for dataset `id_`.
 
     Raises CallError if the dataset is not encrypted, the key is already
-    loaded, or the ZFS operation fails. On success, mounts the dataset
-    (and optionally its children) unless `mount_ds` is False.
+    loaded, or the ZFS operation fails.
 
     `key` (str) and `key_location` (str) are mutually exclusive. Key material
     is passed to ZFS via an in-memory file and never written to disk.
@@ -46,16 +40,9 @@ def load_key(
     except (ZFSException, ValueError) as e:
         ctx.logger.error(f'Failed to load key for {id_}', exc_info=True)
         raise CallError(f'Failed to load key for {id_}: {e}')
-    else:
-        if mount_ds:
-            ctx.call_sync2(ctx.s.zfs.resource.mount, id_, recursive=recursive)
 
 
-def check_key(
-    ctx: 'ServiceContext',
-    id_: str,
-    **kwargs
-) -> bool:
+def check_key(ctx: 'ServiceContext', id_: str, **kwargs) -> bool:
     """Return True if `key` (or the key at `key_location`) can unlock `id_`.
 
     Does not actually load the key. Raises CallError if the dataset is not
@@ -87,8 +74,7 @@ def change_key(
     `properties` may contain any combination of keyformat, keylocation, and
     pbkdf2iters. `key` is the new key material and is required when
     keylocation is not given. The dataset's key must already be loaded before
-    calling this. If `load_key` is True, the new key is loaded immediately
-    after the change. Raises CallError on failure.
+    calling this. Raises CallError on failure.
     """
     props = {} if properties is None else cast(dict, properties.copy())
     if key:
@@ -108,12 +94,11 @@ def change_key(
         raise CallError(f'Failed to change key for {id_}: {e}')
 
 
-def change_encryption_root(id_: str, load_key: bool = True) -> None:
+def change_encryption_root(id_: str) -> None:
     """Make dataset `id_` inherit encryption from its parent, removing it as
     an encryption root.
 
     `id_` must currently be an encryption root and its key must be loaded.
-    If `load_key` is True, the inherited key is loaded after the change.
     Raises CallError on failure.
     """
     try:
@@ -121,8 +106,6 @@ def change_encryption_root(id_: str, load_key: bool = True) -> None:
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
         crypto.inherit_key()
-        if load_key:
-            crypto.load_key()
     except (ZFSException, ValueError) as e:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
