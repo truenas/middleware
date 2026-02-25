@@ -422,6 +422,7 @@ def test__multiprotocol_nfs_preset(nfsacl_dataset):
 
     assert conf['path'] == nfsacl_dataset
     assert conf['oplocks'] == 'no'
+    assert conf['smb3 unix extensions'] is True
 
 
 def test__shadow_copy_off(nfsacl_dataset):
