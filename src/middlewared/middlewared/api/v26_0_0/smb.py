@@ -134,6 +134,7 @@ class SharingSMBGetaclResult(SharingSMBSetaclResult):
 
 
 SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
+SMBMinProtocol = Literal['SMB1', 'SMB2', 'SMB3']
 SMBSearchProtocol = Literal[SearchProtocol.SPOTLIGHT]
 
 
@@ -151,8 +152,11 @@ class SMBEntry(BaseModel):
     domain of the Active Directory domain. """
     description: str
     """ Description of the SMB server. SMB clients may see this description during some operations. """
-    enable_smb1: bool
-    """ Enable SMB1 support on the server. WARNING: using the SMB1 protocol is not recommended. """
+    minimum_protocol: SMBMinProtocol
+    """ Minimum SMB protocol version permitted for client connections. `SMB1` enables legacy client support \
+    (not recommended). `SMB2` is the default. `SMB3` restricts access to modern clients only. \
+    NOTE: SMB2 and SMB3 are dialects of the same protocol family; setting `SMB3` as the minimum may break \
+    access for networked embedded devices that only support SMB2. """
     unixcharset: SMBCharsetType
     """ Select character set for file names on local filesystem. Use this option only if you know the names are not \
     UTF-8. """
@@ -211,7 +215,7 @@ class SMBEntry(BaseModel):
     stateful_failover: bool
     """ Enterprise feature to ensure SMB state consistency across HA failover events. This feature is \
     incompatible with the following share purposes: MULTIPROTOCOL_SHARE, LEGACY_SHARE. This feature is also \
-    incompatible with SMB1 support. """
+    incompatible with `minimum_protocol` set to `SMB1`. """
 
     @field_validator('bindip')
     @classmethod
@@ -313,8 +317,8 @@ class SmbAuditConfig(BaseModel):
     NOTE: If a user is a member of groups in the `watch_list` and the `ignore_list`, the `watch_list` \
     has priority, and the SMB session is audited. """
     enable: bool = False
-    """ Turn on auditing for the SMB share. SMB share auditing may not be enabled if `enable_smb1` is `true` \
-    in the SMB service configuration."""
+    """ Turn on auditing for the SMB share. SMB share auditing may not be enabled if `minimum_protocol` is \
+    `SMB1` in the SMB service configuration."""
     watch_list: list[NonEmptyString] = Field(default=[], examples=[['interns', 'contractors']])
     """ Only audit the listed group accounts. If the list is empty, all groups will be audited. """
     ignore_list: list[NonEmptyString] = Field(default=[], examples=[['automation', 'apps']])
