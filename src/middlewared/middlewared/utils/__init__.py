@@ -102,7 +102,6 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class SwInfo:
     stable: bool
-    codename: str
     version: str
     fullname: str
     buildtime: int
@@ -116,7 +115,6 @@ def sw_info() -> SwInfo:
         version = manifest['version']
         return SwInfo(
             stable='MASTER' not in manifest['version'],
-            codename=manifest['codename'],
             version=version,
             fullname=f'{BRAND}-{version}',
             buildtime=manifest['buildtime'],
