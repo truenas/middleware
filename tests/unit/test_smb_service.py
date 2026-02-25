@@ -400,6 +400,16 @@ def test__encryption_required():
         BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'required'
+    assert conf['server signing'] == 'mandatory'
+
+
+def test__encryption_not_required__no_mandatory_signing():
+    for config in (BASE_SMB_CONFIG, SMB_ENCRYPTION_NEGOTIATE, SMB_ENCRYPTION_DESIRED):
+        conf = generate_smb_conf_dict(
+            DISABLED_DS_CONFIG, config, [],
+            BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+        )
+        assert conf.get('server signing') != 'mandatory'
 
 
 def test__ipa_base():
