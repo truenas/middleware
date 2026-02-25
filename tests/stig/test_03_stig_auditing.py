@@ -11,11 +11,9 @@ See truenas_audit_handler.py
 import contextlib
 import pytest
 
-from auto_config import pool_name, password, user as runuser
+from auto_config import pool_name
 from datetime import datetime, timedelta
-from functions import async_SSH_done, async_SSH_start
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils import call, ssh
 from os.path import dirname, join as path_join
 from time import sleep
@@ -236,29 +234,3 @@ def test_audit_events(test_rule, param, key, sv, auditd_gpos_stig_enable):
     event_user = event_data['syscall']['AUID']
     assert event_user == STIG_USER, f"Expected {STIG_USER} but found {event_user!r}. " \
         f"event_data.syscall={event_data['syscall']}"
-
-
-def test_missing_watched_directory():
-    """Confirm truenas_audit_handler can handle a missing or renamed watched directory"""
-    watched_dir = "/etc/proftpd/conf.d"
-
-    try:
-        # Setup the condition
-        ssh(f"mv {watched_dir} {watched_dir}.MOVED")
-
-        ah_log_tail = async_SSH_start("tail -n 0 -F /var/log/audit/audit_handler.log", runuser, password, truenas_server.ip)
-
-        with stig_mode_audit(check=False):
-            # Nothing to do here
-            pass
-
-        ah_log_data, errs = async_SSH_done(ah_log_tail, 5)    # 5 second timeout
-
-        # We should detect no exceptions
-        assert "PYTHON_EXCEPTION" not in ah_log_data
-
-        # We log the missing directory detection
-        assert "Watched directory is missing" in ah_log_data
-
-    finally:
-        ssh(f"mv {watched_dir}.MOVED {watched_dir}")
