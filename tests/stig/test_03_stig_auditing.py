@@ -152,7 +152,7 @@ def auditd_gpos_stig_enable():
             'group_create': True,
             'shell': '/usr/bin/bash',
             'ssh_password_enabled': True,
-            'groups': [40, 43],
+            'groups': [40],
         }):
             yield rules
 
