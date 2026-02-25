@@ -1,8 +1,8 @@
 from typing import Iterable, Literal, TypedDict, TYPE_CHECKING, cast
 
-import truenas_pylibzfs
 from truenas_pylibzfs import ZFSException
 from middlewared.service import CallError
+from middlewared.utils.threading import thread_local_storage as tls
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -37,8 +37,7 @@ def load_key(
     if len(kwargs) > 1:
         raise ValueError('Cannot specify both key and key location')
     try:
-        lz = truenas_pylibzfs.open_handle()
-        rsrc = lz.open_resource(name=id_)
+        rsrc = tls.lzh.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
         if crypto.info().key_is_loaded:
@@ -68,8 +67,7 @@ def check_key(
     if len(kwargs) > 1:
         raise ValueError('Cannot specify both key and key location')
     try:
-        lz = truenas_pylibzfs.open_handle()
-        rsrc = lz.open_resource(name=id_)
+        rsrc = tls.lzh.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
         return crypto.check_key(**kwargs)
@@ -100,11 +98,10 @@ def change_key(
         raise ValueError('Must specify either key or key location')
 
     try:
-        lz = truenas_pylibzfs.open_handle()
-        rsrc = lz.open_resource(name=id_)
+        rsrc = tls.lzh.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
-        config = lz.resource_cryptography_config(**props)
+        config = tls.lzh.resource_cryptography_config(**props)
         crypto.change_key(info=config)
     except (ZFSException, ValueError) as e:
         ctx.logger.error(f'Failed to change key for {id_}', exc_info=True)
@@ -120,8 +117,7 @@ def change_encryption_root(id_: str, load_key: bool = True) -> None:
     Raises CallError on failure.
     """
     try:
-        lz = truenas_pylibzfs.open_handle()
-        rsrc = lz.open_resource(name=id_)
+        rsrc = tls.lzh.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
         crypto.inherit_key()
