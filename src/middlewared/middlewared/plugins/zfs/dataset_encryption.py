@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Sequence, TypedDict, TYPE_CHECKING
+from typing import Iterable, Literal, TypedDict, TYPE_CHECKING, cast
 
 import truenas_pylibzfs
 from truenas_pylibzfs import ZFSException
@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 
 class EncryptionProperties(TypedDict, total=False):
-    keyformat: Any
+    keyformat: Literal['hex', 'passphrase', 'raw']
     keylocation: str
-    pbkdf2iters: Any
+    pbkdf2iters: int | None
 
 
 def load_key(
@@ -77,26 +77,30 @@ def change_key(
     ctx: 'ServiceContext',
     id_: str,
     properties: EncryptionProperties | None = None,
-    load_key: bool = True,
     key: str | None = None
 ) -> None:
     """Change the encryption key and/or properties for dataset `id_`.
 
     `properties` may contain any combination of keyformat, keylocation, and
     pbkdf2iters. `key` is the new key material and is required when
-    keylocation is 'prompt'. The dataset's key must already be loaded before
+    keylocation is not given. The dataset's key must already be loaded before
     calling this. If `load_key` is True, the new key is loaded immediately
     after the change. Raises CallError on failure.
     """
+    props = {} if properties is None else cast(dict, properties.copy())
+    if key:
+        props.pop('keylocation', None)
+        props['key'] = key
+    elif 'keylocation' not in props:
+        raise ValueError('Must specify either key or key location')
+
     try:
         lz = truenas_pylibzfs.open_handle()
         rsrc = lz.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
-        config = lz.resource_cryptography_config(**(properties or {}), key=key)
+        config = lz.resource_cryptography_config(**props)
         crypto.change_key(info=config)
-        if load_key:
-            crypto.load_key()
     except (ZFSException, ValueError) as e:
         ctx.logger.error(f'Failed to change key for {id_}', exc_info=True)
         raise CallError(f'Failed to change key for {id_}: {e}')

@@ -195,7 +195,7 @@ class PoolDatasetService(Service):
         encryption_dict.pop('encryption')
         key = encryption_dict.pop('key')
 
-        await self.middleware.run_in_thread(change_key, self.context, id_, encryption_dict, False, key)
+        await self.middleware.run_in_thread(change_key, self.context, id_, encryption_dict, key)
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
