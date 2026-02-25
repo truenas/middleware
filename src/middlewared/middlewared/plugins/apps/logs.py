@@ -1,6 +1,8 @@
 import errno
 
 import docker.errors
+from zoneinfo import ZoneInfo
+
 from dateutil.parser import parse, ParserError
 from docker.api.client import APIClient
 
@@ -56,6 +58,7 @@ class AppContainerLogsFollowTailEventSource(EventSource):
         tail_lines = self.arg['tail_lines'] or 'all'
 
         self.validate_log_args(app_name, container_id)
+        tz = ZoneInfo(self.middleware.call_sync('system.general.config')['timezone'])
         with get_docker_client() as docker_client:
             try:
                 container = docker_client.containers.get(container_id)
@@ -69,7 +72,7 @@ class AppContainerLogsFollowTailEventSource(EventSource):
                 # separately so UI can highlight the timestamp giving us a cleaner view of the logs
                 timestamp = log_entry.split(maxsplit=1)[0].strip()
                 try:
-                    timestamp = str(parse(timestamp))
+                    timestamp = str(parse(timestamp).astimezone(tz))
                 except (TypeError, ParserError):
                     timestamp = None
                 else:
