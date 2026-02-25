@@ -175,11 +175,19 @@ class PoolDatasetService(Service):
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {
             d['name']: d for d in self.middleware.call_sync(
-                'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot']}}
+                'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot', 'keyformat']}}
             ) if d['name'] == d['encryption_root']
         }
         try:
-            statuses = bulk_check(self.context, [{'id_': name, 'key': db_datasets[name]} for name in db_datasets])
+            to_check = []
+            for ds_name in db_datasets:
+                key = db_datasets[ds_name]
+                ds = encrypted_roots.get(ds_name)
+                if ds and ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and key:
+                    with contextlib.suppress(ValueError):
+                        key = bytes.fromhex(key)
+                to_check.append({'id_': ds_name, 'key': key})
+            statuses = bulk_check(self.context, to_check)
         except Exception as exc:
             self.logger.error(f'Failed to sync database keys: {exc}')
             return
