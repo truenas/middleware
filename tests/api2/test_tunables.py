@@ -161,7 +161,7 @@ def test_arc_max_set():
     assert int(val.strip()) == 8675309
 
     mount_info = call("filesystem.mount_info", [["mountpoint", "=", "/"]], {"get": True})
-    assert "RO" in mount_info["super_opts"]
+    assert "RO" in mount_info["mount_opts"]
 
 
 def test_create_error():

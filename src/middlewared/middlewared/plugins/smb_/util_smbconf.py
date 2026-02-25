@@ -204,6 +204,7 @@ def __apply_purpose_and_options(
             out['posix locking'] = False
             out['oplocks'] = 'no'
             out['level2 oplocks'] = 'no'
+            out['smb3 unix extensions'] = True
 
         case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
