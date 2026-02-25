@@ -98,9 +98,6 @@ class PoolDatasetService(Service):
         to_check = []
         for name, ds in datasets.items():
             ds_key = keys_supplied.get(name, {}).get('key') or ds['encryption_key']
-            if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
-                with contextlib.suppress(ValueError):
-                    ds_key = bytes.fromhex(ds_key)
             to_check.append({'id_': name, 'key': ds_key})
 
         statuses = bulk_check(self.context, to_check)
