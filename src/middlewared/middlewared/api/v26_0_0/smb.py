@@ -229,6 +229,18 @@ class SMBEntry(BaseModel):
         (i.e. {'192.168.1.150': '192.168.1.150'})."""
         return [str(i.ip) for i in values]
 
+    @classmethod
+    def from_previous(cls, value):
+        enable_smb1 = value.pop('enable_smb1', False)
+        value['minimum_protocol'] = 'SMB1' if enable_smb1 else 'SMB2'
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        minimum_protocol = value.pop('minimum_protocol', 'SMB2')
+        value['enable_smb1'] = minimum_protocol == 'SMB1'
+        return value
+
 
 class SMBStatusOptions(BaseModel):
     verbose: bool = True
