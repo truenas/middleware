@@ -1,5 +1,8 @@
 import datetime
 import math
+import typing
+
+import jwt
 
 from truenas_connect_utils.status import Status
 
@@ -14,6 +17,19 @@ CONFIGURED_TNC_STATES = (
 HEARTBEAT_INTERVAL = 120
 TNC_CERT_PREFIX = 'truenas_connect_'
 TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
+
+
+def decode_and_validate_token(token: str) -> dict[str, typing.Any]:
+    """Decode a TNC JWT token and verify it contains required fields."""
+    try:
+        decoded_token = jwt.decode(token, options={'verify_signature': False})
+    except jwt.exceptions.DecodeError as e:
+        raise ValueError(f'Invalid JWT token: {e}')
+
+    if diff := {'account_id', 'system_id'} - set(decoded_token):
+        raise ValueError(f'JWT token does not contain required fields: {diff}')
+
+    return decoded_token
 
 
 def get_unset_payload() -> dict:
