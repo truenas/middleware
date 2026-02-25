@@ -180,6 +180,11 @@ class PoolDatasetChangeKeyOptions(BaseModel):
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
     """Raw hex-encoded encryption key."""
 
+    @classmethod
+    def from_previous(cls, value):
+        value['pbkdf2iters'] = max(1300000, value['pbkdf2iters'])
+        return value
+
 
 class PoolDatasetCreateUserProperty(BaseModel):
     key: Annotated[str, Field(examples=["custom:backup_policy", "org:created_by"], pattern=".*:.*")]

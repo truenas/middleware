@@ -14,6 +14,11 @@ class EncryptionProperties(TypedDict, total=False):
     pbkdf2iters: int | None
 
 
+class CheckKeyResult(TypedDict):
+    result: bool | None
+    error: str | None
+
+
 def load_key(
     ctx: 'ServiceContext', id_: str, *,
     mount_ds: bool = True,
@@ -126,7 +131,7 @@ def change_encryption_root(id_: str, load_key: bool = True) -> None:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
 
-def bulk_check(ctx: 'ServiceContext', params: Iterable[dict[str, str]]) -> list[dict]:
+def bulk_check(ctx: 'ServiceContext', params: Iterable[dict[str, str]]) -> list[CheckKeyResult]:
     """Run check_key for each parameter list in `params`.
 
     Returns a list of dicts in the same order as `params`, each with keys:
