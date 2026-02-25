@@ -1,4 +1,4 @@
-from typing import Iterable, Literal, TypedDict, TYPE_CHECKING, cast
+from typing import Iterable, Literal, NotRequired, TypedDict, TYPE_CHECKING, cast
 
 from truenas_pylibzfs import ZFSException
 from middlewared.service import CallError
@@ -14,6 +14,12 @@ class EncryptionProperties(TypedDict, total=False):
     pbkdf2iters: int | None
 
 
+class CheckKeyParams(TypedDict):
+    id_: str
+    key: NotRequired[str | bytes]
+    key_location: NotRequired[str]
+
+
 class CheckKeyResult(TypedDict):
     result: bool | None
     error: str | None
@@ -25,8 +31,10 @@ def load_key(ctx: 'ServiceContext', id_: str, **kwargs) -> None:
     Raises CallError if the dataset is not encrypted, the key is already
     loaded, or the ZFS operation fails.
 
-    `key` (str) and `key_location` (str) are mutually exclusive. Key material
-    is passed to ZFS via an in-memory file and never written to disk.
+    `key` (str | bytes) and `key_location` (str) are mutually exclusive.
+    Pass `key` as str for hex/passphrase keyformats or as bytes for raw
+    keyformat. Key material is passed to ZFS via an in-memory file and
+    never written to disk.
     """
     if len(kwargs) > 1:
         raise ValueError('Cannot specify both key and key location')
@@ -49,7 +57,9 @@ def check_key(ctx: 'ServiceContext', id_: str, **kwargs) -> bool:
     encrypted or if the ZFS operation fails for a reason other than a wrong
     key (EZFS_CRYPTOFAILED returns False rather than raising).
 
-    `key` (str) and `key_location` (str) are mutually exclusive.
+    `key` (str | bytes) and `key_location` (str) are mutually exclusive.
+    Pass `key` as str for hex/passphrase keyformats or as bytes for raw
+    keyformat.
     """
     if len(kwargs) > 1:
         raise ValueError('Cannot specify both key and key location')
@@ -110,7 +120,7 @@ def change_encryption_root(id_: str) -> None:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
 
-def bulk_check(ctx: 'ServiceContext', params: Iterable[dict[str, str]]) -> list[CheckKeyResult]:
+def bulk_check(ctx: 'ServiceContext', params: Iterable[CheckKeyParams]) -> list[CheckKeyResult]:
     """Run check_key for each parameter list in `params`.
 
     Returns a list of dicts in the same order as `params`, each with keys:
