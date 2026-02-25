@@ -18,8 +18,7 @@ def load_key(
     ctx: 'ServiceContext', id_: str, *,
     mount_ds: bool = True,
     recursive: bool = False,
-    key: str | None = None,
-    key_location: str | None = None
+    **kwargs
 ) -> None:
     """Load the encryption key for dataset `id_`.
 
@@ -27,9 +26,11 @@ def load_key(
     loaded, or the ZFS operation fails. On success, mounts the dataset
     (and optionally its children) unless `mount_ds` is False.
 
-    `key` and `key_location` are mutually exclusive. Key material is passed
-    to ZFS via an in-memory file and never written to disk.
+    `key` (str) and `key_location` (str) are mutually exclusive. Key material
+    is passed to ZFS via an in-memory file and never written to disk.
     """
+    if len(kwargs) > 1:
+        raise ValueError('Cannot specify both key and key location')
     try:
         lz = truenas_pylibzfs.open_handle()
         rsrc = lz.open_resource(name=id_)
@@ -37,7 +38,7 @@ def load_key(
             raise CallError(f'{id_} is not encrypted')
         if crypto.info().key_is_loaded:
             raise CallError(f'{id_} key is already loaded')
-        crypto.load_key(key=key, key_location=key_location)
+        crypto.load_key(**kwargs)
     except (ZFSException, ValueError) as e:
         ctx.logger.error(f'Failed to load key for {id_}', exc_info=True)
         raise CallError(f'Failed to load key for {id_}: {e}')
@@ -49,21 +50,24 @@ def load_key(
 def check_key(
     ctx: 'ServiceContext',
     id_: str,
-    key: str | None = None,
-    key_location: str | None = None
+    **kwargs
 ) -> bool:
     """Return True if `key` (or the key at `key_location`) can unlock `id_`.
 
     Does not actually load the key. Raises CallError if the dataset is not
     encrypted or if the ZFS operation fails for a reason other than a wrong
     key (EZFS_CRYPTOFAILED returns False rather than raising).
+
+    `key` (str) and `key_location` (str) are mutually exclusive.
     """
+    if len(kwargs) > 1:
+        raise ValueError('Cannot specify both key and key location')
     try:
         lz = truenas_pylibzfs.open_handle()
         rsrc = lz.open_resource(name=id_)
         if (crypto := rsrc.crypto()) is None:
             raise CallError(f'{id_} is not encrypted')
-        return crypto.check_key(key=key, key_location=key_location)
+        return crypto.check_key(**kwargs)
     except (ZFSException, ValueError) as e:
         ctx.logger.error(f'Failed to check key for {id_}', exc_info=True)
         raise CallError(f'Failed to check key for {id_}: {e}')
@@ -118,7 +122,7 @@ def change_encryption_root(id_: str, load_key: bool = True) -> None:
         raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
 
-def bulk_check(ctx: 'ServiceContext', params: Iterable[Sequence]) -> list[dict]:
+def bulk_check(ctx: 'ServiceContext', params: Iterable[dict[str, str]]) -> list[dict]:
     """Run check_key for each parameter list in `params`.
 
     Returns a list of dicts in the same order as `params`, each with keys:
@@ -129,7 +133,7 @@ def bulk_check(ctx: 'ServiceContext', params: Iterable[Sequence]) -> list[dict]:
     for i in params:
         result = error = None
         try:
-            result = check_key(ctx, *i)
+            result = check_key(ctx, **i)
         except Exception as e:
             error = str(e)
         finally:

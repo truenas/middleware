@@ -101,13 +101,13 @@ class PoolDatasetService(Service):
             if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
                 with contextlib.suppress(ValueError):
                     ds_key = bytes.fromhex(ds_key)
-            to_check.append((name, ds_key))
+            to_check.append({'id_': name, 'key': ds_key})
 
         statuses = bulk_check(self.context, to_check)
 
         results = []
         for ds_data, status in zip(to_check, statuses):
-            ds_name = ds_data[0]
+            ds_name = ds_data['id_']
             data = datasets[ds_name]
             results.append({
                 'name': ds_name,
@@ -179,7 +179,7 @@ class PoolDatasetService(Service):
             ) if d['name'] == d['encryption_root']
         }
         try:
-            statuses = bulk_check(self.context, [(name, db_datasets[name]) for name in db_datasets])
+            statuses = bulk_check(self.context, [{'id_': name, 'key': db_datasets[name]} for name in db_datasets])
         except Exception as exc:
             self.logger.error(f'Failed to sync database keys: {exc}')
             return

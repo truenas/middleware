@@ -62,7 +62,7 @@ class KMIPService(Service, KMIPServerMixin):
                     try:
                         if (
                             ds['name'] in self.zfs_keys
-                            and check_key(self.context, ds['name'], self.zfs_keys[ds['name']])
+                            and check_key(self.context, ds['name'], key=self.zfs_keys[ds['name']])
                         ):
                             continue
                         else:
@@ -103,7 +103,7 @@ class KMIPService(Service, KMIPServerMixin):
                     key = ds['encryption_key']
                 elif (
                     ds['name'] in self.zfs_keys
-                    and check_key(self.context, ds['name'], self.zfs_keys[ds['name']])
+                    and check_key(self.context, ds['name'], key=self.zfs_keys[ds['name']])
                 ):
                     key = self.zfs_keys[ds['name']]
                 elif connection_successful:
