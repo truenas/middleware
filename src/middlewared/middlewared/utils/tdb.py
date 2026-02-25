@@ -9,9 +9,10 @@ except ImportError:
 
 from base64 import b64encode, b64decode
 from collections import defaultdict, namedtuple
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import Any, Callable, Literal, overload
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service_exception import MatchNotFound
 from threading import RLock
@@ -22,10 +23,10 @@ FD_CLOSED = -1
 # weren't updated. See lib/tdb/include/tdb.h
 MUTEX_LOCKING = 4096
 
-TDB_LOCKS = defaultdict(RLock)
-TDBOptions = namedtuple('TdbFileOptions', ['backend', 'data_type', 'clustered'], defaults=[None, None, False])
-TDB_HANDLES = {}
-CTDB_HANDLES = {}
+TDB_LOCKS: defaultdict[str, RLock] = defaultdict(RLock)
+TDBOptions = namedtuple('TDBOptions', ['backend', 'data_type', 'clustered'], defaults=[None, None, False])
+TDB_HANDLES: dict[str, 'TDBHandle'] = {}
+CTDB_HANDLES: dict[str, Any] = {}
 
 
 class TDBPathType(enum.Enum):
@@ -94,36 +95,36 @@ class TDBBatchOperation:
     """
     action: TDBBatchAction
     key: str
-    value: str | dict = None
+    value: str | dict[str, Any] | None = None
 
 
 @dataclass(slots=True, frozen=True)
 class TDBOps:
     """ Function references for operations on a given handle """
-    fetch: callable
-    store: callable
-    delete: callable
-    clear: callable
+    fetch: Callable[..., Any]
+    store: Callable[..., Any]
+    delete: Callable[..., Any]
+    clear: Callable[..., Any]
 
 
 class TDBHandle:
-    hdl = None
-    name = None
-    data_type = None
-    path_type = None
-    full_path = None
-    keys_null_terminated = False
+    hdl: Any = None
+    name: str | None = None
+    data_type: TDBDataType | None = None
+    path_type: TDBPathType | None = None
+    full_path: str | None = None
+    keys_null_terminated: bool = False
 
-    # function pointers for basic ops
-    ops = None
+    # function pointers for basic ops (always set in __init__)
+    ops: Any = None
 
-    def __enter__(self):
+    def __enter__(self) -> 'TDBHandle':
         return self
 
-    def __exit__(self, tp, val, traceback):
+    def __exit__(self, tp: type[BaseException] | None, val: BaseException | None, traceback: Any) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """ Close the TDB handle """
         self.ops = None
 
@@ -145,7 +146,7 @@ class TDBHandle:
         # if file has been renamed or deleted from under us, readlink will show different path
         return os.readlink(f'/proc/self/fd/{self.hdl.fd}') == self.full_path
 
-    def parse_value(self, tdb_val: bytes) -> dict | str:
+    def parse_value(self, tdb_val: bytes) -> dict[str, Any] | str:
         match self.data_type:
             case TDBDataType.BYTES:
                 out = b64encode(tdb_val).decode()
@@ -162,7 +163,7 @@ class TDBHandle:
         """ Ensure sync of file to disk """
         os.fdatasync(self.hdl.fd)
 
-    def get(self, key: str) -> dict | str:
+    def get(self, key: str) -> dict[str, Any] | str:
         """
         Retrieve the specified key
 
@@ -188,7 +189,7 @@ class TDBHandle:
 
         return self.parse_value(tdb_val)
 
-    def store(self, key: str, value: str | dict | bytes) -> None:
+    def store(self, key: str, value: str | dict[str, Any] | bytes) -> None:
         """
         Set the specified `key` to the specified `value`.
 
@@ -202,11 +203,11 @@ class TDBHandle:
 
         match self.data_type:
             case TDBDataType.BYTES:
-                tdb_val = b64decode(value)
+                tdb_val = b64decode(value)  # type: ignore[arg-type]
             case TDBDataType.JSON:
                 tdb_val = json.dumps(value).encode()
             case TDBDataType.STRING:
-                tdb_val = value.encode()
+                tdb_val = value.encode()  # type: ignore[union-attr]
             case _:
                 raise ValueError(f'{self.data_type}: unknown data type')
 
@@ -234,7 +235,15 @@ class TDBHandle:
         """
         self.ops.clear()
 
-    def entries(self, include_keys: bool = True, key_prefix: str = None) -> Iterable[dict]:
+    @overload
+    def entries(self, include_keys: Literal[True] = ..., key_prefix: str | None = None) -> Iterable[dict[str, Any]]: ...
+
+    @overload
+    def entries(self, include_keys: Literal[False] = ..., key_prefix: str | None = None) -> (
+        Iterable[dict[str, Any] | str]
+    ): ...
+
+    def entries(self, include_keys: bool = True, key_prefix: str | None = None) -> Iterable[dict[str, Any] | str]:
         """
         Iterate entries in TDB file:
 
@@ -263,7 +272,7 @@ class TDBHandle:
             else:
                 yield tdb_val
 
-    def batch_op(self, ops: list[TDBBatchOperation]) -> dict:
+    def batch_op(self, ops: list[TDBBatchOperation]) -> dict[str, Any]:
         """
         Perform a list of operations under a transaction lock so that
         they are automatically rolled back if any one of operations fails.
@@ -287,7 +296,7 @@ class TDBHandle:
             for op in ops:
                 match op.action:
                     case TDBBatchAction.SET:
-                        self.store(op.key, op.value)
+                        self.store(op.key, op.value)  # type: ignore[arg-type]
                     case TDBBatchAction.DEL:
                         self.delete(op.key)
                     case TDBBatchAction.GET:
@@ -359,7 +368,7 @@ class TDBHandle:
 
 
 class CTDBHandle(TDBHandle):
-    def close(self):
+    def close(self) -> None:
         """ decrement reference on handle and client """
         del self.hdl
         self.hdl = None
@@ -369,7 +378,15 @@ class CTDBHandle(TDBHandle):
         """ CTDB handles are basically always valid """
         return self.hdl is not None
 
-    def entries(self, include_keys: bool = True, key_prefix: str = None) -> Iterable[dict]:
+    @overload
+    def entries(self, include_keys: Literal[True] = ..., key_prefix: str | None = None) -> Iterable[dict[str, Any]]: ...
+
+    @overload
+    def entries(self, include_keys: Literal[False] = ..., key_prefix: str | None = None) -> (
+        Iterable[dict[str, Any] | str]
+    ): ...
+
+    def entries(self, include_keys: bool = True, key_prefix: str | None = None) -> Iterable[dict[str, Any] | str]:
         for ctdb_key, ctdb_val in self.hdl.iter():
             key = ctdb_key.decode()
             if key_prefix and not key.startswith(key_prefix):
@@ -386,7 +403,7 @@ class CTDBHandle(TDBHandle):
         """ This doesn't really make sense for ctdb so we'll just NO-OP it for API consistency """
         pass
 
-    def batch_op(self, ops: list[TDBBatchOperation]) -> dict:
+    def batch_op(self, ops: list[TDBBatchOperation]) -> dict[str, Any]:
         """
         Perform batch operations on CTDB database.
 
@@ -406,11 +423,11 @@ class CTDBHandle(TDBHandle):
                 case TDBBatchAction.SET:
                     match self.data_type:
                         case TDBDataType.BYTES:
-                            tdb_val = b64decode(op.value)
+                            tdb_val = b64decode(op.value)  # type: ignore[arg-type]
                         case TDBDataType.JSON:
                             tdb_val = json.dumps(op.value).encode()
                         case TDBDataType.STRING:
-                            tdb_val = op.value.encode()
+                            tdb_val = op.value.encode()  # type: ignore[union-attr]
                         case _:
                             raise ValueError(f'{self.data_type}: unknown data type')
                     batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, tdb_val)))
@@ -467,7 +484,7 @@ class CTDBHandle(TDBHandle):
 
 
 @contextmanager
-def get_tdb_handle(name, tdb_options: TDBOptions):
+def get_tdb_handle(name: str, tdb_options: TDBOptions) -> Generator[TDBHandle]:
     """ Open handle on TDB file under a threading lock """
     if tdb_options.clustered:
         if (entry := CTDB_HANDLES.get(name)) is None:
@@ -500,7 +517,7 @@ def get_tdb_handle(name, tdb_options: TDBOptions):
         yield entry
 
 
-def close_sysdataset_tdb_handles():
+def close_sysdataset_tdb_handles() -> None:
     """
     Some samba / winbind-related TDB files are located in system dataset
     This method provides machanism to close them when moving system dataset path
