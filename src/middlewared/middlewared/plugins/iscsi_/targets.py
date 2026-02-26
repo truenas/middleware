@@ -445,12 +445,14 @@ class iSCSITargetService(CRUDService):
         # So this is the best way to do this without going through a restart of the service
         if await self.middleware.call('service.started', 'iscsitarget'):
             g_config = await self.middleware.call('iscsi.global.config')
-            cp = await run([
-                'scstadmin', '-force', '-noprompt', '-rem_target',
-                f'{g_config["basename"]}:{name}', '-driver', 'iscsi'
-            ], check=False)
-            if cp.returncode:
-                self.middleware.logger.error('Failed to remove %r target: %s', name, cp.stderr.decode())
+            iqn = f'{g_config["basename"]}:{name}'
+            # By the time we reach here the extent mapping has already been
+            # removed and the backing device unregistered, so any in-flight
+            # I/O has already drained.  The default retry count is therefore
+            # sufficient: the only residual delay is NEXUS_LOSS_SESS TM
+            # functions completing for sessions that were active at the point
+            # of removal, which resolves in well under a second in practice.
+            await self.middleware.call('iscsi.scst.remove_target', iqn)
 
     @private
     async def get_rel_tgt_id(self):

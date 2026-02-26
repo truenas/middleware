@@ -3,20 +3,26 @@ import itertools
 import pathlib
 
 from middlewared.service import Service
+from middlewared.utils import run
 from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
-COPY_MANAGER_LUNS_PATH = '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
+COPY_MANAGER_LUNS_PATH = (
+    '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
+)
 SCST_DEVICES = '/sys/kernel/scst_tgt/devices'
 SCST_SUSPEND = '/sys/kernel/scst_tgt/suspend'
-SCST_CONTROLLER_A_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
-SCST_CONTROLLER_B_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
+SCST_CONTROLLER_A_TARGET_GROUPS_STATE = (
+    '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
+)
+SCST_CONTROLLER_B_TARGET_GROUPS_STATE = (
+    '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
+)
 
 
 class iSCSITargetService(Service):
-
     class Config:
         namespace = 'iscsi.scst'
         private = True
@@ -34,7 +40,12 @@ class iSCSITargetService(Service):
         paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
         if paths:
             for chunk in itertools.batched(paths, 10):
-                await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in chunk])
+                await asyncio.gather(
+                    *[
+                        self.middleware.call('iscsi.scst.path_write', path, text)
+                        for path in chunk
+                    ]
+                )
 
     def cluster_mode_paths(self):
         scst_tgt_devices = pathlib.Path(SCST_DEVICES)
@@ -62,26 +73,42 @@ class iSCSITargetService(Service):
 
     def check_cluster_mode_paths_present(self, devices):
         for device in devices:
-            if not pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode').exists():
+            if not pathlib.Path(
+                f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode'
+            ).exists():
                 return False
         return True
 
     def get_cluster_mode(self, device):
         try:
-            return pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode').read_text().splitlines()[0]
+            return (
+                pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode')
+                .read_text()
+                .splitlines()[0]
+            )
         except Exception:
-            return "UNKNOWN"
+            return 'UNKNOWN'
 
     async def set_device_cluster_mode(self, device, value):
-        await self.middleware.call('iscsi.scst.path_write',
-                                   f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
-                                   f'{int(value)}\n')
+        await self.middleware.call(
+            'iscsi.scst.path_write',
+            f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
+            f'{int(value)}\n',
+        )
 
     async def set_devices_cluster_mode(self, devices, value):
         text = f'{int(value)}\n'
-        paths = [f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode' for device in devices]
+        paths = [
+            f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode'
+            for device in devices
+        ]
         if paths:
-            await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in paths])
+            await asyncio.gather(
+                *[
+                    self.middleware.call('iscsi.scst.path_write', path, text)
+                    for path in paths
+                ]
+            )
 
     def disable(self):
         pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('0\n')
@@ -109,7 +136,9 @@ class iSCSITargetService(Service):
 
     def enabled(self):
         try:
-            return pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).read_text().strip() == '1'
+            return (
+                pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).read_text().strip() == '1'
+            )
         except FileNotFoundError:
             return False
 
@@ -119,9 +148,13 @@ class iSCSITargetService(Service):
     def activate_extent(self, extent_name, extenttype, path):
         if pathlib.Path(path).exists():
             if extenttype == 'DISK':
-                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_blockio/{sanitize_extent(extent_name)}/active')
+                p = pathlib.Path(
+                    f'{SCST_BASE}/handlers/vdisk_blockio/{sanitize_extent(extent_name)}/active'
+                )
             else:
-                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_fileio/{sanitize_extent(extent_name)}/active')
+                p = pathlib.Path(
+                    f'{SCST_BASE}/handlers/vdisk_fileio/{sanitize_extent(extent_name)}/active'
+                )
             try:
                 p.write_text('1\n')
                 return True
@@ -132,14 +165,20 @@ class iSCSITargetService(Service):
             return False
 
     def delete_iscsi_lun(self, iqn, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'del {lun}\n')
+        pathlib.Path(
+            f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
+        ).write_text(f'del {lun}\n')
 
     def replace_iscsi_lun(self, iqn, extent, lun):
-        mgmt_path = f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
+        mgmt_path = (
+            f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
+        )
         pathlib.Path(mgmt_path).write_text(f'replace {sanitize_extent(extent)} {lun}\n')
 
     def delete_fc_lun(self, wwpn, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'del {lun}\n')
+        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(
+            f'del {lun}\n'
+        )
 
     def replace_fc_lun(self, wwpn, extent, lun):
         mgmt_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt')
@@ -148,11 +187,15 @@ class iSCSITargetService(Service):
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
         if node == 'A':
-            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
-            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("active\n")
+            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text(
+                'nonoptimized\n'
+            )
+            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text('active\n')
         else:
-            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
-            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("active\n")
+            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text(
+                'nonoptimized\n'
+            )
+            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text('active\n')
 
     def reset_target_parameters(self, iqn, parameter_names):
         """Reset the specified parameters to their default values."""
@@ -172,7 +215,7 @@ class iSCSITargetService(Service):
         try:
             SCSTAdmin.apply_config_file('/etc/scst.conf')
         except Exception:
-            self.logger.debug("Failed to apply SCST configuration", exc_info=True)
+            self.logger.debug('Failed to apply SCST configuration', exc_info=True)
             return False
         return True
 
@@ -188,3 +231,35 @@ class iSCSITargetService(Service):
         except (FileNotFoundError, PermissionError):
             pass
         return result
+
+    async def remove_target(self, iqn: str, retries: int = 5):
+        """Remove an iSCSI target from SCST via scstadmin."""
+        # Retries several times with a short sleep to handle the race where
+        # initiator sessions are still being torn down (NEXUS_LOSS_SESS
+        # in-flight) when the call is made.
+        cp = None
+        for attempt in range(retries):
+            cp = await run(
+                [
+                    'scstadmin',
+                    '-force',
+                    '-noprompt',
+                    '-rem_target',
+                    iqn,
+                    '-driver',
+                    'iscsi',
+                ],
+                check=False,
+            )
+            if cp.returncode == 0:
+                return
+            if attempt < retries - 1:
+                await asyncio.sleep(1)
+
+        # scstadmin writes errors to stdout, not stderr
+        self.middleware.logger.error(
+            'Failed to remove target %r after %d attempts: %s',
+            iqn,
+            retries,
+            cp.stderr.decode() or cp.stdout.decode(),
+        )
