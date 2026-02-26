@@ -161,7 +161,7 @@ def test_005_starting_cifs_service(request):
 @pytest.mark.dependency(name="VSS_SMB1_ENABLED")
 def test_006_enable_smb1(request):
     depends(request, ["VSS_SHARE_CREATED"])
-    assert call("smb.update", {"enable_smb1": True})
+    assert call("smb.update", {"minimum_protocol": "SMB1"})
 
 
 @pytest.mark.dependency(name="SHARE_HAS_SHADOW_COPIES")
@@ -297,7 +297,7 @@ def test_050_delete_smb_user(request):
 
 def test_051_disable_smb1(request):
     depends(request, ["VSS_SMB1_ENABLED"])
-    assert call("smb.update", {"enable_smb1": False, "aapl_extensions": False})
+    assert call("smb.update", {"minimum_protocol": "SMB2", "aapl_extensions": False})
 
 
 def test_052_stopping_smb_service(request):

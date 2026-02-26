@@ -26,7 +26,7 @@ def test_smb_update_audit():
     Test the auditing of SMB configuration changes
     '''
     initial_smb_config = call('smb.config')
-    payload = {'enable_smb1': True}
+    payload = {'minimum_protocol': 'SMB1'}
     try:
         with expect_audit_method_calls([{
             'method': 'smb.update',
@@ -35,7 +35,7 @@ def test_smb_update_audit():
         }]):
             call('smb.update', payload)
     finally:
-        call('smb.update', {'enable_smb1': False})
+        call('smb.update', {'minimum_protocol': 'SMB2'})
 
 
 def test_smb_share_audit(smb_audit_dataset):
