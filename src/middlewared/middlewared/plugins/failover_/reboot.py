@@ -254,6 +254,7 @@ class FailoverRebootService(Service):
             ))['id']
 
             boot_environment_plugin = 'boot.environment'
+            activate_args = [{'id': id_}]
         except CallError as e:
             if e.errno != CallError.ENOMETHOD:
                 raise
@@ -268,15 +269,12 @@ class FailoverRebootService(Service):
             ))['id']
 
             boot_environment_plugin = 'bootenv'
+            activate_args = [id_]
 
         if remote_be_id == id_:
             return False
 
-        await self.middleware.call(
-            'failover.call_remote',
-            f'{boot_environment_plugin}.activate',
-            [id_],
-        )
+        await self.middleware.call('failover.call_remote', f'{boot_environment_plugin}.activate', activate_args)
         return True
 
     @private
