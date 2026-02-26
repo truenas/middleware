@@ -1,9 +1,9 @@
 import yaml
 
 from middlewared.service import ValidationErrors
+from middlewared.utils.yaml import safe_yaml_load
 
 from .compose_utils import validate_compose_config
-from middlewared.utils.yaml import safe_yaml_load
 
 
 def validate_payload(data: dict, schema: str) -> dict:

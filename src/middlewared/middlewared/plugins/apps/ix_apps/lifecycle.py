@@ -7,12 +7,12 @@ import yaml
 from middlewared.service_exception import CallError
 from middlewared.utils import sw_version
 from middlewared.utils.io import write_if_changed
+from middlewared.utils.yaml import safe_yaml_load
 
 from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
     get_installed_custom_app_compose_file,
 )
-from middlewared.utils.yaml import safe_yaml_load
 from .utils import CONTEXT_KEY_NAME, dump_yaml, run
 
 
