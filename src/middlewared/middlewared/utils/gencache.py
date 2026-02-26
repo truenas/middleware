@@ -1,4 +1,5 @@
 import enum
+from typing import Any
 
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.tdb import (
@@ -22,7 +23,7 @@ class IDMAPCacheType(enum.Enum):
     NAME2SID = 'NAME2SID'
 
 
-def fetch_gencache_entry(key: str) -> str:
+def fetch_gencache_entry(key: str) -> dict[str, Any] | str:
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         return hdl.get(key)
 
@@ -43,7 +44,7 @@ def wipe_gencache_entries() -> None:
         return hdl.clear()
 
 
-def flush_gencache_entries(keep_saf=False) -> None:
+def flush_gencache_entries(keep_saf: bool = False) -> None:
     """
     delete all keys in gencache
 
@@ -65,6 +66,6 @@ def flush_gencache_entries(keep_saf=False) -> None:
             hdl.delete(entry['key'])
 
 
-def query_gencache_entries(filters: list, options: dict) -> list | dict:
+def query_gencache_entries(filters: list[Any], options: dict[str, Any]) -> list[dict[str, Any]] | dict[str, Any] | int:
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         return filter_list(hdl.entries(), filters, options)

@@ -205,7 +205,7 @@ def get_cpu_temperatures() -> dict[str, float]:
     if total_temp:
         data['cpu'] = total_temp / len(data)
 
-    return data or ({f'cpu{i}': 0.0 for i in range(cinfo['core_count'])} | {'cpu': 0.0})
+    return data or ({f'cpu{i}': 0.0 for i in range(cinfo['core_count'] or 0)} | {'cpu': 0.0})
 
 
 @functools.cache
