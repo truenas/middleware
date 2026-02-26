@@ -1,5 +1,6 @@
 import re
 
+
 RE_DOMAIN_WILDCARD = re.compile(r'\*|\?|\[|\]')
 
 
