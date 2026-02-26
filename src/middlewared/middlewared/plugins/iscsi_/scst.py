@@ -257,9 +257,9 @@ class iSCSITargetService(Service):
                 await asyncio.sleep(1)
 
         # scstadmin writes errors to stdout, not stderr
-        self.middleware.logger.error(
+        self.logger.error(
             'Failed to remove target %r after %d attempts: %s',
             iqn,
             retries,
-            cp.stderr.decode() or cp.stdout.decode(),
+            cp.stdout.decode() or cp.stderr.decode(),
         )
