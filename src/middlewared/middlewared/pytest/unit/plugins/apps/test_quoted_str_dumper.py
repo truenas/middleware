@@ -1,7 +1,8 @@
 import textwrap
 import yaml
 
-from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml, safe_yaml_load
+from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml
+from middlewared.utils.yaml import safe_yaml_load
 
 
 def test_basic_string_quoting():

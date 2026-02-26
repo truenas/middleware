@@ -24,7 +24,7 @@ from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
-from .ix_apps.utils import safe_yaml_load
+from middlewared.utils.yaml import safe_yaml_load
 
 
 logger = logging.getLogger('app_lifecycle')

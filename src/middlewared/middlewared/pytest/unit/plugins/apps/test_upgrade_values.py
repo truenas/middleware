@@ -3,7 +3,7 @@ import unittest.mock
 
 import pytest
 
-from middlewared.plugins.apps.ix_apps.utils import safe_yaml_load
+from middlewared.utils.yaml import safe_yaml_load
 
 from middlewared.plugins.apps.upgrade import AppService
 from middlewared.pytest.unit.middleware import Middleware
