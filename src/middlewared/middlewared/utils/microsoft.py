@@ -1,7 +1,9 @@
+from typing import Any
+
 import requests
 
 
-def get_microsoft_access_token(client_id: str, client_secret: str, refresh_token: str, scope: str) -> dict:
+def get_microsoft_access_token(client_id: str, client_secret: str, refresh_token: str, scope: str) -> dict[str, Any]:
     r = requests.post(
         "https://login.microsoftonline.com/common/oauth2/v2.0/token",
         data={
@@ -14,4 +16,4 @@ def get_microsoft_access_token(client_id: str, client_secret: str, refresh_token
         timeout=10,
     )
     r.raise_for_status()
-    return r.json()
+    return r.json()  # type: ignore[no-any-return]

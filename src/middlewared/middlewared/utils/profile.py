@@ -12,7 +12,7 @@ P = ParamSpec('P')
 
 # First matching overload is chosen
 @overload
-def profile_wrap(func: Callable[P, Coroutine]) -> Callable[P, Coroutine[None, None, str]]: ...
+def profile_wrap(func: Callable[P, Coroutine[Any, Any, Any]]) -> Callable[P, Coroutine[None, None, str]]: ...
 
 
 @overload
@@ -21,7 +21,7 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, str]: ...
 
 def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, str]] | Callable[P, str]:
     if asyncio.iscoroutinefunction(func):
-        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
+        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
             pr = cProfile.Profile()
             pr.enable()
             rv = await func(*args, **kwargs)
@@ -29,7 +29,7 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, st
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats(SortKey.CUMULATIVE).print_stats()
             return s.getvalue() + '\n' + str(rv)
-        return wrapper
+        return async_wrapper
     else:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
             pr = cProfile.Profile()

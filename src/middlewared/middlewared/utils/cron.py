@@ -22,10 +22,10 @@ def convert_schedule_to_db_format(data_dict: dict[str, Any], schedule_name: str 
         return
 
     schedule = data_dict.pop(schedule_name)
-    db_fields, cron_fields = DB_FIELDS, CRON_FIELDS
+    db_fields, cron_fields = list(DB_FIELDS), list(CRON_FIELDS)
     if begin_end:
-        db_fields += ('begin', 'end')
-        cron_fields += ('begin', 'end')
+        db_fields += ['begin', 'end']
+        cron_fields += ['begin', 'end']
 
     if schedule is None:
         data_dict.update((key_prefix + field, None) for field in db_fields)
