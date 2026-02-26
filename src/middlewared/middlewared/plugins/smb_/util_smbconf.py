@@ -655,6 +655,10 @@ def generate_smb_conf_dict(
             'ntlm auth': 'disabled'
         })
 
+    # Some third-party security scanners alert if encryption is required but signing is not mandatory.
+    if smb_service_config['encryption'] == 'REQUIRED':
+        smbconf['server signing'] = 'mandatory'
+
     # The following parameters must come after processing includes in order to
     # prevent auxiliary parameters from overriding them
     smbconf.update({
