@@ -129,16 +129,11 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
         ) as it:
             for item in it:
                 if item.islnk:
-                    os.close(item.fd)
                     continue
                 try:
                     _apply_action(item, it, depth_offset)
                 except OSError as e:
-                    raise CallError(
-                        f'acltool [{action}] failed on item in {mountpoint}: {e}'
-                    )
-                finally:
-                    os.close(item.fd)
+                    raise CallError(f'acltool [{action}] failed on item in {mountpoint}: {e}')
 
     _process_mount(mountpoint, fs_name, rel_path)
 
