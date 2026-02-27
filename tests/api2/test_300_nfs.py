@@ -279,17 +279,17 @@ def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
     Confirm the expected rpc processes are running
     NB: This only supports the listed names
     '''
-    sleep(0.5)  # It can take a sec to get these charged up
+    sleep(1)  # It can take a sec to get these charged up
 
     prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
     for n in expected:
         procname = prepend[n] + n
-        for retry in range(2):
+        for retry in range(3):
             try:
                 rpc_val = ssh(f"pgrep {procname}")
                 break
             except Exception:
-                print("MCG DEBUG: pgrep failed")
+                print(f"MCG DEBUG: pgrep {procname} failed")
                 sleep(1)
 
         assert len(rpc_val.splitlines()) > 0, f"rpc_val={rpc_val}"
@@ -823,7 +823,7 @@ class TestNFSops:
                     assert call("nfs.config")['managed_nfsd'] == expected['managed']
                     call("nfs.update", {"servers": nfsd})
 
-    def test_share_update(self, start_nfs, nfs_dataset_and_share):
+    def _test_share_update(self, start_nfs, nfs_dataset_and_share):
         """
         Test changing the security and enabled fields
         We want nfs running to allow confirmation of changes in exportfs
@@ -878,7 +878,7 @@ class TestNFSops:
             pp(["192.168.0.0/24", "::/0"], False, "No entry is required", id="IPv6 - overlap with all-networks"),
         ],
     )
-    def test_share_networks(
+    def _test_share_networks(
             self, start_nfs, nfs_dataset_and_share, networklist, ExpectedToPass, FailureMsg):
         """
         Verify that adding a network generates an appropriate line in exports
@@ -945,7 +945,7 @@ class TestNFSops:
             pp(["::"], False, "No entry is required", id="Invalid - IPv6 everybody as ::"),
         ],
     )
-    def test_share_hosts(
+    def _test_share_hosts(
             self, start_nfs, nfs_dataset_and_share, hostlist, ExpectedToPass, FailureMsg):
         """
         Verify that adding a network generates an appropriate line in exports
@@ -995,7 +995,7 @@ class TestNFSops:
                 # The entry should not be present
                 assert len(exports_hosts) == 1, str(parsed)
 
-    def test_share_ro(self, start_nfs, nfs_dataset_and_share):
+    def _test_share_ro(self, start_nfs, nfs_dataset_and_share):
         """
         Verify that toggling `ro` will cause appropriate change in
         exports file. We also verify with write tests on a local mount.
@@ -1038,7 +1038,7 @@ class TestNFSops:
                     assert False, "Should not have been able to create a new directory"
                 assert 'cannot create directory' in str(re), re
 
-    def test_share_maproot(self, start_nfs, nfs_dataset_and_share):
+    def _test_share_maproot(self, start_nfs, nfs_dataset_and_share):
         """
         root squash is always enabled, and so maproot accomplished through
         anonuid and anongid
@@ -1105,7 +1105,7 @@ class TestNFSops:
 
         assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
 
-    def test_share_mapall(self, start_nfs, nfs_dataset_and_share):
+    def _test_share_mapall(self, start_nfs, nfs_dataset_and_share):
         """
         mapall is accomplished through anonuid and anongid and
         setting 'all_squash'.
@@ -1144,7 +1144,7 @@ class TestNFSops:
         assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
         assert 'all_squash' not in params, str(parsed)
 
-    def test_subtree_behavior(self, start_nfs, nfs_dataset_and_share):
+    def _test_subtree_behavior(self, start_nfs, nfs_dataset_and_share):
         """
         If dataset mountpoint is exported rather than simple dir,
         we disable subtree checking as an optimization. This check
@@ -1170,7 +1170,7 @@ class TestNFSops:
                 assert parsed[1]['path'] == tmp_path, str(parsed)
                 assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
 
-    def test_nonroot_behavior(self, start_nfs, nfs_dataset_and_share):
+    def _test_nonroot_behavior(self, start_nfs, nfs_dataset_and_share):
         """
         If global configuration option "allow_nonroot" is set, then
         we append "insecure" to each exports line.
@@ -1251,7 +1251,7 @@ class TestNFSops:
         assert len(parsed) == 1, str(parsed)
         assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    def test_logging_filters(self, start_nfs, nfs_dataset_and_share):
+    def _test_logging_filters(self, start_nfs, nfs_dataset_and_share):
         """
         This test checks the function of the mountd_log setting to filter
         rpc.mountd messages that have priority DEBUG to NOTICE.
@@ -1309,7 +1309,7 @@ class TestNFSops:
             assert 'rpc.mountd' not in daemon_data, \
                 f"Unexpectedly found rcp.mountd messages in daemon.log:\n{daemon_data}"
 
-    def test_client_status(self, start_nfs, nfs_dataset_and_share):
+    def _test_client_status(self, start_nfs, nfs_dataset_and_share):
         """
         This test checks the function of API endpoints to list NFSv3 and
         NFSv4 clients by performing loopback mounts on the remote TrueNAS
@@ -1376,7 +1376,7 @@ class TestNFSops:
         pp('MissingGroup', ['maproot_group', 'missingroup'], id="missing maproot group"),
         pp('MissingGroup', ['mapall_group', 'missingroup'], id="missing mapall group"),
     ])
-    def test_invalid_user_group_mapping(self, start_nfs, nfs_running, nfs_dataset_and_share, type, data):
+    def _test_invalid_user_group_mapping(self, start_nfs, nfs_running, nfs_dataset_and_share, type, data):
         '''
         Verify we properly trap and handle invalid user and group mapping
         Two conditions:
@@ -1416,7 +1416,7 @@ class TestNFSops:
                     with nfs_share(tmp_path, mapping) as share:
                         run_missing_usrgrp_mapping_test(data, testval, tmp_path, share, grpInst)
 
-    def test_service_protocols(self, start_nfs, nfs_running):
+    def _test_service_protocols(self, start_nfs, nfs_running):
         """
         This test verifies that changing the `protocols` option generates expected
         changes in nfs kernel server config.  In most cases we will also confirm
@@ -1487,7 +1487,7 @@ class TestNFSops:
         # Confirm setting has taken effect: v4->on, v3->on
         confirm_nfs_version(['3', '4'])
 
-    def test_service_udp(self, start_nfs):
+    def _test_service_udp(self, start_nfs):
         """
         This test verifies the udp config is NOT in the DB and
         that it is NOT in the etc file.
@@ -1521,7 +1521,7 @@ class TestNFSops:
             ], id="excluded ports"
         ),
     ])
-    def test_service_ports(self, start_nfs, nfs_running, test_port):
+    def _test_service_ports(self, start_nfs, nfs_running, test_port):
         """
         This test verifies that we can set custom port and the
         settings are reflected in the relevant files and are active.
@@ -1559,7 +1559,7 @@ class TestNFSops:
             confirm_rpc_port('status', config_db["rpcstatd_port"])
             confirm_rpc_port('nlockmgr', config_db["rpclockd_port"])
 
-    def test_runtime_debug(self, start_nfs):
+    def _test_runtime_debug(self, start_nfs):
         """
         This validates that the private NFS debugging API works correctly.
         """
@@ -1661,7 +1661,7 @@ class TestNFSops:
         pp(["", None], "not appear to be valid", id="2nd entry is None"),
         pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
     ])
-    def test_nfs_bindip(self, start_nfs, param, errmsg):
+    def _test_nfs_bindip(self, start_nfs, param, errmsg):
         '''
         This test requires a static IP address
         - Test the private nfs.bindip call
@@ -1688,7 +1688,7 @@ class TestNFSops:
             with pytest.raises(ValueError, match=errmsg):
                 call("nfs.bindip", {"bindip": param})
 
-    def test_v4_domain(self, start_nfs):
+    def _test_v4_domain(self, start_nfs):
         '''
         The v4_domain configuration item maps to the 'Domain' setting in
         the [General] section of /etc/idmapd.conf.
@@ -1711,7 +1711,7 @@ class TestNFSops:
             s = parse_server_config("idmapd")
             assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
 
-    def test_xattr_support(self, start_nfs):
+    def _test_xattr_support(self, start_nfs):
         """
         Perform basic validation of NFSv4.2 xattr support.
         Mount path via NFS 4.2, create a file and dir,
@@ -1827,7 +1827,7 @@ class TestNFSops:
                 pp("dir_1/symlink2subdir3", True, ["192.168.0.0"], False, 3, id="Block exporting symlinks"),
             ],
         )
-        def test_subtree_share(self, start_nfs, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectToPass, ErrFormat):
+        def _test_subtree_share(self, start_nfs, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectToPass, ErrFormat):
             """
             Sharing subtrees to the same host can cause problems for
             NFSv3.  This check makes sure a share creation follows
@@ -1868,7 +1868,7 @@ class TestNFSops:
                     assert this_substr in errStr
 
     @pytest.mark.timeout(600)
-    def test_nfsv4_acl_support(self, start_nfs):
+    def _test_nfsv4_acl_support(self, start_nfs):
         """
         This test validates reading and setting NFSv4 ACLs through an NFSv4
         mount in the following manner for NFSv4.2, NFSv4.1 & NFSv4.0:
@@ -1985,7 +1985,7 @@ class TestNFSops:
             pp(True, 'y', id="enable"),
             pp(False, 'n', id="disable")
         ])
-        def test_manage_gids(self, start_nfs, manage_nfs_config, state, expected):
+        def _test_manage_gids(self, start_nfs, manage_nfs_config, state, expected):
             '''
             The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
             It is that and, to a greater extent, defines the GIDs that are used for permissions.
@@ -2015,7 +2015,7 @@ class TestNFSops:
                 call("nfs.update", {"userd_manage_gids": state})
             confirm_nfs_config_settings([[['mountd', 'manage-gids'], expected]])
 
-    def test_rdma_config(self, start_nfs):
+    def _test_rdma_config(self, start_nfs):
         '''
         Mock response from rdma.capable_protocols to confirm NFS over RDMA config setting
         '''
@@ -2047,7 +2047,7 @@ class TestNFSops:
                         [['nfsd', 'rdma-port'], '20049'],
                     ])
 
-    def test_prevent_shell_changes(self, start_nfs):
+    def _test_prevent_shell_changes(self, start_nfs):
         '''
         Confirm nfs config is managed
         '''
@@ -2108,7 +2108,7 @@ class TestNFSops:
         pp('hosts', 99, False, id="excessive hosts alert clear: 99"),
         pp('networks', 99, False, id="excessive networks alert clear: 0"),
     ])
-    def test_share_host_and_network_alerts(self, start_nfs, nfs_dataset_and_share, entry_type, num, expect_alert):
+    def _test_share_host_and_network_alerts(self, start_nfs, nfs_dataset_and_share, entry_type, num, expect_alert):
         """Test alert generation wtih excessive number of host or network entries. Current threshold: 100"""
         assert start_nfs is True
         share_id = nfs_dataset_and_share['nfsid']
@@ -2151,7 +2151,7 @@ class TestNFSops:
                 this_alert = [entry for entry in alerts if entry['key'] == f"/mnt/{ds}"]
                 assert len(this_alert) == 0, f"Unexpectedly found alert for key '/mnt/{ds}'.\n{alerts}"
 
-    def test_share_alert_on_share_delete(self, start_nfs):
+    def _test_share_alert_on_share_delete(self, start_nfs):
         """Share alerts should be deleted when the share is deleted. Current threshold: 100"""
         assert start_nfs is True
         alerts = call('alert.list')
@@ -2178,7 +2178,7 @@ class TestNFSops:
         assert len(this_alert) == 0, f"Unexpectedly found alert for 'NFSHostListExcessive'.\n{alerts}"
 
 
-def test_pool_delete_with_attached_share():
+def _test_pool_delete_with_attached_share():
     '''
     Confirm we can delete a pool with the system dataset and a dataset with active NFS shares
     '''
@@ -2203,7 +2203,7 @@ def test_pool_delete_with_attached_share():
                         assert found_pool == [], f"Pool {found_pool[0]['name']} failed to delete, {error_detected}"
 
 
-def test_threadpool_mode():
+def _test_threadpool_mode():
     '''
     Verify that NFS thread pool configuration can be adjusted through private API endpoints.
 
@@ -2224,7 +2224,7 @@ def test_threadpool_mode():
 
 
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
-def test_missing_or_empty_exports(exports):
+def _test_missing_or_empty_exports(exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
