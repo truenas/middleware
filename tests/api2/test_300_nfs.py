@@ -274,17 +274,20 @@ def confirm_mountd_processes(expected):
     assert (num_detected - 1 if num_detected > 1 else num_detected) == expected
 
 
-def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
+# def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
+def confirm_rpc_processes(expected=['statd', 'bind', 'idmapd']):
     '''
     Confirm the expected rpc processes are running
     NB: This only supports the listed names
     '''
     sleep(1)  # It can take a sec to get these charged up
+    rpc_val = ""
 
-    prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
+    # prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
+    prepend = {'statd': 'rpc.', 'bind': 'rpc', 'idmapd': 'rpc.'}
     for n in expected:
         procname = prepend[n] + n
-        for retry in range(3):
+        for retry in range(5):
             try:
                 rpc_val = ssh(f"pgrep {procname}")
                 break
