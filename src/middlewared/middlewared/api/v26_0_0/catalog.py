@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import ConfigDict, Field, RootModel
 
@@ -9,7 +10,8 @@ __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
     'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogSyncedArgs',
     'CatalogSyncedResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse',
-    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps', 'CatalogAppVersionDetails',
+    'CatalogAppDetails', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps',
+    'CatalogAppVersionDetails',
 ]
 
 
@@ -124,6 +126,11 @@ class CatalogAppInfo(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
+class CatalogAppDetails(CatalogAppInfo):
+    versions: dict[str, Any]
+    """Mapping of version strings."""
+
+
 class CatalogApps(BaseModel):
     cache: bool = True
     """Whether to use cached catalog data if available."""
@@ -166,5 +173,5 @@ class CatalogGetAppDetailsArgs(BaseModel):
 
 
 class CatalogGetAppDetailsResult(BaseModel):
-    result: CatalogAppInfo
-    """Detailed information about the requested app."""
+    result: CatalogAppDetails
+    """Detailed information about the requested app, including all available versions."""

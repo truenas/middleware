@@ -27,19 +27,30 @@ class VolumeMount:
 
 
 def upgrade_available_for_app(
-    version_mapping: dict[str, dict[str, dict[str, str]]], app_metadata: dict, image_updates_available: bool = False,
+    version_mapping: dict[str, dict[str, dict[str, str | None]]],
+    app_metadata: dict,
+    image_updates_available: bool = False,
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
     catalog_app_metadata = app_metadata['metadata']
     catalog_app = catalog_app_metadata['name']
-    if app_metadata['custom_app'] is False and version_mapping.get(
-        catalog_app_metadata['train'], {}
-    ).get(catalog_app_metadata['name']):
-        latest_version_info = version_mapping[catalog_app_metadata['train']][catalog_app_metadata['name']]
-        return Version(catalog_app_metadata['version']) < Version(
-            latest_version_info['version']
-        ), latest_version_info['version'], latest_version_info['app_version']
+    if (
+        app_metadata['custom_app'] is False
+        and (
+            latest_version_info := version_mapping.get(
+                catalog_app_metadata['train'], {}
+            ).get(
+                catalog_app_metadata['name']
+            )
+        )
+        and latest_version_info['version']
+    ):
+        return (
+            Version(catalog_app_metadata['version']) < Version(latest_version_info['version']),
+            latest_version_info['version'],
+            latest_version_info['app_version']
+        )
     elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None, None
     else:
@@ -71,7 +82,7 @@ def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[
 
 
 def list_apps(
-    train_to_apps_version_mapping: dict[str, dict[str, dict[str, str]]],
+    train_to_apps_version_mapping: dict[str, dict[str, dict[str, str | None]]],
     specific_app: str | None = None,
     host_ip: str | None = None,
     retrieve_config: bool = False,

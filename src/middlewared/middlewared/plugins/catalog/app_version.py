@@ -5,14 +5,14 @@ import os
 import stat
 
 from catalog_reader.train_utils import get_train_path
-from middlewared.api.current import CatalogAppInfo, CatalogApps, CatalogAppVersionDetails
+from middlewared.api.current import CatalogAppDetails, CatalogApps, CatalogAppVersionDetails
 from middlewared.service import CallError, ServiceContext
 
 from .apps_details import get_normalized_questions_context, retrieve_recommended_apps
 from .apps_util import get_app_details as retrieve_app_details
 
 
-def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppInfo:
+def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppDetails:
     catalog = context.call_sync2(context.s.catalog.config)
     app_location = os.path.join(get_train_path(catalog.location), options.train, app_name)
     try:
@@ -38,4 +38,4 @@ def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppV
     if options.train in recommended_apps and app_name in recommended_apps[options.train]:
         app_details['recommended'] = True
 
-    return CatalogAppInfo.model_validate(app_details)
+    return CatalogAppDetails.model_validate(app_details)
