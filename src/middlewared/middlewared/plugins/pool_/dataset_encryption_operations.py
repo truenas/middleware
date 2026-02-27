@@ -4,7 +4,6 @@ from middlewared.api.current import (
     PoolDatasetChangeKeyArgs, PoolDatasetChangeKeyResult, PoolDatasetInheritParentEncryptionPropertiesArgs,
     PoolDatasetInheritParentEncryptionPropertiesResult
 )
-from middlewared.plugins.zfs.dataset_encryption import change_encryption_root, change_key
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils import secrets
 
@@ -195,7 +194,7 @@ class PoolDatasetService(Service):
         encryption_dict.pop('encryption')
         key = encryption_dict.pop('key')
 
-        await self.middleware.run_in_thread(change_key, self.context, id_, encryption_dict, key)
+        await self.call2(self.s.zfs.resource.change_key, id_, encryption_dict, key)
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
@@ -257,6 +256,6 @@ class PoolDatasetService(Service):
                             'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                         )
 
-        await self.middleware.run_in_thread(change_encryption_root, id_)
+        await self.call2(self.s.zfs.resource.change_encryption_root, id_)
         await self.middleware.call('pool.dataset.sync_db_keys', id_)
         await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id_)

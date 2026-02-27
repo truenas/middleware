@@ -14,7 +14,6 @@ from middlewared.api.current import (
     PoolDatasetExportKeysResult, PoolDatasetExportKeysForReplicationArgs, PoolDatasetExportKeysForReplicationResult,
     PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult
 )
-from middlewared.plugins.zfs.dataset_encryption import bulk_check
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
@@ -103,7 +102,7 @@ class PoolDatasetService(Service):
                     ds_key = bytes.fromhex(ds_key)
             to_check.append({'id_': name, 'key': ds_key})
 
-        statuses = bulk_check(self.context, to_check)
+        statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
 
         results = []
         for ds_data, status in zip(to_check, statuses):
@@ -187,7 +186,7 @@ class PoolDatasetService(Service):
                     with contextlib.suppress(ValueError):
                         key = bytes.fromhex(key)
                 to_check.append({'id_': ds_name, 'key': key})
-            statuses = bulk_check(self.context, to_check)
+            statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
         except Exception as exc:
             self.logger.error(f'Failed to sync database keys: {exc}')
             return
