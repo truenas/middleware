@@ -197,7 +197,7 @@ class DiskService(Service):
                 serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].add(reserved_disk)
 
             if duplicate_serials := {serial for serial, serial_disks in serial_to_disk.items()
-                                     if len(serial_disks) > 1}:
+                                     if len(serial_disks) > 1 and disks_set & serial_disks}:
                 error = ', '.join(map(lambda serial: f'{serial[0]!r} ({", ".join(sorted(serial_to_disk[serial]))})',
                                       duplicate_serials))
                 verrors.add('topology', f'Disks have duplicate serial numbers: {error}.')
