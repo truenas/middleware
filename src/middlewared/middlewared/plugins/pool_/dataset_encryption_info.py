@@ -100,16 +100,13 @@ class PoolDatasetService(Service):
             if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
                 with contextlib.suppress(ValueError):
                     ds_key = bytes.fromhex(ds_key)
-            to_check.append((name, {'key': ds_key}))
+            to_check.append({'id_': name, 'key': ds_key})
 
-        check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
-        check_job.wait_sync()
-        if check_job.error:
-            raise CallError(f'Failed to retrieve encryption summary for {id_}: {check_job.error}')
+        statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
 
         results = []
-        for ds_data, status in zip(to_check, check_job.result):
-            ds_name = ds_data[0]
+        for ds_data, status in zip(to_check, statuses):
+            ds_name = ds_data['id_']
             data = datasets[ds_name]
             results.append({
                 'name': ds_name,
@@ -177,19 +174,25 @@ class PoolDatasetService(Service):
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {
             d['name']: d for d in self.middleware.call_sync(
-                'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot']}}
+                'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot', 'keyformat']}}
             ) if d['name'] == d['encryption_root']
         }
-        to_remove = []
-        check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
-            (name, {'key': db_datasets[name]}) for name in db_datasets
-        ])
-        check_key_job.wait_sync()
-        if check_key_job.error:
-            self.logger.error(f'Failed to sync database keys: {check_key_job.error}')
+        try:
+            to_check = []
+            for ds_name in db_datasets:
+                key = db_datasets[ds_name]
+                ds = encrypted_roots.get(ds_name)
+                if ds and ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and key:
+                    with contextlib.suppress(ValueError):
+                        key = bytes.fromhex(key)
+                to_check.append({'id_': ds_name, 'key': key})
+            statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
+        except Exception as exc:
+            self.logger.error(f'Failed to sync database keys: {exc}')
             return
 
-        for dataset, status in zip(db_datasets, check_key_job.result):
+        to_remove = []
+        for dataset, status in zip(db_datasets, statuses):
             if not status['result']:
                 to_remove.append(dataset)
             elif status['error']:
