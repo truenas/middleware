@@ -10,18 +10,20 @@ from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import private
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+import truenas_os
+
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
     FS_ACL_Type,
     NFS4_SPECIAL_ENTRIES,
-    POSIX_SPECIAL_ENTRIES
+    POSIX_SPECIAL_ENTRIES,
+    posixacl_dict_to_obj,
 )
-from .utils import canonicalize_nfs4_acl, gen_aclstring_posix1e
+from .utils import canonicalize_nfs4_acl
 
 import middlewared.sqlalchemy as sa
 import errno
 import os
-import copy
 
 
 class ACLTempateModel(sa.Model):
@@ -99,7 +101,11 @@ class ACLTemplateService(CRUDService):
             ace['id'] = entry[0][entry_key]
 
         if acltype is FS_ACL_Type.POSIX1E:
-            gen_aclstring_posix1e(copy.deepcopy(data['acl']), False, verrors)
+            try:
+                acl_obj = posixacl_dict_to_obj(data['acl'])
+                truenas_os.validate_acl(-1, acl_obj)
+            except (ValueError, KeyError) as e:
+                verrors.add(schema, str(e))
 
     @api_method(
         ACLTemplateCreateArgs,
@@ -199,12 +205,14 @@ class ACLTemplateService(CRUDService):
         if data['acltype'] == FS_ACL_Type.NFS4:
             if bu_id != -1:
                 data['acl'].append(
-                    {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                    {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"},
+                     "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
                 )
 
             if ba_id != -1:
                 data['acl'].append(
-                    {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                    {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"},
+                     "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
                 )
             return
 
