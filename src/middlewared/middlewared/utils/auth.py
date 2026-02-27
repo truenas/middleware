@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass, asdict
 from random import uniform
 from time import monotonic
+from typing import Any
 from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
@@ -37,7 +38,7 @@ class AuthResp(enum.StrEnum):
 class AuthenticatorAssuranceLevel:
     max_session_age: int
     max_inactivity: int | None
-    mechanisms: tuple[AuthMech] | None
+    mechanisms: tuple[AuthMech, ...]
     otp_mandatory: bool
     min_fail_delay: int
 
@@ -46,7 +47,7 @@ class AuthenticatorAssuranceLevel:
 class ServerAAL:
     level: AuthenticatorAssuranceLevel
 
-    def get_delay_interval(self):
+    def get_delay_interval(self) -> float:
         return uniform(
             self.level.min_fail_delay,
             self.level.min_fail_delay + 1
@@ -128,7 +129,7 @@ class OTPWResponseCode(enum.StrEnum):
 @dataclass(slots=True)
 class UserOnetimePassword:
     uid: int   # UID of related user
-    expires: int  # expiration time (monotonic)
+    expires: float  # expiration time (monotonic)
     keyhash: str  # hash of onetime password
     used: bool = False  # whether password has been used for authentication
     password_set_override: bool = False  # whether we should allow override of password aging
@@ -137,7 +138,7 @@ class UserOnetimePassword:
 @dataclass(slots=True)
 class OTPWResponse:
     code: OTPWResponseCode
-    data: dict | None = None  # asdict output of onetime password (if SUCCESS)
+    data: dict[str, Any] | None = None  # asdict output of onetime password (if SUCCESS)
 
 
 class OnetimePasswordManager:
@@ -147,9 +148,9 @@ class OnetimePasswordManager:
     for a system administrator to provision a temporary password for a user
     that may be used to set two-factor authentication and user password.
     """
-    otpasswd = {}
-    lock = threading.Lock()
-    cnt = 0
+    otpasswd: dict[str, UserOnetimePassword] = {}
+    lock: threading.Lock = threading.Lock()
+    cnt: int = 0
 
     def generate_for_uid(self, uid: int, admin_generated: bool = False) -> str:
         """
@@ -205,7 +206,7 @@ class OnetimePasswordManager:
 OTPW_MANAGER = OnetimePasswordManager()
 
 
-def get_login_uid(pid: int, raise_error=False) -> int:
+def get_login_uid(pid: int, raise_error: bool = False) -> int:
     """
     Get the login uid of the specified PID. By design it is set by pam_loginuid
     on session login. If value is unitialized then the value will be UINT32_MAX -1

@@ -96,6 +96,7 @@ from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -163,6 +164,12 @@ class SharingServicesContainer(BaseServiceContainer):
         self.webshare = SharingWebshareService(middleware)
 
 
+class SystemServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.ntpserver = NTPServerService(middleware)
+
+
 class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -179,6 +186,7 @@ class ServiceContainer(BaseServiceContainer):
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
         self.truesearch = TrueSearchService(middleware)
         self.update = UpdateService(middleware)

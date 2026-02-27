@@ -95,8 +95,9 @@ def passdb_dir():
     os.makedirs(util_passdb.SMBPath.PRIVATEDIR.path, mode=0o700, exist_ok=True)
 
     # valid smb.conf is required for pdbedit command
+    # passdb backend must point to our non-default passdb location so pdbedit can find entries
     with open('/etc/smb4.conf', 'w') as f:
-        f.write('[global]\n')
+        f.write(f'[global]\n    passdb backend = tdbsam:{util_passdb.PASSDB_PATH}\n')
         f.flush()
 
 

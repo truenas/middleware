@@ -104,7 +104,7 @@ def initialize_for_smb_tests(request):
                 # In test_140_enable_aapl we turned afp on for the share, so wait until
                 # it has been destroyed before turning off aapl_extensions.
                 call('smb.update', {
-                    'enable_smb1': False,
+                    'minimum_protocol': 'SMB2',
                     'aapl_extensions': False
                 })
 
@@ -192,7 +192,7 @@ def test_011_check_dos_ro_cred_handling(request):
 @pytest.mark.dependency(name="SMB1_ENABLED")
 def test_050_enable_smb1(request):
     depends(request, ["SMB_SHARE_CREATED"])
-    call("smb.update", {"enable_smb1": True})
+    call("smb.update", {"minimum_protocol": "SMB1"})
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE_SMB1")

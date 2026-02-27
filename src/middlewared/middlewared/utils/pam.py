@@ -63,24 +63,24 @@ class PAMControl:
     response: PAMResponse
     action: PAMAction | int
 
-    def as_conf(self):
+    def as_conf(self) -> str:
         return f'{self.response}={self.action}'
 
 
 @dataclass(slots=True, frozen=True)
 class PAMLine:
     pam_service: PAMService
-    pam_control: PAMSimpleControl | tuple[PAMControl]
+    pam_control: PAMSimpleControl | tuple[PAMControl, ...]
     pam_module: PAMModule
-    pam_module_args: tuple[str] | None = None
+    pam_module_args: tuple[str, ...] | None = None
 
-    def __dump_control(self):
+    def __dump_control(self) -> str | PAMSimpleControl:
         if isinstance(self.pam_control, PAMSimpleControl):
             return self.pam_control
 
         return f'[{" ".join(ctrl.as_conf() for ctrl in self.pam_control)}]'
 
-    def as_conf(self):
+    def as_conf(self) -> str:
         if self.pam_module_args is None:
             return '\t'.join([
                 self.pam_service,
@@ -99,8 +99,8 @@ class PAMLine:
 @dataclass(slots=True, frozen=True)
 class PAMConfLines:
     service: PAMService
-    primary: tuple[PAMLine]
-    secondary: tuple[PAMLine] | None = None
+    primary: tuple[PAMLine, ...] | tuple[()]
+    secondary: tuple[PAMLine, ...] | None = None
 
 
 # Below this point are intialized PAM configuration objects for use in mako files
