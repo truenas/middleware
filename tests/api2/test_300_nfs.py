@@ -279,10 +279,20 @@ def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
     Confirm the expected rpc processes are running
     NB: This only supports the listed names
     '''
+    sleep(0.5)  # It can take a sec to get these charged up
+
     prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
     for n in expected:
         procname = prepend[n] + n
-        assert len(ssh(f"pgrep {procname}").splitlines()) > 0
+        for retry in range(2):
+            try:
+                rpc_val = ssh(f"pgrep {procname}")
+                break
+            except Exception:
+                print("MCG DEBUG: pgrep failed")
+                sleep(1)
+
+        assert len(rpc_val.splitlines()) > 0, f"rpc_val={rpc_val}"
 
 
 def confirm_nfs_version(expected=[]):
@@ -812,7 +822,6 @@ class TestNFSops:
                 with pytest.raises(ValidationErrors, match="Input should be"):
                     assert call("nfs.config")['managed_nfsd'] == expected['managed']
                     call("nfs.update", {"servers": nfsd})
-
 
     def test_share_update(self, start_nfs, nfs_dataset_and_share):
         """
