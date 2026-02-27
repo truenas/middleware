@@ -1,9 +1,9 @@
 import errno
-import json
 import os
-import subprocess
 from pathlib import Path
 from typing import Literal
+
+import truenas_os
 
 from pydantic import Field
 
@@ -24,14 +24,17 @@ from middlewared.utils.filesystem.acl import (
     NFS4ACE_Tag,
     POSIXACE_Tag,
     NFS4ACE_MaskSimple,
+    nfs4acl_dict_to_obj,
+    nfs4acl_obj_to_dict,
+    posixacl_dict_to_obj,
+    posixacl_obj_to_dict,
     normalize_acl_ids,
     path_get_acltype,
     strip_acl_path,
-    validate_nfs4_ace_full,
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
-from .utils import acltool, AclToolAction, calculate_inherited_acl, canonicalize_nfs4_acl, gen_aclstring_posix1e
+from .utils import acltool, AclToolAction, calculate_inherited_acl, canonicalize_nfs4_acl
 
 
 class SimplifiedAclEntry(BaseModel):
@@ -200,12 +203,18 @@ class FilesystemService(Service):
 
         if not options['recursive']:
             job.set_progress(100, 'Finished changing owner.')
-            os.chown(data['path'], uid, gid)
+            fd = truenas_os.openat2(
+                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            )
+            try:
+                os.fchown(fd, uid, gid)
+            finally:
+                os.close(fd)
             return
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
         options['posixacl'] = True
-        acltool(data['path'], AclToolAction.CHOWN, uid, gid, options)
+        acltool(data['path'], AclToolAction.CHOWN, uid, gid, options, job)
         job.set_progress(100, 'Finished changing owner.')
 
     @api_method(
@@ -292,10 +301,15 @@ class FilesystemService(Service):
 
         strip_acl_path(data['path'])
 
-        if mode:
-            os.chmod(data['path'], mode)
-
-        os.chown(data['path'], uid, gid)
+        fd = truenas_os.openat2(
+            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+        )
+        try:
+            if mode:
+                os.fchmod(fd, mode)
+            os.fchown(fd, uid, gid)
+        finally:
+            os.close(fd)
 
         if not options['recursive']:
             job.set_progress(100, 'Finished setting permissions.')
@@ -305,125 +319,57 @@ class FilesystemService(Service):
         job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
         options['posixacl'] = not is_nfs4acl
         options['do_chmod'] = True
-        acltool(data['path'], action, uid, gid, options)
+        acltool(data['path'], action, uid, gid, options, job)
         job.set_progress(100, 'Finished setting permissions.')
 
     @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
-        flags = "-jn"
+        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            acl_obj = truenas_os.fgetacl(fd)
+            st = os.fstat(fd)
+        finally:
+            os.close(fd)
 
-        if not simplified:
-            flags += "v"
+        output = nfs4acl_obj_to_dict(acl_obj, st.st_uid, st.st_gid, simplified)
+        output['path'] = path
+        output['acltype'] = 'NFS4'
 
-        getacl = subprocess.run(
-            ['nfs4xdr_getfacl', flags, path],
-            capture_output=True,
-            check=False
-        )
-        if getacl.returncode != 0:
-            raise CallError(f"Failed to get ACL for path [{path}]: {getacl.stderr.decode()}")
-
-        output = json.loads(getacl.stdout.decode())
         for ace in output['acl']:
             if resolve_ids and ace['id'] != -1:
-                ace['who'] = self.middleware.call_sync(
-                    'idmap.id_to_name', ace['id'], ace['tag']
-                )
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', ace['id'], ace['tag'])
             elif resolve_ids and ace['tag'] == 'group@':
-                ace['who'] = self.middleware.call_sync(
-                    'idmap.id_to_name', output['gid'], 'GROUP'
-                )
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_gid, 'GROUP')
             elif resolve_ids and ace['tag'] == 'owner@':
-                ace['who'] = self.middleware.call_sync(
-                    'idmap.id_to_name', output['uid'], 'USER'
-                )
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_uid, 'USER')
             elif resolve_ids:
                 ace['who'] = None
 
-            ace['flags'].pop('SUCCESSFUL_ACCESS', None)
-            ace['flags'].pop('FAILED_ACCESS', None)
-
-        na41flags = output.pop('nfs41_flags')
-        output['aclflags'] = {
-            "protected": na41flags['PROTECTED'],
-            "defaulted": na41flags['DEFAULTED'],
-            "autoinherit": na41flags['AUTOINHERIT']
-        }
-        output['acltype'] = 'NFS4'
         return output
 
     @private
     def getacl_posix1e(self, path, simplified, resolve_ids):
-        st = os.stat(path)
-        ret = {
-            'uid': st.st_uid,
-            'gid': st.st_gid,
-            'acl': [],
-            'acltype': FS_ACL_Type.POSIX1E
-        }
+        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            acl_obj = truenas_os.fgetacl(fd)
+            st = os.fstat(fd)
+        finally:
+            os.close(fd)
 
-        ret['uid'] = st.st_uid
-        ret['gid'] = st.st_gid
+        ret = posixacl_obj_to_dict(acl_obj, st.st_uid, st.st_gid)
+        ret['acltype'] = FS_ACL_Type.POSIX1E
+        ret['path'] = path
 
-        gfacl = subprocess.run(['getfacl', '-c', '-n', path],
-                               check=False, capture_output=True)
-        if gfacl.returncode != 0:
-            raise CallError(f"Failed to get POSIX1e ACL on path [{path}]: {gfacl.stderr.decode()}")
-
-        # linux output adds extra line to output if it's an absolute path and extra newline at end.
-        entries = gfacl.stdout.decode().splitlines()
-        entries = entries[:-1]
-
-        for entry in entries:
-            if entry.startswith("#"):
-                continue
-
-            entry = entry.split("\t")[0]
-            ace = {
-                "default": False,
-                "tag": None,
-                "id": -1,
-                "perms": {
-                    "READ": False,
-                    "WRITE": False,
-                    "EXECUTE": False,
-                }
-            }
-
-            tag, id_, perms = entry.rsplit(":", 2)
-            ace['perms'].update({
-                "READ": perms[0].casefold() == "r",
-                "WRITE": perms[1].casefold() == "w",
-                "EXECUTE": perms[2].casefold() == "x",
-            })
-            if tag.startswith('default'):
-                ace['default'] = True
-                tag = tag[8:]
-
-            ace['tag'] = tag.upper()
-            if id_.isdigit():
-                ace['id'] = int(id_)
-                if resolve_ids:
-                    ace['who'] = self.middleware.call_sync(
-                        'idmap.id_to_name', ace['id'], ace['tag']
-                    )
-
-            elif ace['tag'] not in ['OTHER', 'MASK']:
-                if resolve_ids:
-                    to_check = st.st_gid if ace['tag'] == "GROUP" else st.st_uid
-                    ace['who'] = self.middleware.call_sync(
-                        'idmap.id_to_name', to_check, ace['tag']
-                    )
-
-                ace['tag'] += '_OBJ'
-
+        for ace in ret['acl']:
+            if resolve_ids and ace['id'] != -1:
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', ace['id'], ace['tag'])
+            elif resolve_ids and ace['tag'] == 'GROUP_OBJ':
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_gid, 'GROUP')
+            elif resolve_ids and ace['tag'] == 'USER_OBJ':
+                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_uid, 'USER')
             elif resolve_ids:
                 ace['who'] = None
 
-            ret['acl'].append(ace)
-
-        ret['trivial'] = (len(ret['acl']) == 3)
-        ret['path'] = path
         return ret
 
     @private
@@ -504,30 +450,27 @@ class FilesystemService(Service):
 
     @private
     def setacl_nfs4_internal(self, path, acl, do_canon, verrors):
-        payload = {
-            'acl': canonicalize_nfs4_acl(acl) if do_canon else acl,
-        }
-        json_payload = json.dumps(payload)
-        setacl = subprocess.run(
-            ['nfs4xdr_setfacl', '-j', json_payload, path],
-            capture_output=True,
-            check=False
-        )
-        """
-        nfs4xr_setacl with JSON input will return validation
-        errors on exit with EX_DATAERR (65).
-        """
-        if setacl.returncode == 65:
-            err = setacl.stderr.decode()
-            json_verrors = json.loads(err.split(None, 1)[1])
-            for entry in json_verrors:
-                for schema, err in entry.items():
-                    verrors.add(f'filesystem_acl.{schema.replace("acl", "dacl")}', err)
-
+        acl_to_set = canonicalize_nfs4_acl(acl) if do_canon else acl
+        try:
+            acl_obj = nfs4acl_dict_to_obj(acl_to_set, aclflags=None)
+        except (ValueError, KeyError) as e:
+            verrors.add('filesystem_acl.dacl', str(e))
             verrors.check()
+            return
 
-        elif setacl.returncode != 0:
-            raise CallError(setacl.stderr.decode())
+        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            try:
+                truenas_os.validate_acl(fd, acl_obj)
+            except ValueError as e:
+                verrors.add('filesystem_acl.dacl', str(e))
+                verrors.check()
+                return
+            truenas_os.fsetacl(fd, acl_obj)
+        except (OSError, ValueError) as e:
+            raise CallError(str(e))
+        finally:
+            os.close(fd)
 
     @private
     def setacl_nfs4(self, job, current_acl, data):
@@ -538,11 +481,6 @@ class FilesystemService(Service):
         action = AclToolAction.CLONE
 
         verrors = ValidationErrors()
-
-        for idx, ace in enumerate(data['dacl']):
-            validate_nfs4_ace_full(ace, f'filesystem.setacl.dacl.{idx}', verrors)
-
-        verrors.check()
         job.set_progress(50, 'Setting NFSv4 ACL.')
 
         if do_strip:
@@ -562,11 +500,17 @@ class FilesystemService(Service):
             self.setacl_nfs4_internal(data['path'], data['dacl'], do_canon, verrors)
 
         if not recursive:
-            os.chown(data['path'], data['uid'], data['gid'])
+            fd = truenas_os.openat2(
+                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            )
+            try:
+                os.fchown(fd, data['uid'], data['gid'])
+            finally:
+                os.close(fd)
             job.set_progress(100, 'Finished setting NFSv4 ACL.')
             return
 
-        acltool(data['path'], action, data['uid'], data['gid'], data['options'])
+        acltool(data['path'], action, data['uid'], data['gid'], data['options'], job)
 
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
@@ -606,8 +550,6 @@ class FilesystemService(Service):
                         e.errmsg
                     )
 
-            aclstring = gen_aclstring_posix1e(dacl, recursive, verrors)
-
         verrors.check()
 
         strip_acl_path(data['path'])
@@ -615,19 +557,38 @@ class FilesystemService(Service):
         job.set_progress(50, 'Setting POSIX1e ACL.')
 
         if not do_strip:
-            setacl = subprocess.run(['setfacl', '-m', aclstring, data['path']],
-                                    check=False, capture_output=True)
-            if setacl.returncode != 0:
-                raise CallError(f'Failed to set ACL [{aclstring}] on path [{data["path"]}]: '
-                                f'{setacl.stderr.decode()}')
+            try:
+                acl_obj = posixacl_dict_to_obj(dacl)
+            except (ValueError, KeyError) as e:
+                raise CallError(f'Failed to build POSIX ACL for [{data["path"]}]: {e}')
+
+            fd = truenas_os.openat2(
+                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            )
+            try:
+                try:
+                    truenas_os.validate_acl(fd, acl_obj)
+                except ValueError as e:
+                    raise CallError(f'Failed to validate ACL for [{data["path"]}]: {e}')
+                truenas_os.fsetacl(fd, acl_obj)
+            except (OSError, ValueError) as e:
+                raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
+            finally:
+                os.close(fd)
 
         if not recursive:
-            os.chown(data['path'], data['uid'], data['gid'])
+            fd = truenas_os.openat2(
+                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            )
+            try:
+                os.fchown(fd, data['uid'], data['gid'])
+            finally:
+                os.close(fd)
             job.set_progress(100, 'Finished setting POSIX1e ACL.')
             return
 
         options['posixacl'] = True
-        acltool(data['path'], action, data['uid'], data['gid'], options)
+        acltool(data['path'], action, data['uid'], data['gid'], options, job)
 
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
