@@ -6,10 +6,10 @@ import time
 import truenas_os
 
 from middlewared.service_exception import CallError
+from middlewared.utils.mount import statmount as _statmount
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
     FS_ACL_Type,
-    NFS4ACE_Flag,
     nfs4acl_dict_to_obj,
     nfs4acl_obj_to_dict,
     posixacl_dict_to_obj,
@@ -47,47 +47,41 @@ class _NFS4InheritedAcls:
         return self.d2_dir if is_dir else self.d2_file
 
 
-def _get_mount_info(path: str):
-    stx = truenas_os.statx(path, mask=truenas_os.STATX_MNT_ID_UNIQUE)
-    sm = truenas_os.statmount(
-        stx.stx_mnt_id,
-        mask=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
-    )
-    abs_path = os.path.realpath(path)
+def _get_mount_info(fd: int):
+    sm = _statmount(fd=fd, as_dict=False)
+    abs_path = os.readlink(f'/proc/self/fd/{fd}')
     rel = os.path.relpath(abs_path, sm.mnt_point)
     return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)
 
 
-def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict, job=None) -> None:
+def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None) -> None:
     """
-    Perform recursive ACL-related operations on path using fd-based operations
-    via the truenas_os extension.
+    Perform recursive ACL-related operations using fd-based operations via the
+    truenas_os extension.
+
+    `fd` must be an open O_RDONLY descriptor for the root path of the
+    operation.  acltool reads from it but does NOT close it; the caller owns
+    the descriptor lifetime.
 
     If `job` is provided, progress updates are emitted at most once per 1 000
-    items *and* no more frequently than every 5 seconds (whichever is later).
+    items *and* no more frequently than every 1 second (whichever is later).
     """
     traverse = options.get('traverse', False)
     do_chmod = options.get('do_chmod', False)
 
-    mountpoint, fs_name, rel_path = _get_mount_info(path)
+    mountpoint, fs_name, rel_path = _get_mount_info(fd)
 
-    root_fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-    try:
-        root_acl = (
-            truenas_os.fgetacl(root_fd)
-            if action in (AclToolAction.CLONE, AclToolAction.INHERIT)
-            else None
-        )
-        root_mode = os.fstat(root_fd).st_mode if do_chmod else None
-    finally:
-        os.close(root_fd)
+    root_acl = (
+        truenas_os.fgetacl(fd)
+        if action in (AclToolAction.CLONE, AclToolAction.INHERIT)
+        else None
+    )
+    root_mode = os.fstat(fd).st_mode if do_chmod else None
 
     nfs4_inh = None
     if root_acl is not None and isinstance(root_acl, truenas_os.NFS4ACL):
         nfs4_inh = _NFS4InheritedAcls.from_root(root_acl)
 
-    # Progress reporting: fire callback every 1 000 files, but only emit an
-    # update when at least 1 second has elapsed since the previous one.
     last_report_time = time.monotonic()
 
     def _report_progress(dir_stack, state, private_data):
@@ -141,7 +135,7 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
                     _apply_action(item, it, depth_offset)
                 except OSError as e:
                     raise CallError(
-                        f'acltool [{action}] failed on item in {path}: {e}'
+                        f'acltool [{action}] failed on item in {mountpoint}: {e}'
                     )
                 finally:
                     os.close(item.fd)
@@ -149,50 +143,16 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
     _process_mount(mountpoint, fs_name, rel_path)
 
     if traverse:
-        real_path = os.path.realpath(path)
+        real_path = os.readlink(f'/proc/self/fd/{fd}')
         for entry in truenas_os.iter_mount(
             statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
         ):
             child_mnt = entry.mnt_point
             if not child_mnt.startswith(real_path + '/'):
                 continue
-            sub_mp, sub_fs, _sub_rel = _get_mount_info(child_mnt)
             child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
-            _process_mount(sub_mp, sub_fs, None, depth_offset=child_depth)
+            _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
 
-
-def canonicalize_nfs4_acl(theacl):
-    """
-    Order NFS4 ACEs according to MS guidelines:
-    1) Deny ACEs that apply to the object itself (NOINHERIT)
-    2) Allow ACEs that apply to the object itself (NOINHERIT)
-    3) Deny ACEs that apply to a subobject of the object (INHERIT)
-    4) Allow ACEs that apply to a subobject of the object (INHERIT)
-
-    See http://docs.microsoft.com/en-us/windows/desktop/secauthz/order-of-aces-in-a-dacl
-    Logic is simplified here because we do not determine depth from which ACLs are inherited.
-    """
-    def __ace_is_inherited(ace):
-        if ace['flags'].get('BASIC'):
-            return False
-        return ace['flags'].get(NFS4ACE_Flag.INHERITED, False)
-
-    out = []
-    acl_groups = {
-        'deny_noinherit': [],
-        'deny_inherit': [],
-        'allow_noinherit': [],
-        'allow_inherit': [],
-    }
-
-    for ace in theacl:
-        key = f'{ace.get("type", "ALLOW").lower()}_{"inherit" if __ace_is_inherited(ace) else "noinherit"}'
-        acl_groups[key].append(ace)
-
-    for g in acl_groups.values():
-        out.extend(g)
-
-    return out
 
 
 def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
