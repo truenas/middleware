@@ -370,7 +370,13 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
     # Modify share to map with a built-in user or group and restart NFS
     call('sharing.nfs.update', share, {data[0]: "ftp"})
-    call('service.control', 'RESTART', 'nfs', job=True)
+    for retry in range(2):
+        try:
+            # Loss of websock can generate ClientException.  Retry if we get that.
+            call('service.control', 'RESTART', 'nfs', job=True)
+            break
+        except ClientException:
+            sleep(1)
 
     # The alert should be cleared
     alerts = call('alert.list')
@@ -480,6 +486,7 @@ def nfs_db():
 def nfs_config():
     ''' Use this to restore NFS settings '''
     nfs_db_conf = {}
+    is_managed = True
     want_exit_run_state = get_nfs_service_state()
     # Let things settle then collect the restore state
     sleep(0.2)
@@ -487,6 +494,8 @@ def nfs_config():
         # Very rare to get a CallError after the settle wait. Include a retry for resilience.
         try:
             nfs_db_conf = call("nfs.config")
+            is_managed = nfs_db_conf['managed_nfsd']
+
             excl = ['id', 'v4_krb_enabled', 'keytab_has_nfs_spn', 'managed_nfsd']
             [nfs_db_conf.pop(key) for key in excl]
             break
@@ -499,11 +508,17 @@ def nfs_config():
     finally:
         # restore nfs.config
         # Wait a bit for NFS to return to initial run state
+        exit_config = {}
         current_run_state = None
         sleep(0.2)
-        for i in range(2):
+
+        # Apply the original 'managed' setting
+        if is_managed:
+            nfs_db_conf["servers"] = None
+
+        for i in range(3):
             try:
-                call("nfs.update", nfs_db_conf)
+                exit_config = call("nfs.update", nfs_db_conf)
                 current_run_state = get_nfs_service_state()
                 if current_run_state == want_exit_run_state:
                     break
@@ -513,7 +528,9 @@ def nfs_config():
             except CallError:
                 # Probably reported a failed to start: Sleep and retry
                 sleep(0.2)
+
         assert current_run_state == want_exit_run_state
+        assert exit_config['managed_nfsd'] is True
 
 
 @contextlib.contextmanager
@@ -568,9 +585,13 @@ def nfs_dataset_and_share():
 
 @pytest.fixture(scope="class")
 def start_nfs():
-    """ Class Fixture: The exit state is managed by init_nfs """
+    """
+    The exit state is managed by init_nfs
+    This also restores nfs config to default
+    """
     with manage_start_nfs() as nfs_start:
-        yield nfs_start
+        with nfs_config():
+            yield nfs_start
 
 
 @pytest.fixture(scope="function")
@@ -747,7 +768,6 @@ class TestNFSops:
         pp(0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}, id="User set 0: invalid"),
         pp(257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}, id="User set 257: invalid"),
         pp(None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}, id="48 cores: expect 32 nfsd (max), 8 mountd"),
-        pp(-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}, id="Reset to 'managed_nfsd'"),
     ])
     def test_service_update(self, start_nfs, nfsd, cores, expected):
         """
@@ -764,6 +784,8 @@ class TestNFSops:
         number greater than zero.
 
         The number of mountd will be 1/4 the number of nfsd.
+
+        Confirming restore of 'managed_nfsd' is done in start_nfs fixture
         """
         assert start_nfs is True
 
@@ -787,15 +809,10 @@ class TestNFSops:
                 assert nfs_conf['servers'] == expected['nfsd']
                 assert nfs_conf['managed_nfsd'] == expected['managed']
             else:
-                if nfsd == -1:
-                    # We know apriori that the current state is managed_nfsd == True
-                    with nfs_config():
-                        # Test making change to non-'server' setting does not change managed_nfsd
-                        assert call("nfs.config")['managed_nfsd'] == expected['managed']
-                else:
-                    with pytest.raises(ValidationErrors, match="Input should be"):
-                        assert call("nfs.config")['managed_nfsd'] == expected['managed']
-                        call("nfs.update", {"servers": nfsd})
+                with pytest.raises(ValidationErrors, match="Input should be"):
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+                    call("nfs.update", {"servers": nfsd})
+
 
     def test_share_update(self, start_nfs, nfs_dataset_and_share):
         """
