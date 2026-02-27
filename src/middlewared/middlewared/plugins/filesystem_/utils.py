@@ -104,7 +104,7 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
 
     reporting_callback = _report_progress if job is not None else None
 
-    def _apply_action(item, it):
+    def _apply_action(item, it, depth_offset=0):
         if action == AclToolAction.CHOWN:
             os.fchown(item.fd, uid, gid)
 
@@ -117,7 +117,7 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
 
         elif action in (AclToolAction.CLONE, AclToolAction.INHERIT):
             if nfs4_inh is not None:
-                inherited = nfs4_inh.pick(len(it.dir_stack()), item.isdir)
+                inherited = nfs4_inh.pick(depth_offset + len(it.dir_stack()), item.isdir)
                 truenas_os.fsetacl(item.fd, inherited)
             elif root_acl is not None:
                 truenas_os.fsetacl(item.fd, root_acl)
@@ -126,7 +126,7 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
             if do_chmod and root_mode is not None:
                 os.fchmod(item.fd, root_mode & 0o7777)
 
-    def _process_mount(mnt_point, fs, rel):
+    def _process_mount(mnt_point, fs, rel, depth_offset=0):
         with truenas_os.iter_filesystem_contents(
             mnt_point, fs,
             relative_path=rel,
@@ -138,7 +138,7 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
                     os.close(item.fd)
                     continue
                 try:
-                    _apply_action(item, it)
+                    _apply_action(item, it, depth_offset)
                 except OSError as e:
                     raise CallError(
                         f'acltool [{action}] failed on item in {path}: {e}'
@@ -157,7 +157,8 @@ def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict,
             if not child_mnt.startswith(real_path + '/'):
                 continue
             sub_mp, sub_fs, _sub_rel = _get_mount_info(child_mnt)
-            _process_mount(sub_mp, sub_fs, None)
+            child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
+            _process_mount(sub_mp, sub_fs, None, depth_offset=child_depth)
 
 
 def canonicalize_nfs4_acl(theacl):

@@ -244,6 +244,7 @@ _NFS4_BASIC_FLAGS = MappingProxyType({
     NFS4ACE_FlagSimple.INHERIT: truenas_os.NFS4Flag.FILE_INHERIT | truenas_os.NFS4Flag.DIRECTORY_INHERIT,
     NFS4ACE_FlagSimple.NOINHERIT: truenas_os.NFS4Flag(0),
 })
+_NFS4_BASIC_FLAGS_REV = MappingProxyType({v: k for k, v in _NFS4_BASIC_FLAGS.items()})
 _NFS4_ACL_FLAGS = MappingProxyType({
     NFS4ACL_Flag.AUTOINHERIT: truenas_os.NFS4ACLFlag.AUTO_INHERIT,
     NFS4ACL_Flag.PROTECTED: truenas_os.NFS4ACLFlag.PROTECTED,
@@ -352,10 +353,16 @@ def nfs4acl_obj_to_dict(acl: 'truenas_os.NFS4ACL', uid: int, gid: int, simplifie
         else:
             perms_dict = _perm_obj_to_full_dict(perm)
 
+        clean_flags = ace_flags & ~truenas_os.NFS4Flag.IDENTIFIER_GROUP
+        if simplified and (basic_flag := _NFS4_BASIC_FLAGS_REV.get(clean_flags)):
+            flags_dict = {'BASIC': basic_flag}
+        else:
+            flags_dict = _flags_obj_to_dict(clean_flags)
+
         ace_list.append({
             'tag': tag, 'id': out_id, 'type': ace.ace_type.name,
             'perms': perms_dict,
-            'flags': _flags_obj_to_dict(ace_flags & ~truenas_os.NFS4Flag.IDENTIFIER_GROUP),
+            'flags': flags_dict,
         })
 
     return {

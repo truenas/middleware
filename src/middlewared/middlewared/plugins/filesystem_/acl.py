@@ -214,6 +214,13 @@ class FilesystemService(Service):
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
         options['posixacl'] = True
+        fd = truenas_os.openat2(
+            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+        )
+        try:
+            os.fchown(fd, uid, gid)
+        finally:
+            os.close(fd)
         acltool(data['path'], AclToolAction.CHOWN, uid, gid, options, job)
         job.set_progress(100, 'Finished changing owner.')
 
@@ -499,14 +506,15 @@ class FilesystemService(Service):
 
             self.setacl_nfs4_internal(data['path'], data['dacl'], do_canon, verrors)
 
+        fd = truenas_os.openat2(
+            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+        )
+        try:
+            os.fchown(fd, data['uid'], data['gid'])
+        finally:
+            os.close(fd)
+
         if not recursive:
-            fd = truenas_os.openat2(
-                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-            )
-            try:
-                os.fchown(fd, data['uid'], data['gid'])
-            finally:
-                os.close(fd)
             job.set_progress(100, 'Finished setting NFSv4 ACL.')
             return
 
@@ -552,11 +560,11 @@ class FilesystemService(Service):
 
         verrors.check()
 
-        strip_acl_path(data['path'])
-
         job.set_progress(50, 'Setting POSIX1e ACL.')
 
-        if not do_strip:
+        if do_strip:
+            strip_acl_path(data['path'])
+        else:
             try:
                 acl_obj = posixacl_dict_to_obj(dacl)
             except (ValueError, KeyError) as e:
@@ -576,14 +584,15 @@ class FilesystemService(Service):
             finally:
                 os.close(fd)
 
+        fd = truenas_os.openat2(
+            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+        )
+        try:
+            os.fchown(fd, data['uid'], data['gid'])
+        finally:
+            os.close(fd)
+
         if not recursive:
-            fd = truenas_os.openat2(
-                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-            )
-            try:
-                os.fchown(fd, data['uid'], data['gid'])
-            finally:
-                os.close(fd)
             job.set_progress(100, 'Finished setting POSIX1e ACL.')
             return
 
