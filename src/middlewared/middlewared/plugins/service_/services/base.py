@@ -359,6 +359,13 @@ async def set_unit_file_state(service_name: str | bytes, enabled: bool) -> None:
             )
         await router.send_and_get_reply(msg)
 
+        # Reload the systemd manager configuration so the unit file state change
+        # is reflected in runtime state. EnableUnitFiles/DisableUnitFiles only
+        # modify symlinks on disk without updating systemd's in-memory state,
+        # whereas `systemctl enable/disable` did this implicitly.
+        reload_msg = new_method_call(_SYSTEMD_MANAGER, "Reload", "", ())
+        await router.send_and_get_reply(reload_msg)
+
 
 async def call_unit_action(service_name: str | bytes, action: str) -> str:
     """
