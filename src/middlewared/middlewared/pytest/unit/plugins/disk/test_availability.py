@@ -38,3 +38,15 @@ async def test__disk_service__check_disks_availability(disks, allow_duplicate_se
     m["disk.get_reserved"] = AsyncMock(return_value=["sdb", "sde"])
     verrors = await DiskService(m).check_disks_availability(disks, allow_duplicate_serials)
     assert [e.errmsg for e in verrors.errors] == errors
+
+
+@pytest.mark.asyncio
+async def test__disk_service__check_disks_availability__only_requested_disks():
+    m = Middleware()
+    m["disk.get_disks"] = AsyncMock(return_value=[
+        FauxDisk(**{"name": "sda", "serial": " BAD USB DRIVE ", "lunid": None}),
+        FauxDisk(**{"name": "sdb", "serial": " BAD USB DRIVE ", "lunid": None}),
+        FauxDisk(**{"name": "sdc", "serial": "1", "lunid": "0"}),
+    ])
+    m["disk.get_reserved"] = AsyncMock(return_value=["sda", "sdb"])
+    assert not await DiskService(m).check_disks_availability(["sdc"], False)
