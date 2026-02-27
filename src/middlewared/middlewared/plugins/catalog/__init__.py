@@ -8,8 +8,7 @@ from middlewared.api.current import (
     CatalogTrainsArgs, CatalogTrainsResult, CatalogTrainsResponse, CatalogUpdate,
     CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
     CatalogSyncedArgs, CatalogSyncedResult,
-    CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
-    CatalogAppInfo,
+    CatalogAppDetails, CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
 )
 from middlewared.service import ConfigService, job, private
 
@@ -19,6 +18,7 @@ from .apps_details import (
     app_version_details as app_version_details_impl,
     get_normalized_questions_context as get_nqc_impl,
     train_to_apps_version_mapping as train_to_apps_version_mapping_impl,
+    NormalizedQuestions,
 )
 from .app_version import get_app_details
 from .features import version_supported_error_check as version_supported_error_check_impl
@@ -58,7 +58,7 @@ class CatalogService(ConfigService[CatalogEntry]):
         CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
         roles=['CATALOG_READ'], check_annotations=True,
     )
-    def get_app_details(self, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppInfo:
+    def get_app_details(self, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppDetails:
         """
         Retrieve information of `app_name` `app_version_details.catalog` catalog app.
         """
@@ -113,11 +113,11 @@ class CatalogService(ConfigService[CatalogEntry]):
         return train_to_apps_version_mapping_impl(self.context)
 
     @private
-    async def get_normalized_questions_context(self) -> Any:
+    async def get_normalized_questions_context(self) -> NormalizedQuestions:
         return await get_nqc_impl(self.context)
 
     @private
-    def app_version_details(self, version_path: str, questions_context: Any = None) -> dict[str, Any]:
+    def app_version_details(self, version_path: str, questions_context: NormalizedQuestions | None = None) -> dict[str, Any]:
         return app_version_details_impl(self.context, version_path, questions_context)
 
     @private

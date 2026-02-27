@@ -3,7 +3,7 @@ from typing import Any
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppCategoriesArgs, AppCategoriesResult, AppAvailableItem, AppLatestItem,
-    AppSimilarArgs, AppSimilarResult,
+    AppSimilarArgs, AppSimilarResult, CatalogApps
 )
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils.filter_list import filter_list
@@ -45,8 +45,8 @@ class AppService(Service):
             for app in self.middleware.call_sync('app.query')
         ]
 
-        catalog = self.middleware.call_sync('catalog.config')
-        for train, train_data in self.middleware.call_sync('catalog.apps', {}).root.items():
+        catalog = self.call_sync2(self.s.catalog.config)
+        for train, train_data in self.call_sync2(self.s.catalog.apps, CatalogApps()).root.items():
             if train not in catalog.preferred_trains:
                 continue
 

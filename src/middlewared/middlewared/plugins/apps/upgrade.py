@@ -10,7 +10,7 @@ from packaging.version import InvalidVersion, Version
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
-    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, private, Service, ValidationErrors
@@ -221,8 +221,8 @@ class AppService(Service):
         if isinstance(app, str):
             app = await self.middleware.call('app.get_instance', app)
         metadata = app['metadata']
-        app_details = await self.middleware.call(
-            'catalog.get_app_details', metadata['name'], {'train': metadata['train']}
+        app_details = await self.call2(
+            self.s.catalog.get_app_details, metadata['name'], CatalogAppVersionDetails(train=metadata['train'])
         )
         new_version = options['app_version']
         if new_version == 'latest':
