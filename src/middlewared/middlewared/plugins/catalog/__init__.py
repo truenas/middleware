@@ -117,7 +117,9 @@ class CatalogService(ConfigService[CatalogEntry]):
         return await get_nqc_impl(self.context)
 
     @private
-    def app_version_details(self, version_path: str, questions_context: NormalizedQuestions | None = None) -> dict[str, Any]:
+    def app_version_details(
+        self, version_path: str, questions_context: NormalizedQuestions | None = None
+    ) -> dict[str, Any]:
         return app_version_details_impl(self.context, version_path, questions_context)
 
     @private
