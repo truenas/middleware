@@ -34,7 +34,7 @@ from middlewared.utils.filesystem.acl import (
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
-from .utils import acltool, AclToolAction, calculate_inherited_acl, canonicalize_nfs4_acl
+from .utils import acltool, AclToolAction, calculate_inherited_acl
 
 
 class SimplifiedAclEntry(BaseModel):
@@ -201,27 +201,17 @@ class FilesystemService(Service):
         self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
-        if not options['recursive']:
-            job.set_progress(100, 'Finished changing owner.')
-            fd = truenas_os.openat2(
-                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-            )
-            try:
-                os.fchown(fd, uid, gid)
-            finally:
-                os.close(fd)
-            return
-
-        job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
-        options['posixacl'] = True
         fd = truenas_os.openat2(
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
             os.fchown(fd, uid, gid)
+            if options['recursive']:
+                job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
+                options['posixacl'] = True
+                acltool(fd, AclToolAction.CHOWN, uid, gid, options, job)
         finally:
             os.close(fd)
-        acltool(data['path'], AclToolAction.CHOWN, uid, gid, options, job)
         job.set_progress(100, 'Finished changing owner.')
 
     @api_method(
@@ -315,18 +305,14 @@ class FilesystemService(Service):
             if mode:
                 os.fchmod(fd, mode)
             os.fchown(fd, uid, gid)
+            if options['recursive']:
+                action = AclToolAction.CLONE if mode else AclToolAction.STRIP
+                job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
+                options['posixacl'] = not is_nfs4acl
+                options['do_chmod'] = True
+                acltool(fd, action, uid, gid, options, job)
         finally:
             os.close(fd)
-
-        if not options['recursive']:
-            job.set_progress(100, 'Finished setting permissions.')
-            return
-
-        action = AclToolAction.CLONE if mode else AclToolAction.STRIP
-        job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
-        options['posixacl'] = not is_nfs4acl
-        options['do_chmod'] = True
-        acltool(data['path'], action, uid, gid, options, job)
         job.set_progress(100, 'Finished setting permissions.')
 
     @private
@@ -456,35 +442,10 @@ class FilesystemService(Service):
         return ret
 
     @private
-    def setacl_nfs4_internal(self, path, acl, do_canon, verrors):
-        acl_to_set = canonicalize_nfs4_acl(acl) if do_canon else acl
-        try:
-            acl_obj = nfs4acl_dict_to_obj(acl_to_set, aclflags=None)
-        except (ValueError, KeyError) as e:
-            verrors.add('filesystem_acl.dacl', str(e))
-            verrors.check()
-            return
-
-        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-        try:
-            try:
-                truenas_os.validate_acl(fd, acl_obj)
-            except ValueError as e:
-                verrors.add('filesystem_acl.dacl', str(e))
-                verrors.check()
-                return
-            truenas_os.fsetacl(fd, acl_obj)
-        except (OSError, ValueError) as e:
-            raise CallError(str(e))
-        finally:
-            os.close(fd)
-
-    @private
     def setacl_nfs4(self, job, current_acl, data):
         job.set_progress(0, 'Preparing to set acl.')
         recursive = data['options'].get('recursive', False)
         do_strip = data['options'].get('stripacl', False)
-        do_canon = data['options'].get('canonicalize', False)
         action = AclToolAction.CLONE
 
         verrors = ValidationErrors()
@@ -493,32 +454,39 @@ class FilesystemService(Service):
         if do_strip:
             action = AclToolAction.STRIP
             strip_acl_path(data['path'])
-
-        else:
-            if data['options']['validate_effective_acl']:
-                uid_to_check = current_acl['uid'] if data['uid'] == ACL_UNDEFINED_ID else data['uid']
-                gid_to_check = current_acl['gid'] if data['gid'] == ACL_UNDEFINED_ID else data['gid']
-
-                self.middleware.call_sync(
-                    'filesystem.check_acl_execute',
-                    data['path'], data['dacl'], uid_to_check, gid_to_check, True
-                )
-
-            self.setacl_nfs4_internal(data['path'], data['dacl'], do_canon, verrors)
+        elif data['options']['validate_effective_acl']:
+            uid_to_check = current_acl['uid'] if data['uid'] == ACL_UNDEFINED_ID else data['uid']
+            gid_to_check = current_acl['gid'] if data['gid'] == ACL_UNDEFINED_ID else data['gid']
+            self.middleware.call_sync(
+                'filesystem.check_acl_execute',
+                data['path'], data['dacl'], uid_to_check, gid_to_check, True
+            )
 
         fd = truenas_os.openat2(
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
+            if not do_strip:
+                try:
+                    acl_obj = nfs4acl_dict_to_obj(data['dacl'], aclflags=None)
+                except (ValueError, KeyError) as e:
+                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.check()
+                try:
+                    truenas_os.validate_acl(fd, acl_obj)
+                except ValueError as e:
+                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.check()
+                try:
+                    truenas_os.fsetacl(fd, acl_obj)
+                except (OSError, ValueError) as e:
+                    raise CallError(str(e))
+
             os.fchown(fd, data['uid'], data['gid'])
+            if recursive:
+                acltool(fd, action, data['uid'], data['gid'], data['options'], job)
         finally:
             os.close(fd)
-
-        if not recursive:
-            job.set_progress(100, 'Finished setting NFSv4 ACL.')
-            return
-
-        acltool(data['path'], action, data['uid'], data['gid'], data['options'], job)
 
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
@@ -562,6 +530,7 @@ class FilesystemService(Service):
 
         job.set_progress(50, 'Setting POSIX1e ACL.')
 
+        acl_obj = None
         if do_strip:
             strip_acl_path(data['path'])
         else:
@@ -570,34 +539,26 @@ class FilesystemService(Service):
             except (ValueError, KeyError) as e:
                 raise CallError(f'Failed to build POSIX ACL for [{data["path"]}]: {e}')
 
-            fd = truenas_os.openat2(
-                data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-            )
-            try:
-                try:
-                    truenas_os.validate_acl(fd, acl_obj)
-                except ValueError as e:
-                    raise CallError(f'Failed to validate ACL for [{data["path"]}]: {e}')
-                truenas_os.fsetacl(fd, acl_obj)
-            except (OSError, ValueError) as e:
-                raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
-            finally:
-                os.close(fd)
-
         fd = truenas_os.openat2(
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
+            if acl_obj is not None:
+                try:
+                    truenas_os.validate_acl(fd, acl_obj)
+                except ValueError as e:
+                    raise CallError(f'Failed to validate ACL for [{data["path"]}]: {e}')
+                try:
+                    truenas_os.fsetacl(fd, acl_obj)
+                except (OSError, ValueError) as e:
+                    raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
+
             os.fchown(fd, data['uid'], data['gid'])
+            if recursive:
+                options['posixacl'] = True
+                acltool(fd, action, data['uid'], data['gid'], options, job)
         finally:
             os.close(fd)
-
-        if not recursive:
-            job.set_progress(100, 'Finished setting POSIX1e ACL.')
-            return
-
-        options['posixacl'] = True
-        acltool(data['path'], action, data['uid'], data['gid'], options, job)
 
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
@@ -644,8 +605,7 @@ class FilesystemService(Service):
         `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
         losing any access rules.
 
-        `canonicalize` reorder ACL entries so that they are in concanical form as described
-        in the Microsoft documentation MS-DTYP 2.4.5 (ACL). This only applies to NFSv4 ACLs.
+        `canonicalize` deprecated, has no effect. ACL entries are always written in canonical order.
 
         The following notes about ACL entries are necessarily terse. If more detail is requried
         please consult relevant TrueNAS documentation.

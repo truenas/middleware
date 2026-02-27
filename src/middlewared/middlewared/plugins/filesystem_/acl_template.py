@@ -19,7 +19,6 @@ from middlewared.utils.filesystem.acl import (
     POSIX_SPECIAL_ENTRIES,
     posixacl_dict_to_obj,
 )
-from .utils import canonicalize_nfs4_acl
 
 import middlewared.sqlalchemy as sa
 import errno
@@ -324,7 +323,7 @@ class ACLTemplateService(CRUDService):
         `format-options` gives additional options to alter the results of
         the template query:
 
-        `canonicalize` - place ACL entries for NFSv4 ACLs in Microsoft canonical order.
+        `canonicalize` - deprecated, has no effect. ACL entries are always stored in canonical order.
         `ensure_builtins` - ensure all results contain entries for `builtin_users` and `builtin_administrators`
         groups.
         `resolve_names` - convert ids in ACL entries into names.
@@ -338,11 +337,6 @@ class ACLTemplateService(CRUDService):
             if acltype == FS_ACL_Type.DISABLED:
                 return []
 
-            if acltype == FS_ACL_Type.POSIX1E and data['format-options']['canonicalize']:
-                verrors.add(
-                    "filesystem.acltemplate_by_path.format-options.canonicalize",
-                    "POSIX1E ACLs may not be sorted into Windows canonical order."
-                )
             filters.append(("acltype", "=", acltype))
 
         if not data['path'] and data['format-options']['resolve_names']:
@@ -362,8 +356,5 @@ class ACLTemplateService(CRUDService):
                 st = await self.middleware.run_in_thread(os.stat, data['path'])
                 await self.resolve_names(st.st_uid, st.st_gid, t)
 
-            if data['format-options']['canonicalize'] and t['acltype'] == FS_ACL_Type.NFS4:
-                canonicalized = canonicalize_nfs4_acl(t['acl'])
-                t['acl'] = canonicalized
 
         return templates
