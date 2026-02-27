@@ -1304,6 +1304,32 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
     async def call2(
         self,
         f: typing.Callable[..., typing.Any],
