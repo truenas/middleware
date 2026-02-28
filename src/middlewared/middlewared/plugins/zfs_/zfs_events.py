@@ -124,13 +124,12 @@ async def retrieve_pool_from_db(middleware, pool_name):
     return pool[0]
 
 
-POOL_ALERTS = ('PoolUSBDisks', 'PoolUpgraded')
+POOL_ALERTS = ('PoolUpgraded',)
 POOL_ALERTS_LOCKS = defaultdict(asyncio.Lock)
 
 
 async def pool_alerts_args(middleware, pool_name):
-    disks = await middleware.call('device.get_disks')
-    return {'pool_name': pool_name, 'disks': disks}
+    return {'pool_name': pool_name}
 
 
 async def zfs_events(middleware, event: ZfsEvent):
@@ -220,9 +219,9 @@ async def remove_outdated_alerts_on_boot(middleware, data):
                 if alert['args'] not in pools:
                     await middleware.call('alert.oneshot_delete', 'PoolUpgraded', alert['args'])
 
+            # PoolUSBDisks alert was removed; clean up any persisted alerts from prior versions
             if alert['klass'] == 'PoolUSBDisks':
-                if alert['args']['pool'] not in pools:
-                    await middleware.call('alert.oneshot_delete', 'PoolUSBDisks', alert['args']['pool'])
+                await middleware.call('alert.oneshot_delete', 'PoolUSBDisks', alert['args']['pool'])
 
 
 async def setup(middleware):
