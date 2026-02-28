@@ -4,7 +4,9 @@ import itertools
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING
+import types
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from middlewared.service import Service
@@ -12,7 +14,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def load_modules(directory, base=None, depth=0, whitelist=None):
+def load_modules(
+    directory: str, base: str | None = None, depth: int = 0, whitelist: list[str] | None = None,
+) -> Iterator[types.ModuleType]:
     directory = os.path.normpath(directory)
     if base is None:
         middlewared_root = os.path.dirname(os.path.dirname(__file__))
@@ -44,8 +48,8 @@ def load_modules(directory, base=None, depth=0, whitelist=None):
             yield from load_modules(path, f'{base}.{f}', depth - 1, whitelist)
 
 
-def load_classes(module, base, blacklist):
-    classes = []
+def load_classes(module: types.ModuleType, base: type, blacklist: Any) -> list[Any]:
+    classes: list[Any] = []
     for attr in dir(module):
         attr = getattr(module, attr)
         if inspect.isclass(attr):
@@ -58,13 +62,19 @@ def load_classes(module, base, blacklist):
 
 class LoadPluginsMixin:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._services: dict[str, 'Service'] = {}
         self._services_aliases: dict[str, 'Service'] = {}
         super().__init__()
 
-    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None,
-                      service_container=None):
+    def _load_plugins(
+        self,
+        on_module_begin: Any = None,
+        on_module_end: Any = None,
+        on_modules_loaded: Any = None,
+        whitelist: list[str] | None = None,
+        service_container: Any = None,
+    ) -> None:
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
         services = []
@@ -81,8 +91,8 @@ class LoadPluginsMixin:
             if on_module_end:
                 on_module_end(mod)
 
-        def key(service):
-            return service._config.namespace
+        def key(service: Any) -> str:
+            return service._config.namespace  # type: ignore[no-any-return]
 
         for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
             service = service_container
@@ -93,12 +103,12 @@ class LoadPluginsMixin:
                 service = None
 
             if service is None:
-                parts = list(parts)
+                parts = list(parts)  # type: ignore[assignment]
 
-                if len(parts) == 1:
-                    service = parts[0](self)
+                if len(parts) == 1:  # type: ignore[arg-type]
+                    service = parts[0](self)  # type: ignore[index]
                 else:
-                    service = CompoundService(self, [part(self) for part in parts])
+                    service = CompoundService(self, [part(self) for part in parts])  # type: ignore[no-untyped-call]
 
             if not service._config.private and not service._config.cli_private and not service._config.cli_namespace:
                 raise RuntimeError(f'Service {service!r} does not have CLI namespace set')
@@ -108,7 +118,7 @@ class LoadPluginsMixin:
         if on_modules_loaded:
             on_modules_loaded()
 
-    def add_service(self, service: 'Service'):
+    def add_service(self, service: 'Service') -> None:
         self._services[service._config.namespace] = service
         if service._config.namespace_alias:
             self._services_aliases[service._config.namespace_alias] = service
@@ -119,5 +129,5 @@ class LoadPluginsMixin:
             return service
         return self._services_aliases[name]
 
-    def get_services(self):
+    def get_services(self) -> dict[str, 'Service']:
         return self._services
