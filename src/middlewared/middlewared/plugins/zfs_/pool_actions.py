@@ -24,16 +24,6 @@ class ZFSPoolService(Service):
             return ['/dev/disk/by-partuuid']
         return SEARCH_PATHS
 
-    def is_upgraded(self, pool_name):
-        enabled = (libzfs.FeatureState.ENABLED, libzfs.FeatureState.ACTIVE)
-        with libzfs.ZFS() as zfs:
-            try:
-                pool = zfs.get(pool_name)
-            except libzfs.ZFSException:
-                raise CallError(f'{pool_name!r} not found', errno.ENOENT)
-
-            return all((i.state in enabled for i in pool.features))
-
     def upgrade(self, pool: str):
         if not pool:
             raise ValidationError('pool', 'name of pool required')

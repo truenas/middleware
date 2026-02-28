@@ -6,8 +6,8 @@ from middlewared.api.current import (
     PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult,
     ZFSResourceQuery,
 )
-from middlewared.service import CallError, private, Service, ValidationError
-from middlewared.plugins.zpool import get_zpool_disks_impl
+from middlewared.service import private, Service, ValidationError
+from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
 
 from truenas_pylibzfs import ZFSException, ZFSError
 
@@ -104,11 +104,11 @@ class PoolService(Service):
         disks = list()
         for i in pools:
             try:
-                disks.extend(get_zpool_disks_impl(tls, i['vol_name']))
+                disks.extend(get_zpool_disks_impl(tls.lzh, i['vol_name']))
             except ZFSException as e:
                 if e.code == ZFSError.EZFS_NOENT:
                     raise ValidationError(
-                        'pool.get_disks.id',
+                        'pool.get_disks',
                         f'pool {i["vol_name"]!r} is not imported',
                         errno.ENOENT
                     )
@@ -127,29 +127,47 @@ class PoolService(Service):
                 info.append(i['name'])
         return info
 
-    @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'])
-    async def is_upgraded(self, oid):
+    @api_method(
+        PoolIsUpgradedArgs,
+        PoolIsUpgradedResult,
+        pass_thread_local_storage=True,
+        roles=['POOL_READ']
+    )
+    def is_upgraded(self, tls, oid):
         """
-        Returns whether or not the pool of `id` is on the latest version and with all feature
-        flags enabled.
+        Returns whether or not the pool of `id` is on the latest version
+        and with all feature flags enabled.
 
-        .. examples(websocket)::
+        Queries the database for the pool matching the given `id`, then
+        checks each ZFS feature flag on the pool. Returns `true` only
+        when every feature flag is in the ENABLED or ACTIVE state.
 
-          Check if pool of id 1 is upgraded.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.is_upgraded",
-                "params": [1]
-            }
+        Raises a `ValidationError` if no pool matches the given `id` or
+        if the pool is not currently imported.
         """
-        return await self.is_upgraded_by_name((await self.middleware.call('pool.get_instance', oid))['name'])
+        pool = self.middleware.call_sync(
+            'datastore.query', 'storage.volume', [['id', '=', oid]]
+        )
+        if not pool:
+            raise ValidationError(
+                'pool.is_upgraded',
+                f'pool with database id {oid!r} does not exist',
+                errno.ENOENT
+            )
 
-    @private
-    async def is_upgraded_by_name(self, name):
+        pname = pool[0]['vol_name']
+        is_upgraded = True
         try:
-            return await self.middleware.call('zfs.pool.is_upgraded', name)
-        except CallError:
-            return False
+            for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
+                if info.state not in ('ENABLED', 'ACTIVE'):
+                    is_upgraded = False
+                    break
+        except ZFSException as e:
+            if e.code == ZFSError.EZFS_NOENT:
+                raise ValidationError(
+                    'pool.is_upgraded',
+                    f'pool {pname!r} is not imported',
+                    errno.ENOENT
+                )
+            raise
+        return is_upgraded
