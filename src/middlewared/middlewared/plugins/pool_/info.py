@@ -171,10 +171,3 @@ class PoolService(Service):
                 )
                 raise
         return is_upgraded
-
-    @private
-    async def is_upgraded_by_name(self, name):
-        try:
-            return await self.middleware.call('zfs.pool.is_upgraded', name)
-        except CallError:
-            return False

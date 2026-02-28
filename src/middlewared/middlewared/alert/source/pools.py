@@ -13,7 +13,7 @@ class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
 
     async def is_upgraded(self, pool_name):
         try:
-            return await self.middleware.call('zfs.pool.is_upgraded', pool_name)
+            return await self.middleware.call('pool.is_upgraded', pool_name)
         except Exception:
             return
 
