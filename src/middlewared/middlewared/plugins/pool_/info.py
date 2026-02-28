@@ -7,7 +7,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.service import CallError, private, Service, ValidationError
-from middlewared.plugins.zpool import get_zpool_disks_impl
+from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
 
 from truenas_pylibzfs import ZFSException, ZFSError
 
@@ -127,8 +127,13 @@ class PoolService(Service):
                 info.append(i['name'])
         return info
 
-    @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'])
-    async def is_upgraded(self, oid):
+    @api_method(
+        PoolIsUpgradedArgs,
+        PoolIsUpgradedResult,
+        pass_thread_local_storage=True,
+        roles=['POOL_READ']
+    )
+    def is_upgraded(self, tls, oid):
         """
         Returns whether or not the pool of `id` is on the latest version and with all feature
         flags enabled.
@@ -145,7 +150,32 @@ class PoolService(Service):
                 "params": [1]
             }
         """
-        return await self.is_upgraded_by_name((await self.middleware.call('pool.get_instance', oid))['name'])
+        pool = self.middleware.call_sync(
+            'datastore.query', 'storage.volume', [['id', '=', oid]]
+        )
+        if not pool:
+            raise ValidationError(
+                'pool.is_upgraded',
+                f'pool with database id {oid!r} does not exist',
+                errno.ENOENT
+            )
+
+        pname = pool[0]['vol_name']
+        is_upgraded = True
+        try:
+            for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
+                if info.state not in ('ENABLED', 'ACTIVE'):
+                    is_upgraded = False
+                    break
+        except ZFSException as e:
+            if e.code == ZFSError.EZFS_NOENT:
+                raise ValidationError(
+                    'pool.get_disks.id',
+                    f'pool {pname!r} is not imported',
+                    errno.ENOENT
+                )
+                raise
+        return is_upgraded
 
     @private
     async def is_upgraded_by_name(self, name):
