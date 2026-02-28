@@ -108,7 +108,7 @@ class PoolService(Service):
             except ZFSException as e:
                 if e.code == ZFSError.EZFS_NOENT:
                     raise ValidationError(
-                        'pool.get_disks.id',
+                        'pool.get_disks',
                         f'pool {i["vol_name"]!r} is not imported',
                         errno.ENOENT
                     )
@@ -165,7 +165,7 @@ class PoolService(Service):
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 raise ValidationError(
-                    'pool.get_disks.id',
+                    'pool.is_upgraded',
                     f'pool {pname!r} is not imported',
                     errno.ENOENT
                 )
