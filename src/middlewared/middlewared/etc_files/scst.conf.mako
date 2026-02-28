@@ -614,7 +614,7 @@ ${retrieve_luns(target['id'],'')}\
 ## Fibre Channel targets
 ##
 ####################################################################################
-% if render_ctx['fc.capable'] and not standby_write_empty_config:
+% if render_ctx['fc.capable']:
 %   if render_ctx['fcport.query']:
 TARGET_DRIVER qla2x00t {
 ##
