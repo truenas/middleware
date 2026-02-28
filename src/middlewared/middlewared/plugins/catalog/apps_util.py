@@ -16,7 +16,7 @@ from middlewared.service import CallError
 from middlewared.utils import sw_info
 
 
-RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{2}(?:\.\d)*)')  # We are only interested in XX.XX here
+RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{1,2}(?:\.\d+)*)')  # We are only interested in XX.XX or XX.X here
 
 
 def get_app_default_values(version_details: dict[str, Any]) -> dict[str, Any]:
