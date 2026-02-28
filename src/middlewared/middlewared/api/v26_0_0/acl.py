@@ -327,8 +327,6 @@ class FilesystemSetAclOptions(BaseModel):
     """Whether to apply ACL changes recursively to all child files and directories."""
     traverse: bool = False
     """Whether to traverse filesystem boundaries during recursive operations."""
-    canonicalize: bool = True
-    """Whether to reorder ACL entries in Windows canonical order."""
     validate_effective_acl: bool = True
     """Whether to validate that the users/groups granted access in the ACL can actually access the path or parent \
     path."""
@@ -428,8 +426,6 @@ class ACLTemplateDeleteResult(BaseModel):
 
 
 class AclTemplateFormatOptions(BaseModel):
-    canonicalize: bool = False
-    """Whether to normalize and canonicalize ACL entries in the response."""
     ensure_builtins: bool = False
     """Whether to ensure built-in templates are included in the response."""
     resolve_names: bool = False

@@ -1,12 +1,19 @@
+import dataclasses
 import enum
-import subprocess
+import os
+import time
 
-from middlewared.service_exception import CallError, ValidationErrors
+import truenas_os
+
+from middlewared.service_exception import CallError
+from middlewared.utils.mount import statmount as _statmount
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
     FS_ACL_Type,
-    NFS4ACE_Flag,
-    NFS4ACE_FlagSimple,
+    nfs4acl_dict_to_obj,
+    nfs4acl_obj_to_dict,
+    posixacl_dict_to_obj,
+    posixacl_obj_to_dict,
 )
 
 
@@ -15,141 +22,135 @@ class AclToolAction(enum.StrEnum):
     CLONE = 'clone'  # Use simplified imheritance logic
     INHERIT = 'inherit'  # NFS41-style inheritance
     STRIP = 'strip'  # Strip ACL from specified path
-    RESTORE = 'restore'  # restore ACL from snapshot
 
 
-def acltool(path: str, action: AclToolAction, uid: int, gid: int, options: dict) -> None:
+@dataclasses.dataclass(slots=True)
+class _NFS4InheritedAcls:
+    d1_file: object  # NFS4ACL for depth-1 files
+    d1_dir: object   # NFS4ACL for depth-1 directories
+    d2_file: object  # NFS4ACL for depth-2+ files
+    d2_dir: object   # NFS4ACL for depth-2+ directories
+
+    @classmethod
+    def from_root(cls, root_acl):
+        d1_dir = root_acl.generate_inherited_acl(is_dir=True)
+        return cls(
+            d1_file=root_acl.generate_inherited_acl(is_dir=False),
+            d1_dir=d1_dir,
+            d2_file=d1_dir.generate_inherited_acl(is_dir=False),
+            d2_dir=d1_dir.generate_inherited_acl(is_dir=True),
+        )
+
+    def pick(self, depth, is_dir):
+        if depth == 1:
+            return self.d1_dir if is_dir else self.d1_file
+        return self.d2_dir if is_dir else self.d2_file
+
+
+def _get_mount_info(fd: int):
+    sm = _statmount(fd=fd, as_dict=False)
+    abs_path = os.readlink(f'/proc/self/fd/{fd}')
+    rel = os.path.relpath(abs_path, sm.mnt_point)
+    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)
+
+
+def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None) -> None:
     """
-    This is an internal-only tool that performs certain ACL-related operations on the specified path.
-    """
-    flags = "-r"
-    flags += "x" if options.get('traverse') else ""
-    flags += "C" if options.get('do_chmod') else ""
-    flags += "P" if options.get('posixacl') else ""
+    Perform recursive ACL-related operations using fd-based operations via the
+    truenas_os extension.
 
-    acltool = subprocess.run([
-        '/usr/bin/nfs4xdr_winacl',
-        '-a', action,
-        '-O', str(uid), '-G', str(gid),
-        flags,
-        '-c', path,
-        '-p', path], check=False, capture_output=True
+    `fd` must be an open O_RDONLY descriptor for the root path of the
+    operation.  acltool reads from it but does NOT close it; the caller owns
+    the descriptor lifetime.
+
+    If `job` is provided, progress updates are emitted at most once per 1 000
+    items *and* no more frequently than every 1 second (whichever is later).
+    """
+    traverse = options.get('traverse', False)
+    do_chmod = options.get('do_chmod', False)
+
+    mountpoint, fs_name, rel_path = _get_mount_info(fd)
+
+    root_acl = (
+        truenas_os.fgetacl(fd)
+        if action in (AclToolAction.CLONE, AclToolAction.INHERIT)
+        else None
     )
-    if acltool.returncode != 0:
-        raise CallError(f"acltool [{action}] on path {path} failed with error: [{acltool.stderr.decode().strip()}]")
+    root_mode = os.fstat(fd).st_mode if do_chmod else None
 
+    nfs4_inh = None
+    if root_acl is not None and isinstance(root_acl, truenas_os.NFS4ACL):
+        nfs4_inh = _NFS4InheritedAcls.from_root(root_acl)
 
-def __ace_is_inherited_nfs4(ace):
-    if ace['flags'].get('BASIC'):
-        return False
+    last_report_time = time.monotonic()
 
-    return ace['flags'].get(NFS4ACE_Flag.INHERITED, False)
+    def _report_progress(dir_stack, state, private_data):
+        nonlocal last_report_time
+        now = time.monotonic()
+        if now - last_report_time < 1.0:
+            return
 
+        last_report_time = now
+        job.set_progress(
+            None,
+            f'Processing {state.current_directory} ({state.cnt:,} files processed)',
+        )
 
-def canonicalize_nfs4_acl(theacl):
-    """
-    Order NFS4 ACEs according to MS guidelines:
-    1) Deny ACEs that apply to the object itself (NOINHERIT)
-    2) Allow ACEs that apply to the object itself (NOINHERIT)
-    3) Deny ACEs that apply to a subobject of the object (INHERIT)
-    4) Allow ACEs that apply to a subobject of the object (INHERIT)
+    reporting_callback = _report_progress if job is not None else None
 
-    See http://docs.microsoft.com/en-us/windows/desktop/secauthz/order-of-aces-in-a-dacl
-    Logic is simplified here because we do not determine depth from which ACLs are inherited.
-    """
-    out = []
-    acl_groups = {
-        "deny_noinherit": [],
-        "deny_inherit": [],
-        "allow_noinherit": [],
-        "allow_inherit": [],
-    }
+    def _apply_action(item, it, depth_offset=0):
+        if action == AclToolAction.CHOWN:
+            os.fchown(item.fd, uid, gid)
 
-    for ace in theacl:
-        key = f'{ace.get("type", "ALLOW").lower()}_{"inherit" if __ace_is_inherited_nfs4(ace) else "noinherit"}'
-        acl_groups[key].append(ace)
+        elif action == AclToolAction.STRIP:
+            truenas_os.fsetacl(item.fd, None)
+            if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
+                os.fchown(item.fd, uid, gid)
+            if do_chmod and root_mode is not None:
+                os.fchmod(item.fd, root_mode & 0o7777)
 
-    for g in acl_groups.values():
-        out.extend(g)
+        elif action in (AclToolAction.CLONE, AclToolAction.INHERIT):
+            if nfs4_inh is not None:
+                inherited = nfs4_inh.pick(depth_offset + len(it.dir_stack()), item.isdir)
+                truenas_os.fsetacl(item.fd, inherited)
+            elif root_acl is not None:
+                truenas_os.fsetacl(item.fd, root_acl)
+            if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
+                os.fchown(item.fd, uid, gid)
+            if do_chmod and root_mode is not None:
+                os.fchmod(item.fd, root_mode & 0o7777)
 
-    return out
-
-
-def __calculate_inherited_posix1e(theacl, isdir):
-    """
-    Create a new ACL based on what a file or directory would receive if it
-    were created within a directory that had `theacl` set on it.
-    """
-    inherited = []
-    for entry in theacl['acl']:
-        if entry['default'] is False:
-            continue
-
-        # add access entry
-        inherited.append(entry.copy() | {'default': False})
-
-        if isdir:
-            # add default entry
-            inherited.append(entry)
-
-    return inherited
-
-
-def __calculate_inherited_nfs4(theacl, isdir):
-    """
-    Create a new ACL based on what a file or directory would receive if it
-    were created within a directory that had `theacl` set on it.
-    """
-    inherited = []
-    for entry in theacl['acl']:
-        if not (flags := entry.get('flags', {}).copy()):
-            continue
-
-        if (basic := flags.get('BASIC')) == NFS4ACE_FlagSimple.NOINHERIT:
-            continue
-        elif basic == NFS4ACE_FlagSimple.INHERIT:
-            flags[NFS4ACE_Flag.INHERITED] = True
-            inherited.append(entry)
-            continue
-        elif not flags.get(NFS4ACE_Flag.FILE_INHERIT, False) and not flags.get(NFS4ACE_Flag.DIRECTORY_INHERIT, False):
-            # Entry has no inherit flags
-            continue
-        elif not isdir and not flags.get(NFS4ACE_Flag.FILE_INHERIT):
-            # File and this entry doesn't inherit on files
-            continue
-
-        if isdir:
-            if not flags.get(NFS4ACE_Flag.DIRECTORY_INHERIT, False):
-                if flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT]:
-                    # doesn't apply to this dir and shouldn't apply to contents.
+    def _process_mount(mnt_point, fs, rel, depth_offset=0):
+        with truenas_os.iter_filesystem_contents(
+            mnt_point, fs,
+            relative_path=rel,
+            reporting_increment=1000,
+            reporting_callback=reporting_callback,
+        ) as it:
+            for item in it:
+                if item.islnk:
                     continue
+                try:
+                    _apply_action(item, it, depth_offset)
+                except OSError as e:
+                    raise CallError(f'acltool [{action}] failed on item in {mountpoint}: {e}')
 
-                # This is a directory ACL and we have entry that only applies to files.
-                flags[NFS4ACE_Flag.INHERIT_ONLY] = True
-            elif flags.get(NFS4ACE_Flag.INHERIT_ONLY, False):
-                flags[NFS4ACE_Flag.INHERIT_ONLY] = False
-            elif flags.get(NFS4ACE_Flag.NO_PROPAGATE_INHERIT):
-                flags[NFS4ACE_Flag.DIRECTORY_INHERIT] = False
-                flags[NFS4ACE_Flag.FILE_INHERIT] = False
-                flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT] = False
-        else:
-            flags[NFS4ACE_Flag.DIRECTORY_INHERIT] = False
-            flags[NFS4ACE_Flag.FILE_INHERIT] = False
-            flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT] = False
-            flags[NFS4ACE_Flag.INHERIT_ONLY] = False
+    _process_mount(mountpoint, fs_name, rel_path)
 
-        inherited.append({
-            'tag': entry['tag'],
-            'id': entry['id'],
-            'type': entry['type'],
-            'perms': entry['perms'],
-            'flags': flags | {NFS4ACE_Flag.INHERITED: True}
-        })
-
-    return inherited
+    if traverse:
+        real_path = os.readlink(f'/proc/self/fd/{fd}')
+        for entry in truenas_os.iter_mount(
+            statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
+        ):
+            child_mnt = entry.mnt_point
+            if not child_mnt.startswith(real_path + '/'):
+                continue
+            child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
+            _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
 
 
-def calculate_inherited_acl(theacl, isdir=True):
+
+def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
     """
     Create a new ACL based on what a file or directory would receive if it
     were created within a directory that had `theacl` set on it.
@@ -161,118 +162,16 @@ def calculate_inherited_acl(theacl, isdir=True):
     acltype = FS_ACL_Type(theacl['acltype'])
 
     match acltype:
-        case FS_ACL_Type.POSIX1E:
-            return __calculate_inherited_posix1e(theacl, isdir)
-
         case FS_ACL_Type.NFS4:
-            return __calculate_inherited_nfs4(theacl, isdir)
+            obj = nfs4acl_dict_to_obj(theacl['acl'], theacl.get('aclflags'))
+            return nfs4acl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0, simplified=False)['acl']
+
+        case FS_ACL_Type.POSIX1E:
+            obj = posixacl_dict_to_obj(theacl['acl'])
+            return posixacl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0)['acl']
 
         case FS_ACL_Type.DISABLED:
             raise ValueError('ACL is disabled')
 
         case _:
             raise TypeError(f'{acltype}: unknown ACL type')
-
-
-def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors) -> str:
-    """
-    This method iterates through provided POSIX1e ACL and
-    performs additional validation before returning the ACL
-    string formatted for the setfacl command. In case
-    of ValidationError, None is returned.
-    """
-    has_tag = {
-        "USER_OBJ": False,
-        "GROUP_OBJ": False,
-        "OTHER": False,
-        "MASK": False,
-        "DEF_USER_OBJ": False,
-        "DEF_GROUP_OBJ": False,
-        "DEF_OTHER": False,
-        "DEF_MASK": False,
-    }
-    required_entries = ["USER_OBJ", "GROUP_OBJ", "OTHER"]
-    has_named = False
-    has_def_named = False
-    has_default = False
-    aclstring = ""
-
-    for idx, ace in enumerate(dacl):
-        if idx != 0:
-            aclstring += ","
-
-        if ace.get('who') and ace['id'] not in (None, ACL_UNDEFINED_ID):
-            verrors.add(
-                f'filesystem_acl.dacl.{idx}.who',
-                f'Numeric ID {ace["id"]} and account name {ace["who"]} may not be specified simultaneously'
-            )
-
-        if ace['id'] == ACL_UNDEFINED_ID:
-            ace['id'] = ''
-
-        who = "DEF_" if ace['default'] else ""
-        who += ace['tag']
-        duplicate_who = has_tag.get(who)
-
-        if duplicate_who is True:
-            verrors.add(
-                f'filesystem_acl.dacl.{idx}',
-                f'More than one {"default" if ace["default"] else ""} '
-                f'{ace["tag"]} entry is not permitted'
-            )
-
-        elif duplicate_who is False:
-            has_tag[who] = True
-
-        if ace['tag'] in ["USER", "GROUP"]:
-            if ace['default']:
-                has_def_named = True
-            else:
-                has_named = True
-
-        ace['tag'] = ace['tag'].rstrip('_OBJ').lower()
-
-        if ace['default']:
-            has_default = True
-            aclstring += "default:"
-
-        aclstring += f"{ace['tag']}:{ace['id']}:"
-        aclstring += 'r' if ace['perms']['READ'] else '-'
-        aclstring += 'w' if ace['perms']['WRITE'] else '-'
-        aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
-
-    if has_named and not has_tag['MASK']:
-        verrors.add(
-            'filesystem_acl.dacl',
-            'Named (user or group) POSIX ACL entries '
-            'require a mask entry to be present in the ACL.'
-        )
-
-    elif has_def_named and not has_tag['DEF_MASK']:
-        verrors.add(
-            'filesystem_acl.dacl',
-            'Named default (user or group) POSIX ACL entries '
-            'require a default mask entry to be present in the ACL.'
-        )
-
-    if recursive and not has_default:
-        verrors.add(
-            'filesystem_acl.dacl',
-            'Default ACL entries are required in order to apply '
-            'ACL recursively.'
-        )
-
-    for entry in required_entries:
-        if not has_tag[entry]:
-            verrors.add(
-                'filesystem_acl.dacl',
-                f'Presence of [{entry}] entry is required.'
-            )
-
-        if has_default and not has_tag[f"DEF_{entry}"]:
-            verrors.add(
-                'filesystem_acl.dacl',
-                f'Presence of default [{entry}] entry is required.'
-            )
-
-    return aclstring
