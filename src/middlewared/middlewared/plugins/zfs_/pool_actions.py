@@ -24,16 +24,6 @@ class ZFSPoolService(Service):
             return ['/dev/disk/by-partuuid']
         return SEARCH_PATHS
 
-    def upgrade(self, pool: str):
-        if not pool:
-            raise ValidationError('pool', 'name of pool required')
-
-        try:
-            with libzfs.ZFS() as zfs:
-                zfs.get(pool).upgrade()
-        except libzfs.ZFSException as e:
-            raise CallError(str(e))
-
     def export(self, name: str, options: dict | None = None):
         try:
             with libzfs.ZFS() as zfs:

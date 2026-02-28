@@ -1,8 +1,12 @@
-from datetime import datetime
+import datetime
+import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolScrubArgs, PoolScrubResult, PoolUpgradeArgs, PoolUpgradeResult
 from middlewared.service import job, private, Service
+from middlewared.service_exception import ValidationError
+
+from truenas_pylibzfs import ZFSError, ZFSException
 
 
 class PoolService(Service):
@@ -23,7 +27,7 @@ class PoolService(Service):
 
         higher_prio = False
         weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
-        now = datetime.now()
+        now = datetime.datetime.now()
         now_t = now.time()
         # end overlaps the day
         if resilver['begin'] > resilver['end']:
@@ -83,8 +87,13 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
 
-    @api_method(PoolUpgradeArgs, PoolUpgradeResult, roles=['POOL_WRITE'])
-    async def upgrade(self, oid):
+    @api_method(
+        PoolUpgradeArgs,
+        PoolUpgradeResult,
+        pass_thread_local_storage=True,
+        roles=['POOL_WRITE']
+    )
+    def upgrade(self, tls, oid):
         """
         Upgrade pool of `id` to latest version with all feature flags.
 
@@ -100,8 +109,27 @@ class PoolService(Service):
                 "params": [1]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
-        # Should we check first if upgrade is required ?
-        await self.middleware.call('zfs.pool.upgrade', pool['name'])
-        await self.middleware.call('alert.oneshot_delete', 'PoolUpgraded', pool['name'])
-        return True
+        pool = self.middleware.call_sync(
+            'datastore.query', 'storage.volume', [['id', '=', oid]]
+        )
+        if not pool:
+            raise ValidationError(
+                'pool.upgrade',
+                f'pool with database id {oid!r} does not exist',
+                errno.ENOENT
+            )
+
+        pname = pool[0]['vol_name']
+        try:
+            upgrade_zpool_impl(tls.lzh, pname)
+        except ZFSException as e:
+            if e.code == ZFSError.EZFS_NOENT:
+                raise ValidationError(
+                    'pool.upgrade',
+                    f'pool {pname!r} is not imported',
+                    errno.ENOENT
+                )
+            raise
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'PoolUpgraded', pname)
+            return True
