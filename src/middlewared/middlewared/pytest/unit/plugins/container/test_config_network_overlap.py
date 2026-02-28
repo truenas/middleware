@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from middlewared.plugins.container.config import LXCConfigService
+from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
@@ -29,7 +29,6 @@ def setup_middleware(config=None):
     m['datastore.update'] = AsyncMock()
     m['interface.query'] = Mock(return_value=[])
     m['interface.ip_in_use'] = AsyncMock(return_value=SYSTEM_IPS)
-    m['container.validate_pool'] = AsyncMock()
     return m
 
 

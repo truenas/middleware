@@ -1,18 +1,18 @@
 import time
 
-from middlewared.api.current import ContainersMetricsEventSourceArgs, ContainersMetricsEventSourceEvent
-from middlewared.event import EventSource
+from middlewared.api.current import ContainersMetricsEventSourceArgs, ContainersMetricsEventSourceEvent, QueryOptions
+from middlewared.event import TypedEventSource
 from middlewared.plugins.reporting.realtime_reporting.cgroup import get_cgroup_stats
 from middlewared.service import Service
 
 
-class ContainersMetricsEventSource(EventSource):
+class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSourceArgs]):
     args = ContainersMetricsEventSourceArgs
     event = ContainersMetricsEventSourceEvent
     roles = ['CONTAINER_READ']
 
-    def run_sync(self):
-        interval = self.arg['interval']
+    def run_sync(self) -> None:
+        interval = self.typed_arg.interval
         while not self._cancel_sync.is_set():
             netdata_metrics = None
             containers_mapping = {}
@@ -21,8 +21,8 @@ class ContainersMetricsEventSource(EventSource):
                 try:
                     netdata_metrics = self.middleware.call_sync('netdata.get_all_metrics')
                     containers_mapping = {
-                        f'lxc/{inst["uuid"].replace("-", "")}': inst['id'] for inst in self.middleware.call_sync(
-                            'container.query', [], {'select': ['uuid', 'id'], 'force_sql_filters': True}
+                        f'lxc/{inst.uuid.replace("-", "")}': inst.id for inst in self.middleware.call_sync2(
+                            self.middleware.services.container.query, [], QueryOptions(force_sql_filters=True)
                         )
                     }
                 except Exception:
@@ -35,7 +35,7 @@ class ContainersMetricsEventSource(EventSource):
                     break
 
             if netdata_metrics and containers_mapping:
-                containers_status = get_cgroup_stats(netdata_metrics, containers_mapping.keys())
+                containers_status = get_cgroup_stats(netdata_metrics, list(containers_mapping))
                 self.send_event('ADDED', fields={
                     containers_mapping[cgroup_name]: stats for cgroup_name, stats in containers_status.items()
                 })

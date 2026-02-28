@@ -3,6 +3,7 @@ import random
 
 from typing import Any
 
+from middlewared.api.base import BaseModel
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
@@ -31,7 +32,10 @@ class NICDelegate(DeviceDelegate):
     ) -> None:
         nic = device['attributes'].get('nic_attach')
         if nic:
-            if nic not in itertools.chain(*self.middleware.call_sync(self.nic_choices_endpoint).values()):
+            choices = self.middleware.call_sync(self.nic_choices_endpoint)
+            if isinstance(choices, BaseModel):
+                choices = choices.model_dump()
+            if nic not in itertools.chain(*choices.values()):
                 verrors.add('attributes.nic_attach', 'Not a valid choice.')
             elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
                 verrors.add(

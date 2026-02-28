@@ -13,6 +13,7 @@ from truenas_pynetif.address.netlink import netlink_route
 from truenas_pynetif.configure import BridgeConfig, configure_bridge
 from truenas_pynetif.netlink import DeviceNotFound
 
+BRIDGE_AUTO = '[AUTO]'
 BRIDGE_NAME = "truenasbr0"
 # This is intentionally kept on the boot drive because placing
 # it on the system dataset prevents unmounting during system
@@ -23,9 +24,24 @@ DNSMASQ_CONF_FILE = f"{FS_PATH}/test.dnsmasq.raw"
 DOMAIN_NAME = "tn-container"
 
 __all__ = (
+    "BRIDGE_AUTO",
+    "bridge_choices",
     "container_bridge_name",
     "configure_container_bridge",
 )
+
+
+async def bridge_choices(context: ServiceContext) -> dict[str, str]:
+    choices = {BRIDGE_AUTO: "Automatic"}
+    # We do not allow custom bridge on HA because it might have bridge STP issues
+    # causing failover problems.
+    if not await context.middleware.call("failover.licensed"):
+        choices.update({
+            i["name"]: i["name"]
+            for i in await context.middleware.call("interface.query", [["type", "=", "BRIDGE"]])
+        })
+
+    return choices
 
 
 def _bridge_impl(
@@ -61,7 +77,7 @@ def _bridge_impl(
     return was_created
 
 
-def _start_dnsmasq(ctx, dnsmasq_args) -> None:
+def _start_dnsmasq(ctx: ServiceContext, dnsmasq_args: list[str]) -> None:
     with open(DNSMASQ_CONF_FILE, "w"):
         pass
 
@@ -111,7 +127,7 @@ def _start_dnsmasq(ctx, dnsmasq_args) -> None:
         )
 
 
-def _configure_nft(ipv4_masquerade, ipv6_masquerade):
+def _configure_nft(ipv4_masquerade: str, ipv6_masquerade: str) -> None:
     with open("/proc/sys/net/ipv4/ip_forward", "w") as f:
         f.write("1\n")
 
@@ -173,20 +189,16 @@ def _configure_nft(ipv4_masquerade, ipv6_masquerade):
         subprocess.check_call(["nft", "-f", f.name])
 
 
-def configure_container_bridge(ctx: ServiceContext):
+def configure_container_bridge(ctx: ServiceContext) -> None:
     config = ctx.middleware.call_sync("lxc.config")
-    if config["bridge"] is not None:
+    if config.bridge is not None:
         return
 
     # FIXME: what user and group whould we use to run dnsmasq?
     os.makedirs(FS_PATH, exist_ok=True)
 
-    ip4 = None
-    if config["v4_network"]:
-        ip4 = ipaddress.ip_interface(config["v4_network"])
-    ip6 = None
-    if config["v6_network"]:
-        ip6 = ipaddress.ip_interface(config["v6_network"])
+    ip4 = ipaddress.IPv4Interface(config.v4_network) if config.v4_network else None
+    ip6 = ipaddress.IPv6Interface(config.v6_network) if config.v6_network else None
 
     was_created = _bridge_impl(ip4, ip6)
     if not was_created:
@@ -226,6 +238,6 @@ def configure_container_bridge(ctx: ServiceContext):
     _start_dnsmasq(ctx, dnsmasq_args)
 
 
-def container_bridge_name(ctx: ServiceContext):
+def container_bridge_name(ctx: ServiceContext) -> str:
     config = ctx.middleware.call_sync("lxc.config")
-    return config["bridge"] or BRIDGE_NAME
+    return config.bridge or BRIDGE_NAME

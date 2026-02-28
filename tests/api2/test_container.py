@@ -44,7 +44,7 @@ def get_mountpoint(dataset):
 
 
 def nsenter(container, command):
-    return shlex.join(call("container.nsenter", container) + [command])
+    return shlex.join(call("container.nsenter", container["id"]) + [command])
 
 
 def script_output(container):

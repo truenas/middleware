@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.service import ServiceChangeMixin, SharingTaskService
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class FSAttachmentDelegate(ServiceChangeMixin):
@@ -21,7 +28,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     # Delegates with same priority maintain registration order among themselves.
     priority = 0
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
         self.logger = middleware.logger
 

@@ -3,18 +3,19 @@ from typing import Annotated, Literal, TypeAlias
 
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
 )
 
 
 __all__ = [
     'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
     'ContainerFilesystemDevice', 'ContainerGPUDevice',
-    'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
+    'ContainerDeviceEntry', 'ContainerDeviceCreate', 'ContainerDeviceUpdate', 'ContainerDeviceDeleteOptions',
+    'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
     'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult',
+    'ContainerDeviceNicAttachChoices', 'ContainerDeviceNicAttachChoicesResult',
+    'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult', 'USBPassthroughDevice',
     'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
 ]
 
@@ -85,9 +86,9 @@ class ContainerDeviceCreate(ContainerDeviceEntry):
     id: Excluded = excluded_field()
 
 
-@single_argument_args('container_device_create')
-class ContainerDeviceCreateArgs(ContainerDeviceCreate):
-    pass
+class ContainerDeviceCreateArgs(BaseModel):
+    container_device_create: ContainerDeviceCreate
+    """Container device creation parameters."""
 
 
 class ContainerDeviceCreateResult(BaseModel):
@@ -151,12 +152,16 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class ContainerDeviceNicAttachChoicesResult(BaseModel):
+class ContainerDeviceNicAttachChoices(BaseModel):
     BRIDGE: list[str]
     """Available bridge interfaces for NIC attachment."""
     MACVLAN: list[str]
     """Available parent interfaces for creating MACVLAN NIC devices."""
+
+
+class ContainerDeviceNicAttachChoicesResult(BaseModel):
+    result: ContainerDeviceNicAttachChoices
+    """Available NIC attach choices."""
 
 
 class USBCapability(BaseModel):
@@ -199,5 +204,5 @@ class ContainerDeviceGpuChoicesArgs(BaseModel):
 
 
 class ContainerDeviceGpuChoicesResult(BaseModel):
-    result: dict
+    result: dict[str, str]
     """Available GPU(s) for container attachment."""
