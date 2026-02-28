@@ -7,6 +7,9 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.service import CallError, private, Service, ValidationError
+from middlewared.plugins.zpool import get_zpool_disks_impl
+
+from truenas_pylibzfs import ZFSException, ZFSError
 
 
 class PoolService(Service):
@@ -70,16 +73,46 @@ class PoolService(Service):
 
         return processes
 
-    @api_method(PoolGetDisksArgs, PoolGetDisksResult, roles=['POOL_READ'])
-    async def get_disks(self, oid):
+    @api_method(
+        PoolGetDisksArgs,
+        PoolGetDisksResult,
+        pass_thread_local_storage=True,
+        roles=['POOL_READ']
+    )
+    def get_disks(self, tls, oid):
         """
-        Get all disks in use by pools.
-        If `id` is provided only the disks from the given pool `id` will be returned.
+        Return the device names of all disks belonging to a pool.
+
+        Queries the database for the pool matching the given `id` and
+        resolves each vdev, cache, log, special, dedup, and spare device
+        to its whole-disk device name (e.g. sda, nvme0n1). If `id` is
+        not provided, disks for all pools in the database are returned.
+
+        Raises a `ValidationError` if no pool matches the given `id` or
+        if the pool is not currently imported.
         """
-        disks = []
-        for pool in await self.middleware.call('pool.query', [] if not oid else [('id', '=', oid)]):
-            if pool['status'] != 'OFFLINE':
-                disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
+        filters = list() if not oid else [['id', '=', oid]]
+        pools = self.middleware.call_sync(
+            'datastore.query', 'storage.volume', filters
+        )
+        if not pools:
+            err = 'No pools in database'
+            if oid:
+                err = f'pool with database id {oid!r} does not exist',
+            raise ValidationError('pool.get_disks', err, errno.ENOENT)
+
+        disks = list()
+        for i in pools:
+            try:
+                disks.extend(get_zpool_disks_impl(tls, i['vol_name']))
+            except ZFSException as e:
+                if e.code == ZFSError.EZFS_NOENT:
+                    raise ValidationError(
+                        'pool.get_disks.id',
+                        f'pool {i["vol_name"]!r} is not imported',
+                        errno.ENOENT
+                    )
+                raise
         return disks
 
     @api_method(PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, roles=['DATASET_READ'])
