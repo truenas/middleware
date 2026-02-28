@@ -118,7 +118,7 @@ async def do_create(self, app, data):
 
 **Datastore Access**:
 - Via `self.middleware.call('datastore.query', 'table', filters, options)`
-- CRUD: `datastore.create()`, `datastore.update()`, `datastore.delete()`
+- CRUD: `datastore.insert()`, `datastore.update()`, `datastore.delete()`
 - Supports filtering and complex queries
 
 ### Job System

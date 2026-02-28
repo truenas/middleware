@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import datetime
+import threading
 from unittest.mock import ANY, patch
 
 import pytest
@@ -9,6 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
+from middlewared.service_exception import CallError
 from middlewared.sqlalchemy import EncryptedText, JSON, Time
 
 import middlewared.plugins.datastore  # noqa
@@ -34,12 +36,8 @@ async def datastore_test(mocked_calls=None):
                 ds = DatastoreService(m)
                 ds.setup()
 
-                for part in ds.parts:
-                    if hasattr(part, "connection"):
-                        Model.metadata.create_all(bind=part.connection)
-                        break
-                else:
-                    raise RuntimeError("Could not find part that provides connection")
+                conn_part = next(p for p in ds.parts if hasattr(p, '_get_conn'))
+                Model.metadata.create_all(bind=conn_part._get_conn())
 
                 m["datastore.execute"] = ds.execute
                 m["datastore.execute_write"] = ds.execute_write
@@ -1202,3 +1200,72 @@ async def test__extend_fk(extend_fk_attrs, filter_, options, expected_result):
 
         query_result = await ds.query("test.linkedfrom", filter_, options)
         assert query_result == expected_result
+
+
+@pytest.mark.asyncio
+async def test__get_conn_per_thread_isolation():
+    """Each thread gets its own SQLite connection through threading.local()."""
+    async with datastore_test() as ds:
+        conn_part = next(p for p in ds.parts if hasattr(p, '_get_conn'))
+
+        connections = {}
+
+        def grab_conn():
+            connections[threading.get_ident()] = conn_part._get_conn()
+
+        threads = [threading.Thread(target=grab_conn) for _ in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert len(set(id(c) for c in connections.values())) == 3
+
+
+@pytest.mark.asyncio
+async def test__generation_invalidates_connection():
+    """
+    After setup() bumps _generation, the same thread's next _get_conn() call
+    returns a new connection and discards the old one.
+    """
+    async with datastore_test() as ds:
+        conn_part = next(p for p in ds.parts if hasattr(p, '_get_conn'))
+
+        results = {}
+        barrier = threading.Barrier(2)
+
+        def worker():
+            results['before'] = conn_part._get_conn()
+            barrier.wait()  # signal: have conn_before, ready for setup()
+            barrier.wait()  # wait: setup() has been called
+            results['after'] = conn_part._get_conn()
+
+        t = threading.Thread(target=worker)
+        t.start()
+
+        barrier.wait()   # wait until worker has recorded conn_before
+        conn_part.setup()
+        barrier.wait()   # release worker to fetch conn_after
+
+        t.join()
+
+        assert results['before'] is not results['after']
+
+
+@pytest.mark.asyncio
+async def test__forked_child_write_raises():
+    """
+    execute() and execute_write() must raise CallError when called from a
+    process whose PID differs from the one recorded by setup().
+    Simulated by setting _main_pid to a value that can never equal getpid().
+    """
+    async with datastore_test() as ds:
+        conn_part = next(p for p in ds.parts if hasattr(p, '_get_conn'))
+
+        conn_part._main_pid = -1  # unreachable PID
+
+        with pytest.raises(CallError):
+            ds.execute("SELECT 1")
+
+        with pytest.raises(CallError):
+            await ds.insert("account.bsdgroups", {"bsdgrp_gid": 99})
