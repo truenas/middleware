@@ -97,17 +97,14 @@ class PoolService(Service):
         """
         Upgrade pool of `id` to latest version with all feature flags.
 
-        .. examples(websocket)::
+        Queries the database for the pool matching the given `id`, then
+        enables all supported ZFS feature flags on the pool. This is a
+        one-way operation and cannot be reversed. Once upgraded, the pool
+        will not be importable on systems running older ZFS versions that
+        do not support the newly enabled features.
 
-          Upgrade pool of id 1.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.upgrade",
-                "params": [1]
-            }
+        Raises a `ValidationError` if no pool matches the given `id` or
+        if the pool is not currently imported.
         """
         pool = self.middleware.call_sync(
             'datastore.query', 'storage.volume', [['id', '=', oid]]
