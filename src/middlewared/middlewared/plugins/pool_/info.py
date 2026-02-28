@@ -104,7 +104,7 @@ class PoolService(Service):
         disks = list()
         for i in pools:
             try:
-                disks.extend(get_zpool_disks_impl(tls, i['vol_name']))
+                disks.extend(get_zpool_disks_impl(tls.lzh, i['vol_name']))
             except ZFSException as e:
                 if e.code == ZFSError.EZFS_NOENT:
                     raise ValidationError(
@@ -169,5 +169,5 @@ class PoolService(Service):
                     f'pool {pname!r} is not imported',
                     errno.ENOENT
                 )
-                raise
+            raise
         return is_upgraded
