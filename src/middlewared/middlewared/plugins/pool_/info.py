@@ -135,20 +135,15 @@ class PoolService(Service):
     )
     def is_upgraded(self, tls, oid):
         """
-        Returns whether or not the pool of `id` is on the latest version and with all feature
-        flags enabled.
+        Returns whether or not the pool of `id` is on the latest version
+        and with all feature flags enabled.
 
-        .. examples(websocket)::
+        Queries the database for the pool matching the given `id`, then
+        checks each ZFS feature flag on the pool. Returns `true` only
+        when every feature flag is in the ENABLED or ACTIVE state.
 
-          Check if pool of id 1 is upgraded.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.is_upgraded",
-                "params": [1]
-            }
+        Raises a `ValidationError` if no pool matches the given `id` or
+        if the pool is not currently imported.
         """
         pool = self.middleware.call_sync(
             'datastore.query', 'storage.volume', [['id', '=', oid]]
