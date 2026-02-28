@@ -6,7 +6,7 @@ from middlewared.api.current import (
     PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult,
     ZFSResourceQuery,
 )
-from middlewared.service import CallError, private, Service, ValidationError
+from middlewared.service import private, Service, ValidationError
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
 
 from truenas_pylibzfs import ZFSException, ZFSError
