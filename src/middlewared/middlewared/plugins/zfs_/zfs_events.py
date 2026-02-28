@@ -219,10 +219,6 @@ async def remove_outdated_alerts_on_boot(middleware, data):
                 if alert['args'] not in pools:
                     await middleware.call('alert.oneshot_delete', 'PoolUpgraded', alert['args'])
 
-            # PoolUSBDisks alert was removed; clean up any persisted alerts from prior versions
-            if alert['klass'] == 'PoolUSBDisks':
-                await middleware.call('alert.oneshot_delete', 'PoolUSBDisks', alert['args']['pool'])
-
 
 async def setup(middleware):
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
