@@ -1,32 +1,6 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
 
 
-class PoolUSBDisksAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = 'Pool consuming USB disks'
-    text = '%(pool)r is consuming USB devices %(disks)r which is not recommended.'
-
-    async def get_usb_disks(self, pool_name, disks):
-        try:
-            return [disk for disk in filter(
-                lambda d: d in disks and disks[d]['bus'] == 'USB',
-                await self.middleware.call('zfs.pool.get_disks', pool_name)
-            )]
-        except Exception:
-            return []
-
-    async def create(self, args):
-        pool_name = args['pool_name']
-        disks = args['disks']
-
-        if usb_disks := await self.get_usb_disks(pool_name, disks):
-            return Alert(PoolUSBDisksAlertClass, {'pool': pool_name, 'disks': ', '.join(usb_disks)}, key=pool_name)
-
-    async def delete(self, alerts, query):
-        return list(filter(lambda x: x.args['pool'] != query, alerts))
-
-
 class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.NOTICE
