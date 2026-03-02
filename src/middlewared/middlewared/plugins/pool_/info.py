@@ -95,13 +95,15 @@ class PoolService(Service):
         pools = self.middleware.call_sync(
             'datastore.query', 'storage.volume', filters
         )
-        if not pools:
-            err = 'No pools in database'
-            if oid:
-                err = f'pool with database id {oid!r} does not exist',
-            raise ValidationError('pool.get_disks', err, errno.ENOENT)
-
         disks = list()
+        if not pools and oid:
+            raise ValidationError(
+                'pool.get_disks',
+                f'pool with database id {oid!r} does not exist',
+                errno.ENOENT
+            )
+            return disks
+
         for i in pools:
             try:
                 disks.extend(get_zpool_disks_impl(tls.lzh, i['vol_name']))
