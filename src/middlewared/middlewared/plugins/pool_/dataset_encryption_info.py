@@ -18,6 +18,7 @@ from middlewared.service import CallError, job, periodic, private, Service, Vali
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.pool_.utils import get_dataset_parents
+from middlewared.plugins.zfs.encryption import check_key
 
 from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -28,8 +29,9 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @api_method(PoolDatasetEncryptionSummaryArgs, PoolDatasetEncryptionSummaryResult, roles=['DATASET_READ'])
+    @pass_thread_local_storage
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
-    def encryption_summary(self, job, id_, options):
+    def encryption_summary(self, job, tls, id_, options):
         """
         Retrieve summary of all encrypted roots under `id`.
 
@@ -94,39 +96,40 @@ class PoolDatasetService(Service):
         verrors.check()
         datasets = self.query_encrypted_datasets(id_, {'all': True})
 
-        to_check = []
+        results = []
         for name, ds in datasets.items():
             ds_key = keys_supplied.get(name, {}).get('key') or ds['encryption_key']
             if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
                 with contextlib.suppress(ValueError):
                     ds_key = bytes.fromhex(ds_key)
-            to_check.append({'dataset': name, 'key': ds_key})
 
-        statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
+            try:
+                valid_key = check_key(self.context, tls, name, key=ds_key)
+            except Exception:
+                valid_key = False
 
-        results = []
-        for ds_data, status in zip(to_check, statuses):
-            ds_name = ds_data['id_']
-            data = datasets[ds_name]
             results.append({
-                'name': ds_name,
-                'key_format': ZFSKeyFormat(data['key_format']['value']).value,
-                'key_present_in_database': bool(data['encryption_key']),
-                'valid_key': bool(status['result']), 'locked': data['locked'],
+                'name': name,
+                'key_format': ZFSKeyFormat(ds['key_format']['value']).value,
+                'key_present_in_database': bool(ds['encryption_key']),
+                'valid_key': valid_key,
+                'locked': ds['locked'],
                 'unlock_error': None,
                 'unlock_successful': False,
             })
 
         failed = set()
         for ds in sorted(results, key=lambda d: d['name'].count('/')):
-            for i in range(1, ds['name'].count('/') + 1):
-                check = ds['name'].rsplit('/', i)[0]
+            ds_name = ds['name']
+            for i in range(1, ds_name.count('/') + 1):
+                check = ds_name.rsplit('/', i)[0]
                 if check in failed:
-                    failed.add(ds['name'])
+                    failed.add(ds_name)
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
-            if ds['locked'] and not options['force'] and not keys_supplied.get(ds['name'], {}).get('force'):
-                err = dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
+            ds_locked = ds['locked']
+            if ds_locked and not options['force'] and not keys_supplied.get(ds_name, {}).get('force'):
+                err = dataset_can_be_mounted(ds_name, os.path.join('/mnt', ds_name))
                 if ds['unlock_error'] and err:
                     ds['unlock_error'] += f' and {err}'
                 elif err:
@@ -134,28 +137,29 @@ class PoolDatasetService(Service):
 
             if ds['valid_key']:
                 ds['unlock_successful'] = not bool(ds['unlock_error'])
-            elif not ds['locked']:
+            elif not ds_locked:
                 # For datasets which are already not locked, unlock operation for them
                 # will succeed as they are not locked
                 ds['unlock_successful'] = True
             else:
-                key_provided = ds['name'] in keys_supplied or ds['key_present_in_database']
+                key_provided = ds_name in keys_supplied or ds['key_present_in_database']
                 if key_provided:
                     if ds['unlock_error']:
-                        if ds['name'] in keys_supplied or ds['key_present_in_database']:
+                        if ds_name in keys_supplied or ds['key_present_in_database']:
                             ds['unlock_error'] += ' and provided key is invalid'
                     else:
                         ds['unlock_error'] = 'Provided key is invalid'
                 elif not ds['unlock_error']:
                     ds['unlock_error'] = 'Key not provided'
-                failed.add(ds['name'])
+                failed.add(ds_name)
 
         return results
 
     @periodic(86400)
     @private
+    @pass_thread_local_storage
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
-    def sync_db_keys(self, job, name=None):
+    def sync_db_keys(self, job, tls, name=None):
         if not self.middleware.call_sync('failover.is_single_master_node'):
             # We don't want to do this for passive controller
             return
@@ -164,42 +168,47 @@ class PoolDatasetService(Service):
         # It is possible we have a pool configured but for some mistake/reason the pool did not import like
         # during repair disks were not plugged in and system was booted, in such cases we would like to not
         # remove the encryption keys from the database.
-        for root_ds in {pool['name'] for pool in self.middleware.call_sync('pool.query')} - {
-            ds['id'] for ds in self.middleware.call_sync(
-                'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
-            )
-        }:
+        for root_ds in (
+            {pool['name'] for pool in self.middleware.call_sync('pool.query')}
+            - {
+                ds['id']
+                for ds in self.middleware.call_sync(
+                    'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
+                )
+            }
+        ):
             filters.extend([['name', '!=', root_ds], ['name', '!^', f'{root_ds}/']])
 
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {
-            d['name']: d for d in self.middleware.call_sync(
-                'pool.dataset.query', filters, {'extra': {'properties': ['encryptionroot', 'keyformat']}}
-            ) if d['name'] == d['encryption_root']
+            d['name']: d
+            for d in self.middleware.call_sync(
+                'pool.dataset.query',
+                filters,
+                {'extra': {'properties': ['encryptionroot', 'keyformat']}}
+            )
+            if d['name'] == d['encryption_root']
         }
+
+        to_remove = []
         try:
-            to_check = []
-            for ds_name in db_datasets:
-                key = db_datasets[ds_name]
+            for ds_name, key in db_datasets.items():
                 ds = encrypted_roots.get(ds_name)
                 if ds and ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and key:
                     with contextlib.suppress(ValueError):
                         key = bytes.fromhex(key)
-                to_check.append({'dataset': ds_name, 'key': key})
-            statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
+
+                try:
+                    should_remove = not check_key(self.context, tls, ds_name, key=key)
+                except Exception:
+                    should_remove = True
+
+                if should_remove:
+                    to_remove.append(ds_name)
+
         except Exception as exc:
             self.logger.error(f'Failed to sync database keys: {exc}')
             return
-
-        to_remove = []
-        for dataset, status in zip(db_datasets, statuses):
-            if not status['result']:
-                to_remove.append(dataset)
-            elif status['error']:
-                if dataset not in encrypted_roots:
-                    to_remove.append(dataset)
-                else:
-                    self.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
 
         self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
 

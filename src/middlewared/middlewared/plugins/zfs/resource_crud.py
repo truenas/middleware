@@ -20,10 +20,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 
-from .encryption import (
-    CheckKeyParams, CheckKeyResult, EncryptionProperties,
-    bulk_check, change_encryption_root, change_key, load_key
-)
+from .encryption import EncryptionProperties, change_encryption_root, change_key, load_key
 from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
@@ -382,17 +379,6 @@ class ZFSResourceService(Service):
         Raises CallError on failure.
         """
         return change_encryption_root(tls, dataset)
-
-    @private
-    @pass_thread_local_storage
-    def bulk_check(self, tls, params: typing.Iterable[CheckKeyParams]) -> list[CheckKeyResult]:
-        """Run check_key for each parameter list in `params`.
-
-        Returns a list of dicts in the same order as `params`, each with keys:
-        - 'result': True/False from check_key, or None if an exception occurred
-        - 'error': str(exception) if one was raised, otherwise None
-        """
-        return bulk_check(self.context, tls, params)
 
     @private
     @pass_thread_local_storage

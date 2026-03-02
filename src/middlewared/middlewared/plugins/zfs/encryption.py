@@ -1,5 +1,5 @@
 import threading
-from typing import Iterable, Literal, NotRequired, TypedDict, TYPE_CHECKING, cast
+from typing import Literal, TypedDict, TYPE_CHECKING, cast
 
 from truenas_pylibzfs import ZFSException
 from middlewared.service import CallError
@@ -12,17 +12,6 @@ class EncryptionProperties(TypedDict, total=False):
     keyformat: Literal['hex', 'passphrase', 'raw']
     keylocation: str
     pbkdf2iters: int | None
-
-
-class CheckKeyParams(TypedDict):
-    dataset: str
-    key: NotRequired[str | bytes]
-    key_location: NotRequired[str]
-
-
-class CheckKeyResult(TypedDict):
-    result: bool | None
-    error: str | None
 
 
 def load_key(ctx: 'ServiceContext', tls: threading.local, dataset: str, **kwargs) -> None:
@@ -96,17 +85,3 @@ def change_encryption_root(tls: threading.local, dataset: str) -> None:
         crypto.inherit_key()
     except (ZFSException, ValueError) as e:
         raise CallError(f'Failed to change encryption root for {dataset}: {e}')
-
-
-def bulk_check(ctx: 'ServiceContext', tls: threading.local, params: Iterable[CheckKeyParams]) -> list[CheckKeyResult]:
-    statuses = []
-    for i in params:
-        result = error = None
-        try:
-            result = check_key(ctx, tls, **i)
-        except Exception as e:
-            error = str(e)
-        finally:
-            statuses.append({'result': result, 'error': error})
-
-    return statuses
