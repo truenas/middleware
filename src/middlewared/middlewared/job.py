@@ -18,6 +18,7 @@ import typing
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
+from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
@@ -616,6 +617,8 @@ class Job:
             prepend.append(self)
             if getattr(self.method, 'audit_callback', None):
                 prepend.append(self.audit_callback)
+            if hasattr(self.method, '_pass_thread_local_storage'):
+                prepend.append(thread_local_storage)
             # Make sure args are not altered during job run
             args = prepend + copy.deepcopy(self.args)
             if asyncio.iscoroutinefunction(self.method):
