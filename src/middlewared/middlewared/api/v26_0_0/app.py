@@ -22,7 +22,7 @@ __all__ = [
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem',
+    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult',
 ]
 
 
@@ -467,6 +467,32 @@ class AppUpgradeArgs(BaseModel):
 class AppUpgradeResult(BaseModel):
     result: AppEntry
     """The application entry after successful upgrade."""
+
+
+class AppUpgradeBulkEntry(BaseModel):
+    app_name: NonEmptyString
+    """Name of the application to upgrade."""
+    options: UpgradeOptions = UpgradeOptions()
+    """Upgrade options for this specific application."""
+
+
+class AppUpgradeBulkArgs(BaseModel):
+    apps: list[AppUpgradeBulkEntry]
+    """List of applications to upgrade, each with its own options."""
+
+
+class AppBulkUpgradeJobResult(BaseModel):
+    app_name: NonEmptyString
+    """Name of the application."""
+    error: LongString | None
+    """Error message if the upgrade failed, or `null` on success."""
+    result: AppEntry | None
+    """The application entry after upgrade, or `null` if the upgrade failed."""
+
+
+class AppUpgradeBulkResult(BaseModel):
+    result: list[AppBulkUpgradeJobResult]
+    """Per-app upgrade results in the same order as the input list."""
 
 
 class UpgradeSummaryOptions(BaseModel):
