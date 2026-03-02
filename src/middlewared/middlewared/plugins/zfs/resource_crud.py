@@ -20,7 +20,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_encryption import (
+from .encryption import (
     CheckKeyParams, CheckKeyResult, EncryptionProperties,
     bulk_check, change_encryption_root, change_key, load_key
 )

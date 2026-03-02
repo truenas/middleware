@@ -4,7 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.zfs.dataset_encryption import check_key
+from middlewared.plugins.zfs.encryption import check_key
 from middlewared.service import job, private, Service
 from middlewared.service.decorators import pass_thread_local_storage
 
