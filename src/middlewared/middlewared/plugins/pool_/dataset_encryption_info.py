@@ -100,7 +100,7 @@ class PoolDatasetService(Service):
             if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
                 with contextlib.suppress(ValueError):
                     ds_key = bytes.fromhex(ds_key)
-            to_check.append({'id_': name, 'key': ds_key})
+            to_check.append({'dataset': name, 'key': ds_key})
 
         statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
 
@@ -185,7 +185,7 @@ class PoolDatasetService(Service):
                 if ds and ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and key:
                     with contextlib.suppress(ValueError):
                         key = bytes.fromhex(key)
-                to_check.append({'id_': ds_name, 'key': key})
+                to_check.append({'dataset': ds_name, 'key': key})
             statuses = self.call_sync2(self.s.zfs.resource.bulk_check, to_check)
         except Exception as exc:
             self.logger.error(f'Failed to sync database keys: {exc}')
