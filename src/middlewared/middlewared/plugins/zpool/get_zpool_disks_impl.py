@@ -52,9 +52,12 @@ def get_zpool_disks_impl(lzh: typing.Any, pool_name: str | None) -> list[str]:
         return disks
 
     for i in status.storage_vdevs:
-        for j in filter(lambda x: x.vdev_type == "disk", i.children):
-            # skip non-disk vdevs
-            disks.append(_get_whole_disk(j.name))
+        if i.children:
+            for j in i.children:
+                disks.append(_get_whole_disk(j.name))
+        else:
+            # stripe vdevs have no children; the vdev itself is the disk
+            disks.append(_get_whole_disk(i.name))
 
     for vtype in ("cache", "log", "special", "dedup"):
         for j in getattr(status.support_vdevs, vtype):
