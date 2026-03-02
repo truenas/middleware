@@ -8,7 +8,7 @@ from middlewared.service import Service, ValidationErrors
 from .utils import WILDCARD_IPS
 
 
-SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 3702, 5353, 6000]]
+SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 1700, 3702, 5353, 6000]]
 
 
 def get_ip_version(ip: str) -> int:
