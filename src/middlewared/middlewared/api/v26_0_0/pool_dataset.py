@@ -8,7 +8,8 @@ from middlewared.api.base import (
 )
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 
-from .common import DatasetTier, QueryFilters, QueryOptions
+from .common import QueryFilters, QueryOptions
+from .zfs_tier import TierInfo
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 
@@ -81,7 +82,7 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     """Custom user-defined ZFS properties set on this dataset as key-value pairs."""
     locked: bool
     """Whether an encrypted dataset is currently locked (key not loaded)."""
-    tier: DatasetTier | None
+    tier: TierInfo | None
     """Performance tier. `null` if tiering disabled or if underlying pool does not support tiering."""
     comments: PoolDatasetEntryProperty
     """ZFS comments property for storing descriptive text about the dataset."""

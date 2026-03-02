@@ -6,9 +6,9 @@ from pydantic import AfterValidator, model_validator, Field
 from middlewared.api.base import BaseModel, TimeString, croniter_for_schedule, validate_filters, validate_options
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
-           "DatasetTier"]
+           "TierClass"]
 
-DatasetTier = Literal['REGULAR', 'PERFORMANCE']
+TierClass = Literal['REGULAR', 'PERFORMANCE']
 """Storage performance tier. `REGULAR` uses standard-capacity drives; `PERFORMANCE` uses fast media (e.g. NVMe)."""
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'

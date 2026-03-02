@@ -11,7 +11,7 @@ from middlewared.api.base import (
     query_result,
     single_argument_args,
 )
-from .common import DatasetTier, QueryFilters, QueryOptions
+from .common import TierClass, QueryFilters, QueryOptions
 
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
     'ZfsTierRewriteJobRecoverArgs', 'ZfsTierRewriteJobRecoverResult',
     'ZfsTierRewriteJobStatusArgs', 'ZfsTierRewriteJobStatusResult',
-    'SharingTierInfo',
+    'TierInfo',
 ]
 
 TierRewriteJobStatus = Literal['COMPLETE', 'RUNNING', 'QUEUED', 'CANCELLED', 'STOPPED', 'ERROR']
@@ -100,8 +100,8 @@ class ZfsTierRewriteJobEntry(BaseModel):
     """
 
 
-class SharingTierInfo(BaseModel):
-    tier_type: DatasetTier
+class TierInfo(BaseModel):
+    tier_type: TierClass
     """Storage performance tier for this share."""
     tier_job: ZfsTierRewriteJobEntry | None = None
     """Most recent rewrite job for this share's dataset, or `null` if no job history exists."""
