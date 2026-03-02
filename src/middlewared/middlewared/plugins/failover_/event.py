@@ -978,6 +978,7 @@ class FailoverEventsService(Service):
             self.run_call(
                 'failover.call_remote',
                 'failover.send_pwenc_secret',
+                [],
                 {'raise_connect_error': False}
             )
         except Exception:
