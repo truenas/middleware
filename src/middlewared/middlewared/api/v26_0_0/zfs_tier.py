@@ -11,13 +11,14 @@ from middlewared.api.base import (
     query_result,
     single_argument_args,
 )
-from .common import TierClass, QueryFilters, QueryOptions
+from .common import StorageTier, QueryFilters, QueryOptions
 
 
 __all__ = [
     'ZfsTierEntry', 'ZfsTierUpdateArgs', 'ZfsTierUpdateResult',
     'ZfsTierRewriteJobStats', 'ZfsTierRewriteJobEntry', 'ZfsTierRewriteJobStatusEntry',
-    'ZfsTierRewriteJobChangedEvent',
+    'ZfsTierRewriteJobQueryAddedEvent', 'ZfsTierRewriteJobQueryChangedEvent', 'ZfsTierRewriteJobQueryRemovedEvent',
+    'ZfsTierRewriteJobStatusEventSourceArgs', 'ZfsTierRewriteJobStatusEventSourceEvent',
     'ZfsTierRewriteJobCreateArgs', 'ZfsTierRewriteJobCreateResult',
     'ZfsTierRewriteJobAbortArgs', 'ZfsTierRewriteJobAbortResult',
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
@@ -101,7 +102,7 @@ class ZfsTierRewriteJobEntry(BaseModel):
 
 
 class TierInfo(BaseModel):
-    tier_type: TierClass
+    tier_type: StorageTier
     """Storage performance tier for this share."""
     tier_job: ZfsTierRewriteJobEntry | None = None
     """Most recent rewrite job for this share's dataset, or `null` if no job history exists."""
@@ -114,9 +115,34 @@ class ZfsTierRewriteJobStatusEntry(ZfsTierRewriteJobEntry):
     """Error message describing why the job entered `ERROR` state, otherwise `null`."""
 
 
-class ZfsTierRewriteJobChangedEvent(BaseModel):
-    fields: list[ZfsTierRewriteJobStatusEntry]
-    """All rewrite jobs whose status or statistics have changed since the previous event."""
+class ZfsTierRewriteJobQueryAddedEvent(BaseModel):
+    id: NonEmptyString
+    """Identifier of the rewrite job that was added (`dataset_name@job_uuid` format)."""
+    fields: ZfsTierRewriteJobEntry
+    """Complete job information for the newly created job."""
+
+
+class ZfsTierRewriteJobQueryChangedEvent(BaseModel):
+    id: NonEmptyString
+    """Identifier of the rewrite job that changed (`dataset_name@job_uuid` format)."""
+    fields: ZfsTierRewriteJobEntry
+    """Updated job information reflecting the latest lifecycle state."""
+
+
+class ZfsTierRewriteJobQueryRemovedEvent(BaseModel):
+    id: NonEmptyString
+    """Identifier of the rewrite job that was removed (`dataset_name@job_uuid` format)."""
+
+
+class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
+    dataset_name: NonEmptyString
+    """ZFS dataset to subscribe to (e.g. `tank/data`). Receives updates whenever the job \
+    status or statistics change."""
+
+
+class ZfsTierRewriteJobStatusEventSourceEvent(BaseModel):
+    fields: ZfsTierRewriteJobStatusEntry
+    """Current status and statistics for the dataset's active rewrite job."""
 
 
 class ZfsTierRewriteJobCreateArgs(BaseModel):
