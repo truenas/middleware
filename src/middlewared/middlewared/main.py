@@ -855,13 +855,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             args.append(app)
 
         is_coroutine = asyncio.iscoroutinefunction(methodobj)
+
+        if getattr(methodobj, 'audit_callback', None):
+            args.append(audit_callback)
+
         if hasattr(methodobj, '_pass_thread_local_storage'):
             if is_coroutine:
                 raise RuntimeError("Thread local storage is invalid for coroutines")
             args.append(thread_local_storage)
-
-        if getattr(methodobj, 'audit_callback', None):
-            args.append(audit_callback)
 
         if hasattr(methodobj, '_pass_app'):
             if methodobj._pass_app['message_id']:

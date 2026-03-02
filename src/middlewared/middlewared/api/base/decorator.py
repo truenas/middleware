@@ -42,6 +42,27 @@ def process_annotation(annotation):
 
 
 def calculate_args_index(f, audit_callback, check_annotations):
+    """Determine how many leading arguments are framework-injected (before user params).
+
+    Decorators must be stacked outermost-to-innermost and the method signature must list the
+    injected parameters in the following order (each is optional depending on which decorators
+    are applied)::
+
+        self, [app], [job], [audit_callback], [tls], [message_id], <user params...>
+
+    Decorator stacking order (top to bottom)::
+
+        @api_method(MyArgs, MyResult, roles=[...])
+        @pass_app()                        # optional
+        @pass_thread_local_storage         # optional, sync methods only
+        @job(lock=...)                     # optional, must be innermost
+        def my_method(self, app, job, tls, id_, options):
+            ...
+
+    ``@job`` must always be the innermost (bottommost) decorator so that its ``_job`` attribute
+    is set on the raw function before the other decorators inspect it.  A mismatch between the
+    decorator stack and the method signature is caught here at class-load time.
+    """
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
 
