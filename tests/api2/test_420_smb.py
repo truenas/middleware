@@ -74,12 +74,12 @@ def enable_aapl():
 @pytest.fixture(scope='function')
 def enable_smb1():
     reset_systemd_svcs('smbd')
-    call('smb.update', {'enable_smb1': True})
+    call('smb.update', {'minimum_protocol': 'SMB1'})
 
     try:
         yield
     finally:
-        call('smb.update', {'enable_smb1': False})
+        call('smb.update', {'minimum_protocol': 'SMB2'})
 
 
 @pytest.fixture(scope='function')

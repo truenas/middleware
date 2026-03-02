@@ -69,7 +69,7 @@ async def run(*args: Any, encoding: None = None, **kwargs: Any) -> subprocess.Co
 async def run(*args: Any, encoding: str, **kwargs: Any) -> subprocess.CompletedProcess[str]: ...
 
 
-async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | str]:
+async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] | subprocess.CompletedProcess[str]:
     if isinstance(args[0], list):
         args = tuple(args[0])
 

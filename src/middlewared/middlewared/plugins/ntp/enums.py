@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 
 
@@ -7,7 +9,7 @@ class Mode(enum.Enum):
     LOCAL = 'LOCAL'
 
     @staticmethod
-    def from_str(strval):
+    def from_str(strval: str) -> Mode:
         if strval in ('SERVER', '^'):
             return Mode.SERVER
         elif strval in ('PEER', '='):
@@ -17,7 +19,7 @@ class Mode(enum.Enum):
         else:
             raise NotImplementedError(f'Invalid mode: {strval}')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
 
@@ -30,7 +32,7 @@ class State(enum.Enum):
     NOT_SELECTABLE = 'NOT_SELECTABLE'
 
     @staticmethod
-    def from_str(strval):
+    def from_str(strval: str) -> State:
         if strval in ('BEST', '*'):
             return State.BEST
         elif strval in ('SELECTED', '+'):
@@ -46,14 +48,14 @@ class State(enum.Enum):
         else:
             raise NotImplementedError(f'Invalid state: {strval}')
 
-    def is_active(self):
+    def is_active(self) -> bool:
         return self in [State.BEST, State.SELECTED]
 
     @staticmethod
-    def is_active_qq(val):
+    def is_active_qq(val: str | State) -> bool:
         if type(val) == str:
             val = State.from_str(val)
         return val in [State.BEST, State.SELECTED]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)

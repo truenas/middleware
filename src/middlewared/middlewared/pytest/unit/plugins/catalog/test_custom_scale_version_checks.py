@@ -31,9 +31,27 @@ from middlewared.plugins.catalog.apps_util import custom_scale_version_checks
     (
         '22.01',
         '21.03',
-        '22.0',
+        'MASTER-SNAPSHOT',
         'Unable to determine your TrueNAS system version'
-    )
+    ),
+    (
+        '24.10.2.2',
+        None,
+        '26.0.0-MASTER-20260215',
+        ''
+    ),
+    (
+        None,
+        '25.04',
+        '26.0.0-MASTER-20260215',
+        'Your TrueNAS system version (26.0.0) is greater than the maximum version (25.04) required by this application.'
+    ),
+    (
+        '24.10',
+        '27.0',
+        '26.0.0-MASTER-20260215',
+        ''
+    ),
 ])
 def test_custom_scale_version(min_version, max_version, sys_scale_version, expected):
     result = custom_scale_version_checks(min_version, max_version, sys_scale_version)

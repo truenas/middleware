@@ -12,7 +12,9 @@ from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
-from .utils import calculate_sleep, CONFIGURED_TNC_STATES, get_unset_payload, HEARTBEAT_INTERVAL
+from .utils import (
+    calculate_sleep, CONFIGURED_TNC_STATES, decode_and_validate_token, get_unset_payload, HEARTBEAT_INTERVAL,
+)
 
 
 logger = logging.getLogger('truenas_connect')
@@ -55,15 +57,24 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         if (new_token := resp['headers'].get('X-New-Token')) is not None:
                             logger.debug('TNC Heartbeat: Received new token')
 
-                            await self.middleware.call(
-                                'datastore.update',
-                                'truenas_connect',
-                                tnc_config['id'],
-                                {
+                            try:
+                                decoded_token = decode_and_validate_token(new_token)
+                            except ValueError as e:
+                                logger.error('TNC Heartbeat: Failed to validate received token: %s', e)
+                            else:
+                                await self.middleware.call(
+                                    'datastore.update',
+                                    'truenas_connect',
+                                    tnc_config['id'],
+                                    {
+                                        'jwt_token': new_token,
+                                        'registration_details': decoded_token,
+                                    },
+                                )
+                                tnc_config.update({
                                     'jwt_token': new_token,
-                                },
-                            )
-                            tnc_config['jwt_token'] = new_token
+                                    'registration_details': decoded_token,
+                                })
                         else:
                             logger.warning('TNC Heartbeat: Received 205 status but no X-New-Token header')
                     case 400:

@@ -3,6 +3,8 @@
 
 import enum
 
+from typing import Any
+
 from aiohttp.http_websocket import WSCloseCode
 from truenas_api_client import json as ejson
 
@@ -21,7 +23,7 @@ class MsgSizeLimit(enum.IntEnum):
 
 
 class MsgSizeError(Exception):
-    def __init__(self, limit, datalen, method_name=None):
+    def __init__(self, limit: MsgSizeLimit, datalen: int, method_name: str | None = None) -> None:
         self.limit = limit
         self.datalen = datalen
         self.errmsg = f'Message length [{self.datalen}] exceeded maximum size of {self.limit}'
@@ -34,11 +36,11 @@ class MsgSizeError(Exception):
             self.ws_close_code = WSCloseCode.MESSAGE_TOO_BIG
             self.ws_errmsg = 'Max message length is 64 kB'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.errmsg
 
 
-def parse_message(authenticated: bool, msg_data: str) -> dict:
+def parse_message(authenticated: bool, msg_data: str) -> dict[str, Any]:
     """
     Parses the JSON message and ensures that it is a dict, and it does not exceed size limits.
 
@@ -70,7 +72,7 @@ def parse_message(authenticated: bool, msg_data: str) -> dict:
     if datalen > MsgSizeLimit.EXTENDED.value:
         raise MsgSizeError(MsgSizeLimit.EXTENDED, datalen)
 
-    message = ejson.loads(msg_data)
+    message: dict[str, Any] = ejson.loads(msg_data)
 
     try:
         method = message.get('method')

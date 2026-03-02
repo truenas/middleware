@@ -78,8 +78,8 @@ def get_impl(obj: object, path: str) -> FilterGetResult:
 
                 raise ValueError(f'{left}: must be array index or wildcard character')
 
-            left = int(left)
-            cur = cur[left] if left < len(cur) else None
+            int_left = int(left)
+            cur = cur[int_left] if int_left < len(cur) else None
 
     return FilterGetResult(cur)
 
@@ -125,7 +125,7 @@ def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
     return (keys, cur)
 
 
-def filterop(i: object, f: Sequence, source_getter: GetterProtocol) -> bool:
+def filterop(i: object, f: Sequence[Any], source_getter: GetterProtocol) -> bool:
     """Apply a single filter operation to an object and return whether it matches."""
     name, op, value = f
     data = source_getter(i, name)
@@ -170,10 +170,10 @@ def getter_fn(entry: Any) -> GetterProtocol:
 
 def eval_filter(
     list_item: _Entry,
-    the_filter: Sequence,
+    the_filter: Sequence[Any],
     getter: GetterProtocol,
     value_maps: dict[str, datetime] | None = None
-):
+) -> bool:
     """
     `the_filter` in this case will be a single condition of either the form
     [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
@@ -217,7 +217,7 @@ def eval_filter(
 
 def do_filters(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence],
+    filters: Iterable[Sequence[Any]],
     select: _SelectList | None = None,
     shortcircuit: bool = False,
     value_maps: dict[str, datetime] | None = None,
@@ -345,7 +345,7 @@ def do_get(rv: list[_Entry]) -> _Entry:
 
 
 class _FilterListBaseOptions(TypedDict, total=False):
-    select: list[str | list]
+    select: list[str | list[str]]
     order_by: list[str]
     offset: int
     limit: int
@@ -354,7 +354,7 @@ class _FilterListBaseOptions(TypedDict, total=False):
     extend: str | None
     extend_context: str | None
     prefix: str | None
-    extra: dict
+    extra: dict[str, Any]
 
 
 class _FilterListGetOptions(_FilterListBaseOptions, total=False):
@@ -370,23 +370,23 @@ class _FilterListCountOptions(_FilterListBaseOptions, total=False):
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence] | None = None,
-    options: _FilterListCountOptions = ...,
+    filters: Iterable[Sequence[Any]] | None,
+    options: _FilterListCountOptions,
 ) -> int: ...
 
 
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence] | None = None,
-    options: _FilterListGetOptions = ...,
+    filters: Iterable[Sequence[Any]] | None,
+    options: _FilterListGetOptions,
 ) -> _Entry: ...
 
 
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence] | None = None,
+    filters: Iterable[Sequence[Any]] | None = None,
     options: None = None,
 ) -> list[_Entry]: ...
 
@@ -394,23 +394,23 @@ def filter_list(
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence] | None = None,
-    options: dict | None = None,
+    filters: Iterable[Sequence[Any]] | None = None,
+    options: dict[str, Any] | None = None,
 ) -> list[_Entry] | _Entry | int: ...
 
 
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence] | None = None,
-    options: dict | None = None
+    filters: Iterable[Sequence[Any]] | None = None,
+    options: dict[str, Any] | _FilterListGetOptions | _FilterListCountOptions | None = None
 ) -> list[_Entry] | _Entry | int:
     """Main entry point for filtering, selecting, ordering and paginating data collections."""
-    options, select, order_by = validate_options(options)
+    options, select, order_by = validate_options(options)  # type: ignore[arg-type]
 
     do_shortcircuit = options.get('get', False) and not order_by
 
     if filters:
-        maps = {}
+        maps: dict[str, datetime] = {}
         validate_filters(filters, value_maps=maps)
         rv = do_filters(_list, filters, select, do_shortcircuit, value_maps=maps)
         if do_shortcircuit:
@@ -440,11 +440,11 @@ def filter_list(
     return rv
 
 
-def filter_getattrs(filters: list[Sequence]) -> set:
+def filter_getattrs(filters: list[Sequence[Any]]) -> set[str]:
     """
     Get a set of attributes in a filter list.
     """
-    attrs = set()
+    attrs: set[str] = set()
     if not filters:
         return attrs
 

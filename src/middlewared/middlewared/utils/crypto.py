@@ -22,7 +22,7 @@ def ssl_random(size: int) -> bytes:
     return RAND_bytes(size)
 
 
-def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
+def generate_string(string_size: int = 8, punctuation_chars: bool = False, extra_chars: str | None = None) -> str:
     """
     Generate a cryptographically secure random string of size `string_size`.
     If `punctuation_chars` is True, then punctuation characters will be added to the string.
@@ -39,7 +39,7 @@ def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
     return ''.join(choice(initial_string) for i in range(string_size))
 
 
-def generate_token(size, url_safe=False):
+def generate_token(size: int, url_safe: bool = False) -> str:
     """
     Generate a cryptographically secure token of `size` in bytes returned in hex format.
 
@@ -51,7 +51,7 @@ def generate_token(size, url_safe=False):
         return token_hex(size)
 
 
-def sha512_crypt(word):
+def sha512_crypt(word: str) -> str:
     """Generate a hash using the modular crypt format of `word`
     using SHA512 algorithm with rounds set to 656,000 with a
     16-char pseudo-random cryptographically secure salt.
@@ -65,14 +65,14 @@ def sha512_crypt(word):
     return cryptit(word, settings)
 
 
-def check_unixhash(passwd, unixhash):
+def check_unixhash(passwd: str, unixhash: str) -> bool:
     """Verify that the hash produced by `passwd` matches the
     given `unixhash`.
     """
     return compare_digest(cryptit(passwd, unixhash), unixhash)
 
 
-def generate_nt_hash(passwd):
+def generate_nt_hash(passwd: str) -> str:
     """
     Generate an NT hash for SMB user password. This is required for
     NTLM authentication for local users.
@@ -83,7 +83,7 @@ def generate_nt_hash(passwd):
     WARNING: This is a weak algorithm and must be treated as
     plain-text equivalent.
     """
-    md4_hash_bytes = md4_hash_blob(passwd.encode('utf-16le'))
+    md4_hash_bytes: bytes = md4_hash_blob(passwd.encode('utf-16le'))
     return md4_hash_bytes.hex().upper()
 
 
@@ -143,7 +143,7 @@ def generate_api_key_auth_data(
     }
 
 
-def ssl_uuid4():
+def ssl_uuid4() -> UUID:
     """
     Generate a random UUID using SSL RAND_bytes. Based on uuid4 from cpython with os.urandom replaced.
     """

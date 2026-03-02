@@ -39,8 +39,13 @@ TLSProtocol TLSv1.2 TLSv1.3
 % if tls_options:
 TLSOptions ${' '.join(tls_options)}
 % endif
+% if cert['key_type'] == 'EC':
+TLSECCertificateFile "${cert['certificate_path']}"
+TLSECCertificateKeyFile "${cert['privatekey_path']}"
+% else:
 TLSRSACertificateFile "${cert['certificate_path']}"
 TLSRSACertificateKeyFile "${cert['privatekey_path']}"
+% endif
 % if cert['chain']:
 TLSCertificateChainFile "${cert['certificate_path']}"
 % endif

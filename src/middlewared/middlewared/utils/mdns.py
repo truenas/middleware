@@ -6,7 +6,8 @@ import socket
 import xml.etree.ElementTree as xml
 
 from io import StringIO
-from . import filter_list
+from typing import Any
+from .filter_list import filter_list
 
 
 AVAHI_SERVICE_PATH = '/etc/avahi/services'
@@ -23,7 +24,7 @@ class DevType(enum.Enum):
     TIMECAPSULE = 'TimeCapsule6,106'
     XSERVE = 'Xserve'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -40,7 +41,7 @@ class AvahiConst(enum.Enum):
     AVAHI_IF_UNSPEC = -1
 
 
-def ip_addresses_to_interface_indexes(ifaces, ip_addresses):
+def ip_addresses_to_interface_indexes(ifaces: list[dict[str, Any]], ip_addresses: list[str]) -> list[int]:
     """
     Avahi can bind services to particular physical intefaces using
     interface index. This is used to ensure that we don't adverise
@@ -53,9 +54,9 @@ def ip_addresses_to_interface_indexes(ifaces, ip_addresses):
     `ip_addresses` - list of ip_addresses the service is supposed
     to be bound to.
     """
-    indexes = []
+    indexes: list[int] = []
 
-    iface_filter = [['OR', [
+    iface_filter: list[list[Any]] = [['OR', [
         ['state.aliases.*.address', 'in', ip_addresses],
         ['state.failover_virtual_aliases.*.address', 'in', ip_addresses]
     ]]]
@@ -67,15 +68,15 @@ def ip_addresses_to_interface_indexes(ifaces, ip_addresses):
     return indexes
 
 
-def parse_srv_record_data(data_in):
+def parse_srv_record_data(data_in: str) -> list[dict[str, Any]]:
     """
     This function primarily exists for the purpose of CI tests.
     XML data for a service record is passed in as a string.
 
     Returns dictionary with basic information from data
     """
-    output = []
-    entry = None
+    output: list[dict[str, Any]] = []
+    entry: dict[str, Any] | None = None
     with StringIO(data_in) as xmlbuf:
         root = xml.parse(xmlbuf).getroot()
         for elem in root.iter():
@@ -89,13 +90,13 @@ def parse_srv_record_data(data_in):
                     }
                     output.append(entry)
                 case 'type':
-                    entry['srv'] = elem.text
+                    entry['srv'] = elem.text  # type: ignore
                 case 'port':
-                    entry['port'] = int(elem.text)
+                    entry['port'] = int(elem.text)  # type: ignore
                 case 'interface':
-                    entry['interface'] = int(elem.text)
+                    entry['interface'] = int(elem.text)  # type: ignore
                 case 'txt-record':
-                    entry['txt_records'].append(elem.text)
+                    entry['txt_records'].append(elem.text)  # type: ignore
                 case _:
                     pass
 
@@ -103,12 +104,12 @@ def parse_srv_record_data(data_in):
 
 
 def generate_avahi_srv_record(
-    service_type,
-    interface_indexes=None,
-    txt_records=None,
-    custom_service_type=None,
-    custom_port=None,
-):
+    service_type: str,
+    interface_indexes: list[int] | None = None,
+    txt_records: list[str] | None = None,
+    custom_service_type: str | None = None,
+    custom_port: int | None = None,
+) -> str:
     """
     Generate XML string for service data for an avahi service. Takes
     the following parameters:
@@ -149,7 +150,7 @@ def generate_avahi_srv_record(
             port = custom_port
 
     txt_records = txt_records or []
-    iface_indexes = interface_indexes or [AvahiConst.AVAHI_IF_UNSPEC]
+    iface_indexes: list[int] | list[AvahiConst] = interface_indexes or [AvahiConst.AVAHI_IF_UNSPEC]  # type: ignore
 
     root = xml.Element("service-group")
     # We want to use replace-wildcards with %h here, rather than the hostname

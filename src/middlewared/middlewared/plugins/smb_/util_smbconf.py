@@ -516,8 +516,11 @@ def generate_smb_conf_dict(
             'fss:prune stale': True,
         })
 
-    if smb_service_config['enable_smb1']:
-        smbconf['server min protocol'] = 'NT1'
+    match smb_service_config['minimum_protocol']:
+        case 'SMB1':
+            smbconf['server min protocol'] = 'NT1'
+        case 'SMB3':
+            smbconf['server min protocol'] = 'SMB3_00'
 
     if smb_service_config['syslog']:
         smbconf['logging'] = f'syslog@{min(3, loglevelint)} file'
@@ -675,6 +678,10 @@ def generate_smb_conf_dict(
             'client use kerberos': 'required',
             'ntlm auth': 'disabled'
         })
+
+    # Some third-party security scanners alert if encryption is required but signing is not mandatory.
+    if smb_service_config['encryption'] == 'REQUIRED':
+        smbconf['server signing'] = 'mandatory'
 
     if smb_service_config['stateful_failover']:
         smbconf.update({

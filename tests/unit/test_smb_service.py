@@ -19,7 +19,7 @@ BASE_SMB_CONFIG = {
     'bindip': [],
     'server_sid': 'S-1-5-21-732395397-2008429054-3061640861',
     'ntlmv1_auth': False,
-    'enable_smb1': False,
+    'minimum_protocol': 'SMB2',
     'admin_group': None,
     'next_rid': 0,
     'multichannel': False,
@@ -35,7 +35,8 @@ SMB_LOCALMASTER = BASE_SMB_CONFIG | {'localmaster': True}
 SMB_GUEST = BASE_SMB_CONFIG | {'guest': 'mike'}
 SMB_BINDIP = BASE_SMB_CONFIG | {'bindip': ['192.168.0.250', '192.168.0.251']}
 SMB_NTLMV1 = BASE_SMB_CONFIG | {'ntlmv1_auth': True}
-SMB_SMB1 = BASE_SMB_CONFIG | {'enable_smb1': True}
+SMB_SMB1 = BASE_SMB_CONFIG | {'minimum_protocol': 'SMB1'}
+SMB_SMB3 = BASE_SMB_CONFIG | {'minimum_protocol': 'SMB3'}
 SMB_MULTICHANNEL = BASE_SMB_CONFIG | {'multichannel': True}
 SMB_OPTIONS = BASE_SMB_CONFIG | {'smb_options': 'canary = bob\n canary2 = bob2 \n #comment\n ;othercomment'}
 SMB_ENCRYPTION_NEGOTIATE = BASE_SMB_CONFIG | {'encryption': 'NEGOTIATE'}
@@ -263,6 +264,22 @@ def test__smb1_enable():
     assert conf['server min protocol'] == 'NT1'
 
 
+def test__smb2_minimum():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert 'server min protocol' not in conf
+
+
+def test__smb3_minimum():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, SMB_SMB3, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['server min protocol'] == 'SMB3_00'
+
+
 def test__smb_options():
     conf = generate_smb_conf_dict(
         DISABLED_DS_CONFIG, SMB_OPTIONS, [],
@@ -400,6 +417,16 @@ def test__encryption_required():
         BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'required'
+    assert conf['server signing'] == 'mandatory'
+
+
+def test__encryption_not_required__no_mandatory_signing():
+    for config in (BASE_SMB_CONFIG, SMB_ENCRYPTION_NEGOTIATE, SMB_ENCRYPTION_DESIRED):
+        conf = generate_smb_conf_dict(
+            DISABLED_DS_CONFIG, config, [],
+            BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+        )
+        assert conf.get('server signing') != 'mandatory'
 
 
 def test__ipa_base():

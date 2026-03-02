@@ -1,7 +1,6 @@
 import os
 import tempfile
 import typing
-import yaml
 from contextlib import suppress
 
 from middlewared.api import api_method
@@ -15,6 +14,7 @@ from middlewared.plugins.nfs import NFSServicePathInfo
 from middlewared.service import Service, private, filterable_api_method
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.yaml import safe_yaml_load
 
 
 class NFSService(Service):
@@ -96,7 +96,7 @@ class NFSService(Service):
         info = {}
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
-                info = yaml.safe_load(f.read())
+                info = safe_yaml_load(f)
 
                 # NFS-135435: Fixup non-printable chars
                 for item in ['name', 'Implementation domain', 'Implementation name']:
@@ -114,7 +114,7 @@ class NFSService(Service):
         states = []
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/states", "r") as f:
-                states = yaml.safe_load(f.read())
+                states = safe_yaml_load(f)
 
         # states file may be empty, which changes it to None type
         # return empty list in this case

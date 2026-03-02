@@ -173,7 +173,7 @@ class PoolService(CRUDService):
     @private
     def pool_extend(self, pool, context):
         if context['extra'].get('is_upgraded'):
-            pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
+            pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded', pool['id'])
 
         # WebUI expects the same data as in `boot.get_state`
         pool |= self.middleware.call_sync(

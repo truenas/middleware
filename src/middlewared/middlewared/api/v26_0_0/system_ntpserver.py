@@ -4,6 +4,7 @@ from typing import Literal
 
 __all__ = [
     'NTPServerEntry',
+    'NTPServerCreate', 'NTPServerUpdate',
     'NTPServerCreateArgs', 'NTPServerCreateResult',
     'NTPServerUpdateArgs', 'NTPServerUpdateResult',
     'NTPServerDeleteArgs', 'NTPServerDeleteResult',

@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from collections.abc import Generator
 import logging
 import os
-from typing import Any, Literal, TypedDict, overload
+from typing import Any, Literal, TypedDict, TYPE_CHECKING, overload
 
 import truenas_os
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +276,7 @@ def umount(
     truenas_os.umount2(target=path, flags=flags)
 
 
-def resolve_dataset_path(path: str, middleware=None) -> tuple[str, str] | tuple[None, None]:
+def resolve_dataset_path(path: str, middleware: Middleware | None = None) -> tuple[str, str] | tuple[None, None]:
     """
     Authoritatively resolve a filesystem path to its ZFS dataset and relative path.
 

@@ -80,7 +80,7 @@ class SMBModel(sa.Model):
     cifs_srv_bindip = sa.Column(sa.MultiSelectField())
     cifs_SID = sa.Column(sa.String(120), nullable=True)
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
-    cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_minimum_protocol = sa.Column(sa.String(120), default='SMB2')
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
@@ -388,7 +388,7 @@ class SMBService(ConfigService):
                 'Please provide a valid value for unixcharset'
             )
 
-        if new['enable_smb1'] and new['encryption'] == 'REQUIRED':
+        if new['minimum_protocol'] == 'SMB1' and new['encryption'] == 'REQUIRED':
             verrors.add(
                 'smb_update.encryption',
                 'Encryption may not be set to REQUIRED while SMB1 support is enabled.'
@@ -469,12 +469,12 @@ class SMBService(ConfigService):
                     'This option must be enabled when AFP, time machine, or Final Cut Pro shares are present'
                 )
 
-        if new['enable_smb1']:
+        if new['minimum_protocol'] == 'SMB1':
             if audited_shares := await self.middleware.call(
                 'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit', 'name']}
             ):
                 verrors.add(
-                    'smb_update.enable_smb1',
+                    'smb_update.minimum_protocol',
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
@@ -492,7 +492,7 @@ class SMBService(ConfigService):
         automatically set to the correct value during the process of joining an AD domain.
         NOTE: `workgroup` and `netbiosname` should have different values.
 
-        `enable_smb1` allows legacy SMB clients to connect to the server when enabled.
+        `minimum_protocol` sets the minimum SMB protocol version permitted for client connections.
 
         `aapl_extensions` enables support for SMB2 protocol extensions for MacOS clients. This is not a
         requirement for MacOS support, but is currently a requirement for time machine support.
@@ -573,7 +573,7 @@ class SMBService(ConfigService):
                     'This feature is only available for HA-capable TrueNAS Enterprise servers.'
                 )
 
-            if new['enable_smb1']:
+            if new['minimum_protocol'] == 'SMB1':
                 verrors.add(
                     'smb_update.stateful_failover',
                     'This feature is incompatible with SMB1 support'
@@ -1314,7 +1314,7 @@ class SharingSMBService(SharingService):
                 )
 
         if data[share_field.AUDIT][share_field.AUDIT_ENABLE]:
-            if smb_config['enable_smb1']:
+            if smb_config['minimum_protocol'] == 'SMB1':
                 verrors.add(
                     f'{schema_name}.audit.enable',
                     'SMB auditing is not supported if SMB1 protocol is enabled'

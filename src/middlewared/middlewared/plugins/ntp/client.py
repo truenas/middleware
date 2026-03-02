@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import dataclasses
 import socket
 import struct
 import time
+from typing import Any
 
 
-def format_ntp_packet(data):
+def format_ntp_packet(data: bytes) -> dict[str, Any]:
     # unpack the response
     unpacked = struct.unpack('!B B B b 11I', data)
 
@@ -34,7 +37,7 @@ class NTPClient:
     host: str
     timeout: int = 5  # second
 
-    def make_request(self):
+    def make_request(self) -> dict[str, Any]:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             # set timeout
             s.settimeout(self.timeout)

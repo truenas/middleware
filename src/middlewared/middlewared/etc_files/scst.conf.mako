@@ -130,21 +130,6 @@
                     initiator_access.add(wwn)
         return initiator_access
 
-    if render_ctx['fc.capable']:
-        fc_host_by_port_name = {x['alias']: x for x in middleware.call_sync('fc.fc_host.query')}
-        # Physical devices are added to the config automatically.  We want to
-        # identify any that are not being used and select a rel_tgt_id in the
-        # 10K range for them.
-        ports_in_use = middleware.call_sync('fc.fc_hosts', [['physical', '=', True]], {'select': ['port_name']})
-        physical_naa = {str_to_naa(entry['port_name']) for entry in ports_in_use}
-        used_physical_naa = set()
-        for entry in render_ctx['fcport.query']:
-            if '/' not in entry['port']:
-                for key in ['wwpn', 'wwpn_b']:
-                    if naa := entry.get(key):
-                        used_physical_naa.add(naa)
-        unused_physical = sorted([wwn_as_colon_hex(naa) for naa in (physical_naa - used_physical_naa)])
-
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
     # MASTER node, or BACKUP node.
@@ -236,6 +221,24 @@
     except KeyError:
         # Non-HA
         other_node = 'MANUAL'
+
+    if render_ctx['fc.capable']:
+        fc_host_by_port_name = {x['alias']: x for x in middleware.call_sync('fc.fc_host.query')}
+        # Physical devices are added to the config automatically.  We want to
+        # identify any that are not being used and select a rel_tgt_id in the
+        # 10K range for them.
+        if standby_write_empty_config:
+            unused_physical = []
+        else:
+            ports_in_use = middleware.call_sync('fc.fc_hosts', [['physical', '=', True]], {'select': ['port_name']})
+            physical_naa = {str_to_naa(entry['port_name']) for entry in ports_in_use}
+            used_physical_naa = set()
+            for entry in render_ctx['fcport.query']:
+                if '/' not in entry['port']:
+                    for key in ['wwpn', 'wwpn_b']:
+                        if naa := entry.get(key):
+                            used_physical_naa.add(naa)
+            unused_physical = sorted([wwn_as_colon_hex(naa) for naa in (physical_naa - used_physical_naa)])
 
     # Let's map extents to respective ios
     all_rw_extent_names = []

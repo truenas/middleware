@@ -10,11 +10,12 @@ from packaging.version import InvalidVersion, Version
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
-    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
+from middlewared.utils.yaml import safe_yaml_load
 
 from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
@@ -24,7 +25,6 @@ from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
-from .ix_apps.utils import safe_yaml_load
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -221,8 +221,8 @@ class AppService(Service):
         if isinstance(app, str):
             app = await self.middleware.call('app.get_instance', app)
         metadata = app['metadata']
-        app_details = await self.middleware.call(
-            'catalog.get_app_details', metadata['name'], {'train': metadata['train']}
+        app_details = await self.call2(
+            self.s.catalog.get_app_details, metadata['name'], CatalogAppVersionDetails(train=metadata['train'])
         )
         new_version = options['app_version']
         if new_version == 'latest':
