@@ -1,9 +1,10 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
 
 
-class WebUiRootLoginAlertClass(AlertClass, OneShotAlertClass):
+class WebUiRootLoginAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
+    keys = []
     title = "Root User Can Still Log In To The Web UI"
     text = (
         "Root user has their password disabled, but as there are no other users granted with a privilege of Local "
@@ -12,9 +13,3 @@ class WebUiRootLoginAlertClass(AlertClass, OneShotAlertClass):
     )
 
     exclude_from_list = True
-
-    async def create(self, args):
-        return Alert(self.__class__, args)
-
-    async def delete(self, alerts, query):
-        return []

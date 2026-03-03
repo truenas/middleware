@@ -14,11 +14,9 @@ from middlewared.utils import ProductType
 class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
+    keys = []
     title = "JBOF removal may require reboot"
     text = "Incomplete removal of JBOF requires a reboot to cleanup."
-
-    async def delete(self, alerts, query):
-        return []
 
 
 class JBOFRedfishCommAlertClass(AlertClass):

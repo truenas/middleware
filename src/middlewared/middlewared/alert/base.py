@@ -145,21 +145,24 @@ class SimpleOneShotAlertClass(OneShotAlertClass):
     :cvar keys: controls how alerts are deleted:
         `keys = ["id", "name"]` When deleting an alert, only this keys will be compared
         `keys = []`             When deleting an alert, all alerts of this class will be deleted
-        `keys = None`           All present alert keys must be equal to the delete query (default)
+        `keys = None`           Use :meth:`key` to match alerts (default)
+
+    Override the :meth:`key` method to set a custom deduplication key derived from `args`. By default it returns
+    `args` itself, so alerts are matched by full args equality.
     """
     keys = None
 
+    def key(self, args):
+        return args
+
     async def create(self, args):
-        return Alert(self.__class__, args)
+        return Alert(self.__class__, args, key=self.key(args))
 
     async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: (
-                any(alert.args[k] != query[k] for k in self.keys) if self.keys is not None
-                else alert.args != query
-            ),
-            alerts
-        ))
+        if self.keys is not None:
+            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in self.keys)]
+
+        return [alert for alert in alerts if self.key(alert.args) != query]
 
 
 class DismissableAlertClass:
