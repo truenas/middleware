@@ -197,7 +197,7 @@ class PoolDatasetService(Service):
         encryption_dict.pop('encryption')
         key = encryption_dict.pop('key')
 
-        change_key(self.context, tls, id_, encryption_dict, key)
+        change_key(tls, id_, encryption_dict, key)
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end

@@ -104,7 +104,7 @@ class PoolDatasetService(Service):
                     ds_key = bytes.fromhex(ds_key)
 
             try:
-                valid_key = check_key(self.context, tls, name, key=ds_key)
+                valid_key = check_key(tls, name, key=ds_key)
             except Exception:
                 valid_key = False
 
@@ -199,7 +199,7 @@ class PoolDatasetService(Service):
                         key = bytes.fromhex(key)
 
                 try:
-                    should_remove = not check_key(self.context, tls, ds_name, key=key)
+                    should_remove = not check_key(tls, ds_name, key=key)
                 except Exception:
                     should_remove = True
 

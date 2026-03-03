@@ -6,6 +6,8 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from truenas_pylibzfs import ZFSError, ZFSException
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
@@ -217,9 +219,15 @@ class PoolDatasetService(Service):
 
             job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
-                load_key(self.context, tls, name, key=datasets[name]['key'])
-            except CallError as e:
-                failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
+                load_key(tls, name, key=datasets[name]['key'])
+            except ZFSException as e:
+                if ZFSError(e.code) == ZFSError.EZFS_CRYPTOFAILED:
+                    failed[name]['error'] = 'Invalid Key'
+                else:
+                    failed[name]['error'] = str(e)
+                continue
+            except Exception as e:
+                failed[name]['error'] = str(e)
                 continue
 
             # Before we mount the dataset in question, we should ensure that the path where it will be mounted
