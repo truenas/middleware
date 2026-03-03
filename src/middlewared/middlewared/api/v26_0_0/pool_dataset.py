@@ -172,13 +172,18 @@ class PoolDatasetChangeKeyOptions(BaseModel):
     """Generate a new random encryption key instead of using a provided key or passphrase."""
     key_file: bool = False
     """Whether the provided key is from a key file rather than entered directly."""
-    pbkdf2iters: int = Field(default=350000, ge=100000)
+    pbkdf2iters: int = Field(default=1300000, ge=1300000)
     """Number of PBKDF2 iterations for passphrase-based keys. Higher values improve security against \
-    brute force attacks but increase unlock time. Default 350,000 balances security and performance."""
+    brute force attacks but increase unlock time."""
     passphrase: Secret[NonEmptyString | None] = None
     """Passphrase to use for encryption key derivation."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
     """Raw hex-encoded encryption key."""
+
+    @classmethod
+    def from_previous(cls, value):
+        value['pbkdf2iters'] = max(1300000, value['pbkdf2iters'])
+        return value
 
 
 class PoolDatasetCreateUserProperty(BaseModel):

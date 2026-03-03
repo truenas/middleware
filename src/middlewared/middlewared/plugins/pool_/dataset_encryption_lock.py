@@ -6,11 +6,15 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from truenas_pylibzfs import ZFSError, ZFSException
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
 )
+from middlewared.plugins.zfs.encryption import load_key
 from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filesystem.directory import directory_is_empty
 
 from .utils import (
@@ -85,8 +89,9 @@ class PoolDatasetService(Service):
         return True
 
     @api_method(PoolDatasetUnlockArgs, PoolDatasetUnlockResult, roles=['DATASET_WRITE'])
+    @pass_thread_local_storage
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
-    def unlock(self, job, id_, options):
+    def unlock(self, job, tls, id_, options):
         """
         Unlock dataset `id` (and its children if `unlock_options.recursive` is `true`).
 
@@ -214,11 +219,15 @@ class PoolDatasetService(Service):
 
             job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
-                self.middleware.call_sync(
-                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
-                )
-            except CallError as e:
-                failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
+                load_key(tls, name, key=datasets[name]['key'])
+            except ZFSException as e:
+                if e.code == ZFSError.EZFS_CRYPTOFAILED:
+                    failed[name]['error'] = 'Invalid Key'
+                else:
+                    failed[name]['error'] = str(e)
+                continue
+            except Exception as e:
+                failed[name]['error'] = str(e)
                 continue
 
             # Before we mount the dataset in question, we should ensure that the path where it will be mounted
