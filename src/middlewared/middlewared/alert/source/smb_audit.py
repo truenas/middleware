@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class SMBAuditShareDisabledAlertClass(AlertClass, SimpleOneShotAlertClass):
+class SMBAuditShareDisabledAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []

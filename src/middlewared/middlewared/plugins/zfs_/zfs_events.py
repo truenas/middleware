@@ -5,7 +5,7 @@ import threading
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+    AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 )
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -65,7 +65,7 @@ class ScanWatch:
         self._cancel.set()
 
 
-class ScrubNotStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
     title = "Scrub Failed to Start"
@@ -77,7 +77,7 @@ class ScrubNotStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
         return args["pool"]
 
 
-class ScrubStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ScrubStartedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.INFO
     title = "Scrub Started"

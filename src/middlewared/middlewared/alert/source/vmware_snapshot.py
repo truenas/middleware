@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class VMWareSnapshotCreateFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
     keys = []
@@ -11,7 +11,7 @@ class VMWareSnapshotCreateFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
-class VMWareSnapshotDeleteFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
     keys = []

@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class WebUiRootLoginAlertClass(AlertClass, SimpleOneShotAlertClass):
+class WebUiRootLoginAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     keys = []

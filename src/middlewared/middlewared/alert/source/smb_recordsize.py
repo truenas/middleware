@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class SMBVeeamFastCloneAlertClass(AlertClass, SimpleOneShotAlertClass):
+class SMBVeeamFastCloneAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []

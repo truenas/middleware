@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class TruecommandConnectionDisabledAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TruecommandConnectionDisabledAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 
@@ -11,7 +11,7 @@ class TruecommandConnectionDisabledAlertClass(AlertClass, SimpleOneShotAlertClas
     text = 'TrueCommand API Key has been disabled by iX Portal: %(error)s'
 
 
-class TruecommandConnectionPendingAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TruecommandConnectionPendingAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 
@@ -21,7 +21,7 @@ class TruecommandConnectionPendingAlertClass(AlertClass, SimpleOneShotAlertClass
     text = 'Confirmation is pending for TrueCommand API Key from iX Portal: %(error)s'
 
 
-class TruecommandConnectionHealthAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 
@@ -32,7 +32,7 @@ class TruecommandConnectionHealthAlertClass(AlertClass, SimpleOneShotAlertClass)
            'has been registered with TrueCommand and TrueCommand is able to access NAS.'
 
 
-class TruecommandContainerHealthAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TruecommandContainerHealthAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 

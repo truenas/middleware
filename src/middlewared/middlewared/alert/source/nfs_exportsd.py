@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class NFSblockedByExportsDirAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSblockedByExportsDirAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.ERROR
     keys = []
@@ -9,7 +9,7 @@ class NFSblockedByExportsDirAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = "/etc/exports.d contains entries that must be removed: %(entries)s"
 
 
-class NFSexportMappingInvalidNamesAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSexportMappingInvalidNamesAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.ERROR
     keys = []

@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class DifFormattedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class DifFormattedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     keys = []

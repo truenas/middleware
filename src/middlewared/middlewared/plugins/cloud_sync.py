@@ -19,7 +19,7 @@ from middlewared.alert.base import (
     AlertCategory,
     AlertClass,
     AlertLevel,
-    SimpleOneShotAlertClass,
+    OneShotAlertClass,
 )
 from middlewared.job import JobCancelledException
 from middlewared.api import api_method
@@ -529,7 +529,7 @@ class FsLockManager:
         self.sync_locks.pop(path, None)
 
 
-class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.ERROR
     title = "Cloud Sync Task Failed"
@@ -543,7 +543,7 @@ class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         return [alert for alert in alerts if alert.key in task_ids]
 
 
-class CloudProviderRemovedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CloudProviderRemovedAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.INFO
     category = AlertCategory.TASKS
     title = "Cloud Provider Was Removed"

@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class PoolUpgradedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.NOTICE
     title = "New Feature Flags Are Available for Pool"

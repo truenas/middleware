@@ -1,13 +1,13 @@
 from datetime import timedelta
 import logging
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 
 log = logging.getLogger("audit_check_alertmod")
 
 
 # -------------- OneShot Alerts ------------------
-class AuditBackendSetupAlertClass(AlertClass, SimpleOneShotAlertClass):
+class AuditBackendSetupAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.AUDIT
     level = AlertLevel.ERROR
     title = "Audit Service Backend Failed"

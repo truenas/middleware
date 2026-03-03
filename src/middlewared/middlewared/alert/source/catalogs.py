@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class CatalogNotHealthyAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.APPLICATIONS
@@ -12,7 +12,7 @@ class CatalogNotHealthyAlertClass(AlertClass, SimpleOneShotAlertClass):
         return args['catalog']
 
 
-class CatalogSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.CRITICAL
     category = AlertCategory.APPLICATIONS

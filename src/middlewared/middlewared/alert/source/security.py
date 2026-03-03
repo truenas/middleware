@@ -1,4 +1,4 @@
-from middlewared.alert.base import Alert, AlertClass, AlertSource, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import Alert, AlertClass, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list
@@ -21,7 +21,7 @@ class LocalAccountExpiredAlertClass(AlertClass):
     text = "The following local user accounts have expired: %(accounts)s"
 
 
-class AllAdminAccountsExpiredAlertClass(AlertClass, SimpleOneShotAlertClass):
+class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
     """
     All local administrator accounts have expired passwords. This means we have
     potentially locked out ability to administer the NAS. To facilitate recovery
