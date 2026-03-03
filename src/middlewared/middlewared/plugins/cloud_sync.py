@@ -535,10 +535,12 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     title = "Cloud Sync Task Failed"
     text = "Cloud sync task \"%(name)s\" failed."
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args["id"]
 
-    async def load(self, middleware, alerts):
+    @classmethod
+    async def load(cls, middleware, alerts):
         task_ids = {str(task["id"]) for task in await middleware.call("cloudsync.query")}
         return [alert for alert in alerts if alert.key in task_ids]
 

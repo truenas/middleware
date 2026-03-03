@@ -8,7 +8,8 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     title = 'Catalog Not Healthy'
     text = '%(apps)s Applications in %(catalog)s Catalog are not healthy.'
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['catalog']
 
 
@@ -19,5 +20,6 @@ class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     title = 'Unable to Sync Catalog'
     text = 'Failed to sync %(catalog)s catalog: %(error)s'
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['catalog']

@@ -175,7 +175,8 @@ class CloudBackupTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     title = "Cloud Backup Task Failed"
     text = "Cloud backup task \"%(name)s\" failed."
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args["id"]
 
 

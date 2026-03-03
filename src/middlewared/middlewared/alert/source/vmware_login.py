@@ -7,5 +7,6 @@ class VMWareLoginFailedAlertClass(AlertClass, OneShotAlertClass):
     title = "VMWare Login Failed"
     text = "VMWare login to %(hostname)s failed: %(error)s."
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['hostname']
