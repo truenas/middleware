@@ -317,8 +317,11 @@ class AppService(Service):
 
         # Create single alert if updates exist
         if apps_with_updates:
+            count = len(apps_with_updates)
             await self.middleware.call('alert.oneshot_create', 'AppUpdate', {
-                'apps': apps_with_updates,
+                'count': count,
+                'plural': 's' if count != 1 else '',
+                'apps': ', '.join(apps_with_updates),
             })
 
     @private

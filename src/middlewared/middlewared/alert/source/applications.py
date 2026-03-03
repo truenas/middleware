@@ -53,13 +53,7 @@ class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
     text = 'Updates are available for %(count)d application%(plural)s: %(apps)s'
 
     async def create(self, args):
-        # Format the text based on number of apps
-        count = len(args['apps'])
-        return Alert(AppUpdateAlertClass, {
-            'count': count,
-            'plural': 's' if count != 1 else '',
-            'apps': ', '.join(args['apps']),
-        })
+        return Alert(AppUpdateAlertClass, args)
 
     async def delete(self, alerts, query):
         return []
