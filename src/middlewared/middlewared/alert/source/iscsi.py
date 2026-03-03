@@ -1,15 +1,17 @@
 from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 
 
 class ISCSIPortalIPAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'IP Addresses Bound to an iSCSI Portal Were Not Found'
-    text = 'These IP addresses are bound to an iSCSI Portal but not found: %s.'
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='IP Addresses Bound to an iSCSI Portal Were Not Found',
+        text='These IP addresses are bound to an iSCSI Portal but not found: %s.',
+    )
 
 
 class ISCSIPortalIPAlertSource(AlertSource):
@@ -55,22 +57,26 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
 
 class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'iSCSI Authorized Access has an invalid character'
-    text = (
-        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
-        'has a %(field)s containing the invalid character: %(char)r.'
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='iSCSI Authorized Access has an invalid character',
+        text=(
+            'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+            'has a %(field)s containing the invalid character: %(char)r.'
+        ),
     )
 
 
 class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'iSCSI Authorized Access has leading or trailing whitespace'
-    text = (
-        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
-        'has a %(field)s containing leading or trailing whitespace.'
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='iSCSI Authorized Access has leading or trailing whitespace',
+        text=(
+            'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+            'has a %(field)s containing leading or trailing whitespace.'
+        ),
     )
 
 

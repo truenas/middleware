@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
@@ -22,10 +22,12 @@ def remove_deasserted_records(records):
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event"
-    text = "Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)"
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="IPMI System Event",
+        text="Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)",
+    )
 
     @classmethod
     async def dismiss(cls, middleware, alerts, alert):
@@ -40,10 +42,12 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
 
 
 class IPMISELSpaceLeftAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event Log Low Space Left"
-    text = "IPMI System Event Log low space left: %(free)s (%(used)s)."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="IPMI System Event Log Low Space Left",
+        text="IPMI System Event Log low space left: %(free)s (%(used)s).",
+    )
 
 
 class IPMISELAlertSource(AlertSource):

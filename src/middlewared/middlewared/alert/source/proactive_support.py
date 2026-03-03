@@ -3,16 +3,18 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
 
 
 class ProactiveSupportAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Proactive Support Is Not Configured"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Proactive Support Is Not Configured",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class ProactiveSupportAlertSource(AlertSource):

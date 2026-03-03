@@ -5,49 +5,59 @@
 
 import errno
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
 from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
 
 
 class FailoverInterfaceNotFoundAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Failover Internal Interface Not Found'
-    text = 'Failover internal interface not found. Contact support.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='Failover Internal Interface Not Found',
+        text='Failover internal interface not found. Contact support.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'TrueNAS Software Versions Must Match Between Storage Controllers'
-    text = 'TrueNAS software versions must match between storage controllers.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='TrueNAS Software Versions Must Match Between Storage Controllers',
+        text='TrueNAS software versions must match between storage controllers.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Failed to Check Failover Status with the Other Controller'
-    text = 'Failed to check failover status with the other controller: %s.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='Failed to Check Failover Status with the Other Controller',
+        text='Failed to check failover status with the other controller: %s.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class FailoverFailedAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Failover Failed'
-    text = 'Failover failed. Check /var/log/failover.log on both controllers.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='Failover Failed',
+        text='Failover failed. Check /var/log/failover.log on both controllers.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Controllers VRRP States Do Not Agree'
-    text = 'Controllers VRRP states do not agree: %(error)s.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='Controllers VRRP States Do Not Agree',
+        text='Controllers VRRP states do not agree: %(error)s.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class FailoverAlertSource(AlertSource):

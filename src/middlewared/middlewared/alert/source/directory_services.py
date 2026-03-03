@@ -1,6 +1,6 @@
 import errno
 from datetime import timedelta
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.directoryservices.constants import DSStatus
 from middlewared.utils.directoryservices.health import (
@@ -10,17 +10,21 @@ from middlewared.service_exception import CallError
 
 
 class DirectoryServiceBindAlertClass(AlertClass):
-    category = AlertCategory.DIRECTORY_SERVICE
-    level = AlertLevel.WARNING
-    title = "DirectoryService Bind Is Not Healthy"
-    text = "%(err)s."
+    config = AlertClassConfig(
+        category=AlertCategory.DIRECTORY_SERVICE,
+        level=AlertLevel.WARNING,
+        title="DirectoryService Bind Is Not Healthy",
+        text="%(err)s.",
+    )
 
 
 class DirectoryServiceDnsUpdateAlertClass(AlertClass):
-    category = AlertCategory.DIRECTORY_SERVICE
-    level = AlertLevel.WARNING
-    title = "DirectoryService DNS Update Failed"
-    text = "%(err)s."
+    config = AlertClassConfig(
+        category=AlertCategory.DIRECTORY_SERVICE,
+        level=AlertLevel.WARNING,
+        title="DirectoryService DNS Update Failed",
+        text="%(err)s.",
+    )
 
 
 class DirectoryServiceDomainBindAlertSource(AlertSource):

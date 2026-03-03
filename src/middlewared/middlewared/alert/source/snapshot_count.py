@@ -1,26 +1,30 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.utils.path import FSLocation, path_location
 
 
 class SnapshotTotalCountAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Too Many Snapshots Exist"
-    text = (
-        "Your system has more snapshots (%(count)d) than recommended (%(max)d). Performance or functionality "
-        "might degrade."
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Too Many Snapshots Exist",
+        text=(
+            "Your system has more snapshots (%(count)d) than recommended (%(max)d). Performance or functionality "
+            "might degrade."
+        ),
     )
 
 
 class SnapshotCountAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Too Many Snapshots Exist For Dataset"
-    text = (
-        "SMB share %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). File Explorer may not "
-        "display all snapshots in the Previous Versions tab."
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Too Many Snapshots Exist For Dataset",
+        text=(
+            "SMB share %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). File Explorer may not "
+            "display all snapshots in the Previous Versions tab."
+        ),
     )
 
 

@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.size import format_size
@@ -12,17 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 class QuotaWarningAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Quota Exceeded on Dataset"
-    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Quota Exceeded on Dataset",
+        text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
+    )
 
 
 class QuotaCriticalAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.CRITICAL
-    title = "Critical Quota Exceeded on Dataset"
-    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.CRITICAL,
+        title="Critical Quota Exceeded on Dataset",
+        text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
+    )
 
 
 class QuotaAlertSource(ThreadedAlertSource):
@@ -127,7 +131,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                         mail = {
                             "to": [to],
                             "subject": f"{hostname}: {quota_name} exceeded on dataset {ds}",
-                            "text": klass.text % args
+                            "text": klass.config.text % args
                         }
 
                 alerts.append(Alert(

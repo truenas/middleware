@@ -1,24 +1,28 @@
-from middlewared.alert.base import Alert, AlertClass, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list
 
 
 class LocalAccountExpiringAlertClass(AlertClass):
-    category = AlertCategory.SECURITY
-    level = AlertLevel.NOTICE
-    title = "Local User Accounts Must Change Password"
-    text = "The following local user accounts must change passwords : %(accounts)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.NOTICE,
+        title="Local User Accounts Must Change Password",
+        text="The following local user accounts must change passwords : %(accounts)s",
+    )
 
 
 class LocalAccountExpiredAlertClass(AlertClass):
     """
     One or more accounts are actually expired.
     """
-    category = AlertCategory.SECURITY
-    level = AlertLevel.WARNING
-    title = "Local User Accounts Are Expired"
-    text = "The following local user accounts have expired: %(accounts)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.WARNING,
+        title="Local User Accounts Are Expired",
+        text="The following local user accounts have expired: %(accounts)s",
+    )
 
 
 class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
@@ -29,14 +33,16 @@ class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
     The most likely reason for this happening is that the user has restored a
     configuration backup with old passwords.
     """
-    category = AlertCategory.SECURITY
-    level = AlertLevel.CRITICAL
-    title = "All local full administrator accounts are expired."
-    text = (
-        "All administrator accounts with full administrator privilege are expired. "
-        "In order to allow recovery, password expiration has been temporarily disabled for "
-        "local administrator accounts with full admin privileges until at least one "
-        "account password has been updated."
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.CRITICAL,
+        title="All local full administrator accounts are expired.",
+        text=(
+            "All administrator accounts with full administrator privilege are expired. "
+            "In order to allow recovery, password expiration has been temporarily disabled for "
+            "local administrator accounts with full admin privileges until at least one "
+            "account password has been updated."
+        ),
     )
 
 

@@ -7,34 +7,40 @@ from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 class LicenseAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "TrueNAS License Issue"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="TrueNAS License Issue",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "TrueNAS License Is Expiring"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="TrueNAS License Is Expiring",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "TrueNAS License Has Expired"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="TrueNAS License Has Expired",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):

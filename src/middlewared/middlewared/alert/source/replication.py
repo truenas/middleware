@@ -1,25 +1,31 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 
 
 class SnapshotFailedAlertClass(AlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.CRITICAL
-    title = "Snapshot Task Failed"
-    text = "Snapshot Task For Dataset \"%(name)s\" failed: %(message)s."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.CRITICAL,
+        title="Snapshot Task Failed",
+        text="Snapshot Task For Dataset \"%(name)s\" failed: %(message)s.",
+    )
 
 
 class ReplicationSuccessAlertClass(AlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.INFO
-    title = "Replication Succeeded"
-    text = "Replication \"%(name)s\" succeeded."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.INFO,
+        title="Replication Succeeded",
+        text="Replication \"%(name)s\" succeeded.",
+    )
 
 
 class ReplicationFailedAlertClass(AlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.CRITICAL
-    title = "Replication Failed"
-    text = "Replication \"%(name)s\" failed: %(message)s."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.CRITICAL,
+        title="Replication Failed",
+        text="Replication \"%(name)s\" failed: %(message)s.",
+    )
 
 
 class ReplicationAlertSource(AlertSource):

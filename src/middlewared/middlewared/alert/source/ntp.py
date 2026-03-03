@@ -1,16 +1,18 @@
 from datetime import timedelta
 
 from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
-                                    AlertLevel, AlertSource)
+                                    AlertClassConfig, AlertLevel, AlertSource)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.ntp.peers import NTPPeer
 
 
 class NTPHealthCheckAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "NTP Health Check Failed"
-    text = "NTP health check failed - %(reason)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="NTP Health Check Failed",
+        text="NTP health check failed - %(reason)s",
+    )
 
 
 class NTPHealthCheckAlertSource(AlertSource):

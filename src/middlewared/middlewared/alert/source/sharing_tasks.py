@@ -1,12 +1,14 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
 class ShareLockedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    level = AlertLevel.WARNING
-    category = AlertCategory.SHARING
-    title = 'Share Is Unavailable Because It Uses A Locked Dataset'
-    text = '%(type)s share "%(identifier)s" is unavailable because it uses a locked dataset.'
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='Share Is Unavailable Because It Uses A Locked Dataset',
+        text='%(type)s share "%(identifier)s" is unavailable because it uses a locked dataset.',
+        deleted_automatically=False,
+    )
 
     @classmethod
     def key(cls, args):
@@ -14,11 +16,13 @@ class ShareLockedAlertClass(AlertClass, OneShotAlertClass):
 
 
 class TaskLockedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    level = AlertLevel.WARNING
-    category = AlertCategory.TASKS
-    title = 'Task Is Unavailable Because It Uses A Locked Dataset'
-    text = '%(type)s task "%(identifier)s" will not be executed because it uses a locked dataset.'
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title='Task Is Unavailable Because It Uses A Locked Dataset',
+        text='%(type)s task "%(identifier)s" will not be executed because it uses a locked dataset.',
+        deleted_automatically=False,
+    )
 
     @classmethod
     def key(cls, args):

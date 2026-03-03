@@ -5,7 +5,7 @@
 
 import datetime
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 
@@ -15,73 +15,89 @@ WEBUI_SUPPORT_FORM = (
 
 
 class NVDIMMAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'There Is An Issue With NVDIMM'
-    text = 'NVDIMM: "%(dev)s" is reporting "%(value)s" with status "%(status)s".'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='There Is An Issue With NVDIMM',
+        text='NVDIMM: "%(dev)s" is reporting "%(value)s" with status "%(status)s".',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class NVDIMMESLifetimeWarningAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'NVDIMM Energy Source Lifetime Is Less Than 20%'
-    text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='NVDIMM Energy Source Lifetime Is Less Than 20%',
+        text='NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'NVDIMM Energy Source Lifetime Is Less Than 10%'
-    text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='NVDIMM Energy Source Lifetime Is Less Than 10%',
+        text='NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
-    text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='NVDIMM Memory Module Lifetime Is Less Than 20%',
+        text='NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'NVDIMM Memory Module Lifetime Is Less Than 10%'
-    text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='NVDIMM Memory Module Lifetime Is Less Than 10%',
+        text='NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'Invalid NVDIMM Firmware Version'
-    text = f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}'
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='Invalid NVDIMM Firmware Version',
+        text=f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}',
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+    )
 
 
 class NVDIMMRecommendedFirmwareVersionAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'NVDIMM Firmware Version Should Be Upgraded'
-    text = (
-        'NVDIMM: "%(dev)s" is running firmware version "%(rv)s" which can be upgraded to '
-        f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='NVDIMM Firmware Version Should Be Upgraded',
+        text=(
+            'NVDIMM: "%(dev)s" is running firmware version "%(rv)s" which can be upgraded to '
+            f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
+        ),
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
     )
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
 
 
 class OldBiosVersionAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'Old BIOS Version'
-    text = f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}'
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='Old BIOS Version',
+        text=f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}',
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+    )
 
 
 class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):

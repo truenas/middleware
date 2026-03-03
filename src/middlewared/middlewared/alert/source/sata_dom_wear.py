@@ -5,24 +5,28 @@
 
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
 from middlewared.utils import ProductType
 
 
 class SATADOMWearWarningAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "SATA DOM Lifetime: Less Than 20% Left"
-    text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="SATA DOM Lifetime: Less Than 20% Left",
+        text="%(lifetime)d%% of lifetime left on SATA DOM %(disk)s.",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class SATADOMWearCriticalAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "SATA DOM Lifetime: Less Than 10% Left"
-    text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="SATA DOM Lifetime: Less Than 10% Left",
+        text="%(lifetime)d%% of lifetime left on SATA DOM %(disk)s.",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class SATADOMWearAlertSource(AlertSource):

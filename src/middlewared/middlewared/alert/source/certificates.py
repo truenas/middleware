@@ -1,46 +1,56 @@
 from datetime import datetime
 
-from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.time_utils import utc_now
 
 
 class CertificateIsExpiringAlertClass(AlertClass):
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.NOTICE
-    title = "Certificate Is Expiring"
-    text = "Certificate %(name)r is expiring within %(days)d days."
+    config = AlertClassConfig(
+        category=AlertCategory.CERTIFICATES,
+        level=AlertLevel.NOTICE,
+        title="Certificate Is Expiring",
+        text="Certificate %(name)r is expiring within %(days)d days.",
+    )
 
 
 class CertificateIsExpiringSoonAlertClass(AlertClass):
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.WARNING
-    title = "Certificate Is Expiring Soon"
-    text = "Certificate %(name)r is expiring within %(days)d days."
+    config = AlertClassConfig(
+        category=AlertCategory.CERTIFICATES,
+        level=AlertLevel.WARNING,
+        title="Certificate Is Expiring Soon",
+        text="Certificate %(name)r is expiring within %(days)d days.",
+    )
 
 
 class CertificateExpiredAlertClass(AlertClass):
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.CRITICAL
-    title = "Certificate Has Expired"
-    text = "Certificate %(name)r has expired."
+    config = AlertClassConfig(
+        category=AlertCategory.CERTIFICATES,
+        level=AlertLevel.CRITICAL,
+        title="Certificate Has Expired",
+        text="Certificate %(name)r has expired.",
+    )
 
 
 class CertificateParsingFailedAlertClass(AlertClass):
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.WARNING
-    title = "Certificate Parsing Failed"
-    text = "Failed to parse %(type)s %(name)r."
+    config = AlertClassConfig(
+        category=AlertCategory.CERTIFICATES,
+        level=AlertLevel.WARNING,
+        title="Certificate Parsing Failed",
+        text="Failed to parse %(type)s %(name)r.",
+    )
 
 
 class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
     # this is consumed in nginx.conf in the etc plugin
     # you don't have to specify the `AlertClass` verbiage
     # of the class name when calling it
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.CRITICAL
-    title = "Web UI HTTPS Certificate Setup Failed"
-    text = "Web UI HTTPS certificate setup failed."
+    config = AlertClassConfig(
+        category=AlertCategory.CERTIFICATES,
+        level=AlertLevel.CRITICAL,
+        title="Web UI HTTPS Certificate Setup Failed",
+        text="Web UI HTTPS certificate setup failed.",
+    )
 
 
 class CertificateChecksAlertSource(AlertSource):

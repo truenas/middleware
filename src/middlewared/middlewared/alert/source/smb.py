@@ -1,5 +1,5 @@
 import time
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
 
@@ -28,24 +28,30 @@ def generate_alert_text(auth_log):
 
 
 class SMBLegacyProtocolAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.NOTICE
-    title = "SMB1 connections to TrueNAS server have been performed in last 24 hours"
-    text = "The following clients have established SMB1 sessions: %(err)s."
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.NOTICE,
+        title="SMB1 connections to TrueNAS server have been performed in last 24 hours",
+        text="The following clients have established SMB1 sessions: %(err)s.",
+    )
 
 
 class NTLMv1AuthenticationAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = "NTLMv1 authentication has been attempted in the last 24 hours"
-    text = "The following clients have attempted NTLMv1 authentication: %(err)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title="NTLMv1 authentication has been attempted in the last 24 hours",
+        text="The following clients have attempted NTLMv1 authentication: %(err)s",
+    )
 
 
 class SMBPathAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.CRITICAL
-    title = "SMB share path has unresolvable issues"
-    text = "SMB shares have path-related configuration issues that may impact service stability: %(err)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.CRITICAL,
+        title="SMB share path has unresolvable issues",
+        text="SMB shares have path-related configuration issues that may impact service stability: %(err)s",
+    )
 
 
 class SMBLegacyProtocolAlertSource(AlertSource):
@@ -167,13 +173,15 @@ class SMBPathAlertSource(AlertSource):
 
 
 class SMBUserMissingHashAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    keys = []
-    title = "SMB user is missing required password hash"
-    text = (
-        "One or more SMB users do not have a valid SMB password hash. This can happen if the TrueNAS configuration "
-        "was restored without the secret seed. This can also happen if an SMB user was created with an empty password "
-        "in an older version of TrueNAS. To correct this, do one of these steps: reset the user password in the "
-        "TrueNAS UI or API, or disable SMB access for the user. Affected users: %(entries)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title="SMB user is missing required password hash",
+        text=(
+            "One or more SMB users do not have a valid SMB password hash. This can happen if the TrueNAS configuration "
+            "was restored without the secret seed. This can also happen if an SMB user was created with an empty password "
+            "in an older version of TrueNAS. To correct this, do one of these steps: reset the user password in the "
+            "TrueNAS UI or API, or disable SMB access for the user. Affected users: %(entries)s"
+        ),
+        keys=[],
     )

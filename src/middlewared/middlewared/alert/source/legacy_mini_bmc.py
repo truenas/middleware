@@ -1,19 +1,21 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
 
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 
 
 class TrueNASMiniBMCAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Critical IPMI Firmware Update Available"
-    text = (
-        "A critical IPMI firmware update is available for this system. Please see "
-        f"<a href=\"{URL}\" target=\"_blank\">"
-        "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Critical IPMI Firmware Update Available",
+        text=(
+            "A critical IPMI firmware update is available for this system. Please see "
+            f"<a href=\"{URL}\" target=\"_blank\">"
+            "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
+        ),
+        products=(ProductType.COMMUNITY_EDITION,),
     )
-    products = (ProductType.COMMUNITY_EDITION,)
 
 
 class TrueNASMiniBMCAlertSource(AlertSource):

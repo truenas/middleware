@@ -7,6 +7,7 @@ import time
 
 from middlewared.alert.base import (
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     AlertSource,
@@ -18,23 +19,27 @@ from middlewared.utils.crypto import generate_token
 
 
 class SensorAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Sensor Value Is Outside of Working Range"
-    text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s"
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Sensor Value Is Outside of Working Range",
+        text="Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class PowerSupplyAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Power Supply Error"
-    text = (
-        "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Power Supply Error",
+        text=(
+            "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
+        ),
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+        proactive_support_notify_gone=True,
     )
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
-    proactive_support_notify_gone = True
 
 
 class PsuAlertSource(AlertSource):

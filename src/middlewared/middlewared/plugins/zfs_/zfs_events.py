@@ -5,7 +5,7 @@ import threading
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+    AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 )
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -66,12 +66,13 @@ class ScanWatch:
 
 
 class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    title = "Scrub Failed to Start"
-    text = "%(text)s."
-
-    deleted_automatically = False
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title="Scrub Failed to Start",
+        text="%(text)s.",
+        deleted_automatically=False,
+    )
 
     @classmethod
     def key(cls, args):
@@ -79,10 +80,12 @@ class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
 
 
 class ScrubStartedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.INFO
-    title = "Scrub Started"
-    text = "Scrub of pool %r has started. Performance may be degraded during this time."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.INFO,
+        title="Scrub Started",
+        text="Scrub of pool %r has started. Performance may be degraded during this time.",
+    )
 
 
 async def resilver_scrub_start(middleware, pool_name):
