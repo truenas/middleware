@@ -4,7 +4,7 @@ from middlewared.alert.base import Alert, AlertClass, OneShotAlertClass, AlertCa
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ApiKeyRevokedAlertClass(AlertClass, OneShotAlertClass):
+class ApiKeyRevokedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "API Key Revoked"
