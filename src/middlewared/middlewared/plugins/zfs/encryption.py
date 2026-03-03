@@ -11,7 +11,7 @@ class EncryptionProperties(TypedDict, total=False):
     pbkdf2iters: int | None
 
 
-def load_key(tls: threading.local, dataset: str, **kwargs) -> None:
+def load_key(tls: threading.local, dataset: str, **kwargs: str | bytes) -> None:
     """
     Load the encryption key for a ZFS dataset.
 
@@ -34,7 +34,7 @@ def load_key(tls: threading.local, dataset: str, **kwargs) -> None:
     crypto.load_key(**kwargs)
 
 
-def check_key(tls: threading.local, dataset: str, **kwargs) -> bool:
+def check_key(tls: threading.local, dataset: str, **kwargs: str | bytes) -> bool:
     """
     Return True if ``key`` (or the key at ``key_location``) can unlock ``dataset``.
 
@@ -56,7 +56,7 @@ def check_key(tls: threading.local, dataset: str, **kwargs) -> bool:
     rsrc = open_resource(tls, dataset)
     if (crypto := rsrc.crypto()) is None:
         raise ZFSNotEncryptedException(dataset)
-    return crypto.check_key(**kwargs)
+    return crypto.check_key(**kwargs)  # type: ignore[no-any-return]
 
 
 def change_key(
@@ -76,7 +76,7 @@ def change_key(
             pbkdf2iters.
         key: New key material. Required when keylocation is not given.
     """
-    props = {} if properties is None else cast(dict, properties.copy())
+    props = {} if properties is None else cast(dict[str, str | int | None], properties.copy())
     if key:
         props.pop('keylocation', None)
         props['key'] = key
