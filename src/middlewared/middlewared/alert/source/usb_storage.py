@@ -9,7 +9,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, 
 from middlewared.utils import ProductType
 
 
-class USBStorageAlertClass(AlertClass):
+class USBStorageAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -37,5 +37,5 @@ class USBStorageAlertSource(ThreadedAlertSource):
                     # scenario, we need to ignore the device.
                     continue
                 elif "-part" not in i.name:
-                    alerts.append(Alert(USBStorageAlertClass, resolved_path))
+                    alerts.append(Alert(USBStorageAlert, resolved_path))
         return alerts

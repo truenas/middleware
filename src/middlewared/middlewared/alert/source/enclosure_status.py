@@ -28,7 +28,7 @@ class BadElement:
         return [self.enc_name, self.descriptor, self.status, self.value, self.value_raw]
 
 
-class EnclosureUnhealthyAlertClass(AlertClass):
+class EnclosureUnhealthyAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -38,7 +38,7 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     )
 
 
-class EnclosureHealthyAlertClass(AlertClass):
+class EnclosureHealthyAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.INFO,
@@ -106,10 +106,10 @@ class EnclosureStatusAlertSource(AlertSource):
                     pass
 
                 alerts.append(
-                    Alert(EnclosureUnhealthyAlertClass, args=current_bad_element.args())
+                    Alert(EnclosureUnhealthyAlert, args=current_bad_element.args())
                 )
 
         for enclosure in good_enclosures:
-            alerts.append(Alert(EnclosureHealthyAlertClass, args=enclosure))
+            alerts.append(Alert(EnclosureHealthyAlert, args=enclosure))
 
         return alerts

@@ -1,7 +1,7 @@
 from middlewared.alert.base import OneShotAlertClass, AlertClass, AlertCategory, AlertClassConfig, AlertLevel
 
 
-class UPSBatteryLowAlertClass(AlertClass, OneShotAlertClass):
+class UPSBatteryLowAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.ALERT,
@@ -12,7 +12,7 @@ class UPSBatteryLowAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class UPSOnlineAlertClass(AlertClass, OneShotAlertClass):
+class UPSOnlineAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.INFO,
@@ -23,7 +23,7 @@ class UPSOnlineAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class UPSOnBatteryAlertClass(AlertClass, OneShotAlertClass):
+class UPSOnBatteryAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.CRITICAL,
@@ -34,7 +34,7 @@ class UPSOnBatteryAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class UPSCommbadAlertClass(AlertClass, OneShotAlertClass):
+class UPSCommbadAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.CRITICAL,
@@ -45,7 +45,7 @@ class UPSCommbadAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class UPSCommokAlertClass(AlertClass, OneShotAlertClass):
+class UPSCommokAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.INFO,
@@ -56,7 +56,7 @@ class UPSCommokAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class UPSReplbattAlertClass(AlertClass, OneShotAlertClass):
+class UPSReplbattAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
         level=AlertLevel.CRITICAL,

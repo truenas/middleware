@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class FIPSMisconfigurationAlertClass(AlertClass):
+class FIPSMisconfigurationAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SECURITY,
         level=AlertLevel.CRITICAL,
@@ -26,10 +26,10 @@ class FIPSProviderAlertSource(AlertSource):
         try:
             fips_enabled = await self.middleware.call('system.security.info.fips_enabled')
         except Exception:
-            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "unknown"})
+            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "unknown"})
 
         if fips_configured and not fips_enabled:
-            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "not active"})
+            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "not active"})
 
         if not fips_configured and fips_enabled:
-            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "active"})
+            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "active"})

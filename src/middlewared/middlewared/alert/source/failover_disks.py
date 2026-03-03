@@ -10,7 +10,7 @@ TITLE = 'Disks Missing On '
 TEXT = 'Disks with serial %(serials)s present on '
 
 
-class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
+class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -20,7 +20,7 @@ class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
     )
 
 
-class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
+class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -40,10 +40,10 @@ class FailoverDisksAlertSource(AlertSource):
         if (md := await self.middleware.call('failover.mismatch_disks')):
             if md['missing_remote']:
                 return [Alert(
-                    DisksAreNotPresentOnStandbyNodeAlertClass, {'serials': ', '.join(md['missing_remote'])}
+                    DisksAreNotPresentOnStandbyNodeAlert, {'serials': ', '.join(md['missing_remote'])}
                 )]
             if md['missing_local']:
                 return [Alert(
-                    DisksAreNotPresentOnActiveNodeAlertClass, {'serials': ', '.join(md['missing_local'])}
+                    DisksAreNotPresentOnActiveNodeAlert, {'serials': ', '.join(md['missing_local'])}
                 )]
         return []

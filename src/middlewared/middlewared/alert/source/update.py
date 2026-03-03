@@ -4,7 +4,7 @@ from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCat
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class CurrentlyRunningVersionDoesNotMatchProfileAlertClass(AlertClass):
+class CurrentlyRunningVersionDoesNotMatchProfileAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -15,7 +15,7 @@ class CurrentlyRunningVersionDoesNotMatchProfileAlertClass(AlertClass):
     )
 
 
-class HasUpdateAlertClass(AlertClass):
+class HasUpdateAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.INFO,
@@ -46,13 +46,13 @@ class HasUpdateAlertSource(AlertSource):
                     else:
                         selected = "<Unknown>"
 
-                    return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlertClass, {
+                    return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlert, {
                         "running": running,
                         "selected": selected,
                     })
 
                 if update_status.status.new_version:
-                    return Alert(HasUpdateAlertClass)
+                    return Alert(HasUpdateAlert)
         except Exception:
             pass
 

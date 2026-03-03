@@ -5,7 +5,7 @@ from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.time_utils import utc_now
 
 
-class CertificateIsExpiringAlertClass(AlertClass):
+class CertificateIsExpiringAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
         level=AlertLevel.NOTICE,
@@ -14,7 +14,7 @@ class CertificateIsExpiringAlertClass(AlertClass):
     )
 
 
-class CertificateIsExpiringSoonAlertClass(AlertClass):
+class CertificateIsExpiringSoonAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
         level=AlertLevel.WARNING,
@@ -23,7 +23,7 @@ class CertificateIsExpiringSoonAlertClass(AlertClass):
     )
 
 
-class CertificateExpiredAlertClass(AlertClass):
+class CertificateExpiredAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
         level=AlertLevel.CRITICAL,
@@ -32,7 +32,7 @@ class CertificateExpiredAlertClass(AlertClass):
     )
 
 
-class CertificateParsingFailedAlertClass(AlertClass):
+class CertificateParsingFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
         level=AlertLevel.WARNING,
@@ -41,7 +41,7 @@ class CertificateParsingFailedAlertClass(AlertClass):
     )
 
 
-class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
+class WebUiCertificateSetupFailedAlert(AlertClass, OneShotAlertClass):
     # this is consumed in nginx.conf in the etc plugin
     # you don't have to specify the `AlertClass` verbiage
     # of the class name when calling it
@@ -67,7 +67,7 @@ class CertificateChecksAlertSource(AlertSource):
             # make the sure certs have been parsed correctly
             if not cert['parsed']:
                 alerts.append(Alert(
-                    CertificateParsingFailedAlertClass,
+                    CertificateParsingFailedAlert,
                     {"type": cert["cert_type"].capitalize(), "name": cert["name"]},
                 ))
             else:
@@ -78,12 +78,12 @@ class CertificateChecksAlertSource(AlertSource):
                     if diff < alert_threshold:
                         if diff >= 0:
                             alerts.append(Alert(
-                                CertificateIsExpiringSoonAlertClass if diff <= 2 else CertificateIsExpiringAlertClass,
+                                CertificateIsExpiringSoonAlert if diff <= 2 else CertificateIsExpiringAlert,
                                 {'name': cert['name'], 'days': diff}, key=[cert['name']],
                             ))
                         else:
                             alerts.append(Alert(
-                                CertificateExpiredAlertClass,
+                                CertificateExpiredAlert,
                                 {'name': cert['name']}, key=[cert['name']]
                             ))
 

@@ -13,7 +13,7 @@ from middlewared.alert.base import (
 )
 
 
-class DiskTemperatureTooHotAlertClass(AlertClass):
+class DiskTemperatureTooHotAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -49,7 +49,7 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
             else:
                 alerts.append(
                     Alert(
-                        DiskTemperatureTooHotAlertClass,
+                        DiskTemperatureTooHotAlert,
                         {
                             "device": f"/dev/{disk}",
                             "serial": di.serial,

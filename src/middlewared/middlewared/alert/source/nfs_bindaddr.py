@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 
-class NFSBindAddressAlertClass(AlertClass, OneShotAlertClass):
+class NFSBindAddressAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

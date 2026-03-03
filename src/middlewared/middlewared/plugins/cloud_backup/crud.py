@@ -169,7 +169,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
                 verrors.add(f"{name}.password", e.errmsg)
 
 
-class CloudBackupTaskFailedAlertClass(AlertClass, OneShotAlertClass):
+class CloudBackupTaskFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,

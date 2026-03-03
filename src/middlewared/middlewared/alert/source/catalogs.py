@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
+class CatalogNotHealthyAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.WARNING,
@@ -15,7 +15,7 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
         return args['catalog']
 
 
-class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+class CatalogSyncFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.CRITICAL,

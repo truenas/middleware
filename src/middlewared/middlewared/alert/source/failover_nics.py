@@ -10,7 +10,7 @@ TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '
 
 
-class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
+class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -20,7 +20,7 @@ class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
     )
 
 
-class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
+class NetworkCardsMismatchOnActiveNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -40,10 +40,10 @@ class FailoverNetworkCardsAlertSource(AlertSource):
         if (interfaces := await self.middleware.call('failover.mismatch_nics')):
             if interfaces['missing_remote']:
                 return [Alert(
-                    NetworkCardsMismatchOnStandbyNodeAlertClass, {'interfaces': ', '.join(interfaces['missing_remote'])}
+                    NetworkCardsMismatchOnStandbyNodeAlert, {'interfaces': ', '.join(interfaces['missing_remote'])}
                 )]
             if interfaces['missing_local']:
                 return [Alert(
-                    NetworkCardsMismatchOnActiveNodeAlertClass, {'interfaces': ', '.join(interfaces['missing_local'])}
+                    NetworkCardsMismatchOnActiveNodeAlert, {'interfaces': ', '.join(interfaces['missing_local'])}
                 )]
         return []

@@ -5,7 +5,7 @@ from middlewared.role import Role
 from middlewared.service import CallError, Service
 
 
-class SystemTestingAlertClass(AlertClass, OneShotAlertClass):
+class SystemTestingAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,

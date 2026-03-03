@@ -7,7 +7,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.utils import ProductType
 
 
-class ProactiveSupportAlertClass(AlertClass):
+class ProactiveSupportAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -26,7 +26,7 @@ class ProactiveSupportAlertSource(AlertSource):
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
         if available and support['enabled'] is None:
-            return Alert(ProactiveSupportAlertClass, f'Proactive support is not configured. Review the {webui_page}.')
+            return Alert(ProactiveSupportAlert, f'Proactive support is not configured. Review the {webui_page}.')
 
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
@@ -38,6 +38,6 @@ class ProactiveSupportAlertSource(AlertSource):
 
             if unfilled:
                 return Alert(
-                    ProactiveSupportAlertClass,
+                    ProactiveSupportAlert,
                     f'Please complete these fields on the {webui_page}: {", ".join(unfilled)}'
                 )

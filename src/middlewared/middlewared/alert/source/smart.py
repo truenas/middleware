@@ -26,7 +26,7 @@ class SmartInfo:
     unknown_device: bool = False
 
 
-class SMARTUncorrectedErrorsAlertClass(AlertClass):
+class SMARTUncorrectedErrorsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -35,7 +35,7 @@ class SMARTUncorrectedErrorsAlertClass(AlertClass):
     )
 
 
-class SMARTFailedSelfTestAlertClass(AlertClass):
+class SMARTFailedSelfTestAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -44,7 +44,7 @@ class SMARTFailedSelfTestAlertClass(AlertClass):
     )
 
 
-class SMARTSpareBlockCountAlertClass(AlertClass):
+class SMARTSpareBlockCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -53,7 +53,7 @@ class SMARTSpareBlockCountAlertClass(AlertClass):
     )
 
 
-class SMARTEraseCycleCountAlertClass(AlertClass):
+class SMARTEraseCycleCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -208,7 +208,7 @@ class SMARTAlertSource(ThreadedAlertSource):
                 if parsed.uncorrected_errors:
                     alerts.append(
                         Alert(
-                            SMARTUncorrectedErrorsAlertClass,
+                            SMARTUncorrectedErrorsAlert,
                             {
                                 "ue": parsed.uncorrected_errors,
                                 "name": disk.name,
@@ -219,7 +219,7 @@ class SMARTAlertSource(ThreadedAlertSource):
                 if parsed.smart_testfail:
                     alerts.append(
                         Alert(
-                            SMARTFailedSelfTestAlertClass,
+                            SMARTFailedSelfTestAlert,
                             {"name": disk.name, "serial": disk.serial},
                         )
                     )

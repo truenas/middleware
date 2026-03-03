@@ -4,7 +4,7 @@ from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCat
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ApiKeyRevokedAlertClass(AlertClass):
+class ApiKeyRevokedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -25,7 +25,7 @@ class ApiKeyRevokedAlertSource(AlertSource):
         alerts = []
         for key in await self.middleware.call("api_key.query"):
             if key["revoked"]:
-                alerts.append(Alert(ApiKeyRevokedAlertClass, {
+                alerts.append(Alert(ApiKeyRevokedAlert, {
                     "name": key["name"],
                     "reason": key["revoked_reason"],
                 }))

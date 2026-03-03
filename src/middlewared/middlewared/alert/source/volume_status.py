@@ -3,7 +3,7 @@ from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
 from middlewared.utils.zfs import query_imported_fast_impl
 
 
-class VolumeStatusAlertClass(AlertClass):
+class VolumeStatusAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.CRITICAL,
@@ -13,7 +13,7 @@ class VolumeStatusAlertClass(AlertClass):
     )
 
 
-class BootPoolStatusAlertClass(AlertClass):
+class BootPoolStatusAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -49,7 +49,7 @@ class VolumeStatusAlertSource(AlertSource):
             for pool in await self.middleware.call("zfs.pool.query", [["id", "=", boot_pool]]):
                 if not pool["healthy"]:
                     alerts.append([
-                        "BootPoolStatusAlertClass",
+                        "BootPoolStatusAlert",
                         {
                             "status": pool["status"],
                             "status_detail": pool["status_detail"],
@@ -72,7 +72,7 @@ class VolumeStatusAlertSource(AlertSource):
                         devices = ""
 
                     alerts.append([
-                        "VolumeStatusAlertClass",
+                        "VolumeStatusAlert",
                         {
                             "volume": pool["name"],
                             "state": pool["status"],
@@ -86,8 +86,8 @@ class VolumeStatusAlertSource(AlertSource):
         return [
             Alert(
                 {
-                    "BootPoolStatusAlertClass": BootPoolStatusAlertClass,
-                    "VolumeStatusAlertClass": VolumeStatusAlertClass,
+                    "BootPoolStatusAlert": BootPoolStatusAlert,
+                    "VolumeStatusAlert": VolumeStatusAlert,
                 }[alert[0]],
                 alert[1]
             )

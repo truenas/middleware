@@ -21,7 +21,7 @@ def remove_deasserted_records(records):
     return list(filter(None, records))
 
 
-class IPMISELAlertClass(AlertClass, DismissableAlertClass):
+class IPMISELAlert(AlertClass, DismissableAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -41,7 +41,7 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
-class IPMISELSpaceLeftAlertClass(AlertClass):
+class IPMISELSpaceLeftAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -127,7 +127,7 @@ class IPMISELAlertSource(AlertSource):
                 record.pop("id")
                 dt = record.pop("datetime")
                 alert = Alert(
-                    IPMISELAlertClass,
+                    IPMISELAlert,
                     {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
                     key=[record, dt.isoformat()],
                     datetime=dt,
@@ -154,7 +154,7 @@ class IPMISELAlertSource(AlertSource):
             used_bytes = total_bytes_avail - free_bytes
             if (used_bytes / 100) > upper_threshold:
                 alert = Alert(
-                    IPMISELSpaceLeftAlertClass,
+                    IPMISELSpaceLeftAlert,
                     {"free": f"{free_bytes} bytes free", "used": f"{used_bytes} bytes used"},
                     key=None,
                 )

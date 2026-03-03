@@ -3,7 +3,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, 
 UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
 
 
-class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMixedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -12,7 +12,7 @@ class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class ISCSIDiscoveryAuthMultipleCHAPAlertClass(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleCHAPAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -21,7 +21,7 @@ class ISCSIDiscoveryAuthMultipleCHAPAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class ISCSIDiscoveryAuthMultipleMutualCHAPAlertClass(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

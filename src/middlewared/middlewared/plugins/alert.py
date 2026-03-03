@@ -87,7 +87,7 @@ class AlertModel(sa.Model):
     klass = sa.Column(sa.Text())
 
 
-class AlertSourceRunFailedAlertClass(AlertClass):
+class AlertSourceRunFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -97,7 +97,7 @@ class AlertSourceRunFailedAlertClass(AlertClass):
     )
 
 
-class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
+class AlertSourceRunFailedOnBackupNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -107,7 +107,7 @@ class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     )
 
 
-class AutomaticAlertFailedAlertClass(AlertClass, OneShotAlertClass):
+class AutomaticAlertFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -125,7 +125,7 @@ class AutomaticAlertFailedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class TestAlertClass(AlertClass):
+class TestAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -752,7 +752,7 @@ class AlertService(Service):
             self.logger.debug('Failed to reserve a privileged port')
         except Exception as e:
             other_node_alerts = [Alert(
-                AlertSourceRunFailedOnBackupNodeAlertClass,
+                AlertSourceRunFailedOnBackupNodeAlert,
                 args={"source_name": name, "traceback": str(e)},
                 _source=name
             )]
@@ -890,7 +890,7 @@ class AlertService(Service):
                 self.alert_sources_errors.add(source_name)
 
             alerts = [
-                Alert(AlertSourceRunFailedAlertClass,
+                Alert(AlertSourceRunFailedAlert,
                       args={
                           "source_name": alert_source.name,
                           "traceback": str(e),
@@ -1149,7 +1149,7 @@ class AlertServiceService(CRUDService):
             master_node = await self.middleware.call("failover.node")
 
         test_alert = Alert(
-            TestAlertClass,
+            TestAlert,
             node=master_node,
             datetime=utc_now(),
             last_occurrence=utc_now(),

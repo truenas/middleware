@@ -7,7 +7,7 @@ log = logging.getLogger("audit_check_alertmod")
 
 
 # -------------- OneShot Alerts ------------------
-class AuditBackendSetupAlertClass(AlertClass, OneShotAlertClass):
+class AuditBackendSetupAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
         level=AlertLevel.ERROR,
@@ -17,7 +17,7 @@ class AuditBackendSetupAlertClass(AlertClass, OneShotAlertClass):
 
 
 # --------------- Monitored Alerts ----------------
-class AuditServiceHealthAlertClass(AlertClass):
+class AuditServiceHealthAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
         level=AlertLevel.ERROR,
@@ -42,7 +42,7 @@ class AuditServiceHealthAlertSource(AlertSource):
             )
         except Exception as e:
             return Alert(
-                AuditServiceHealthAlertClass,
+                AuditServiceHealthAlert,
                 {'verrs': str(e)},
                 key=None
             )

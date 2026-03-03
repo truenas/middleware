@@ -4,7 +4,7 @@ from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.utils.path import FSLocation, path_location
 
 
-class SnapshotTotalCountAlertClass(AlertClass):
+class SnapshotTotalCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.WARNING,
@@ -16,7 +16,7 @@ class SnapshotTotalCountAlertClass(AlertClass):
     )
 
 
-class SnapshotCountAlertClass(AlertClass):
+class SnapshotCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.WARNING,
@@ -39,7 +39,7 @@ class SnapshotCountAlertSource(AlertSource):
 
         if total > max_total:
             return [Alert(
-                SnapshotTotalCountAlertClass,
+                SnapshotTotalCountAlert,
                 {"count": total, "max": max_total},
                 key=None,
             )]
@@ -58,7 +58,7 @@ class SnapshotCountAlertSource(AlertSource):
             count = snapshot_counts.get(path, 0)
             if count > max_:
                 to_alert.append(Alert(
-                    SnapshotCountAlertClass,
+                    SnapshotCountAlert,
                     {"dataset": path, "count": count, "max": max_},
                     key=path,
                 ))

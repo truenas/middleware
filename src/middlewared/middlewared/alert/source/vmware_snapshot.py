@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
+class VMWareSnapshotCreateFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,
@@ -12,7 +12,7 @@ class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
+class VMWareSnapshotDeleteFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,

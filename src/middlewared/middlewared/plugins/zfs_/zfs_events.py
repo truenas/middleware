@@ -65,7 +65,7 @@ class ScanWatch:
         self._cancel.set()
 
 
-class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
+class ScrubNotStartedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,
@@ -79,7 +79,7 @@ class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
         return args["pool"]
 
 
-class ScrubStartedAlertClass(AlertClass, OneShotAlertClass):
+class ScrubStartedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,

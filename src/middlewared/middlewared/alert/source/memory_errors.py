@@ -9,7 +9,7 @@ from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 
-class MemoryErrorsAlertClass(AlertClass):
+class MemoryErrorsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -20,7 +20,7 @@ class MemoryErrorsAlertClass(AlertClass):
     )
 
 
-class MemorySizeMismatchAlertClass(AlertClass):
+class MemorySizeMismatchAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -43,7 +43,7 @@ class MemoryErrorsAlertSource(AlertSource):
                 # is available. These errors occur when the system detects an uncorrectable memory
                 # error, but specific details about the error are not provided or accessible.
                 # Because of this fact, we'll just report the error count without the DIMM information.
-                alerts.append(Alert(MemoryErrorsAlertClass, {'count': val, 'loc': location}))
+                alerts.append(Alert(MemoryErrorsAlert, {'count': val, 'loc': location}))
             elif (val := info['uncorrected_errors']) is not None and val > 0:
                 # this means that there were uncorrected errors where the dimm information was able
                 # to be obtained.
@@ -51,7 +51,7 @@ class MemoryErrorsAlertSource(AlertSource):
                     if (val2 := info[dimm_key]['uncorrected_errors']) is not None and val2 > 0:
                         # the specific dimm
                         alerts.append(Alert(
-                            MemoryErrorsAlertClass, {'count': val2, 'loc': location + f' on dimm {dimm_key}'}
+                            MemoryErrorsAlert, {'count': val2, 'loc': location + f' on dimm {dimm_key}'}
                         ))
 
         return alerts
@@ -87,7 +87,7 @@ class MemorySizeMismatchAlertSource(AlertSource):
         # and alert on it.
         if abs(r1 - r2) > (0.02 * max(abs(r1), abs(r2))):
             alerts.append(Alert(
-                MemorySizeMismatchAlertClass,
+                MemorySizeMismatchAlert,
                 {'r1': format_size(r1), 'r2': format_size(r2)}
             ))
 

@@ -6,7 +6,7 @@ from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.ntp.peers import NTPPeer
 
 
-class NTPHealthCheckAlertClass(AlertClass):
+class NTPHealthCheckAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -35,7 +35,7 @@ class NTPHealthCheckAlertSource(AlertSource):
         active_peer = [x for x in peers if x.is_active()]
         if not active_peer:
             return Alert(
-                NTPHealthCheckAlertClass,
+                NTPHealthCheckAlert,
                 {'reason': f'No Active NTP peers: {[{str(x)} for x in peers]}'}
             )
 
@@ -44,4 +44,4 @@ class NTPHealthCheckAlertSource(AlertSource):
             return
 
         msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
-        return Alert(NTPHealthCheckAlertClass, {'reason': msg})
+        return Alert(NTPHealthCheckAlert, {'reason': msg})

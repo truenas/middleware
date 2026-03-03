@@ -10,7 +10,7 @@ from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
 
 
-class FailoverInterfaceNotFoundAlertClass(AlertClass):
+class FailoverInterfaceNotFoundAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -20,7 +20,7 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     )
 
 
-class TrueNASVersionsMismatchAlertClass(AlertClass):
+class TrueNASVersionsMismatchAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -30,7 +30,7 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     )
 
 
-class FailoverStatusCheckFailedAlertClass(AlertClass):
+class FailoverStatusCheckFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -40,7 +40,7 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     )
 
 
-class FailoverFailedAlertClass(AlertClass):
+class FailoverFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -50,7 +50,7 @@ class FailoverFailedAlertClass(AlertClass):
     )
 
 
-class VRRPStatesDoNotAgreeAlertClass(AlertClass):
+class VRRPStatesDoNotAgreeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -67,7 +67,7 @@ class FailoverAlertSource(AlertSource):
 
     async def check(self):
         if not await self.middleware.call('failover.internal_interfaces'):
-            return [Alert(FailoverInterfaceNotFoundAlertClass)]
+            return [Alert(FailoverInterfaceNotFoundAlert)]
 
         try:
             if not await self.middleware.call('failover.call_remote', 'system.ready'):
@@ -76,17 +76,17 @@ class FailoverAlertSource(AlertSource):
             local_version = await self.middleware.call('system.version')
             remote_version = await self.middleware.call('failover.call_remote', 'system.version')
             if local_version != remote_version:
-                return [Alert(TrueNASVersionsMismatchAlertClass)]
+                return [Alert(TrueNASVersionsMismatchAlert)]
 
             local = await self.middleware.call('failover.vip.get_states')
             remote = await self.middleware.call('failover.call_remote', 'failover.vip.get_states')
             if err := await self.middleware.call('failover.vip.check_states', local, remote):
-                return [Alert(VRRPStatesDoNotAgreeAlertClass, {'error': i}) for i in err]
+                return [Alert(VRRPStatesDoNotAgreeAlert, {'error': i}) for i in err]
         except CallError as e:
             if e.errno != errno.ECONNREFUSED:
-                return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
+                return [Alert(FailoverStatusCheckFailedAlert, [str(e)])]
 
         if await self.middleware.call('failover.status') in ('ERROR', 'UNKNOWN'):
-            return [Alert(FailoverFailedAlertClass)]
+            return [Alert(FailoverFailedAlert)]
 
         return []

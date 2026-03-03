@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import text
 
-from middlewared.plugins.cloud_sync import CloudProviderRemovedAlertClass
+from middlewared.plugins.cloud_sync import CloudProviderRemovedAlert
 from middlewared.utils.time_utils import utc_now
 
 
@@ -40,7 +40,7 @@ def upgrade():
             {
                 "key": json.dumps(args),
                 "datetime": now,
-                "text": CloudProviderRemovedAlertClass.text % args,
+                "text": CloudProviderRemovedAlert.text % args,
                 "args": json.dumps(args),
                 "uuid": str(uuid.uuid4()),
                 "last_occurrence": now,

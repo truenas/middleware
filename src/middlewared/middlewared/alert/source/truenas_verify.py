@@ -7,7 +7,7 @@ from middlewared.utils.security import system_security_config_to_stig_type
 
 
 # --------------- Monitored Alerts ----------------
-class TrueNASVerifyServiceChangeDetectionAlertClass(AlertClass):
+class TrueNASVerifyServiceChangeDetectionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
         level=AlertLevel.ERROR,
@@ -33,7 +33,7 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
             res = subprocess.run(['truenas_verify', 'syslog'], capture_output=True, text=True)
             if res.returncode:
                 return Alert(
-                    TrueNASVerifyServiceChangeDetectionAlertClass,
+                    TrueNASVerifyServiceChangeDetectionAlert,
                     {'verrs': res.stdout.strip()},
                     key=None
                 )
