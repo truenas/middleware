@@ -104,7 +104,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
                          self.snmp_alert_level_type(
                              self.snmp_alert_level_type.namedValues.getValue(
-                                 classes.get(alert.klass.name, {}).get("level", alert.klass.config.level.name).lower()))),
+                                 classes.get(alert.klass.config.name, {}).get("level", alert.klass.config.level.name).lower()))),
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message),
                          pysnmp.hlapi.OctetString(alert.formatted))
                     )

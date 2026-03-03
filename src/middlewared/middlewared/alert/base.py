@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 import enum
 import json
@@ -62,6 +62,8 @@ class AlertClassConfig:
         `keys = ["id", "name"]` When deleting an alert, only these keys will be compared
         `keys = []`             When deleting an alert, all alerts of this class will be deleted
         `keys = None`           Use `key()` method for matching (default)
+
+    :param name: class name (without Alert suffix). Will be set by `AlertClassMeta` on each class creation.
     """
 
     category: AlertCategory
@@ -75,6 +77,7 @@ class AlertClassConfig:
     deleted_automatically: bool = True
     expires_after: timedelta | None = None
     keys: list | None = None
+    name: str = "NOTSET"
 
 
 class AlertClass:
@@ -95,10 +98,11 @@ class AlertClass:
         if not cls.__name__.endswith("AlertClass"):
             raise NameError(f"Invalid alert class name {cls.__name__}")
 
-        cls.name = cls.__name__.replace("AlertClass", "")
+        name = cls.__name__.replace("AlertClass", "")
+        cls.config = replace(cls.config, name=name)
 
         AlertClass.classes.append(cls)
-        AlertClass.class_by_name[cls.name] = cls
+        AlertClass.class_by_name[name] = cls
 
     @classmethod
     def format(cls, args):
@@ -444,7 +448,7 @@ class ProThreadedAlertService(ThreadedAlertService):
 def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
     text = f"{product_name} @ {hostname}<br><br>"
 
-    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].klass.name == "Test":
+    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].klass.config.name == "Test":
         return text + "This is a test alert"
 
     if new_alerts:
