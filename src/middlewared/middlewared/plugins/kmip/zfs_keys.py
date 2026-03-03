@@ -126,19 +126,20 @@ class KMIPService(Service, KMIPServerMixin):
         return failed
 
     @private
+    @pass_thread_local_storage
     @job(lock=lambda args: f'kmip_sync_zfs_keys_{args}')
-    def sync_zfs_keys(self, job, ids=None):
+    def sync_zfs_keys(self, job, tls, ids=None):
         if not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)
         if config['enabled'] and config['manage_zfs_keys']:
             if conn_successful:
-                failed = self.push_zfs_keys(ids)
+                failed = self.push_zfs_keys(tls, ids)  # type: ignore
             else:
                 return
         else:
-            failed = self.pull_zfs_keys()
+            failed = self.pull_zfs_keys(tls)  # type: ignore
         if failed:
             self.middleware.call_sync(
                 'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
