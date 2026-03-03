@@ -40,7 +40,7 @@ class AlertClassMeta(type):
             AlertClass.class_by_name[cls.name] = cls
 
 
-class AlertClass(CallMixin, metaclass=AlertClassMeta):
+class AlertClass(metaclass=AlertClassMeta):
     """
     Alert class: a description of a specific type of issue that can exist in the system.
 
@@ -77,9 +77,6 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     proactive_support = False
     proactive_support_notify_gone = False
-
-    def __init__(self, middleware):
-        self.middleware = middleware
 
     @classmethod
     def format(cls, args):
@@ -126,12 +123,13 @@ class OneShotAlertClass:
         """
         raise NotImplementedError
 
-    async def load(self, alerts):
+    async def load(self, middleware, alerts):
         """
         This is called on system startup. Returns only those `alerts` that are still applicable to this system (i.e.,
         corresponsing resources still exist).
 
         :param alerts: all the existing alerts of the class
+        :param middleware: the middleware instance
         :return: `alerts` that should exist on this system.
         """
         return alerts
@@ -166,7 +164,7 @@ class SimpleOneShotAlertClass(OneShotAlertClass):
 
 
 class DismissableAlertClass:
-    async def dismiss(self, alerts, alert):
+    async def dismiss(self, middleware, alerts, alert):
         raise NotImplementedError
 
 
