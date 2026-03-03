@@ -221,7 +221,7 @@ class PoolDatasetService(Service):
             try:
                 load_key(tls, name, key=datasets[name]['key'])
             except ZFSException as e:
-                if ZFSError(e.code) == ZFSError.EZFS_CRYPTOFAILED:
+                if e.code == ZFSError.EZFS_CRYPTOFAILED:
                     failed[name]['error'] = 'Invalid Key'
                 else:
                     failed[name]['error'] = str(e)
