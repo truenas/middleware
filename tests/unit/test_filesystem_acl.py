@@ -154,22 +154,25 @@ def _deny(who_type, mask, who_id=-1, ace_flags=None):
     )
 
 
+_INHERIT = t.NFS4Flag.FILE_INHERIT | t.NFS4Flag.DIRECTORY_INHERIT
+
+
 def _full_allow_all():
-    """Full control for owner@, group@, everyone@."""
+    """Full control for owner@, group@, everyone@, with inheritance."""
     return [
-        _allow(t.NFS4Who.OWNER,    _NFS4_FULL),
+        _allow(t.NFS4Who.OWNER,    _NFS4_FULL, ace_flags=_INHERIT),
         _allow(t.NFS4Who.GROUP,    _NFS4_FULL,
-               ace_flags=t.NFS4Flag.IDENTIFIER_GROUP),
-        _allow(t.NFS4Who.EVERYONE, _NFS4_FULL),
+               ace_flags=_INHERIT | t.NFS4Flag.IDENTIFIER_GROUP),
+        _allow(t.NFS4Who.EVERYONE, _NFS4_FULL, ace_flags=_INHERIT),
     ]
 
 
 def _owner_group_only():
-    """Full control for owner@ and group@ only (no everyone@)."""
+    """Full control for owner@ and group@ only (no everyone@), with inheritance."""
     return [
-        _allow(t.NFS4Who.OWNER, _NFS4_FULL),
+        _allow(t.NFS4Who.OWNER, _NFS4_FULL, ace_flags=_INHERIT),
         _allow(t.NFS4Who.GROUP, _NFS4_FULL,
-               ace_flags=t.NFS4Flag.IDENTIFIER_GROUP),
+               ace_flags=_INHERIT | t.NFS4Flag.IDENTIFIER_GROUP),
     ]
 
 
@@ -213,8 +216,7 @@ def nfs4_dataset():
     rsrc = lz.open_resource(name=ds_name)
     try:
         rsrc.mount()
-        props = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
-        yield props[truenas_pylibzfs.ZFSProperty.MOUNTPOINT].value
+        yield rsrc.get_mountpoint()
     finally:
         rsrc.unmount()
         lz.destroy_resource(name=ds_name)
