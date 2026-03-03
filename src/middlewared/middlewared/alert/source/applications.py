@@ -1,16 +1,6 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class FailuresInAppMigrationAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    keys = []
-
-    category = AlertCategory.APPLICATIONS
-    level = AlertLevel.ERROR
-    title = 'App(s) failed to migrate'
-    text = 'App(s) failed to migrate, please check /var/log/app_migrations.log for more details.'
-
-
 class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
