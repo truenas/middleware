@@ -9,7 +9,6 @@ class ZFSPoolService(Service):
     class Config:
         namespace = 'zfs.pool'
         private = True
-        process_pool = True
 
     def wait(self, pool_name: str, options: dict):
         """Wait on zpool operations to complete.

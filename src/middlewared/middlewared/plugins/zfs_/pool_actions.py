@@ -13,7 +13,6 @@ class ZFSPoolService(Service):
     class Config:
         namespace = 'zfs.pool'
         private = True
-        process_pool = True
 
     @functools.cache
     def get_search_paths(self):

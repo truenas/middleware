@@ -155,7 +155,6 @@ def job[**P, R](
             'lock': lock,
             'lock_queue_size': lock_queue_size,
             'logs': logs,
-            'process': False,
             'pipes': pipes or [],
             'check_pipes': check_pipes,
             'transient': transient,

@@ -47,7 +47,6 @@ from .utils.types import AuditCallback, JobProgressCallback
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .utils.web_app import SiteManager
-from .worker import main_worker, worker_init
 
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
@@ -58,14 +57,12 @@ from collections import defaultdict
 import argparse
 import asyncio
 import concurrent.futures
-import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
-import multiprocessing
 import os
 import pathlib
 import re
@@ -231,8 +228,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.log_handler = log_handler
         self.log_format = log_format
         self.__thread_id = threading.get_ident()
-        multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
-        self.__init_procpool()
         self.__wsclients: dict[str, 'RpcWebSocketApp'] = {}
         self.role_manager = RoleManager(ROLES)
         self.events = Events(self.role_manager)
@@ -800,23 +795,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def run_in_thread[**P, T](self, method: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
 
-    def __init_procpool(self):
-        self.__procpool = concurrent.futures.ProcessPoolExecutor(
-            max_workers=5,
-            max_tasks_per_child=100,
-            initializer=functools.partial(worker_init, self.debug_level, self.log_handler)
-        )
-
-    async def run_in_proc(self, method, *args, **kwargs):
-        retries = 2
-        for i in range(retries):
-            try:
-                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
-            except concurrent.futures.process.BrokenProcessPool:
-                if i == retries - 1:
-                    raise
-                self.__init_procpool()
-
     def pipe(self, buffered=False):
         """
         :param buffered: Please see :class:`middlewared.pipe.Pipe` documentation for information on unbuffered and
@@ -875,8 +853,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
-            if serviceobj._config.process_pool:
-                job_options['process'] = True
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
                       message_id, audit_callback)
@@ -933,14 +909,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
-        if not self.mocks.get(name) and serviceobj._config.process_pool:
-            self.logger.trace('Calling %r in process pool', name)
-            if isinstance(serviceobj, middlewared.service.CRUDService):
-                service_name, method_name = name.rsplit('.', 1)
-                if method_name in ['create', 'update', 'delete']:
-                    name = f'{service_name}.do_{method_name}'
-            return await self._call_worker(name, *prepared_call.args)
-
         self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
         return await self.run_in_executor(
             prepared_call.executor,
@@ -948,9 +916,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             *prepared_call.args,
             **prepared_call.kwargs,
         )
-
-    async def _call_worker(self, name, *args, job=None):
-        return await self.run_in_proc(main_worker, name, args, job)
 
     def dump_args(self, args, method=None, method_name=None):
         if method is None:
@@ -1295,10 +1260,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             self.logger.trace('Calling %r in main IO loop', name)
             return self.run_coroutine(methodobj(*prepared_call.args))
 
-        if serviceobj._config.process_pool:
-            self.logger.trace('Calling %r in process pool', name)
-            return self.run_coroutine(self._call_worker(name, *prepared_call.args))
-
         if not self._in_executor(prepared_call.executor):
             self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
             return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args))
@@ -1393,10 +1354,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if prepared_call.is_coroutine:
             self.logger.trace("Calling %r in main IO loop", name)
             return self.run_coroutine(methodobj(*prepared_call.args, **prepared_call.kwargs))
-
-        if serviceobj._config.process_pool:
-            self.logger.trace("Calling %r in process pool", name)
-            return self.run_coroutine(self._call_worker(name, *prepared_call.args, **prepared_call.kwargs))
 
         if not self._in_executor(prepared_call.executor):
             self.logger.trace("Calling %r in executor %r", name, prepared_call.executor)
@@ -1829,9 +1786,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
         self.create_task(self.jobs.run())
-
-        # Start up middleware worker process pool
-        self.__procpool._start_executor_manager_thread()
 
         self.runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await self.runner.setup()

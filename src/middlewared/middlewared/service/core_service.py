@@ -243,7 +243,7 @@ class CoreService(Service):
 
             config = {
                 k: v for k, v in list(v._config.__dict__.items())
-                if not (k in ['entry', 'events', 'event_sources', 'process_pool', 'thread_pool'] or k.startswith('_'))
+                if not (k in ['entry', 'events', 'event_sources', 'thread_pool'] or k.startswith('_'))
             }
             if config['cli_description'] is None:
                 if v.__doc__:
