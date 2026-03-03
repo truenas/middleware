@@ -174,6 +174,6 @@ class SMBUserMissingHashAlertClass(AlertClass, OneShotAlertClass):
     text = (
         "One or more SMB users do not have a valid SMB password hash. This can happen if the TrueNAS configuration "
         "was restored without the secret seed. This can also happen if an SMB user was created with an empty password "
-        "in an older version of TrueNAS. To correct this, do one of these steps: reset the user password in the TrueNAS "
-        "UI or API, or disable SMB access for the user. Affected users: %(entries)s"
+        "in an older version of TrueNAS. To correct this, do one of these steps: reset the user password in the "
+        "TrueNAS UI or API, or disable SMB access for the user. Affected users: %(entries)s"
     )
