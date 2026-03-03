@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
