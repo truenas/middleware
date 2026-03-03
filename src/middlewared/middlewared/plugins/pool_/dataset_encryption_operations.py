@@ -245,7 +245,7 @@ class PoolDatasetService(Service):
                         'encryption': True,
                     }
                 )
-                if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
+                if parent_encrypted_root['key_format']['value'] == ZFSKeyFormat.PASSPHRASE.value:
                     if any(
                         d['name'] == d['encryption_root']
                         for d in self.middleware.call_sync(
