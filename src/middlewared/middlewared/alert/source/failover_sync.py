@@ -3,15 +3,14 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import (
-    Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
-)
+from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.utils import ProductType
 
 
 class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
+    keys = []
     title = "Automatic Sync to Peer Failed"
     text = (
         "Tried for %(mins)d minutes to sync configuration information to "
@@ -19,12 +18,6 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "System/Failover page to try and perform a manual sync."
     )
     products = (ProductType.ENTERPRISE,)
-
-    async def create(self, args):
-        return Alert(FailoverSyncFailedAlertClass, {'mins': args['mins']})
-
-    async def delete(self, alerts, query):
-        return []
 
 
 class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -40,8 +33,9 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     products = (ProductType.ENTERPRISE,)
 
 
-class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
+    keys = []
 
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
@@ -51,9 +45,3 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
     products = (ProductType.ENTERPRISE,)
-
-    async def create(self, args):
-        return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)
-
-    async def delete(self, alerts, query):
-        return []

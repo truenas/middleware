@@ -1,4 +1,4 @@
-from middlewared.alert.base import Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
 
 URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
@@ -14,11 +14,5 @@ class DeprecatedServiceAlertClass(AlertClass, SimpleOneShotAlertClass):
         "the service has been removed in the next version of SCALE."
     )
 
-    async def create(self, args):
-        return Alert(DeprecatedServiceAlertClass, args, key=args['service'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.args['service'] != query,
-            alerts
-        ))
+    def key(self, args):
+        return args['service']

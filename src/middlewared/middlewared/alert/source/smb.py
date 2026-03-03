@@ -169,6 +169,7 @@ class SMBPathAlertSource(AlertSource):
 class SMBUserMissingHashAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
+    keys = []
     title = "SMB user is missing required password hash"
     text = (
         "One or more SMB users do not have a valid SMB password hash. This can happen if the TrueNAS configuration "
@@ -176,6 +177,3 @@ class SMBUserMissingHashAlertClass(AlertClass, SimpleOneShotAlertClass):
         "in an older version of TrueNAS. To correct this, do one of these steps: reset the user password in the TrueNAS "
         "UI or API, or disable SMB access for the user. Affected users: %(entries)s"
     )
-
-    async def delete(self, alerts, query):
-        return []

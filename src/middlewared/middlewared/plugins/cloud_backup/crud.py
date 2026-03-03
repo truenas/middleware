@@ -1,4 +1,4 @@
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -169,20 +169,14 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
                 verrors.add(f"{name}.password", e.errmsg)
 
 
-class CloudBackupTaskFailedAlertClass(AlertClass, OneShotAlertClass):
+class CloudBackupTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.ERROR
     title = "Cloud Backup Task Failed"
     text = "Cloud backup task \"%(name)s\" failed."
 
-    async def create(self, args):
-        return Alert(CloudBackupTaskFailedAlertClass, args, key=args["id"])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    def key(self, args):
+        return args["id"]
 
 
 class CloudBackupFSAttachmentDelegate(LockableFSAttachmentDelegate):

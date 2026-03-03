@@ -1,59 +1,39 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
 
 
-class FailuresInAppMigrationAlertClass(AlertClass, OneShotAlertClass):
+class FailuresInAppMigrationAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
+    keys = []
 
     category = AlertCategory.APPLICATIONS
     level = AlertLevel.ERROR
     title = 'App(s) failed to migrate'
     text = 'App(s) failed to migrate, please check /var/log/app_migrations.log for more details.'
 
-    async def create(self, args):
-        return Alert(FailuresInAppMigrationAlertClass, args)
 
-    async def delete(self, alerts, query):
-        return []
-
-
-class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
+class ApplicationsConfigurationFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
+    keys = []
     level = AlertLevel.CRITICAL
     category = AlertCategory.APPLICATIONS
     title = 'Unable to Configure Applications'
     text = 'Failed to configure docker for Applications: %(error)s'
 
-    async def create(self, args):
-        return Alert(ApplicationsConfigurationFailedAlertClass, args)
 
-    async def delete(self, alerts, query):
-        return []
-
-
-class ApplicationsStartFailedAlertClass(AlertClass, OneShotAlertClass):
+class ApplicationsStartFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
+    keys = []
     level = AlertLevel.CRITICAL
     category = AlertCategory.APPLICATIONS
     title = 'Unable to Start Applications'
     text = 'Failed to start docker for Applications: %(error)s'
 
-    async def create(self, args):
-        return Alert(ApplicationsStartFailedAlertClass, args)
 
-    async def delete(self, alerts, query):
-        return []
-
-
-class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
+class AppUpdateAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
+    keys = []
 
     category = AlertCategory.APPLICATIONS
     level = AlertLevel.INFO
     title = 'Application Update Available'
     text = 'Updates are available for %(count)d application%(plural)s: %(apps)s'
-
-    async def create(self, args):
-        return Alert(AppUpdateAlertClass, args)
-
-    async def delete(self, alerts, query):
-        return []
