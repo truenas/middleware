@@ -16,11 +16,9 @@ from contextlib import contextmanager
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from middlewared.alert.base import (
-    Alert,
     AlertCategory,
     AlertClass,
     AlertLevel,
-    OneShotAlertClass,
     SimpleOneShotAlertClass,
 )
 from middlewared.job import JobCancelledException
@@ -531,20 +529,14 @@ class FsLockManager:
         self.sync_locks.pop(path, None)
 
 
-class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
+class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.ERROR
     title = "Cloud Sync Task Failed"
     text = "Cloud sync task \"%(name)s\" failed."
 
-    async def create(self, args):
-        return Alert(CloudSyncTaskFailedAlertClass, args, key=args["id"])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    def key(self, args):
+        return args["id"]
 
     def load(self, alerts):
         task_ids = {str(task["id"]) for task in self.middleware.call_sync("cloudsync.query")}
