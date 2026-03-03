@@ -10,6 +10,7 @@ from middlewared.alert.base import (
     Alert,
     AlertCategory,
     AlertClass,
+    AlertClassConfig,
     AlertLevel,
     ThreadedAlertSource,
 )
@@ -26,31 +27,39 @@ class SmartInfo:
 
 
 class SMARTUncorrectedErrorsAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "Uncorrected Errors Detected"
-    text = "%(ue)d uncorrectable errors reported for %(name)s (%(serial)s)."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="Uncorrected Errors Detected",
+        text="%(ue)d uncorrectable errors reported for %(name)s (%(serial)s).",
+    )
 
 
 class SMARTFailedSelfTestAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "Failed Selftest"
-    text = "%(name)s (%(serial)s) failed a SMART selftest."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="Failed Selftest",
+        text="%(name)s (%(serial)s) failed a SMART selftest.",
+    )
 
 
 class SMARTSpareBlockCountAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Low Spare Block Reserve"
-    text = "%(name)s (%(serial)s) is reporting a low spare block reserve (%(sb)d) ."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Low Spare Block Reserve",
+        text="%(name)s (%(serial)s) is reporting a low spare block reserve (%(sb)d) .",
+    )
 
 
 class SMARTEraseCycleCountAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "High Erase Cycle Count"
-    text = "%(name)s (%(serial)s) has a high erase cycle count (%(ec)d) (raw (%(ec_raw)d)."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="High Erase Cycle Count",
+        text="%(name)s (%(serial)s) has a high erase cycle count (%(ec)d) (raw (%(ec_raw)d).",
+    )
 
 
 class SMARTAlertSource(ThreadedAlertSource):

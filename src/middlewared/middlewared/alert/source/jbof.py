@@ -5,50 +5,60 @@
 
 import datetime
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, OneShotAlertClass
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
 
 
 class JBOFTearDownFailureAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    keys = []
-    title = "JBOF removal may require reboot"
-    text = "Incomplete removal of JBOF requires a reboot to cleanup."
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="JBOF removal may require reboot",
+        text="Incomplete removal of JBOF requires a reboot to cleanup.",
+        keys=[],
+    )
 
 
 class JBOFRedfishCommAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'Failed to Communicate with JBOF'
-    text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='Failed to Communicate with JBOF',
+        text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class JBOFInvalidDataAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'JBOF has invalid data'
-    text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='JBOF has invalid data',
+        text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class JBOFElementWarningAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'JBOF element non-critical'
-    text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='JBOF element non-critical',
+        text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class JBOFElementCriticalAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'JBOF element critical'
-    text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='JBOF element critical',
+        text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class JBOFAlertSource(AlertSource):

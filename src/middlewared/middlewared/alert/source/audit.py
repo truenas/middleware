@@ -1,6 +1,6 @@
 from datetime import timedelta
 import logging
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 
 log = logging.getLogger("audit_check_alertmod")
@@ -8,18 +8,22 @@ log = logging.getLogger("audit_check_alertmod")
 
 # -------------- OneShot Alerts ------------------
 class AuditBackendSetupAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.AUDIT
-    level = AlertLevel.ERROR
-    title = "Audit Service Backend Failed"
-    text = "Audit service failed backend setup: %(service)s. See /var/log/middlewared.log"
+    config = AlertClassConfig(
+        category=AlertCategory.AUDIT,
+        level=AlertLevel.ERROR,
+        title="Audit Service Backend Failed",
+        text="Audit service failed backend setup: %(service)s. See /var/log/middlewared.log",
+    )
 
 
 # --------------- Monitored Alerts ----------------
 class AuditServiceHealthAlertClass(AlertClass):
-    category = AlertCategory.AUDIT
-    level = AlertLevel.ERROR
-    title = "Audit Service Health Failure"
-    text = "Failed to perform audit query: %(verrs)s"
+    config = AlertClassConfig(
+        category=AlertCategory.AUDIT,
+        level=AlertLevel.ERROR,
+        title="Audit Service Health Failure",
+        text="Failed to perform audit query: %(verrs)s",
+    )
 
 
 class AuditServiceHealthAlertSource(AlertSource):

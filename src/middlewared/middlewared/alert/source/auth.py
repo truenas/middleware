@@ -1,4 +1,4 @@
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.audit import UNAUTHENTICATED
@@ -10,25 +10,29 @@ MAX_LOGINS_LISTED = 100
 
 
 class AdminSessionAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Administrator account activity"
-    text = (
-        "The root or default system administrator account was used to authenticate "
-        "to the UI / API %(count)d times in the last 24 hours:</br>%(sessions)s.</br>"
-        "To improve security, create one or more administrator accounts (see "
-        f"<a href=\"{URL}\" target=\"_blank\">documentation</a>) "
-        "with unique usernames and passwords and disable password access for default "
-        "administrator accounts (<b>root</b>, <b>admin</b>, or <b>truenas_admin</b>)."
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Administrator account activity",
+        text=(
+            "The root or default system administrator account was used to authenticate "
+            "to the UI / API %(count)d times in the last 24 hours:</br>%(sessions)s.</br>"
+            "To improve security, create one or more administrator accounts (see "
+            f"<a href=\"{URL}\" target=\"_blank\">documentation</a>) "
+            "with unique usernames and passwords and disable password access for default "
+            "administrator accounts (<b>root</b>, <b>admin</b>, or <b>truenas_admin</b>)."
+        ),
     )
 
 
 class APIFailedLoginAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "API Login Failures"
-    text = (
-        "%(count)d API login failures in the last 24 hours:\n%(sessions)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="API Login Failures",
+        text=(
+            "%(count)d API login failures in the last 24 hours:\n%(sessions)s"
+        ),
     )
 
 

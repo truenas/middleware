@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from middlewared.alert.base import (
     AlertCategory,
     AlertClass,
+    AlertClassConfig,
     AlertLevel,
     OneShotAlertClass,
 )
@@ -530,10 +531,12 @@ class FsLockManager:
 
 
 class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.ERROR
-    title = "Cloud Sync Task Failed"
-    text = "Cloud sync task \"%(name)s\" failed."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.ERROR,
+        title="Cloud Sync Task Failed",
+        text="Cloud sync task \"%(name)s\" failed.",
+    )
 
     @classmethod
     def key(cls, args):
@@ -546,14 +549,16 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
 
 
 class CloudProviderRemovedAlertClass(AlertClass, OneShotAlertClass):
-    level = AlertLevel.INFO
-    category = AlertCategory.TASKS
-    title = "Cloud Provider Was Removed"
-    text = (
-        "%(provider)s is no longer a supported Cloud Credential. All previously configured Cloud Tasks have been "
-        "deleted."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.INFO,
+        title="Cloud Provider Was Removed",
+        text=(
+            "%(provider)s is no longer a supported Cloud Credential. All previously configured Cloud Tasks have been "
+            "deleted."
+        ),
+        deleted_automatically=False,
     )
-    deleted_automatically = False
 
 
 def lsjson_error_excerpt(error):

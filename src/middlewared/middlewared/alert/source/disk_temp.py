@@ -7,19 +7,22 @@ from middlewared.alert.base import (
     Alert,
     AlertCategory,
     AlertClass,
+    AlertClassConfig,
     AlertLevel,
     AlertSource,
 )
 
 
 class DiskTemperatureTooHotAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Disk Temperature Is Too Hot"
-    text = (
-        "Disk %(device)s (with serial: %(serial)s) critical temperature"
-        " threshold is %(crit_threshold)d degrees celsius and the"
-        " current temp is %(temp)d degrees celsius"
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Disk Temperature Is Too Hot",
+        text=(
+            "Disk %(device)s (with serial: %(serial)s) critical temperature"
+            " threshold is %(crit_threshold)d degrees celsius and the"
+            " current temp is %(temp)d degrees celsius"
+        ),
     )
 
 

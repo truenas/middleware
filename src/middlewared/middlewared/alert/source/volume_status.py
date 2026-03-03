@@ -1,22 +1,26 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, Alert, AlertSource
 from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
 from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class VolumeStatusAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.CRITICAL
-    title = "Pool Status Is Not Healthy"
-    text = "Pool %(volume)s state is %(state)s: %(status)s%(devices)s"
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.CRITICAL,
+        title="Pool Status Is Not Healthy",
+        text="Pool %(volume)s state is %(state)s: %(status)s%(devices)s",
+        proactive_support=True,
+    )
 
 
 class BootPoolStatusAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "Boot Pool Is Not Healthy"
-    text = "Boot pool status is %(status)s: %(status_detail)s."
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="Boot Pool Is Not Healthy",
+        text="Boot pool status is %(status)s: %(status_detail)s.",
+        proactive_support=True,
+    )
 
 
 class VolumeStatusAlertSource(AlertSource):

@@ -5,19 +5,21 @@
 
 import time
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
 from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
 class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Other Controller is Inaccessible'
-    text = 'Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.'
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
-    proactive_support_notify_gone = True
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title='Other Controller is Inaccessible',
+        text='Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.',
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+        proactive_support_notify_gone=True,
+    )
 
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):

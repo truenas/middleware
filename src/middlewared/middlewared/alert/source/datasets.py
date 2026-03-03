@@ -1,16 +1,18 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.alert.schedule import IntervalSchedule
 
 
 class EncryptedDatasetAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = 'Unencrypted datasets detected within encrypted datasets'
-    text = (
-        'The following datasets are not encrypted but are within an encrypted dataset: %(datasets)r which is '
-        'not supported behaviour and may lead to various issues.'
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title='Unencrypted datasets detected within encrypted datasets',
+        text=(
+            'The following datasets are not encrypted but are within an encrypted dataset: %(datasets)r which is '
+            'not supported behaviour and may lead to various issues.'
+        ),
     )
 
 

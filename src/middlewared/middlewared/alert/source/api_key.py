@@ -1,18 +1,20 @@
 from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
 class ApiKeyRevokedAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "API Key Revoked"
-    text = (
-        "%(name)s: API key has been revoked and must either be renewed or deleted. "
-        "Revoke reason: %(reason)s. "
-        "Once the maintenance is complete, API client configuration must be updated to "
-        "use the renewed API key."
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="API Key Revoked",
+        text=(
+            "%(name)s: API key has been revoked and must either be renewed or deleted. "
+            "Revoke reason: %(reason)s. "
+            "Once the maintenance is complete, API client configuration must be updated to "
+            "use the renewed API key."
+        ),
     )
 
 

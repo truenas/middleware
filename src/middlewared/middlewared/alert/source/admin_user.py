@@ -1,15 +1,17 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
 from middlewared.plugins.account import ADMIN_UID
 from middlewared.service_exception import MatchNotFound
 
 
 class AdminUserIsOverriddenAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Admin User Is Overridden"
-    text = "NSS query results are different for the locally set up `%(username)s` user."
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Admin User Is Overridden",
+        text="NSS query results are different for the locally set up `%(username)s` user.",
+    )
 
 
 class AdminUserAlertSource(AlertSource):

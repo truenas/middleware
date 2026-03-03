@@ -3,28 +3,32 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 
 class MemoryErrorsAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'Uncorrected Memory Errors Detected'
-    text = '%(count)d total uncorrected errors detected for %(loc)s.'
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='Uncorrected Memory Errors Detected',
+        text='%(count)d total uncorrected errors detected for %(loc)s.',
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+    )
 
 
 class MemorySizeMismatchAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'Memory Size Mismatch Detected'
-    text = 'Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s'
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title='Memory Size Mismatch Detected',
+        text='Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s',
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+    )
 
 
 class MemoryErrorsAlertSource(AlertSource):

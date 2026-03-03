@@ -1,17 +1,18 @@
 from typing import Any, Literal
 
-from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
 
 
 class SystemTestingAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "System mocking endpoints used"
-    text = "System mocking endpoints used on server."
-
-    deleted_automatically = False
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="System mocking endpoints used",
+        text="System mocking endpoints used on server.",
+        deleted_automatically=False,
+    )
 
 
 class TestService(Service):

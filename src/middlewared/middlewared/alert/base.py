@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import enum
 import json
@@ -14,7 +15,7 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.service.call_mixin import CallMixin
 
 __all__ = [
-    "UnavailableException", "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
+    "UnavailableException", "AlertClassConfig", "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
     "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource", "AlertService",
     "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis", "alert_category_names",
 ]
@@ -26,43 +27,67 @@ class UnavailableException(Exception):
     pass
 
 
-class AlertClass:
+@dataclass(slots=True, frozen=True, kw_only=True)
+class AlertClassConfig:
     """
-    Alert class: a description of a specific type of issue that can exist in the system.
+    Configuration for an AlertClass.
 
-    :cvar category: `AlertCategory` value
+    :param category: `AlertCategory` value.
 
-    :cvar level: Default `AlertLevel` value (alert level can be later changed by user)
+    :param level: Default `AlertLevel` value (alert level can be later changed by user).
 
-    :cvar title: Short description of the alert class (e.g. "An SSL certificate is expiring")
+    :param title: Short description of the alert class (e.g. "An SSL certificate is expiring").
 
-    :cvar text: Format string for the alert class instance (e.g. "%(name)s SSL certificate is expiring")
+    :param text: Format string for the alert class instance (e.g. "%(name)s SSL certificate is expiring").
 
-    :cvar exclude_from_list: Set this to `true` to exclude the alert from the UI configuration. For example, you might
+    :param exclude_from_list: Set this to `true` to exclude the alert from the UI configuration. For example, you might
         want to hide some rare legacy hardware-specific alert. It will still be sent if it occurs, but users won't be
         able to disable it or change its level.
 
-    :cvar products: A list of `system.product_type` return values on which alerts of this class can be emitted.
+    :param products: A list of `system.product_type` return values on which alerts of this class can be emitted.
 
-    :cvar proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for the
-        systems that have a corresponding support license.
+    :param proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for
+        the systems that have a corresponding support license.
 
-    :cvar proactive_support_notify_gone: Set this to `true` if, upon removal of the alert, a support ticket should be
+    :param proactive_support_notify_gone: Set this to `true` if, upon removal of the alert, a support ticket should be
         open for the systems that have a corresponding support license.
-    """
 
-    classes = []
-    class_by_name = {}
+    :param deleted_automatically: (OneShotAlertClass) Set this to `false` if there is no one to call
+        `alert.oneshot_delete` when the alert situation is resolved. In that case, the alert will be deleted when the
+        user dismisses it.
+
+    :param expires_after: (OneShotAlertClass) Lifetime for the alert.
+
+    :param keys: (OneShotAlertClass) Controls how alerts are deleted:
+        `keys = ["id", "name"]` When deleting an alert, only these keys will be compared
+        `keys = []`             When deleting an alert, all alerts of this class will be deleted
+        `keys = None`           Use `key()` method for matching (default)
+    """
 
     category: AlertCategory
     level: AlertLevel
     title: str
     text: str | None = None
+    exclude_from_list: bool = False
+    products: tuple[str] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    proactive_support: bool = False
+    proactive_support_notify_gone: bool = False
+    deleted_automatically: bool = True
+    expires_after: timedelta | None = None
+    keys: list | None = None
 
-    exclude_from_list = False
-    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
-    proactive_support = False
-    proactive_support_notify_gone = False
+
+class AlertClass:
+    """
+    Alert class: a description of a specific type of issue that can exist in the system.
+
+    Subclasses must define a `config` class variable of type `AlertClassConfig`.
+    """
+
+    classes = []
+    class_by_name = {}
+
+    config: AlertClassConfig
 
     def __init_subclass__(cls):
         super().__init_subclass__()
@@ -77,13 +102,13 @@ class AlertClass:
 
     @classmethod
     def format(cls, args):
-        if cls.text is None:
-            return cls.title
+        if cls.config.text is None:
+            return cls.config.title
 
         if args is None:
-            return cls.text
+            return cls.config.text
 
-        return cls.text % (tuple(args) if isinstance(args, list) else args)
+        return cls.config.text % (tuple(args) if isinstance(args, list) else args)
 
 
 class OneShotAlertClass:
@@ -91,23 +116,11 @@ class OneShotAlertClass:
     One-shot alert mixin: add this to `AlertClass` superclass list for alerts that are created not by an
     `AlertSource` but using `alert.oneshot_create` API method.
 
-    :cvar deleted_automatically: Set this to `false` if there is no one to call `alert.oneshot_delete` when the alert
-        situation is resolved. In that case, the alert will be deleted when the user dismisses it.
-
-    :cvar expires_after: Lifetime for the alert.
-
-    :cvar keys: controls how alerts are deleted:
-        `keys = ["id", "name"]` When deleting an alert, only these keys will be compared
-        `keys = []`             When deleting an alert, all alerts of this class will be deleted
-        `keys = None`           Use :meth:`key` to match alerts (default)
+    Configure `deleted_automatically`, `expires_after`, and `keys` via `AlertClassConfig`.
 
     Override the :meth:`key` method to set a custom deduplication key derived from `args`. By default it returns
     `args` itself, so alerts are matched by full args equality.
     """
-
-    deleted_automatically = True
-    expires_after = None
-    keys = None
 
     @classmethod
     def key(cls, args):
@@ -133,8 +146,8 @@ class OneShotAlertClass:
         :return: `alerts` that do not match query (e.g. `query` specifies `{"certificate_id": "xxx"}` and the method
             implementation returns all `alerts` except the ones related to the certificate `xxx`).
         """
-        if cls.keys is not None:
-            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in cls.keys)]
+        if cls.config.keys is not None:
+            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in cls.config.keys)]
 
         return [alert for alert in alerts if cls.key(alert.args) != query]
 
@@ -289,7 +302,7 @@ class Alert:
         self.dismissed = dismissed
         self.mail = mail
 
-        self.text = _text or self.klass.text or self.klass.title
+        self.text = _text or self.klass.config.text or self.klass.config.title
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

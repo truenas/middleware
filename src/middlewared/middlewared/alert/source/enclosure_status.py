@@ -7,6 +7,7 @@ from middlewared.utils import ProductType
 
 from middlewared.alert.base import (
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     Alert,
@@ -28,19 +29,23 @@ class BadElement:
 
 
 class EnclosureUnhealthyAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Enclosure Status Is Not Healthy"
-    text = 'Enclosure (%s): Element "%s" is reporting a status of "%s" with a value of "%s". (raw value "%s")'
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Enclosure Status Is Not Healthy",
+        text='Enclosure (%s): Element "%s" is reporting a status of "%s" with a value of "%s". (raw value "%s")',
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class EnclosureHealthyAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.INFO
-    title = "Enclosure Status Is Healthy"
-    text = "Enclosure (%s) is healthy."
-    products = (ProductType.ENTERPRISE,)
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.INFO,
+        title="Enclosure Status Is Healthy",
+        text="Enclosure (%s) is healthy.",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class EnclosureStatusAlertSource(AlertSource):

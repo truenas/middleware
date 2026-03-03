@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 
 class ScrubPausedAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Scrub Is Paused"
-    text = "Scrub for pool %r is paused for more than 8 hours."
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Scrub Is Paused",
+        text="Scrub for pool %r is paused for more than 8 hours.",
+    )
 
 
 class ScrubPausedAlertSource(ThreadedAlertSource):

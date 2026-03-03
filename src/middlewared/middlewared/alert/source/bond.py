@@ -6,6 +6,7 @@
 from middlewared.alert.base import (
     Alert,
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     AlertSource,
@@ -13,24 +14,30 @@ from middlewared.alert.base import (
 
 
 class BONDInactivePortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "Ports are Not ACTIVE on BOND Interface"
-    text = "These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch."
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="Ports are Not ACTIVE on BOND Interface",
+        text="These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch.",
+    )
 
 
 class BONDNoActivePortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "There are No ACTIVE Ports on BOND Interface"
-    text = "There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch."
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="There are No ACTIVE Ports on BOND Interface",
+        text="There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch.",
+    )
 
 
 class BONDMissingPortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "BOND Interface references missing ports"
-    text = "BOND Interface %(name)s references missing ports %(missing)s."
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="BOND Interface references missing ports",
+        text="BOND Interface %(name)s references missing ports %(missing)s.",
+    )
 
 
 class BondStatus(AlertSource):

@@ -1,14 +1,16 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, ProductType
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, ProductType
 from middlewared.alert.schedule import IntervalSchedule
 
 
 class FIPSMisconfigurationAlertClass(AlertClass):
-    category = AlertCategory.SECURITY
-    level = AlertLevel.CRITICAL
-    title = "FIPS misconfiguration"
-    text = "FIPS is %(configuration)s, but FIPS provider is %(state)s."
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.CRITICAL,
+        title="FIPS misconfiguration",
+        text="FIPS is %(configuration)s, but FIPS provider is %(state)s.",
+    )
 
 
 class FIPSProviderAlertSource(AlertSource):

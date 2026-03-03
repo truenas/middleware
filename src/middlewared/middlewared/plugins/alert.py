@@ -19,6 +19,7 @@ from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
     AlertClass,
+    AlertClassConfig,
     OneShotAlertClass,
     DismissableAlertClass,
     AlertLevel,
@@ -87,47 +88,50 @@ class AlertModel(sa.Model):
 
 
 class AlertSourceRunFailedAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "Alert Check Failed"
-    text = "Failed to check for alert %(source_name)s: %(traceback)s"
-
-    exclude_from_list = True
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="Alert Check Failed",
+        text="Failed to check for alert %(source_name)s: %(traceback)s",
+        exclude_from_list=True,
+    )
 
 
 class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "Alert Check Failed (Standby Controller)"
-    text = "Failed to check for alert %(source_name)s on standby controller: %(traceback)s"
-
-    exclude_from_list = True
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="Alert Check Failed (Standby Controller)",
+        text="Failed to check for alert %(source_name)s on standby controller: %(traceback)s",
+        exclude_from_list=True,
+    )
 
 
 class AutomaticAlertFailedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Failed to Notify TrueNAS About Alert"
-    text = textwrap.dedent("""\
-        Creating an automatic alert for TrueNAS about system %(serial)s failed: %(error)s.
-        Please contact TrueNAS Support: https://www.truenas.com/support/
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Failed to Notify TrueNAS About Alert",
+        text=textwrap.dedent("""\
+            Creating an automatic alert for TrueNAS about system %(serial)s failed: %(error)s.
+            Please contact TrueNAS Support: https://www.truenas.com/support/
 
-        Alert:
+            Alert:
 
-        %(alert)s
-    """)
-
-    exclude_from_list = True
-
-    deleted_automatically = False
+            %(alert)s
+        """),
+        exclude_from_list=True,
+        deleted_automatically=False,
+    )
 
 
 class TestAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "Test alert"
-
-    exclude_from_list = True
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="Test alert",
+        exclude_from_list=True,
+    )
 
 
 class AlertPolicy:
@@ -156,7 +160,7 @@ class AlertPolicy:
 
 
 def get_alert_level(alert, classes):
-    return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)]
+    return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.config.level.name)]
 
 
 def get_alert_policy(alert, classes):
@@ -180,9 +184,9 @@ class AlertSerializer:
             id=alert.uuid,
             node=self.nodes[alert.node],
             klass=alert.klass.name,
-            level=self.classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
+            level=self.classes.get(alert.klass.name, {}).get("level", alert.klass.config.level.name),
             formatted=alert.formatted,
-            one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically
+            one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.config.deleted_automatically
         )
 
     async def get_alert_class(self, alert):
@@ -192,7 +196,7 @@ class AlertSerializer:
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        if self.product_type not in alert.klass.products:
+        if self.product_type not in alert.klass.config.products:
             return False
 
         if (await self.get_alert_class(alert)).get("policy") == "NEVER":
@@ -346,10 +350,10 @@ class AlertService(Service):
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
-            if not (options["include_all_products"] or product_type in alert_class.products):
+            if not (options["include_all_products"] or product_type in alert_class.config.products):
                 continue
 
-            if not (options["include_hidden_classes"] or not alert_class.exclude_from_list):
+            if not (options["include_hidden_classes"] or not alert_class.config.exclude_from_list):
                 continue
 
             classes.append(alert_class)
@@ -362,19 +366,19 @@ class AlertService(Service):
                     [
                         {
                             "id": alert_class.name,
-                            "title": alert_class.title,
-                            "level": alert_class.level.name,
-                            "product_types": list(alert_class.products),
-                            "proactive_support": alert_class.proactive_support,
+                            "title": alert_class.config.title,
+                            "level": alert_class.config.level.name,
+                            "product_types": list(alert_class.config.products),
+                            "proactive_support": alert_class.config.proactive_support,
                         }
                         for alert_class in classes
-                        if alert_class.category == alert_category
+                        if alert_class.config.category == alert_category
                     ],
                     key=lambda klass: klass["title"]
                 )
             }
             for alert_category in AlertCategory
-            if any(alert_class.category == alert_category for alert_class in classes)
+            if any(alert_class.config.category == alert_category for alert_class in classes)
         ]
 
     @api_method(AlertListArgs, AlertListResult, roles=['ALERT_LIST_READ'])
@@ -392,7 +396,7 @@ class AlertService(Service):
                 self.alerts,
                 key=lambda alert: (
                     -get_alert_level(alert, classes).value,
-                    alert.klass.title,
+                    alert.klass.config.title,
                     alert.datetime,
                 ),
             )
@@ -447,7 +451,7 @@ class AlertService(Service):
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self._delete_on_dismiss(deleted_alert)
-        elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically:
+        elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.config.deleted_automatically:
             self._delete_on_dismiss(alert)
         else:
             alert.dismissed = True
@@ -528,7 +532,7 @@ class AlertService(Service):
                 service_alerts = [
                     alert for alert in self.alerts
                     if (
-                        product_type in alert.klass.products and
+                        product_type in alert.klass.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) != "NEVER"
                     )
@@ -536,7 +540,7 @@ class AlertService(Service):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        product_type in alert.klass.products and
+                        product_type in alert.klass.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -544,7 +548,7 @@ class AlertService(Service):
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        product_type in alert.klass.products and
+                        product_type in alert.klass.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -595,16 +599,16 @@ class AlertService(Service):
                         alert
                         for alert in gone_alerts
                         if (
-                            alert.klass.proactive_support and
+                            alert.klass.config.proactive_support and
                             (await as_.get_alert_class(alert)).get("proactive_support", True) and
-                            alert.klass.proactive_support_notify_gone
+                            alert.klass.config.proactive_support_notify_gone
                         )
                     ]
                     new_proactive_support_alerts = [
                         alert
                         for alert in new_alerts
                         if (
-                            alert.klass.proactive_support and
+                            alert.klass.config.proactive_support and
                             (await as_.get_alert_class(alert)).get("proactive_support", True)
                         )
                     ]
@@ -832,8 +836,8 @@ class AlertService(Service):
 
     def __should_expire_alert(self, alert):
         if issubclass(alert.klass, OneShotAlertClass):
-            if alert.klass.expires_after is not None:
-                return alert.last_occurrence < utc_now() - alert.klass.expires_after
+            if alert.klass.config.expires_after is not None:
+                return alert.last_occurrence < utc_now() - alert.klass.config.expires_after
 
         return False
 
@@ -1240,7 +1244,7 @@ class AlertClassesService(ConfigService):
                 verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
                 continue
 
-            if "proactive_support" in v and not AlertClass.class_by_name[k].proactive_support:
+            if "proactive_support" in v and not AlertClass.class_by_name[k].config.proactive_support:
                 verrors.add(
                     f"alert_class_update.classes.{k}.proactive_support",
                     "Proactive support is not supported by this alert class",

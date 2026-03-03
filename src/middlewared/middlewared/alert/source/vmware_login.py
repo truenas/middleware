@@ -1,11 +1,13 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
 class VMWareLoginFailedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    title = "VMWare Login Failed"
-    text = "VMWare login to %(hostname)s failed: %(error)s."
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title="VMWare Login Failed",
+        text="VMWare login to %(hostname)s failed: %(error)s.",
+    )
 
     @classmethod
     def key(cls, args):

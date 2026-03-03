@@ -3,6 +3,7 @@ from time import time
 
 from middlewared.alert.base import (
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     Alert,
@@ -12,10 +13,12 @@ from middlewared.alert.schedule import IntervalSchedule
 
 
 class SSHLoginFailuresAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "SSH Login Failures"
-    text = "%(cnt)d SSH login failures in the last 24 hours"
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="SSH Login Failures",
+        text="%(cnt)d SSH login failures in the last 24 hours",
+    )
 
 
 class SSHLoginFailuresAlertSource(AlertSource):

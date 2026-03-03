@@ -1,13 +1,15 @@
 import subprocess
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 
 class SyslogNgAlertClass(AlertClass):
-    category = AlertCategory.REPORTING
-    level = AlertLevel.WARNING
-    title = "syslog-ng Is Not Running"
-    text = "%s"
+    config = AlertClassConfig(
+        category=AlertCategory.REPORTING,
+        level=AlertLevel.WARNING,
+        title="syslog-ng Is Not Running",
+        text="%s",
+    )
 
 
 class SyslogNgAlertSource(ThreadedAlertSource):
