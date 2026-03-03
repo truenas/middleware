@@ -152,6 +152,9 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
             statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
         ):
             child_mnt = entry.mnt_point
+            if not child_mnt.startswith(real_path + '/'):
+                continue
+
             child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
             child_fd = truenas_os.openat2(
                 child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
@@ -164,7 +167,6 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
                 _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
             finally:
                 os.close(child_fd)
-
 
 
 def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
