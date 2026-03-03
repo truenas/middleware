@@ -80,7 +80,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_extend(self, config):
         config['status_reason'] = Status[config['status']].value
         config.pop('jwt_token', None)
-        config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
 

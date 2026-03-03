@@ -47,6 +47,8 @@ class TrueNASConnectEntry(BaseModel):
     """URL endpoint for sending heartbeat signals to maintain connection status."""
     tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None
     """TrueNAS Connect tier."""
+    last_heartbeat_failure_datetime: str | None
+    """Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."""
 
 
 @single_argument_args('tn_connect_update')
