@@ -115,6 +115,13 @@
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
     for share in shares:
+        if share['locked']:
+            middleware.logger.debug(
+                'Skipping generation of share %r as the underlying resource is locked', share['path']
+            )
+            middleware.call_sync('sharing.nfs.generate_locked_alert', share['id'])
+            continue
+
         p = Path(share['path'])
         if not p.exists():
             middleware.logger.info("%s: path does not exist, omitting from NFS exports", p)

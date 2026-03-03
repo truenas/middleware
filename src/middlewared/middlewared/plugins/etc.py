@@ -300,7 +300,7 @@ class EtcService(Service):
         )),
         'nfsd': EtcGroup(
             ctx=(
-                CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True), ('locked', '=', False)]]),
+                CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True)]]),
                 CtxMethod(method='nfs.config'),
             ),
             entries=(

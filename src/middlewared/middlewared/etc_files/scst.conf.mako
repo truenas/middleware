@@ -491,7 +491,7 @@ TARGET_DRIVER iscsi {
 
             for initiator in ((initiators[group['initiator']]['initiators'] if group['initiator'] else []) or ['*']):
                 if not is_fc_addr(initiator):
-                    iscsi_initiator_portal_access.add(f'{initiator}\#{address}')
+                    iscsi_initiator_portal_access.add(fr'{initiator}\#{address}')
 %>\
 %   if associated_targets.get(target['id']):
 ##
