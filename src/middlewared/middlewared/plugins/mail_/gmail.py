@@ -12,7 +12,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.service import private, Service
 
 
-class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
+class GMailConfigurationDiscardedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,

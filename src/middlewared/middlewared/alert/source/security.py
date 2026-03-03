@@ -4,7 +4,7 @@ from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list
 
 
-class LocalAccountExpiringAlertClass(AlertClass):
+class LocalAccountExpiringAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SECURITY,
         level=AlertLevel.NOTICE,
@@ -13,7 +13,7 @@ class LocalAccountExpiringAlertClass(AlertClass):
     )
 
 
-class LocalAccountExpiredAlertClass(AlertClass):
+class LocalAccountExpiredAlert(AlertClass):
     """
     One or more accounts are actually expired.
     """
@@ -25,7 +25,7 @@ class LocalAccountExpiredAlertClass(AlertClass):
     )
 
 
-class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
+class AllAdminAccountsExpiredAlert(AlertClass, OneShotAlertClass):
     """
     All local administrator accounts have expired passwords. This means we have
     potentially locked out ability to administer the NAS. To facilitate recovery
@@ -92,13 +92,13 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
 
         if expiring:
             alerts.append(Alert(
-                LocalAccountExpiringAlertClass,
+                LocalAccountExpiringAlert,
                 {"accounts": ", ".join([u["username"] for u in expiring])}
             ))
 
         if expired:
             alerts.append(Alert(
-                LocalAccountExpiredAlertClass,
+                LocalAccountExpiredAlert,
                 {"accounts": ", ".join([u["username"] for u in expired])}
             ))
 

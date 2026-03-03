@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class SMBAuditShareDisabledAlertClass(AlertClass, OneShotAlertClass):
+class SMBAuditShareDisabledAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

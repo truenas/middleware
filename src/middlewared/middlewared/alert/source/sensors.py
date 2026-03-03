@@ -18,7 +18,7 @@ from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
-class SensorAlertClass(AlertClass):
+class SensorAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -28,7 +28,7 @@ class SensorAlertClass(AlertClass):
     )
 
 
-class PowerSupplyAlertClass(AlertClass):
+class PowerSupplyAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -80,7 +80,7 @@ class PsuAlertSource(AlertSource):
                         self.incident_id = generate_token(16, url_safe=True)
                     alerts.append(
                         Alert(
-                            PowerSupplyAlertClass,
+                            PowerSupplyAlert,
                             {
                                 "id": self.incident_id,
                                 "psu": i["name"],
@@ -131,7 +131,7 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "lower-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlertClass,
+                            SensorAlert,
                             {
                                 "name": sensor["name"],
                                 "relative": relative,
@@ -152,7 +152,7 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "upper-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlertClass,
+                            SensorAlert,
                             {
                                 "name": sensor["name"],
                                 "relative": relative,

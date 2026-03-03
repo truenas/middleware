@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class EncryptedDatasetAlertClass(AlertClass):
+class EncryptedDatasetAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -35,4 +35,4 @@ class UnencryptedDatasetsAlertSource(AlertSource):
                     unencrypted_datasets.append(child['name'])
 
         if unencrypted_datasets:
-            return Alert(EncryptedDatasetAlertClass, {'datasets': ', '.join(unencrypted_datasets)})
+            return Alert(EncryptedDatasetAlert, {'datasets': ', '.join(unencrypted_datasets)})

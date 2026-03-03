@@ -2,7 +2,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.utils import ProductType
 
 
-class CoreFilesArePresentAlertClass(AlertClass):
+class CoreFilesArePresentAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -53,4 +53,4 @@ class CoreFilesArePresentAlertSource(AlertSource):
                 corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
-            return Alert(CoreFilesArePresentAlertClass, {"corefiles": ', '.join(corefiles)})
+            return Alert(CoreFilesArePresentAlert, {"corefiles": ', '.join(corefiles)})

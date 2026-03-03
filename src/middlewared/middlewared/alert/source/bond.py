@@ -13,7 +13,7 @@ from middlewared.alert.base import (
 )
 
 
-class BONDInactivePortsAlertClass(AlertClass):
+class BONDInactivePortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
         level=AlertLevel.CRITICAL,
@@ -22,7 +22,7 @@ class BONDInactivePortsAlertClass(AlertClass):
     )
 
 
-class BONDNoActivePortsAlertClass(AlertClass):
+class BONDNoActivePortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
         level=AlertLevel.CRITICAL,
@@ -31,7 +31,7 @@ class BONDNoActivePortsAlertClass(AlertClass):
     )
 
 
-class BONDMissingPortsAlertClass(AlertClass):
+class BONDMissingPortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
         level=AlertLevel.CRITICAL,
@@ -61,19 +61,19 @@ class BondStatus(AlertSource):
             if missing:
                 alerts.append(
                     Alert(
-                        BONDMissingPortsAlertClass,
+                        BONDMissingPortsAlert,
                         {"name": iface, "missing": ", ".join(missing)},
                     )
                 )
             elif not active:
-                alerts.append(Alert(BONDNoActivePortsAlertClass, {"name": iface}))
+                alerts.append(Alert(BONDNoActivePortsAlert, {"name": iface}))
             elif inactive and (info["lag_protocol"] != "FAILOVER" or len(active) == 1):
                 # 1. if this isn't FAILOVER type and any inactive
                 # 2. OR if it's FAILOVER and we only have 1 active
                 # we need to raise an alert
                 alerts.append(
                     Alert(
-                        BONDInactivePortsAlertClass,
+                        BONDInactivePortsAlert,
                         {"name": iface, "ports": ", ".join(inactive)},
                     )
                 )

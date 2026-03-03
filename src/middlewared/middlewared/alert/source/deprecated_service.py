@@ -3,7 +3,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertCla
 URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
 
-class DeprecatedServiceAlertClass(AlertClass, OneShotAlertClass):
+class DeprecatedServiceAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

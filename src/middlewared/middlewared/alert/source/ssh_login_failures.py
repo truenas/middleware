@@ -12,7 +12,7 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class SSHLoginFailuresAlertClass(AlertClass):
+class SSHLoginFailuresAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -44,4 +44,4 @@ class SSHLoginFailuresAlertSource(AlertSource):
             },
         )
         if cnt > 0:
-            return Alert(SSHLoginFailuresAlertClass, {"cnt": cnt})
+            return Alert(SSHLoginFailuresAlert, {"cnt": cnt})

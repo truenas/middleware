@@ -4,7 +4,7 @@ from middlewared.utils import ProductType
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 
 
-class TrueNASMiniBMCAlertClass(AlertClass):
+class TrueNASMiniBMCAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -32,4 +32,4 @@ class TrueNASMiniBMCAlertSource(AlertSource):
                 except ValueError:
                     return
 
-            return Alert(TrueNASMiniBMCAlertClass)
+            return Alert(TrueNASMiniBMCAlert)

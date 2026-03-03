@@ -95,10 +95,10 @@ class AlertClass:
     def __init_subclass__(cls):
         super().__init_subclass__()
 
-        if not cls.__name__.endswith("AlertClass"):
+        if not cls.__name__.endswith("Alert"):
             raise NameError(f"Invalid alert class name {cls.__name__}")
 
-        name = cls.__name__.replace("AlertClass", "")
+        name = cls.__name__.removesuffix("Alert")
         cls.config = replace(cls.config, name=name)
 
         AlertClass.classes.append(cls)
@@ -238,7 +238,7 @@ class Alert:
     Alert: a message about a single issues in the system (or a group of similar issues that can be potentially resolved
     with a single action).
 
-    :ivar klass: Alert class: generic description of the alert (e.g. `CertificateIsExpiringAlertClass`)
+    :ivar klass: Alert class: generic description of the alert (e.g. `CertificateIsExpiringAlert`)
 
     :ivar args: specific description of the alert (e.g. `{"name": "my certificate", "days": 3}`).
         The resulting alert text will be obtained by doing `klass.text % args`
@@ -247,7 +247,7 @@ class Alert:
         will default to `args`, which is the most common use case. Can be anything that can be JSON serialized.
 
         However, for some alerts it makes sense to pass only a subset of args as the key. For example, for a
-        `CertificateIsExpiringAlertClass` you may only want to include the certificate name as the key and omit how
+        `CertificateIsExpiringAlert` you may only want to include the certificate name as the key and omit how
         many days are left before the certificate expires. That way, at day change, the alerts "certificate xxx expires
         in 3 days" and "certificate xxx expires in 2 days" will be considered the same alert (as only certificate name
         will be compared) and the newer one will silently replace the old one (in opposite case, an E-Mail would be

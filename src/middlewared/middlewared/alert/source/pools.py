@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
+class PoolUpgradedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.NOTICE,

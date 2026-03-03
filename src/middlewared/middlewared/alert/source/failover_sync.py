@@ -7,7 +7,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertCla
 from middlewared.utils import ProductType
 
 
-class FailoverSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+class FailoverSyncFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -22,7 +22,7 @@ class FailoverSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class FailoverKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+class FailoverKeysSyncFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -36,7 +36,7 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+class FailoverKMIPKeysSyncFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,

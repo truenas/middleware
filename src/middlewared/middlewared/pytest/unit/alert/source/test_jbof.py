@@ -4,7 +4,7 @@ import pytest
 import copy
 
 from middlewared.alert.base import Alert
-from middlewared.alert.source.jbof import JBOFInvalidDataAlertClass, JBOFRedfishCommAlertClass, JBOFAlertSource, JBOFElementWarningAlertClass, JBOFElementCriticalAlertClass
+from middlewared.alert.source.jbof import JBOFInvalidDataAlert, JBOFRedfishCommAlert, JBOFAlertSource, JBOFElementWarningAlert, JBOFElementCriticalAlert
 from middlewared.pytest.unit.middleware import Middleware
 
 uuid1 = '244c0e5f-bf7b-4a68-bd40-80e3f1a5b4ed'
@@ -444,7 +444,7 @@ async def test__jbof_redfish_comm_alert():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert == Alert(JBOFRedfishCommAlertClass, args=jbof1_id_dict)
+    assert alert == Alert(JBOFRedfishCommAlert, args=jbof1_id_dict)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Failed to communicate with redfish interface.'
 
 
@@ -471,7 +471,7 @@ async def test__jbof_invalid_data():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFInvalidDataAlertClass
+    assert alert.klass == JBOFInvalidDataAlert
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) does not provide valid data for: elements'
 
 
@@ -492,7 +492,7 @@ async def test__jbof_psu_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert alert.klass == JBOFElementCriticalAlert
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Power Supply PSU1 is critical: LossOfInput'
 
 
@@ -513,7 +513,7 @@ async def test__jbof_fan_noncritical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementWarningAlertClass
+    assert alert.klass == JBOFElementWarningAlert
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Cooling Fan6 is noncritical: SpeedRPM=12345.0'
 
 
@@ -534,7 +534,7 @@ async def test__jbof_temp_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert alert.klass == JBOFElementCriticalAlert
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Temperature Sensors TempDrive1 is critical: 50.0 C'
 
 
@@ -555,5 +555,5 @@ async def test__jbof_volt_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert alert.klass == JBOFElementCriticalAlert
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Voltage Sensor VoltPS1Vin is critical: 100'

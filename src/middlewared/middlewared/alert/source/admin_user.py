@@ -5,7 +5,7 @@ from middlewared.plugins.account import ADMIN_UID
 from middlewared.service_exception import MatchNotFound
 
 
-class AdminUserIsOverriddenAlertClass(AlertClass):
+class AdminUserIsOverriddenAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -43,4 +43,4 @@ class AdminUserAlertSource(AlertSource):
                 (user_obj["pw_gecos"] != admin["full_name"]) or
                 (user_obj["pw_dir"] != admin["home"])
         ):
-            return Alert(AdminUserIsOverriddenAlertClass, {"username": admin["username"]})
+            return Alert(AdminUserIsOverriddenAlert, {"username": admin["username"]})

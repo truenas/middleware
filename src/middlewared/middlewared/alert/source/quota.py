@@ -11,7 +11,7 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 logger = logging.getLogger(__name__)
 
 
-class QuotaWarningAlertClass(AlertClass):
+class QuotaWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.WARNING,
@@ -20,7 +20,7 @@ class QuotaWarningAlertClass(AlertClass):
     )
 
 
-class QuotaCriticalAlertClass(AlertClass):
+class QuotaCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.CRITICAL,
@@ -92,9 +92,9 @@ class QuotaAlertSource(ThreadedAlertSource):
 
                 used_fraction = 100 * used / quota_value
                 if used_fraction >= critical_threshold:
-                    klass = QuotaCriticalAlertClass
+                    klass = QuotaCriticalAlert
                 elif used_fraction >= warning_threshold:
-                    klass = QuotaWarningAlertClass
+                    klass = QuotaWarningAlert
                 else:
                     continue
 

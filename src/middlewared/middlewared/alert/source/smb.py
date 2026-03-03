@@ -27,7 +27,7 @@ def generate_alert_text(auth_log):
     return [f"{entry['client']} at {entry['address']} ({entry['cnt']} times)" for entry in alert_text.values()]
 
 
-class SMBLegacyProtocolAlertClass(AlertClass):
+class SMBLegacyProtocolAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.NOTICE,
@@ -36,7 +36,7 @@ class SMBLegacyProtocolAlertClass(AlertClass):
     )
 
 
-class NTLMv1AuthenticationAlertClass(AlertClass):
+class NTLMv1AuthenticationAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -45,7 +45,7 @@ class NTLMv1AuthenticationAlertClass(AlertClass):
     )
 
 
-class SMBPathAlertClass(AlertClass):
+class SMBPathAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.CRITICAL,
@@ -87,7 +87,7 @@ class SMBLegacyProtocolAlertSource(AlertSource):
             })
 
         return Alert(
-            SMBLegacyProtocolAlertClass,
+            SMBLegacyProtocolAlert,
             {'err': ', '.join(generate_alert_text(parsed))},
             key=None
         )
@@ -131,7 +131,7 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
             })
 
         return Alert(
-            NTLMv1AuthenticationAlertClass,
+            NTLMv1AuthenticationAlert,
             {'err': ', '.join(generate_alert_text(parsed))},
             key=None
         )
@@ -169,10 +169,10 @@ class SMBPathAlertSource(AlertSource):
             self.middleware.logger.error('Failed to format error message', exc_info=True)
             return
 
-        return Alert(SMBPathAlertClass, {'err': msg}, key=None)
+        return Alert(SMBPathAlert, {'err': msg}, key=None)
 
 
-class SMBUserMissingHashAlertClass(AlertClass, OneShotAlertClass):
+class SMBUserMissingHashAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

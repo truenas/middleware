@@ -9,7 +9,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 from middlewared.utils import ProductType
 
 
-class SATADOMWearWarningAlertClass(AlertClass):
+class SATADOMWearWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -19,7 +19,7 @@ class SATADOMWearWarningAlertClass(AlertClass):
     )
 
 
-class SATADOMWearCriticalAlertClass(AlertClass):
+class SATADOMWearCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -46,12 +46,12 @@ class SATADOMWearAlertSource(AlertSource):
             lifetime = await self.middleware.call("disk.sata_dom_lifetime_left", disk)
             if lifetime is not None:
                 if lifetime <= 0.1:
-                    alerts.append(Alert(SATADOMWearCriticalAlertClass, {
+                    alerts.append(Alert(SATADOMWearCriticalAlert, {
                         "disk": disk,
                         "lifetime": int(lifetime * 100 + 0.5),
                     }))
                 elif lifetime <= 0.2:
-                    alerts.append(Alert(SATADOMWearWarningAlertClass, {
+                    alerts.append(Alert(SATADOMWearWarningAlert, {
                         "disk": disk,
                         "lifetime": int(lifetime * 100 + 0.5),
                     }))

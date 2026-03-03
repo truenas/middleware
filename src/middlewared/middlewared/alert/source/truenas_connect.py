@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class TNCHeartbeatConnectionFailureAlertClass(AlertClass, OneShotAlertClass):
+class TNCHeartbeatConnectionFailureAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TRUENAS_CONNECT,
         level=AlertLevel.ERROR,
@@ -12,7 +12,7 @@ class TNCHeartbeatConnectionFailureAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class TNCDisabledAutoUnconfiguredAlertClass(AlertClass, OneShotAlertClass):
+class TNCDisabledAutoUnconfiguredAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TRUENAS_CONNECT,
         level=AlertLevel.ERROR,

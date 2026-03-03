@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class TruecommandConnectionDisabledAlertClass(AlertClass, OneShotAlertClass):
+class TruecommandConnectionDisabledAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -12,7 +12,7 @@ class TruecommandConnectionDisabledAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class TruecommandConnectionPendingAlertClass(AlertClass, OneShotAlertClass):
+class TruecommandConnectionPendingAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.INFO,
@@ -23,7 +23,7 @@ class TruecommandConnectionPendingAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
+class TruecommandConnectionHealthAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -35,7 +35,7 @@ class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class TruecommandContainerHealthAlertClass(AlertClass, OneShotAlertClass):
+class TruecommandContainerHealthAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,

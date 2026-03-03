@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, OneShotAlertClass, AlertLevel
 
 
-class FailoverRebootAlertClass(AlertClass, OneShotAlertClass):
+class FailoverRebootAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -15,7 +15,7 @@ class FailoverRebootAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class FencedRebootAlertClass(AlertClass, OneShotAlertClass):
+class FencedRebootAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,

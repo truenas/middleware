@@ -10,7 +10,7 @@ from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
-class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
+class FailoverRemoteSystemInaccessibleAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -39,7 +39,7 @@ class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
             if time.monotonic() - self.last_available > 4 * 3600:
                 if self.incident_id is None:
                     self.incident_id = generate_token(16, url_safe=True)
-                return [Alert(FailoverRemoteSystemInaccessibleAlertClass, args=[self.incident_id])]
+                return [Alert(FailoverRemoteSystemInaccessibleAlert, args=[self.incident_id])]
             else:
                 raise UnavailableException()
 

@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class NFSHostnameLookupFailAlertClass(AlertClass, OneShotAlertClass):
+class NFSHostnameLookupFailAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -11,7 +11,7 @@ class NFSHostnameLookupFailAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class NFSHostListExcessiveAlertClass(AlertClass, OneShotAlertClass):
+class NFSHostListExcessiveAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -26,7 +26,7 @@ class NFSHostListExcessiveAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class NFSNetworkListExcessiveAlertClass(AlertClass, OneShotAlertClass):
+class NFSNetworkListExcessiveAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

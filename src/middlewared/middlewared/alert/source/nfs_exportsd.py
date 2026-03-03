@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class NFSblockedByExportsDirAlertClass(AlertClass, OneShotAlertClass):
+class NFSblockedByExportsDirAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.ERROR,
@@ -11,7 +11,7 @@ class NFSblockedByExportsDirAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class NFSexportMappingInvalidNamesAlertClass(AlertClass, OneShotAlertClass):
+class NFSexportMappingInvalidNamesAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.ERROR,

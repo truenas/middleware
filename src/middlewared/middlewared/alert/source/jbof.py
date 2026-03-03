@@ -11,7 +11,7 @@ from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
 
 
-class JBOFTearDownFailureAlertClass(AlertClass, OneShotAlertClass):
+class JBOFTearDownFailureAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -21,7 +21,7 @@ class JBOFTearDownFailureAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class JBOFRedfishCommAlertClass(AlertClass):
+class JBOFRedfishCommAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -31,7 +31,7 @@ class JBOFRedfishCommAlertClass(AlertClass):
     )
 
 
-class JBOFInvalidDataAlertClass(AlertClass):
+class JBOFInvalidDataAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -41,7 +41,7 @@ class JBOFInvalidDataAlertClass(AlertClass):
     )
 
 
-class JBOFElementWarningAlertClass(AlertClass):
+class JBOFElementWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -51,7 +51,7 @@ class JBOFElementWarningAlertClass(AlertClass):
     )
 
 
-class JBOFElementCriticalAlertClass(AlertClass):
+class JBOFElementCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -79,13 +79,13 @@ class JBOFAlertSource(AlertSource):
                     break
             if data is None:
                 # Did not find data for this JBOF
-                alerts.append(Alert(JBOFRedfishCommAlertClass, jbof_id_dict))
+                alerts.append(Alert(JBOFRedfishCommAlert, jbof_id_dict))
                 continue
 
             # Make sure the data seems to have the correct shape
             elements = data.get('elements')
             if not elements or not isinstance(elements, dict):
-                alerts.append(Alert(JBOFInvalidDataAlertClass, {'keys': 'elements'} | jbof_id_dict))
+                alerts.append(Alert(JBOFInvalidDataAlert, {'keys': 'elements'} | jbof_id_dict))
                 continue
 
             bad_keys = []
@@ -97,19 +97,19 @@ class JBOFAlertSource(AlertSource):
                     for key, v in edata.items():
                         match v['status']:
                             case ElementStatus.NONCRITICAL.value:
-                                alerts.append(Alert(JBOFElementWarningAlertClass, {'etype': etype.value,
+                                alerts.append(Alert(JBOFElementWarningAlert, {'etype': etype.value,
                                                                                    'key': key,
                                                                                    'value': v.get('value', '')
                                                                                    } | jbof_id_dict))
                             case ElementStatus.CRITICAL.value:
-                                alerts.append(Alert(JBOFElementCriticalAlertClass, {'etype': etype.value,
+                                alerts.append(Alert(JBOFElementCriticalAlert, {'etype': etype.value,
                                                                                     'key': key,
                                                                                     'value': v.get('value', '')
                                                                                     } | jbof_id_dict))
                             case _:
                                 pass
             if bad_keys:
-                alerts.append(Alert(JBOFInvalidDataAlertClass, {'keys': ','.join(bad_keys)} | jbof_id_dict))
+                alerts.append(Alert(JBOFInvalidDataAlert, {'keys': ','.join(bad_keys)} | jbof_id_dict))
 
     async def check(self):
         alerts = []

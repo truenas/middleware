@@ -12,7 +12,7 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ZpoolCapacityNoticeAlertClass(AlertClass):
+class ZpoolCapacityNoticeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.NOTICE,
@@ -22,7 +22,7 @@ class ZpoolCapacityNoticeAlertClass(AlertClass):
     )
 
 
-class ZpoolCapacityWarningAlertClass(AlertClass):
+class ZpoolCapacityWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.WARNING,
@@ -32,7 +32,7 @@ class ZpoolCapacityWarningAlertClass(AlertClass):
     )
 
 
-class ZpoolCapacityCriticalAlertClass(AlertClass):
+class ZpoolCapacityCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
         level=AlertLevel.CRITICAL,
@@ -61,9 +61,9 @@ class ZpoolCapacityAlertSource(AlertSource):
                 continue
 
             for target_capacity, klass in [
-                (95, ZpoolCapacityCriticalAlertClass),
-                (90, ZpoolCapacityWarningAlertClass),
-                (85, ZpoolCapacityNoticeAlertClass),
+                (95, ZpoolCapacityCriticalAlert),
+                (90, ZpoolCapacityWarningAlert),
+                (85, ZpoolCapacityNoticeAlert),
             ]:
                 if capacity >= target_capacity:
                     alerts.append(

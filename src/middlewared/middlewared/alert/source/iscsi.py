@@ -5,7 +5,7 @@ from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 
 
-class ISCSIPortalIPAlertClass(AlertClass):
+class ISCSIPortalIPAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -53,10 +53,10 @@ class ISCSIPortalIPAlertSource(AlertSource):
                 ips -= ok
 
         if ips:
-            return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
+            return Alert(ISCSIPortalIPAlert, ', '.join(ips))
 
 
-class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
+class ISCSIAuthSecretInvalidCharAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -68,7 +68,7 @@ class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
     )
 
 
-class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
+class ISCSIAuthSecretWhitespaceAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -105,7 +105,7 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                         if char in auth[secretfield]:
                             alerts.append(
                                 Alert(
-                                    ISCSIAuthSecretInvalidCharAlertClass,
+                                    ISCSIAuthSecretInvalidCharAlert,
                                     {
                                         'field': private_to_public[secretfield],
                                         'tag': auth['tag'],
@@ -118,7 +118,7 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                     if auth[secretfield] != auth[secretfield].strip():
                         alerts.append(
                             Alert(
-                                ISCSIAuthSecretWhitespaceAlertClass,
+                                ISCSIAuthSecretWhitespaceAlert,
                                 {
                                     'field': private_to_public[secretfield],
                                     'tag': auth['tag'],

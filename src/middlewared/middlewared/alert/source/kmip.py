@@ -6,7 +6,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 
-class KMIPConnectionFailedAlertClass(AlertClass, OneShotAlertClass):
+class KMIPConnectionFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,
@@ -16,7 +16,7 @@ class KMIPConnectionFailedAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class KMIPZFSDatasetsSyncFailureAlertClass(AlertClass, OneShotAlertClass):
+class KMIPZFSDatasetsSyncFailureAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,
@@ -26,7 +26,7 @@ class KMIPZFSDatasetsSyncFailureAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class KMIPSEDDisksSyncFailureAlertClass(AlertClass, OneShotAlertClass):
+class KMIPSEDDisksSyncFailureAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,
@@ -36,7 +36,7 @@ class KMIPSEDDisksSyncFailureAlertClass(AlertClass, OneShotAlertClass):
     )
 
 
-class KMIPSEDGlobalPasswordSyncFailureAlertClass(AlertClass, OneShotAlertClass):
+class KMIPSEDGlobalPasswordSyncFailureAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,

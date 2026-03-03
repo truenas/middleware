@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class SnapshotFailedAlertClass(AlertClass):
+class SnapshotFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,
@@ -10,7 +10,7 @@ class SnapshotFailedAlertClass(AlertClass):
     )
 
 
-class ReplicationSuccessAlertClass(AlertClass):
+class ReplicationSuccessAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,
@@ -19,7 +19,7 @@ class ReplicationSuccessAlertClass(AlertClass):
     )
 
 
-class ReplicationFailedAlertClass(AlertClass):
+class ReplicationFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,
@@ -37,7 +37,7 @@ class ReplicationAlertSource(AlertSource):
             if snapshottask.state["state"] == "ERROR":
                 alerts.append(
                     Alert(
-                        SnapshotFailedAlertClass,
+                        SnapshotFailedAlert,
                         {
                             "name": snapshottask.dataset,
                             "message": snapshottask.state["error"],
@@ -51,7 +51,7 @@ class ReplicationAlertSource(AlertSource):
             if replication["state"]["state"] == "FINISHED":
                 alerts.append(
                     Alert(
-                        ReplicationSuccessAlertClass,
+                        ReplicationSuccessAlert,
                         {
                             "name": replication["name"],
                         },
@@ -62,7 +62,7 @@ class ReplicationAlertSource(AlertSource):
             if replication["state"]["state"] == "ERROR":
                 alerts.append(
                     Alert(
-                        ReplicationFailedAlertClass,
+                        ReplicationFailedAlert,
                         {
                             "name": replication["name"],
                             "message": replication["state"]["error"],

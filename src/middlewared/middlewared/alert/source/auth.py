@@ -9,7 +9,7 @@ URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/
 MAX_LOGINS_LISTED = 100
 
 
-class AdminSessionAlertClass(AlertClass):
+class AdminSessionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -25,7 +25,7 @@ class AdminSessionAlertClass(AlertClass):
     )
 
 
-class APIFailedLoginAlertClass(AlertClass):
+class APIFailedLoginAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -87,7 +87,7 @@ class AdminSessionAlertSource(AlertSource):
 
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
         return Alert(
-            AdminSessionAlertClass,
+            AdminSessionAlert,
             {'count': admin_login_count, 'sessions': audit_msg},
             key=None
         )
@@ -137,7 +137,7 @@ class APIFailedLoginAlertSource(AlertSource):
 
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in auth_failures])
         return Alert(
-            APIFailedLoginAlertClass,
+            APIFailedLoginAlert,
             {'count': auth_failure_count, 'sessions': audit_msg},
             key=None
         )
