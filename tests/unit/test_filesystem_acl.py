@@ -213,7 +213,8 @@ def nfs4_dataset():
     rsrc = lz.open_resource(name=ds_name)
     try:
         rsrc.mount()
-        yield rsrc.properties[truenas_pylibzfs.ZFSProperty.MOUNTPOINT].value
+        props = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
+        yield props[truenas_pylibzfs.ZFSProperty.MOUNTPOINT].value
     finally:
         rsrc.unmount()
         lz.destroy_resource(name=ds_name)
@@ -754,12 +755,11 @@ def test_posix_file_mode_bit(local_user, posix_env, mode_bit):
             with pytest.raises(PermissionError):
                 open(testfile, 'w').write('x')
 
-            # Exec syscall is permitted by the kernel (EXECUTE is set), but
-            # the shell cannot read the script body, so it exits non-zero.
-            result = subprocess.run([testfile], capture_output=True, timeout=5)
-            assert result.returncode != 0, (
-                'script should fail: shell cannot read body without READ bit'
-            )
+            # Shell scripts require READ to parse the #! header; the kernel
+            # returns EACCES on execve before the interpreter runs.
+            with pytest.raises(PermissionError):
+                subprocess.run([testfile], capture_output=True, timeout=5,
+                               check=True)
 
 
 @pytest.mark.parametrize('mode_bit', list(ALL_BITS))

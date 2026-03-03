@@ -198,19 +198,26 @@ class TestNFS4RoundTrip:
         assert acl_out == acl_in
 
     def test_multi_ace_ordering_preserved(self):
-        """ACE ordering is preserved across the round-trip."""
+        """Relative ordering within DENY/ALLOW groups is preserved.
+
+        truenas_os.NFS4ACL canonicalizes ACEs to DENY-before-ALLOW order
+        while preserving relative order within each group.  The input must
+        already be in canonical order for the round-trip to be stable.
+        """
         acl_in = [
+            # DENY entries first (canonical)
             {'tag': 'USER', 'id': 42, 'type': 'DENY',
              'perms': _nfs4_perms(WRITE_DATA=True),
              'flags': _nfs4_flags()},
+            {'tag': 'everyone@', 'id': -1, 'type': 'DENY',
+             'perms': _nfs4_perms(WRITE_ACL=True, WRITE_OWNER=True),
+             'flags': _nfs4_flags()},
+            # ALLOW entries after
             {'tag': 'owner@', 'id': -1, 'type': 'ALLOW',
              'perms': _nfs4_perms(READ_DATA=True, WRITE_DATA=True),
              'flags': _nfs4_flags(FILE_INHERIT=True)},
             {'tag': 'group@', 'id': -1, 'type': 'ALLOW',
              'perms': _nfs4_perms(READ_DATA=True),
-             'flags': _nfs4_flags()},
-            {'tag': 'everyone@', 'id': -1, 'type': 'DENY',
-             'perms': _nfs4_perms(WRITE_ACL=True, WRITE_OWNER=True),
              'flags': _nfs4_flags()},
         ]
         acl_out, _ = _nfs4_rt(acl_in)
