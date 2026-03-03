@@ -538,8 +538,8 @@ class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     def key(self, args):
         return args["id"]
 
-    def load(self, alerts):
-        task_ids = {str(task["id"]) for task in self.middleware.call_sync("cloudsync.query")}
+    async def load(self, middleware, alerts):
+        task_ids = {str(task["id"]) for task in await middleware.call("cloudsync.query")}
         return [alert for alert in alerts if alert.key in task_ids]
 
 
