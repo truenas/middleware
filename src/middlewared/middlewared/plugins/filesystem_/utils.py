@@ -70,12 +70,15 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
     do_chmod = options.get('do_chmod', False)
 
     mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(fd)
+    root_acl = None
 
-    root_acl = (
-        truenas_os.fgetacl(fd)
-        if action in (AclToolAction.CLONE, AclToolAction.INHERIT)
-        else None
-    )
+    if action in (AclToolAction.CLONE, AclToolAction.INHERIT):
+        try:
+            root = truenas_os.fgetacl(fd)
+        except OSError as exc:
+            if exc.errno != errno.EOPNOTSUPP:
+                raise
+
     root_mode = os.fstat(fd).st_mode if do_chmod else None
 
     nfs4_inh = None
