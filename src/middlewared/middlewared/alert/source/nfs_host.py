@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class NFSHostnameLookupFailAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSHostnameLookupFailAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []
@@ -9,7 +9,7 @@ class NFSHostnameLookupFailAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = "NFS shares refer to the following unresolvable hosts: %(hosts)s"
 
 
-class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSHostListExcessiveAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []
@@ -22,7 +22,7 @@ class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
     )
 
 
-class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSNetworkListExcessiveAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []

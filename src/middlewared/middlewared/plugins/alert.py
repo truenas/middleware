@@ -20,7 +20,6 @@ from middlewared.alert.base import (
     alert_category_names,
     AlertClass,
     OneShotAlertClass,
-    SimpleOneShotAlertClass,
     DismissableAlertClass,
     AlertLevel,
     Alert,
@@ -105,7 +104,7 @@ class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     exclude_from_list = True
 
 
-class AutomaticAlertFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class AutomaticAlertFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Failed to Notify TrueNAS About Alert"

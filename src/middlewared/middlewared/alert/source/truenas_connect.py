@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class TNCHeartbeatConnectionFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TNCHeartbeatConnectionFailureAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
     level = AlertLevel.ERROR
@@ -10,7 +10,7 @@ class TNCHeartbeatConnectionFailureAlertClass(AlertClass, SimpleOneShotAlertClas
     text = 'Failed to connect to TrueNAS Connect Heartbeat Service in the last 48 hours'
 
 
-class TNCDisabledAutoUnconfiguredAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TNCDisabledAutoUnconfiguredAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
     level = AlertLevel.ERROR

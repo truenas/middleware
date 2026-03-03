@@ -1,5 +1,5 @@
 import time
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
 
@@ -166,7 +166,7 @@ class SMBPathAlertSource(AlertSource):
         return Alert(SMBPathAlertClass, {'err': msg}, key=None)
 
 
-class SMBUserMissingHashAlertClass(AlertClass, SimpleOneShotAlertClass):
+class SMBUserMissingHashAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     keys = []

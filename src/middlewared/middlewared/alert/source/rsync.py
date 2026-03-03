@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class RsyncSuccessAlertClass(AlertClass, SimpleOneShotAlertClass):
+class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
 
     category = AlertCategory.TASKS
@@ -13,7 +13,7 @@ class RsyncSuccessAlertClass(AlertClass, SimpleOneShotAlertClass):
         return args['id']
 
 
-class RsyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
 
     category = AlertCategory.TASKS

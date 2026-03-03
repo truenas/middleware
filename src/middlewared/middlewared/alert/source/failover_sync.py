@@ -3,11 +3,11 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.utils import ProductType
 
 
-class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailoverSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     keys = []
@@ -20,7 +20,7 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     products = (ProductType.ENTERPRISE,)
 
 
-class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailoverKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
 
     category = AlertCategory.HA
@@ -33,7 +33,7 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     products = (ProductType.ENTERPRISE,)
 
 
-class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 
