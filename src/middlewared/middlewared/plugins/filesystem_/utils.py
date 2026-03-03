@@ -98,27 +98,30 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
 
     reporting_callback = _report_progress if job is not None else None
 
-    def _apply_action(item, it, depth_offset=0):
+    def _apply_action_fd(fd, isdir, depth):
         if action == AclToolAction.CHOWN:
-            os.fchown(item.fd, uid, gid)
+            os.fchown(fd, uid, gid)
 
         elif action == AclToolAction.STRIP:
-            truenas_os.fsetacl(item.fd, None)
+            truenas_os.fsetacl(fd, None)
             if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
-                os.fchown(item.fd, uid, gid)
+                os.fchown(fd, uid, gid)
             if do_chmod and root_mode is not None:
-                os.fchmod(item.fd, root_mode & 0o7777)
+                os.fchmod(fd, root_mode & 0o7777)
 
         elif action in (AclToolAction.CLONE, AclToolAction.INHERIT):
             if nfs4_inh is not None:
-                inherited = nfs4_inh.pick(depth_offset + len(it.dir_stack()), item.isdir)
-                truenas_os.fsetacl(item.fd, inherited)
+                inherited = nfs4_inh.pick(depth, isdir)
+                truenas_os.fsetacl(fd, inherited)
             elif root_acl is not None:
-                truenas_os.fsetacl(item.fd, root_acl)
+                truenas_os.fsetacl(fd, root_acl)
             if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
-                os.fchown(item.fd, uid, gid)
+                os.fchown(fd, uid, gid)
             if do_chmod and root_mode is not None:
-                os.fchmod(item.fd, root_mode & 0o7777)
+                os.fchmod(fd, root_mode & 0o7777)
+
+    def _apply_action(item, it, depth_offset=0):
+        _apply_action_fd(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
 
     def _process_mount(mnt_point, fs, rel, depth_offset=0):
         with truenas_os.iter_filesystem_contents(
@@ -133,7 +136,7 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
                 try:
                     _apply_action(item, it, depth_offset)
                 except OSError as e:
-                    raise CallError(f'acltool [{action}] failed on item in {mountpoint}: {e}')
+                    raise CallError(f'acltool [{action}] failed on item in {mnt_point}: {e}')
 
     _process_mount(mountpoint, fs_name, rel_path)
 
@@ -146,7 +149,17 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
             if not child_mnt.startswith(real_path + '/'):
                 continue
             child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
-            _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
+            child_fd = truenas_os.openat2(
+                child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            )
+            try:
+                try:
+                    _apply_action_fd(child_fd, True, child_depth)
+                except OSError as e:
+                    raise CallError(f'acltool [{action}] failed on {child_mnt}: {e}')
+                _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
+            finally:
+                os.close(child_fd)
 
 
 

@@ -526,6 +526,12 @@ class FilesystemService(Service):
                         e.errmsg
                     )
 
+        if recursive and not do_strip and not any(entry.get('default') for entry in dacl):
+            verrors.add(
+                'filesystem_acl.dacl',
+                'Default ACL entries are required in order to apply ACL recursively.'
+            )
+
         verrors.check()
 
         job.set_progress(50, 'Setting POSIX1e ACL.')
