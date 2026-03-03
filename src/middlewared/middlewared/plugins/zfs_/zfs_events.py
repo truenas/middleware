@@ -73,7 +73,8 @@ class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
 
     deleted_automatically = False
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args["pool"]
 
 

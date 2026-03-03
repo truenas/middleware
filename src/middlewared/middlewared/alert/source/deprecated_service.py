@@ -14,5 +14,6 @@ class DeprecatedServiceAlertClass(AlertClass, OneShotAlertClass):
         "the service has been removed in the next version of SCALE."
     )
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['service']

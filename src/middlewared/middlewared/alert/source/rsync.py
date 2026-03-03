@@ -9,7 +9,8 @@ class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
     title = 'Rsync Task Succeeded'
     text = 'Rsync "%(direction)s" task for "%(path)s" succeeded.'
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['id']
 
 
@@ -21,5 +22,6 @@ class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
     title = 'Rsync Task Failed'
     text = 'Rsync "%(direction)s" task for "%(path)s" failed.'
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['id']
