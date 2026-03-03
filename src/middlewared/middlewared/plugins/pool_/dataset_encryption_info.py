@@ -168,15 +168,14 @@ class PoolDatasetService(Service):
         # It is possible we have a pool configured but for some mistake/reason the pool did not import like
         # during repair disks were not plugged in and system was booted, in such cases we would like to not
         # remove the encryption keys from the database.
-        for root_ds in (
-            {pool['name'] for pool in self.middleware.call_sync('pool.query')}
-            - {
-                ds['id']
-                for ds in self.middleware.call_sync(
-                    'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
-                )
-            }
-        ):
+        pool_names = {pool['name'] for pool in self.middleware.call_sync('pool.query')}
+        ds_names = {
+            ds['id']
+            for ds in self.middleware.call_sync(
+                'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
+            )
+        }
+        for root_ds in pool_names - ds_names:
             filters.extend([['name', '!=', root_ds], ['name', '!^', f'{root_ds}/']])
 
         db_datasets = self.query_encrypted_roots_keys(filters)
