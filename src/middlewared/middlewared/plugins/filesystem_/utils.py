@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import errno
 import os
 import time
 
@@ -74,8 +75,9 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
 
     if action in (AclToolAction.CLONE, AclToolAction.INHERIT):
         try:
-            root = truenas_os.fgetacl(fd)
+            root_acl = truenas_os.fgetacl(fd)
         except OSError as exc:
+            # underlying filesystem may have ACLs disabled
             if exc.errno != errno.EOPNOTSUPP:
                 raise
 
