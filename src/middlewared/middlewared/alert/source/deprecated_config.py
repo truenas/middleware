@@ -1,9 +1,9 @@
-from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel
 
 URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
 
-class DeprecatedServiceConfigurationAlertClass(AlertClass, SimpleOneShotAlertClass):
+class DeprecatedServiceConfigurationAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "Deprecated Service Configuration Detected"

@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, SimpleOneShotAlertClass, AlertLevel
+from middlewared.alert.base import AlertCategory, AlertClass, OneShotAlertClass, AlertLevel
 
 
-class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailoverRebootAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     keys = []
@@ -13,7 +13,7 @@ class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
     )
 
 
-class FencedRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FencedRebootAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     keys = []

@@ -8,11 +8,11 @@ from google.oauth2.credentials import Credentials
 import google_auth_httplib2
 import httplib2
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 from middlewared.service import private, Service
 
 
-class GMailConfigurationDiscardedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 

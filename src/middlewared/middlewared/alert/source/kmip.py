@@ -3,10 +3,10 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel
 
 
-class KMIPConnectionFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class KMIPConnectionFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.KMIP
     level = AlertLevel.CRITICAL
     title = 'Failed to Communicate with KMIP Server'
@@ -15,7 +15,7 @@ class KMIPConnectionFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
-class KMIPZFSDatasetsSyncFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
+class KMIPZFSDatasetsSyncFailureAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.KMIP
     level = AlertLevel.CRITICAL
     title = 'Failed to Sync ZFS Keys with KMIP Server'
@@ -24,7 +24,7 @@ class KMIPZFSDatasetsSyncFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
-class KMIPSEDDisksSyncFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
+class KMIPSEDDisksSyncFailureAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.KMIP
     level = AlertLevel.CRITICAL
     title = 'Failed to Sync SED Keys with KMIP Server'
@@ -33,7 +33,7 @@ class KMIPSEDDisksSyncFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
-class KMIPSEDGlobalPasswordSyncFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
+class KMIPSEDGlobalPasswordSyncFailureAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.KMIP
     level = AlertLevel.CRITICAL
     title = 'Failed to Sync SED Global Password with KMIP Server'

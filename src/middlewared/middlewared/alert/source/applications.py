@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class FailuresInAppMigrationAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailuresInAppMigrationAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 
@@ -11,7 +11,7 @@ class FailuresInAppMigrationAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = 'App(s) failed to migrate, please check /var/log/app_migrations.log for more details.'
 
 
-class ApplicationsConfigurationFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
     level = AlertLevel.CRITICAL
@@ -20,7 +20,7 @@ class ApplicationsConfigurationFailedAlertClass(AlertClass, SimpleOneShotAlertCl
     text = 'Failed to configure docker for Applications: %(error)s'
 
 
-class ApplicationsStartFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ApplicationsStartFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
     level = AlertLevel.CRITICAL
@@ -29,7 +29,7 @@ class ApplicationsStartFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = 'Failed to start docker for Applications: %(error)s'
 
 
-class AppUpdateAlertClass(AlertClass, SimpleOneShotAlertClass):
+class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     keys = []
 

@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class ShareLockedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ShareLockedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.SHARING
@@ -12,7 +12,7 @@ class ShareLockedAlertClass(AlertClass, SimpleOneShotAlertClass):
         return f'{args["type"]}_{args["id"]}'
 
 
-class TaskLockedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class TaskLockedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.TASKS

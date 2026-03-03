@@ -1,23 +1,23 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
 
 
-class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "iSCSI Discovery Authorization Global"
     text = "Prior to upgrade had specified iSCSI discovery auth on only some portals, now applies globally.  May need to update client configuration when using %(ips)s"
 
 
-class ISCSIDiscoveryAuthMultipleCHAPAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleCHAPAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "iSCSI Discovery Authorization merged"
     text = "Prior to upgrade different portals had different iSCSI discovery auth, now applies globally."
 
 
-class ISCSIDiscoveryAuthMultipleMutualCHAPAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleMutualCHAPAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "iSCSI Discovery Authorization Multiple Mutual CHAP"
