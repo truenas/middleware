@@ -157,22 +157,32 @@ def _deny(who_type, mask, who_id=-1, ace_flags=None):
 _INHERIT = t.NFS4Flag.FILE_INHERIT | t.NFS4Flag.DIRECTORY_INHERIT
 
 
-def _full_allow_all():
-    """Full control for owner@, group@, everyone@, with inheritance."""
+def _full_allow_all(inherit=False):
+    """Full control for owner@, group@, everyone@.
+
+    Pass inherit=True on directory ACLs: truenas_os requires at least one
+    ACE with FILE_INHERIT or DIRECTORY_INHERIT on directories, and rejects
+    those flags entirely on files.
+    """
+    inh = _INHERIT if inherit else t.NFS4Flag(0)
     return [
-        _allow(t.NFS4Who.OWNER,    _NFS4_FULL, ace_flags=_INHERIT),
+        _allow(t.NFS4Who.OWNER,    _NFS4_FULL, ace_flags=inh),
         _allow(t.NFS4Who.GROUP,    _NFS4_FULL,
-               ace_flags=_INHERIT | t.NFS4Flag.IDENTIFIER_GROUP),
-        _allow(t.NFS4Who.EVERYONE, _NFS4_FULL, ace_flags=_INHERIT),
+               ace_flags=inh | t.NFS4Flag.IDENTIFIER_GROUP),
+        _allow(t.NFS4Who.EVERYONE, _NFS4_FULL, ace_flags=inh),
     ]
 
 
-def _owner_group_only():
-    """Full control for owner@ and group@ only (no everyone@), with inheritance."""
+def _owner_group_only(inherit=False):
+    """Full control for owner@ and group@ only (no everyone@).
+
+    Pass inherit=True on directory ACLs for the same reason as _full_allow_all.
+    """
+    inh = _INHERIT if inherit else t.NFS4Flag(0)
     return [
-        _allow(t.NFS4Who.OWNER, _NFS4_FULL, ace_flags=_INHERIT),
+        _allow(t.NFS4Who.OWNER, _NFS4_FULL, ace_flags=inh),
         _allow(t.NFS4Who.GROUP, _NFS4_FULL,
-               ace_flags=_INHERIT | t.NFS4Flag.IDENTIFIER_GROUP),
+               ace_flags=inh | t.NFS4Flag.IDENTIFIER_GROUP),
     ]
 
 
@@ -242,7 +252,7 @@ def nfs4_env(nfs4_dataset):
     os.mkdir(dirpath)
     _write_testfile(filepath)
     os.chown(dirpath, 0, 0)
-    _fsetacl(dirpath,  _full_allow_all(), is_dir=True)
+    _fsetacl(dirpath,  _full_allow_all(inherit=True), is_dir=True)
     _fsetacl(filepath, _full_allow_all(), is_dir=False)
     try:
         yield dirpath, filepath
@@ -260,7 +270,7 @@ def _apply_deny_acl(dirpath, filepath, uid, perm):
     if perm == 'EXECUTE':
         _fsetacl(dirpath,
                  [_deny(t.NFS4Who.NAMED, t.NFS4Perm.EXECUTE, uid)]
-                 + _full_allow_all(), is_dir=True)
+                 + _full_allow_all(inherit=True), is_dir=True)
         _fsetacl(filepath, _full_allow_all(), is_dir=False)
 
     elif perm == 'DELETE_CHILD':
@@ -268,21 +278,21 @@ def _apply_deny_acl(dirpath, filepath, uid, perm):
         # On Linux deletion still succeeds per RFC 5661 § 6.2.1.3.2.
         _fsetacl(dirpath,
                  [_deny(t.NFS4Who.NAMED, t.NFS4Perm.DELETE_CHILD, uid)]
-                 + _full_allow_all(), is_dir=True)
+                 + _full_allow_all(inherit=True), is_dir=True)
         _fsetacl(filepath, _full_allow_all(), is_dir=False)
 
     elif perm == 'FULL_DELETE':
         # Deny both DELETE on file and DELETE_CHILD on dir.
         _fsetacl(dirpath,
                  [_deny(t.NFS4Who.NAMED, t.NFS4Perm.DELETE_CHILD, uid)]
-                 + _full_allow_all(), is_dir=True)
+                 + _full_allow_all(inherit=True), is_dir=True)
         _fsetacl(filepath,
                  [_deny(t.NFS4Who.NAMED, t.NFS4Perm.DELETE, uid)]
                  + _full_allow_all(), is_dir=False)
 
     else:
         mask = getattr(t.NFS4Perm, perm)
-        _fsetacl(dirpath, _full_allow_all(), is_dir=True)
+        _fsetacl(dirpath, _full_allow_all(inherit=True), is_dir=True)
         _fsetacl(filepath,
                  [_deny(t.NFS4Who.NAMED, mask, uid)]
                  + _full_allow_all(), is_dir=False)
@@ -310,7 +320,7 @@ def _apply_allow_acl(dirpath, filepath, uid, perm):
 
     _fsetacl(dirpath,
              [_allow(t.NFS4Who.NAMED, dir_mask, uid)]
-             + _owner_group_only(), is_dir=True)
+             + _owner_group_only(inherit=True), is_dir=True)
     _fsetacl(filepath,
              [_allow(t.NFS4Who.NAMED, file_mask, uid)]
              + _owner_group_only(), is_dir=False)
@@ -338,7 +348,7 @@ def _apply_omit_acl(dirpath, filepath, uid, perm):
 
     _fsetacl(dirpath,
              [_allow(t.NFS4Who.NAMED, dir_mask, uid)]
-             + _owner_group_only(), is_dir=True)
+             + _owner_group_only(inherit=True), is_dir=True)
     _fsetacl(filepath,
              [_allow(t.NFS4Who.NAMED, file_mask, uid)]
              + _owner_group_only(), is_dir=False)
