@@ -376,7 +376,9 @@ def _do_nfs4_op(perm, dirpath, filepath, username, uid, acl_bytes=None):
                     f.write('x')
 
             elif perm == 'WRITE_ATTRIBUTES':
-                os.utime(filepath, (0, 0))
+                # Set to current time — explicit times require ownership
+                # regardless of ACL; current-time utime only needs WRITE_ATTRIBUTES.
+                os.utime(filepath, None)
 
             elif perm in ('DELETE', 'DELETE_CHILD', 'FULL_DELETE'):
                 os.unlink(filepath)
