@@ -787,7 +787,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         Runs method in a native thread using concurrent.futures.Pool.
         This prevents a CPU intensive or non-asyncio friendly method
         to block the event loop indefinitely.
-        Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
@@ -1735,12 +1734,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             if e.args[0] != "Event loop is closed":
                 raise
 
-        # As we don't do clean shutdown (which will terminate multiprocessing children gracefully),
-        # let's just kill our entire process group
-        os.killpg(os.getpgid(os.getpid()), signal.SIGKILL)
-
-        # We use "_exit" specifically as otherwise process pool executor won't let middlewared process die because
-        # it is still active. We don't initiate a shutdown for it because it may hang forever for any reason
+        # Use os._exit rather than sys.exit to avoid Python-level cleanup (atexit handlers, thread joins, etc.)
+        # that could block in this abnormal shutdown path.
         os._exit(0)
 
     async def __initialize(self):
