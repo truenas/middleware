@@ -27,7 +27,8 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
     title = "IPMI System Event"
     text = "Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)"
 
-    async def dismiss(self, middleware, alerts, alert):
+    @classmethod
+    async def dismiss(cls, middleware, alerts, alert):
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
         if await middleware.call('keyvalue.has_key', IPMISELAlertSource.dismissed_datetime_kv_key):
             d = await middleware.call('keyvalue.get', IPMISELAlertSource.dismissed_datetime_kv_key)

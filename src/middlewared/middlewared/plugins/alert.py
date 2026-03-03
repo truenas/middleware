@@ -308,7 +308,7 @@ class AlertService(Service):
 
             for alerts in alerts_by_classes.values():
                 if issubclass(alerts[0].klass, OneShotAlertClass):
-                    alerts = await alerts[0].klass().load(self.middleware, alerts)
+                    alerts = await alerts[0].klass.load(self.middleware, alerts)
 
                 self.alerts.extend(alerts)
         else:
@@ -443,7 +443,7 @@ class AlertService(Service):
         if issubclass(alert.klass, DismissableAlertClass):
             related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
                                                       self.alerts)
-            left_alerts = await alert.klass().dismiss(self.middleware, related_alerts, alert)
+            left_alerts = await alert.klass.dismiss(self.middleware, related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self._delete_on_dismiss(deleted_alert)
@@ -959,7 +959,7 @@ class AlertService(Service):
         if not issubclass(klass, OneShotAlertClass):
             raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
-        alert = await klass().create(args)
+        alert = await klass.create(args)
         if alert is None:
             return
 
@@ -1008,7 +1008,7 @@ class AlertService(Service):
 
             related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
                                                       self.alerts)
-            left_alerts = await klass().delete(related_alerts, query)
+            left_alerts = await klass.delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self.alerts.remove(deleted_alert)

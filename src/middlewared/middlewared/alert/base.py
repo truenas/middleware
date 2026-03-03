@@ -112,19 +112,22 @@ class OneShotAlertClass:
     expires_after = None
     keys = None
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args
 
-    async def create(self, args):
+    @classmethod
+    async def create(cls, args):
         """
         Returns an `Alert` instance created using `args` that were passed to `alert.oneshot_create`.
 
         :param args: free-form data that was passed to `alert.oneshot_create`.
         :return: an `Alert` instance.
         """
-        return Alert(self.__class__, args, key=self.key(args))
+        return Alert(cls, args, key=cls.key(args))
 
-    async def delete(self, alerts, query):
+    @classmethod
+    async def delete(cls, alerts, query):
         """
         Returns only those `alerts` that do not match `query` that was passed to `alert.oneshot_delete`.
 
@@ -133,12 +136,13 @@ class OneShotAlertClass:
         :return: `alerts` that do not match query (e.g. `query` specifies `{"certificate_id": "xxx"}` and the method
             implementation returns all `alerts` except the ones related to the certificate `xxx`).
         """
-        if self.keys is not None:
-            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in self.keys)]
+        if cls.keys is not None:
+            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in cls.keys)]
 
-        return [alert for alert in alerts if self.key(alert.args) != query]
+        return [alert for alert in alerts if cls.key(alert.args) != query]
 
-    async def load(self, middleware, alerts):
+    @classmethod
+    async def load(cls, middleware, alerts):
         """
         This is called on system startup. Returns only those `alerts` that are still applicable to this system (i.e.,
         corresponding resources still exist).
@@ -151,7 +155,8 @@ class OneShotAlertClass:
 
 
 class DismissableAlertClass:
-    async def dismiss(self, middleware, alerts, alert):
+    @classmethod
+    async def dismiss(cls, middleware, alerts, alert):
         raise NotImplementedError
 
 

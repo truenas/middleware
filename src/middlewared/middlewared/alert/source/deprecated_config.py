@@ -13,5 +13,6 @@ class DeprecatedServiceConfigurationAlertClass(AlertClass, OneShotAlertClass):
         f"Before upgrading, please check {URL} for more information."
     )
 
-    def key(self, args):
+    @classmethod
+    def key(cls, args):
         return args['config']
