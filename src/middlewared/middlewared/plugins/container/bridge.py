@@ -29,7 +29,7 @@ __all__ = (
 
 
 def _bridge_impl(
-    ip4: ipaddress.IPv4Network | None, ip6: ipaddress.IPv6Network | None
+    ip4: ipaddress.IPv4Interface | None, ip6: ipaddress.IPv6Interface | None
 ) -> bool:
     was_created = False
     with netlink_route() as sock:

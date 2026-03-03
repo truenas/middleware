@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import yaml
 
@@ -148,11 +149,27 @@ class ContainerService(Service):
             self.logger.error("Legacy container migration failed", exc_info=True)
             return
 
-        container_config = await self.middleware.call("datastore.config", "container.config")
-        if container_config["preferred_pool"] is None:
+        container_config = await self.middleware.call("lxc.config")
+        updates = {}
+        if container_config["preferred_pool"] is None and legacy_config["pool"]:
+            updates["preferred_pool"] = legacy_config["pool"]
+
+        for col in ("bridge", "v4_network", "v6_network"):
+            if not legacy_config.get(col):
+                continue
+
+            value = legacy_config[col]
+            if col in ("v4_network", "v6_network"):
+                try:
+                    value = str(ipaddress.ip_network(value, strict=False))
+                except (ValueError, TypeError):
+                    continue
+
+            updates[col] = value
+
+        if updates:
             await self.middleware.call(
-                "datastore.update", "container.config", container_config["id"],
-                {"preferred_pool": legacy_config["pool"]},
+                "datastore.update", "container.config", container_config["id"], updates,
             )
 
         await self.middleware.call(
