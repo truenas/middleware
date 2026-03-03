@@ -12,20 +12,7 @@ class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
     )
 
     async def create(self, args):
-        pool = args['pool_name']
-        if pool == await self.middleware.call('boot.pool_name'):
-            # We don't want this alert for the boot pool as it has certain features disabled by design
-            return
-
-        found = await self.middleware.call('datastore.query', 'storage.volume', [['vol_name', '=', pool]])
-        if not found:
-            return
-
-        try:
-            if not await self.middleware.call('pool.is_upgraded', found[0]['id']):
-                return Alert(PoolUpgradedAlertClass, pool, key=pool)
-        except Exception:
-            pass
+        return Alert(PoolUpgradedAlertClass, args, key=args)
 
     async def delete(self, alerts, query):
         return list(filter(lambda x: x.args != query, alerts))
