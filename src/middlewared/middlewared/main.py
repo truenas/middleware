@@ -69,6 +69,7 @@ import multiprocessing
 import os
 import pathlib
 import re
+import shutil
 import signal
 import sys
 import textwrap
@@ -1931,6 +1932,8 @@ def main():
         # Remove the '--' separator if present
         if test_command and test_command[0] == '--':
             test_command = test_command[1:]
+        # Remove mako template cache before it gets used
+        shutil.rmtree("/run/mako", ignore_errors=True)
     else:
         # If --test wasn't specified but there are unknown args, it's an error
         if test_command:

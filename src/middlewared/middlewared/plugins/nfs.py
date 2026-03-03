@@ -406,6 +406,10 @@ class SharingNFSService(SharingService):
 
     share_task_type = 'NFS'
 
+    @private
+    async def human_identifier(self, share_task):
+        return await self.get_path_field(share_task)
+
     class Config:
         namespace = "sharing.nfs"
         datastore = "sharing.nfs_share"
