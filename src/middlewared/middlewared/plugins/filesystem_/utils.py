@@ -51,7 +51,7 @@ def _get_mount_info(fd: int):
     sm = _statmount(fd=fd, as_dict=False)
     abs_path = os.readlink(f'/proc/self/fd/{fd}')
     rel = os.path.relpath(abs_path, sm.mnt_point)
-    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)
+    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
 
 
 def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None) -> None:
@@ -69,7 +69,7 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
     traverse = options.get('traverse', False)
     do_chmod = options.get('do_chmod', False)
 
-    mountpoint, fs_name, rel_path = _get_mount_info(fd)
+    mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(fd)
 
     root_acl = (
         truenas_os.fgetacl(fd)
@@ -143,11 +143,10 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
     if traverse:
         real_path = os.readlink(f'/proc/self/fd/{fd}')
         for entry in truenas_os.iter_mount(
+            mnt_id=mnt_id,
             statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
         ):
             child_mnt = entry.mnt_point
-            if not child_mnt.startswith(real_path + '/'):
-                continue
             child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
             child_fd = truenas_os.openat2(
                 child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
