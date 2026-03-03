@@ -160,11 +160,11 @@ class AlertPolicy:
 
 
 def get_alert_level(alert, classes):
-    return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.config.level.name)]
+    return AlertLevel[classes.get(alert.klass.config.name, {}).get("level", alert.klass.config.level.name)]
 
 
 def get_alert_policy(alert, classes):
-    return classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY)
+    return classes.get(alert.klass.config.name, {}).get("policy", DEFAULT_POLICY)
 
 
 class AlertSerializer:
@@ -183,15 +183,15 @@ class AlertSerializer:
             alert.__dict__,
             id=alert.uuid,
             node=self.nodes[alert.node],
-            klass=alert.klass.name,
-            level=self.classes.get(alert.klass.name, {}).get("level", alert.klass.config.level.name),
+            klass=alert.klass.config.name,
+            level=self.classes.get(alert.klass.config.name, {}).get("level", alert.klass.config.level.name),
             formatted=alert.formatted,
             one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.config.deleted_automatically
         )
 
     async def get_alert_class(self, alert):
         await self._ensure_initialized()
-        return self.classes.get(alert.klass.name, {})
+        return self.classes.get(alert.klass.config.name, {})
 
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
@@ -365,7 +365,7 @@ class AlertService(Service):
                 "classes": sorted(
                     [
                         {
-                            "id": alert_class.name,
+                            "id": alert_class.config.name,
                             "title": alert_class.config.title,
                             "level": alert_class.config.level.name,
                             "product_types": list(alert_class.config.products),
@@ -851,7 +851,7 @@ class AlertService(Service):
     @private
     async def run_source(self, source_name):
         try:
-            return [dict(alert.__dict__, klass=alert.klass.name)
+            return [dict(alert.__dict__, klass=alert.klass.config.name)
                     for alert in await self.__run_source(source_name)]
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
@@ -934,7 +934,7 @@ class AlertService(Service):
 
         for alert in self.alerts:
             d = alert.__dict__.copy()
-            d["klass"] = d["klass"].name
+            d["klass"] = d["klass"].config.name
             del d["mail"]
             await self.middleware.call("datastore.insert", "system.alert", d)
 
