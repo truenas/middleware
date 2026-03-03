@@ -31,7 +31,6 @@ def service_config(klass, config):
         'namespace_alias': None,
         'private': False,
         'thread_pool': None,
-        'process_pool': None,
         'cli_namespace': None,
         'cli_private': False,
         'cli_description': None,
@@ -195,7 +194,6 @@ class ServiceBase(type):
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
-      - process_pool: process pool to run service methods
       - cli_namespace: replace namespace identifier for CLI
       - cli_private: if the service is not private, this flags whether or not the service is visible in the CLI
     """
