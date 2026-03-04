@@ -755,29 +755,31 @@ class TestAcltoolChmod:
 
     def test_clone_nfs4_without_mode_does_not_chmod_children(self, nfs4_env):
         """
-        CLONE action with do_chmod=False must not chmod children.
+        CLONE action with do_chmod=False must not fchmod children to the
+        root's stored mode.
 
-        Regression: acltool() was always setting do_chmod=True, so a CLONE
-        pass (which sets a proper inherited NFS4 ACL) also chmoded every child
-        to the root mode — corrupting permissions on NFS4 datasets.
+        On NFS4 (aclmode=passthrough) setting an inherited ACL on a child
+        automatically updates its mode bits to match the ACL (FULL_CONTROL →
+        0o777).  Root's *stored* mode is set to 0o700 so it diverges from the
+        ACL-derived value.  With do_chmod=False children must end up at the
+        ACL-derived 0o777; do_chmod=True would fchmod them back to 0o700.
         """
         root, subdir, file_root, file_sub = nfs4_env
 
-        # Give children a distinctive mode so a chmod would be detectable.
-        os.chmod(file_root, 0o640)
-        os.chmod(file_sub, 0o640)
-        mode_before = {p: _get_mode(p) for p in (file_root, file_sub)}
-
         fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
         try:
+            # Diverge root's stored mode from what the ACL implies.
+            os.fchmod(fd, 0o700)
             acltool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
                     options={'do_chmod': False})
         finally:
             os.close(fd)
 
-        for path in (file_root, file_sub):
-            assert _get_mode(path) == mode_before[path], (
-                f'{path}: mode must be unchanged when do_chmod=False on CLONE'
+        # ZFS derives mode bits from the inherited FULL_CONTROL ACL → 0o777.
+        # do_chmod=False must not override that with the root's stored 0o700.
+        for path in (subdir, file_root, file_sub):
+            assert _get_mode(path) == 0o777, (
+                f'{path}: expected ACL-derived mode 777, got {_get_mode(path):o}'
             )
 
     def test_clone_nfs4_with_mode_does_chmod_children(self, nfs4_env):
