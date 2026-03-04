@@ -526,7 +526,7 @@ class PoolDatasetService(CRUDService):
             else:
                 acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
                     'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                    'format-options': {'canonicalize': True, 'ensure_builtins': True},
+                    'format-options': {'ensure_builtins': True},
                 }))[0]['acl']
         elif data['share_type'] == 'APPS':
             must_add_apps = True
@@ -552,7 +552,7 @@ class PoolDatasetService(CRUDService):
             else:
                 acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
                     'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                    'format-options': {'canonicalize': True, 'ensure_builtins': True},
+                    'format-options': {'ensure_builtins': True},
                 }))[0]['acl']
 
             if must_add_apps:
