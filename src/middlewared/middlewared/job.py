@@ -604,9 +604,8 @@ class Job:
 
     async def __run_body(self):
         """
-        If job is flagged as process a new process is spawned
-        with the job id which will in turn run the method
-        and return the result as a json
+        Run this job's method and set the result, injecting
+        any necessary arguments like app and tls.
         """
         prepend = []
         if hasattr(self.method, '_pass_app'):
@@ -618,6 +617,7 @@ class Job:
             prepend.append(thread_local_storage)
         # Make sure args are not altered during job run
         args = prepend + copy.deepcopy(self.args)
+
         if asyncio.iscoroutinefunction(self.method):
             rv = await self.method(*args)
         else:
