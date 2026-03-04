@@ -2,6 +2,8 @@
     import ipaddress
     import socket
     from pathlib import Path
+    from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
+    from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
     def do_map(share, map_type, map_ids, alert_shares):
@@ -164,8 +166,7 @@
     if gaierrors:
         middleware.call_sync(
             'alert.oneshot_create',
-            'NFSHostnameLookupFail',
-            {'hosts': ', '.join(gaierrors)}
+            NFSHostnameLookupFailAlert(hosts=', '.join(gaierrors))
         )
     else:
         middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
@@ -177,8 +178,8 @@
             middleware.logger.warning('%s: Disabling this NFS share. Mapping invalid names: %s', sharepath, names)
             disabled_shares.append(f'({sharepath}: {names})')
 
-        middleware.call_sync("alert.oneshot_create", "NFSexportMappingInvalidNames",
-            {'share_list': ','.join(disabled_shares)}
+        middleware.call_sync("alert.oneshot_create",
+            NFSexportMappingInvalidNamesAlert(share_list=','.join(disabled_shares))
         )
     else:
         middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames")

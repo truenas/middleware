@@ -231,14 +231,6 @@ class AlertSerializer:
             self.initialized = True
 
 
-class AlertOneshotCreateArgs(BaseModel):
-    instance: Any
-
-
-class AlertOneshotCreateResult(BaseModel):
-    result: None
-
-
 class AlertOneshotDeleteArgs(BaseModel):
     klass: str | list[str]
     query: Any = None
@@ -668,8 +660,8 @@ class AlertService(Service):
                             })
                             await job.wait()
                             if job.error:
-                                await self.middleware.call("alert.oneshot_create", "AutomaticAlertFailed",
-                                                           {"serial": serial, "alert": msg, "error": str(job.error)})
+                                await self.middleware.call("alert.oneshot_create", AutomaticAlertFailedAlert(
+                                    serial=serial, alert=msg, error=str(job.error)))
 
     def __uuid(self):
         return str(uuid.uuid4())
@@ -952,11 +944,13 @@ class AlertService(Service):
 
         for alert in self.alerts:
             d = alert.__dict__.copy()
-            d["klass"] = d["klass"].config.name
+            d["klass"] = alert.instance.config.name
+            d["args"] = alert.instance.args()
+            del d["instance"]
             del d["mail"]
             await self.middleware.call("datastore.insert", "system.alert", d)
 
-    @api_method(AlertOneshotCreateArgs, AlertOneshotCreateResult, private=True)
+    @private
     @job(
         lock="process_alerts",
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
@@ -972,10 +966,8 @@ class AlertService(Service):
         :param instance: an instance of an `AlertClass` subclass that also inherits from `OneShotAlertClass`.
         """
 
-        klass = type(instance)
-
-        if not issubclass(klass, OneShotAlertClass):
-            raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
+        if not isinstance(instance, OneShotAlertClass):
+            raise CallError(f"Alert {instance!r} is not a one-shot alert class")
 
         alert = Alert(instance)
         alert.source = ""
@@ -1017,7 +1009,7 @@ class AlertService(Service):
                 raise CallError(f"Invalid alert source: {klassname!r}")
 
             if not issubclass(klass, OneShotAlertClass):
-                raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
+                raise CallError(f"Alert class {klassname!r} is not a one-shot alert class")
 
             related_alerts, unrelated_alerts = bisect(
                 lambda a: (a.node, a.instance.config.name) == (self.node, klass.config.name),

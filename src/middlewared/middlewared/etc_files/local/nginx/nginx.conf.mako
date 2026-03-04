@@ -2,6 +2,7 @@
     import ipaddress
     import os
 
+    from middlewared.alert.source.certificates import WebUiCertificateSetupFailedAlert
     from middlewared.logger import NGINX_LOG_PATH
 
     # Let's ensure that /var/log/nginx directory exists
@@ -56,7 +57,7 @@
     # Let's verify that required SSL support in the backend is complete by middlewared
     if not cert or middleware.call_sync('certificate.cert_services_validation', cert['id'], 'nginx.certificate', False):
         ssl_configuration = False
-        middleware.call_sync('alert.oneshot_create', 'WebUiCertificateSetupFailed', None)
+        middleware.call_sync('alert.oneshot_create', WebUiCertificateSetupFailedAlert())
     else:
         ssl_configuration = True
         middleware.call_sync('alert.oneshot_delete', 'WebUiCertificateSetupFailed', None)
