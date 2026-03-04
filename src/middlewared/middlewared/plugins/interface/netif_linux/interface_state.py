@@ -1,4 +1,3 @@
-import time
 import threading
 from dataclasses import dataclass
 
@@ -273,6 +272,5 @@ def list_interface_states(max_retries: int = 5) -> dict[str, InterfaceState]:
             except DumpInterrupted:
                 close_address_netlink()
                 if attempt < max_retries:
-                    time.sleep(0.05 * attempt)
                     continue
                 raise
