@@ -36,6 +36,10 @@ def install_scale(
         manifest = json.load(f)
 
     boot_pool_name = context.middleware.call_sync("boot.pool_name")
+    # The `+` sign is part of the nightly build version name, but it is not a compatible character for a
+    # ZFS dataset name. We must sanitize it here because the truenas_install on the currently running system
+    # (which is what executes during upgrades) may predate the fix in truenas_install itself.
+    options.setdefault("dataset_name", f"{boot_pool_name}/ROOT/{manifest['version'].replace('+', '-')}")
     ensure_free_space(context, boot_pool_name, manifest["size"])
 
     for file, checksum in manifest["checksums"].items():
