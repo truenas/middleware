@@ -52,7 +52,12 @@ class FailoverDatastoreService(Service):
         try:
             # This is executed in `hook_datastore_execute_write` so we can't query local failover status here, and we'll
             # have to rely on remote.
-            if (fs := self.middleware.call_sync('failover.call_remote', 'failover.status')) == 'BACKUP':
+            if (fs := self.middleware.call_sync(
+                'failover.call_remote',
+                'failover.status',
+                [],
+                {'timeout': 5}
+            )) == 'BACKUP':
                 self.send()
             else:
                 # Avoid sending database if we are not MASTER.
@@ -74,6 +79,10 @@ class FailoverDatastoreService(Service):
                     if not self.failure:
                         # Someone sent the database for us
                         return
+
+                    if self.middleware.call_sync('failover.in_progress'):
+                        self.logger.warning('Failover in progress, deferring database replication retry')
+                        continue
 
                     if (fs := self.middleware.call_sync('failover.status')) != 'MASTER':
                         self.logger.warning('Failover status is %s while retrying database send', fs)
@@ -163,6 +172,9 @@ def hook_datastore_execute_write(middleware, sql, params, options):
         return
 
     if middleware.call_sync('failover.datastore.is_failure'):
+        return
+
+    if middleware.call_sync('failover.in_progress'):
         return
 
     try:
