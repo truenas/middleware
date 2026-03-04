@@ -1,3 +1,4 @@
+import time
 import threading
 from dataclasses import dataclass
 
@@ -239,9 +240,9 @@ def list_interface_states(max_retries: int = 5) -> dict[str, InterfaceState]:
     Returns a dict mapping interface name to InterfaceState.
     This is a drop-in replacement for netif.list_interfaces().
     """
-    with _netlink_dump_lock:
-        for attempt in range(1, max_retries + 1):
-            try:
+    for attempt in range(1, max_retries + 1):
+        try:
+            with _netlink_dump_lock:
                 nl = get_address_netlink()
 
                 # Get all links
@@ -250,27 +251,28 @@ def list_interface_states(max_retries: int = 5) -> dict[str, InterfaceState]:
                 # Get all addresses with interface names
                 all_addresses = nl.get_addresses()
 
-                # Group addresses by interface name
-                addresses_by_name: dict[str, list[AddressInfo]] = {}
-                for addr in all_addresses:
-                    if addr.ifname:
-                        if addr.ifname not in addresses_by_name:
-                            addresses_by_name[addr.ifname] = []
-                        addresses_by_name[addr.ifname].append(addr)
+            # Group addresses by interface name
+            addresses_by_name: dict[str, list[AddressInfo]] = {}
+            for addr in all_addresses:
+                if addr.ifname:
+                    if addr.ifname not in addresses_by_name:
+                        addresses_by_name[addr.ifname] = []
+                    addresses_by_name[addr.ifname].append(addr)
 
-                # Build InterfaceState objects
-                result: dict[str, InterfaceState] = {}
-                for name, link in links.items():
-                    result[name] = InterfaceState(
-                        name=name,
-                        link=link,
-                        addresses=addresses_by_name.get(name, []),
-                    )
+            # Build InterfaceState objects
+            result: dict[str, InterfaceState] = {}
+            for name, link in links.items():
+                result[name] = InterfaceState(
+                    name=name,
+                    link=link,
+                    addresses=addresses_by_name.get(name, []),
+                )
 
-                return result
+            return result
 
-            except DumpInterrupted:
-                close_address_netlink()
-                if attempt < max_retries:
-                    continue
-                raise
+        except DumpInterrupted:
+            close_address_netlink()
+            if attempt < max_retries:
+                time.sleep(0.05 * attempt)
+                continue
+            raise
