@@ -27,6 +27,8 @@ NFS4_DACL = [
 ]
 
 POSIX_DACL = [
+    # Named USER entry (root, uid 0) + MASK make the ACL non-trivial on both
+    # files and directories, so filesystem.stat reports acl: True everywhere.
     {'tag': 'USER_OBJ',  'id': -1, 'default': False,
      'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'USER',      'id': 0,  'default': False,
