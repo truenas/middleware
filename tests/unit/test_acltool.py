@@ -21,8 +21,10 @@ Tests run on a TrueNAS system and create real ZFS datasets.  Coverage:
 Both CLONE and INHERIT actions are parametrised for each group.
 """
 
+import errno
 import os
 import shutil
+import stat
 
 import pytest
 import truenas_os as t
@@ -185,6 +187,33 @@ def nfs4_dataset():
         lz.destroy_resource(name=ds_name)
 
 
+@pytest.fixture(scope='module')
+def nfs4_restricted_dataset():
+    """NFS4 dataset with aclmode=restricted; yields (mountpoint, ds_name).
+
+    On aclmode=restricted fchmod() raises EPERM when a non-trivial ACL is
+    present.  Any accidental chmod during a CLONE pass will therefore blow up
+    immediately, making this fixture a self-enforcing correctness check.
+    """
+    ds_name = f'{_pool_ds()}/acltool_nfs4_restricted'
+    lz = truenas_pylibzfs.open_handle()
+    lz.create_resource(
+        name=ds_name,
+        type=truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM,
+        properties={
+            truenas_pylibzfs.ZFSProperty.ACLTYPE: 'nfsv4',
+            truenas_pylibzfs.ZFSProperty.ACLMODE: 'restricted',
+        },
+    )
+    rsrc = lz.open_resource(name=ds_name)
+    try:
+        rsrc.mount()
+        yield rsrc.get_mountpoint(), ds_name
+    finally:
+        rsrc.unmount()
+        lz.destroy_resource(name=ds_name)
+
+
 # ---------------------------------------------------------------------------
 # Function-scoped test environment fixtures
 # ---------------------------------------------------------------------------
@@ -212,6 +241,39 @@ def nfs4_env(nfs4_dataset):
     try:
         yield env
     finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+@pytest.fixture(scope='function')
+def nfs4_restricted_env(nfs4_restricted_dataset):
+    """Fresh NFS4/restricted tree with non-trivial ACL set on every node.
+
+    The non-trivial ACL is set on both the root *and* all children so that
+    fchmod() on any child will fail with EPERM — which is exactly what makes
+    this fixture a useful regression guard for spurious do_chmod behaviour.
+    """
+    mnt, _ = nfs4_restricted_dataset
+    root = os.path.join(mnt, 'testroot')
+    env = _make_tree(root)
+    root, subdir, file_root, file_sub = env
+    _set_nfs4_acl(root, is_dir=True)
+    _set_nfs4_acl(subdir, is_dir=True)
+    _set_nfs4_acl(file_root, is_dir=False)
+    _set_nfs4_acl(file_sub, is_dir=False)
+    try:
+        yield env
+    finally:
+        # Strip ACLs first so rmtree's unlink/rmdir calls are not blocked by
+        # restricted aclmode preventing the implicit chmod(0) that some
+        # libc rmtree implementations perform.
+        for path, is_dir in (
+            (file_sub, False), (file_root, False),
+            (subdir, True), (root, True),
+        ):
+            try:
+                _strip_acl(path)
+            except Exception:
+                pass
         shutil.rmtree(root, ignore_errors=True)
 
 
@@ -609,3 +671,188 @@ class TestAcltoolNFS4Traverse:
         assert len(child_acl.aces) == len(parent_acl.aces), (
             'child dir ACL must have same number of ACEs as parent dir'
         )
+
+
+# ---------------------------------------------------------------------------
+# do_chmod / stripacl regression tests
+#
+# Bugs fixed:
+#
+# 1. setperm(recursive=True, stripacl=True, mode=...) was passing
+#    AclToolAction.CLONE to acltool().  acltool then called
+#    NFS4ACL.generate_inherited_acl() on the just-stripped (trivial, no
+#    inherit-flags) ACL, raising:
+#      ValueError: parent ACL has no inheritable ACEs for this object type
+#
+# 2. acltool() set do_chmod=True unconditionally, so a CLONE pass (setting
+#    a proper inherited NFS4 ACL on children) also chmoded every child to
+#    the root mode — wrong on NFS4 where mode bits are derived from the ACL.
+# ---------------------------------------------------------------------------
+
+def _strip_acl(path):
+    """Strip the ACL from path via fsetacl(fd, None)."""
+    fd = t.openat2(path, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+    try:
+        t.fsetacl(fd, None)
+    finally:
+        os.close(fd)
+
+
+def _get_mode(path):
+    return stat.S_IMODE(os.stat(path).st_mode)
+
+
+class TestAcltoolChmod:
+
+    def test_strip_with_mode_applies_mode_to_children(self, nfs4_env):
+        """
+        STRIP action with do_chmod=True must apply root_mode to every child.
+
+        Regression: setperm(recursive=True, stripacl=True, mode=...) was
+        broken on NFS4 because it chose CLONE instead of STRIP, then crashed
+        when generate_inherited_acl() found no inherit flags on the stripped
+        root ACL.
+        """
+        root, subdir, file_root, file_sub = nfs4_env
+
+        # Strip the root ACL so acltool sees a trivial ACL (no inherit flags).
+        # This is exactly what filesystem.setperm does before calling acltool.
+        _strip_acl(root)
+
+        target_mode = 0o700
+        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            os.fchmod(fd, target_mode)
+            # Must not raise ValueError despite trivial (no-inherit) root ACL.
+            acltool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    options={'do_chmod': True})
+        finally:
+            os.close(fd)
+
+        for path in (subdir, file_root, file_sub):
+            assert _get_mode(path) == target_mode, (
+                f'{path}: expected mode {target_mode:o} after STRIP+do_chmod'
+            )
+
+    def test_strip_without_mode_does_not_chmod_children(self, nfs4_env):
+        """STRIP action with do_chmod=False must leave child modes unchanged."""
+        root, subdir, file_root, file_sub = nfs4_env
+
+        mode_before = {p: _get_mode(p) for p in (subdir, file_root, file_sub)}
+
+        _strip_acl(root)
+        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            acltool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    options={'do_chmod': False})
+        finally:
+            os.close(fd)
+
+        for path in (subdir, file_root, file_sub):
+            assert _get_mode(path) == mode_before[path], (
+                f'{path}: mode must be unchanged with do_chmod=False'
+            )
+
+    def test_clone_nfs4_without_mode_does_not_chmod_children(self, nfs4_env):
+        """
+        CLONE action with do_chmod=False must not chmod children.
+
+        Regression: acltool() was always setting do_chmod=True, so a CLONE
+        pass (which sets a proper inherited NFS4 ACL) also chmoded every child
+        to the root mode — corrupting permissions on NFS4 datasets.
+        """
+        root, subdir, file_root, file_sub = nfs4_env
+
+        # Give children a distinctive mode so a chmod would be detectable.
+        os.chmod(file_root, 0o640)
+        os.chmod(file_sub, 0o640)
+        mode_before = {p: _get_mode(p) for p in (file_root, file_sub)}
+
+        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            acltool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    options={'do_chmod': False})
+        finally:
+            os.close(fd)
+
+        for path in (file_root, file_sub):
+            assert _get_mode(path) == mode_before[path], (
+                f'{path}: mode must be unchanged when do_chmod=False on CLONE'
+            )
+
+    def test_clone_nfs4_with_mode_does_chmod_children(self, nfs4_env):
+        """CLONE action with do_chmod=True must apply root_mode to children."""
+        root, subdir, file_root, file_sub = nfs4_env
+
+        target_mode = 0o755
+        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            os.fchmod(fd, target_mode)
+            acltool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    options={'do_chmod': True})
+        finally:
+            os.close(fd)
+
+        for path in (subdir, file_root, file_sub):
+            assert _get_mode(path) == target_mode, (
+                f'{path}: expected mode {target_mode:o} after CLONE+do_chmod'
+            )
+
+
+# ---------------------------------------------------------------------------
+# aclmode=restricted + non-trivial ACL regression tests
+#
+# On aclmode=restricted fchmod() raises EPERM when a non-trivial ACL is
+# present.  All children in nfs4_restricted_env carry a non-trivial ACL, so
+# any accidental chmod during a CLONE pass will surface as an immediate EPERM
+# rather than a silent wrong-mode value.  This makes the restricted fixture a
+# stronger regression guard than the passthrough tests above.
+# ---------------------------------------------------------------------------
+
+class TestAcltoolNFS4Restricted:
+
+    def test_fchmod_raises_eperm_on_restricted_nontrivial(self, nfs4_restricted_env):
+        """
+        Sanity check: fchmod on a file with a non-trivial ACL on an
+        aclmode=restricted dataset must raise EPERM.
+
+        This confirms the fixture actually enforces the restriction so the
+        CLONE tests below are meaningful.
+        """
+        _, _, file_root, _ = nfs4_restricted_env
+        fd = t.openat2(file_root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            with pytest.raises(OSError) as exc_info:
+                os.fchmod(fd, 0o644)
+            assert exc_info.value.errno == errno.EPERM, (
+                'expected EPERM from fchmod on restricted dataset with non-trivial ACL'
+            )
+        finally:
+            os.close(fd)
+
+    @pytest.mark.parametrize('action', _CLONE_INHERIT)
+    def test_clone_restricted_without_mode_does_not_chmod(self, nfs4_restricted_env, action):
+        """
+        CLONE/INHERIT with do_chmod=False must not attempt fchmod on children.
+
+        If acltool() erroneously called fchmod() on children that already
+        carry a non-trivial ACL on an aclmode=restricted dataset, it would
+        raise EPERM and the test would fail.
+        """
+        root, subdir, file_root, file_sub = nfs4_restricted_env
+
+        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
+        try:
+            # Must not raise EPERM (or anything else).
+            acltool(fd, action, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    options={'do_chmod': False})
+        finally:
+            os.close(fd)
+
+        # All children must still carry a non-trivial NFS4 ACL.
+        for path, is_dir in ((subdir, True), (file_root, False), (file_sub, False)):
+            acl = _get_acl(path, is_dir=is_dir)
+            assert isinstance(acl, t.NFS4ACL)
+            assert not acl.trivial, (
+                f'{path}: ACL must remain non-trivial after {action} with do_chmod=False'
+            )
