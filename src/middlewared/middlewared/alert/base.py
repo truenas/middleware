@@ -400,9 +400,7 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin):
-    title = NotImplementedError
-
-    schema = NotImplementedError
+    title: str = NotImplementedError
 
     html = False
 
