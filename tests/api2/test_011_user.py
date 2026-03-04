@@ -386,7 +386,8 @@ def test_031_create_user_with_homedir(request):
     call('pool.dataset.create', HomeAssets.Dataset01['create_payload'])
     call('filesystem.setacl', {
         'path': os.path.join('/mnt', HomeAssets.Dataset01['create_payload']['name']),
-        'dacl': HomeAssets.Dataset01['home_acl']
+        'dacl': HomeAssets.Dataset01['home_acl'],
+        'options': {'validate_effective_acl': False}
     }, job=True)
 
     # now create the user
