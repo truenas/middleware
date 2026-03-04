@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
@@ -16,5 +17,5 @@ class VMWareLoginFailedAlert(OneShotAlertClass):
     error: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['hostname']

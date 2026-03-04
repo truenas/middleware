@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, Alert, AlertSource
 from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
@@ -36,9 +37,9 @@ class BootPoolStatusAlert(AlertClass):
 
 
 class VolumeStatusAlertSource(AlertSource):
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | None:
         if not await self.enabled():
-            return
+            return None
 
         try:
             states = await self.middleware.call("cache.get", "VolumeStatusAlertSource.pools_states")
@@ -95,10 +96,10 @@ class VolumeStatusAlertSource(AlertSource):
 
             await self.middleware.call("cache.put", VOLUME_STATUS_ALERTS, alerts)
 
-        klass_map = {"BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert}
+        klass_map: dict[str, type[AlertClass]] = {"BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert}
         return [Alert(klass_map[alert[0]].from_args(alert[1])) for alert in alerts]
 
-    async def enabled(self):
+    async def enabled(self) -> bool:
         if await self.middleware.call("system.is_enterprise"):
             status = await self.middleware.call("failover.status")
             return status in ("MASTER", "SINGLE")

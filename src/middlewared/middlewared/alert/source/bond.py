@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import (
     Alert,
@@ -54,8 +55,8 @@ class BONDMissingPortsAlert(AlertClass):
 
 
 class BondStatus(AlertSource):
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         ifaces = {i["id"]: i for i in await self.middleware.call("interface.query")}
         for iface, info in ifaces.items():
             if info["type"] != "LINK_AGGREGATION":

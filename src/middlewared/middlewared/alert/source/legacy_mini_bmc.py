@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
 
@@ -21,15 +23,17 @@ class TrueNASMiniBMCAlert(AlertClass):
 class TrueNASMiniBMCAlertSource(AlertSource):
     products = (ProductType.COMMUNITY_EDITION,)
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         dmi = await self.middleware.call("system.dmidecode_info")
         if "freenas" in dmi["system-product-name"].lower() and dmi["baseboard-product-name"] == "C2750D4I":
             if (fwver := (await self.middleware.call("ipmi.mc.info")).get("firmware_revision", None)):
                 try:
                     fwver = [int(i) for i in fwver.split(".")]
                     if len(fwver) < 2 or not (fwver[0] == 0 and fwver[1] < 30):
-                        return
+                        return None
                 except ValueError:
-                    return
+                    return None
 
             return Alert(TrueNASMiniBMCAlert())
+
+        return None

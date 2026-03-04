@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
@@ -16,7 +17,7 @@ class NFSHostnameLookupFailAlert(OneShotAlertClass):
     hosts: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -39,7 +40,7 @@ class NFSHostListExcessiveAlert(OneShotAlertClass):
     numEntries: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -62,5 +63,5 @@ class NFSNetworkListExcessiveAlert(OneShotAlertClass):
     numEntries: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None

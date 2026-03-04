@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from typing import Any
+
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass,
 )
@@ -23,7 +25,7 @@ class ProactiveSupportAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         webui_page = 'System Settings->General->Support page'
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
@@ -42,3 +44,5 @@ class ProactiveSupportAlertSource(AlertSource):
                 return Alert(
                     ProactiveSupportAlert(f'Please complete these fields on the {webui_page}: {", ".join(unfilled)}')
                 )
+
+        return None

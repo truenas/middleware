@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass
 from middlewared.alert.schedule import IntervalSchedule
@@ -18,20 +19,20 @@ class ISCSIPortalIPAlert(NonDataclassAlertClass[str], AlertClass):
 class ISCSIPortalIPAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=60))
 
-    async def check(self):
+    async def check(self) -> Alert[ISCSIPortalIPAlert] | None:
         try:
             started = await self.middleware.call('service.started', 'iscsitarget')
         except Exception:
             # during upgrade this crashed with a timeout error
             # so don't pollute the webUI with tracebacks
-            return
+            return None
         else:
             if not started:
-                return
+                return None
 
         in_use_ips = {i['address'] for i in await self.middleware.call('interface.ip_in_use', {'any': True})}
         portals = {p['id']: p for p in await self.middleware.call('iscsi.portal.query')}
-        ips = set()
+        ips: set[str] = set()
         for target in await self.middleware.call('iscsi.target.query'):
             for group in target['groups']:
                 ips.update(
@@ -55,6 +56,7 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
         if ips:
             return Alert(ISCSIPortalIPAlert(', '.join(ips)))
+        return None
 
 
 @dataclass(kw_only=True)
@@ -98,8 +100,8 @@ class ISCSIAuthSecretAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
 
         private_to_public = {
             'user': 'User',

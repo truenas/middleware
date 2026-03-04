@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import (
     Alert,
@@ -37,8 +38,8 @@ class DiskTemperatureTooHotAlert(AlertClass):
 class DiskTemperatureTooHotAlertSource(AlertSource):
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = list()
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = list()
         map = {i.name: i for i in await self.middleware.call("disk.get_disks")}
         temp_cache = await self.middleware.call("disk.temperatures", [], True)
         for disk, (temp, crit) in temp_cache.items():

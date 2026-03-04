@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
@@ -22,7 +23,7 @@ class SnapshotTotalCountAlert(AlertClass):
     max: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -43,7 +44,7 @@ class SnapshotCountAlert(AlertClass):
     max: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['dataset']
 
 
@@ -51,7 +52,7 @@ class SnapshotCountAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
     run_on_backup_node = False
 
-    async def _check_total(self, snapshot_counts: dict[str, int]) -> list[Alert]:
+    async def _check_total(self, snapshot_counts: dict[str, int]) -> list[Alert[Any]]:
         """Return an `Alert` if the total number of snapshots exceeds the limit."""
         max_total = await self.middleware.call2(self.middleware.services.pool.snapshottask.max_total_count)
         total = sum(snapshot_counts.values())
@@ -64,7 +65,7 @@ class SnapshotCountAlertSource(AlertSource):
 
         return []
 
-    async def _check_smb(self, snapshot_counts: dict[str, int]) -> list[Alert]:
+    async def _check_smb(self, snapshot_counts: dict[str, int]) -> list[Alert[Any]]:
         """Return an `Alert` for every dataset shared over smb whose number of snapshots exceeds the limit."""
         max_ = await self.middleware.call2(self.middleware.services.pool.snapshottask.max_count)
         to_alert = list()
@@ -83,7 +84,7 @@ class SnapshotCountAlertSource(AlertSource):
 
         return to_alert
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         snapshot_counts = await self.middleware.call2(
             self.middleware.services.zfs.resource.snapshot.count_impl, ZFSResourceSnapshotCountQuery(recursive=True),
         )

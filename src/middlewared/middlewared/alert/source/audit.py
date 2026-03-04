@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 
@@ -33,7 +35,7 @@ class AuditServiceHealthAlert(AlertClass):
     verrs: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -44,7 +46,7 @@ class AuditServiceHealthAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=20))
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> Alert[AuditServiceHealthAlert] | None:
         try:
             await self.middleware.call(
                 'audit.query', {
@@ -55,3 +57,4 @@ class AuditServiceHealthAlertSource(AlertSource):
             return Alert(
                 AuditServiceHealthAlert(verrs=str(e))
             )
+        return None

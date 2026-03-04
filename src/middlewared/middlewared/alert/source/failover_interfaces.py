@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
 
@@ -22,7 +24,7 @@ class FailoverCriticalAlertSource(AlertSource):
     failover_related = True
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
             return [Alert(NoCriticalFailoverInterfaceFoundAlert())]
         else:

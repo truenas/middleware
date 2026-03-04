@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
@@ -18,7 +19,7 @@ class ShareLockedAlert(OneShotAlertClass):
     id: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return f'{args["type"]}_{args["id"]}'
 
 
@@ -37,5 +38,5 @@ class TaskLockedAlert(OneShotAlertClass):
     id: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return f'{args["type"]}_{args["id"]}'

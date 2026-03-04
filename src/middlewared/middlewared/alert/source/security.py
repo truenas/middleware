@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
@@ -59,8 +60,8 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     run_on_backup_node = False
     products = (ProductType.ENTERPRISE,)
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         sec = await self.middleware.call("system.security.config")
         if not sec["max_password_age"]:
             # password aging disabled and so we can skip these checks

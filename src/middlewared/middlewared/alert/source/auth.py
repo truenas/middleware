@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
@@ -31,7 +32,7 @@ class AdminSessionAlert(AlertClass):
     sessions: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -50,11 +51,11 @@ class APIFailedLoginAlert(AlertClass):
     sessions: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
-def audit_entry_to_msg(entry):
+def audit_entry_to_msg(entry: dict[str, Any]) -> str:
     return (
         f'(username={entry["username"]},'
         f'session_id={entry["session"]},'
@@ -67,7 +68,7 @@ class AdminSessionAlertSource(AlertSource):
     run_on_backup_node = True
     products = (ProductType.ENTERPRISE,)
 
-    async def check(self):
+    async def check(self) -> Alert[AdminSessionAlert] | None:
         now = int(time())
         qf = [
             ['message_timestamp', '>', now - 86400],
@@ -82,7 +83,7 @@ class AdminSessionAlertSource(AlertSource):
             'query-options': {'count': True}
         })
         if not admin_login_count:
-            return
+            return None
 
         admin_logins = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
@@ -113,7 +114,7 @@ class APIFailedLoginAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
 
-    async def check(self):
+    async def check(self) -> Alert[APIFailedLoginAlert] | None:
         now = int(time())
         qf = [
             ['message_timestamp', '>', now - 86400],
@@ -128,7 +129,7 @@ class APIFailedLoginAlertSource(AlertSource):
             'query-options': {'count': True}
         })
         if not auth_failure_count:
-            return
+            return None
 
         auth_failures = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
@@ -149,7 +150,7 @@ class APIFailedLoginAlertSource(AlertSource):
             }
         })
         if not auth_failures:
-            return
+            return None
 
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in auth_failures])
         return Alert(

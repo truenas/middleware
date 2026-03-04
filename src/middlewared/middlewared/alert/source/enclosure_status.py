@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 from dataclasses import dataclass
+from typing import Any
+
 from middlewared.utils import ProductType
 
 from middlewared.alert.base import (
@@ -25,11 +27,11 @@ class BadElement:
     value_raw: int
     enc_title: str
 
-    def args(self):
+    def args(self) -> list[str | int]:
         return [self.enc_name, self.descriptor, self.status, self.value, self.value_raw]
 
 
-class EnclosureUnhealthyAlert(NonDataclassAlertClass[list], AlertClass):
+class EnclosureUnhealthyAlert(NonDataclassAlertClass[list[str | int]], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -39,7 +41,7 @@ class EnclosureUnhealthyAlert(NonDataclassAlertClass[list], AlertClass):
     )
 
 
-class EnclosureHealthyAlert(NonDataclassAlertClass[list], AlertClass):
+class EnclosureHealthyAlert(NonDataclassAlertClass[list[str]], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.INFO,
@@ -54,9 +56,9 @@ class EnclosureStatusAlertSource(AlertSource):
     failover_related = True
     run_on_backup_node = False
     bad = ("critical", "noncritical", "unknown", "unrecoverable")
-    bad_elements: list | list[tuple[BadElement, int]] = list()
+    bad_elements: list[tuple[BadElement, int]] = list()
 
-    async def should_report(self, ele_type: str, ele_value: dict[str]):
+    async def should_report(self, ele_type: str, ele_value: dict[str, Any]) -> bool:
         """We only want to raise an alert for an element's status
         if it meets a certain criteria"""
         if not ele_value["value"]:
@@ -70,8 +72,9 @@ class EnclosureStatusAlertSource(AlertSource):
 
         return True
 
-    async def check(self):
-        good_enclosures, bad_elements = [], []
+    async def check(self) -> list[Alert[Any]]:
+        good_enclosures: list[list[str]] = []
+        bad_elements: list[tuple[BadElement, int]] = []
         for enc in await self.middleware.call("enclosure2.query"):
             enc_title = f"{enc['name']} (id: {enc['id']})"
             good_enclosures.append([enc_title])
@@ -96,7 +99,7 @@ class EnclosureStatusAlertSource(AlertSource):
 
         self.bad_elements = bad_elements
 
-        alerts = []
+        alerts: list[Alert[Any]] = []
         for current_bad_element, count in bad_elements:
             # We only report unhealthy enclosure elements if
             # they were unhealthy 5 probes in a row (1 probe = 1 minute)

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
@@ -19,7 +20,7 @@ class CertificateIsExpiringAlert(AlertClass):
     days: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['name']]
 
 
@@ -36,7 +37,7 @@ class CertificateIsExpiringSoonAlert(AlertClass):
     days: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['name']]
 
 
@@ -52,7 +53,7 @@ class CertificateExpiredAlert(AlertClass):
     name: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['name']]
 
 
@@ -85,8 +86,8 @@ class CertificateChecksAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)  # every 24 hours
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
 
         # system certs
         certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])

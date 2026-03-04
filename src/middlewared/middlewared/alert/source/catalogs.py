@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
@@ -17,7 +18,7 @@ class CatalogNotHealthyAlert(OneShotAlertClass):
     catalog: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['catalog']
 
 
@@ -35,5 +36,5 @@ class CatalogSyncFailedAlert(OneShotAlertClass):
     error: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['catalog']

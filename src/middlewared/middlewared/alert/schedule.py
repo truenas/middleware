@@ -7,7 +7,7 @@ class BaseSchedule:
         raise NotImplementedError
 
 
-class IntervalSchedule:
+class IntervalSchedule(BaseSchedule):
     def __init__(self, interval: timedelta):
         self.interval = interval
 
@@ -15,7 +15,7 @@ class IntervalSchedule:
         return now >= last_run + self.interval
 
 
-class CrontabSchedule:
+class CrontabSchedule(BaseSchedule):
     def __init__(self, hour: int):
         self.hour = hour
 

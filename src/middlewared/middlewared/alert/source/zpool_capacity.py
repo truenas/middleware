@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import (
     AlertClass,
@@ -27,7 +28,7 @@ class ZpoolCapacityNoticeAlert(AlertClass):
     capacity: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['volume']]
 
 
@@ -45,7 +46,7 @@ class ZpoolCapacityWarningAlert(AlertClass):
     capacity: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['volume']]
 
 
@@ -63,15 +64,15 @@ class ZpoolCapacityCriticalAlert(AlertClass):
     capacity: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['volume']]
 
 
 class ZpoolCapacityAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = []
         # query_impl with pool_names=None skips boot pools, so we query
         # the boot pool explicitly to ensure capacity alerts still fire.
         pools = await self.middleware.call("zpool.query_impl", {"properties": ["capacity"]})

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 
@@ -18,7 +19,7 @@ class SnapshotFailedAlert(AlertClass):
     datetime_iso: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['id'], args['datetime_iso']]
 
 
@@ -36,7 +37,7 @@ class ReplicationSuccessAlert(AlertClass):
     datetime_iso: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['id'], args['datetime_iso']]
 
 
@@ -55,16 +56,18 @@ class ReplicationFailedAlert(AlertClass):
     datetime_iso: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['id'], args['datetime_iso']]
 
 
 class ReplicationAlertSource(AlertSource):
-    async def check(self):
-        alerts = []
-        for snapshottask in await self.middleware.call2(
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
+        snapshottasks = await self.middleware.call2(
             self.middleware.services.pool.snapshottask.query, [["enabled", "=", True]],
-        ):
+        )
+        assert isinstance(snapshottasks, list)
+        for snapshottask in snapshottasks:
             if snapshottask.state["state"] == "ERROR":
                 alerts.append(
                     Alert(

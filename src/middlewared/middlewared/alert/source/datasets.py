@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.alert.schedule import IntervalSchedule
@@ -24,7 +25,7 @@ class UnencryptedDatasetsAlertSource(AlertSource):
 
     schedule = IntervalSchedule(timedelta(hours=12))
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         unencrypted_datasets = []
         for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
             for child in dataset['children']:
@@ -40,3 +41,5 @@ class UnencryptedDatasetsAlertSource(AlertSource):
 
         if unencrypted_datasets:
             return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted_datasets)))
+
+        return None

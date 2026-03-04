@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -33,7 +34,7 @@ class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
 
-    async def check(self) -> list[Alert] | Alert | None:
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         try:
             update_status = await self.call2(self.s.update.status)
             if update_status.status:

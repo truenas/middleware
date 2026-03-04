@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
 
@@ -15,8 +16,8 @@ class ScrubPausedAlert(NonDataclassAlertClass[str], AlertClass):
 class ScrubPausedAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = []
         for pool in await self.middleware.call("pool.query"):
             if pool["scan"] is not None:
                 if pool["scan"]["pause"] is not None:

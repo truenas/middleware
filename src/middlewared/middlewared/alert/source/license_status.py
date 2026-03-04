@@ -6,6 +6,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -48,8 +49,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]] | Alert[Any]:
+        alerts: list[Alert[Any]] = []
 
         local_license = self.middleware.call_sync('system.license')
         if local_license is None:
@@ -85,7 +86,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 )
             ))
 
-        enc_nums = defaultdict(lambda: 0)
+        enc_nums: defaultdict[str, int] = defaultdict(lambda: 0)
         for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
             enc_nums[enc['model']] += 1
 
@@ -125,6 +126,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 contract_type = local_license['contract_type']  # Display as stored, usually upper case.
                 customer_name = local_license['customer_name']
 
+                alert_klass: type[LicenseHasExpiredAlert] | type[LicenseIsExpiringAlert]
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlert
                     alert_text = textwrap.dedent("""\

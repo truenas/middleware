@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -29,7 +30,7 @@ class QuotaWarningAlert(AlertClass):
     quota_property: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['dataset'], args['quota_property']]
 
 
@@ -50,7 +51,7 @@ class QuotaCriticalAlert(AlertClass):
     quota_property: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return [args['dataset'], args['quota_property']]
 
 
@@ -58,7 +59,7 @@ class QuotaAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(hours=1))
     run_on_backup_node = False
 
-    def __cast_threshold(self, val):
+    def __cast_threshold(self, val: Any) -> int:
         try:
             return abs(int(val))
         except Exception:
@@ -67,8 +68,8 @@ class QuotaAlertSource(ThreadedAlertSource):
             # not crash here
             return 0
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         hostname = self.middleware.call_sync("system.hostname")
         mntinfo = getmntinfo()
         rv = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
@@ -116,6 +117,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                     used = props["usedbydataset"]["value"]
 
                 used_fraction = 100 * used / quota_value
+                klass: type[QuotaCriticalAlert] | type[QuotaWarningAlert]
                 if used_fraction >= critical_threshold:
                     klass = QuotaCriticalAlert
                 elif used_fraction >= warning_threshold:
@@ -166,7 +168,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                 ))
         return alerts
 
-    def _get_owner(self, dataset_name, props, mntinfo):
+    def _get_owner(self, dataset_name: str, props: Any, mntinfo: Any) -> int:
         mountpoint = None
         if props["mounted"]["value"] is True:
             if props["mountpoint"]["raw"] == "legacy":
