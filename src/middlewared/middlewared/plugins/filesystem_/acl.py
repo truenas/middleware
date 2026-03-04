@@ -304,12 +304,21 @@ class FilesystemService(Service):
         try:
             if mode:
                 os.fchmod(fd, mode)
+
             os.fchown(fd, uid, gid)
+
             if options['recursive']:
-                action = AclToolAction.CLONE if mode else AclToolAction.STRIP
+                # When stripping ACLs, always use STRIP even if a mode was supplied.
+                # CLONE would call generate_inherited_acl() on the just-stripped root
+                # ACL (which has no inherit flags) and raise ValueError.
+                if options['stripacl'] or mode:
+                    action = AclToolAction.STRIP
+                else:
+                    action = AclToolAction.CLONE
+
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 options['posixacl'] = not is_nfs4acl
-                options['do_chmod'] = True
+                options['do_chmod'] = mode is not None
                 acltool(fd, action, uid, gid, options, job)
         finally:
             os.close(fd)
