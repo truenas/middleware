@@ -142,7 +142,8 @@ class SMARTAlertSource(ThreadedAlertSource):
             # (a.k.a. “Bad Block Count” on Phison / “Reserved Block Count” on Micron)
             # falls below 90% of its initial value.
             alerts.append(
-                SMARTSpareBlockCountAlertClass(
+                Alert(
+                    SMARTSpareBlockCountAlertClass,
                     {
                         "name": sijson["device"]["name"],
                         "serial": sijson["serial_number"],
@@ -168,7 +169,8 @@ class SMARTAlertSource(ThreadedAlertSource):
                 # Rule: Trigger warning alert when the
                 # Block Erase Count has a Raw Value > 3000.
                 alerts.append(
-                    SMARTEraseCycleCountAlertClass(
+                    Alert(
+                        SMARTEraseCycleCountAlertClass,
                         {
                             "name": sijson["device"]["name"],
                             "serial": sijson["serial_number"],
