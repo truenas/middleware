@@ -103,7 +103,7 @@ class AlertClass:
     def __init_subclass__(cls):
         super().__init_subclass__()
 
-        if cls.__name__ not in ["OneShotAlertClass"]:
+        if cls.__name__ not in ["DismissableAlertClass", "OneShotAlertClass"]:
             if not cls.__name__.endswith("Alert"):
                 raise NameError(f"Invalid alert class name {cls.__name__}")
 
@@ -186,7 +186,7 @@ class OneShotAlertClass(AlertClass):
         """
         if cls.config.keys is not None:
             if query is None:
-                raise ValueError("`query` cannot be `None`")
+                return []
 
             return [alert for alert in alerts if any(getattr(alert.instance, k) != query[k] for k in cls.config.keys)]
 

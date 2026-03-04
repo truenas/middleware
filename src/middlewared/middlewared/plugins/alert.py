@@ -190,10 +190,18 @@ class AlertSerializer:
         await self._ensure_initialized()
 
         return dict(
-            alert.__dict__,
             id=alert.uuid,
-            node=self.nodes[alert.node],
+            uuid=alert.uuid,
+            source=alert.source,
             klass=alert.instance.config.name,
+            args=alert.instance.args(),
+            node=self.nodes[alert.node],
+            key=alert.key,
+            datetime=alert.datetime,
+            last_occurrence=alert.last_occurrence,
+            dismissed=alert.dismissed,
+            mail=alert.mail,
+            text=alert.text,
             level=self.classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name),
             formatted=alert.formatted,
             one_shot=isinstance(alert.instance, OneShotAlertClass) and not alert.instance.config.deleted_automatically
@@ -302,10 +310,11 @@ class AlertService(Service):
                     self.logger.info("Alert source %r is no longer present", alert["source"])
                     continue
 
+                class_name = alert.pop("klass")
                 try:
-                    klass = AlertClass.class_by_name[alert["klass"]]
+                    klass = AlertClass.class_by_name[class_name]
                 except KeyError:
-                    self.logger.info("Alert class %r is no longer present", alert["klass"])
+                    self.logger.info("Alert class %r is no longer present", class_name)
                     continue
 
                 alert["_uuid"] = alert.pop("uuid")
@@ -743,7 +752,7 @@ class AlertService(Service):
         return this_node_alerts, other_node_alerts, locked
 
     async def __run_other_node_alert_source(self, name):
-        keys = ("datetime", "last_occurrence", "dismissed", "mail",)
+        keys = ("datetime", "last_occurrence", "dismissed", "mail")
         other_node_alerts = []
         try:
             try:
@@ -861,7 +870,7 @@ class AlertService(Service):
     @private
     async def run_source(self, source_name):
         try:
-            return [dict(alert.__dict__, klass=alert.instance.config.name)
+            return [dict(alert.__dict__, instance=None, klass=alert.instance.config.name, args=alert.instance.args())
                     for alert in await self.__run_source(source_name)]
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
