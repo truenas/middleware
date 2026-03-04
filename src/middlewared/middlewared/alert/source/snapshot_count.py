@@ -1,9 +1,12 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.utils.path import FSLocation, path_location
 
 
+@dataclass(kw_only=True)
 class SnapshotTotalCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -15,7 +18,15 @@ class SnapshotTotalCountAlert(AlertClass):
         ),
     )
 
+    count: int
+    max: int
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class SnapshotCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -26,6 +37,14 @@ class SnapshotCountAlert(AlertClass):
             "display all snapshots in the Previous Versions tab."
         ),
     )
+
+    dataset: str
+    count: int
+    max: int
+
+    @classmethod
+    def key(cls, args):
+        return args['dataset']
 
 
 class SnapshotCountAlertSource(AlertSource):
@@ -38,11 +57,10 @@ class SnapshotCountAlertSource(AlertSource):
         total = sum(snapshot_counts.values())
 
         if total > max_total:
-            return [Alert(
-                SnapshotTotalCountAlert,
-                {"count": total, "max": max_total},
-                key=None,
-            )]
+            return [Alert(SnapshotTotalCountAlert(
+                count=total,
+                max=max_total,
+            ))]
 
         return []
 
@@ -57,11 +75,11 @@ class SnapshotCountAlertSource(AlertSource):
             path = share["path"].removeprefix("/mnt/")
             count = snapshot_counts.get(path, 0)
             if count > max_:
-                to_alert.append(Alert(
-                    SnapshotCountAlert,
-                    {"dataset": path, "count": count, "max": max_},
-                    key=path,
-                ))
+                to_alert.append(Alert(SnapshotCountAlert(
+                    dataset=path,
+                    count=count,
+                    max=max_,
+                )))
 
         return to_alert
 

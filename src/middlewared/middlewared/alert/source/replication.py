@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 
 
+@dataclass(kw_only=True)
 class SnapshotFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -9,7 +12,17 @@ class SnapshotFailedAlert(AlertClass):
         text="Snapshot Task For Dataset \"%(name)s\" failed: %(message)s.",
     )
 
+    name: str
+    message: str
+    id: int
+    datetime_iso: str
 
+    @classmethod
+    def key(cls, args):
+        return [args['id'], args['datetime_iso']]
+
+
+@dataclass(kw_only=True)
 class ReplicationSuccessAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -18,7 +31,16 @@ class ReplicationSuccessAlert(AlertClass):
         text="Replication \"%(name)s\" succeeded.",
     )
 
+    name: str
+    id: int
+    datetime_iso: str
 
+    @classmethod
+    def key(cls, args):
+        return [args['id'], args['datetime_iso']]
+
+
+@dataclass(kw_only=True)
 class ReplicationFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -26,6 +48,15 @@ class ReplicationFailedAlert(AlertClass):
         title="Replication Failed",
         text="Replication \"%(name)s\" failed: %(message)s.",
     )
+
+    name: str
+    message: str
+    id: int
+    datetime_iso: str
+
+    @classmethod
+    def key(cls, args):
+        return [args['id'], args['datetime_iso']]
 
 
 class ReplicationAlertSource(AlertSource):
@@ -37,12 +68,12 @@ class ReplicationAlertSource(AlertSource):
             if snapshottask.state["state"] == "ERROR":
                 alerts.append(
                     Alert(
-                        SnapshotFailedAlert,
-                        {
-                            "name": snapshottask.dataset,
-                            "message": snapshottask.state["error"],
-                        },
-                        key=[snapshottask.id, snapshottask.state["datetime"].isoformat()],
+                        SnapshotFailedAlert(
+                            name=snapshottask.dataset,
+                            message=snapshottask.state["error"],
+                            id=snapshottask.id,
+                            datetime_iso=snapshottask.state["datetime"].isoformat(),
+                        ),
                         datetime=snapshottask.state["datetime"],
                     )
                 )
@@ -51,23 +82,23 @@ class ReplicationAlertSource(AlertSource):
             if replication["state"]["state"] == "FINISHED":
                 alerts.append(
                     Alert(
-                        ReplicationSuccessAlert,
-                        {
-                            "name": replication["name"],
-                        },
-                        key=[replication["id"], replication["state"]["datetime"].isoformat()],
+                        ReplicationSuccessAlert(
+                            name=replication["name"],
+                            id=replication["id"],
+                            datetime_iso=replication["state"]["datetime"].isoformat(),
+                        ),
                         datetime=replication["state"]["datetime"],
                     )
                 )
             if replication["state"]["state"] == "ERROR":
                 alerts.append(
                     Alert(
-                        ReplicationFailedAlert,
-                        {
-                            "name": replication["name"],
-                            "message": replication["state"]["error"],
-                        },
-                        key=[replication["id"], replication["state"]["datetime"].isoformat()],
+                        ReplicationFailedAlert(
+                            name=replication["name"],
+                            message=replication["state"]["error"],
+                            id=replication["id"],
+                            datetime_iso=replication["state"]["datetime"].isoformat(),
+                        ),
                         datetime=replication["state"]["datetime"],
                     )
                 )

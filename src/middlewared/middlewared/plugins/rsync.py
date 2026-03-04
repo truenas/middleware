@@ -8,6 +8,7 @@ import pathlib
 import shlex
 import tempfile
 
+from middlewared.alert.source.rsync import RsyncFailedAlert, RsyncSuccessAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     RsyncTaskEntry,
@@ -599,11 +600,11 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 )
 
             if not rsync['quiet']:
-                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', {
-                    'id': rsync['id'],
-                    'direction': rsync['direction'],
-                    'path': rsync['path'],
-                })
+                self.middleware.call_sync('alert.oneshot_create', RsyncFailedAlert(
+                    id=rsync['id'],
+                    direction=rsync['direction'],
+                    path=rsync['path'],
+                ))
 
             if err:
                 msg = f'{err} Check logs for further information'
@@ -620,11 +621,11 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             raise CallError(msg)
 
         elif not rsync['quiet']:
-            self.middleware.call_sync('alert.oneshot_create', 'RsyncSuccess', {
-                'id': rsync['id'],
-                'direction': rsync['direction'],
-                'path': rsync['path'],
-            })
+            self.middleware.call_sync('alert.oneshot_create', RsyncSuccessAlert(
+                id=rsync['id'],
+                direction=rsync['direction'],
+                path=rsync['path'],
+            ))
 
 
 class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):

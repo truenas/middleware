@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import OneShotAlertClass, AlertClass, AlertCategory, AlertClassConfig, AlertLevel
 
 
+@dataclass(kw_only=True)
 class UPSBatteryLowAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -11,7 +14,11 @@ class UPSBatteryLowAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    ups: str
+    body: str
 
+
+@dataclass(kw_only=True)
 class UPSOnlineAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -22,7 +29,11 @@ class UPSOnlineAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    ups: str
+    body: str
 
+
+@dataclass(kw_only=True)
 class UPSOnBatteryAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -33,7 +44,11 @@ class UPSOnBatteryAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    ups: str
+    body: str
 
+
+@dataclass(kw_only=True)
 class UPSCommbadAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -44,7 +59,11 @@ class UPSCommbadAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    ups: str
+    body: str
 
+
+@dataclass(kw_only=True)
 class UPSCommokAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -55,7 +74,11 @@ class UPSCommokAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    ups: str
+    body: str
 
+
+@dataclass(kw_only=True)
 class UPSReplbattAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.UPS,
@@ -65,3 +88,6 @@ class UPSReplbattAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    ups: str
+    body: str

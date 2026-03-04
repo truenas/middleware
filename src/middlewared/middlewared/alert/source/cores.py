@@ -1,8 +1,13 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
 
 
+@dataclass(kw_only=True)
 class CoreFilesArePresentAlert(AlertClass):
+    corefiles: str
+
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -53,4 +58,4 @@ class CoreFilesArePresentAlertSource(AlertSource):
                 corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
-            return Alert(CoreFilesArePresentAlert, {"corefiles": ', '.join(corefiles)})
+            return Alert(CoreFilesArePresentAlert(corefiles=', '.join(corefiles)))

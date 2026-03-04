@@ -1,9 +1,14 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
 
+@dataclass(kw_only=True)
 class DeprecatedServiceAlert(AlertClass, OneShotAlertClass):
+    service: str
+
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

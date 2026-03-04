@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class VMWareSnapshotCreateFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -11,7 +14,13 @@ class VMWareSnapshotCreateFailedAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    snapshot: str
+    vm: str
+    hostname: str
+    error: str
 
+
+@dataclass(kw_only=True)
 class VMWareSnapshotDeleteFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -21,3 +30,8 @@ class VMWareSnapshotDeleteFailedAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    snapshot: str
+    vm: str
+    hostname: str
+    error: str

@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class SMBAuditShareDisabledAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -9,3 +12,5 @@ class SMBAuditShareDisabledAlert(AlertClass, OneShotAlertClass):
         text="SMB shares disabled due to invalid group in audit configuration: %(shares)s",
         keys=[],
     )
+
+    shares: str

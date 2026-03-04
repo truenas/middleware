@@ -3,11 +3,16 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.utils import ProductType
 
 
+@dataclass(kw_only=True)
 class FailoverSyncFailedAlert(AlertClass, OneShotAlertClass):
+    mins: int
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -36,7 +41,10 @@ class FailoverKeysSyncFailedAlert(AlertClass, OneShotAlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class FailoverKMIPKeysSyncFailedAlert(AlertClass, OneShotAlertClass):
+    error: str
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,

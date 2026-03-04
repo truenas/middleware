@@ -1,12 +1,14 @@
 import asyncio
 from collections import defaultdict
+from dataclasses import dataclass
 import threading
 
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
+    AlertCategory, AlertClass, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
 )
+from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.utils.zfs.event import (
@@ -65,7 +67,11 @@ class ScanWatch:
         self._cancel.set()
 
 
+@dataclass(kw_only=True)
 class ScrubNotStartedAlert(AlertClass, OneShotAlertClass):
+    pool: str
+    text: str
+
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,
@@ -79,7 +85,7 @@ class ScrubNotStartedAlert(AlertClass, OneShotAlertClass):
         return args["pool"]
 
 
-class ScrubStartedAlert(AlertClass, OneShotAlertClass):
+class ScrubStartedAlert(NonDataclassAlertClass[str], AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,
@@ -137,7 +143,7 @@ async def create_pool_upgraded_alert(middleware, pool_name):
 
     try:
         if not await middleware.call('pool.is_upgraded', found[0]['id']):
-            await middleware.call('alert.oneshot_create', 'PoolUpgraded', pool_name)
+            await middleware.call('alert.oneshot_create', PoolUpgradedAlert(pool_name))
     except Exception:
         pass
 

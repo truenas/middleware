@@ -1,9 +1,9 @@
 import subprocess
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
 
 
-class SyslogNgAlert(AlertClass):
+class SyslogNgAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.REPORTING,
         level=AlertLevel.WARNING,
@@ -18,4 +18,4 @@ class SyslogNgAlertSource(ThreadedAlertSource):
                               stderr=subprocess.STDOUT, encoding="utf8")
         status = p1.communicate()[0]
         if p1.returncode == 1:
-            return Alert(SyslogNgAlert, status)
+            return Alert(SyslogNgAlert(status))

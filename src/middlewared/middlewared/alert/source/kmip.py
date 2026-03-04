@@ -3,10 +3,16 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 
+@dataclass(kw_only=True)
 class KMIPConnectionFailedAlert(AlertClass, OneShotAlertClass):
+    server: str
+    error: str
+
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,
@@ -16,7 +22,10 @@ class KMIPConnectionFailedAlert(AlertClass, OneShotAlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class KMIPZFSDatasetsSyncFailureAlert(AlertClass, OneShotAlertClass):
+    datasets: str
+
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,
@@ -26,7 +35,10 @@ class KMIPZFSDatasetsSyncFailureAlert(AlertClass, OneShotAlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class KMIPSEDDisksSyncFailureAlert(AlertClass, OneShotAlertClass):
+    disks: str
+
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,

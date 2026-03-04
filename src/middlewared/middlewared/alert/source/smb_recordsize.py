@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class SMBVeeamFastCloneAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -9,3 +12,5 @@ class SMBVeeamFastCloneAlert(AlertClass, OneShotAlertClass):
         text="SMB shares cannot use Veeam Fast Clone due to incorrect ZFS recordsize: %(shares)s",
         keys=[],
     )
+
+    shares: str

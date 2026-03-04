@@ -1,10 +1,15 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, ProductType
 from middlewared.alert.schedule import IntervalSchedule
 
 
+@dataclass(kw_only=True)
 class FIPSMisconfigurationAlert(AlertClass):
+    configuration: str
+    state: str
+
     config = AlertClassConfig(
         category=AlertCategory.SECURITY,
         level=AlertLevel.CRITICAL,
@@ -26,10 +31,10 @@ class FIPSProviderAlertSource(AlertSource):
         try:
             fips_enabled = await self.middleware.call('system.security.info.fips_enabled')
         except Exception:
-            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "unknown"})
+            return Alert(FIPSMisconfigurationAlert(configuration=configuration, state="unknown"))
 
         if fips_configured and not fips_enabled:
-            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "not active"})
+            return Alert(FIPSMisconfigurationAlert(configuration=configuration, state="not active"))
 
         if not fips_configured and fips_enabled:
-            return Alert(FIPSMisconfigurationAlert, {"configuration": configuration, "state": "active"})
+            return Alert(FIPSMisconfigurationAlert(configuration=configuration, state="active"))

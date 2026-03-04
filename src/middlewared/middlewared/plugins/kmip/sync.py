@@ -2,6 +2,7 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+from middlewared.alert.source.kmip import KMIPConnectionFailedAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     KMIPKmipSyncPendingArgs, KMIPKmipSyncPendingResult, KMIPSyncKeysArgs, KMIPSyncKeysResult,
@@ -37,8 +38,8 @@ class KMIPService(Service, KMIPServerMixin):
             if raise_alert:
                 config = self.middleware.call_sync('kmip.config')
                 self.middleware.call_sync(
-                    'alert.oneshot_create', 'KMIPConnectionFailed',
-                    {'server': config['server'], 'error': result['exception']}
+                    'alert.oneshot_create',
+                    KMIPConnectionFailedAlert(server=config['server'], error=result['exception'])
                 )
             return False
         else:

@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import datetime
+from dataclasses import dataclass
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
@@ -21,7 +22,12 @@ class JBOFTearDownFailureAlert(AlertClass, OneShotAlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class JBOFRedfishCommAlert(AlertClass):
+    desc: str
+    ip1: str
+    ip2: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -31,7 +37,13 @@ class JBOFRedfishCommAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class JBOFInvalidDataAlert(AlertClass):
+    desc: str
+    ip1: str
+    ip2: str
+    keys: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -41,7 +53,15 @@ class JBOFInvalidDataAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class JBOFElementWarningAlert(AlertClass):
+    desc: str
+    ip1: str
+    ip2: str
+    etype: str
+    key: str
+    value: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -51,7 +71,15 @@ class JBOFElementWarningAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class JBOFElementCriticalAlert(AlertClass):
+    desc: str
+    ip1: str
+    ip2: str
+    etype: str
+    key: str
+    value: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -79,13 +107,13 @@ class JBOFAlertSource(AlertSource):
                     break
             if data is None:
                 # Did not find data for this JBOF
-                alerts.append(Alert(JBOFRedfishCommAlert, jbof_id_dict))
+                alerts.append(Alert(JBOFRedfishCommAlert(**jbof_id_dict)))
                 continue
 
             # Make sure the data seems to have the correct shape
             elements = data.get('elements')
             if not elements or not isinstance(elements, dict):
-                alerts.append(Alert(JBOFInvalidDataAlert, {'keys': 'elements'} | jbof_id_dict))
+                alerts.append(Alert(JBOFInvalidDataAlert(keys='elements', **jbof_id_dict)))
                 continue
 
             bad_keys = []
@@ -97,19 +125,23 @@ class JBOFAlertSource(AlertSource):
                     for key, v in edata.items():
                         match v['status']:
                             case ElementStatus.NONCRITICAL.value:
-                                alerts.append(Alert(JBOFElementWarningAlert, {'etype': etype.value,
-                                                                                   'key': key,
-                                                                                   'value': v.get('value', '')
-                                                                                   } | jbof_id_dict))
+                                alerts.append(Alert(JBOFElementWarningAlert(
+                                    etype=etype.value,
+                                    key=key,
+                                    value=v.get('value', ''),
+                                    **jbof_id_dict,
+                                )))
                             case ElementStatus.CRITICAL.value:
-                                alerts.append(Alert(JBOFElementCriticalAlert, {'etype': etype.value,
-                                                                                    'key': key,
-                                                                                    'value': v.get('value', '')
-                                                                                    } | jbof_id_dict))
+                                alerts.append(Alert(JBOFElementCriticalAlert(
+                                    etype=etype.value,
+                                    key=key,
+                                    value=v.get('value', ''),
+                                    **jbof_id_dict,
+                                )))
                             case _:
                                 pass
             if bad_keys:
-                alerts.append(Alert(JBOFInvalidDataAlert, {'keys': ','.join(bad_keys)} | jbof_id_dict))
+                alerts.append(Alert(JBOFInvalidDataAlert(keys=','.join(bad_keys), **jbof_id_dict)))
 
     async def check(self):
         alerts = []

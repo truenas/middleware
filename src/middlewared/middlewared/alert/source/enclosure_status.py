@@ -12,6 +12,7 @@ from middlewared.alert.base import (
     AlertLevel,
     Alert,
     AlertSource,
+    NonDataclassAlertClass,
 )
 
 
@@ -28,7 +29,7 @@ class BadElement:
         return [self.enc_name, self.descriptor, self.status, self.value, self.value_raw]
 
 
-class EnclosureUnhealthyAlert(AlertClass):
+class EnclosureUnhealthyAlert(NonDataclassAlertClass[list], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -38,7 +39,7 @@ class EnclosureUnhealthyAlert(AlertClass):
     )
 
 
-class EnclosureHealthyAlert(AlertClass):
+class EnclosureHealthyAlert(NonDataclassAlertClass[list], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.INFO,
@@ -106,10 +107,10 @@ class EnclosureStatusAlertSource(AlertSource):
                     pass
 
                 alerts.append(
-                    Alert(EnclosureUnhealthyAlert, args=current_bad_element.args())
+                    Alert(EnclosureUnhealthyAlert(current_bad_element.args()))
                 )
 
         for enclosure in good_enclosures:
-            alerts.append(Alert(EnclosureHealthyAlert, args=enclosure))
+            alerts.append(Alert(EnclosureHealthyAlert(enclosure)))
 
         return alerts

@@ -3,12 +3,15 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 
+@dataclass(kw_only=True)
 class MemoryErrorsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -19,7 +22,11 @@ class MemoryErrorsAlert(AlertClass):
         proactive_support=True,
     )
 
+    count: int
+    loc: str
 
+
+@dataclass(kw_only=True)
 class MemorySizeMismatchAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -29,6 +36,9 @@ class MemorySizeMismatchAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
     )
+
+    r1: str
+    r2: str
 
 
 class MemoryErrorsAlertSource(AlertSource):
@@ -43,7 +53,7 @@ class MemoryErrorsAlertSource(AlertSource):
                 # is available. These errors occur when the system detects an uncorrectable memory
                 # error, but specific details about the error are not provided or accessible.
                 # Because of this fact, we'll just report the error count without the DIMM information.
-                alerts.append(Alert(MemoryErrorsAlert, {'count': val, 'loc': location}))
+                alerts.append(Alert(MemoryErrorsAlert(count=val, loc=location)))
             elif (val := info['uncorrected_errors']) is not None and val > 0:
                 # this means that there were uncorrected errors where the dimm information was able
                 # to be obtained.
@@ -51,7 +61,7 @@ class MemoryErrorsAlertSource(AlertSource):
                     if (val2 := info[dimm_key]['uncorrected_errors']) is not None and val2 > 0:
                         # the specific dimm
                         alerts.append(Alert(
-                            MemoryErrorsAlert, {'count': val2, 'loc': location + f' on dimm {dimm_key}'}
+                            MemoryErrorsAlert(count=val2, loc=location + f' on dimm {dimm_key}')
                         ))
 
         return alerts
@@ -87,8 +97,7 @@ class MemorySizeMismatchAlertSource(AlertSource):
         # and alert on it.
         if abs(r1 - r2) > (0.02 * max(abs(r1), abs(r2))):
             alerts.append(Alert(
-                MemorySizeMismatchAlert,
-                {'r1': format_size(r1), 'r2': format_size(r2)}
+                MemorySizeMismatchAlert(r1=format_size(r1), r2=format_size(r2))
             ))
 
         return alerts

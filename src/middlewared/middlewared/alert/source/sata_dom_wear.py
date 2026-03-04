@@ -3,12 +3,14 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
 from middlewared.utils import ProductType
 
 
+@dataclass(kw_only=True)
 class SATADOMWearWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -18,7 +20,11 @@ class SATADOMWearWarningAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    disk: str
+    lifetime: int
 
+
+@dataclass(kw_only=True)
 class SATADOMWearCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -27,6 +33,9 @@ class SATADOMWearCriticalAlert(AlertClass):
         text="%(lifetime)d%% of lifetime left on SATA DOM %(disk)s.",
         products=(ProductType.ENTERPRISE,),
     )
+
+    disk: str
+    lifetime: int
 
 
 class SATADOMWearAlertSource(AlertSource):
@@ -46,14 +55,14 @@ class SATADOMWearAlertSource(AlertSource):
             lifetime = await self.middleware.call("disk.sata_dom_lifetime_left", disk)
             if lifetime is not None:
                 if lifetime <= 0.1:
-                    alerts.append(Alert(SATADOMWearCriticalAlert, {
-                        "disk": disk,
-                        "lifetime": int(lifetime * 100 + 0.5),
-                    }))
+                    alerts.append(Alert(SATADOMWearCriticalAlert(
+                        disk=disk,
+                        lifetime=int(lifetime * 100 + 0.5),
+                    )))
                 elif lifetime <= 0.2:
-                    alerts.append(Alert(SATADOMWearWarningAlert, {
-                        "disk": disk,
-                        "lifetime": int(lifetime * 100 + 0.5),
-                    }))
+                    alerts.append(Alert(SATADOMWearWarningAlert(
+                        disk=disk,
+                        lifetime=int(lifetime * 100 + 0.5),
+                    )))
 
         return alerts

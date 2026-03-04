@@ -15,6 +15,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
+from middlewared.alert.source.audit import AuditBackendSetupAlert
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.base.types import NonEmptyString
@@ -193,7 +194,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
             try:
                 conn.setup()
             except Exception:
-                self.middleware.call_sync('alert.oneshot_create', 'AuditBackendSetup', {"service": svc})
+                self.middleware.call_sync('alert.oneshot_create', AuditBackendSetupAlert(service=svc))
                 self.logger.error(
                     '%s: failed to set up auditing database connection.',
                     svc, exc_info=True

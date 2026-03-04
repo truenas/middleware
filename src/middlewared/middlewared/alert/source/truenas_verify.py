@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import timedelta
 import subprocess
 
@@ -7,6 +8,7 @@ from middlewared.utils.security import system_security_config_to_stig_type
 
 
 # --------------- Monitored Alerts ----------------
+@dataclass(kw_only=True)
 class TrueNASVerifyServiceChangeDetectionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
@@ -17,6 +19,12 @@ class TrueNASVerifyServiceChangeDetectionAlert(AlertClass):
             "NOTE: Search syslog for messages from 'truenas_verify' and some descrepancies might be nominal."
         ),
     )
+
+    verrs: str
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
@@ -33,9 +41,7 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
             res = subprocess.run(['truenas_verify', 'syslog'], capture_output=True, text=True)
             if res.returncode:
                 return Alert(
-                    TrueNASVerifyServiceChangeDetectionAlert,
-                    {'verrs': res.stdout.strip()},
-                    key=None
+                    TrueNASVerifyServiceChangeDetectionAlert(verrs=res.stdout.strip()),
                 )
 
     def stig_enabled(self):

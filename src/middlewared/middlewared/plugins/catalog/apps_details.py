@@ -15,6 +15,7 @@ from datetime import datetime
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 from pydantic import BaseModel, ConfigDict, Field
 
+from middlewared.alert.source.catalogs import CatalogNotHealthyAlert
 from middlewared.api.current import (
     AppCertificateChoices, AppIpChoices, CatalogApps, CatalogAppsResponse, CatalogEntry,
     SystemGeneralEntry, SystemGeneralTimezoneChoices,
@@ -160,9 +161,9 @@ def retrieve_trains_data_from_json(
 
     if unhealthy_apps:
         context.middleware.call_sync(
-            'alert.oneshot_create', 'CatalogNotHealthy', {
-                'catalog': catalog.id, 'apps': ', '.join(unhealthy_apps)
-            }
+            'alert.oneshot_create', CatalogNotHealthyAlert(
+                catalog=catalog.id, apps=', '.join(unhealthy_apps)
+            )
         )
 
     return data

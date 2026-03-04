@@ -1,5 +1,10 @@
 import middlewared.sqlalchemy as sa
-from middlewared.alert.source.discovery_auth import UPGRADE_ALERTS
+from middlewared.alert.source.discovery_auth import (
+    ISCSIDiscoveryAuthMixedAlert,
+    ISCSIDiscoveryAuthMultipleCHAPAlert,
+    ISCSIDiscoveryAuthMultipleMutualCHAPAlert,
+    UPGRADE_ALERTS,
+)
 from middlewared.api import api_method
 from middlewared.api.current import (iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, iSCSITargetAuthCredentialDeleteArgs,
                                      iSCSITargetAuthCredentialDeleteResult, iSCSITargetAuthCredentialEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
@@ -234,10 +239,16 @@ class iSCSITargetAuthCredentialService(CRUDService):
             elif peerusers[0] != orig_peerusers[0]:
                 # Remove old event and replace with new one.
                 await self.middleware.call("alert.oneshot_delete", alert_name, {'peeruser': orig_peerusers[0]})
-                await self.middleware.call("alert.oneshot_create", alert_name, {'peeruser': peerusers[0]})
+                await self.middleware.call("alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]))
         elif len(peerusers) > 1:
             # Alert was not in place, add one.
-            await self.middleware.call("alert.oneshot_create", alert_name, {'peeruser': peerusers[0]})
+            await self.middleware.call("alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]))
+
+    UPGRADE_ALERT_CLASSES = {
+        'ISCSIDiscoveryAuthMixed': ISCSIDiscoveryAuthMixedAlert,
+        'ISCSIDiscoveryAuthMultipleCHAP': ISCSIDiscoveryAuthMultipleCHAPAlert,
+        'ISCSIDiscoveryAuthMultipleMutualCHAP': ISCSIDiscoveryAuthMultipleMutualCHAPAlert,
+    }
 
     @private
     async def load_upgrade_alerts(self):
@@ -247,7 +258,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
         for alert in UPGRADE_ALERTS:
             try:
                 args = await self.call2(self.s.keyvalue.get, alert)
-                await self.middleware.call("alert.oneshot_create", alert, args)
+                alert_cls = self.UPGRADE_ALERT_CLASSES[alert]
+                await self.middleware.call("alert.oneshot_create", alert_cls(**args))
                 await self.call2(self.s.keyvalue.delete, alert)
             except KeyError:
                 pass

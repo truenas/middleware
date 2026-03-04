@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class ShareLockedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -10,11 +13,16 @@ class ShareLockedAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
     )
 
+    type: str
+    identifier: str
+    id: int
+
     @classmethod
     def key(cls, args):
         return f'{args["type"]}_{args["id"]}'
 
 
+@dataclass(kw_only=True)
 class TaskLockedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -23,6 +31,10 @@ class TaskLockedAlert(AlertClass, OneShotAlertClass):
         text='%(type)s task "%(identifier)s" will not be executed because it uses a locked dataset.',
         deleted_automatically=False,
     )
+
+    type: str
+    identifier: str
+    id: int
 
     @classmethod
     def key(cls, args):

@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -13,7 +15,13 @@ from middlewared.alert.base import (
 )
 
 
+@dataclass(kw_only=True)
 class DiskTemperatureTooHotAlert(AlertClass):
+    device: str
+    serial: str
+    crit_threshold: int
+    temp: int
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -49,13 +57,12 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
             else:
                 alerts.append(
                     Alert(
-                        DiskTemperatureTooHotAlert,
-                        {
-                            "device": f"/dev/{disk}",
-                            "serial": di.serial,
-                            "crit_threshold": crit,
-                            "temp": temp,
-                        },
+                        DiskTemperatureTooHotAlert(
+                            device=f"/dev/{disk}",
+                            serial=di.serial,
+                            crit_threshold=crit,
+                            temp=temp,
+                        )
                     )
                 )
         return alerts

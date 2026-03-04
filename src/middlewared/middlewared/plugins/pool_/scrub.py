@@ -4,6 +4,7 @@ import re
 import shlex
 
 from middlewared.api import api_method, Event
+from middlewared.plugins.zfs_.zfs_events import ScrubNotStartedAlert, ScrubStartedAlert
 from middlewared.api.current import (
     PoolScrubEntry, PoolScrubCreateArgs, PoolScrubCreateResult, PoolScrubUpdateArgs, PoolScrubUpdateResult,
     PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
@@ -239,13 +240,13 @@ class PoolScrubService(CRUDService):
         try:
             started = await self.__run(name, threshold)
         except ScrubError as e:
-            await self.middleware.call('alert.oneshot_create', 'ScrubNotStarted', {
-                'pool': name,
-                'text': e.errmsg,
-            })
+            await self.middleware.call('alert.oneshot_create', ScrubNotStartedAlert(
+                pool=name,
+                text=e.errmsg,
+            ))
         else:
             if started:
-                await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
+                await self.middleware.call('alert.oneshot_create', ScrubStartedAlert(name))
 
     async def __run(self, name, threshold):
         if name == await self.middleware.call('boot.pool_name'):

@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, OneShotAlertClass, AlertLevel
 
 
+@dataclass(kw_only=True)
 class FailoverRebootAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -14,7 +17,11 @@ class FailoverRebootAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    fqdn: str
+    now: str
 
+
+@dataclass(kw_only=True)
 class FencedRebootAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -27,3 +34,6 @@ class FencedRebootAlert(AlertClass, OneShotAlertClass):
         ),
         keys=[],
     )
+
+    fqdn: str
+    now: str

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
@@ -5,6 +6,7 @@ from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.time_utils import utc_now
 
 
+@dataclass(kw_only=True)
 class CertificateIsExpiringAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
@@ -13,7 +15,15 @@ class CertificateIsExpiringAlert(AlertClass):
         text="Certificate %(name)r is expiring within %(days)d days.",
     )
 
+    name: str
+    days: int
 
+    @classmethod
+    def key(cls, args):
+        return [args['name']]
+
+
+@dataclass(kw_only=True)
 class CertificateIsExpiringSoonAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
@@ -22,7 +32,15 @@ class CertificateIsExpiringSoonAlert(AlertClass):
         text="Certificate %(name)r is expiring within %(days)d days.",
     )
 
+    name: str
+    days: int
 
+    @classmethod
+    def key(cls, args):
+        return [args['name']]
+
+
+@dataclass(kw_only=True)
 class CertificateExpiredAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
@@ -31,7 +49,14 @@ class CertificateExpiredAlert(AlertClass):
         text="Certificate %(name)r has expired.",
     )
 
+    name: str
 
+    @classmethod
+    def key(cls, args):
+        return [args['name']]
+
+
+@dataclass(kw_only=True)
 class CertificateParsingFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.CERTIFICATES,
@@ -39,6 +64,9 @@ class CertificateParsingFailedAlert(AlertClass):
         title="Certificate Parsing Failed",
         text="Failed to parse %(type)s %(name)r.",
     )
+
+    type: str
+    name: str
 
 
 class WebUiCertificateSetupFailedAlert(AlertClass, OneShotAlertClass):
@@ -67,8 +95,7 @@ class CertificateChecksAlertSource(AlertSource):
             # make the sure certs have been parsed correctly
             if not cert['parsed']:
                 alerts.append(Alert(
-                    CertificateParsingFailedAlert,
-                    {"type": cert["cert_type"].capitalize(), "name": cert["name"]},
+                    CertificateParsingFailedAlert(type=cert["cert_type"].capitalize(), name=cert["name"]),
                 ))
             else:
                 # check the parsed certificate(s) for expiration
@@ -77,14 +104,13 @@ class CertificateChecksAlertSource(AlertSource):
                     alert_threshold = (cert.get('renew_days') or 10) - 1
                     if diff < alert_threshold:
                         if diff >= 0:
+                            klass = CertificateIsExpiringSoonAlert if diff <= 2 else CertificateIsExpiringAlert
                             alerts.append(Alert(
-                                CertificateIsExpiringSoonAlert if diff <= 2 else CertificateIsExpiringAlert,
-                                {'name': cert['name'], 'days': diff}, key=[cert['name']],
+                                klass(name=cert['name'], days=diff),
                             ))
                         else:
                             alerts.append(Alert(
-                                CertificateExpiredAlert,
-                                {'name': cert['name']}, key=[cert['name']]
+                                CertificateExpiredAlert(name=cert['name']),
                             ))
 
         return alerts

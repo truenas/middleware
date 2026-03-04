@@ -7,6 +7,7 @@ from truenas_connect_utils.config import get_account_id_and_system_id
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
+from middlewared.alert.source.truenas_connect import TNCDisabledAutoUnconfiguredAlert, TNCHeartbeatConnectionFailureAlert
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
@@ -93,7 +94,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         self.middleware.send_event(
                             'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
                         )
-                        await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
+                        await self.middleware.call('alert.oneshot_create', TNCDisabledAutoUnconfiguredAlert())
                         await self.middleware.call('tn_connect.delete_cert', tnc_config['certificate'])
                         return
                     case 500:
@@ -120,7 +121,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been 48 hours '
                         'since the last successful heartbeat (last failure: %s)', last_failure,
                     )
-                    await self.middleware.call('alert.oneshot_create', 'TNCHeartbeatConnectionFailure', None)
+                    await self.middleware.call('alert.oneshot_create', TNCHeartbeatConnectionFailureAlert())
                     break
                 else:
                     logger.debug(

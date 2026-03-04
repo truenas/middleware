@@ -1,5 +1,6 @@
 from truenas_pylibvirt.utils.gpu import get_gpus
 
+from middlewared.alert.source.gpu_isolation import InvalidGpuPciIdsAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemAdvancedGetGpuPciChoicesArgs,
@@ -164,8 +165,7 @@ class SystemAdvancedService(Service):
                 # Create alert to notify user
                 await self.middleware.call(
                     'alert.oneshot_create',
-                    'InvalidGpuPciIds',
-                    {'pci_ids': ', '.join(invalid_pci_ids)}
+                    InvalidGpuPciIdsAlert(pci_ids=', '.join(invalid_pci_ids))
                 )
 
                 # Add reboot reason

@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
 
@@ -10,7 +12,10 @@ TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '
 
 
+@dataclass(kw_only=True)
 class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
+    interfaces: str
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -20,7 +25,10 @@ class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class NetworkCardsMismatchOnActiveNodeAlert(AlertClass):
+    interfaces: str
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -40,10 +48,10 @@ class FailoverNetworkCardsAlertSource(AlertSource):
         if (interfaces := await self.middleware.call('failover.mismatch_nics')):
             if interfaces['missing_remote']:
                 return [Alert(
-                    NetworkCardsMismatchOnStandbyNodeAlert, {'interfaces': ', '.join(interfaces['missing_remote'])}
+                    NetworkCardsMismatchOnStandbyNodeAlert(interfaces=', '.join(interfaces['missing_remote']))
                 )]
             if interfaces['missing_local']:
                 return [Alert(
-                    NetworkCardsMismatchOnActiveNodeAlert, {'interfaces': ', '.join(interfaces['missing_local'])}
+                    NetworkCardsMismatchOnActiveNodeAlert(interfaces=', '.join(interfaces['missing_local']))
                 )]
         return []

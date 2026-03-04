@@ -32,4 +32,4 @@ class TrueNASMiniBMCAlertSource(AlertSource):
                 except ValueError:
                     return
 
-            return Alert(TrueNASMiniBMCAlert)
+            return Alert(TrueNASMiniBMCAlert())

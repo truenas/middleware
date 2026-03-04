@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
 
@@ -10,7 +12,10 @@ TITLE = 'Disks Missing On '
 TEXT = 'Disks with serial %(serials)s present on '
 
 
+@dataclass(kw_only=True)
 class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
+    serials: str
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -20,7 +25,10 @@ class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
+    serials: str
+
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -40,10 +48,10 @@ class FailoverDisksAlertSource(AlertSource):
         if (md := await self.middleware.call('failover.mismatch_disks')):
             if md['missing_remote']:
                 return [Alert(
-                    DisksAreNotPresentOnStandbyNodeAlert, {'serials': ', '.join(md['missing_remote'])}
+                    DisksAreNotPresentOnStandbyNodeAlert(serials=', '.join(md['missing_remote']))
                 )]
             if md['missing_local']:
                 return [Alert(
-                    DisksAreNotPresentOnActiveNodeAlert, {'serials': ', '.join(md['missing_local'])}
+                    DisksAreNotPresentOnActiveNodeAlert(serials=', '.join(md['missing_local']))
                 )]
         return []

@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import dataclasses
 from datetime import datetime, timedelta
 import enum
 import json
 import logging
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName, ProductType
-from middlewared.utils.lang import undefined
 from middlewared.utils.service.call_mixin import CallMixin
 
 __all__ = [
-    "UnavailableException", "AlertClassConfig", "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
-    "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource", "AlertService",
-    "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis", "alert_category_names",
+    "UnavailableException", "AlertClassConfig", "AlertClass", "NonDataclassAlertClass", "OneShotAlertClass",
+    "DismissableAlertClass", "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource",
+    "AlertService", "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis",
+    "alert_category_names",
 ]
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class UnavailableException(Exception):
     pass
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class AlertClassConfig:
     """
     Configuration for an AlertClass.
@@ -85,6 +85,11 @@ class AlertClass:
     Alert class: a description of a specific type of issue that can exist in the system.
 
     Subclasses must define a `config` class variable of type `AlertClassConfig`.
+
+    Subclasses may be:
+    - A `@dataclass` with named fields (for alerts with dict args)
+    - A `NonDataclassAlertClass[T]` subclass (for alerts with string or list args)
+    - A plain class with no fields (for alerts with no args)
     """
 
     classes = []
@@ -99,13 +104,35 @@ class AlertClass:
             raise NameError(f"Invalid alert class name {cls.__name__}")
 
         name = cls.__name__.removesuffix("Alert")
-        cls.config = replace(cls.config, name=name)
+        cls.config = dataclasses.replace(cls.config, name=name)
 
         AlertClass.classes.append(cls)
         AlertClass.class_by_name[name] = cls
 
+    def args(self) -> Any:
+        if dataclasses.is_dataclass(self):
+            return dataclasses.asdict(self)
+
+        return None
+
     @classmethod
-    def format(cls, args):
+    def from_args(cls, args: Any) -> Self:
+        if dataclasses.is_dataclass(cls):
+            return cls(**args)
+
+        return cls()
+
+    @classmethod
+    def key(cls, args: Any) -> Any:
+        """Return the deduplication key for an alert with the given args.
+
+        Override this to customize which fields are used for deduplication.
+        Default: the full args value.
+        """
+        return args
+
+    @classmethod
+    def format(cls, args: Any) -> str:
         if cls.config.text is None:
             return cls.config.title
 
@@ -115,6 +142,24 @@ class AlertClass:
         return cls.config.text % (tuple(args) if isinstance(args, list) else args)
 
 
+class NonDataclassAlertClass[T]:
+    """Mixin for alert classes that use positional format strings (string or list args).
+
+    Must be listed FIRST in bases (before AlertClass) for correct MRO:
+        class MyAlert(NonDataclassAlertClass[str], AlertClass): ...
+    """
+
+    def __init__(self, args: T):
+        self._args = args
+
+    def args(self) -> T:
+        return self._args
+
+    @classmethod
+    def from_args(cls, args: Any) -> Self:
+        return cls(args)
+
+
 class OneShotAlertClass:
     """
     One-shot alert mixin: add this to `AlertClass` superclass list for alerts that are created not by an
@@ -122,26 +167,11 @@ class OneShotAlertClass:
 
     Configure `deleted_automatically`, `expires_after`, and `keys` via `AlertClassConfig`.
 
-    Override the :meth:`key` method to set a custom deduplication key derived from `args`. By default it returns
-    `args` itself, so alerts are matched by full args equality.
+    Override `AlertClass.key()` to set a custom deduplication key derived from `args`.
     """
 
     @classmethod
-    def key(cls, args):
-        return args
-
-    @classmethod
-    async def create(cls, args):
-        """
-        Returns an `Alert` instance created using `args` that were passed to `alert.oneshot_create`.
-
-        :param args: free-form data that was passed to `alert.oneshot_create`.
-        :return: an `Alert` instance.
-        """
-        return Alert(cls, args, key=cls.key(args))
-
-    @classmethod
-    async def delete(cls, alerts, query):
+    async def delete(cls, alerts: list[Alert[Self]], query: dict[str, Any] | None) -> list[Alert[Self]]:
         """
         Returns only those `alerts` that do not match `query` that was passed to `alert.oneshot_delete`.
 
@@ -151,9 +181,9 @@ class OneShotAlertClass:
             implementation returns all `alerts` except the ones related to the certificate `xxx`).
         """
         if cls.config.keys is not None:
-            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in cls.config.keys)]
+            return [alert for alert in alerts if any(getattr(alert.instance, k) != query[k] for k in cls.config.keys)]
 
-        return [alert for alert in alerts if cls.key(alert.args) != query]
+        return [alert for alert in alerts if cls.key(alert.instance.args()) != query]
 
     @classmethod
     async def load(cls, middleware, alerts):
@@ -233,7 +263,7 @@ class AlertLevel(enum.Enum):
 DateTimeType: TypeAlias = datetime
 
 
-class Alert:
+class Alert[T: AlertClass]:
     """
     Alert: a message about a single issues in the system (or a group of similar issues that can be potentially resolved
     with a single action).
@@ -265,7 +295,6 @@ class Alert:
         when the alert is first seen.
     """
 
-    klass: type[AlertClass]
     args: dict[str, Any] | list
     key: Any
     datetime: DateTimeType
@@ -276,9 +305,7 @@ class Alert:
 
     def __init__(
         self,
-        klass: type[AlertClass],
-        args: Any = None,
-        key: Any = undefined,
+        instance: T,
         datetime: datetime | None = None,
         last_occurrence: datetime | None = None,
         node: str | None = None,
@@ -291,14 +318,11 @@ class Alert:
     ):
         self.uuid = _uuid
         self.source = _source
-        self.klass = klass
-        self.args = args
+        self.instance = instance
 
         self.node = node
         if _key is None:
-            if key is undefined:
-                key = args
-            self.key = json.dumps(key, sort_keys=True)
+            self.key = json.dumps(self.instance.key(self.instance.args()), sort_keys=True)
         else:
             self.key = _key
         self.datetime = datetime
@@ -306,7 +330,7 @@ class Alert:
         self.dismissed = dismissed
         self.mail = mail
 
-        self.text = _text or self.klass.config.text or self.klass.config.title
+        self.text = _text or self.instance.config.text or self.instance.config.title
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -317,7 +341,7 @@ class Alert:
     @property
     def formatted(self):
         try:
-            return self.klass.format(self.args)
+            return self.instance.format(self.instance.args())
         except Exception:
             return self.text
 
@@ -446,9 +470,9 @@ class ProThreadedAlertService(ThreadedAlertService):
 
 
 def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
-    text = f"{product_name} @ {hostname}<br><br>"
+    text = f"{product_name} @ {hostname}<nbr><br>"
 
-    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].klass.config.name == "Test":
+    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].instance.config.name == "Test":
         return text + "This is a test alert"
 
     if new_alerts:

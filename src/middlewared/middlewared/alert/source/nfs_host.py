@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class NFSHostnameLookupFailAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -10,7 +13,14 @@ class NFSHostnameLookupFailAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    hosts: str
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class NFSHostListExcessiveAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -25,7 +35,15 @@ class NFSHostListExcessiveAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    sharePath: str
+    numEntries: int
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class NFSNetworkListExcessiveAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -39,3 +57,10 @@ class NFSNetworkListExcessiveAlert(AlertClass, OneShotAlertClass):
         ),
         keys=[],
     )
+
+    sharePath: str
+    numEntries: int
+
+    @classmethod
+    def key(cls, args):
+        return None

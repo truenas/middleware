@@ -87,6 +87,7 @@ class AlertModel(sa.Model):
     klass = sa.Column(sa.Text())
 
 
+@dataclass(kw_only=True)
 class AlertSourceRunFailedAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -95,8 +96,11 @@ class AlertSourceRunFailedAlert(AlertClass):
         text="Failed to check for alert %(source_name)s: %(traceback)s",
         exclude_from_list=True,
     )
+    source_name: str
+    traceback: str
 
 
+@dataclass(kw_only=True)
 class AlertSourceRunFailedOnBackupNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -105,8 +109,11 @@ class AlertSourceRunFailedOnBackupNodeAlert(AlertClass):
         text="Failed to check for alert %(source_name)s on standby controller: %(traceback)s",
         exclude_from_list=True,
     )
+    source_name: str
+    traceback: str
 
 
+@dataclass(kw_only=True)
 class AutomaticAlertFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -123,6 +130,9 @@ class AutomaticAlertFailedAlert(AlertClass, OneShotAlertClass):
         exclude_from_list=True,
         deleted_automatically=False,
     )
+    serial: str
+    error: str
+    alert: str
 
 
 class TestAlert(AlertClass):
@@ -160,11 +170,11 @@ class AlertPolicy:
 
 
 def get_alert_level(alert, classes):
-    return AlertLevel[classes.get(alert.klass.config.name, {}).get("level", alert.klass.config.level.name)]
+    return AlertLevel[classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name)]
 
 
 def get_alert_policy(alert, classes):
-    return classes.get(alert.klass.config.name, {}).get("policy", DEFAULT_POLICY)
+    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)
 
 
 class AlertSerializer:
@@ -183,20 +193,20 @@ class AlertSerializer:
             alert.__dict__,
             id=alert.uuid,
             node=self.nodes[alert.node],
-            klass=alert.klass.config.name,
-            level=self.classes.get(alert.klass.config.name, {}).get("level", alert.klass.config.level.name),
+            klass=alert.instance.config.name,
+            level=self.classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name),
             formatted=alert.formatted,
-            one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.config.deleted_automatically
+            one_shot=isinstance(alert.instance, OneShotAlertClass) and not alert.instance.config.deleted_automatically
         )
 
     async def get_alert_class(self, alert):
         await self._ensure_initialized()
-        return self.classes.get(alert.klass.config.name, {})
+        return self.classes.get(alert.instance.config.name, {})
 
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        if self.product_type not in alert.klass.config.products:
+        if self.product_type not in alert.instance.config.products:
             return False
 
         if (await self.get_alert_class(alert)).get("policy") == "NEVER":
@@ -214,8 +224,7 @@ class AlertSerializer:
 
 
 class AlertOneshotCreateArgs(BaseModel):
-    klass: str
-    args: Any
+    instance: Any
 
 
 class AlertOneshotCreateResult(BaseModel):
@@ -294,7 +303,7 @@ class AlertService(Service):
                     continue
 
                 try:
-                    alert["klass"] = AlertClass.class_by_name[alert["klass"]]
+                    klass = AlertClass.class_by_name[alert["klass"]]
                 except KeyError:
                     self.logger.info("Alert class %r is no longer present", alert["klass"])
                     continue
@@ -304,15 +313,17 @@ class AlertService(Service):
                 alert["_key"] = alert.pop("key")
                 alert["_text"] = alert.pop("text")
 
-                alert = Alert(**alert)
+                args = alert.pop("args")
+                instance = klass.from_args(args)
+                alert = Alert(instance, **alert)
 
                 if alert.uuid not in alerts_uuids:
                     alerts_uuids.add(alert.uuid)
-                    alerts_by_classes[alert.klass.__name__].append(alert)
+                    alerts_by_classes[alert.instance.config.name].append(alert)
 
             for alerts in alerts_by_classes.values():
-                if issubclass(alerts[0].klass, OneShotAlertClass):
-                    alerts = await alerts[0].klass.load(self.middleware, alerts)
+                if isinstance(alerts[0].instance, OneShotAlertClass):
+                    alerts = await alerts[0].instance.load(self.middleware, alerts)
 
                 self.alerts.extend(alerts)
         else:
@@ -396,7 +407,7 @@ class AlertService(Service):
                 self.alerts,
                 key=lambda alert: (
                     -get_alert_level(alert, classes).value,
-                    alert.klass.config.title,
+                    alert.instance.config.title,
                     alert.datetime,
                 ),
             )
@@ -444,14 +455,14 @@ class AlertService(Service):
         if alert is None:
             return
 
-        if issubclass(alert.klass, DismissableAlertClass):
-            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
+        if isinstance(alert.instance, DismissableAlertClass):
+            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.instance.config.name) == (alert.node, alert.instance.config.name),
                                                       self.alerts)
-            left_alerts = await alert.klass.dismiss(self.middleware, related_alerts, alert)
+            left_alerts = await alert.instance.dismiss(self.middleware, related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self._delete_on_dismiss(deleted_alert)
-        elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.config.deleted_automatically:
+        elif isinstance(alert.instance, OneShotAlertClass) and not alert.instance.config.deleted_automatically:
             self._delete_on_dismiss(alert)
         else:
             alert.dismissed = True
@@ -532,7 +543,7 @@ class AlertService(Service):
                 service_alerts = [
                     alert for alert in self.alerts
                     if (
-                        product_type in alert.klass.config.products and
+                        product_type in alert.instance.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) != "NEVER"
                     )
@@ -540,7 +551,7 @@ class AlertService(Service):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        product_type in alert.klass.config.products and
+                        product_type in alert.instance.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -548,14 +559,14 @@ class AlertService(Service):
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        product_type in alert.klass.config.products and
+                        product_type in alert.instance.config.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
                 ]
                 for gone_alert in list(service_gone_alerts):
                     for new_alert in service_new_alerts:
-                        if gone_alert.klass == new_alert.klass and gone_alert.key == new_alert.key:
+                        if gone_alert.instance.config.name == new_alert.instance.config.name and gone_alert.key == new_alert.key:
                             service_gone_alerts.remove(gone_alert)
                             service_new_alerts.remove(new_alert)
                             break
@@ -599,16 +610,16 @@ class AlertService(Service):
                         alert
                         for alert in gone_alerts
                         if (
-                            alert.klass.config.proactive_support and
+                            alert.instance.config.proactive_support and
                             (await as_.get_alert_class(alert)).get("proactive_support", True) and
-                            alert.klass.config.proactive_support_notify_gone
+                            alert.instance.config.proactive_support_notify_gone
                         )
                     ]
                     new_proactive_support_alerts = [
                         alert
                         for alert in new_alerts
                         if (
-                            alert.klass.config.proactive_support and
+                            alert.instance.config.proactive_support and
                             (await as_.get_alert_class(alert)).get("proactive_support", True)
                         )
                     ]
@@ -732,18 +743,18 @@ class AlertService(Service):
         return this_node_alerts, other_node_alerts, locked
 
     async def __run_other_node_alert_source(self, name):
-        keys = ("args", "datetime", "last_occurrence", "dismissed", "mail",)
+        keys = ("datetime", "last_occurrence", "dismissed", "mail",)
         other_node_alerts = []
         try:
             try:
                 for alert in await self.middleware.call("failover.call_remote", "alert.run_source", [name]):
+                    klass = AlertClass.class_by_name[alert["klass"]]
+                    instance = klass.from_args(alert["args"])
                     other_node_alerts.append(
-                        Alert(**dict(
-                            {k: v for k, v in alert.items() if k in keys},
-                            klass=AlertClass.class_by_name[alert["klass"]],
-                            _source=alert["source"],
-                            _key=alert["key"]
-                        ))
+                        Alert(instance,
+                              **{k: v for k, v in alert.items() if k in keys},
+                              _source=alert["source"],
+                              _key=alert["key"])
                     )
             except CallError as e:
                 if e.errno not in NETWORK_ERRORS + (CallError.EALERTCHECKERUNAVAILABLE,):
@@ -752,8 +763,7 @@ class AlertService(Service):
             self.logger.debug('Failed to reserve a privileged port')
         except Exception as e:
             other_node_alerts = [Alert(
-                AlertSourceRunFailedOnBackupNodeAlert,
-                args={"source_name": name, "traceback": str(e)},
+                AlertSourceRunFailedOnBackupNodeAlert(source_name=name, traceback=str(e)),
                 _source=name
             )]
 
@@ -810,7 +820,7 @@ class AlertService(Service):
         try:
             existing_alert = [
                 a for a in self.alerts
-                if (a.node, a.source, a.klass, a.key) == (alert.node, alert.source, alert.klass, alert.key)
+                if (a.node, a.source, a.instance.config.name, a.key) == (alert.node, alert.source, alert.instance.config.name, alert.key)
             ][0]
         except IndexError:
             existing_alert = None
@@ -835,9 +845,9 @@ class AlertService(Service):
         self.alerts = list(filter(lambda alert: not self.__should_expire_alert(alert), self.alerts))
 
     def __should_expire_alert(self, alert):
-        if issubclass(alert.klass, OneShotAlertClass):
-            if alert.klass.config.expires_after is not None:
-                return alert.last_occurrence < utc_now() - alert.klass.config.expires_after
+        if isinstance(alert.instance, OneShotAlertClass):
+            if alert.instance.config.expires_after is not None:
+                return alert.last_occurrence < utc_now() - alert.instance.config.expires_after
 
         return False
 
@@ -851,7 +861,7 @@ class AlertService(Service):
     @private
     async def run_source(self, source_name):
         try:
-            return [dict(alert.__dict__, klass=alert.klass.config.name)
+            return [dict(alert.__dict__, klass=alert.instance.config.name)
                     for alert in await self.__run_source(source_name)]
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
@@ -890,11 +900,10 @@ class AlertService(Service):
                 self.alert_sources_errors.add(source_name)
 
             alerts = [
-                Alert(AlertSourceRunFailedAlert,
-                      args={
-                          "source_name": alert_source.name,
-                          "traceback": str(e),
-                      })
+                Alert(AlertSourceRunFailedAlert(
+                    source_name=alert_source.name,
+                    traceback=str(e),
+                ))
             ]
         else:
             self.alert_sources_errors.discard(source_name)
@@ -944,31 +953,23 @@ class AlertService(Service):
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_create(self, job, klass, args):
+    async def oneshot_create(self, job, instance):
         """
-        Creates a one-shot alert of specified `klass`, passing `args` to `klass.create` method.
+        Creates a one-shot alert from the given alert class `instance`.
 
         Normal alert creation logic will be applied, so if you create an alert with the same `key` as an already
         existing alert, no duplicate alert will be created.
 
-        :param klass: one-shot alert class name (without the `AlertClass` suffix).
-        :param args: `args` that will be passed to `klass.create` method.
+        :param instance: an instance of an `AlertClass` subclass that also inherits from `OneShotAlertClass`.
         """
 
-        try:
-            klass = AlertClass.class_by_name[klass]
-        except KeyError:
-            raise CallError(f"Invalid alert class: {klass!r}")
+        klass = type(instance)
 
         if not issubclass(klass, OneShotAlertClass):
             raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
-        alert = await klass.create(args)
-        if alert is None:
-            return
-
+        alert = Alert(instance)
         alert.source = ""
-
         alert.node = self.node
 
         self.__handle_alert(alert)
@@ -1009,8 +1010,10 @@ class AlertService(Service):
             if not issubclass(klass, OneShotAlertClass):
                 raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
 
-            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
-                                                      self.alerts)
+            related_alerts, unrelated_alerts = bisect(
+                lambda a: (a.node, a.instance.config.name) == (self.node, klass.config.name),
+                self.alerts
+            )
             left_alerts = await klass.delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
@@ -1148,7 +1151,7 @@ class AlertServiceService(CRUDService):
             master_node = await self.middleware.call("failover.node")
 
         test_alert = Alert(
-            TestAlert,
+            TestAlert(),
             node=master_node,
             datetime=utc_now(),
             last_occurrence=utc_now(),
