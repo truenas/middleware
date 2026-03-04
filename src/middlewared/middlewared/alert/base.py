@@ -34,7 +34,7 @@ class AlertClassMeta(type):
     def __init__(cls, name: str, bases: tuple[type, ...], dct: dict[str, Any]) -> None:
         super().__init__(name, bases, dct)
 
-        if cls.__name__ not in ["AlertClass", "OneShotAlertClass"]:
+        if cls.__name__ not in ["AlertClass", "DismissableAlertClass", "OneShotAlertClass"]:
             if not cls.__name__.endswith("Alert"):
                 raise NameError(f"Invalid alert class name {cls.__name__}")
 
@@ -189,7 +189,7 @@ class OneShotAlertClass(AlertClass):
         """
         if cls.config.keys is not None:
             if query is None:
-                raise ValueError("`query` cannot be `None`")
+                return []
 
             return [alert for alert in alerts if any(getattr(alert.instance, k) != query[k] for k in cls.config.keys)]
 

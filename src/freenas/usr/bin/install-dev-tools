@@ -43,7 +43,7 @@ PACKAGES=(
 )
 PIP_PACKAGES=(
     types-boto3
-    types-boto2[s3]
+    types-boto3[s3]
 )
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
