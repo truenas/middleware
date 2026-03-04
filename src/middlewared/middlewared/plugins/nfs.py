@@ -634,8 +634,7 @@ class SharingNFSService(SharingService):
                         )
                 except Exception:
                     # we can't get info on unmounted / locked datasets but this
-                    # doesn't have to be perfect. We can improve in GE with newer pylibzfs
-                    # that doesn't use a process pool
+                    # doesn't have to be perfect.
                     pass
             else:
                 verrors.add(

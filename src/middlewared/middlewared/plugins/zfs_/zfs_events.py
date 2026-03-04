@@ -192,9 +192,7 @@ async def zfs_events(middleware, event: ZfsEvent):
             return
 
         # We are not handling create/changed events because it takes a toll on middleware when we are replicating
-        # datasets and repeated calls to the process pool can result in tasks getting blocked for longer periods
-        # of time and middleware itself getting slow as well to process requests in a timely manner
-        # We are now handling create/changed events whenever changes are made via our API
+        # datasets. We are now handling create/changed events whenever changes are made via our API
         if event_type == 'destroy':
             if ds_id.split('/')[-1].startswith('%'):
                 # Ignore deletion of hidden clones such as `%recv` dataset created by replication
