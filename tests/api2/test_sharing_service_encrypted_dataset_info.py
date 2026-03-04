@@ -10,7 +10,7 @@ ENCRYPTION_PARAMETERS = {
     'encryption': True,
     'encryption_options': {
         'algorithm': 'AES-256-GCM',
-        'pbkdf2iters': 350000,
+        'pbkdf2iters': 1300000,
         'passphrase': PASSPHRASE,
     },
     'inherit_encryption': False,
