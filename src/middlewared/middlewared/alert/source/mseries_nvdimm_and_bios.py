@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import datetime
+from dataclasses import dataclass
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -14,6 +15,7 @@ WEBUI_SUPPORT_FORM = (
 )
 
 
+@dataclass(kw_only=True)
 class NVDIMMAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -23,7 +25,12 @@ class NVDIMMAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    dev: str
+    value: str
+    status: str
 
+
+@dataclass(kw_only=True)
 class NVDIMMESLifetimeWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -33,7 +40,11 @@ class NVDIMMESLifetimeWarningAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    dev: str
+    value: int
 
+
+@dataclass(kw_only=True)
 class NVDIMMESLifetimeCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -43,7 +54,11 @@ class NVDIMMESLifetimeCriticalAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    dev: str
+    value: int
 
+
+@dataclass(kw_only=True)
 class NVDIMMMemoryModLifetimeWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -53,7 +68,11 @@ class NVDIMMMemoryModLifetimeWarningAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    dev: str
+    value: int
 
+
+@dataclass(kw_only=True)
 class NVDIMMMemoryModLifetimeCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -63,7 +82,11 @@ class NVDIMMMemoryModLifetimeCriticalAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    dev: str
+    value: int
 
+
+@dataclass(kw_only=True)
 class NVDIMMInvalidFirmwareVersionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -74,7 +97,10 @@ class NVDIMMInvalidFirmwareVersionAlert(AlertClass):
         proactive_support=True,
     )
 
+    dev: str
 
+
+@dataclass(kw_only=True)
 class NVDIMMRecommendedFirmwareVersionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -87,6 +113,10 @@ class NVDIMMRecommendedFirmwareVersionAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
     )
+
+    dev: str
+    rv: str
+    uv: str
 
 
 class OldBiosVersionAlert(AlertClass):
@@ -113,52 +143,47 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             hex_int = int(_hex, 16)
             if hex_int & ~(persistency_restored | arm_info):
                 alerts.append(Alert(
-                    NVDIMMAlert,
-                    {'dev': dev, 'value': _hex, 'status': ','.join(vals)}
+                    NVDIMMAlert(dev=dev, value=_hex, status=','.join(vals))
                 ))
 
             if nvdimm['specrev'] >= 22 and not (hex_int & arm_info):
                 alerts.append(Alert(
-                    NVDIMMAlert,
-                    {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
+                    NVDIMMAlert(dev=dev, value='ARM STATUS', status='NOT ARMED')
                 ))
 
         for i in ('nvm_health_info', 'nvm_error_threshold_status', 'nvm_warning_threshold_status'):
             for _hex, vals in nvdimm[i].items():
                 if int(_hex, 16) != 0:
                     alerts.append(Alert(
-                        NVDIMMAlert,
-                        {'dev': dev, 'value': _hex, 'status': ','.join(vals)}
+                        NVDIMMAlert(dev=dev, value=_hex, status=','.join(vals))
                     ))
 
         if (val := int(nvdimm['nvm_lifetime'].rstrip('%'))) < 20:
             alert = NVDIMMMemoryModLifetimeWarningAlert if val > 10 else NVDIMMMemoryModLifetimeCriticalAlert
-            alerts.append(Alert(alert, {'dev': dev, 'value': val}))
+            alerts.append(Alert(alert(dev=dev, value=val)))
 
         if nvdimm['index'] == 0 and (val := int(nvdimm['es_lifetime'].rstrip('%'))) < 20:
             # we only check this value for the 0th slot nvdimm since M60 has 2 and the way
             # they're physically cabled, prevents monitoring the 2nd nvdimm's energy source
             # (it always reports -1%)
             alert = NVDIMMESLifetimeWarningAlert if val > 10 else NVDIMMESLifetimeCriticalAlert
-            alerts.append(Alert(alert, {'dev': dev, 'value': val}))
+            alerts.append(Alert(alert(dev=dev, value=val)))
 
         if 'not_armed' in nvdimm['state_flags']:
             alerts.append(Alert(
-                NVDIMMAlert,
-                {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
+                NVDIMMAlert(dev=dev, value='ARM STATUS', status='NOT ARMED')
             ))
 
         if (run_fw := nvdimm['running_firmware']) is not None:
             if run_fw not in nvdimm['qualified_firmware']:
-                alerts.append(Alert(NVDIMMInvalidFirmwareVersionAlert, {'dev': dev}))
+                alerts.append(Alert(NVDIMMInvalidFirmwareVersionAlert(dev=dev)))
             elif run_fw != nvdimm['recommended_firmware']:
                 alerts.append(Alert(
-                    NVDIMMRecommendedFirmwareVersionAlert,
-                    {'dev': dev, 'rv': run_fw, 'uv': nvdimm['recommended_firmware']}
+                    NVDIMMRecommendedFirmwareVersionAlert(dev=dev, rv=run_fw, uv=nvdimm['recommended_firmware'])
                 ))
 
         if not old_bios_alert_already_generated and nvdimm['old_bios']:
-            alerts.append(Alert(OldBiosVersionAlert))
+            alerts.append(Alert(OldBiosVersionAlert()))
             old_bios_alert_already_generated = True
 
     def check_sync(self):
@@ -167,7 +192,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
         if self.middleware.call_sync('truenas.get_chassis_hardware').startswith(sys):
             old_bios = self.middleware.call_sync('mseries.bios.is_old_version')
             if old_bios:
-                alerts.append(Alert(OldBiosVersionAlert))
+                alerts.append(Alert(OldBiosVersionAlert()))
 
             for nvdimm in self.middleware.call_sync('mseries.nvdimm.info'):
                 try:

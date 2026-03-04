@@ -1,9 +1,11 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
+@dataclass(kw_only=True)
 class CurrentlyRunningVersionDoesNotMatchProfileAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -13,6 +15,9 @@ class CurrentlyRunningVersionDoesNotMatchProfileAlert(AlertClass):
             "Currently running system version profile %(running)s does not match selected update profile %(selected)s."
         ),
     )
+
+    running: str
+    selected: str
 
 
 class HasUpdateAlert(AlertClass):
@@ -46,13 +51,13 @@ class HasUpdateAlertSource(AlertSource):
                     else:
                         selected = "<Unknown>"
 
-                    return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlert, {
-                        "running": running,
-                        "selected": selected,
-                    })
+                    return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlert(
+                        running=running,
+                        selected=selected,
+                    ))
 
                 if update_status.status.new_version:
-                    return Alert(HasUpdateAlert)
+                    return Alert(HasUpdateAlert())
         except Exception:
             pass
 

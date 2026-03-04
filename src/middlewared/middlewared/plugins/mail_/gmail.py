@@ -123,7 +123,7 @@ class MailService(Service):
                     self.middleware.logger.warning(f"GMail credentials RefreshError: {e}. Discarding GMail OAuth")
                     self._set_gmail_config(None)
                     self.middleware.call_sync("mail.gmail_initialize")
-                    self.middleware.call_sync("alert.oneshot_create", "GMailConfigurationDiscarded", None)
+                    self.middleware.call_sync("alert.oneshot_create", GMailConfigurationDiscardedAlert())
 
             raise
 

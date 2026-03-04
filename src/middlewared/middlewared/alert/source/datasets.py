@@ -1,10 +1,14 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.alert.schedule import IntervalSchedule
 
 
+@dataclass(kw_only=True)
 class EncryptedDatasetAlert(AlertClass):
+    datasets: str
+
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -35,4 +39,4 @@ class UnencryptedDatasetsAlertSource(AlertSource):
                     unencrypted_datasets.append(child['name'])
 
         if unencrypted_datasets:
-            return Alert(EncryptedDatasetAlert, {'datasets': ', '.join(unencrypted_datasets)})
+            return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted_datasets)))

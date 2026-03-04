@@ -71,7 +71,7 @@ class UPSService(SystemServiceService[UPSEntry]):
 
     @private
     async def dismiss_alerts(self) -> None:
-        alerts = list(alerts_mapping().values())
+        alerts = [cls.config.name for cls in alerts_mapping().values()]
         await self.middleware.call('alert.oneshot_delete', alerts)
 
     @private

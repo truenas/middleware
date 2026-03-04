@@ -1,8 +1,11 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, Alert, AlertSource
 from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
 from middlewared.utils.zfs import query_imported_fast_impl
 
 
+@dataclass(kw_only=True)
 class VolumeStatusAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -12,7 +15,13 @@ class VolumeStatusAlert(AlertClass):
         proactive_support=True,
     )
 
+    volume: str
+    state: str
+    status: str
+    devices: str
 
+
+@dataclass(kw_only=True)
 class BootPoolStatusAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -21,6 +30,9 @@ class BootPoolStatusAlert(AlertClass):
         text="Boot pool status is %(status)s: %(status_detail)s.",
         proactive_support=True,
     )
+
+    status: str
+    status_detail: str
 
 
 class VolumeStatusAlertSource(AlertSource):
@@ -83,16 +95,8 @@ class VolumeStatusAlertSource(AlertSource):
 
             await self.middleware.call("cache.put", VOLUME_STATUS_ALERTS, alerts)
 
-        return [
-            Alert(
-                {
-                    "BootPoolStatusAlert": BootPoolStatusAlert,
-                    "VolumeStatusAlert": VolumeStatusAlert,
-                }[alert[0]],
-                alert[1]
-            )
-            for alert in alerts
-        ]
+        klass_map = {"BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert}
+        return [Alert(klass_map[alert[0]].from_args(alert[1])) for alert in alerts]
 
     async def enabled(self):
         if await self.middleware.call("system.is_enterprise"):

@@ -471,7 +471,7 @@ async def test__jbof_invalid_data():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFInvalidDataAlert
+    assert isinstance(alert.instance, JBOFInvalidDataAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) does not provide valid data for: elements'
 
 
@@ -492,7 +492,7 @@ async def test__jbof_psu_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlert
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Power Supply PSU1 is critical: LossOfInput'
 
 
@@ -513,7 +513,7 @@ async def test__jbof_fan_noncritical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementWarningAlert
+    assert isinstance(alert.instance, JBOFElementWarningAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Cooling Fan6 is noncritical: SpeedRPM=12345.0'
 
 
@@ -534,7 +534,7 @@ async def test__jbof_temp_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlert
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Temperature Sensors TempDrive1 is critical: 50.0 C'
 
 
@@ -555,5 +555,5 @@ async def test__jbof_volt_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlert
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Voltage Sensor VoltPS1Vin is critical: 100'

@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import time
+from dataclasses import dataclass
 
 from middlewared.alert.base import (
     AlertClass,
@@ -18,6 +19,7 @@ from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
+@dataclass(kw_only=True)
 class SensorAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -27,7 +29,14 @@ class SensorAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    name: str
+    relative: str
+    level: str
+    value: object
+    event: str
 
+
+@dataclass(kw_only=True)
 class PowerSupplyAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -40,6 +49,11 @@ class PowerSupplyAlert(AlertClass):
         proactive_support=True,
         proactive_support_notify_gone=True,
     )
+
+    id: str
+    psu: str
+    state: str
+    errors: str
 
 
 class PsuAlertSource(AlertSource):
@@ -80,13 +94,12 @@ class PsuAlertSource(AlertSource):
                         self.incident_id = generate_token(16, url_safe=True)
                     alerts.append(
                         Alert(
-                            PowerSupplyAlert,
-                            {
-                                "id": self.incident_id,
-                                "psu": i["name"],
-                                "state": i["state"],
-                                "errors": ", ".join(i["event"]),
-                            },
+                            PowerSupplyAlert(
+                                id=self.incident_id,
+                                psu=i["name"],
+                                state=i["state"],
+                                errors=", ".join(i["event"]),
+                            ),
                         )
                     )
                 else:
@@ -131,14 +144,13 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "lower-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlert,
-                            {
-                                "name": sensor["name"],
-                                "relative": relative,
-                                "level": level,
-                                "value": reading,
-                                "event": ", ".join(sensor["event"]),
-                            },
+                            SensorAlert(
+                                name=sensor["name"],
+                                relative=relative,
+                                level=level,
+                                value=reading,
+                                event=", ".join(sensor["event"]),
+                            ),
                         )
 
                 for key in (
@@ -152,13 +164,12 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "upper-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlert,
-                            {
-                                "name": sensor["name"],
-                                "relative": relative,
-                                "level": level,
-                                "value": reading,
-                                "event": ", ".join(sensor["event"]),
-                            },
+                            SensorAlert(
+                                name=sensor["name"],
+                                relative=relative,
+                                level=level,
+                                value=reading,
+                                event=", ".join(sensor["event"]),
+                            ),
                         )
         return alerts

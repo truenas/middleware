@@ -1,5 +1,7 @@
 import os
 
+from middlewared.alert.source.nfs_exportsd import NFSblockedByExportsDirAlert
+
 from .base import SimpleService
 
 
@@ -25,7 +27,7 @@ class NFSService(SimpleService):
     async def check_configuration(self):
         # Raise alert if there are entries in /etc/exports.d
         if (exportsdList := await self.middleware.run_in_thread(self.check_exportsd_dir)):
-            await self.middleware.call('alert.oneshot_create', 'NFSblockedByExportsDir', {'entries': exportsdList})
+            await self.middleware.call('alert.oneshot_create', NFSblockedByExportsDirAlert(entries=str(exportsdList)))
         else:
             await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir')
 

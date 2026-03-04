@@ -1,9 +1,12 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list
 
 
+@dataclass(kw_only=True)
 class LocalAccountExpiringAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SECURITY,
@@ -12,7 +15,10 @@ class LocalAccountExpiringAlert(AlertClass):
         text="The following local user accounts must change passwords : %(accounts)s",
     )
 
+    accounts: str
 
+
+@dataclass(kw_only=True)
 class LocalAccountExpiredAlert(AlertClass):
     """
     One or more accounts are actually expired.
@@ -23,6 +29,8 @@ class LocalAccountExpiredAlert(AlertClass):
         title="Local User Accounts Are Expired",
         text="The following local user accounts have expired: %(accounts)s",
     )
+
+    accounts: str
 
 
 class AllAdminAccountsExpiredAlert(AlertClass, OneShotAlertClass):
@@ -92,14 +100,16 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
 
         if expiring:
             alerts.append(Alert(
-                LocalAccountExpiringAlert,
-                {"accounts": ", ".join([u["username"] for u in expiring])}
+                LocalAccountExpiringAlert(
+                    accounts=", ".join([u["username"] for u in expiring]),
+                )
             ))
 
         if expired:
             alerts.append(Alert(
-                LocalAccountExpiredAlert,
-                {"accounts": ", ".join([u["username"] for u in expired])}
+                LocalAccountExpiredAlert(
+                    accounts=", ".join([u["username"] for u in expired]),
+                )
             ))
 
         return alerts

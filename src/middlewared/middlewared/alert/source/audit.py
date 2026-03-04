@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import timedelta
 import logging
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
@@ -7,6 +8,7 @@ log = logging.getLogger("audit_check_alertmod")
 
 
 # -------------- OneShot Alerts ------------------
+@dataclass(kw_only=True)
 class AuditBackendSetupAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
@@ -15,8 +17,11 @@ class AuditBackendSetupAlert(AlertClass, OneShotAlertClass):
         text="Audit service failed backend setup: %(service)s. See /var/log/middlewared.log",
     )
 
+    service: str
+
 
 # --------------- Monitored Alerts ----------------
+@dataclass(kw_only=True)
 class AuditServiceHealthAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
@@ -24,6 +29,12 @@ class AuditServiceHealthAlert(AlertClass):
         title="Audit Service Health Failure",
         text="Failed to perform audit query: %(verrs)s",
     )
+
+    verrs: str
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 class AuditServiceHealthAlertSource(AlertSource):
@@ -42,7 +53,5 @@ class AuditServiceHealthAlertSource(AlertSource):
             )
         except Exception as e:
             return Alert(
-                AuditServiceHealthAlert,
-                {'verrs': str(e)},
-                key=None
+                AuditServiceHealthAlert(verrs=str(e))
             )

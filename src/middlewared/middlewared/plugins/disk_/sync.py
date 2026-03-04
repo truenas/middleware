@@ -1,6 +1,7 @@
 import re
 from datetime import timedelta
 
+from middlewared.alert.source.dif_formatted_disks import DifFormattedAlert
 from middlewared.service import job, private, Service, ServiceChangeMixin
 from middlewared.utils.disks import dev_to_ident
 from middlewared.utils.time_utils import utc_now
@@ -55,7 +56,7 @@ class DiskService(Service, ServiceChangeMixin):
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
         if disks[name]['dif']:
-            await self.middleware.call('alert.oneshot_create', 'DifFormatted', ', '.join([name]))
+            await self.middleware.call('alert.oneshot_create', DifFormattedAlert(', '.join([name])))
         else:
             await self.middleware.call('alert.oneshot_delete', 'DifFormatted', None)
 
@@ -216,7 +217,7 @@ class DiskService(Service, ServiceChangeMixin):
                 qs.append(disk)
 
         if dif_formatted_disks:
-            self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', ', '.join(dif_formatted_disks))
+            self.middleware.call_sync('alert.oneshot_create', DifFormattedAlert(', '.join(dif_formatted_disks)))
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'DifFormatted', None)
 

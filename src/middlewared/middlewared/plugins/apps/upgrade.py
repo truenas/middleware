@@ -7,6 +7,7 @@ import yaml
 
 from packaging.version import InvalidVersion, Version
 
+from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
@@ -318,11 +319,11 @@ class AppService(Service):
         # Create single alert if updates exist
         if apps_with_updates:
             count = len(apps_with_updates)
-            await self.middleware.call('alert.oneshot_create', 'AppUpdate', {
-                'count': count,
-                'plural': 's' if count != 1 else '',
-                'apps': ', '.join(apps_with_updates),
-            })
+            await self.middleware.call('alert.oneshot_create', AppUpdateAlert(
+                count=count,
+                plural='s' if count != 1 else '',
+                apps=', '.join(apps_with_updates),
+            ))
 
     @private
     async def check_upgrade_alerts(self):

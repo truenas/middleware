@@ -1,3 +1,4 @@
+from middlewared.alert.source.web_ui_root_login import WebUiRootLoginAlert
 from middlewared.utils.filter_list import filter_list
 
 
@@ -9,6 +10,6 @@ async def render(service, middleware, render_ctx):
         render_ctx['user.query'],
         render_ctx['group.query'],
     ):
-        await middleware.call('alert.oneshot_create', 'WebUiRootLogin', None)
+        await middleware.call('alert.oneshot_create', WebUiRootLoginAlert())
     else:
         await middleware.call('alert.oneshot_delete', 'WebUiRootLogin', None)

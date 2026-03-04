@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class ApplicationsConfigurationFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
@@ -11,7 +14,10 @@ class ApplicationsConfigurationFailedAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    error: str
 
+
+@dataclass(kw_only=True)
 class ApplicationsStartFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
@@ -22,7 +28,10 @@ class ApplicationsStartFailedAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    error: str
 
+
+@dataclass(kw_only=True)
 class AppUpdateAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
@@ -32,3 +41,7 @@ class AppUpdateAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    count: int
+    plural: str
+    apps: str

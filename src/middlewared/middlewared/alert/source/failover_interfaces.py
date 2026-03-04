@@ -24,6 +24,6 @@ class FailoverCriticalAlertSource(AlertSource):
 
     async def check(self):
         if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
-            return [Alert(NoCriticalFailoverInterfaceFoundAlert)]
+            return [Alert(NoCriticalFailoverInterfaceFoundAlert())]
         else:
             return []

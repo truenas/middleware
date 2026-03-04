@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
@@ -21,13 +22,23 @@ def remove_deasserted_records(records):
     return list(filter(None, records))
 
 
+@dataclass(kw_only=True)
 class IPMISELAlert(AlertClass, DismissableAlertClass):
+    name: str
+    event_direction: str
+    event: str
+    dt_iso: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
         title="IPMI System Event",
         text="Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)",
     )
+
+    @classmethod
+    def key(cls, args):
+        return [args['name'], args['event_direction'], args['event'], args['dt_iso']]
 
     @classmethod
     async def dismiss(cls, middleware, alerts, alert):
@@ -41,13 +52,21 @@ class IPMISELAlert(AlertClass, DismissableAlertClass):
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
+@dataclass(kw_only=True)
 class IPMISELSpaceLeftAlert(AlertClass):
+    free: str
+    used: str
+
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
         title="IPMI System Event Log Low Space Left",
         text="IPMI System Event Log low space left: %(free)s (%(used)s).",
     )
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 class IPMISELAlertSource(AlertSource):
@@ -127,9 +146,12 @@ class IPMISELAlertSource(AlertSource):
                 record.pop("id")
                 dt = record.pop("datetime")
                 alert = Alert(
-                    IPMISELAlert,
-                    {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
-                    key=[record, dt.isoformat()],
+                    IPMISELAlert(
+                        name=record["name"],
+                        event_direction=record["event_direction"],
+                        event=record["event"],
+                        dt_iso=dt.isoformat(),
+                    ),
                     datetime=dt,
                 )
                 alerts_by_key[alert.key] = alert
@@ -154,9 +176,10 @@ class IPMISELAlertSource(AlertSource):
             used_bytes = total_bytes_avail - free_bytes
             if (used_bytes / 100) > upper_threshold:
                 alert = Alert(
-                    IPMISELSpaceLeftAlert,
-                    {"free": f"{free_bytes} bytes free", "used": f"{used_bytes} bytes used"},
-                    key=None,
+                    IPMISELSpaceLeftAlert(
+                        free=f"{free_bytes} bytes free",
+                        used=f"{used_bytes} bytes used",
+                    ),
                 )
 
         return alert

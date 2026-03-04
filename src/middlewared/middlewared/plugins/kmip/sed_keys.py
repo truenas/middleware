@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDGlobalPasswordSyncFailureAlert
 from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
@@ -274,11 +275,11 @@ class KMIPService(Service, KMIPServerMixin):
         except ValueError:
             pass
         else:
-            self.middleware.call_sync('alert.oneshot_create', 'KMIPSEDGlobalPasswordSyncFailure')
+            self.middleware.call_sync('alert.oneshot_create', KMIPSEDGlobalPasswordSyncFailureAlert())
         finally:
             if failed:
                 self.middleware.call_sync(
-                    'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
+                    'alert.oneshot_create', KMIPSEDDisksSyncFailureAlert(disks=','.join(failed))
                 )
         self.middleware.call_hook_sync('kmip.sed_keys_sync')
         return ret_failed

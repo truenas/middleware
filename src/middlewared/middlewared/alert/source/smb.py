@@ -1,4 +1,6 @@
 import time
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
@@ -27,6 +29,7 @@ def generate_alert_text(auth_log):
     return [f"{entry['client']} at {entry['address']} ({entry['cnt']} times)" for entry in alert_text.values()]
 
 
+@dataclass(kw_only=True)
 class SMBLegacyProtocolAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -35,7 +38,14 @@ class SMBLegacyProtocolAlert(AlertClass):
         text="The following clients have established SMB1 sessions: %(err)s.",
     )
 
+    err: str
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class NTLMv1AuthenticationAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -44,7 +54,14 @@ class NTLMv1AuthenticationAlert(AlertClass):
         text="The following clients have attempted NTLMv1 authentication: %(err)s",
     )
 
+    err: str
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class SMBPathAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -52,6 +69,12 @@ class SMBPathAlert(AlertClass):
         title="SMB share path has unresolvable issues",
         text="SMB shares have path-related configuration issues that may impact service stability: %(err)s",
     )
+
+    err: str
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 class SMBLegacyProtocolAlertSource(AlertSource):
@@ -86,11 +109,9 @@ class SMBLegacyProtocolAlertSource(AlertSource):
                 'workstation': entry['event_data'].get('workstation'),
             })
 
-        return Alert(
-            SMBLegacyProtocolAlert,
-            {'err': ', '.join(generate_alert_text(parsed))},
-            key=None
-        )
+        return Alert(SMBLegacyProtocolAlert(
+            err=', '.join(generate_alert_text(parsed)),
+        ))
 
 
 class NTLMv1AuthenticationAlertSource(AlertSource):
@@ -130,11 +151,9 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
                 'workstation': entry['event_data'].get('workstation'),
             })
 
-        return Alert(
-            NTLMv1AuthenticationAlert,
-            {'err': ', '.join(generate_alert_text(parsed))},
-            key=None
-        )
+        return Alert(NTLMv1AuthenticationAlert(
+            err=', '.join(generate_alert_text(parsed)),
+        ))
 
 
 class SMBPathAlertSource(AlertSource):
@@ -169,9 +188,10 @@ class SMBPathAlertSource(AlertSource):
             self.middleware.logger.error('Failed to format error message', exc_info=True)
             return
 
-        return Alert(SMBPathAlert, {'err': msg}, key=None)
+        return Alert(SMBPathAlert(err=msg))
 
 
+@dataclass(kw_only=True)
 class SMBUserMissingHashAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -185,3 +205,5 @@ class SMBUserMissingHashAlert(AlertClass, OneShotAlertClass):
         ),
         keys=[],
     )
+
+    entries: str

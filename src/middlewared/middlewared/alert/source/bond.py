@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+
 from middlewared.alert.base import (
     Alert,
     AlertClass,
@@ -13,6 +15,7 @@ from middlewared.alert.base import (
 )
 
 
+@dataclass(kw_only=True)
 class BONDInactivePortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
@@ -21,7 +24,11 @@ class BONDInactivePortsAlert(AlertClass):
         text="These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch.",
     )
 
+    name: str
+    ports: str
 
+
+@dataclass(kw_only=True)
 class BONDNoActivePortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
@@ -30,7 +37,10 @@ class BONDNoActivePortsAlert(AlertClass):
         text="There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch.",
     )
 
+    name: str
 
+
+@dataclass(kw_only=True)
 class BONDMissingPortsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.NETWORK,
@@ -38,6 +48,9 @@ class BONDMissingPortsAlert(AlertClass):
         title="BOND Interface references missing ports",
         text="BOND Interface %(name)s references missing ports %(missing)s.",
     )
+
+    name: str
+    missing: str
 
 
 class BondStatus(AlertSource):
@@ -61,20 +74,18 @@ class BondStatus(AlertSource):
             if missing:
                 alerts.append(
                     Alert(
-                        BONDMissingPortsAlert,
-                        {"name": iface, "missing": ", ".join(missing)},
+                        BONDMissingPortsAlert(name=iface, missing=", ".join(missing))
                     )
                 )
             elif not active:
-                alerts.append(Alert(BONDNoActivePortsAlert, {"name": iface}))
+                alerts.append(Alert(BONDNoActivePortsAlert(name=iface)))
             elif inactive and (info["lag_protocol"] != "FAILOVER" or len(active) == 1):
                 # 1. if this isn't FAILOVER type and any inactive
                 # 2. OR if it's FAILOVER and we only have 1 active
                 # we need to raise an alert
                 alerts.append(
                     Alert(
-                        BONDInactivePortsAlert,
-                        {"name": iface, "ports": ", ".join(inactive)},
+                        BONDInactivePortsAlert(name=iface, ports=", ".join(inactive))
                     )
                 )
 

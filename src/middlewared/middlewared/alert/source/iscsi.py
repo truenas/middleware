@@ -1,11 +1,12 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 
 
-class ISCSIPortalIPAlert(AlertClass):
+class ISCSIPortalIPAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -53,10 +54,17 @@ class ISCSIPortalIPAlertSource(AlertSource):
                 ips -= ok
 
         if ips:
-            return Alert(ISCSIPortalIPAlert, ', '.join(ips))
+            return Alert(ISCSIPortalIPAlert(', '.join(ips)))
 
 
+@dataclass(kw_only=True)
 class ISCSIAuthSecretInvalidCharAlert(AlertClass):
+    field: str
+    tag: int
+    userfield: str
+    user: str
+    char: str
+
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -68,7 +76,13 @@ class ISCSIAuthSecretInvalidCharAlert(AlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class ISCSIAuthSecretWhitespaceAlert(AlertClass):
+    field: str
+    tag: int
+    userfield: str
+    user: str
+
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -105,26 +119,24 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                         if char in auth[secretfield]:
                             alerts.append(
                                 Alert(
-                                    ISCSIAuthSecretInvalidCharAlert,
-                                    {
-                                        'field': private_to_public[secretfield],
-                                        'tag': auth['tag'],
-                                        'userfield': private_to_public[userfield],
-                                        'user': auth[userfield],
-                                        'char': char,
-                                    },
+                                    ISCSIAuthSecretInvalidCharAlert(
+                                        field=private_to_public[secretfield],
+                                        tag=auth['tag'],
+                                        userfield=private_to_public[userfield],
+                                        user=auth[userfield],
+                                        char=char,
+                                    ),
                                 )
                             )
                     if auth[secretfield] != auth[secretfield].strip():
                         alerts.append(
                             Alert(
-                                ISCSIAuthSecretWhitespaceAlert,
-                                {
-                                    'field': private_to_public[secretfield],
-                                    'tag': auth['tag'],
-                                    'userfield': private_to_public[userfield],
-                                    'user': auth[userfield],
-                                },
+                                ISCSIAuthSecretWhitespaceAlert(
+                                    field=private_to_public[secretfield],
+                                    tag=auth['tag'],
+                                    userfield=private_to_public[userfield],
+                                    user=auth[userfield],
+                                ),
                             )
                         )
 

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import (
@@ -12,6 +13,7 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
+@dataclass(kw_only=True)
 class ZpoolCapacityNoticeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -21,7 +23,15 @@ class ZpoolCapacityNoticeAlert(AlertClass):
         proactive_support=True,
     )
 
+    volume: str
+    capacity: int
 
+    @classmethod
+    def key(cls, args):
+        return [args['volume']]
+
+
+@dataclass(kw_only=True)
 class ZpoolCapacityWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -31,7 +41,15 @@ class ZpoolCapacityWarningAlert(AlertClass):
         proactive_support=True,
     )
 
+    volume: str
+    capacity: int
 
+    @classmethod
+    def key(cls, args):
+        return [args['volume']]
+
+
+@dataclass(kw_only=True)
 class ZpoolCapacityCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.STORAGE,
@@ -40,6 +58,13 @@ class ZpoolCapacityCriticalAlert(AlertClass):
         text="Space usage for pool '%(volume)s' is %(capacity)d%%.",
         proactive_support=True,
     )
+
+    volume: str
+    capacity: int
+
+    @classmethod
+    def key(cls, args):
+        return [args['volume']]
 
 
 class ZpoolCapacityAlertSource(AlertSource):
@@ -61,12 +86,7 @@ class ZpoolCapacityAlertSource(AlertSource):
                 if capacity >= target_capacity:
                     alerts.append(
                         Alert(
-                            klass,
-                            {
-                                "volume": pool["name"],
-                                "capacity": capacity,
-                            },
-                            key=[pool["name"]],
+                            klass(volume=pool["name"], capacity=capacity),
                         )
                     )
                     break

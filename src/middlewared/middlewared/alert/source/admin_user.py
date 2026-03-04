@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
@@ -5,6 +6,7 @@ from middlewared.plugins.account import ADMIN_UID
 from middlewared.service_exception import MatchNotFound
 
 
+@dataclass(kw_only=True)
 class AdminUserIsOverriddenAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -12,6 +14,8 @@ class AdminUserIsOverriddenAlert(AlertClass):
         title="Admin User Is Overridden",
         text="NSS query results are different for the locally set up `%(username)s` user.",
     )
+
+    username: str
 
 
 class AdminUserAlertSource(AlertSource):
@@ -43,4 +47,4 @@ class AdminUserAlertSource(AlertSource):
                 (user_obj["pw_gecos"] != admin["full_name"]) or
                 (user_obj["pw_dir"] != admin["home"])
         ):
-            return Alert(AdminUserIsOverriddenAlert, {"username": admin["username"]})
+            return Alert(AdminUserIsOverriddenAlert(username=admin["username"]))

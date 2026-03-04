@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
@@ -9,6 +11,7 @@ URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/
 MAX_LOGINS_LISTED = 100
 
 
+@dataclass(kw_only=True)
 class AdminSessionAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -24,7 +27,15 @@ class AdminSessionAlert(AlertClass):
         ),
     )
 
+    count: int
+    sessions: str
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class APIFailedLoginAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -34,6 +45,13 @@ class APIFailedLoginAlert(AlertClass):
             "%(count)d API login failures in the last 24 hours:\n%(sessions)s"
         ),
     )
+
+    count: int
+    sessions: str
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 def audit_entry_to_msg(entry):
@@ -87,9 +105,7 @@ class AdminSessionAlertSource(AlertSource):
 
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
         return Alert(
-            AdminSessionAlert,
-            {'count': admin_login_count, 'sessions': audit_msg},
-            key=None
+            AdminSessionAlert(count=admin_login_count, sessions=audit_msg)
         )
 
 
@@ -137,7 +153,5 @@ class APIFailedLoginAlertSource(AlertSource):
 
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in auth_failures])
         return Alert(
-            APIFailedLoginAlert,
-            {'count': auth_failure_count, 'sessions': audit_msg},
-            key=None
+            APIFailedLoginAlert(count=auth_failure_count, sessions=audit_msg)
         )

@@ -1,6 +1,7 @@
 import base64
 import collections
 import configparser
+from dataclasses import dataclass
 import enum
 import itertools
 import json
@@ -530,6 +531,7 @@ class FsLockManager:
         self.sync_locks.pop(path, None)
 
 
+@dataclass(kw_only=True)
 class CloudSyncTaskFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
@@ -537,6 +539,9 @@ class CloudSyncTaskFailedAlert(AlertClass, OneShotAlertClass):
         title="Cloud Sync Task Failed",
         text="Cloud sync task \"%(name)s\" failed.",
     )
+
+    id: int
+    name: str
 
     @classmethod
     def key(cls, args):
@@ -1085,10 +1090,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                         self.middleware.call_sync("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
                 except Exception:
                     if "id" in cloud_sync:
-                        self.middleware.call_sync("alert.oneshot_create", "CloudSyncTaskFailed", {
-                            "id": cloud_sync["id"],
-                            "name": cloud_sync["description"],
-                        })
+                        self.middleware.call_sync("alert.oneshot_create", CloudSyncTaskFailedAlert(
+                            id=cloud_sync["id"],
+                            name=cloud_sync["description"],
+                        ))
                     raise
 
     @api_method(CloudSyncAbortArgs, CloudSyncAbortResult, roles=["CLOUD_SYNC_WRITE"])

@@ -3,11 +3,13 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass,
+)
 from middlewared.utils import ProductType
 
 
-class ProactiveSupportAlert(AlertClass):
+class ProactiveSupportAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -26,7 +28,7 @@ class ProactiveSupportAlertSource(AlertSource):
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
         if available and support['enabled'] is None:
-            return Alert(ProactiveSupportAlert, f'Proactive support is not configured. Review the {webui_page}.')
+            return Alert(ProactiveSupportAlert(f'Proactive support is not configured. Review the {webui_page}.'))
 
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
@@ -38,6 +40,5 @@ class ProactiveSupportAlertSource(AlertSource):
 
             if unfilled:
                 return Alert(
-                    ProactiveSupportAlert,
-                    f'Please complete these fields on the {webui_page}: {", ".join(unfilled)}'
+                    ProactiveSupportAlert(f'Please complete these fields on the {webui_page}: {", ".join(unfilled)}')
                 )

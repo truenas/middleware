@@ -1,4 +1,5 @@
 import errno
+from dataclasses import dataclass
 from datetime import timedelta
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -9,7 +10,10 @@ from middlewared.utils.directoryservices.health import (
 from middlewared.service_exception import CallError
 
 
+@dataclass(kw_only=True)
 class DirectoryServiceBindAlert(AlertClass):
+    err: str
+
     config = AlertClassConfig(
         category=AlertCategory.DIRECTORY_SERVICE,
         level=AlertLevel.WARNING,
@@ -17,14 +21,25 @@ class DirectoryServiceBindAlert(AlertClass):
         text="%(err)s.",
     )
 
+    @classmethod
+    def key(cls, args):
+        return None
 
+
+@dataclass(kw_only=True)
 class DirectoryServiceDnsUpdateAlert(AlertClass):
+    err: str
+
     config = AlertClassConfig(
         category=AlertCategory.DIRECTORY_SERVICE,
         level=AlertLevel.WARNING,
         title="DirectoryService DNS Update Failed",
         text="%(err)s.",
     )
+
+    @classmethod
+    def key(cls, args):
+        return None
 
 
 class DirectoryServiceDomainBindAlertSource(AlertSource):
@@ -47,7 +62,7 @@ class DirectoryServiceDomainBindAlertSource(AlertSource):
                 await self.middleware.call('directoryservices.health.recover')
             except Exception as e:
                 # Recovery failed, generate an alert
-                return Alert(DirectoryServiceBindAlert, {'err': str(e)}, key=None)
+                return Alert(DirectoryServiceBindAlert(err=str(e)))
 
         except Exception:
             # We shouldn't be raising other sorts of errors
@@ -75,7 +90,7 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             # disabling directory services. Most likely scenario is playing around with datastore
             # plugin or sqlite3 commands.
             self.middleware.logger.warning('Periodic DNS update failed due to misconfiguration.', exc_info=True)
-            return Alert(DirectoryServiceDnsUpdateAlert, {'err': str(exc)}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlert(err=str(exc)))
         except FileNotFoundError:
             # This happens if the system dataset is not mounted. We'll log an error but not
             # raise an alert because there are probably many other things hollering about the
@@ -94,8 +109,8 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             else:
                 errmsg = exc.errmsg
 
-            return Alert(DirectoryServiceDnsUpdateAlert, {'err': errmsg}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlert(err=errmsg))
         except Exception as exc:
             # If needed we can enhance this in the future to parse CallError
             self.middleware.logger.warning('Periodic DNS update failed.', exc_info=True)
-            return Alert(DirectoryServiceDnsUpdateAlert, {'err': str(exc)}, key=None)
+            return Alert(DirectoryServiceDnsUpdateAlert(err=str(exc)))

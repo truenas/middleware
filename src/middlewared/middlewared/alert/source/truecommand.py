@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class TruecommandConnectionDisabledAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -11,7 +14,10 @@ class TruecommandConnectionDisabledAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    error: str
 
+
+@dataclass(kw_only=True)
 class TruecommandConnectionPendingAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -21,6 +27,8 @@ class TruecommandConnectionPendingAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    error: str
 
 
 class TruecommandConnectionHealthAlert(AlertClass, OneShotAlertClass):

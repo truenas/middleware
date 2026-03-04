@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from middlewared.alert.base import Alert
-from middlewared.alert.source.quota import QuotaCriticalAlertClass, QuotaAlertSource
+from middlewared.alert.source.quota import QuotaCriticalAlert, QuotaAlertSource
 from middlewared.plugins.zfs_.utils import TNUserProp
 
 DEFAULT_QUOTA_THRESHOLDS = {k: v for k, v in TNUserProp.quotas()}
@@ -48,15 +48,14 @@ FAUX_DS = f"{FAUX_POOL}/share/HR"
         },
         [
             Alert(
-                QuotaCriticalAlertClass,
-                args={
-                    "name": "Refquota",
-                    "dataset": FAUX_DS,
-                    "used_fraction": 95.367431640625,
-                    "used": "9.54 MiB",
-                    "quota_value": "10 MiB",
-                },
-                key=[FAUX_DS, "refquota"],
+                QuotaCriticalAlert(
+                    name="Refquota",
+                    dataset=FAUX_DS,
+                    used_fraction=95.367431640625,
+                    used="9.54 MiB",
+                    quota_value="10 MiB",
+                    quota_property="refquota",
+                ),
                 mail=None,
             )
         ]

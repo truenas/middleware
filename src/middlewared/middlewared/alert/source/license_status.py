@@ -7,13 +7,13 @@ from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
-class LicenseAlert(AlertClass):
+class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -23,7 +23,7 @@ class LicenseAlert(AlertClass):
     )
 
 
-class LicenseIsExpiringAlert(AlertClass):
+class LicenseIsExpiringAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -33,7 +33,7 @@ class LicenseIsExpiringAlert(AlertClass):
     )
 
 
-class LicenseHasExpiredAlert(AlertClass):
+class LicenseHasExpiredAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -53,12 +53,12 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         local_license = self.middleware.call_sync('system.license')
         if local_license is None:
-            return Alert(LicenseAlert, "Your TrueNAS has no license, contact support.")
+            return Alert(LicenseAlert("Your TrueNAS has no license, contact support."))
 
         # check if this node's system serial matches the serial in the license
         local_serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
         if local_serial not in (local_license['system_serial'], local_license['system_serial_ha']):
-            alerts.append(Alert(LicenseAlert, 'System serial does not match license.'))
+            alerts.append(Alert(LicenseAlert('System serial does not match license.')))
 
         standby_license = standby_serial = None
         try:
@@ -72,15 +72,14 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         if standby_license and standby_serial is not None:
             # check if the remote node's system serial matches the serial in the license
             if standby_serial not in (standby_license['system_serial'], standby_license['system_serial_ha']):
-                alerts.append(Alert(LicenseAlert, 'System serial of standby node does not match license.',))
+                alerts.append(Alert(LicenseAlert('System serial of standby node does not match license.')))
 
         model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
         if model == 'UNKNOWN':
-            alerts.append(Alert(LicenseAlert, 'TrueNAS is running on unsupported hardware.'))
+            alerts.append(Alert(LicenseAlert('TrueNAS is running on unsupported hardware.')))
         elif model != local_license['model']:
             alerts.append(Alert(
-                LicenseAlert,
-                (
+                LicenseAlert(
                     f'Your license was issued for model {local_license["model"]!r} '
                     f'but the system was detected as model {model!r}'
                 )
@@ -102,8 +101,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                 if enc_nums[name] != quantity:
                     alerts.append(Alert(
-                        LicenseAlert,
-                        (
+                        LicenseAlert(
                             'License expects %(license)s units of %(name)s Expansion shelf but found %(found)s.' % {
                                 'license': quantity,
                                 'name': name,
@@ -113,8 +111,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                     ))
         elif enc_nums:
             alerts.append(Alert(
-                LicenseAlert,
-                'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
+                LicenseAlert(
+                    'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
+                )
             ))
 
         for days in [0, 14, 30, 90, 180]:
@@ -173,8 +172,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         """)
 
                 alerts.append(Alert(
-                    alert_klass,
-                    alert_text,
+                    alert_klass(alert_text),
                     mail={
                         "cc": ["support-renewal@truenas.com"],
                         "subject": subject,

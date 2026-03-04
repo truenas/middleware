@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class NFSblockedByExportsDirAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -10,7 +13,14 @@ class NFSblockedByExportsDirAlert(AlertClass, OneShotAlertClass):
         keys=[],
     )
 
+    entries: str
 
+    @classmethod
+    def key(cls, args):
+        return None
+
+
+@dataclass(kw_only=True)
 class NFSexportMappingInvalidNamesAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
@@ -19,3 +29,9 @@ class NFSexportMappingInvalidNamesAlert(AlertClass, OneShotAlertClass):
         text="NFS shares have invalid names:\n%(share_list)s",
         keys=[],
     )
+
+    share_list: str
+
+    @classmethod
+    def key(cls, args):
+        return None

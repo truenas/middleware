@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import timedelta
 
 from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
@@ -6,6 +7,7 @@ from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.ntp.peers import NTPPeer
 
 
+@dataclass(kw_only=True)
 class NTPHealthCheckAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
@@ -13,6 +15,8 @@ class NTPHealthCheckAlert(AlertClass):
         title="NTP Health Check Failed",
         text="NTP health check failed - %(reason)s",
     )
+
+    reason: str
 
 
 class NTPHealthCheckAlertSource(AlertSource):
@@ -35,8 +39,7 @@ class NTPHealthCheckAlertSource(AlertSource):
         active_peer = [x for x in peers if x.is_active()]
         if not active_peer:
             return Alert(
-                NTPHealthCheckAlert,
-                {'reason': f'No Active NTP peers: {[{str(x)} for x in peers]}'}
+                NTPHealthCheckAlert(reason=f'No Active NTP peers: {[{str(x)} for x in peers]}')
             )
 
         peer = active_peer[0]
@@ -44,4 +47,4 @@ class NTPHealthCheckAlertSource(AlertSource):
             return
 
         msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
-        return Alert(NTPHealthCheckAlert, {'reason': msg})
+        return Alert(NTPHealthCheckAlert(reason=msg))

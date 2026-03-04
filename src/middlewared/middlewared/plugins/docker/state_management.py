@@ -1,5 +1,6 @@
 import errno
 
+from middlewared.alert.source.applications import ApplicationsConfigurationFailedAlert, ApplicationsStartFailedAlert
 from middlewared.api.base import Event
 from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, periodic, Service
@@ -38,8 +39,7 @@ class DockerStateService(Service):
             if e.errno != CallError.EDATASETISLOCKED:
                 await self.middleware.call(
                     'alert.oneshot_create',
-                    'ApplicationsConfigurationFailed',
-                    {'error': e.errmsg},
+                    ApplicationsConfigurationFailedAlert(error=e.errmsg),
                 )
 
             await self.set_status(Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
@@ -53,9 +53,9 @@ class DockerStateService(Service):
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
         else:
             await self.set_status(Status.FAILED.value, 'Failed to start docker service')
-            await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {
-                'error': 'Docker service could not be started'
-            })
+            await self.middleware.call('alert.oneshot_create', ApplicationsStartFailedAlert(
+                error='Docker service could not be started',
+            ))
 
     async def start_service(self, mount_datasets: bool = False):
         await self.set_status(Status.INITIALIZING.value)

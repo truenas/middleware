@@ -5,6 +5,8 @@ import itertools
 import os
 import shutil
 
+from middlewared.alert.source.nfs_bindaddr import NFSBindAddressAlert
+from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     NFSEntry,
@@ -228,7 +230,7 @@ class NFSService(SystemServiceService):
             return bindip
         else:
             if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
-                await self.middleware.call('alert.oneshot_create', 'NFSBindAddress', None)
+                await self.middleware.call('alert.oneshot_create', NFSBindAddressAlert())
 
             return []
 
@@ -666,7 +668,7 @@ class SharingNFSService(SharingService):
         # Register a warning level alert for excessively long list of network entries
         if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:
             await self.middleware.call(
-                'alert.oneshot_create', 'NFSNetworkListExcessive', {'sharePath': data['path'], 'numEntries': netlen}
+                'alert.oneshot_create', NFSNetworkListExcessiveAlert(sharePath=data['path'], numEntries=netlen)
             )
         else:
             await self.middleware.call(
@@ -679,7 +681,7 @@ class SharingNFSService(SharingService):
         # Register a warning level alert for excessively long list of host entries
         if (hostlen := len(data['hosts'])) >= NFS_HOSTS_WARNING_THRESHOLD:
             await self.middleware.call(
-                'alert.oneshot_create', 'NFSHostListExcessive', {'sharePath': data['path'], 'numEntries': hostlen}
+                'alert.oneshot_create', NFSHostListExcessiveAlert(sharePath=data['path'], numEntries=hostlen)
             )
         else:
             await self.middleware.call(

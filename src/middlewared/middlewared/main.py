@@ -144,7 +144,7 @@ def get_service_methods(service: middlewared.service.Service, prefix: str) -> di
         attr_value = getattr(service, attr)
         if isinstance(attr_value, middlewared.service.Service):
             result.update(**get_service_methods(attr_value, f"{prefix}{attr}."))
-        elif callable(attr_value):
+        elif inspect.ismethod(attr_value):
             result[f"{prefix}{attr}"] = attr_value
 
     return result

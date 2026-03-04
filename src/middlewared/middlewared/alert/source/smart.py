@@ -26,6 +26,7 @@ class SmartInfo:
     unknown_device: bool = False
 
 
+@dataclass(kw_only=True)
 class SMARTUncorrectedErrorsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -34,7 +35,12 @@ class SMARTUncorrectedErrorsAlert(AlertClass):
         text="%(ue)d uncorrectable errors reported for %(name)s (%(serial)s).",
     )
 
+    ue: int
+    name: str
+    serial: str
 
+
+@dataclass(kw_only=True)
 class SMARTFailedSelfTestAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -43,7 +49,11 @@ class SMARTFailedSelfTestAlert(AlertClass):
         text="%(name)s (%(serial)s) failed a SMART selftest.",
     )
 
+    name: str
+    serial: str
 
+
+@dataclass(kw_only=True)
 class SMARTSpareBlockCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -52,7 +62,12 @@ class SMARTSpareBlockCountAlert(AlertClass):
         text="%(name)s (%(serial)s) is reporting a low spare block reserve (%(sb)d) .",
     )
 
+    name: str
+    serial: str
+    sb: int
 
+
+@dataclass(kw_only=True)
 class SMARTEraseCycleCountAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
@@ -60,6 +75,11 @@ class SMARTEraseCycleCountAlert(AlertClass):
         title="High Erase Cycle Count",
         text="%(name)s (%(serial)s) has a high erase cycle count (%(ec)d) (raw (%(ec_raw)d).",
     )
+
+    name: str
+    serial: str
+    ec: int
+    ec_raw: int
 
 
 class SMARTAlertSource(ThreadedAlertSource):
@@ -151,14 +171,11 @@ class SMARTAlertSource(ThreadedAlertSource):
             # (a.k.a. “Bad Block Count” on Phison / “Reserved Block Count” on Micron)
             # falls below 90% of its initial value.
             alerts.append(
-                Alert(
-                    SMARTSpareBlockCountAlertClass,
-                    {
-                        "name": sijson["device"]["name"],
-                        "serial": sijson["serial_number"],
-                        "sb": si.spare_block_reserve,
-                    }
-                )
+                Alert(SMARTSpareBlockCountAlert(
+                    name=sijson["device"]["name"],
+                    serial=sijson["serial_number"],
+                    sb=si.spare_block_reserve,
+                ))
             )
 
         if si.erase_count is not None:
@@ -178,15 +195,12 @@ class SMARTAlertSource(ThreadedAlertSource):
                 # Rule: Trigger warning alert when the
                 # Block Erase Count has a Raw Value > 3000.
                 alerts.append(
-                    Alert(
-                        SMARTEraseCycleCountAlertClass,
-                        {
-                            "name": sijson["device"]["name"],
-                            "serial": sijson["serial_number"],
-                            "ec": ec,
-                            "ec_raw": si.erase_count,
-                        }
-                    )
+                    Alert(SMARTEraseCycleCountAlert(
+                        name=sijson["device"]["name"],
+                        serial=sijson["serial_number"],
+                        ec=ec,
+                        ec_raw=si.erase_count,
+                    ))
                 )
 
         return alerts
@@ -207,21 +221,18 @@ class SMARTAlertSource(ThreadedAlertSource):
 
                 if parsed.uncorrected_errors:
                     alerts.append(
-                        Alert(
-                            SMARTUncorrectedErrorsAlert,
-                            {
-                                "ue": parsed.uncorrected_errors,
-                                "name": disk.name,
-                                "serial": disk.serial,
-                            },
-                        )
+                        Alert(SMARTUncorrectedErrorsAlert(
+                            ue=parsed.uncorrected_errors,
+                            name=disk.name,
+                            serial=disk.serial,
+                        ))
                     )
                 if parsed.smart_testfail:
                     alerts.append(
-                        Alert(
-                            SMARTFailedSelfTestAlert,
-                            {"name": disk.name, "serial": disk.serial},
-                        )
+                        Alert(SMARTFailedSelfTestAlert(
+                            name=disk.name,
+                            serial=disk.serial,
+                        ))
                     )
                 alerts.extend(self.micron_phison_check(sijson, parsed, is_ent))
             except Exception:

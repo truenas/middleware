@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
+@dataclass(kw_only=True)
 class CatalogNotHealthyAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
@@ -10,11 +13,15 @@ class CatalogNotHealthyAlert(AlertClass, OneShotAlertClass):
         deleted_automatically=False,
     )
 
+    apps: str
+    catalog: str
+
     @classmethod
     def key(cls, args):
         return args['catalog']
 
 
+@dataclass(kw_only=True)
 class CatalogSyncFailedAlert(AlertClass, OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
@@ -23,6 +30,9 @@ class CatalogSyncFailedAlert(AlertClass, OneShotAlertClass):
         text='Failed to sync %(catalog)s catalog: %(error)s',
         deleted_automatically=False,
     )
+
+    catalog: str
+    error: str
 
     @classmethod
     def key(cls, args):

@@ -1,9 +1,14 @@
+from dataclasses import dataclass
+
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
 
 
+@dataclass(kw_only=True)
 class ISCSIDiscoveryAuthMixedAlert(AlertClass, OneShotAlertClass):
+    ips: str
+
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -21,7 +26,10 @@ class ISCSIDiscoveryAuthMultipleCHAPAlert(AlertClass, OneShotAlertClass):
     )
 
 
+@dataclass(kw_only=True)
 class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(AlertClass, OneShotAlertClass):
+    peeruser: str
+
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
