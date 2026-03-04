@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
@@ -26,13 +27,13 @@ class CoreFilesArePresentAlert(AlertClass):
 class CoreFilesArePresentAlertSource(AlertSource):
     products = (ProductType.COMMUNITY_EDITION,)
 
-    async def should_alert(self, core):
+    async def should_alert(self, core: dict[str, Any]) -> bool:
         if core["corefile"] != "present" or not core["unit"]:
             # no core file on disk, no investigation
             # not associated to a unit? probably impossible but better safe than sorry
             return False
 
-        return core["unit"].startswith((
+        return bool(core["unit"].startswith((
             # NFS related service(s)
             "nfs-blkmap.service",
             "nfs-idmapd.service",
@@ -49,9 +50,9 @@ class CoreFilesArePresentAlertSource(AlertSource):
             "scst.service",
             # ZFS related (userspace) service(s)
             "zfs-zed.service",
-        ))
+        )))
 
-    async def check(self):
+    async def check(self) -> Alert[CoreFilesArePresentAlert] | None:
         corefiles = []
         for coredump in await self.middleware.call("system.coredumps"):
             if await self.should_alert(coredump):
@@ -59,3 +60,4 @@ class CoreFilesArePresentAlertSource(AlertSource):
 
         if corefiles:
             return Alert(CoreFilesArePresentAlert(corefiles=', '.join(corefiles)))
+        return None

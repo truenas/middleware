@@ -5,6 +5,7 @@
 
 import time
 from dataclasses import dataclass
+from typing import Any, TYPE_CHECKING
 
 from middlewared.alert.base import (
     AlertClass,
@@ -17,6 +18,9 @@ from middlewared.alert.base import (
 )
 from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 @dataclass(kw_only=True)
@@ -57,13 +61,13 @@ class PowerSupplyAlert(AlertClass):
 
 
 class PsuAlertSource(AlertSource):
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self.last_failure = time.monotonic()
-        self.incident_id = None
+        self.incident_id: str | None = None
         self._30mins = 30 * 60
 
-    async def should_alert(self):
+    async def should_alert(self) -> bool:
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"
         ].startswith("TRUENAS-R"):
@@ -75,8 +79,8 @@ class PsuAlertSource(AlertSource):
 
         return False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         if not await self.should_alert():
             return alerts
 
@@ -108,7 +112,7 @@ class PsuAlertSource(AlertSource):
 
 
 class SensorsAlertSource(AlertSource):
-    async def should_alert(self):
+    async def should_alert(self) -> bool:
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"
         ].startswith("TRUENAS-R"):
@@ -120,8 +124,8 @@ class SensorsAlertSource(AlertSource):
 
         return False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any]:
+        alerts: list[Alert[Any]] = []
         if not await self.should_alert():
             return alerts
 

@@ -5,6 +5,8 @@
 
 from dataclasses import dataclass
 
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
 
@@ -44,7 +46,7 @@ class FailoverNetworkCardsAlertSource(AlertSource):
     require_stable_peer = True
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         if (interfaces := await self.middleware.call('failover.mismatch_nics')):
             if interfaces['missing_remote']:
                 return [Alert(

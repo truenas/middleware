@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 import subprocess
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -23,7 +24,7 @@ class TrueNASVerifyServiceChangeDetectionAlert(AlertClass):
     verrs: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -34,7 +35,7 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
     run_on_backup_node = False
 
-    def check_sync(self):
+    def check_sync(self) -> list[Alert[Any]] | Alert[Any] | None:
         # Run only if in stig mode
         if self.stig_enabled():
             # Capture the results in syslog
@@ -44,7 +45,9 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
                     TrueNASVerifyServiceChangeDetectionAlert(verrs=res.stdout.strip()),
                 )
 
-    def stig_enabled(self):
+        return None
+
+    def stig_enabled(self) -> Any:
         security_config = self.middleware.call_sync('system.security.config')
         enabled_stig = system_security_config_to_stig_type(security_config)
         return enabled_stig

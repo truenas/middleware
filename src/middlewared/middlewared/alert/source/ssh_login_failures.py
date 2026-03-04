@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from time import time
+from typing import Any
 
 from middlewared.alert.base import (
     AlertClass,
@@ -28,7 +29,7 @@ class SSHLoginFailuresAlert(AlertClass):
 class SSHLoginFailuresAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         cnt = await self.middleware.call(
             "audit.query",
             {
@@ -49,3 +50,5 @@ class SSHLoginFailuresAlertSource(AlertSource):
         )
         if cnt > 0:
             return Alert(SSHLoginFailuresAlert(cnt=cnt))
+
+        return None

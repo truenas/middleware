@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
@@ -16,7 +17,7 @@ class NFSblockedByExportsDirAlert(OneShotAlertClass):
     entries: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None
 
 
@@ -33,5 +34,5 @@ class NFSexportMappingInvalidNamesAlert(OneShotAlertClass):
     share_list: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None

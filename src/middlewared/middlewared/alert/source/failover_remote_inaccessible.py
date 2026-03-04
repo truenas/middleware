@@ -5,12 +5,14 @@
 
 import time
 
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, NonDataclassAlertClass, UnavailableException
 from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
-class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list], AlertClass):
+class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -27,12 +29,12 @@ class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
     failover_related = True
     run_on_backup_node = False
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Any) -> None:
         super().__init__(middleware)
         self.last_available = time.monotonic()
-        self.incident_id = None
+        self.incident_id: str | None = None
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         try:
             await self.middleware.call('failover.call_remote', 'core.ping', [], {'timeout': 2})
         except Exception:

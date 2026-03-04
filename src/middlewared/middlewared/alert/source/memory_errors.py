@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
@@ -44,8 +45,8 @@ class MemorySizeMismatchAlert(AlertClass):
 class MemoryErrorsAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24hrs
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         for mem_ctrl, info in (await self.middleware.call('hardware.memory.error_info')).items():
             location = f'memory controller {mem_ctrl}'
             if (val := info['uncorrected_errors_with_no_dimm_info']) is not None and val > 0:
@@ -71,8 +72,8 @@ class MemorySizeMismatchAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24hrs
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         if not await self.middleware.call('failover.licensed'):
             return alerts
 

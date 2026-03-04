@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, NonDataclassAlertClass, OneShotAlertClass
 
 
@@ -11,5 +13,5 @@ class DifFormattedAlert(NonDataclassAlertClass[str], OneShotAlertClass):
     )
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return None

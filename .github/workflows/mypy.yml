@@ -27,6 +27,7 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
+            middlewared/alert/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/init_shutdown_script/ \

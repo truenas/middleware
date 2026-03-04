@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
 from middlewared.utils import ProductType
@@ -42,12 +43,12 @@ class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     products = (ProductType.ENTERPRISE,)
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         dmi = await self.middleware.call("system.dmidecode_info")
         if not dmi["system-product-name"].startswith(("TRUENAS-M", "TRUENAS-Z")):
             return []
 
-        alerts = []
+        alerts: list[Alert[Any]] = []
         for disk in await self.middleware.call("boot.get_disks"):
             if not disk.startswith("sda"):
                 continue

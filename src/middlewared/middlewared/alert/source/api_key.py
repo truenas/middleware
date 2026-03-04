@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -26,8 +27,8 @@ class ApiKeyRevokedAlert(AlertClass):
 class ApiKeyRevokedAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = []
         for key in await self.middleware.call("api_key.query"):
             if key["revoked"]:
                 alerts.append(Alert(ApiKeyRevokedAlert(

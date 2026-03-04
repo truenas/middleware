@@ -5,6 +5,7 @@
 
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
@@ -94,7 +95,7 @@ class JBOFAlertSource(AlertSource):
     run_on_backup_node = False
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
 
-    def produce_alerts(self, jbof_config, jbof_data, alerts):
+    def produce_alerts(self, jbof_config: list[dict[str, Any]], jbof_data: list[dict[str, Any]], alerts: list[Alert[Any]]) -> None:
         for jbof in jbof_config:
             jbof_id_dict = {'desc': jbof['description'], 'ip1': jbof['mgmt_ip1'], 'ip2': jbof['mgmt_ip2']}
             data = None
@@ -143,8 +144,8 @@ class JBOFAlertSource(AlertSource):
             if bad_keys:
                 alerts.append(Alert(JBOFInvalidDataAlert(keys=','.join(bad_keys), **jbof_id_dict)))
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         jbof_config = await self.middleware.call('jbof.query')
 
         if jbof_config:

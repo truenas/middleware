@@ -6,6 +6,8 @@
 import errno
 from dataclasses import dataclass
 
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, NonDataclassAlertClass, UnavailableException
 from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
@@ -31,7 +33,7 @@ class TrueNASVersionsMismatchAlert(AlertClass):
     )
 
 
-class FailoverStatusCheckFailedAlert(NonDataclassAlertClass[list], AlertClass):
+class FailoverStatusCheckFailedAlert(NonDataclassAlertClass[list[str]], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -69,7 +71,7 @@ class FailoverAlertSource(AlertSource):
     failover_related = True
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         if not await self.middleware.call('failover.internal_interfaces'):
             return [Alert(FailoverInterfaceNotFoundAlert())]
 

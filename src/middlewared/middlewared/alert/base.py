@@ -9,7 +9,7 @@ from typing import Any, Self, TypeAlias, TYPE_CHECKING
 
 import html2text
 
-from middlewared.alert.schedule import IntervalSchedule
+from middlewared.alert.schedule import BaseSchedule, CrontabSchedule, IntervalSchedule
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.service.call_mixin import CallMixin
 
@@ -20,7 +20,7 @@ __all__ = [
     "UnavailableException", "AlertClassConfig", "AlertClass", "NonDataclassAlertClass", "OneShotAlertClass",
     "DismissableAlertClass", "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource",
     "AlertService", "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis",
-    "alert_category_names",
+    "alert_category_names", "CrontabSchedule", "IntervalSchedule", "ProductType",
 ]
 
 logger = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ class AlertClass(metaclass=AlertClassMeta):
         return cls()
 
     @classmethod
-    def key(cls, args: Any) -> Any:
+    def key_from_args(cls, args: Any) -> Any:
         """Return the deduplication key for an alert with the given args.
 
         Override this to customize which fields are used for deduplication.
@@ -174,7 +174,7 @@ class OneShotAlertClass(AlertClass):
 
     Configure `deleted_automatically`, `expires_after`, and `keys` via `AlertClassConfig`.
 
-    Override `AlertClass.key()` to set a custom deduplication key derived from `args`.
+    Override `AlertClass.key_from_args()` to set a custom deduplication key derived from `args`.
     """
 
     @classmethod
@@ -193,7 +193,7 @@ class OneShotAlertClass(AlertClass):
 
             return [alert for alert in alerts if any(getattr(alert.instance, k) != query[k] for k in cls.config.keys)]
 
-        return [alert for alert in alerts if cls.key(alert.instance.args()) != query]
+        return [alert for alert in alerts if cls.key_from_args(alert.instance.args()) != query]
 
     @classmethod
     async def load(cls, middleware: Middleware, alerts: list[Alert[Self]]) -> list[Alert[Self]]:
@@ -330,7 +330,7 @@ class Alert[T: AlertClass]:
 
         self.key: str
         if _key is None:
-            self.key = json.dumps(self.instance.key(self.instance.args()), sort_keys=True)
+            self.key = json.dumps(self.instance.key_from_args(self.instance.args()), sort_keys=True)
         else:
             self.key = _key
 
@@ -369,9 +369,9 @@ class AlertSource(CallMixin):
     :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
     """
 
-    schedule = IntervalSchedule(timedelta())
+    schedule: BaseSchedule = IntervalSchedule(timedelta())
 
-    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     failover_related = False
     run_on_backup_node = True
     require_stable_peer = False

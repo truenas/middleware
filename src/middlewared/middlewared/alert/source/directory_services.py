@@ -1,6 +1,8 @@
 import errno
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
+
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.directoryservices.constants import DSStatus
@@ -22,7 +24,7 @@ class DirectoryServiceBindAlert(AlertClass):
     )
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -38,7 +40,7 @@ class DirectoryServiceDnsUpdateAlert(AlertClass):
     )
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -46,13 +48,13 @@ class DirectoryServiceDomainBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> Alert[Any] | None:
         if DSHealthObj.dstype is None:
-            return
+            return None
 
         if DSHealthObj.status in (DSStatus.JOINING, DSStatus.LEAVING):
             # Some op is in progress, don't interfere
-            return
+            return None
 
         try:
             await self.middleware.call('directoryservices.health.check')
@@ -68,6 +70,8 @@ class DirectoryServiceDomainBindAlertSource(AlertSource):
             # We shouldn't be raising other sorts of errors
             self.middleware.logger.error("Unexpected error while performing health check.", exc_info=True)
 
+        return None
+
 
 class DirectoryServiceDnsUpdateAlertSource(AlertSource):
     # The DNS updates are potentially going to happen every 7 days, but we check whether it's
@@ -78,9 +82,9 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> Alert[Any] | None:
         if DSHealthObj.dstype is None:
-            return
+            return None
 
         try:
             # checks for enabled DS and whether DNS updates are enabled occur in this method
@@ -114,3 +118,5 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             # If needed we can enhance this in the future to parse CallError
             self.middleware.logger.warning('Periodic DNS update failed.', exc_info=True)
             return Alert(DirectoryServiceDnsUpdateAlert(err=str(exc)))
+
+        return None

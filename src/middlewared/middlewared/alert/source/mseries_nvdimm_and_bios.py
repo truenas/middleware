@@ -5,6 +5,7 @@
 
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -134,7 +135,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
     products = (ProductType.ENTERPRISE,)
 
-    def produce_alerts(self, nvdimm, alerts, old_bios):
+    def produce_alerts(self, nvdimm: Any, alerts: list[Alert[Any]], old_bios: bool) -> None:
         persistency_restored = 0x4
         arm_info = 0x40
         dev = nvdimm['dev']
@@ -159,15 +160,17 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                     ))
 
         if (val := int(nvdimm['nvm_lifetime'].rstrip('%'))) < 20:
-            alert = NVDIMMMemoryModLifetimeWarningAlert if val > 10 else NVDIMMMemoryModLifetimeCriticalAlert
-            alerts.append(Alert(alert(dev=dev, value=val)))
+            mod_alert: type[NVDIMMMemoryModLifetimeWarningAlert] | type[NVDIMMMemoryModLifetimeCriticalAlert]
+            mod_alert = NVDIMMMemoryModLifetimeWarningAlert if val > 10 else NVDIMMMemoryModLifetimeCriticalAlert
+            alerts.append(Alert(mod_alert(dev=dev, value=val)))
 
         if nvdimm['index'] == 0 and (val := int(nvdimm['es_lifetime'].rstrip('%'))) < 20:
             # we only check this value for the 0th slot nvdimm since M60 has 2 and the way
             # they're physically cabled, prevents monitoring the 2nd nvdimm's energy source
             # (it always reports -1%)
-            alert = NVDIMMESLifetimeWarningAlert if val > 10 else NVDIMMESLifetimeCriticalAlert
-            alerts.append(Alert(alert(dev=dev, value=val)))
+            es_alert: type[NVDIMMESLifetimeWarningAlert] | type[NVDIMMESLifetimeCriticalAlert]
+            es_alert = NVDIMMESLifetimeWarningAlert if val > 10 else NVDIMMESLifetimeCriticalAlert
+            alerts.append(Alert(es_alert(dev=dev, value=val)))
 
         if 'not_armed' in nvdimm['state_flags']:
             alerts.append(Alert(
@@ -186,8 +189,8 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             alerts.append(Alert(OldBiosVersionAlert()))
             old_bios_alert_already_generated = True
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         sys = ('TRUENAS-M40', 'TRUENAS-M50', 'TRUENAS-M60')
         if self.middleware.call_sync('truenas.get_chassis_hardware').startswith(sys):
             old_bios = self.middleware.call_sync('mseries.bios.is_old_version')

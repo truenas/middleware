@@ -1,5 +1,6 @@
 import time
 from dataclasses import dataclass
+from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule
@@ -9,8 +10,8 @@ from middlewared.service_exception import ValidationErrors
 AUDIT_MAX_QUERY_ENTRIES = 1000
 
 
-def generate_alert_text(auth_log):
-    alert_text = {}
+def generate_alert_text(auth_log: list[dict[str, Any]]) -> list[str]:
+    alert_text: dict[str, dict[str, Any]] = {}
     for x in auth_log:
         k = f'{x["clientAccount"] or x["becameAccount"]} - '
         k += x["workstation"] or x["address"]
@@ -41,7 +42,7 @@ class SMBLegacyProtocolAlert(AlertClass):
     err: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -57,7 +58,7 @@ class NTLMv1AuthenticationAlert(AlertClass):
     err: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -73,7 +74,7 @@ class SMBPathAlert(AlertClass):
     err: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> None:
         return None
 
 
@@ -81,9 +82,9 @@ class SMBLegacyProtocolAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> Alert[Any] | None:
         if not await self.middleware.call('service.started', 'cifs'):
-            return
+            return None
 
         now = time.time()
         if not (auth_log := await self.middleware.call('audit.query', {
@@ -98,7 +99,7 @@ class SMBLegacyProtocolAlertSource(AlertSource):
                 'limit': AUDIT_MAX_QUERY_ENTRIES,
             }
         })):
-            return
+            return None
 
         parsed = []
         for entry in auth_log:
@@ -118,13 +119,13 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)  # every 24 hours
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> Alert[Any] | None:
         if not await self.middleware.call('service.started', 'cifs'):
-            return
+            return None
 
         smb_conf = await self.middleware.call('smb.config')
         if smb_conf['ntlmv1_auth']:
-            return
+            return None
 
         now = time.time()
         if not (auth_log := await self.middleware.call('audit.query', {
@@ -140,7 +141,7 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
                 'limit': AUDIT_MAX_QUERY_ENTRIES,
             }
         })):
-            return
+            return None
 
         parsed = []
         for entry in auth_log:
@@ -160,14 +161,14 @@ class SMBPathAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = False
 
-    async def smb_path_alert_format(self, verrors):
-        errors = []
+    async def smb_path_alert_format(self, verrors: ValidationErrors) -> str:
+        errors: list[str] = []
         for e in verrors:
             errors.append(f'{e[0].split(":")[0]}: {e[1]}')
 
         return ', '.join(errors)
 
-    async def check(self):
+    async def check(self) -> Alert[Any] | None:
         verrors = ValidationErrors()
 
         for share in await self.middleware.call('sharing.smb.query', [['enabled', '=', True], ['locked', '=', False]]):
@@ -180,13 +181,13 @@ class SMBPathAlertSource(AlertSource):
                 self.middleware.logger.error('Failed to validate path field', exc_info=True)
 
         if not verrors:
-            return
+            return None
 
         try:
             msg = await self.smb_path_alert_format(verrors)
         except Exception:
             self.middleware.logger.error('Failed to format error message', exc_info=True)
-            return
+            return None
 
         return Alert(SMBPathAlert(err=msg))
 
