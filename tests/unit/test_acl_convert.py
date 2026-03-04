@@ -462,3 +462,55 @@ class TestPOSIXRoundTrip:
         result = posixacl_obj_to_dict(posixacl_dict_to_obj(acl_in), uid=500, gid=600)
         assert result['uid'] == 500
         assert result['gid'] == 600
+
+
+# ---------------------------------------------------------------------------
+# POSIX generate_inherited_acl: file vs directory variants
+#
+# Covers the invariant relied on by acltool()'s CLONE/INHERIT path:
+# generate_inherited_acl(is_dir=False) must never produce an ACL with default
+# entries (default entries are only valid on directories; fsetacl() raises
+# ValueError if you try to set them on a file).
+# ---------------------------------------------------------------------------
+
+def _posix_acl_with_defaults():
+    """Return a POSIXACL that has both access and default entries."""
+    rwx = t.POSIXPerm.READ | t.POSIXPerm.WRITE | t.POSIXPerm.EXECUTE
+    aces = [
+        t.POSIXAce(t.POSIXTag.USER_OBJ,  rwx,             default=False),
+        t.POSIXAce(t.POSIXTag.GROUP_OBJ, rwx,             default=False),
+        t.POSIXAce(t.POSIXTag.OTHER,     t.POSIXPerm(0),  default=False),
+        t.POSIXAce(t.POSIXTag.USER_OBJ,  rwx,             default=True),
+        t.POSIXAce(t.POSIXTag.GROUP_OBJ, rwx,             default=True),
+        t.POSIXAce(t.POSIXTag.OTHER,     t.POSIXPerm(0),  default=True),
+    ]
+    return t.POSIXACL.from_aces(aces)
+
+
+class TestPOSIXGenerateInheritedAcl:
+
+    def test_file_variant_has_no_default_entries(self):
+        """generate_inherited_acl(is_dir=False) must produce no default entries.
+
+        acltool() relies on this guarantee when applying a POSIX ACL to files
+        during recursive CLONE/INHERIT operations.  Passing a POSIXACL with
+        default entries to fsetacl() on a file raises ValueError.
+        """
+        file_acl = _posix_acl_with_defaults().generate_inherited_acl(is_dir=False)
+        assert not file_acl.default_aces, (
+            'file-variant ACL must have no default entries'
+        )
+
+    def test_dir_variant_has_default_entries(self):
+        """generate_inherited_acl(is_dir=True) must preserve default entries."""
+        dir_acl = _posix_acl_with_defaults().generate_inherited_acl(is_dir=True)
+        assert dir_acl.default_aces, (
+            'dir-variant ACL must carry default entries'
+        )
+
+    def test_file_variant_has_access_entries(self):
+        """generate_inherited_acl(is_dir=False) must still produce access entries."""
+        file_acl = _posix_acl_with_defaults().generate_inherited_acl(is_dir=False)
+        assert file_acl.aces, (
+            'file-variant ACL must have access entries'
+        )
