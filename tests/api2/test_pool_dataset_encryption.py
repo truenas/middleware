@@ -93,7 +93,7 @@ class TestNormalPool:
             'name': dataset,
             'encryption_options': {
                 'generate_key': False,
-                'pbkdf2iters': 100000,
+                'pbkdf2iters': 1300000,
                 'algorithm': 'AES-128-CCM',
                 'passphrase': passphrase,
             },
@@ -127,7 +127,7 @@ class TestNormalPool:
                 'encryption_options': {'pbkdf2iters': 0},
                 'inherit_encryption': False
             },
-            'Input should be greater than or equal to 100000'
+            'Input should be greater than or equal to 1300000'
         ),
         (
             {
@@ -221,7 +221,7 @@ class TestPassphraseEncryptedPool:
             'name': dataset,
             'encryption_options': {
                 'generate_key': False,
-                'pbkdf2iters': 100000,
+                'pbkdf2iters': 1300000,
                 'algorithm': 'AES-128-CCM',
                 'passphrase': passphrase,
             },
