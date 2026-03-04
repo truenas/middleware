@@ -84,8 +84,11 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
     root_mode = os.fstat(fd).st_mode if do_chmod else None
 
     nfs4_inh = None
+    posix_file_acl = None
     if root_acl is not None and isinstance(root_acl, truenas_os.NFS4ACL):
         nfs4_inh = _NFS4InheritedAcls.from_root(root_acl)
+    elif root_acl is not None and isinstance(root_acl, truenas_os.POSIXACL):
+        posix_file_acl = root_acl.generate_inherited_acl(is_dir=False)
 
     last_report_time = time.monotonic()
 
@@ -119,7 +122,10 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
                 inherited = nfs4_inh.pick(depth, isdir)
                 truenas_os.fsetacl(fd, inherited)
             elif root_acl is not None:
-                truenas_os.fsetacl(fd, root_acl)
+                if posix_file_acl is not None and not isdir:
+                    truenas_os.fsetacl(fd, posix_file_acl)
+                else:
+                    truenas_os.fsetacl(fd, root_acl)
             if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
                 os.fchown(fd, uid, gid)
             if do_chmod and root_mode is not None:
