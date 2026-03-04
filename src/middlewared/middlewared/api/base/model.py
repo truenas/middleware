@@ -325,12 +325,14 @@ def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type
 
 def query_result_item(item: type[ModelT]) -> type[ModelT]:
     # All fields must be non-required since we can query subsets of fields
-    return create_model(
+    result = create_model(
         item.__name__.removesuffix("Entry") + "QueryResultItem",
         __base__=(item,),
         __module__=item.__module__,
         __cls_kwargs__={"metaclass": ForUpdateMetaclass},
     )
+    result.__normalize_as__ = item
+    return result
 
 
 def added_event_model(item):

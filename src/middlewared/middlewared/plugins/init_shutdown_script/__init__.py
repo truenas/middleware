@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING, Any
+from typing import Any, Literal, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -12,7 +12,7 @@ from middlewared.api.current import (
     InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult,
     QueryOptions,
 )
-from middlewared.service import CRUDService, job, private
+from middlewared.service import GenericCRUDService, job, private
 
 from .crud import InitShutdownScriptServicePart
 from .task import execute_init_tasks, WHEN_ARG
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 __all__ = ('InitShutdownScriptService',)
 
 
-class InitShutdownScriptService(CRUDService[InitShutdownScriptEntry]):
+class InitShutdownScriptService(GenericCRUDService[InitShutdownScriptEntry]):
 
     class Config:
         cli_namespace = 'system.init_shutdown_script'
@@ -39,12 +39,12 @@ class InitShutdownScriptService(CRUDService[InitShutdownScriptEntry]):
         self._svc_part = InitShutdownScriptServicePart(self.context)
 
     async def query(
-        self, filters: list[Any] | None = None, options: dict[str, Any] | None = None
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
     ) -> list[InitShutdownScriptEntry] | InitShutdownScriptEntry | int:
-        return await self._svc_part.query(filters or [], QueryOptions(**(options or {})))
+        return await self._svc_part.query(filters or [], options or QueryOptions())
 
-    async def get_instance(self, id_: int, options: dict[str, Any] | None = None) -> InitShutdownScriptEntry:
-        return await self._svc_part.get_instance(id_, extra=(options or {}).get('extra'))
+    async def get_instance(self, id_: int, options: QueryOptions | None = None) -> InitShutdownScriptEntry:
+        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult, check_annotations=True)
     async def do_create(self, data: InitShutdownScriptCreate) -> InitShutdownScriptEntry:

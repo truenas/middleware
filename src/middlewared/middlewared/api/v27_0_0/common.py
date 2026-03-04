@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from typing import Annotated, Self
+from typing import Annotated, Any, Self
 
 from pydantic import AfterValidator, model_validator, Field
 
@@ -12,13 +12,13 @@ QF_FIELD = Field(default=[], description=QF_DOC, examples=[
     [["name", "=", "bob"]],
     [["OR", [["name", "=", "bob"], ["name", "=", "larry"]]]],
 ])
-QueryFilters = Annotated[list, QF_FIELD, AfterValidator(validate_filters)]
+QueryFilters = Annotated[list[Any], QF_FIELD, AfterValidator(validate_filters)]
 
 
 class QueryOptions(BaseModel):
     """ Query options customize the results returned by a query method. More complete documentation with examples \
     are covered in the "Query methods" section of the TrueNAS API documentation. """
-    extra: dict = {}
+    extra: dict[str, Any] = {}
     """ Extra options are defined on a per-endpoint basis and are described in the documentation for the associated \
     query method. """
     order_by: list[str] = Field(default=[], examples=[['size', '-devname', 'nulls_first:-expiretime']])
@@ -26,7 +26,7 @@ class QueryOptions(BaseModel):
     also have one of more of the following special prefixes: `-` (reverse sort direction), `nulls_first:` (place \
     any null values at the head of the results list), `nulls_last:` (place any null values at the tail of the \
     results list). """
-    select: list[str | list] = Field(default=[], examples=[['username', 'Authentication.status']])
+    select: list[str | list[Any]] = Field(default=[], examples=[['username', 'Authentication.status']])
     """ An array of field names specifying the exact fields to include in the query return. The dot character `.` \
     may be used to explicitly select only subkeys of the query result. """
     count: bool = False

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import errno
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import create_model, Field
 
@@ -29,7 +31,7 @@ def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[B
         __base__=(BaseModel,),
         __module__=entry.__module__,
         id=Annotated[entry.model_fields[primary_key].annotation, Field()],
-        options=Annotated[QueryOptions, Field(default={})],
+        options=Annotated[QueryOptions, Field(default_factory=QueryOptions)],
     )
 
 
@@ -49,6 +51,7 @@ class CRUDServiceMetabase(ServiceBase):
             name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
                 ('CRUDService', ('ServiceChangeMixin', 'Service', 'Generic')),
+                ('GenericCRUDService', ('CRUDService', 'Generic')),
                 ('SharingTaskService', ('CRUDService', 'Generic')),
                 ('SharingService', ('SharingTaskService', 'Generic')),
                 ('TaskPathService', ('SharingTaskService', 'Generic')),
@@ -69,22 +72,26 @@ class CRUDServiceMetabase(ServiceBase):
 
         if entry is not None:
             query_result_model = query_result(entry)
+            use_check_annotations_query = config.generic and 'query' in attrs
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
                 not hasattr(klass.query, 'new_style_accepts')
             ):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
-                    QueryArgs, query_result_model, private=private, cli_private=cli_private
+                    QueryArgs, query_result_model, private=private, cli_private=cli_private,
+                    check_annotations=use_check_annotations_query,
                 )(klass.query)
 
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
             get_instance_result_model = get_instance_result(entry)
+            use_check_annotations_gi = config.generic and 'get_instance' in attrs
             klass.get_instance = api_method(
                 get_instance_args_model,
                 get_instance_result_model,
                 private=private,
                 cli_private=cli_private,
+                check_annotations=use_check_annotations_gi,
             )(klass.get_instance)
 
             # Models must be registered with their factories for backwards compatibility.
@@ -138,7 +145,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options['prefix'] = self._config.datastore_prefix
         return options
 
-    async def query(self, filters: list | None = None, options: dict | None = None) -> list[E] | E | int:
+    async def query(self, filters=None, options=None) -> list[E] | E | int:
         if not self._config.datastore:
             raise NotImplementedError(
                 f'{self._config.namespace}.query must be implemented or a '
@@ -351,3 +358,23 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
                 }, **data)
 
         return dependencies
+
+
+class GenericCRUDService[E](CRUDService[E]):
+    """
+    CRUDService subclass for generic services that use Pydantic models (QueryOptions)
+    instead of raw dicts. Provides properly typed query/get_instance signatures.
+
+    Services with ``generic = True`` that override ``query``/``get_instance`` should
+    inherit from this class instead of ``CRUDService`` directly.
+    """
+
+    async def query(  # type: ignore[override]
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[E] | E | int:
+        return await super().query(filters, options)
+
+    async def get_instance(  # type: ignore[override]
+        self, id_: int, options: QueryOptions | None = None,
+    ) -> E:
+        return await super().get_instance(id_, options)
