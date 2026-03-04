@@ -304,13 +304,14 @@ class FilesystemService(Service):
         try:
             if mode:
                 os.fchmod(fd, mode)
+
             os.fchown(fd, uid, gid)
+
             if options['recursive']:
-                action = AclToolAction.CLONE if mode else AclToolAction.STRIP
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 options['posixacl'] = not is_nfs4acl
-                options['do_chmod'] = True
-                acltool(fd, action, uid, gid, options, job)
+                options['do_chmod'] = mode is not None
+                acltool(fd, AclToolAction.STRIP, uid, gid, options, job)
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
