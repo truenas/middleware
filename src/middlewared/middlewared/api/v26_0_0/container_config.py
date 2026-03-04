@@ -16,10 +16,10 @@ class LXCConfigEntry(BaseModel):
     """Default pool used by containers and image datasets."""
     bridge: str | None = None
     """Network bridge interface for virtualized instance networking. `null` if not configured."""
-    v4_network: IPv4Network | None = None
-    """IPv4 network CIDR for the virtualization bridge network. `null` if not configured."""
-    v6_network: IPv6Network | None = None
-    """IPv6 network CIDR for the virtualization bridge network. `null` if not configured."""
+    v4_network: IPv4Network
+    """IPv4 network CIDR for the container bridge network."""
+    v6_network: IPv6Network
+    """IPv6 network CIDR for the container bridge network."""
 
 
 @single_argument_args("lxc_config_update")

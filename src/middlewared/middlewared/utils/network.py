@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 import aiohttp
@@ -42,3 +43,23 @@ async def check_internet_connectivity() -> str | None:
         return 'Network connectivity check timed out'
     except Exception as e:
         return f'Network connectivity check failed: {e}'
+
+
+def system_ips_to_cidrs(system_ips: list[dict]) -> set:
+    """Convert list of dicts from interface.ip_in_use to a set of ip_network objects."""
+    return {
+        ipaddress.ip_network(f'{ip["address"]}/{ip["netmask"]}', strict=False)
+        for ip in system_ips
+    }
+
+
+def validate_network_overlaps(schema: str, network, system_cidrs: set, verrors) -> None:
+    """Add a validation error if `network` overlaps any CIDR in `system_cidrs`.
+
+    Only compares networks of the same address family to avoid TypeError.
+    """
+    if any(
+        network.overlaps(cidr) for cidr in system_cidrs
+        if network.version == cidr.version
+    ):
+        verrors.add(schema, f'Network {network} overlaps with an existing system network')
