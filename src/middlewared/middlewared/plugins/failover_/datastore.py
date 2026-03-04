@@ -189,7 +189,7 @@ def hook_datastore_execute_write(middleware, sql, params, options):
                 params,
             ],
             {
-                'timeout': 3,
+                'timeout': 10,
             },
         )
     except Exception as e:
