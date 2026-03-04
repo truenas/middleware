@@ -172,7 +172,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
 
 @dataclass(kw_only=True)
-class CloudBackupTaskFailedAlert(AlertClass, OneShotAlertClass):
+class CloudBackupTaskFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,

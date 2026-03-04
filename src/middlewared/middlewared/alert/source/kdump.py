@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class KdumpNotReadyAlert(AlertClass, OneShotAlertClass):
+class KdumpNotReadyAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,

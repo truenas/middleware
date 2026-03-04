@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 
 @dataclass(kw_only=True)
-class ShareLockedAlert(AlertClass, OneShotAlertClass):
+class ShareLockedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -23,7 +23,7 @@ class ShareLockedAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class TaskLockedAlert(AlertClass, OneShotAlertClass):
+class TaskLockedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,

@@ -532,7 +532,7 @@ class FsLockManager:
 
 
 @dataclass(kw_only=True)
-class CloudSyncTaskFailedAlert(AlertClass, OneShotAlertClass):
+class CloudSyncTaskFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,
@@ -553,7 +553,7 @@ class CloudSyncTaskFailedAlert(AlertClass, OneShotAlertClass):
         return [alert for alert in alerts if alert.key in task_ids]
 
 
-class CloudProviderRemovedAlert(AlertClass, OneShotAlertClass):
+class CloudProviderRemovedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,

@@ -69,7 +69,7 @@ class CertificateParsingFailedAlert(AlertClass):
     name: str
 
 
-class WebUiCertificateSetupFailedAlert(AlertClass, OneShotAlertClass):
+class WebUiCertificateSetupFailedAlert(OneShotAlertClass):
     # this is consumed in nginx.conf in the etc plugin
     # you don't have to specify the `AlertClass` verbiage
     # of the class name when calling it

@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 
 @dataclass(kw_only=True)
-class RsyncSuccessAlert(AlertClass, OneShotAlertClass):
+class RsyncSuccessAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,
@@ -23,7 +23,7 @@ class RsyncSuccessAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class RsyncFailedAlert(AlertClass, OneShotAlertClass):
+class RsyncFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,

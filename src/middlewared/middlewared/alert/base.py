@@ -5,13 +5,16 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-from typing import Any, Self, TypeAlias
+from typing import Any, Self, TypeAlias, TYPE_CHECKING
 
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.service.call_mixin import CallMixin
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 __all__ = [
     "UnavailableException", "AlertClassConfig", "AlertClass", "NonDataclassAlertClass", "OneShotAlertClass",
@@ -28,18 +31,19 @@ class UnavailableException(Exception):
 
 
 class AlertClassMeta(type):
-    def __init__(cls, name, bases, dct):
+    def __init__(cls, name: str, bases: tuple[type, ...], dct: dict[str, Any]) -> None:
         super().__init__(name, bases, dct)
 
-        if cls.__name__ != "AlertClass":
+        if cls.__name__ not in ["AlertClass", "OneShotAlertClass"]:
             if not cls.__name__.endswith("Alert"):
                 raise NameError(f"Invalid alert class name {cls.__name__}")
 
+            config: AlertClassConfig = cls.config  # type: ignore[has-type]
             alert_name = cls.__name__.removesuffix("Alert")
-            cls.config = dataclasses.replace(cls.config, name=alert_name)
+            cls.config = dataclasses.replace(config, name=alert_name)
 
-            AlertClass.classes.append(cls)
-            AlertClass.class_by_name[cls.config.name] = cls
+            AlertClass.classes.append(cls)  # type: ignore[arg-type]
+            AlertClass.class_by_name[cls.config.name] = cls  # type: ignore[assignment]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -86,12 +90,12 @@ class AlertClassConfig:
     title: str
     text: str | None = None
     exclude_from_list: bool = False
-    products: tuple[str] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     proactive_support: bool = False
     proactive_support_notify_gone: bool = False
     deleted_automatically: bool = True
     expires_after: timedelta | None = None
-    keys: list | None = None
+    keys: list[str] | None = None
     name: str = "NOTSET"
 
 
@@ -107,8 +111,8 @@ class AlertClass(metaclass=AlertClassMeta):
     - A plain class with no fields (for alerts with no args)
     """
 
-    classes = []
-    class_by_name = {}
+    classes: list[type[AlertClass]] = []
+    class_by_name: dict[str, type[AlertClass]] = {}
 
     config: AlertClassConfig
 
@@ -163,7 +167,7 @@ class NonDataclassAlertClass[T]:
         return cls(args)
 
 
-class OneShotAlertClass:
+class OneShotAlertClass(AlertClass):
     """
     One-shot alert mixin: add this to `AlertClass` superclass list for alerts that are created not by an
     `AlertSource` but using `alert.oneshot_create` API method.
@@ -184,12 +188,15 @@ class OneShotAlertClass:
             implementation returns all `alerts` except the ones related to the certificate `xxx`).
         """
         if cls.config.keys is not None:
+            if query is None:
+                raise ValueError("`query` cannot be `None`")
+
             return [alert for alert in alerts if any(getattr(alert.instance, k) != query[k] for k in cls.config.keys)]
 
         return [alert for alert in alerts if cls.key(alert.instance.args()) != query]
 
     @classmethod
-    async def load(cls, middleware, alerts):
+    async def load(cls, middleware: Middleware, alerts: list[Alert[Self]]) -> list[Alert[Self]]:
         """
         This is called on system startup. Returns only those `alerts` that are still applicable to this system (i.e.,
         corresponding resources still exist).
@@ -201,9 +208,9 @@ class OneShotAlertClass:
         return alerts
 
 
-class DismissableAlertClass:
+class DismissableAlertClass(AlertClass):
     @classmethod
-    async def dismiss(cls, middleware, alerts, alert):
+    async def dismiss(cls, middleware: Middleware, alerts: list[Alert[Self]], alert: Alert[Self]) -> list[Alert[Self]]:
         raise NotImplementedError
 
 
@@ -298,14 +305,6 @@ class Alert[T: AlertClass]:
         when the alert is first seen.
     """
 
-    args: dict[str, Any] | list
-    key: Any
-    datetime: DateTimeType
-    last_occurrence: DateTimeType
-    node: str | None
-    dismissed: bool
-    mail: dict | None
-
     def __init__(
         self,
         instance: T,
@@ -315,34 +314,38 @@ class Alert[T: AlertClass]:
         dismissed: bool | None = None,
         mail: Any = None,
         _uuid: str | None = None,
-        _source: Any = None,
-        _key: Any = None,
-        _text: Any = None,
+        _source: str | None = None,
+        _key: str | None = None,
+        _text: str | None = None,
     ):
+        self.instance = instance
+        self.datetime = datetime
+        self.last_occurrence = last_occurrence or datetime
+        self.node = node
+        self.dismissed = dismissed
+        self.mail = mail
+
         self.uuid = _uuid
         self.source = _source
-        self.instance = instance
 
-        self.node = node
         if _key is None:
             self.key = json.dumps(self.instance.key(self.instance.args()), sort_keys=True)
         else:
             self.key = _key
-        self.datetime = datetime
-        self.last_occurrence = last_occurrence or datetime
-        self.dismissed = dismissed
-        self.mail = mail
 
         self.text = _text or self.instance.config.text or self.instance.config.title
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Alert):
+            return NotImplemented
+
         return self.__dict__ == other.__dict__
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self.__dict__)
 
     @property
-    def formatted(self):
+    def formatted(self) -> str:
         try:
             return self.instance.format(self.instance.args())
         except Exception:
@@ -372,14 +375,14 @@ class AlertSource(CallMixin):
     run_on_backup_node = True
     require_stable_peer = False
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__class__.__name__.replace("AlertSource", "")
 
-    async def check(self) -> list[Alert] | Alert | None:
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         """
         This method will be called on the specific `schedule` to check for the alert conditions.
 
@@ -389,10 +392,10 @@ class AlertSource(CallMixin):
 
 
 class ThreadedAlertSource(AlertSource):
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         return await self.middleware.run_in_thread(self.check_sync)
 
-    def check_sync(self):
+    def check_sync(self) -> list[Alert[Any]] | Alert[Any] | None:
         raise NotImplementedError
 
 
@@ -403,20 +406,30 @@ class AlertService(CallMixin):
 
     html = False
 
-    def __init__(self, middleware, attributes):
+    def __init__(self, middleware: Middleware, attributes: dict[str, Any]):
         self.middleware = middleware
         self.attributes = attributes
 
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         return cls.__name__.replace("AlertService", "")
 
-    async def send(self, alerts, gone_alerts, new_alerts):
+    async def send(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> None:
         raise NotImplementedError
 
-    async def _format_alerts(self, alerts, gone_alerts, new_alerts):
+    async def _format_alerts(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> str:
         hostname = await self.middleware.call("system.hostname")
         if await self.middleware.call("system.is_enterprise"):
             node_map = await self.middleware.call("alert.node_map")
@@ -432,23 +445,49 @@ class AlertService(CallMixin):
 
 
 class ThreadedAlertService(AlertService):
-    async def send(self, alerts, gone_alerts, new_alerts):
+    async def send(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> None:
         return await self.middleware.run_in_thread(self.send_sync, alerts, gone_alerts, new_alerts)
 
-    def send_sync(self, alerts, gone_alerts, new_alerts):
+    def send_sync(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> None:
         raise NotImplementedError
 
-    def _format_alerts(self, alerts, gone_alerts, new_alerts):
+    def _format_alerts_sync(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> str:
         hostname = self.middleware.call_sync("system.hostname")
         if self.middleware.call_sync("system.is_enterprise"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
             node_map = None
-        return format_alerts(ProductName.PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
+
+        html = format_alerts(ProductName.PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
+
+        if self.html:
+            return html
+
+        return html2text.html2text(html).rstrip()
 
 
 class ProThreadedAlertService(ThreadedAlertService):
-    def send_sync(self, alerts, gone_alerts, new_alerts):
+    def send_sync(
+        self,
+        alerts: list[Alert[Any]],
+        gone_alerts: list[Alert[Any]],
+        new_alerts: list[Alert[Any]],
+    ) -> None:
         exc = None
 
         for alert in gone_alerts:
@@ -468,14 +507,21 @@ class ProThreadedAlertService(ThreadedAlertService):
         if exc is not None:
             raise exc
 
-    def create_alert(self, alert):
+    def create_alert(self, alert: Alert[Any]) -> None:
         raise NotImplementedError
 
-    def delete_alert(self, alert):
+    def delete_alert(self, alert: Alert[Any]) -> None:
         raise NotImplementedError
 
 
-def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
+def format_alerts(
+    product_name: str,
+    hostname: str,
+    node_map: dict[str, str],
+    alerts: list[Alert[Any]],
+    gone_alerts: list[Alert[Any]],
+    new_alerts: list[Alert[Any]],
+) -> str:
     text = f"{product_name} @ {hostname}<br><br>"
 
     if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].instance.config.name == "Test":
@@ -510,12 +556,12 @@ def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_ale
     return text
 
 
-def format_alert(alert, node_map):
-    return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
+def format_alert(alert: Alert[Any], node_map: dict[str, str]) -> str:
+    return (f"{node_map[alert.node]} - " if alert.node is not None and node_map else "") + alert.formatted
 
 
-def ellipsis(a, b):
-    if len(a) <= b:
-        return a
+def ellipsis(s: str, length: int) -> str:
+    if len(s) <= length:
+        return s
 
-    return a[:(b - 1)] + "…"
+    return s[:(length - 1)] + "…"

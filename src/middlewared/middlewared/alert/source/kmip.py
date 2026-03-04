@@ -9,7 +9,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertCla
 
 
 @dataclass(kw_only=True)
-class KMIPConnectionFailedAlert(AlertClass, OneShotAlertClass):
+class KMIPConnectionFailedAlert(OneShotAlertClass):
     server: str
     error: str
 
@@ -23,7 +23,7 @@ class KMIPConnectionFailedAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class KMIPZFSDatasetsSyncFailureAlert(AlertClass, OneShotAlertClass):
+class KMIPZFSDatasetsSyncFailureAlert(OneShotAlertClass):
     datasets: str
 
     config = AlertClassConfig(
@@ -36,7 +36,7 @@ class KMIPZFSDatasetsSyncFailureAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class KMIPSEDDisksSyncFailureAlert(AlertClass, OneShotAlertClass):
+class KMIPSEDDisksSyncFailureAlert(OneShotAlertClass):
     disks: str
 
     config = AlertClassConfig(
@@ -48,7 +48,7 @@ class KMIPSEDDisksSyncFailureAlert(AlertClass, OneShotAlertClass):
     )
 
 
-class KMIPSEDGlobalPasswordSyncFailureAlert(AlertClass, OneShotAlertClass):
+class KMIPSEDGlobalPasswordSyncFailureAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.KMIP,
         level=AlertLevel.CRITICAL,

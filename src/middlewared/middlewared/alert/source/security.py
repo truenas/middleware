@@ -33,7 +33,7 @@ class LocalAccountExpiredAlert(AlertClass):
     accounts: str
 
 
-class AllAdminAccountsExpiredAlert(AlertClass, OneShotAlertClass):
+class AllAdminAccountsExpiredAlert(OneShotAlertClass):
     """
     All local administrator accounts have expired passwords. This means we have
     potentially locked out ability to administer the NAS. To facilitate recovery

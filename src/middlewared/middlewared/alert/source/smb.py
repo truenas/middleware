@@ -192,7 +192,7 @@ class SMBPathAlertSource(AlertSource):
 
 
 @dataclass(kw_only=True)
-class SMBUserMissingHashAlert(AlertClass, OneShotAlertClass):
+class SMBUserMissingHashAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

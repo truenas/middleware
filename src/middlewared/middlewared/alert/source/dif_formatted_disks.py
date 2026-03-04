@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, NonDataclassAlertClass, OneShotAlertClass
 
 
-class DifFormattedAlert(NonDataclassAlertClass[str], AlertClass, OneShotAlertClass):
+class DifFormattedAlert(NonDataclassAlertClass[str], OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,

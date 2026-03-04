@@ -68,7 +68,7 @@ class ScanWatch:
 
 
 @dataclass(kw_only=True)
-class ScrubNotStartedAlert(AlertClass, OneShotAlertClass):
+class ScrubNotStartedAlert(OneShotAlertClass):
     pool: str
     text: str
 
@@ -85,7 +85,7 @@ class ScrubNotStartedAlert(AlertClass, OneShotAlertClass):
         return args["pool"]
 
 
-class ScrubStartedAlert(NonDataclassAlertClass[str], AlertClass, OneShotAlertClass):
+class ScrubStartedAlert(NonDataclassAlertClass[str], OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,

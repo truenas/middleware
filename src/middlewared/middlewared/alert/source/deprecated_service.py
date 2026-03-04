@@ -6,7 +6,7 @@ URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
 
 @dataclass(kw_only=True)
-class DeprecatedServiceAlert(AlertClass, OneShotAlertClass):
+class DeprecatedServiceAlert(OneShotAlertClass):
     service: str
 
     config = AlertClassConfig(

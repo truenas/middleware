@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class FCHardwareAddedAlert(AlertClass, OneShotAlertClass):
+class FCHardwareAddedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -14,7 +14,7 @@ class FCHardwareAddedAlert(AlertClass, OneShotAlertClass):
     )
 
 
-class FCHardwareReplacedAlert(AlertClass, OneShotAlertClass):
+class FCHardwareReplacedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.CRITICAL,
