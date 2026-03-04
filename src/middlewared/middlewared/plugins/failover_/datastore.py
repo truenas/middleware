@@ -56,7 +56,7 @@ class FailoverDatastoreService(Service):
                 'failover.call_remote',
                 'failover.status',
                 [],
-                {'timeout': 5, 'connect_timeout': 5.0}
+                {'timeout': 5}
             )) == 'BACKUP':
                 self.send()
             else:
@@ -81,9 +81,8 @@ class FailoverDatastoreService(Service):
                         return
 
                     if self.middleware.call_sync('failover.in_progress'):
-                        self.logger.warning('Failover in progress, aborting database replication retry')
-                        self.failure = False
-                        return
+                        self.logger.warning('Failover in progress, deferring database replication retry')
+                        continue
 
                     if (fs := self.middleware.call_sync('failover.status')) != 'MASTER':
                         self.logger.warning('Failover status is %s while retrying database send', fs)
