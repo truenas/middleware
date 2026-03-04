@@ -1,4 +1,8 @@
-from middlewared.alert.base import AlertService
+from __future__ import annotations
+
+from typing import Any
+
+from middlewared.alert.base import Alert, AlertService
 from middlewared.service_exception import NetworkActivityDisabled
 
 
@@ -7,7 +11,7 @@ class MailAlertService(AlertService):
 
     html = True
 
-    async def send(self, alerts, gone_alerts, new_alerts):
+    async def send(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
         if self.attributes["email"]:
             emails = [self.attributes["email"]]
         else:

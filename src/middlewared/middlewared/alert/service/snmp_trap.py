@@ -1,21 +1,28 @@
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
+
 import pysnmp.hlapi
 import pysnmp.smi
 
-from middlewared.alert.base import ThreadedAlertService
+from middlewared.alert.base import Alert, ThreadedAlertService
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class SNMPTrapAlertService(ThreadedAlertService):
     title = "SNMP Trap"
 
-    def __init__(self, middleware, attributes):
+    def __init__(self, middleware: Middleware, attributes: dict[str, Any]) -> None:
         super().__init__(middleware, attributes)
 
         self.initialized = False
 
-    def send_sync(self, alerts, gone_alerts, new_alerts):
+    def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
         if self.attributes["host"] in ("localhost", "127.0.0.1", "::1"):
             if not self.middleware.call_sync("service.started", "snmp"):
-                self.logger.trace("Local SNMP service not started, not sending traps")
+                self.logger.trace("Local SNMP service not started, not sending traps")  # type: ignore[attr-defined]
                 return
 
         if not self.initialized:
