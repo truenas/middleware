@@ -12,6 +12,8 @@ fi
 PACKAGES=(
     # need to make things work
     make
+    # linting
+    mypy
     # Debian package building tools
     dpkg-dev
     dh-python
@@ -39,7 +41,10 @@ PACKAGES=(
     pkg-config
     libiscsi-dev
 )
-PIP_PACKAGES=()
+PIP_PACKAGES=(
+    types-boto3
+    types-boto2[s3]
+)
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
     # Running on SCALE

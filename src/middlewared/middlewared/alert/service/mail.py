@@ -13,7 +13,6 @@ class MailAlertService(AlertService):
         else:
             emails = await self.middleware.call("mail.local_administrators_emails")
             if not emails:
-                self.logger.trace("No e-mail address configured for any of the local administrators, not sending email")
                 return
 
         try:
