@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import json
+from typing import Any
+
 import requests
 
-from middlewared.alert.base import ProThreadedAlertService
+from middlewared.alert.base import Alert, ProThreadedAlertService
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class VictorOpsAlertService(ProThreadedAlertService):
     title = "VictorOps"
 
-    def create_alert(self, alert):
+    def create_alert(self, alert: Alert[Any]) -> None:
         r = requests.post(
             f"https://alert.victorops.com/integrations/generic/20131114/alert/{self.attributes['api_key']}/"
             f"{self.attributes['routing_key']}",
@@ -23,7 +27,7 @@ class VictorOpsAlertService(ProThreadedAlertService):
         )
         r.raise_for_status()
 
-    def delete_alert(self, alert):
+    def delete_alert(self, alert: Alert[Any]) -> None:
         r = requests.post(
             f"https://alert.victorops.com/integrations/generic/20131114/alert/{self.attributes['api_key']}/"
             f"{self.attributes['routing_key']}",

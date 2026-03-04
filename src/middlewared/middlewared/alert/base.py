@@ -316,21 +316,22 @@ class Alert[T: AlertClass]:
         _text: str | None = None,
     ):
         self.instance = instance
-        self.datetime = datetime
+        self.datetime: DateTimeType = datetime  # type: ignore[assignment]
         self.last_occurrence = last_occurrence or datetime
-        self.node = node
+        self.node: str = node  # type: ignore[assignment]
         self.dismissed = dismissed
         self.mail = mail
 
-        self.uuid = _uuid
-        self.source = _source
+        self.uuid: str = _uuid  # type: ignore[assignment]
+        self.source: str = _source  # type: ignore[assignment]
 
+        self.key: str
         if _key is None:
             self.key = json.dumps(self.instance.key(self.instance.args()), sort_keys=True)
         else:
             self.key = _key
 
-        self.text = _text or self.instance.config.text or self.instance.config.title
+        self.text: str = _text or self.instance.config.text or self.instance.config.title
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Alert):
@@ -551,7 +552,7 @@ def format_alerts(
 
 
 def format_alert(alert: Alert[Any], node_map: dict[str, str]) -> str:
-    return (f"{node_map[alert.node]} - " if alert.node is not None and node_map else "") + alert.formatted
+    return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
 
 
 def ellipsis(s: str, length: int) -> str:

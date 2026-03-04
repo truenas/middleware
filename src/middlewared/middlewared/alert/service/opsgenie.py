@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import json
+from typing import Any
+
 import requests
 
-from middlewared.alert.base import ProThreadedAlertService, ellipsis
+from middlewared.alert.base import Alert, ProThreadedAlertService, ellipsis
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class OpsGenieAlertService(ProThreadedAlertService):
     title = "OpsGenie"
 
-    def create_alert(self, alert):
+    def create_alert(self, alert: Alert[Any]) -> None:
         r = requests.post(
             (self.attributes.get("api_url") or "https://api.opsgenie.com") + "/v2/alerts",
             headers={"Authorization": f"GenieKey {self.attributes['api_key']}",
@@ -22,7 +26,7 @@ class OpsGenieAlertService(ProThreadedAlertService):
         )
         r.raise_for_status()
 
-    def delete_alert(self, alert):
+    def delete_alert(self, alert: Alert[Any]) -> None:
         r = requests.delete(
             (self.attributes.get("api_url") or "https://api.opsgenie.com") + "/v2/alerts/" + alert.uuid,
             params={"identifierType": "alias"},
