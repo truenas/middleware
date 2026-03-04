@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, 
 
 
 @dataclass(kw_only=True)
-class SMBVeeamFastCloneAlert(AlertClass, OneShotAlertClass):
+class SMBVeeamFastCloneAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

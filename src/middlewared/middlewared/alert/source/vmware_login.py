@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, 
 
 
 @dataclass(kw_only=True)
-class VMWareLoginFailedAlert(AlertClass, OneShotAlertClass):
+class VMWareLoginFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.WARNING,

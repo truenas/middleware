@@ -23,7 +23,7 @@ def remove_deasserted_records(records):
 
 
 @dataclass(kw_only=True)
-class IPMISELAlert(AlertClass, DismissableAlertClass):
+class IPMISELAlert(DismissableAlertClass):
     name: str
     event_direction: str
     event: str

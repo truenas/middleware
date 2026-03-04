@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 
 @dataclass(kw_only=True)
-class TruecommandConnectionDisabledAlert(AlertClass, OneShotAlertClass):
+class TruecommandConnectionDisabledAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -18,7 +18,7 @@ class TruecommandConnectionDisabledAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class TruecommandConnectionPendingAlert(AlertClass, OneShotAlertClass):
+class TruecommandConnectionPendingAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.INFO,
@@ -31,7 +31,7 @@ class TruecommandConnectionPendingAlert(AlertClass, OneShotAlertClass):
     error: str
 
 
-class TruecommandConnectionHealthAlert(AlertClass, OneShotAlertClass):
+class TruecommandConnectionHealthAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
@@ -43,7 +43,7 @@ class TruecommandConnectionHealthAlert(AlertClass, OneShotAlertClass):
     )
 
 
-class TruecommandContainerHealthAlert(AlertClass, OneShotAlertClass):
+class TruecommandContainerHealthAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,

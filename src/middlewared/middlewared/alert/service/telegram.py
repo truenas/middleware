@@ -20,7 +20,7 @@ class TelegramAlertService(ThreadedAlertService):
                 headers={"Content-type": "application/json"},
                 data=json.dumps({
                     "chat_id": chat_id,
-                    "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))),
+                    "text": html.escape(self._format_alerts_sync(alerts, gone_alerts, new_alerts)),
                     "parse_mode": "HTML",
                 }),
                 timeout=INTERNET_TIMEOUT,

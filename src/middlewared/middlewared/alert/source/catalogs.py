@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 
 @dataclass(kw_only=True)
-class CatalogNotHealthyAlert(AlertClass, OneShotAlertClass):
+class CatalogNotHealthyAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.WARNING,
@@ -22,7 +22,7 @@ class CatalogNotHealthyAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class CatalogSyncFailedAlert(AlertClass, OneShotAlertClass):
+class CatalogSyncFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.CRITICAL,

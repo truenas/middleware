@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, 
 
 
 @dataclass(kw_only=True)
-class NFSHostnameLookupFailAlert(AlertClass, OneShotAlertClass):
+class NFSHostnameLookupFailAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -21,7 +21,7 @@ class NFSHostnameLookupFailAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class NFSHostListExcessiveAlert(AlertClass, OneShotAlertClass):
+class NFSHostListExcessiveAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -44,7 +44,7 @@ class NFSHostListExcessiveAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class NFSNetworkListExcessiveAlert(AlertClass, OneShotAlertClass):
+class NFSNetworkListExcessiveAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,

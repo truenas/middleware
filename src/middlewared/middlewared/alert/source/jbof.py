@@ -12,7 +12,7 @@ from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
 
 
-class JBOFTearDownFailureAlert(AlertClass, OneShotAlertClass):
+class JBOFTearDownFailureAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,

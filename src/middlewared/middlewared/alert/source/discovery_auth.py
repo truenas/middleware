@@ -6,7 +6,7 @@ UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', '
 
 
 @dataclass(kw_only=True)
-class ISCSIDiscoveryAuthMixedAlert(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMixedAlert(OneShotAlertClass):
     ips: str
 
     config = AlertClassConfig(
@@ -17,7 +17,7 @@ class ISCSIDiscoveryAuthMixedAlert(AlertClass, OneShotAlertClass):
     )
 
 
-class ISCSIDiscoveryAuthMultipleCHAPAlert(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleCHAPAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -27,7 +27,7 @@ class ISCSIDiscoveryAuthMultipleCHAPAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(AlertClass, OneShotAlertClass):
+class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(OneShotAlertClass):
     peeruser: str
 
     config = AlertClassConfig(

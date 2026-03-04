@@ -114,7 +114,7 @@ class AlertSourceRunFailedOnBackupNodeAlert(AlertClass):
 
 
 @dataclass(kw_only=True)
-class AutomaticAlertFailedAlert(AlertClass, OneShotAlertClass):
+class AutomaticAlertFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,

@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class WebUiRootLoginAlert(AlertClass, OneShotAlertClass):
+class WebUiRootLoginAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,

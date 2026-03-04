@@ -17,5 +17,5 @@ class AWSSNSAlertService(ThreadedAlertService):
         client.publish(
             TopicArn=self.attributes["topic_arn"],
             Subject="Alerts",
-            Message=self._format_alerts(alerts, gone_alerts, new_alerts),
+            Message=self._format_alerts_sync(alerts, gone_alerts, new_alerts),
         )

@@ -9,7 +9,7 @@ log = logging.getLogger("audit_check_alertmod")
 
 # -------------- OneShot Alerts ------------------
 @dataclass(kw_only=True)
-class AuditBackendSetupAlert(AlertClass, OneShotAlertClass):
+class AuditBackendSetupAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.AUDIT,
         level=AlertLevel.ERROR,

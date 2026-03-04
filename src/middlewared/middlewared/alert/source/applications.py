@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 
 @dataclass(kw_only=True)
-class ApplicationsConfigurationFailedAlert(AlertClass, OneShotAlertClass):
+class ApplicationsConfigurationFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.CRITICAL,
@@ -18,7 +18,7 @@ class ApplicationsConfigurationFailedAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class ApplicationsStartFailedAlert(AlertClass, OneShotAlertClass):
+class ApplicationsStartFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.CRITICAL,
@@ -32,7 +32,7 @@ class ApplicationsStartFailedAlert(AlertClass, OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
-class AppUpdateAlert(AlertClass, OneShotAlertClass):
+class AppUpdateAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.INFO,
