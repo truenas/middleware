@@ -1,8 +1,11 @@
+import time
+import threading
 from dataclasses import dataclass
 
 from middlewared.plugins.interface.netif_linux.address.constants import AddressFamily, IFOperState
 from middlewared.plugins.interface.netif_linux.address.netlink import (
     AddressInfo,
+    close_address_netlink,
     DumpInterrupted,
     LinkInfo,
     get_address_netlink,
@@ -227,7 +230,10 @@ class InterfaceState:
         return result
 
 
-def list_interface_states(max_retries: int = 3) -> dict[str, InterfaceState]:
+_netlink_dump_lock = threading.Lock()
+
+
+def list_interface_states(max_retries: int = 5) -> dict[str, InterfaceState]:
     """
     Get all network interfaces using pure netlink.
 
@@ -236,13 +242,14 @@ def list_interface_states(max_retries: int = 3) -> dict[str, InterfaceState]:
     """
     for attempt in range(1, max_retries + 1):
         try:
-            nl = get_address_netlink()
+            with _netlink_dump_lock:
+                nl = get_address_netlink()
 
-            # Get all links
-            links = nl.get_links()
+                # Get all links
+                links = nl.get_links()
 
-            # Get all addresses with interface names
-            all_addresses = nl.get_addresses()
+                # Get all addresses with interface names
+                all_addresses = nl.get_addresses()
 
             # Group addresses by interface name
             addresses_by_name: dict[str, list[AddressInfo]] = {}
@@ -264,6 +271,8 @@ def list_interface_states(max_retries: int = 3) -> dict[str, InterfaceState]:
             return result
 
         except DumpInterrupted:
+            close_address_netlink()
             if attempt < max_retries:
+                time.sleep(0.05 * attempt)
                 continue
             raise

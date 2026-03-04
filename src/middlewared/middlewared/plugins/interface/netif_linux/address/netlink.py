@@ -543,5 +543,8 @@ def get_address_netlink() -> AddressNetlink:
 def close_address_netlink() -> None:
     nl = _address_ctx.get()
     if nl is not None:
-        nl.close()
+        try:
+            nl.close()
+        except OSError:
+            pass
         _address_ctx.set(None)
