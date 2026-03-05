@@ -96,11 +96,6 @@ def _is_zfs_snapshot_mount(sm: truenas_os.StatmountResult) -> bool:
     snapshots yield ``pool/dataset@snapname``.  The ``fs_type`` guard prevents
     a false match on non-ZFS filesystems that happen to include ``@`` in their
     source name.
-
-    Note: ``MNT_SHRINKABLE``, which ZFS sets directly on ``mnt_flags`` after
-    the usermode mount helper returns (``zfs_ctldir.c``), is not exposed
-    through ``statmount(2)`` — ``mnt_to_attr_flags()`` in ``fs/namespace.c``
-    does not translate it.
     """
     return sm.fs_type == 'zfs' and sm.sb_source is not None and '@' in sm.sb_source
 
