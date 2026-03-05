@@ -12,12 +12,12 @@ from middlewared.service.decorators import pass_thread_local_storage
 from .query_impl import query_impl
 
 
-class ZPoolQueryService(Service):
+class ZPoolService(Service):
 
     class Config:
         namespace = "zpool"
-        private = True
         cli_private = True
+        entry = ZPoolEntry
 
     @private
     @pass_thread_local_storage

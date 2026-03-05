@@ -1,7 +1,8 @@
 import typing
 from datetime import datetime, timezone
 
-import truenas_pylibzfs
+from truenas_pylibzfs import property_sets, ZFSException, ZFSError, ZPOOLProperty
+
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
 from .get_zpool_scan_impl import get_zpool_scan_impl
@@ -54,9 +55,6 @@ def _format_scan(scrub_struct: typing.Any) -> dict | None:
     if scrub_struct is None:
         return None
 
-    start_time = datetime.fromtimestamp(scrub_struct.start_time, tz=timezone.utc)
-    end_time = datetime.fromtimestamp(scrub_struct.end_time, tz=timezone.utc)
-
     percentage = scrub_struct.percentage
     if percentage is None and scrub_struct.to_examine > 0:
         percentage = (scrub_struct.examined / scrub_struct.to_examine) * 100
@@ -66,8 +64,8 @@ def _format_scan(scrub_struct: typing.Any) -> dict | None:
     return {
         "function": scrub_struct.func.name,
         "state": scrub_struct.state.name,
-        "start_time": start_time,
-        "end_time": end_time,
+        "start_time": datetime.fromtimestamp(scrub_struct.start_time, tz=timezone.utc),
+        "end_time": datetime.fromtimestamp(scrub_struct.end_time, tz=timezone.utc),
         "percentage": percentage,
         "bytes_to_process": scrub_struct.to_examine,
         "bytes_processed": scrub_struct.examined,
@@ -83,13 +81,12 @@ def _format_properties(props_struct: typing.Any, requested_names: list[str]) -> 
     result = {}
     for name in requested_names:
         prop = getattr(props_struct, name, None)
-        if prop is None:
-            continue
-        result[name] = {
-            "raw": prop.raw,
-            "source": prop.source.name if prop.source is not None else "NONE",
-            "value": prop.value,
-        }
+        if prop is not None:
+            result[name] = {
+                "raw": prop.raw,
+                "source": prop.source.name if prop.source is not None else "NONE",
+                "value": prop.value,
+            }
     return result
 
 
@@ -120,39 +117,27 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
         A dict matching the ZPoolEntry schema.
     """
     # Single status() call — used for both health info and topology
-    need_topology = data.get("topology")
     status_dict = pool.status(asdict=True)
 
     zpool_status = status_dict["status"]
-    status_code = zpool_status.name.removeprefix("ZPOOL_STATUS_")
-    is_nonrecoverable = (
-        zpool_status in truenas_pylibzfs.property_sets.ZPOOL_STATUS_NONRECOVERABLE
-    )
-    warning = zpool_status in truenas_pylibzfs.property_sets.ZPOOL_STATUS_RECOVERABLE
-
-    health_prop = pool.get_properties(
-        properties={truenas_pylibzfs.ZPOOLProperty.HEALTH}
-    ).health
-    health = health_prop.value
-    healthy = not is_nonrecoverable and health == "ONLINE"
-
+    is_nonrecoverable = zpool_status in property_sets.ZPOOL_STATUS_NONRECOVERABLE
+    health = pool.get_properties(properties={ZPOOLProperty.HEALTH}).health.value
     result: dict[str, typing.Any] = {
         "name": pool.name,
         "guid": status_dict["guid"],
         "status": health,
-        "healthy": healthy,
-        "warning": warning,
-        "status_code": status_code,
+        "healthy": not is_nonrecoverable and health == "ONLINE",
+        "warning": zpool_status in property_sets.ZPOOL_STATUS_RECOVERABLE,
+        "status_code": zpool_status.name.removeprefix("ZPOOL_STATUS_"),
         "status_detail": status_dict["reason"],
     }
     # Properties
-    prop_request = data.get("properties")
-    if prop_request is not None:
-        prop_names = list(prop_request)
+    prop_names = data.get("properties", [])
+    if prop_names:
         enum_set = set()
         for n in prop_names:
             try:
-                enum_set.add(truenas_pylibzfs.ZPOOLProperty[n.upper()])
+                enum_set.add(ZPOOLProperty[n.upper()])
             except KeyError:
                 pass
 
@@ -165,7 +150,7 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
         result["properties"] = None
 
     result["topology"] = None
-    if need_topology:
+    if data.get("topology"):
         result["topology"] = _format_topology(status_dict)
 
     # Scan
@@ -211,8 +196,8 @@ def query_impl(lzh: typing.Any, data: dict) -> list[dict]:
         try:
             pool = lzh.open_pool(name=name)
             results.append(_build_pool_dict(pool, lzh, data))
-        except truenas_pylibzfs.ZFSException as e:
-            if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+        except ZFSException as e:
+            if e.code == ZFSError.EZFS_NOENT:
                 if data.get("raise_on_noent", False):
                     raise ZpoolNotFoundException(name)
                 else:
