@@ -1,3 +1,4 @@
+import json
 import sys
 from functions import SSH_TEST, SRVTarget, get_host_ip
 from platform import system
@@ -291,23 +292,27 @@ class SSH_NFS(NFS):
         if setfacl['result'] is False:
             raise RuntimeError(setfacl['stderr'])
 
+    # Maps JSON acl_flags values to the hyphenated names used by truenas_setfacl
+    # and expected by tests. Structural flags (e.g. ACL_IS_DIR) are omitted.
+    _ACL_FLAG_MAP = {
+        'AUTO_INHERIT': 'auto-inherit',
+        'PROTECTED': 'protected',
+        'DEFAULTED': 'defaulted',
+    }
+
     def getaclflag(self, path):
         self.validate(path)
         getfacl = SSH_TEST(
-            f"truenas_getfacl {self._localpath}/{path}",
+            f"truenas_getfacl -j {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
         if getfacl['result'] is False:
             raise RuntimeError(getfacl['stderr'])
-        for line in getfacl['stdout'].split('\n'):
-            if line.startswith('# ACL flags:'):
-                # truenas_getfacl includes structural flags (e.g. 'acl-is-dir')
-                # alongside the NFSv4 inheritance flags. Filter to only the
-                # inheritance-related flags and return 'none' if none are set.
-                _structural = {'acl-is-dir', 'none'}
-                flags = [f for f in line.split(':', 1)[1].split(',') if f.strip() not in _structural]
-                return flags[0].strip() if flags else 'none'
-        raise RuntimeError('Could not find acl_flag')
+        data = json.loads(getfacl['stdout'])
+        inheritance_flags = [
+            self._ACL_FLAG_MAP[f] for f in data['acl_flags'] if f in self._ACL_FLAG_MAP
+        ]
+        return inheritance_flags[0] if inheritance_flags else 'none'
 
     def setaclflag(self, path, value):
         self.validate(path)
