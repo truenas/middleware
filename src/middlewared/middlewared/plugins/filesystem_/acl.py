@@ -533,18 +533,19 @@ class FilesystemService(Service):
                 'Default ACL entries are required in order to apply ACL recursively.'
             )
 
+        acl_obj = None
+        if not do_strip:
+            try:
+                acl_obj = posixacl_dict_to_obj(dacl)
+            except (ValueError, KeyError) as e:
+                verrors.add('filesystem_acl.dacl', str(e))
+
         verrors.check()
 
         job.set_progress(50, 'Setting POSIX1e ACL.')
 
-        acl_obj = None
         if do_strip:
             strip_acl_path(data['path'])
-        else:
-            try:
-                acl_obj = posixacl_dict_to_obj(dacl)
-            except (ValueError, KeyError) as e:
-                raise CallError(f'Failed to build POSIX ACL for [{data["path"]}]: {e}')
 
         fd = truenas_os.openat2(
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
@@ -554,7 +555,8 @@ class FilesystemService(Service):
                 try:
                     truenas_os.validate_acl(fd, acl_obj)
                 except ValueError as e:
-                    raise CallError(f'Failed to validate ACL for [{data["path"]}]: {e}')
+                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.check()
                 try:
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:

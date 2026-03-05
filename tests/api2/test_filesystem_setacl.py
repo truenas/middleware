@@ -27,15 +27,23 @@ NFS4_DACL = [
 POSIX_DACL = [
     {'tag': 'USER_OBJ',  'id': -1, 'default': False,
      'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
+    {'tag': 'USER',      'id': 0,  'default': False,
+     'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'GROUP_OBJ', 'id': -1, 'default': False,
      'perms': {'READ': True,  'WRITE': False, 'EXECUTE': True}},
+    {'tag': 'MASK',      'id': -1, 'default': False,
+     'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'OTHER',     'id': -1, 'default': False,
      'perms': {'READ': False, 'WRITE': False, 'EXECUTE': False}},
     # default entries required for recursive application
     {'tag': 'USER_OBJ',  'id': -1, 'default': True,
      'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
+    {'tag': 'USER',      'id': 0,  'default': True,
+     'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'GROUP_OBJ', 'id': -1, 'default': True,
      'perms': {'READ': True,  'WRITE': False, 'EXECUTE': True}},
+    {'tag': 'MASK',      'id': -1, 'default': True,
+     'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'OTHER',     'id': -1, 'default': True,
      'perms': {'READ': False, 'WRITE': False, 'EXECUTE': False}},
 ]
