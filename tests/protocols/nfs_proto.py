@@ -293,9 +293,8 @@ class SSH_NFS(NFS):
 
     def getaclflag(self, path):
         self.validate(path)
-        # nfs4_getfacl has no knowledge of acl_flags, use nfs4xfr_getfacl instead
         getfacl = SSH_TEST(
-            f"nfs4xdr_getfacl {self._localpath}/{path}",
+            f"truenas_getfacl {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
         if getfacl['result'] is False:
@@ -307,13 +306,12 @@ class SSH_NFS(NFS):
 
     def setaclflag(self, path, value):
         self.validate(path)
-        # nfs4_setfacl has no knowledge of acl_flags, use nfs4xfr_setfacl instead
-        getfacl = SSH_TEST(
-            f"nfs4xdr_setfacl -p {value} {self._localpath}/{path}",
+        result = SSH_TEST(
+            f"truenas_setfacl -p {value} {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if getfacl['result'] is False:
-            raise RuntimeError(getfacl['stderr'])
+        if result['result'] is False:
+            raise RuntimeError(result['stderr'])
 
     def getxattr(self, path, xattr_name):
         self.validate(path)
