@@ -291,15 +291,44 @@ def check_model_module(model: type[BaseModel], private: bool):
             )
 
 
+def _resolve_annotation(func: typing.Callable, name: str) -> typing.Any:
+    """Resolve a function's annotation by name into a real type.
+
+    With `from __future__ import annotations`, annotations are stored as strings.
+    This evaluates them using the function's module globals so that normalize_annotation
+    can decompose unions and generics.
+    Returns the annotation unchanged if it is already a real type (no __future__).
+    """
+    annotation = func.__annotations__.get(name)
+    if isinstance(annotation, str):
+        return eval(annotation, vars(sys.modules[func.__module__]))
+    return annotation
+
+
 def check_method_annotations(func, args_index: int, accepts: type[BaseModel], returns: type[BaseModel]):
     expected_args = [(name, field.annotation) for name, field in accepts.model_fields.items()]
+    # Resolve string annotations (from `from __future__ import annotations`) into real types
+    # so that normalize_annotation can decompose them via union/generic recursion.
+    # We only resolve the params we actually check (after args_index) plus the return type,
+    # because framework-injected params (e.g. app: App) may reference TYPE_CHECKING-only imports.
     func_args = [
-        (name, func.__annotations__.get(name))
+        (name, _resolve_annotation(func, name))
         for name in function_arg_names(func)[args_index:]
     ]
     # We only compare annotations since we don't care about parameter names.
     expected_annotations = [normalize_annotation(annotation) for _, annotation in expected_args]
     func_annotations = [normalize_annotation(annotation) for _, annotation in func_args]
+
+    # When a model field has a default, allow the function to annotate `T | None`
+    # even though the model field is just `T`.
+    for i, (name, _) in enumerate(expected_args):
+        field = accepts.model_fields[name]
+        if (
+            i < len(func_annotations)
+            and not field.is_required()
+            and func_annotations[i] == f"{expected_annotations[i]} | None"
+        ):
+            func_annotations[i] = expected_annotations[i]
 
     if expected_annotations != func_annotations:
         expected = ", ".join([
@@ -312,7 +341,7 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
                          f"Got {found!r}.")
 
     expected_return_annotation = normalize_annotation(returns.model_fields["result"].annotation, returns)
-    return_annotation = normalize_annotation(func.__annotations__.get("return"), returns)
+    return_annotation = normalize_annotation(_resolve_annotation(func, "return"), returns)
     if return_annotation != expected_return_annotation:
         raise ValueError(f"{func.__name__}: must have a `return` annotation of {expected_return_annotation!r}. "
                          f"Got {return_annotation!r}.")
@@ -333,6 +362,20 @@ def normalize_annotation(annotation, parent_model=None):
         if has_none:
             result += " | None"
         return result
+
+    # Recurse into generic type arguments (e.g., list[X] -> normalize X)
+    if (
+        origin is not None
+        and origin is not types.UnionType
+        and origin is not typing.Union
+        and origin is not typing.Annotated
+        and origin is not typing.Literal
+    ):
+        args = typing.get_args(annotation)
+        if args:
+            normalized_args = [normalize_annotation(arg, parent_model) for arg in args]
+            origin_name = origin.__name__ if isinstance(origin, type) else repr(origin)
+            return f"{origin_name}[{', '.join(str(a) for a in normalized_args)}]"
 
     result = annotation
     if origin is typing.Annotated:

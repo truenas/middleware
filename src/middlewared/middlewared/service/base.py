@@ -82,6 +82,7 @@ def validate_api_method_schema_class_names(klass):
             "CRUDService": {"query", "get_instance", "create", "update", "delete"},
         }
         methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
+        methods_will_be_wrapped_later["GenericCRUDService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]

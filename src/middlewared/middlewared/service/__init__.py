@@ -7,7 +7,7 @@ from .compound_service import CompoundService
 from .config_service import ConfigService
 from .config_service_part import ConfigServicePart
 from .context import ServiceContext
-from .crud_service import CRUDService
+from .crud_service import CRUDService, GenericCRUDService
 from .crud_service_part import CRUDServicePart
 from .decorators import (
     job, no_auth_required,
@@ -22,8 +22,8 @@ from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
 ABSTRACT_SERVICES = (
-    CompoundService, ConfigService, CRUDService, SharingService, SharingTaskService,
-    SystemServiceService, TaskPathService
+    CompoundService, ConfigService, CRUDService, GenericCRUDService, SharingService,
+    SharingTaskService, SystemServiceService, TaskPathService
 )
 
 __all__ = [
@@ -38,6 +38,7 @@ __all__ = [
     'ConfigService',
     'ConfigServicePart',
     'CRUDService',
+    'GenericCRUDService',
     'CRUDServicePart',
     'job',
     'no_auth_required',

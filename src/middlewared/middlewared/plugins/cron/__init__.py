@@ -10,7 +10,7 @@ from middlewared.api.current import (
     CronJobDeleteArgs, CronJobDeleteResult,
     CronJobRunArgs, CronJobRunResult,
 )
-from middlewared.service import CRUDService, job, private
+from middlewared.service import GenericCRUDService, job, private
 
 from .crud import CronJobServicePart
 from .execute import construct_cron_command as _construct_cron_command, execute_cron_task
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 __all__ = ('CronJobService',)
 
 
-class CronJobService(CRUDService[CronJobEntry]):
+class CronJobService(GenericCRUDService[CronJobEntry]):
 
     class Config:
         cli_namespace = 'task.cron_job'
@@ -37,12 +37,12 @@ class CronJobService(CRUDService[CronJobEntry]):
         self._svc_part = CronJobServicePart(self.context)
 
     async def query(
-        self, filters: list[Any] | None = None, options: dict[str, Any] | None = None
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
     ) -> list[CronJobEntry] | CronJobEntry | int:
-        return await self._svc_part.query(filters or [], QueryOptions(**(options or {})))
+        return await self._svc_part.query(filters or [], options or QueryOptions())
 
-    async def get_instance(self, id_: int, options: dict[str, Any] | None = None) -> CronJobEntry:
-        return await self._svc_part.get_instance(id_, extra=(options or {}).get('extra'))
+    async def get_instance(self, id_: int, options: QueryOptions | None = None) -> CronJobEntry:
+        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(CronJobCreateArgs, CronJobCreateResult, check_annotations=True)
     async def do_create(self, data: CronJobCreate) -> CronJobEntry:

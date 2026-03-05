@@ -12,7 +12,7 @@ from middlewared.api.current import (
     NTPServerDeleteArgs, NTPServerDeleteResult,
     QueryOptions,
 )
-from middlewared.service import CRUDService, filterable_api_method
+from middlewared.service import GenericCRUDService, filterable_api_method
 from middlewared.utils.filter_list import filter_list
 
 from .crud import NTPServerServicePart
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 __all__ = ('NTPServerService',)
 
 
-class NTPServerService(CRUDService[NTPServerEntry]):
+class NTPServerService(GenericCRUDService[NTPServerEntry]):
 
     class Config:
         namespace = 'system.ntpserver'
@@ -39,12 +39,12 @@ class NTPServerService(CRUDService[NTPServerEntry]):
         self._svc_part = NTPServerServicePart(self.context)
 
     async def query(
-        self, filters: list[Any] | None = None, options: dict[str, Any] | None = None
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
     ) -> list[NTPServerEntry] | NTPServerEntry | int:
-        return await self._svc_part.query(filters or [], QueryOptions(**(options or {})))
+        return await self._svc_part.query(filters or [], options or QueryOptions())
 
-    async def get_instance(self, id_: int, options: dict[str, Any] | None = None) -> NTPServerEntry:
-        return await self._svc_part.get_instance(id_, extra=(options or {}).get('extra'))
+    async def get_instance(self, id_: int, options: QueryOptions | None = None) -> NTPServerEntry:
+        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(NTPServerCreateArgs, NTPServerCreateResult, check_annotations=True)
     async def do_create(self, data: NTPServerCreate) -> NTPServerEntry:
