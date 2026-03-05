@@ -103,6 +103,12 @@ class FilesystemService(Service):
             verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
             return loc
 
+        if data['options'].get('traverse') and not data['options'].get('recursive'):
+            verrors.add(
+                f'{schema}.options.traverse',
+                'Traverse requires recursive to be enabled.'
+            )
+
         if st['is_ctldir']:
             verrors.add(f'{schema}.path',
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
