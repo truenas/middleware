@@ -58,7 +58,6 @@ ALLOW_PERMS = [
     'EXECUTE',
     'READ_DATA',
     'WRITE_DATA',
-    'WRITE_ATTRIBUTES',
     'DELETE',
     'DELETE_CHILD',
     'READ_ACL',
