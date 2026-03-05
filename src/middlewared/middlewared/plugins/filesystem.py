@@ -9,6 +9,7 @@ import time
 from typing import Literal
 
 import pyinotify
+import truenas_os
 
 from itertools import product
 from middlewared.api import api_method
@@ -181,7 +182,7 @@ class FilesystemService(Service):
         """
         Get the current ZFS attributes for the file at the given path
         """
-        fd = os.open(path, os.O_RDONLY)
+        fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
         try:
             attr_mask = attrs.fget_zfs_file_attributes(fd)
         finally:
@@ -555,7 +556,7 @@ class FilesystemService(Service):
             CallError(ENOENT) - Path not found
         """
         try:
-            fd = os.open(path, os.O_PATH)
+            fd = truenas_os.openat2(path, os.O_PATH, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
             try:
                 st = os.fstatvfs(fd)
                 mntinfo = statmount(fd=fd)
