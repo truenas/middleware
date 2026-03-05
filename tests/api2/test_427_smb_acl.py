@@ -72,7 +72,7 @@ def iter_permset(path, share, local_acl):
     assert smbacl['acl'][0]['perms'] == permset
     for perm in permset.keys():
         permset[perm] = True
-        call('filesystem.setacl', {'path': path, "dacl": local_acl}, job=True)
+        call('filesystem.setacl', {'path': path, "dacl": local_acl, 'options': {'validate_effective_acl': False}}, job=True)
         smbacl = get_windows_sd(share)
         for ace in smbacl["acl"]:
             if ace["id"] != 666:
@@ -87,7 +87,7 @@ def iter_flagset(path, share, local_acl):
     for flag in flagset.keys():
         # we automatically canonicalize entries and so INHERITED shifts to end of list
         flagset[flag] = True
-        call('filesystem.setacl', {'path': path, "dacl": local_acl}, job=True)
+        call('filesystem.setacl', {'path': path, "dacl": local_acl, 'options': {'validate_effective_acl': False}}, job=True)
         smbacl = get_windows_sd(share)
         for ace in smbacl["acl"]:
             if ace["id"] != 666:
@@ -144,7 +144,7 @@ def test_003_test_perms(request):
                 'type': 'ALLOW',
                 'tag': 'USER'
             })
-            call('filesystem.setacl', {'path': path, "dacl": the_acl}, job=True)
+            call('filesystem.setacl', {'path': path, "dacl": the_acl, 'options': {'validate_effective_acl': False}}, job=True)
             iter_permset(path, "PERMS", the_acl)
 
 
@@ -169,7 +169,7 @@ def test_004_test_flags(request):
                 'type': 'ALLOW',
                 'tag': 'USER'
             })
-            call('filesystem.setacl', {'path': path, "dacl": the_acl}, job=True)
+            call('filesystem.setacl', {'path': path, "dacl": the_acl, 'options': {'validate_effective_acl': False}}, job=True)
             iter_flagset(path, "FLAGS", the_acl)
 
 
