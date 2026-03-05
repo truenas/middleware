@@ -82,12 +82,36 @@ def __statmount_dict(sm: truenas_os.StatmountResult) -> StatmountResultDict:
     }
 
 
+def _is_zfs_snapshot_mount(sm: truenas_os.StatmountResult) -> bool:
+    """
+    Return True if this mount is a ZFS snapshot.
+
+    Two conditions must both hold:
+    - ``fs_type`` is ``"zfs"``
+    - ``sb_source`` contains ``"@"`` (the ZFS snapshot name separator)
+
+    ``sb_source`` comes from ``statmount(2)`` via ZFS's ``show_devname``
+    superblock operation (``zpl_show_devname`` → ``dmu_objset_name``), which
+    returns the full dataset name.  Regular datasets yield ``pool/dataset``;
+    snapshots yield ``pool/dataset@snapname``.  The ``fs_type`` guard prevents
+    a false match on non-ZFS filesystems that happen to include ``@`` in their
+    source name.
+
+    Note: ``MNT_SHRINKABLE``, which ZFS sets directly on ``mnt_flags`` after
+    the usermode mount helper returns (``zfs_ctldir.c``), is not exposed
+    through ``statmount(2)`` — ``mnt_to_attr_flags()`` in ``fs/namespace.c``
+    does not translate it.
+    """
+    return sm.fs_type == 'zfs' and sm.sb_source is not None and '@' in sm.sb_source
+
+
 @overload
 def iter_mountinfo(
     *,
     target_mnt_id: int | None = None,
     reverse: bool = False,
     as_dict: Literal[True] = True,
+    include_snapshot_mounts: bool = False,
 ) -> Generator[StatmountResultDict]: ...
 
 
@@ -97,6 +121,7 @@ def iter_mountinfo(
     target_mnt_id: int | None = None,
     reverse: bool = False,
     as_dict: Literal[False],
+    include_snapshot_mounts: bool = False,
 ) -> Generator[truenas_os.StatmountResult]: ...
 
 
@@ -104,18 +129,28 @@ def iter_mountinfo(
     *,
     target_mnt_id: int | None = None,
     reverse: bool = False,
-    as_dict: bool = True
+    as_dict: bool = True,
+    include_snapshot_mounts: bool = False,
 ) -> Generator[StatmountResultDict] | Generator[truenas_os.StatmountResult]:
     """
     Iterate mountpoints on the server. If `target_mnt_id` is provided then only children of the specified mount id
     will be iterated. If `reverse` is specified, then they will be iterated in reverse order. If `as_dict` is
     specified, then iterator will yield dictionary of legacy format.
+
+    ZFS snapshot mounts (``fs_type == "zfs"`` and ``"@"`` in ``sb_source``)
+    are excluded by default because they are transient: ZFS mounts them on
+    first access of ``.zfs/snapshot/<name>`` and expires them after
+    ``zfs_expire_snapshot`` seconds (default 300 s).  Pass
+    ``include_snapshot_mounts=True`` to include them — needed when enumerating
+    all child mounts for recursive unmount operations.
     """
     iter_kwargs: dict[str, Any] = {'reverse': reverse, 'statmount_flags': truenas_os.STATMOUNT_ALL}
     if target_mnt_id:
         iter_kwargs['mnt_id'] = target_mnt_id
 
     for sm in truenas_os.iter_mount(**iter_kwargs):
+        if not include_snapshot_mounts and _is_zfs_snapshot_mount(sm):
+            continue
         if as_dict:
             yield __statmount_dict(sm)
         else:
@@ -267,8 +302,8 @@ def umount(
 
         mnt_id = stat_result.stx_mnt_id
 
-        # Unmount all child mounts first
-        for mnt in iter_mountinfo(target_mnt_id=mnt_id, reverse=True):
+        # Unmount all child mounts first, including any triggered snapshot mounts
+        for mnt in iter_mountinfo(target_mnt_id=mnt_id, reverse=True, include_snapshot_mounts=True):
             assert mnt['mountpoint'] is not None
             truenas_os.umount2(target=mnt['mountpoint'], flags=flags)
 
