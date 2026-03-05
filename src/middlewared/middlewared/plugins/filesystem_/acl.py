@@ -554,7 +554,7 @@ class FilesystemService(Service):
                 try:
                     truenas_os.validate_acl(fd, acl_obj)
                 except ValueError as e:
-                    raise CallError(f'Failed to validate ACL for [{data["path"]}]: {e}')
+                    raise ValidationError('filesystem_acl.dacl', str(e))
                 try:
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:
