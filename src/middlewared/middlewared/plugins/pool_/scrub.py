@@ -249,7 +249,7 @@ class PoolScrubService(CRUDService):
 
     async def __run(self, name, threshold):
         if name == await self.middleware.call('boot.pool_name'):
-            pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
+            pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [name], 'scan': True}))[0]
         else:
             if await self.middleware.call('failover.licensed'):
                 if await self.middleware.call('failover.status') == 'BACKUP':

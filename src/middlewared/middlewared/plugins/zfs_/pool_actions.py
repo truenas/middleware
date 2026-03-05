@@ -218,16 +218,16 @@ class ZFSPoolService(Service):
             raise CallError(str(e), e.code)
 
     def find_not_online(self, pool: str):
-        pool = self.middleware.call_sync('zfs.pool.query', [['id', '=', pool]], {'get': True})
+        pool = self.middleware.call_sync('zpool.query_impl', {'pool_names': [pool], 'topology': True})[0]
 
         unavails = []
-        for nodes in pool['groups'].values():
+        for nodes in pool['topology'].values():
             for node in nodes:
                 unavails.extend(self.__find_not_online(node))
         return unavails
 
     def __find_not_online(self, node):
-        if len(node['children']) == 0 and node['status'] not in ('ONLINE', 'AVAIL'):
+        if len(node['children']) == 0 and node['state'] not in ('ONLINE', 'AVAIL'):
             return [node]
 
         unavails = []

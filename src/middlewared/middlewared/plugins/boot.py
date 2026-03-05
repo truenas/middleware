@@ -123,12 +123,12 @@ class BootService(Service):
 
         await self.middleware.call('boot.format', dev, format_opts)
 
-        pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
+        pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [BOOT_POOL_NAME], 'topology': True}))[0]
 
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev)
         extend_pool_job = await self.middleware.call(
             'zfs.pool.extend', BOOT_POOL_NAME, None, [{
-                'target': pool['groups']['data'][0]['guid'],
+                'target': pool['topology']['data'][0]['guid'],
                 'type': 'DISK',
                 'path': f'/dev/{zfs_dev_part["name"]}'
             }]
@@ -296,7 +296,7 @@ class BootService(Service):
     async def check_update_ashift_property(self):
         properties = {}
         if (
-            zfs_pool := await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)])
+            zfs_pool := await self.middleware.call('zpool.query_impl', {'pool_names': [BOOT_POOL_NAME], 'properties': ['ashift']})
         ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             properties['ashift'] = {'value': '12'}
 
