@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CronJobEntry, CronJobSchedule, QueryOptions,
+    CronJobEntry, CronJobSchedule,
     CronJobCreateArgs, CronJobCreateResult, CronJobCreate,
     CronJobUpdateArgs, CronJobUpdateResult, CronJobUpdate,
     CronJobDeleteArgs, CronJobDeleteResult,
@@ -35,14 +35,6 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self._svc_part = CronJobServicePart(self.context)
-
-    async def query(
-        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
-    ) -> list[CronJobEntry] | CronJobEntry | int:
-        return await self._svc_part.query(filters or [], options or QueryOptions())
-
-    async def get_instance(self, id_: int, options: QueryOptions | None = None) -> CronJobEntry:
-        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(CronJobCreateArgs, CronJobCreateResult, check_annotations=True)
     async def do_create(self, data: CronJobCreate) -> CronJobEntry:
