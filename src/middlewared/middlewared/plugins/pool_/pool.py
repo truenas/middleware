@@ -96,7 +96,14 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
+        if info := await self.middleware.call('zpool.query_impl', {
+            'pool_names': [pool_name],
+            'properties': [
+                'size', 'allocated', 'free', 'freeing', 'fragmentation',
+                'autotrim', 'dedup_table_quota', 'dedup_table_size', 'health',
+            ],
+            'topology': True, 'scan': True, 'expand': True,
+        }):
             info = info[0]
 
             # `zpool.c` uses `zpool_get_state_str` to print pool status.
@@ -112,27 +119,42 @@ class PoolService(CRUDService):
             if scan and scan['state'] is None:
                 scan = None
 
+            props = info['properties']
+
+            # Transform autotrim to PoolEntry format (value/rawvalue/parsed/source)
+            at = props['autotrim']
+            autotrim = {
+                'parsed': at['value'],
+                'rawvalue': at['raw'],
+                'source': at['source'] or 'NONE',
+                'value': at['raw'],
+            }
+
             rv.update({
                 'status': status,
                 'scan': scan,
-                'expand': info['expand'],
-                'topology': await self.middleware.call('pool.transform_topology', info['groups']),
+                'expand': info['expand'] or {
+                    'state': None, 'expanding_vdev': None, 'start_time': None,
+                    'end_time': None, 'bytes_to_reflow': None, 'bytes_reflowed': None,
+                    'waiting_for_resilver': None, 'total_secs_left': None, 'percentage': None,
+                },
+                'topology': await self.middleware.call('pool.transform_topology', info['topology']),
                 'healthy': info['healthy'],
                 'warning': info['warning'],
                 'status_code': info['status_code'],
                 'status_detail': info['status_detail'],
-                'size': info['properties']['size']['parsed'],
-                'allocated': info['properties']['allocated']['parsed'],
-                'free': info['properties']['free']['parsed'],
-                'freeing': info['properties']['freeing']['parsed'],
-                'fragmentation': info['properties']['fragmentation']['parsed'],
-                'size_str': info['properties']['size']['rawvalue'],
-                'allocated_str': info['properties']['allocated']['rawvalue'],
-                'free_str': info['properties']['free']['rawvalue'],
-                'freeing_str': info['properties']['freeing']['rawvalue'],
-                'autotrim': info['properties']['autotrim'],
-                'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
-                'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
+                'size': props['size']['value'],
+                'allocated': props['allocated']['value'],
+                'free': props['free']['value'],
+                'freeing': props['freeing']['value'],
+                'fragmentation': props['fragmentation']['raw'],
+                'size_str': props['size']['raw'],
+                'allocated_str': props['allocated']['raw'],
+                'free_str': props['free']['raw'],
+                'freeing_str': props['freeing']['raw'],
+                'autotrim': autotrim,
+                'dedup_table_quota': props['dedup_table_quota']['value'],
+                'dedup_table_size': props['dedup_table_size']['value'],
             })
         else:
             # If system is licensed for SED and we have SED disks which are locked, we would like to
@@ -636,7 +658,7 @@ class PoolService(CRUDService):
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
         if (
-            zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
+            zfs_pool := await self.middleware.call('zpool.query_impl', {'pool_names': [pool['name']], 'properties': ['ashift']})
         ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093
             properties['ashift'] = {'value': '12'}
@@ -667,10 +689,10 @@ class PoolService(CRUDService):
 
     @private
     async def is_draid_pool(self, pool_name):
-        if pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool_name]]):
+        if pool := await self.middleware.call('zpool.query_impl', {'pool_names': [pool_name], 'topology': True}):
             if any(
-                group['type'] == 'draid'
-                for group in pool[0]['groups']['data'] + pool[0]['groups'].get('special', [])
+                group['vdev_type'] == 'draid'
+                for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])
             ):
                 return True
 

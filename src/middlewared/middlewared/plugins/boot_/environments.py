@@ -103,8 +103,8 @@ class BootEnvironmentService(Service):
 
         active_be = statmount(path='/')['mount_source']
         activated_be = self.middleware.call_sync(
-            "zfs.pool.query", [["name", "=", bp_name]], {"get": True}
-        )["properties"]["bootfs"]["value"]
+            "zpool.query_impl", {"pool_names": [bp_name], "properties": ["bootfs"]}
+        )[0]["properties"]["bootfs"]["value"]
         for i in info:
             props = i["properties"]
             results.append(

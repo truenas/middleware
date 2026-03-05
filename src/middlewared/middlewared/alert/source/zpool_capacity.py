@@ -40,9 +40,9 @@ class ZpoolCapacityAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        for pool in await self.middleware.call("zfs.pool.query"):
+        for pool in await self.middleware.call("zpool.query_impl", {"properties": ["capacity"]}):
             try:
-                capacity = int(pool["properties"]["capacity"]["parsed"])
+                capacity = int(pool["properties"]["capacity"]["value"])
             except (KeyError, ValueError):
                 continue
 
