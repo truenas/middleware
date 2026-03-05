@@ -302,7 +302,12 @@ class SSH_NFS(NFS):
             raise RuntimeError(getfacl['stderr'])
         for line in getfacl['stdout'].split('\n'):
             if line.startswith('# ACL flags:'):
-                return line.split(':')[1].strip()
+                # truenas_getfacl includes structural flags (e.g. 'acl-is-dir')
+                # alongside the NFSv4 inheritance flags. Filter to only the
+                # inheritance-related flags and return 'none' if none are set.
+                _structural = {'acl-is-dir', 'none'}
+                flags = [f for f in line.split(':', 1)[1].split(',') if f.strip() not in _structural]
+                return flags[0].strip() if flags else 'none'
         raise RuntimeError('Could not find acl_flag')
 
     def setaclflag(self, path, value):
