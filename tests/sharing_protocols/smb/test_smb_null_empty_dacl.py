@@ -1,4 +1,3 @@
-import json
 import os
 import pytest
 
@@ -34,24 +33,19 @@ def share():
 def set_special_acl(path, special_acl_type):
     match special_acl_type:
         case 'NULL_DACL':
-            permset = NULL_DACL_PERMS
+            # everyone@ ALLOW full_set, no inheritance flags
+            ace_text = 'everyone@:full_set:-:allow'
         case 'EMPTY_DACL':
-            permset = EMPTY_DACL_PERMS
+            # everyone@ ALLOW no perms, no inheritance flags
+            ace_text = 'everyone@:-:-:allow'
         case _:
             raise TypeError(f'[EDOOFUS]: {special_acl_type} unexpected special ACL type')
 
-    payload = json.dumps({'acl': [{
-        'tag': 'everyone@',
-        'id': -1,
-        'type': 'ALLOW',
-        'perms': permset,
-        'flags': {'BASIC': 'NOINHERIT'},
-    }]})
     ssh(f'touch {path}')
 
     # Use SSH to write to avoid middleware ACL normalization and validation
     # that prevents writing these specific ACLs.
-    ssh(f"nfs4xdr_setfacl -j '{payload}' {path}")
+    ssh(f"echo '{ace_text}' | truenas_setfacl -f - {path}")
 
 
 def test_null_dacl_set(unprivileged_user_fixture, share):
