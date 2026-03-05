@@ -54,24 +54,21 @@ class CRUDServicePart[E, PK = int](ServicePart):
         extra = opts.get('extra', {}) or {}
 
         if options.force_sql_filters:
-            result: Any = await self.middleware.call(
-                'datastore.query', self._datastore, filters,
-                {'prefix': self._datastore_prefix, **opts},
-            )
-            if options.count:
-                return cast(int, result)
-
-            if options.get:
-                ctx = await self.extend_context([result], extra)
-                return self._to_entry(await self._run_extend(result, ctx))
-
-            ctx = await self.extend_context(result, extra)
-            return [
-                self._to_entry(row)
-                for row in await self._run_extend_many(result, ctx)
-            ]
-        else:
+            # When force_sql_filters is set, let the datastore handle
+            # filters for performance, but strip pagination/select opts
+            # so the datastore returns full rows for extend() to process.
+            ds_opts: dict[str, Any] = {
+                'prefix': self._datastore_prefix,
+                'force_sql_filters': True,
+            }
             rows: list[dict[str, Any]] = await self.middleware.call(
+                'datastore.query', self._datastore, filters, ds_opts,
+            )
+            ctx = await self.extend_context(rows, extra)
+            rows = await self._run_extend_many(rows, ctx)
+            result: Any = filter_list(rows, [], opts)
+        else:
+            rows = await self.middleware.call(
                 'datastore.query', self._datastore, [],
                 {'prefix': self._datastore_prefix},
             )
@@ -79,11 +76,13 @@ class CRUDServicePart[E, PK = int](ServicePart):
             rows = await self._run_extend_many(rows, ctx)
             result = filter_list(rows, filters, opts)
 
-            if isinstance(result, int):
-                return result
-            if isinstance(result, dict):
-                return self._to_entry(result)
+        if isinstance(result, int):
+            return result
+        if isinstance(result, dict):
+            return self._to_entry(result)
+        if isinstance(result, list):
             return [self._to_entry(row) for row in result]
+        return result
 
     async def get_instance(self, id_: PK, extra: dict[str, Any] | None = None) -> E:
         rows: list[dict[str, Any]] = await self.middleware.call(
@@ -92,7 +91,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
             {'prefix': self._datastore_prefix},
         )
         if not rows:
-            raise InstanceNotFound(f'{id_} does not exist')
+            raise InstanceNotFound(f'{self._entry.__name__.removesuffix("Entry")} {id_} does not exist')
 
         ctx = await self.extend_context(rows, extra or {})
         return self._to_entry(await self._run_extend(rows[0], ctx))
