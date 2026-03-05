@@ -180,7 +180,7 @@ if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in loca
 digit = ''.join(secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10))
 if not hostname:
     hostname = f'test{digit}'
-domain = f'{hostname}.nb.ixsystems.com'
+domain = f'{hostname}.nb.ixsystems.net'
 artifacts = f"{workdir}/artifacts/"
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
