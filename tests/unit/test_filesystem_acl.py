@@ -20,6 +20,7 @@ import tempfile
 import pytest
 import truenas_os as t
 from contextlib import contextmanager
+from datetime import datetime
 from truenas_api_client import Client
 
 import truenas_pylibzfs
@@ -376,9 +377,11 @@ def _do_nfs4_op(perm, dirpath, filepath, username, uid, acl_bytes=None):
                     f.write('x')
 
             elif perm == 'WRITE_ATTRIBUTES':
-                # Set to current time — explicit times require ownership
-                # regardless of ACL; current-time utime only needs WRITE_ATTRIBUTES.
-                os.utime(filepath, None)
+                # Requires either file owner or explicit WRITE_ATTRIBUTES
+                # This is due to our custom kernel. c.f. fs/namei.c and friends
+                # as well as zpl_permission.c
+                ts = datetime(2015, 12, 18, 1, 30, 9).timestamp()
+                os.utime(filepath, (ts, ts))
 
             elif perm in ('DELETE', 'DELETE_CHILD', 'FULL_DELETE'):
                 os.unlink(filepath)
