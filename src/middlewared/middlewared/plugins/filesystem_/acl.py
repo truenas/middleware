@@ -33,6 +33,7 @@ from middlewared.utils.filesystem.acl import (
     strip_acl_path,
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
+from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, path_location
 from .utils import acltool, AclToolAction, calculate_inherited_acl
 
@@ -101,6 +102,12 @@ class FilesystemService(Service):
         if st['type'] == 'FILE' and data['options']['recursive']:
             verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
             return loc
+
+        if data['options'].get('traverse') and not data['options'].get('recursive'):
+            verrors.add(
+                f'{schema}.options.traverse',
+                'Traverse requires recursive to be enabled.'
+            )
 
         if st['is_ctldir']:
             verrors.add(f'{schema}.path',
@@ -443,6 +450,42 @@ class FilesystemService(Service):
         return ret
 
     @private
+    def _validate_child_acltypes(self, path: str, current_acltype: str) -> None:
+        """
+        When traverse is requested on a setacl operation, verify that all child
+        filesystems under `path` share the same ACL type. Mixing NFS4 and POSIX1E
+        across dataset boundaries would silently apply the wrong ACL model.
+        """
+        root_mnt_id = statmount(path=path, as_dict=True)['mount_id']
+        real_path = os.path.realpath(path)
+        mismatched = []
+
+        for entry in iter_mountinfo(target_mnt_id=root_mnt_id, as_dict=True):
+            child_mnt = entry['mountpoint']
+            if not child_mnt.startswith(real_path + '/'):
+                continue
+
+            super_opts = entry['super_opts']
+            if 'NFS4ACL' in super_opts:
+                child_acltype = FS_ACL_Type.NFS4
+            elif 'POSIXACL' in super_opts:
+                child_acltype = FS_ACL_Type.POSIX1E
+            else:
+                child_acltype = FS_ACL_Type.DISABLED
+
+            if child_acltype != current_acltype:
+                mismatched.append(child_mnt)
+
+        if mismatched:
+            raise ValidationError(
+                'filesystem.setacl.options.traverse',
+                f'Child filesystems have a different ACL type than {real_path!r} '
+                f'({current_acltype}). All child filesystems must share the same '
+                f'ACL configuration for traverse operations: '
+                f'{", ".join(mismatched)}'
+            )
+
+    @private
     def setacl_nfs4(self, job, current_acl, data):
         job.set_progress(0, 'Preparing to set acl.')
         recursive = data['options'].get('recursive', False)
@@ -699,6 +742,9 @@ class FilesystemService(Service):
                 'filesystem.setacl.dacl.acltype',
                 'ACL type is invalid for selected path'
             )
+
+        if data['options'].get('traverse') and not data['options'].get('stripacl'):
+            self._validate_child_acltypes(data['path'], current_acl['acltype'])
 
         for idx, entry in enumerate(data['dacl']):
             # Convert any names to ids (because ultimately uid/gid is written to disk)
@@ -958,7 +1004,7 @@ class FilesystemService(Service):
             'path': data['path'],
             'dacl': current_acl['acl'],
             'acltype': current_acl['acltype'],
-            'options': {'recursive': True}
+            'options': {'recursive': True, 'validate_effective_acl': False}
         })
 
         job.wrap_sync(setacl_job)

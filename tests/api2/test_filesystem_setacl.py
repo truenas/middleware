@@ -6,9 +6,11 @@ tests/unit/test_filesystem_acl.py; these tests focus on the middleware API
 surface (job execution, option propagation, dataset boundary handling).
 """
 
+import pytest
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+from truenas_api_client import ClientException
 
 
 # ---------------------------------------------------------------------------
@@ -25,6 +27,8 @@ NFS4_DACL = [
 ]
 
 POSIX_DACL = [
+    # Named USER entry (root, uid 0) + MASK make the ACL non-trivial on both
+    # files and directories, so filesystem.stat reports acl: True everywhere.
     {'tag': 'USER_OBJ',  'id': -1, 'default': False,
      'perms': {'READ': True,  'WRITE': True,  'EXECUTE': True}},
     {'tag': 'USER',      'id': 0,  'default': False,
@@ -71,7 +75,7 @@ def test_setacl_nfs4_recursive():
         call('filesystem.setacl', {
             'path': base,
             'dacl': NFS4_DACL,
-            'options': {'recursive': True},
+            'options': {'recursive': True, 'validate_effective_acl': False},
         }, job=True)
 
         for path in (
@@ -93,7 +97,7 @@ def test_setacl_posix_recursive():
         call('filesystem.setacl', {
             'path': base,
             'dacl': POSIX_DACL,
-            'options': {'recursive': True},
+            'options': {'recursive': True, 'validate_effective_acl': False},
         }, job=True)
 
         for path in (
@@ -121,7 +125,7 @@ def test_setacl_no_traverse_stops_at_child_dataset():
             call('filesystem.setacl', {
                 'path': f'/mnt/{parent_ds}',
                 'dacl': NFS4_DACL,
-                'options': {'recursive': True},
+                'options': {'recursive': True, 'validate_effective_acl': False},
             }, job=True)
 
             assert call('filesystem.getacl', child)['acl'] == acl_before, (
@@ -139,7 +143,7 @@ def test_setacl_traverse_crosses_child_dataset():
             call('filesystem.setacl', {
                 'path': f'/mnt/{parent_ds}',
                 'dacl': NFS4_DACL,
-                'options': {'recursive': True, 'traverse': True},
+                'options': {'recursive': True, 'traverse': True, 'validate_effective_acl': False},
             }, job=True)
 
             assert _has_acl(f'{child}/canary'), (
@@ -163,7 +167,7 @@ def test_setacl_strip_nonrecursive():
         call('filesystem.setacl', {
             'path': base,
             'dacl': [],
-            'options': {'stripacl': True},
+            'options': {'stripacl': True, 'validate_effective_acl': False},
         }, job=True)
 
         assert not _has_acl(base), 'root ACL should be stripped'
@@ -179,7 +183,7 @@ def test_setacl_strip_recursive():
         call('filesystem.setacl', {
             'path': base,
             'dacl': [],
-            'options': {'stripacl': True, 'recursive': True},
+            'options': {'stripacl': True, 'recursive': True, 'validate_effective_acl': False},
         }, job=True)
 
         for path in (
@@ -190,3 +194,121 @@ def test_setacl_strip_recursive():
             f'{base}/dir1/dir2/file2',
         ):
             assert not _has_acl(path), f'{path}: ACL should have been stripped'
+
+
+# ---------------------------------------------------------------------------
+# Traverse ACL-type mismatch validation
+# ---------------------------------------------------------------------------
+
+def test_setacl_traverse_rejects_nfs4_root_posix_child():
+    """
+    setacl with traverse=True must raise a ValidationError when the child
+    dataset uses a different ACL type (POSIX) than the root (NFS4).
+    """
+    with dataset('setacl_mixed_nfs4', {'share_type': 'SMB'}) as parent_ds:
+        with dataset('setacl_mixed_nfs4/child',
+                     {'acltype': 'POSIX', 'aclmode': 'DISCARD'}) as _:
+            with pytest.raises(ClientException) as exc_info:
+                call('filesystem.setacl', {
+                    'path': f'/mnt/{parent_ds}',
+                    'dacl': NFS4_DACL,
+                    'options': {
+                        'recursive': True,
+                        'traverse': True,
+                        'validate_effective_acl': False,
+                    },
+                }, job=True)
+
+            assert 'traverse' in str(exc_info.value).lower()
+
+
+def test_setacl_traverse_rejects_posix_root_nfs4_child():
+    """
+    setacl with traverse=True must raise a ValidationError when the child
+    dataset uses a different ACL type (NFS4) than the root (POSIX).
+    """
+    with dataset('setacl_mixed_posix',
+                 {'acltype': 'POSIX', 'aclmode': 'DISCARD'}) as parent_ds:
+        with dataset('setacl_mixed_posix/child', {'share_type': 'SMB'}) as _:
+            with pytest.raises(ClientException) as exc_info:
+                call('filesystem.setacl', {
+                    'path': f'/mnt/{parent_ds}',
+                    'dacl': POSIX_DACL,
+                    'options': {
+                        'recursive': True,
+                        'traverse': True,
+                        'validate_effective_acl': False,
+                    },
+                }, job=True)
+
+            assert 'traverse' in str(exc_info.value).lower()
+
+
+def test_setacl_strip_traverse_bypasses_acltype_check():
+    """
+    stripacl=True with traverse=True must succeed even when the child dataset
+    has a different ACL type. The guard only applies to non-strip operations.
+    """
+    with dataset('setacl_strip_mixed', {'share_type': 'SMB'}) as parent_ds:
+        with dataset('setacl_strip_mixed/child',
+                     {'acltype': 'POSIX', 'aclmode': 'DISCARD'}) as _:
+            call('filesystem.setacl', {
+                'path': f'/mnt/{parent_ds}',
+                'dacl': [],
+                'options': {
+                    'recursive': True,
+                    'traverse': True,
+                    'stripacl': True,
+                    'validate_effective_acl': False,
+                },
+            }, job=True)
+
+
+def test_setacl_traverse_allows_matching_nfs4_child():
+    """
+    setacl with traverse=True succeeds when the child dataset shares the same
+    NFS4 ACL type as the root.
+    """
+    with dataset('setacl_match_nfs4', {'share_type': 'SMB'}) as parent_ds:
+        with dataset('setacl_match_nfs4/child', {'share_type': 'SMB'}) as child_ds:
+            ssh(f'touch /mnt/{child_ds}/canary')
+
+            call('filesystem.setacl', {
+                'path': f'/mnt/{parent_ds}',
+                'dacl': NFS4_DACL,
+                'options': {
+                    'recursive': True,
+                    'traverse': True,
+                    'validate_effective_acl': False,
+                },
+            }, job=True)
+
+            assert _has_acl(f'/mnt/{child_ds}/canary'), (
+                'file inside NFS4 child dataset should have ACL after traverse setacl'
+            )
+
+
+def test_setacl_traverse_allows_matching_posix_child():
+    """
+    setacl with traverse=True succeeds when the child dataset shares the same
+    POSIX ACL type as the root.
+    """
+    with dataset('setacl_match_posix',
+                 {'acltype': 'POSIX', 'aclmode': 'DISCARD'}) as parent_ds:
+        with dataset('setacl_match_posix/child',
+                     {'acltype': 'POSIX', 'aclmode': 'DISCARD'}) as child_ds:
+            ssh(f'touch /mnt/{child_ds}/canary')
+
+            call('filesystem.setacl', {
+                'path': f'/mnt/{parent_ds}',
+                'dacl': POSIX_DACL,
+                'options': {
+                    'recursive': True,
+                    'traverse': True,
+                    'validate_effective_acl': False,
+                },
+            }, job=True)
+
+            assert _has_acl(f'/mnt/{child_ds}/canary'), (
+                'file inside POSIX child dataset should have ACL after traverse setacl'
+            )
