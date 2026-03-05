@@ -155,10 +155,15 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
         real_path = os.readlink(f'/proc/self/fd/{fd}')
         for entry in truenas_os.iter_mount(
             mnt_id=mnt_id,
-            statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE,
+            statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE | truenas_os.STATMOUNT_FS_TYPE,
         ):
             child_mnt = entry.mnt_point
             if not child_mnt.startswith(real_path + '/'):
+                continue
+
+            # Skip ZFS snapshot mounts: they are read-only and transient, so
+            # write operations (fsetacl/fchown/fchmod) would fail with EROFS.
+            if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
                 continue
 
             child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
