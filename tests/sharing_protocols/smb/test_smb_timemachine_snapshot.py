@@ -88,7 +88,7 @@ def smb_setup(aapl_extensions):
 
 
 def check_snapshot_count(dataset_name, expected_count):
-    cnt = call('zfs.resource.snapshot.count').get(dataset_name, 0)
+    cnt = call('zfs.resource.snapshot.count', {'paths': [dataset_name]}).get(dataset_name, 0)
     assert cnt == expected_count
 
 
