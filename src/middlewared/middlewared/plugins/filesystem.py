@@ -39,6 +39,7 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
+from middlewared.utils.io import safe_open
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
@@ -81,7 +82,7 @@ class FileFollowTailEventSource(EventSource):
         if fsize < bufsize:
             bufsize = fsize
         i = 0
-        with open(path, encoding='utf-8', errors='ignore') as f:
+        with safe_open(path, encoding='utf-8', errors='ignore') as f:
             data = []
             while True:
                 i += 1
@@ -500,7 +501,7 @@ class FilesystemService(Service):
         dirname = os.path.dirname(path)
         os.makedirs(dirname, exist_ok=True)
 
-        with open(path, 'ab' if options.get('append') else 'wb+') as f:
+        with safe_open(path, 'ab' if options.get('append') else 'wb+') as f:
             f.write(binascii.a2b_base64(content))
             if mode := options.get('mode'):
                 os.fchmod(f.fileno(), mode)
@@ -521,7 +522,7 @@ class FilesystemService(Service):
         if not os.path.isfile(path):
             raise CallError(f'{path} is not a file')
 
-        with open(path, 'rb') as f:
+        with safe_open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
     @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
@@ -547,7 +548,7 @@ class FilesystemService(Service):
         mode = options.get('mode')
 
         try:
-            with open(path, openmode) as f:
+            with safe_open(path, openmode) as f:
                 if mode:
                     os.fchmod(f.fileno(), mode)
 
