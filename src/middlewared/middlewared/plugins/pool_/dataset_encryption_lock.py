@@ -73,7 +73,7 @@ class PoolDatasetService(Service):
             # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
-        if ds['mountpoint']:
+        if ds['mountpoint'] and await self.middleware.run_in_thread(os.path.exists, ds['mountpoint']):
             try:
                 await self.middleware.call('filesystem.set_zfs_attributes', {
                     'path': ds['mountpoint'],
@@ -296,6 +296,18 @@ class PoolDatasetService(Service):
                         })
                     except Exception:
                         pass
+
+            # If key was loaded but no datasets under this encryption root
+            # were successfully mounted, unload the key to restore a clean
+            # locked state rather than leaving an orphaned loaded key.
+            to_mount_names = {d['name'] for d in to_mount}
+            if not to_mount_names.intersection(unlocked):
+                try:
+                    self.call_sync2(self.s.zfs.resource.unload_key, name)
+                except Exception:
+                    self.logger.warning(
+                        '%s: failed to unload key after mount failures', name, exc_info=True
+                    )
 
         for failed_ds in failed:
             failed_datasets = {}
