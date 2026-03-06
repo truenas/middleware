@@ -192,10 +192,11 @@ class TNCACMEService(Service):
                 'private_key': cert[0]['privatekey'],
             }
 
-        await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
+        resp = await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
             return await create_cert(
-                await self.middleware.call('tn_connect.config_internal'), csr_details, cert_renewal_id
+                await self.middleware.call('tn_connect.config_internal'), resp['response'] or {},
+                csr_details, cert_renewal_id
             )
         except TNCCallError as e:
             raise CallError(str(e))

@@ -72,7 +72,7 @@ def __query_impl_paths(hdl: Any, state: CallbackState) -> None:
             rsrc = hdl.open_resource(name=path)
             __query_impl_callback(rsrc, state)
         except ZFSException as e:
-            if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+            if e.code == ZFSError.EZFS_NOENT:
                 if state.query_args.get("raise_on_noent", False):
                     raise ZFSPathNotFoundException(path)
                 else:

@@ -9,14 +9,15 @@ from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, targ
                                     verify_ha_inquiry, verify_luns, zvol_extent)
 from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled
-from auto_config import ha, pool_name
+from auto_config import extended_tests, ha, pool_name
 from protocols import iscsi_scsi_connection
 
 from middlewared.test.integration.assets.hostkvm import get_kvm_domain, poweroff_vm, reset_vm, start_vm
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, settle_ha
 from middlewared.test.integration.utils.client import truenas_server
 
 pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
+skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
 
 SERVICE_NAME = 'iscsitarget'
 MB = 1024 * 1024
@@ -57,6 +58,7 @@ class TestFixtureConfiguredALUA:
             if self.VERBOSE:
                 _debug('Waiting for ALUA to settle')
             sleep(5)
+        settle_ha()
 
     def wait_for_master(self, timeout=120):
         for _ in range(timeout):
@@ -221,6 +223,32 @@ class TestFixtureConfiguredALUA:
                 return 2
             case _:
                 return 5
+
+    @skip_extended_tests
+    @pytest.mark.timeout(1200)
+    def test_alua_target_create(self, alua_configured):
+        """
+        Test that we can create a target, extent and access it from both paths.
+        Repeat many times.
+        """
+        config = alua_configured
+        portal_id = config['portal']['id']
+        for i in range(50):
+            target_name = f'aluatargetrep{i:03}'
+            iqn = f'iqn.2005-10.org.freenas.ctl:{target_name}'
+            with target(target_name, [{'portal': portal_id}]) as target_config:
+                extentname = f'aluaextent{i:03}'
+                with self.target_lun(target_config['id'], extentname, 100, 0) as tlconfig:
+                    serial = tlconfig['extent']['serial']
+                    naa = tlconfig['extent']['naa']
+                    ip1 = truenas_server.nodea_ip if i % 2 == 0 else truenas_server.nodeb_ip
+                    ip2 = truenas_server.nodeb_ip if i % 2 == 0 else truenas_server.nodea_ip
+                    with iscsi_scsi_connection(ip1, iqn) as s1:
+                        print(f'Connected to {iqn} via {ip1}')
+                        verify_ha_inquiry(s1, serial, naa, 1)
+                    with iscsi_scsi_connection(ip2, iqn) as s2:
+                        print(f'Connected to {iqn} via {ip2}')
+                        verify_ha_inquiry(s2, serial, naa, 1)
 
     def test_alua_luns(self, alua_configured):
         """Test whether an ALUA target reacts correctly to having a LUN added

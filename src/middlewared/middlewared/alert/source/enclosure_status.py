@@ -21,6 +21,7 @@ class BadElement:
     status: str
     value: str
     value_raw: int
+    enc_title: str
 
     def args(self):
         return [self.enc_name, self.descriptor, self.status, self.value, self.value_raw]
@@ -66,7 +67,8 @@ class EnclosureStatusAlertSource(AlertSource):
     async def check(self):
         good_enclosures, bad_elements = [], []
         for enc in await self.middleware.call("enclosure2.query"):
-            good_enclosures.append([f"{enc['name']} (id: {enc['id']})"])
+            enc_title = f"{enc['name']} (id: {enc['id']})"
+            good_enclosures.append([enc_title])
             enc["elements"].pop("Array Device Slot")  # dont care about disk slots
             for element_type, element_values in enc["elements"].items():
                 for ele_value in element_values.values():
@@ -77,6 +79,7 @@ class EnclosureStatusAlertSource(AlertSource):
                             status=ele_value["status"],
                             value=ele_value["value"],
                             value_raw=ele_value["value_raw"],
+                            enc_title=enc_title,
                         )
                         for previous_bad_element, count in self.bad_elements:
                             if previous_bad_element == current_bad_element:
@@ -93,7 +96,7 @@ class EnclosureStatusAlertSource(AlertSource):
             # they were unhealthy 5 probes in a row (1 probe = 1 minute)
             if count >= 5:
                 try:
-                    good_enclosures.remove(current_bad_element.enc_name)
+                    good_enclosures.remove([current_bad_element.enc_title])
                 except ValueError:
                     pass
 

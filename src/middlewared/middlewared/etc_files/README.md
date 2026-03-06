@@ -59,16 +59,16 @@ group configuration in `etc.py`.
 
 ### Configuration
 
-Groups in `etc.py` can specify a `ctx` list to pre-fetch data:
+Groups in `etc.py` can specify a `ctx` tuple of `CtxMethod` instances to pre-fetch data:
 
 ```python
-'groupname': {
-    'ctx': [
-        {'method': 'system.security.config'},
-        {'method': 'user.query', 'args': [[['local', '=', True]]]},
-    ],
-    'entries': [...]
-}
+'groupname': EtcGroup(
+    ctx=(
+        CtxMethod(method='system.security.config'),
+        CtxMethod(method='user.query', args=[[['local', '=', True]]]),
+    ),
+    entries=(...),
+)
 ```
 
 ### Structure
@@ -99,18 +99,22 @@ def render(service, middleware, render_ctx):
 
 ## File Registration
 
-Files must be registered in the `GROUPS` dictionary in `src/middlewared/middlewared/plugins/etc.py`. Each entry specifies:
+Files must be registered in the `GROUPS` dictionary in `src/middlewared/middlewared/plugins/etc.py` as
+`EtcEntry` instances inside an `EtcGroup`. `EtcEntry` fields:
 
-- `type` - Either `'mako'` or `'py'`
-- `path` - Path relative to this directory (or use `local_path` for different source path)
-- `mode` - File permissions (optional, default: 0o644)
-- `owner`/`group` - File ownership (optional, default: root:root)
-- `checkpoint` - Generation checkpoint (optional, default: 'initial')
+- `renderer_type` - `RendererType.MAKO` or `RendererType.PY`
+- `path` - Output path written as `/etc/<path>` (leading `local/` is stripped); also the source
+  template path under `etc_files/` unless `local_path` overrides it
+- `local_path` - Overrides the source template lookup path under `etc_files/` (optional)
+- `mode` - Octal permission bits (optional, default: `0o644`)
+- `owner`/`group` - Builtin username/group name for file ownership (optional, default: root:root)
+- `checkpoint` - `Checkpoint` enum value controlling when the entry is rendered
+  (optional, default: `Checkpoint.INITIAL`); `None` means only rendered outside checkpoint calls
 
 Example:
 ```python
-'groupname': [
-    {'type': 'mako', 'path': 'config.conf', 'mode': 0o600},
-    {'type': 'py', 'path': 'setup_script'},
-]
+'groupname': EtcGroup(entries=(
+    EtcEntry(renderer_type=RendererType.MAKO, path='config.conf', mode=0o600),
+    EtcEntry(renderer_type=RendererType.PY, path='setup_script'),
+))
 ```

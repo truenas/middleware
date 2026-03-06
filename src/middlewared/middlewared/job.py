@@ -18,6 +18,7 @@ import typing
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
+from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
@@ -603,25 +604,25 @@ class Job:
 
     async def __run_body(self):
         """
-        If job is flagged as process a new process is spawned
-        with the job id which will in turn run the method
-        and return the result as a json
+        Run this job's method and set the result, injecting
+        any necessary arguments like app and tls.
         """
-        if self.options.get('process'):
-            rv = await self.middleware._call_worker(self.method_name, *self.args, job={'id': self.id})
+        prepend = []
+        if hasattr(self.method, '_pass_app'):
+            prepend.append(self.app)
+        prepend.append(self)
+        if getattr(self.method, 'audit_callback', None):
+            prepend.append(self.audit_callback)
+        if hasattr(self.method, '_pass_thread_local_storage'):
+            prepend.append(thread_local_storage)
+        # Make sure args are not altered during job run
+        args = prepend + copy.deepcopy(self.args)
+
+        if asyncio.iscoroutinefunction(self.method):
+            rv = await self.method(*args)
         else:
-            prepend = []
-            if hasattr(self.method, '_pass_app'):
-                prepend.append(self.app)
-            prepend.append(self)
-            if getattr(self.method, 'audit_callback', None):
-                prepend.append(self.audit_callback)
-            # Make sure args are not altered during job run
-            args = prepend + copy.deepcopy(self.args)
-            if asyncio.iscoroutinefunction(self.method):
-                rv = await self.method(*args)
-            else:
-                rv = await self.middleware.run_in_thread(self.method, *args)
+            rv = await self.middleware.run_in_thread(self.method, *args)
+
         self.set_result(rv)
         self.set_state('SUCCESS')
         if self.progress['percent'] != 100:

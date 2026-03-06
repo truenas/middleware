@@ -5,6 +5,7 @@ import os
 import pathlib
 import re
 import shutil
+import sqlite3
 import subprocess
 import tarfile
 import tempfile
@@ -36,6 +37,20 @@ CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
 CONFIGURATION_RESET_REBOOT_REASON = 'Configuration reset'
 
 
+@contextlib.contextmanager
+def _vacuumed_db_copy():
+    """Yield the path to a temporary vacuumed copy of the database.
+
+    Uses VACUUM INTO so the copy is produced in a single read pass without
+    modifying the source.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = os.path.join(tmp_dir, 'freenas-v1.db')
+        with sqlite3.connect(FREENAS_DATABASE) as conn:
+            conn.execute(f"VACUUM INTO '{tmp_path}'")
+        yield tmp_path
+
+
 class ConfigService(Service):
 
     class Config:
@@ -43,27 +58,31 @@ class ConfigService(Service):
 
     @private
     def save_db_only(self, options, job):
-        with open(FREENAS_DATABASE, 'rb') as f:
-            shutil.copyfileobj(f, job.pipes.output.w)
+        with _vacuumed_db_copy() as path:
+            with open(path, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
 
     @private
     def save_tar_file(self, options, job):
-        with tempfile.NamedTemporaryFile(delete=True) as ntf:
-            with tarfile.open(ntf.name, 'w') as tar:
-                files = {'freenas-v1.db': FREENAS_DATABASE}
-                if options['secretseed']:
-                    files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
-                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['admin_authorized_keys']):
-                    files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
-                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['truenas_admin_authorized_keys']):
-                    files['truenas_admin_authorized_keys'] = CONFIG_FILES['truenas_admin_authorized_keys']
-                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
-                    files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
-                for arcname, path in files.items():
-                    tar.add(path, arcname=arcname)
+        with _vacuumed_db_copy() as db_path:
+            with tempfile.NamedTemporaryFile(delete=True) as ntf:
+                with tarfile.open(ntf.name, 'w') as tar:
+                    files = {'freenas-v1.db': db_path}
+                    if options['secretseed']:
+                        files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
+                    if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['admin_authorized_keys']):
+                        files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
+                    if options['root_authorized_keys'] and os.path.exists(
+                        CONFIG_FILES['truenas_admin_authorized_keys']
+                    ):
+                        files['truenas_admin_authorized_keys'] = CONFIG_FILES['truenas_admin_authorized_keys']
+                    if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
+                        files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
+                    for arcname, path in files.items():
+                        tar.add(path, arcname=arcname)
 
-            with open(ntf.name, 'rb') as f:
-                shutil.copyfileobj(f, job.pipes.output.w)
+                with open(ntf.name, 'rb') as f:
+                    shutil.copyfileobj(f, job.pipes.output.w)
 
     @api_method(ConfigSaveArgs, ConfigSaveResult, roles=['FULL_ADMIN'])
     @job(pipes=["output"])

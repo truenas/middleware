@@ -644,7 +644,13 @@ class SystemDatasetService(ConfigService):
                     check=False,
                     capture_output=True
                 )
-                if cp.returncode == 0:
+                # Exit code 24 means "some files vanished before they could be
+                # transferred".  This is expected when rsyncing a live system
+                # directory — lock files (e.g. nfs/.etab.lock) can disappear
+                # between rsync's directory scan and the actual transfer.
+                # The rsync plugin (RsyncReturnCode.nonfatals) treats 24 the
+                # same way: non-fatal.
+                if cp.returncode in (0, 24):
                     # Let's make sure that we don't have coredump directory mounted
                     subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
                     self.__umount(_from, config['uuid'])

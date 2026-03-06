@@ -1,5 +1,5 @@
 <%
-    ups_config = middleware.call_sync('ups.config')
+    ups_config = render_ctx['ups.config']
 %>\
 % if ups_config.rmonitor:
 LISTEN 0.0.0.0 ${ups_config.remoteport}

@@ -311,7 +311,7 @@ class LegacyOpt(BaseModel):
     NOTE: This feature does not work with recycle bin features in client operating systems.
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
-    path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
+    path_suffix: NonEmptyString | None = Field(default=None, examples=["%D/%U"])
     """Path suffix template for dynamic path generation. Uses SMB variable substitution patterns like `%D` (domain) \
     and `%U` (username)."""
     hostsallow: list[str] = Field(default=[], examples=[

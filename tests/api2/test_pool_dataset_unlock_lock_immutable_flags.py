@@ -57,3 +57,51 @@ def test_unlock_unsets_immutable_flag():
                 'datasets': [{'name': child_ds, 'passphrase': PASSPHRASE}],
             }, job=True)
             assert is_immutable(child_ds_mountpoint) is False, child_ds_mountpoint
+
+
+def test_lock_with_missing_mountpoint():
+    """Lock should succeed even when the mountpoint directory doesn't exist on disk."""
+    with dataset('ro_parent') as parent_ds:
+        with dataset('ro_parent/enc_child', encryption_props()) as child_ds:
+            child_mp = os.path.join('/mnt', child_ds)
+            call('pool.dataset.lock', child_ds, {'force_umount': True}, job=True)
+            # Remove immutable flag and delete mountpoint directory
+            ssh(f'chattr -i {child_mp} && rmdir {child_mp}')
+            # Set parent readonly so mountpoint can't be recreated
+            ssh(f'zfs set readonly=on {parent_ds}')
+            try:
+                # Manually load key so dataset is in unlocked-but-unmounted state
+                ssh(f'echo -n "{PASSPHRASE}" | zfs load-key {child_ds}')
+                # Lock should succeed without FileNotFoundError
+                call('pool.dataset.lock', child_ds, {'force_umount': True}, job=True)
+                ds = call('pool.dataset.get_instance_quick', child_ds, {'encryption': True})
+                assert ds['locked'] is True
+                assert ds['key_loaded'] is False
+            finally:
+                ssh(f'zfs set readonly=off {parent_ds}')
+
+
+def test_unlock_unloads_key_on_mount_failure():
+    """Unlock should unload the key when mount fails, keeping dataset in a clean locked state."""
+    with dataset('ro_parent') as parent_ds:
+        with dataset('ro_parent/enc_child', encryption_props()) as child_ds:
+            child_mp = os.path.join('/mnt', child_ds)
+            call('pool.dataset.lock', child_ds, {'force_umount': True}, job=True)
+            # Remove immutable flag and delete mountpoint directory
+            ssh(f'chattr -i {child_mp} && rmdir {child_mp}')
+            # Set parent readonly so mount will fail (can't create mountpoint)
+            ssh(f'zfs set readonly=on {parent_ds}')
+            try:
+                result = call('pool.dataset.unlock', child_ds, {
+                    'datasets': [{'name': child_ds, 'passphrase': PASSPHRASE}],
+                }, job=True)
+                # Mount should have failed
+                assert result['unlocked'] == []
+                assert child_ds in result['failed']
+                assert 'Failed to mount dataset' in result['failed'][child_ds]['error']
+                # Key should be unloaded — dataset remains cleanly locked
+                ds = call('pool.dataset.get_instance_quick', child_ds, {'encryption': True})
+                assert ds['locked'] is True
+                assert ds['key_loaded'] is False
+            finally:
+                ssh(f'zfs set readonly=off {parent_ds}')

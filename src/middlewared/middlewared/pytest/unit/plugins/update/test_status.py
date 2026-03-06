@@ -167,7 +167,7 @@ async def test_update_status(train_releases, result):
               side_effect=lambda ctx, train: train_releases[train]),
         patch('middlewared.plugins.update_.version.release_notes', return_value="<release notes>"),
         patch('middlewared.plugins.update_.profile_.get_manifest_file',
-              return_value=UpdateManifest(train=CURRENT_TRAIN_NAME, buildtime=0, codename='', version=CURRENT_VERSION)),
+              return_value=UpdateManifest(train=CURRENT_TRAIN_NAME, buildtime=0, version=CURRENT_VERSION)),
         patch('middlewared.plugins.update_.profile_.get_train_releases',
               side_effect=lambda ctx, train: train_releases.get(train, {}))
     ):

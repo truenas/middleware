@@ -28,7 +28,7 @@ BASE_SMB_CONFIG = {
     'bindip': [],
     'server_sid': 'S-1-5-21-732395397-2008429054-3061640861',
     'ntlmv1_auth': False,
-    'enable_smb1': False,
+    'minimum_protocol': 'SMB2',
     'admin_group': None,
     'next_rid': 0,
     'multichannel': False,
@@ -422,6 +422,7 @@ def test__multiprotocol_nfs_preset(nfsacl_dataset):
 
     assert conf['path'] == nfsacl_dataset
     assert conf['oplocks'] == 'no'
+    assert conf['smb3 unix extensions'] is True
 
 
 def test__shadow_copy_off(nfsacl_dataset):

@@ -136,9 +136,9 @@ class PoolCreateEncryptionOptions(BaseModel):
     key."""
     generate_key: bool = False
     """Automatically generate the key to be used for dataset encryption."""
-    pbkdf2iters: int = Field(ge=100000, default=350000)
+    pbkdf2iters: int = Field(ge=1300000, default=1300000)
     """Number of PBKDF2 iterations for key derivation from passphrase. Higher iterations improve security \
-    against brute force attacks but increase unlock time. Default 350,000 balances security and performance."""
+    against brute force attacks but increase unlock time."""
     algorithm: Literal[
         "AES-128-CCM", "AES-192-CCM", "AES-256-CCM", "AES-128-GCM", "AES-192-GCM", "AES-256-GCM"
     ] = "AES-256-GCM"
@@ -147,6 +147,11 @@ class PoolCreateEncryptionOptions(BaseModel):
     """Must be specified if encryption for root dataset is desired with a passphrase as a key."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
     """A hex-encoded key specified as an alternative to using `passphrase`."""
+
+    @classmethod
+    def from_previous(cls, value):
+        value['pbkdf2iters'] = max(1300000, value['pbkdf2iters'])
+        return value
 
 
 class PoolCreateTopologyVdevDRAID(BaseModel):

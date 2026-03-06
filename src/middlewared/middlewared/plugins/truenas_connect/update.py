@@ -80,7 +80,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_extend(self, config):
         config['status_reason'] = Status[config['status']].value
         config.pop('jwt_token', None)
-        config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
 
@@ -211,9 +210,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 await self.middleware.call('cache.pop', TNC_IPS_CACHE_KEY)
 
             # Send combined IPs to TNC service
-            response = await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
-            if response['error']:
-                raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
+            await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 

@@ -31,7 +31,6 @@ def service_config(klass, config):
         'namespace_alias': None,
         'private': False,
         'thread_pool': None,
-        'process_pool': None,
         'cli_namespace': None,
         'cli_private': False,
         'cli_description': None,
@@ -83,6 +82,7 @@ def validate_api_method_schema_class_names(klass):
             "CRUDService": {"query", "get_instance", "create", "update", "delete"},
         }
         methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
+        methods_will_be_wrapped_later["GenericCRUDService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
@@ -195,7 +195,6 @@ class ServiceBase(type):
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
-      - process_pool: process pool to run service methods
       - cli_namespace: replace namespace identifier for CLI
       - cli_private: if the service is not private, this flags whether or not the service is visible in the CLI
     """

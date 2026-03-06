@@ -8,7 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AppEntry, AppCreateArgs, AppCreateResult, AppUpdateArgs, AppUpdateResult, AppDeleteArgs, AppDeleteResult,
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
-    ZFSResourceQuery
+    ZFSResourceQuery, CatalogAppVersionDetails
 )
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
@@ -18,7 +18,7 @@ from middlewared.utils.filter_list import filter_list
 from .compose_utils import collect_logs, compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
-from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
+from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
@@ -68,20 +68,21 @@ class AppService(CRUDService):
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs['specific_app'] = filters[0][2]
 
-        available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
+        available_apps_mapping = self.call_sync2(self.s.catalog.train_to_apps_version_mapping)
 
         apps = list_apps(available_apps_mapping, **kwargs)
         if not retrieve_app_schema:
             return filter_list(apps, filters, options)
 
-        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+        questions_context = self.call_sync2(self.s.catalog.get_normalized_questions_context)
         for app in apps:
             if app['custom_app']:
                 version_details = get_version_details()
             else:
-                version_details = self.middleware.call_sync(
-                    'catalog.app_version_details',
-                    get_installed_app_version_path(app['name'], app['version']), questions_context,
+                version_details = self.call_sync2(
+                    self.s.catalog.app_version_details,
+                    get_installed_app_version_path(app['name'], app['version']),
+                    questions_context,
                 )
 
             app['version_details'] = version_details
@@ -136,15 +137,33 @@ class AppService(CRUDService):
         verrors.check()
 
         app_name = data['app_name']
-        complete_app_details = self.middleware.call_sync('catalog.get_app_details', data['catalog_app'], {
-            'train': data['train'],
-        })
+        complete_app_details = self.call_sync2(
+            self.s.catalog.get_app_details,
+            data['catalog_app'],
+            CatalogAppVersionDetails(train=data['train'])
+        )
         version = data['version']
         if version == 'latest':
             version = get_latest_version_from_app_versions(complete_app_details.versions)
 
         if version not in complete_app_details.versions:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
+
+        app_metadata = complete_app_details.versions[version].get('app_metadata') or {}
+        annotations = app_metadata.get('annotations') or {}
+        if annotations.get('disallow_multiple_instances'):
+            # We will like to raise validation error if multiple instances of the app in question cannot
+            # be installed at the same time
+            catalog_app = data['catalog_app']
+            train = data['train']
+            for installed_app in get_collective_metadata().values():
+                installed_app_metadata = installed_app.get('metadata') or {}
+                if installed_app_metadata.get('name') == catalog_app and installed_app_metadata.get('train') == train:
+                    verrors.add(
+                        'app_create.catalog_app',
+                        f'{catalog_app!r} app does not allow multiple instances',
+                    )
+                    verrors.check()
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
 
@@ -153,7 +172,7 @@ class AppService(CRUDService):
         self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
     ):
         app_version_details = complete_app_details.versions[version]
-        self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
+        self.call_sync2(self.s.catalog.version_supported_error_check, app_version_details)
 
         app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
@@ -172,8 +191,9 @@ class AppService(CRUDService):
         # 3) Have docker compose deploy the app in question
         try:
             setup_install_app_dir(app_name, app_version_details)
-            app_version_details = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app_name, version),
+            app_version_details = self.call_sync2(
+                self.s.catalog.app_version_details,
+                get_installed_app_version_path(app_name, version)
             )
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
@@ -249,8 +269,8 @@ class AppService(CRUDService):
             # We use update=False because we want defaults to be populated again if they are not present in the payload
             # Why this is not dangerous is because the defaults will be added only if they are not present/configured
             # for the app in question
-            app_version_details = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app_name, app['version']),
+            app_version_details = self.call_sync2(
+                self.s.catalog.app_version_details, get_installed_app_version_path(app_name, app['version'])
             )
 
             new_values = self.middleware.call_sync(

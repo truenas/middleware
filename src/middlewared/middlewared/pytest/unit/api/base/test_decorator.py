@@ -1,7 +1,7 @@
 import pytest
-from typing import Annotated
+from typing import Annotated, Any
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, LongString
 from middlewared.api.base.decorator import check_method_annotations
 
 
@@ -181,6 +181,104 @@ class TestCheckMethodAnnotations:
 
         # Should not raise
         check_method_annotations(method, 1, SimpleArgs, SimpleResult)
+
+    def test_longstring_return_matches_str(self):
+        """Test that model with LongString result accepts str annotation."""
+        class LongStringResult(BaseModel):
+            result: LongString
+
+        def method(self, name: str, count: int) -> str:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, LongStringResult)
+
+    def test_longstring_optional_return_matches_str_optional(self):
+        """Test that model with LongString | None result accepts str | None annotation."""
+        class LongStringOptionalResult(BaseModel):
+            result: LongString | None
+
+        def method(self, name: str, count: int) -> str | None:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, LongStringOptionalResult)
+
+    def test_normalize_as_inside_generic(self):
+        """Test __normalize_as__ is resolved inside list[X]."""
+        class Foo:
+            __normalize_as__ = str
+
+        class FooResult(BaseModel):
+            result: list[Foo]
+
+        def method(self, name: str, count: int) -> list[str]:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, FooResult)
+
+    def test_normalize_as_inside_union_with_generic(self):
+        """Test __normalize_as__ in list[X] | X | int."""
+        class Foo:
+            __normalize_as__ = str
+
+        class FooResult(BaseModel):
+            result: list[Foo] | Foo | int
+
+        def method(self, name: str, count: int) -> list[str] | str | int:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, FooResult)
+
+    def test_optional_annotation_allowed_for_field_with_default(self):
+        """Test that T | None annotation is accepted when model field has a default."""
+        class ArgsWithDefaults(BaseModel):
+            name: str = "default"
+            count: int = 0
+
+        def method(self, name: str | None, count: int | None) -> str:
+            pass
+
+        check_method_annotations(method, 1, ArgsWithDefaults, SimpleResult)
+
+    def test_optional_annotation_rejected_for_required_field(self):
+        """Test that T | None annotation is rejected when model field is required."""
+        def method(self, name: str | None, count: int) -> str:
+            pass
+
+        with pytest.raises(ValueError, match="must have the following signature"):
+            check_method_annotations(method, 1, SimpleArgs, SimpleResult)
+
+    def test_list_any_matches(self):
+        """list[Any] in both model and function annotation matches."""
+        class ListAnyResult(BaseModel):
+            result: list[Any]
+
+        def method(self, name: str, count: int) -> list[Any]:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, ListAnyResult)
+
+    def test_dict_str_any_matches(self):
+        """dict[str, Any] in both model and function annotation matches."""
+        class DictResult(BaseModel):
+            result: dict[str, Any]
+
+        def method(self, name: str, count: int) -> dict[str, Any]:
+            pass
+
+        check_method_annotations(method, 1, SimpleArgs, DictResult)
+
+    def test_list_any_optional_matches(self):
+        """list[Any] | None matches list[Any] with default via None relaxation."""
+        class OptionalListArgs(BaseModel):
+            items: list[Any] = []
+
+        class DummyResult(BaseModel):
+            result: str
+
+        def method(self, items: list[Any] | None) -> str:
+            pass
+
+        check_method_annotations(method, 1, OptionalListArgs, DummyResult)
 
     def test_error_message_includes_function_name(self):
         """Test that error messages include the function name."""

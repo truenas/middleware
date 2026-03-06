@@ -18,7 +18,7 @@ def passphrase_encryption():
     return {
         'encryption_options': {
             'generate_key': False,
-            'pbkdf2iters': 100000,
+            'pbkdf2iters': 1300000,
             'algorithm': 'AES-128-CCM',
             'passphrase': 'passphrase',
         },

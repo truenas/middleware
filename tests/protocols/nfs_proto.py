@@ -1,3 +1,4 @@
+import json
 import sys
 from functions import SSH_TEST, SRVTarget, get_host_ip
 from platform import system
@@ -291,29 +292,36 @@ class SSH_NFS(NFS):
         if setfacl['result'] is False:
             raise RuntimeError(setfacl['stderr'])
 
+    # Maps JSON acl_flags values to the hyphenated names used by truenas_setfacl
+    # and expected by tests. Structural flags (e.g. ACL_IS_DIR) are omitted.
+    _ACL_FLAG_MAP = {
+        'AUTO_INHERIT': 'auto-inherit',
+        'PROTECTED': 'protected',
+        'DEFAULTED': 'defaulted',
+    }
+
     def getaclflag(self, path):
         self.validate(path)
-        # nfs4_getfacl has no knowledge of acl_flags, use nfs4xfr_getfacl instead
         getfacl = SSH_TEST(
-            f"nfs4xdr_getfacl {self._localpath}/{path}",
+            f"truenas_getfacl -j {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
         if getfacl['result'] is False:
             raise RuntimeError(getfacl['stderr'])
-        for line in getfacl['stdout'].split('\n'):
-            if line.startswith('# ACL flags:'):
-                return line.split(':')[1].strip()
-        raise RuntimeError('Could not find acl_flag')
+        data = json.loads(getfacl['stdout'])
+        inheritance_flags = [
+            self._ACL_FLAG_MAP[f] for f in data['acl_flags'] if f in self._ACL_FLAG_MAP
+        ]
+        return inheritance_flags[0] if inheritance_flags else 'none'
 
     def setaclflag(self, path, value):
         self.validate(path)
-        # nfs4_setfacl has no knowledge of acl_flags, use nfs4xfr_setfacl instead
-        getfacl = SSH_TEST(
-            f"nfs4xdr_setfacl -p {value} {self._localpath}/{path}",
+        result = SSH_TEST(
+            f"truenas_setfacl -p {value} {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if getfacl['result'] is False:
-            raise RuntimeError(getfacl['stderr'])
+        if result['result'] is False:
+            raise RuntimeError(result['stderr'])
 
     def getxattr(self, path, xattr_name):
         self.validate(path)

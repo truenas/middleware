@@ -89,7 +89,7 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
 
 
 async def enterprise_train_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
-    await middleware.call('catalog.update_train_for_enterprise')
+    await middleware.call2(middleware.services.catalog.update_train_for_enterprise)
 
 
 async def setup(middleware: Middleware) -> None:

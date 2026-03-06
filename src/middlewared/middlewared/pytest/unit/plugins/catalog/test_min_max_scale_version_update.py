@@ -157,3 +157,62 @@ def test_min_max_scale_version_update(sw_info, version_data, expected):
     sw_info.return_value = Mock(version='25.04.0')
     result = minimum_scale_version_check_update(version_data)
     assert result == expected
+
+
+@pytest.mark.parametrize('version_data, expected_supported', [
+    (
+        {
+            'healthy': True,
+            'supported': True,
+            'healthy_error': None,
+            'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
+            'last_update': '2024-10-09 20:30:25',
+            'human_version': '24.10.1_1.1.11',
+            'app_metadata': {
+                'annotations': {
+                    'min_scale_version': '24.10',
+                }
+            },
+            'version': '1.1.11',
+            'schema': {
+                'groups': [
+                    {
+                        'name': 'Actual Budget Configuration',
+                        'description': 'Configure Actual Budget'
+                    }
+                ]
+            }
+        },
+        True,
+    ),
+    (
+        {
+            'healthy': True,
+            'supported': True,
+            'healthy_error': None,
+            'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
+            'last_update': '2024-10-09 20:30:25',
+            'human_version': '24.10.1_1.1.11',
+            'app_metadata': {
+                'annotations': {
+                    'max_scale_version': '25.04',
+                }
+            },
+            'version': '1.1.11',
+            'schema': {
+                'groups': [
+                    {
+                        'name': 'Actual Budget Configuration',
+                        'description': 'Configure Actual Budget'
+                    }
+                ]
+            }
+        },
+        False,
+    ),
+])
+@unittest.mock.patch('middlewared.plugins.catalog.apps_util.sw_info')
+def test_min_max_scale_version_update_master_build(sw_info, version_data, expected_supported):
+    sw_info.return_value = Mock(version='26.0.0-MASTER-20260215')
+    result = minimum_scale_version_check_update(version_data)
+    assert result['supported'] is expected_supported

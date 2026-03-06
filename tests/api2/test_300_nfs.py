@@ -442,7 +442,7 @@ def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
         if acl is None:
             call("filesystem.setperm", {'path': f"/mnt/{_dataset}", "mode": mode or "777"}, job=True)
         else:
-            call("filesystem.setacl", {'path': f"/mnt/{_dataset}", "dacl": acl}, job=True)
+            call("filesystem.setacl", {'path': f"/mnt/{_dataset}", "dacl": acl, 'options': {'validate_effective_acl': False}}, job=True)
 
         yield _dataset
 

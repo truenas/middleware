@@ -27,11 +27,11 @@ IP_IN_USE = [
         'At least one address pool must be specified'),
     (
         [{'base': 'fe80::5054:ff:fe4f:bbbe/56', 'size': 64}],
-        'Base network fe80::5054:ff:fe4f:bbbe/56 overlaps with an existing system network'
+        'Network fe80::/56 overlaps with an existing system network'
     ),
     (
         [{'base': '172.20.2.0/24', 'size': 27}],
-        'Base network 172.20.2.0/24 overlaps with an existing system network'
+        'Network 172.20.2.0/24 overlaps with an existing system network'
     ),
     (
         [{'base': '172.21.2.0/16', 'size': 10}],

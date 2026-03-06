@@ -6,11 +6,15 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from truenas_pylibzfs import ZFSError, ZFSException
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
 )
+from middlewared.plugins.zfs.encryption import load_key
 from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filesystem.directory import directory_is_empty
 
 from .utils import (
@@ -49,30 +53,46 @@ class PoolDatasetService(Service):
 
         mountpoint = dataset_mountpoint(ds)
 
-        await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
+        try:
+            # Mark dataset as "about to be locked" so services can treat it as locked
+            # during delegate.stop() even though the key hasn't been unloaded yet
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
 
-        # recursive doesn't apply to zvols
-        recursive = ds['type'] != 'VOLUME'
-        await self.call2(
-            self.s.zfs.resource.unload_key,
-            id_,
-            recursive=recursive,
-            force_unmount=options['force_umount'],
-        )
+            await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
+
+            # recursive doesn't apply to zvols
+            recursive = ds['type'] != 'VOLUME'
+            await self.call2(
+                self.s.zfs.resource.unload_key,
+                id_,
+                recursive=recursive,
+                force_unmount=options['force_umount'],
+            )
+        finally:
+            # We do this after unload key to make sure that if anything queries shares/datasets etc, the dataset/share
+            # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
+            await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         if ds['mountpoint']:
-            await self.middleware.call('filesystem.set_zfs_attributes', {
-                'path': ds['mountpoint'],
-                'zfs_file_attributes': {'immutable': True}
-            })
+            try:
+                await self.middleware.call('filesystem.set_zfs_attributes', {
+                    'path': ds['mountpoint'],
+                    'zfs_file_attributes': {'immutable': True}
+                })
+            except OSError as e:
+                # EROFS: dataset has readonly=on
+                # ENOENT: mountpoint directory doesn't exist on disk
+                if e.errno not in (errno.EROFS, errno.ENOENT):
+                    raise
 
         await self.middleware.call_hook('dataset.post_lock', id_)
 
         return True
 
     @api_method(PoolDatasetUnlockArgs, PoolDatasetUnlockResult, roles=['DATASET_WRITE'])
+    @pass_thread_local_storage
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
-    def unlock(self, job, id_, options):
+    def unlock(self, job, tls, id_, options):
         """
         Unlock dataset `id` (and its children if `unlock_options.recursive` is `true`).
 
@@ -200,11 +220,15 @@ class PoolDatasetService(Service):
 
             job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
-                self.middleware.call_sync(
-                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
-                )
-            except CallError as e:
-                failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
+                load_key(tls, name, key=datasets[name]['key'])
+            except ZFSException as e:
+                if e.code == ZFSError.EZFS_CRYPTOFAILED:
+                    failed[name]['error'] = 'Invalid Key'
+                else:
+                    failed[name]['error'] = str(e)
+                continue
+            except Exception as e:
+                failed[name]['error'] = str(e)
                 continue
 
             # Before we mount the dataset in question, we should ensure that the path where it will be mounted
@@ -273,6 +297,18 @@ class PoolDatasetService(Service):
                         })
                     except Exception:
                         pass
+
+            # If key was loaded but no datasets under this encryption root
+            # were successfully mounted, unload the key to restore a clean
+            # locked state rather than leaving an orphaned loaded key.
+            to_mount_names = {d['name'] for d in to_mount}
+            if not to_mount_names.intersection(unlocked):
+                try:
+                    self.call_sync2(self.s.zfs.resource.unload_key, name)
+                except Exception:
+                    self.logger.warning(
+                        '%s: failed to unload key after mount failures', name, exc_info=True
+                    )
 
         for failed_ds in failed:
             failed_datasets = {}

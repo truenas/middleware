@@ -2,7 +2,7 @@
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
-    ds_config = middleware.call_sync('directoryservices.config')
+    ds_config = render_ctx['directoryservices.config']
     if not ds_config['enable']:
         raise FileShouldNotExist
 

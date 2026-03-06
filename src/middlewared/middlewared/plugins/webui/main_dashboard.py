@@ -36,7 +36,6 @@ class WebUIMainDashboardService(Service):
         return {
             'platform': platform,
             'version': sw_info().version,
-            'codename': sw_info().codename,
             'license': self.middleware.call_sync('system.license'),
             'system_serial': dmi['system-serial-number'],
             'hostname': hostname,

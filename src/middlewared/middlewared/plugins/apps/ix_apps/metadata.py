@@ -4,9 +4,10 @@ import typing
 import yaml
 
 from middlewared.utils.io import write_if_changed
+from middlewared.utils.yaml import safe_yaml_load
 from .path import get_collective_config_path, get_collective_metadata_path, get_installed_app_metadata_path
 from .portals import get_portals_and_app_notes
-from .utils import dump_yaml, safe_yaml_load
+from .utils import dump_yaml
 
 
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:

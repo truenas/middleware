@@ -1,5 +1,5 @@
 <%
-	ups_config = middleware.call_sync('ups.config')
+	ups_config = render_ctx['ups.config']
 	shutdown = ups_config.shutdown
 	sudo_path = "/usr/bin/sudo"
 %>\

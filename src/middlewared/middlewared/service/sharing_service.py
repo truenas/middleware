@@ -189,8 +189,12 @@ class SharingTaskService[E](CRUDService[E]):
         if path_location(path) is not FSLocation.LOCAL:
             return False
 
+        # When the dataset is resolved, pass it directly to avoid iterating over
+        # relative_path subdirectory components, which are not datasets and always
+        # produce spurious EZFS_NOENT lookups. path_in_locked_datasets accepts bare
+        # dataset names (e.g. docker and KMIP already call it this way).
         return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', path
+            'pool.dataset.path_in_locked_datasets', data.get('dataset') or path
         )
 
     @private

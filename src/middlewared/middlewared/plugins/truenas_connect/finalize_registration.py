@@ -2,14 +2,13 @@ import asyncio
 import datetime
 import logging
 
-import jwt
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_finalization_uri
 
 from middlewared.service import job, Service
 
 from .mixin import TNCAPIMixin
-from .utils import calculate_sleep, CLAIM_TOKEN_CACHE_KEY
+from .utils import calculate_sleep, CLAIM_TOKEN_CACHE_KEY, decode_and_validate_token
 
 
 logger = logging.getLogger('truenas_connect')
@@ -69,18 +68,12 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                     await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
                 else:
                     token = status['response']['token']
-                    decoded_token = {}
                     try:
-                        decoded_token = jwt.decode(token, options={'verify_signature': False})
-                    except jwt.exceptions.DecodeError:
-                        logger.error('Invalid JWT token received from TNC')
+                        decoded_token = decode_and_validate_token(token)
+                    except ValueError as e:
+                        logger.error('Failed to validate received token: %s', e)
                         await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
                         return
-                    else:
-                        if diff := {'account_id', 'system_id'} - set(decoded_token):
-                            logger.error('JWT token does not contain required fields: %r', diff)
-                            await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
-                            return
 
                     await self.middleware.call(
                         'datastore.update', 'truenas_connect', config['id'], {

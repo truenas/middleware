@@ -1,5 +1,7 @@
 import logging
 
+from pydantic import ValidationError
+
 from middlewared.api.base import BaseModel
 from middlewared.service_exception import ValidationErrors
 from .remove_secrets import remove_secrets
@@ -25,7 +27,7 @@ def serialize_result(model: type[BaseModel], result, expose_secrets: bool, allow
             warnings=False,
             by_alias=True,
         )["result"]
-    except ValidationErrors as e:
+    except (ValidationError, ValidationErrors) as e:
         if not allow_fallback:
             raise
 

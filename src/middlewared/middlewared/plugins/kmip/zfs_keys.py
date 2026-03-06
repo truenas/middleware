@@ -4,7 +4,9 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.api.current import ZFSResourceQuery
+from middlewared.plugins.zfs.encryption import check_key
 from middlewared.service import job, private, Service
+from middlewared.service.decorators import pass_thread_local_storage
 
 from .connection import KMIPServerMixin
 
@@ -50,7 +52,8 @@ class KMIPService(Service, KMIPServerMixin):
         return rv
 
     @private
-    def push_zfs_keys(self, ids=None):
+    @pass_thread_local_storage
+    def push_zfs_keys(self, tls, ids=None):
         failed = []
         filters = [] if ids is None else [['id', 'in', ids]]
         existing_datasets = self.get_encrypted_datasets(filters)
@@ -59,8 +62,9 @@ class KMIPService(Service, KMIPServerMixin):
                 if not ds['encryption_key']:
                     # We want to make sure we have the KMIP server's keys and in-memory keys in sync
                     try:
-                        if ds['name'] in self.zfs_keys and self.middleware.call_sync(
-                            'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                        if (
+                            ds['name'] in self.zfs_keys
+                            and check_key(tls, ds['name'], key=self.zfs_keys[ds['name']])
                         ):
                             continue
                         else:
@@ -91,7 +95,8 @@ class KMIPService(Service, KMIPServerMixin):
         return failed
 
     @private
-    def pull_zfs_keys(self):
+    @pass_thread_local_storage
+    def pull_zfs_keys(self, tls):
         existing_datasets = self.get_encrypted_datasets([['kmip_uid', '!=', None]])
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
@@ -99,8 +104,9 @@ class KMIPService(Service, KMIPServerMixin):
             try:
                 if ds['encryption_key']:
                     key = ds['encryption_key']
-                elif ds['name'] in self.zfs_keys and self.middleware.call_sync(
-                    'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                elif (
+                    ds['name'] in self.zfs_keys
+                    and check_key(tls, ds['name'], key=self.zfs_keys[ds['name']])
                 ):
                     key = self.zfs_keys[ds['name']]
                 elif connection_successful:
@@ -120,19 +126,20 @@ class KMIPService(Service, KMIPServerMixin):
         return failed
 
     @private
+    @pass_thread_local_storage
     @job(lock=lambda args: f'kmip_sync_zfs_keys_{args}')
-    def sync_zfs_keys(self, job, ids=None):
+    def sync_zfs_keys(self, job, tls, ids=None):
         if not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)
         if config['enabled'] and config['manage_zfs_keys']:
             if conn_successful:
-                failed = self.push_zfs_keys(ids)
+                failed = self.push_zfs_keys(tls, ids)  # type: ignore
             else:
                 return
         else:
-            failed = self.pull_zfs_keys()
+            failed = self.pull_zfs_keys(tls)  # type: ignore
         if failed:
             self.middleware.call_sync(
                 'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}

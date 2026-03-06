@@ -10,7 +10,6 @@ Middleware Daemon
     state.rst
     service.rst
     etc_files.rst
-    process_pool.rst
     jobs.rst
     roles.rst
     audit.rst

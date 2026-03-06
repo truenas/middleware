@@ -38,19 +38,6 @@ def test__write_file_content_basic(create_etc_dir):
     os.unlink(target)
 
 
-def test__write_file_content_basic_dirfd(create_etc_dir):
-    dirfd = os.open(create_etc_dir, os.O_DIRECTORY)
-    try:
-        changes = write_if_changed('testfile2', "canary", dirfd=dirfd)
-        assert changes == FileChanges.CONTENTS
-
-        changes = write_if_changed('testfile2', b"canary2", dirfd=dirfd)
-        assert changes == FileChanges.CONTENTS
-        os.remove('testfile2', dir_fd=dirfd)
-    finally:
-        os.close(dirfd)
-
-
 def test__write_file_perms(create_etc_dir):
     target = os.path.join(create_etc_dir, 'testfile3')
 
@@ -147,8 +134,6 @@ def test__write_file_exceptions(create_etc_dir):
     ({'gid': 'bob'}, 'gid must be an integer'),
     ({'perms': 'bob'}, 'perms must be an integer'),
     ({'perms': 0o4777}, '2559: invalid mode. Supported bits are RWX for UGO.'),
-    ({'dirfd': 'home'}, 'dirfd must be a valid file descriptor'),
-    ({'dirfd': -1}, '-1: file descriptor not found'),
 ])
 def test__write_file_value_errors(create_etc_dir, params, expected_text):
     target = os.path.join(create_etc_dir, 'testfile7')
@@ -159,35 +144,11 @@ def test__write_file_value_errors(create_etc_dir, params, expected_text):
     assert expected_text in str(exc.value)
 
 
-def test__write_file_path_absolute_dirfd_value_error(create_etc_dir):
-    target = os.path.join(create_etc_dir, 'testfile8')
-
-    dirfd = os.open(create_etc_dir, os.O_DIRECTORY)
-    try:
-        with pytest.raises(ValueError) as exc:
-            write_if_changed(target, "canary", dirfd=dirfd)
-    finally:
-        os.close(dirfd)
-
-    assert 'absolute paths may not be used' in str(exc.value)
-
-
-def test__write_file_path_relative_no_dirfd_value_error(create_etc_dir):
+def test__write_file_path_relative_value_error(create_etc_dir):
     with pytest.raises(ValueError) as exc:
-        write_if_changed('testfile9', "canary")
+        write_if_changed('testfile8', "canary")
 
-    assert 'relative paths may not be used' in str(exc.value)
-
-
-def test__write_file_wrong_open_type_value_error(create_etc_dir):
-    # create a test file
-    with open(os.path.join(create_etc_dir, 'testfile10'), 'w') as f:
-        with pytest.raises(ValueError) as exc:
-            write_if_changed('willnotexist', "canary", dirfd=f.fileno())
-
-        assert 'dirfd must be opened' in str(exc.value)
-
-    os.unlink(os.path.join(create_etc_dir, 'testfile10'))
+    assert 'path must be absolute' in str(exc.value)
 
 @pytest.mark.parametrize("mask,expected_dump", [
     (FileChanges.CONTENTS, ['CONTENTS']),

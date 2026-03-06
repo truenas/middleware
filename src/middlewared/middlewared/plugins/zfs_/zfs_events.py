@@ -124,13 +124,12 @@ async def retrieve_pool_from_db(middleware, pool_name):
     return pool[0]
 
 
-POOL_ALERTS = ('PoolUSBDisks', 'PoolUpgraded')
+POOL_ALERTS = ('PoolUpgraded',)
 POOL_ALERTS_LOCKS = defaultdict(asyncio.Lock)
 
 
 async def pool_alerts_args(middleware, pool_name):
-    disks = await middleware.call('device.get_disks')
-    return {'pool_name': pool_name, 'disks': disks}
+    return {'pool_name': pool_name}
 
 
 async def zfs_events(middleware, event: ZfsEvent):
@@ -193,9 +192,7 @@ async def zfs_events(middleware, event: ZfsEvent):
             return
 
         # We are not handling create/changed events because it takes a toll on middleware when we are replicating
-        # datasets and repeated calls to the process pool can result in tasks getting blocked for longer periods
-        # of time and middleware itself getting slow as well to process requests in a timely manner
-        # We are now handling create/changed events whenever changes are made via our API
+        # datasets. We are now handling create/changed events whenever changes are made via our API
         if event_type == 'destroy':
             if ds_id.split('/')[-1].startswith('%'):
                 # Ignore deletion of hidden clones such as `%recv` dataset created by replication
@@ -219,10 +216,6 @@ async def remove_outdated_alerts_on_boot(middleware, data):
             if alert['klass'] == 'PoolUpgraded':
                 if alert['args'] not in pools:
                     await middleware.call('alert.oneshot_delete', 'PoolUpgraded', alert['args'])
-
-            if alert['klass'] == 'PoolUSBDisks':
-                if alert['args']['pool'] not in pools:
-                    await middleware.call('alert.oneshot_delete', 'PoolUSBDisks', alert['args']['pool'])
 
 
 async def setup(middleware):

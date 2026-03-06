@@ -12,7 +12,6 @@ class ZFSPoolService(CRUDService):
     class Config:
         namespace = 'zfs.pool'
         private = True
-        process_pool = True
 
     def query(self, filters: list | None = None, options: dict | None = None):
         if filters is None:

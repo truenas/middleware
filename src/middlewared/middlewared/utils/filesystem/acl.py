@@ -1,10 +1,11 @@
 import enum
 import errno
 import os
+from types import MappingProxyType
+
+import truenas_os
 
 from typing import Any
-
-from middlewared.service_exception import ValidationErrors
 
 ACL_UNDEFINED_ID = -1
 
@@ -146,32 +147,6 @@ POSIX_SPECIAL_ENTRIES = frozenset([
 ])
 
 
-def validate_nfs4_ace_full(ace_in: dict[str, Any], schema_prefix: str, verrors: ValidationErrors) -> None:
-    """
-    This is further validation that occurs in filesystem.setacl. By this point
-    ACE should have already passed through `validate_nfs4_ace_model` above.
-    """
-    if not isinstance(ace_in, dict):
-        raise TypeError(f'{type(ace_in)}: expected dict')
-
-    if ace_in['tag'] in NFS4_SPECIAL_ENTRIES:
-        if ace_in['type'] == NFS4ACE_Type.DENY:
-            tag = ace_in['tag']
-            verrors.add(
-                f'{schema_prefix}.tag',
-                f'{tag}: DENY entries for specified tag are not permitted.'
-            )
-    else:
-        ace_id = ace_in.get('id', ACL_UNDEFINED_ID)
-        ace_who = ace_in.get('who')
-
-        if ace_id != ACL_UNDEFINED_ID and ace_who:
-            verrors.add(
-                f'{schema_prefix}.who',
-                f'Numeric ID {ace_id} and account name {ace_who} may not be specified simultaneously'
-            )
-
-
 def path_get_acltype(path: str) -> FS_ACL_Type:
     try:
         # ACCESS ACL is sufficient to determine POSIX ACL support
@@ -208,7 +183,227 @@ def normalize_acl_ids(setacl_data: dict[str, Any]) -> None:
             ace['id'] = ACL_UNDEFINED_ID
 
 
+# ---------------------------------------------------------------------------
+# truenas_os integration
+# ---------------------------------------------------------------------------
+
+# NFS4 "BASIC" permission shortcuts (all 14 permission bits)
+_NFS4_BASIC_FULL = (
+    truenas_os.NFS4Perm.READ_DATA |
+    truenas_os.NFS4Perm.WRITE_DATA |
+    truenas_os.NFS4Perm.APPEND_DATA |
+    truenas_os.NFS4Perm.READ_NAMED_ATTRS |
+    truenas_os.NFS4Perm.WRITE_NAMED_ATTRS |
+    truenas_os.NFS4Perm.EXECUTE |
+    truenas_os.NFS4Perm.DELETE_CHILD |
+    truenas_os.NFS4Perm.READ_ATTRIBUTES |
+    truenas_os.NFS4Perm.WRITE_ATTRIBUTES |
+    truenas_os.NFS4Perm.DELETE |
+    truenas_os.NFS4Perm.READ_ACL |
+    truenas_os.NFS4Perm.WRITE_ACL |
+    truenas_os.NFS4Perm.WRITE_OWNER |
+    truenas_os.NFS4Perm.SYNCHRONIZE
+)
+_NFS4_BASIC_MODIFY = _NFS4_BASIC_FULL & ~(
+    truenas_os.NFS4Perm.WRITE_ACL | truenas_os.NFS4Perm.WRITE_OWNER
+)
+_NFS4_BASIC_READ = (
+    truenas_os.NFS4Perm.READ_DATA |
+    truenas_os.NFS4Perm.READ_NAMED_ATTRS |
+    truenas_os.NFS4Perm.READ_ATTRIBUTES |
+    truenas_os.NFS4Perm.READ_ACL |
+    truenas_os.NFS4Perm.EXECUTE |
+    truenas_os.NFS4Perm.SYNCHRONIZE
+)
+_NFS4_BASIC_TRAVERSE = (
+    truenas_os.NFS4Perm.READ_NAMED_ATTRS |
+    truenas_os.NFS4Perm.READ_ATTRIBUTES |
+    truenas_os.NFS4Perm.EXECUTE |
+    truenas_os.NFS4Perm.SYNCHRONIZE
+)
+
+# Lookup tables used by the conversion helpers below
+_NFS4_PERM_NAMES = tuple(NFS4ACE_Mask)
+# Input flag names: our enum members plus audit flags that live only in truenas_os
+_NFS4_FLAG_NAMES = (
+    NFS4ACE_Flag.FILE_INHERIT, NFS4ACE_Flag.DIRECTORY_INHERIT,
+    NFS4ACE_Flag.NO_PROPAGATE_INHERIT, NFS4ACE_Flag.INHERIT_ONLY,
+    'SUCCESSFUL_ACCESS', 'FAILED_ACCESS',
+    NFS4ACE_Flag.INHERITED,
+)
+# Output flag names (audit flags omitted)
+_NFS4_OUTPUT_FLAG_NAMES = tuple(NFS4ACE_Flag)
+_NFS4_BASIC_PERMS = MappingProxyType({
+    NFS4ACE_MaskSimple.FULL_CONTROL: _NFS4_BASIC_FULL,
+    NFS4ACE_MaskSimple.MODIFY: _NFS4_BASIC_MODIFY,
+    NFS4ACE_MaskSimple.READ: _NFS4_BASIC_READ,
+    NFS4ACE_MaskSimple.TRAVERSE: _NFS4_BASIC_TRAVERSE,
+})
+_NFS4_BASIC_PERMS_REV = MappingProxyType({v: k for k, v in _NFS4_BASIC_PERMS.items()})
+_NFS4_BASIC_FLAGS = MappingProxyType({
+    NFS4ACE_FlagSimple.INHERIT: truenas_os.NFS4Flag.FILE_INHERIT | truenas_os.NFS4Flag.DIRECTORY_INHERIT,
+    NFS4ACE_FlagSimple.NOINHERIT: truenas_os.NFS4Flag(0),
+})
+_NFS4_BASIC_FLAGS_REV = MappingProxyType({v: k for k, v in _NFS4_BASIC_FLAGS.items()})
+_NFS4_ACL_FLAGS = MappingProxyType({
+    NFS4ACL_Flag.AUTOINHERIT: truenas_os.NFS4ACLFlag.AUTO_INHERIT,
+    NFS4ACL_Flag.PROTECTED: truenas_os.NFS4ACLFlag.PROTECTED,
+    NFS4ACL_Flag.DEFAULTED: truenas_os.NFS4ACLFlag.DEFAULTED,
+})
+_NFS4_TAG_TO_WHO = MappingProxyType({
+    NFS4ACE_Tag.SPECIAL_OWNER: truenas_os.NFS4Who.OWNER,
+    NFS4ACE_Tag.SPECIAL_GROUP: truenas_os.NFS4Who.GROUP,
+    NFS4ACE_Tag.SPECIAL_EVERYONE: truenas_os.NFS4Who.EVERYONE,
+})
+_NFS4_WHO_TO_TAG = MappingProxyType({v: k for k, v in _NFS4_TAG_TO_WHO.items()})
+_POSIX_PERM_NAMES = tuple(POSIXACE_Mask)
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers (only valid when truenas_os is available)
+# ---------------------------------------------------------------------------
+
+def _perm_obj_to_full_dict(perm: 'truenas_os.NFS4Perm') -> dict:
+    return {n: bool(perm & getattr(truenas_os.NFS4Perm, n)) for n in _NFS4_PERM_NAMES}
+
+
+def _flags_obj_to_dict(flags: 'truenas_os.NFS4Flag') -> dict:
+    # SUCCESSFUL_ACCESS and FAILED_ACCESS are intentionally omitted from output
+    return {n: bool(flags & getattr(truenas_os.NFS4Flag, n)) for n in _NFS4_OUTPUT_FLAG_NAMES}
+
+
+def _perm_dict_to_obj(perms_dict: dict) -> 'truenas_os.NFS4Perm':
+    perm = truenas_os.NFS4Perm(0)
+    for n in _NFS4_PERM_NAMES:
+        if perms_dict.get(n):
+            perm |= getattr(truenas_os.NFS4Perm, n)
+    return perm
+
+
+def _flags_dict_to_obj(flags_dict: dict) -> 'truenas_os.NFS4Flag':
+    flags = truenas_os.NFS4Flag(0)
+    for n in _NFS4_FLAG_NAMES:
+        if flags_dict.get(n):
+            flags |= getattr(truenas_os.NFS4Flag, n)
+    return flags
+
+
+# ---------------------------------------------------------------------------
+# Public conversion helpers
+# ---------------------------------------------------------------------------
+
+def nfs4ace_dict_to_obj(ace: dict) -> 'truenas_os.NFS4Ace':
+    """Convert a middleware NFS4 ACE dict to a truenas_os.NFS4Ace object."""
+    tag = ace['tag']
+    extra_flags = truenas_os.NFS4Flag(0)
+    if who_type := _NFS4_TAG_TO_WHO.get(tag):
+        who_id = -1
+    elif tag == 'USER':
+        who_type, who_id = truenas_os.NFS4Who.NAMED, ace['id']
+    elif tag == 'GROUP':
+        who_type, who_id = truenas_os.NFS4Who.NAMED, ace['id']
+        extra_flags = truenas_os.NFS4Flag.IDENTIFIER_GROUP
+    else:
+        raise ValueError(f'{tag!r}: unknown NFS4 ACE tag')
+
+    ace_type = truenas_os.NFS4AceType.ALLOW if ace['type'] == 'ALLOW' else truenas_os.NFS4AceType.DENY
+
+    perms = ace['perms']
+    if 'BASIC' in perms:
+        if (access_mask := _NFS4_BASIC_PERMS.get(perms['BASIC'])) is None:
+            raise ValueError(f'{perms["BASIC"]!r}: unknown BASIC permission')
+    else:
+        access_mask = _perm_dict_to_obj(perms)
+
+    flags_in = ace.get('flags', {})
+    if 'BASIC' in flags_in:
+        if (ace_flags := _NFS4_BASIC_FLAGS.get(flags_in['BASIC'])) is None:
+            raise ValueError(f'{flags_in["BASIC"]!r}: unknown BASIC flag')
+    else:
+        ace_flags = _flags_dict_to_obj(flags_in)
+
+    return truenas_os.NFS4Ace(ace_type, ace_flags | extra_flags, access_mask, who_type, who_id)
+
+
+def nfs4acl_dict_to_obj(acl_list: list, aclflags: dict | None) -> 'truenas_os.NFS4ACL':
+    """Convert a list of middleware NFS4 ACE dicts to a truenas_os.NFS4ACL."""
+    acl_flag_obj = truenas_os.NFS4ACLFlag(0)
+    if aclflags:
+        for key, flag in _NFS4_ACL_FLAGS.items():
+            if aclflags.get(key):
+                acl_flag_obj |= flag
+    return truenas_os.NFS4ACL.from_aces([nfs4ace_dict_to_obj(ace) for ace in acl_list], acl_flag_obj)
+
+
+def nfs4acl_obj_to_dict(acl: 'truenas_os.NFS4ACL', uid: int, gid: int, simplified: bool) -> dict:
+    """Convert a truenas_os.NFS4ACL to the middleware API dict format."""
+    ace_list = []
+    for ace in acl.aces:
+        ace_flags = ace.ace_flags
+        if tag := _NFS4_WHO_TO_TAG.get(ace.who_type):
+            out_id = -1
+        elif ace_flags & truenas_os.NFS4Flag.IDENTIFIER_GROUP:
+            tag, out_id = 'GROUP', ace.who_id
+        else:
+            tag, out_id = 'USER', ace.who_id
+
+        perm = ace.access_mask
+        if simplified and (basic := _NFS4_BASIC_PERMS_REV.get(perm)):
+            perms_dict = {'BASIC': basic}
+        else:
+            perms_dict = _perm_obj_to_full_dict(perm)
+
+        clean_flags = ace_flags & ~truenas_os.NFS4Flag.IDENTIFIER_GROUP
+        if simplified and (basic_flag := _NFS4_BASIC_FLAGS_REV.get(clean_flags)):
+            flags_dict = {'BASIC': basic_flag}
+        else:
+            flags_dict = _flags_obj_to_dict(clean_flags)
+
+        ace_list.append({
+            'tag': tag, 'id': out_id, 'type': ace.ace_type.name,
+            'perms': perms_dict,
+            'flags': flags_dict,
+        })
+
+    return {
+        'uid': uid, 'gid': gid,
+        'aclflags': {k: bool(acl.acl_flags & v) for k, v in _NFS4_ACL_FLAGS.items()},
+        'trivial': acl.trivial,
+        'acl': ace_list,
+    }
+
+
+def posixace_dict_to_obj(ace: dict) -> 'truenas_os.POSIXAce':
+    """Convert a middleware POSIX ACE dict to a truenas_os.POSIXAce object."""
+    perm_obj = truenas_os.POSIXPerm(0)
+    for n in _POSIX_PERM_NAMES:
+        if ace['perms'].get(n):
+            perm_obj |= getattr(truenas_os.POSIXPerm, n)
+    ace_id = -1 if (v := ace.get('id')) is None else v
+    return truenas_os.POSIXAce(truenas_os.POSIXTag[ace['tag']], perm_obj, ace_id, bool(ace.get('default', False)))
+
+
+def posixacl_dict_to_obj(acl_list: list) -> 'truenas_os.POSIXACL':
+    """Convert a list of middleware POSIX ACE dicts to a truenas_os.POSIXACL."""
+    return truenas_os.POSIXACL.from_aces([posixace_dict_to_obj(ace) for ace in acl_list])
+
+
+def posixacl_obj_to_dict(acl: 'truenas_os.POSIXACL', uid: int, gid: int) -> dict:
+    """Convert a truenas_os.POSIXACL to the middleware API dict format."""
+    def _ace_to_dict(ace):
+        return {
+            'default': ace.default, 'tag': ace.tag.name, 'id': ace.id,
+            'perms': {n: bool(ace.perms & getattr(truenas_os.POSIXPerm, n)) for n in _POSIX_PERM_NAMES},
+        }
+    return {
+        'uid': uid, 'gid': gid, 'trivial': acl.trivial,
+        'acl': [_ace_to_dict(ace) for ace in (*acl.aces, *acl.default_aces)],
+    }
+
+
 def strip_acl_path(path: str) -> None:
-    for xat in os.listxattr(path):
-        if xat in ACL_XATTRS:
-            os.removexattr(path, xat)
+    fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+    try:
+        truenas_os.fsetacl(fd, None)
+    finally:
+        os.close(fd)

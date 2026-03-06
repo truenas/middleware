@@ -45,7 +45,7 @@ def test_audit_setacl():
             'type': 'ALLOW'
         })
 
-        payload = {'path': path, 'dacl': the_acl}
+        payload = {'path': path, 'dacl': the_acl, 'options': {'validate_effective_acl': False}}
 
         with expect_audit_method_calls([{
             'method': 'filesystem.setacl',

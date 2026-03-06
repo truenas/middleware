@@ -56,8 +56,7 @@ class BootService(Service):
 
         NOTE: we cache this information since it doesn't change
         very often and we have a ton of callers (especially on HA)
-        that need to determine this information. By caching this,
-        it reduces the amount of times we have to use our ProcessPool
+        that need to determine this information.
         """
         global BOOT_POOL_DISKS
         if BOOT_POOL_DISKS is None:

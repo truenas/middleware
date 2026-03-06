@@ -17,8 +17,6 @@ class RemoteInfo(BaseModel):
     """Platform type (e.g., 'FREENAS', 'TRUENAS-SCALE')."""
     version: NonEmptyString
     """Software version string."""
-    codename: NonEmptyString
-    """Release codename for this version."""
     license: dict | None
     """License information object. `null` if no license is installed."""
     system_serial: str
@@ -29,6 +27,10 @@ class RemoteInfo(BaseModel):
     """System uptime in seconds since last boot."""
     datetime_: datetime = Field(alias="datetime")
     """Current system date and time."""
+
+    @classmethod
+    def to_previous(cls, value):
+        value["codename"] = "<DEPRECATED>"
 
 
 class SysInfo(RemoteInfo):

@@ -47,7 +47,6 @@ from .utils.types import AuditCallback, JobProgressCallback
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .utils.web_app import SiteManager
-from .worker import main_worker, worker_init
 
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
@@ -58,17 +57,16 @@ from collections import defaultdict
 import argparse
 import asyncio
 import concurrent.futures
-import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
-import multiprocessing
 import os
 import pathlib
 import re
+import shutil
 import signal
 import sys
 import textwrap
@@ -93,9 +91,12 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.webshare.config import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
@@ -161,6 +162,12 @@ class SharingServicesContainer(BaseServiceContainer):
         self.webshare = SharingWebshareService(middleware)
 
 
+class SystemServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.ntpserver = NTPServerService(middleware)
+
+
 class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -172,10 +179,13 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.catalog = CatalogService(middleware)
+        self.cronjob = CronJobService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.system = SystemServicesContainer(middleware)
+        self.truenas = TrueNASService(middleware)
         self.truesearch = TrueSearchService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
@@ -218,8 +228,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.log_handler = log_handler
         self.log_format = log_format
         self.__thread_id = threading.get_ident()
-        multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
-        self.__init_procpool()
         self.__wsclients: dict[str, 'RpcWebSocketApp'] = {}
         self.role_manager = RoleManager(ROLES)
         self.events = Events(self.role_manager)
@@ -779,30 +787,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         Runs method in a native thread using concurrent.futures.Pool.
         This prevents a CPU intensive or non-asyncio friendly method
         to block the event loop indefinitely.
-        Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread[**P, T](self, method: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
-
-    def __init_procpool(self):
-        self.__procpool = concurrent.futures.ProcessPoolExecutor(
-            max_workers=5,
-            max_tasks_per_child=100,
-            initializer=functools.partial(worker_init, self.debug_level, self.log_handler)
-        )
-
-    async def run_in_proc(self, method, *args, **kwargs):
-        retries = 2
-        for i in range(retries):
-            try:
-                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
-            except concurrent.futures.process.BrokenProcessPool:
-                if i == retries - 1:
-                    raise
-                self.__init_procpool()
 
     def pipe(self, buffered=False):
         """
@@ -843,13 +833,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             args.append(app)
 
         is_coroutine = asyncio.iscoroutinefunction(methodobj)
+
+        if getattr(methodobj, 'audit_callback', None):
+            args.append(audit_callback)
+
         if hasattr(methodobj, '_pass_thread_local_storage'):
             if is_coroutine:
                 raise RuntimeError("Thread local storage is invalid for coroutines")
             args.append(thread_local_storage)
-
-        if getattr(methodobj, 'audit_callback', None):
-            args.append(audit_callback)
 
         if hasattr(methodobj, '_pass_app'):
             if methodobj._pass_app['message_id']:
@@ -861,8 +852,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
-            if serviceobj._config.process_pool:
-                job_options['process'] = True
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
                       message_id, audit_callback)
@@ -919,14 +908,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
-        if not self.mocks.get(name) and serviceobj._config.process_pool:
-            self.logger.trace('Calling %r in process pool', name)
-            if isinstance(serviceobj, middlewared.service.CRUDService):
-                service_name, method_name = name.rsplit('.', 1)
-                if method_name in ['create', 'update', 'delete']:
-                    name = f'{service_name}.do_{method_name}'
-            return await self._call_worker(name, *prepared_call.args)
-
         self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
         return await self.run_in_executor(
             prepared_call.executor,
@@ -934,9 +915,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             *prepared_call.args,
             **prepared_call.kwargs,
         )
-
-    async def _call_worker(self, name, *args, job=None):
-        return await self.run_in_proc(main_worker, name, args, job)
 
     def dump_args(self, args, method=None, method_name=None):
         if method is None:
@@ -1281,16 +1259,38 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             self.logger.trace('Calling %r in main IO loop', name)
             return self.run_coroutine(methodobj(*prepared_call.args))
 
-        if serviceobj._config.process_pool:
-            self.logger.trace('Calling %r in process pool', name)
-            return self.run_coroutine(self._call_worker(name, *prepared_call.args))
-
         if not self._in_executor(prepared_call.executor):
             self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
             return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args))
 
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
 
     async def call2(
         self,
@@ -1353,10 +1353,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if prepared_call.is_coroutine:
             self.logger.trace("Calling %r in main IO loop", name)
             return self.run_coroutine(methodobj(*prepared_call.args, **prepared_call.kwargs))
-
-        if serviceobj._config.process_pool:
-            self.logger.trace("Calling %r in process pool", name)
-            return self.run_coroutine(self._call_worker(name, *prepared_call.args, **prepared_call.kwargs))
 
         if not self._in_executor(prepared_call.executor):
             self.logger.trace("Calling %r in executor %r", name, prepared_call.executor)
@@ -1738,12 +1734,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             if e.args[0] != "Event loop is closed":
                 raise
 
-        # As we don't do clean shutdown (which will terminate multiprocessing children gracefully),
-        # let's just kill our entire process group
-        os.killpg(os.getpgid(os.getpid()), signal.SIGKILL)
-
-        # We use "_exit" specifically as otherwise process pool executor won't let middlewared process die because
-        # it is still active. We don't initiate a shutdown for it because it may hang forever for any reason
+        # Use os._exit rather than sys.exit to avoid Python-level cleanup (atexit handlers, thread joins, etc.)
+        # that could block in this abnormal shutdown path.
         os._exit(0)
 
     async def __initialize(self):
@@ -1789,9 +1781,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
         self.create_task(self.jobs.run())
-
-        # Start up middleware worker process pool
-        self.__procpool._start_executor_manager_thread()
 
         self.runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await self.runner.setup()
@@ -1892,6 +1881,8 @@ def main():
         # Remove the '--' separator if present
         if test_command and test_command[0] == '--':
             test_command = test_command[1:]
+        # Remove mako template cache before it gets used
+        shutil.rmtree("/run/mako", ignore_errors=True)
     else:
         # If --test wasn't specified but there are unknown args, it's an error
         if test_command:

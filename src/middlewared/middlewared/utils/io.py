@@ -2,7 +2,6 @@
 # Any updates to this file should have corresponding updates to tests
 
 from contextlib import contextmanager
-import fcntl
 import os
 import enum
 import stat
@@ -215,10 +214,10 @@ def atomic_write(target: str, mode: typing.Literal["w", "wb"] = "w", *, tmppath:
 
 
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,
-                     dirfd: int | None = None, raise_error: bool = False) -> int:
+                     tmpdir: str | None = None, raise_error: bool = False) -> int:
     """
     Commit changes to a configuration file.
-    `path` - path to configuration file. May be relative to a specified `dirfd`
+    `path` - absolute path to configuration file.
 
     `data` - expected file contents. May be bytes or string
 
@@ -228,8 +227,8 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
 
     `perms` - numeric permissions that file should have
 
-    `dirfd` - optional open file descriptor (may be O_PATH or O_DIRECTORY) if `path` is
-    relative.
+    `tmpdir` - optional directory for temporary file creation during atomic replace.
+    If None, uses the directory containing `path`. Must be on the same filesystem as `path`.
 
     `raise_error` - raise an UnexpectedFileChange exception if file ownership or
     permissions have unexpectedly changed.
@@ -252,35 +251,15 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         if value < 0 or value > ID_MAX:
             raise ValueError(f'{name} must be between 0 and {ID_MAX}')
 
-    if dirfd is not None:
-        if not isinstance(dirfd, int):
-            raise ValueError('dirfd must be a valid file descriptor')
+    if not os.path.isabs(path):
+        raise ValueError(f'{path}: path must be absolute')
 
-        if not os.path.exists(f'/proc/self/fd/{dirfd}'):
-            raise ValueError(f'{dirfd}: file descriptor not found')
-
-        if os.path.isabs(path):
-            raise ValueError(f'{path}: absolute paths may not be used with a `dirfd`')
-
-        if fcntl.fcntl(dirfd, fcntl.F_GETFL) & (os.O_DIRECTORY | os.O_PATH) == 0:
-            raise ValueError('dirfd must be opened via O_DIRECTORY or O_PATH')
-
-        # tempfile API does not permit using a file descriptor
-        # so we'll get the underlying directory name from procfs
-        parent_dir = os.readlink(f'/proc/self/fd/{dirfd}')
-        # Construct absolute path for atomic_replace
-        absolute_path = os.path.join(parent_dir, path)
-    else:
-        if not os.path.isabs(path):
-            raise ValueError(f'{path}: relative paths may not be used without a `dirfd`')
-
-        parent_dir = os.path.dirname(path)
-        absolute_path = path
+    temp_path = tmpdir if tmpdir is not None else os.path.dirname(path)
 
     changes = 0
 
     try:
-        with open(os.open(path, os.O_RDONLY, dir_fd=dirfd), 'rb+') as f:
+        with open(truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS), 'rb+') as f:
             current = f.read()
             if current != data:
                 changes |= FileChanges.CONTENTS
@@ -311,8 +290,8 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
 
     if changes & FileChanges.CONTENTS:
         atomic_replace(
-            temp_path=parent_dir,
-            target_file=absolute_path,
+            temp_path=temp_path,
+            target_file=path,
             perms=perms,
             data=data,
             uid=uid,

@@ -1,6 +1,7 @@
 import ipaddress
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils.network import system_ips_to_cidrs, validate_network_overlaps
 
 
 def validate_address_pools(system_ips: list[dict], user_specified_networks: list[dict]):
@@ -9,10 +10,7 @@ def validate_address_pools(system_ips: list[dict], user_specified_networks: list
         verrors.add('docker_update.address_pools', 'At least one address pool must be specified')
     verrors.check()
 
-    network_cidrs = set([
-        ipaddress.ip_network(f'{ip["address"]}/{ip["netmask"]}', False)
-        for ip in system_ips
-    ])
+    network_cidrs = system_ips_to_cidrs(system_ips)
     seen_networks = set()
     for index, user_network in enumerate(user_specified_networks):
         if isinstance(user_network['base'], (ipaddress.IPv4Interface, ipaddress.IPv6Interface)):
@@ -30,11 +28,9 @@ def validate_address_pools(system_ips: list[dict], user_specified_networks: list
             )
 
         # Validate no overlaps with system networks
-        if any(base_network.overlaps(system_network) for system_network in network_cidrs):
-            verrors.add(
-                f'docker_update.address_pools.{index}.base',
-                f'Base network {user_network["base"]} overlaps with an existing system network'
-            )
+        validate_network_overlaps(
+            f'docker_update.address_pools.{index}.base', base_network, network_cidrs, verrors
+        )
 
         # Validate no duplicate networks
         if base_network in seen_networks:

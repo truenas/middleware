@@ -117,7 +117,7 @@ class JBOFService(CRUDService):
     async def validate(self, data, schema_name, old=None):
         verrors = ValidationErrors()
 
-        # Check license
+        # Check license (error text checked in test_jbof.py)
         license_count = await self.middleware.call("jbof.licensed")
         if license_count == 0:
             verrors.add(f"{schema_name}.mgmt_ip1", "This feature is not licensed")
@@ -128,6 +128,18 @@ class JBOFService(CRUDService):
                 if count >= license_count:
                     verrors.add(f"{schema_name}.mgmt_ip1",
                                 f"Already configured the number of licensed emclosures: {license_count}")
+        if verrors:
+            return verrors, data
+
+        # On create check the RDMA available (error text checked in test_jbof.py)
+        if old is None:
+            if await self.middleware.call("rdma.get_link_choices") == []:
+                if await self.middleware.call("rdma.get_link_choices", True) == []:
+                    verrors.add(f"{schema_name}.mgmt_ip1", "No RDMA links are available")
+                else:
+                    verrors.add(f"{schema_name}.mgmt_ip1", "All RDMA links are configured")
+            if verrors:
+                return verrors, data
 
         # Ensure redfish connects to mgmt1 (incl login)
         mgmt_ip1 = data.get('mgmt_ip1')

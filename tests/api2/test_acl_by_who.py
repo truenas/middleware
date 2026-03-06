@@ -32,7 +32,7 @@ def test__posix_by_who(posix_acl_dataset):
         {'tag': 'GROUP', 'who': 'root', 'perms': permset_posix_full, 'default': False},
     ])
 
-    call('filesystem.setacl', {'path': target, 'dacl': the_acl}, job=True)
+    call('filesystem.setacl', {'path': target, 'dacl': the_acl, 'options': {'validate_effective_acl': False}}, job=True)
 
     new_acl = call('filesystem.getacl', target)['acl']
     saw_user = False
@@ -59,7 +59,7 @@ def test__nfsv4_by_who(nfsv4_acl_dataset):
         {'tag': 'GROUP', 'who': 'root', 'perms': permset_nfsv4_full, 'flags': flagset_nfsv4_inherit, 'type': 'ALLOW'},
     ])
 
-    call('filesystem.setacl', {'path': target, 'dacl': the_acl}, job=True)
+    call('filesystem.setacl', {'path': target, 'dacl': the_acl, 'options': {'validate_effective_acl': False}}, job=True)
 
     new_acl = call('filesystem.getacl', target)['acl']
     saw_user = False
@@ -87,12 +87,13 @@ def test__acl_validation_errors_posix(posix_acl_dataset):
     ])
 
     with pytest.raises(ClientValidationErrors):
-        call('filesystem.setacl', {'path': target, 'dacl': new_acl}, job=True)
+        call('filesystem.setacl', {'path': target, 'dacl': new_acl, 'options': {'validate_effective_acl': False}}, job=True)
 
-    new_acl = deepcopy(the_acl)
-    new_acl.extend([
-        {'tag': 'USER', 'perms': permset_posix_full, 'default': False, 'who': 'root', 'id': 0},
-    ])
+    # Strip any named/MASK entries that a prior test may have left on the dataset,
+    # so the resulting ACL has a USER entry but no MASK — which is invalid.
+    bare_acl = [e for e in the_acl if e['tag'] not in ('MASK', 'USER', 'GROUP')]
+    bare_acl.append({'tag': 'USER', 'perms': permset_posix_full, 'default': False, 'who': 'root', 'id': 0})
+    new_acl = bare_acl
 
     with pytest.raises(ClientValidationErrors):
-        call('filesystem.setacl', {'path': target, 'dacl': new_acl}, job=True)
+        call('filesystem.setacl', {'path': target, 'dacl': new_acl, 'options': {'validate_effective_acl': False}}, job=True)

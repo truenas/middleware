@@ -10,11 +10,13 @@ from packaging.version import InvalidVersion, Version
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
-    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
+    AppUpgradeBulkArgs, AppUpgradeBulkResult,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
+from middlewared.utils.yaml import safe_yaml_load
 
 from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
@@ -24,7 +26,6 @@ from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
-from .ix_apps.utils import safe_yaml_load
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -69,7 +70,7 @@ class AppService(Service):
                 continue
 
             self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
-                datase=dataset,
+                dataset=dataset,
                 name=get_upgrade_snap_name(app_info["name"], app_info["version"]),
                 bypass=True,
             ))
@@ -82,10 +83,23 @@ class AppService(Service):
         roles=['APPS_WRITE']
     )
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
-    def upgrade(self, job, app_name, options):
+    async def upgrade(self, job, app_name, options):
         """
         Upgrade `app_name` app to `app_version`.
         """
+        app_instance = await job.wrap(await self.middleware.call('app.upgrade_impl', app_name, options))
+        if app_instance['upgrade_available'] is False or app_instance['custom_app']:
+            # Refresh alerts when app reached latest version (remove from upgrade list) or
+            # for custom apps where upgrade_available may not reflect image update status.
+            # When user upgrades to an intermediate version, upgrade_available remains True
+            # and the existing alert correctly stays in place.
+            await self.middleware.call('app.update_app_upgrade_alert')
+
+        return app_instance
+
+    @private
+    @job(lock=lambda args: f'app_upgrade_impl_{args[0]}', transient=True)
+    def upgrade_impl(self, job, app_name, options):
         app = self.middleware.call_sync('app.get_instance', app_name)
         if app['state'] == 'STOPPED':
             raise CallError('In order to upgrade an app, it must not be in stopped state')
@@ -100,11 +114,8 @@ class AppService(Service):
             finally:
                 app = self.middleware.call_sync('app.get_instance', app_name)
                 if app['upgrade_available'] is False or app['custom_app']:
-                    # This conditional is for the case that maybe pull was successful but redeploy failed,
-                    # so we make sure that when we are returning from here, we don't have any alert left
-                    # if the image has actually been updated
-                    self.middleware.call_sync('app.update_app_upgrade_alert')
-
+                    # Pull may have succeeded but redeploy failed - we early-return here
+                    # so that the caller can update alerts based on the refreshed app state
                     self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
                     job.set_progress(100, 'App successfully upgraded and redeployed')
                     return app
@@ -172,12 +183,36 @@ class AppService(Service):
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance)
 
         job.set_progress(100, 'Upgraded app successfully')
-        if new_app_instance['upgrade_available'] is False:
-            # We have this conditional for the case if user chose not to upgrade to latest version
-            # and jump to some intermediate version which is not latest
-            self.middleware.call_sync('app.update_app_upgrade_alert')
-
         return new_app_instance
+
+    @api_method(
+        AppUpgradeBulkArgs, AppUpgradeBulkResult,
+        audit='Apps: Bulk Upgrade',
+        audit_extended=lambda apps: f'{len(apps)} apps',
+        roles=['APPS_WRITE']
+    )
+    @job(lock='app_upgrade_bulk')
+    async def upgrade_bulk(self, job, apps):
+        """
+        Upgrade multiple apps sequentially, each with its own options, emitting
+        a single consolidated alert once all upgrades have completed.
+        """
+        results = []
+        total = len(apps)
+        for i, entry in enumerate(apps):
+            app_name = entry['app_name']
+            job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
+            upgrade_job = await self.middleware.call('app.upgrade_impl', app_name, entry['options'])
+            result = await upgrade_job.wait(raise_error=False)
+            results.append({
+                'app_name': app_name,
+                'error': upgrade_job.error,
+                'result': result,
+            })
+
+        job.set_progress(100, 'Bulk upgrade complete')
+        await self.middleware.call('app.update_app_upgrade_alert')
+        return results
 
     @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'])
     async def upgrade_summary(self, app_name, options):
@@ -221,8 +256,8 @@ class AppService(Service):
         if isinstance(app, str):
             app = await self.middleware.call('app.get_instance', app)
         metadata = app['metadata']
-        app_details = await self.middleware.call(
-            'catalog.get_app_details', metadata['name'], {'train': metadata['train']}
+        app_details = await self.call2(
+            self.s.catalog.get_app_details, metadata['name'], CatalogAppVersionDetails(train=metadata['train'])
         )
         new_version = options['app_version']
         if new_version == 'latest':

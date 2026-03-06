@@ -22,7 +22,6 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.service_.services.all import all_services
-from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
@@ -978,8 +977,8 @@ class FailoverEventsService(Service):
         try:
             self.run_call(
                 'failover.call_remote',
-                'failover.send_small_file',
-                [PWENC_FILE_SECRET],
+                'failover.send_pwenc_secret',
+                [],
                 {'raise_connect_error': False}
             )
         except Exception:

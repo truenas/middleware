@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import errno
-from typing import Annotated
+import sys
+from typing import Annotated, Any, TYPE_CHECKING, overload
 
 from pydantic import create_model, Field
 
@@ -8,8 +11,6 @@ from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base.model import (
     BaseModel, query_result, query_result_item, added_event_model, changed_event_model, removed_event_model,
 )
-if not API_LOADING_FORBIDDEN:
-    from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.type import copy_function_metadata
@@ -18,6 +19,21 @@ from .base import ServiceBase
 from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
+
+
+if not API_LOADING_FORBIDDEN:
+    from middlewared.api.current import QueryArgs, QueryOptions
+
+if TYPE_CHECKING:
+    from typing import Literal
+
+    class _QueryGetOptions(QueryOptions):
+        get: Literal[True]
+        count: Literal[False]
+
+    class _QueryCountOptions(QueryOptions):
+        count: Literal[True]
+        get: Literal[False]
 
 
 PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
@@ -29,7 +45,7 @@ def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[B
         __base__=(BaseModel,),
         __module__=entry.__module__,
         id=Annotated[entry.model_fields[primary_key].annotation, Field()],
-        options=Annotated[QueryOptions, Field(default={})],
+        options=Annotated[QueryOptions, Field(default_factory=QueryOptions)],
     )
 
 
@@ -49,6 +65,7 @@ class CRUDServiceMetabase(ServiceBase):
             name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
                 ('CRUDService', ('ServiceChangeMixin', 'Service', 'Generic')),
+                ('GenericCRUDService', ('CRUDService', 'Generic')),
                 ('SharingTaskService', ('CRUDService', 'Generic')),
                 ('SharingService', ('SharingTaskService', 'Generic')),
                 ('TaskPathService', ('SharingTaskService', 'Generic')),
@@ -69,13 +86,25 @@ class CRUDServiceMetabase(ServiceBase):
 
         if entry is not None:
             query_result_model = query_result(entry)
+            is_generic_crud = any(
+                base.__name__ == 'GenericCRUDService' for base in klass.__mro__[1:]
+            )
+            use_check_annotations = is_generic_crud
+
+            # GenericCRUDService.query/get_instance use the type-var `E` in
+            # their string annotations.  Inject the concrete entry type so
+            # that check_method_annotations can eval() them
+            if is_generic_crud:
+                sys.modules[klass.query.__module__].__dict__['E'] = entry
+
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
                 not hasattr(klass.query, 'new_style_accepts')
             ):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
-                    QueryArgs, query_result_model, private=private, cli_private=cli_private
+                    QueryArgs, query_result_model, private=private, cli_private=cli_private,
+                    check_annotations=use_check_annotations,
                 )(klass.query)
 
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
@@ -85,6 +114,7 @@ class CRUDServiceMetabase(ServiceBase):
                 get_instance_result_model,
                 private=private,
                 cli_private=cli_private,
+                check_annotations=use_check_annotations,
             )(klass.get_instance)
 
             # Models must be registered with their factories for backwards compatibility.
@@ -138,7 +168,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options['prefix'] = self._config.datastore_prefix
         return options
 
-    async def query(self, filters: list | None = None, options: dict | None = None) -> list[E] | E | int:
+    async def query(self, filters=None, options=None) -> list[E] | E | int:
         if not self._config.datastore:
             raise NotImplementedError(
                 f'{self._config.namespace}.query must be implemented or a '
@@ -351,3 +381,35 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
                 }, **data)
 
         return dependencies
+
+
+class GenericCRUDService[E](CRUDService[E]):
+    """
+    CRUDService subclass for generic services that use Pydantic models (QueryOptions)
+    instead of raw dicts. Provides properly typed query/get_instance signatures.
+
+    Services with ``generic = True`` should inherit from this class instead of
+    ``CRUDService`` directly. Set ``_svc_part`` in ``__init__`` to a
+    ``CRUDServicePart`` instance to delegate query/get_instance automatically.
+    """
+
+    @overload
+    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...
+
+    @overload
+    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...
+
+    @overload
+    async def query(
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[E] | E | int: ...
+
+    async def query(
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[E] | E | int:
+        return await self._svc_part.query(filters or [], options or QueryOptions())
+
+    async def get_instance(
+        self, id_: int, options: QueryOptions | None = None,
+    ) -> E:
+        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)

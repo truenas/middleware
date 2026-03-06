@@ -187,3 +187,22 @@ def test_reconnect_token_with_user_info_false():
         assert resp['response_type'] == 'SUCCESS'
         assert resp['user_info'] is None
         assert len(resp['reconnect_token']) == 64
+
+
+def test_reconnect_token_is_single_use():
+    """Reconnect tokens are always single-use; a second login attempt with the same token fails."""
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password(),
+            'login_options': {'reconnect_token': True},
+        })
+        assert resp['response_type'] == 'SUCCESS'
+        token = resp['reconnect_token']
+
+    with client(auth=None) as c:
+        assert c.call('auth.login_with_token', token)
+
+    with client(auth=None) as c:
+        assert not c.call('auth.login_with_token', token)

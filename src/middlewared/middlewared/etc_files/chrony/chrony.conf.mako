@@ -10,21 +10,21 @@ confdir /etc/chrony/conf.d
 	ntp_query = middleware.call_sync('system.ntpserver.query')
 %>\
 % for ntp in ntp_query:
-server ${ntp['address']}\
-	% if ntp['burst']:
+server ${ntp.address}\
+	% if ntp.burst:
  burst\
 	% endif
-	% if ntp['iburst']:
+	% if ntp.iburst:
  iburst\
 	% endif
-	% if ntp['prefer']:
+	% if ntp.prefer:
  prefer\
 	% endif
-	% if ntp['maxpoll']:
- maxpoll ${ntp['maxpoll']}\
+	% if ntp.maxpoll:
+ maxpoll ${ntp.maxpoll}\
 	% endif
-	% if ntp['minpoll']:
- minpoll ${ntp['minpoll']}\
+	% if ntp.minpoll:
+ minpoll ${ntp.minpoll}\
 	% endif
 
 % endfor

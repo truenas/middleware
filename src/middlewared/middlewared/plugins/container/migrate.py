@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import yaml
 
@@ -127,17 +128,67 @@ class ContainerService(Service):
                             f"device: {e!r}.\n".encode()
                         )
 
+    @private
+    async def maybe_migrate_legacy(self):
+        """Check for legacy incus containers and auto-migrate if found.
+
+        Called on system ready. If virt_global.pool is set, legacy containers
+        exist and need migration. On success, sets preferred_pool and clears
+        virt_global.pool so migration does not re-trigger on next boot.
+        """
+        legacy_config = await self.middleware.call("datastore.query", "virt.global")
+        if not legacy_config or legacy_config[0]["pool"] is None:
+            return
+
+        legacy_config = legacy_config[0]
+        self.logger.info("Legacy incus container configuration found, starting migration")
+        try:
+            migration_job = await self.middleware.call("container.migrate")
+            await migration_job.wait(raise_error=True)
+        except Exception:
+            self.logger.error("Legacy container migration failed", exc_info=True)
+            return
+
+        container_config = await self.middleware.call("lxc.config")
+        updates = {}
+        if container_config["preferred_pool"] is None and legacy_config["pool"]:
+            updates["preferred_pool"] = legacy_config["pool"]
+
+        for col in ("bridge", "v4_network", "v6_network"):
+            if not legacy_config.get(col):
+                continue
+
+            value = legacy_config[col]
+            if col in ("v4_network", "v6_network"):
+                try:
+                    value = str(ipaddress.ip_network(value, strict=False))
+                except (ValueError, TypeError):
+                    continue
+
+            updates[col] = value
+
+        if updates:
+            await self.middleware.call(
+                "datastore.update", "container.config", container_config["id"], updates,
+            )
+
+        await self.middleware.call(
+            "datastore.update", "virt.global", legacy_config["id"],
+            {"pool": None},
+        )
+        self.logger.info("Legacy container migration completed")
+
     @api_method(ContainerMigrateArgs, ContainerMigrateResult, roles=["CONTAINER_WRITE"])
     @job(lock="container.migrate", logs=True)
     async def migrate(self, job):
         """Migrate incus containers to new API."""
 
-        legacy_configuration = await self.middleware.call("datastore.config", "virt.global")
-        pool = legacy_configuration["pool"]
-        if pool is None:
+        legacy_configuration = await self.middleware.call("datastore.query", "virt.global")
+        if not legacy_configuration or legacy_configuration[0]["pool"] is None:
             raise CallError("Legacy containers configuration pool is not set.")
+        pool = legacy_configuration[0]["pool"]
 
-        storage_pools = {pool} | set(filter(bool, (legacy_configuration["storage_pools"] or "").split()))
+        storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]["storage_pools"] or "").split()))
         existing_containers = {
             container["name"]: container for container in await self.middleware.call("container.query")
         }
@@ -164,6 +215,9 @@ class ContainerService(Service):
 
             split = dataset["name"].split("/")
             if len(split) != 4:
+                job.logs_fd.write(
+                    f"Skipping dataset {dataset['name']} during migration (not a container dataset)".encode(),
+                )
                 continue
 
             name = split[-1]
@@ -194,8 +248,14 @@ class ContainerService(Service):
                 )
                 self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
 
-                with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
-                    manifest = yaml.safe_load(f.read())
+                try:
+                    with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
+                        manifest = yaml.safe_load(f.read())
+                except Exception:
+                    job.logs_fd.write(
+                        f"Failed to read backup.yaml for container {name!r}, skipping.\n".encode()
+                    )
+                    continue
 
                 config = manifest["container"]["config"]
 

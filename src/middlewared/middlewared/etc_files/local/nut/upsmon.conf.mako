@@ -2,7 +2,7 @@
 	import re
 
 	from middlewared.plugins.ups.utils import UPS_POWERDOWN_FLAG_FILE
-	ups_config = middleware.call_sync('ups.config')
+	ups_config = render_ctx['ups.config']
 	user = re.sub(r'([#$])', r'\\\1', ups_config.monuser)
 	for field in filter(
 		lambda f: not getattr(ups_config, f),

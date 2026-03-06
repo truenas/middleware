@@ -406,6 +406,10 @@ class SharingNFSService(SharingService):
 
     share_task_type = 'NFS'
 
+    @private
+    async def human_identifier(self, share_task):
+        return await self.get_path_field(share_task)
+
     class Config:
         namespace = "sharing.nfs"
         datastore = "sharing.nfs_share"
@@ -630,8 +634,7 @@ class SharingNFSService(SharingService):
                         )
                 except Exception:
                     # we can't get info on unmounted / locked datasets but this
-                    # doesn't have to be perfect. We can improve in GE with newer pylibzfs
-                    # that doesn't use a process pool
+                    # doesn't have to be perfect.
                     pass
             else:
                 verrors.add(

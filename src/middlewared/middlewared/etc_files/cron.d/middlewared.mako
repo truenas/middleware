@@ -18,7 +18,7 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ## Redmine 55908
 % if not middleware.call_sync("system.is_enterprise") or middleware.call_sync("failover.status") != "BACKUP":
     % for job in middleware.call_sync("cronjob.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cronjob.run {job['id']} true"))}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, "root", f"midclt call cronjob.run {job.id} true"))}
     % endfor
 
     % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):

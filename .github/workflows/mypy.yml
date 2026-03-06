@@ -28,8 +28,12 @@ jobs:
           cd src/middlewared
           mypy \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/cron/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
+            middlewared/plugins/ntp/ \
+            middlewared/plugins/snapshot/ \
+            middlewared/plugins/truenas/ \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \

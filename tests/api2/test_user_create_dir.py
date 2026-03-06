@@ -101,7 +101,8 @@ def test_user_change_homedir_acl_preserve(setup_user):
 
     call('filesystem.setacl', {
         'path': os.path.join(setup_user['home'], 'canary'),
-        'dacl': ACL
+        'dacl': ACL,
+        'options': {'validate_effective_acl': False}
     }, job=True)
 
 

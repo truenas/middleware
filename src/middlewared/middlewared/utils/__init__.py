@@ -69,7 +69,7 @@ async def run(*args: Any, encoding: None = None, **kwargs: Any) -> subprocess.Co
 async def run(*args: Any, encoding: str, **kwargs: Any) -> subprocess.CompletedProcess[str]: ...
 
 
-async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | str]:
+async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] | subprocess.CompletedProcess[str]:
     if isinstance(args[0], list):
         args = tuple(args[0])
 
@@ -102,7 +102,6 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes | 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class SwInfo:
     stable: bool
-    codename: str
     version: str
     fullname: str
     buildtime: int
@@ -116,7 +115,6 @@ def sw_info() -> SwInfo:
         version = manifest['version']
         return SwInfo(
             stable='MASTER' not in manifest['version'],
-            codename=manifest['codename'],
             version=version,
             fullname=f'{BRAND}-{version}',
             buildtime=manifest['buildtime'],

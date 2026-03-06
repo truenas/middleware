@@ -90,6 +90,10 @@ class iSCSITargetExtentService(SharingService):
         """Determine if this extent is in a locked path"""
         path = await self.get_path_field(data)
         if data['type'] == 'FILE':
+            if dataset := data.get('dataset'):
+                return await self.middleware.call(
+                    'pool.dataset.path_in_locked_datasets', dataset
+                )
             for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
                 c = component.as_posix()
                 # walk up the path starting from right to left

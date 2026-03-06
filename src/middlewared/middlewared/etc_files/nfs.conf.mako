@@ -2,13 +2,18 @@
     import pathlib
     import shutil
     from middlewared.plugins.nfs import NFSServicePathInfo
+    from middlewared.service_exception import MatchNotFound
     state_path = NFSServicePathInfo.STATEDIR.path()
     cld_storedir = NFSServicePathInfo.CLDDIR.path()
     cltrack_storedir = NFSServicePathInfo.CLDTRKDIR.path()
     config = render_ctx["nfs.config"]
 
     # HA requirement: Consistent server scope value between controllers
-    scope = render_ctx["system.global.id"]
+    try:
+        scope = middleware.call_sync('system.global.id')
+    except MatchNotFound:
+        # It's possible we're on first system boot and haven't generated a system id yet
+        raise FileShouldNotExist
 
     # Fail-safe setting is two nfsd
     num_nfsd = config['servers'] if config['servers'] > 0 else 2
