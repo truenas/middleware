@@ -216,7 +216,7 @@ class FilesystemService(Service):
             if options['recursive']:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
                 options['posixacl'] = True
-                acltool(fd, AclToolAction.CHOWN, uid, gid, options, job)
+                acltool(fd, AclToolAction.CHOWN, uid, gid, options, job, middleware=self.middleware)
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished changing owner.')
@@ -318,7 +318,7 @@ class FilesystemService(Service):
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 options['posixacl'] = not is_nfs4acl
                 options['do_chmod'] = mode is not None
-                acltool(fd, AclToolAction.STRIP, uid, gid, options, job)
+                acltool(fd, AclToolAction.STRIP, uid, gid, options, job, middleware=self.middleware)
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
@@ -528,7 +528,7 @@ class FilesystemService(Service):
 
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
-                acltool(fd, action, data['uid'], data['gid'], data['options'], job)
+                acltool(fd, action, data['uid'], data['gid'], data['options'], job, middleware=self.middleware)
         finally:
             os.close(fd)
 
@@ -608,7 +608,7 @@ class FilesystemService(Service):
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
                 options['posixacl'] = True
-                acltool(fd, action, data['uid'], data['gid'], options, job)
+                acltool(fd, action, data['uid'], data['gid'], options, job, middleware=self.middleware)
         finally:
             os.close(fd)
 
