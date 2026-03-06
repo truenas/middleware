@@ -21,7 +21,7 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs as rese
 from auto_config import hostname, password, pool_name, user, ha
 from functions import async_SSH_done, async_SSH_start
 from protocols import SSH_NFS, nfs_share
-from truenas_api_client import ClientException
+from truenas_api_client import ClientException, CallTimeout
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
@@ -199,6 +199,71 @@ def get_nfs_service_state():
     return nfs_service['state']
 
 
+def _is_ws_disconnect(e: ClientException) -> bool:
+    """Return True if e is a transient WebSocket disconnection or call timeout.
+
+    Covers three observed variants:
+    - CallTimeout (ClientException subclass, errno=ETIMEDOUT): the call timed out
+      waiting for a response while the middleware was processing a slow restart.
+    - ClientException with errno 103: the WebSocket was closed mid-call.
+    - ClientException with 'WebSocket connection closed' in the message: same
+      condition surfaced via a different code path in the client library.
+    """
+    return isinstance(e, CallTimeout) or e.errno == 103 or 'WebSocket connection closed' in str(e)
+
+
+def resilient_nfs_control(action):
+    """
+    Call service.control for NFS with retry on transient WebSocket disconnections.
+
+    NFS service operations (START/STOP/RESTART) can occasionally drop the WebSocket
+    connection (ClientException errno 103) while the job is in-flight — for example
+    when NFS is stopped in a degraded state or restarted while a share references a
+    user/group that no longer exists.  Retry up to twice; if the service has already
+    reached the expected post-action state despite the connection drop, skip the retry.
+    """
+    expected_state = {'START': 'RUNNING', 'STOP': 'STOPPED', 'RESTART': 'RUNNING'}[action]
+    for attempt in range(3):
+        try:
+            call('service.control', action, 'nfs', job=True)
+            return
+        except ClientException as e:
+            if not _is_ws_disconnect(e) or attempt >= 2:
+                raise
+            sleep(2)
+            if get_nfs_service_state() == expected_state:
+                return
+
+
+def resilient_nfs_update(payload, timeout=120):
+    """
+    Call nfs.update with retry on transient WebSocket disconnections.
+
+    nfs.update can trigger an NFS service restart which occasionally drops the
+    WebSocket connection while the call is in-flight (seen as both CallTimeout and
+    ClientException depending on exact timing).  Retry up to twice; if the config
+    was already applied despite the connection drop, wait for the service to reach
+    RUNNING state (so ports are registered with rpcbind) before returning.
+    """
+    for attempt in range(3):
+        try:
+            return call("nfs.update", payload, timeout=timeout)
+        except ClientException as e:
+            if not _is_ws_disconnect(e) or attempt >= 2:
+                raise
+            sleep(2)
+            current = call("nfs.config")
+            if all(current.get(k) == v for k, v in payload.items()):
+                # Config was applied but the restart may still be in progress.
+                # Poll until the service is RUNNING so that callers can safely
+                # query rpcbind or /etc/nfs.conf without racing.
+                for _ in range(30):
+                    if get_nfs_service_state() == 'RUNNING':
+                        break
+                    sleep(1)
+                return current
+
+
 def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=False):
     """
     Start or Stop NFS service
@@ -258,8 +323,19 @@ def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
-    result = ssh("cat /proc/fs/nfsd/threads")
-    assert int(result) == expected, result
+    for attempt in range(3):
+        # Allow half a sec and retries
+        sleep(0.5)
+        try:
+            result = int(ssh("cat /proc/fs/nfsd/threads"))
+        except ClientException as e:
+            # websocket loss resilience
+            if not _is_ws_disconnect(e) or attempt >= 2:
+                raise
+        if result == expected:
+            break
+
+    assert result == expected, result
 
 
 def confirm_mountd_processes(expected):
@@ -274,15 +350,30 @@ def confirm_mountd_processes(expected):
     assert (num_detected - 1 if num_detected > 1 else num_detected) == expected
 
 
-def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
+def confirm_rpc_processes(expected=['statd', 'bind', 'idmapd']):
     '''
-    Confirm the expected rpc processes are running
-    NB: This only supports the listed names
+    Confirm the expected rpc processes are running.
+    NB: This only supports the listed names.
+
+    Retries for up to ~20 s per process: rpc.idmapd is the last service in
+    the NFS startup chain and can lag well behind nfsd/mountd on a loaded
+    CI host.
     '''
     prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
+    unit = {'idmapd': 'nfs-idmapd', 'bind': 'rpcbind', 'statd': 'rpc-statd'}
     for n in expected:
         procname = prepend[n] + n
-        assert len(ssh(f"pgrep {procname}").splitlines()) > 0
+        found = False
+        for _ in range(20):
+            if ssh(f"pgrep {procname}", check=False):
+                found = True
+                break
+            sleep(1)
+        if not found:
+            diag = ssh(f"systemctl status {unit[n]}.service --no-pager; "
+                       f"journalctl -u {unit[n]}.service --no-pager -n 20",
+                       check=False)
+            assert False, f"{procname} is not running\n{diag}"
 
 
 def confirm_nfs_version(expected=[]):
@@ -313,11 +404,19 @@ def confirm_nfs_version(expected=[]):
 
 def confirm_rpc_port(rpc_name, port_num):
     '''
-    Confirm the expected port for the requested rpc process
+    Confirm the expected port for the requested rpc process.
     rpc_name = ('mountd', 'status', 'nlockmgr')
+
+    Retries for up to ~10 s: RPC services re-register with rpcbind
+    asynchronously after a restart, so the entry may lag on a loaded CI host.
     '''
-    line = ssh(f"rpcinfo -p | grep {rpc_name} | grep tcp")
-    assert line, "Failed to get line from rpcinfo call"
+    line = None
+    for _ in range(10):
+        line = ssh(f"rpcinfo -p | grep {rpc_name} | grep tcp", check=False)
+        if line:
+            break
+        sleep(1)
+    assert line, f"rpcinfo shows no {rpc_name}/tcp registration"
 
     # example:    '100005    3   tcp    618  mountd'
     assert int(line.split()[3]) == port_num, str(line)
@@ -341,7 +440,7 @@ def confirm_nfs_config_settings(keyvals: list[tuple[list[str], str]], retry=True
 
         except (KeyError, ValueError):
             if attempt < max_attempts - 1:
-                sleep(0.1)
+                sleep(0.2)
                 continue  # Retry
             raise  # Re-raise on last attempt
 
@@ -355,7 +454,7 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
     # Remove the user/group and restart nfs
     call(f'{usrgrp}.delete', usrgrpInst['id'])
-    call('service.control', 'RESTART', 'nfs', job=True)
+    resilient_nfs_control('RESTART')
 
     # An alert should be generated
     alerts = call('alert.list')
@@ -370,7 +469,7 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
     # Modify share to map with a built-in user or group and restart NFS
     call('sharing.nfs.update', share, {data[0]: "ftp"})
-    call('service.control', 'RESTART', 'nfs', job=True)
+    resilient_nfs_control('RESTART')
 
     # The alert should be cleared
     alerts = call('alert.list')
@@ -442,7 +541,7 @@ def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
         if acl is None:
             call("filesystem.setperm", {'path': f"/mnt/{_dataset}", "mode": mode or "777"}, job=True)
         else:
-            call("filesystem.setacl", {'path': f"/mnt/{_dataset}", "dacl": acl, 'options': {'validate_effective_acl': False}}, job=True)
+            call("filesystem.setacl", {'path': f"/mnt/{_dataset}", "dacl": acl}, job=True)
 
         yield _dataset
 
@@ -500,19 +599,36 @@ def nfs_config():
         # restore nfs.config
         # Wait a bit for NFS to return to initial run state
         current_run_state = None
-        sleep(0.2)
-        for i in range(2):
+        sleep(0.5)
+        for i in range(5):
             try:
-                call("nfs.update", nfs_db_conf)
+                # nfs.update can trigger a service restart; allow extra time and
+                # catch both CallError and transient WebSocket/timeout errors.
+                call("nfs.update", nfs_db_conf, timeout=120)
+                sleep(0.5)
                 current_run_state = get_nfs_service_state()
                 if current_run_state == want_exit_run_state:
                     break
                 else:
-                    # Didn't make it to the desired runstate:  Sleep and retry
-                    sleep(0.2)
-            except CallError:
-                # Probably reported a failed to start: Sleep and retry
-                sleep(0.2)
+                    # Didn't make it to the desired runstate: sleep and retry
+                    sleep(2)
+            except (CallError, ClientException):
+                # CallTimeout is a ClientException subclass; all indicate the
+                # update did not complete cleanly.  Sleep and retry.
+                sleep(2)
+        # Last resort: if the restore nfs.update left the service in the wrong
+        # state, force it to the desired state explicitly.  Handles both
+        # directions: STOPPED→RUNNING (restart left NFS stopped) and
+        # RUNNING→STOPPED (restore triggered a start when it should stay stopped).
+        if current_run_state != want_exit_run_state:
+            try:
+                if want_exit_run_state == 'RUNNING':
+                    resilient_nfs_control('START')
+                elif want_exit_run_state == 'STOPPED':
+                    resilient_nfs_control('STOP')
+                current_run_state = get_nfs_service_state()
+            except ClientException:
+                pass
         assert current_run_state == want_exit_run_state
 
 
@@ -767,11 +883,16 @@ class TestNFSops:
         """
         assert start_nfs is True
 
+        # Multiple restarts across parametrized variants cause systemd rate-limiting.
+        # Reset the systemd failure counters before each variant to prevent idmapd
+        # and related services from being blocked by start-limit-hit.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
         with mock("system.cpu_info", return_value={"core_count": cores}):
 
             # Use 0 as 'null' flag
             if nfsd is None or nfsd in range(1, 257):
-                call("nfs.update", {"servers": nfsd})
+                resilient_nfs_update({"servers": nfsd})
 
                 confirm_nfs_config_settings([
                     [['nfsd', 'threads'], str(expected['nfsd'])],
@@ -822,6 +943,8 @@ class TestNFSops:
             # Test share disable
             assert share_data['enabled'] is True
             nfs_share = call('sharing.nfs.update', nfsid, {"enabled": False})
+            # Wait a sec before collecting the data
+            sleep(1)
             assert parse_exports() == []
 
     @pytest.mark.parametrize(
@@ -877,6 +1000,8 @@ class TestNFSops:
                 else:
                     assert FailureMsg in str(ve.value.errors[0])
 
+            # Wait a sec before collecting the data from the exports file
+            sleep(1)
             parsed = parse_exports()
             assert len(parsed) == 1, str(parsed)
 
@@ -888,7 +1013,8 @@ class TestNFSops:
 
                 # The entry should be present
                 diff = set(cidr_list) ^ set(exports_networks)
-                assert len(diff) == 0, f'diff: {diff}, exports: {parsed}'
+                assert len(diff) == 0, \
+                    f'Expect cidr_list: {set(cidr_list)}; Found exports_networks: {set(exports_networks)}'
             else:
                 # The entry should NOT be present
                 assert len(exports_networks) == 1, str(parsed)
@@ -954,6 +1080,8 @@ class TestNFSops:
                 else:
                     assert FailureMsg in str(ve.value.errors[0])
 
+            # Wait a sec before collecting the data from the exports file
+            sleep(1)
             parsed = parse_exports()
             assert len(parsed) == 1, str(parsed)
 
@@ -964,7 +1092,8 @@ class TestNFSops:
             if ExpectedToPass:
                 # The entry should be present
                 diff = set(hostlist) ^ set(exports_hosts)
-                assert len(diff) == 0, f'diff: {diff}, exports: {parsed}'
+                assert len(diff) == 0, \
+                    f'Expect hostlist: {set(hostlist)}; Found exports_hosts: {set(exports_hosts)}'
             else:
                 # The entry should not be present
                 assert len(exports_hosts) == 1, str(parsed)
@@ -1225,6 +1354,8 @@ class TestNFSops:
         assert len(parsed) == 1, str(parsed)
         assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
+    # Sometimes the VM under test gets busy and the messages get pushed outside the search window.
+    @pytest.mark.flaky(reruns=3)
     def test_logging_filters(self, start_nfs, nfs_dataset_and_share):
         """
         This test checks the function of the mountd_log setting to filter
@@ -1238,10 +1369,10 @@ class TestNFSops:
 
         with nfs_config():
             # Create several rpc.mountd daemons
-            call("nfs.update", {"servers": 24})
+            resilient_nfs_update({"servers": 24})
 
             # Enable rpc.mountd logging
-            call("nfs.update", {"mountd_log": True})
+            resilient_nfs_update({"mountd_log": True})
 
             # Run test:  rpc.mountd messages should not be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
@@ -1263,7 +1394,7 @@ class TestNFSops:
                 f"Unexpectedly did not find rpc.mountd messages in daemon.log:\n{daemon_data}"
 
             # Disable rpc.mountd logging
-            call("nfs.update", {"mountd_log": False})
+            resilient_nfs_update({"mountd_log": False})
 
             # Run test: rpc.mountd messages should be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
@@ -1514,7 +1645,7 @@ class TestNFSops:
         for port in test_port:
             port_name = port[name] + "_port"
             if port[err] is None:
-                nfs_conf = call("nfs.update", {port_name: port[value]})
+                nfs_conf = resilient_nfs_update({port_name: port[value]})
                 assert nfs_conf[port_name] == port[value]
             else:
                 with pytest.raises(ValidationErrors, match=port[err]):
@@ -1680,7 +1811,7 @@ class TestNFSops:
             assert s['General'].get('Domain') is None, f"'Domain' was not expected to be set: {s}"
 
             # Make a setting change and confirm
-            db = call('nfs.update', {"v4_domain": "ixsystems.com"})
+            db = resilient_nfs_update({"v4_domain": "ixsystems.com"})
             assert db['v4_domain'] == 'ixsystems.com', f"v4_domain failed to be updated in nfs DB: {db}"
             s = parse_server_config("idmapd")
             assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
@@ -2013,7 +2144,7 @@ class TestNFSops:
         with mock("system.is_enterprise", return_value=True):
             with mock("rdma.capable_protocols", return_value=['NFS']):
                 with nfs_config():
-                    call("nfs.update", {"rdma": True})
+                    resilient_nfs_update({"rdma": True})
 
                     # 20049 is the default port for NFS over RDMA.
                     confirm_nfs_config_settings([
@@ -2057,7 +2188,7 @@ class TestNFSops:
                     for monkey_business in [modnfsconf, rogueconf]:
                         # Confirm restore with NFS -server- config changes
                         monkey_business()
-                        call("nfs.update", {"mountd_log": True})
+                        resilient_nfs_update({"mountd_log": True})
                         confirm_clean()
 
                         # Confirm restore with NFS -share- config changes
@@ -2072,7 +2203,7 @@ class TestNFSops:
             with nfs_db():
                 monkey_with_db()
                 ssh("rm -f /etc/nfs.conf")
-                call('service.control', 'RESTART', 'nfs', job=True)
+                resilient_nfs_control('RESTART')
                 confirm_clean()
 
     @pytest.mark.parametrize('entry_type,num,expect_alert', [
@@ -2216,8 +2347,8 @@ def test_missing_or_empty_exports(exports):
             sleep(1)
             confirm_nfsd_processes(nfs_conf['servers'])
         finally:
-            # Return NFS to stopped condition
-            call('service.control', 'STOP', 'nfs', job=True)
+            # Return NFS to stopped condition.
+            resilient_nfs_control('STOP')
             sleep(1)
 
     # Confirm stopped
