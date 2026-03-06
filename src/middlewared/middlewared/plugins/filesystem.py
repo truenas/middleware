@@ -175,14 +175,24 @@ class FilesystemService(Service):
         `sparse` - maps to SPARSE MS-DOS attribute. Is presented to SMB clients, but has
         no impact on local filesystem.
         """
-        return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+        try:
+            return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
 
     @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
         """
-        fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        try:
+            fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
         try:
             attr_mask = attrs.fget_zfs_file_attributes(fd)
         finally:
@@ -565,6 +575,10 @@ class FilesystemService(Service):
 
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
 
         flags = mntinfo['mount_opts']
         for flag in mntinfo['super_opts']:
