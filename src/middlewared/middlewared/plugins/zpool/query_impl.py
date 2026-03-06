@@ -143,7 +143,6 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
     """
     # Single status() call — used for both health info and topology
     status_dict = pool.status(asdict=True)
-
     zpool_status = status_dict["status"]
     is_nonrecoverable = zpool_status in property_sets.ZPOOL_STATUS_NONRECOVERABLE
     health = pool.get_properties(properties={ZPOOLProperty.HEALTH}).health.value
@@ -178,11 +177,9 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
     if data.get("topology"):
         result["topology"] = _format_topology(status_dict)
 
-    # Scan
+    result["scan"] = None
     if data.get("scan"):
         result["scan"] = _format_scan(pool.scrub_info())
-    else:
-        result["scan"] = None
 
     result["expand"] = None
 
