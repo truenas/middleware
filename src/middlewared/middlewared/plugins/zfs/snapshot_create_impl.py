@@ -83,7 +83,7 @@ def create_snapshots_impl(
     try:
         ds_hdl = tls.lzh.open_resource(name=dataset)
     except truenas_pylibzfs.ZFSException as e:
-        if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+        if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
             raise ZFSPathNotFoundException(dataset)
         raise
 

@@ -262,7 +262,7 @@ class PoolDatasetService(Service):
             try:
                 crypto = tls.lzh.open_resource(name=path).crypto()
             except ZFSException as e:
-                if ZFSError(e.code) != ZFSError.EZFS_NOENT:
+                if e.code != ZFSError.EZFS_NOENT:
                     raise
 
                 # For this case we'll treat missing dataset as unlocked
@@ -276,7 +276,7 @@ class PoolDatasetService(Service):
                 if crypto and not crypto.info().key_is_loaded:
                     return True
             except ZFSException as e:
-                if ZFSError(e.code) in (ZFSError.EZFS_NOENT, ZFSError.EZFS_INVALIDNAME):
+                if e.code in (ZFSError.EZFS_NOENT, ZFSError.EZFS_INVALIDNAME):
                     continue
                 else:
                     raise
