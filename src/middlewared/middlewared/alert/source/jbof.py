@@ -5,20 +5,18 @@
 
 import datetime
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, OneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
 
 
-class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
+class JBOFTearDownFailureAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
+    keys = []
     title = "JBOF removal may require reboot"
     text = "Incomplete removal of JBOF requires a reboot to cleanup."
-
-    async def delete(self, alerts, query):
-        return []
 
 
 class JBOFRedfishCommAlertClass(AlertClass):

@@ -1,11 +1,11 @@
 from typing import Any, Literal
 
-from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
 
 
-class SystemTestingAlertClass(AlertClass, SimpleOneShotAlertClass):
+class SystemTestingAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = "System mocking endpoints used"

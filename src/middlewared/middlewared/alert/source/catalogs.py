@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
 class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
@@ -8,14 +8,9 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     title = 'Catalog Not Healthy'
     text = '%(apps)s Applications in %(catalog)s Catalog are not healthy.'
 
-    async def create(self, args):
-        return Alert(CatalogNotHealthyAlertClass, args, key=args['catalog'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.args['catalog'] != query,
-            alerts
-        ))
+    @classmethod
+    def key(cls, args):
+        return args['catalog']
 
 
 class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -25,11 +20,6 @@ class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     title = 'Unable to Sync Catalog'
     text = 'Failed to sync %(catalog)s catalog: %(error)s'
 
-    async def create(self, args):
-        return Alert(CatalogSyncFailedAlertClass, args, key=args['catalog'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.args['catalog'] != query,
-            alerts
-        ))
+    @classmethod
+    def key(cls, args):
+        return args['catalog']

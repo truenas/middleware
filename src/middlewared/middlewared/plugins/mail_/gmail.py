@@ -8,12 +8,13 @@ from google.oauth2.credentials import Credentials
 import google_auth_httplib2
 import httplib2
 
-from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 from middlewared.service import private, Service
 
 
 class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
+    keys = []
 
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
@@ -22,12 +23,6 @@ class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
         "Your Gmail OAuth configuration was discarded due to a token refresh error. "
         "Please go to the system email configuration and click the \"Log In to Gmail\" button again."
     )
-
-    async def create(self, args):
-        return Alert(GMailConfigurationDiscardedAlertClass, args)
-
-    async def delete(self, alerts, query):
-        return []
 
 
 class GmailService:

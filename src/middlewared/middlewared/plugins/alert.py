@@ -20,7 +20,6 @@ from middlewared.alert.base import (
     alert_category_names,
     AlertClass,
     OneShotAlertClass,
-    SimpleOneShotAlertClass,
     DismissableAlertClass,
     AlertLevel,
     Alert,
@@ -105,7 +104,7 @@ class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     exclude_from_list = True
 
 
-class AutomaticAlertFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class AutomaticAlertFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Failed to Notify TrueNAS About Alert"
@@ -308,8 +307,8 @@ class AlertService(Service):
                     alerts_by_classes[alert.klass.__name__].append(alert)
 
             for alerts in alerts_by_classes.values():
-                if isinstance(alerts[0].klass, OneShotAlertClass):
-                    alerts = await alerts[0].klass.load(alerts)
+                if issubclass(alerts[0].klass, OneShotAlertClass):
+                    alerts = await alerts[0].klass.load(self.middleware, alerts)
 
                 self.alerts.extend(alerts)
         else:
@@ -444,7 +443,7 @@ class AlertService(Service):
         if issubclass(alert.klass, DismissableAlertClass):
             related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
                                                       self.alerts)
-            left_alerts = await alert.klass(self.middleware).dismiss(related_alerts, alert)
+            left_alerts = await alert.klass.dismiss(self.middleware, related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self._delete_on_dismiss(deleted_alert)
@@ -960,7 +959,7 @@ class AlertService(Service):
         if not issubclass(klass, OneShotAlertClass):
             raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
-        alert = await klass(self.middleware).create(args)
+        alert = await klass.create(args)
         if alert is None:
             return
 
@@ -1009,7 +1008,7 @@ class AlertService(Service):
 
             related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
                                                       self.alerts)
-            left_alerts = await klass(self.middleware).delete(related_alerts, query)
+            left_alerts = await klass.delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self.alerts.remove(deleted_alert)

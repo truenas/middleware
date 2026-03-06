@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.time_utils import utc_now
 
@@ -33,7 +33,7 @@ class CertificateParsingFailedAlertClass(AlertClass):
     text = "Failed to parse %(type)s %(name)r."
 
 
-class WebUiCertificateSetupFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
     # this is consumed in nginx.conf in the etc plugin
     # you don't have to specify the `AlertClass` verbiage
     # of the class name when calling it
