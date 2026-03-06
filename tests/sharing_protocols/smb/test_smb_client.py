@@ -112,7 +112,7 @@ def test_acl_share_file(request, mount_share):
 def test_acl_share_permissions(request, mount_share, perm):
     assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
 
-    SAMPLE_ENTRY['perms'] | {perm: True}
+    SAMPLE_ENTRY['perms'] = PERMSET | {perm: True}
     payload = {
         'path': mount_share['share']['path'],
         'dacl': [SAMPLE_ENTRY] + PERSISTENT_ACL
