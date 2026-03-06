@@ -101,6 +101,34 @@ def _format_scan(s: typing.Any) -> dict | None:
     }
 
 
+def _format_expand(e: typing.Any) -> dict | None:
+    if e is None:
+        return None
+
+    is_scanning = e.state.name == "SCANNING"
+
+    total = e.to_reflow or 1
+    percentage = (e.reflowed / total) * 100
+
+    total_secs_left = None
+    if is_scanning:
+        elapsed = (time.time() - e.start_time) or 1
+        rate = (e.reflowed or 1) / elapsed
+        total_secs_left = int((total - e.reflowed) / rate)
+
+    return {
+        "state": e.state.name,
+        "expanding_vdev": e.expanding_vdev,
+        "start_time": e.start_time,
+        "end_time": e.end_time if not is_scanning else None,
+        "bytes_to_reflow": e.to_reflow,
+        "bytes_reflowed": e.reflowed,
+        "waiting_for_resilver": e.waiting_for_resilver,
+        "total_secs_left": total_secs_left,
+        "percentage": percentage,
+    }
+
+
 def _format_properties(props_struct: typing.Any, requested_names: list[str]) -> dict:
     """Transform struct_zpool_property to a dict of property value dicts."""
     result = {}
@@ -182,6 +210,8 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
         result["scan"] = _format_scan(pool.scrub_info())
 
     result["expand"] = None
+    if data.get("expand"):
+        result["expand"] = _format_expand(pool.expand_info())
 
     # Features
     if data.get("features"):

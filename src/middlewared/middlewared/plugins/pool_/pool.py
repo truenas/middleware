@@ -133,14 +133,23 @@ class PoolService(CRUDService):
                 'value': at['raw'],
             }
 
-            rv.update({
-                'status': status,
-                'scan': scan,
-                'expand': info['expand'] or {
+            expand = info['expand']
+            if expand is not None:
+                if expand['start_time']:
+                    expand['start_time'] = datetime.fromtimestamp(expand['start_time'], tz=timezone.utc)
+                if expand['end_time']:
+                    expand['end_time'] = datetime.fromtimestamp(expand['end_time'], tz=timezone.utc)
+            else:
+                expand = {
                     'state': None, 'expanding_vdev': None, 'start_time': None,
                     'end_time': None, 'bytes_to_reflow': None, 'bytes_reflowed': None,
                     'waiting_for_resilver': None, 'total_secs_left': None, 'percentage': None,
-                },
+                }
+
+            rv.update({
+                'status': status,
+                'scan': scan,
+                'expand': expand,
                 'topology': await self.middleware.call('pool.transform_topology', info['topology']),
                 'healthy': info['healthy'],
                 'warning': info['warning'],
