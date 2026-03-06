@@ -142,3 +142,24 @@ class EventSource:
 
     def on_finish_sync(self):
         pass
+
+
+class TypedEventSource[A: 'BaseModel'](EventSource):
+    """EventSource subclass that provides validated args as a typed pydantic model."""
+    args: type[A]
+    typed_arg: A
+
+    async def validate_arg(self) -> None:
+        if self.arg is None:
+            data = {}
+        else:
+            try:
+                data = json.loads(self.arg)
+            except ValueError as e:
+                verrors = ValidationErrors()
+                verrors.add("", str(e))
+                raise verrors
+
+        result = validate_model(self.args, data, dump_models=False)
+        self.typed_arg = result  # type: ignore[assignment]
+        self.arg = result.model_dump(warnings=False, by_alias=True)
