@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -10,7 +10,6 @@ from middlewared.api.current import (
     InitShutdownScriptUpdate,
     InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult,
     InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult,
-    QueryOptions,
 )
 from middlewared.service import GenericCRUDService, job, private
 
@@ -37,14 +36,6 @@ class InitShutdownScriptService(GenericCRUDService[InitShutdownScriptEntry]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self._svc_part = InitShutdownScriptServicePart(self.context)
-
-    async def query(
-        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
-    ) -> list[InitShutdownScriptEntry] | InitShutdownScriptEntry | int:
-        return await self._svc_part.query(filters or [], options or QueryOptions())
-
-    async def get_instance(self, id_: int, options: QueryOptions | None = None) -> InitShutdownScriptEntry:
-        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult, check_annotations=True)
     async def do_create(self, data: InitShutdownScriptCreate) -> InitShutdownScriptEntry:
