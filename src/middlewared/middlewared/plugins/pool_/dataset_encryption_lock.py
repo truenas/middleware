@@ -80,8 +80,9 @@ class PoolDatasetService(Service):
                     'zfs_file_attributes': {'immutable': True}
                 })
             except OSError as e:
-                # It's ok to get `EROFS` because the dataset can have `readonly=on`
-                if e.errno != errno.EROFS:
+                # EROFS: dataset has readonly=on
+                # ENOENT: mountpoint directory doesn't exist on disk
+                if e.errno not in (errno.EROFS, errno.ENOENT):
                     raise
 
         await self.middleware.call_hook('dataset.post_lock', id_)
@@ -296,6 +297,18 @@ class PoolDatasetService(Service):
                         })
                     except Exception:
                         pass
+
+            # If key was loaded but no datasets under this encryption root
+            # were successfully mounted, unload the key to restore a clean
+            # locked state rather than leaving an orphaned loaded key.
+            to_mount_names = {d['name'] for d in to_mount}
+            if not to_mount_names.intersection(unlocked):
+                try:
+                    self.call_sync2(self.s.zfs.resource.unload_key, name)
+                except Exception:
+                    self.logger.warning(
+                        '%s: failed to unload key after mount failures', name, exc_info=True
+                    )
 
         for failed_ds in failed:
             failed_datasets = {}
