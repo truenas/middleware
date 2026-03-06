@@ -55,7 +55,7 @@ def _get_mount_info(fd: int):
     return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
 
 
-def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None) -> None:
+def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None, middleware=None) -> None:
     """
     Perform recursive ACL-related operations using fd-based operations via the
     truenas_os extension.
@@ -71,6 +71,29 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
     do_chmod = options.get('do_chmod', False)
 
     mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(fd)
+
+    total_objects = 0
+    if job is not None and middleware is not None:
+        try:
+            total_objects = middleware.call_sync('zfs.resource.estimate_object_count', fs_name)
+            if traverse:
+                real_path = os.readlink(f'/proc/self/fd/{fd}')
+                for entry in truenas_os.iter_mount(
+                    mnt_id=mnt_id,
+                    statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE | truenas_os.STATMOUNT_FS_TYPE,
+                ):
+                    child_mnt = entry.mnt_point
+                    if not child_mnt.startswith(real_path + '/'):
+                        continue
+                    if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
+                        continue
+                    if entry.fs_type == 'zfs' and entry.sb_source:
+                        total_objects += middleware.call_sync(
+                            'zfs.resource.estimate_object_count', entry.sb_source
+                        )
+        except Exception:
+            total_objects = 0
+
     root_acl = None
 
     if action in (AclToolAction.CLONE, AclToolAction.INHERIT):
@@ -99,8 +122,12 @@ def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, j
             return
 
         last_report_time = now
+        if total_objects > 0:
+            pct = min(10 + int(state.cnt / total_objects * 89), 99)
+        else:
+            pct = None
         job.set_progress(
-            None,
+            pct,
             f'Processing {state.current_directory} ({state.cnt:,} files processed)',
         )
 
