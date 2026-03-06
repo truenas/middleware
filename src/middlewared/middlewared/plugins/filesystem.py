@@ -346,6 +346,8 @@ class FilesystemService(Service):
             # Make sure this is actually ZFS before issuing FS ioctls
             try:
                 self.get_zfs_attributes(str(path))
+            except CallError:
+                raise
             except Exception:
                 raise CallError(f'{path}: ZFS attributes are not supported.')
 
