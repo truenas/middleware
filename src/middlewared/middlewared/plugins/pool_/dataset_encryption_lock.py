@@ -73,15 +73,16 @@ class PoolDatasetService(Service):
             # shows up as locked - and once unload key goes through, the share/ds will actually be locked then
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
-        if ds['mountpoint'] and await self.middleware.run_in_thread(os.path.exists, ds['mountpoint']):
+        if ds['mountpoint']:
             try:
                 await self.middleware.call('filesystem.set_zfs_attributes', {
                     'path': ds['mountpoint'],
                     'zfs_file_attributes': {'immutable': True}
                 })
             except OSError as e:
-                # It's ok to get `EROFS` because the dataset can have `readonly=on`
-                if e.errno != errno.EROFS:
+                # EROFS: dataset has readonly=on
+                # ENOENT: mountpoint directory doesn't exist on disk
+                if e.errno not in (errno.EROFS, errno.ENOENT):
                     raise
 
         await self.middleware.call_hook('dataset.post_lock', id_)
