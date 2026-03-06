@@ -151,7 +151,7 @@ def do_stig_auth(c, user_obj, secret):
     assert resp['response_type'] == 'OTP_REQUIRED'
     assert resp['username'] == user_obj.username
 
-    resp = c.call('auth.login_ex', {
+    resp = c.call('auth.login_ex_continue', {
         'mechanism': 'OTP_TOKEN',
         'otp_token': get_2fa_totp_token(secret)
     })
