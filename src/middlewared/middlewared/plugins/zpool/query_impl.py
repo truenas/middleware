@@ -1,6 +1,8 @@
 import typing
 from datetime import datetime, timezone
 
+from middlewared.utils import BOOT_POOL_NAME_VALID
+
 from truenas_pylibzfs import property_sets, ZFSException, ZFSError, ZPOOLProperty
 
 from .exceptions import ZpoolNotFoundException
@@ -171,6 +173,10 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
 
 
 def _get_zpools_cb(pool, state: list):
+    if pool.name in BOOT_POOL_NAME_VALID:
+        # Skip boot pool during discovery. Callers that need boot pool
+        # info should explicitly pass its name via pool_names.
+        return True
     state.append(pool.name)
     return True
 
