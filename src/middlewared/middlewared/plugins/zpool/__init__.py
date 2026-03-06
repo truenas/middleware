@@ -1,7 +1,6 @@
 from .get_zpool_disks_impl import get_zpool_disks_impl
 from .get_zpool_features_impl import get_zpool_features_impl
 from .get_zpool_properties_impl import get_zpool_properties_impl
-from .get_zpool_scan_impl import get_zpool_scan_impl
 from .get_zpool_status_impl import get_zpool_status_impl
 from .get_zpool_topology_impl import get_zpool_topology_impl
 from .query_impl import query_impl
@@ -11,7 +10,6 @@ __all__ = (
     "get_zpool_disks_impl",
     "get_zpool_features_impl",
     "get_zpool_properties_impl",
-    "get_zpool_scan_impl",
     "get_zpool_status_impl",
     "get_zpool_topology_impl",
     "query_impl",

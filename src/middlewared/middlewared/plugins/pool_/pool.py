@@ -1,5 +1,6 @@
 import errno
 import os
+from datetime import datetime, timezone
 
 import middlewared.sqlalchemy as sa
 
@@ -113,11 +114,13 @@ class PoolService(CRUDService):
             if info['properties']['health']['value'] == 'SUSPENDED':
                 status = 'SUSPENDED'
 
-            # Normalize scan field: if there's no scan data, libzfs returns a dict with None values
-            # but the API expects either None or a valid PoolScan object with all required fields
+            # Convert raw scan timestamps to datetime for the public API.
             scan = info['scan']
-            if scan and scan['state'] is None:
-                scan = None
+            if scan is not None:
+                scan['start_time'] = datetime.fromtimestamp(scan['start_time'], tz=timezone.utc)
+                scan['end_time'] = datetime.fromtimestamp(scan['end_time'], tz=timezone.utc)
+                if scan['pause'] is not None:
+                    scan['pause'] = datetime.fromtimestamp(scan['pause'], tz=timezone.utc)
 
             props = info['properties']
 

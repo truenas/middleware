@@ -1,5 +1,5 @@
+import time
 import typing
-from datetime import datetime, timezone
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
@@ -7,7 +7,6 @@ from truenas_pylibzfs import property_sets, ZFSException, ZFSError, ZPOOLPropert
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
-from .get_zpool_scan_impl import get_zpool_scan_impl
 
 __all__ = ("query_impl",)
 
@@ -52,29 +51,53 @@ def _format_topology(status_dict: dict) -> dict:
     return top
 
 
-def _format_scan(scrub_struct: typing.Any) -> dict | None:
-    """Transform struct_zpool_scrub to a scan dict, or None."""
-    if scrub_struct is None:
+def _format_scan(s: typing.Any) -> dict | None:
+    """Transform a struct_zpool_scrub into a scan dict, or None.
+
+    Args:
+        s: A truenas_pylibzfs.struct_zpool_scrub or None.
+
+    Returns:
+        dict with keys: function, state, start_time, end_time, percentage,
+        bytes_to_process, bytes_processed, bytes_issued, pause, errors,
+        total_secs_left.  Returns None when no scan has ever run.
+    """
+    if s is None:
         return None
 
-    percentage = scrub_struct.percentage
-    if percentage is None and scrub_struct.to_examine > 0:
-        percentage = (scrub_struct.examined / scrub_struct.to_examine) * 100
+    is_scanning = s.state.name == "SCANNING"
+
+    # percentage — use the pre-computed value when available (active scan),
+    # otherwise derive from issued / (to_examine - skipped).
+    percentage = s.percentage
     if percentage is None:
-        percentage = 0.0
+        total = s.to_examine - s.skipped
+        percentage = (s.issued / total) * 100 if total > 0 else 0.0
+
+    # total_secs_left — only meaningful while actively scanning.
+    total_secs_left = None
+    if is_scanning:
+        total = s.to_examine - s.skipped
+        elapsed = (int(time.time()) - s.pass_start - s.pass_scrub_spent_paused) or 1
+        issue_rate = (s.pass_issued or 1) / elapsed
+        total_secs_left = int((total - s.issued) / issue_rate)
+
+    # pause — unix timestamp when the scan was paused (0 = not paused).
+    # Only meaningful while actively scanning and paused.
+    pause = s.pass_scrub_pause if is_scanning and s.pass_scrub_pause != 0 else None
 
     return {
-        "function": scrub_struct.func.name,
-        "state": scrub_struct.state.name,
-        "start_time": datetime.fromtimestamp(scrub_struct.start_time, tz=timezone.utc),
-        "end_time": datetime.fromtimestamp(scrub_struct.end_time, tz=timezone.utc),
+        "function": s.func.name,
+        "state": s.state.name,
+        "start_time": s.start_time,
+        "end_time": s.end_time,
         "percentage": percentage,
-        "bytes_to_process": scrub_struct.to_examine,
-        "bytes_processed": scrub_struct.examined,
-        "bytes_issued": scrub_struct.issued,
-        "pause": None,
-        "errors": scrub_struct.errors,
-        "total_secs_left": None,
+        "bytes_to_process": s.to_examine,
+        "bytes_processed": s.examined,
+        "bytes_issued": s.issued,
+        "pause": pause,
+        "errors": s.errors,
+        "total_secs_left": total_secs_left,
     }
 
 
@@ -157,7 +180,7 @@ def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
 
     # Scan
     if data.get("scan"):
-        result["scan"] = _format_scan(get_zpool_scan_impl(pool))
+        result["scan"] = _format_scan(pool.scrub_info())
     else:
         result["scan"] = None
 
