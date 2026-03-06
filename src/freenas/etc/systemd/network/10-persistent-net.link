@@ -4,12 +4,5 @@ Driver=ntb_netdev
 
 [Link]
 Name=ntb0
-# TODO: at time of writing, ntb on SCALE has pathological
-# behavior related TCP/IP Window size calculation whereby
-# the receiving side clamps the window size to 0 causing
-# recalculation which, ultimately, ends with behavior
-# described in https://en.wikipedia.org/wiki/Silly_window_syndrome
-# The work-around is to drop MTU size a bit which fixes
-# the scenario altogether. When we discover why this is
-# happening, we should remove the MTUBytes line.
-MTUBytes=64000
+# NAS-140093: Drop ntb MTU to 4000 to fix memory allocation issues
+MTUBytes=4000
