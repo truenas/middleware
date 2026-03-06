@@ -151,7 +151,7 @@ def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryStat
         snap_hdl = hdl.open_resource(name=snap_path)
         __snapshot_callback(snap_hdl, state)
     except ZFSException as e:
-        if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+        if e.code == ZFSError.EZFS_NOENT:
             raise ZFSPathNotFoundException(snap_path)
         raise
 
@@ -162,7 +162,7 @@ def __query_dataset_snapshots(hdl: Any, ds_path: str, state: SnapshotQueryState)
         ds_hdl = hdl.open_resource(name=ds_path)
         __dataset_iter_callback(ds_hdl, state)
     except ZFSException as e:
-        if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+        if e.code == ZFSError.EZFS_NOENT:
             raise ZFSPathNotFoundException(ds_path)
         raise
 

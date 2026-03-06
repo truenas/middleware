@@ -93,7 +93,7 @@ def rollback_impl(
     try:
         tls.lzh.open_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
-        if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+        if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
             raise ZFSPathNotFoundException(path)
         raise
 
@@ -102,7 +102,7 @@ def rollback_impl(
         try:
             ds_hdl = tls.lzh.open_resource(name=dataset)
         except truenas_pylibzfs.ZFSException as e:
-            if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+            if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
                 raise ZFSPathNotFoundException(dataset)
             raise
 
@@ -120,7 +120,7 @@ def rollback_impl(
             try:
                 tls.lzh.open_resource(name=snap_path)
             except truenas_pylibzfs.ZFSException as e:
-                if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+                if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
                     raise ZFSPathNotFoundException(snap_path)
                 raise
 
