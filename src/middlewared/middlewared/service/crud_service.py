@@ -394,15 +394,15 @@ class GenericCRUDService[E](CRUDService[E]):
     """
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...
+    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...
+    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
     async def query(
         self, filters: list[Any] | None = None, options: QueryOptions | None = None,
-    ) -> list[E] | E | int: ...
+    ) -> list[E]: ...
 
     async def query(
         self, filters: list[Any] | None = None, options: QueryOptions | None = None,
