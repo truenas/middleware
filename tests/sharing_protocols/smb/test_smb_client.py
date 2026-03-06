@@ -193,7 +193,15 @@ def test_acl_share_flags(request, mount_share, flagset):
 
 def do_stream_ops(fname, samba_compat):
     set_xattr_compat(samba_compat)
+    try:
+        _do_stream_ops(fname, samba_compat)
+    finally:
+        # Restore the default (compat enabled) so this test's global kernel
+        # state change doesn't affect other test modules.
+        set_xattr_compat(True)
 
+
+def _do_stream_ops(fname, samba_compat):
     assert list_stream(fname) == []
 
     data_to_write = b'canary'
