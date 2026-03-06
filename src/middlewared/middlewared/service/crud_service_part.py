@@ -41,13 +41,13 @@ class CRUDServicePart[E, PK = int](ServicePart):
         return data
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...
+    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...
+    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: QueryOptions) -> list[E] | E | int: ...
+    async def query(self, filters: list[Any], options: QueryOptions) -> list[E]: ...
 
     async def query(self, filters: list[Any], options: QueryOptions) -> list[E] | E | int:
         opts = options.model_dump()
