@@ -48,15 +48,37 @@ def set_special_acl(path, special_acl_type):
     ssh(f"echo '{ace_text}' | truenas_setfacl -f - {path}")
 
 
+def _grant_user_write_dacl(share_path, username):
+    """
+    Add an inheritable named USER ACE granting FULL_CONTROL on the share root.
+    Files created under the share inherit this named ACE, which (unlike special
+    entries) grants ACE_WRITE_ACL so the user can call set_sd on their files.
+    """
+    uid = call('user.get_user_obj', {'username': username})['pw_uid']
+    current_acl = call('filesystem.getacl', share_path)
+    call('filesystem.setacl', {
+        'path': share_path,
+        'dacl': current_acl['acl'] + [{
+            'tag': 'USER',
+            'id': uid,
+            'type': 'ALLOW',
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+        }],
+    }, job=True)
+
+
 def test_null_dacl_set(unprivileged_user_fixture, share):
     """ verify that setting NULL DACL results in expected ZFS ACL """
+    _grant_user_write_dacl(share['share']['path'], unprivileged_user_fixture.username)
+
     with smb_connection(
         share=share['share']['name'],
         username=unprivileged_user_fixture.username,
         password=unprivileged_user_fixture.password,
     ) as c:
         fh = c.create_file('test_null_dacl', 'w')
-        current_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP)
+        current_sd = c.get_sd(fh, security.SECINFO_DACL)
         current_sd.dacl = None
         c.set_sd(fh, current_sd, security.SECINFO_DACL)
 
@@ -92,13 +114,15 @@ def test_null_dacl_functional(unprivileged_user_fixture, share):
 
 def test_empty_dacl_set(unprivileged_user_fixture, share):
     """ verify that setting empty DACL results in expected ZFS ACL """
+    _grant_user_write_dacl(share['share']['path'], unprivileged_user_fixture.username)
+
     with smb_connection(
         share=share['share']['name'],
         username=unprivileged_user_fixture.username,
         password=unprivileged_user_fixture.password,
     ) as c:
         fh = c.create_file('test_empty_dacl', 'w')
-        current_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP)
+        current_sd = c.get_sd(fh, security.SECINFO_DACL)
         current_sd.dacl = security.acl()
         c.set_sd(fh, current_sd, security.SECINFO_DACL)
 
