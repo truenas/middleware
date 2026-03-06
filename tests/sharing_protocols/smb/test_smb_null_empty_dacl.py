@@ -58,7 +58,7 @@ def test_null_dacl_set(unprivileged_user_fixture, share):
         fh = c.create_file('test_null_dacl', 'w')
         current_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP)
         current_sd.dacl = None
-        c.set_sd(fh, current_sd, security.SECINFO_OWNER | security.SECINFO_GROUP | security.SECINFO_DACL)
+        c.set_sd(fh, current_sd, security.SECINFO_DACL)
 
         new_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP | security.SECINFO_DACL)
         assert new_sd.dacl is None
@@ -100,7 +100,7 @@ def test_empty_dacl_set(unprivileged_user_fixture, share):
         fh = c.create_file('test_empty_dacl', 'w')
         current_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP)
         current_sd.dacl = security.acl()
-        c.set_sd(fh, current_sd, security.SECINFO_OWNER | security.SECINFO_GROUP | security.SECINFO_DACL)
+        c.set_sd(fh, current_sd, security.SECINFO_DACL)
 
         new_sd = c.get_sd(fh, security.SECINFO_OWNER | security.SECINFO_GROUP | security.SECINFO_DACL)
         assert new_sd.dacl.num_aces == 0
