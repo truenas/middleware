@@ -2,15 +2,41 @@
 # Any updates to this file should have corresponding updates to tests
 
 from contextlib import contextmanager
-import os
 import enum
+import errno
+import os
 import stat
 import truenas_os
 from tempfile import TemporaryDirectory
 import typing
 
+from middlewared.service_exception import CallError
+
 
 ID_MAX = 2 ** 32 - 2
+
+
+@contextmanager
+def safe_open(path, mode='r', buffering=-1, encoding=None, errors=None, newline=None):
+    """
+    Drop-in for open() that uses openat2(RESOLVE_NO_SYMLINKS) as the opener,
+    preventing symlink-based TOCTOU attacks. Raises OSError(ELOOP) if any
+    path component is a symlink.
+    """
+    def _opener(p, flags):
+        return truenas_os.openat2(
+            p, flags,
+            mode=0o666 if (flags & os.O_CREAT) else 0,
+            resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+        )
+
+    try:
+        with open(path, mode, buffering, encoding, errors, newline, opener=_opener) as f:
+            yield f
+    except OSError as e:
+        if e.errno == errno.ELOOP:
+            raise CallError('Symlinks are not permitted.', errno.ELOOP)
+        raise
 
 
 class FileChanges(enum.IntFlag):
