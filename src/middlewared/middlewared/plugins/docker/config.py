@@ -11,6 +11,7 @@ from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
+from. state_setup import status_change as docker_status_change
 from .state_utils import Status
 from .utils import applications_ds_name
 from .validation_utils import validate_address_pools
@@ -100,7 +101,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
-                await self.middleware.call('docker.setup.status_change')
+                await docker_status_change(self)
                 if config['pool']:
                     await self.middleware.call('app.metadata.generate')
             elif config['pool'] and (address_pools_changed or registry_mirrors_changed):

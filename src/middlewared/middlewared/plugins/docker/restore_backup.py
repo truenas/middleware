@@ -9,6 +9,7 @@ from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, job, Service
 
 from .fs_manage import mount_docker_ds
+from .state_setup import create_update_docker_datasets
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
 
@@ -41,7 +42,7 @@ class DockerService(Service):
         self.middleware.call_sync('service.control', 'STOP', 'docker').wait_sync(raise_error=True)
         job.set_progress(20, 'Stopped Docker service')
 
-        docker_config = self.middleware.call_sync('docker.config')
+        docker_config = self.call_sync2(self.context.s.docker.config)
         self.call_sync2(
             self.s.zfs.resource.destroy_impl, os.path.join(docker_config['dataset'], 'docker'),
             bypass=True, recursive=True,
@@ -61,7 +62,7 @@ class DockerService(Service):
 
         job.set_progress(30, 'Rolled back snapshots')
 
-        self.middleware.call_sync('docker.setup.create_update_docker_datasets', docker_config['dataset'])
+        create_update_docker_datasets(self.context, docker_config.dataset)
         mount_docker_ds(self.context)
 
         apps_to_start = []
