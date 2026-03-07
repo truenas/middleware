@@ -9,7 +9,9 @@ from middlewared.api.current import (
     DockerUpdateArgs, DockerUpdateResult,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
 )
-from middlewared.service import ConfigService, job, private
+from middlewared.service import GenericConfigService, job, private
+
+from .config import DockerConfigServicePart
 
 
 if typing.TYPE_CHECKING:
@@ -20,9 +22,13 @@ if typing.TYPE_CHECKING:
 __all__ = ('DockerService',)
 
 
-class DockerService(ConfigService[DockerEntry]):
+class DockerService(GenericConfigService[DockerEntry]):
 
     class Config:
         cli_namespace = 'app.docker'
         role_prefix = 'DOCKER'
         entry = DockerEntry
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._svc_part = DockerConfigServicePart(self.context)
