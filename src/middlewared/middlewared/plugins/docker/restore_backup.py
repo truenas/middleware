@@ -8,6 +8,7 @@ from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, job, Service
 
+from .fs_manage import mount_docker_ds
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
 
@@ -61,7 +62,7 @@ class DockerService(Service):
         job.set_progress(30, 'Rolled back snapshots')
 
         self.middleware.call_sync('docker.setup.create_update_docker_datasets', docker_config['dataset'])
-        self.middleware.call_sync('docker.fs_manage.mount')
+        mount_docker_ds(self.context)
 
         apps_to_start = []
         for app_info in backup['apps']:

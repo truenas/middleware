@@ -4,6 +4,7 @@ from middlewared.api.base import Event
 from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, periodic, Service
 
+from .fs_manage import ix_apps_is_mounted, mount_docker_ds
 from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
 # Docker can take a long time to start on systems with HDDs (2-3+ minutes)
@@ -63,11 +64,11 @@ class DockerStateService(Service):
         try:
             await self.before_start_check()
             if mount_datasets:
-                catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
+                catalog_sync_job = await mount_docker_ds(self.context)
 
             config = await self.middleware.call('docker.config')
             # Make sure correct ix-apps dataset is mounted
-            if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
+            if not await ix_apps_is_mounted(self.context, config['dataset']):
                 raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
             await (
                 await self.middleware.call('service.control', 'START', 'docker', {'timeout': DOCKER_START_TIMEOUT})

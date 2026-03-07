@@ -11,6 +11,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 
+from .fs_manage import mount_docker_ds
 from .state_utils import (
     DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, missing_required_datasets,
 )
@@ -72,7 +73,7 @@ class DockerSetupService(Service):
 
         await self.create_update_docker_datasets(config['dataset'])
         # Docker dataset would not be mounted at this point, so we will explicitly mount them now
-        catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
+        catalog_sync_job = await mount_docker_ds(self.context)
         if catalog_sync_job:
             await catalog_sync_job.wait()
         await self.middleware.call('docker.state.start_service')

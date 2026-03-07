@@ -10,6 +10,7 @@ from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
+from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
 from .state_utils import Status
 from .utils import applications_ds_name
 from .validation_utils import validate_address_pools
@@ -84,10 +85,10 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 catalog_sync_job = None
                 try:
                     job.set_progress(30, 'Umounting docker apps dataset')
-                    catalog_sync_job = await self.middleware.call('docker.fs_manage.umount')
+                    catalog_sync_job = await mount_docker_ds(self)
                 except Exception:
                     self.logger.exception('Unexpected failure umounting apps dataset')
-                    if await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
+                    if await ix_apps_is_mounted(self):
                         raise
                 finally:
                     if catalog_sync_job:
@@ -104,7 +105,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                     await self.middleware.call('app.metadata.generate')
             elif config['pool'] and (address_pools_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
-                catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
+                catalog_sync_job = await mount_docker_ds(self)
                 if catalog_sync_job:
                     await catalog_sync_job.wait()
 

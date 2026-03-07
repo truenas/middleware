@@ -6,6 +6,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.service_exception import InstanceNotFound
 from middlewared.plugins.pool_.utils import CreateImplArgs
 
+from .fs_manage import mount_docker_ds, umount_docker_ds
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
 
@@ -37,7 +38,7 @@ class DockerService(Service):
                     zprops=DatasetDefaults.create_time_props(os.path.basename(dsname))
                 )
             )
-            if umount_job := await self.middleware.call('docker.fs_manage.umount'):
+            if umount_job := await umount_docker_ds(self.context):
                 await umount_job.wait()
 
             await self.replicate_apps_dataset(new_pool, old_config['pool'], migration_options)
@@ -45,7 +46,7 @@ class DockerService(Service):
             await self.middleware.call('datastore.update', 'services.docker', old_config['id'], config)
 
             # Mount the new pool's ix-apps so backup can be restored
-            if mount_job := await self.middleware.call('docker.fs_manage.mount'):
+            if mount_job := await mount_docker_ds(self.context):
                 await mount_job.wait()
 
             job.set_progress(70, f'Restoring docker apps in {new_pool!r} pool')
