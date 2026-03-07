@@ -25,10 +25,10 @@ def get_status_dict() -> dict[str, str]:
 async def set_status(context: ServiceContext, new_status: str, extra: str | None = None) -> None:
     global STATUS
     assert new_status in Status.__members__
-    new_status = Status(new_status)
+    status = Status(new_status)
     STATUS = APPS_STATUS(
-        new_status,
-        f'{STATUS_DESCRIPTIONS[new_status]}:\n{extra}' if extra else STATUS_DESCRIPTIONS[new_status],
+        status,
+        f'{STATUS_DESCRIPTIONS[status]}:\n{extra}' if extra else STATUS_DESCRIPTIONS[status],
     )
     context.middleware.send_event('docker.state', 'CHANGED', fields=get_status_dict())
 
@@ -124,7 +124,7 @@ async def periodic_check(context: ServiceContext) -> None:
         return
 
     try:
-        await (await context.call2(context.s.catalog.sync)).wait()
+        await (await context.call2(context.s.catalog.sync)).wait()  # type: ignore[call-overload,misc]
     except CallError as e:
         if e.errno != errno.EBUSY:
             raise

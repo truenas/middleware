@@ -22,12 +22,13 @@ async def status_change(context: ServiceContext) -> None:
     config = await context.call2(context.s.docker.config)
     if not config.pool:
         try:
-            await (await context.call2(context.s.catalog.sync)).wait()
+            await (await context.call2(context.s.catalog.sync)).wait()  # type: ignore[call-overload,misc]
         except CallError as e:
             if e.errno != errno.EBUSY:
                 raise
         return
 
+    assert config.dataset is not None
     await context.to_thread(create_update_docker_datasets, context, config.dataset)
     # Docker dataset would not be mounted at this point, so we will explicitly mount them now
     catalog_sync_job = await mount_docker_ds(context)
@@ -41,21 +42,22 @@ async def status_change(context: ServiceContext) -> None:
 async def validate_fs(context: ServiceContext) -> None:
     config = await context.call2(context.s.docker.config)
     if not config.pool:
-        raise CallError(f'{config["pool"]!r} pool not found.')
+        raise CallError(f'{config.pool!r} pool not found.')
 
+    assert config.dataset is not None
     ds = {
         i['name']
         for i in await context.call2(
             context.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=docker_datasets(config['dataset']), properties=None)
+            ZFSResourceQuery(paths=docker_datasets(config.dataset), properties=None)
         )
     }
-    if missing_datasets := missing_required_datasets(ds, config['dataset']):
+    if missing_datasets := missing_required_datasets(ds, config.dataset):
         raise CallError(f'Missing "{", ".join(missing_datasets)}" dataset(s) required for starting docker.')
 
     await context.to_thread(create_update_docker_datasets, context, config.dataset)
 
-    for i in (config['dataset'], config['pool']):
+    for i in (config.dataset, config.pool):
         if await context.middleware.call('pool.dataset.path_in_locked_datasets', i):
             raise CallError(
                 f'Cannot start docker because {i!r} is located in a locked dataset.',

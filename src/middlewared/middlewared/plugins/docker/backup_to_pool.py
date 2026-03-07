@@ -38,6 +38,7 @@ async def backup_to_pool(context: ServiceContext, job: Job, target_pool: str) ->
 
     verrors.check()
 
+    assert docker_config.pool is not None
     job.set_progress(10, 'Initial validation has been completed, stopping docker service')
     await (await context.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
     job.set_progress(30, 'Snapshotting apps dataset')

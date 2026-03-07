@@ -21,6 +21,7 @@ from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
 from .events import setup_docker_events
+from .fs_manage import umount_docker_ds
 from .restore_backup import restore_backup
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
@@ -69,7 +70,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_backup')
-    def backup(self, job: Job, backup_name: str) -> str:
+    def backup(self, job: Job, backup_name: str) -> str:  # type: ignore[misc]
         """
         Create a backup of existing apps.
 
@@ -85,7 +86,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_backup_to_pool')
-    async def backup_to_pool(self, job: Job, target_pool: str) -> None:
+    async def backup_to_pool(self, job: Job, target_pool: str) -> None:  # type: ignore[misc]
         """
         Create a backup of existing apps on `target_pool`.
 
@@ -104,7 +105,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         roles=['DOCKER_WRITE'],
         check_annotations=True,
     )
-    def delete_backup(self, backup_name) -> None:
+    def delete_backup(self, backup_name: str) -> None:
         """
         Delete `backup_name` app backup.
         """
@@ -125,7 +126,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_restore_backup')
-    def restore_backup(self, job: Job, backup_name: str) -> None:
+    def restore_backup(self, job: Job, backup_name: str) -> None:  # type: ignore[misc]
         """
         Restore a backup of existing apps.
         """
@@ -148,12 +149,12 @@ class DockerService(GenericConfigService[DockerEntry]):
         await docker_set_status(self.context, new_status, extra)
 
     @private
-    async def setup_docker_events(self):
+    async def setup_docker_events(self) -> None:
         await self.context.to_thread(setup_docker_events, self.context)
 
     @private
-    async def start_service(self) -> None:
-        await start_service(self.context)
+    async def start_service(self, mount_datasets: bool = False) -> None:
+        await start_service(self.context, mount_datasets)
 
     @private
     @periodic(interval=86400)
@@ -167,6 +168,10 @@ class DockerService(GenericConfigService[DockerEntry]):
     @private
     async def terminate_timeout(self) -> int:
         return terminate_timeout()
+
+    @private
+    async def umount_docker_ds(self) -> Job | None:
+        return await umount_docker_ds(self.context)
 
     @private
     async def validate_state(self, raise_error: bool = True) -> None:
@@ -185,7 +190,7 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
         await middleware.call2(middleware.s.docker.set_status, Status.UNCONFIGURED.value)
 
 
-async def handle_license_update(middleware: Middleware, *args, **kwargs):
+async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
     if not await middleware.call('docker.license_active'):
         # We will like to stop docker in this case
         await middleware.call('service.control', 'STOP', 'docker')

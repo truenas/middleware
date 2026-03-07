@@ -54,7 +54,7 @@ async def ix_apps_is_mounted(context: ServiceContext, dataset_to_check: str | No
         return False
 
     if dataset_to_check:
-        return fs_details['source'] == dataset_to_check
+        return bool(fs_details['source'] == dataset_to_check)
 
     return True
 
@@ -90,7 +90,7 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                     # gone. if we crash here, we prevent users
                     # from using our API to move zpools that
                     # have the system dataset....dont do that
-                    return
+                    return None
                 raise
 
             await context.middleware.call(
@@ -98,7 +98,7 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                 UpdateImplArgs(name=docker_ds, iprops={'mountpoint'})
             )
         try:
-            return await context.middleware.call('catalog.sync')
+            return await context.middleware.call('catalog.sync')  # type: ignore[no-any-return]
         except CallError as e:
             if e.errno != errno.EBUSY:
                 raise
@@ -106,12 +106,14 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
             if jobs := await context.middleware.call(
                 'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
             ):
-                return await context.middleware.call('core.job_wait', jobs[0]['id'])
+                return await context.middleware.call('core.job_wait', jobs[0]['id'])  # type: ignore[no-any-return]
     except Exception as e:
         await set_status(
             context, Status.FAILED.value, f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
         )
         raise
+
+    return None
 
 
 async def mount_docker_ds(context: ServiceContext) -> Job | None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import typing
-from typing import Any, Awaitable
+from typing import Any
 from urllib.parse import urlparse
 
 import middlewared.sqlalchemy as sa
@@ -13,7 +13,7 @@ from middlewared.plugins.zfs.utils import get_encryption_info
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
 from .migrate import migrate_ix_apps_dataset
 from .state_management import set_status as docker_set_status
-from. state_setup import status_change as docker_status_change
+from .state_setup import status_change as docker_status_change
 from .state_utils import Status
 from .utils import applications_ds_name
 from .validation_utils import validate_address_pools
@@ -41,7 +41,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
     _datastore = 'services.docker'
     _entry = DockerEntry
 
-    async def extend(self, data: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
+    async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         data['nvidia'] = (await self.middleware.call('system.advanced.config'))['nvidia']
         return data

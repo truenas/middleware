@@ -221,7 +221,7 @@ def pass_thread_local_storage[**P, R, X](fn: Callable[Concatenate[X, P], R]) -> 
     return fn
 
 
-def periodic(interval: float, run_on_start: bool = True):
+def periodic[**P, R](interval: float, run_on_start: bool = True) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Flag method as a periodic task that runs automatically at regular intervals.
 
@@ -279,8 +279,8 @@ def periodic(interval: float, run_on_start: bool = True):
         - Periodic tasks are typically combined with `@private` decorator since they run automatically and are not
           meant to be called directly via the API.
     """
-    def wrapper(fn):
-        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
+    def wrapper(fn: Callable[P, R]) -> Callable[P, R]:
+        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)  # type: ignore[attr-defined]
         return fn
 
     return wrapper
