@@ -9,6 +9,7 @@ from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound
 
+from .backup import delete_backup
 from .backup_to_pool import incrementally_replicate_apps_dataset
 from .fs_manage import mount_docker_ds, umount_docker_ds
 from .state_management import set_status as docker_set_status
@@ -27,7 +28,7 @@ async def migrate_ix_apps_dataset(
     backup_name = f'backup_to_{new_pool}_{datetime.now().strftime("%F_%T")}'
     await docker_set_status(context, Status.MIGRATING.value)
     job.set_progress(30, 'Creating docker backup')
-    backup_job = await context.middleware.call('docker.backup', backup_name)
+    backup_job = await context.call2(context.s.docker.backup, backup_name)
     await backup_job.wait()
     if backup_job.error:
         raise CallError(f'Failed to backup docker apps: {backup_job.error}')
@@ -68,7 +69,7 @@ async def migrate_ix_apps_dataset(
     else:
         job.set_progress(100, 'Migration completed successfully')
     finally:
-        await context.middleware.call('docker.delete_backup', backup_name)
+        await context.to_thread(delete_backup, context, backup_name)
 
 
 async def replicate_apps_dataset(context: ServiceContext, new_pool: str, old_pool: str) -> None:

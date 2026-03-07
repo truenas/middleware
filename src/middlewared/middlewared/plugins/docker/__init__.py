@@ -10,9 +10,13 @@ from middlewared.api.current import (
     DockerUpdateArgs, DockerUpdateResult,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
     DockerBackupToPoolArgs, DockerBackupToPoolResult,
+    DockerBackupArgs, DockerBackupResult,
+    DockerListBackupsArgs, DockerListBackupsResult, DockerBackupMap,
+    DockerDeleteBackupArgs, DockerDeleteBackupResult,
 )
 from middlewared.service import GenericConfigService, job, periodic, private
 
+from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
 from .state_management import (
@@ -49,6 +53,22 @@ class DockerService(GenericConfigService[DockerEntry]):
         self._svc_part = DockerConfigServicePart(self.context)
 
     @api_method(
+        DockerBackupArgs, DockerBackupResult,
+        audit='Docker: Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock='docker_backup')
+    def backup(self, job: Job, backup_name: str) -> str:
+        """
+        Create a backup of existing apps.
+
+        This creates a backup of existing apps on the same pool in which docker is initialized.
+        """
+        return backup(self.context, job, backup_name)
+
+    @api_method(
         DockerBackupToPoolArgs, DockerBackupToPoolResult,
         audit='Docker: Backup to pool',
         audit_extended=lambda target_pool: target_pool,
@@ -67,6 +87,26 @@ class DockerService(GenericConfigService[DockerEntry]):
         then start it again after snapshot has been taken of the current apps dataset.
         """
         return await backup_to_pool(self.context, job, target_pool)
+
+    @api_method(
+        DockerDeleteBackupArgs, DockerDeleteBackupResult,
+        audit='Docker: Deleting Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE'],
+        check_annotations=True,
+    )
+    def delete_backup(self, backup_name) -> None:
+        """
+        Delete `backup_name` app backup.
+        """
+        delete_backup(self.context, backup_name)
+
+    @api_method(DockerListBackupsArgs, DockerListBackupsResult, roles=['DOCKER_READ'], check_annotations=True)
+    def list_backups(self) -> DockerBackupMap:
+        """
+        List existing app backups.
+        """
+        return list_backups(self.context)
 
     @private
     async def after_start_check(self) -> None:
@@ -128,3 +168,4 @@ async def setup(middleware: Middleware) -> None:
     middleware.event_subscribe('system.ready', _event_system_ready)
     await middleware.call2(middleware.s.docker.initialize_state)
     middleware.register_hook('system.post_license_update', handle_license_update)
+    middleware.register_hook('update.post_run', post_system_update_hook, sync=True)

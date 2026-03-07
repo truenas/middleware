@@ -10,6 +10,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
+    'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
     'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
@@ -152,7 +153,7 @@ class DockerListBackupsArgs(BaseModel):
     pass
 
 
-class AppInfo(BaseModel):
+class DockerBackupAppInfo(BaseModel):
     id: NonEmptyString
     """Unique identifier of the application."""
     name: NonEmptyString
@@ -161,10 +162,10 @@ class AppInfo(BaseModel):
     """Current running state of the application."""
 
 
-class BackupInfo(BaseModel):
+class DockerBackupEntry(BaseModel):
     name: NonEmptyString
     """Name of the backup."""
-    apps: list[AppInfo]
+    apps: list[DockerBackupAppInfo]
     """Array of applications included in this backup."""
     snapshot_name: NonEmptyString
     """ZFS snapshot name associated with this backup."""
@@ -174,12 +175,12 @@ class BackupInfo(BaseModel):
     """Filesystem path where the backup is stored."""
 
 
-class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
-    pass
+class DockerBackupMap(RootModel[dict[str, DockerBackupEntry]]):
+    root: dict[str, DockerBackupEntry]
 
 
 class DockerListBackupsResult(BaseModel):
-    result: DockerBackupInfo
+    result: DockerBackupMap
     """Object mapping backup names to their detailed information."""
 
 
