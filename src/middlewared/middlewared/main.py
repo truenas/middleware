@@ -92,6 +92,7 @@ if typing.TYPE_CHECKING:
 
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.cron import CronJobService
+from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.ntp import NTPServerService
@@ -180,6 +181,7 @@ class ServiceContainer(BaseServiceContainer):
 
         self.catalog = CatalogService(middleware)
         self.cronjob = CronJobService(middleware)
+        self.docker = DockerService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
