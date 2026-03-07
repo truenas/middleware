@@ -47,7 +47,7 @@ class AppService(CRUDService):
         `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
         used to install/manage app.
         """
-        if not self.middleware.call_sync('docker.state.validate', False):
+        if not self.middleware.call_sync('docker.validate_state', False):
             return filter_list([], filters, options)
 
         extra = options.get('extra', {})
@@ -123,7 +123,7 @@ class AppService(CRUDService):
 
         TODO: Add support for advanced mode which will enable users to use their own compose files
         """
-        self.middleware.call_sync('docker.state.validate')
+        self.middleware.call_sync('docker.validate_state')
 
         if self.middleware.call_sync('app.query', [['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)

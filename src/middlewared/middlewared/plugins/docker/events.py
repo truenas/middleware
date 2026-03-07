@@ -3,6 +3,8 @@ from middlewared.api.current import DockerEventsAddedEvent
 from middlewared.plugins.apps.ix_apps.docker.utils import get_docker_client, PROJECT_KEY
 from middlewared.service import Service
 
+from .state_management import validate_state
+
 
 class DockerEventService(Service):
 
@@ -19,7 +21,7 @@ class DockerEventService(Service):
         ]
 
     def setup(self):
-        if not self.middleware.call_sync('docker.state.validate', False):
+        if not self.context.run_coroutine(validate_state(self.context, False)):
             return
 
         try:

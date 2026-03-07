@@ -9,6 +9,7 @@ from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, job, Service
 
 from .fs_manage import mount_docker_ds
+from .state_management import start_service
 from .state_setup import create_update_docker_datasets
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
@@ -81,7 +82,7 @@ class DockerService(Service):
 
         job.set_progress(50, 'Generated metadata for apps')
 
-        self.middleware.call_sync('docker.state.start_service', True)
+        self.context.run_coroutine(start_service(self.context, True))
         job.set_progress(70, 'Started Docker service')
 
         logger.debug('Starting %r apps', ', '.join(apps_to_start))

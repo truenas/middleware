@@ -3,6 +3,8 @@ from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
 from middlewared.service import CRUDService, private
 from middlewared.utils.filter_list import filter_list
 
+from .state_management import validate_state
+
 
 class DockerNetworkService(CRUDService):
 
@@ -17,7 +19,7 @@ class DockerNetworkService(CRUDService):
         """
         Query all docker networks
         """
-        if not self.middleware.call_sync('docker.state.validate', False):
+        if not self.context.run_coroutine(validate_state(self.context, False)):
             return filter_list([], filters, options)
 
         networks = []

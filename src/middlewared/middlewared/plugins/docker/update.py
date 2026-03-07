@@ -16,6 +16,7 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
+from .state_management import get_status_dict
 from .state_utils import Status
 from .utils import applications_ds_name
 from .validation_utils import validate_address_pools
@@ -273,7 +274,7 @@ class DockerService(ConfigService):
         """
         Returns the status of the docker service.
         """
-        return await self.middleware.call('docker.state.get_status_dict')
+        return get_status_dict()
 
     @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'])
     async def nvidia_present(self):

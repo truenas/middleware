@@ -98,7 +98,7 @@ class AppService(Service):
         """
         Returns space available in bytes in the configured apps pool which apps can consume
         """
-        await self.middleware.call('docker.state.validate')
+        await self.middleware.call('docker.validate_state')
         return (await self.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes']
 
     @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=['APPS_READ'])

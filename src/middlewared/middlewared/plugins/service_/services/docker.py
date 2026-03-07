@@ -16,8 +16,8 @@ class DockerService(SimpleService):
     systemd_unit = 'docker'
 
     async def before_start(self):
-        await self.middleware.call('docker.state.set_status', Status.INITIALIZING.value)
-        await self.middleware.call('docker.state.before_start_check')
+        await self.middleware.call2(self.s.docker.set_status, Status.INITIALIZING.value)
+        await self.middleware.call2(self.s.docker.before_start_check)
         physical_ifaces = await self.middleware.call('interface.query', [['type', '=', 'PHYSICAL']])
         for key, value in (
             ('vm.panic_on_oom', 0),
@@ -42,7 +42,7 @@ class DockerService(SimpleService):
         finally:
             asyncio.get_event_loop().call_later(
                 2,
-                lambda: self.middleware.create_task(self.middleware.call('docker.state.after_start_check')),
+                lambda: self.middleware.create_task(self.middleware.call2(self.s.docker.after_start_check)),
             )
 
     async def stop(self):
@@ -51,13 +51,13 @@ class DockerService(SimpleService):
         await self._systemd_unit('containerd.service', 'stop')
 
     async def after_start(self):
-        await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
+        await self.middleware.call2(self.s.docker.set_status, Status.RUNNING.value)
         self.middleware.create_task(self.middleware.call('docker.events.setup'))
         if (await self.middleware.call('docker.config'))['enable_image_updates']:
             self.middleware.create_task(self.middleware.call('app.image.op.check_update'))
 
     async def before_stop(self):
-        await self.middleware.call('docker.state.set_status', Status.STOPPING.value)
+        await self.middleware.call2(self.s.docker.set_status, Status.STOPPING.value)
 
     async def after_stop(self):
-        await self.middleware.call('docker.state.set_status', Status.STOPPED.value)
+        await self.middleware.call2(self.s.docker.set_status, Status.STOPPED.value)

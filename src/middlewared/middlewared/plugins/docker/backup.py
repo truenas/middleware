@@ -24,6 +24,7 @@ from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, Service
 
+from .state_management import validate_state
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup
 from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
 
@@ -49,7 +50,7 @@ class DockerService(Service):
 
         This creates a backup of existing apps on the same pool in which docker is initialized.
         """
-        self.middleware.call_sync('docker.state.validate')
+        self.context.run_coroutine(validate_state(self.context))
         docker_config = self.middleware.call_sync('docker.config')
         name = backup_name or datetime.datetime.now().strftime('%F_%T')
         if not validate_snapshot_name(f'a@{name}'):
@@ -163,7 +164,7 @@ class DockerService(Service):
         """
         Delete `backup_name` app backup.
         """
-        self.middleware.call_sync('docker.state.validate')
+        self.context.run_coroutine(validate_state(self.context))
 
         backup = self.middleware.call_sync('docker.list_backups').get(backup_name)
         if not backup:

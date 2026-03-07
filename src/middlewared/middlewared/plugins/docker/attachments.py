@@ -2,6 +2,8 @@ import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
 
+from .state_management import start_service
+
 
 class DockerFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'docker'
@@ -48,7 +50,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         if not attachments:
             return
         try:
-            await self.middleware.call('docker.state.start_service', True)
+            await self.call2(self.s.docker.start_service, True)
         except Exception:
             self.middleware.logger.error('Failed to start docker')
 

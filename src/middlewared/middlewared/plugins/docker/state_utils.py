@@ -2,7 +2,6 @@ import dataclasses
 import collections
 import enum
 import os
-import typing
 
 
 APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
@@ -44,7 +43,7 @@ class DatasetDefaults:
         }
 
     @classmethod
-    def update_only(cls, ds_name: str | None = None, skip_ds_name_check: bool = False):
+    def update_only(cls, ds_name: str | None = None, skip_ds_name_check: bool = False) -> dict[str, str]:
         return {
             k: v['value'] for k, v in dataclasses.asdict(cls()).items()
             if v['create_time_only'] is False and (skip_ds_name_check or v['ds_name'] in (ds_name, None))
@@ -94,7 +93,7 @@ def datasets_to_skip_for_snapshot_on_backup(docker_ds: str) -> list[str]:
     ]
 
 
-def docker_datasets(docker_ds: str) -> typing.List[str]:
+def docker_datasets(docker_ds: str) -> list[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
             CATALOG_DATASET_NAME,
@@ -105,7 +104,7 @@ def docker_datasets(docker_ds: str) -> typing.List[str]:
     ]
 
 
-def docker_dataset_custom_props(ds: str) -> typing.Dict:
+def docker_dataset_custom_props(ds: str) -> dict[str, str]:
     props = {
         'ix-apps': {
             'encryption': 'off',
@@ -115,7 +114,7 @@ def docker_dataset_custom_props(ds: str) -> typing.Dict:
     return props.get(ds, dict())
 
 
-def docker_dataset_update_props(props: dict) -> typing.Dict[str, str]:
+def docker_dataset_update_props(props: dict) -> dict[str, str]:
     return {
         attr: value
         for attr, value in props.items()
@@ -123,7 +122,7 @@ def docker_dataset_update_props(props: dict) -> typing.Dict[str, str]:
     }
 
 
-def missing_required_datasets(existing_datasets: set, docker_ds: str) -> set:
+def missing_required_datasets(existing_datasets: set, docker_ds: str) -> set[str]:
     diff = existing_datasets ^ set(docker_datasets(docker_ds))
     if fatal_diff := diff.intersection(
         set(docker_ds) | {

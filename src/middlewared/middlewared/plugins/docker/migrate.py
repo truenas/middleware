@@ -7,6 +7,7 @@ from middlewared.service_exception import InstanceNotFound
 from middlewared.plugins.pool_.utils import CreateImplArgs
 
 from .fs_manage import mount_docker_ds, umount_docker_ds
+from .state_management import set_status as docker_set_status
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
 
@@ -17,7 +18,7 @@ class DockerService(Service):
     async def migrate_ix_apps_dataset(self, job, config, old_config, migration_options):
         new_pool = config['pool']
         backup_name = f'backup_to_{new_pool}_{datetime.now().strftime("%F_%T")}'
-        await self.middleware.call('docker.state.set_status', Status.MIGRATING.value)
+        await docker_set_status(self.context, Status.MIGRATING.value)
         job.set_progress(30, 'Creating docker backup')
         backup_job = await self.middleware.call('docker.backup', backup_name)
         await backup_job.wait()
@@ -55,7 +56,7 @@ class DockerService(Service):
             if restore_job.error:
                 raise CallError(f'Failed to restore docker apps on the new pool: {restore_job.error}')
         except Exception:
-            await self.middleware.call('docker.state.set_status', Status.MIGRATION_FAILED.value)
+            await docker_set_status(self.context, Status.MIGRATION_FAILED.value)
             raise
         else:
             job.set_progress(100, 'Migration completed successfully')

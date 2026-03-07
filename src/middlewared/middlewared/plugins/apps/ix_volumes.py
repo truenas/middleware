@@ -24,7 +24,7 @@ class AppsIxVolumeService(Service):
         """
         Query ix-volumes with `filters` and `options`.
         """
-        if not await self.middleware.call('docker.state.validate', False):
+        if not await self.middleware.call('docker.validate_state', False):
             return filter_list([], filters, options)
 
         docker_ds = (await self.middleware.call('docker.config'))['dataset']
