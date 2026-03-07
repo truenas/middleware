@@ -13,12 +13,14 @@ from middlewared.api.current import (
     DockerBackupArgs, DockerBackupResult,
     DockerListBackupsArgs, DockerListBackupsResult, DockerBackupMap,
     DockerDeleteBackupArgs, DockerDeleteBackupResult,
+    DockerRestoreBackupArgs, DockerRestoreBackupResult,
 )
 from middlewared.service import GenericConfigService, job, periodic, private
 
 from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
+from .restore_backup import restore_backup
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
     validate_state, periodic_check, terminate, terminate_timeout
@@ -107,6 +109,20 @@ class DockerService(GenericConfigService[DockerEntry]):
         List existing app backups.
         """
         return list_backups(self.context)
+
+    @api_method(
+        DockerRestoreBackupArgs, DockerRestoreBackupResult,
+        audit='Docker: Restoring Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock='docker_restore_backup')
+    def restore_backup(self, job: Job, backup_name: str) -> None:
+        """
+        Restore a backup of existing apps.
+        """
+        restore_backup(self.context, job, backup_name)
 
     @private
     async def after_start_check(self) -> None:

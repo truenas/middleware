@@ -1,97 +1,90 @@
+from __future__ import annotations
+
 import errno
 import logging
 import os
+import typing
 
-from middlewared.api import api_method
-from middlewared.api.current import DockerRestoreBackupArgs, DockerRestoreBackupResult, ZFSResourceSnapshotRollbackQuery
+from middlewared.api.current import ZFSResourceSnapshotRollbackQuery
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
-from middlewared.service import CallError, job, Service
+from middlewared.service import CallError, ServiceContext
 
+from .backup import list_backups
 from .fs_manage import mount_docker_ds
 from .state_management import start_service
 from .state_setup import create_update_docker_datasets
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
 
+if typing.TYPE_CHECKING:
+    from middlewared.job import Job
+
+
 logger = logging.getLogger('app_lifecycle')
 
 
-class DockerService(Service):
+def restore_backup(context: ServiceContext, job: Job, backup_name: str) -> None:
+    backup = list_backups(context).root.get(backup_name)
+    if not backup:
+        raise CallError(f'Backup {backup_name!r} not found', errno=errno.ENOENT)
 
-    class Config:
-        cli_namespace = 'app.docker'
+    job.set_progress(10, 'Basic validation complete')
 
-    @api_method(
-        DockerRestoreBackupArgs, DockerRestoreBackupResult,
-        audit='Docker: Restoring Backup',
-        audit_extended=lambda backup_name: backup_name,
-        roles=['DOCKER_WRITE']
+    logger.debug('Restoring backup %r', backup_name)
+    context.middleware.call_sync('service.control', 'STOP', 'docker').wait_sync(raise_error=True)
+    job.set_progress(20, 'Stopped Docker service')
+
+    docker_config = context.call_sync2(context.s.docker.config)
+    assert docker_config.dataset is not None
+    context.call_sync2(
+        context.s.zfs.resource.destroy_impl, os.path.join(docker_config.dataset, 'docker'),
+        bypass=True, recursive=True,
     )
-    @job(lock='docker_restore_backup')
-    def restore_backup(self, job, backup_name):
-        """
-        Restore a backup of existing apps.
-        """
-        backup = self.middleware.call_sync('docker.list_backups').get(backup_name)
-        if not backup:
-            raise CallError(f'Backup {backup_name!r} not found', errno=errno.ENOENT)
 
-        job.set_progress(10, 'Basic validation complete')
+    job.set_progress(25, f'Rolling back to {backup_name!r} backup')
+    docker_ds, snapshot_name = backup.snapshot_name.split('@')
+    skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
+    for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
+        context.call_sync2(context.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+            path=f'{dataset}@{snapshot_name}',
+            force=True,
+            recursive=True,
+            recursive_clones=True,
+            bypass=True,
+        ))
 
-        logger.debug('Restoring backup %r', backup_name)
-        self.middleware.call_sync('service.control', 'STOP', 'docker').wait_sync(raise_error=True)
-        job.set_progress(20, 'Stopped Docker service')
+    job.set_progress(30, 'Rolled back snapshots')
 
-        docker_config = self.call_sync2(self.context.s.docker.config)
-        self.call_sync2(
-            self.s.zfs.resource.destroy_impl, os.path.join(docker_config['dataset'], 'docker'),
-            bypass=True, recursive=True,
-        )
+    create_update_docker_datasets(context, docker_config.dataset)
+    context.run_coroutine(mount_docker_ds(context))
 
-        job.set_progress(25, f'Rolling back to {backup_name!r} backup')
-        docker_ds, snapshot_name = backup['snapshot_name'].split('@')
-        skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
-        for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
-            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
-                path=f'{dataset}@{snapshot_name}',
-                force=True,
-                recursive=True,
-                recursive_clones=True,
-                bypass=True,
-            ))
+    apps_to_start = []
+    for app_info in backup.apps:
+        if os.path.exists(get_installed_app_path(app_info.id)) is False:
+            logger.debug('App %r path not found, skipping restoring', app_info.id)
+            continue
 
-        job.set_progress(30, 'Rolled back snapshots')
+        if app_info.state == AppState.RUNNING.name:
+            apps_to_start.append(app_info.id)
 
-        create_update_docker_datasets(self.context, docker_config.dataset)
-        mount_docker_ds(self.context)
+    metadata_job = context.middleware.call_sync('app.metadata.generate')
+    metadata_job.wait_sync()
+    if metadata_job.error:
+        raise CallError(f'Failed to generate app metadata: {metadata_job.error}')
 
-        apps_to_start = []
-        for app_info in backup['apps']:
-            if os.path.exists(get_installed_app_path(app_info['id'])) is False:
-                logger.debug('App %r path not found, skipping restoring', app_info['id'])
-                continue
+    job.set_progress(50, 'Generated metadata for apps')
 
-            if app_info['state'] == AppState.RUNNING.name:
-                apps_to_start.append(app_info['id'])
+    context.run_coroutine(start_service(context, True))
+    job.set_progress(70, 'Started Docker service')
 
-        metadata_job = self.middleware.call_sync('app.metadata.generate')
-        metadata_job.wait_sync()
-        if metadata_job.error:
-            raise CallError(f'Failed to generate app metadata: {metadata_job.error}')
-
-        job.set_progress(50, 'Generated metadata for apps')
-
-        self.context.run_coroutine(start_service(self.context, True))
-        job.set_progress(70, 'Started Docker service')
-
-        logger.debug('Starting %r apps', ', '.join(apps_to_start))
-        redeploy_job = self.middleware.call_sync(
-            'core.bulk', 'app.redeploy', [
-                [app_name] for app_name in apps_to_start
-            ]
-        )
-        redeploy_job.wait_sync()
-        # Not going to raise an error if some app failed to start as that could be true for various apps
-        logger.debug('Restore complete')
-        job.set_progress(100, f'Restore {backup_name!r} complete')
+    logger.debug('Starting %r apps', ', '.join(apps_to_start))
+    redeploy_job = context.middleware.call_sync(
+        'core.bulk', 'app.redeploy', [
+            [app_name] for app_name in apps_to_start
+        ]
+    )
+    redeploy_job.wait_sync()
+    # Not going to raise an error if some app failed to start as that could be true for various apps
+    logger.debug('Restore complete')
+    job.set_progress(100, f'Restore {backup_name!r} complete')
