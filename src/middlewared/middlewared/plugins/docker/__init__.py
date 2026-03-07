@@ -9,9 +9,11 @@ from middlewared.api.current import (
     DockerStatusArgs, DockerStatusResult,
     DockerUpdateArgs, DockerUpdateResult,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
+    DockerBackupToPoolArgs, DockerBackupToPoolResult,
 )
 from middlewared.service import GenericConfigService, job, periodic, private
 
+from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
@@ -45,6 +47,26 @@ class DockerService(GenericConfigService[DockerEntry]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self._svc_part = DockerConfigServicePart(self.context)
+
+    @api_method(
+        DockerBackupToPoolArgs, DockerBackupToPoolResult,
+        audit='Docker: Backup to pool',
+        audit_extended=lambda target_pool: target_pool,
+        roles=['DOCKER_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock='docker_backup_to_pool')
+    async def backup_to_pool(self, job: Job, target_pool: str) -> None:
+        """
+        Create a backup of existing apps on `target_pool`.
+
+        This creates a backup of existing apps on the `target_pool` specified. If this is executed multiple times,
+        in the next iteration it will incrementally backup the apps that have changed since the last backup.
+
+        Note: This will stop the docker service (which means current active apps will be stopped) and
+        then start it again after snapshot has been taken of the current apps dataset.
+        """
+        return await backup_to_pool(self.context, job, target_pool)
 
     @private
     async def after_start_check(self) -> None:
