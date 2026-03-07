@@ -5,7 +5,7 @@ import typing
 from middlewared.api import api_method
 from middlewared.api.base import Event
 from middlewared.api.current import (
-    DockerEntry, ZFSResourceQuery, DockerStateChangedEvent,
+    DockerEntry, DockerEventsAddedEvent, DockerStateChangedEvent,
     DockerStatusArgs, DockerStatusResult,
     DockerUpdateArgs, DockerUpdateResult,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
@@ -20,6 +20,7 @@ from middlewared.service import GenericConfigService, job, periodic, private
 from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
+from .events import setup_docker_events
 from .restore_backup import restore_backup
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
@@ -47,6 +48,12 @@ class DockerService(GenericConfigService[DockerEntry]):
                 description='Docker state events',
                 roles=['DOCKER_READ'],
                 models={'CHANGED': DockerStateChangedEvent},
+            ),
+            Event(
+                name='docker.events',
+                description='Docker container events',
+                roles=['DOCKER_READ'],
+                models={'ADDED': DockerEventsAddedEvent},
             )
         ]
 
@@ -137,17 +144,21 @@ class DockerService(GenericConfigService[DockerEntry]):
         return await initialize_state(self.context)
 
     @private
-    @periodic(interval=86400)
-    async def state_periodic_check(self) -> None:
-        await periodic_check(self.context)
-
-    @private
     async def set_status(self, new_status: str, extra: str | None = None) -> None:
         await docker_set_status(self.context, new_status, extra)
 
     @private
+    async def setup_docker_events(self):
+        await self.context.to_thread(setup_docker_events, self.context)
+
+    @private
     async def start_service(self) -> None:
         await start_service(self.context)
+
+    @private
+    @periodic(interval=86400)
+    async def state_periodic_check(self) -> None:
+        await periodic_check(self.context)
 
     @private
     async def terminate(self) -> None:
@@ -185,3 +196,5 @@ async def setup(middleware: Middleware) -> None:
     await middleware.call2(middleware.s.docker.initialize_state)
     middleware.register_hook('system.post_license_update', handle_license_update)
     middleware.register_hook('update.post_run', post_system_update_hook, sync=True)
+    # We are going to check in setup docker events if setting up events is relevant or not
+    middleware.create_task(middleware.call2(middleware.s.docker.setup_docker_events))

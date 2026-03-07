@@ -28,7 +28,9 @@ async def migrate_ix_apps_dataset(
     backup_name = f'backup_to_{new_pool}_{datetime.now().strftime("%F_%T")}'
     await docker_set_status(context, Status.MIGRATING.value)
     job.set_progress(30, 'Creating docker backup')
-    backup_job = await context.call2(context.s.docker.backup, backup_name)
+    backup_job = await context.call2(
+        context.s.docker.backup, backup_name,  # type: ignore[call-overload,misc]
+    )
     await backup_job.wait()
     if backup_job.error:
         raise CallError(f'Failed to backup docker apps: {backup_job.error}')
@@ -59,7 +61,9 @@ async def migrate_ix_apps_dataset(
             await mount_job.wait()
 
         job.set_progress(70, f'Restoring docker apps in {new_pool!r} pool')
-        restore_job = await context.middleware.call('docker.restore_backup', backup_name)
+        restore_job = await context.call2(
+            context.s.docker.restore_backup, backup_name,  # type: ignore[call-overload,misc]
+        )
         await restore_job.wait()
         if restore_job.error:
             raise CallError(f'Failed to restore docker apps on the new pool: {restore_job.error}')
@@ -88,11 +92,11 @@ async def replicate_apps_dataset(context: ServiceContext, new_pool: str, old_poo
         await incrementally_replicate_apps_dataset(context, old_pool, new_pool, MIGRATION_NAMING_SCHEMA)
     finally:
         await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
-            path=snap_details['name'],
+            path=snap_details.name,
             recursive=True,
             bypass=True,
         ))
-        target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
+        target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details.snapshot_name}'
         try:
             await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
                 path=target_snap_name,
