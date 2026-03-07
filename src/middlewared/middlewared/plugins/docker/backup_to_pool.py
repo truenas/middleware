@@ -4,7 +4,7 @@ import typing
 
 from middlewared.api.current import ZFSResourceQuery, ZFSResourceSnapshotCreateQuery
 from middlewared.plugins.zfs.utils import get_encryption_info
-from middlewared.service import ServiceContext, ValidationErrors
+from middlewared.service import CallError, ServiceContext, ValidationErrors
 
 from .utils import applications_ds_name
 
@@ -88,4 +88,6 @@ async def incrementally_replicate_apps_dataset(
             'mount': False,
         }
     )
-    await replication_job.wait(raise_error=True)
+    await replication_job.wait()
+    if replication_job.error:
+        raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {replication_job.error}')

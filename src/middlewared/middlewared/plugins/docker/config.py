@@ -11,6 +11,7 @@ from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
+from .migrate import migrate_ix_apps_dataset
 from .state_management import set_status as docker_set_status
 from. state_setup import status_change as docker_status_change
 from .state_utils import Status
@@ -60,7 +61,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
         await self.validate(old_config, config)
 
         if migrate_apps:
-            await self.middleware.call('docker.migrate_ix_apps_dataset', job, config, old_config, {})
+            await migrate_ix_apps_dataset(self, job, config, old_config)
             return await self.config()
 
         if old_config != config:
