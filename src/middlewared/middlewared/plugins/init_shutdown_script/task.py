@@ -39,10 +39,10 @@ async def execute_task(context: ServiceContext, task: InitShutdownScriptEntry) -
 
 
 async def execute_init_tasks(context: ServiceContext, job: Job, when: str) -> None:
-    tasks = typing.cast(list[InitShutdownScriptEntry], await context.s.initshutdownscript.query([
+    tasks = await context.s.initshutdownscript.query([
         ['enabled', '=', True],
         ['when', '=', when]
-    ]))
+    ])
     tasks_len = len(tasks)
 
     for idx, task in enumerate(tasks):
