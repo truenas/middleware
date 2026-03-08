@@ -55,8 +55,12 @@ async def test_docker_registry_mirrors_validation(new_mirrors, old_mirrors, erro
     m['system.is_ha_capable'] = lambda *arg: False
     svc_part = make_svc_part(m)
 
-    new_config = DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', registry_mirrors=new_mirrors)
-    old_config = DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', registry_mirrors=old_mirrors)
+    new_config = DockerEntry.model_construct(
+        **DEFAULTS, pool='tank', dataset='tank/ix-apps', registry_mirrors=new_mirrors,
+    )
+    old_config = DockerEntry.model_construct(
+        **DEFAULTS, pool='tank', dataset='tank/ix-apps', registry_mirrors=old_mirrors,
+    )
 
     with patch('middlewared.plugins.docker.config.query_imported_fast_impl') as run:
         run.return_value = {'5714764211007133142': {'name': 'tank', 'state': 'ONLINE'}}

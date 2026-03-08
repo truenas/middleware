@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from middlewared.api.current import DockerEntry, ZFSResourceQuery
+from middlewared.api.current import DockerEntry
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 from middlewared.plugins.docker.config import DockerConfigServicePart
