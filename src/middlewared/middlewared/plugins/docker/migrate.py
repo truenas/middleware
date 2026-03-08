@@ -96,11 +96,11 @@ async def replicate_apps_dataset(context: ServiceContext, new_pool: str, old_poo
         await incrementally_replicate_apps_dataset(context, old_pool, new_pool, MIGRATION_NAMING_SCHEMA)
     finally:
         await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
-            path=snap_details.name,
+            path=snap_details['name'],
             recursive=True,
             bypass=True,
         ))
-        target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details.snapshot_name}'
+        target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
         try:
             await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
                 path=target_snap_name,
