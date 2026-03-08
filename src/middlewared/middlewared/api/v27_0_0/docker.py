@@ -11,11 +11,11 @@ from middlewared.api.base import (
 
 __all__ = [
     'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
-    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult', 'DockerStatusInfo',
+    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
-    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate', 'DockerStatusInfo',
 ]
 
 

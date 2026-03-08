@@ -110,7 +110,8 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                 return await context.middleware.call('core.job_wait', jobs[0]['id'])  # type: ignore[no-any-return]
     except Exception as e:
         await context.call2(
-            context.s.docker.set_status, Status.FAILED.value, f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
+            context.s.docker.set_status, Status.FAILED.value,
+            f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
         )
         raise
 
