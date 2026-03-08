@@ -40,7 +40,7 @@ class SystemAdvancedService(Service):
         if (await self.middleware.call('docker.config')).pool:
             # We explicitly have it non-blocking here as docker restart on HDD based systems can take
             # decent amount of time
-            self.middleware.create_task(self.middleware.call('docker.restart_svc'))
+            self.middleware.create_task(self.middleware.call('docker.restart_service'))
 
     @private
     def configure_nvidia(self):

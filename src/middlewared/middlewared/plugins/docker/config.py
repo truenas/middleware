@@ -11,6 +11,7 @@ from middlewared.plugins.zfs.utils import get_encryption_info
 
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds
 from .migrate import migrate_ix_apps_dataset
+from .service_utils import license_active
 from .state_management import set_status as docker_set_status
 from .state_setup import status_change as docker_status_change
 from .state_utils import Status
@@ -147,7 +148,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
     ) -> None:
         verrors = ValidationErrors()
 
-        if new_config.pool and not await self.middleware.call('docker.license_active'):
+        if new_config.pool and not await license_active(self):
             verrors.add(f'{schema}.pool', 'System is not licensed to use Applications')
 
         if new_config.pool and not await self.to_thread(query_imported_fast_impl, [new_config.pool]):

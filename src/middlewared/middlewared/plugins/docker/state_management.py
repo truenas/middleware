@@ -1,10 +1,9 @@
 import errno
 
-from middlewared.api.base import Event
-from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, ServiceContext
 
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds
+from .service_utils import license_active
 from .state_setup import validate_fs as docker_validate_fs
 from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
@@ -35,7 +34,7 @@ async def set_status(context: ServiceContext, new_status: str, extra: str | None
 
 async def before_start_check(context: ServiceContext) -> None:
     try:
-        if not await context.middleware.call('docker.license_active'):
+        if not await license_active(context):
             raise CallError('System is not licensed to use Applications')
 
         await docker_validate_fs(context)
@@ -110,7 +109,7 @@ async def validate_state(context: ServiceContext, raise_error: bool = True) -> b
         error_str = 'No pool configured for Docker'
     if not error_str and not await context.middleware.call('service.started', 'docker'):
         error_str = 'Docker service is not running'
-    if not await context.middleware.call('docker.license_active'):
+    if not await license_active(context):
         error_str = 'System is not licensed to use Applications'
 
     if error_str and raise_error:

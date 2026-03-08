@@ -23,9 +23,10 @@ from .config import DockerConfigServicePart
 from .events import setup_docker_events
 from .fs_manage import umount_docker_ds
 from .restore_backup import restore_backup
+from .service_utils import license_active, restart_docker_service
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
-    validate_state, periodic_check, terminate, terminate_timeout
+    validate_state, periodic_check, terminate, terminate_timeout, get_status_dict,
 )
 from .state_utils import Status
 
@@ -118,6 +119,11 @@ class DockerService(GenericConfigService[DockerEntry]):
         """
         return list_backups(self.context)
 
+    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'], check_annotations=True)
+    async def nvidia_present(self) -> bool:
+        """Returns whether a non-isolated NVIDIA GPU is present in the system."""
+        return await self.middleware.call('system.advanced.nvidia_present')  # type: ignore[no-any-return]
+
     @api_method(
         DockerRestoreBackupArgs, DockerRestoreBackupResult,
         audit='Docker: Restoring Backup',
@@ -132,9 +138,16 @@ class DockerService(GenericConfigService[DockerEntry]):
         """
         restore_backup(self.context, job, backup_name)
 
+    @api_method(DockerStatusArgs, DockerStatusResult, roles=['DOCKER_READ'], check_annotations=True)
+    async def status(self) -> dict[str, str]:
+        """
+        Returns the status of the docker service.
+        """
+        return get_status_dict()
+
     @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations', check_annotations=True)
     @job(lock='docker_update')
-    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
+    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:  # type: ignore[misc]
         """
         Update Docker service configuration.
         """
@@ -151,6 +164,14 @@ class DockerService(GenericConfigService[DockerEntry]):
     @private
     async def initialize_state(self) -> None:
         return await initialize_state(self.context)
+
+    @private
+    async def license_active(self) -> bool:
+        return await license_active(self.context)
+
+    @private
+    async def restart_service(self) -> None:
+        await restart_docker_service(self.context)
 
     @private
     async def set_status(self, new_status: str, extra: str | None = None) -> None:
