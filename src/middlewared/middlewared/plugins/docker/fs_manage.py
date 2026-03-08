@@ -5,7 +5,6 @@ from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext, ValidationError
 
-from .state_management import set_status
 from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
 
 
@@ -108,8 +107,8 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
             ):
                 return await context.middleware.call('core.job_wait', jobs[0]['id'])  # type: ignore[no-any-return]
     except Exception as e:
-        await set_status(
-            context, Status.FAILED.value, f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
+        await context.call2(
+            context.s.docker.set_status, Status.FAILED.value, f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
         )
         raise
 
