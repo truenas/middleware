@@ -12,7 +12,6 @@ from middlewared.utils.interface import wait_for_default_interface_link_state_up
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 
 from .fs_manage import mount_docker_ds
-from .state_management import start_service, periodic_check
 from .state_utils import (
     DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, missing_required_datasets,
 )
@@ -35,8 +34,8 @@ async def status_change(context: ServiceContext) -> None:
     if catalog_sync_job:
         await catalog_sync_job.wait()
 
-    await start_service(context)
-    context.create_task(periodic_check(context))
+    await context.call2(context.s.docker.start_service)
+    context.create_task(context.call2(context.s.docker.state_periodic_check))
 
 
 async def validate_fs(context: ServiceContext) -> None:

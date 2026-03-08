@@ -109,8 +109,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
                 await docker_set_status(self, Status.UNCONFIGURED.value)
 
-            # model_dump(mode='json') converts IPvAnyInterface->str, AddressPool->dict automatically
-            db_update = data.model_dump(mode='json')
+            db_update = data.model_dump()
             db_update.pop('nvidia', None)
             db_update.pop('migrate_applications', None)
             await self.middleware.call('datastore.update', self._datastore, old_config.id, db_update)

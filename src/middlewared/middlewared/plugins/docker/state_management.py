@@ -1,5 +1,6 @@
 import errno
 
+from middlewared.api.current import DockerStatusInfo
 from middlewared.service import CallError, ServiceContext
 
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds
@@ -14,11 +15,8 @@ DOCKER_SHUTDOWN_TIMEOUT = 60  # This is seconds
 STATUS = APPS_STATUS(Status.PENDING, STATUS_DESCRIPTIONS[Status.PENDING])
 
 
-def get_status_dict() -> dict[str, str]:
-    return {
-        'status': STATUS.status.value,
-        'description': STATUS.description
-    }
+def get_status() -> DockerStatusInfo:
+    return DockerStatusInfo(status=STATUS.status.value, description=STATUS.description)
 
 
 async def set_status(context: ServiceContext, new_status: str, extra: str | None = None) -> None:
@@ -29,7 +27,7 @@ async def set_status(context: ServiceContext, new_status: str, extra: str | None
         status,
         f'{STATUS_DESCRIPTIONS[status]}:\n{extra}' if extra else STATUS_DESCRIPTIONS[status],
     )
-    context.middleware.send_event('docker.state', 'CHANGED', fields=get_status_dict())
+    context.middleware.send_event('docker.state', 'CHANGED', fields=get_status().model_dump())
 
 
 async def before_start_check(context: ServiceContext) -> None:

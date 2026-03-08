@@ -6,7 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.base import Event
 from middlewared.api.current import (
     DockerEntry, DockerEventsAddedEvent, DockerStateChangedEvent,
-    DockerStatusArgs, DockerStatusResult,
+    DockerStatusArgs, DockerStatusResult, DockerStatusInfo,
     DockerUpdateArgs, DockerUpdateResult, DockerUpdate,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
     DockerBackupToPoolArgs, DockerBackupToPoolResult,
@@ -28,7 +28,7 @@ from .restore_backup import restore_backup
 from .service_utils import license_active, restart_docker_service
 from .state_management import (
     after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
-    validate_state, periodic_check, terminate, terminate_timeout, get_status_dict,
+    validate_state, periodic_check, terminate, terminate_timeout, get_status,
 )
 from .state_utils import Status
 
@@ -60,6 +60,7 @@ class DockerService(GenericConfigService[DockerEntry]):
                 models={'ADDED': DockerEventsAddedEvent},
             )
         ]
+        generic = True
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -74,7 +75,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_backup')
-    def backup(self, job: Job, backup_name: str) -> str:  # type: ignore[misc]
+    def backup(self, job: Job, backup_name: str | None) -> str:
         """
         Create a backup of existing apps.
 
@@ -90,7 +91,7 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_backup_to_pool')
-    async def backup_to_pool(self, job: Job, target_pool: str) -> None:  # type: ignore[misc]
+    async def backup_to_pool(self, job: Job, target_pool: str) -> None:
         """
         Create a backup of existing apps on `target_pool`.
 
@@ -135,22 +136,22 @@ class DockerService(GenericConfigService[DockerEntry]):
         check_annotations=True,
     )
     @job(lock='docker_restore_backup')
-    def restore_backup(self, job: Job, backup_name: str) -> None:  # type: ignore[misc]
+    def restore_backup(self, job: Job, backup_name: str) -> None:
         """
         Restore a backup of existing apps.
         """
         restore_backup(self.context, job, backup_name)
 
     @api_method(DockerStatusArgs, DockerStatusResult, roles=['DOCKER_READ'], check_annotations=True)
-    async def status(self) -> dict[str, str]:
+    async def status(self) -> DockerStatusInfo:
         """
         Returns the status of the docker service.
         """
-        return get_status_dict()
+        return get_status()
 
     @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations', check_annotations=True)
     @job(lock='docker_update')
-    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:  # type: ignore[misc]
+    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
         """
         Update Docker service configuration.
         """
@@ -216,10 +217,10 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
     if await middleware.call('failover.licensed'):
         return
 
-    if (await middleware.call2(middleware.s.docker.config)).pool:
-        middleware.create_task(middleware.call2(middleware.s.docker.start_service, True))
+    if (await middleware.call2(middleware.services.docker.config)).pool:
+        middleware.create_task(middleware.call2(middleware.services.docker.start_service, True))
     else:
-        await middleware.call2(middleware.s.docker.set_status, Status.UNCONFIGURED.value)
+        await middleware.call2(middleware.services.docker.set_status, Status.UNCONFIGURED.value)
 
 
 async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -230,8 +231,8 @@ async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwa
 
 async def setup(middleware: Middleware) -> None:
     middleware.event_subscribe('system.ready', _event_system_ready)
-    await middleware.call2(middleware.s.docker.initialize_state)
+    await middleware.call2(middleware.services.docker.initialize_state)
     middleware.register_hook('system.post_license_update', handle_license_update)
     middleware.register_hook('update.post_run', post_system_update_hook, sync=True)
     # We are going to check in setup docker events if setting up events is relevant or not
-    middleware.create_task(middleware.call2(middleware.s.docker.setup_docker_events))
+    middleware.create_task(middleware.call2(middleware.services.docker.setup_docker_events))

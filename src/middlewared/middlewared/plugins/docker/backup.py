@@ -90,7 +90,7 @@ def list_backups(context: ServiceContext) -> DockerBackupMap:
     return DockerBackupMap(backups)
 
 
-def backup(context: ServiceContext, job: Job, backup_name: str) -> str:
+def backup(context: ServiceContext, job: Job, backup_name: str | None) -> str:
     context.run_coroutine(validate_state(context))
     docker_config = context.call_sync2(context.s.docker.config)
     name = backup_name or datetime.datetime.now().strftime('%F_%T')

@@ -11,7 +11,7 @@ from middlewared.api.base import (
 
 __all__ = [
     'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
-    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
+    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult', 'DockerStatusInfo',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
@@ -119,7 +119,7 @@ class DockerStatusArgs(BaseModel):
     pass
 
 
-class StatusResult(BaseModel):
+class DockerStatusInfo(BaseModel):
     description: str
     """Human-readable description of the current Docker service status."""
     status: Literal[
@@ -130,7 +130,7 @@ class StatusResult(BaseModel):
 
 
 class DockerStatusResult(BaseModel):
-    result: StatusResult
+    result: DockerStatusInfo
     """Current Docker service status information."""
 
 
@@ -226,5 +226,5 @@ class DockerEventsAddedEvent(BaseModel):
 
 
 class DockerStateChangedEvent(BaseModel):
-    fields: StatusResult
+    fields: DockerStatusInfo
     """Event fields."""
