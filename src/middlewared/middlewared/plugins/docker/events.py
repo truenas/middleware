@@ -7,7 +7,7 @@ from .state_management import validate_state
 
 
 def process_internal(context: ServiceContext, client: docker.DockerClient) -> None:
-    for container_event in client.events(
+    for container_event in client.events(  # type: ignore[no-untyped-call]
             decode=True, filters={
                 'type': ['container'],
                 'event': [
