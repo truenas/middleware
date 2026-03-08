@@ -7,7 +7,7 @@ from middlewared.api.base import Event
 from middlewared.api.current import (
     DockerEntry, DockerEventsAddedEvent, DockerStateChangedEvent,
     DockerStatusArgs, DockerStatusResult,
-    DockerUpdateArgs, DockerUpdateResult,
+    DockerUpdateArgs, DockerUpdateResult, DockerUpdate,
     DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
     DockerBackupToPoolArgs, DockerBackupToPoolResult,
     DockerBackupArgs, DockerBackupResult,
@@ -131,6 +131,14 @@ class DockerService(GenericConfigService[DockerEntry]):
         Restore a backup of existing apps.
         """
         restore_backup(self.context, job, backup_name)
+
+    @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations', check_annotations=True)
+    @job(lock='docker_update')
+    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
+        """
+        Update Docker service configuration.
+        """
+        return await self._svc_part.do_update(job, data)
 
     @private
     async def after_start_check(self) -> None:

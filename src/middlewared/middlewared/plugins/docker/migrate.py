@@ -4,7 +4,7 @@ import os
 import typing
 from datetime import datetime
 
-from middlewared.api.current import ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery
+from middlewared.api.current import DockerEntry, ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery
 from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound
@@ -22,9 +22,12 @@ if typing.TYPE_CHECKING:
 
 
 async def migrate_ix_apps_dataset(
-    context: ServiceContext, job: Job, config: dict[str, typing.Any], old_config: dict[str, typing.Any],
+    context: ServiceContext, job: Job, new_config: DockerEntry, old_config: DockerEntry,
 ) -> None:
-    new_pool = config['pool']
+    # Both pools guaranteed non-None: caller validates migration requires both pools set
+    assert new_config.pool is not None
+    assert old_config.pool is not None
+    new_pool = new_config.pool
     backup_name = f'backup_to_{new_pool}_{datetime.now().strftime("%F_%T")}'
     await docker_set_status(context, Status.MIGRATING.value)
     job.set_progress(30, 'Creating docker backup')
@@ -39,8 +42,8 @@ async def migrate_ix_apps_dataset(
     await (await context.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
 
     try:
-        job.set_progress(40, f'Replicating datasets from {old_config["pool"]!r} to {new_pool!r} pool')
-        dsname = applications_ds_name(config['pool'])
+        job.set_progress(40, f'Replicating datasets from {old_config.pool!r} to {new_pool!r} pool')
+        dsname = applications_ds_name(new_config.pool)
         await context.middleware.call(
             'pool.dataset.create_impl',
             CreateImplArgs(
@@ -52,9 +55,10 @@ async def migrate_ix_apps_dataset(
         if umount_job := await umount_docker_ds(context):
             await umount_job.wait()
 
-        await replicate_apps_dataset(context, new_pool, old_config['pool'])
+        await replicate_apps_dataset(context, new_pool, old_config.pool)
 
-        await context.middleware.call('datastore.update', 'services.docker', old_config['id'], config)
+        db_data = new_config.model_dump(mode='json', exclude={'id', 'dataset', 'nvidia'})
+        await context.middleware.call('datastore.update', 'services.docker', old_config.id, db_data)
 
         # Mount the new pool's ix-apps so backup can be restored
         if mount_job := await mount_docker_ds(context):

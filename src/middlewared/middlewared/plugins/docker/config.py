@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import typing
 from typing import Any
-from urllib.parse import urlparse
 
 import middlewared.sqlalchemy as sa
-from middlewared.api.current import DockerEntry, ZFSResourceQuery
+from middlewared.api.current import DockerEntry, DockerUpdate, ZFSResourceQuery
 from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
-from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
+from .fs_manage import ix_apps_is_mounted, mount_docker_ds
 from .migrate import migrate_ix_apps_dataset
 from .state_management import set_status as docker_set_status
 from .state_setup import status_change as docker_status_change
@@ -46,28 +45,38 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
         data['nvidia'] = (await self.middleware.call('system.advanced.config'))['nvidia']
         return data
 
-    async def do_update(self, job: Job, data: dict[str, Any]) -> DockerEntry:
-        old_config = (await self.config()).model_dump()
-        old_config.pop('dataset')
-        config = old_config.copy()
-        config.update(data)
-        config['cidr_v6'] = str(config['cidr_v6'])
-        migrate_apps = config.get('migrate_applications', False)
+    async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
+        old_config = await self.config()
+        new_config = old_config.updated(data)
 
-        nvidia_changed = old_config['nvidia'] != config['nvidia']
-        new_nvidia = config.pop('nvidia')
-        old_config.pop('nvidia')
+        # migrate_applications is only on DockerUpdate, not DockerEntry
+        update_dict = data.model_dump()
+        migrate_apps = update_dict.get('migrate_applications', False)
 
-        await self.validate(old_config, config)
+        # nvidia is stored in system.advanced, not docker datastore
+        nvidia_changed = old_config.nvidia != new_config.nvidia
+        new_nvidia = new_config.nvidia
+
+        await self.validate(old_config, new_config, migrate_apps)
 
         if migrate_apps:
-            await migrate_ix_apps_dataset(self, job, config, old_config)
+            await migrate_ix_apps_dataset(self, job, new_config, old_config)
             return await self.config()
 
-        if old_config != config:
-            address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
-            pool_changed = config['pool'] != old_config['pool']
-            registry_mirrors_changed = config.get('registry_mirrors', []) != old_config.get('registry_mirrors', [])
+        # Detect changes — after updated(), unchanged fields keep the same object reference,
+        # so != correctly detects when the user provided new values
+        pool_changed = new_config.pool != old_config.pool
+        address_pools_changed = (
+            new_config.address_pools != old_config.address_pools
+            or new_config.cidr_v6 != old_config.cidr_v6
+        )
+        registry_mirrors_changed = new_config.registry_mirrors != old_config.registry_mirrors
+        db_changed = (
+            pool_changed or address_pools_changed or registry_mirrors_changed
+            or new_config.enable_image_updates != old_config.enable_image_updates
+        )
+
+        if db_changed:
             if pool_changed:
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
                 job.set_progress(15, 'Stopping Apps')
@@ -99,14 +108,18 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
                 await docker_set_status(self, Status.UNCONFIGURED.value)
 
-            await self.middleware.call('datastore.update', self._datastore, old_config['id'], config)
+            # model_dump(mode='json') converts IPvAnyInterface->str, AddressPool->dict automatically
+            db_update = data.model_dump(mode='json')
+            db_update.pop('nvidia', None)
+            db_update.pop('migrate_applications', None)
+            await self.middleware.call('datastore.update', self._datastore, old_config.id, db_update)
 
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await docker_status_change(self)
-                if config['pool']:
+                if new_config.pool:
                     await self.middleware.call('app.metadata.generate')
-            elif config['pool'] and (address_pools_changed or registry_mirrors_changed):
+            elif new_config.pool and (address_pools_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await mount_docker_ds(self)
                 if catalog_sync_job:
@@ -114,7 +127,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
                 await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
 
-            if config['pool'] and address_pools_changed:
+            if new_config.pool and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
                 await self.middleware.call(
                     'core.bulk', 'app.redeploy', [
@@ -129,70 +142,74 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
 
-    async def validate(self, old_config: dict[str, Any], config: dict[str, Any], schema: str = 'docker_update') -> None:
+    async def validate(
+        self, old_config: DockerEntry, new_config: DockerEntry, migrate_apps: bool, schema: str = 'docker_update',
+    ) -> None:
         verrors = ValidationErrors()
 
-        if config['pool'] and not await self.middleware.call('docker.license_active'):
-            verrors.add(
-                f'{schema}.pool',
-                'System is not licensed to use Applications'
-            )
+        if new_config.pool and not await self.middleware.call('docker.license_active'):
+            verrors.add(f'{schema}.pool', 'System is not licensed to use Applications')
 
-        if config['pool'] and not await self.to_thread(query_imported_fast_impl, [config['pool']]):
+        if new_config.pool and not await self.to_thread(query_imported_fast_impl, [new_config.pool]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
-        if config['address_pools'] != old_config['address_pools']:
+        if new_config.address_pools != old_config.address_pools:
+            # When changed, new_config.address_pools contains AddressPool objects from DockerUpdate
             validate_address_pools(
-                await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
+                await self.middleware.call('interface.ip_in_use', {'static': True}),
+                [pool.model_dump() for pool in new_config.address_pools],
             )
 
-        seen_registries: set[str] = set()
-        for idx, registry in enumerate(config.get('registry_mirrors', [])):
-            if registry['url'] in seen_registries:
-                verrors.add(
-                    f'{schema}.registry_mirrors.{idx}',
-                    f'Duplicate registry mirror: {registry["url"]}'
-                )
-            if urlparse(registry['url']).scheme == 'http' and not registry.get('insecure'):
-                verrors.add(
-                    f'{schema}.registry_mirrors.{idx}',
-                    'Registry mirror URL that starts with "http://" must be marked as insecure.'
-                )
-            seen_registries.add(registry['url'])
+        if new_config.registry_mirrors != old_config.registry_mirrors:
+            # When changed, new_config.registry_mirrors contains RegistryMirror objects from DockerUpdate
+            # http/insecure check is handled by DockerUpdate Pydantic model validator
+            seen_registries: set[str] = set()
+            for idx, registry in enumerate(new_config.registry_mirrors):
+                url = str(registry.url)
+                if url in seen_registries:
+                    verrors.add(
+                        f'{schema}.registry_mirrors.{idx}',
+                        f'Duplicate registry mirror: {url}'
+                    )
+                seen_registries.add(url)
 
-        if config.pop('migrate_applications', False):
-            if config['pool'] == old_config['pool']:
+        if migrate_apps:
+            if new_config.pool == old_config.pool:
                 verrors.add(
                     f'{schema}.migrate_applications',
                     'Migration of applications dataset only happens when a new pool is configured.'
                 )
-            elif not old_config['pool']:
+            elif not old_config.pool:
                 verrors.add(
                     f'{schema}.migrate_applications',
                     'A pool must have been configured previously for ix-apps dataset migration.'
                 )
             else:
+                # Both pools guaranteed non-None: old_config.pool is truthy (elif above),
+                # new_config.pool differs from old and DockerUpdate enforces pool when migrating
+                assert new_config.pool is not None
+                assert old_config.pool is not None
                 if await self.call2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=[applications_ds_name(config['pool'])], properties=None)
+                    ZFSResourceQuery(paths=[applications_ds_name(new_config.pool)], properties=None)
                 ):
                     verrors.add(
                         f'{schema}.migrate_applications',
-                        f'Migration of {applications_ds_name(old_config["pool"])!r} to {config["pool"]!r} not '
-                        f'possible as {applications_ds_name(config["pool"])} already exists.'
+                        f'Migration of {applications_ds_name(old_config.pool)!r} to {new_config.pool!r} not '
+                        f'possible as {applications_ds_name(new_config.pool)} already exists.'
                     )
 
                 ix_apps_ds = await self.call2(
                     self.s.zfs.resource.query_impl,
                     ZFSResourceQuery(
-                        paths=[applications_ds_name(old_config['pool'])],
+                        paths=[applications_ds_name(old_config.pool)],
                         properties=['encryption']
                     )
                 )
                 if not ix_apps_ds:
                     verrors.add(
                         f'{schema}.migrate_applications',
-                        f'{applications_ds_name(old_config["pool"])!r} does not exist, migration not possible.'
+                        f'{applications_ds_name(old_config.pool)!r} does not exist, migration not possible.'
                     )
                 elif get_encryption_info(ix_apps_ds[0]['properties']).encrypted:
                     verrors.add(
@@ -202,7 +219,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
                 destination_root_ds = await self.call2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=[config['pool']], properties=['encryption'])
+                    ZFSResourceQuery(paths=[new_config.pool], properties=['encryption'])
                 )
                 enc = get_encryption_info(destination_root_ds[0]['properties'])
                 if enc.encrypted:
@@ -215,15 +232,15 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                     elif enc.locked:
                         verrors.add(
                             f'{schema}.migrate_applications',
-                            f'Migration not possible as {config["pool"]!r} is locked'
+                            f'Migration not possible as {new_config.pool!r} is locked'
                         )
                     if not await self.middleware.call(
-                        'datastore.query', 'storage.encrypteddataset', [['name', '=', config['pool']]]
+                        'datastore.query', 'storage.encrypteddataset', [['name', '=', new_config.pool]]
                     ):
                         verrors.add(
                             f'{schema}.migrate_applications',
-                            f'Migration not possible as system does not has encryption key for {config["pool"]!r} '
-                            'stored'
+                            f'Migration not possible as system does not has encryption key for '
+                            f'{new_config.pool!r} stored'
                         )
 
         verrors.check()

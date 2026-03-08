@@ -5,7 +5,7 @@ from pydantic import IPvAnyInterface, Field, field_validator, model_validator, R
 from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString,
 )
 
 
@@ -15,7 +15,7 @@ __all__ = [
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
-    'DockerEventsAddedEvent', 'DockerStateChangedEvent',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate',
 ]
 
 
@@ -59,7 +59,7 @@ class DockerEntry(BaseModel):
     """Storage pool used for Docker or `null` if not configured."""
     nvidia: SkipJsonSchema[bool]
     """Whether NVIDIA GPU support is enabled for containers."""
-    address_pools: list[dict]
+    address_pools: list[AddressPool]
     """Array of network address pools for container networking."""
     cidr_v6: str
     """IPv6 CIDR block for Docker container networking."""
@@ -67,8 +67,7 @@ class DockerEntry(BaseModel):
     """Array of registry mirrors."""
 
 
-@single_argument_args('docker_update')
-class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
+class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     dataset: Excluded = excluded_field()
     address_pools: list[AddressPool]
@@ -104,6 +103,11 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
         if self.migrate_applications is True and not self.pool:
             raise ValueError('Pool is required when migrating applications.')
         return self
+
+
+class DockerUpdateArgs(BaseModel):
+    docker_update: DockerUpdate
+    """Docker update arguments."""
 
 
 class DockerUpdateResult(BaseModel):
