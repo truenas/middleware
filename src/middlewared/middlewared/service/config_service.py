@@ -43,6 +43,7 @@ class ConfigServiceMetabase(ServiceBase):
             )
             for c_name, c_bases in (
                 ('ConfigService', ('ServiceChangeMixin', 'Service', 'Generic')),
+                ('GenericConfigService', ('ConfigService', 'Generic')),
                 ('SystemServiceService', ('ConfigService', 'Generic')),
             )
         ):
