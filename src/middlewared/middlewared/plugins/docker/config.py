@@ -112,6 +112,16 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             db_update = data.model_dump()
             db_update.pop('nvidia', None)
             db_update.pop('migrate_applications', None)
+            # model_dump() preserves complex Python types (IPvAnyInterface, HttpUrl) that
+            # are not directly storable in SQLite. Convert them to plain strings for DB storage.
+            if 'address_pools' in db_update:
+                for pool in db_update['address_pools']:
+                    pool['base'] = str(pool['base'])
+            if 'cidr_v6' in db_update:
+                db_update['cidr_v6'] = str(db_update['cidr_v6'])
+            if 'registry_mirrors' in db_update:
+                for mirror in db_update['registry_mirrors']:
+                    mirror['url'] = str(mirror['url'])
             await self.middleware.call('datastore.update', self._datastore, old_config.id, db_update)
 
             if pool_changed:
