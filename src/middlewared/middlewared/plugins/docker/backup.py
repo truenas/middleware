@@ -123,7 +123,7 @@ def backup(context: ServiceContext, job: Job, backup_name: str | None) -> str:
         )
 
     with atomic_write(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
-        f.write(dump_yaml(docker_config.model_dump()))
+        f.write(dump_yaml(docker_config.model_dump(mode='json')))
 
     job.set_progress(95, 'Taking snapshot of ix-applications')
 

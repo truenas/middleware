@@ -10,8 +10,9 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
-    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
+    'DockerAddressPool', 'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
+    'DockerEntry', 'DockerRegistryMirror', 'DockerUpdateArgs', 'DockerUpdateResult',
+    'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
@@ -19,7 +20,7 @@ __all__ = [
 ]
 
 
-class AddressPool(BaseModel):
+class DockerAddressPool(BaseModel):
     base: IPvAnyInterface
     """Base network address with prefix for the pool."""
     size: Annotated[int, Field(ge=1)]
@@ -41,7 +42,7 @@ class AddressPool(BaseModel):
         return self
 
 
-class RegistryMirror(BaseModel):
+class DockerRegistryMirror(BaseModel):
     url: HttpUrl
     """URL of the registry mirror."""
     insecure: bool
@@ -59,24 +60,24 @@ class DockerEntry(BaseModel):
     """Storage pool used for Docker or `null` if not configured."""
     nvidia: SkipJsonSchema[bool]
     """Whether NVIDIA GPU support is enabled for containers."""
-    address_pools: list[AddressPool]
+    address_pools: list[DockerAddressPool]
     """Array of network address pools for container networking."""
     cidr_v6: str
     """IPv6 CIDR block for Docker container networking."""
-    registry_mirrors: list[RegistryMirror]
+    registry_mirrors: list[DockerRegistryMirror]
     """Array of registry mirrors."""
 
 
 class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     dataset: Excluded = excluded_field()
-    address_pools: list[AddressPool]
+    address_pools: list[DockerAddressPool]
     """Array of network address pools for container networking."""
     cidr_v6: IPvAnyInterface
     """IPv6 CIDR block for Docker container networking."""
     migrate_applications: bool
     """Whether to migrate existing applications when changing pools."""
-    registry_mirrors: list[RegistryMirror]
+    registry_mirrors: list[DockerRegistryMirror]
     """Array of registry mirrors."""
 
     @field_validator('cidr_v6')

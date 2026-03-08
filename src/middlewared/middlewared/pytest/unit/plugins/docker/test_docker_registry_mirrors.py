@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError as PydanticValidationError
 
 from middlewared.api.current import DockerEntry, DockerUpdate
-from middlewared.api.v27_0_0.docker import RegistryMirror
+from middlewared.api.current import DockerRegistryMirror
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 from middlewared.plugins.docker.config import DockerConfigServicePart
@@ -23,26 +23,26 @@ DEFAULTS = dict(id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/6
 @pytest.mark.parametrize('new_mirrors,old_mirrors,error_msgs', [
     (
         [
-            RegistryMirror(url='https://mirror1.example.com', insecure=False),
-            RegistryMirror(url='https://mirror2.example.com', insecure=False),
-            RegistryMirror(url='http://insecure1.example.com', insecure=True),
-            RegistryMirror(url='http://insecure2.example.com', insecure=True),
+            DockerRegistryMirror(url='https://mirror1.example.com', insecure=False),
+            DockerRegistryMirror(url='https://mirror2.example.com', insecure=False),
+            DockerRegistryMirror(url='http://insecure1.example.com', insecure=True),
+            DockerRegistryMirror(url='http://insecure2.example.com', insecure=True),
         ],
         [],
         []
     ),
     (
         [
-            RegistryMirror(url='https://mirror1.example.com', insecure=False),
-            RegistryMirror(url='https://mirror1.example.com', insecure=False),
+            DockerRegistryMirror(url='https://mirror1.example.com', insecure=False),
+            DockerRegistryMirror(url='https://mirror1.example.com', insecure=False),
         ],
         [],
         ['Duplicate registry mirror: https://mirror1.example.com/']
     ),
     (
         [
-            RegistryMirror(url='http://insecure1.example.com', insecure=True),
-            RegistryMirror(url='http://insecure1.example.com', insecure=True),
+            DockerRegistryMirror(url='http://insecure1.example.com', insecure=True),
+            DockerRegistryMirror(url='http://insecure1.example.com', insecure=True),
         ],
         [],
         ['Duplicate registry mirror: http://insecure1.example.com/']

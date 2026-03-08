@@ -4,7 +4,9 @@ import typing
 from typing import Any
 
 import middlewared.sqlalchemy as sa
-from middlewared.api.current import DockerEntry, DockerUpdate, ZFSResourceQuery
+from middlewared.api.current import (
+    DockerAddressPool, DockerEntry, DockerRegistryMirror, DockerUpdate, ZFSResourceQuery,
+)
 from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
@@ -44,6 +46,8 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         data['nvidia'] = (await self.middleware.call('system.advanced.config'))['nvidia']
+        data['address_pools'] = [DockerAddressPool.model_validate(p) for p in data.get('address_pools', [])]
+        data['registry_mirrors'] = [DockerRegistryMirror.model_validate(m) for m in data.get('registry_mirrors', [])]
         return data
 
     async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
@@ -69,7 +73,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
         pool_changed = new_config.pool != old_config.pool
         address_pools_changed = (
             new_config.address_pools != old_config.address_pools
-            or new_config.cidr_v6 != old_config.cidr_v6
+            or str(new_config.cidr_v6) != str(old_config.cidr_v6)
         )
         registry_mirrors_changed = new_config.registry_mirrors != old_config.registry_mirrors
         db_changed = (
@@ -164,14 +168,14 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
         if new_config.address_pools != old_config.address_pools:
-            # When changed, new_config.address_pools contains AddressPool objects from DockerUpdate
+            # When changed, new_config.address_pools contains DockerAddressPool objects from DockerUpdate
             validate_address_pools(
                 await self.middleware.call('interface.ip_in_use', {'static': True}),
                 [pool.model_dump() for pool in new_config.address_pools],
             )
 
         if new_config.registry_mirrors != old_config.registry_mirrors:
-            # When changed, new_config.registry_mirrors contains RegistryMirror objects from DockerUpdate
+            # When changed, new_config.registry_mirrors contains DockerRegistryMirror objects from DockerUpdate
             # http/insecure check is handled by DockerUpdate Pydantic model validator
             seen_registries: set[str] = set()
             for idx, registry in enumerate(new_config.registry_mirrors):
