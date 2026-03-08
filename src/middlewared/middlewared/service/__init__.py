@@ -22,7 +22,7 @@ from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
 ABSTRACT_SERVICES = (
-    CompoundService, ConfigService, CRUDService, GenericCRUDService, SharingService,
+    CompoundService, ConfigService, CRUDService, GenericConfigService, GenericCRUDService, SharingService,
     SharingTaskService, SystemServiceService, TaskPathService
 )
 
