@@ -362,7 +362,7 @@ class AppService(CRUDService):
     @private
     def get_app_volume_ds(self, app_name):
         # This will return volume dataset of app if it exists, otherwise null
-        docker_ds = self.middleware.call_sync('docker.config')['dataset']
+        docker_ds = self.middleware.call_sync('docker.config').dataset
         apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
         rv = self.call_sync2(
             self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
