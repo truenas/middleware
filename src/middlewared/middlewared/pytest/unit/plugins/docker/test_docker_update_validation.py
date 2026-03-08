@@ -160,7 +160,7 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
-        ['Migration of \'tank/ix-apps\' to \'test\' not possible as test/ix-apps already exists.']
+        ["Migration of 'tank/ix-apps' to 'test' not possible as test/ix-apps already exists."]
     ),
     (
         {
@@ -171,7 +171,7 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
-        ['\'tank/ix-apps\' does not exist, migration not possible.']
+        ["'tank/ix-apps' does not exist, migration not possible."]
     ),
     (
         {
@@ -192,7 +192,7 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
-        ['\'tank/ix-apps\' is encrypted which is not a supported configuration']
+        ["'tank/ix-apps' is encrypted which is not a supported configuration"]
     ),
     (
         {
@@ -212,7 +212,7 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
-        ['\'tank/ix-apps\' can only be migrated to a destination pool which is "KEY" encrypted.']
+        ["'tank/ix-apps' can only be migrated to a destination pool which is \"KEY\" encrypted."]
     ),
     (
         {
@@ -268,7 +268,7 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
-        ['Migration not possible as \'test\' is locked']
+        ["Migration not possible as 'test' is locked"]
     ),
     (
         {
@@ -289,8 +289,8 @@ SYSTEM_STATE = {
         DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
         True,
         [
-            'Migration not possible as \'test\' is locked',
-            'Migration not possible as system does not has encryption key for \'test\' stored'
+            "Migration not possible as 'test' is locked",
+            "Migration not possible as system does not has encryption key for 'test' stored"
         ]
     ),
 ])
