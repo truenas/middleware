@@ -1,10 +1,18 @@
+import logging
 from unittest.mock import patch
 
 import pytest
 
+from middlewared.api.current import DockerEntry, ZFSResourceQuery
+from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
-from middlewared.plugins.docker.update import DockerService
+from middlewared.plugins.docker.config import DockerConfigServicePart
 from middlewared.pytest.unit.middleware import Middleware
+
+
+def make_svc_part(m):
+    context = ServiceContext(m, logging.getLogger('test'))
+    return DockerConfigServicePart(context)
 
 
 def mock_zfs_resource_query_impl(system_state):
@@ -52,6 +60,8 @@ def mock_zfs_resource_query_impl(system_state):
     return _query_impl
 
 
+DEFAULTS = dict(id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/64', registry_mirrors=[])
+
 SYSTEM_STATE = {
     'available_pool': ['test', 'tank'],
     'available_dataset': [
@@ -90,18 +100,12 @@ SYSTEM_STATE = {
 }
 
 
-@pytest.mark.parametrize('system_state,new_values,old_values,error_msgs', [
+@pytest.mark.parametrize('system_state,new_config,old_config,migrate_apps,error_msgs', [
     (
         SYSTEM_STATE,
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         []
     ),
     (
@@ -109,41 +113,23 @@ SYSTEM_STATE = {
             **SYSTEM_STATE,
             'import_query_pool': {}
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['Pool not found.']
     ),
     (
         SYSTEM_STATE,
-        {
-            'pool': 'tank',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['Migration of applications dataset only happens when a new pool is configured.']
     ),
     (
         SYSTEM_STATE,
-        {
-            'pool': 'tank',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': None,
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool=None, dataset=None, address_pools=[]),
+        True,
         ['A pool must have been configured previously for ix-apps dataset migration.']
     ),
     (
@@ -171,15 +157,9 @@ SYSTEM_STATE = {
             ],
 
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['Migration of \'tank/ix-apps\' to \'test\' not possible as test/ix-apps already exists.']
     ),
     (
@@ -188,15 +168,9 @@ SYSTEM_STATE = {
             'available_dataset': [],
 
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['\'tank/ix-apps\' does not exist, migration not possible.']
     ),
     (
@@ -215,15 +189,9 @@ SYSTEM_STATE = {
             ],
 
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['\'tank/ix-apps\' is encrypted which is not a supported configuration']
     ),
     (
@@ -241,15 +209,9 @@ SYSTEM_STATE = {
                 }
             ],
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['\'tank/ix-apps\' can only be migrated to a destination pool which is "KEY" encrypted.']
     ),
     (
@@ -275,15 +237,9 @@ SYSTEM_STATE = {
                 }
             ]
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         []
     ),
     (
@@ -309,15 +265,9 @@ SYSTEM_STATE = {
                 }
             ]
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         ['Migration not possible as \'test\' is locked']
     ),
     (
@@ -335,15 +285,9 @@ SYSTEM_STATE = {
                 }
             ],
         },
-        {
-            'pool': 'test',
-            'address_pools': [],
-            'migrate_applications': True,
-        },
-        {
-            'pool': 'tank',
-            'address_pools': [],
-        },
+        DockerEntry.model_construct(**DEFAULTS, pool='test', dataset='test/ix-apps', address_pools=[]),
+        DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[]),
+        True,
         [
             'Migration not possible as \'test\' is locked',
             'Migration not possible as system does not has encryption key for \'test\' stored'
@@ -351,18 +295,19 @@ SYSTEM_STATE = {
     ),
 ])
 @pytest.mark.asyncio
-async def test_docker_update_validation(system_state, new_values, old_values, error_msgs):
+async def test_docker_update_validation(system_state, new_config, old_config, migrate_apps, error_msgs):
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
     m.services.zfs.resource.query_impl = mock_zfs_resource_query_impl(system_state)
     m['system.is_ha_capable'] = lambda *arg: False
-    with patch('middlewared.plugins.docker.update.query_imported_fast_impl') as run:
+    svc_part = make_svc_part(m)
+    with patch('middlewared.plugins.docker.config.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']
         if not error_msgs:
-            assert await DockerService(m).validate_data(old_values, new_values) is None
+            assert await svc_part.validate(old_config, new_config, migrate_apps) is None
         else:
             with pytest.raises(ValidationErrors) as ve:
-                await DockerService(m).validate_data(old_values, new_values)
+                await svc_part.validate(old_config, new_config, migrate_apps)
             for i in range(len(error_msgs)):
                 assert ve.value.errors[i].errmsg == error_msgs[i]
