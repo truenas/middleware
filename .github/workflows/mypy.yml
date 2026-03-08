@@ -29,6 +29,7 @@ jobs:
           mypy \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cron/ \
+            middlewared/plugins/docker/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/ntp/ \
