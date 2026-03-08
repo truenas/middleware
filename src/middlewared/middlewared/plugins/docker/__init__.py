@@ -20,6 +20,8 @@ from middlewared.service import GenericConfigService, job, periodic, private
 from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
 from .config import DockerConfigServicePart
+from .docker_network import DockerNetworkService
+from .docker_network_crud import DockerNetworkServicePart
 from .events import setup_docker_events
 from .fs_manage import umount_docker_ds
 from .restore_backup import restore_backup
@@ -61,6 +63,7 @@ class DockerService(GenericConfigService[DockerEntry]):
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
+        self.network = DockerNetworkService(middleware)
         self._svc_part = DockerConfigServicePart(self.context)
 
     @api_method(
