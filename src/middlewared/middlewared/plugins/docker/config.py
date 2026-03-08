@@ -11,7 +11,7 @@ from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 
-from .fs_manage import ix_apps_is_mounted, mount_docker_ds
+from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
 from .migrate import migrate_ix_apps_dataset
 from .service_utils import license_active
 from .state_management import set_status as docker_set_status
@@ -102,7 +102,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 catalog_sync_job = None
                 try:
                     job.set_progress(30, 'Umounting docker apps dataset')
-                    catalog_sync_job = await mount_docker_ds(self)
+                    catalog_sync_job = await umount_docker_ds(self)
                 except Exception:
                     self.logger.exception('Unexpected failure umounting apps dataset')
                     if await ix_apps_is_mounted(self):

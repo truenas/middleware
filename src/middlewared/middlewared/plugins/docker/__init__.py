@@ -206,8 +206,8 @@ class DockerService(GenericConfigService[DockerEntry]):
         return await umount_docker_ds(self.context)
 
     @private
-    async def validate_state(self, raise_error: bool = True) -> None:
-        await validate_state(self.context, raise_error)
+    async def validate_state(self, raise_error: bool = True) -> bool:
+        return await validate_state(self.context, raise_error)
 
 
 async def _event_system_ready(middleware: Middleware, event_type: str, args: typing.Any) -> None:

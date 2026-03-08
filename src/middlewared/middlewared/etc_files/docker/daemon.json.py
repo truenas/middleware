@@ -28,10 +28,10 @@ def render(service, middleware):
         'default-network-opts': {'bridge': {'com.docker.network.enable_ipv6': 'true'}},
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config.cidr_v6,
-        'default-address-pools': config.address_pools,
-        'registry-mirrors': [registry['url'] for registry in config.registry_mirrors],
+        'default-address-pools': [pool.model_dump(mode='json') for pool in config.address_pools],
+        'registry-mirrors': [registry.url for registry in config.registry_mirrors],
         'insecure-registries': [
-            urlparse(registry['url']).netloc for registry in config.registry_mirrors if registry['insecure']
+            urlparse(registry.url).netloc for registry in config.registry_mirrors if registry.insecure
         ],
         **(
             {

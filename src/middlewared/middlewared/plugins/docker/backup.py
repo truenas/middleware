@@ -157,13 +157,13 @@ def delete_backup(context: ServiceContext, backup_name: str) -> None:
 
 
 async def post_system_update_hook(middleware: Middleware) -> None:
-    if not (await middleware.call2(middleware.s.docker.config)).dataset:
+    if not (await middleware.call2(middleware.services.docker.config)).dataset:
         # If docker is not configured, there is nothing to backup
         logger.debug('Docker is not configured, skipping apps backup on system update')
         return
 
     backups = []
-    for k, v in (await middleware.call2(middleware.s.docker.list_backups)).root.items():
+    for k, v in (await middleware.call2(middleware.services.docker.list_backups)).root.items():
         if k.startswith(UPDATE_BACKUP_PREFIX):
             backups.append(v)
 
@@ -173,7 +173,7 @@ async def post_system_update_hook(middleware: Middleware) -> None:
             backup = backups.pop(0)
             try:
                 logger.debug('Deleting %r apps old auto-generated backup', backup.name)
-                await middleware.call2(middleware.s.docker.delete_backup, backup.name)
+                await middleware.call2(middleware.services.docker.delete_backup, backup.name)
             except Exception as e:
                 logger.error(
                     'Failed to delete %r app backup: %s', backup.name, e, exc_info=True
@@ -181,7 +181,7 @@ async def post_system_update_hook(middleware: Middleware) -> None:
                 break
 
     backup_job: Job = await middleware.call2(
-        middleware.s.docker.backup,  # type: ignore[misc, arg-type]
+        middleware.services.docker.backup,  # type: ignore[misc, arg-type]
         f'{UPDATE_BACKUP_PREFIX}-{datetime.datetime.now().strftime("%F_%T")}'
     )
     await backup_job.wait()
