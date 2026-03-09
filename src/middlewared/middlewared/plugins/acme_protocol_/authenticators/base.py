@@ -11,6 +11,7 @@ class Authenticator:
     NAME: str
     PROPAGATION_DELAY: float
     SCHEMA_MODEL: type['BaseModel']
+    INTERNAL = False
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware
