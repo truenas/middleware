@@ -100,7 +100,7 @@ class AlertClass:
 
     config: AlertClassConfig
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls: type[AlertClass]) -> None:
         super().__init_subclass__()
 
         if cls.__name__ not in ["DismissableAlertClass", "OneShotAlertClass"]:

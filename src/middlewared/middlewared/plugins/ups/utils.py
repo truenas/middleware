@@ -20,7 +20,8 @@ RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
 UPS_POWERDOWN_FLAG_FILE = '/etc/killpower'
 
 
-def alerts_mapping() -> dict[str, type]:
+def alerts_mapping() -> dict[str, type[UPSBatteryLowAlert] | type[UPSCommbadAlert] | type[UPSCommokAlert] |
+                                  type[UPSOnBatteryAlert] | type[UPSOnlineAlert] | type[UPSReplbattAlert]]:
     return {
         'LOWBATT': UPSBatteryLowAlert,
         'COMMBAD': UPSCommbadAlert,
