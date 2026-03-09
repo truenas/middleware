@@ -16,7 +16,7 @@ import pathlib
 from collections import namedtuple
 from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
-from truenas_os import AT_EMPTY_PATH, statx, StatxResult
+from truenas_os import AT_EMPTY_PATH, AT_FDCWD, openat2, RESOLVE_NO_SYMLINKS, statx, StatxResult
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
@@ -74,7 +74,12 @@ class DirectoryFd():
     def __init__(self, path: str | pathlib.Path, dir_fd: int | None = None) -> None:
         self.__path = path
         self.__dir_fd: int | None = None
-        self.__dir_fd = os.open(path, os.O_DIRECTORY, dir_fd=dir_fd)
+        self.__dir_fd = openat2(
+            os.fspath(path),
+            os.O_DIRECTORY,
+            AT_FDCWD if dir_fd is None else dir_fd,
+            resolve=RESOLVE_NO_SYMLINKS,
+        )
 
     def __del__(self) -> None:
         self.close()
