@@ -24,10 +24,10 @@ def max_total_count() -> int:
     return MAX_TOTAL_COUNT
 
 
-async def run(ctx: ServiceContext, id_: int) -> None:
+async def run(ctx: ServiceContext, id_: int, job) -> None:
     task = await ctx.call2(ctx.s.pool.snapshottask.get_instance, id_)
 
     if not task.enabled:
         raise CallError("Task is not enabled")
 
-    await ctx.middleware.call("zettarepl.run_periodic_snapshot_task", task.id)
+    await ctx.middleware.call("zettarepl.run_periodic_snapshot_task", task.id, job)
