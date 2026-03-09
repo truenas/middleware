@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass, Alert
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
 class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
@@ -9,14 +9,9 @@ class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
     title = 'Rsync Task Succeeded'
     text = 'Rsync "%(direction)s" task for "%(path)s" succeeded.'
 
-    async def create(self, args):
-        return Alert(RsyncSuccessAlertClass, args, key=args['id'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    @classmethod
+    def key(cls, args):
+        return args['id']
 
 
 class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -27,11 +22,6 @@ class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
     title = 'Rsync Task Failed'
     text = 'Rsync "%(direction)s" task for "%(path)s" failed.'
 
-    async def create(self, args):
-        return Alert(RsyncFailedAlertClass, args, key=args['id'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    @classmethod
+    def key(cls, args):
+        return args['id']

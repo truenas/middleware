@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class InvalidGpuPciIdsAlertClass(AlertClass, SimpleOneShotAlertClass):
+class InvalidGpuPciIdsAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.SYSTEM

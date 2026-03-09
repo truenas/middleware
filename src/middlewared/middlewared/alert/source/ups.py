@@ -1,7 +1,7 @@
-from middlewared.alert.base import SimpleOneShotAlertClass, AlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import OneShotAlertClass, AlertClass, AlertCategory, AlertLevel
 
 
-class UPSBatteryLowAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSBatteryLowAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.ALERT
     title = 'UPS Battery LOW'
@@ -11,7 +11,7 @@ class UPSBatteryLowAlertClass(AlertClass, SimpleOneShotAlertClass):
     keys = []
 
 
-class UPSOnlineAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSOnlineAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.INFO
     title = 'UPS On Line Power'
@@ -21,7 +21,7 @@ class UPSOnlineAlertClass(AlertClass, SimpleOneShotAlertClass):
     keys = []
 
 
-class UPSOnBatteryAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSOnBatteryAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.CRITICAL
     title = 'UPS On Battery'
@@ -31,7 +31,7 @@ class UPSOnBatteryAlertClass(AlertClass, SimpleOneShotAlertClass):
     keys = []
 
 
-class UPSCommbadAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSCommbadAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.CRITICAL
     title = 'UPS Communication Lost'
@@ -41,7 +41,7 @@ class UPSCommbadAlertClass(AlertClass, SimpleOneShotAlertClass):
     keys = []
 
 
-class UPSCommokAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSCommokAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.INFO
     title = 'UPS Communication Established'
@@ -51,7 +51,7 @@ class UPSCommokAlertClass(AlertClass, SimpleOneShotAlertClass):
     keys = []
 
 
-class UPSReplbattAlertClass(AlertClass, SimpleOneShotAlertClass):
+class UPSReplbattAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.UPS
     level = AlertLevel.CRITICAL
     title = 'UPS Battery Needs Replacement'

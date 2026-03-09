@@ -236,7 +236,7 @@ class SharingTaskService[E](CRUDService[E]):
     @private
     async def remove_locked_alert(self, share_task_id):
         await self.middleware.call(
-            'alert.oneshot_delete', self.locked_alert_class, f'"{self.share_task_type}_{share_task_id}"'
+            'alert.oneshot_delete', self.locked_alert_class, f'{self.share_task_type}_{share_task_id}'
         )
 
     @pass_app(message_id=True)

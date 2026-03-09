@@ -16,12 +16,10 @@ from contextlib import contextmanager
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from middlewared.alert.base import (
-    Alert,
     AlertCategory,
     AlertClass,
     AlertLevel,
     OneShotAlertClass,
-    SimpleOneShotAlertClass,
 )
 from middlewared.job import JobCancelledException
 from middlewared.api import api_method
@@ -537,21 +535,17 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     title = "Cloud Sync Task Failed"
     text = "Cloud sync task \"%(name)s\" failed."
 
-    async def create(self, args):
-        return Alert(CloudSyncTaskFailedAlertClass, args, key=args["id"])
+    @classmethod
+    def key(cls, args):
+        return args["id"]
 
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
-
-    def load(self, alerts):
-        task_ids = {str(task["id"]) for task in self.middleware.call_sync("cloudsync.query")}
+    @classmethod
+    async def load(cls, middleware, alerts):
+        task_ids = {str(task["id"]) for task in await middleware.call("cloudsync.query")}
         return [alert for alert in alerts if alert.key in task_ids]
 
 
-class CloudProviderRemovedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CloudProviderRemovedAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.INFO
     category = AlertCategory.TASKS
     title = "Cloud Provider Was Removed"

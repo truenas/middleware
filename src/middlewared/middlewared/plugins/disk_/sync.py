@@ -55,7 +55,7 @@ class DiskService(Service, ServiceChangeMixin):
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
         if disks[name]['dif']:
-            await self.middleware.call('alert.oneshot_create', 'DifFormatted', [name])
+            await self.middleware.call('alert.oneshot_create', 'DifFormatted', name)
         else:
             await self.middleware.call('alert.oneshot_delete', 'DifFormatted', None)
 
@@ -216,7 +216,7 @@ class DiskService(Service, ServiceChangeMixin):
                 qs.append(disk)
 
         if dif_formatted_disks:
-            self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', dif_formatted_disks)
+            self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', ', '.join(dif_formatted_disks))
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'DifFormatted', None)
 

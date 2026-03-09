@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class KdumpNotReadyAlertClass(AlertClass, SimpleOneShotAlertClass):
+class KdumpNotReadyAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.SYSTEM
