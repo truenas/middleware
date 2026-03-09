@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class ServiceInterface(CallMixin):
-    name = NotImplemented
+    name: str
 
     etc = []
     restartable = False  # Implements `restart` method instead of `stop` + `start`

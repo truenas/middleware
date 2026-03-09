@@ -68,9 +68,9 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     classes = []
     class_by_name = {}
 
-    category: AlertCategory = NotImplemented
-    level: AlertLevel = NotImplemented
-    title: str = NotImplemented
+    category: AlertCategory
+    level: AlertLevel
+    title: str
     text: str | None = None
 
     exclude_from_list = False
@@ -363,11 +363,8 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin):
-    title = NotImplementedError
-
-    schema = NotImplementedError
-
-    html = False
+    title: str
+    html: bool = False
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware

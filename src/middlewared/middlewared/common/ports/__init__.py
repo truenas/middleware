@@ -5,15 +5,15 @@ from middlewared.plugins.ports.utils import WILDCARD_IPS
 
 class PortDelegate:
 
-    name = NotImplemented
-    namespace = NotImplemented
-    title = NotImplemented
+    name: str
+    namespace: str
+    title: str
 
     def __init__(self, middleware):
         self.middleware = middleware
         self.logger = middleware.logger
         for k in ('name', 'namespace', 'title'):
-            if getattr(self, k) is NotImplemented:
+            if not hasattr(self, k):
                 raise ValueError(f'{k!r} must be specified for port delegate')
 
     async def get_ports(self):
@@ -21,20 +21,20 @@ class PortDelegate:
 
 
 class ServicePortDelegate(PortDelegate):
-    bind_address_field = NotImplemented
-    port_fields = NotImplemented
+    bind_address_field: str
+    port_fields: Iterable[str]
 
     async def basic_checks(self):
-        if self.port_fields is NotImplemented:
+        if not hasattr(self, 'port_fields'):
             raise ValueError('Port fields must be set for Service port delegate')
         elif not isinstance(self.port_fields, Iterable):
             raise ValueError('Port fields must be an iterable')
 
     def bind_address(self, config):
         default = '0.0.0.0'
-        return default if self.bind_address_field is NotImplemented else (
-            config.get(self.bind_address_field) or default
-        )
+        if hasattr(self, 'bind_address_field'):
+            return config.get(self.bind_address_field) or default
+        return default
 
     def get_bind_ip_port_tuple(self, config, port_field):
         return self.bind_address(config), config[port_field]

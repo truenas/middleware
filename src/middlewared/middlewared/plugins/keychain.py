@@ -33,8 +33,8 @@ from middlewared.utils import run
 
 
 class KeychainCredentialType:
-    name = NotImplemented
-    title = NotImplemented
+    name: str
+    title: str
 
     used_by_delegates = []
 
@@ -47,8 +47,13 @@ class KeychainCredentialType:
         pass
 
 
+class KeychainCredentialUsedByDelegateUnbindMethod(enum.Enum):
+    DELETE = "delete"
+    DISABLE = "disable"
+
+
 class KeychainCredentialUsedByDelegate:
-    unbind_method = NotImplemented
+    unbind_method: KeychainCredentialUsedByDelegateUnbindMethod
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -63,15 +68,10 @@ class KeychainCredentialUsedByDelegate:
         raise NotImplementedError
 
 
-class KeychainCredentialUsedByDelegateUnbindMethod(enum.Enum):
-    DELETE = "delete"
-    DISABLE = "disable"
-
-
 class OtherKeychainCredentialKeychainCredentialUsedByDelegate(KeychainCredentialUsedByDelegate):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DELETE
 
-    type = NotImplemented
+    type: str
 
     async def query(self, id_):
         result = []

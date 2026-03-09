@@ -1,6 +1,7 @@
 class BaseRcloneRemote:
-    name = NotImplemented
-    title = NotImplemented
+    name: str
+    title: str
+    rclone_type: str
 
     buckets = False
     bucket_title = "Bucket"
@@ -10,8 +11,6 @@ class BaseRcloneRemote:
     readonly = False
 
     fast_list = False
-
-    rclone_type = NotImplemented
 
     credentials_oauth = False
     credentials_oauth_name = None

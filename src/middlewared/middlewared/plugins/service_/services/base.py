@@ -619,7 +619,7 @@ async def call_unit_action_and_wait(
 
 
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
-    systemd_unit = NotImplemented
+    systemd_unit: str
     systemd_async_start = False
 
     async def systemd_extra_units(self):

@@ -26,10 +26,10 @@ __all__ = ('CRUDServicePart',)
 class CRUDServicePart[E, PK = int](ServicePart):
     __slots__ = ()
 
-    _datastore: str = NotImplemented
+    _datastore: str
     _datastore_prefix: str = ''
     _datastore_primary_key: str = 'id'
-    _entry: type[E] = NotImplemented
+    _entry: type[E]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {}

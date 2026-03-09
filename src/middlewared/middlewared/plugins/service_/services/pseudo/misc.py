@@ -225,10 +225,10 @@ class UserService(PseudoServiceBase):
 
 class NVMETargetService(PseudoServiceBase):
     name = "nvmet"
-    systemd_unit = NotImplemented
-
     etc = ["nvmet"]
     reloadable = True
+
+    systemd_unit: str
 
     async def start(self):
         await self.middleware.call('nvmet.global.start')

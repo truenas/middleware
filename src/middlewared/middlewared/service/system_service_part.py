@@ -12,7 +12,7 @@ ServiceVerb = typing.Literal['reload', 'restart']
 class SystemServicePart[E](ConfigServicePart[E], ServiceChangeMixin):
     __slots__ = ()
 
-    _service: str = NotImplemented
+    _service: str
     _service_verb: ServiceVerb = 'reload'
     _service_verb_sync: bool = True
 
