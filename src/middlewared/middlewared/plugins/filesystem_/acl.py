@@ -36,7 +36,10 @@ from middlewared.utils.filesystem.acl import (
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, path_location
-from .utils import AclTool, AclToolAction, AclToolOptions, calculate_inherited_acl
+from .utils import (
+    AclTool, AclToolAction, ATAclOptions, ATChownOptions, ATPermOptions,
+    calculate_inherited_acl,
+)
 
 
 class SimplifiedAclEntry(BaseModel):
@@ -217,7 +220,7 @@ class FilesystemService(Service):
             os.fchown(fd, uid, gid)
             if options['recursive']:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
-                AclTool(fd, AclToolAction.CHOWN, uid, gid, AclToolOptions(traverse=options['traverse']), job, tls).run()
+                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job, tls).run()
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished changing owner.')
@@ -318,7 +321,7 @@ class FilesystemService(Service):
             if options['recursive']:
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 AclTool(fd, AclToolAction.STRIP, uid, gid,
-                        AclToolOptions(traverse=options['traverse'], do_chmod=mode is not None), job, tls).run()
+                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job, tls).run()
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
@@ -525,11 +528,15 @@ class FilesystemService(Service):
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:
                     raise CallError(str(e))
+                acl_opts = ATAclOptions(traverse=data['options']['traverse'], target_acl=acl_obj)
+            else:
+                # target_mode=None: no explicit chmod; the resulting mode is the
+                # POSIX representation of the ACL that the kernel derives on strip.
+                acl_opts = ATPermOptions(traverse=data['options']['traverse'])
 
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'],
-                        AclToolOptions(traverse=data['options']['traverse']), job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
         finally:
             os.close(fd)
 
@@ -605,11 +612,15 @@ class FilesystemService(Service):
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:
                     raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
+                acl_opts = ATAclOptions(traverse=options['traverse'], target_acl=acl_obj)
+            else:
+                # target_mode=None: no explicit chmod; the resulting mode is the
+                # POSIX representation of the ACL that the kernel derives on strip.
+                acl_opts = ATPermOptions(traverse=options['traverse'])
 
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'],
-                        AclToolOptions(traverse=options['traverse']), job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
         finally:
             os.close(fd)
 

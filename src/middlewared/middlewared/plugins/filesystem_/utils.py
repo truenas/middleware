@@ -1,8 +1,8 @@
 import dataclasses
 import enum
-import errno
 import os
 import time
+import types
 
 import truenas_os
 
@@ -27,9 +27,23 @@ class AclToolAction(enum.StrEnum):
 
 
 @dataclasses.dataclass(slots=True)
-class AclToolOptions:
+class ATBaseOptions:
     traverse: bool = False
-    do_chmod: bool = False
+
+
+@dataclasses.dataclass(slots=True)
+class ATChownOptions(ATBaseOptions):
+    pass
+
+
+@dataclasses.dataclass(slots=True)
+class ATPermOptions(ATBaseOptions):
+    target_mode: int | None = None
+
+
+@dataclasses.dataclass(slots=True)
+class ATAclOptions(ATBaseOptions):
+    target_acl: object = None
 
 
 @dataclasses.dataclass(slots=True)
@@ -77,11 +91,28 @@ class AclTool:
 
     __slots__ = (
         'fd', 'action', 'uid', 'gid', 'options', 'job', 'tls',
-        'root_acl', 'root_mode', 'nfs4_inh', 'posix_file_acl',
+        'nfs4_inh', 'posix_file_acl', '_action_fd_fn',
         'total_objects', 'cumulative_processed', 'last_report_time',
     )
 
+    _OPTIONS_TYPE = types.MappingProxyType({
+        AclToolAction.CHOWN: ATChownOptions,
+        AclToolAction.STRIP: ATPermOptions,
+        AclToolAction.CLONE: ATAclOptions,
+        AclToolAction.INHERIT: ATAclOptions,
+    })
+
+    _ACTION_FN = types.MappingProxyType({
+        AclToolAction.CHOWN: '_do_chown',
+        AclToolAction.STRIP: '_do_strip',
+        AclToolAction.CLONE: '_do_acl',
+        AclToolAction.INHERIT: '_do_acl',
+    })
+
     def __init__(self, fd, action, uid, gid, options, job=None, tls=None):
+        expected = self._OPTIONS_TYPE[action]
+        if not isinstance(options, expected):
+            raise TypeError(f'{action}: expected {expected.__name__}, got {type(options).__name__}')
         self.fd = fd
         self.action = action
         self.uid = uid
@@ -92,10 +123,9 @@ class AclTool:
         self.total_objects = 0
         self.cumulative_processed = 0
         self.last_report_time = time.monotonic()
-        self.root_acl = None
-        self.root_mode = None
         self.nfs4_inh = None
         self.posix_file_acl = None
+        self._action_fd_fn = getattr(self, self._ACTION_FN[action])
 
     def _estimate_total(self, fs_name, mnt_id):
         """Populate self.total_objects before iteration begins."""
@@ -138,33 +168,32 @@ class AclTool:
             f'Processing {state.current_directory} ({self.cumulative_processed:,} files processed)',
         )
 
-    def _apply_action_fd(self, fd, isdir, depth):
-        if self.action == AclToolAction.CHOWN:
+    def _do_chown(self, fd, isdir, depth):
+        os.fchown(fd, self.uid, self.gid)
+
+    def _do_strip(self, fd, isdir, depth):
+        truenas_os.fsetacl(fd, None)
+        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
             os.fchown(fd, self.uid, self.gid)
+        if self.options.target_mode is not None:
+            os.fchmod(fd, self.options.target_mode & 0o7777)
 
-        elif self.action == AclToolAction.STRIP:
-            truenas_os.fsetacl(fd, None)
-            if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
-                os.fchown(fd, self.uid, self.gid)
-            if self.options.do_chmod and self.root_mode is not None:
-                os.fchmod(fd, self.root_mode & 0o7777)
-
-        elif self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
-            if self.nfs4_inh is not None:
-                truenas_os.fsetacl(fd, self.nfs4_inh.pick(depth, isdir))
-            elif self.root_acl is not None:
-                if self.posix_file_acl is not None and not isdir:
-                    truenas_os.fsetacl(fd, self.posix_file_acl)
-                else:
-                    truenas_os.fsetacl(fd, self.root_acl)
-            if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
-                os.fchown(fd, self.uid, self.gid)
-            if self.options.do_chmod and self.root_mode is not None:
-                os.fchmod(fd, self.root_mode & 0o7777)
+    def _do_acl(self, fd, isdir, depth):
+        if self.nfs4_inh is not None:
+            # NFS4: use precomputed depth/type-specific inherited ACL
+            truenas_os.fsetacl(fd, self.nfs4_inh.pick(depth, isdir))
+        elif not isdir:
+            # POSIX1E file: use precomputed file-inherited ACL
+            truenas_os.fsetacl(fd, self.posix_file_acl)
+        else:
+            # POSIX1E dir: apply root ACL directly
+            truenas_os.fsetacl(fd, self.options.target_acl)
+        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
+            os.fchown(fd, self.uid, self.gid)
 
     def _apply_action(self, item, it, depth_offset=0):
         self.cumulative_processed += 1
-        self._apply_action_fd(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
+        self._action_fd_fn(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
 
     def _process_mount(self, mnt_point, fs, rel, depth_offset=0):
         reporting_cb = self._report_progress if self.job is not None else None
@@ -188,19 +217,10 @@ class AclTool:
         self._estimate_total(fs_name, mnt_id)
 
         if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
-            try:
-                self.root_acl = truenas_os.fgetacl(self.fd)
-            except OSError as exc:
-                # underlying filesystem may have ACLs disabled
-                if exc.errno != errno.EOPNOTSUPP:
-                    raise
-
-        self.root_mode = os.fstat(self.fd).st_mode if self.options.do_chmod else None
-
-        if self.root_acl is not None and isinstance(self.root_acl, truenas_os.NFS4ACL):
-            self.nfs4_inh = _NFS4InheritedAcls.from_root(self.root_acl)
-        elif self.root_acl is not None and isinstance(self.root_acl, truenas_os.POSIXACL):
-            self.posix_file_acl = self.root_acl.generate_inherited_acl(is_dir=False)
+            if isinstance(self.options.target_acl, truenas_os.NFS4ACL):
+                self.nfs4_inh = _NFS4InheritedAcls.from_root(self.options.target_acl)
+            elif isinstance(self.options.target_acl, truenas_os.POSIXACL):
+                self.posix_file_acl = self.options.target_acl.generate_inherited_acl(is_dir=False)
 
         self._process_mount(mountpoint, fs_name, rel_path)
 
@@ -227,7 +247,7 @@ class AclTool:
                 )
                 try:
                     try:
-                        self._apply_action_fd(child_fd, True, child_depth)
+                        self._action_fd_fn(child_fd, True, child_depth)
                     except OSError as e:
                         raise CallError(f'acltool [{self.action}] failed on {child_mnt}: {e}')
                     self._process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
