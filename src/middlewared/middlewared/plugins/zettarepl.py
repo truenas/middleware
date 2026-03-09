@@ -260,7 +260,10 @@ class ZettareplProcess:
                         break
                 else:
                     logger.warning("Task %s(%r) not found", class_name, task_id)
-                    self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
+                    if task_id.startswith("replication_"):
+                        self.observer_queue.put(PeriodicSnapshotTaskError(task_id, "Task not found"))
+                    if task_id.startswith("periodic_snapshot_"):
+                        self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
 
 
 class ZettareplService(Service):
@@ -365,14 +368,14 @@ class ZettareplService(Service):
             self.logger.error("Abnormal zettarepl process termination with code %r, restarting", process.exitcode)
             error = f"Abnormal zettarepl process termination with code {process.exitcode}."
             task_error_channels = [
-                ("replication_", ("WAITING", "RUNNING"), self.replication_jobs_channels,
+                ("replication_", self.replication_jobs_channels,
                  lambda task_id: ReplicationTaskError(task_id, error)),
-                ("periodic_snapshot_", ("RUNNING",), self.periodic_snapshot_task_jobs_channels,
+                ("periodic_snapshot_", self.periodic_snapshot_task_jobs_channels,
                  lambda task_id: PeriodicSnapshotTaskError(task_id, error)),
             ]
             for k, v in self.middleware.call_sync("zettarepl.get_state").get("tasks", {}).items():
-                for prefix, states, channels, make_error in task_error_channels:
-                    if k.startswith(prefix) and v.get("state") in states:
+                for prefix, channels, make_error in task_error_channels:
+                    if k.startswith(prefix):
                         self.middleware.call_sync("zettarepl.set_state", k, {
                             "state": "ERROR",
                             "datetime": utc_now(),
@@ -414,7 +417,7 @@ class ZettareplService(Service):
         try:
             self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id_}")))
         except Exception:
-            raise CallError("Replication service is not running")
+            raise CallError("Periodic snapshot task service is not running")
 
         self._run_periodic_snapshot_task_job(f"task_{id_}", job)
 
