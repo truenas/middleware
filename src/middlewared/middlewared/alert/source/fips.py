@@ -8,15 +8,15 @@ from middlewared.alert.schedule import IntervalSchedule
 
 @dataclass(kw_only=True)
 class FIPSMisconfigurationAlert(AlertClass):
-    configuration: str
-    state: str
-
     config = AlertClassConfig(
         category=AlertCategory.SECURITY,
         level=AlertLevel.CRITICAL,
         title="FIPS misconfiguration",
         text="FIPS is %(configuration)s, but FIPS provider is %(state)s.",
     )
+
+    configuration: str
+    state: str
 
 
 class FIPSProviderAlertSource(AlertSource):

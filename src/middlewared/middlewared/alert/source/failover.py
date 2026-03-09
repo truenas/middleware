@@ -55,8 +55,6 @@ class FailoverFailedAlert(AlertClass):
 
 @dataclass(kw_only=True)
 class VRRPStatesDoNotAgreeAlert(AlertClass):
-    error: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -64,6 +62,8 @@ class VRRPStatesDoNotAgreeAlert(AlertClass):
         text='Controllers VRRP states do not agree: %(error)s.',
         products=(ProductType.ENTERPRISE,),
     )
+
+    error: str
 
 
 class FailoverAlertSource(AlertSource):

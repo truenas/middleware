@@ -5,8 +5,6 @@ from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, 
 
 @dataclass(kw_only=True)
 class InvalidGpuPciIdsAlert(OneShotAlertClass):
-    pci_ids: str
-
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -19,3 +17,5 @@ class InvalidGpuPciIdsAlert(OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    pci_ids: str

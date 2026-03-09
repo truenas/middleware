@@ -16,8 +16,6 @@ TEXT = 'Network interfaces %(interfaces)s present on '
 
 @dataclass(kw_only=True)
 class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
-    interfaces: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -26,11 +24,11 @@ class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    interfaces: str
+
 
 @dataclass(kw_only=True)
 class NetworkCardsMismatchOnActiveNodeAlert(AlertClass):
-    interfaces: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -38,6 +36,8 @@ class NetworkCardsMismatchOnActiveNodeAlert(AlertClass):
         text=TEXT + 'standby storage controller but missing on active storage controller.',
         products=(ProductType.ENTERPRISE,),
     )
+
+    interfaces: str
 
 
 class FailoverNetworkCardsAlertSource(AlertSource):

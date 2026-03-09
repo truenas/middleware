@@ -11,8 +11,6 @@ from middlewared.utils import ProductType
 
 @dataclass(kw_only=True)
 class FailoverSyncFailedAlert(OneShotAlertClass):
-    mins: int
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -25,6 +23,8 @@ class FailoverSyncFailedAlert(OneShotAlertClass):
         products=(ProductType.ENTERPRISE,),
         keys=[],
     )
+
+    mins: int
 
 
 class FailoverKeysSyncFailedAlert(OneShotAlertClass):
@@ -43,8 +43,6 @@ class FailoverKeysSyncFailedAlert(OneShotAlertClass):
 
 @dataclass(kw_only=True)
 class FailoverKMIPKeysSyncFailedAlert(OneShotAlertClass):
-    error: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -57,3 +55,5 @@ class FailoverKMIPKeysSyncFailedAlert(OneShotAlertClass):
         deleted_automatically=False,
         keys=[],
     )
+
+    error: str

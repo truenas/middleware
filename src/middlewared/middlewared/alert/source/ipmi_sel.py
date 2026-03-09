@@ -25,17 +25,17 @@ def remove_deasserted_records(records: list[dict[str, Any]]) -> list[dict[str, A
 
 @dataclass(kw_only=True)
 class IPMISELAlert(DismissableAlertClass):
-    name: str
-    event_direction: str
-    event: str
-    dt_iso: str
-
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
         title="IPMI System Event",
         text="Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)",
     )
+
+    name: str
+    event_direction: str
+    event: str
+    dt_iso: str
 
     @classmethod
     def key_from_args(cls, args: Any) -> list[str]:
@@ -61,15 +61,15 @@ class IPMISELAlert(DismissableAlertClass):
 
 @dataclass(kw_only=True)
 class IPMISELSpaceLeftAlert(AlertClass):
-    free: str
-    used: str
-
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
         title="IPMI System Event Log Low Space Left",
         text="IPMI System Event Log low space left: %(free)s (%(used)s).",
     )
+
+    free: str
+    used: str
 
     @classmethod
     def key_from_args(cls, args: Any) -> None:

@@ -8,8 +8,6 @@ URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 
 @dataclass(kw_only=True)
 class DeprecatedServiceAlert(OneShotAlertClass):
-    service: str
-
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -21,6 +19,8 @@ class DeprecatedServiceAlert(OneShotAlertClass):
             "the service has been removed in the next version of SCALE."
         ),
     )
+
+    service: str
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:

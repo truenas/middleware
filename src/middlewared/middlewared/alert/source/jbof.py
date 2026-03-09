@@ -25,10 +25,6 @@ class JBOFTearDownFailureAlert(OneShotAlertClass):
 
 @dataclass(kw_only=True)
 class JBOFRedfishCommAlert(AlertClass):
-    desc: str
-    ip1: str
-    ip2: str
-
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -37,14 +33,13 @@ class JBOFRedfishCommAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
-
-@dataclass(kw_only=True)
-class JBOFInvalidDataAlert(AlertClass):
     desc: str
     ip1: str
     ip2: str
-    keys: str
 
+
+@dataclass(kw_only=True)
+class JBOFInvalidDataAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -53,16 +48,14 @@ class JBOFInvalidDataAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
-
-@dataclass(kw_only=True)
-class JBOFElementWarningAlert(AlertClass):
     desc: str
     ip1: str
     ip2: str
-    etype: str
-    key: str
-    value: str
+    keys: str
 
+
+@dataclass(kw_only=True)
+class JBOFElementWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
@@ -71,9 +64,6 @@ class JBOFElementWarningAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
-
-@dataclass(kw_only=True)
-class JBOFElementCriticalAlert(AlertClass):
     desc: str
     ip1: str
     ip2: str
@@ -81,6 +71,9 @@ class JBOFElementCriticalAlert(AlertClass):
     key: str
     value: str
 
+
+@dataclass(kw_only=True)
+class JBOFElementCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -88,6 +81,13 @@ class JBOFElementCriticalAlert(AlertClass):
         text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s',
         products=(ProductType.ENTERPRISE,),
     )
+
+    desc: str
+    ip1: str
+    ip2: str
+    etype: str
+    key: str
+    value: str
 
 
 class JBOFAlertSource(AlertSource):

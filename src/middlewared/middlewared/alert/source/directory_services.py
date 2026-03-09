@@ -14,14 +14,14 @@ from middlewared.service_exception import CallError
 
 @dataclass(kw_only=True)
 class DirectoryServiceBindAlert(AlertClass):
-    err: str
-
     config = AlertClassConfig(
         category=AlertCategory.DIRECTORY_SERVICE,
         level=AlertLevel.WARNING,
         title="DirectoryService Bind Is Not Healthy",
         text="%(err)s.",
     )
+
+    err: str
 
     @classmethod
     def key_from_args(cls, args: Any) -> None:
@@ -30,14 +30,14 @@ class DirectoryServiceBindAlert(AlertClass):
 
 @dataclass(kw_only=True)
 class DirectoryServiceDnsUpdateAlert(AlertClass):
-    err: str
-
     config = AlertClassConfig(
         category=AlertCategory.DIRECTORY_SERVICE,
         level=AlertLevel.WARNING,
         title="DirectoryService DNS Update Failed",
         text="%(err)s.",
     )
+
+    err: str
 
     @classmethod
     def key_from_args(cls, args: Any) -> None:

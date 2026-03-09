@@ -16,8 +16,6 @@ TEXT = 'Disks with serial %(serials)s present on '
 
 @dataclass(kw_only=True)
 class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
-    serials: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -26,11 +24,11 @@ class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
         products=(ProductType.ENTERPRISE,),
     )
 
+    serials: str
+
 
 @dataclass(kw_only=True)
 class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
-    serials: str
-
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
@@ -38,6 +36,8 @@ class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
         text=TEXT + 'standby storage controller but missing on active storage controller.',
         products=(ProductType.ENTERPRISE,),
     )
+
+    serials: str
 
 
 class FailoverDisksAlertSource(AlertSource):

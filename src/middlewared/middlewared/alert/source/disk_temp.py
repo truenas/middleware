@@ -18,11 +18,6 @@ from middlewared.alert.base import (
 
 @dataclass(kw_only=True)
 class DiskTemperatureTooHotAlert(AlertClass):
-    device: str
-    serial: str
-    crit_threshold: int
-    temp: int
-
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
@@ -33,6 +28,11 @@ class DiskTemperatureTooHotAlert(AlertClass):
             " current temp is %(temp)d degrees celsius"
         ),
     )
+
+    device: str
+    serial: str
+    crit_threshold: int
+    temp: int
 
 
 class DiskTemperatureTooHotAlertSource(AlertSource):

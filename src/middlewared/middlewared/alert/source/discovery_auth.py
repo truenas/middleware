@@ -7,14 +7,14 @@ UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', '
 
 @dataclass(kw_only=True)
 class ISCSIDiscoveryAuthMixedAlert(OneShotAlertClass):
-    ips: str
-
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
         title="iSCSI Discovery Authorization Global",
         text="Prior to upgrade had specified iSCSI discovery auth on only some portals, now applies globally.  May need to update client configuration when using %(ips)s",
     )
+
+    ips: str
 
 
 class ISCSIDiscoveryAuthMultipleCHAPAlert(OneShotAlertClass):
@@ -28,11 +28,11 @@ class ISCSIDiscoveryAuthMultipleCHAPAlert(OneShotAlertClass):
 
 @dataclass(kw_only=True)
 class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(OneShotAlertClass):
-    peeruser: str
-
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
         title="iSCSI Discovery Authorization Multiple Mutual CHAP",
         text="Multiple mutual CHAP peers defined for discovery auth, but only first one (\"%(peeruser)s\") applies.  May need to update client configuration.",
     )
+
+    peeruser: str

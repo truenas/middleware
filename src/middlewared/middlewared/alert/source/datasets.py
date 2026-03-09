@@ -8,8 +8,6 @@ from middlewared.alert.schedule import IntervalSchedule
 
 @dataclass(kw_only=True)
 class EncryptedDatasetAlert(AlertClass):
-    datasets: str
-
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -19,6 +17,8 @@ class EncryptedDatasetAlert(AlertClass):
             'not supported behaviour and may lead to various issues.'
         ),
     )
+
+    datasets: str
 
 
 class UnencryptedDatasetsAlertSource(AlertSource):

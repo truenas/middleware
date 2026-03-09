@@ -61,12 +61,6 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
 @dataclass(kw_only=True)
 class ISCSIAuthSecretInvalidCharAlert(AlertClass):
-    field: str
-    tag: int
-    userfield: str
-    user: str
-    char: str
-
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -77,14 +71,15 @@ class ISCSIAuthSecretInvalidCharAlert(AlertClass):
         ),
     )
 
-
-@dataclass(kw_only=True)
-class ISCSIAuthSecretWhitespaceAlert(AlertClass):
     field: str
     tag: int
     userfield: str
     user: str
+    char: str
 
+
+@dataclass(kw_only=True)
+class ISCSIAuthSecretWhitespaceAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
@@ -94,6 +89,11 @@ class ISCSIAuthSecretWhitespaceAlert(AlertClass):
             'has a %(field)s containing leading or trailing whitespace.'
         ),
     )
+
+    field: str
+    tag: int
+    userfield: str
+    user: str
 
 
 class ISCSIAuthSecretAlertSource(AlertSource):

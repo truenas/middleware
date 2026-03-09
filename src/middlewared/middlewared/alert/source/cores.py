@@ -7,8 +7,6 @@ from middlewared.utils import ProductType
 
 @dataclass(kw_only=True)
 class CoreFilesArePresentAlert(AlertClass):
-    corefiles: str
-
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
@@ -22,6 +20,8 @@ class CoreFilesArePresentAlert(AlertClass):
         ),
         products=(ProductType.COMMUNITY_EDITION,),
     )
+
+    corefiles: str
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
