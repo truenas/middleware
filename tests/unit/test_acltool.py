@@ -31,7 +31,7 @@ import truenas_os as t
 import truenas_pylibzfs
 from truenas_api_client import Client
 
-from middlewared.plugins.filesystem_.utils import AclToolAction, acltool
+from middlewared.plugins.filesystem_.utils import AclTool, AclToolAction, ATAclOptions, ATPermOptions
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID
 
 
@@ -53,6 +53,7 @@ _CLONE_INHERIT = [AclToolAction.CLONE, AclToolAction.INHERIT]
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _open_fd(path, is_dir=False):
     return os.open(path, os.O_RDONLY | (os.O_DIRECTORY if is_dir else 0))
@@ -108,8 +109,9 @@ def _set_nfs4_acl(path, is_dir):
 def _run_acltool(root_path, action, traverse=False):
     fd = t.openat2(root_path, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
     try:
-        acltool(fd, action, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                options={'traverse': traverse})
+        root_acl = t.fgetacl(fd)
+        AclTool(fd, action, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                ATAclOptions(target_acl=root_acl, traverse=traverse)).run()
     finally:
         os.close(fd)
 
@@ -724,8 +726,8 @@ class TestAcltoolChmod:
         try:
             os.fchmod(fd, target_mode)
             # Must not raise ValueError despite trivial (no-inherit) root ACL.
-            acltool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                    options={'do_chmod': True})
+            AclTool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    ATPermOptions(target_mode=target_mode)).run()
         finally:
             os.close(fd)
 
@@ -743,8 +745,8 @@ class TestAcltoolChmod:
         _strip_acl(root)
         fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
         try:
-            acltool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                    options={'do_chmod': False})
+            AclTool(fd, AclToolAction.STRIP, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    ATPermOptions()).run()
         finally:
             os.close(fd)
 
@@ -768,10 +770,11 @@ class TestAcltoolChmod:
 
         fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
         try:
+            root_acl = t.fgetacl(fd)
             # Diverge root's stored mode from what the ACL implies.
             os.fchmod(fd, 0o700)
-            acltool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                    options={'do_chmod': False})
+            AclTool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    ATAclOptions(target_acl=root_acl)).run()
         finally:
             os.close(fd)
 
@@ -780,24 +783,6 @@ class TestAcltoolChmod:
         for path in (subdir, file_root, file_sub):
             assert _get_mode(path) == 0o777, (
                 f'{path}: expected ACL-derived mode 777, got {_get_mode(path):o}'
-            )
-
-    def test_clone_nfs4_with_mode_does_chmod_children(self, nfs4_env):
-        """CLONE action with do_chmod=True must apply root_mode to children."""
-        root, subdir, file_root, file_sub = nfs4_env
-
-        target_mode = 0o755
-        fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
-        try:
-            os.fchmod(fd, target_mode)
-            acltool(fd, AclToolAction.CLONE, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                    options={'do_chmod': True})
-        finally:
-            os.close(fd)
-
-        for path in (subdir, file_root, file_sub):
-            assert _get_mode(path) == target_mode, (
-                f'{path}: expected mode {target_mode:o} after CLONE+do_chmod'
             )
 
 
@@ -845,9 +830,10 @@ class TestAcltoolNFS4Restricted:
 
         fd = t.openat2(root, flags=os.O_RDONLY, resolve=t.RESOLVE_NO_SYMLINKS)
         try:
+            root_acl = t.fgetacl(fd)
             # Must not raise EPERM (or anything else).
-            acltool(fd, action, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
-                    options={'do_chmod': False})
+            AclTool(fd, action, ACL_UNDEFINED_ID, ACL_UNDEFINED_ID,
+                    ATAclOptions(target_acl=root_acl)).run()
         finally:
             os.close(fd)
 
