@@ -20,23 +20,23 @@ ID_MAX = 2 ** 32 - 2
 def safe_open(path, mode='r', buffering=-1, encoding=None, errors=None, newline=None):
     """
     Drop-in for open() that uses openat2(RESOLVE_NO_SYMLINKS) as the opener,
-    preventing symlink-based TOCTOU attacks. Raises OSError(ELOOP) if any
+    preventing symlink-based TOCTOU attacks. Raises CallError(ELOOP) if any
     path component is a symlink.
     """
     def _opener(p, flags):
-        return truenas_os.openat2(
-            p, flags,
-            mode=0o666 if (flags & os.O_CREAT) else 0,
-            resolve=truenas_os.RESOLVE_NO_SYMLINKS,
-        )
+        try:
+            return truenas_os.openat2(
+                p, flags,
+                mode=0o666 if (flags & os.O_CREAT) else 0,
+                resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+            )
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
 
-    try:
-        with open(path, mode, buffering, encoding, errors, newline, opener=_opener) as f:
-            yield f
-    except OSError as e:
-        if e.errno == errno.ELOOP:
-            raise CallError('Symlinks are not permitted.', errno.ELOOP)
-        raise
+    with open(path, mode, buffering, encoding, errors, newline, opener=_opener) as f:
+        yield f
 
 
 class FileChanges(enum.IntFlag):

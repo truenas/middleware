@@ -501,6 +501,11 @@ class FilesystemService(Service):
             )
 
         dirname = os.path.dirname(path)
+        # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
+        # to be created at symlink target locations as a side-effect. The subsequent
+        # safe_open blocks the actual file write via RESOLVE_NO_SYMLINKS, but the
+        # created directories are not rolled back. Fully safe directory creation
+        # would require an fd-walking mkdirat implementation.
         os.makedirs(dirname, exist_ok=True)
 
         with safe_open(path, 'ab' if options.get('append') else 'wb+') as f:
@@ -541,6 +546,11 @@ class FilesystemService(Service):
 
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
+            # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
+            # to be created at symlink target locations as a side-effect. The subsequent
+            # safe_open blocks the actual file write via RESOLVE_NO_SYMLINKS, but the
+            # created directories are not rolled back. Fully safe directory creation
+            # would require an fd-walking mkdirat implementation.
             os.makedirs(dirname)
         if options.get('append'):
             openmode = 'ab'
