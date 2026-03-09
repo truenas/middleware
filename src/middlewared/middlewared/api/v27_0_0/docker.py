@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
+from pydantic import IPvAnyInterface, Field, field_serializer, field_validator, model_validator, RootModel
 from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
@@ -25,6 +25,10 @@ class DockerAddressPool(BaseModel):
     """Base network address with prefix for the pool."""
     size: Annotated[int, Field(ge=1)]
     """Subnet size for networks allocated from this pool."""
+
+    @field_serializer('base')
+    def serialize_base(self, v):
+        return str(v)
 
     @field_validator('base')
     @classmethod
