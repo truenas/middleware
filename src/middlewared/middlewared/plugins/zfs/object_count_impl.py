@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import truenas_pylibzfs
 
@@ -10,7 +11,7 @@ __all__ = ('estimate_object_count_impl',)
 logger = logging.getLogger(__name__)
 
 
-def estimate_object_count_impl(tls, dataset_name: str) -> int:
+def estimate_object_count_impl(tls: typing.Any, dataset_name: str) -> int:
     """Estimate total objects (files + dirs) in a dataset via ZFS quota accounting.
 
     Uses GROUPOBJ_USED quota type which sums object counts per group across
@@ -31,7 +32,7 @@ def estimate_object_count_impl(tls, dataset_name: str) -> int:
 
     cnt = 0
 
-    def _cb(quota, state):
+    def _cb(quota: typing.Any, state: typing.Any) -> bool:
         nonlocal cnt
         cnt += quota.value
         return True

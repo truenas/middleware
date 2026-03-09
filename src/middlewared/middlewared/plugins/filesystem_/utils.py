@@ -8,6 +8,7 @@ import truenas_os
 
 from middlewared.service_exception import CallError
 from middlewared.utils.mount import statmount as _statmount
+from middlewared.plugins.zfs.object_count_impl import estimate_object_count_impl
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
     FS_ACL_Type,
@@ -23,6 +24,12 @@ class AclToolAction(enum.StrEnum):
     CLONE = 'clone'  # Use simplified imheritance logic
     INHERIT = 'inherit'  # NFS41-style inheritance
     STRIP = 'strip'  # Strip ACL from specified path
+
+
+@dataclasses.dataclass(slots=True)
+class AclToolOptions:
+    traverse: bool = False
+    do_chmod: bool = False
 
 
 @dataclasses.dataclass(slots=True)
@@ -55,156 +62,177 @@ def _get_mount_info(fd: int):
     return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
 
 
-def acltool(fd: int, action: AclToolAction, uid: int, gid: int, options: dict, job=None, middleware=None) -> None:
+class AclTool:
     """
     Perform recursive ACL-related operations using fd-based operations via the
     truenas_os extension.
 
     `fd` must be an open O_RDONLY descriptor for the root path of the
-    operation.  acltool reads from it but does NOT close it; the caller owns
+    operation.  AclTool reads from it but does NOT close it; the caller owns
     the descriptor lifetime.
 
-    If `job` is provided, progress updates are emitted at most once per 1 000
-    items *and* no more frequently than every 1 second (whichever is later).
+    If `job` is provided, progress updates are emitted no more frequently than
+    every 1 second.
     """
-    traverse = options.get('traverse', False)
-    do_chmod = options.get('do_chmod', False)
 
-    mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(fd)
+    __slots__ = (
+        'fd', 'action', 'uid', 'gid', 'options', 'job', 'tls',
+        'root_acl', 'root_mode', 'nfs4_inh', 'posix_file_acl',
+        'total_objects', 'cumulative_processed', 'last_report_time',
+    )
 
-    total_objects = 0
-    if job is not None and middleware is not None:
+    def __init__(self, fd, action, uid, gid, options, job=None, tls=None):
+        self.fd = fd
+        self.action = action
+        self.uid = uid
+        self.gid = gid
+        self.options = options
+        self.job = job
+        self.tls = tls
+        self.total_objects = 0
+        self.cumulative_processed = 0
+        self.last_report_time = time.monotonic()
+        self.root_acl = None
+        self.root_mode = None
+        self.nfs4_inh = None
+        self.posix_file_acl = None
+
+    def _estimate_total(self, fs_name, mnt_id):
+        """Populate self.total_objects before iteration begins."""
+        if self.job is None or self.tls is None:
+            return
+        # Subdirectory: dataset-wide estimate would dwarf actual work
+        mountpoint, _, rel_path, _ = _get_mount_info(self.fd)
+        if rel_path is not None:
+            return
         try:
-            total_objects = middleware.call_sync('zfs.resource.estimate_object_count', fs_name)
-            if traverse:
-                real_path = os.readlink(f'/proc/self/fd/{fd}')
-                for entry in truenas_os.iter_mount(
-                    mnt_id=mnt_id,
-                    statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE | truenas_os.STATMOUNT_FS_TYPE,
-                ):
-                    child_mnt = entry.mnt_point
-                    if not child_mnt.startswith(real_path + '/'):
+            self.total_objects = estimate_object_count_impl(self.tls, fs_name)
+            if self.options.traverse:
+                real_path = os.readlink(f'/proc/self/fd/{self.fd}')
+                _sm_flags = (
+                    truenas_os.STATMOUNT_MNT_POINT |
+                    truenas_os.STATMOUNT_SB_SOURCE |
+                    truenas_os.STATMOUNT_FS_TYPE
+                )
+                for entry in truenas_os.iter_mount(mnt_id=mnt_id, statmount_flags=_sm_flags):
+                    if not entry.mnt_point.startswith(real_path + '/'):
                         continue
                     if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
                         continue
                     if entry.fs_type == 'zfs' and entry.sb_source:
-                        total_objects += middleware.call_sync(
-                            'zfs.resource.estimate_object_count', entry.sb_source
-                        )
+                        self.total_objects += estimate_object_count_impl(self.tls, entry.sb_source)
         except Exception:
-            total_objects = 0
+            self.total_objects = 0
 
-    root_acl = None
-
-    if action in (AclToolAction.CLONE, AclToolAction.INHERIT):
-        try:
-            root_acl = truenas_os.fgetacl(fd)
-        except OSError as exc:
-            # underlying filesystem may have ACLs disabled
-            if exc.errno != errno.EOPNOTSUPP:
-                raise
-
-    root_mode = os.fstat(fd).st_mode if do_chmod else None
-
-    nfs4_inh = None
-    posix_file_acl = None
-    if root_acl is not None and isinstance(root_acl, truenas_os.NFS4ACL):
-        nfs4_inh = _NFS4InheritedAcls.from_root(root_acl)
-    elif root_acl is not None and isinstance(root_acl, truenas_os.POSIXACL):
-        posix_file_acl = root_acl.generate_inherited_acl(is_dir=False)
-
-    last_report_time = time.monotonic()
-
-    def _report_progress(dir_stack, state, private_data):
-        nonlocal last_report_time
+    def _report_progress(self, dir_stack, state, private_data):
         now = time.monotonic()
-        if now - last_report_time < 1.0:
+        if now - self.last_report_time < 1.0:
             return
-
-        last_report_time = now
-        if total_objects > 0:
-            pct = min(10 + int(state.cnt / total_objects * 89), 99)
+        self.last_report_time = now
+        if self.total_objects > 0:
+            pct = min(10 + int(self.cumulative_processed / self.total_objects * 89), 99)
         else:
             pct = None
-        job.set_progress(
+        self.job.set_progress(
             pct,
-            f'Processing {state.current_directory} ({state.cnt:,} files processed)',
+            f'Processing {state.current_directory} ({self.cumulative_processed:,} files processed)',
         )
 
-    reporting_callback = _report_progress if job is not None else None
+    def _apply_action_fd(self, fd, isdir, depth):
+        if self.action == AclToolAction.CHOWN:
+            os.fchown(fd, self.uid, self.gid)
 
-    def _apply_action_fd(fd, isdir, depth):
-        if action == AclToolAction.CHOWN:
-            os.fchown(fd, uid, gid)
-
-        elif action == AclToolAction.STRIP:
+        elif self.action == AclToolAction.STRIP:
             truenas_os.fsetacl(fd, None)
-            if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
-                os.fchown(fd, uid, gid)
-            if do_chmod and root_mode is not None:
-                os.fchmod(fd, root_mode & 0o7777)
+            if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
+                os.fchown(fd, self.uid, self.gid)
+            if self.options.do_chmod and self.root_mode is not None:
+                os.fchmod(fd, self.root_mode & 0o7777)
 
-        elif action in (AclToolAction.CLONE, AclToolAction.INHERIT):
-            if nfs4_inh is not None:
-                inherited = nfs4_inh.pick(depth, isdir)
-                truenas_os.fsetacl(fd, inherited)
-            elif root_acl is not None:
-                if posix_file_acl is not None and not isdir:
-                    truenas_os.fsetacl(fd, posix_file_acl)
+        elif self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
+            if self.nfs4_inh is not None:
+                truenas_os.fsetacl(fd, self.nfs4_inh.pick(depth, isdir))
+            elif self.root_acl is not None:
+                if self.posix_file_acl is not None and not isdir:
+                    truenas_os.fsetacl(fd, self.posix_file_acl)
                 else:
-                    truenas_os.fsetacl(fd, root_acl)
-            if uid != ACL_UNDEFINED_ID or gid != ACL_UNDEFINED_ID:
-                os.fchown(fd, uid, gid)
-            if do_chmod and root_mode is not None:
-                os.fchmod(fd, root_mode & 0o7777)
+                    truenas_os.fsetacl(fd, self.root_acl)
+            if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
+                os.fchown(fd, self.uid, self.gid)
+            if self.options.do_chmod and self.root_mode is not None:
+                os.fchmod(fd, self.root_mode & 0o7777)
 
-    def _apply_action(item, it, depth_offset=0):
-        _apply_action_fd(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
+    def _apply_action(self, item, it, depth_offset=0):
+        self.cumulative_processed += 1
+        self._apply_action_fd(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
 
-    def _process_mount(mnt_point, fs, rel, depth_offset=0):
+    def _process_mount(self, mnt_point, fs, rel, depth_offset=0):
+        reporting_cb = self._report_progress if self.job is not None else None
         with truenas_os.iter_filesystem_contents(
             mnt_point, fs,
             relative_path=rel,
             reporting_increment=1000,
-            reporting_callback=reporting_callback,
+            reporting_callback=reporting_cb,
         ) as it:
             for item in it:
                 if item.islnk:
                     continue
                 try:
-                    _apply_action(item, it, depth_offset)
+                    self._apply_action(item, it, depth_offset)
                 except OSError as e:
-                    raise CallError(f'acltool [{action}] failed on item in {mnt_point}: {e}')
+                    raise CallError(f'acltool [{self.action}] failed on item in {mnt_point}: {e}')
 
-    _process_mount(mountpoint, fs_name, rel_path)
+    def run(self):
+        mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(self.fd)
 
-    if traverse:
-        real_path = os.readlink(f'/proc/self/fd/{fd}')
-        for entry in truenas_os.iter_mount(
-            mnt_id=mnt_id,
-            statmount_flags=truenas_os.STATMOUNT_MNT_POINT | truenas_os.STATMOUNT_SB_SOURCE | truenas_os.STATMOUNT_FS_TYPE,
-        ):
-            child_mnt = entry.mnt_point
-            if not child_mnt.startswith(real_path + '/'):
-                continue
+        self._estimate_total(fs_name, mnt_id)
 
-            # Skip ZFS snapshot mounts: they are read-only and transient, so
-            # write operations (fsetacl/fchown/fchmod) would fail with EROFS.
-            if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
-                continue
-
-            child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
-            child_fd = truenas_os.openat2(
-                child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-            )
+        if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
             try:
+                self.root_acl = truenas_os.fgetacl(self.fd)
+            except OSError as exc:
+                # underlying filesystem may have ACLs disabled
+                if exc.errno != errno.EOPNOTSUPP:
+                    raise
+
+        self.root_mode = os.fstat(self.fd).st_mode if self.options.do_chmod else None
+
+        if self.root_acl is not None and isinstance(self.root_acl, truenas_os.NFS4ACL):
+            self.nfs4_inh = _NFS4InheritedAcls.from_root(self.root_acl)
+        elif self.root_acl is not None and isinstance(self.root_acl, truenas_os.POSIXACL):
+            self.posix_file_acl = self.root_acl.generate_inherited_acl(is_dir=False)
+
+        self._process_mount(mountpoint, fs_name, rel_path)
+
+        if self.options.traverse:
+            real_path = os.readlink(f'/proc/self/fd/{self.fd}')
+            _sm_flags = (
+                truenas_os.STATMOUNT_MNT_POINT |
+                truenas_os.STATMOUNT_SB_SOURCE |
+                truenas_os.STATMOUNT_FS_TYPE
+            )
+            for entry in truenas_os.iter_mount(mnt_id=mnt_id, statmount_flags=_sm_flags):
+                child_mnt = entry.mnt_point
+                if not child_mnt.startswith(real_path + '/'):
+                    continue
+
+                # Skip ZFS snapshot mounts: they are read-only and transient, so
+                # write operations (fsetacl/fchown/fchmod) would fail with EROFS.
+                if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
+                    continue
+
+                child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
+                child_fd = truenas_os.openat2(
+                    child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+                )
                 try:
-                    _apply_action_fd(child_fd, True, child_depth)
-                except OSError as e:
-                    raise CallError(f'acltool [{action}] failed on {child_mnt}: {e}')
-                _process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
-            finally:
-                os.close(child_fd)
+                    try:
+                        self._apply_action_fd(child_fd, True, child_depth)
+                    except OSError as e:
+                        raise CallError(f'acltool [{self.action}] failed on {child_mnt}: {e}')
+                    self._process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
+                finally:
+                    os.close(child_fd)
 
 
 def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
