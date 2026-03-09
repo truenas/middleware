@@ -448,7 +448,7 @@ async def test__jbof_redfish_comm_alert():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert == Alert(JBOFRedfishCommAlert, args=jbof1_id_dict)
+    assert alert == Alert(JBOFRedfishCommAlert(**jbof1_id_dict))
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Failed to communicate with redfish interface.'
 
 
