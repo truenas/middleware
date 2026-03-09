@@ -192,7 +192,6 @@ class AclTool:
             os.fchown(fd, self.uid, self.gid)
 
     def _apply_action(self, item, it, depth_offset=0):
-        self.cumulative_processed += 1
         self._action_fd_fn(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
 
     def _process_mount(self, mnt_point, fs, rel, depth_offset=0):
@@ -204,6 +203,7 @@ class AclTool:
             reporting_callback=reporting_cb,
         ) as it:
             for item in it:
+                self.cumulative_processed += 1
                 if item.islnk:
                     continue
                 try:
@@ -247,6 +247,7 @@ class AclTool:
                 )
                 try:
                     try:
+                        self.cumulative_processed += 1
                         self._action_fd_fn(child_fd, True, child_depth)
                     except OSError as e:
                         raise CallError(f'acltool [{self.action}] failed on {child_mnt}: {e}')
