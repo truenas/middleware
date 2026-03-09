@@ -186,6 +186,9 @@ class ZettareplProcess:
         while True:
             try:
                 self.zettarepl.run()
+            except KeyboardInterrupt:
+                # zettarepl shutdown on middleware shutdown
+                return
             except Exception:
                 logging.getLogger("zettarepl").error("Unhandled exception", exc_info=True)
                 time.sleep(10)
@@ -270,6 +273,14 @@ class ZettareplService(Service):
 
         self.lock = threading.Lock()
         self.command_queue = None
+        # multiprocessing.Queue internally uses semaphores tracked by a resource_tracker daemon
+        # process. That daemon is spawned lazily on the first Queue() call and inherits the
+        # parent's environment. At shutdown (e.g. Ctrl+C) the queues are intentionally left open
+        # because the observer_queue reader thread holds a live reference, so the resource_tracker
+        # prints a "leaked semaphore" UserWarning for each one. Suppress it via PYTHONWARNINGS
+        # here, before Queue() triggers the daemon spawn, so the daemon inherits the filter.
+        # warnings.filterwarnings() in the parent process has no effect on the daemon subprocess.
+        os.environ.setdefault('PYTHONWARNINGS', 'ignore:resource_tracker:UserWarning')
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.replication_jobs_channels = defaultdict(list)
