@@ -32,17 +32,12 @@ You can subclass `AlertSource` class (or one of its helper subclasses) to add a 
 One-shot alerts
 ^^^^^^^^^^^^^^^
 
-One-shot alerts are the alerts created by external events. The main issue with such alerts is deleting them, so there
-are a few one-shot alert types, each offering a different deletion strategy.
+One-shot alerts are the alerts created by external events.
 
 Add `OneShotAlertClass` to your `AlertClass` superclass list to make it a one-shot alert.
 
 .. autoclass:: middlewared.alert.base.OneShotAlertClass
     :members:
-
-For most use-cases a simple implementation is sufficient:
-
-.. autoclass:: middlewared.alert.base.SimpleOneShotAlertClass
 
 Use the following methods to create/delete one-shot alerts:
 

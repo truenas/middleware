@@ -37,7 +37,7 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
             d = d.replace(tzinfo=None)
             datetimes.append(d)
 
-        await middleware.call(
+        await middleware.call2(
             middleware.services.keyvalue.set,
             IPMISELAlertSource.dismissed_datetime_kv_key,
             max(datetimes),
