@@ -11,7 +11,7 @@ class SystemGeneralCertificateAttachmentDelegate(CertificateServiceAttachmentDel
 
 class SystemAdvancedCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
-    CERT_FIELD = NotImplementedError
+    # CERT_FIELD is unused
     HUMAN_NAME = 'Syslog Service'
     NAMESPACE = 'system.advanced'
     SERVICE = 'syslogd'

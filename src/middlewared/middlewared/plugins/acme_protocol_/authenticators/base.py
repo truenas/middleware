@@ -1,14 +1,16 @@
 import time
+from typing import TYPE_CHECKING
 
 from middlewared.service import CallError
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
 
 
 class Authenticator:
 
-    NAME = NotImplementedError
-    PROPAGATION_DELAY = NotImplementedError
-    SCHEMA_MODEL = NotImplementedError
-    INTERNAL = False
+    NAME: str
+    PROPAGATION_DELAY: float
+    SCHEMA_MODEL: type['BaseModel']
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware

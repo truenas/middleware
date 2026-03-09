@@ -363,11 +363,8 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin):
-    title = NotImplementedError
-
-    schema = NotImplementedError
-
-    html = False
+    title: str
+    html: bool = False
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware

@@ -8,9 +8,9 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     """
 
     # Unique identifier among all FSAttachmentDelegate classes
-    name: str = NotImplementedError
+    name: str
     # Human-readable name of item handled by this delegate (e.g. "NFS Share")
-    title: str = NotImplementedError
+    title: str
     # If is not None, corresponding service will be restarted after performing tasks on item
     service: str | None = None
     # attribute which is used to identify human readable description of an attachment
@@ -87,7 +87,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
     """
 
     # service object
-    service_class: type[SharingTaskService[E]] = NotImplementedError
+    service_class: type[SharingTaskService[E]]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
