@@ -66,6 +66,17 @@ class LaggMixin:
         run(["ip", "link", "set", self.name, "type", "bond", "primary", value])
 
     @property
+    def miimon(self):
+        try:
+            return int(self._sysfs_read(self.get_options_path("miimon")).strip())
+        except FileNotFoundError:
+            return None
+
+    @miimon.setter
+    def miimon(self, value):
+        run(["ip", "link", "set", self.name, "type", "bond", "miimon", str(value)])
+
+    @property
     def ports(self):
         ports = []
         for port in self._sysfs_read(f"/sys/devices/virtual/net/{self.name}/bonding/slaves").split():
