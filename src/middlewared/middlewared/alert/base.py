@@ -519,7 +519,10 @@ def format_alerts(
 ) -> str:
     text = f"{product_name} @ {hostname}<br><br>"
 
-    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].instance.config.name == "Test":
+    if (
+        len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and
+        new_alerts[0].instance.config.name == "Test"
+    ):
         return text + "This is a test alert"
 
     if new_alerts:

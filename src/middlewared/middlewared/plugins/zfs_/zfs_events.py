@@ -6,7 +6,7 @@ import threading
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
+    AlertCategory, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
 )
 from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.utils.threading import start_daemon_thread

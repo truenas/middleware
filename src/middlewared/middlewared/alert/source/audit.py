@@ -3,7 +3,9 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass,
+)
 from middlewared.alert.schedule import IntervalSchedule
 
 log = logging.getLogger("audit_check_alertmod")
@@ -40,9 +42,9 @@ class AuditServiceHealthAlert(AlertClass):
 
 
 class AuditServiceHealthAlertSource(AlertSource):
-    '''
+    """
     Run simple query every 20 minutes as a heath check
-    '''
+    """
     schedule = IntervalSchedule(timedelta(minutes=20))
     run_on_backup_node = False
 

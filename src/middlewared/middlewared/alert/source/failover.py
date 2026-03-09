@@ -8,7 +8,10 @@ from dataclasses import dataclass
 
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, NonDataclassAlertClass, UnavailableException
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource,
+    NonDataclassAlertClass, UnavailableException,
+)
 from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
 

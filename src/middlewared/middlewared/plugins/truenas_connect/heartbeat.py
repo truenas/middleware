@@ -7,7 +7,9 @@ from truenas_connect_utils.config import get_account_id_and_system_id
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
-from middlewared.alert.source.truenas_connect import TNCDisabledAutoUnconfiguredAlert, TNCHeartbeatConnectionFailureAlert
+from middlewared.alert.source.truenas_connect import (
+    TNCDisabledAutoUnconfiguredAlert, TNCHeartbeatConnectionFailureAlert,
+)
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
@@ -134,7 +136,6 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         'last_heartbeat_failure_datetime': None,
                     })
                     logger.debug('TNC Heartbeat: Resetting last heartbeat failure datetime')
-
 
                 await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
                 await asyncio.sleep(HEARTBEAT_INTERVAL)

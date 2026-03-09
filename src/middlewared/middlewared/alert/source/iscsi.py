@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 

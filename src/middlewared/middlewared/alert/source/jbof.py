@@ -7,7 +7,9 @@ import datetime
 from dataclasses import dataclass
 from typing import Any
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
@@ -95,7 +97,9 @@ class JBOFAlertSource(AlertSource):
     run_on_backup_node = False
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
 
-    def produce_alerts(self, jbof_config: list[dict[str, Any]], jbof_data: list[dict[str, Any]], alerts: list[Alert[Any]]) -> None:
+    def produce_alerts(
+        self, jbof_config: list[dict[str, Any]], jbof_data: list[dict[str, Any]], alerts: list[Alert[Any]],
+    ) -> None:
         for jbof in jbof_config:
             jbof_id_dict = {'desc': jbof['description'], 'ip1': jbof['mgmt_ip1'], 'ip2': jbof['mgmt_ip2']}
             data = None

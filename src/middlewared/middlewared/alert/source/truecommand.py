@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
 @dataclass(kw_only=True)

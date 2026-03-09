@@ -29,9 +29,9 @@ class TrueNASVerifyServiceChangeDetectionAlert(AlertClass):
 
 
 class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
-    '''
+    """
     Periodic verification of root file system
-    '''
+    """
     schedule = IntervalSchedule(timedelta(hours=24))
     run_on_backup_node = False
 

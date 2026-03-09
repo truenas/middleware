@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 URL = "https://www.truenas.com/docs/scale/scaledeprecatedfeatures/"
 

@@ -457,8 +457,10 @@ class AlertService(Service):
             return
 
         if isinstance(alert.instance, DismissableAlertClass):
-            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.instance.config.name) == (alert.node, alert.instance.config.name),
-                                                      self.alerts)
+            related_alerts, unrelated_alerts = bisect(
+                lambda a: (a.node, a.instance.config.name) == (alert.node, alert.instance.config.name),
+                self.alerts,
+            )
             left_alerts = await alert.instance.dismiss(self.middleware, related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
@@ -567,7 +569,10 @@ class AlertService(Service):
                 ]
                 for gone_alert in list(service_gone_alerts):
                     for new_alert in service_new_alerts:
-                        if gone_alert.instance.config.name == new_alert.instance.config.name and gone_alert.key == new_alert.key:
+                        if (
+                            gone_alert.instance.config.name == new_alert.instance.config.name and
+                            gone_alert.key == new_alert.key
+                        ):
                             service_gone_alerts.remove(gone_alert)
                             service_new_alerts.remove(new_alert)
                             break
@@ -821,7 +826,9 @@ class AlertService(Service):
         try:
             existing_alert = [
                 a for a in self.alerts
-                if (a.node, a.source, a.instance.config.name, a.key) == (alert.node, alert.source, alert.instance.config.name, alert.key)
+                if (a.node, a.source, a.instance.config.name, a.key) == (
+                    alert.node, alert.source, alert.instance.config.name, alert.key
+                )
             ][0]
         except IndexError:
             existing_alert = None

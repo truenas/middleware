@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.api import api_method
 from middlewared.api.current import (

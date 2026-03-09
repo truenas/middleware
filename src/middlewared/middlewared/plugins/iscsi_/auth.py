@@ -6,8 +6,12 @@ from middlewared.alert.source.discovery_auth import (
     UPGRADE_ALERTS,
 )
 from middlewared.api import api_method
-from middlewared.api.current import (iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, iSCSITargetAuthCredentialDeleteArgs,
-                                     iSCSITargetAuthCredentialDeleteResult, iSCSITargetAuthCredentialEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
+from middlewared.api.current import (
+    iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult,
+    iSCSITargetAuthCredentialDeleteArgs, iSCSITargetAuthCredentialDeleteResult,
+    iSCSITargetAuthCredentialEntry, iSCSITargetAuthCredentialUpdateArgs,
+    iSCSITargetAuthCredentialUpdateResult,
+)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from .utils import IscsiAuthType
 
@@ -45,7 +49,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
         role_prefix = 'SHARING_ISCSI_AUTH'
         entry = iSCSITargetAuthCredentialEntry
 
-    @api_method(iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
+    @api_method(iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult,
+                audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
     async def do_create(self, data):
         """
         Create an iSCSI Authorized Access.
@@ -74,7 +79,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @api_method(iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult, audit='Update iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult,
+                audit='Update iSCSI Authorized Access', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Authorized Access of `id`.
@@ -115,7 +121,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(iSCSITargetAuthCredentialDeleteArgs, iSCSITargetAuthCredentialDeleteResult, audit='Delete iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialDeleteArgs, iSCSITargetAuthCredentialDeleteResult,
+                audit='Delete iSCSI Authorized Access', audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Authorized Access of `id`.
@@ -239,10 +246,14 @@ class iSCSITargetAuthCredentialService(CRUDService):
             elif peerusers[0] != orig_peerusers[0]:
                 # Remove old event and replace with new one.
                 await self.middleware.call("alert.oneshot_delete", alert_name, {'peeruser': orig_peerusers[0]})
-                await self.middleware.call("alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]))
+                await self.middleware.call(
+                    "alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
+                )
         elif len(peerusers) > 1:
             # Alert was not in place, add one.
-            await self.middleware.call("alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]))
+            await self.middleware.call(
+                "alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
+            )
 
     UPGRADE_ALERT_CLASSES = {
         'ISCSIDiscoveryAuthMixed': ISCSIDiscoveryAuthMixedAlert,
@@ -266,7 +277,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @private
     async def clear_alerts(self):
-        alerts = [alert for alert in await self.middleware.call('alert.list') if alert['klass'].startswith('ISCSIDiscoveryAuth')]
+        alerts = [
+            alert for alert in await self.middleware.call('alert.list')
+            if alert['klass'].startswith('ISCSIDiscoveryAuth')
+        ]
         for alert in alerts:
             await self.middleware.call("alert.oneshot_delete", alert['klass'], alert['args'])
 

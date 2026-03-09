@@ -3,7 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
+)
 from middlewared.alert.schedule import IntervalSchedule
 
 
@@ -80,7 +82,9 @@ class IPMISELAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
-    async def get_sensor_values(self) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]:
+    async def get_sensor_values(
+        self,
+    ) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]:
         # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
         sensor_types = (
             "Redundancy State",

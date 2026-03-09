@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
 
@@ -11,7 +11,10 @@ class ISCSIDiscoveryAuthMixedAlert(OneShotAlertClass):
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
         title="iSCSI Discovery Authorization Global",
-        text="Prior to upgrade had specified iSCSI discovery auth on only some portals, now applies globally.  May need to update client configuration when using %(ips)s",
+        text=(
+            "Prior to upgrade had specified iSCSI discovery auth on only some portals, now applies globally. "
+            " May need to update client configuration when using %(ips)s"
+        ),
     )
 
     ips: str
@@ -32,7 +35,10 @@ class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(OneShotAlertClass):
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
         title="iSCSI Discovery Authorization Multiple Mutual CHAP",
-        text="Multiple mutual CHAP peers defined for discovery auth, but only first one (\"%(peeruser)s\") applies.  May need to update client configuration.",
+        text=(
+            "Multiple mutual CHAP peers defined for discovery auth, but only first one (\"%(peeruser)s\") applies. "
+            " May need to update client configuration."
+        ),
     )
 
     peeruser: str

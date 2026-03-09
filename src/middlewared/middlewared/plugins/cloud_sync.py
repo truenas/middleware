@@ -18,7 +18,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from middlewared.alert.base import (
     AlertCategory,
-    AlertClass,
     AlertClassConfig,
     AlertLevel,
     OneShotAlertClass,

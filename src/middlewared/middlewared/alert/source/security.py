@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import (
+    Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel,
+)
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list

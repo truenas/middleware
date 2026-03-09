@@ -8,7 +8,9 @@ from datetime import date, timedelta
 import textwrap
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
@@ -139,15 +141,16 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         Please contact your authorized reseller or TrueNAS (sales@TrueNAS.com).
                     """)
                     encouraging = textwrap.dedent("""\
-                        Please renew the support contract for your TrueNAS product as soon as possible to maintain support services.
-                        Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com, phone: 1-855-473-7449).
+                        Please renew the support contract for your TrueNAS product as soon as possible to maintain
+                        support services. Contact your authorized reseller or TrueNAS
+                        (email: sales@TrueNAS.com, phone: 1-855-473-7449).
                     """)
                 else:
                     alert_klass = LicenseIsExpiringAlert
                     alert_text = textwrap.dedent(f"""\
-                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire on {contract_expiration}.
-                        Please avoid service interruptions, contact your authorized reseller or
-                        email: sales@TrueNAS.com, phone: 1-855-473-7449.
+                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire
+                        on {contract_expiration}. Please avoid service interruptions, contact your
+                        authorized reseller or email: sales@TrueNAS.com, phone: 1-855-473-7449.
                     """)
                     days_left = (local_license['contract_end'] - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"

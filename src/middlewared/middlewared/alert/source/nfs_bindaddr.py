@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
 
 
 class NFSBindAddressAlert(OneShotAlertClass):

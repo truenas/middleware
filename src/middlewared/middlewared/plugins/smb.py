@@ -482,7 +482,7 @@ class SMBService(ConfigService):
 
     @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
-        """
+        r"""
         Update SMB Service Configuration.
 
         `netbiosname` defaults to the original hostname of the system.

@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+)
 
 
 class ScrubPausedAlert(NonDataclassAlertClass[str], AlertClass):

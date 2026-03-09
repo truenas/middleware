@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
 class TNCHeartbeatConnectionFailureAlert(OneShotAlertClass):
@@ -17,7 +17,10 @@ class TNCDisabledAutoUnconfiguredAlert(OneShotAlertClass):
         category=AlertCategory.TRUENAS_CONNECT,
         level=AlertLevel.ERROR,
         title='TrueNAS Connect Disabled - Service Unconfigured',
-        text='TrueNAS Connect has been disabled from TrueNAS Connect. The system has automatically unconfigured itself.',
+        text=(
+            'TrueNAS Connect has been disabled from TrueNAS Connect.'
+            ' The system has automatically unconfigured itself.'
+        ),
         deleted_automatically=False,
         keys=[],
     )

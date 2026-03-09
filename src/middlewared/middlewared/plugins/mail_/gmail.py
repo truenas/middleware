@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 import google_auth_httplib2
 import httplib2
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 from middlewared.service import private, Service
 
 

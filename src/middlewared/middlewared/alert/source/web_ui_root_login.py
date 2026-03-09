@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
 class WebUiRootLoginAlert(OneShotAlertClass):

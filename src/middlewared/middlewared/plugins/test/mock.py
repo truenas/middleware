@@ -1,6 +1,6 @@
 from typing import Any, Literal
 
-from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
 

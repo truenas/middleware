@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
 class FCHardwareAddedAlert(OneShotAlertClass):

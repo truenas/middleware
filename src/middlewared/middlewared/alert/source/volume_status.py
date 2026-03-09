@@ -96,7 +96,9 @@ class VolumeStatusAlertSource(AlertSource):
 
             await self.middleware.call("cache.put", VOLUME_STATUS_ALERTS, alerts)
 
-        klass_map: dict[str, type[AlertClass]] = {"BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert}
+        klass_map: dict[str, type[AlertClass]] = {
+            "BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert,
+        }
         return [Alert(klass_map[alert[0]].from_args(alert[1])) for alert in alerts]
 
     async def enabled(self) -> bool:

@@ -4,7 +4,6 @@ import html
 import json
 from typing import Any
 
-import html2text
 import requests
 
 from middlewared.alert.base import Alert, ThreadedAlertService
