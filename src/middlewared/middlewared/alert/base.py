@@ -26,21 +26,7 @@ class UnavailableException(Exception):
     pass
 
 
-class AlertClassMeta(type):
-    def __init__(cls, name, bases, dct):
-        super().__init__(name, bases, dct)
-
-        if cls.__name__ != "AlertClass":
-            if not cls.__name__.endswith("AlertClass"):
-                raise NameError(f"Invalid alert class name {cls.__name__}")
-
-            cls.name = cls.__name__.replace("AlertClass", "")
-
-            AlertClass.classes.append(cls)
-            AlertClass.class_by_name[cls.name] = cls
-
-
-class AlertClass(metaclass=AlertClassMeta):
+class AlertClass:
     """
     Alert class: a description of a specific type of issue that can exist in the system.
 
@@ -77,6 +63,17 @@ class AlertClass(metaclass=AlertClassMeta):
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     proactive_support = False
     proactive_support_notify_gone = False
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+
+        if not cls.__name__.endswith("AlertClass"):
+            raise NameError(f"Invalid alert class name {cls.__name__}")
+
+        cls.name = cls.__name__.replace("AlertClass", "")
+
+        AlertClass.classes.append(cls)
+        AlertClass.class_by_name[cls.name] = cls
 
     @classmethod
     def format(cls, args):

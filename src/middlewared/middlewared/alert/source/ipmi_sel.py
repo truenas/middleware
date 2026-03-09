@@ -30,12 +30,18 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
     @classmethod
     async def dismiss(cls, middleware, alerts, alert):
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
-        if await middleware.call('keyvalue.has_key', IPMISELAlertSource.dismissed_datetime_kv_key):
-            d = await middleware.call('keyvalue.get', IPMISELAlertSource.dismissed_datetime_kv_key)
+        if await middleware.call2(middleware.services.keyvalue.has_key, IPMISELAlertSource.dismissed_datetime_kv_key):
+            d = await middleware.call2(
+                middleware.services.keyvalue.get, IPMISELAlertSource.dismissed_datetime_kv_key,
+            )
             d = d.replace(tzinfo=None)
             datetimes.append(d)
 
-        await middleware.call('keyvalue.set', IPMISELAlertSource.dismissed_datetime_kv_key, max(datetimes))
+        await middleware.call(
+            middleware.services.keyvalue.set,
+            IPMISELAlertSource.dismissed_datetime_kv_key,
+            max(datetimes),
+        )
         return [a for a in alerts if a.datetime > alert.datetime]
 
 

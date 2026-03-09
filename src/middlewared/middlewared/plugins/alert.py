@@ -964,7 +964,6 @@ class AlertService(Service):
             return
 
         alert.source = ""
-        alert.klass = alert.klass
 
         alert.node = self.node
 
