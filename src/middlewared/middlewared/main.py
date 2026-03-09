@@ -63,6 +63,7 @@ from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
+import multiprocessing
 import os
 import pathlib
 import re
@@ -1892,6 +1893,12 @@ def main():
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
     setup_logging('middleware', args.debug_level, args.log_handler)
+
+    # zettarepl runs in a child process via multiprocessing. We use 'spawn' instead of the Linux
+    # default 'fork' so that the child does not inherit the parent's logging handlers (which would
+    # cause duplicate log output) or its asyncio SIGTERM handler (which would make the child
+    # unkillable without SIGKILL).
+    multiprocessing.set_start_method('spawn')
 
     middleware = Middleware(
         loop_debug=args.loop_debug,
