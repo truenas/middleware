@@ -2,6 +2,8 @@ import errno
 import ipaddress
 import socket
 
+import dns.resolver
+
 from .activedirectory_join_mixin import ADJoinMixin
 from .ipa_join_mixin import IPAJoinMixin
 from .ldap_join_mixin import LDAPJoinMixin
@@ -253,6 +255,66 @@ class DomainConnection(
 
         return kdcs_out
 
+    def _has_ptr_zone(self) -> bool:
+        """
+        Check whether a reverse DNS zone is configured for any of the IP
+        addresses that will be registered for this host.
+
+        FreeIPA reverse zones are optional; calling nsupdate with do_ptr=True
+        against a domain with no reverse zone will fail.  This method lets
+        callers detect that situation before invoking register_dns /
+        unregister_dns.
+
+        Returns:
+            True  – at least one IP has a delegated reverse zone
+            False – no reverse zone found (or detection failed)
+        """
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        timeout = ds_config.get('timeout', 10)
+
+        if self.middleware.call_sync('failover.licensed'):
+            master, backup, _init = self.middleware.call_sync('failover.vip.get_states')
+            addrs = [
+                ipaddress.ip_address(alias['address'])
+                for iface in self.middleware.call_sync('interface.query', [['id', 'in', master + backup]])
+                for alias in iface['failover_virtual_aliases']
+            ]
+        else:
+            addrs = [
+                ipaddress.ip_address(i['address'])
+                for i in self.middleware.call_sync('interface.ip_in_use')
+            ]
+
+        resolver = dns.resolver.Resolver()
+        resolver.timeout = timeout
+        resolver.lifetime = timeout
+
+        for addr in addrs:
+            # Build the conventional reverse zone name for this address:
+            #   IPv4 /24 → e.g. 163.220.10.in-addr.arpa
+            #   IPv6 /48 → the first 12 nibbles of the reversed address + ip6.arpa
+            # A single SOA query is sufficient: if the zone exists and the IPA
+            # DNS server is authoritative for it, the query succeeds; any other
+            # outcome (NXDOMAIN, REFUSED, timeout) means no usable reverse zone.
+            if addr.version == 4:
+                parts = str(addr).split('.')
+                zone = f'{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa'
+            else:
+                nibbles = addr.reverse_pointer.split('.')
+                zone = '.'.join(nibbles[20:])  # /48: skip 20 host nibbles, keep 12 prefix nibbles + ip6.arpa
+
+            try:
+                resolver.resolve(zone, 'SOA')
+                self.logger.debug('%s: reverse DNS zone found for %s', zone, addr)
+                return True
+            except Exception:
+                self.logger.debug(
+                    '%s: no reverse DNS zone found for %s',
+                    zone, addr, exc_info=True
+                )
+
+        return False
+
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False):
         """
@@ -339,10 +401,13 @@ class DomainConnection(
             if not dns_record_is_expired(fqdn):
                 return
 
-            # generate a renew payload. Currently we are only doing ptr updates on AD.
-            # We are not deleting any old / incorrect entries. At least in AD case the outdated
-            # entries will be scavenged within a week or so.
-            payload = self._create_nsupdate_payload(fqdn, 'ADD', ds_config['service_type'] == DSType.AD.value)
+            # generate a renew payload. PTR updates are done for AD always, and for IPA
+            # when a reverse zone is detected. Outdated entries in AD are scavenged within
+            # a week or so; IPA entries persist until explicitly removed.
+            do_ptr = ds_config['service_type'] == DSType.AD.value or (
+                ds_config['service_type'] == DSType.IPA.value and self._has_ptr_zone()
+            )
+            payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
             self.middleware.call_sync('dns.nsupdate', {'ops': payload})
             update_dns_record_state(fqdn)
 
