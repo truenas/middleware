@@ -140,8 +140,8 @@ class DiskService(CRUDService):
             context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
             context['boot_pool_name'] = await self.middleware.call('boot.pool_name')
 
-            for pool in await self.middleware.call('zfs.pool.query'):
-                topology = await self.middleware.call('pool.transform_topology_lightweight', pool['groups'])
+            for pool in await self.middleware.call('zpool.query_impl', {'topology': True}):
+                topology = await self.middleware.call('pool.transform_topology_lightweight', pool['topology'])
                 for vdev in await self.middleware.call('pool.flatten_topology', topology):
                     if vdev['type'] == 'DISK':
                         context['zfs_guid_to_pool'][vdev['guid']] = pool['name']
