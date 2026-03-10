@@ -123,12 +123,17 @@ class BootService(Service):
 
         await self.middleware.call('boot.format', dev, format_opts)
 
-        pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
+        pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [BOOT_POOL_NAME], 'topology': True}))[0]
+
+        # Mirrored boot pools have their vdev in 'data', single-disk boot
+        # pools have it in 'stripe' (no children = no grouping vdev).
+        top = pool['topology']
+        boot_vdev = (top['data'] or top['stripe'])[0]
 
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev)
         extend_pool_job = await self.middleware.call(
             'zfs.pool.extend', BOOT_POOL_NAME, None, [{
-                'target': pool['groups']['data'][0]['guid'],
+                'target': boot_vdev['guid'],
                 'type': 'DISK',
                 'path': f'/dev/{zfs_dev_part["name"]}'
             }]
@@ -294,14 +299,13 @@ class BootService(Service):
 
     @private
     async def check_update_ashift_property(self):
-        properties = {}
-        if (
-            zfs_pool := await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)])
-        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
-            properties['ashift'] = {'value': '12'}
-
-        if properties:
-            await self.middleware.call('zfs.pool.update', BOOT_POOL_NAME, {'properties': properties})
+        zfs_pool = await self.middleware.call(
+            'zpool.query_impl', {'pool_names': [BOOT_POOL_NAME], 'properties': ['ashift']}
+        )
+        if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+            await self.middleware.call(
+                'zfs.pool.update', BOOT_POOL_NAME, {'properties': {'ashift': {'value': '12'}}}
+            )
 
 
 async def on_config_upload(middleware, path):

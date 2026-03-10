@@ -40,9 +40,16 @@ class ZpoolCapacityAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        for pool in await self.middleware.call("zfs.pool.query"):
+        # query_impl with pool_names=None skips boot pools, so we query
+        # the boot pool explicitly to ensure capacity alerts still fire.
+        pools = await self.middleware.call("zpool.query_impl", {"properties": ["capacity"]})
+        pools.extend(await self.middleware.call(
+            "zpool.query_impl",
+            {"pool_names": [await self.middleware.call("boot.pool_name")], "properties": ["capacity"]}
+        ))
+        for pool in pools:
             try:
-                capacity = int(pool["properties"]["capacity"]["parsed"])
+                capacity = int(pool["properties"]["capacity"]["value"])
             except (KeyError, ValueError):
                 continue
 

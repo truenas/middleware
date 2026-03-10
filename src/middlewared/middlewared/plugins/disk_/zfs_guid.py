@@ -42,14 +42,14 @@ class DiskService(Service):
 
     @private
     async def sync_all_zfs_guid(self):
-        for pool in await self.middleware.call(
-            "zfs.pool.query",
-            [["name", "!=", await self.middleware.call("boot.pool_name")]],
-        ):
+        boot_pool = await self.middleware.call("boot.pool_name")
+        for pool in await self.middleware.call("zpool.query_impl", {"topology": True}):
+            if pool["name"] == boot_pool:
+                continue
             try:
                 await self.sync_zfs_guid({
                     **pool,
-                    "topology": await self.middleware.call("pool.transform_topology", pool["groups"])
+                    "topology": await self.middleware.call("pool.transform_topology", pool["topology"])
                 })
             except Exception:
                 self.logger.error("Error running sync_zfs_guid for pool %r", pool["name"])
@@ -60,8 +60,13 @@ class DiskService(Service):
             pool = pool_id_or_pool
             topology = pool_id_or_pool["topology"]
         elif isinstance(pool_id_or_pool, str):
-            pool = await self.middleware.call("zfs.pool.query", [["name", "=", pool_id_or_pool]], {"get": True})
-            topology = await self.middleware.call("pool.transform_topology", pool["groups"])
+            results = await self.middleware.call(
+                "zpool.query_impl", {"pool_names": [pool_id_or_pool], "topology": True}
+            )
+            if not results:
+                raise MatchNotFound()
+            pool = results[0]
+            topology = await self.middleware.call("pool.transform_topology", pool["topology"])
         else:
             pool = await self.middleware.call("pool.get_instance", pool_id_or_pool)
             topology = pool["topology"]

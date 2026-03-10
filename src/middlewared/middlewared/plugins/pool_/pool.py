@@ -1,5 +1,6 @@
 import errno
 import os
+from datetime import datetime, timezone
 
 import middlewared.sqlalchemy as sa
 
@@ -96,7 +97,15 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
+        if info := await self.middleware.call('zpool.query_impl', {
+            'pool_names': [pool_name],
+            'properties': [
+                'size', 'allocated', 'free', 'freeing', 'fragmentation',
+                'autotrim', 'dedup_table_quota', 'dedup_table_size', 'health',
+            ],
+            'topology': True, 'scan': True, 'expand': True,
+            'follow_links': False, 'full_path': True,
+        }):
             info = info[0]
 
             # `zpool.c` uses `zpool_get_state_str` to print pool status.
@@ -106,33 +115,62 @@ class PoolService(CRUDService):
             if info['properties']['health']['value'] == 'SUSPENDED':
                 status = 'SUSPENDED'
 
-            # Normalize scan field: if there's no scan data, libzfs returns a dict with None values
-            # but the API expects either None or a valid PoolScan object with all required fields
+            # Convert raw scan timestamps to datetime for the public API.
             scan = info['scan']
-            if scan and scan['state'] is None:
-                scan = None
+            if scan is not None:
+                scan['start_time'] = datetime.fromtimestamp(scan['start_time'], tz=timezone.utc)
+                if scan['end_time'] is not None:
+                    scan['end_time'] = datetime.fromtimestamp(scan['end_time'], tz=timezone.utc)
+                if scan['pause'] is not None:
+                    scan['pause'] = datetime.fromtimestamp(scan['pause'], tz=timezone.utc)
+
+                # Legacy API compatibility: swap bytes_to_process and bytes_processed
+                # to match the old py-libzfs mapping where bytes_to_process = pss_examined
+                # and bytes_processed = pss_to_examine.
+                scan['bytes_to_process'], scan['bytes_processed'] = (
+                    scan['bytes_processed'], scan['bytes_to_process']
+                )
+
+            props = info['properties']
+
+            # Transform autotrim to PoolEntry format (value/rawvalue/parsed/source)
+            at = props['autotrim']
+            autotrim = {
+                'parsed': at['value'],
+                'rawvalue': at['raw'],
+                'source': at['source'] or 'NONE',
+                'value': at['raw'],
+            }
+
+            expand = info['expand']
+            if expand is not None:
+                if expand['start_time']:
+                    expand['start_time'] = datetime.fromtimestamp(expand['start_time'], tz=timezone.utc)
+                if expand['end_time']:
+                    expand['end_time'] = datetime.fromtimestamp(expand['end_time'], tz=timezone.utc)
+            # expand stays None when no expansion has occurred
 
             rv.update({
                 'status': status,
                 'scan': scan,
-                'expand': info['expand'],
-                'topology': await self.middleware.call('pool.transform_topology', info['groups']),
+                'expand': expand,
+                'topology': await self.middleware.call('pool.transform_topology', info['topology']),
                 'healthy': info['healthy'],
                 'warning': info['warning'],
                 'status_code': info['status_code'],
                 'status_detail': info['status_detail'],
-                'size': info['properties']['size']['parsed'],
-                'allocated': info['properties']['allocated']['parsed'],
-                'free': info['properties']['free']['parsed'],
-                'freeing': info['properties']['freeing']['parsed'],
-                'fragmentation': info['properties']['fragmentation']['parsed'],
-                'size_str': info['properties']['size']['rawvalue'],
-                'allocated_str': info['properties']['allocated']['rawvalue'],
-                'free_str': info['properties']['free']['rawvalue'],
-                'freeing_str': info['properties']['freeing']['rawvalue'],
-                'autotrim': info['properties']['autotrim'],
-                'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
-                'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
+                'size': props['size']['value'],
+                'allocated': props['allocated']['value'],
+                'free': props['free']['value'],
+                'freeing': props['freeing']['value'],
+                'fragmentation': str(props['fragmentation']['value']),
+                'size_str': props['size']['raw'],
+                'allocated_str': props['allocated']['raw'],
+                'free_str': props['free']['raw'],
+                'freeing_str': props['freeing']['raw'],
+                'autotrim': autotrim,
+                'dedup_table_quota': str(props['dedup_table_quota']['value']),
+                'dedup_table_size': props['dedup_table_size']['value'],
             })
         else:
             # If system is licensed for SED and we have SED disks which are locked, we would like to
@@ -492,7 +530,7 @@ class PoolService(CRUDService):
         try:
             job.set_progress(90, 'Creating ZFS Pool')
 
-            z_pool = await self.middleware.call('zfs.pool.create', {
+            await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
                 'vdevs': vdevs,
                 'options': options,
@@ -500,6 +538,10 @@ class PoolService(CRUDService):
             })
 
             job.set_progress(95, 'Setting pool options')
+
+            z_pool = (await self.middleware.call(
+                'zpool.query_impl', {'pool_names': [data['name']]}
+            ))[0]
 
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
@@ -511,7 +553,7 @@ class PoolService(CRUDService):
 
             pool = {
                 'name': data['name'],
-                'guid': z_pool['guid'],
+                'guid': str(z_pool['guid']),
                 'all_sed': data['all_sed'],
             }
             pool_id = await self.middleware.call(
@@ -635,9 +677,10 @@ class PoolService(CRUDService):
         if dedup_table_quota_value is not None:
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
-        if (
-            zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
-        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+        zfs_pool = await self.middleware.call(
+            'zpool.query_impl', {'pool_names': [pool['name']], 'properties': ['ashift']}
+        )
+        if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093
             properties['ashift'] = {'value': '12'}
 
@@ -667,10 +710,10 @@ class PoolService(CRUDService):
 
     @private
     async def is_draid_pool(self, pool_name):
-        if pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool_name]]):
+        if pool := await self.middleware.call('zpool.query_impl', {'pool_names': [pool_name], 'topology': True}):
             if any(
-                group['type'] == 'draid'
-                for group in pool[0]['groups']['data'] + pool[0]['groups'].get('special', [])
+                group['vdev_type'].startswith('draid')
+                for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])
             ):
                 return True
 
