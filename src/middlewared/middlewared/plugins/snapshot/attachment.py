@@ -42,5 +42,5 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
 async def register(middleware: Middleware) -> None:
     await middleware.call(
         'pool.dataset.register_attachment_delegate',
-        PeriodicSnapshotTaskFSAttachmentDelegate(middleware),  # type: ignore[no-untyped-call]
+        PeriodicSnapshotTaskFSAttachmentDelegate(middleware),
     )

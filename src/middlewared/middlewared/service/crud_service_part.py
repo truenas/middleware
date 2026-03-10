@@ -32,6 +32,9 @@ class CRUDServicePart[E, PK = int](ServicePart):
     _entry: type[E]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
+        return await self.to_thread(self.extend_context_sync, rows, extra)
+
+    def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
@@ -95,6 +98,9 @@ class CRUDServicePart[E, PK = int](ServicePart):
 
         ctx = await self.extend_context(rows, extra or {})
         return self._to_entry(await self._run_extend(rows[0], ctx))
+
+    def get_instance__sync(self, id_: PK, extra: dict[str, Any] | None = None) -> E:
+        return self.run_coroutine(self.get_instance(id_, extra))
 
     async def _create(self, data: dict[str, Any]) -> E:
         data = await self._run_compress(data)

@@ -155,7 +155,7 @@ class SystemAdvancedService(ConfigService):
             return
 
         container_ids = {
-            device['container'] for device in await self.middleware.call(
+            device.container for device in await self.middleware.call(
                 'container.device.query', [['attributes.dtype', '=', 'GPU'], ['attributes.gpu_type', '=', 'NVIDIA']]
             )
         }
@@ -165,7 +165,7 @@ class SystemAdvancedService(ConfigService):
             verrors.add(
                 'nvidia',
                 f'NVIDIA GPU support cannot be disabled while the following containers are using '
-                f'NVIDIA GPUs: {", ".join(c["name"] for c in containers)}. Please stop these containers first.'
+                f'NVIDIA GPUs: {", ".join(c.name for c in containers)}. Please stop these containers first.'
             )
 
     def _syslogd_changes(self, orig_config: dict, new_config: dict) -> bool:

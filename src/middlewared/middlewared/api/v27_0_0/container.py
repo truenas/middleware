@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 from pydantic import Discriminator, Field, PositiveInt
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, UUIDv4String,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, UUIDv4String,
 )
 
 from .container_device import ContainerDeviceEntry
@@ -11,12 +11,12 @@ from .container_device import ContainerDeviceEntry
 
 __all__ = [
     "ContainerEntry",
-    "ContainerCreateArgs", "ContainerCreateResult",
-    "ContainerUpdateArgs", "ContainerUpdateResult",
+    "ContainerCreateArgs", "ContainerCreateResult", "ContainerCreate",
+    "ContainerUpdateArgs", "ContainerUpdateResult", "ContainerUpdate",
     "ContainerDeleteArgs", "ContainerDeleteResult",
     "ContainerPoolChoicesArgs", "ContainerPoolChoicesResult",
     "ContainerStartArgs", "ContainerStartResult",
-    "ContainerStopArgs", "ContainerStopResult",
+    "ContainerStopArgs", "ContainerStopResult", "ContainerStopOptions",
     "ContainerMigrateArgs", "ContainerMigrateResult",
     "ContainersMetricsEventSourceArgs", "ContainersMetricsEventSourceEvent"
 ]
@@ -128,9 +128,9 @@ class ContainerCreateImage(BaseModel):
     """Image version. Use `container.image.query_registry` to list all available images."""
 
 
-@single_argument_args("container_create")
-class ContainerCreateArgs(ContainerCreate):
-    pass
+class ContainerCreateArgs(BaseModel):
+    container_create: ContainerCreate
+    """Container creation parameters."""
 
 
 class ContainerCreateResult(BaseModel):
@@ -170,7 +170,7 @@ class ContainerPoolChoicesArgs(BaseModel):
 
 
 class ContainerPoolChoicesResult(BaseModel):
-    result: dict
+    result: dict[str, str]
     """Object of available ZFS pools that can be used for container root filesystem."""
 
 

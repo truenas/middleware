@@ -93,10 +93,12 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.container import ContainerService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
@@ -182,10 +184,12 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.catalog = CatalogService(middleware)
+        self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.docker = DockerService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
+        self.lxc = LXCConfigService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)

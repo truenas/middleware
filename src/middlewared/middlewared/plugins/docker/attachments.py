@@ -64,5 +64,5 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
 async def setup(middleware: Middleware) -> None:
     await middleware.call(
         'pool.dataset.register_attachment_delegate',
-        DockerFSAttachmentDelegate(middleware)  # type: ignore[no-untyped-call]
+        DockerFSAttachmentDelegate(middleware)
     )
