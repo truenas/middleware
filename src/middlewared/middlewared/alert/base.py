@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 import dataclasses
 from datetime import datetime, timedelta
 import enum
@@ -205,10 +206,11 @@ class OneShotAlertClass(AlertClass):
         return alerts
 
 
-class DismissableAlertClass(AlertClass):
+class DismissableAlertClass(AlertClass, ABC):
     @classmethod
+    @abstractmethod
     async def dismiss(cls, middleware: Middleware, alerts: list[Alert[Self]], alert: Alert[Self]) -> list[Alert[Self]]:
-        raise NotImplementedError
+        ...
 
 
 class AlertCategory(enum.Enum):
@@ -350,7 +352,7 @@ class Alert[T: AlertClass]:
             return self.text
 
 
-class AlertSource(CallMixin):
+class AlertSource(CallMixin, ABC):
     """
     Alert source: a class that periodically checks for a specific erroneous condition and returns one or multiple
     `Alert` instances.
@@ -380,24 +382,26 @@ class AlertSource(CallMixin):
     def name(self) -> str:
         return self.__class__.__name__.replace("AlertSource", "")
 
+    @abstractmethod
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         """
         This method will be called on the specific `schedule` to check for the alert conditions.
 
         :return: an `Alert` instance, or a list of `Alert` instances, or `None` for no alerts.
         """
-        raise NotImplementedError
+        ...
 
 
 class ThreadedAlertSource(AlertSource):
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         return await self.middleware.run_in_thread(self.check_sync)
 
+    @abstractmethod
     def check_sync(self) -> list[Alert[Any]] | Alert[Any] | None:
-        raise NotImplementedError
+        ...
 
 
-class AlertService(CallMixin):
+class AlertService(CallMixin, ABC):
     title: str
     html: bool = False
 
@@ -411,13 +415,14 @@ class AlertService(CallMixin):
     def name(cls) -> str:
         return cls.__name__.replace("AlertService", "")
 
+    @abstractmethod
     async def send(
         self,
         alerts: list[Alert[Any]],
         gone_alerts: list[Alert[Any]],
         new_alerts: list[Alert[Any]],
     ) -> None:
-        raise NotImplementedError
+        ...
 
     async def _format_alerts(
         self,
@@ -448,13 +453,14 @@ class ThreadedAlertService(AlertService):
     ) -> None:
         return await self.middleware.run_in_thread(self.send_sync, alerts, gone_alerts, new_alerts)
 
+    @abstractmethod
     def send_sync(
         self,
         alerts: list[Alert[Any]],
         gone_alerts: list[Alert[Any]],
         new_alerts: list[Alert[Any]],
     ) -> None:
-        raise NotImplementedError
+        ...
 
     def _format_alerts_sync(
         self,
@@ -502,17 +508,19 @@ class ProThreadedAlertService(ThreadedAlertService):
         if exc is not None:
             raise exc
 
+    @abstractmethod
     def create_alert(self, alert: Alert[Any]) -> None:
-        raise NotImplementedError
+        ...
 
+    @abstractmethod
     def delete_alert(self, alert: Alert[Any]) -> None:
-        raise NotImplementedError
+        ...
 
 
 def format_alerts(
     product_name: str,
     hostname: str,
-    node_map: dict[str, str],
+    node_map: dict[str, str] | None,
     alerts: list[Alert[Any]],
     gone_alerts: list[Alert[Any]],
     new_alerts: list[Alert[Any]],
@@ -554,7 +562,7 @@ def format_alerts(
     return text
 
 
-def format_alert(alert: Alert[Any], node_map: dict[str, str]) -> str:
+def format_alert(alert: Alert[Any], node_map: dict[str, str] | None) -> str:
     return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
 
 

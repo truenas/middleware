@@ -34,8 +34,6 @@ One-shot alerts
 
 One-shot alerts are the alerts created by external events.
 
-Add `OneShotAlertClass` to your `AlertClass` superclass list to make it a one-shot alert.
-
 .. autoclass:: middlewared.alert.base.OneShotAlertClass
     :members:
 

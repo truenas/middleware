@@ -40,7 +40,7 @@ def upgrade():
             {
                 "key": json.dumps(args),
                 "datetime": now,
-                "text": CloudProviderRemovedAlert.text % args,
+                "text": CloudProviderRemovedAlert.config.text % args,
                 "args": json.dumps(args),
                 "uuid": str(uuid.uuid4()),
                 "last_occurrence": now,

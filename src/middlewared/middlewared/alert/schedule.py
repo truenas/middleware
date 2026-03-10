@@ -1,10 +1,12 @@
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 
 
-class BaseSchedule:
+class BaseSchedule(ABC):
+    @abstractmethod
     def should_run(self, now: datetime, last_run: datetime) -> bool:
-        raise NotImplementedError
+        ...
 
 
 class IntervalSchedule(BaseSchedule):
