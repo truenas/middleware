@@ -163,7 +163,7 @@ class PoolService(CRUDService):
                 'allocated': props['allocated']['value'],
                 'free': props['free']['value'],
                 'freeing': props['freeing']['value'],
-                'fragmentation': props['fragmentation']['value'],
+                'fragmentation': str(props['fragmentation']['value']),
                 'size_str': props['size']['raw'],
                 'allocated_str': props['allocated']['raw'],
                 'free_str': props['free']['raw'],
