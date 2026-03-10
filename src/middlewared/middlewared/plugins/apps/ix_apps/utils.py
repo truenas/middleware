@@ -1,4 +1,5 @@
 import enum
+from typing import Any
 
 import yaml
 
@@ -37,7 +38,7 @@ def _repr_str(dumper, data: str):
 QuotedStrDumper.add_representer(str, _repr_str)
 
 
-def dump_yaml(data, **kwargs):
+def dump_yaml(data: Any, **kwargs: Any) -> str:
     """
     Helper function to dump YAML with proper string quoting.
 
@@ -53,7 +54,7 @@ def dump_yaml(data, **kwargs):
         The YAML string representation of the data
     """
     kwargs['Dumper'] = QuotedStrDumper
-    return yaml.dump(data, **kwargs)
+    return yaml.dump(data, **kwargs)  # type: ignore[no-any-return]
 
 
 def get_app_name_from_project_name(project_name: str) -> str:

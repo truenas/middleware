@@ -4,7 +4,7 @@ from middlewared.service_exception import (
 from middlewared.utils.filter_list import filter_list
 
 from .compound_service import CompoundService
-from .config_service import ConfigService
+from .config_service import ConfigService, GenericConfigService
 from .config_service_part import ConfigServicePart
 from .context import ServiceContext
 from .crud_service import CRUDService, GenericCRUDService
@@ -22,7 +22,7 @@ from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
 ABSTRACT_SERVICES = (
-    CompoundService, ConfigService, CRUDService, GenericCRUDService, SharingService,
+    CompoundService, ConfigService, CRUDService, GenericConfigService, GenericCRUDService, SharingService,
     SharingTaskService, SystemServiceService, TaskPathService
 )
 
@@ -38,6 +38,7 @@ __all__ = [
     'ConfigService',
     'ConfigServicePart',
     'CRUDService',
+    'GenericConfigService',
     'GenericCRUDService',
     'CRUDServicePart',
     'job',

@@ -1,28 +1,34 @@
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
+from pydantic import IPvAnyInterface, Field, field_serializer, field_validator, model_validator, RootModel
 from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString,
 )
 
 
 __all__ = [
-    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
+    'DockerAddressPool', 'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
+    'DockerEntry', 'DockerRegistryMirror', 'DockerUpdateArgs', 'DockerUpdateResult',
+    'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
-    'DockerEventsAddedEvent', 'DockerStateChangedEvent',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate', 'DockerStatusInfo',
 ]
 
 
-class AddressPool(BaseModel):
+class DockerAddressPool(BaseModel):
     base: IPvAnyInterface
     """Base network address with prefix for the pool."""
     size: Annotated[int, Field(ge=1)]
     """Subnet size for networks allocated from this pool."""
+
+    @field_serializer('base')
+    def serialize_base(self, v):
+        return str(v)
 
     @field_validator('base')
     @classmethod
@@ -40,7 +46,7 @@ class AddressPool(BaseModel):
         return self
 
 
-class RegistryMirror(BaseModel):
+class DockerRegistryMirror(BaseModel):
     url: HttpUrl
     """URL of the registry mirror."""
     insecure: bool
@@ -58,25 +64,24 @@ class DockerEntry(BaseModel):
     """Storage pool used for Docker or `null` if not configured."""
     nvidia: SkipJsonSchema[bool]
     """Whether NVIDIA GPU support is enabled for containers."""
-    address_pools: list[dict]
+    address_pools: list[DockerAddressPool]
     """Array of network address pools for container networking."""
     cidr_v6: str
     """IPv6 CIDR block for Docker container networking."""
-    registry_mirrors: list[RegistryMirror]
+    registry_mirrors: list[DockerRegistryMirror]
     """Array of registry mirrors."""
 
 
-@single_argument_args('docker_update')
-class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
+class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     dataset: Excluded = excluded_field()
-    address_pools: list[AddressPool]
+    address_pools: list[DockerAddressPool]
     """Array of network address pools for container networking."""
     cidr_v6: IPvAnyInterface
     """IPv6 CIDR block for Docker container networking."""
     migrate_applications: bool
     """Whether to migrate existing applications when changing pools."""
-    registry_mirrors: list[RegistryMirror]
+    registry_mirrors: list[DockerRegistryMirror]
     """Array of registry mirrors."""
 
     @field_validator('cidr_v6')
@@ -105,6 +110,11 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
         return self
 
 
+class DockerUpdateArgs(BaseModel):
+    docker_update: DockerUpdate
+    """Docker update arguments."""
+
+
 class DockerUpdateResult(BaseModel):
     result: DockerEntry
     """The updated Docker configuration."""
@@ -114,7 +124,7 @@ class DockerStatusArgs(BaseModel):
     pass
 
 
-class StatusResult(BaseModel):
+class DockerStatusInfo(BaseModel):
     description: str
     """Human-readable description of the current Docker service status."""
     status: Literal[
@@ -125,7 +135,7 @@ class StatusResult(BaseModel):
 
 
 class DockerStatusResult(BaseModel):
-    result: StatusResult
+    result: DockerStatusInfo
     """Current Docker service status information."""
 
 
@@ -152,7 +162,7 @@ class DockerListBackupsArgs(BaseModel):
     pass
 
 
-class AppInfo(BaseModel):
+class DockerBackupAppInfo(BaseModel):
     id: NonEmptyString
     """Unique identifier of the application."""
     name: NonEmptyString
@@ -161,10 +171,10 @@ class AppInfo(BaseModel):
     """Current running state of the application."""
 
 
-class BackupInfo(BaseModel):
+class DockerBackupEntry(BaseModel):
     name: NonEmptyString
     """Name of the backup."""
-    apps: list[AppInfo]
+    apps: list[DockerBackupAppInfo]
     """Array of applications included in this backup."""
     snapshot_name: NonEmptyString
     """ZFS snapshot name associated with this backup."""
@@ -174,12 +184,12 @@ class BackupInfo(BaseModel):
     """Filesystem path where the backup is stored."""
 
 
-class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
-    pass
+class DockerBackupMap(RootModel[dict[str, DockerBackupEntry]]):
+    root: dict[str, DockerBackupEntry]
 
 
 class DockerListBackupsResult(BaseModel):
-    result: DockerBackupInfo
+    result: DockerBackupMap
     """Object mapping backup names to their detailed information."""
 
 
@@ -221,5 +231,5 @@ class DockerEventsAddedEvent(BaseModel):
 
 
 class DockerStateChangedEvent(BaseModel):
-    fields: StatusResult
+    fields: DockerStatusInfo
     """Event fields."""

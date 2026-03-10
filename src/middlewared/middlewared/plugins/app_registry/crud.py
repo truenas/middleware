@@ -60,7 +60,7 @@ class AppRegistryService(CRUDService):
         """
         Create an app registry entry.
         """
-        await self.middleware.call('docker.state.validate')
+        await self.middleware.call('docker.validate_state')
         await self.validate(data)
         id_ = await self.middleware.call('datastore.insert', 'app.registry', data)
         await self.middleware.call('etc.generate', 'app_registry')
@@ -71,7 +71,7 @@ class AppRegistryService(CRUDService):
         """
         Update an app registry entry.
         """
-        await self.middleware.call('docker.state.validate')
+        await self.middleware.call('docker.validate_state')
         old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
@@ -88,7 +88,7 @@ class AppRegistryService(CRUDService):
         """
         Delete an app registry entry.
         """
-        await self.middleware.call('docker.state.validate')
+        await self.middleware.call('docker.validate_state')
         await self.get_instance(id_)
         await self.middleware.call('datastore.delete', 'app.registry', id_)
         await self.middleware.call('etc.generate', 'app_registry')

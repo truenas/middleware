@@ -82,6 +82,7 @@ from pydantic import create_model, Field
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from types import MethodType, ModuleType
     from aiohttp.web_request import Request
     from .api.base.server.app import App
@@ -93,6 +94,7 @@ if typing.TYPE_CHECKING:
 
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.cron import CronJobService
+from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.ntp import NTPServerService
@@ -181,6 +183,7 @@ class ServiceContainer(BaseServiceContainer):
 
         self.catalog = CatalogService(middleware)
         self.cronjob = CronJobService(middleware)
+        self.docker = DockerService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
@@ -273,7 +276,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         return serviceobj, methodobj
 
-    def create_task(self, coro, *, name=None):
+    def create_task[T](self, coro: Coroutine[typing.Any, typing.Any, T], *, name: str | None = None) -> asyncio.Task[T]:
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)

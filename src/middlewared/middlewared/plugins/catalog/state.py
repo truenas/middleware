@@ -7,7 +7,7 @@ from middlewared.service import ServiceContext
 
 
 async def dataset_mounted(context: ServiceContext) -> bool:
-    if docker_ds := (await context.middleware.call('docker.config'))['dataset']:
+    if docker_ds := (await context.middleware.call('docker.config')).dataset:
         expected_source = os.path.join(docker_ds, CATALOG_DATASET_NAME)
         catalog_path = catalog_ds_path()
         try:

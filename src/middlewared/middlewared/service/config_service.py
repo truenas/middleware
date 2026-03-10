@@ -43,6 +43,7 @@ class ConfigServiceMetabase(ServiceBase):
             )
             for c_name, c_bases in (
                 ('ConfigService', ('ServiceChangeMixin', 'Service', 'Generic')),
+                ('GenericConfigService', ('ConfigService', 'Generic')),
                 ('SystemServiceService', ('ConfigService', 'Generic')),
             )
         ):
@@ -125,3 +126,9 @@ class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetab
             rows[0] = self._config.entry(**rows[0])
 
         return rows[0]
+
+
+class GenericConfigService[E](ConfigService[E]):
+
+    async def config(self) -> E:
+        return await self._svc_part.config()

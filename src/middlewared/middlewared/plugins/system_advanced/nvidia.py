@@ -37,10 +37,10 @@ class SystemAdvancedService(Service):
         # this only gets called if nvidia setting was toggled
         # which means we need to restart apps once we have run our configuration logic
         await self.middleware.call('system.advanced.configure_nvidia')
-        if (await self.middleware.call('docker.config'))['pool']:
+        if (await self.middleware.call('docker.config')).pool:
             # We explicitly have it non-blocking here as docker restart on HDD based systems can take
             # decent amount of time
-            self.middleware.create_task(self.middleware.call('docker.restart_svc'))
+            self.middleware.create_task(self.middleware.call('docker.restart_service'))
 
     @private
     def configure_nvidia(self):
