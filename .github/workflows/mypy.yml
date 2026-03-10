@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dev tools
-        run: FAKE_ENV=1 ./src/freenas/usr/bin/install-dev-tools
-
       - name: Install mypy
         run: apt install -y mypy
 
