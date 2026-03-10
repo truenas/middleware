@@ -564,6 +564,11 @@ async def call_unit_action_and_wait(
             timeout = await _get_unit_timeout(router, unit_path, service_name, action)
 
         if action == "Stop":
+            active_state = await _get_unit_property(
+                router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
+            )
+            if active_state in ("inactive", "failed"):
+                return
             await _stop_unit_and_wait_for_exit(
                 router, unit_path, service_name, timeout, start_time,
                 timeout_is_explicit,
