@@ -2,10 +2,14 @@ import contextlib
 import inspect
 import socket
 
-import iscsi
+try:
+    import iscsi
+    from pyscsi.pyscsi.scsi import SCSI
+    from pyscsi.utils import init_device
+except ImportError:
+    print("iscsi module not available")
+
 from functions import SRVTarget, get_host_ip
-from pyscsi.pyscsi.scsi import SCSI
-from pyscsi.utils import init_device
 
 
 def initiator_name_supported():
