@@ -12,7 +12,7 @@ __all__ = ("hold_impl", "release_impl",)
 class CollectSnapshotsState:
     snapshots: list[str]
     snap_name: str
-    lzh: truenas_pylibzfs.ZFS
+    lzh: Any
 
 
 def __collect_matching_snapshots_callback(ds_hdl: Any, state: CollectSnapshotsState) -> bool:
