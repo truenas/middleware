@@ -12,13 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/truenas/middleware:master
+      image: ghcr.io/truenas/middleware:26
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dev tools
-        run: FAKE_ENV=1 ./src/freenas/usr/bin/install-dev-tools
 
       - name: Test
         run: |
