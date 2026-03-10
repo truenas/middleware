@@ -169,7 +169,7 @@ class PoolService(CRUDService):
                 'free_str': props['free']['raw'],
                 'freeing_str': props['freeing']['raw'],
                 'autotrim': autotrim,
-                'dedup_table_quota': props['dedup_table_quota']['value'],
+                'dedup_table_quota': str(props['dedup_table_quota']['value']),
                 'dedup_table_size': props['dedup_table_size']['value'],
             })
         else:
