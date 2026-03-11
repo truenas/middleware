@@ -103,7 +103,7 @@ from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
-from middlewared.plugins.webshare.config import WebshareService
+from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
