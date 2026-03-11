@@ -123,6 +123,9 @@ class NfsMountdService(PseudoServiceBase):
     async def stop(self):
         await systemd_unit("nfs-mountd", "stop")
 
+    async def get_state(self):
+        return await systemd_unit("nfs-mountd", "status")
+
 
 class NtpdService(SimpleService):
     name = "ntpd"
