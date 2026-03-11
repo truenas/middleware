@@ -25,12 +25,12 @@ from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.constants import (
-    NETIF_COMPLETE_SENTINEL,
     CONFIGURED_SENTINEL,
     SMB_AUDIT_DEFAULTS,
     SMBCmd,
     SMBPath,
 )
+from middlewared.utils.interface import NETIF_COMPLETE_SENTINEL
 from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.sharesec import remove_share_acl
