@@ -133,7 +133,10 @@ class InterfaceEntry(BaseModel):
     type: str
     """Type of interface (PHYSICAL, BRIDGE, LINK_AGGREGATION, VLAN, etc.)."""
     state: InterfaceEntryState
-    """Current runtime state information for the interface."""
+    """Current runtime state of the interface as reported by the OS kernel. This reflects what is actually configured \
+    in the kernel at query time and may differ from the top-level fields, which represent the persisted database \
+    configuration. Pending changes (after `interface.update` but before `interface.commit`) will not be visible here \
+    until the commit is applied and the interface is synchronized."""
     aliases: list[InterfaceEntryAlias]
     """List of IP address aliases configured on the interface."""
     ipv4_dhcp: bool
