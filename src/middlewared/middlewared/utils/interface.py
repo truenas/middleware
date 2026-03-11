@@ -2,8 +2,11 @@ import contextlib
 import os
 import time
 
+from middlewared.utils import MIDDLEWARE_RUN_DIR
+
 
 IFACE_LINK_STATE_MAX_WAIT: int = 60
+NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 RTF_GATEWAY: int = 0x0002
 RTF_UP: int = 0x0001
 
