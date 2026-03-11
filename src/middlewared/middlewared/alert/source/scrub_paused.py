@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, AlertSource,
 )
 
 
@@ -15,7 +15,7 @@ class ScrubPausedAlert(NonDataclassAlertClass[str], AlertClass):
     )
 
 
-class ScrubPausedAlertSource(ThreadedAlertSource):
+class ScrubPausedAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
