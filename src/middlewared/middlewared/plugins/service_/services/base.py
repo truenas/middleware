@@ -401,10 +401,13 @@ async def _stop_unit_and_wait_for_exit(
     """
     Stop a systemd unit and wait for all processes to exit.
 
-    Issues a Stop command, waits for systemd to send SIGTERM (JobRemoved signal),
-    then polls until MainPID=0 or ActiveState=inactive to ensure all processes
-    have fully exited.
+    Issues a Stop command then proceeds in two phases:
 
+    Phase 1 — wait for the JobRemoved D-Bus signal that indicates systemd has
+    finished processing the Stop job (i.e. SIGTERM / SIGKILL sent).
+
+    Phase 2 — poll ActiveState (and MainPID for .service units) until the unit
+    reaches inactive/failed state, ensuring all processes have fully exited.
     This prevents race conditions where services with slow shutdown (e.g., netdata
     flushing databases) still have open file handles when subsequent operations
     (umount, zfs destroy) are attempted.
@@ -433,21 +436,71 @@ async def _stop_unit_and_wait_for_exit(
         reply = await router.send_and_get_reply(msg)
         job_path = unwrap_msg(reply)[0]
 
-        # Wait for JobRemoved
-        try:
-            async with asyncio.timeout(timeout):
-                while True:
-                    msg = await job_queue.get()
-                    if msg.body[1] == job_path:
-                        result = msg.body[3]
-                        if result != "done":
-                            logger.warning(
-                                "%s Stop job finished with result: %s",
-                                service_name,
-                                result,
-                            )
-                        break
-        except TimeoutError:
+        # Phase 1: Wait for JobRemoved *or* for the unit to reach an inactive/failed
+        # state — whichever comes first.  The concurrent poll handles the race where
+        # systemd deactivates the unit as a dependency of another unit stopping before
+        # our explicit Stop job fires its JobRemoved signal (e.g. virtlogd.socket
+        # being torn down implicitly when libvirtd stops).
+        _PHASE1_POLL_INTERVAL = 0.2
+
+        async def _wait_for_job_removed() -> str | None:
+            """Return the Stop job result string, or None if cancelled."""
+            while True:
+                msg = await job_queue.get()
+                if msg.body[1] == job_path:
+                    return msg.body[3]
+
+        async def _wait_for_inactive() -> None:
+            """Return when the unit reaches inactive or failed state."""
+            while True:
+                await asyncio.sleep(_PHASE1_POLL_INTERVAL)
+                try:
+                    state = await _get_unit_property(
+                        router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
+                    )
+                    if state in ("inactive", "failed"):
+                        return
+                except Exception:
+                    pass
+
+        job_task = asyncio.create_task(_wait_for_job_removed())
+        poll_task = asyncio.create_task(_wait_for_inactive())
+        done, pending = await asyncio.wait(
+            {job_task, poll_task},
+            timeout=timeout,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        for t in pending:
+            t.cancel()
+            try:
+                await t
+            except (asyncio.CancelledError, Exception):
+                pass
+
+        if poll_task in done:
+            # Unit became inactive before JobRemoved arrived — return immediately,
+            # skipping Phase 2 (there's nothing left to wait for).
+            elapsed_total = time.monotonic() - start_time
+            if elapsed_total > 3.0:
+                logger.warning(
+                    "%s took %.2fs to stop (became inactive without JobRemoved signal)",
+                    service_name,
+                    elapsed_total,
+                )
+            return
+        elif job_task in done:
+            try:
+                result = job_task.result()
+                if result is not None and result != "done":
+                    logger.warning(
+                        "%s Stop job finished with result: %s",
+                        service_name,
+                        result,
+                    )
+            except Exception:
+                logger.exception("%s: error retrieving Stop job result", service_name)
+        else:
+            # Timeout — neither task completed within the allowed window.
             if timeout_is_explicit:
                 logger.debug(
                     "%s Stop: stopped waiting after %.1fs (job still running)",
@@ -461,7 +514,7 @@ async def _stop_unit_and_wait_for_exit(
                     timeout,
                 )
 
-        # Wait for processes to actually exit by polling state
+        # Phase 2: Wait for processes to actually exit by polling state
         elapsed = time.monotonic() - start_time
         timeout_remaining = max(5.0, timeout - elapsed)
         poll_deadline = time.monotonic() + timeout_remaining
