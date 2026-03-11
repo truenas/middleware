@@ -212,6 +212,7 @@ class SupportService(ConfigService):
         job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
 
         has_debug = False
+        debug_attach_error = None
         if debug:
             job.set_progress(60, 'Generating debug file')
 
@@ -272,6 +273,9 @@ class SupportService(ConfigService):
 
                     await self.middleware.run_in_thread(copy2)
                     await tjob.wait()
+                    if tjob.error:
+                        has_debug = False
+                        debug_attach_error = str(tjob.error)
         else:
             job.set_progress(100)
 
@@ -279,6 +283,7 @@ class SupportService(ConfigService):
             'ticket': ticket,
             'url': url,
             'has_debug': has_debug,
+            'debug_attach_error': debug_attach_error,
         }
 
     @api_method(SupportAttachTicketArgs, SupportAttachTicketResult, roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
