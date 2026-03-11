@@ -397,7 +397,15 @@ class FailoverEventsService(Service):
         # to avoid inflight I/O interfering with the LUN replacement during
         # become_active.  Suspending iSCSI means BUSY will be returned.
         suspended = cleaned = False
+
         try:
+            # Configure dev_disk to dump PR state to files as devices are
+            # detached during reset_active().  Files are keyed by device
+            # serial number and consumed by restore_pr_state() in
+            # become_active().  This is race-free: the dump happens at the
+            # exact moment each device is torn down, after all commands drain.
+            self.run_call('iscsi.scst.set_pr_dump_dir', '/var/lib/scst/pr_dump')
+
             try:
                 # Ensure the internal (inter-node) target sessions
                 # are stopped, as otherwise inflight IO could
