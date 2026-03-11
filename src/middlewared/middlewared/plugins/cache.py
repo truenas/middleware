@@ -5,7 +5,6 @@ from typing import Any
 
 from middlewared.service import periodic, Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import MIDDLEWARE_BOOT_ENV_STATE_DIR
 from middlewared.utils.tdb import (
     TDBBatchAction, TDBBatchOperation, TDBPathType, TDBOptions, TDBDataType, get_tdb_handle
 )
