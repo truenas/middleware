@@ -26,12 +26,15 @@ __all__ = ('CRUDServicePart',)
 class CRUDServicePart[E, PK = int](ServicePart):
     __slots__ = ()
 
-    _datastore: str = NotImplemented
+    _datastore: str
     _datastore_prefix: str = ''
     _datastore_primary_key: str = 'id'
-    _entry: type[E] = NotImplemented
+    _entry: type[E]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
+        return await self.to_thread(self.extend_context_sync, rows, extra)
+
+    def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
@@ -41,13 +44,13 @@ class CRUDServicePart[E, PK = int](ServicePart):
         return data
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...
+    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...
+    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: QueryOptions) -> list[E] | E | int: ...
+    async def query(self, filters: list[Any], options: QueryOptions) -> list[E]: ...
 
     async def query(self, filters: list[Any], options: QueryOptions) -> list[E] | E | int:
         opts = options.model_dump()
@@ -95,6 +98,9 @@ class CRUDServicePart[E, PK = int](ServicePart):
 
         ctx = await self.extend_context(rows, extra or {})
         return self._to_entry(await self._run_extend(rows[0], ctx))
+
+    def get_instance__sync(self, id_: PK, extra: dict[str, Any] | None = None) -> E:
+        return self.run_coroutine(self.get_instance(id_, extra))
 
     async def _create(self, data: dict[str, Any]) -> E:
         data = await self._run_compress(data)

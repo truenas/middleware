@@ -30,6 +30,8 @@ from .utils import get_upgrade_snap_name, upgrade_summary_info
 
 logger = logging.getLogger('app_lifecycle')
 
+APP_UPGRADE_ALERT_CACHE_KEY = 'app_upgrade_alert_apps'
+
 
 class AppService(Service):
 
@@ -281,6 +283,7 @@ class AppService(Service):
     @private
     async def clear_upgrade_alerts_for_all(self):
         await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+        await self.middleware.call('cache.pop', APP_UPGRADE_ALERT_CACHE_KEY)
 
     @private
     async def update_app_upgrade_alert(self):
@@ -288,9 +291,6 @@ class AppService(Service):
         Deletes existing app update alerts and creates a single consolidated alert
         if any apps have updates available.
         """
-        # Delete all existing AppUpdate alerts
-        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
-
         # Get all apps with updates
         # We only raise alerts in 2 cases:
         # 1) app version changed
@@ -315,11 +315,33 @@ class AppService(Service):
                     if (latest_v.major, latest_v.minor) != (current_v.major, current_v.minor):
                         apps_with_updates.append(app['id'])
 
+        # Avoid re-firing the same alert on every catalog sync
+        new_apps = set(apps_with_updates)
+        try:
+            cached_apps = set(await self.middleware.call('cache.get', APP_UPGRADE_ALERT_CACHE_KEY))
+        except KeyError:
+            cached_apps = None
+
+        if new_apps == cached_apps:
+            if not new_apps:
+                # We would like to be certain that we clear any alert if there are no new_apps to
+                # avoid any edge case still leaving out the alert
+                await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+            return
+
+        # Delete all existing AppUpdate alerts
+        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+
         # Create single alert if updates exist
         if apps_with_updates:
+            count = len(apps_with_updates)
             await self.middleware.call('alert.oneshot_create', 'AppUpdate', {
-                'apps': apps_with_updates,
+                'count': count,
+                'plural': 's' if count != 1 else '',
+                'apps': ', '.join(apps_with_updates),
             })
+
+        await self.middleware.call('cache.put', APP_UPGRADE_ALERT_CACHE_KEY, new_apps, 86400)
 
     @private
     async def check_upgrade_alerts(self):

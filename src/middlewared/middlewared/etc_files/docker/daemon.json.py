@@ -12,7 +12,7 @@ from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 def render(service, middleware):
     config = middleware.call_sync('docker.config')
     http_proxy = middleware.call_sync('network.configuration.config')['httpproxy']
-    if not config['pool']:
+    if not config.pool:
         raise FileShouldNotExist()
 
     # We need to do this so that proxy changes are respected by systemd on docker daemon start
@@ -27,11 +27,11 @@ def render(service, middleware):
         'ipv6': True,
         'default-network-opts': {'bridge': {'com.docker.network.enable_ipv6': 'true'}},
         'storage-driver': 'overlay2',
-        'fixed-cidr-v6': config['cidr_v6'],
-        'default-address-pools': config['address_pools'],
-        'registry-mirrors': [registry['url'] for registry in config['registry_mirrors']],
+        'fixed-cidr-v6': config.cidr_v6,
+        'default-address-pools': [pool.model_dump(mode='json') for pool in config.address_pools],
+        'registry-mirrors': [registry.url for registry in config.registry_mirrors],
         'insecure-registries': [
-            urlparse(registry['url']).netloc for registry in config['registry_mirrors'] if registry['insecure']
+            urlparse(registry.url).netloc for registry in config.registry_mirrors if registry.insecure
         ],
         **(
             {

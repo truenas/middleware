@@ -24,8 +24,8 @@ class SharingTaskService[E](CRUDService[E]):
     allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
-    locked_alert_class: str = NotImplemented
-    share_task_type: str = NotImplemented
+    locked_alert_class: str
+    share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
@@ -236,7 +236,7 @@ class SharingTaskService[E](CRUDService[E]):
     @private
     async def remove_locked_alert(self, share_task_id):
         await self.middleware.call(
-            'alert.oneshot_delete', self.locked_alert_class, f'"{self.share_task_type}_{share_task_id}"'
+            'alert.oneshot_delete', self.locked_alert_class, f'{self.share_task_type}_{share_task_id}'
         )
 
     @pass_app(message_id=True)

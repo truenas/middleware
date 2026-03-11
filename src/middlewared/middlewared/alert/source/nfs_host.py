@@ -1,19 +1,18 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class NFSHostnameLookupFailAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSHostnameLookupFailAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
+    keys = []
     title = "NFS shares reference hosts that could not be resolved"
     text = "NFS shares refer to the following unresolvable hosts: %(hosts)s"
 
-    async def delete(self, alerts, query):
-        return []
 
-
-class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSHostListExcessiveAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
+    keys = []
     title = "NFS host list excessively long"
     text = (
         "The NFS share, %(sharePath)s, has %(numEntries)d host entries. "
@@ -22,13 +21,11 @@ class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
         "or other configurations to reduce the host list length."
     )
 
-    async def delete(self, alerts, query):
-        return []
 
-
-class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
+class NFSNetworkListExcessiveAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
+    keys = []
     title = "NFS network list excessively long"
     text = (
         "The NFS share, %(sharePath)s, has %(numEntries)d network entries. "
@@ -36,6 +33,3 @@ class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
         "Consider using directory services, netgroups, wider network ranges, "
         "or other configurations to reduce the network list length."
     )
-
-    async def delete(self, alerts, query):
-        return []

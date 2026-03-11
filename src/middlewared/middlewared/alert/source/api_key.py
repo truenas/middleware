@@ -1,10 +1,10 @@
 from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ApiKeyRevokedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class ApiKeyRevokedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "API Key Revoked"

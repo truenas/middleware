@@ -7,7 +7,7 @@ from middlewared.plugins.etc import FileShouldNotExist
 
 def render(service, middleware):
     config = middleware.call_sync('docker.config')
-    if not config['pool']:
+    if not config.pool:
         raise FileShouldNotExist()
 
     os.makedirs('/etc/docker', exist_ok=True)

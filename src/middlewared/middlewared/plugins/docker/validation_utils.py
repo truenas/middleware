@@ -1,10 +1,11 @@
 import ipaddress
+from typing import Any
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.network import system_ips_to_cidrs, validate_network_overlaps
 
 
-def validate_address_pools(system_ips: list[dict], user_specified_networks: list[dict]):
+def validate_address_pools(system_ips: list[dict[str, Any]], user_specified_networks: list[dict[str, Any]]) -> None:
     verrors = ValidationErrors()
     if not user_specified_networks:
         verrors.add('docker_update.address_pools', 'At least one address pool must be specified')

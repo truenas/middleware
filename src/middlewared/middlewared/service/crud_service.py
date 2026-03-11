@@ -91,11 +91,13 @@ class CRUDServiceMetabase(ServiceBase):
             )
             use_check_annotations = is_generic_crud
 
-            # GenericCRUDService.query/get_instance use the type-var `E` in
-            # their string annotations.  Inject the concrete entry type so
+            # GenericCRUDService.query/get_instance use the type-vars `E` and `PK` in
+            # their string annotations.  Inject the concrete types so
             # that check_method_annotations can eval() them
             if is_generic_crud:
-                sys.modules[klass.query.__module__].__dict__['E'] = entry
+                mod = sys.modules[klass.query.__module__].__dict__
+                mod['E'] = entry
+                mod['PK'] = entry.model_fields[config.datastore_primary_key].annotation
 
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
@@ -383,7 +385,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         return dependencies
 
 
-class GenericCRUDService[E](CRUDService[E]):
+class GenericCRUDService[E, PK = int](CRUDService[E]):
     """
     CRUDService subclass for generic services that use Pydantic models (QueryOptions)
     instead of raw dicts. Provides properly typed query/get_instance signatures.
@@ -394,15 +396,15 @@ class GenericCRUDService[E](CRUDService[E]):
     """
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...
+    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...
+    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
     async def query(
         self, filters: list[Any] | None = None, options: QueryOptions | None = None,
-    ) -> list[E] | E | int: ...
+    ) -> list[E]: ...
 
     async def query(
         self, filters: list[Any] | None = None, options: QueryOptions | None = None,
@@ -410,6 +412,6 @@ class GenericCRUDService[E](CRUDService[E]):
         return await self._svc_part.query(filters or [], options or QueryOptions())
 
     async def get_instance(
-        self, id_: int, options: QueryOptions | None = None,
+        self, id_: PK, options: QueryOptions | None = None,
     ) -> E:
         return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)

@@ -1111,22 +1111,22 @@ class FailoverEventsService(Service):
         self.start_apps_impl()
 
     def start_apps_impl(self):
-        pool = self.run_call('docker.config')['pool']
+        pool = self.run_call('docker.config').pool
         if not pool:
-            self.middleware.call_sync('docker.state.set_status', DockerStatus.UNCONFIGURED.value)
+            self.middleware.call_sync('docker.set_status', DockerStatus.UNCONFIGURED.value)
             logger.info('Skipping starting apps as they are not configured')
             return
 
         logger.info('Going to initialize apps plugin as %r pool is configured for apps', pool)
         try:
-            self.run_call('docker.state.start_service', True)
+            self.run_call('docker.start_service', True)
         except Exception:
             logger.error('Failed to start docker service', exc_info=True)
         else:
             logger.info('Docker service started successfully')
 
     def stop_apps(self):
-        if not self.middleware.call_sync('docker.config')['dataset']:
+        if not self.middleware.call_sync('docker.config').dataset:
             return
 
         logger.info('Trying to gracefully stop docker service')

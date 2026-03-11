@@ -1,9 +1,9 @@
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPv4Network, IPv6Network, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPv4Network, IPv6Network,
 )
 
 __all__ = [
-    "LXCConfigEntry",
+    "LXCConfigEntry", "LXCConfigUpdate",
     "LXCConfigUpdateArgs", "LXCConfigUpdateResult",
     "LXCConfigBridgeChoicesArgs", "LXCConfigBridgeChoicesResult",
 ]
@@ -22,9 +22,13 @@ class LXCConfigEntry(BaseModel):
     """IPv6 network CIDR for the container bridge network."""
 
 
-@single_argument_args("lxc_config_update")
-class LXCConfigUpdateArgs(LXCConfigEntry, metaclass=ForUpdateMetaclass):
+class LXCConfigUpdate(LXCConfigEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+
+
+class LXCConfigUpdateArgs(BaseModel):
+    data: LXCConfigUpdate
+    """LXC config update parameters."""
 
 
 class LXCConfigUpdateResult(BaseModel):

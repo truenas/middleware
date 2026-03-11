@@ -1,7 +1,7 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 
 
-class FCHardwareAddedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FCHardwareAddedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = 'Fibre Channel HBAs added.'
@@ -13,7 +13,7 @@ class FCHardwareAddedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
-class FCHardwareReplacedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FCHardwareReplacedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.CRITICAL
     title = 'Fibre Channel HBAs replaced.'

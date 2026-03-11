@@ -10,7 +10,7 @@ from middlewared.api.current import (
     CatalogSyncedArgs, CatalogSyncedResult,
     CatalogAppDetails, CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
 )
-from middlewared.service import ConfigService, job, private
+from middlewared.service import GenericConfigService, job, private
 
 from .config import CatalogConfigPart
 from .apps_details import (
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class CatalogService(ConfigService[CatalogEntry]):
+class CatalogService(GenericConfigService[CatalogEntry]):
     class Config:
         cli_namespace = 'app.catalog'
         role_prefix = 'CATALOG'
@@ -42,17 +42,14 @@ class CatalogService(ConfigService[CatalogEntry]):
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
-        self._config_part = CatalogConfigPart(self.context)
-
-    async def config(self) -> CatalogEntry:
-        return await self._config_part.config()
+        self._svc_part = CatalogConfigPart(self.context)
 
     @api_method(CatalogUpdateArgs, CatalogUpdateResult, check_annotations=True)
     async def do_update(self, data: CatalogUpdate) -> CatalogEntry:
         """
         Update catalog preferences.
         """
-        return await self._config_part.do_update(data)
+        return await self._svc_part.do_update(data)
 
     @api_method(
         CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
@@ -128,7 +125,7 @@ class CatalogService(ConfigService[CatalogEntry]):
 
     @private
     async def update_train_for_enterprise(self) -> None:
-        return await self._config_part.update_train_for_enterprise()
+        return await self._svc_part.update_train_for_enterprise()
 
 
 async def setup(middleware: Middleware) -> None:

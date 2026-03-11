@@ -63,6 +63,7 @@ from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
+import multiprocessing
 import os
 import pathlib
 import re
@@ -81,6 +82,7 @@ from pydantic import create_model, Field
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from types import MethodType, ModuleType
     from aiohttp.web_request import Request
     from .api.base.server.app import App
@@ -91,14 +93,17 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.container import ContainerService
 from middlewared.plugins.cron import CronJobService
+from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
-from middlewared.plugins.webshare.config import WebshareService
+from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
@@ -179,9 +184,12 @@ class ServiceContainer(BaseServiceContainer):
         super(ServiceContainer, self).__init__(middleware)
 
         self.catalog = CatalogService(middleware)
+        self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
+        self.docker = DockerService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
+        self.lxc = LXCConfigService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
@@ -272,7 +280,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         return serviceobj, methodobj
 
-    def create_task(self, coro, *, name=None):
+    def create_task[T](self, coro: Coroutine[typing.Any, typing.Any, T], *, name: str | None = None) -> asyncio.Task[T]:
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
@@ -1892,6 +1900,12 @@ def main():
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
     setup_logging('middleware', args.debug_level, args.log_handler)
+
+    # zettarepl runs in a child process via multiprocessing. We use 'spawn' instead of the Linux
+    # default 'fork' so that the child does not inherit the parent's logging handlers (which would
+    # cause duplicate log output) or its asyncio SIGTERM handler (which would make the child
+    # unkillable without SIGKILL).
+    multiprocessing.set_start_method('spawn')
 
     middleware = Middleware(
         loop_debug=args.loop_debug,

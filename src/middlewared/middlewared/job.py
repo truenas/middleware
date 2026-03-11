@@ -838,7 +838,7 @@ class Job:
             os.makedirs(LOGS_DIR, mode=0o700, exist_ok=True)
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
 
-    async def logs_fd_write(self, data):
+    async def logs_fd_write(self, data: bytes) -> None:
         await self.middleware.run_in_thread(self.logs_fd.write, data)
 
     async def set_on_finish_cb(self, cb: OnFinishCallback):

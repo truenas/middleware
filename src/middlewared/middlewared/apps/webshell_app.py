@@ -334,9 +334,8 @@ class ShellApplication:
                     )
 
                 if options.get("container_id"):
-                    options["nsenter"] = await self.middleware.call(
-                        "container.nsenter",
-                        await self.middleware.call("container.get_instance", options["container_id"]),
+                    options["nsenter"] = await self.middleware.call2(
+                        self.middleware.services.container.nsenter, options["container_id"],
                     )
                     options["command"] = options.get("command") or "/bin/sh"
 

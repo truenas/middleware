@@ -3,8 +3,8 @@ from middlewared.service import ServiceChangeMixin
 
 class CertificateAttachmentDelegate:
 
-    HUMAN_NAME = NotImplementedError
-    NAMESPACE = NotImplementedError
+    HUMAN_NAME: str
+    NAMESPACE: str
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -22,11 +22,11 @@ class CertificateAttachmentDelegate:
 class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, ServiceChangeMixin):
 
     CERT_FIELD = 'certificate'
-    SERVICE = NotImplementedError
+    SERVICE: str
     SERVICE_VERB = 'RELOAD'
 
     async def get_namespace(self):
-        return self.SERVICE if self.NAMESPACE is NotImplementedError else self.NAMESPACE
+        return getattr(self, 'NAMESPACE', self.SERVICE)
 
     async def state(self, cert_id):
         config = await self.middleware.call(f'{await self.get_namespace()}.config')

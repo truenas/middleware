@@ -2,8 +2,6 @@ import errno
 import libzfs
 
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
-from middlewared.utils.filter_list import filter_list
-from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 
 
@@ -13,24 +11,8 @@ class ZFSPoolService(CRUDService):
         namespace = 'zfs.pool'
         private = True
 
-    def query(self, filters: list | None = None, options: dict | None = None):
-        if filters is None:
-            filters = list()
-        if options is None:
-            options = dict()
-
-        # We should not get datasets, there is zfs.dataset.query for that
-        state_kwargs = {'datasets_recursive': False}
-        with libzfs.ZFS() as zfs:
-            # Handle `id` or `name` filter specially to avoiding getting every property for all zpools
-            if filters and len(filters) == 1 and list(filters[0][:2]) in (['id', '='], ['name', '=']):
-                try:
-                    pools = [zfs.get(filters[0][2]).asdict(**state_kwargs)]
-                except libzfs.ZFSException:
-                    pools = []
-            else:
-                pools = [i.asdict(**state_kwargs) for i in zfs.pools]
-        return filter_list(pools, filters, options)
+    def query(self, filters=None, options=None):
+        return []
 
     def create(self, data: dict):
         """
@@ -42,7 +24,6 @@ class ZFSPoolService(CRUDService):
         with libzfs.ZFS() as zfs:
             topology = convert_topology(zfs, data['vdevs'])
             zfs.create(data['name'], topology, data['options'], data['fsoptions'])
-        return self.middleware.call_sync('zfs.pool.get_instance', data['name'])
 
     def update(self, name: str, options: dict | None = None):
         """
@@ -123,11 +104,6 @@ class ZFSPoolService(CRUDService):
 
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
-
-    def query_imported_fast(self, name_filters=None):
-        # the equivalent of running `zpool list -H -o guid,name` from cli
-        # name_filters will be a list of pool names
-        return query_imported_fast_impl(name_filters)
 
     def validate_draid_configuration(self, topology_type, numdisks, nparity, vdev):
         verrors = ValidationErrors()

@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.service import ServiceChangeMixin, SharingTaskService
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class FSAttachmentDelegate(ServiceChangeMixin):
@@ -8,9 +15,9 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     """
 
     # Unique identifier among all FSAttachmentDelegate classes
-    name: str = NotImplementedError
+    name: str
     # Human-readable name of item handled by this delegate (e.g. "NFS Share")
-    title: str = NotImplementedError
+    title: str
     # If is not None, corresponding service will be restarted after performing tasks on item
     service: str | None = None
     # attribute which is used to identify human readable description of an attachment
@@ -21,7 +28,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     # Delegates with same priority maintain registration order among themselves.
     priority = 0
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
         self.logger = middleware.logger
 
@@ -87,7 +94,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
     """
 
     # service object
-    service_class: type[SharingTaskService[E]] = NotImplementedError
+    service_class: type[SharingTaskService[E]]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

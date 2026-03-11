@@ -81,6 +81,7 @@ def validate_api_method_schema_class_names(klass):
             "ConfigService": {"config", "update"},
             "CRUDService": {"query", "get_instance", "create", "update", "delete"},
         }
+        methods_will_be_wrapped_later["GenericConfigService"] = methods_will_be_wrapped_later["ConfigService"]
         methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
         methods_will_be_wrapped_later["GenericCRUDService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]

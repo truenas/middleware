@@ -21,6 +21,7 @@ from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 
 from .destroy_impl import destroy_impl
+from .object_count_impl import estimate_object_count_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
@@ -80,6 +81,15 @@ class ZFSResourceService(Service):
             filters,
             options,
         )
+
+    @private
+    @pass_thread_local_storage
+    def estimate_object_count(self, tls: typing.Any, dataset_name: str) -> int:
+        """Estimate total objects in a ZFS dataset using quota accounting.
+
+        Returns 0 if the estimate is unavailable.
+        """
+        return estimate_object_count_impl(tls, dataset_name)
 
     @private
     @pass_thread_local_storage

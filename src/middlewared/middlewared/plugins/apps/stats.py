@@ -19,7 +19,7 @@ class AppStatsEventSource(EventSource):
     roles = ['APPS_READ']
 
     def run_sync(self):
-        if not self.middleware.call_sync('docker.state.validate', False):
+        if not self.middleware.call_sync('docker.validate_state', False):
             raise CallError('Apps are not available')
 
         old_projects_stats = list_resources_stats_by_project()
@@ -35,7 +35,7 @@ class AppStatsEventSource(EventSource):
                 old_projects_stats = project_stats
                 time.sleep(interval)
             except Exception:
-                if self.middleware.call_sync('docker.status')['status'] != Status.RUNNING.value:
+                if self.middleware.call_sync('docker.status').status != Status.RUNNING.value:
                     return
 
                 raise

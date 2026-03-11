@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dev tools
-        run: FAKE_ENV=1 ./src/freenas/usr/bin/install-dev-tools
-
       - name: Install mypy
         run: apt install -y mypy
 
@@ -28,7 +25,9 @@ jobs:
           cd src/middlewared
           mypy \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
+            middlewared/plugins/docker/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/ntp/ \

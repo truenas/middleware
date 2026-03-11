@@ -23,7 +23,7 @@ class AppImageService(CRUDService):
 
         `query-options.extra.parse_tags` is a boolean which when set will have normalized tags to be retrieved.
         """
-        if not self.middleware.call_sync('docker.state.validate', False):
+        if not self.middleware.call_sync('docker.validate_state', False):
             return filter_list([], filters, options)
 
         update_cache = self.middleware.call_sync('app.image.op.get_update_cache')
@@ -75,7 +75,7 @@ class AppImageService(CRUDService):
 
             job.set_progress((progress['current']/progress['total']) * 90, 'Pulling image')
 
-        self.middleware.call_sync('docker.state.validate')
+        self.middleware.call_sync('docker.validate_state')
         image_tag = data['image']
         auth_config = data['auth_config'] or {}
         if not auth_config:
@@ -100,7 +100,7 @@ class AppImageService(CRUDService):
         `options.force` when set will force delete the image regardless of the state of containers and should
         be used cautiously.
         """
-        self.middleware.call_sync('docker.state.validate')
+        self.middleware.call_sync('docker.validate_state')
         image = self.get_instance__sync(image_id)
         delete_image(image_id, options['force'])
         self.middleware.call_sync('app.image.op.remove_from_cache', image)

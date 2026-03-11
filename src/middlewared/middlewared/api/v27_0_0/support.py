@@ -154,6 +154,8 @@ class SupportNewTicket(BaseModel):
     """URL to view the created ticket. `null` if not available."""
     has_debug: bool
     """Whether debug information was attached to the ticket."""
+    debug_attach_error: str | None
+    """If attaching debug information failed, the error message will appear here."""
 
 
 class SupportNewTicketResult(BaseModel):

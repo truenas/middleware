@@ -16,7 +16,7 @@ class AppSchemaActions(Service):
 
     async def update_volumes(self, app_name, volumes):
         app_volume_ds = get_app_parent_volume_ds_name(
-            (await self.middleware.call('docker.config'))['dataset'], app_name
+            (await self.middleware.call('docker.config')).dataset, app_name
         )
 
         user_wants = {app_volume_ds: {'properties': {}}} | {os.path.join(app_volume_ds, v['name']): v for v in volumes}

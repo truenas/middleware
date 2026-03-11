@@ -1,9 +1,7 @@
 from middlewared.api.current import GraphiteExporter as GraphiteExporterModel
 
-from .base import Export
 
-
-class GraphiteExporter(Export):
+class GraphiteExporter:
 
     NAME = 'graphite'
     SCHEMA_MODEL = GraphiteExporterModel

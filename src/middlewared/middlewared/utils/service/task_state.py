@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Any, TYPE_CHECKING
+from typing import Any, Iterable, TYPE_CHECKING
 
 from middlewared.service import private
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class TaskStateMixin:
     middleware: Middleware
 
-    task_state_methods = NotImplemented
+    task_state_methods: Iterable[str]
 
     @private
     async def get_task_state_context(self) -> dict[str, Any]:

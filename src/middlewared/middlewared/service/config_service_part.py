@@ -11,9 +11,9 @@ __all__ = ("ConfigServicePart",)
 class ConfigServicePart[E](ServicePart):
     __slots__ = ()
 
-    _datastore: str = NotImplemented
+    _datastore: str
     _datastore_prefix: str = ''
-    _entry: type[E] = NotImplemented
+    _entry: type[E]
 
     async def config(self) -> E:
         return await self._get_or_insert(

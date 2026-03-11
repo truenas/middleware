@@ -190,9 +190,10 @@ class PoolDatasetService(Service):
             container['id']: container
             for container in self.middleware.call_sync('datastore.query', 'container.container')
         }
-        for container_dev in self.middleware.call_sync(
+        for container_dev_entry in self.middleware.call_sync(
             'container.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK', 'FILESYSTEM']]]
         ):
+            container_dev = container_dev_entry.model_dump(by_alias=True)
             results['container'].append(
                 container_dev | self._parse_virtualization_device_info(container_dev) | {
                     'container_name': containers[container_dev['container']]['name'],

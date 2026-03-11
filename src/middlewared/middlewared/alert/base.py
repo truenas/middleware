@@ -14,7 +14,7 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.service.call_mixin import CallMixin
 
 __all__ = [
-    "UnavailableException", "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
+    "UnavailableException", "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
     "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource", "AlertService",
     "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis", "alert_category_names",
 ]
@@ -26,21 +26,7 @@ class UnavailableException(Exception):
     pass
 
 
-class AlertClassMeta(type):
-    def __init__(cls, name, bases, dct):
-        super().__init__(name, bases, dct)
-
-        if cls.__name__ != "AlertClass":
-            if not cls.__name__.endswith("AlertClass"):
-                raise NameError(f"Invalid alert class name {cls.__name__}")
-
-            cls.name = cls.__name__.replace("AlertClass", "")
-
-            AlertClass.classes.append(cls)
-            AlertClass.class_by_name[cls.name] = cls
-
-
-class AlertClass(CallMixin, metaclass=AlertClassMeta):
+class AlertClass:
     """
     Alert class: a description of a specific type of issue that can exist in the system.
 
@@ -68,9 +54,9 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     classes = []
     class_by_name = {}
 
-    category: AlertCategory = NotImplemented
-    level: AlertLevel = NotImplemented
-    title: str = NotImplemented
+    category: AlertCategory
+    level: AlertLevel
+    title: str
     text: str | None = None
 
     exclude_from_list = False
@@ -78,8 +64,16 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     proactive_support = False
     proactive_support_notify_gone = False
 
-    def __init__(self, middleware):
-        self.middleware = middleware
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+
+        if not cls.__name__.endswith("AlertClass"):
+            raise NameError(f"Invalid alert class name {cls.__name__}")
+
+        cls.name = cls.__name__.replace("AlertClass", "")
+
+        AlertClass.classes.append(cls)
+        AlertClass.class_by_name[cls.name] = cls
 
     @classmethod
     def format(cls, args):
@@ -94,28 +88,43 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
 
 class OneShotAlertClass:
     """
-    One-shot alert mixin: add this to `AlertClass` superclass list to the alerts that are created not by an
+    One-shot alert mixin: add this to `AlertClass` superclass list for alerts that are created not by an
     `AlertSource` but using `alert.oneshot_create` API method.
 
     :cvar deleted_automatically: Set this to `false` if there is no one to call `alert.oneshot_delete` when the alert
         situation is resolved. In that case, the alert will be deleted when the user dismisses it.
 
     :cvar expires_after: Lifetime for the alert.
+
+    :cvar keys: controls how alerts are deleted:
+        `keys = ["id", "name"]` When deleting an alert, only these keys will be compared
+        `keys = []`             When deleting an alert, all alerts of this class will be deleted
+        `keys = None`           Use :meth:`key` to match alerts (default)
+
+    Override the :meth:`key` method to set a custom deduplication key derived from `args`. By default it returns
+    `args` itself, so alerts are matched by full args equality.
     """
 
     deleted_automatically = True
     expires_after = None
+    keys = None
 
-    async def create(self, args):
+    @classmethod
+    def key(cls, args):
+        return args
+
+    @classmethod
+    async def create(cls, args):
         """
         Returns an `Alert` instance created using `args` that were passed to `alert.oneshot_create`.
 
-        :param args: free-form data that was passed  to `alert.oneshot_create`.
+        :param args: free-form data that was passed to `alert.oneshot_create`.
         :return: an `Alert` instance.
         """
-        raise NotImplementedError
+        return Alert(cls, args, key=cls.key(args))
 
-    async def delete(self, alerts, query):
+    @classmethod
+    async def delete(cls, alerts, query):
         """
         Returns only those `alerts` that do not match `query` that was passed to `alert.oneshot_delete`.
 
@@ -124,46 +133,27 @@ class OneShotAlertClass:
         :return: `alerts` that do not match query (e.g. `query` specifies `{"certificate_id": "xxx"}` and the method
             implementation returns all `alerts` except the ones related to the certificate `xxx`).
         """
-        raise NotImplementedError
+        if cls.keys is not None:
+            return [alert for alert in alerts if any(alert.args[k] != query[k] for k in cls.keys)]
 
-    async def load(self, alerts):
+        return [alert for alert in alerts if cls.key(alert.args) != query]
+
+    @classmethod
+    async def load(cls, middleware, alerts):
         """
         This is called on system startup. Returns only those `alerts` that are still applicable to this system (i.e.,
-        corresponsing resources still exist).
+        corresponding resources still exist).
 
-        :param alerts: all the existing alerts of the class
+        :param middleware: the middleware instance.
+        :param alerts: all the existing alerts of the class.
         :return: `alerts` that should exist on this system.
         """
         return alerts
 
 
-class SimpleOneShotAlertClass(OneShotAlertClass):
-    """
-    A simple implementation of `OneShotAlertClass` that pass `args` as `args` when creating an `Alert` and will match
-    `args` dict keys (or their subset) when deleting an alert.
-
-    :cvar keys: controls how alerts are deleted:
-        `keys = ["id", "name"]` When deleting an alert, only this keys will be compared
-        `keys = []`             When deleting an alert, all alerts of this class will be deleted
-        `keys = None`           All present alert keys must be equal to the delete query (default)
-    """
-    keys = None
-
-    async def create(self, args):
-        return Alert(self.__class__, args)
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: (
-                any(alert.args[k] != query[k] for k in self.keys) if self.keys is not None
-                else alert.args != query
-            ),
-            alerts
-        ))
-
-
 class DismissableAlertClass:
-    async def dismiss(self, alerts, alert):
+    @classmethod
+    async def dismiss(cls, middleware, alerts, alert):
         raise NotImplementedError
 
 
@@ -363,11 +353,8 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin):
-    title = NotImplementedError
-
-    schema = NotImplementedError
-
-    html = False
+    title: str
+    html: bool = False
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware
