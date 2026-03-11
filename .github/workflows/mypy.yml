@@ -24,6 +24,7 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
+            middlewared/job.py \
             middlewared/plugins/catalog/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \

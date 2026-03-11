@@ -46,8 +46,7 @@ async def maybe_migrate_legacy(context: ServiceContext) -> None:
     legacy_config = legacy_config[0]
     context.logger.info('Legacy incus container configuration found, starting migration')
     try:
-        # @job decorator mangles the type signature, so call2 can't resolve the overload
-        migration_job = await context.call2(context.s.container.migrate)  # type: ignore[call-overload, misc]
+        migration_job = await context.call2(context.s.container.migrate)
         await migration_job.wait(raise_error=True)
     except Exception:
         context.logger.error('Legacy container migration failed', exc_info=True)

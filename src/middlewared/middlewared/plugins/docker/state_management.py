@@ -121,7 +121,7 @@ async def periodic_check(context: ServiceContext) -> None:
         return
 
     try:
-        await (await context.call2(context.s.catalog.sync)).wait()  # type: ignore[call-overload,misc]
+        await (await context.call2(context.s.catalog.sync)).wait()
     except CallError as e:
         if e.errno != errno.EBUSY:
             raise

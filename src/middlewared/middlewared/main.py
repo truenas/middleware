@@ -945,7 +945,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         serviceobj: Service,
         methodobj: typing.Callable,
         app: App | None,
-        result: dict | str | int | list | None | Job,
+        result: typing.Any,
         *,
         new_style_returns_model: type[BaseModel] | None = None,
         expose_secrets: bool = True,
@@ -1273,6 +1273,32 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, Job[T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
 
     @typing.overload
     async def call2[**P, T](

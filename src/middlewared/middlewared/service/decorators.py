@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 from collections import defaultdict, namedtuple
 import threading
-from typing import Any, Callable, Concatenate, Literal, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Concatenate, Coroutine, Literal, Sequence, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import BaseModel, query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
 LOCKS = defaultdict(asyncio.Lock)
@@ -59,7 +64,57 @@ def filterable_api_method[**P, T](
     return filterable_internal
 
 
-def job[**P, R](
+class _JobDecorator:
+    """Return type of job() — applies to both async and sync methods."""
+
+    def __init__(
+        self,
+        lock: Callable[[Sequence], str] | str | None,
+        lock_queue_size: int | None,
+        logs: bool,
+        pipes: list[Literal["input", "output"]] | None,
+        check_pipes: bool,
+        transient: bool,
+        description: Callable[..., str] | None,
+        abortable: bool,
+        read_roles: list[str] | None,
+    ) -> None:
+        self._options = {
+            'lock': lock,
+            'lock_queue_size': lock_queue_size,
+            'logs': logs,
+            'pipes': pipes or [],
+            'check_pipes': check_pipes,
+            'transient': transient,
+            'description': description,
+            'abortable': abortable,
+            'read_roles': read_roles or [],
+        }
+
+    @overload
+    def __call__[**P, R](
+        self,
+        fn: Callable[
+            Concatenate[Any, Any, P],
+            Coroutine[Any, Any, R],
+        ],
+    ) -> Callable[
+        Concatenate[Any, P],
+        Coroutine[Any, Any, Job[R]],
+    ]: ...
+
+    @overload
+    def __call__[**P, R](
+        self,
+        fn: Callable[Concatenate[Any, Any, P], R],
+    ) -> Callable[Concatenate[Any, P], Job[R]]: ...
+
+    def __call__(self, fn: Any) -> Any:
+        fn._job = self._options
+        return fn
+
+
+def job(
     lock: Callable[[Sequence], str] | str | None = None,
     lock_queue_size: int | None = 5,
     logs: bool = False,
@@ -69,7 +124,7 @@ def job[**P, R](
     description: Callable[..., str] | None = None,
     abortable: bool = False,
     read_roles: list[str] | None = None,
-) -> Callable[[Callable[Concatenate[Any, P], R]], Callable[P, R]]:
+) -> _JobDecorator:
     """
     Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
     the last).
@@ -150,21 +205,11 @@ def job[**P, R](
         By default, non-full-admin users already can see their own jobs and download their logs, so this only should
         be used when the job is launched externally (i.e., using crontab).
     """
-    def check_job(fn):
-        fn._job = {
-            'lock': lock,
-            'lock_queue_size': lock_queue_size,
-            'logs': logs,
-            'pipes': pipes or [],
-            'check_pipes': check_pipes,
-            'transient': transient,
-            'description': description,
-            'abortable': abortable,
-            'read_roles': read_roles or [],
-        }
-        return fn
-
-    return check_job
+    return _JobDecorator(
+        lock=lock, lock_queue_size=lock_queue_size, logs=logs,
+        pipes=pipes, check_pipes=check_pipes, transient=transient,
+        description=description, abortable=abortable, read_roles=read_roles,
+    )
 
 
 def no_auth_required(fn):
