@@ -255,7 +255,7 @@ class JobsQueue:
             job = await self.next()
             self.middleware.create_task(job.run(self))
 
-    async def receive(self, job: dict[str, typing.Any], logs: str | None) -> None:
+    async def receive(self, job: dict[str, typing.Any], logs: bytes | None) -> None:
         await self.deque.receive(self.middleware, job, logs)
 
 
@@ -301,7 +301,7 @@ class JobsDeque:
             self.__dict[job_id].cleanup()
             del self.__dict[job_id]
 
-    async def receive(self, middleware: Middleware, job_dict: dict[str, typing.Any], logs: str | None) -> None:
+    async def receive(self, middleware: Middleware, job_dict: dict[str, typing.Any], logs: bytes | None) -> None:
         job_dict['id'] = self._get_next_id()
         job = await Job.receive(middleware, job_dict, logs)
         assert job.id is not None
@@ -328,7 +328,7 @@ class Job[T = typing.Any]:
         middleware: Middleware,
         method_name: str,
         serviceobj: Service,
-        method: typing.Callable[..., typing.Any],
+        method: typing.Callable[..., typing.Any],  # FIXME: Once main.py gets converted, fix this
         args: list[typing.Any],
         options: dict[str, typing.Any],
         pipes: Pipes | None = None,
@@ -714,7 +714,7 @@ class Job[T = typing.Any]:
             evalue = self.exc_info[1]
             etype_name: str
             if isinstance(evalue, ValidationError):
-                extra: typing.Any = [(evalue.attribute, evalue.errmsg, evalue.errno)]
+                extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
                 errno: int | None = evalue.errno
                 etype_name = 'VALIDATION'
             elif isinstance(evalue, ValidationErrors):
@@ -756,7 +756,7 @@ class Job[T = typing.Any]:
                         self.serviceobj,
                         self.method,
                         self.app,
-                        typing.cast(typing.Any, self.result),
+                        self.result,
                         expose_secrets=False,
                     )
                 except Exception as e:
@@ -794,7 +794,7 @@ class Job[T = typing.Any]:
         }
 
     @staticmethod
-    async def receive(middleware: Middleware, job_dict: dict[str, typing.Any], logs: str | None) -> Job[typing.Any]:
+    async def receive(middleware: Middleware, job_dict: dict[str, typing.Any], logs: bytes | None) -> Job[typing.Any]:
         service_name, method_name = job_dict['method'].rsplit(".", 1)
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
@@ -814,14 +814,12 @@ class Job[T = typing.Any]:
         job.time_finished = job_dict['time_finished']
 
         if logs is not None:
-            logs_bytes = logs.encode() if isinstance(logs, str) else logs
-
             def write_logs() -> None:
                 os.makedirs(LOGS_DIR, exist_ok=True)
                 os.chmod(LOGS_DIR, 0o700)
                 assert job.logs_path is not None
                 with open(job.logs_path, "wb") as f:
-                    f.write(logs_bytes)
+                    f.write(logs)
 
             await middleware.run_in_thread(write_logs)
 

@@ -945,7 +945,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         serviceobj: Service,
         methodobj: typing.Callable,
         app: App | None,
-        result: dict | str | int | list | None | Job,
+        result: typing.Any,
         *,
         new_style_returns_model: type[BaseModel] | None = None,
         expose_secrets: bool = True,
