@@ -198,7 +198,7 @@ class DomainConnection(
             query_name = f'_kerberos._tcp.{realm}.'
 
         try:
-            return self.middleware.call_sync('cache.get', query_name)
+            return self.middleware.call_sync('cache.get', query_name, 'VOLATILE')
         except KeyError:
             pass
 
@@ -249,7 +249,7 @@ class DomainConnection(
 
         if kdcs_out:
             # Store our results for up to 24 hours
-            self.middleware.call_sync('cache.put', query_name, kdcs_out, 86400)
+            self.middleware.call_sync('cache.put', query_name, kdcs_out, 86400, 'VOLATILE')
 
         return kdcs_out
 
