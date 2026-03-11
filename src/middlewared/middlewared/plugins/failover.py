@@ -698,7 +698,10 @@ class FailoverService(ConfigService):
                 with open(os.path.join(mounted, 'manifest.json')) as f:
                     manifest = json.load(f)
 
-                bootenv_name = manifest['version']
+                # Follows the logic in truenas_build/truenas_install:
+                # The `+` sign is part of the nightly build version name, but it is not a compatible character for a
+                # ZFS dataset name.
+                bootenv_name = manifest['version'].replace('+', '-')
 
             existing_bes = set()
             for i in self.middleware.call_sync('boot.environment.query'):
