@@ -180,8 +180,8 @@ async def post_system_update_hook(middleware: Middleware) -> None:
                 )
                 break
 
-    backup_job: Job = await middleware.call2(
-        middleware.services.docker.backup,  # type: ignore[misc, arg-type]
+    backup_job = await middleware.call2(
+        middleware.services.docker.backup,
         f'{UPDATE_BACKUP_PREFIX}-{datetime.datetime.now().strftime("%F_%T")}'
     )
     await backup_job.wait()

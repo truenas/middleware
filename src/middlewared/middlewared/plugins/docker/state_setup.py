@@ -21,7 +21,7 @@ async def status_change(context: ServiceContext) -> None:
     config = await context.call2(context.s.docker.config)
     if not config.pool:
         try:
-            await (await context.call2(context.s.catalog.sync)).wait()  # type: ignore[call-overload,misc]
+            await (await context.call2(context.s.catalog.sync)).wait()
         except CallError as e:
             if e.errno != errno.EBUSY:
                 raise

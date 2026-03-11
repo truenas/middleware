@@ -6,6 +6,7 @@ from middlewared.utils.types import AuditCallback, JobProgressCallback
 
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
+    from middlewared.job import Job
     import middlewared.main
     from middlewared.pipe import Pipes
 
@@ -16,6 +17,24 @@ class CallMixin:
     @property
     def s(self) -> middlewared.main.ServiceContainer:
         return self.middleware.services
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Job[T]:
+        ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, Job[T]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Job[T]:
+        ...
 
     @typing.overload
     async def call2[**P, T](
@@ -56,6 +75,24 @@ class CallMixin:
             profile=profile,
             **kwargs,
         )
+
+    @typing.overload
+    def call_sync2[**P, T](
+        self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Job[T]:
+        ...
+
+    @typing.overload
+    def call_sync2[**P, T](
+        self,
+        f: typing.Callable[P, Job[T]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Job[T]:
+        ...
 
     @typing.overload
     def call_sync2[**P, T](

@@ -22,7 +22,7 @@ from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
-    from asyncio import Task
+    from asyncio import Task, TimerHandle
     from datetime import datetime
     from middlewared.api.base.server.app import App
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
@@ -30,6 +30,12 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.service import Service
     from middlewared.utils.types import EventType, ExcInfo
+
+
+class _Progress(typing.TypedDict):
+    percent: int
+    description: str
+    extra: typing.Any
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +49,7 @@ class JobCancelledException(Exception):
 
 
 def send_job_event(
-    middleware: Middleware, event_type: EventType, job: Job, fields: dict
+    middleware: Middleware, event_type: EventType, job: Job, fields: dict[str, typing.Any]
 ) -> None:
     if job.options['transient']:
         return
@@ -156,12 +162,17 @@ class JobsQueue:
                 queued_jobs = [another_job for another_job in self.queue if another_job.lock is job.lock]
                 if len(queued_jobs) >= job.options["lock_queue_size"]:
                     for queued_job in reversed(queued_jobs):
+                        job_creds = job.credentials
+                        queued_creds = queued_job.credentials
                         if (
-                            not credential_is_limited_to_own_jobs(job.credentials)
+                            not credential_is_limited_to_own_jobs(job_creds)
                             or (
-                                job.credentials.is_user_session
-                                and queued_job.credentials.is_user_session
-                                and job.credentials.user['username'] == queued_job.credentials.user['username']
+                                job_creds is not None and job_creds.is_user_session
+                                and queued_creds is not None and queued_creds.is_user_session
+                                and (
+                                    job_creds.user['username']  # type: ignore[attr-defined]
+                                    == queued_creds.user['username']  # type: ignore[attr-defined]
+                                )
                             )
                         ):
                             if job.message_ids:
@@ -244,7 +255,7 @@ class JobsQueue:
             job = await self.next()
             self.middleware.create_task(job.run(self))
 
-    async def receive(self, job: dict, logs: str | None) -> None:
+    async def receive(self, job: dict[str, typing.Any], logs: str | None) -> None:
         await self.deque.receive(self.middleware, job, logs)
 
 
@@ -290,16 +301,17 @@ class JobsDeque:
             self.__dict[job_id].cleanup()
             del self.__dict[job_id]
 
-    async def receive(self, middleware: Middleware, job_dict: dict, logs: str | None) -> None:
+    async def receive(self, middleware: Middleware, job_dict: dict[str, typing.Any], logs: str | None) -> None:
         job_dict['id'] = self._get_next_id()
         job = await Job.receive(middleware, job_dict, logs)
+        assert job.id is not None
         self.__dict[job.id] = job
 
 
-OnFinishCallback: typing.TypeAlias = typing.Callable[['Job'], typing.Awaitable] | None
+OnFinishCallback: typing.TypeAlias = typing.Callable[['Job[typing.Any]'], typing.Awaitable[None]] | None
 
 
-class Job:
+class Job[T = typing.Any]:
     """
     Represents a long-running call, methods marked with @job decorator.
 
@@ -316,11 +328,11 @@ class Job:
         middleware: Middleware,
         method_name: str,
         serviceobj: Service,
-        method: typing.Callable,
-        args: list,
-        options: dict,
+        method: typing.Callable[..., typing.Any],
+        args: list[typing.Any],
+        options: dict[str, typing.Any],
         pipes: Pipes | None = None,
-        on_progress_cb: typing.Callable[[dict], None] | None = None,
+        on_progress_cb: typing.Callable[[dict[str, typing.Any]], None] | None = None,
         app: App | None = None,
         message_id: str | None = None,
         audit_callback: typing.Callable[[typing.Any], None] | None = None,
@@ -340,7 +352,7 @@ class Job:
 
         self.id: int | None = None
         self.lock: JobSharedLock | None = None
-        self.result = None
+        self.result: T | None = None
         self.error: str | None = None
         self.exception: str | None = None
         self.exc_info: ExcInfo | None = None
@@ -348,18 +360,18 @@ class Job:
         # Synchronous job must watch this event and shut down and raise `JobCancelledException` when this event is set
         self.aborted_event = threading.Event()
         self.state: State = State.WAITING
-        self.description = None
-        self.progress = {
+        self.description: str | None = None
+        self.progress: _Progress = {
             'percent': 0,
             'description': '',
             'extra': None,
         }
-        self.internal_data = {}
+        self.internal_data: dict[str, typing.Any] = {}
         self.time_started = utc_now()
         self.time_finished: datetime | None = None
         self.loop = self.middleware.loop
-        self.future: Task | None = None
-        self.wrapped: list[Job] = []
+        self.future: Task[None] | None = None
+        self.wrapped: list[Job[typing.Any]] = []
         self.on_finish_cb: OnFinishCallback = None
         self.on_finish_cb_called: bool = False
 
@@ -389,20 +401,22 @@ class Job:
 
     def credential_access_error(self, credential: SessionManagerCredentials, access: JobAccess) -> str | None:
         if not credential_is_limited_to_own_jobs(credential):
-            return
+            return None
 
         if access == JobAccess.READ:
-            if credential.is_user_session and any(credential.has_role(role) for role in self.options['read_roles']):
-                return
+            if credential.is_user_session and any(
+                credential.has_role(role) for role in self.options['read_roles']  # type: ignore[no-untyped-call]
+            ):
+                return None
 
         if not credential.is_user_session or credential_has_full_admin(credential):
-            return
+            return None
 
         if self.credentials is None or not self.credentials.is_user_session:
             return 'Only users with full administrative privileges can access internally ran jobs'
 
-        if self.credentials.user['username'] == credential.user['username']:
-            return
+        if self.credentials.user['username'] == credential.user['username']:  # type: ignore[attr-defined]
+            return None
 
         return 'Job is not owned by current session'
 
@@ -426,10 +440,10 @@ class Job:
                                 errno.EINVAL)
         return lock_name
 
-    def set_result(self, result):
+    def set_result(self, result: T) -> None:
         self.result = result
 
-    def set_exception(self, exc_info: ExcInfo):
+    def set_exception(self, exc_info: ExcInfo) -> None:
         self.error = str(exc_info[1])
         self.exception = ''.join(traceback.format_exception(*exc_info))
         self.exc_info = exc_info
@@ -444,10 +458,10 @@ class Job:
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = utc_now()
 
-    def send_changed_event(self):
+    def send_changed_event(self) -> None:
         send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
 
-    def set_description(self, description):
+    def set_description(self, description: str | None) -> None:
         """
         Sets a human-readable job description for the task manager UI. Use this if you need to build a job description
         with more advanced logic that a simple lambda function given to `@job` decorator can provide.
@@ -458,7 +472,12 @@ class Job:
             self.description = description
             self.send_changed_event()
 
-    def set_progress(self, percent: int | float | None = None, description=None, extra=None):
+    def set_progress(
+        self,
+        percent: int | float | None = None,
+        description: str | None = None,
+        extra: typing.Any = None,
+    ) -> None:
         """
         Sets job completion progress. All arguments are optional and only passed arguments will be changed in the
         whole job progress state.
@@ -499,39 +518,45 @@ class Job:
             send_job_event(self.middleware, 'CHANGED', self, encoded)
 
         for wrapped in self.wrapped:
-            wrapped.set_progress(**self.progress)
+            wrapped.set_progress(
+                percent=self.progress['percent'],
+                description=self.progress['description'],
+                extra=self.progress['extra'],
+            )
 
     async def wait(
         self,
         timeout: float | None = None,
         raise_error: bool = False,
         raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
-    ) -> typing.Any:
+    ) -> T:
         if timeout is None:
             await self._finished.wait()
         else:
             await asyncio.wait_for(self.middleware.create_task(self._finished.wait()), timeout)
         if raise_error:
             if self.error:
+                assert self.exc_info is not None
                 if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
-        return self.result
+        # result is T | None but guaranteed to be T after successful completion (set_result was called)
+        return self.result  # type: ignore[return-value]
 
     def wait_sync(
         self,
         timeout: float | None = None,
         raise_error: bool = False,
         raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError,),
-    ) -> typing.Any:
+    ) -> T:
         """
         Synchronous method to wait for a job in another thread.
         """
         fut = asyncio.run_coroutine_threadsafe(self._finished.wait(), self.loop)
         event = threading.Event()
 
-        def done(_):
+        def done(_: typing.Any) -> None:
             event.set()
 
         fut.add_done_callback(done)
@@ -540,13 +565,15 @@ class Job:
             raise TimeoutError()
         if raise_error:
             if self.error:
+                assert self.exc_info is not None
                 if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
-        return self.result
+        # result is T | None but guaranteed to be T after successful completion (set_result was called)
+        return self.result  # type: ignore[return-value]
 
-    def abort(self):
+    def abort(self) -> None:
         self.aborted_event.set()
         if self.loop is not None and self.future is not None:
             # Only cancel the future for coroutine methods
@@ -586,7 +613,9 @@ class Job:
             self.set_state('ABORTED')
         except Exception as e:
             self.set_state('FAILED')
-            self.set_exception(sys.exc_info())
+            ei = sys.exc_info()
+            assert ei[0] is not None
+            self.set_exception(ei)
             if isinstance(e, CallError):
                 logger.error("Job %r failed: %r", self.method, e)
             else:
@@ -600,14 +629,15 @@ class Job:
             await self.call_on_finish_cb()
             send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
             if self.options['transient']:
+                assert self.id is not None
                 queue.remove(self.id)
 
-    async def __run_body(self):
+    async def __run_body(self) -> None:
         """
         Run this job's method and set the result, injecting
         any necessary arguments like app and tls.
         """
-        prepend = []
+        prepend: list[typing.Any] = []
         if hasattr(self.method, '_pass_app'):
             prepend.append(self.app)
         prepend.append(self)
@@ -631,7 +661,7 @@ class Job:
     def _logs_path(self) -> str:
         return os.path.join(LOGS_DIR, f"{self.id}.log")
 
-    async def __close_logs(self):
+    async def __close_logs(self) -> None:
         if not self.logs_fd:
             return
 
@@ -640,10 +670,11 @@ class Job:
         if self.logs_excerpt:
             return
 
-        def get_logs_excerpt():
-            head = []
-            tail = []
+        def get_logs_excerpt() -> str:
+            head: list[str] = []
+            tail: list[str] = []
             lines = 0
+            assert self.logs_path is not None
             try:
                 with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
                     for line in f:
@@ -666,8 +697,8 @@ class Job:
 
         self.logs_excerpt = await self.middleware.run_in_thread(get_logs_excerpt)
 
-    async def __close_pipes(self):
-        def close_pipes():
+    async def __close_pipes(self) -> None:
+        def close_pipes() -> None:
             if self.pipes.inputs:
                 for pipe in self.pipes.inputs.pipes_to_close:
                     pipe.r.close()
@@ -676,30 +707,31 @@ class Job:
 
         await self.middleware.run_in_thread(close_pipes)
 
-    def __encode__(self, raw_result: bool = True) -> dict:
+    def __encode__(self, raw_result: bool = True) -> dict[str, typing.Any]:
         exc_info = None
         if self.exc_info:
-            etype = self.exc_info[0]
+            etype_cls = self.exc_info[0]
             evalue = self.exc_info[1]
+            etype_name: str
             if isinstance(evalue, ValidationError):
-                extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
-                errno = evalue.errno
-                etype = 'VALIDATION'
+                extra: typing.Any = [(evalue.attribute, evalue.errmsg, evalue.errno)]
+                errno: int | None = evalue.errno
+                etype_name = 'VALIDATION'
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
                 errno = None
-                etype = 'VALIDATION'
+                etype_name = 'VALIDATION'
             elif isinstance(evalue, CallError):
-                etype = etype.__name__
+                etype_name = etype_cls.__name__
                 errno = evalue.errno
                 extra = evalue.extra
             else:
-                etype = etype.__name__
+                etype_name = etype_cls.__name__
                 errno = None
                 extra = None
             exc_info = {
                 'repr': repr(evalue),
-                'type': etype,
+                'type': etype_name,
                 'errno': errno,
                 'extra': extra,
             }
@@ -724,7 +756,7 @@ class Job:
                         self.serviceobj,
                         self.method,
                         self.app,
-                        self.result,
+                        typing.cast(typing.Any, self.result),
                         expose_secrets=False,
                     )
                 except Exception as e:
@@ -737,7 +769,7 @@ class Job:
             'id': self.id,
             'message_ids': self.message_ids,
             'method': self.method_name,
-            'arguments': self.middleware.dump_args(self.args, method=self.method),
+            'arguments': self.middleware.dump_args(self.args, method=self.method),  # type: ignore[no-untyped-call]
             'transient': self.options['transient'],
             'description': self.description,
             'abortable': self.options['abortable'],
@@ -754,15 +786,15 @@ class Job:
             'time_finished': self.time_finished,
             'credentials': (
                 {
-                    'type': self.credentials.class_name(),
-                    'data': self.credentials.dump(),
+                    'type': self.credentials.class_name(),  # type: ignore[no-untyped-call]
+                    'data': self.credentials.dump(),  # type: ignore[no-untyped-call]
                 } if self.credentials is not None
                 else None
             )
         }
 
     @staticmethod
-    async def receive(middleware: Middleware, job_dict: dict, logs: str | None) -> Job:
+    async def receive(middleware: Middleware, job_dict: dict[str, typing.Any], logs: str | None) -> Job[typing.Any]:
         service_name, method_name = job_dict['method'].rsplit(".", 1)
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
@@ -782,21 +814,24 @@ class Job:
         job.time_finished = job_dict['time_finished']
 
         if logs is not None:
-            def write_logs():
+            logs_bytes = logs.encode() if isinstance(logs, str) else logs
+
+            def write_logs() -> None:
                 os.makedirs(LOGS_DIR, exist_ok=True)
                 os.chmod(LOGS_DIR, 0o700)
+                assert job.logs_path is not None
                 with open(job.logs_path, "wb") as f:
-                    f.write(logs)
+                    f.write(logs_bytes)
 
             await middleware.run_in_thread(write_logs)
 
         return job
 
-    async def wrap(
+    async def wrap[U](
         self,
-        subjob: Job,
+        subjob: Job[U],
         raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
-    ):
+    ) -> U:
         """
         Wrap a job in another job, proxying progress and result/error.
         This is useful when we want to run a job inside a job.
@@ -805,16 +840,20 @@ class Job:
         :param raise_error_forward_classes: tuple containing classes to re-raise from
             the job result. If the exception type does not match, then a CallError will be raised
         """
-        self.set_progress(**subjob.progress)
+        self.set_progress(
+            percent=subjob.progress['percent'],
+            description=subjob.progress['description'],
+            extra=subjob.progress['extra'],
+        )
         subjob.wrapped.append(self)
 
         return await subjob.wait(raise_error=True, raise_error_forward_classes=raise_error_forward_classes)
 
-    def wrap_sync(
+    def wrap_sync[U](
         self,
-        subjob: Job,
+        subjob: Job[U],
         raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
-    ):
+    ) -> U:
         """
         Wrap a job in another job, proxying progress and result/error.
         This is useful when we want to run a job inside a job.
@@ -823,30 +862,35 @@ class Job:
         :param raise_error_forward_classes: tuple containing classes to re-raise from
         the job result. If the exception type does not match, then a CallError will be raised
         """
-        self.set_progress(**subjob.progress)
+        self.set_progress(
+            percent=subjob.progress['percent'],
+            description=subjob.progress['description'],
+            extra=subjob.progress['extra'],
+        )
         subjob.wrapped.append(self)
 
         return subjob.wait_sync(raise_error=True, raise_error_forward_classes=raise_error_forward_classes)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.logs_path:
             with contextlib.suppress(Exception):
                 os.unlink(self.logs_path)
 
-    def start_logging(self):
+    def start_logging(self) -> None:
         if self.logs_path is not None:
             os.makedirs(LOGS_DIR, mode=0o700, exist_ok=True)
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
 
     async def logs_fd_write(self, data: bytes) -> None:
+        assert self.logs_fd is not None
         await self.middleware.run_in_thread(self.logs_fd.write, data)
 
-    async def set_on_finish_cb(self, cb: OnFinishCallback):
+    async def set_on_finish_cb(self, cb: OnFinishCallback) -> None:
         self.on_finish_cb = cb
         if self.on_finish_cb_called:
             await self.call_on_finish_cb()
 
-    async def call_on_finish_cb(self):
+    async def call_on_finish_cb(self) -> None:
         if self.on_finish_cb:
             try:
                 await self.on_finish_cb(self)
@@ -863,17 +907,22 @@ class JobProgressBuffer:
     connections.
     """
 
-    def __init__(self, job: Job, interval: float = 1):
+    def __init__(self, job: Job[typing.Any], interval: float = 1):
         self.job = job
 
         self.interval = interval
 
         self.last_update_at: float = 0
 
-        self.pending_update_body = None
-        self.pending_update = None
+        self.pending_update_body: tuple[int | float | None, str | None, typing.Any] | None = None
+        self.pending_update: TimerHandle | None = None
 
-    def set_progress(self, percent: int | float | None = None, description=None, extra=None):
+    def set_progress(
+        self,
+        percent: int | float | None = None,
+        description: str | None = None,
+        extra: typing.Any = None,
+    ) -> None:
         t = time.monotonic()
 
         if t - self.last_update_at >= self.interval:
@@ -891,21 +940,22 @@ class JobProgressBuffer:
             if self.pending_update is None:
                 self.pending_update = self.job.loop.call_later(self.interval, self._do_pending_update)
 
-    def cancel(self):
+    def cancel(self) -> None:
         if self.pending_update is not None:
             self.pending_update.cancel()
 
             self.pending_update_body = None
             self.pending_update = None
 
-    def flush(self):
+    def flush(self) -> None:
         if self.pending_update is not None:
             self.pending_update.cancel()
 
             self._do_pending_update()
 
-    def _do_pending_update(self):
+    def _do_pending_update(self) -> None:
         self.last_update_at = time.monotonic()
+        assert self.pending_update_body is not None
         self.job.set_progress(*self.pending_update_body)
 
         self.pending_update_body = None

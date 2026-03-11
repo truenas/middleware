@@ -1277,6 +1277,32 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     @typing.overload
     async def call2[**P, T](
         self,
+        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[P, Job[T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
         f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
         *args: P.args,
         app: App | None = None,
