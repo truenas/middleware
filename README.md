@@ -7,4 +7,4 @@
 TrueNAS Middleware Source Repo
 =============
 
-Please submit Pull Requests here for consideration to be included in the next major release of TrueNAS. To build this source repository, please refer to the instructions provided at: https://github.com/truenas/truenas-build.
+Please submit Pull Requests here for consideration to be included in the next major release of TrueNAS. To build this source repository, please refer to the debian packaging files included within. 
