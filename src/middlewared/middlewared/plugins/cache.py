@@ -213,7 +213,7 @@ class CacheService(Service):
 
     @periodic(86400, run_on_start=False)
     def cleanup_expired(self):
-        """ internal method to clear out any expired keys from caches to prevent unbounded growth """
+        """Internal method to clear out any expired keys from caches to prevent unbounded growth."""
         failover_licensed = self.middleware.call_sync('failover.licensed')
 
         for cache in CacheType:
