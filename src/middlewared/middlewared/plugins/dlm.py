@@ -2,6 +2,8 @@ import asyncio
 
 from middlewared.service import Service, job, private
 
+DLM_PORT = 21064
+
 
 class DistributedLockManagerService(Service):
     """
@@ -294,9 +296,49 @@ class DistributedLockManagerService(Service):
     @private
     async def remote_down(self):
         """
-        Handle a node HA remote node going down.
+        Handle the HA remote node going down.
+
+        Three guards before calling reset_active:
+        - Only act as MASTER (STANDBY and SINGLE are no-ops).
+        - If the peer's DLM port is still reachable, only remote middleware
+          restarted; skip to avoid unnecessarily tearing down iSCSI sessions.
+        - If we have logged-in extents, we are in standby or mid-transition to
+          master; the failover event is already handling cleanup.
         """
-        self.logger.info('Remote node %s down', self.peernodeID)
+        if await self.middleware.call('failover.status') != 'MASTER':
+            return
+
+        peer_ip = self.nodes.get(self.peernodeID, {}).get('ip')
+        if not peer_ip:
+            self.logger.warning('remote_down: peer IP unknown, skipping reset_active')
+            return
+
+        try:
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(peer_ip, DLM_PORT), timeout=3
+            )
+            writer.close()
+            await writer.wait_closed()
+            self.logger.info(
+                'remote_down: DLM port reachable on %s; '
+                'remote middleware restarted, skipping reset_active',
+                peer_ip,
+            )
+            return
+        except Exception:
+            pass
+
+        if await self.middleware.call('iscsi.extent.logged_in_extents'):
+            self.logger.info(
+                'remote_down: have logged-in extents; in standby/transition, skipping reset_active'
+            )
+            return
+
+        self.logger.info(
+            'remote_down: DLM port unreachable on %s; calling reset_active',
+            peer_ip,
+        )
+        await self.middleware.call('dlm.reset_active')
 
     @private
     async def local_remove_peer(self, lockspace_name):
@@ -429,4 +471,4 @@ async def setup(middleware):
     middleware.register_hook('udev.dlm', udev_dlm_hook)
     # Comment out placeholder call for possible future enhancement.
     # await middleware.call('failover.remote_on_connect', remote_status_event)
-    # await middleware.call('failover.remote_on_disconnect', remote_down_event)
+    await middleware.call('failover.remote_on_disconnect', remote_down_event)
