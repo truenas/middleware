@@ -78,6 +78,7 @@ _TIMEOUT_BUFFER_SEC = 5.0
 
 # systemd's USEC_INFINITY means "no timeout"
 _USEC_INFINITY = 2**64 - 1
+_PHASE1_POLL_INTERVAL = 0.2
 
 # Mapping from unit action to the relevant timeout property name(s)
 # on the org.freedesktop.systemd1.Service interface.
@@ -390,6 +391,28 @@ async def call_unit_action(service_name: str | bytes, action: str) -> str:
         return unwrap_msg(reply)[0]
 
 
+async def _phase1_wait_for_job_removed(job_queue, job_path: str) -> str | None:
+    """Return the Stop job result string once the matching JobRemoved signal arrives."""
+    while True:
+        msg = await job_queue.get()
+        if msg.body[1] == job_path:
+            return msg.body[3]
+
+
+async def _phase1_wait_for_inactive(router, unit_path: str) -> None:
+    """Return when the unit reaches inactive or failed state."""
+    while True:
+        await asyncio.sleep(_PHASE1_POLL_INTERVAL)
+        try:
+            state = await _get_unit_property(
+                router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
+            )
+            if state in ("inactive", "failed"):
+                return
+        except Exception:
+            pass
+
+
 async def _stop_unit_and_wait_for_exit(
     router,
     unit_path: str,
@@ -441,30 +464,8 @@ async def _stop_unit_and_wait_for_exit(
         # systemd deactivates the unit as a dependency of another unit stopping before
         # our explicit Stop job fires its JobRemoved signal (e.g. virtlogd.socket
         # being torn down implicitly when libvirtd stops).
-        _PHASE1_POLL_INTERVAL = 0.2
-
-        async def _wait_for_job_removed() -> str | None:
-            """Return the Stop job result string, or None if cancelled."""
-            while True:
-                msg = await job_queue.get()
-                if msg.body[1] == job_path:
-                    return msg.body[3]
-
-        async def _wait_for_inactive() -> None:
-            """Return when the unit reaches inactive or failed state."""
-            while True:
-                await asyncio.sleep(_PHASE1_POLL_INTERVAL)
-                try:
-                    state = await _get_unit_property(
-                        router, unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
-                    )
-                    if state in ("inactive", "failed"):
-                        return
-                except Exception:
-                    pass
-
-        job_task = asyncio.create_task(_wait_for_job_removed())
-        poll_task = asyncio.create_task(_wait_for_inactive())
+        job_task = asyncio.create_task(_phase1_wait_for_job_removed(job_queue, job_path))
+        poll_task = asyncio.create_task(_phase1_wait_for_inactive(router, unit_path))
         done, pending = await asyncio.wait(
             {job_task, poll_task},
             timeout=timeout,
