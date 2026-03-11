@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
+from truenas_pynetif.ethtool import FecModeName
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
     single_argument_args, single_argument_result, NotRequired, NonEmptyString,
@@ -9,7 +10,8 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "InterfaceEntry", "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
+    "InterfaceEntry", "InterfaceAvailableFecModesArgs", "InterfaceAvailableFecModesResult",
+    "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
     "InterfaceCancelRollbackArgs", "InterfaceCancelRollbackResult", "InterfaceCheckinArgs", "InterfaceCheckinResult",
     "InterfaceCheckinWaitingArgs", "InterfaceCheckinWaitingResult", "InterfaceChoicesArgs", "InterfaceChoicesResult",
     "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
@@ -117,6 +119,8 @@ class InterfaceEntryState(BaseModel):
     pcp: int | None = NotRequired
     """Priority Code Point for VLAN traffic prioritization. Values 0-7 map to different QoS priority levels, \
     with 0 being lowest and 7 highest priority."""
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] | None = NotRequired
+    """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces."""
 
 
 class InterfaceEntry(BaseModel):
@@ -140,6 +144,8 @@ class InterfaceEntry(BaseModel):
     """Human-readable description of the interface."""
     mtu: int | None
     """Maximum transmission unit size for the interface."""
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] = NotRequired
+    """Forward Error Correction (FEC) mode. Only valid for physical interfaces."""
     vlan_parent_interface: str | None = NotRequired
     """Parent interface for VLAN configuration."""
     vlan_tag: int | None = NotRequired
@@ -291,6 +297,15 @@ class InterfaceServicesRestartedOnSyncItem(BaseModel):
 
 class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
+    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"]
+    """
+    Forward Error Correction (FEC) mode. Only valid for physical interfaces.
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
 
 
 # -------------------   Args and Results   ------------------- #
@@ -521,3 +536,13 @@ class InterfaceXmitHashPolicyChoicesResult(BaseModel):
     """Use MAC and IP addresses for traffic distribution across bond members."""
     LAYER3_4: Literal["LAYER3+4"] = Field(alias="LAYER3+4")
     """Use MAC, IP, and TCP/UDP port information for traffic distribution across bond members."""
+
+
+class InterfaceAvailableFecModesArgs(BaseModel):
+    id: str
+    """ID of the interface to query for supported FEC modes."""
+
+
+class InterfaceAvailableFecModesResult(BaseModel):
+    result: list[FecModeName]
+    """List of FEC modes supported by the interface. Empty list if FEC is not supported."""
