@@ -31,6 +31,11 @@ def install_scale(
     options: dict[str, Any],
 ) -> None:
     raise_warnings = options.pop("raise_warnings", True)
+    if "dataset_name" in options:
+        # NAS-140127:
+        # TrueNAS 26 Nightlies begin using a plus sign in the version string for proper semantic versioning syntax.
+        # Plus signs are not valid in ZFS dataset names, i.e. the name of the boot pool.
+        options["dataset_name"] = options["dataset_name"].replace("+", "-")
 
     with open(os.path.join(mounted, "manifest.json")) as f:
         manifest = json.load(f)
