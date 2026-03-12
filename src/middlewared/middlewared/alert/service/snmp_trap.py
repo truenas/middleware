@@ -4,6 +4,7 @@ from typing import Any, TYPE_CHECKING
 
 import pysnmp.hlapi
 import pysnmp.smi
+import pysnmp.smi.compiler
 
 from middlewared.alert.base import Alert, ThreadedAlertService
 
@@ -58,9 +59,11 @@ class SNMPTrapAlertService(ThreadedAlertService):
             self.context_data = pysnmp.hlapi.ContextData()
 
             mib_builder = pysnmp.smi.builder.MibBuilder()
-            mib_sources = mib_builder.getMibSources() + (
-                pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
-            mib_builder.setMibSources(*mib_sources)
+            # Use pySMI compiler to compile the ASN.1 .txt MIB on-the-fly into Python format
+            pysnmp.smi.compiler.addMibCompiler(
+                mib_builder,
+                sources=['/usr/local/share/snmp/mibs/'] + pysnmp.smi.compiler.defaultSources,
+            )
             mib_builder.loadModules("TRUENAS-MIB")
             self.snmp_alert_level_type = mib_builder.importSymbols("TRUENAS-MIB", "AlertLevelType")[0]
             mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
