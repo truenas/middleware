@@ -26,7 +26,7 @@ jobs:
           mypy \
             middlewared/job.py \
             middlewared/alert/ \
-            middlewared/plugins/alert_/ \
+            middlewared/plugins/alert/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
