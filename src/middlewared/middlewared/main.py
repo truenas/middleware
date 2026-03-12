@@ -92,6 +92,8 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.alert_.classes import AlertClassesService
+from middlewared.plugins.alert_.service import AlertServiceService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.cron import CronJobService
@@ -183,6 +185,8 @@ class ServiceContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super(ServiceContainer, self).__init__(middleware)
 
+        self.alertclasses = AlertClassesService(middleware)
+        self.alertservice = AlertServiceService(middleware)
         self.catalog = CatalogService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)

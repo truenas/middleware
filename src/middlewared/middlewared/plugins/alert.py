@@ -11,7 +11,6 @@ from typing import Any
 import uuid
 
 import html2text
-from pydantic_core import ValidationError
 
 from truenas_api_client import ReserveFDException
 
@@ -26,22 +25,17 @@ from middlewared.alert.base import (
     Alert,
     AlertSource,
     ThreadedAlertSource,
-    ThreadedAlertService,
-    ProThreadedAlertService,
 )
-from middlewared.alert.base import UnavailableException, AlertService as _AlertService
+from middlewared.alert.base import UnavailableException
 from middlewared.api import api_method, Event
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
-    AlertClassesEntry, AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertServiceCreateArgs,
-    AlertServiceCreateResult, AlertServiceUpdateArgs, AlertServiceUpdateResult, AlertServiceDeleteArgs,
-    AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult, AlertServiceEntry, AlertListAddedEvent,
-    AlertListChangedEvent, AlertListRemovedEvent,
+    AlertListAddedEvent, AlertListChangedEvent, AlertListRemovedEvent,
 )
 from middlewared.service import (
-    ConfigService, CRUDService, Service, ValidationErrors,
+    Service,
     job, periodic, private,
 )
 from middlewared.service_exception import CallError, NetworkActivityDisabled
@@ -50,12 +44,12 @@ from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.time_utils import utc_now
+from middlewared.plugins.alert_.service import ALERT_SERVICES_FACTORIES
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
 ALERT_SOURCES = {}
-ALERT_SERVICES_FACTORIES = {}
 SEND_ALERTS_ON_READY = False
 # The below value come from observation from support of how long a M-series boot can take.
 FAILOVER_ALERTS_BACKOFF_SECS = 900
@@ -133,15 +127,6 @@ class AutomaticAlertFailedAlert(OneShotAlertClass):
     serial: str
     error: str
     alert: str
-
-
-class TestAlert(AlertClass):
-    config = AlertClassConfig(
-        category=AlertCategory.SYSTEM,
-        level=AlertLevel.CRITICAL,
-        title="Test alert",
-        exclude_from_list=True,
-    )
 
 
 class AlertPolicy:
@@ -225,7 +210,7 @@ class AlertSerializer:
     async def _ensure_initialized(self):
         if not self.initialized:
             self.product_type = await self.middleware.call("alert.product_type")
-            self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
+            self.classes = (await self.middleware.call2(self.middleware.services.alertclasses.config)).classes
             self.nodes = await self.middleware.call("alert.node_map")
 
             self.initialized = True
@@ -400,7 +385,7 @@ class AlertService(Service):
         """
 
         as_ = AlertSerializer(self.middleware)
-        classes = (await self.middleware.call("alertclasses.config"))["classes"]
+        classes = (await self.call2(self.s.alertclasses.config)).classes
 
         return [
             await as_.serialize(alert)
@@ -534,14 +519,14 @@ class AlertService(Service):
             return
 
         product_type = await self.middleware.call("alert.product_type")
-        classes = (await self.middleware.call("alertclasses.config"))["classes"]
+        classes = (await self.call2(self.s.alertclasses.config)).classes
 
         now = utc_now()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
-            for alert_service_desc in await self.middleware.call("alertservice.query", [["enabled", "=", True]]):
-                service_level = AlertLevel[alert_service_desc["level"]]
+            for alert_service_desc in await self.call2(self.s.alertservice.query, [["enabled", "=", True]]):
+                service_level = AlertLevel[alert_service_desc.level]
 
                 service_alerts = [
                     alert for alert in self.alerts
@@ -580,8 +565,11 @@ class AlertService(Service):
                 if not service_gone_alerts and not service_new_alerts:
                     continue
 
-                factory = ALERT_SERVICES_FACTORIES[alert_service_desc["attributes"]["type"]]
-                alert_service = factory(self.middleware, alert_service_desc["attributes"])
+                factory = ALERT_SERVICES_FACTORIES[alert_service_desc.attributes.type]
+                alert_service = factory(
+                    self.middleware,
+                    alert_service_desc.attributes.model_dump(context={"expose_secrets": True}),
+                )
 
                 alerts = [alert for alert in service_alerts if not alert.dismissed]
                 service_gone_alerts = [alert for alert in service_gone_alerts if not alert.dismissed]
@@ -591,7 +579,9 @@ class AlertService(Service):
                     try:
                         await alert_service.send(alerts, service_gone_alerts, service_new_alerts)
                     except Exception:
-                        self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
+                        self.logger.error(
+                            "Error in alert service %r", alert_service_desc.attributes.type, exc_info=True,
+                        )
 
             if policy_name == "IMMEDIATELY":
                 as_ = AlertSerializer(self.middleware)
@@ -1057,225 +1047,14 @@ class AlertService(Service):
         return await self.middleware.call("system.product_type")
 
 
-class AlertServiceModel(sa.Model):
-    __tablename__ = 'system_alertservice'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(120))
-    type = sa.Column(sa.String(20))
-    attributes = sa.Column(sa.JSON(dict))
-    enabled = sa.Column(sa.Boolean())
-    level = sa.Column(sa.String(20))
-
-
-class AlertServiceService(CRUDService):
-    class Config:
-        datastore = "system.alertservice"
-        datastore_extend = "alertservice.extend"
-        datastore_order_by = ["name"]
-        cli_namespace = "system.alert.service"
-        entry = AlertServiceEntry
-        role_prefix = 'ALERT'
-
-    @private
-    async def extend(self, service):
-        service["attributes"]["type"] = service.pop("type")
-
-        try:
-            service["type__title"] = ALERT_SERVICES_FACTORIES[service["attributes"]["type"]].title
-        except KeyError:
-            service["type__title"] = "<Unknown>"
-
-        return service
-
-    async def _compress(self, service):
-        service["type"] = service["attributes"].pop("type")
-        service.pop("type__title", None)
-        return service
-
-    async def _validate(self, service, schema_name):
-        verrors = ValidationErrors()
-
-        levels = AlertLevel.__members__
-        if service["level"] not in levels:
-            verrors.add(f"{schema_name}.level", f"Level must be one of {list(levels)}")
-
-        verrors.check()
-
-    @api_method(AlertServiceCreateArgs, AlertServiceCreateResult)
-    async def do_create(self, data):
-        """
-        Create an Alert Service of specified `type`.
-
-        If `enabled`, it sends alerts to the configured `type` of Alert Service.
-        """
-        await self._validate(data, "alert_service_create")
-
-        await self._compress(data)
-
-        data["id"] = await self.middleware.call("datastore.insert", self._config.datastore, data)
-
-        return await self.get_instance(data["id"])
-
-    @api_method(AlertServiceUpdateArgs, AlertServiceUpdateResult)
-    async def do_update(self, id_, data):
-        """
-        Update Alert Service of `id`.
-        """
-        old = await self.middleware.call("datastore.query", self._config.datastore, [("id", "=", id_)],
-                                         {"extend": self._config.datastore_extend,
-                                          "get": True})
-
-        new = old.copy()
-        new.update(data)
-
-        await self._validate(new, "alert_service_update")
-
-        await self._compress(new)
-
-        await self.middleware.call("datastore.update", self._config.datastore, id_, new)
-
-        return await self.get_instance(id_)
-
-    @api_method(AlertServiceDeleteArgs, AlertServiceDeleteResult)
-    async def do_delete(self, id_):
-        """
-        Delete Alert Service of `id`.
-        """
-        return await self.middleware.call("datastore.delete", self._config.datastore, id_)
-
-    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=['ALERT_WRITE'])
-    async def test(self, data):
-        """
-        Send a test alert using `type` of Alert Service.
-        """
-        await self._validate(data, "alert_service_test")
-
-        factory = ALERT_SERVICES_FACTORIES[data["attributes"]["type"]]
-        alert_service = factory(self.middleware, data["attributes"])
-
-        master_node = "A"
-        if await self.middleware.call("failover.licensed"):
-            master_node = await self.middleware.call("failover.node")
-
-        test_alert = Alert(
-            TestAlert(),
-            node=master_node,
-            datetime=utc_now(),
-            last_occurrence=utc_now(),
-            _uuid=str(uuid.uuid4()),
-        )
-
-        try:
-            await alert_service.send([test_alert], [], [test_alert])
-        except Exception:
-            self.logger.error("Error in alert service %r", data["attributes"]["type"], exc_info=True)
-            return False
-
-        return True
-
-    @private
-    def load(self):
-        for module in load_modules(
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "service")
-        ):
-            for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
-                ALERT_SERVICES_FACTORIES[cls.name()] = cls
-
-    @private
-    async def initialize(self):
-        for alertservice in await self.middleware.call("datastore.query", "system.alertservice"):
-            if alertservice["type"] not in ALERT_SERVICES_FACTORIES:
-                self.logger.debug("Removing obsolete alert service %r (%r)", alertservice["name"], alertservice["type"])
-                await self.middleware.call("datastore.delete", "system.alertservice", alertservice["id"])
-                continue
-
-            try:
-                AlertServiceEntry.model_validate(await self.extend(copy.deepcopy(alertservice)))
-            except ValidationError as e:
-                attributes = copy.copy(alertservice["attributes"])
-                for error in e.errors():
-                    if (
-                        error["type"] == "extra_forbidden" and
-                        len(error["loc"]) == 3 and
-                        error["loc"][0] == "attributes"
-                    ):
-                        # If we remove some attributes, it should not be an error if they are still left in the database
-                        attribute = error["loc"][2]
-                        attributes.pop(attribute, None)
-                        self.logger.debug(
-                            "Removing obsolete attribute %r for alert service %r (%r)",
-                            attribute,
-                            alertservice["name"],
-                            alertservice["type"],
-                        )
-                    else:
-                        self.logger.debug(
-                            "Unknown validaton error for alert service %r (%r): %r. Removing it completely",
-                            alertservice["name"],
-                            alertservice["type"],
-                            error,
-                        )
-                        await self.middleware.call("datastore.delete", "system.alertservice", alertservice["id"])
-                        break
-                else:
-                    await self.middleware.call("datastore.update", "system.alertservice", alertservice["id"], {
-                        "attributes": attributes,
-                    })
-
-
-class AlertClassesModel(sa.Model):
-    __tablename__ = 'system_alertclasses'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    classes = sa.Column(sa.JSON(dict))
-
-
-class AlertClassesService(ConfigService):
-    class Config:
-        datastore = "system.alertclasses"
-        cli_namespace = "system.alert.class"
-        entry = AlertClassesEntry
-        role_prefix = 'ALERT'
-
-    @api_method(AlertClassesUpdateArgs, AlertClassesUpdateResult)
-    async def do_update(self, data):
-        """
-        Update default Alert settings.
-        """
-        old = await self.config()
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-
-        for k, v in new["classes"].items():
-            if k not in AlertClass.class_by_name:
-                verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
-                continue
-
-            if "proactive_support" in v and not AlertClass.class_by_name[k].config.proactive_support:
-                verrors.add(
-                    f"alert_class_update.classes.{k}.proactive_support",
-                    "Proactive support is not supported by this alert class",
-                )
-
-        verrors.check()
-
-        await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
-
-        return await self.config()
-
-
 async def _event_system(middleware, event_type, args):
     if SEND_ALERTS_ON_READY:
         await middleware.call("alert.send_alerts")
 
 
 async def setup(middleware):
-    await middleware.call("alertservice.load")
-    await middleware.call("alertservice.initialize")
+    await middleware.call2(middleware.services.alertservice.load)
+    await middleware.call2(middleware.services.alertservice.initialize)
 
     await middleware.call("alert.load")
     await middleware.call("alert.initialize")
