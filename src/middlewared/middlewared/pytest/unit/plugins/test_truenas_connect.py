@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from middlewared.service import ValidationErrors
 from middlewared.plugins.truenas_connect.update import TrueNASConnectService
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
+from middlewared.plugins.truenas_connect.utils import TNC_IPS_CACHE_KEY
 from truenas_connect_utils.status import Status
 
 
@@ -617,6 +618,7 @@ class TestTNCHostnameService:
             if method == 'tn_connect.config':
                 return {
                     'id': 1,
+                    'ips': [],
                     'interfaces': ['ens3'],
                     'use_all_interfaces': True
                 }
@@ -663,6 +665,7 @@ class TestTNCHostnameService:
             if method == 'tn_connect.config':
                 return {
                     'id': 1,
+                    'ips': [],
                     'interfaces': ['ens3', 'ens4'],
                     'use_all_interfaces': False
                 }
@@ -693,6 +696,95 @@ class TestTNCHostnameService:
 
         assert not get_all_called
         assert get_interfaces_called
+
+    @pytest.mark.asyncio
+    async def test_sync_interface_ips_empty_ips_skips_http(self):
+        """Test that sync skips HTTP call when both static and interface IPs are empty."""
+        service = TNCHostnameService(MagicMock())
+        service.config = AsyncMock()
+
+        register_called = False
+        cache_put_args = None
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            nonlocal register_called, cache_put_args
+
+            if method == 'tn_connect.config':
+                return {
+                    'id': 1,
+                    'ips': [],
+                    'interfaces': [],
+                    'use_all_interfaces': True,
+                }
+            elif method == 'tn_connect.get_all_interface_ips':
+                return []
+            elif method == 'cache.get':
+                raise KeyError('Key not found')
+            elif method == 'datastore.update':
+                assert args[2]['interfaces_ips'] == []
+                return None
+            elif method == 'tn_connect.hostname.register_update_ips':
+                register_called = True
+                return {'error': None}
+            elif method == 'cache.put':
+                cache_put_args = args
+                return None
+            else:
+                return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+        service.middleware.call_hook = AsyncMock()
+
+        await service.sync_interface_ips()
+
+        # HTTP call should NOT have been made
+        assert not register_called
+        # Cache should still be populated to prevent retry storms
+        assert cache_put_args is not None
+        assert cache_put_args[0] == TNC_IPS_CACHE_KEY
+        assert cache_put_args[1] == []
+        # Hook should NOT have been called
+        service.middleware.call_hook.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sync_interface_ips_empty_interface_ips_with_static_ips_syncs(self):
+        """Test that sync proceeds when interface IPs are empty but static IPs exist."""
+        service = TNCHostnameService(MagicMock())
+        service.config = AsyncMock()
+
+        register_called = False
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            nonlocal register_called
+
+            if method == 'tn_connect.config':
+                return {
+                    'id': 1,
+                    'ips': ['192.168.1.100'],
+                    'interfaces': [],
+                    'use_all_interfaces': True,
+                }
+            elif method == 'tn_connect.get_all_interface_ips':
+                return []
+            elif method == 'cache.get':
+                raise KeyError('Key not found')
+            elif method == 'datastore.update':
+                return None
+            elif method == 'tn_connect.hostname.register_update_ips':
+                register_called = True
+                return {'error': None}
+            elif method == 'cache.put':
+                return None
+            else:
+                return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+        service.middleware.call_hook = AsyncMock()
+
+        await service.sync_interface_ips()
+
+        # HTTP call SHOULD have been made because static IPs exist
+        assert register_called
 
     @pytest.mark.asyncio
     async def test_register_update_ips_uses_combined_ips(self):
