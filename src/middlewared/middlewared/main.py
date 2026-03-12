@@ -820,6 +820,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
@@ -861,8 +862,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
-                      message_id, audit_callback)
+            job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, job_silent,
+                      app, message_id, audit_callback)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.
@@ -900,13 +901,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
     ) -> typing.Any:
         prepared_call = self._call_prepare(
             name, serviceobj, methodobj, params, kwargs, app=app, audit_callback=audit_callback,
-            job_on_progress_cb=job_on_progress_cb, message_id=message_id, pipes=pipes, in_event_loop=in_event_loop
+            job_on_progress_cb=job_on_progress_cb, job_silent=job_silent, message_id=message_id, pipes=pipes,
+            in_event_loop=in_event_loop
         )
 
         if prepared_call.job:
@@ -1227,6 +1230,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
     ) -> typing.Any:
@@ -1237,7 +1241,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, job_silent=job_silent,
+            pipes=pipes,
         )
 
     def call_sync(
@@ -1245,6 +1250,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         name: str,
         *params,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         background: bool = False,
@@ -1258,7 +1264,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
-                                           job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
+                                           job_on_progress_cb=job_on_progress_cb, job_silent=job_silent,
+                                           in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
@@ -1282,6 +1289,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1295,6 +1303,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1308,6 +1317,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1321,6 +1331,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1333,6 +1344,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: typing.Any,
@@ -1358,6 +1370,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         audit_callback: AuditCallback | None = None,
         background: bool = False,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
@@ -1379,7 +1392,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         name, serviceobj, methodobj = self.get_method_by_callable(f, args)
         prepared_call = self._call_prepare(name, serviceobj, methodobj, args, kwargs, app=app,
                                            audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb,
-                                           in_event_loop=False)
+                                           job_silent=job_silent, in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
