@@ -87,7 +87,18 @@ class IPAJoinMixin:
         self._ipa_del_spn()
 
         job.set_progress(description='Removing DNS entries.')
-        self.unregister_dns(ds_config_to_fqdn(ds_config), do_ptr=self._has_ptr_zone())
+        try:
+            self.unregister_dns(ds_config_to_fqdn(ds_config), do_ptr=self._has_ptr_zone())
+        except Exception:
+            # DNS cleanup via dynamic update may fail if admin credentials lack
+            # krb5-self permission for the host's records.  The ipactl leave
+            # command below removes the host from IPA and cleans up DNS via the
+            # IPA API, so this is not fatal.
+            self.logger.warning(
+                'Failed to remove DNS entries during IPA domain leave. '
+                'DNS records will be cleaned up by the IPA server when the '
+                'host account is removed.', exc_info=True
+            )
 
         # now leave IPA
         job.set_progress(description='Leaving IPA domain.')

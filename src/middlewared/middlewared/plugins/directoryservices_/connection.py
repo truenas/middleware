@@ -124,27 +124,45 @@ class DomainConnection(
         if not fqdn.endswith(dot):
             fqdn += dot
 
+        # When PTR records are requested, build a resolver so we can check
+        # each IP individually.  An IP whose /24 reverse zone does not exist
+        # in the authoritative DNS must be excluded: mixing PTR updates for
+        # existing and non-existing zones into one nsupdate batch causes
+        # nsupdate to walk up the DNS hierarchy for the missing zone's SOA,
+        # potentially finding a parent zone whose MNAME is 'localhost', which
+        # breaks GSSAPI authentication for the entire batch.
+        if do_ptr:
+            ds_config = self.middleware.call_sync('directoryservices.config')
+            timeout = ds_config.get('timeout', 10)
+            resolver = dns.resolver.Resolver()
+            resolver.timeout = timeout
+            resolver.lifetime = timeout
+        else:
+            resolver = None
+
         payload = []
         if self.middleware.call_sync('failover.licensed'):
             master, backup, init = self.middleware.call_sync('failover.vip.get_states')
             for master_iface in self.middleware.call_sync('interface.query', [["id", "in", master + backup]]):
                 for i in master_iface['failover_virtual_aliases']:
                     addr = ipaddress.ip_address(i['address'])
+                    ip_do_ptr = do_ptr and self._addr_has_ptr_zone(addr, resolver)
                     payload.append({
                         'command': cmd_type,
                         'name': fqdn,
                         'address': str(addr),
-                        'do_ptr': do_ptr,
+                        'do_ptr': ip_do_ptr,
                         'type': 'A' if addr.version == 4 else 'AAAA'
                     })
         else:
             for i in self.middleware.call_sync('interface.ip_in_use'):
                 addr = ipaddress.ip_address(i['address'])
+                ip_do_ptr = do_ptr and self._addr_has_ptr_zone(addr, resolver)
                 payload.append({
                     'command': cmd_type,
                     'name': fqdn,
                     'address': str(addr),
-                    'do_ptr': do_ptr,
+                    'do_ptr': ip_do_ptr,
                     'type': 'A' if addr.version == 4 else 'AAAA'
                 })
 
@@ -255,6 +273,42 @@ class DomainConnection(
 
         return kdcs_out
 
+    def _addr_has_ptr_zone(self, addr: ipaddress.IPv4Address | ipaddress.IPv6Address, resolver: 'dns.resolver.Resolver') -> bool:
+        """
+        Check whether a reverse DNS zone exists for a single IP address.
+
+        Args:
+            addr:     IP address to check.
+            resolver: Configured dns.resolver.Resolver to use for the SOA query.
+
+        Returns:
+            True  – a delegated /24 (IPv4) or /48 (IPv6) reverse zone was found
+            False – no zone found (NXDOMAIN, REFUSED, timeout, etc.)
+        """
+        # Build the conventional reverse zone name for this address:
+        #   IPv4 /24 → e.g. 163.220.10.in-addr.arpa
+        #   IPv6 /48 → the first 12 nibbles of the reversed address + ip6.arpa
+        # A single SOA query is sufficient: if the zone exists and the IPA
+        # DNS server is authoritative for it, the query succeeds; any other
+        # outcome (NXDOMAIN, REFUSED, timeout) means no usable reverse zone.
+        if addr.version == 4:
+            parts = str(addr).split('.')
+            zone = f'{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa'
+        else:
+            nibbles = addr.reverse_pointer.split('.')
+            zone = '.'.join(nibbles[20:])  # /48: skip 20 host nibbles, keep 12 prefix nibbles + ip6.arpa
+
+        try:
+            resolver.resolve(zone, 'SOA')
+            self.logger.debug('%s: reverse DNS zone found for %s', zone, addr)
+            return True
+        except Exception:
+            self.logger.debug(
+                '%s: no reverse DNS zone found for %s',
+                zone, addr, exc_info=True
+            )
+            return False
+
     def _has_ptr_zone(self) -> bool:
         """
         Check whether a reverse DNS zone is configured for any of the IP
@@ -289,31 +343,7 @@ class DomainConnection(
         resolver.timeout = timeout
         resolver.lifetime = timeout
 
-        for addr in addrs:
-            # Build the conventional reverse zone name for this address:
-            #   IPv4 /24 → e.g. 163.220.10.in-addr.arpa
-            #   IPv6 /48 → the first 12 nibbles of the reversed address + ip6.arpa
-            # A single SOA query is sufficient: if the zone exists and the IPA
-            # DNS server is authoritative for it, the query succeeds; any other
-            # outcome (NXDOMAIN, REFUSED, timeout) means no usable reverse zone.
-            if addr.version == 4:
-                parts = str(addr).split('.')
-                zone = f'{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa'
-            else:
-                nibbles = addr.reverse_pointer.split('.')
-                zone = '.'.join(nibbles[20:])  # /48: skip 20 host nibbles, keep 12 prefix nibbles + ip6.arpa
-
-            try:
-                resolver.resolve(zone, 'SOA')
-                self.logger.debug('%s: reverse DNS zone found for %s', zone, addr)
-                return True
-            except Exception:
-                self.logger.debug(
-                    '%s: no reverse DNS zone found for %s',
-                    zone, addr, exc_info=True
-                )
-
-        return False
+        return any(self._addr_has_ptr_zone(addr, resolver) for addr in addrs)
 
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False):
@@ -362,7 +392,13 @@ class DomainConnection(
                 fqdn += dot
 
             payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
-            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            if ds_type_str == DSType.IPA.value:
+                # Use the IPA server FQDN so nsupdate can construct the GSSAPI principal
+                # (DNS/<fqdn>@<REALM>) without needing a reverse DNS lookup of an IP address.
+                server = ds_config['configuration']['target_server']
+            else:
+                server = self.middleware.call_sync('network.configuration.config').get('nameserver1') or None
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload, 'server': server})
             update_dns_record_state(fqdn)
 
             # Update the domain setting in the network configuration
@@ -408,7 +444,11 @@ class DomainConnection(
                 ds_config['service_type'] == DSType.IPA.value and self._has_ptr_zone()
             )
             payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
-            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            if ds_config['service_type'] == DSType.IPA.value:
+                server = ds_config['configuration']['target_server']
+            else:
+                server = self.middleware.call_sync('network.configuration.config').get('nameserver1') or None
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload, 'server': server})
             update_dns_record_state(fqdn)
 
     @kerberos_ticket
@@ -437,7 +477,11 @@ class DomainConnection(
                 fqdn += dot
 
             payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
-            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            if ds_type_str == DSType.IPA.value:
+                server = ds_config['configuration']['target_server']
+            else:
+                server = self.middleware.call_sync('network.configuration.config').get('nameserver1') or None
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload, 'server': server})
             remove_dns_record_state()
 
         # Remove domain setting in network.Configuration.

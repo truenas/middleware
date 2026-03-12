@@ -39,6 +39,11 @@ class DNSNsUpdateArgs(BaseModel):
     use_kerberos: bool = True
     ops: UniqueList[DNSNsUpdateOpA | DNSNsUpdateOpAAAA] = Field(min_length=1)
     timeout: int = 30
+    server: str | None = None
+    """ Explicitly set the DNS server for nsupdate. When set, nsupdate connects
+    directly to this server rather than resolving it via SOA MNAME lookup.
+    This avoids GSSAPI principal mismatches in environments where the SOA MNAME
+    resolution does not produce the expected canonical server hostname. """
 
 
 class DNSNsUpdateResult(BaseModel):
@@ -143,6 +148,15 @@ class DNSService(Service):
             self.middleware.call_sync('kerberos.check_ticket')
 
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
+            if data['server']:
+                # Direct nsupdate to the specified server instead of letting it
+                # discover the authoritative server via SOA MNAME lookup.  Without
+                # this, nsupdate reverse-looks up the server IP it connects to in
+                # order to construct the GSS-TSIG Kerberos principal, and in some
+                # environments that reverse lookup returns an unexpected name
+                # (e.g. 'localhost'), causing GSSAPI authentication to fail.
+                tmpfile.write(f'server {data["server"]}\n'.encode())
+
             ptrs = []
             for entry in data['ops']:
                 addr = ipaddress.ip_address(entry['address'])
@@ -167,6 +181,12 @@ class DNSService(Service):
                 # prior to sending our PTR changes
                 tmpfile.write(b'\n')
 
+                # The server directive only applies to the current batch.
+                # After the blank line above resets the session, repeat it
+                # so the PTR batch is also directed to the correct server.
+                if data['server']:
+                    tmpfile.write(f'server {data["server"]}\n'.encode())
+
                 for ptr in ptrs:
                     reverse_pointer, name = ptr
                     directive = ' '.join([
@@ -183,12 +203,18 @@ class DNSService(Service):
             tmpfile.write(b'send\n')
             tmpfile.file.flush()
 
+            tmpfile.seek(0)
+            self.logger.debug('nsupdate input:\n%s', tmpfile.read().decode())
+
             cmd = ['nsupdate', '-t', str(data['timeout'])]
             if data['use_kerberos']:
                 cmd.append('-g')
 
             cmd.append(tmpfile.name)
             nsupdate_proc = subprocess.run(cmd, capture_output=True)
+
+            self.logger.debug('nsupdate returncode: %d stderr: %s',
+                              nsupdate_proc.returncode, nsupdate_proc.stderr.decode())
 
             # tsig verify failure is possible if reverse zone is misconfigured
             # Unfortunately, this is quite common and so we have to skip it.
