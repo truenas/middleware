@@ -225,12 +225,12 @@ class NFSService(SystemServiceService):
             found = True
 
         if found:
-            await self.middleware.call('alert.oneshot_delete', 'NFSBindAddress', None)
+            await self.call2(self.s.alert.oneshot_delete, 'NFSBindAddress', None)
 
             return bindip
         else:
             if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
-                await self.middleware.call('alert.oneshot_create', NFSBindAddressAlert())
+                await self.call2(self.s.alert.oneshot_create, NFSBindAddressAlert())
 
             return []
 

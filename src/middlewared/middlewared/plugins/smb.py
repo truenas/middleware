@@ -230,18 +230,18 @@ class SMBService(ConfigService):
 
         if veeam_repo_errors:
             # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
-            self.middleware.call_sync('alert.oneshot_create', SMBVeeamFastCloneAlert(
+            self.call_sync2(self.s.alert.oneshot_create, SMBVeeamFastCloneAlert(
                 shares=', '.join(veeam_repo_errors),
             ))
         else:
-            self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
+            self.call_sync2(self.s.alert.oneshot_delete, 'SMBVeeamFastClone')
 
         if disabled_shares:
-            self.middleware.call_sync('alert.oneshot_create', SMBAuditShareDisabledAlert(
+            self.call_sync2(self.s.alert.oneshot_create, SMBAuditShareDisabledAlert(
                 shares=', '.join(disabled_shares),
             ))
         else:
-            self.middleware.call_sync('alert.oneshot_delete', 'SMBAuditShareDisabled')
+            self.call_sync2(self.s.alert.oneshot_delete, 'SMBAuditShareDisabled')
 
         return generate_smb_conf_dict(
             ds_config,

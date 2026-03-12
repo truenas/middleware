@@ -129,5 +129,5 @@ class PoolService(Service):
                 )
             raise
         else:
-            self.middleware.call_sync('alert.oneshot_delete', 'PoolUpgraded', pname)
+            self.call_sync2(self.s.alert.oneshot_delete, 'PoolUpgraded', pname)
             return True

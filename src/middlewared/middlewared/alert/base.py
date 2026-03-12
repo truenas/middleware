@@ -459,7 +459,7 @@ class AlertService(CallMixin, ABC):
     ) -> str:
         hostname = await self.middleware.call("system.hostname")
         if await self.middleware.call("system.is_enterprise"):
-            node_map = await self.middleware.call("alert.node_map")
+            node_map = await self.call2(self.s.alert.node_map)
         else:
             node_map = None
 
@@ -497,7 +497,7 @@ class ThreadedAlertService(AlertService):
     ) -> str:
         hostname = self.middleware.call_sync("system.hostname")
         if self.middleware.call_sync("system.is_enterprise"):
-            node_map = self.middleware.call_sync("alert.node_map")
+            node_map = self.call_sync2(self.s.alert.node_map)
         else:
             node_map = None
 

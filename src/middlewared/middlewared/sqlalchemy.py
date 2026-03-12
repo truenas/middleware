@@ -73,7 +73,7 @@ class JSON[T](TypeDecorator[T]):
     impl = Text
     cache_ok = True
 
-    def __init__(self, type_: type[T], encrypted: bool = False) -> None:
+    def __init__(self, type_: type[T] | None, encrypted: bool = False) -> None:
         super().__init__()
         self.type = type_
         self.encrypted = encrypted

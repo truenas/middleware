@@ -273,7 +273,7 @@ class JBOFService(CRUDService):
             await self.middleware.call('jbof.unwire_dataplane', data['mgmt_ip1'], data['index'])
         except Exception:
             self.logger.debug('Unable to unwire JBOF @%r', data['mgmt_ip1'])
-            await self.middleware.call('alert.oneshot_create', 'JBOFTearDownFailure', None)
+            await self.call2(self.s.alert.oneshot_create, 'JBOFTearDownFailure', None)
 
         # Now delete the entry
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
@@ -959,7 +959,7 @@ class JBOFService(CRUDService):
 
 
 async def _clear_reboot_alerts(middleware, event_type, args):
-    await middleware.call('alert.oneshot_delete', 'JBOFTearDownFailure', None)
+    await middleware.call2(middleware.services.alert.oneshot_delete, 'JBOFTearDownFailure', None)
 
 
 async def setup(middleware):

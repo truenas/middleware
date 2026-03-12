@@ -96,7 +96,7 @@ class FailoverDatastoreService(Service):
                         pass
 
                     if raise_alert_time <= 0 and self.failure:
-                        self.middleware.call_sync('alert.oneshot_create', FailoverSyncFailedAlert(mins=total_mins))
+                        self.call_sync2(self.s.alert.oneshot_create, FailoverSyncFailedAlert(mins=total_mins))
                         raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
 
             start_daemon_thread(name="fo_db_retry", target=send_retry)
@@ -115,7 +115,7 @@ class FailoverDatastoreService(Service):
         self.middleware.call_sync('failover.call_remote', 'failover.datastore.receive')
 
         self.failure = False
-        self.middleware.call_sync('alert.oneshot_delete', 'FailoverSyncFailed', None)
+        self.call_sync2(self.s.alert.oneshot_delete, 'FailoverSyncFailed', None)
 
     def receive(self):
         # Take the following example:

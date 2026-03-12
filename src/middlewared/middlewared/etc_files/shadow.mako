@@ -26,9 +26,9 @@
            ['password_age', '<', sec['max_password_age'] - 1]
         ])
         if unexpired:
-            middleware.call_sync('alert.oneshot_delete', 'AllAdminAccountsExpired', None)
+            middleware.call_sync2(middleware.services.alert.oneshot_delete, 'AllAdminAccountsExpired', None)
         else:
-            middleware.call_sync('alert.oneshot_create', AllAdminAccountsExpiredAlert())
+            middleware.call_sync2(middleware.services.alert.oneshot_create, AllAdminAccountsExpiredAlert())
             max_age_overrides = set([user['username'] for user in password_full_admin_users])
 
     def get_passwd(entry):

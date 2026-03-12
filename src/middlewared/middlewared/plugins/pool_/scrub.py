@@ -235,18 +235,18 @@ class PoolScrubService(CRUDService):
         """
         Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
         """
-        await self.middleware.call('alert.oneshot_delete', 'ScrubNotStarted', name)
-        await self.middleware.call('alert.oneshot_delete', 'ScrubStarted', name)
+        await self.call2(self.s.alert.oneshot_delete, 'ScrubNotStarted', name)
+        await self.call2(self.s.alert.oneshot_delete, 'ScrubStarted', name)
         try:
             started = await self.__run(name, threshold)
         except ScrubError as e:
-            await self.middleware.call('alert.oneshot_create', ScrubNotStartedAlert(
+            await self.call2(self.s.alert.oneshot_create, ScrubNotStartedAlert(
                 pool=name,
                 text=e.errmsg,
             ))
         else:
             if started:
-                await self.middleware.call('alert.oneshot_create', ScrubStartedAlert(name))
+                await self.call2(self.s.alert.oneshot_create, ScrubStartedAlert(name))
 
     async def __run(self, name, threshold):
         if name == await self.middleware.call('boot.pool_name'):

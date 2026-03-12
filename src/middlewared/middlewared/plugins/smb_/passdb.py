@@ -109,7 +109,7 @@ class SMBService(Service):
             delete_passdb_entry(entry['username'], entry['user_rid'], clustered)
 
         if broken_entries:
-            self.middleware.call_sync("alert.oneshot_create",
-                                      SMBUserMissingHashAlert(entries=','.join(broken_entries)))
+            self.call_sync2(self.s.alert.oneshot_create,
+                            SMBUserMissingHashAlert(entries=','.join(broken_entries)))
         else:
-            self.middleware.call_sync("alert.oneshot_delete", "SMBUserMissingHash")
+            self.call_sync2(self.s.alert.oneshot_delete, "SMBUserMissingHash")

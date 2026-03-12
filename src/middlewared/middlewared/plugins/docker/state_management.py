@@ -47,13 +47,13 @@ async def before_start_check(context: ServiceContext) -> None:
         await set_status(context, Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
         raise
 
-    await context.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+    await context.middleware.call2(context.middleware.services.alert.oneshot_delete, 'ApplicationsConfigurationFailed', None)
 
 
 async def after_start_check(context: ServiceContext) -> None:
     if await context.middleware.call('service.started', 'docker'):
         await set_status(context, Status.RUNNING.value)
-        await context.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+        await context.middleware.call2(context.middleware.services.alert.oneshot_delete, 'ApplicationsStartFailed', None)
     else:
         await set_status(context, Status.FAILED.value, 'Failed to start docker service')
         await context.middleware.call(

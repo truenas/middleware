@@ -217,7 +217,7 @@ class TruecommandService(ConfigService):
         else:
             to_dismiss_alerts = health_alerts | non_health_alerts if dismiss_health else non_health_alerts
         for klass in to_dismiss_alerts:
-            await self.middleware.call('alert.oneshot_delete', klass, None)
+            await self.call2(self.s.alert.oneshot_delete, klass, None)
 
     @private
     async def event_config(self):

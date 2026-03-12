@@ -1,17 +1,20 @@
-from dataclasses import dataclass
-from collections import defaultdict, namedtuple
+from __future__ import annotations
+
+from collections import defaultdict
 import copy
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import errno
 from itertools import zip_longest
 import textwrap
 import time
+import typing
 from typing import Any
 import uuid
 
 import html2text
 
-from truenas_api_client import ReserveFDException
+from truenas_api_client.exc import ReserveFDException
 
 from middlewared.alert.base import (
     AlertCategory,
@@ -25,6 +28,7 @@ from middlewared.alert.base import (
     AlertSource,
 )
 from middlewared.alert.base import UnavailableException
+import middlewared.alert.source  # noqa: F401
 from middlewared.api import api_method, Event
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
@@ -32,25 +36,23 @@ from middlewared.api.current import (
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
     AlertListAddedEvent, AlertListChangedEvent, AlertListRemovedEvent,
 )
-from middlewared.service import (
-    Service,
-    job, periodic, private,
-)
+from middlewared.plugins.alert_.service import ALERT_SERVICES_FACTORIES
+from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.service import Service, job, periodic, private
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
 from middlewared.utils import bisect
 from middlewared.utils.time_utils import utc_now
-import middlewared.alert.source  # noqa: F401
-from middlewared.plugins.alert_.service import ALERT_SERVICES_FACTORIES
-from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 
-POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
-DEFAULT_POLICY = "IMMEDIATELY"
-SEND_ALERTS_ON_READY = False
-# The below value come from observation from support of how long a M-series boot can take.
-FAILOVER_ALERTS_BACKOFF_SECS = 900
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable
+    from middlewared.main import Middleware
 
-AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
+POLICIES: list[str] = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
+DEFAULT_POLICY: str = "IMMEDIATELY"
+SEND_ALERTS_ON_READY: bool = False
+# The below value come from observation from support of how long an M-series boot can take.
+FAILOVER_ALERTS_BACKOFF_SECS: int = 900
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -59,6 +61,12 @@ class AlertFailoverInfo:
     other_node: str
     run_on_backup_node: bool
     run_failover_related: bool
+
+
+@dataclass(slots=True, frozen=True)
+class AlertSourceLock:
+    source_name: str
+    expires_at: float
 
 
 class AlertModel(sa.Model):
@@ -126,48 +134,47 @@ class AutomaticAlertFailedAlert(OneShotAlertClass):
 
 
 class AlertPolicy:
-    def __init__(self, key=lambda now: now):
+    def __init__(self, key: Callable[[datetime], Any] = lambda now: now) -> None:
         self.key = key
+        self.last_key_value: Any = None
+        self.last_key_value_alerts: dict[str, Alert[Any]] = {}
 
-        self.last_key_value = None
-        self.last_key_value_alerts = {}
-
-    def receive_alerts(self, now, alerts):
-        alerts = {alert.uuid: alert for alert in alerts}
-        gone_alerts = []
-        new_alerts = []
+    def receive_alerts(self, now: datetime, alerts: list[Alert[Any]]) -> tuple[list[Alert[Any]], list[Alert[Any]]]:
+        alerts_by_uuid = {alert.uuid: alert for alert in alerts}
+        gone_alerts: list[Alert[Any]] = []
+        new_alerts: list[Alert[Any]] = []
         key = self.key(now)
         if key != self.last_key_value:
-            gone_alerts = [alert for alert in self.last_key_value_alerts.values() if alert.uuid not in alerts]
-            new_alerts = [alert for alert in alerts.values() if alert.uuid not in self.last_key_value_alerts]
+            gone_alerts = [alert for alert in self.last_key_value_alerts.values() if alert.uuid not in alerts_by_uuid]
+            new_alerts = [alert for alert in alerts_by_uuid.values() if alert.uuid not in self.last_key_value_alerts]
 
             self.last_key_value = key
-            self.last_key_value_alerts = alerts
+            self.last_key_value_alerts = alerts_by_uuid
 
         return gone_alerts, new_alerts
 
-    def delete_alert(self, alert):
+    def delete_alert(self, alert: Alert[Any]) -> None:
         self.last_key_value_alerts.pop(alert.uuid, None)
 
 
-def get_alert_level(alert, classes):
+def get_alert_level(alert: Alert[Any], classes: dict[str, Any]) -> AlertLevel:
     return AlertLevel[classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name)]
 
 
-def get_alert_policy(alert, classes):
-    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)
+def get_alert_policy(alert: Alert[Any], classes: dict[str, Any]) -> str:
+    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)  # type: ignore
 
 
 class AlertSerializer:
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
 
-        self.initialized = False
-        self.product_type = None
-        self.classes = None
-        self.nodes = None
+        self.initialized: bool = False
+        self.product_type: str = ""
+        self.classes: dict[str, dict[str, Any]] = {}
+        self.nodes: dict[str, str] = {}
 
-    async def serialize(self, alert):
+    async def serialize(self, alert: Alert[Any]) -> dict[str, Any]:
         await self._ensure_initialized()
 
         return dict(
@@ -188,11 +195,11 @@ class AlertSerializer:
             one_shot=isinstance(alert.instance, OneShotAlertClass) and not alert.instance.config.deleted_automatically
         )
 
-    async def get_alert_class(self, alert):
+    async def get_alert_class(self, alert: Alert[Any]) -> dict[str, Any]:
         await self._ensure_initialized()
         return self.classes.get(alert.instance.config.name, {})
 
-    async def should_show_alert(self, alert):
+    async def should_show_alert(self, alert: Alert[Any]) -> bool:
         await self._ensure_initialized()
 
         if self.product_type not in alert.instance.config.products:
@@ -203,11 +210,13 @@ class AlertSerializer:
 
         return True
 
-    async def _ensure_initialized(self):
+    async def _ensure_initialized(self) -> None:
         if not self.initialized:
-            self.product_type = await self.middleware.call("alert.product_type")
-            self.classes = (await self.middleware.call2(self.middleware.services.alertclasses.config)).classes
-            self.nodes = await self.middleware.call("alert.node_map")
+            self.product_type = await self.middleware.call2(self.middleware.services.alert.product_type)
+            self.classes = (
+                await self.middleware.call2(self.middleware.services.alertclasses.config)
+            ).classes  # type: ignore
+            self.nodes = await self.middleware.call2(self.middleware.services.alert.node_map)
 
             self.initialized = True
 
@@ -220,9 +229,11 @@ class AlertOneshotDeleteArgs(BaseModel):
 class AlertOneshotDeleteResult(BaseModel):
     result: None
 
+List = list  # avoid shadowing by AlertService.list
+
 
 class AlertService(Service):
-    alert_sources_errors = set()
+    alert_sources_errors: set[str] = set()
 
     class Config:
         cli_namespace = "system.alert"
@@ -239,25 +250,32 @@ class AlertService(Service):
             ),
         ]
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
 
-        self.alert_sources = {name: cls(middleware) for name, cls in AlertSource.class_by_name.items()}
-        self.blocked_sources = defaultdict(set)
-        self.sources_locks = {}
+        self.alert_sources: dict[str, AlertSource] = {
+            name: cls(middleware) for name, cls in AlertSource.class_by_name.items()
+        }
+        self.blocked_sources: defaultdict[str, set[str]] = defaultdict(set)
+        self.sources_locks: dict[str, AlertSourceLock] = {}
 
-        self.blocked_failover_alerts_until = 0
+        self.blocked_failover_alerts_until: float = 0
 
-        self.sources_run_times = defaultdict(lambda: {
+        self.sources_run_times: defaultdict[str, dict[str, Any]] = defaultdict(lambda: {
             "last": [],
             "max": 0,
             "total_count": 0,
             "total_time": 0,
         })
 
+        self.node: str = "A"
+        self.alerts: list[Alert[Any]] = []
+        self.alert_source_last_run: defaultdict[str, datetime] = defaultdict(lambda: datetime.min)
+        self.policies: dict[str, AlertPolicy] = {}
+
     @private
-    async def initialize(self, load=True):
-        is_enterprise = await self.middleware.call("system.is_enterprise")
+    async def initialize(self, load: bool = True) -> None:
+        is_enterprise: bool = await self.middleware.call("system.is_enterprise")
 
         self.node = "A"
         if is_enterprise:
@@ -266,8 +284,8 @@ class AlertService(Service):
 
         self.alerts = []
         if load:
-            alerts_uuids = set()
-            alerts_by_classes = defaultdict(list)
+            alerts_uuids: set[str] = set()
+            alerts_by_classes: defaultdict[str, list[Alert[Any]]] = defaultdict(list)
             for alert in await self.middleware.call("datastore.query", "system.alert"):
                 del alert["id"]
 
@@ -275,7 +293,7 @@ class AlertService(Service):
                     self.logger.info("Alert source %r is no longer present", alert["source"])
                     continue
 
-                class_name = alert.pop("klass")
+                class_name: str = alert.pop("klass")
                 try:
                     klass = AlertClass.class_by_name[class_name]
                 except KeyError:
@@ -301,7 +319,7 @@ class AlertService(Service):
 
                 self.alerts.extend(alerts)
         else:
-            await self.flush_alerts()
+            await self.call2(self.s.alert.flush_alerts)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -315,23 +333,23 @@ class AlertService(Service):
             policy.receive_alerts(utc_now(), self.alerts)
 
     @private
-    async def terminate(self):
-        await self.flush_alerts()
+    async def terminate(self) -> None:
+        await self.call2(self.s.alert.flush_alerts)
 
     @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=['ALERT_LIST_READ'])
-    async def list_policies(self):
+    async def list_policies(self) -> list[str]:
         """
         List all alert policies which indicate the frequency of the alerts.
         """
         return POLICIES
 
     @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=['ALERT_LIST_READ'])
-    async def list_categories(self, options):
+    async def list_categories(self, options: dict[str, Any]) -> list[dict[str, Any]]:
         """
         List all types of alerts which the system can issue.
         """
 
-        product_type = await self.middleware.call("alert.product_type")
+        product_type: str = await self.call2(self.s.alert.product_type)
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
@@ -367,7 +385,7 @@ class AlertService(Service):
         ]
 
     @api_method(AlertListArgs, AlertListResult, roles=['ALERT_LIST_READ'])
-    async def list(self):
+    async def list(self) -> list[dict[str, Any]]:
         """
         List all types of alerts including active/dismissed currently in the system.
         """
@@ -389,14 +407,14 @@ class AlertService(Service):
         ]
 
     @private
-    async def node_map(self):
-        nodes = {
+    async def node_map(self) -> dict[str, str]:
+        nodes: dict[str, str] = {
             'A': 'Controller A',
             'B': 'Controller B',
         }
         if await self.middleware.call('failover.licensed'):
-            node = await self.middleware.call('failover.node')
-            status = await self.middleware.call('failover.status')
+            node: str = await self.middleware.call('failover.node')
+            status: str = await self.middleware.call('failover.status')
             if status == 'MASTER':
                 if node == 'A':
                     nodes = {
@@ -413,14 +431,14 @@ class AlertService(Service):
 
         return nodes
 
-    def __alert_by_uuid(self, uuid):
+    def __alert_by_uuid(self, uuid: str) -> Alert[Any] | None:
         try:
             return [a for a in self.alerts if a.uuid == uuid][0]
         except IndexError:
             return None
 
     @api_method(AlertDismissArgs, AlertDismissResult, roles=['ALERT_LIST_WRITE'])
-    async def dismiss(self, uuid):
+    async def dismiss(self, uuid: str) -> None:
         """
         Dismiss `id` alert.
         """
@@ -444,7 +462,7 @@ class AlertService(Service):
             alert.dismissed = True
             await self._send_alert_changed_event(alert)
 
-    def _delete_on_dismiss(self, alert):
+    def _delete_on_dismiss(self, alert: Alert[Any]) -> None:
         try:
             self.alerts.remove(alert)
             removed = True
@@ -458,7 +476,7 @@ class AlertService(Service):
             self._send_alert_deleted_event(alert)
 
     @api_method(AlertRestoreArgs, AlertRestoreResult, roles=['ALERT_LIST_WRITE'])
-    async def restore(self, uuid):
+    async def restore(self, uuid: str) -> None:
         """
         Restore `id` alert which had been dismissed.
         """
@@ -471,18 +489,18 @@ class AlertService(Service):
 
         await self._send_alert_changed_event(alert)
 
-    async def _send_alert_changed_event(self, alert):
+    async def _send_alert_changed_event(self, alert: Alert[Any]) -> None:
         as_ = AlertSerializer(self.middleware)
         if await as_.should_show_alert(alert):
             self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
-    def _send_alert_deleted_event(self, alert):
+    def _send_alert_deleted_event(self, alert: Alert[Any]) -> None:
         self.middleware.send_event("alert.list", "REMOVED", id=alert.uuid)
 
     @periodic(60)
     @private
     @job(lock="process_alerts", transient=True, lock_queue_size=1)
-    async def process_alerts(self, job):
+    async def process_alerts(self, job: Any) -> None:
         if not await self.__should_run_or_send_alerts():
             return
 
@@ -495,19 +513,19 @@ class AlertService(Service):
             self.alerts = valid_alerts
             return
 
-        await self.middleware.call("alert.send_alerts")
+        await self.call2(self.s.alert.send_alerts)
 
     @private
     @job(lock="process_alerts", transient=True)
-    async def send_alerts(self, job):
+    async def send_alerts(self, job: Any) -> None:
         global SEND_ALERTS_ON_READY
 
         if await self.middleware.call("system.state") != "READY":
             SEND_ALERTS_ON_READY = True
             return
 
-        product_type = await self.middleware.call("alert.product_type")
-        classes = (await self.call2(self.s.alertclasses.config)).classes
+        product_type: str = await self.call2(self.s.alert.product_type)
+        classes: dict[str, Any] = (await self.call2(self.s.alertclasses.config)).classes
 
         now = utc_now()
         for policy_name, policy in self.policies.items():
@@ -611,7 +629,7 @@ class AlertService(Service):
                         if await self.middleware.call("support.is_available_and_enabled"):
                             support = await self.middleware.call("support.config")
 
-                            msg = []
+                            msg: list[str] = []
                             if gone_proactive_support_alerts:
                                 msg.append("The following alerts were cleared:")
                                 msg += [f"* {html2text.html2text(alert.formatted)}"
@@ -621,18 +639,20 @@ class AlertService(Service):
                                 msg += [f"* {html2text.html2text(alert.formatted)}"
                                         for alert in new_proactive_support_alerts]
 
-                            serial = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
+                            serial: str = (
+                                await self.middleware.call("system.dmidecode_info")
+                            )["system-serial-number"]
 
                             for name, verbose_name in await self.middleware.call("support.fields"):
                                 value = support[name]
                                 if value:
                                     msg += ["", "{}: {}".format(verbose_name, value)]
 
-                            msg = "\n".join(msg)
+                            msg_str: str = "\n".join(msg)
 
                             job = await self.middleware.call("support.new_ticket", {
                                 "title": "Automatic alert (%s)" % serial,
-                                "body": msg,
+                                "body": msg_str,
                                 "attach_debug": False,
                                 "category": "Hardware",
                                 "criticality": "Loss of Functionality",
@@ -643,26 +663,26 @@ class AlertService(Service):
                             })
                             await job.wait()
                             if job.error:
-                                await self.middleware.call("alert.oneshot_create", AutomaticAlertFailedAlert(
-                                    serial=serial, alert=msg, error=str(job.error)))
+                                await self.call2(self.s.alert.oneshot_create, AutomaticAlertFailedAlert(
+                                    serial=serial, alert=msg_str, error=str(job.error)))
 
-    def __uuid(self):
+    def __uuid(self) -> str:
         return str(uuid.uuid4())
 
-    async def __should_run_or_send_alerts(self):
+    async def __should_run_or_send_alerts(self) -> bool:
         if await self.middleware.call('system.state') != 'READY':
             return False
 
         if await self.middleware.call('failover.licensed'):
-            status = await self.middleware.call('failover.status')
+            status: str = await self.middleware.call('failover.status')
             if status == 'BACKUP' or await self.middleware.call('failover.in_progress'):
                 return False
 
         return True
 
-    async def __get_failover_info(self):
+    async def __get_failover_info(self) -> AlertFailoverInfo:
         this_node, other_node = "A", "B"
-        run_on_backup_node = run_failover_related = False
+        run_on_backup_node = False
         run_failover_related = await self.middleware.call("failover.licensed")
         if run_failover_related:
             if await self.middleware.call("failover.node") != "A":
@@ -670,7 +690,7 @@ class AlertService(Service):
 
             run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
             if run_failover_related:
-                args = ([], {"connect_timeout": 2})
+                args = ([], {"connect_timeout": 2})  # type: ignore
 
                 # Do not run on backup if there is a software version mismatch
                 try:
@@ -714,8 +734,11 @@ class AlertService(Service):
             run_failover_related=run_failover_related
         )
 
-    async def __handle_locked_alert_source(self, name, this_node, other_node):
-        this_node_alerts, other_node_alerts = [], []
+    async def __handle_locked_alert_source(
+        self, name: str, this_node: str, other_node: str,
+    ) -> tuple[List[Alert[Any]], List[Alert[Any]], set[str]]:
+        this_node_alerts: list[Alert[Any]] = []
+        other_node_alerts: list[Alert[Any]] = []
         locked = self.blocked_sources[name]
         if locked:
             self.logger.debug("Not running alert source %r because it is blocked", name)
@@ -726,9 +749,9 @@ class AlertService(Service):
                     other_node_alerts.append(i)
         return this_node_alerts, other_node_alerts, locked
 
-    async def __run_other_node_alert_source(self, name):
+    async def __run_other_node_alert_source(self, name: str) -> List[Alert[Any]]:
         keys = ("datetime", "last_occurrence", "dismissed", "mail")
-        other_node_alerts = []
+        other_node_alerts: list[Alert[Any]] = []
         try:
             try:
                 for alert in await self.middleware.call("failover.call_remote", "alert.run_source", [name]):
@@ -753,12 +776,12 @@ class AlertService(Service):
 
         return other_node_alerts
 
-    async def __run_alerts(self):
-        product_type = await self.middleware.call("alert.product_type")
+    async def __run_alerts(self) -> None:
+        product_type: str = await self.call2(self.s.alert.product_type)
         fi = await self.__get_failover_info()
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
-                await self.unblock_source(k)
+                await self.call2(self.s.alert.unblock_source, k)
 
         for alert_source in self.alert_sources.values():
             if product_type not in alert_source.products:
@@ -800,7 +823,7 @@ class AlertService(Service):
                 [a for a in self.alerts if a.source != alert_source.name] + this_node_alerts + other_node_alerts
             )
 
-    def __handle_alert(self, alert):
+    def __handle_alert(self, alert: Alert[Any]) -> None:
         try:
             existing_alert = [
                 a for a in self.alerts
@@ -827,25 +850,25 @@ class AlertService(Service):
         else:
             alert.dismissed = existing_alert.dismissed
 
-    def __expire_alerts(self):
+    def __expire_alerts(self) -> None:
         self.alerts = list(filter(lambda alert: not self.__should_expire_alert(alert), self.alerts))
 
-    def __should_expire_alert(self, alert):
+    def __should_expire_alert(self, alert: Alert[Any]) -> bool:
         if isinstance(alert.instance, OneShotAlertClass):
             if alert.instance.config.expires_after is not None:
-                return alert.last_occurrence < utc_now() - alert.instance.config.expires_after
+                return alert.last_occurrence < utc_now() - alert.instance.config.expires_after  # type: ignore
 
         return False
 
     @private
-    async def sources_stats(self):
+    async def sources_stats(self) -> dict[str, Any]:
         return {
             k: {"avg": v["total_time"] / v["total_count"] if v["total_count"] != 0 else 0, **v}
             for k, v in sorted(self.sources_run_times.items(), key=lambda t: t[0])
         }
 
     @private
-    async def run_source(self, source_name):
+    async def run_source(self, source_name: str) -> List[dict[str, Any]]:
         try:
             return [dict(alert.__dict__, instance=None, klass=alert.instance.config.name, args=alert.instance.args())
                     for alert in await self.__run_source(source_name)]
@@ -853,7 +876,7 @@ class AlertService(Service):
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
 
     @private
-    async def block_source(self, source_name, timeout=3600):
+    async def block_source(self, source_name: str, timeout: int = 3600) -> str:
         if source_name not in self.alert_sources:
             raise CallError("Invalid alert source")
 
@@ -863,16 +886,16 @@ class AlertService(Service):
         return lock
 
     @private
-    async def unblock_source(self, lock):
+    async def unblock_source(self, lock: str) -> None:
         source_lock = self.sources_locks.pop(lock, None)
         if source_lock:
             self.blocked_sources[source_lock.source_name].remove(lock)
 
     @private
-    async def block_failover_alerts(self):
+    async def block_failover_alerts(self) -> None:
         self.blocked_failover_alerts_until = time.monotonic() + FAILOVER_ALERTS_BACKOFF_SECS
 
-    async def __run_source(self, source_name):
+    async def __run_source(self, source_name: str) -> List[Alert[Any]]:
         alert_source = self.alert_sources[source_name]
 
         start = time.monotonic()
@@ -903,8 +926,8 @@ class AlertService(Service):
             source_stat["total_count"] += 1
             source_stat["total_time"] += run_time
 
-        keys = set()
-        unique_alerts = []
+        keys: set[str] = set()
+        unique_alerts: list[Alert[Any]] = []
         for alert in alerts:
             if alert.key in keys:
                 continue
@@ -920,7 +943,7 @@ class AlertService(Service):
 
     @periodic(3600, run_on_start=False)
     @private
-    async def flush_alerts(self):
+    async def flush_alerts(self) -> None:
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
@@ -941,7 +964,7 @@ class AlertService(Service):
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_create(self, job, instance):
+    async def oneshot_create(self, job: Any, instance: OneShotAlertClass) -> None:
         """
         Creates a one-shot alert from the given alert class `instance`.
 
@@ -962,7 +985,7 @@ class AlertService(Service):
 
         self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
 
-        await self.middleware.call("alert.send_alerts")
+        await self.call2(self.s.alert.send_alerts)
 
     @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
     @job(
@@ -970,7 +993,7 @@ class AlertService(Service):
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_delete(self, job, klass, query):
+    async def oneshot_delete(self, job: Any, klass: str | List[str], query: Any = None) -> None:
         """
         Deletes one-shot alerts of specified `klass` or klasses, passing `query`
         to `klass.delete` method.
@@ -981,6 +1004,7 @@ class AlertService(Service):
         :param query: `query` that will be passed to `klass.delete` method.
         """
 
+        klasses: list[str]
         if isinstance(klass, list):
             klasses = klass
         else:
@@ -989,18 +1013,18 @@ class AlertService(Service):
         deleted = False
         for klassname in klasses:
             try:
-                klass = AlertClass.class_by_name[klassname]
+                klass_type = AlertClass.class_by_name[klassname]
             except KeyError:
                 raise CallError(f"Invalid alert source: {klassname!r}")
 
-            if not issubclass(klass, OneShotAlertClass):
+            if not issubclass(klass_type, OneShotAlertClass):
                 raise CallError(f"Alert class {klassname!r} is not a one-shot alert class")
 
             related_alerts, unrelated_alerts = bisect(
-                lambda a: (a.node, a.instance.config.name) == (self.node, klass.config.name),
+                lambda a: (a.node, a.instance.config.name) == (self.node, klass_type.config.name),
                 self.alerts
             )
-            left_alerts = await klass.delete(related_alerts, query)
+            left_alerts = await klass_type.delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
                     self.alerts.remove(deleted_alert)
@@ -1012,12 +1036,12 @@ class AlertService(Service):
             # when deleting cloud sync task). If we delete a cloud sync task and then reboot the system abruptly,
             # the alerts won't be flushed to the database and on next boot an alert for nonexisting cloud sync task
             # will appear, and it won't be deletable.
-            await self.middleware.call("alert.flush_alerts")
+            await self.call2(self.s.alert.flush_alerts)
 
-            await self.middleware.call("alert.send_alerts")
+            await self.call2(self.s.alert.send_alerts)
 
     @private
-    def alert_source_clear_run(self, name):
+    def alert_source_clear_run(self, name: str) -> None:
         """
         Mark the alert source as never ran so that it will be re-run within the next minute.
         This is useful when you know some alert conditions were just changed.
@@ -1031,19 +1055,18 @@ class AlertService(Service):
         self.alert_source_last_run[alert_source.name] = datetime.min
 
     @private
-    async def product_type(self):
-        return await self.middleware.call("system.product_type")
+    async def product_type(self) -> str:
+        return await self.middleware.call("system.product_type")  # type: ignore
 
 
-async def _event_system(middleware, event_type, args):
+async def _event_system(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:
     if SEND_ALERTS_ON_READY:
-        await middleware.call("alert.send_alerts")
+        await middleware.call2(middleware.services.alert.send_alerts)
 
 
-async def setup(middleware):
-    await middleware.call2(middleware.services.alertservice.load)
+async def setup(middleware: Middleware) -> None:
     await middleware.call2(middleware.services.alertservice.initialize)
 
-    await middleware.call("alert.initialize")
+    await middleware.call2(middleware.services.alert.initialize)
 
     middleware.event_subscribe("system.ready", _event_system)

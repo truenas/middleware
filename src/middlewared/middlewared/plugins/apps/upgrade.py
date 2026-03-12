@@ -283,7 +283,7 @@ class AppService(Service):
 
     @private
     async def clear_upgrade_alerts_for_all(self):
-        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+        await self.call2(self.s.alert.oneshot_delete, 'AppUpdate', None)
         await self.middleware.call('cache.pop', APP_UPGRADE_ALERT_CACHE_KEY)
 
     @private
@@ -327,16 +327,16 @@ class AppService(Service):
             if not new_apps:
                 # We would like to be certain that we clear any alert if there are no new_apps to
                 # avoid any edge case still leaving out the alert
-                await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+                await self.call2(self.s.alert.oneshot_delete, 'AppUpdate', None)
             return
 
         # Delete all existing AppUpdate alerts
-        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+        await self.call2(self.s.alert.oneshot_delete, 'AppUpdate', None)
 
         # Create single alert if updates exist
         if apps_with_updates:
             count = len(apps_with_updates)
-            await self.middleware.call('alert.oneshot_create', AppUpdateAlert(
+            await self.call2(self.s.alert.oneshot_create, AppUpdateAlert(
                 count=count,
                 plural='s' if count != 1 else '',
                 apps=', '.join(apps_with_updates),

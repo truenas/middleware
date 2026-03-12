@@ -514,12 +514,12 @@ class FCHostService(CRUDService):
                 await self.middleware.call('fc.fc_host.delete', fc_host['id'])
             await self.middleware.call('fc.fc_host.wire')
             self.logger.warning('Fibre Channel ports rewired')
-            await self.middleware.call("alert.oneshot_create", FCHardwareReplacedAlert())
+            await self.call2(self.s.alert.oneshot_create, FCHardwareReplacedAlert())
         elif addition_only:
             await self.middleware.call('fc.fc_host.reset_wired', True)
             await self.middleware.call('fc.fc_host.wire')
             self.logger.warning('Fibre Channel ports added')
-            await self.middleware.call("alert.oneshot_create", FCHardwareAddedAlert())
+            await self.call2(self.s.alert.oneshot_create, FCHardwareAddedAlert())
 
         return True
 

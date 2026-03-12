@@ -57,10 +57,10 @@
     # Let's verify that required SSL support in the backend is complete by middlewared
     if not cert or middleware.call_sync('certificate.cert_services_validation', cert['id'], 'nginx.certificate', False):
         ssl_configuration = False
-        middleware.call_sync('alert.oneshot_create', WebUiCertificateSetupFailedAlert())
+        middleware.call_sync2(middleware.services.alert.oneshot_create, WebUiCertificateSetupFailedAlert())
     else:
         ssl_configuration = True
-        middleware.call_sync('alert.oneshot_delete', 'WebUiCertificateSetupFailed', None)
+        middleware.call_sync2(middleware.services.alert.oneshot_delete, 'WebUiCertificateSetupFailed', None)
 
     system_version = middleware.call_sync('system.version')
 

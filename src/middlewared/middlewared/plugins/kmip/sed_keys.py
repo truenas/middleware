@@ -275,7 +275,7 @@ class KMIPService(Service, KMIPServerMixin):
         except ValueError:
             pass
         else:
-            self.middleware.call_sync('alert.oneshot_create', KMIPSEDGlobalPasswordSyncFailureAlert())
+            self.call_sync2(self.s.alert.oneshot_create, KMIPSEDGlobalPasswordSyncFailureAlert())
         finally:
             if failed:
                 self.middleware.call_sync(

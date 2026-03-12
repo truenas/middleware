@@ -1016,10 +1016,10 @@ class FailoverService(ConfigService):
                     'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
                 )
             except Exception as e:
-                await self.middleware.call('alert.oneshot_create', FailoverKeysSyncFailedAlert())
+                await self.call2(self.s.alert.oneshot_create, FailoverKeysSyncFailedAlert())
                 self.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
             else:
-                await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
+                await self.call2(self.s.alert.oneshot_delete, 'FailoverKeysSyncFailed', None)
             try:
                 kmip_keys = await self.middleware.call('kmip.kmip_memory_keys')
                 await self.middleware.call(
@@ -1033,7 +1033,7 @@ class FailoverService(ConfigService):
                     'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
                 )
             else:
-                await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
+                await self.call2(self.s.alert.oneshot_delete, 'FailoverKMIPKeysSyncFailed', None)
 
 
 async def ha_permission(middleware, app):

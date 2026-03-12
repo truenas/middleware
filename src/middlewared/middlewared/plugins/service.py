@@ -217,12 +217,9 @@ class ServiceService(CRUDService):
 
         if service_object.deprecated:
             if state.running:
-                await self.middleware.call(
-                    'alert.oneshot_create',
-                    DeprecatedServiceAlert(service=service_object.name),
-                )
+                await self.call2(self.s.alert.oneshot_create, DeprecatedServiceAlert(service=service_object.name))
             else:
-                await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
+                await self.call2(self.s.alert.oneshot_delete, 'DeprecatedService', service_object.name)
 
         return state.running
 
@@ -255,7 +252,7 @@ class ServiceService(CRUDService):
                     await service_object.after_stop()
                     await self.middleware.call('service.notify_running', service)
                     if service_object.deprecated:
-                        await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
+                        await self.call2(self.s.alert.oneshot_delete, 'DeprecatedService', service_object.name)
 
                     return True
 
@@ -326,7 +323,7 @@ class ServiceService(CRUDService):
 
         await self.middleware.call('service.notify_running', service)
         if service_object.deprecated:
-            await self.middleware.call('alert.oneshot_create', DeprecatedServiceAlert(service=service_object.name))
+            await self.call2(self.s.alert.oneshot_create, DeprecatedServiceAlert(service=service_object.name))
 
         return True
 
