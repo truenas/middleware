@@ -41,7 +41,7 @@ def retaste_disks_impl(disk_serials: set = None):
         errors = m.dict()
         with multiprocessing.Pool() as p:
             # we use processes so that these operations are truly
-            # "parrallel" (side-step the GIL) since we have systems
+            # "parallel" (side-step the GIL) since we have systems
             # with 1k+ disks. Since this runs, potentially, on failover
             # event we need to squeeze out every bit of perf we can get
             p.starmap(taste_it, [(disk, errors) for disk in disks])
