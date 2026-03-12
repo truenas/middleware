@@ -1,6 +1,7 @@
 import copy
 import contextlib
 import pathlib
+import tempfile
 import typing
 import yaml
 
@@ -53,14 +54,19 @@ def render_compose_templates(app_version_path: str, values_file_path: str):
 
 
 def update_app_config(app_name: str, version: str, values: dict[str, typing.Any], custom_app: bool = False) -> None:
-    write_new_app_config(app_name, version, values)
     if custom_app:
+        write_new_app_config(app_name, version, values)
         compose_file_path = get_installed_custom_app_compose_file(app_name, version)
         write_if_changed(compose_file_path, dump_yaml(values), perms=0o600, raise_error=False)
     else:
-        render_compose_templates(
-            get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
-        )
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=True) as tmp_file:
+            tmp_file.write(dump_yaml(values))
+            tmp_file.flush()
+
+            render_compose_templates(
+                get_installed_app_version_path(app_name, version), tmp_file.name
+            )
+        write_new_app_config(app_name, version, values)
 
 
 def get_action_context(app_name: str) -> dict[str, typing.Any]:
