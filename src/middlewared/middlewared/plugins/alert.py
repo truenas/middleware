@@ -1156,7 +1156,7 @@ class AlertServiceService(CRUDService):
         try:
             await alert_service.send([test_alert], [], [test_alert])
         except Exception:
-            self.logger.error("Error in alert service %r", data["type"], exc_info=True)
+            self.logger.error("Error in alert service %r", data["attributes"]["type"], exc_info=True)
             return False
 
         return True
