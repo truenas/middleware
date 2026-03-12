@@ -1,28 +1,45 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from dataclasses import dataclass
+from typing import Any
+
+from middlewared.alert.base import AlertClass, AlertCategory, AlertClassConfig, AlertLevel, Alert, AlertSource
 from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
 from middlewared.utils.zfs import query_imported_fast_impl
 
 
-class VolumeStatusAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.CRITICAL
-    title = "Pool Status Is Not Healthy"
-    text = "Pool %(volume)s state is %(state)s: %(status)s%(devices)s"
-    proactive_support = True
+@dataclass(kw_only=True)
+class VolumeStatusAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.CRITICAL,
+        title="Pool Status Is Not Healthy",
+        text="Pool %(volume)s state is %(state)s: %(status)s%(devices)s",
+        proactive_support=True,
+    )
+
+    volume: str
+    state: str
+    status: str
+    devices: str
 
 
-class BootPoolStatusAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "Boot Pool Is Not Healthy"
-    text = "Boot pool status is %(status)s: %(status_detail)s."
-    proactive_support = True
+@dataclass(kw_only=True)
+class BootPoolStatusAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="Boot Pool Is Not Healthy",
+        text="Boot pool status is %(status)s: %(status_detail)s.",
+        proactive_support=True,
+    )
+
+    status: str
+    status_detail: str
 
 
 class VolumeStatusAlertSource(AlertSource):
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | None:
         if not await self.enabled():
-            return
+            return None
 
         try:
             states = await self.middleware.call("cache.get", "VolumeStatusAlertSource.pools_states")
@@ -45,7 +62,7 @@ class VolumeStatusAlertSource(AlertSource):
             for pool in await self.middleware.call("zpool.query_impl", {"pool_names": [boot_pool]}):
                 if not pool["healthy"]:
                     alerts.append([
-                        "BootPoolStatusAlertClass",
+                        "BootPoolStatusAlert",
                         {
                             "status": pool["status"],
                             "status_detail": pool["status_detail"],
@@ -68,7 +85,7 @@ class VolumeStatusAlertSource(AlertSource):
                         devices = ""
 
                     alerts.append([
-                        "VolumeStatusAlertClass",
+                        "VolumeStatusAlert",
                         {
                             "volume": pool["name"],
                             "state": pool["status"],
@@ -79,18 +96,12 @@ class VolumeStatusAlertSource(AlertSource):
 
             await self.middleware.call("cache.put", VOLUME_STATUS_ALERTS, alerts)
 
-        return [
-            Alert(
-                {
-                    "BootPoolStatusAlertClass": BootPoolStatusAlertClass,
-                    "VolumeStatusAlertClass": VolumeStatusAlertClass,
-                }[alert[0]],
-                alert[1]
-            )
-            for alert in alerts
-        ]
+        klass_map: dict[str, type[AlertClass]] = {
+            "BootPoolStatusAlert": BootPoolStatusAlert, "VolumeStatusAlert": VolumeStatusAlert,
+        }
+        return [Alert(klass_map[alert[0]].from_args(alert[1])) for alert in alerts]
 
-    async def enabled(self):
+    async def enabled(self) -> bool:
         if await self.middleware.call("system.is_enterprise"):
             status = await self.middleware.call("failover.status")
             return status in ("MASTER", "SINGLE")

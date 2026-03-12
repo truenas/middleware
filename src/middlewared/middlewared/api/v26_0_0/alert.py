@@ -17,6 +17,8 @@ AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL'
 
 
 class Alert(BaseModel):
+    id: str
+    """Alert identifier used for API operations."""
     uuid: str
     """Unique identifier for the alert."""
     source: str
@@ -39,8 +41,6 @@ class Alert(BaseModel):
     """Email notification configuration and status for this alert."""
     text: LongString
     """Human-readable description of the alert."""
-    id: str
-    """Alert identifier used for API operations."""
     level: str
     """Severity level of the alert (INFO, WARNING, ERROR, etc.)."""
     formatted: LongString | None

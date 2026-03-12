@@ -6,6 +6,8 @@ from pathlib import Path
 import uuid
 import middlewared.sqlalchemy as sa
 
+from middlewared.alert.source.smb_audit import SMBAuditShareDisabledAlert
+from middlewared.alert.source.smb_recordsize import SMBVeeamFastCloneAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     SharingSMBGetaclArgs, SharingSMBGetaclResult,
@@ -228,16 +230,16 @@ class SMBService(ConfigService):
 
         if veeam_repo_errors:
             # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
-            self.middleware.call_sync('alert.oneshot_create', 'SMBVeeamFastClone', {
-                'shares': ', '.join(veeam_repo_errors)
-            })
+            self.middleware.call_sync('alert.oneshot_create', SMBVeeamFastCloneAlert(
+                shares=', '.join(veeam_repo_errors),
+            ))
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
 
         if disabled_shares:
-            self.middleware.call_sync('alert.oneshot_create', 'SMBAuditShareDisabled', {
-                'shares': ', '.join(disabled_shares)
-            })
+            self.middleware.call_sync('alert.oneshot_create', SMBAuditShareDisabledAlert(
+                shares=', '.join(disabled_shares),
+            ))
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'SMBAuditShareDisabled')
 
@@ -480,7 +482,7 @@ class SMBService(ConfigService):
 
     @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
-        """
+        r"""
         Update SMB Service Configuration.
 
         `netbiosname` defaults to the original hostname of the system.

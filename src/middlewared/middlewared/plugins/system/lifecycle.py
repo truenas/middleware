@@ -1,5 +1,6 @@
 import asyncio
 
+from middlewared.alert.source.kdump import KdumpNotReadyAlert
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     SystemBootIdArgs,
@@ -168,7 +169,7 @@ async def _event_system_ready(middleware, event_type, args):
             )
         else:
             if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
-                await middleware.call("alert.oneshot_create", "KdumpNotReady", None)
+                await middleware.call("alert.oneshot_create", KdumpNotReadyAlert())
             else:
                 await middleware.call("alert.oneshot_delete", "KdumpNotReady", None)
     else:

@@ -1,4 +1,5 @@
 <%
+    from middlewared.alert.source.security import AllAdminAccountsExpiredAlert
     from middlewared.utils.filter_list import filter_list
     from middlewared.utils.security import shadow_parse_aging
 
@@ -27,7 +28,7 @@
         if unexpired:
             middleware.call_sync('alert.oneshot_delete', 'AllAdminAccountsExpired', None)
         else:
-            middleware.call_sync('alert.oneshot_create', 'AllAdminAccountsExpired', None)
+            middleware.call_sync('alert.oneshot_create', AllAdminAccountsExpiredAlert())
             max_age_overrides = set([user['username'] for user in password_full_admin_users])
 
     def get_passwd(entry):

@@ -1,8 +1,11 @@
+from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import (
     AlertClass,
     AlertCategory,
+    AlertClassConfig,
     AlertLevel,
     Alert,
     AlertSource,
@@ -11,35 +14,65 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class ZpoolCapacityNoticeAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.NOTICE
-    title = "Pool Space Usage Is Above 85%"
-    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
-    proactive_support = True
+@dataclass(kw_only=True)
+class ZpoolCapacityNoticeAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.NOTICE,
+        title="Pool Space Usage Is Above 85%",
+        text="Space usage for pool '%(volume)s' is %(capacity)d%%.",
+        proactive_support=True,
+    )
+
+    volume: str
+    capacity: int
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return [args['volume']]
 
 
-class ZpoolCapacityWarningAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Pool Space Usage Is Above 90%"
-    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
-    proactive_support = True
+@dataclass(kw_only=True)
+class ZpoolCapacityWarningAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Pool Space Usage Is Above 90%",
+        text="Space usage for pool '%(volume)s' is %(capacity)d%%.",
+        proactive_support=True,
+    )
+
+    volume: str
+    capacity: int
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return [args['volume']]
 
 
-class ZpoolCapacityCriticalAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.CRITICAL
-    title = "Pool Space Usage Is Above 95%"
-    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
-    proactive_support = True
+@dataclass(kw_only=True)
+class ZpoolCapacityCriticalAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.CRITICAL,
+        title="Pool Space Usage Is Above 95%",
+        text="Space usage for pool '%(volume)s' is %(capacity)d%%.",
+        proactive_support=True,
+    )
+
+    volume: str
+    capacity: int
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return [args['volume']]
 
 
 class ZpoolCapacityAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = []
         # query_impl with pool_names=None skips boot pools, so we query
         # the boot pool explicitly to ensure capacity alerts still fire.
         pools = await self.middleware.call("zpool.query_impl", {"properties": ["capacity"]})
@@ -54,19 +87,14 @@ class ZpoolCapacityAlertSource(AlertSource):
                 continue
 
             for target_capacity, klass in [
-                (95, ZpoolCapacityCriticalAlertClass),
-                (90, ZpoolCapacityWarningAlertClass),
-                (85, ZpoolCapacityNoticeAlertClass),
+                (95, ZpoolCapacityCriticalAlert),
+                (90, ZpoolCapacityWarningAlert),
+                (85, ZpoolCapacityNoticeAlert),
             ]:
                 if capacity >= target_capacity:
                     alerts.append(
                         Alert(
-                            klass,
-                            {
-                                "volume": pool["name"],
-                                "capacity": capacity,
-                            },
-                            key=[pool["name"]],
+                            klass(volume=pool["name"], capacity=capacity),
                         )
                     )
                     break

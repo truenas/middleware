@@ -3,12 +3,13 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDGlobalPasswordSyncFailureAlert
 from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
 
 
-'''
+"""
 SED keys are stored in 2 places:
 1) system.advanced table
 2) storage.disk table
@@ -21,7 +22,7 @@ There are 3 possible cases which we need to handle for storage.disk
 There are 2 possible cases which we need to handle for system.advanced
 1) system.advanced.config can have global SED password
 2) system.advanced.config cannot have global SED password
-'''
+"""
 
 
 class KMIPService(Service, KMIPServerMixin):
@@ -274,11 +275,11 @@ class KMIPService(Service, KMIPServerMixin):
         except ValueError:
             pass
         else:
-            self.middleware.call_sync('alert.oneshot_create', 'KMIPSEDGlobalPasswordSyncFailure')
+            self.middleware.call_sync('alert.oneshot_create', KMIPSEDGlobalPasswordSyncFailureAlert())
         finally:
             if failed:
                 self.middleware.call_sync(
-                    'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
+                    'alert.oneshot_create', KMIPSEDDisksSyncFailureAlert(disks=','.join(failed))
                 )
         self.middleware.call_hook_sync('kmip.sed_keys_sync')
         return ret_failed

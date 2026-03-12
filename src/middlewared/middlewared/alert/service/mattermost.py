@@ -1,16 +1,19 @@
-import json
-import requests
-import html
-import html2text
+from __future__ import annotations
 
-from middlewared.alert.base import ThreadedAlertService
+import html
+import json
+from typing import Any
+
+import requests
+
+from middlewared.alert.base import Alert, ThreadedAlertService
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class MattermostAlertService(ThreadedAlertService):
     title = "Mattermost"
 
-    def send_sync(self, alerts, gone_alerts, new_alerts):
+    def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
         r = requests.post(
             self.attributes["url"],
             headers={"Content-type": "application/json"},
@@ -18,7 +21,7 @@ class MattermostAlertService(ThreadedAlertService):
                 "username": self.attributes["username"],
                 "channel": self.attributes["channel"],
                 "icon_url": self.attributes["icon_url"],
-                "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))),
+                "text": html.escape(self._format_alerts_sync(alerts, gone_alerts, new_alerts)),
             }),
             timeout=INTERNET_TIMEOUT,
         )

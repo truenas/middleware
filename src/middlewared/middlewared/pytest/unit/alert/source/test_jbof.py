@@ -4,7 +4,9 @@ import pytest
 import copy
 
 from middlewared.alert.base import Alert
-from middlewared.alert.source.jbof import JBOFInvalidDataAlertClass, JBOFRedfishCommAlertClass, JBOFAlertSource, JBOFElementWarningAlertClass, JBOFElementCriticalAlertClass
+from middlewared.alert.source.jbof import (
+    JBOFInvalidDataAlert, JBOFRedfishCommAlert, JBOFAlertSource, JBOFElementWarningAlert, JBOFElementCriticalAlert,
+)
 from middlewared.pytest.unit.middleware import Middleware
 
 uuid1 = '244c0e5f-bf7b-4a68-bd40-80e3f1a5b4ed'
@@ -293,13 +295,15 @@ jbof_data_one = [
                                        'status': 'OK',
                                        'value': 'SpeedRPM=21792.0',
                                        'value_raw': None}},
-                  'Power Supply': {'PSU1': {'descriptor': 'PSU1,YSEF1600EM-2A01P10,S0A00A3032029000366,A00,3Y POWER,1600W',
-                                            'status': 'OK',
-                                            'value': 'Normal',
-                                            'value_raw': None},
-                                   'PSU2': {'descriptor': 'PSU2,YSEF1600EM-2A01P10,S0A00A3032029000366,A00,3Y POWER,1600W',
-                                            'status': 'OK',
-                                            'value': 'Normal',
+                  'Power Supply': {'PSU1': {'descriptor': 'PSU1,YSEF1600EM-2A01P10,S0A00A3032029000366,'
+                                                            'A00,3Y POWER,1600W',
+                                           'status': 'OK',
+                                           'value': 'Normal',
+                                           'value_raw': None},
+                                  'PSU2': {'descriptor': 'PSU2,YSEF1600EM-2A01P10,S0A00A3032029000366,'
+                                                          'A00,3Y POWER,1600W',
+                                           'status': 'OK',
+                                           'value': 'Normal',
                                             'value_raw': None}},
                   'Temperature Sensors': {'TempDrive1': {'descriptor': 'Temperature Sensor Drive 1',
                                                          'status': 'OK',
@@ -444,7 +448,7 @@ async def test__jbof_redfish_comm_alert():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert == Alert(JBOFRedfishCommAlertClass, args=jbof1_id_dict)
+    assert alert == Alert(JBOFRedfishCommAlert(**jbof1_id_dict))
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Failed to communicate with redfish interface.'
 
 
@@ -471,7 +475,7 @@ async def test__jbof_invalid_data():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFInvalidDataAlertClass
+    assert isinstance(alert.instance, JBOFInvalidDataAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) does not provide valid data for: elements'
 
 
@@ -492,7 +496,7 @@ async def test__jbof_psu_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Power Supply PSU1 is critical: LossOfInput'
 
 
@@ -513,7 +517,7 @@ async def test__jbof_fan_noncritical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementWarningAlertClass
+    assert isinstance(alert.instance, JBOFElementWarningAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Cooling Fan6 is noncritical: SpeedRPM=12345.0'
 
 
@@ -534,7 +538,7 @@ async def test__jbof_temp_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Temperature Sensors TempDrive1 is critical: 50.0 C'
 
 
@@ -555,5 +559,5 @@ async def test__jbof_volt_sensor_critical():
     alerts = await jas.check()
     assert len(alerts) == 1, alerts
     alert = alerts[0]
-    assert alert.klass == JBOFElementCriticalAlertClass
+    assert isinstance(alert.instance, JBOFElementCriticalAlert)
     assert alert.formatted == f'JBOF: "{desc1}" ({ip1}/{ip2}) Voltage Sensor VoltPS1Vin is critical: 100'

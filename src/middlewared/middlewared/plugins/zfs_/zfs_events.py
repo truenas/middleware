@@ -1,12 +1,14 @@
 import asyncio
 from collections import defaultdict
+from dataclasses import dataclass
 import threading
 
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+    AlertCategory, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
 )
+from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.utils.zfs.event import (
@@ -65,24 +67,31 @@ class ScanWatch:
         self._cancel.set()
 
 
-class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    title = "Scrub Failed to Start"
-    text = "%(text)s."
+@dataclass(kw_only=True)
+class ScrubNotStartedAlert(OneShotAlertClass):
+    pool: str
+    text: str
 
-    deleted_automatically = False
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title="Scrub Failed to Start",
+        text="%(text)s.",
+        deleted_automatically=False,
+    )
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args):
         return args["pool"]
 
 
-class ScrubStartedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.INFO
-    title = "Scrub Started"
-    text = "Scrub of pool %r has started. Performance may be degraded during this time."
+class ScrubStartedAlert(NonDataclassAlertClass[str], OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.INFO,
+        title="Scrub Started",
+        text="Scrub of pool %r has started. Performance may be degraded during this time.",
+    )
 
 
 async def resilver_scrub_start(middleware, pool_name):
@@ -134,7 +143,7 @@ async def create_pool_upgraded_alert(middleware, pool_name):
 
     try:
         if not await middleware.call('pool.is_upgraded', found[0]['id']):
-            await middleware.call('alert.oneshot_create', 'PoolUpgraded', pool_name)
+            await middleware.call('alert.oneshot_create', PoolUpgradedAlert(pool_name))
     except Exception:
         pass
 

@@ -1,15 +1,24 @@
+from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
-from middlewared.plugins.account import ADMIN_UID
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule,
+)
+from middlewared.plugins.account_.constants import ADMIN_UID
 from middlewared.service_exception import MatchNotFound
 
 
-class AdminUserIsOverriddenAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Admin User Is Overridden"
-    text = "NSS query results are different for the locally set up `%(username)s` user."
+@dataclass(kw_only=True)
+class AdminUserIsOverriddenAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Admin User Is Overridden",
+        text="NSS query results are different for the locally set up `%(username)s` user.",
+    )
+
+    username: str
 
 
 class AdminUserAlertSource(AlertSource):
@@ -20,7 +29,7 @@ class AdminUserAlertSource(AlertSource):
 
     schedule = IntervalSchedule(timedelta(hours=24))
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         try:
             admin = await self.middleware.call(
                 "datastore.query",
@@ -31,7 +40,7 @@ class AdminUserAlertSource(AlertSource):
                 {"get": True, "prefix": "bsdusr_"}
             )
         except MatchNotFound:
-            return
+            return None
 
         user_obj = await self.middleware.call("user.get_user_obj", {"uid": ADMIN_UID})
 
@@ -41,4 +50,6 @@ class AdminUserAlertSource(AlertSource):
                 (user_obj["pw_gecos"] != admin["full_name"]) or
                 (user_obj["pw_dir"] != admin["home"])
         ):
-            return Alert(AdminUserIsOverriddenAlertClass, {"username": admin["username"]})
+            return Alert(AdminUserIsOverriddenAlert(username=admin["username"]))
+
+        return None

@@ -3,27 +3,41 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from dataclasses import dataclass
+
+from typing import Any
+
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
 
 TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '
 
 
-class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = TITLE + 'Standby Storage Controller'
-    text = TEXT + 'active storage controller but missing on standby storage controller.'
-    products = (ProductType.ENTERPRISE,)
+@dataclass(kw_only=True)
+class NetworkCardsMismatchOnStandbyNodeAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title=TITLE + 'Standby Storage Controller',
+        text=TEXT + 'active storage controller but missing on standby storage controller.',
+        products=(ProductType.ENTERPRISE,),
+    )
+
+    interfaces: str
 
 
-class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = TITLE + 'Active Storage Controller'
-    text = TEXT + 'standby storage controller but missing on active storage controller.'
-    products = (ProductType.ENTERPRISE,)
+@dataclass(kw_only=True)
+class NetworkCardsMismatchOnActiveNodeAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HA,
+        level=AlertLevel.CRITICAL,
+        title=TITLE + 'Active Storage Controller',
+        text=TEXT + 'standby storage controller but missing on active storage controller.',
+        products=(ProductType.ENTERPRISE,),
+    )
+
+    interfaces: str
 
 
 class FailoverNetworkCardsAlertSource(AlertSource):
@@ -32,14 +46,14 @@ class FailoverNetworkCardsAlertSource(AlertSource):
     require_stable_peer = True
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]]:
         if (interfaces := await self.middleware.call('failover.mismatch_nics')):
             if interfaces['missing_remote']:
                 return [Alert(
-                    NetworkCardsMismatchOnStandbyNodeAlertClass, {'interfaces': ', '.join(interfaces['missing_remote'])}
+                    NetworkCardsMismatchOnStandbyNodeAlert(interfaces=', '.join(interfaces['missing_remote']))
                 )]
             if interfaces['missing_local']:
                 return [Alert(
-                    NetworkCardsMismatchOnActiveNodeAlertClass, {'interfaces': ', '.join(interfaces['missing_local'])}
+                    NetworkCardsMismatchOnActiveNodeAlert(interfaces=', '.join(interfaces['missing_local']))
                 )]
         return []

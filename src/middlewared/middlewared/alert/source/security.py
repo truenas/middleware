@@ -1,27 +1,42 @@
-from middlewared.alert.base import Alert, AlertClass, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel
+from dataclasses import dataclass
+from typing import Any
+
+from middlewared.alert.base import (
+    Alert, AlertClass, AlertClassConfig, AlertSource, OneShotAlertClass, AlertCategory, AlertLevel,
+)
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
 from middlewared.utils.filter_list import filter_list
 
 
-class LocalAccountExpiringAlertClass(AlertClass):
-    category = AlertCategory.SECURITY
-    level = AlertLevel.NOTICE
-    title = "Local User Accounts Must Change Password"
-    text = "The following local user accounts must change passwords : %(accounts)s"
+@dataclass(kw_only=True)
+class LocalAccountExpiringAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.NOTICE,
+        title="Local User Accounts Must Change Password",
+        text="The following local user accounts must change passwords : %(accounts)s",
+    )
+
+    accounts: str
 
 
-class LocalAccountExpiredAlertClass(AlertClass):
+@dataclass(kw_only=True)
+class LocalAccountExpiredAlert(AlertClass):
     """
     One or more accounts are actually expired.
     """
-    category = AlertCategory.SECURITY
-    level = AlertLevel.WARNING
-    title = "Local User Accounts Are Expired"
-    text = "The following local user accounts have expired: %(accounts)s"
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.WARNING,
+        title="Local User Accounts Are Expired",
+        text="The following local user accounts have expired: %(accounts)s",
+    )
+
+    accounts: str
 
 
-class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
+class AllAdminAccountsExpiredAlert(OneShotAlertClass):
     """
     All local administrator accounts have expired passwords. This means we have
     potentially locked out ability to administer the NAS. To facilitate recovery
@@ -29,14 +44,16 @@ class AllAdminAccountsExpiredAlertClass(AlertClass, OneShotAlertClass):
     The most likely reason for this happening is that the user has restored a
     configuration backup with old passwords.
     """
-    category = AlertCategory.SECURITY
-    level = AlertLevel.CRITICAL
-    title = "All local full administrator accounts are expired."
-    text = (
-        "All administrator accounts with full administrator privilege are expired. "
-        "In order to allow recovery, password expiration has been temporarily disabled for "
-        "local administrator accounts with full admin privileges until at least one "
-        "account password has been updated."
+    config = AlertClassConfig(
+        category=AlertCategory.SECURITY,
+        level=AlertLevel.CRITICAL,
+        title="All local full administrator accounts are expired.",
+        text=(
+            "All administrator accounts with full administrator privilege are expired. "
+            "In order to allow recovery, password expiration has been temporarily disabled for "
+            "local administrator accounts with full admin privileges until at least one "
+            "account password has been updated."
+        ),
     )
 
 
@@ -45,8 +62,8 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     run_on_backup_node = False
     products = (ProductType.ENTERPRISE,)
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         sec = await self.middleware.call("system.security.config")
         if not sec["max_password_age"]:
             # password aging disabled and so we can skip these checks
@@ -86,14 +103,16 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
 
         if expiring:
             alerts.append(Alert(
-                LocalAccountExpiringAlertClass,
-                {"accounts": ", ".join([u["username"] for u in expiring])}
+                LocalAccountExpiringAlert(
+                    accounts=", ".join([u["username"] for u in expiring]),
+                )
             ))
 
         if expired:
             alerts.append(Alert(
-                LocalAccountExpiredAlertClass,
-                {"accounts": ", ".join([u["username"] for u in expired])}
+                LocalAccountExpiredAlert(
+                    accounts=", ".join([u["username"] for u in expired]),
+                )
             ))
 
         return alerts

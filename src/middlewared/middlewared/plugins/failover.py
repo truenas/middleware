@@ -10,6 +10,7 @@ import stat
 import time
 from functools import partial
 
+from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     FailoverBecomePassiveArgs,
@@ -1015,7 +1016,7 @@ class FailoverService(ConfigService):
                     'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
                 )
             except Exception as e:
-                await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
+                await self.middleware.call('alert.oneshot_create', FailoverKeysSyncFailedAlert())
                 self.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
             else:
                 await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
@@ -1026,7 +1027,7 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 await self.middleware.call(
-                    'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
+                    'alert.oneshot_create', FailoverKMIPKeysSyncFailedAlert(error=str(e)),
                 )
                 self.logger.error(
                     'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True

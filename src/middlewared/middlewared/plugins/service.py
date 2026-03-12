@@ -4,6 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 import middlewared.sqlalchemy as sa
+from middlewared.alert.source.deprecated_service import DeprecatedServiceAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     ServiceEntry, ServiceStartedArgs, ServiceStartedResult, ServiceStartedOrEnabledArgs,
@@ -189,8 +190,7 @@ class ServiceService(CRUDService):
                     if service_object.deprecated:
                         await self.middleware.call(
                             'alert.oneshot_create',
-                            'DeprecatedService',
-                            {"service": service_object.name}
+                            DeprecatedServiceAlert(service=service_object.name),
                         )
                     return True
 
@@ -219,8 +219,7 @@ class ServiceService(CRUDService):
             if state.running:
                 await self.middleware.call(
                     'alert.oneshot_create',
-                    'DeprecatedService',
-                    {"service": service_object.name}
+                    DeprecatedServiceAlert(service=service_object.name),
                 )
             else:
                 await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
@@ -327,7 +326,7 @@ class ServiceService(CRUDService):
 
         await self.middleware.call('service.notify_running', service)
         if service_object.deprecated:
-            await self.middleware.call('alert.oneshot_create', 'DeprecatedService', {"service": service_object.name})
+            await self.middleware.call('alert.oneshot_create', DeprecatedServiceAlert(service=service_object.name))
 
         return True
 

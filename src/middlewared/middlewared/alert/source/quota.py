@@ -1,8 +1,10 @@
 import datetime
 import logging
 import os
+from dataclasses import dataclass
+from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.size import format_size
@@ -11,25 +13,53 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 logger = logging.getLogger(__name__)
 
 
-class QuotaWarningAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
-    title = "Quota Exceeded on Dataset"
-    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
+@dataclass(kw_only=True)
+class QuotaWarningAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.WARNING,
+        title="Quota Exceeded on Dataset",
+        text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
+    )
+
+    name: str
+    dataset: str
+    used_fraction: float
+    used: str
+    quota_value: str
+    quota_property: str
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return [args['dataset'], args['quota_property']]
 
 
-class QuotaCriticalAlertClass(AlertClass):
-    category = AlertCategory.STORAGE
-    level = AlertLevel.CRITICAL
-    title = "Critical Quota Exceeded on Dataset"
-    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
+@dataclass(kw_only=True)
+class QuotaCriticalAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.STORAGE,
+        level=AlertLevel.CRITICAL,
+        title="Critical Quota Exceeded on Dataset",
+        text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
+    )
+
+    name: str
+    dataset: str
+    used_fraction: float
+    used: str
+    quota_value: str
+    quota_property: str
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return [args['dataset'], args['quota_property']]
 
 
 class QuotaAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(hours=1))
     run_on_backup_node = False
 
-    def __cast_threshold(self, val):
+    def __cast_threshold(self, val: Any) -> int:
         try:
             return abs(int(val))
         except Exception:
@@ -38,8 +68,8 @@ class QuotaAlertSource(ThreadedAlertSource):
             # not crash here
             return 0
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         hostname = self.middleware.call_sync("system.hostname")
         mntinfo = getmntinfo()
         rv = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
@@ -87,21 +117,23 @@ class QuotaAlertSource(ThreadedAlertSource):
                     used = props["usedbydataset"]["value"]
 
                 used_fraction = 100 * used / quota_value
+                klass: type[QuotaCriticalAlert] | type[QuotaWarningAlert]
                 if used_fraction >= critical_threshold:
-                    klass = QuotaCriticalAlertClass
+                    klass = QuotaCriticalAlert
                 elif used_fraction >= warning_threshold:
-                    klass = QuotaWarningAlertClass
+                    klass = QuotaWarningAlert
                 else:
                     continue
 
                 quota_name = quota_property.title()
-                args = {
-                    "name": quota_name,
-                    "dataset": ds,
-                    "used_fraction": used_fraction,
-                    "used": format_size(used),
-                    "quota_value": format_size(quota_value),
-                }
+                instance = klass(
+                    name=quota_name,
+                    dataset=ds,
+                    used_fraction=used_fraction,
+                    used=format_size(used),
+                    quota_value=format_size(quota_value),
+                    quota_property=quota_property,
+                )
 
                 mail = None
                 owner = self._get_owner(ds, props, mntinfo)
@@ -127,18 +159,16 @@ class QuotaAlertSource(ThreadedAlertSource):
                         mail = {
                             "to": [to],
                             "subject": f"{hostname}: {quota_name} exceeded on dataset {ds}",
-                            "text": klass.text % args
+                            "text": instance.format(instance.args())
                         }
 
                 alerts.append(Alert(
-                    klass,
-                    args=args,
-                    key=[ds, quota_property],
+                    instance,
                     mail=mail,
                 ))
         return alerts
 
-    def _get_owner(self, dataset_name, props, mntinfo):
+    def _get_owner(self, dataset_name: str, props: Any, mntinfo: Any) -> int:
         mountpoint = None
         if props["mounted"]["value"] is True:
             if props["mountpoint"]["raw"] == "legacy":

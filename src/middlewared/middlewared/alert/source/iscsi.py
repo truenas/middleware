@@ -1,34 +1,40 @@
+from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 
 
-class ISCSIPortalIPAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'IP Addresses Bound to an iSCSI Portal Were Not Found'
-    text = 'These IP addresses are bound to an iSCSI Portal but not found: %s.'
+class ISCSIPortalIPAlert(NonDataclassAlertClass[str], AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='IP Addresses Bound to an iSCSI Portal Were Not Found',
+        text='These IP addresses are bound to an iSCSI Portal but not found: %s.',
+    )
 
 
 class ISCSIPortalIPAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=60))
 
-    async def check(self):
+    async def check(self) -> Alert[ISCSIPortalIPAlert] | None:
         try:
             started = await self.middleware.call('service.started', 'iscsitarget')
         except Exception:
             # during upgrade this crashed with a timeout error
             # so don't pollute the webUI with tracebacks
-            return
+            return None
         else:
             if not started:
-                return
+                return None
 
         in_use_ips = {i['address'] for i in await self.middleware.call('interface.ip_in_use', {'any': True})}
         portals = {p['id']: p for p in await self.middleware.call('iscsi.portal.query')}
-        ips = set()
+        ips: set[str] = set()
         for target in await self.middleware.call('iscsi.target.query'):
             for group in target['groups']:
                 ips.update(
@@ -51,35 +57,53 @@ class ISCSIPortalIPAlertSource(AlertSource):
                 ips -= ok
 
         if ips:
-            return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
+            return Alert(ISCSIPortalIPAlert(', '.join(ips)))
+        return None
 
 
-class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'iSCSI Authorized Access has an invalid character'
-    text = (
-        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
-        'has a %(field)s containing the invalid character: %(char)r.'
+@dataclass(kw_only=True)
+class ISCSIAuthSecretInvalidCharAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='iSCSI Authorized Access has an invalid character',
+        text=(
+            'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+            'has a %(field)s containing the invalid character: %(char)r.'
+        ),
     )
 
+    field: str
+    tag: int
+    userfield: str
+    user: str
+    char: str
 
-class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'iSCSI Authorized Access has leading or trailing whitespace'
-    text = (
-        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
-        'has a %(field)s containing leading or trailing whitespace.'
+
+@dataclass(kw_only=True)
+class ISCSIAuthSecretWhitespaceAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SHARING,
+        level=AlertLevel.WARNING,
+        title='iSCSI Authorized Access has leading or trailing whitespace',
+        text=(
+            'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+            'has a %(field)s containing leading or trailing whitespace.'
+        ),
     )
+
+    field: str
+    tag: int
+    userfield: str
+    user: str
 
 
 class ISCSIAuthSecretAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
     run_on_backup_node = False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
 
         private_to_public = {
             'user': 'User',
@@ -99,26 +123,24 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                         if char in auth[secretfield]:
                             alerts.append(
                                 Alert(
-                                    ISCSIAuthSecretInvalidCharAlertClass,
-                                    {
-                                        'field': private_to_public[secretfield],
-                                        'tag': auth['tag'],
-                                        'userfield': private_to_public[userfield],
-                                        'user': auth[userfield],
-                                        'char': char,
-                                    },
+                                    ISCSIAuthSecretInvalidCharAlert(
+                                        field=private_to_public[secretfield],
+                                        tag=auth['tag'],
+                                        userfield=private_to_public[userfield],
+                                        user=auth[userfield],
+                                        char=char,
+                                    ),
                                 )
                             )
                     if auth[secretfield] != auth[secretfield].strip():
                         alerts.append(
                             Alert(
-                                ISCSIAuthSecretWhitespaceAlertClass,
-                                {
-                                    'field': private_to_public[secretfield],
-                                    'tag': auth['tag'],
-                                    'userfield': private_to_public[userfield],
-                                    'user': auth[userfield],
-                                },
+                                ISCSIAuthSecretWhitespaceAlert(
+                                    field=private_to_public[secretfield],
+                                    tag=auth['tag'],
+                                    userfield=private_to_public[userfield],
+                                    user=auth[userfield],
+                                ),
                             )
                         )
 

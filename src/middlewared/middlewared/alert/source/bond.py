@@ -3,39 +3,60 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from dataclasses import dataclass
+from typing import Any
+
 from middlewared.alert.base import (
     Alert,
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     AlertSource,
 )
 
 
-class BONDInactivePortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "Ports are Not ACTIVE on BOND Interface"
-    text = "These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch."
+@dataclass(kw_only=True)
+class BONDInactivePortsAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="Ports are Not ACTIVE on BOND Interface",
+        text="These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch.",
+    )
+
+    name: str
+    ports: str
 
 
-class BONDNoActivePortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "There are No ACTIVE Ports on BOND Interface"
-    text = "There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch."
+@dataclass(kw_only=True)
+class BONDNoActivePortsAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="There are No ACTIVE Ports on BOND Interface",
+        text="There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch.",
+    )
+
+    name: str
 
 
-class BONDMissingPortsAlertClass(AlertClass):
-    category = AlertCategory.NETWORK
-    level = AlertLevel.CRITICAL
-    title = "BOND Interface references missing ports"
-    text = "BOND Interface %(name)s references missing ports %(missing)s."
+@dataclass(kw_only=True)
+class BONDMissingPortsAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.NETWORK,
+        level=AlertLevel.CRITICAL,
+        title="BOND Interface references missing ports",
+        text="BOND Interface %(name)s references missing ports %(missing)s.",
+    )
+
+    name: str
+    missing: str
 
 
 class BondStatus(AlertSource):
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         ifaces = {i["id"]: i for i in await self.middleware.call("interface.query")}
         for iface, info in ifaces.items():
             if info["type"] != "LINK_AGGREGATION":
@@ -54,20 +75,18 @@ class BondStatus(AlertSource):
             if missing:
                 alerts.append(
                     Alert(
-                        BONDMissingPortsAlertClass,
-                        {"name": iface, "missing": ", ".join(missing)},
+                        BONDMissingPortsAlert(name=iface, missing=", ".join(missing))
                     )
                 )
             elif not active:
-                alerts.append(Alert(BONDNoActivePortsAlertClass, {"name": iface}))
+                alerts.append(Alert(BONDNoActivePortsAlert(name=iface)))
             elif inactive and (info["lag_protocol"] != "FAILOVER" or len(active) == 1):
                 # 1. if this isn't FAILOVER type and any inactive
                 # 2. OR if it's FAILOVER and we only have 1 active
                 # we need to raise an alert
                 alerts.append(
                     Alert(
-                        BONDInactivePortsAlertClass,
-                        {"name": iface, "ports": ", ".join(inactive)},
+                        BONDInactivePortsAlert(name=iface, ports=", ".join(inactive))
                     )
                 )
 

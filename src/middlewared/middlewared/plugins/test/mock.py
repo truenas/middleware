@@ -1,17 +1,18 @@
 from typing import Any, Literal
 
-from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
 
 
-class SystemTestingAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "System mocking endpoints used"
-    text = "System mocking endpoints used on server."
-
-    deleted_automatically = False
+class SystemTestingAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="System mocking endpoints used",
+        text="System mocking endpoints used on server.",
+        deleted_automatically=False,
+    )
 
 
 class TestService(Service):
@@ -46,7 +47,7 @@ class TestService(Service):
 
         self.middleware.set_mock(name, args, method)
 
-        await self.middleware.call("alert.oneshot_create", "SystemTesting", None)
+        await self.middleware.call("alert.oneshot_create", SystemTestingAlert())
 
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
@@ -66,7 +67,7 @@ class TestService(Service):
         self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
         self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
 
-        await self.middleware.call('alert.oneshot_create', 'SystemTesting', None)
+        await self.middleware.call('alert.oneshot_create', SystemTestingAlert())
 
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
     # When these are mocked over they will be available to users with the "MOCK" role.

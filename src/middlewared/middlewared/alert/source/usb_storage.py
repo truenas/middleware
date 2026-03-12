@@ -4,26 +4,31 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import os
+from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertCategory, AlertClassConfig, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+)
 from middlewared.utils import ProductType
 
 
-class USBStorageAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = 'A USB Storage Device Has Been Connected to This System'
-    text = ('A USB storage device %r has been connected to this system. Please remove that USB device to '
-            'prevent problems with system boot or HA failover.')
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
+class USBStorageAlert(NonDataclassAlertClass[str], AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title='A USB Storage Device Has Been Connected to This System',
+        text=('A USB storage device %r has been connected to this system. Please remove that USB device to '
+              'prevent problems with system boot or HA failover.'),
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+    )
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
     products = (ProductType.ENTERPRISE,)
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]] | Alert[Any] | None:
+        alerts: list[Alert[Any]] = []
         with os.scandir("/dev/disk/by-id") as sdir:
             for i in filter(lambda x: x.name.lower().startswith("usb-"), sdir):
                 resolved_path = os.path.realpath(i.path)
@@ -35,5 +40,5 @@ class USBStorageAlertSource(ThreadedAlertSource):
                     # scenario, we need to ignore the device.
                     continue
                 elif "-part" not in i.name:
-                    alerts.append(Alert(USBStorageAlertClass, resolved_path))
+                    alerts.append(Alert(USBStorageAlert(resolved_path)))
         return alerts

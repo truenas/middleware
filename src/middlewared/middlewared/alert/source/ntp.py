@@ -1,25 +1,32 @@
+from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
-                                    AlertLevel, AlertSource)
+                                    AlertClassConfig, AlertLevel, AlertSource)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.ntp.peers import NTPPeer
 
 
-class NTPHealthCheckAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "NTP Health Check Failed"
-    text = "NTP health check failed - %(reason)s"
+@dataclass(kw_only=True)
+class NTPHealthCheckAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="NTP Health Check Failed",
+        text="NTP health check failed - %(reason)s",
+    )
+
+    reason: str
 
 
 class NTPHealthCheckAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=12))
     run_on_backup_node = False
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         if (await self.middleware.call("system.time_info"))["uptime_seconds"] < 300:
-            return
+            return None
 
         try:
             peers = [NTPPeer(p) for p in (await self.middleware.call("system.ntpserver.peers"))]
@@ -28,18 +35,17 @@ class NTPHealthCheckAlertSource(AlertSource):
             peers = []
 
         if not peers:
-            return
+            return None
 
         active_peer = [x for x in peers if x.is_active()]
         if not active_peer:
             return Alert(
-                NTPHealthCheckAlertClass,
-                {'reason': f'No Active NTP peers: {[{str(x)} for x in peers]}'}
+                NTPHealthCheckAlert(reason=f'No Active NTP peers: {[{str(x)} for x in peers]}')
             )
 
         peer = active_peer[0]
         if peer.offset_in_secs < 300:
-            return
+            return None
 
         msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
-        return Alert(NTPHealthCheckAlertClass, {'reason': msg})
+        return Alert(NTPHealthCheckAlert(reason=msg))

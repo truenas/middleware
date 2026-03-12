@@ -1,3 +1,4 @@
+from middlewared.alert.source.smb import SMBUserMissingHashAlert
 from middlewared.api.current import UserEntry
 from middlewared.service import filterable_api_method, Service, job, private
 from middlewared.utils.sid import get_domain_rid
@@ -108,7 +109,7 @@ class SMBService(Service):
             delete_passdb_entry(entry['username'], entry['user_rid'], clustered)
 
         if broken_entries:
-            self.middleware.call_sync("alert.oneshot_create", "SMBUserMissingHash",
-                                      {'entries': ','.join(broken_entries)})
+            self.middleware.call_sync("alert.oneshot_create",
+                                      SMBUserMissingHashAlert(entries=','.join(broken_entries)))
         else:
             self.middleware.call_sync("alert.oneshot_delete", "SMBUserMissingHash")
