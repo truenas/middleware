@@ -379,6 +379,8 @@ class AlertSource(CallMixin, ABC):
     :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
     """
 
+    class_by_name: dict[str, type[AlertSource]] = {}
+
     schedule: BaseSchedule = IntervalSchedule(timedelta())
 
     products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
@@ -386,12 +388,26 @@ class AlertSource(CallMixin, ABC):
     run_on_backup_node = True
     require_stable_peer = False
 
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        if cls.__name__ not in ["ThreadedAlertSource"]:
+            if not cls.__name__.endswith("AlertSource"):
+                raise NameError(f"Invalid alert source name {cls.__name__}")
+
+            name = cls.__name__.removesuffix("AlertSource")
+
+            if name in AlertSource.class_by_name:
+                raise RuntimeError(f"Alert source {name} is already registered")
+
+            AlertSource.class_by_name[name] = cls
+
     def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
     @property
     def name(self) -> str:
-        return self.__class__.__name__.replace("AlertSource", "")
+        return self.__class__.__name__.removesuffix("AlertSource")
 
     @abstractmethod
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:

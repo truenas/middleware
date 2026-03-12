@@ -4,7 +4,6 @@ import copy
 from datetime import datetime, timezone
 import errno
 from itertools import zip_longest
-import os
 import textwrap
 import time
 from typing import Any
@@ -24,7 +23,6 @@ from middlewared.alert.base import (
     AlertLevel,
     Alert,
     AlertSource,
-    ThreadedAlertSource,
 )
 from middlewared.alert.base import UnavailableException
 from middlewared.api import api_method, Event
@@ -41,15 +39,13 @@ from middlewared.service import (
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
 from middlewared.utils import bisect
-from middlewared.utils.plugins import load_modules, load_classes
-from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.time_utils import utc_now
+import middlewared.alert.source  # noqa: F401
 from middlewared.plugins.alert_.service import ALERT_SERVICES_FACTORIES
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
-ALERT_SOURCES = {}
 SEND_ALERTS_ON_READY = False
 # The below value come from observation from support of how long a M-series boot can take.
 FAILOVER_ALERTS_BACKOFF_SECS = 900
@@ -246,6 +242,7 @@ class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
 
+        self.alert_sources = {name: cls(middleware) for name, cls in AlertSource.class_by_name.items()}
         self.blocked_sources = defaultdict(set)
         self.sources_locks = {}
 
@@ -257,15 +254,6 @@ class AlertService(Service):
             "total_count": 0,
             "total_time": 0,
         })
-
-    @private
-    def load(self):
-        for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
-            for cls in load_classes(module, AlertSource, (ThreadedAlertSource,)):
-                source = cls(self.middleware)
-                if source.name in ALERT_SOURCES:
-                    raise RuntimeError(f"Alert source {source.name} is already registered")
-                ALERT_SOURCES[source.name] = source
 
     @private
     async def initialize(self, load=True):
@@ -283,7 +271,7 @@ class AlertService(Service):
             for alert in await self.middleware.call("datastore.query", "system.alert"):
                 del alert["id"]
 
-                if alert["source"] and alert["source"] not in ALERT_SOURCES:
+                if alert["source"] and alert["source"] not in self.alert_sources:
                     self.logger.info("Alert source %r is no longer present", alert["source"])
                     continue
 
@@ -772,7 +760,7 @@ class AlertService(Service):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
 
-        for alert_source in ALERT_SOURCES.values():
+        for alert_source in self.alert_sources.values():
             if product_type not in alert_source.products:
                 continue
 
@@ -866,7 +854,7 @@ class AlertService(Service):
 
     @private
     async def block_source(self, source_name, timeout=3600):
-        if source_name not in ALERT_SOURCES:
+        if source_name not in self.alert_sources:
             raise CallError("Invalid alert source")
 
         lock = str(uuid.uuid4())
@@ -885,7 +873,7 @@ class AlertService(Service):
         self.blocked_failover_alerts_until = time.monotonic() + FAILOVER_ALERTS_BACKOFF_SECS
 
     async def __run_source(self, source_name):
-        alert_source = ALERT_SOURCES[source_name]
+        alert_source = self.alert_sources[source_name]
 
         start = time.monotonic()
         try:
@@ -1036,7 +1024,7 @@ class AlertService(Service):
 
         :param name: alert source name (without `AlertClass` suffix)
         """
-        alert_source = ALERT_SOURCES.get(name)
+        alert_source = self.alert_sources.get(name)
         if not alert_source:
             raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)
 
@@ -1056,7 +1044,6 @@ async def setup(middleware):
     await middleware.call2(middleware.services.alertservice.load)
     await middleware.call2(middleware.services.alertservice.initialize)
 
-    await middleware.call("alert.load")
     await middleware.call("alert.initialize")
 
     middleware.event_subscribe("system.ready", _event_system)
