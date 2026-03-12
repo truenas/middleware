@@ -105,6 +105,7 @@ class TDBOps:
     store: Callable[..., Any]
     delete: Callable[..., Any]
     clear: Callable[..., Any]
+    vacuum: Callable[..., Any]
 
 
 class TDBHandle:
@@ -311,6 +312,10 @@ class TDBHandle:
 
         return output
 
+    def vacuum(self) -> None:
+        """ Repack the database to free up space """
+        self.ops.vacuum()
+
     def __init__(
         self,
         name: str,
@@ -363,7 +368,8 @@ class TDBHandle:
             fetch=self.hdl.get,
             store=self.hdl.store,
             clear=self.hdl.clear,
-            delete=self.hdl.delete
+            delete=self.hdl.delete,
+            vacuum=self.hdl.repack
         )
 
 
@@ -455,6 +461,10 @@ class CTDBHandle(TDBHandle):
 
         self.hdl.sync_with_tdb_file(tdb_path)
 
+    def vacuum_noop_impl(self) -> None:
+        """ XXX: placeholder until I wrap vacuum op in pyctdb """
+        return
+
     def __init__(self, name: str, options: TDBOptions):
         if pyctdb is None:
             raise RuntimeError('pyctdb module not available')
@@ -479,7 +489,8 @@ class CTDBHandle(TDBHandle):
             fetch=self.hdl.fetch,
             store=self.hdl.store,
             delete=self.hdl.delete,
-            clear=self.hdl.wipe_db
+            clear=self.hdl.wipe_db,
+            vacuum=self.vacuum_noop_impl
         )
 
 
