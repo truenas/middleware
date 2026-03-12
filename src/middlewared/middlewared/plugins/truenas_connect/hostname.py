@@ -11,6 +11,8 @@ from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 
 logger = logging.getLogger('truenas_connect')
 
+_sync_lock = asyncio.Lock()
+
 
 class TNCHostnameService(Service):
 
@@ -52,46 +54,55 @@ class TNCHostnameService(Service):
             raise CallError(str(e))
 
     async def sync_interface_ips(self, event_details=None):
-        tnc_config = await self.middleware.call('tn_connect.config')
+        async with _sync_lock:
+            tnc_config = await self.middleware.call('tn_connect.config')
 
-        # Get interface IPs based on use_all_interfaces flag
-        if tnc_config['use_all_interfaces']:
-            interfaces_ips = await self.middleware.call('tn_connect.get_all_interface_ips')
-        else:
-            interfaces_ips = await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces'])
+            # Get interface IPs based on use_all_interfaces flag
+            if tnc_config['use_all_interfaces']:
+                interfaces_ips = await self.middleware.call('tn_connect.get_all_interface_ips')
+            else:
+                interfaces_ips = await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces'])
 
-        try:
-            cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
-        except KeyError:
-            skip_syncing = False
-        else:
-            skip_syncing = set(cached_ips) == set(interfaces_ips)
+            try:
+                cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
+            except KeyError:
+                skip_syncing = False
+            else:
+                skip_syncing = set(cached_ips) == set(interfaces_ips)
 
-        # If cached IPs are the same as current, skip syncing
-        if skip_syncing:
-            return
+            # If cached IPs are the same as current, skip syncing
+            if skip_syncing:
+                return
 
-        if event_details:
-            logger.info(
-                'Updating IPs for TrueNAS Connect due to %s change on interface %s',
-                event_details['type'], event_details['iface'],
+            if event_details:
+                logger.info(
+                    'Updating IPs for TrueNAS Connect due to %s change on interface %s',
+                    event_details['type'], event_details['iface'],
+                )
+
+            logger.debug('Updating TrueNAS Connect database with interface IPs: %r', ', '.join(interfaces_ips))
+            await self.middleware.call(
+                'datastore.update', 'truenas_connect', tnc_config['id'], {
+                    'interfaces_ips': interfaces_ips,
+                }
             )
 
-        logger.debug('Updating TrueNAS Connect database with interface IPs: %r', ', '.join(interfaces_ips))
-        await self.middleware.call(
-            'datastore.update', 'truenas_connect', tnc_config['id'], {
-                'interfaces_ips': interfaces_ips,
-            }
-        )
+            # Skip HTTP call if no IPs available (static + dynamic combined)
+            # to avoid sending an empty payload that would cause a 400 error.
+            # Still cache the empty result to prevent retry storms from repeated netlink events.
+            combined_ips = tnc_config['ips'] + interfaces_ips
+            if not combined_ips:
+                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
+                return
 
-        logger.debug('Syncing interface IPs for TrueNAS Connect')
-        try:
-            await self.middleware.call('tn_connect.hostname.register_update_ips')
-        except CallError:
-            logger.error('Failed to update IPs with TrueNAS Connect', exc_info=True)
-        else:
-            await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
-            await self.middleware.call_hook('tn_connect.hostname.updated', await self.config())
+            logger.debug('Syncing interface IPs for TrueNAS Connect')
+            try:
+                await self.middleware.call('tn_connect.hostname.register_update_ips')
+            except CallError:
+                logger.error('Failed to update IPs with TrueNAS Connect', exc_info=True)
+            else:
+                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
+                await self.middleware.call_hook('tn_connect.hostname.updated', await self.config())
 
     async def handle_update_ips(self, event_type, args):
         """
