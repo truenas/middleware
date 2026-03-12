@@ -605,9 +605,9 @@ class FailoverEventsService(Service):
             try:
                 logger.info('Retasting disks on standby node')
                 self.run_call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
-                logger.info('Done retasting disks on standby node')
+                logger.info('Done scheduling retasting disks on standby node')
             except Exception:
-                logger.exception('Unexpected failure retasting disks on standby node')
+                logger.exception('Unexpected failure scheduling retasting disks on standby node')
 
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
@@ -1063,7 +1063,7 @@ class FailoverEventsService(Service):
 
         logger.info('Retasting disks (if required)')
         self.run_call('disk.retaste')
-        logger.info('Done retasting disks (if required)')
+        logger.info('Done scheduling retasting disks (if required)')
 
         logger.info('Activating directory services')
         try:
