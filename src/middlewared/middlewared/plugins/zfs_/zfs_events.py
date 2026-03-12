@@ -81,7 +81,7 @@ class ScrubNotStartedAlert(OneShotAlertClass):
     )
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args):
         return args["pool"]
 
 

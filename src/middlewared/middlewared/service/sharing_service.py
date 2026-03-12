@@ -1,5 +1,6 @@
 from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
 
+from middlewared.alert.base import OneShotAlertClass
 from middlewared.alert.source.sharing_tasks import ShareLockedAlert, TaskLockedAlert
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -25,7 +26,7 @@ class SharingTaskService[E](CRUDService[E]):
     allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
-    locked_alert_class: str
+    locked_alert_class: type[OneShotAlertClass]
     share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By

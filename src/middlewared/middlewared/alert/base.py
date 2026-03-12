@@ -150,9 +150,20 @@ class AlertClass:
 class NonDataclassAlertClass[T]:
     """Mixin for alert classes that use positional format strings (string or list args).
 
-    Must be listed FIRST in bases (before AlertClass) for correct MRO:
+    Must be listed FIRST in bases (before AlertClass) for correct MRO::
+
         class MyAlert(NonDataclassAlertClass[str], AlertClass): ...
     """
+
+    def __init_subclass__(cls: type[NonDataclassAlertClass[Any]]) -> None:
+        super().__init_subclass__()
+
+        mro = cls.__mro__
+        if AlertClass in mro:
+            if mro.index(NonDataclassAlertClass) > mro.index(AlertClass):
+                raise TypeError(
+                    f"{cls.__name__}: NonDataclassAlertClass must be listed before AlertClass in bases for correct MRO"
+                )
 
     def __init__(self, args: T):
         self._args = args

@@ -543,7 +543,7 @@ class CloudSyncTaskFailedAlert(OneShotAlertClass):
     name: str
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args):
         return args["id"]
 
     @classmethod
