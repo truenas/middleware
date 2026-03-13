@@ -183,6 +183,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return await self.query(name, [], options)
 
     def _get_queryset_joins(self, table):
+        """Return a mapping of ForeignKey → aliased Table for all FK columns on table.
+
+        Recurses into joined tables so that chains of foreign keys are fully
+        resolved, enabling deep relationship loading in a single query.
+        """
         result = {}
         for column in table.c:
             if column.foreign_keys:
@@ -201,6 +206,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     async def _queryset_serialize(
         self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select, extra_options, fk_attrs,
     ):
+        """Serialize raw query rows to dicts and apply extend/select transformations.
+
+        Calls extend once per row (or once with context for extend_context) and
+        then applies per-FK extend passes for any foreign keys listed in fk_attrs.
+        """
         rows = []
         for i, row in enumerate(qs):
             rows.append(self._serialize(row, table, aliases, relationships[i], field_prefix, fk_attrs))
@@ -232,6 +242,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return result
 
     def _serialize(self, obj, table, aliases, relationships, field_prefix, fk_attrs):
+        """Convert one result row to a dict, stripping the field prefix and merging pre-fetched relationship data."""
         data = self._serialize_row(obj, table, aliases)
         data.update(relationships)
 
@@ -245,6 +256,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return result
 
     async def _extend(self, data, extend, extend_context, extend_context_value, select):
+        """Call the extend method on a row dict and apply field selection if requested."""
         if extend:
             if extend_context:
                 data = await self.middleware.call(extend, data, extend_context_value)
@@ -257,9 +269,16 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             return do_select([data], select)[0]
 
     def _strip_prefix(self, k, field_prefix):
+        """Remove field_prefix from k if k starts with it, otherwise return k unchanged."""
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k
 
     def _serialize_row(self, obj, table, aliases):
+        """Produce a raw key→value dict from one query row.
+
+        Scalar columns are included directly. FK columns (ending in _id) are
+        replaced by a nested dict built by recursing into the joined alias table.
+        A NULL FK value or a NULL joined PK produces None for that key.
+        """
         data = {}
 
         for column in table.c:
@@ -285,6 +304,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return data
 
     async def _fetch_many_to_many(self, table, rows):
+        """Fetch many-to-many related rows for every PK in rows.
+
+        For each relationship on the table, queries the junction table to collect
+        child IDs, then fetches the child rows in bulk and groups them back by
+        parent PK. Returns a list of relationship dicts aligned with rows.
+        """
         pk = self._get_pk(table)
         pk_values = [row[pk.name] for row in rows]
 

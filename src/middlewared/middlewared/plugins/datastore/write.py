@@ -147,6 +147,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return id_
 
     def _extract_relationships(self, table, prefix, data):
+        """Split data into scalar column values and many-to-many relationship entries.
+
+        Returns (insert_dict, relationships_list) where insert_dict contains
+        values for regular columns and relationships_list pairs each SQLAlchemy
+        relationship object with its list of target PKs.
+        """
         relationships = self._get_relationships(table)
 
         insert = {}
@@ -161,6 +167,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return insert, insert_relationships
 
     async def _handle_relationships(self, pk, relationships):
+        """Replace junction-table rows for pk with the new set of related PKs.
+
+        Deletes all existing rows in each junction table for this pk before
+        inserting the new values, implementing a full replace rather than a diff.
+        """
         for relationship, values in relationships:
             assert len(relationship.synchronize_pairs) == 1
             assert len(relationship.secondary_synchronize_pairs) == 1
