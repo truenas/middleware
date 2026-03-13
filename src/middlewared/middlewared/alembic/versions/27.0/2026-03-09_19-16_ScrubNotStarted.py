@@ -1,7 +1,7 @@
 """Remove ScrubNotStarted alerts
 
 Revision ID: 3fc58b28ce77
-Revises: ad6bd79a37d7
+Revises: f3b4b0f4b0cf
 Create Date: 2026-03-09 19:16:31.067201+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '3fc58b28ce77'
-down_revision = 'ad6bd79a37d7'
+down_revision = 'f3b4b0f4b0cf'
 branch_labels = None
 depends_on = None
 
