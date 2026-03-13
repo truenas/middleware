@@ -1,4 +1,4 @@
-"""empty message
+"""Merge.
 
 Revision ID: ef6c293fc34f
 Revises: 3fc58b28ce77
