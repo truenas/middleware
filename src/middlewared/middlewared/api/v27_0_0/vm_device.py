@@ -1,10 +1,9 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import ConfigDict, Field, model_validator, RootModel, Secret
+from pydantic import Field, model_validator, RootModel, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
 )
 
 
@@ -13,15 +12,16 @@ __all__ = [
     'VMDeviceType', 'VMDeviceEntry', 'VMDeviceCreateArgs', 'VMDeviceCreateResult', 'VMDeviceUpdateArgs',
     'VMDeviceUpdateResult', 'VMDeviceDeleteArgs', 'VMDeviceDeleteResult', 'VMDeviceDiskChoicesArgs',
     'VMDeviceDiskChoicesResult', 'VMDeviceIotypeChoicesArgs', 'VMDeviceIotypeChoicesResult',
-    'VMDeviceNicAttachChoicesArgs',
+    'VMDeviceNicAttachChoicesArgs', 'VMDevicePassthroughDevice', 'VMDevicePassthroughInfo',
     'VMDeviceNicAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
     'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIommuEnabledArgs',
     'VMDeviceIommuEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
     'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
     'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
     'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
-    'VMDeviceConvertArgs', 'VMDeviceConvertResult',
-    'VMDeviceVirtualSizeArgs', 'VMDeviceVirtualSizeResult'
+    'VMDeviceConvertArgs', 'VMDeviceConvertResult', 'USBPassthroughInfo', 'VMDeviceCreate',
+    'VMDeviceVirtualSize', 'VMDeviceVirtualSizeArgs', 'VMDeviceVirtualSizeResult', 'VMDeviceDeleteOptions',
+    'VMDeviceUpdate', 'VMDeviceNicAttachChoices', 'VMDeviceIotypeChoices', 'VMDeviceConvert',
 ]
 
 
@@ -181,9 +181,9 @@ class VMDeviceCreate(VMDeviceEntry):
     id: Excluded = excluded_field()
 
 
-@single_argument_args('vm_device_create')
-class VMDeviceCreateArgs(VMDeviceCreate):
-    pass
+class VMDeviceCreateArgs(BaseModel):
+    vm_device_create: VMDeviceCreate
+    """VM device creation parameters."""
 
 
 class VMDeviceCreateResult(BaseModel):
@@ -234,12 +234,8 @@ class VMDeviceDiskChoicesArgs(BaseModel):
     pass
 
 
-class VMDeviceDiskChoices(BaseModel):
-    model_config = ConfigDict(extra='allow')
-
-
 class VMDeviceDiskChoicesResult(BaseModel):
-    result: VMDeviceDiskChoices
+    result: dict[str, str]
     """Available disk devices and storage volumes for VM attachment."""
 
 
@@ -247,8 +243,7 @@ class VMDeviceIotypeChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMDeviceIotypeChoicesResult(BaseModel):
+class VMDeviceIotypeChoices(BaseModel):
     NATIVE: str = 'NATIVE'
     """Native asynchronous I/O for best performance with NVMe."""
     THREADS: str = 'THREADS'
@@ -257,25 +252,33 @@ class VMDeviceIotypeChoicesResult(BaseModel):
     """Linux io_uring interface for high-performance async I/O."""
 
 
+class VMDeviceIotypeChoicesResult(BaseModel):
+    result: VMDeviceIotypeChoices
+    """IO-type choices for storage devices."""
+
+
 class VMDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMDeviceNicAttachChoicesResult(BaseModel):
+class VMDeviceNicAttachChoices(BaseModel):
     BRIDGE: list[str]
     """Available bridge interfaces for NIC attachment."""
     MACVLAN: list[str]
     """Available parent interfaces for creating MACVLAN NIC devices."""
 
 
+class VMDeviceNicAttachChoicesResult(BaseModel):
+    result: VMDeviceNicAttachChoices
+    """Available NIC attach choices."""
+
+
 class VMDeviceBindChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
 class VMDeviceBindChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    result: dict[str, str]
     """Available IP addresses for VM display server binding."""
 
 
@@ -427,12 +430,16 @@ class VMDeviceUsbControllerChoicesResult(BaseModel):
     """Available USB controller types for virtual machines."""
 
 
-@single_argument_args('vm_convert')
-class VMDeviceConvertArgs(BaseModel):
+class VMDeviceConvert(BaseModel):
     source: NonEmptyString
     """Source path for the conversion (disk image file or ZFS volume)."""
     destination: NonEmptyString
     """Destination path for the conversion (disk image file or ZFS volume)."""
+
+
+class VMDeviceConvertArgs(BaseModel):
+    vm_convert: VMDeviceConvert
+    """VM device conversion parameters."""
 
 
 class VMDeviceConvertResult(BaseModel):
@@ -440,10 +447,14 @@ class VMDeviceConvertResult(BaseModel):
     """Whether the conversion operation was successful."""
 
 
-@single_argument_args('vm_virtual_size')
-class VMDeviceVirtualSizeArgs(BaseModel):
+class VMDeviceVirtualSize(BaseModel):
     path: str
     """Absolute path to the disk image."""
+
+
+class VMDeviceVirtualSizeArgs(BaseModel):
+    vm_virtual_size: VMDeviceVirtualSize
+    """VM device virtual size parameters."""
 
 
 class VMDeviceVirtualSizeResult(BaseModel):

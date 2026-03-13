@@ -322,8 +322,8 @@ class PoolSnapshotService(CRUDService):
         # VM suspend setup
         affected_vms = {}
         if suspend_vms:
-            if affected_vms := self.middleware.call_sync('vm.query_snapshot_begin', dataset, recursive):
-                self.middleware.call_sync('vm.suspend_vms', list(affected_vms))
+            if affected_vms := self.call_sync2(self.s.vm.query_snapshot_begin, dataset, recursive):
+                self.call_sync2(self.s.vm.suspend_vms, list(affected_vms))
 
         try:
             # Create snapshot via zfs.resource.snapshot.create_impl
@@ -352,7 +352,7 @@ class PoolSnapshotService(CRUDService):
             )
         finally:
             if affected_vms:
-                self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
+                self.call_sync2(self.s.vm.resume_suspended_vms, list(affected_vms))
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 

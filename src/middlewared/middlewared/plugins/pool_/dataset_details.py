@@ -186,9 +186,10 @@ class PoolDatasetService(Service):
 
         # vm
         vms = {vm['id']: vm for vm in self.middleware.call_sync('datastore.query', 'vm.vm')}
-        for vm_device in self.middleware.call_sync('vm.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK']]]):
-            results['vm'].append(vm_device | self._parse_virtualization_device_info(vm_device) | {
-                'vm_name': vms[vm_device['vm']]['name'],
+        for vm_device in self.call_sync2(self.s.vm.device.query, [['attributes.dtype', 'in', ['RAW', 'DISK']]]):
+            vm_device_dict = vm_device.model_dump(by_alias=True)
+            results['vm'].append(vm_device_dict | self._parse_virtualization_device_info(vm_device_dict) | {
+                'vm_name': vms[vm_device.vm]['name'],
             })
 
         # containers

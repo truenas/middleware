@@ -59,7 +59,7 @@ class ShellWorkerThread(threading.Thread):
                 "-c",
                 "qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock",
                 "console",
-                f'{options["vm_data"]["uuid"]}',
+                f'{options["vm_data"].uuid}',
             ]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
@@ -329,8 +329,8 @@ class ShellApplication:
 
                 options = data.get("options", {})
                 if options.get("vm_id"):
-                    options["vm_data"] = await self.middleware.call(
-                        "vm.get_instance", options["vm_id"]
+                    options["vm_data"] = await self.middleware.call2(
+                        self.middleware.services.vm.get_instance, options["vm_id"]
                     )
 
                 if options.get("container_id"):

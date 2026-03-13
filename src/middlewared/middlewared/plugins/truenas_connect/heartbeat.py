@@ -146,7 +146,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         stats = await self.middleware.call('reporting.realtime.stats', disk_mapping)
         # We would like to add app/vm stats here as well now
         apps = await self.middleware.call('app.query')
-        vms = await self.middleware.call('vm.query')
+        vms = await self.call2(self.s.vm.query)
         stats.update({
             'apps': {
                 'total': len(apps),
@@ -154,7 +154,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             },
             'vms': {
                 'total': len(vms),
-                'running': len([vm for vm in vms if vm['status']['state'] == 'RUNNING']),
+                'running': len([vm for vm in vms if vm.status.state == 'RUNNING']),
             },
         })
         return {

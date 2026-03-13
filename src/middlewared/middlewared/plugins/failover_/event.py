@@ -1087,12 +1087,12 @@ class FailoverEventsService(Service):
 
     def start_vms(self):
         logger.info('Starting VMs which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('vm.start_on_boot'))
+        self.middleware.create_task(self.call2(self.s.vm.start_on_boot))
 
     def stop_vms(self):
         logger.info('Trying to gracefully stop VMs')
         try:
-            self.run_call('vm.handle_shutdown')
+            self.call_sync2(self.s.vm.handle_shutdown)
         except Exception:
             logger.error('Failed to gracefully stop VMs', exc_info=True)
 

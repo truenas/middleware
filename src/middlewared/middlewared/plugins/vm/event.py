@@ -1,30 +1,28 @@
-import functools
-import logging
+from __future__ import annotations
 
-from truenas_pylibvirt.libvirtd.connection import DomainState
+from typing import TYPE_CHECKING
 
-
-logger = logging.getLogger(__name__)
+from middlewared.api.current import QueryOptions
 
 
-STOPPED_STATES = [DomainState.SHUTDOWN, DomainState.SHUTOFF, DomainState.CRASHED]
+if TYPE_CHECKING:
+    from truenas_pylibvirt.libvirtd.connection import DomainEvent
+
+    from middlewared.main import Middleware
 
 
-def vm_domain_event_callback(middleware, event):
+def vm_domain_event_callback(middleware: Middleware, event: DomainEvent) -> None:
     """
     Handle VM domain lifecycle events from libvirt.
 
     Sends CHANGED events for all libvirt state changes and cleans up memory on stop.
     VM CRUD events (create/update/delete) are handled automatically by CRUDService.
     """
-    vm = middleware.call_sync('vm.query', [['uuid', '=', event.uuid]], {'force_sql_filters': True})
-    if not vm:
+    vms = middleware.call_sync2(
+        middleware.services.vm.query, [['uuid', '=', event.uuid]], QueryOptions(force_sql_filters=True)
+    )
+    if not vms:
         return
 
-    middleware.send_event('vm.query', 'CHANGED', id=vm[0]['id'], fields=vm[0])
-
-
-async def setup(middleware):
-    middleware.libvirt_domains_manager.vms.connection.register_domain_event_callback(
-        functools.partial(vm_domain_event_callback, middleware)
-    )
+    vm = vms[0]
+    middleware.send_event('vm.query', 'CHANGED', id=vm.id, fields=vm.model_dump(by_alias=True))

@@ -42,6 +42,7 @@ jobs:
             middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \
             middlewared/plugins/ups/ \
+            middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
             --exclude middlewared/etc_files \
             --follow-imports silent \

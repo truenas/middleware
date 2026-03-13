@@ -1,14 +1,22 @@
+from __future__ import annotations
+
 import os
 import shutil
+import typing
 
+from middlewared.api.current import VMEntry
 from middlewared.plugins.vm.utils import get_vm_nvram_file_name, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
+
+
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 DEFAULT_NVRAM_FOLDER_PATH = '/var/lib/libvirt/qemu/nvram'
 SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA = '/data/subsystems/vm/nvram'
 
 
-def migrate(middleware):
+def migrate(middleware: Middleware) -> None:
     os.makedirs(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, exist_ok=True)
     os.chown(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID)
 
@@ -16,15 +24,15 @@ def migrate(middleware):
         middleware.logger.debug('Skipping nvram migration as system is HA capable')
         return
 
-    for vm in middleware.call_sync('vm.query', [['bootloader', '=', 'UEFI']]):
+    for vm in middleware.call_sync2(middleware.services.vm.query, [['bootloader', '=', 'UEFI']]):
         try:
             migrate_vm_nvram_file(middleware, vm)
         except Exception:
-            middleware.logger.error('Failed to migrate nvram file for VM %r(%r)', vm['name'], vm['id'], exc_info=True)
+            middleware.logger.error('Failed to migrate nvram file for VM %r(%r)', vm.name, vm.id, exc_info=True)
 
 
-def migrate_vm_nvram_file(middleware, vm):
-    file_name = get_vm_nvram_file_name(vm)
+def migrate_vm_nvram_file(middleware: Middleware, vm: VMEntry) -> None:
+    file_name = get_vm_nvram_file_name(vm.id, vm.name)
     new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, file_name)
     to_copy_path = os.path.join(DEFAULT_NVRAM_FOLDER_PATH, file_name)
     if os.path.exists(to_copy_path):
@@ -33,5 +41,5 @@ def migrate_vm_nvram_file(middleware, vm):
     else:
         # File does not exist for us to copy, so we need to just log it
         middleware.logger.debug(
-            'No nvram file found for VM %r(%r), hence setting it up with %r', vm['name'], vm['id'], new_path
+            'No nvram file found for VM %r(%r), hence setting it up with %r', vm.name, vm.id, new_path
         )

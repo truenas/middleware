@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
+
 from truenas_pylibvirt.device import (
     CDROMDevice, DisplayDevice, NICDevice, PCIDevice, DiskStorageDevice, RawStorageDevice, USBDevice,
 )
@@ -14,22 +18,26 @@ from middlewared.utils.libvirt.pci import PCIDelegate
 from middlewared.utils.libvirt.storage_devices import DiskDelegate, RAWDelegate
 from middlewared.utils.libvirt.usb import USBDelegate
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 def validate_storage_fields(
-    device: dict,
+    device: dict[str, Any],
     verrors: ValidationErrors,
-    old: dict | None = None,
-    instance: dict | None = None,
+    old: dict[str, Any] | None = None,
+    instance: dict[str, Any] | None = None,
     update: bool = True,
 ) -> None:
     if update is False:
         device['attributes']['serial'] = generate_string(8)
-    elif not device['attributes'].get('serial'):
-        # As this is a json field, ensure that some consumer does not remove this value, in that case
-        # we preserve the original value
-        device['attributes']['serial'] = old['attributes']['serial']
-    elif device['attributes']['serial'] != old['attributes']['serial']:
-        verrors.add('attributes.serial', 'This field is read-only.')
+    elif old is not None:
+        if not device['attributes'].get('serial'):
+            # As this is a json field, ensure that some consumer does not remove this value, in that case
+            # we preserve the original value
+            device['attributes']['serial'] = old['attributes']['serial']
+        elif device['attributes']['serial'] != old['attributes']['serial']:
+            verrors.add('attributes.serial', 'This field is read-only.')
 
     logical_sectorsize = device['attributes'].get('logical_sectorsize')
     physical_sectorsize = device['attributes'].get('physical_sectorsize')
@@ -45,47 +53,47 @@ def validate_storage_fields(
 class VMCDROMDelegate(CDROMDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMCDROMDevice]:
         return VMCDROMDevice
 
 
 class VMDisplayDelegate(DisplayDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMDisplayDevice]:
         return VMDisplayDevice
 
 
 class VMNICDelegate(NICDelegate):
 
     @property
-    def nic_choices_endpoint(self):
+    def nic_choices_endpoint(self) -> str:
         return 'vm.device.nic_attach_choices'
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMNICDevice]:
         return VMNICDevice
 
 
 class VMPCIDelegate(PCIDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMPCIDevice]:
         return VMPCIDevice
 
 
 class VMRAWDelegate(RAWDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMRAWDevice]:
         return VMRAWDevice
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         super().validate_middleware(device, verrors, old, instance, update)
@@ -106,15 +114,15 @@ class VMRAWDelegate(RAWDelegate):
 class VMDiskDelegate(DiskDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMDiskDevice]:
         return VMDiskDevice
 
     def validate_middleware(
         self,
-        device: dict,
+        device: dict[str, Any],
         verrors: ValidationErrors,
-        old: dict | None = None,
-        instance: dict | None = None,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
         super().validate_middleware(device, verrors, old, instance, update)
@@ -124,11 +132,12 @@ class VMDiskDelegate(DiskDelegate):
 class VMUSBDelegate(USBDelegate):
 
     @property
-    def schema_model(self):
+    def schema_model(self) -> type[VMUSBDevice]:
         return VMUSBDevice
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
+    device_factory = middleware.services.vm.device.device_factory
     for device_key, device_klass, delegate_klass in (
         ('CDROM', CDROMDevice, VMCDROMDelegate),
         ('DISK', DiskStorageDevice, VMDiskDelegate),
@@ -138,4 +147,4 @@ async def setup(middleware):
         ('PCI', PCIDevice, VMPCIDelegate),
         ('DISPLAY', DisplayDevice, VMDisplayDelegate),
     ):
-        await middleware.call('vm.device.register_pylibvirt_device', device_key, device_klass, delegate_klass)
+        device_factory.register(device_key, device_klass, delegate_klass)
