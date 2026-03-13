@@ -1230,7 +1230,7 @@ class InterfaceService(CRUDService):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
         if 'fec_mode' in data:
             if new['type'] == 'PHYSICAL':
-                if available := await self.available_fec_modes(oid):
+                if available := self.available_fec_modes(oid):
                     if data['fec_mode'] not in available:
                         verrors.add(
                             'interface_update.fec_mode',
@@ -1485,13 +1485,13 @@ class InterfaceService(CRUDService):
         return {i.value: i.value for i in LacpduRateChoices}
 
     @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
-    async def available_fec_modes(self, id_):
+    def available_fec_modes(self, id_):
         """
         Returns FEC modes supported by interface `id`.
 
         Returns an empty list if the interface does not exist or does not support FEC.
         """
-        return await self.middleware.run_in_thread(get_ethtool().get_fec_modes, id_)
+        return get_ethtool().get_fec_modes(id_)
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):
