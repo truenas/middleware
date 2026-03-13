@@ -5,6 +5,8 @@ import itertools
 import os
 import shutil
 
+from middlewared.alert.source.nfs_bindaddr import NFSBindAddressAlert
+from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     NFSEntry,
@@ -94,7 +96,7 @@ class NFSService(SystemServiceService):
 
     @private
     def name_to_id_conversion(self, name, name_type='user'):
-        ''' Convert built-in user or group name to associated UID or GID '''
+        """ Convert built-in user or group name to associated UID or GID """
         if any((not isinstance(name, str), isinstance(name, int))):
             # it's not a string (NoneType, float, w/e) or it's an int
             # so there is nothing to do
@@ -118,7 +120,7 @@ class NFSService(SystemServiceService):
 
     @private
     def setup_directories(self):
-        '''
+        """
         We are moving the NFS state directory from /var/lib/nfs to
         the system dataset: /var/db/system/nfs.
         When setup_directories is called /var/db/system/nfs is expected to exist.
@@ -127,7 +129,7 @@ class NFSService(SystemServiceService):
         and there might be current info in /var/lib/nfs.
 
         We always make sure the expected directories are present
-        '''
+        """
 
         # Initialize the system dataset NFS state directory
         state_dir = NFSServicePathInfo.STATEDIR.path()
@@ -228,7 +230,7 @@ class NFSService(SystemServiceService):
             return bindip
         else:
             if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
-                await self.middleware.call('alert.oneshot_create', 'NFSBindAddress', None)
+                await self.middleware.call('alert.oneshot_create', NFSBindAddressAlert())
 
             return []
 
@@ -334,7 +336,10 @@ class NFSService(SystemServiceService):
             for bindip in (new['bindip'] or ['0.0.0.0']):
                 verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs', bindip))
 
-        if await self.middleware.call("failover.licensed") and NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
+        if (
+            await self.middleware.call("failover.licensed") and
+            NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled
+        ):
             gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
             if not gc["gc_hostname_virtual"] or not gc["gc_domain"]:
                 verrors.add(
@@ -666,7 +671,7 @@ class SharingNFSService(SharingService):
         # Register a warning level alert for excessively long list of network entries
         if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:
             await self.middleware.call(
-                'alert.oneshot_create', 'NFSNetworkListExcessive', {'sharePath': data['path'], 'numEntries': netlen}
+                'alert.oneshot_create', NFSNetworkListExcessiveAlert(sharePath=data['path'], numEntries=netlen)
             )
         else:
             await self.middleware.call(
@@ -679,7 +684,7 @@ class SharingNFSService(SharingService):
         # Register a warning level alert for excessively long list of host entries
         if (hostlen := len(data['hosts'])) >= NFS_HOSTS_WARNING_THRESHOLD:
             await self.middleware.call(
-                'alert.oneshot_create', 'NFSHostListExcessive', {'sharePath': data['path'], 'numEntries': hostlen}
+                'alert.oneshot_create', NFSHostListExcessiveAlert(sharePath=data['path'], numEntries=hostlen)
             )
         else:
             await self.middleware.call(
@@ -760,9 +765,11 @@ class SharingNFSService(SharingService):
                         return None
                     else:
                         try:
-                            dns_addresses = [x['address'] for x in await self.middleware.call('dnsclient.forward_lookup', {
-                                'names': [hostname]
-                            })]
+                            dns_addresses = [
+                                x['address'] for x in await self.middleware.call(
+                                    'dnsclient.forward_lookup', {'names': [hostname]},
+                                )
+                            ]
                             # We might get both IPv4 and IPv6 addresses, the caller expects a single response
                             return dns_addresses[0]
                         except Exception as e:

@@ -2,6 +2,7 @@ import asyncio
 import re
 import time
 
+from middlewared.alert.source.truecommand import TruecommandConnectionHealthAlert
 from middlewared.api.current import TruecommandStatus
 from middlewared.service import CallError, periodic, private, Service
 from middlewared.utils import run
@@ -48,7 +49,7 @@ class TruecommandService(Service):
             # Stop wireguard if it's running and start polling the api to see what's up
             await self.middleware.call('truecommand.set_status', TruecommandStatus.CONNECTING.value)
             await self.stop_truecommand_service()
-            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
+            await self.middleware.call('alert.oneshot_create', TruecommandConnectionHealthAlert())
             await self.middleware.call('truecommand.poll_api_for_status')
         else:
             # Mark the connection as connected - we do this for just in case user never called
@@ -100,8 +101,12 @@ class TruecommandService(Service):
             if TruecommandStatus(config['api_key_state']) == TruecommandStatus.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
-                await (await self.middleware.call('service.control', 'START', 'truecommand', {'ha_propagate': False})).wait(raise_error=True)
-                await (await self.middleware.call('service.control', 'RELOAD', 'http', {'ha_propagate': False})).wait(raise_error=True)
+                await (await self.middleware.call(
+                    'service.control', 'START', 'truecommand', {'ha_propagate': False},
+                )).wait(raise_error=True)
+                await (await self.middleware.call(
+                    'service.control', 'RELOAD', 'http', {'ha_propagate': False},
+                )).wait(raise_error=True)
                 asyncio.get_event_loop().call_later(
                     30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
                     lambda: self.middleware.create_task(self.middleware.call('truecommand.health_check')),

@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.source.kmip import KMIPZFSDatasetsSyncFailureAlert
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.encryption import check_key
 from middlewared.service import job, private, Service
@@ -142,7 +143,7 @@ class KMIPService(Service, KMIPServerMixin):
             failed = self.pull_zfs_keys(tls)  # type: ignore
         if failed:
             self.middleware.call_sync(
-                'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
+                'alert.oneshot_create', KMIPZFSDatasetsSyncFailureAlert(datasets=','.join(failed))
             )
         self.middleware.call_hook_sync('kmip.zfs_keys_sync')
         return failed

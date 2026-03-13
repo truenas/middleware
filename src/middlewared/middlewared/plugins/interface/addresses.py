@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import socket
 
 from truenas_pynetif.address.address import add_address, remove_address, replace_address
@@ -12,6 +13,7 @@ from truenas_pynetif.netlink import AddressDoesNotExist, AddressInfo, LinkInfo
 
 from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop
 from middlewared.service import ServiceContext
+from middlewared.utils.interface import NETIF_COMPLETE_SENTINEL
 
 from .sync_data import SyncData
 
@@ -171,17 +173,6 @@ def configure_addresses_impl(
         "tunable.set_sysctl", f"net.ipv6.conf.{name}.autoconf", autoconf
     )
 
-    # Handle keepalived for VIPs
-    if vip or alias_vips:
-        if not ctx.middleware.call_sync("service.started", "keepalived"):
-            ctx.middleware.call_sync(
-                "service.control", "START", "keepalived"
-            ).wait_sync(raise_error=True)
-        else:
-            ctx.middleware.call_sync(
-                "service.control", "RELOAD", "keepalived"
-            ).wait_sync(raise_error=True)
-
     # Add addresses in database but not configured
     for addr in addrs_database - addrs_configured:
         address = addr.address
@@ -195,6 +186,27 @@ def configure_addresses_impl(
             index=link_index,
             broadcast=addr.broadcast,
         )
+
+    # Bring interface up
+    if not (link.flags & IFFlags.UP):
+        set_link_up(sock, index=link_index)
+
+    # Handle keepalived for VIPs.  Skip the START during early boot (when called
+    # from ix-netif.service) because keepalived requires network-online.target
+    # which cannot be reached until ix-netif.service itself completes — starting
+    # it here would deadlock for 95s.  The sentinel is written by ix-netif.service
+    # on successful completion, so its presence means the network is up.
+    if vip or alias_vips:
+        if ctx.middleware.call_sync("service.started", "keepalived"):
+            ctx.middleware.call_sync(
+                "service.control", "RELOAD", "keepalived"
+            ).wait_sync(raise_error=True)
+        elif os.path.exists(NETIF_COMPLETE_SENTINEL):
+            ctx.middleware.call_sync(
+                "service.control", "START", "keepalived"
+            ).wait_sync(raise_error=True)
+        # else: early boot call from ix-netif.service; keepalived will be
+        # started later once network-online.target is satisfied.
 
     # Configure MTU (skip for bond members)
     skip_mtu = sync_data.is_bond_member(name)
@@ -222,10 +234,6 @@ def configure_addresses_impl(
             ctx.logger.warning(
                 "Failed to set interface description on %s", name, exc_info=True
             )
-
-    # Bring interface up
-    if not (link.flags & IFFlags.UP):
-        set_link_up(sock, index=link_index)
 
     # Return True if DHCP should be started
     return not status.running and data["int_dhcp"]

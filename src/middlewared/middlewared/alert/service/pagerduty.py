@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 import json
+from typing import Any
 
 import html2text
 import requests
 
-from middlewared.alert.base import ProThreadedAlertService, ellipsis
+from middlewared.alert.base import Alert, ProThreadedAlertService, ellipsis
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class PagerDutyAlertService(ProThreadedAlertService):
     title = "PagerDuty"
 
-    def create_alert(self, alert):
+    def create_alert(self, alert: Alert[Any]) -> None:
         r = requests.post(
             "https://events.pagerduty.com/generic/2010-04-15/create_event.json",
             headers={"Content-type": "application/json"},
@@ -25,7 +28,7 @@ class PagerDutyAlertService(ProThreadedAlertService):
         )
         r.raise_for_status()
 
-    def delete_alert(self, alert):
+    def delete_alert(self, alert: Alert[Any]) -> None:
         r = requests.post(
             "https://events.pagerduty.com/generic/2010-04-15/create_event.json",
             headers={"Content-type": "application/json"},

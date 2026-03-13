@@ -13,6 +13,8 @@ import fcntl
 import os
 import struct
 
+import truenas_os
+
 ZFS_IOC_GETATTRS = 0x80088301
 ZFS_IOC_SETATTRS = 0x40088302
 
@@ -160,14 +162,12 @@ def set_zfs_file_attributes_dict(path: str, attrs_in: dict[str, bool | None]) ->
     When operation succeeds a dictionary will be returned with current values
     of attributes on the file.
 
-    NOTE: if caller is concerned about TOCTOU issues with path lookups, then a
-    procfd path ("/proc/self/fd/<fd>") with an already-open fd may be used in lieu
-    of a regular filesystem path.
     """
     attrs = {key: value for key, value in attrs_in.items() if value is not None}
-    open_flags = os.O_DIRECTORY if os.path.isdir(path) else os.O_RDWR
-
-    fd = os.open(path, open_flags)
+    try:
+        fd = truenas_os.openat2(path, os.O_RDWR, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+    except IsADirectoryError:
+        fd = truenas_os.openat2(path, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
 
     try:
         current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))

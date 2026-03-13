@@ -4,9 +4,9 @@ from unittest.mock import Mock
 import pytest
 
 from middlewared.alert.source.enclosure_status import (
-    EnclosureHealthyAlertClass,
+    EnclosureHealthyAlert,
     EnclosureStatusAlertSource,
-    EnclosureUnhealthyAlertClass,
+    EnclosureUnhealthyAlert,
 )
 from middlewared.pytest.unit.middleware import Middleware
 
@@ -57,8 +57,8 @@ async def test__enc_all_healthy_single():
     alerts = await source.check()
 
     assert len(alerts) == 1
-    assert alerts[0].klass == EnclosureHealthyAlertClass
-    assert alerts[0].args == ["EncA (id: id-a)"]
+    assert isinstance(alerts[0].instance, EnclosureHealthyAlert)
+    assert alerts[0].instance.args() == ["EncA (id: id-a)"]
 
 
 @pytest.mark.asyncio
@@ -92,8 +92,8 @@ async def test__enc_bad_element_removes_correct_enclosure_from_healthy():
         await source.check()
     alerts = await source.check()
 
-    healthy_args = [a.args for a in alerts if a.klass == EnclosureHealthyAlertClass]
-    unhealthy_alerts = [a for a in alerts if a.klass == EnclosureUnhealthyAlertClass]
+    healthy_args = [a.instance.args() for a in alerts if isinstance(a.instance, EnclosureHealthyAlert)]
+    unhealthy_alerts = [a for a in alerts if isinstance(a.instance, EnclosureUnhealthyAlert)]
 
     # Enclosure A has a critical element -> must NOT be marked healthy
     assert [enc_a_title] not in healthy_args, (
@@ -107,7 +107,7 @@ async def test__enc_bad_element_removes_correct_enclosure_from_healthy():
 
     # There should be exactly one unhealthy alert for enclosure A's fan
     assert len(unhealthy_alerts) == 1
-    assert unhealthy_alerts[0].args == ["EncA", "Fan1", "Critical", "SpeedRPM=0", 0]
+    assert unhealthy_alerts[0].instance.args() == ["EncA", "Fan1", "Critical", "SpeedRPM=0", 0]
 
 
 @pytest.mark.asyncio
@@ -123,8 +123,8 @@ async def test__enc_bad_element_under_threshold_all_healthy():
     # First probe – count will be 1, under the threshold of 5
     alerts = await source.check()
 
-    healthy_alerts = [a for a in alerts if a.klass == EnclosureHealthyAlertClass]
-    unhealthy_alerts = [a for a in alerts if a.klass == EnclosureUnhealthyAlertClass]
+    healthy_alerts = [a for a in alerts if isinstance(a.instance, EnclosureHealthyAlert)]
+    unhealthy_alerts = [a for a in alerts if isinstance(a.instance, EnclosureUnhealthyAlert)]
 
     # Both enclosures should appear healthy (bad element hasn't persisted long enough)
     assert len(healthy_alerts) == 2

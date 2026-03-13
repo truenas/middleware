@@ -2,11 +2,15 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+from __future__ import annotations
 
 import time
+from dataclasses import dataclass
+from typing import Any, TYPE_CHECKING
 
 from middlewared.alert.base import (
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     AlertSource,
@@ -16,35 +20,55 @@ from middlewared.alert.base import (
 from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
-
-class SensorAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Sensor Value Is Outside of Working Range"
-    text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s"
-    products = (ProductType.ENTERPRISE,)
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
-class PowerSupplyAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.CRITICAL
-    title = "Power Supply Error"
-    text = (
-        "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
+@dataclass(kw_only=True)
+class SensorAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Sensor Value Is Outside of Working Range",
+        text="Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s",
+        products=(ProductType.ENTERPRISE,),
     )
-    products = (ProductType.ENTERPRISE,)
-    proactive_support = True
-    proactive_support_notify_gone = True
+
+    name: str
+    relative: str
+    level: str
+    value: object
+    event: str
+
+
+@dataclass(kw_only=True)
+class PowerSupplyAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.CRITICAL,
+        title="Power Supply Error",
+        text=(
+            "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
+        ),
+        products=(ProductType.ENTERPRISE,),
+        proactive_support=True,
+        proactive_support_notify_gone=True,
+    )
+
+    id: str
+    psu: str
+    state: str
+    errors: str
 
 
 class PsuAlertSource(AlertSource):
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self.last_failure = time.monotonic()
-        self.incident_id = None
+        self.incident_id: str | None = None
         self._30mins = 30 * 60
 
-    async def should_alert(self):
+    async def should_alert(self) -> bool:
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"
         ].startswith("TRUENAS-R"):
@@ -56,8 +80,8 @@ class PsuAlertSource(AlertSource):
 
         return False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]]:
+        alerts: list[Alert[Any]] = []
         if not await self.should_alert():
             return alerts
 
@@ -75,13 +99,12 @@ class PsuAlertSource(AlertSource):
                         self.incident_id = generate_token(16, url_safe=True)
                     alerts.append(
                         Alert(
-                            PowerSupplyAlertClass,
-                            {
-                                "id": self.incident_id,
-                                "psu": i["name"],
-                                "state": i["state"],
-                                "errors": ", ".join(i["event"]),
-                            },
+                            PowerSupplyAlert(
+                                id=self.incident_id,
+                                psu=i["name"],
+                                state=i["state"],
+                                errors=", ".join(i["event"]),
+                            ),
                         )
                     )
                 else:
@@ -90,7 +113,7 @@ class PsuAlertSource(AlertSource):
 
 
 class SensorsAlertSource(AlertSource):
-    async def should_alert(self):
+    async def should_alert(self) -> bool:
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"
         ].startswith("TRUENAS-R"):
@@ -102,8 +125,8 @@ class SensorsAlertSource(AlertSource):
 
         return False
 
-    async def check(self):
-        alerts = []
+    async def check(self) -> list[Alert[Any]] | Alert[Any]:
+        alerts: list[Alert[Any]] = []
         if not await self.should_alert():
             return alerts
 
@@ -126,14 +149,13 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "lower-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlertClass,
-                            {
-                                "name": sensor["name"],
-                                "relative": relative,
-                                "level": level,
-                                "value": reading,
-                                "event": ", ".join(sensor["event"]),
-                            },
+                            SensorAlert(
+                                name=sensor["name"],
+                                relative=relative,
+                                level=level,
+                                value=reading,
+                                event=", ".join(sensor["event"]),
+                            ),
                         )
 
                 for key in (
@@ -147,13 +169,12 @@ class SensorsAlertSource(AlertSource):
                             "recommended" if key == "upper-non-critical" else "critical"
                         )
                         return Alert(
-                            SensorAlertClass,
-                            {
-                                "name": sensor["name"],
-                                "relative": relative,
-                                "level": level,
-                                "value": reading,
-                                "event": ", ".join(sensor["event"]),
-                            },
+                            SensorAlert(
+                                name=sensor["name"],
+                                relative=relative,
+                                level=level,
+                                value=reading,
+                                event=", ".join(sensor["event"]),
+                            ),
                         )
         return alerts

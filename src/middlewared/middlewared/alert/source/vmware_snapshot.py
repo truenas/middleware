@@ -1,21 +1,37 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from dataclasses import dataclass
+
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
-class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    keys = []
-    title = "Creating VMWare Snapshot Failed"
-    text = "Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s."
+@dataclass(kw_only=True)
+class VMWareSnapshotCreateFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title="Creating VMWare Snapshot Failed",
+        text="Creating VMWare snapshot %(snapshot)s of VM %(vm)s at %(hostname)s failed: %(error)s.",
+        deleted_automatically=False,
+        keys=[],
+    )
 
-    deleted_automatically = False
+    snapshot: str
+    vm: str
+    hostname: str
+    error: str
 
 
-class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    keys = []
-    title = "VMWare Snapshot Deletion Failed"
-    text = "Deletion of VMWare snapshot %(snapshot)s of VM %(vm)s on %(hostname)s failed: %(error)s."
+@dataclass(kw_only=True)
+class VMWareSnapshotDeleteFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.WARNING,
+        title="VMWare Snapshot Deletion Failed",
+        text="Deletion of VMWare snapshot %(snapshot)s of VM %(vm)s on %(hostname)s failed: %(error)s.",
+        deleted_automatically=False,
+        keys=[],
+    )
 
-    deleted_automatically = False
+    snapshot: str
+    vm: str
+    hostname: str
+    error: str

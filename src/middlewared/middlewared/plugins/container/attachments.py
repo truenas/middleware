@@ -107,9 +107,8 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
     async def stop(self, attachments: list[dict[str, Any]]) -> None:
         for attachment in attachments:
             try:
-                # @job decorator mangles the type signature, so call2 can't resolve the return type
                 job = await self.middleware.call2(
-                    self.s.container.stop, attachment['id'], ContainerStopOptions(force=True)  # type: ignore
+                    self.s.container.stop, attachment['id'], ContainerStopOptions(force=True)
                 )
                 await job.wait(raise_error=True)
             except Exception:

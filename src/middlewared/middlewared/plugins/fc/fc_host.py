@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Literal
 
 import middlewared.sqlalchemy as sa
+from middlewared.alert.source.fibre_channel import FCHardwareAddedAlert, FCHardwareReplacedAlert
 from middlewared.api import api_method
 from middlewared.api.current import (FCHostCreateArgs, FCHostCreateResult, FCHostDeleteArgs, FCHostDeleteResult,
                                      FCHostEntry, FCHostUpdateArgs, FCHostUpdateResult)
@@ -513,12 +514,12 @@ class FCHostService(CRUDService):
                 await self.middleware.call('fc.fc_host.delete', fc_host['id'])
             await self.middleware.call('fc.fc_host.wire')
             self.logger.warning('Fibre Channel ports rewired')
-            await self.middleware.call("alert.oneshot_create", "FCHardwareReplaced", None)
+            await self.middleware.call("alert.oneshot_create", FCHardwareReplacedAlert())
         elif addition_only:
             await self.middleware.call('fc.fc_host.reset_wired', True)
             await self.middleware.call('fc.fc_host.wire')
             self.logger.warning('Fibre Channel ports added')
-            await self.middleware.call("alert.oneshot_create", "FCHardwareAdded", None)
+            await self.middleware.call("alert.oneshot_create", FCHardwareAddedAlert())
 
         return True
 

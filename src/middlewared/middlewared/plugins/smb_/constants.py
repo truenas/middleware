@@ -1,11 +1,9 @@
 import enum
 import os
 from middlewared.utils import ctdb
-from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 
 
-NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 VEEAM_REPO_BLOCKSIZE = 131072

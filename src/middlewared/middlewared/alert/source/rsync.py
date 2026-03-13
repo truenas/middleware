@@ -1,27 +1,42 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from dataclasses import dataclass
+from typing import Any
+
+from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+@dataclass(kw_only=True)
+class RsyncSuccessAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.INFO,
+        title='Rsync Task Succeeded',
+        text='Rsync "%(direction)s" task for "%(path)s" succeeded.',
+        deleted_automatically=False,
+    )
 
-    category = AlertCategory.TASKS
-    level = AlertLevel.INFO
-    title = 'Rsync Task Succeeded'
-    text = 'Rsync "%(direction)s" task for "%(path)s" succeeded.'
+    direction: str
+    path: str
+    id: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['id']
 
 
-class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+@dataclass(kw_only=True)
+class RsyncFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.CRITICAL,
+        title='Rsync Task Failed',
+        text='Rsync "%(direction)s" task for "%(path)s" failed.',
+        deleted_automatically=False,
+    )
 
-    category = AlertCategory.TASKS
-    level = AlertLevel.CRITICAL
-    title = 'Rsync Task Failed'
-    text = 'Rsync "%(direction)s" task for "%(path)s" failed.'
+    direction: str
+    path: str
+    id: int
 
     @classmethod
-    def key(cls, args):
+    def key_from_args(cls, args: Any) -> Any:
         return args['id']

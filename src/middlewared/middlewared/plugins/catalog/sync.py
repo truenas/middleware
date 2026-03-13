@@ -4,6 +4,7 @@ import aiohttp
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
 
+from middlewared.alert.source.catalogs import CatalogSyncFailedAlert
 from middlewared.api.current import CatalogApps
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.network import check_internet_connectivity
@@ -79,7 +80,7 @@ async def sync(context: ServiceContext, job: Job) -> None:
         await update_popularity_cache(context)
     except Exception as e:
         await context.middleware.call(
-            'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': OFFICIAL_LABEL, 'error': str(e)}
+            'alert.oneshot_create', CatalogSyncFailedAlert(catalog=OFFICIAL_LABEL, error=str(e))
         )
         raise
     else:

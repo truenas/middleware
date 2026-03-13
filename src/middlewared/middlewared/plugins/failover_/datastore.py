@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 import time
 
+from middlewared.alert.source.failover_sync import FailoverSyncFailedAlert
 from middlewared.service import Service
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import thread_pool
@@ -95,7 +96,7 @@ class FailoverDatastoreService(Service):
                         pass
 
                     if raise_alert_time <= 0 and self.failure:
-                        self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', {'mins': total_mins})
+                        self.middleware.call_sync('alert.oneshot_create', FailoverSyncFailedAlert(mins=total_mins))
                         raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
 
             start_daemon_thread(name="fo_db_retry", target=send_retry)
@@ -107,7 +108,10 @@ class FailoverDatastoreService(Service):
             True,  # match origin
             True,  # single-use (required if STIG enabled)
         ])
-        self.middleware.call_sync('failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED, {'mode': db_utils.FREENAS_DATABASE_MODE})
+        self.middleware.call_sync(
+            'failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED,
+            {'mode': db_utils.FREENAS_DATABASE_MODE},
+        )
         self.middleware.call_sync('failover.call_remote', 'failover.datastore.receive')
 
         self.failure = False

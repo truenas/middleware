@@ -1,34 +1,50 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any
 
-from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
+)
 from middlewared.alert.schedule import IntervalSchedule
 
 
-def remove_deasserted_records(records):
-    records = records.copy()
-    assertions = defaultdict(lambda: defaultdict(set))
+def remove_deasserted_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    nullable_records: list[dict[str, Any] | None] = list(records)
+    assertions: defaultdict[Any, defaultdict[Any, set[int]]] = defaultdict(lambda: defaultdict(set))
     for i, record in enumerate(records):
         event_assertions = assertions[record["name"]][record["event"]]
         if record["event_direction"] == "Assertion Event":
             event_assertions.add(i)
         if record["event_direction"] == "Deassertion Event":
             for j in event_assertions:
-                records[j] = None
-            records[i] = None
+                nullable_records[j] = None
+            nullable_records[i] = None
             event_assertions.clear()
 
-    return list(filter(None, records))
+    return [r for r in nullable_records if r is not None]
 
 
-class IPMISELAlertClass(AlertClass, DismissableAlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event"
-    text = "Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)"
+@dataclass(kw_only=True)
+class IPMISELAlert(DismissableAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="IPMI System Event",
+        text="Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)",
+    )
+
+    name: str
+    event_direction: str
+    event: str
+    dt_iso: str
 
     @classmethod
-    async def dismiss(cls, middleware, alerts, alert):
+    def key_from_args(cls, args: Any) -> list[str]:
+        return [args['name'], args['event_direction'], args['event'], args['dt_iso']]
+
+    @classmethod
+    async def dismiss(cls, middleware: Any, alerts: list[Alert[Any]], alert: Alert[Any]) -> list[Alert[Any]]:
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
         if await middleware.call2(middleware.services.keyvalue.has_key, IPMISELAlertSource.dismissed_datetime_kv_key):
             d = await middleware.call2(
@@ -45,18 +61,30 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
-class IPMISELSpaceLeftAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event Log Low Space Left"
-    text = "IPMI System Event Log low space left: %(free)s (%(used)s)."
+@dataclass(kw_only=True)
+class IPMISELSpaceLeftAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="IPMI System Event Log Low Space Left",
+        text="IPMI System Event Log low space left: %(free)s (%(used)s).",
+    )
+
+    free: str
+    used: str
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> None:
+        return None
 
 
 class IPMISELAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
-    async def get_sensor_values(self):
+    async def get_sensor_values(
+        self,
+    ) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]:
         # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
         sensor_types = (
             "Redundancy State",
@@ -92,7 +120,7 @@ class IPMISELAlertSource(AlertSource):
         )
         return sensor_types, sensor_events_to_alert_on, sensor_events_to_ignore
 
-    async def produce_sel_elist_alerts(self):
+    async def produce_sel_elist_alerts(self) -> list[Alert[Any]]:
         stypes, do_alert, ignore = await self.get_sensor_values()
         records = []
         for i in (await (await self.middleware.call("ipmi.sel.elist")).wait()):
@@ -129,9 +157,12 @@ class IPMISELAlertSource(AlertSource):
                 record.pop("id")
                 dt = record.pop("datetime")
                 alert = Alert(
-                    IPMISELAlertClass,
-                    {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
-                    key=[record, dt.isoformat()],
+                    IPMISELAlert(
+                        name=record["name"],
+                        event_direction=record["event_direction"],
+                        event=record["event"],
+                        dt_iso=dt.isoformat(),
+                    ),
                     datetime=dt,
                 )
                 alerts_by_key[alert.key] = alert
@@ -139,7 +170,7 @@ class IPMISELAlertSource(AlertSource):
 
         return alerts
 
-    async def produce_sel_low_space_alert(self):
+    async def produce_sel_low_space_alert(self) -> Alert[Any] | None:
         info = (await (await self.middleware.call("ipmi.sel.info")).wait())
         alloc_tot = alloc_us = None
         if (free_bytes := info.get("free_space_remaining")) is not None:
@@ -151,21 +182,23 @@ class IPMISELAlertSource(AlertSource):
         alert = None
         upper_threshold = 90  # percent
         if all((i is not None and i.isdigit()) for i in (free_bytes, alloc_tot, alloc_us)):
+            assert free_bytes is not None and alloc_us is not None and alloc_tot is not None
             free_bytes = int(free_bytes)
             total_bytes_avail = int(alloc_us) * int(alloc_tot)
             used_bytes = total_bytes_avail - free_bytes
             if (used_bytes / 100) > upper_threshold:
                 alert = Alert(
-                    IPMISELSpaceLeftAlertClass,
-                    {"free": f"{free_bytes} bytes free", "used": f"{used_bytes} bytes used"},
-                    key=None,
+                    IPMISELSpaceLeftAlert(
+                        free=f"{free_bytes} bytes free",
+                        used=f"{used_bytes} bytes used",
+                    ),
                 )
 
         return alert
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | None:
         if not await self.middleware.call("truenas.is_ix_hardware"):
-            return
+            return None
 
         alerts = []
         alerts.extend(await self.produce_sel_elist_alerts())

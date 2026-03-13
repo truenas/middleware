@@ -155,8 +155,8 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
         image = data.image.model_dump()
         try:
-            image_snapshot = await job.wrap(await self.call2(  # type: ignore[call-overload]
-                self.s.container.image.pull, pool, image,  # type: ignore[misc]
+            image_snapshot = await job.wrap(await self.call2(
+                self.s.container.image.pull, pool, image,
             ))
         except ValidationErrors as image_verrors:
             verrors.add_child('container_create.image', image_verrors)

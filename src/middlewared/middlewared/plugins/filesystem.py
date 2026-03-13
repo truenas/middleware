@@ -9,6 +9,7 @@ import time
 from typing import Literal
 
 import pyinotify
+import truenas_os
 
 from itertools import product
 from middlewared.api import api_method
@@ -38,6 +39,7 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
+from middlewared.utils.io import safe_open
 from middlewared.utils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
@@ -80,7 +82,7 @@ class FileFollowTailEventSource(EventSource):
         if fsize < bufsize:
             bufsize = fsize
         i = 0
-        with open(path, encoding='utf-8', errors='ignore') as f:
+        with safe_open(path, encoding='utf-8', errors='ignore') as f:
             data = []
             while True:
                 i += 1
@@ -174,14 +176,24 @@ class FilesystemService(Service):
         `sparse` - maps to SPARSE MS-DOS attribute. Is presented to SMB clients, but has
         no impact on local filesystem.
         """
-        return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+        try:
+            return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
 
     @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
         """
-        fd = os.open(path, os.O_RDONLY)
+        try:
+            fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
         try:
             attr_mask = attrs.fget_zfs_file_attributes(fd)
         finally:
@@ -334,6 +346,8 @@ class FilesystemService(Service):
             # Make sure this is actually ZFS before issuing FS ioctls
             try:
                 self.get_zfs_attributes(str(path))
+            except CallError:
+                raise
             except Exception:
                 raise CallError(f'{path}: ZFS attributes are not supported.')
 
@@ -487,9 +501,14 @@ class FilesystemService(Service):
             )
 
         dirname = os.path.dirname(path)
+        # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
+        # to be created at symlink target locations as a side-effect. The subsequent
+        # safe_open blocks the actual file write via RESOLVE_NO_SYMLINKS, but the
+        # created directories are not rolled back. Fully safe directory creation
+        # would require an fd-walking mkdirat implementation.
         os.makedirs(dirname, exist_ok=True)
 
-        with open(path, 'ab' if options.get('append') else 'wb+') as f:
+        with safe_open(path, 'ab' if options.get('append') else 'wb+') as f:
             f.write(binascii.a2b_base64(content))
             if mode := options.get('mode'):
                 os.fchmod(f.fileno(), mode)
@@ -510,7 +529,7 @@ class FilesystemService(Service):
         if not os.path.isfile(path):
             raise CallError(f'{path} is not a file')
 
-        with open(path, 'rb') as f:
+        with safe_open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
     @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
@@ -527,6 +546,11 @@ class FilesystemService(Service):
 
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
+            # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
+            # to be created at symlink target locations as a side-effect. The subsequent
+            # safe_open blocks the actual file write via RESOLVE_NO_SYMLINKS, but the
+            # created directories are not rolled back. Fully safe directory creation
+            # would require an fd-walking mkdirat implementation.
             os.makedirs(dirname)
         if options.get('append'):
             openmode = 'ab'
@@ -536,7 +560,7 @@ class FilesystemService(Service):
         mode = options.get('mode')
 
         try:
-            with open(path, openmode) as f:
+            with safe_open(path, openmode) as f:
                 if mode:
                     os.fchmod(f.fileno(), mode)
 
@@ -555,7 +579,7 @@ class FilesystemService(Service):
             CallError(ENOENT) - Path not found
         """
         try:
-            fd = os.open(path, os.O_PATH)
+            fd = truenas_os.openat2(path, os.O_PATH, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
             try:
                 st = os.fstatvfs(fd)
                 mntinfo = statmount(fd=fd)
@@ -564,6 +588,10 @@ class FilesystemService(Service):
 
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            raise
 
         flags = mntinfo['mount_opts']
         for flag in mntinfo['super_opts']:

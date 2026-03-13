@@ -1,4 +1,5 @@
 from .base import SimpleService
+from middlewared.utils import run
 
 
 class CIFSService(SimpleService):
@@ -25,3 +26,6 @@ class CIFSService(SimpleService):
         # reconfigure mdns (remove SMB service, possibly also ADISK)
         await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
         await self.call2(self.s.truesearch.configure)
+
+    async def reload(self):
+        await run(["smbcontrol", "smbd", "reload-config"], check=False)

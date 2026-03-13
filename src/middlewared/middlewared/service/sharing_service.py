@@ -1,5 +1,7 @@
 from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
 
+from middlewared.alert.base import OneShotAlertClass
+from middlewared.alert.source.sharing_tasks import ShareLockedAlert, TaskLockedAlert
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
@@ -24,7 +26,7 @@ class SharingTaskService[E](CRUDService[E]):
     allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
-    locked_alert_class: str
+    locked_alert_class: type[OneShotAlertClass]
     share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
@@ -229,14 +231,17 @@ class SharingTaskService[E](CRUDService[E]):
     async def generate_locked_alert(self, share_task_id):
         share_task = await self.get_instance(share_task_id)
         await self.middleware.call(
-            'alert.oneshot_create', self.locked_alert_class,
-            {**share_task, 'identifier': await self.human_identifier(share_task), 'type': self.share_task_type}
+            'alert.oneshot_create', self.locked_alert_class(
+                type=self.share_task_type,
+                identifier=await self.human_identifier(share_task),
+                id=share_task['id'],
+            )
         )
 
     @private
     async def remove_locked_alert(self, share_task_id):
         await self.middleware.call(
-            'alert.oneshot_delete', self.locked_alert_class, f'{self.share_task_type}_{share_task_id}'
+            'alert.oneshot_delete', self.locked_alert_class.config.name, f'{self.share_task_type}_{share_task_id}'
         )
 
     @pass_app(message_id=True)
@@ -265,7 +270,7 @@ class SharingTaskService[E](CRUDService[E]):
 
 
 class SharingService[E](SharingTaskService[E]):
-    locked_alert_class = 'ShareLocked'
+    locked_alert_class = ShareLockedAlert
 
     @private
     async def human_identifier(self, share_task):
@@ -277,7 +282,7 @@ class SharingService[E](SharingTaskService[E]):
 
 
 class TaskPathService[E](SharingTaskService[E]):
-    locked_alert_class = 'TaskLocked'
+    locked_alert_class = TaskLockedAlert
 
     @private
     async def human_identifier(self, share_task):

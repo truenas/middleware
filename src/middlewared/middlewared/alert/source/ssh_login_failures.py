@@ -1,8 +1,11 @@
+from dataclasses import dataclass
 from datetime import timedelta
 from time import time
+from typing import Any
 
 from middlewared.alert.base import (
     AlertClass,
+    AlertClassConfig,
     AlertCategory,
     AlertLevel,
     Alert,
@@ -11,17 +14,22 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class SSHLoginFailuresAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "SSH Login Failures"
-    text = "%(cnt)d SSH login failures in the last 24 hours"
+@dataclass(kw_only=True)
+class SSHLoginFailuresAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="SSH Login Failures",
+        text="%(cnt)d SSH login failures in the last 24 hours",
+    )
+
+    cnt: int
 
 
 class SSHLoginFailuresAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
 
-    async def check(self):
+    async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         cnt = await self.middleware.call(
             "audit.query",
             {
@@ -41,4 +49,6 @@ class SSHLoginFailuresAlertSource(AlertSource):
             },
         )
         if cnt > 0:
-            return Alert(SSHLoginFailuresAlertClass, {"cnt": cnt})
+            return Alert(SSHLoginFailuresAlert(cnt=cnt))
+
+        return None

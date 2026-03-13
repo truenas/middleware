@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import errno
 import os
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware as _get_chassis_hardware
 
@@ -58,7 +58,7 @@ def unaccept_eula() -> None:
 
 
 async def is_production(context: ServiceContext) -> bool:
-    return await context.call2(context.s.keyvalue.get, 'truenas:production', False)
+    return cast(bool, await context.call2(context.s.keyvalue.get, 'truenas:production', False))
 
 
 async def set_production(

@@ -6,35 +6,44 @@
 from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
+from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
-class LicenseAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "TrueNAS License Issue"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="TrueNAS License Issue",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
-class LicenseIsExpiringAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "TrueNAS License Is Expiring"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+class LicenseIsExpiringAlert(NonDataclassAlertClass[str], AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="TrueNAS License Is Expiring",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
-class LicenseHasExpiredAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.CRITICAL
-    title = "TrueNAS License Has Expired"
-    text = "%s"
-    products = (ProductType.ENTERPRISE,)
+class LicenseHasExpiredAlert(NonDataclassAlertClass[str], AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.CRITICAL,
+        title="TrueNAS License Has Expired",
+        text="%s",
+        products=(ProductType.ENTERPRISE,),
+    )
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
@@ -42,17 +51,17 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 
-    def check_sync(self):
-        alerts = []
+    def check_sync(self) -> list[Alert[Any]] | Alert[Any]:
+        alerts: list[Alert[Any]] = []
 
         local_license = self.middleware.call_sync('system.license')
         if local_license is None:
-            return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
+            return Alert(LicenseAlert("Your TrueNAS has no license, contact support."))
 
         # check if this node's system serial matches the serial in the license
         local_serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
         if local_serial not in (local_license['system_serial'], local_license['system_serial_ha']):
-            alerts.append(Alert(LicenseAlertClass, 'System serial does not match license.'))
+            alerts.append(Alert(LicenseAlert('System serial does not match license.')))
 
         standby_license = standby_serial = None
         try:
@@ -66,21 +75,20 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         if standby_license and standby_serial is not None:
             # check if the remote node's system serial matches the serial in the license
             if standby_serial not in (standby_license['system_serial'], standby_license['system_serial_ha']):
-                alerts.append(Alert(LicenseAlertClass, 'System serial of standby node does not match license.',))
+                alerts.append(Alert(LicenseAlert('System serial of standby node does not match license.')))
 
         model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
         if model == 'UNKNOWN':
-            alerts.append(Alert(LicenseAlertClass, 'TrueNAS is running on unsupported hardware.'))
+            alerts.append(Alert(LicenseAlert('TrueNAS is running on unsupported hardware.')))
         elif model != local_license['model']:
             alerts.append(Alert(
-                LicenseAlertClass,
-                (
+                LicenseAlert(
                     f'Your license was issued for model {local_license["model"]!r} '
                     f'but the system was detected as model {model!r}'
                 )
             ))
 
-        enc_nums = defaultdict(lambda: 0)
+        enc_nums: defaultdict[str, int] = defaultdict(lambda: 0)
         for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
             enc_nums[enc['model']] += 1
 
@@ -96,8 +104,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                 if enc_nums[name] != quantity:
                     alerts.append(Alert(
-                        LicenseAlertClass,
-                        (
+                        LicenseAlert(
                             'License expects %(license)s units of %(name)s Expansion shelf but found %(found)s.' % {
                                 'license': quantity,
                                 'name': name,
@@ -107,8 +114,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                     ))
         elif enc_nums:
             alerts.append(Alert(
-                LicenseAlertClass,
-                'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
+                LicenseAlert(
+                    'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
+                )
             ))
 
         for days in [0, 14, 30, 90, 180]:
@@ -120,8 +128,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 contract_type = local_license['contract_type']  # Display as stored, usually upper case.
                 customer_name = local_license['customer_name']
 
+                alert_klass: type[LicenseHasExpiredAlert] | type[LicenseIsExpiringAlert]
                 if days == 0:
-                    alert_klass = LicenseHasExpiredAlertClass
+                    alert_klass = LicenseHasExpiredAlert
                     alert_text = textwrap.dedent("""\
                         SUPPORT CONTRACT EXPIRATION: Please reactivate and continue to receive technical support and
                         assistance. Contact by email: sales@TrueNAS.com, or telephone: 1-855-473-7449
@@ -132,15 +141,16 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         Please contact your authorized reseller or TrueNAS (sales@TrueNAS.com).
                     """)
                     encouraging = textwrap.dedent("""\
-                        Please renew the support contract for your TrueNAS product as soon as possible to maintain support services.
-                        Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com, phone: 1-855-473-7449).
+                        Please renew the support contract for your TrueNAS product as soon as possible to maintain
+                        support services. Contact your authorized reseller or TrueNAS
+                        (email: sales@TrueNAS.com, phone: 1-855-473-7449).
                     """)
                 else:
-                    alert_klass = LicenseIsExpiringAlertClass
+                    alert_klass = LicenseIsExpiringAlert
                     alert_text = textwrap.dedent(f"""\
-                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire on {contract_expiration}.
-                        Please avoid service interruptions, contact your authorized reseller or
-                        email: sales@TrueNAS.com, phone: 1-855-473-7449.
+                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire
+                        on {contract_expiration}. Please avoid service interruptions, contact your
+                        authorized reseller or email: sales@TrueNAS.com, phone: 1-855-473-7449.
                     """)
                     days_left = (local_license['contract_end'] - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
@@ -167,8 +177,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         """)
 
                 alerts.append(Alert(
-                    alert_klass,
-                    alert_text,
+                    alert_klass(alert_text),
                     mail={
                         "cc": ["support-renewal@truenas.com"],
                         "subject": subject,

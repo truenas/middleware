@@ -1,31 +1,39 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from dataclasses import dataclass
+from typing import Any
+
+from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
 
 
-class CoreFilesArePresentAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Core Files Detected"
-    text = (
-        "Core files for executables have been found in /var/db/system/cores/."
-        "Please open the shell, copy any core files present in /var/db/system/cores/ "
-        "and then generate a system debug. Next, create a ticket at https://ixsystems.atlassian.net/ "
-        "and attach the core files and debug. After creating the ticket, the core files can be removed "
-        "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
+@dataclass(kw_only=True)
+class CoreFilesArePresentAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Core Files Detected",
+        text=(
+            "Core files for executables have been found in /var/db/system/cores/."
+            "Please open the shell, copy any core files present in /var/db/system/cores/ "
+            "and then generate a system debug. Next, create a ticket at https://ixsystems.atlassian.net/ "
+            "and attach the core files and debug. After creating the ticket, the core files can be removed "
+            "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
+        ),
+        products=(ProductType.COMMUNITY_EDITION,),
     )
-    products = (ProductType.COMMUNITY_EDITION,)
+
+    corefiles: str
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
     products = (ProductType.COMMUNITY_EDITION,)
 
-    async def should_alert(self, core):
+    async def should_alert(self, core: dict[str, Any]) -> bool:
         if core["corefile"] != "present" or not core["unit"]:
             # no core file on disk, no investigation
             # not associated to a unit? probably impossible but better safe than sorry
             return False
 
-        return core["unit"].startswith((
+        return bool(core["unit"].startswith((
             # NFS related service(s)
             "nfs-blkmap.service",
             "nfs-idmapd.service",
@@ -42,13 +50,14 @@ class CoreFilesArePresentAlertSource(AlertSource):
             "scst.service",
             # ZFS related (userspace) service(s)
             "zfs-zed.service",
-        ))
+        )))
 
-    async def check(self):
+    async def check(self) -> Alert[CoreFilesArePresentAlert] | None:
         corefiles = []
         for coredump in await self.middleware.call("system.coredumps"):
             if await self.should_alert(coredump):
                 corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
-            return Alert(CoreFilesArePresentAlertClass, {"corefiles": ', '.join(corefiles)})
+            return Alert(CoreFilesArePresentAlert(corefiles=', '.join(corefiles)))
+        return None

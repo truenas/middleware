@@ -32,7 +32,7 @@ async def migrate_ix_apps_dataset(
     await docker_set_status(context, Status.MIGRATING.value)
     job.set_progress(30, 'Creating docker backup')
     backup_job = await context.call2(
-        context.s.docker.backup, backup_name,  # type: ignore[call-overload,misc]
+        context.s.docker.backup, backup_name,
     )
     await backup_job.wait()
     if backup_job.error:
@@ -66,7 +66,7 @@ async def migrate_ix_apps_dataset(
 
         job.set_progress(70, f'Restoring docker apps in {new_pool!r} pool')
         restore_job = await context.call2(
-            context.s.docker.restore_backup, backup_name,  # type: ignore[call-overload,misc]
+            context.s.docker.restore_backup, backup_name,
         )
         await restore_job.wait()
         if restore_job.error:

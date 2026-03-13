@@ -1,29 +1,47 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+from dataclasses import dataclass
+
+from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
 
 
-class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    keys = []
-    level = AlertLevel.CRITICAL
-    category = AlertCategory.APPLICATIONS
-    title = 'Unable to Configure Applications'
-    text = 'Failed to configure docker for Applications: %(error)s'
+@dataclass(kw_only=True)
+class ApplicationsConfigurationFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.APPLICATIONS,
+        level=AlertLevel.CRITICAL,
+        title='Unable to Configure Applications',
+        text='Failed to configure docker for Applications: %(error)s',
+        deleted_automatically=False,
+        keys=[],
+    )
+
+    error: str
 
 
-class ApplicationsStartFailedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    keys = []
-    level = AlertLevel.CRITICAL
-    category = AlertCategory.APPLICATIONS
-    title = 'Unable to Start Applications'
-    text = 'Failed to start docker for Applications: %(error)s'
+@dataclass(kw_only=True)
+class ApplicationsStartFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.APPLICATIONS,
+        level=AlertLevel.CRITICAL,
+        title='Unable to Start Applications',
+        text='Failed to start docker for Applications: %(error)s',
+        deleted_automatically=False,
+        keys=[],
+    )
+
+    error: str
 
 
-class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
-    keys = []
+@dataclass(kw_only=True)
+class AppUpdateAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.APPLICATIONS,
+        level=AlertLevel.INFO,
+        title='Application Update Available',
+        text='Updates are available for %(count)d application%(plural)s: %(apps)s',
+        deleted_automatically=False,
+        keys=[],
+    )
 
-    category = AlertCategory.APPLICATIONS
-    level = AlertLevel.INFO
-    title = 'Application Update Available'
-    text = 'Updates are available for %(count)d application%(plural)s: %(apps)s'
+    count: int
+    plural: str
+    apps: str

@@ -8,6 +8,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCloneQuery, ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.cloud.path import check_local_path
+from middlewared.plugins.cloud_backup.crud import CloudBackupTaskFailedAlert
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
@@ -168,10 +169,10 @@ class CloudBackupService(Service):
             job.set_progress(description="Done")
         except Exception:
             if "id" in cloud_backup:
-                self.middleware.call_sync("alert.oneshot_create", "CloudBackupTaskFailed", {
-                    "id": cloud_backup["id"],
-                    "name": cloud_backup["description"],
-                })
+                self.middleware.call_sync("alert.oneshot_create", CloudBackupTaskFailedAlert(
+                    id=cloud_backup["id"],
+                    name=cloud_backup["description"],
+                ))
             raise
 
     @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
