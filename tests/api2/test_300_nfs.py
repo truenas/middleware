@@ -767,6 +767,10 @@ class TestNFSops:
         """
         assert start_nfs is True
 
+        # Multiple restarts across parametrized variants can trigger systemd
+        # rate-limiting (start-limit-hit). Reset failure counters before each.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
         with mock("system.cpu_info", return_value={"core_count": cores}):
 
             # Use 0 as 'null' flag
