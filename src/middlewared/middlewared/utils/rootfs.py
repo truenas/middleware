@@ -7,7 +7,7 @@ import subprocess
 from types import TracebackType
 from typing import Any, Self
 
-from middlewared.utils.mount import statmount
+from truenas_os_pyutils.mount import statmount
 
 
 @dataclass

@@ -6,7 +6,7 @@ import typing
 
 import truenas_os
 
-from middlewared.utils.mount import __statmount_dict
+from truenas_os_pyutils.mount import __statmount_dict
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
 if typing.TYPE_CHECKING:
