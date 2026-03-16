@@ -27,6 +27,7 @@ from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_vers
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
+from .utils.mock import coerce_mock_result, get_mock_return_model
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
 from .utils.privilege import credential_has_full_admin
@@ -1492,13 +1493,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 raise ValueError(f'{name!r} is already mocked with {args!r}')
 
         serviceobj, methodobj = self.get_method(name)
+        mock_return_model = get_mock_return_model(serviceobj, methodobj)
 
         if inspect.iscoroutinefunction(mock):
             async def f(*args, **kwargs):
-                return await mock(serviceobj, *args, **kwargs)
+                result = await mock(serviceobj, *args, **kwargs)
+                return coerce_mock_result(result, mock_return_model)
         else:
             def f(*args, **kwargs):
-                return mock(serviceobj, *args, **kwargs)
+                result = mock(serviceobj, *args, **kwargs)
+                return coerce_mock_result(result, mock_return_model)
 
         if hasattr(methodobj, '_job'):
             f._job = methodobj._job
