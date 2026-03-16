@@ -1940,10 +1940,21 @@ def main():
 
     setup_logging('middleware', args.debug_level, args.log_handler)
 
-    # zettarepl runs in a child process via multiprocessing. We use 'spawn' instead of the Linux
-    # default 'fork' so that the child does not inherit the parent's logging handlers (which would
-    # cause duplicate log output) or its asyncio SIGTERM handler (which would make the child
-    # unkillable without SIGKILL).
+    # Use 'spawn' instead of the Linux default 'fork' for multiprocessing. Using 'fork' in
+    # multithreaded processes is highly discouraged by the Python docs and may lead to deadlocks.
+    #
+    # middlewared is multithreaded (asyncio event loop, ThreadPoolExecutor workers, etc.). With 'fork', only
+    # the calling thread is duplicated in the child — but all mutexes are copied in their current
+    # state. Locks held by other threads at the moment of fork become permanently locked in the
+    # child (the owning threads don't exist there), causing deadlocks. For example, `disk.retaste`
+    # uses multiprocessing.Pool whose forked workers can deadlock and never exit, hanging
+    # `os.waitpid` forever during pool cleanup.
+    #
+    # Forked children also inherit the parent's signal handlers and logging handlers. This causes
+    # zettarepl (which runs as a multiprocessing child) to inherit the asyncio SIGTERM handler
+    # (making it unkillable without SIGKILL) and duplicate log output.
+    #
+    # 'spawn' starts a fresh Python interpreter via fork+exec, avoiding all inherited state issues.
     multiprocessing.set_start_method('spawn')
 
     middleware = Middleware(
