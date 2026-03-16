@@ -13,7 +13,7 @@ import errno
 from collections import defaultdict
 
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DEPENDENT_SERVICES

@@ -49,7 +49,7 @@ from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SI
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from middlewared.utils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING

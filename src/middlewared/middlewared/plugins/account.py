@@ -58,7 +58,7 @@ from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_st
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
