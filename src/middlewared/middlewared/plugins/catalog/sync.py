@@ -80,11 +80,15 @@ async def sync(context: ServiceContext, job: Job) -> None:
         await update_popularity_cache(context)
     except Exception as e:
         await context.middleware.call2(
-            context.middleware.services.alert.oneshot_create, CatalogSyncFailedAlert(catalog=OFFICIAL_LABEL, error=str(e))
+            context.middleware.services.alert.oneshot_create,
+            CatalogSyncFailedAlert(catalog=OFFICIAL_LABEL, error=str(e))
         )
         raise
     else:
-        await context.middleware.call2(context.middleware.services.alert.oneshot_delete, 'CatalogSyncFailed', OFFICIAL_LABEL)
+        await context.middleware.call2(
+            context.middleware.services.alert.oneshot_delete,
+            'CatalogSyncFailed', OFFICIAL_LABEL,
+        )
         job.set_progress(100, f'Synced {OFFICIAL_LABEL!r} catalog')
         sync_state.synced = True
         context.create_task(context.middleware.call('app.check_upgrade_alerts'))

@@ -90,7 +90,9 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
 
     if all_trains:
         # We can only safely say that the catalog is healthy if we retrieve data for all trains
-        context.middleware.call_sync2(context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label)
+        context.middleware.call_sync2(
+            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
+        )
 
     trains = get_trains(context, catalog, options)
 
