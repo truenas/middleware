@@ -44,6 +44,12 @@ PACKAGES=(
 PIP_PACKAGES=(
     types-boto3
     types-boto3[s3]
+    # linting
+    flake8
+    flake8-builtins
+    flake8-tidy-imports
+    flake8-literal
+    import-linter
 )
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
