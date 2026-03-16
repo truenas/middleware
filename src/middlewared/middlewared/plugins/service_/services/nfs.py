@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from middlewared.alert.source.nfs_exportsd import NFSblockedByExportsDirAlert
 
@@ -25,6 +26,18 @@ class NFSService(SimpleService):
         return exports
 
     async def check_configuration(self):
+        # nfs-idmapd requires rpc_pipefs to be mounted. rpc_pipefs is normally
+        # mounted at boot by a systemd generator that reads pipefs-directory
+        # from /etc/nfs.conf. On first boot, nfs.conf does not exist yet when
+        # generators run, so rpc_pipefs.target is never created and nfs-idmapd
+        # will fail to start. By this point generate_etc has written nfs.conf.
+        # A daemon-reload re-runs the generator, which creates the target and
+        # mounts rpc_pipefs so that nfs-idmapd can start with nfs-server.
+        if not os.path.ismount('/run/rpc_pipefs'):
+            await self.middleware.run_in_thread(
+                subprocess.run, ['systemctl', 'daemon-reload'], capture_output=True
+            )
+
         # Raise alert if there are entries in /etc/exports.d
         if (exportsdList := await self.middleware.run_in_thread(self.check_exportsd_dir)):
             await self.middleware.call('alert.oneshot_create', NFSblockedByExportsDirAlert(entries=str(exportsdList)))
