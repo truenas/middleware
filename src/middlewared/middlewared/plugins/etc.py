@@ -220,6 +220,7 @@ class EtcService(Service):
         'user': EtcGroup(
             ctx=(
                 CtxMethod(method='system.security.config'),
+                CtxMethod(method='system.is_enterprise'),
                 CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
                 CtxMethod(method='group.query', args=[[['local', '=', True]]]),
                 CtxMethod(method='auth.twofactor.config'),
