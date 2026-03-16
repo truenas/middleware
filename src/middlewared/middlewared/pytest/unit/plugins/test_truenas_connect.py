@@ -11,6 +11,7 @@ from truenas_connect_utils.status import Status
 def tnc_service():
     """Create a mock TrueNASConnectService instance."""
     service = TrueNASConnectService(MagicMock())
+    service.middleware.call2 = AsyncMock()
     return service
 
 
@@ -289,7 +290,7 @@ class TestTNCUseAllInterfaces:
                     {'type': 'INET', 'address': '10.0.0.10'},
                     {'type': 'INET', 'address': '172.16.0.10'},
                 ]
-            elif method in ['cache.pop', 'alert.oneshot_delete']:
+            elif method in ['cache.pop']:
                 return None
             elif method == 'datastore.update':
                 # Verify that interfaces_ips was updated with all IPs
@@ -356,8 +357,6 @@ class TestTNCInterfacesUpdate:
                     {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24},
                 ]
             elif method == 'cache.pop':
-                return None
-            elif method == 'alert.oneshot_delete':
                 return None
             elif method == 'datastore.update':
                 return None
@@ -466,8 +465,6 @@ class TestTNCInterfacesUpdate:
                     {'type': 'INET6', 'address': '2001:db8::2', 'netmask': 64},
                 ]
             elif method == 'cache.pop':
-                return None
-            elif method == 'alert.oneshot_delete':
                 return None
             elif method == 'datastore.update':
                 return None

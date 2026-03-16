@@ -232,6 +232,7 @@ class AlertOneshotDeleteResult(BaseModel):
 
 List = list  # avoid shadowing by AlertService.list
 
+
 class AlertService(Service):
     alert_sources_errors: set[str] = set()
 
