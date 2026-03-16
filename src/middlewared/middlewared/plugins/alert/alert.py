@@ -36,7 +36,7 @@ from middlewared.api.current import (
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
     AlertListAddedEvent, AlertListChangedEvent, AlertListRemovedEvent,
 )
-from middlewared.plugins.alert_.service import ALERT_SERVICES_FACTORIES
+from middlewared.plugins.alert.service import ALERT_SERVICES_FACTORIES
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import Service, job, periodic, private
 from middlewared.service_exception import CallError, NetworkActivityDisabled
@@ -254,7 +254,7 @@ class AlertService(Service):
         super().__init__(middleware)
 
         self.alert_sources: dict[str, AlertSource] = {
-            name: cls(middleware) for name, cls in AlertSource.class_by_name.items()
+            name: cls(middleware) for name, cls in AlertSource.by_name.items()
         }
         self.blocked_sources: defaultdict[str, set[str]] = defaultdict(set)
         self.sources_locks: dict[str, AlertSourceLock] = {}
@@ -295,7 +295,7 @@ class AlertService(Service):
 
                 class_name: str = alert.pop("klass")
                 try:
-                    klass = AlertClass.class_by_name[class_name]
+                    klass = AlertClass.by_name[class_name]
                 except KeyError:
                     self.logger.info("Alert class %r is no longer present", class_name)
                     continue
@@ -755,7 +755,7 @@ class AlertService(Service):
         try:
             try:
                 for alert in await self.middleware.call("failover.call_remote", "alert.run_source", [name]):
-                    klass = AlertClass.class_by_name[alert["klass"]]
+                    klass = AlertClass.by_name[alert["klass"]]
                     instance = klass.from_args(alert["args"])
                     other_node_alerts.append(
                         Alert(instance,
@@ -1013,7 +1013,7 @@ class AlertService(Service):
         deleted = False
         for klassname in klasses:
             try:
-                klass_type = AlertClass.class_by_name[klassname]
+                klass_type = AlertClass.by_name[klassname]
             except KeyError:
                 raise CallError(f"Invalid alert source: {klassname!r}")
 

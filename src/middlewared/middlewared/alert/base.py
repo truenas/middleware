@@ -97,7 +97,7 @@ class AlertClass:
     """
 
     classes: list[type[AlertClass]] = []
-    class_by_name: dict[str, type[AlertClass]] = {}
+    by_name: dict[str, type[AlertClass]] = {}
 
     config: AlertClassConfig
 
@@ -112,7 +112,7 @@ class AlertClass:
             cls.config = dataclasses.replace(cls.config, name=name)
 
             AlertClass.classes.append(cls)
-            AlertClass.class_by_name[name] = cls
+            AlertClass.by_name[name] = cls
 
     def args(self) -> Any:
         if dataclasses.is_dataclass(self):
@@ -379,7 +379,7 @@ class AlertSource(CallMixin, ABC):
     :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
     """
 
-    class_by_name: dict[str, type[AlertSource]] = {}
+    by_name: dict[str, type[AlertSource]] = {}
 
     schedule: BaseSchedule = IntervalSchedule(timedelta())
 
@@ -397,10 +397,10 @@ class AlertSource(CallMixin, ABC):
 
             name = cls.__name__.removesuffix("AlertSource")
 
-            if name in AlertSource.class_by_name:
+            if name in AlertSource.by_name:
                 raise RuntimeError(f"Alert source {name} is already registered")
 
-            AlertSource.class_by_name[name] = cls
+            AlertSource.by_name[name] = cls
 
     def __init__(self, middleware: Middleware):
         self.middleware = middleware

@@ -36,11 +36,11 @@ class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
         verrors = ValidationErrors()
 
         for k, v in new["classes"].items():
-            if k not in AlertClass.class_by_name:
+            if k not in AlertClass.by_name:
                 verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
                 continue
 
-            if "proactive_support" in v and not AlertClass.class_by_name[k].config.proactive_support:
+            if "proactive_support" in v and not AlertClass.by_name[k].config.proactive_support:
                 verrors.add(
                     f"alert_class_update.classes.{k}.proactive_support",
                     "Proactive support is not supported by this alert class",
