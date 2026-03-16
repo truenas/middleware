@@ -3,7 +3,8 @@ import pytest
 
 from unittest.mock import patch
 
-from middlewared.plugins.ports.ports import PortService, ValidationErrors
+from middlewared.plugins.ports import PortService
+from middlewared.service import ValidationErrors
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -477,7 +478,7 @@ PORTS_IN_USE = [
 
 @contextlib.contextmanager
 def get_port_service():
-    with patch('middlewared.plugins.ports.ports.PortService.get_in_use') as get_in_use_port:
+    with patch('middlewared.plugins.ports.ports.get_in_use') as get_in_use_port:
         get_in_use_port.return_value = PORTS_IN_USE
         yield PortService(Middleware())
 

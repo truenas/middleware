@@ -100,6 +100,7 @@ from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.ntp import NTPServerService
+from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -191,6 +192,7 @@ class ServiceContainer(BaseServiceContainer):
         self.keyvalue = KeyValueService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.pool = PoolServicesContainer(middleware)
+        self.port = PortService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
