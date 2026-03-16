@@ -147,7 +147,13 @@ class PoolDatasetService(Service):
         # nfs, smb and webshare
         for key in ('nfs', 'smb', 'webshare'):
             for share in self.middleware.call_sync(f'sharing.{key}.query'):
-                share['mount_info'] = self.get_mount_info(share['path'])
+                if isinstance(share, dict):
+                    # FIXME: Remove this eventually
+                    path = share['path']
+                else:
+                    path = share.path
+
+                share['mount_info'] = self.get_mount_info(path)
                 results[key].append(share)
 
         # nvmet
