@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 from middlewared.service import ServiceContext
-from middlewared.utils.mount import umount
+from truenas_os_pyutils.mount import umount
 
 from .utils import UPLOAD_LOCATION
 from .utils_linux import run_kw

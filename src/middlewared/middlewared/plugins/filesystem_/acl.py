@@ -34,7 +34,7 @@ from middlewared.utils.filesystem.acl import (
     strip_acl_path,
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
-from middlewared.utils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, path_location
 from .utils import (
     AclTool, AclToolAction, ATAclOptions, ATChownOptions, ATPermOptions,

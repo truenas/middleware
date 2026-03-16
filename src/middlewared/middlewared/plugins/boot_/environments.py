@@ -5,7 +5,7 @@ import os
 import subprocess
 
 from middlewared.api import api_method
-from middlewared.utils.mount import statmount
+from truenas_os_pyutils.mount import statmount
 from middlewared.api.current import (
     BootEnvironmentActivateArgs,
     BootEnvironmentActivateResult,
