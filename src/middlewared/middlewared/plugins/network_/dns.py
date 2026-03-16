@@ -13,7 +13,7 @@ from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 from middlewared.service_exception import CallError, ValidationErrors
 from truenas_pynetif.address.netlink import get_links, netlink_route
 

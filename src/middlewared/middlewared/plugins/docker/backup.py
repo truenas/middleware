@@ -18,11 +18,11 @@ from middlewared.api.current import (
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
-from middlewared.utils.io import atomic_write
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, Service
+from truenas_os_pyutils.io import atomic_write
 
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup
 from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX

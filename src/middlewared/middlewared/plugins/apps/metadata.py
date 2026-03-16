@@ -1,7 +1,7 @@
 import os
 
 from middlewared.service import job, Service
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 
 from .ix_apps.lifecycle import get_current_app_config
 from .ix_apps.metadata import get_app_metadata

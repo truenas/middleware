@@ -23,7 +23,7 @@ from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.mount import statmount, getmntinfo, iter_mountinfo
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -304,7 +304,7 @@ class SystemDatasetService(ConfigService):
                 job.wait_sync(raise_error=True)
                 return
 
-        mntinfo = list(getmntinfo().values())
+        mntinfo = list(iter_mountinfo())
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
                 ds = self.call_sync2(

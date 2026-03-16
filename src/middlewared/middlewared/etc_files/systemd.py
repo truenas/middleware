@@ -1,7 +1,7 @@
 import json
 
 from middlewared.plugins.service_.services.base import get_unit_file_state, set_unit_file_state
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 
 
 async def render(service, middleware):
