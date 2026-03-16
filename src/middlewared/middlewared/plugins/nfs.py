@@ -509,11 +509,11 @@ class SharingNFSService(SharingService):
         audit_callback(nfs_share['path'])
         res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
         # Remove alerts that might be associated with this share
-        await self.middleware.call(
-            'alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': nfs_share['path']}
+        await self.call2(
+            self.s.alert.oneshot_delete, 'NFSNetworkListExcessive', {'sharePath': nfs_share['path']}
         )
-        await self.middleware.call(
-            'alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': nfs_share['path']}
+        await self.call2(
+            self.s.alert.oneshot_delete, 'NFSHostListExcessive', {'sharePath': nfs_share['path']}
         )
         await self._service_change("nfs", "reload")
         return res
@@ -670,12 +670,12 @@ class SharingNFSService(SharingService):
 
         # Register a warning level alert for excessively long list of network entries
         if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:
-            await self.middleware.call(
-                'alert.oneshot_create', NFSNetworkListExcessiveAlert(sharePath=data['path'], numEntries=netlen)
+            await self.call2(
+                self.s.alert.oneshot_create, NFSNetworkListExcessiveAlert(sharePath=data['path'], numEntries=netlen)
             )
         else:
-            await self.middleware.call(
-                'alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': data['path']}
+            await self.call2(
+                self.s.alert.oneshot_delete, 'NFSNetworkListExcessive', {'sharePath': data['path']}
             )
 
         # Validate hosts: no spaces or quotes
@@ -683,12 +683,12 @@ class SharingNFSService(SharingService):
 
         # Register a warning level alert for excessively long list of host entries
         if (hostlen := len(data['hosts'])) >= NFS_HOSTS_WARNING_THRESHOLD:
-            await self.middleware.call(
-                'alert.oneshot_create', NFSHostListExcessiveAlert(sharePath=data['path'], numEntries=hostlen)
+            await self.call2(
+                self.s.alert.oneshot_create, NFSHostListExcessiveAlert(sharePath=data['path'], numEntries=hostlen)
             )
         else:
-            await self.middleware.call(
-                'alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': data['path']}
+            await self.call2(
+                self.s.alert.oneshot_delete, 'NFSHostListExcessive', {'sharePath': data['path']}
             )
 
     @private

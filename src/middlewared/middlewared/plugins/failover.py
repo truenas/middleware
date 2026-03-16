@@ -1026,8 +1026,8 @@ class FailoverService(ConfigService):
                     'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
                 )
             except Exception as e:
-                await self.middleware.call(
-                    'alert.oneshot_create', FailoverKMIPKeysSyncFailedAlert(error=str(e)),
+                await self.call2(
+                    self.s.alert.oneshot_create, FailoverKMIPKeysSyncFailedAlert(error=str(e)),
                 )
                 self.logger.error(
                     'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True

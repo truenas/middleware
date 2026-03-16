@@ -163,8 +163,8 @@ class SystemAdvancedService(Service):
                 )
 
                 # Create alert to notify user
-                await self.middleware.call(
-                    'alert.oneshot_create',
+                await self.call2(
+                    self.s.alert.oneshot_create,
                     InvalidGpuPciIdsAlert(pci_ids=', '.join(invalid_pci_ids))
                 )
 

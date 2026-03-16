@@ -798,11 +798,11 @@ class FailoverEventsService(Service):
         logger.info('Done updating replication tasks')
 
         logger.info('Temporarily blocking failover alerts')
-        self.run_call('alert.block_failover_alerts')
+        self.call_sync2(self.s.alert.block_failover_alerts)
         logger.info('Done temporarily blocking failover alerts')
 
         logger.info('Initializing alert system')
-        self.run_call('alert.initialize', False)
+        self.call_sync2(self.s.alert.initialize, False)
         logger.info('Done initializing alert system')
 
         logger.info('Initializing task to renew certs if necessary')

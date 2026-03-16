@@ -39,25 +39,25 @@ async def before_start_check(context: ServiceContext) -> None:
         await docker_validate_fs(context)
     except CallError as e:
         if e.errno != CallError.EDATASETISLOCKED:
-            await context.middleware.call(
-                'alert.oneshot_create',
+            await context.call2(
+                context.s.alert.oneshot_create,
                 ApplicationsConfigurationFailedAlert(error=e.errmsg),
             )
 
         await set_status(context, Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
         raise
 
-    await context.middleware.call2(context.middleware.services.alert.oneshot_delete, 'ApplicationsConfigurationFailed', None)
+    await context.call2(context.s.alert.oneshot_delete, 'ApplicationsConfigurationFailed', None)
 
 
 async def after_start_check(context: ServiceContext) -> None:
     if await context.middleware.call('service.started', 'docker'):
         await set_status(context, Status.RUNNING.value)
-        await context.middleware.call2(context.middleware.services.alert.oneshot_delete, 'ApplicationsStartFailed', None)
+        await context.call2(context.s.alert.oneshot_delete, 'ApplicationsStartFailed', None)
     else:
         await set_status(context, Status.FAILED.value, 'Failed to start docker service')
-        await context.middleware.call(
-            'alert.oneshot_create',
+        await context.call2(
+            context.s.alert.oneshot_create,
             ApplicationsStartFailedAlert(error='Docker service could not be started'),
         )
 

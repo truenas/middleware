@@ -188,8 +188,8 @@ class ServiceService(CRUDService):
                     await service_object.after_start()
                     await self.middleware.call('service.notify_running', service)
                     if service_object.deprecated:
-                        await self.middleware.call(
-                            'alert.oneshot_create',
+                        await self.call2(
+                            self.s.alert.oneshot_create,
                             DeprecatedServiceAlert(service=service_object.name),
                         )
                     return True
