@@ -429,8 +429,24 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin, ABC):
+    by_name: dict[str, type[AlertService]] = {}
+
     title: str
     html: bool = False
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        if cls.__name__ not in ("ThreadedAlertService", "ProThreadedAlertService"):
+            if not cls.__name__.endswith("AlertService"):
+                raise NameError(f"Invalid alert service name {cls.__name__}")
+
+            name = cls.__name__.removesuffix("AlertService")
+
+            if name in AlertService.by_name:
+                raise RuntimeError(f"Alert service {name} is already registered")
+
+            AlertService.by_name[name] = cls
 
     def __init__(self, middleware: Middleware, attributes: dict[str, Any]):
         self.middleware = middleware

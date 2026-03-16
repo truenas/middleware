@@ -25,9 +25,10 @@ from middlewared.alert.base import (
     DismissableAlertClass,
     AlertLevel,
     Alert,
+    AlertService as _AlertService,
     AlertSource,
+    UnavailableException,
 )
-from middlewared.alert.base import UnavailableException
 import middlewared.alert.source  # noqa: F401
 from middlewared.api import api_method, Event
 from middlewared.api.base import BaseModel
@@ -36,7 +37,6 @@ from middlewared.api.current import (
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
     AlertListAddedEvent, AlertListChangedEvent, AlertListRemovedEvent,
 )
-from middlewared.plugins.alert.service import ALERT_SERVICES_FACTORIES
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import Service, job, periodic, private
 from middlewared.service_exception import CallError, NetworkActivityDisabled
@@ -571,7 +571,7 @@ class AlertService(Service):
                 if not service_gone_alerts and not service_new_alerts:
                     continue
 
-                factory = ALERT_SERVICES_FACTORIES[alert_service_desc.attributes.type]
+                factory = _AlertService.by_name[alert_service_desc.attributes.type]
                 alert_service = factory(
                     self.middleware,
                     alert_service_desc.attributes.model_dump(context={"expose_secrets": True}),

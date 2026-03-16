@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import os
 import typing
 from typing import Any
 import uuid
@@ -15,8 +14,6 @@ from middlewared.alert.base import (
     AlertClassConfig,
     AlertLevel,
     AlertService as _AlertService,
-    ThreadedAlertService,
-    ProThreadedAlertService,
 )
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -29,13 +26,11 @@ from middlewared.api.current import (
 )
 from middlewared.service import CRUDServicePart, GenericCRUDService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils.plugins import load_modules, load_classes
+import middlewared.alert.service  # noqa: F401
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
-
-ALERT_SERVICES_FACTORIES: dict[str, type[_AlertService]] = {}
 
 
 class TestAlert(AlertClass):
@@ -66,7 +61,7 @@ class AlertServiceServicePart(CRUDServicePart[AlertServiceEntry]):
         data["attributes"]["type"] = data.pop("type")
 
         try:
-            data["type__title"] = ALERT_SERVICES_FACTORIES[data["attributes"]["type"]].title
+            data["type__title"] = _AlertService.by_name[data["attributes"]["type"]].title
         except KeyError:
             data["type__title"] = "<Unknown>"
 
@@ -159,7 +154,7 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         """
         self._svc_part._validate(data, "alert_service_test")
 
-        factory = ALERT_SERVICES_FACTORIES[data.attributes.type]
+        factory = _AlertService.by_name[data.attributes.type]
         alert_service = factory(self.middleware, data.attributes.model_dump(context={"expose_secrets": True}))
 
         master_node = "A"
@@ -183,18 +178,9 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         return True
 
     @private
-    def load(self):
-        for module in load_modules(
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, os.path.pardir,
-                         "alert", "service")
-        ):
-            for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
-                ALERT_SERVICES_FACTORIES[cls.name()] = cls
-
-    @private
     async def initialize(self):
         for alertservice in await self.middleware.call("datastore.query", "system.alertservice"):
-            if alertservice["type"] not in ALERT_SERVICES_FACTORIES:
+            if alertservice["type"] not in _AlertService.by_name:
                 self.logger.debug("Removing obsolete alert service %r (%r)", alertservice["name"], alertservice["type"])
                 await self.middleware.call("datastore.delete", "system.alertservice", alertservice["id"])
                 continue
