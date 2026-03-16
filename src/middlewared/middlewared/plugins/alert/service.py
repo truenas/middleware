@@ -178,7 +178,7 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         return True
 
     @private
-    async def initialize(self):
+    async def initialize(self) -> None:
         for alertservice in await self.middleware.call("datastore.query", "system.alertservice"):
             if alertservice["type"] not in _AlertService.by_name:
                 self.logger.debug("Removing obsolete alert service %r (%r)", alertservice["name"], alertservice["type"])
