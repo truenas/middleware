@@ -2,6 +2,8 @@ import asyncio
 import errno
 import itertools
 
+import truenas_pylibzfs
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDetachArgs, PoolDetachResult, PoolOfflineArgs, PoolOfflineResult,
@@ -205,9 +207,11 @@ class PoolService(Service):
         job.set_progress(20, f'Initiating removal of {options["label"]!r} ZFS device')
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
         job.set_progress(40, 'Waiting for removal of ZFS device to complete')
-        # We would like to wait for the removal to actually complete for cases where the removal might not
-        # be synchronous like removing top level vdevs except for slog and l2arc
-        await self.middleware.call('zfs.pool.wait', pool['name'], {'activity_type': 'REMOVE'})
+        # Wait until the removal operation has fully completed. Some removals may not be
+        # synchronous (e.g., removing top-level vdevs), except for SLOG and L2ARC devices.
+        await self.middleware.run_in_thread(
+            truenas_pylibzfs.lzc.wait, pool_name=pool['name'], activity=truenas_pylibzfs.lzc.ZpoolWaitActivity.REMOVE
+        )
         job.set_progress(60, 'Removal of ZFS device complete')
 
         if found[1]['type'] != 'DISK':
@@ -230,7 +234,7 @@ class PoolService(Service):
         for retry in itertools.count(1):
             wipe_jobs = []
             for disk in disks_to_wipe:
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False)
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, job_silent=True)
                 wipe_jobs.append((disk, wipe_job))
 
             disks_errors = {}

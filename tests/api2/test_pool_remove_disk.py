@@ -9,5 +9,5 @@ def test_waits_for_device_removal():
             {"type": "MIRROR", "disks": disks[2:4]}
         ],
     })) as pool:
-        ssh(f"dd if=/dev/urandom of=/mnt/{pool['name']}/blob bs=1M count=1000")
+        ssh(f"dd if=/dev/urandom of=/mnt/{pool['name']}/blob bs=1M count=6000")
         call("pool.remove", pool["id"], {"label": pool["topology"]["data"][0]["guid"]}, job=True)
