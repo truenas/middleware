@@ -10,7 +10,7 @@ from pathlib import Path
 from subprocess import run
 
 from middlewared.utils import ProductType
-from middlewared.utils.mount import statmount
+from truenas_os_pyutils.mount import statmount
 
 
 ZFS_CMD = '/usr/sbin/zfs'

@@ -11,8 +11,8 @@ import sys
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.ctdb import CTDB_DATA_DIR
-from middlewared.utils.mount import statmount
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from truenas_os_pyutils.mount import statmount
 
 MOUNTINFO = '/proc/self/mountinfo'
 LOCKFILE = os.path.join(CTDB_DATA_DIR, '.reclock')
