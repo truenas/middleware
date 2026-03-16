@@ -12,6 +12,8 @@ fi
 PACKAGES=(
     # need to make things work
     make
+    # linting
+    mypy
     # Debian package building tools
     dpkg-dev
     dh-python
@@ -39,7 +41,14 @@ PACKAGES=(
     pkg-config
     libiscsi-dev
 )
-PIP_PACKAGES=()
+PIP_PACKAGES=(
+    # linting
+    flake8
+    flake8-builtins
+    flake8-tidy-imports
+    flake8-literal
+    import-linter
+)
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
     # Running on SCALE
@@ -52,5 +61,5 @@ fi
 apt update
 apt install -y "${PACKAGES[@]}"
 if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then
-    pip install --break-system-packages "${PIP_PACKAGES[@]}"
+    pip install --break-system-packages --ignore-installed --root-user-action=ignore "${PIP_PACKAGES[@]}"
 fi
