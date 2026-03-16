@@ -3,7 +3,7 @@ import re
 from subprocess import run
 from packaging import version
 
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 
 VERSION = re.compile(r'(?<=Version: ).*')
 PRODUCT = re.compile(r'(?<=Product Name: ).*')
