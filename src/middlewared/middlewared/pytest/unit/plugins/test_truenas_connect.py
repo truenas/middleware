@@ -615,12 +615,15 @@ class TestTNCHostnameService:
         async def mock_middleware_call(method, *args, **kwargs):
             nonlocal get_all_called, get_interfaces_called
 
-            if method == 'tn_connect.config':
+            if method == 'failover.is_single_master_node':
+                return True
+            elif method == 'tn_connect.config':
                 return {
                     'id': 1,
                     'ips': [],
                     'interfaces': ['ens3'],
-                    'use_all_interfaces': True
+                    'use_all_interfaces': True,
+                    'status': 'CONFIGURED',
                 }
             elif method == 'tn_connect.get_all_interface_ips':
                 get_all_called = True
@@ -662,12 +665,15 @@ class TestTNCHostnameService:
         async def mock_middleware_call(method, *args, **kwargs):
             nonlocal get_all_called, get_interfaces_called
 
-            if method == 'tn_connect.config':
+            if method == 'failover.is_single_master_node':
+                return True
+            elif method == 'tn_connect.config':
                 return {
                     'id': 1,
                     'ips': [],
                     'interfaces': ['ens3', 'ens4'],
-                    'use_all_interfaces': False
+                    'use_all_interfaces': False,
+                    'status': 'CONFIGURED',
                 }
             elif method == 'tn_connect.get_all_interface_ips':
                 get_all_called = True
@@ -709,12 +715,15 @@ class TestTNCHostnameService:
         async def mock_middleware_call(method, *args, **kwargs):
             nonlocal register_called, cache_put_args
 
-            if method == 'tn_connect.config':
+            if method == 'failover.is_single_master_node':
+                return True
+            elif method == 'tn_connect.config':
                 return {
                     'id': 1,
                     'ips': [],
                     'interfaces': [],
                     'use_all_interfaces': True,
+                    'status': 'CONFIGURED',
                 }
             elif method == 'tn_connect.get_all_interface_ips':
                 return []
@@ -757,12 +766,15 @@ class TestTNCHostnameService:
         async def mock_middleware_call(method, *args, **kwargs):
             nonlocal register_called
 
-            if method == 'tn_connect.config':
+            if method == 'failover.is_single_master_node':
+                return True
+            elif method == 'tn_connect.config':
                 return {
                     'id': 1,
                     'ips': ['192.168.1.100'],
                     'interfaces': [],
                     'use_all_interfaces': True,
+                    'status': 'CONFIGURED',
                 }
             elif method == 'tn_connect.get_all_interface_ips':
                 return []
