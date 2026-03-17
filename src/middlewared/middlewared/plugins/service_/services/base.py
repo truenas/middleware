@@ -11,7 +11,7 @@ import types
 #   3. Verified under stress testing to be free of memory leaks
 from jeepney import DBusAddress, new_method_call
 from jeepney.bus_messages import message_bus, MatchRule
-from jeepney.io.asyncio import open_dbus_router, Proxy
+from jeepney.io.asyncio import open_dbus_connection, DBusRouter, Proxy
 from jeepney.wrappers import DBusErrorResponse, unwrap_msg
 
 from middlewared.utils.journal import (
@@ -88,6 +88,72 @@ _ACTION_TIMEOUT_PROPERTIES = types.MappingProxyType({
     "Stop": ("TimeoutStopUSec",),
     "Restart": ("TimeoutStopUSec", "TimeoutStartUSec"),
 })
+
+
+# Cached system D-Bus router — one long-lived connection instead of
+# opening/closing per query.  Jeepney's DBusRouter spawns a background
+# asyncio task on construction.  When routers are created and discarded
+# per-call, those tasks can become orphaned and trigger a self-deadlock
+# on CPython's _global_shutdown_lock when the garbage collector finalizes
+# them inside an unrelated ThreadPoolExecutor.submit() call.  A single
+# long-lived router eliminates this task churn entirely.
+_system_dbus_conn = None
+_system_dbus_router = None
+_system_dbus_lock = asyncio.Lock()
+
+
+def _router_is_alive():
+    """Check whether the cached router is usable."""
+    return (
+        _system_dbus_router is not None
+        and not _system_dbus_router._rcv_task.done()
+    )
+
+
+async def _close_cached_router():
+    """Tear down the cached connection and router if they exist."""
+    global _system_dbus_conn, _system_dbus_router
+    router, conn = _system_dbus_router, _system_dbus_conn
+    _system_dbus_router = None
+    _system_dbus_conn = None
+    if router is not None:
+        # Kill the background receiver task that jeepney started.
+        router._rcv_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await router._rcv_task
+    if conn is not None:
+        try:
+            await conn.close()
+        except Exception:
+            pass
+
+
+async def _ensure_cached_router():
+    """Create or reconnect the cached system D-Bus router."""
+    global _system_dbus_conn, _system_dbus_router
+    if _router_is_alive():
+        return
+    async with _system_dbus_lock:
+        if _router_is_alive():
+            return
+        await _close_cached_router()
+        _system_dbus_conn = await open_dbus_connection("SYSTEM")
+        _system_dbus_router = DBusRouter(_system_dbus_conn)
+
+
+@contextlib.asynccontextmanager
+async def _get_system_dbus_router():
+    """Yield the cached system D-Bus router, reconnecting if necessary."""
+    await _ensure_cached_router()
+    try:
+        yield _system_dbus_router
+    except (EOFError, ConnectionResetError, BrokenPipeError, RouterClosed):
+        await _close_cached_router()
+        raise
+    except Exception:
+        logger.warning("Unexpected D-Bus error, closing cached router", exc_info=True)
+        await _close_cached_router()
+        raise
 
 
 async def _get_unit_timeout(
@@ -234,7 +300,7 @@ async def open_unit(service_name: str | bytes):
     """
     service_name = _normalize_unit_name(service_name)
 
-    async with open_dbus_router(bus="SYSTEM") as router:
+    async with _get_system_dbus_router() as router:
         unit_path = await _load_unit_path(router, service_name)
 
         props = DBusAddress(
@@ -328,7 +394,7 @@ async def get_unit_file_state(service_name: str | bytes) -> str:
         Unit file state as string (e.g., "enabled", "disabled", "static", "masked", "not-found")
     """
     service_name = _normalize_unit_name(service_name)
-    async with open_dbus_router(bus="SYSTEM") as router:
+    async with _get_system_dbus_router() as router:
         try:
             msg = new_method_call(_SYSTEMD_MANAGER, "GetUnitFileState", "s", (service_name,))
             reply = await router.send_and_get_reply(msg)
@@ -349,7 +415,7 @@ async def set_unit_file_state(service_name: str | bytes, enabled: bool) -> None:
     """
     service_name = _normalize_unit_name(service_name)
 
-    async with open_dbus_router(bus="SYSTEM") as router:
+    async with _get_system_dbus_router() as router:
         if enabled:
             msg = new_method_call(
                 _SYSTEMD_MANAGER, "EnableUnitFiles", "asbb", ([service_name], False, True)
@@ -609,7 +675,7 @@ async def call_unit_action_and_wait(
 
     start_time = time.monotonic()
 
-    async with open_dbus_router(bus="SYSTEM") as router:
+    async with _get_system_dbus_router() as router:
         await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
 
         unit_path = await _load_unit_path(router, service_name)
