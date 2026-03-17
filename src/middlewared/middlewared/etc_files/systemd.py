@@ -1,6 +1,6 @@
 import json
 
-from middlewared.plugins.service_.services.base import get_unit_file_state, set_unit_file_state
+from middlewared.plugins.service_.services.dbus_router import system_dbus
 from truenas_os_pyutils.io import atomic_write
 
 
@@ -13,7 +13,7 @@ async def render(service, middleware):
     licensed = await middleware.call('failover.licensed')
 
     for unit, enable in services_enabled.items():
-        state = await get_unit_file_state(unit)
+        state = await system_dbus.get_unit_file_state(unit)
         if state not in ("enabled", "disabled"):
             middleware.logger.warning(
                 "Unexpected unit file state %r for %s", state, unit
@@ -25,7 +25,7 @@ async def render(service, middleware):
             enable = False
 
         if enable != is_enabled:
-            await set_unit_file_state(unit, enable)
+            await system_dbus.set_unit_file_state(unit, enable)
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
     with atomic_write('/data/user-services.json', 'w', perms=0o600) as f:
