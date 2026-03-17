@@ -2,7 +2,6 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from truenas_pynetif.ethtool import FecModeName
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
     single_argument_args, single_argument_result, NotRequired, NonEmptyString,
@@ -26,6 +25,9 @@ __all__ = [
     "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIpArgs",
     "InterfaceWebsocketLocalIpResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
 ]
+
+
+FecModeName = Literal["AUTO", "OFF", "RS", "BASER", "LLRS"]
 
 
 class InterfaceEntryAlias(BaseModel):
