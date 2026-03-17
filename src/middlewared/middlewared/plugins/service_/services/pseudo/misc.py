@@ -1,7 +1,8 @@
 import asyncio
 
 from truenas_connect_utils.status import Status
-from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
+from middlewared.plugins.service_.services.base import SimpleService
+from middlewared.plugins.service_.services.dbus_router import system_dbus
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
 
@@ -82,14 +83,14 @@ class HttpService(PseudoServiceBase):
 
     async def restart(self):
         await self.middleware.call("system.general.update_ui_allowlist")
-        await systemd_unit("nginx", "restart")
+        await system_dbus.systemd_unit("nginx", "restart")
 
     async def after_restart(self):
         await self._register_new_port()
 
     async def reload(self):
         await self.middleware.call("system.general.update_ui_allowlist")
-        await systemd_unit("nginx", "reload")
+        await system_dbus.systemd_unit("nginx", "reload")
 
     async def after_reload(self):
         await self._register_new_port()
@@ -121,7 +122,7 @@ class NfsMountdService(PseudoServiceBase):
     may_run_on_standby = False
 
     async def stop(self):
-        await systemd_unit("nfs-mountd", "stop")
+        await system_dbus.systemd_unit("nfs-mountd", "stop")
 
 
 class NtpdService(SimpleService):
