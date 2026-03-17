@@ -1,7 +1,69 @@
+import math
 import pathlib
 import subprocess
 
 from middlewared.service import CallError, private, Service
+
+
+def sgdisk_explicit_alignment(
+    disk_size_bytes: int,
+    sector_size_bytes: int,
+    requested_partition_size: int,
+) -> int | None:
+    """
+    Return the explicit GPT alignment that we need to pass to `sgdisk` in order to be able to create a partition
+    of requested_partition_size bytes that fits on the disk.
+
+    Assumptions:
+    - Standard GPT layout
+    - Protective MBR in sector 0
+    - Primary GPT header in sector 1
+    - Backup GPT header in last sector
+    - Primary/backup partition-entry arrays on both ends
+    - requested_partition_size must be a multiple of sector_size_bytes
+
+    Returns:
+    - alignment in sectors, or None if explicit alignment should not be specified
+    """
+
+    if disk_size_bytes % sector_size_bytes != 0:
+        return None  # disk_size_bytes must be divisible by sector_size_bytes
+
+    if requested_partition_size % sector_size_bytes != 0:
+        return None  # requested_partition_size must be divisible by sector_size_bytes
+
+    total_sectors = disk_size_bytes // sector_size_bytes
+    requested_partition_sectors = requested_partition_size // sector_size_bytes
+
+    # GPT partition-entry array size in sectors
+    num_partition_entries = 128
+    partition_entry_size_bytes = 128
+    entry_array_bytes = num_partition_entries * partition_entry_size_bytes
+    entry_array_sectors = math.ceil(entry_array_bytes / sector_size_bytes)
+
+    # Standard GPT usable range
+    first_usable_sector = 2 + entry_array_sectors
+    last_usable_sector = total_sectors - entry_array_sectors - 2
+
+    latest_start_sector = last_usable_sector - requested_partition_sectors + 1
+    if latest_start_sector < first_usable_sector:
+        return None
+
+    # Largest alignment A such that ceil(first_usable_sector / A) * A <= latest_start_sector
+    best_alignment = None
+    default_alignment = 1024 * 1024 // sector_size_bytes
+    alignment = 1
+    while alignment <= default_alignment:
+        aligned_start = math.ceil(first_usable_sector / alignment) * alignment
+        if aligned_start <= latest_start_sector:
+            best_alignment = alignment
+
+        alignment *= 2
+
+    if best_alignment == default_alignment:
+        return None
+
+    return best_alignment
 
 
 class DiskService(Service):
@@ -34,13 +96,30 @@ class DiskService(Service):
         # wipe the disk (quickly) of any existing filesystems
         self.middleware.call_sync('disk.wipe', disk, 'QUICK', False).wait_sync(raise_error=True)
 
+        alignment = None
         if size is None:
             size = self.get_data_partition_size(disk)
+            for info in self.middleware.call_sync('disk.get_disks', [disk]):
+                # Old TrueNAS systems:
+                # * Used the entire disk for the data partition
+                # * Used smaller partition alignment
+                #
+                # When replacing a disk with such a partition, the new partition must be at least
+                # as large as the one being replaced (ZFS requires this). However, when using a
+                # larger alignment, the new partition may not fit on the disk. In that case,
+                # we must use a smaller alignment.
+                alignment = sgdisk_explicit_alignment(info.size_bytes, info.pbs, size)
+                break
+
+        cmd = ["sgdisk"]
+        if alignment is not None:
+            self.logger.info("Using non-default alignment %r for disk %r", alignment, disk)
+            cmd += ["-a", str(alignment)]
+
+        cmd += ["-n", f"1:0:+{int(size / 1024)}k", "-t", "1:BF01", f"/dev/{disk}"]
 
         try:
-            subprocess.run(["sgdisk", "-n", f"1:0:+{int(size / 1024)}k", "-t", "1:BF01", f"/dev/{disk}"],
-                           capture_output=True,
-                           check=True)
+            subprocess.run(cmd, capture_output=True, check=True)
         except subprocess.CalledProcessError as e:
             error = e.stderr.decode("utf-8", "ignore").strip()
             if "Could not create partition" in error:
