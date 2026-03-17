@@ -260,9 +260,9 @@ class ZettareplProcess:
                         break
                 else:
                     logger.warning("Task %s(%r) not found", class_name, task_id)
-                    if task_id.startswith("replication_"):
+                    if class_name == "PeriodicSnapshotTask":
                         self.observer_queue.put(PeriodicSnapshotTaskError(task_id, "Task not found"))
-                    if task_id.startswith("periodic_snapshot_"):
+                    if class_name == "ReplicationTask":
                         self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
 
 
@@ -375,7 +375,7 @@ class ZettareplService(Service):
             ]
             for k, v in self.middleware.call_sync("zettarepl.get_state").get("tasks", {}).items():
                 for prefix, channels, make_error in task_error_channels:
-                    if k.startswith(prefix):
+                    if k.startswith(prefix) and v.get("state") in ("WAITING", "RUNNING"):
                         self.middleware.call_sync("zettarepl.set_state", k, {
                             "state": "ERROR",
                             "datetime": utc_now(),
@@ -413,16 +413,13 @@ class ZettareplService(Service):
 
         self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
-    def run_periodic_snapshot_task(self, id_, job):
+    def run_periodic_snapshot_task(self, id_):
         try:
             self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id_}")))
         except Exception:
             raise CallError("Periodic snapshot task service is not running")
 
-        self._run_periodic_snapshot_task_job(f"task_{id_}", job)
-
-    def _run_periodic_snapshot_task_job(self, id_, job):
-        channels = self.periodic_snapshot_task_jobs_channels[id_]
+        channels = self.periodic_snapshot_task_jobs_channels[f"task_{id_}"]
         channel = queue.Queue()
         channels.append(channel)
         try:

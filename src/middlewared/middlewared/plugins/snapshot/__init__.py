@@ -141,7 +141,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         """
         Execute a Periodic Snapshot Task of `id`.
         """
-        await _run(self.context, id_, job)
+        await _run(self.context, id_)
 
     @private
     async def removal_date_property(self) -> str:
