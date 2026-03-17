@@ -54,7 +54,7 @@ class BONDMissingPortsAlert(AlertClass):
     missing: str
 
 
-class BondStatus(AlertSource):
+class BondStatusAlertSource(AlertSource):
     async def check(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
         ifaces = {i["id"]: i for i in await self.middleware.call("interface.query")}

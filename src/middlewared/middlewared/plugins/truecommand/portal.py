@@ -51,7 +51,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     await self.middleware.call('truecommand.start_truecommand_service')
                 else:
                     await self.middleware.call('truecommand.dismiss_alerts', True)
-                    await self.middleware.call('alert.oneshot_create', TruecommandContainerHealthAlert())
+                    await self.call2(self.s.alert.oneshot_create, TruecommandContainerHealthAlert())
 
                     asyncio.get_event_loop().call_later(
                         self.POLLING_GAP_MINUTES * 60,
@@ -68,8 +68,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 # api key again
                 # Clear TC pending alerts if any, what only matters now is that key has been disabled by portal
                 await self.middleware.call('truecommand.dismiss_alerts', True)
-                await self.middleware.call(
-                    'alert.oneshot_create', TruecommandConnectionDisabledAlert(error=status['error']),
+                await self.call2(
+                    self.s.alert.oneshot_create, TruecommandConnectionDisabledAlert(error=status['error']),
                 )
                 self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
                 await self.middleware.call('truecommand.set_status', TruecommandStatus.FAILED.value)
@@ -90,8 +90,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 break
 
             else:
-                await self.middleware.call(
-                    'alert.oneshot_create', TruecommandConnectionPendingAlert(error=status['error']),
+                await self.call2(
+                    self.s.alert.oneshot_create, TruecommandConnectionPendingAlert(error=status['error']),
                 )
                 self.middleware.logger.debug(
                     'Pending Confirmation From iX Portal for Truecommand API Key: %s', status['error']

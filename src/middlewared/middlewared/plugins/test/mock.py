@@ -47,7 +47,7 @@ class TestService(Service):
 
         self.middleware.set_mock(name, args, method)
 
-        await self.middleware.call("alert.oneshot_create", SystemTestingAlert())
+        await self.call2(self.s.alert.oneshot_create, SystemTestingAlert())
 
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
@@ -67,7 +67,7 @@ class TestService(Service):
         self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
         self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
 
-        await self.middleware.call('alert.oneshot_create', SystemTestingAlert())
+        await self.call2(self.s.alert.oneshot_create, SystemTestingAlert())
 
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
     # When these are mocked over they will be available to users with the "MOCK" role.

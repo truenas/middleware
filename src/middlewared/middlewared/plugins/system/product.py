@@ -157,7 +157,7 @@ class SystemService(Service):
             with open(EULA_PENDING_PATH, 'a+') as f:
                 os.fchmod(f.fileno(), 0o600)
 
-        self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
+        self.call_sync2(self.s.alert.alert_source_clear_run, 'LicenseStatus')
         self.middleware.call_sync('failover.configure.license', dser_license)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_license=prev_license), wait=False,

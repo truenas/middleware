@@ -80,7 +80,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
 
             self.initialized = True
 
-        classes = (self.middleware.call_sync("alertclasses.config"))["classes"]
+        classes = self.call_sync2(self.s.alertclasses.config).classes
 
         for alert in gone_alerts:
             error_indication, error_status, error_index, var_binds = next(
@@ -114,7 +114,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
                          self.snmp_alert_level_type(
                              self.snmp_alert_level_type.namedValues.getValue(
-                                 classes.get(alert.instance.config.name, {}).get(
+                                 classes.get(alert.instance.config.name, {}).get(  # type: ignore
                                      "level", alert.instance.config.level.name).lower()))),
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message),
                          pysnmp.hlapi.OctetString(alert.formatted))

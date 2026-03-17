@@ -141,7 +141,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         Delete cloud backup entry `id`.
         """
         self.middleware.call_sync("cloud_backup.abort", id_)
-        self.middleware.call_sync("alert.oneshot_delete", "CloudBackupTaskFailed", id_)
+        self.call_sync2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)
         rv = self.middleware.call_sync("datastore.delete", "tasks.cloud_backup", id_)
         self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
         return rv

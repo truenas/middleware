@@ -77,7 +77,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
                 'update.status', 'CHANGED', status=(await self.call2(self.s.update.status)).model_dump()
             )
 
-            await self.middleware.call("alert.alert_source_clear_run", "HasUpdate")
+            await self.call2(self.s.alert.alert_source_clear_run, "HasUpdate")
 
         return await self.config()
 

@@ -37,8 +37,8 @@ class KMIPService(Service, KMIPServerMixin):
         if result['error']:
             if raise_alert:
                 config = self.middleware.call_sync('kmip.config')
-                self.middleware.call_sync(
-                    'alert.oneshot_create',
+                self.call_sync2(
+                    self.s.alert.oneshot_create,
                     KMIPConnectionFailedAlert(server=config['server'], error=result['exception'])
                 )
             return False

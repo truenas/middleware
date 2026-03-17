@@ -4,9 +4,9 @@ from .alertservice_attributes import AlertServiceAttributes
 
 
 __all__ = [
-    'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs', 'AlertServiceDeleteArgs',
-    'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult', 'AlertServiceDeleteResult',
-    'AlertServiceTestResult',
+    'AlertServiceCreate', 'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs',
+    'AlertServiceDeleteArgs', 'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult',
+    'AlertServiceDeleteResult', 'AlertServiceTestResult',
 ]
 
 

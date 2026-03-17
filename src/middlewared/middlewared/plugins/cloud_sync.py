@@ -886,7 +886,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         Deletes cloud_sync entry `id`.
         """
         self.middleware.call_sync("cloudsync.abort", id_)
-        self.middleware.call_sync("alert.oneshot_delete", "CloudSyncTaskFailed", id_)
+        self.call_sync2(self.s.alert.oneshot_delete, "CloudSyncTaskFailed", id_)
         rv = self.middleware.call_sync("datastore.delete", "tasks.cloudsync", id_)
         self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
         return rv
@@ -1086,10 +1086,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                 try:
                     rclone(self.middleware, job, cloud_sync, options["dry_run"])
                     if "id" in cloud_sync:
-                        self.middleware.call_sync("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
+                        self.call_sync2(self.s.alert.oneshot_delete, "CloudSyncTaskFailed", cloud_sync["id"])
                 except Exception:
                     if "id" in cloud_sync:
-                        self.middleware.call_sync("alert.oneshot_create", CloudSyncTaskFailedAlert(
+                        self.call_sync2(self.s.alert.oneshot_create, CloudSyncTaskFailedAlert(
                             id=cloud_sync["id"],
                             name=cloud_sync["description"],
                         ))

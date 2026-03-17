@@ -10,6 +10,6 @@ async def render(service, middleware, render_ctx):
         render_ctx['user.query'],
         render_ctx['group.query'],
     ):
-        await middleware.call('alert.oneshot_create', WebUiRootLoginAlert())
+        await middleware.call2(middleware.services.alert.oneshot_create, WebUiRootLoginAlert())
     else:
-        await middleware.call('alert.oneshot_delete', 'WebUiRootLogin', None)
+        await middleware.call2(middleware.services.alert.oneshot_delete, 'WebUiRootLogin', None)

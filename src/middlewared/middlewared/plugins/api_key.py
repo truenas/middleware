@@ -404,7 +404,7 @@ class ApiKeyService(CRUDService):
 
     @private
     async def check_status(self) -> None:
-        await self.middleware.call("alert.alert_source_clear_run", "ApiKeyRevoked")
+        await self.call2(self.s.alert.alert_source_clear_run, "ApiKeyRevoked")
 
     @api_method(ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult, roles=['API_KEY_READ'])
     def convert_raw_key(self, raw_key):

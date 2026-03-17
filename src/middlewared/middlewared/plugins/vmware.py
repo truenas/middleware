@@ -139,7 +139,7 @@ class VMWareService(CRUDService):
             {**new, 'state': {'state': 'PENDING'}},
         )
 
-        await self.middleware.call("alert.oneshot_delete", "VMWareLoginFailed", old["hostname"])
+        await self.call2(self.s.alert.oneshot_delete, "VMWareLoginFailed", old["hostname"])
 
         return await self.get_instance(id_)
 
@@ -157,7 +157,7 @@ class VMWareService(CRUDService):
             id_
         )
 
-        await self.middleware.call("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
+        await self.call2(self.s.alert.oneshot_delete, "VMWareLoginFailed", vmsnapobj["hostname"])
 
         return response
 
@@ -405,7 +405,7 @@ class VMWareService(CRUDService):
                             snapvmskips.append([vm.config.uuid, vm.name])
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
-                        self.middleware.call_sync("alert.oneshot_create", VMWareSnapshotCreateFailedAlert(
+                        self.call_sync2(self.s.alert.oneshot_create, VMWareSnapshotCreateFailedAlert(
                             hostname=vmsnapobj["hostname"],
                             vm=vm.name,
                             snapshot=vmsnapname,
@@ -463,7 +463,7 @@ class VMWareService(CRUDService):
                             self.logger.debug(
                                 "Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True
                             )
-                            self.middleware.call_sync("alert.oneshot_create", VMWareSnapshotDeleteFailedAlert(
+                            self.call_sync2(self.s.alert.oneshot_create, VMWareSnapshotDeleteFailedAlert(
                                 hostname=vmsnapobj["hostname"],
                                 vm=vm.name,
                                 snapshot=vmsnapname,
@@ -596,7 +596,7 @@ class VMWareService(CRUDService):
     @private
     def alert_vmware_login_failed(self, vmsnapobj, e):
         error = self._vmware_exception_message(e)
-        self.middleware.call_sync("alert.oneshot_create", VMWareLoginFailedAlert(
+        self.call_sync2(self.s.alert.oneshot_create, VMWareLoginFailedAlert(
             hostname=vmsnapobj["hostname"],
             error=error,
         ))
@@ -607,7 +607,7 @@ class VMWareService(CRUDService):
 
     @private
     def delete_vmware_login_failed_alert(self, vmsnapobj):
-        self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
+        self.call_sync2(self.s.alert.oneshot_delete, "VMWareLoginFailed", vmsnapobj["hostname"])
         self.set_vmsnapobj_state(vmsnapobj, {
             "state": "SUCCESS",
         })
