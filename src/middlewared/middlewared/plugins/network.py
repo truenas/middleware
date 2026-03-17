@@ -1228,18 +1228,25 @@ class InterfaceService(CRUDService):
         )
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+
+        # Validate fec_mode field
         if 'fec_mode' in data:
-            if new['type'] == 'PHYSICAL':
-                if available := self.available_fec_modes(oid):
-                    if data['fec_mode'] not in available:
+            if await self.middleware.call('system.is_enterprise'):
+                if new['type'] == 'PHYSICAL':
+                    if available := self.available_fec_modes(oid):
+                        if data['fec_mode'] not in available:
+                            verrors.add(
+                                'interface_update.fec_mode',
+                                f'Unsupported FEC mode. Available: {", ".join(available)}'
+                            )
+                    else:
                         verrors.add(
-                            'interface_update.fec_mode',
-                            f'Unsupported FEC mode. Available: {", ".join(available)}'
+                            'interface_update.fec_mode', 'This interface does not support FEC mode configuration.'
                         )
                 else:
-                    verrors.add('interface_update.fec_mode', 'This interface does not support FEC mode configuration.')
+                    verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
             else:
-                verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+                verrors.add('interface_update.fec_mode', 'Configuring FEC mode is an enterprise feature.')
 
         verrors.check()
 
