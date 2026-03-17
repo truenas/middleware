@@ -27,6 +27,7 @@ from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_vers
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
+from .utils.mock import coerce_mock_result, get_mock_return_model
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
 from .utils.privilege import credential_has_full_admin
@@ -92,6 +93,9 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.alert.alert import AlertService
+from middlewared.plugins.alert.classes import AlertClassesService
+from middlewared.plugins.alert.service import AlertServiceService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.cron import CronJobService
@@ -100,6 +104,7 @@ from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.ntp import NTPServerService
+from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -183,6 +188,9 @@ class ServiceContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super(ServiceContainer, self).__init__(middleware)
 
+        self.alert = AlertService(middleware)
+        self.alertclasses = AlertClassesService(middleware)
+        self.alertservice = AlertServiceService(middleware)
         self.catalog = CatalogService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
@@ -191,6 +199,7 @@ class ServiceContainer(BaseServiceContainer):
         self.keyvalue = KeyValueService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.pool = PoolServicesContainer(middleware)
+        self.port = PortService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
@@ -506,7 +515,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'mail',
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
-                'alert',
+                'alert.alert',
                 # Migrate users and groups ASAP
                 'account',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
@@ -820,6 +829,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
@@ -861,8 +871,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
-                      message_id, audit_callback)
+            job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, job_silent,
+                      app, message_id, audit_callback)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.
@@ -900,13 +910,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         message_id: str | None = None,
         pipes: Pipes | None = None,
         in_event_loop: bool = True,
     ) -> typing.Any:
         prepared_call = self._call_prepare(
             name, serviceobj, methodobj, params, kwargs, app=app, audit_callback=audit_callback,
-            job_on_progress_cb=job_on_progress_cb, message_id=message_id, pipes=pipes, in_event_loop=in_event_loop
+            job_on_progress_cb=job_on_progress_cb, job_silent=job_silent, message_id=message_id, pipes=pipes,
+            in_event_loop=in_event_loop
         )
 
         if prepared_call.job:
@@ -1227,6 +1239,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
     ) -> typing.Any:
@@ -1237,7 +1250,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, job_silent=job_silent,
+            pipes=pipes,
         )
 
     def call_sync(
@@ -1245,6 +1259,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         name: str,
         *params,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         background: bool = False,
@@ -1258,7 +1273,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
-                                           job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
+                                           job_on_progress_cb=job_on_progress_cb, job_silent=job_silent,
+                                           in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
@@ -1282,6 +1298,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1295,6 +1312,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1308,6 +1326,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1321,6 +1340,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: P.kwargs,
@@ -1333,6 +1353,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         app: App | None = None,
         audit_callback: AuditCallback | None = None,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         pipes: Pipes | None = None,
         profile: bool = False,
         **kwargs: typing.Any,
@@ -1358,6 +1379,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         audit_callback: AuditCallback | None = None,
         background: bool = False,
         job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
@@ -1379,7 +1401,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         name, serviceobj, methodobj = self.get_method_by_callable(f, args)
         prepared_call = self._call_prepare(name, serviceobj, methodobj, args, kwargs, app=app,
                                            audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb,
-                                           in_event_loop=False)
+                                           job_silent=job_silent, in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
@@ -1504,13 +1526,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 raise ValueError(f'{name!r} is already mocked with {args!r}')
 
         serviceobj, methodobj = self.get_method(name)
+        mock_return_model = get_mock_return_model(serviceobj, methodobj)
 
         if inspect.iscoroutinefunction(mock):
             async def f(*args, **kwargs):
-                return await mock(serviceobj, *args, **kwargs)
+                result = await mock(serviceobj, *args, **kwargs)
+                return coerce_mock_result(result, mock_return_model)
         else:
             def f(*args, **kwargs):
-                return mock(serviceobj, *args, **kwargs)
+                result = mock(serviceobj, *args, **kwargs)
+                return coerce_mock_result(result, mock_return_model)
 
         if hasattr(methodobj, '_job'):
             f._job = methodobj._job
@@ -1927,10 +1952,21 @@ def main():
 
     setup_logging('middleware', args.debug_level, args.log_handler)
 
-    # zettarepl runs in a child process via multiprocessing. We use 'spawn' instead of the Linux
-    # default 'fork' so that the child does not inherit the parent's logging handlers (which would
-    # cause duplicate log output) or its asyncio SIGTERM handler (which would make the child
-    # unkillable without SIGKILL).
+    # Use 'spawn' instead of the Linux default 'fork' for multiprocessing. Using 'fork' in
+    # multithreaded processes is highly discouraged by the Python docs and may lead to deadlocks.
+    #
+    # middlewared is multithreaded (asyncio event loop, ThreadPoolExecutor workers, etc.). With 'fork', only
+    # the calling thread is duplicated in the child — but all mutexes are copied in their current
+    # state. Locks held by other threads at the moment of fork become permanently locked in the
+    # child (the owning threads don't exist there), causing deadlocks. For example, `disk.retaste`
+    # uses multiprocessing.Pool whose forked workers can deadlock and never exit, hanging
+    # `os.waitpid` forever during pool cleanup.
+    #
+    # Forked children also inherit the parent's signal handlers and logging handlers. This causes
+    # zettarepl (which runs as a multiprocessing child) to inherit the asyncio SIGTERM handler
+    # (making it unkillable without SIGKILL) and duplicate log output.
+    #
+    # 'spawn' starts a fresh Python interpreter via fork+exec, avoiding all inherited state issues.
     multiprocessing.set_start_method('spawn')
 
     middleware = Middleware(

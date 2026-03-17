@@ -49,7 +49,7 @@ from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SI
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from middlewared.utils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
@@ -230,18 +230,18 @@ class SMBService(ConfigService):
 
         if veeam_repo_errors:
             # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
-            self.middleware.call_sync('alert.oneshot_create', SMBVeeamFastCloneAlert(
+            self.call_sync2(self.s.alert.oneshot_create, SMBVeeamFastCloneAlert(
                 shares=', '.join(veeam_repo_errors),
             ))
         else:
-            self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
+            self.call_sync2(self.s.alert.oneshot_delete, 'SMBVeeamFastClone')
 
         if disabled_shares:
-            self.middleware.call_sync('alert.oneshot_create', SMBAuditShareDisabledAlert(
+            self.call_sync2(self.s.alert.oneshot_create, SMBAuditShareDisabledAlert(
                 shares=', '.join(disabled_shares),
             ))
         else:
-            self.middleware.call_sync('alert.oneshot_delete', 'SMBAuditShareDisabled')
+            self.call_sync2(self.s.alert.oneshot_delete, 'SMBAuditShareDisabled')
 
         return generate_smb_conf_dict(
             ds_config,

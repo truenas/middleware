@@ -39,8 +39,8 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
-from middlewared.utils.io import safe_open
-from middlewared.utils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.io import safe_open
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 

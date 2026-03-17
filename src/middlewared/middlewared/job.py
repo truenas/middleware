@@ -333,6 +333,7 @@ class Job[T = typing.Any]:
         options: dict[str, typing.Any],
         pipes: Pipes | None = None,
         on_progress_cb: typing.Callable[[dict[str, typing.Any]], None] | None = None,
+        silent: bool = False,
         app: App | None = None,
         message_id: str | None = None,
         audit_callback: typing.Callable[[typing.Any], None] | None = None,
@@ -349,6 +350,7 @@ class Job[T = typing.Any]:
         self.app = app
         self.message_ids = [message_id] if message_id else []
         self.audit_callback = audit_callback
+        self.silent = silent
 
         self.id: int | None = None
         self.lock: JobSharedLock | None = None
@@ -616,10 +618,11 @@ class Job[T = typing.Any]:
             ei = sys.exc_info()
             assert ei[0] is not None
             self.set_exception(ei)
-            if isinstance(e, CallError):
-                logger.error("Job %r failed: %r", self.method, e)
-            else:
-                logger.error("Job %r failed", self.method, exc_info=True)
+            if not self.silent:
+                if isinstance(e, CallError):
+                    logger.error("Job %r failed: %r", self.method, e)
+                else:
+                    logger.error("Job %r failed", self.method, exc_info=True)
         finally:
             await self.__close_logs()
             await self.__close_pipes()
@@ -799,7 +802,7 @@ class Job[T = typing.Any]:
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
         job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
-                  None, None, None, None)
+                  None, False, None, None, None)
         job.id = job_dict['id']
         job.description = job_dict['description']
         if logs is not None:

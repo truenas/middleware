@@ -42,14 +42,14 @@ class TruecommandService(Service):
         if not await self.middleware.call('failover.is_single_master_node') or TruecommandStatus(
             (await self.middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
         ) != TruecommandStatus.CONNECTED:
-            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
+            await self.call2(self.s.alert.oneshot_delete, 'TruecommandConnectionHealth', None)
             return
 
         if not await self.wireguard_connection_health():
             # Stop wireguard if it's running and start polling the api to see what's up
             await self.middleware.call('truecommand.set_status', TruecommandStatus.CONNECTING.value)
             await self.stop_truecommand_service()
-            await self.middleware.call('alert.oneshot_create', TruecommandConnectionHealthAlert())
+            await self.call2(self.s.alert.oneshot_create, TruecommandConnectionHealthAlert())
             await self.middleware.call('truecommand.poll_api_for_status')
         else:
             # Mark the connection as connected - we do this for just in case user never called

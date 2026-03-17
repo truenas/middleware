@@ -49,15 +49,6 @@ class UpdateUpdateResult(BaseModel):
     """The updated system update configuration."""
 
 
-class UpdateProfileChoicesArgs(BaseModel):
-    pass
-
-
-class UpdateProfileChoicesResult(BaseModel):
-    result: dict[str, UpdateProfileChoice]
-    """Object of available update profiles with their configuration details."""
-
-
 class UpdateProfileChoice(BaseModel):
     name: str
     """Profile name."""
@@ -67,6 +58,15 @@ class UpdateProfileChoice(BaseModel):
     """Profile description."""
     available: bool
     """Whether profile is available for selection."""
+
+
+class UpdateProfileChoicesArgs(BaseModel):
+    pass
+
+
+class UpdateProfileChoicesResult(BaseModel):
+    result: dict[str, UpdateProfileChoice]
+    """Object of available update profiles with their configuration details."""
 
 
 class UpdateStatusArgs(BaseModel):

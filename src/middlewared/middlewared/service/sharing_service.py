@@ -230,8 +230,8 @@ class SharingTaskService[E](CRUDService[E]):
     @private
     async def generate_locked_alert(self, share_task_id):
         share_task = await self.get_instance(share_task_id)
-        await self.middleware.call(
-            'alert.oneshot_create', self.locked_alert_class(
+        await self.call2(
+            self.s.alert.oneshot_create, self.locked_alert_class(
                 type=self.share_task_type,
                 identifier=await self.human_identifier(share_task),
                 id=share_task['id'],
@@ -240,8 +240,8 @@ class SharingTaskService[E](CRUDService[E]):
 
     @private
     async def remove_locked_alert(self, share_task_id):
-        await self.middleware.call(
-            'alert.oneshot_delete', self.locked_alert_class.config.name, f'{self.share_task_type}_{share_task_id}'
+        await self.call2(
+            self.s.alert.oneshot_delete, self.locked_alert_class.config.name, f'{self.share_task_type}_{share_task_id}'
         )
 
     @pass_app(message_id=True)

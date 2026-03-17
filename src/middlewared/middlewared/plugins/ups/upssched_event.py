@@ -113,8 +113,8 @@ async def handle_upssched_event(context: ServiceContext, notify_type: str) -> No
                 body += 'Statistics could not be recovered<br>'
 
             alert_class = alert_mapping[notify_type]
-            await context.middleware.call(
-                'alert.oneshot_create', alert_class(ups=config.identifier, body=body)
+            await context.call2(
+                context.s.alert.oneshot_create, alert_class(ups=config.identifier, body=body)
             )
     else:
         context.logger.debug(f'Unrecognized UPS notification event: {notify_type}')

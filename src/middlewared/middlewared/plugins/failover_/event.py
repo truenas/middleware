@@ -13,7 +13,7 @@ import errno
 from collections import defaultdict
 
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
@@ -605,9 +605,9 @@ class FailoverEventsService(Service):
             try:
                 logger.info('Retasting disks on standby node')
                 self.run_call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
-                logger.info('Done retasting disks on standby node')
+                logger.info('Done scheduling retasting disks on standby node')
             except Exception:
-                logger.exception('Unexpected failure retasting disks on standby node')
+                logger.exception('Unexpected failure scheduling retasting disks on standby node')
 
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
@@ -798,11 +798,11 @@ class FailoverEventsService(Service):
         logger.info('Done updating replication tasks')
 
         logger.info('Temporarily blocking failover alerts')
-        self.run_call('alert.block_failover_alerts')
+        self.call_sync2(self.s.alert.block_failover_alerts)
         logger.info('Done temporarily blocking failover alerts')
 
         logger.info('Initializing alert system')
-        self.run_call('alert.initialize', False)
+        self.call_sync2(self.s.alert.initialize, False)
         logger.info('Done initializing alert system')
 
         logger.info('Initializing task to renew certs if necessary')
@@ -1063,7 +1063,7 @@ class FailoverEventsService(Service):
 
         logger.info('Retasting disks (if required)')
         self.run_call('disk.retaste')
-        logger.info('Done retasting disks (if required)')
+        logger.info('Done scheduling retasting disks (if required)')
 
         logger.info('Activating directory services')
         try:

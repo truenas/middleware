@@ -96,7 +96,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         self.middleware.send_event(
                             'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
                         )
-                        await self.middleware.call('alert.oneshot_create', TNCDisabledAutoUnconfiguredAlert())
+                        await self.call2(self.s.alert.oneshot_create, TNCDisabledAutoUnconfiguredAlert())
                         await self.middleware.call('tn_connect.delete_cert', tnc_config['certificate'])
                         return
                     case 500:
@@ -123,7 +123,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been 48 hours '
                         'since the last successful heartbeat (last failure: %s)', last_failure,
                     )
-                    await self.middleware.call('alert.oneshot_create', TNCHeartbeatConnectionFailureAlert())
+                    await self.call2(self.s.alert.oneshot_create, TNCHeartbeatConnectionFailureAlert())
                     break
                 else:
                     logger.debug(
@@ -137,7 +137,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                     })
                     logger.debug('TNC Heartbeat: Resetting last heartbeat failure datetime')
 
-                await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
+                await self.call2(self.s.alert.oneshot_delete, 'TNCHeartbeatConnectionFailure')
                 await asyncio.sleep(HEARTBEAT_INTERVAL)
 
             tnc_config = await self.middleware.call('tn_connect.config_internal')
@@ -158,6 +158,6 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             },
         })
         return {
-            'alerts': await self.middleware.call('alert.list'),
+            'alerts': await self.call2(self.s.alert.list),
             'stats': stats,
         }

@@ -9,8 +9,9 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 __all__ = [
     'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
     'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
-    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
-    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent', 'AlertLevel',
+    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdate', 'AlertClassesUpdateArgs',
+    'AlertClassesUpdateResult', 'Alert', 'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
+    'AlertLevel',
 ]
 
 AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']

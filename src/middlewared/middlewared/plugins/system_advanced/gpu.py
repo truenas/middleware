@@ -131,7 +131,7 @@ class SystemAdvancedService(Service):
 
             if not isolated_pci_ids:
                 # Nothing to validate
-                await self.middleware.call('alert.oneshot_delete', 'InvalidGpuPciIds', None)
+                await self.call2(self.s.alert.oneshot_delete, 'InvalidGpuPciIds', None)
                 return
 
             # Get current GPUs in the system
@@ -163,8 +163,8 @@ class SystemAdvancedService(Service):
                 )
 
                 # Create alert to notify user
-                await self.middleware.call(
-                    'alert.oneshot_create',
+                await self.call2(
+                    self.s.alert.oneshot_create,
                     InvalidGpuPciIdsAlert(pci_ids=', '.join(invalid_pci_ids))
                 )
 
@@ -178,7 +178,7 @@ class SystemAdvancedService(Service):
                 self.logger.info('Created alert and added reboot reason for invalid GPU PCI IDs')
             else:
                 # All isolated GPU PCI IDs are valid, ensure any previous alert is deleted
-                await self.middleware.call('alert.oneshot_delete', 'InvalidGpuPciIds', None)
+                await self.call2(self.s.alert.oneshot_delete, 'InvalidGpuPciIds', None)
 
         except Exception as e:
             self.logger.error('Error validating isolated GPU PCI IDs on boot: %s', e, exc_info=True)

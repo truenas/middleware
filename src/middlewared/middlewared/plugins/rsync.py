@@ -588,7 +588,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             )
 
         for klass in ('RsyncSuccess', 'RsyncFailed') if not rsync['quiet'] else ():
-            self.middleware.call_sync('alert.oneshot_delete', klass, rsync['id'])
+            self.call_sync2(self.s.alert.oneshot_delete, klass, rsync['id'])
 
         if cp.returncode not in RsyncReturnCode.nonfatals():
             err = None
@@ -600,7 +600,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 )
 
             if not rsync['quiet']:
-                self.middleware.call_sync('alert.oneshot_create', RsyncFailedAlert(
+                self.call_sync2(self.s.alert.oneshot_create, RsyncFailedAlert(
                     id=rsync['id'],
                     direction=rsync['direction'],
                     path=rsync['path'],
@@ -621,7 +621,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             raise CallError(msg)
 
         elif not rsync['quiet']:
-            self.middleware.call_sync('alert.oneshot_create', RsyncSuccessAlert(
+            self.call_sync2(self.s.alert.oneshot_create, RsyncSuccessAlert(
                 id=rsync['id'],
                 direction=rsync['direction'],
                 path=rsync['path'],

@@ -87,7 +87,7 @@ class DiskService(Service):
         """Returns existing temperature alerts for specified disks."""
         alerts = list()
         names = {f'/dev/{i}' for i in names}
-        for i in await self.middleware.call("alert.list"):
+        for i in await self.call2(self.s.alert.list):
             if i["klass"] == "DiskTemperatureTooHot" and i["args"]["device"] in names:
                 alerts.append(i)
         return alerts

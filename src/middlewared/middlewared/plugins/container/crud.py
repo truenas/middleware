@@ -266,13 +266,16 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             )
 
         if data.cpuset:
-            try:
-                parse_numeric_set(data.cpuset)
-            except ValueError as e:
-                verrors.add(
-                    f'{schema_name}.cpuset',
-                    f'Invalid cpuset format: {e}'
-                )
+            if '_' in data.cpuset:
+                verrors.add(f'{schema_name}.cpuset', 'Underscores are not allowed in CPU set values')
+            else:
+                try:
+                    parse_numeric_set(data.cpuset)
+                except ValueError as e:
+                    verrors.add(
+                        f'{schema_name}.cpuset',
+                        f'Invalid cpuset format: {e}'
+                    )
 
         filters: list[tuple[str, str, Any]] = [('name', '=', data.name)]
         if old:

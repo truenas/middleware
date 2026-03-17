@@ -6,7 +6,7 @@ from typing import Any
 
 from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.utils.mount import getmntinfo
+from truenas_os_pyutils.mount import iter_mountinfo
 from middlewared.utils.size import format_size
 from middlewared.plugins.zfs_.utils import TNUserProp
 
@@ -71,7 +71,7 @@ class QuotaAlertSource(ThreadedAlertSource):
     def check_sync(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
         hostname = self.middleware.call_sync("system.hostname")
-        mntinfo = getmntinfo()
+        mntinfo = list(iter_mountinfo())
         rv = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
         for ds, info in rv["datasets"].items():
             props, uprops = info["properties"], info["user_properties"]
@@ -172,7 +172,7 @@ class QuotaAlertSource(ThreadedAlertSource):
         mountpoint = None
         if props["mounted"]["value"] is True:
             if props["mountpoint"]["raw"] == "legacy":
-                for v in mntinfo.values():
+                for v in mntinfo:
                     if v["mount_source"] == dataset_name:
                         mountpoint = v["mountpoint"]
                         break

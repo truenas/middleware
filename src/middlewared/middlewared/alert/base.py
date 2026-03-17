@@ -97,7 +97,7 @@ class AlertClass:
     """
 
     classes: list[type[AlertClass]] = []
-    class_by_name: dict[str, type[AlertClass]] = {}
+    by_name: dict[str, type[AlertClass]] = {}
 
     config: AlertClassConfig
 
@@ -112,7 +112,7 @@ class AlertClass:
             cls.config = dataclasses.replace(cls.config, name=name)
 
             AlertClass.classes.append(cls)
-            AlertClass.class_by_name[name] = cls
+            AlertClass.by_name[name] = cls
 
     def args(self) -> Any:
         if dataclasses.is_dataclass(self):
@@ -379,6 +379,8 @@ class AlertSource(CallMixin, ABC):
     :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
     """
 
+    by_name: dict[str, type[AlertSource]] = {}
+
     schedule: BaseSchedule = IntervalSchedule(timedelta())
 
     products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
@@ -386,12 +388,26 @@ class AlertSource(CallMixin, ABC):
     run_on_backup_node = True
     require_stable_peer = False
 
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        if cls.__name__ not in ["ThreadedAlertSource"]:
+            if not cls.__name__.endswith("AlertSource"):
+                raise NameError(f"Invalid alert source name {cls.__name__}")
+
+            name = cls.__name__.removesuffix("AlertSource")
+
+            if name in AlertSource.by_name:
+                raise RuntimeError(f"Alert source {name} is already registered")
+
+            AlertSource.by_name[name] = cls
+
     def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
     @property
     def name(self) -> str:
-        return self.__class__.__name__.replace("AlertSource", "")
+        return self.__class__.__name__.removesuffix("AlertSource")
 
     @abstractmethod
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
@@ -413,8 +429,24 @@ class ThreadedAlertSource(AlertSource):
 
 
 class AlertService(CallMixin, ABC):
+    by_name: dict[str, type[AlertService]] = {}
+
     title: str
     html: bool = False
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        if cls.__name__ not in ("ThreadedAlertService", "ProThreadedAlertService"):
+            if not cls.__name__.endswith("AlertService"):
+                raise NameError(f"Invalid alert service name {cls.__name__}")
+
+            name = cls.__name__.removesuffix("AlertService")
+
+            if name in AlertService.by_name:
+                raise RuntimeError(f"Alert service {name} is already registered")
+
+            AlertService.by_name[name] = cls
 
     def __init__(self, middleware: Middleware, attributes: dict[str, Any]):
         self.middleware = middleware
@@ -443,7 +475,7 @@ class AlertService(CallMixin, ABC):
     ) -> str:
         hostname = await self.middleware.call("system.hostname")
         if await self.middleware.call("system.is_enterprise"):
-            node_map = await self.middleware.call("alert.node_map")
+            node_map = await self.call2(self.s.alert.node_map)
         else:
             node_map = None
 
@@ -481,7 +513,7 @@ class ThreadedAlertService(AlertService):
     ) -> str:
         hostname = self.middleware.call_sync("system.hostname")
         if self.middleware.call_sync("system.is_enterprise"):
-            node_map = self.middleware.call_sync("alert.node_map")
+            node_map = self.call_sync2(self.s.alert.node_map)
         else:
             node_map = None
 

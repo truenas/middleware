@@ -115,7 +115,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
 
         # We might have cleared some junk
-        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+        await self.call2(self.s.alert.alert_source_clear_run, 'ISCSIAuthSecret')
 
         await self._service_change('iscsitarget', 'reload')
 
@@ -145,7 +145,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
 
         # We might have cleared some junk
-        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+        await self.call2(self.s.alert.alert_source_clear_run, 'ISCSIAuthSecret')
 
         await self._service_change('iscsitarget', 'reload')
 
@@ -242,17 +242,17 @@ class iSCSITargetAuthCredentialService(CRUDService):
             # Alert was in place, do we need to update or remove it?
             if len(peerusers) <= 1:
                 # Clear the existing alert
-                await self.middleware.call("alert.oneshot_delete", alert_name, {'peeruser': orig_peerusers[0]})
+                await self.call2(self.s.alert.oneshot_delete, alert_name, {'peeruser': orig_peerusers[0]})
             elif peerusers[0] != orig_peerusers[0]:
                 # Remove old event and replace with new one.
-                await self.middleware.call("alert.oneshot_delete", alert_name, {'peeruser': orig_peerusers[0]})
-                await self.middleware.call(
-                    "alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
+                await self.call2(self.s.alert.oneshot_delete, alert_name, {'peeruser': orig_peerusers[0]})
+                await self.call2(
+                    self.s.alert.oneshot_create, ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
                 )
         elif len(peerusers) > 1:
             # Alert was not in place, add one.
-            await self.middleware.call(
-                "alert.oneshot_create", ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
+            await self.call2(
+                self.s.alert.oneshot_create, ISCSIDiscoveryAuthMultipleMutualCHAPAlert(peeruser=peerusers[0]),
             )
 
     UPGRADE_ALERT_CLASSES = {
@@ -270,7 +270,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
             try:
                 args = await self.call2(self.s.keyvalue.get, alert)
                 alert_cls = self.UPGRADE_ALERT_CLASSES[alert]
-                await self.middleware.call("alert.oneshot_create", alert_cls(**args))
+                await self.call2(self.s.alert.oneshot_create, alert_cls(**args))
                 await self.call2(self.s.keyvalue.delete, alert)
             except KeyError:
                 pass
@@ -278,11 +278,11 @@ class iSCSITargetAuthCredentialService(CRUDService):
     @private
     async def clear_alerts(self):
         alerts = [
-            alert for alert in await self.middleware.call('alert.list')
+            alert for alert in await self.call2(self.s.alert.list)
             if alert['klass'].startswith('ISCSIDiscoveryAuth')
         ]
         for alert in alerts:
-            await self.middleware.call("alert.oneshot_delete", alert['klass'], alert['args'])
+            await self.call2(self.s.alert.oneshot_delete, alert['klass'], alert['args'])
 
 
 async def __event_system_ready(middleware, event_type, args):

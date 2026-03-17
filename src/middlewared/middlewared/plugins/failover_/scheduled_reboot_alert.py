@@ -53,14 +53,14 @@ def setup_impl(middleware):
     fqdn = get_fqdn(middleware)
     watchdog_time, fenced_time = get_sentinel_files_time_and_clean_them_up(middleware)
     if watchdog_time and (not fenced_time or watchdog_time > fenced_time):
-        middleware.call_sync("alert.oneshot_create", FailoverRebootAlert(fqdn=fqdn, now=now))
+        middleware.call_sync2(middleware.services.alert.oneshot_create, FailoverRebootAlert(fqdn=fqdn, now=now))
         middleware.logger.warning('Failover reboot occurred at %d', watchdog_time)
     elif fenced_time:
-        middleware.call_sync("alert.oneshot_create", FencedRebootAlert(fqdn=fqdn, now=now))
+        middleware.call_sync2(middleware.services.alert.oneshot_create, FencedRebootAlert(fqdn=fqdn, now=now))
         middleware.logger.warning('Fenced reboot occurred at %d', fenced_time)
     else:
-        middleware.call_sync("alert.oneshot_delete", "FencedReboot")
-        middleware.call_sync("alert.oneshot_delete", "FailoverReboot")
+        middleware.call_sync2(middleware.services.alert.oneshot_delete, "FencedReboot")
+        middleware.call_sync2(middleware.services.alert.oneshot_delete, "FailoverReboot")
 
 
 async def setup(middleware):

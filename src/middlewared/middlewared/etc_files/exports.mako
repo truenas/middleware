@@ -164,12 +164,12 @@
         entries.append({"path": share["path"], "options": options})
 
     if gaierrors:
-        middleware.call_sync(
-            'alert.oneshot_create',
+        middleware.call_sync2(
+            middleware.services.alert.oneshot_create,
             NFSHostnameLookupFailAlert(hosts=', '.join(gaierrors))
         )
     else:
-        middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
+        middleware.call_sync2(middleware.services.alert.oneshot_delete, 'NFSHostnameLookupFail', None)
 
     if alert_shares:
         disabled_shares = []
@@ -178,11 +178,12 @@
             middleware.logger.warning('%s: Disabling this NFS share. Mapping invalid names: %s', sharepath, names)
             disabled_shares.append(f'({sharepath}: {names})')
 
-        middleware.call_sync("alert.oneshot_create",
+        middleware.call_sync2(
+            middleware.services.alert.oneshot_create,
             NFSexportMappingInvalidNamesAlert(share_list=','.join(disabled_shares))
         )
     else:
-        middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames")
+        middleware.call_sync2(middleware.services.alert.oneshot_delete, "NFSexportMappingInvalidNames")
 
 
 %>

@@ -27,9 +27,9 @@ class NFSService(SimpleService):
     async def check_configuration(self):
         # Raise alert if there are entries in /etc/exports.d
         if (exportsdList := await self.middleware.run_in_thread(self.check_exportsd_dir)):
-            await self.middleware.call('alert.oneshot_create', NFSblockedByExportsDirAlert(entries=str(exportsdList)))
+            await self.call2(self.s.alert.oneshot_create, NFSblockedByExportsDirAlert(entries=str(exportsdList)))
         else:
-            await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir')
+            await self.call2(self.s.alert.oneshot_delete, 'NFSblockedByExportsDir')
 
     async def after_start(self):
         await self._systemd_unit("rpc-statd", "start")

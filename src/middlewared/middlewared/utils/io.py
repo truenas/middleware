@@ -1,42 +1,15 @@
 # NOTE: tests are provided in tests/unit/test_write_if_changed.py
 # Any updates to this file should have corresponding updates to tests
 
-from contextlib import contextmanager
 import enum
-import errno
 import os
 import stat
 import truenas_os
-from tempfile import TemporaryDirectory
-import typing
 
-from middlewared.service_exception import CallError
+from truenas_os_pyutils.io import atomic_replace
 
 
 ID_MAX = 2 ** 32 - 2
-
-
-@contextmanager
-def safe_open(path, mode='r', buffering=-1, encoding=None, errors=None, newline=None):
-    """
-    Drop-in for open() that uses openat2(RESOLVE_NO_SYMLINKS) as the opener,
-    preventing symlink-based TOCTOU attacks. Raises CallError(ELOOP) if any
-    path component is a symlink.
-    """
-    def _opener(p, flags):
-        try:
-            return truenas_os.openat2(
-                p, flags,
-                mode=0o666 if (flags & os.O_CREAT) else 0,
-                resolve=truenas_os.RESOLVE_NO_SYMLINKS,
-            )
-        except OSError as e:
-            if e.errno == errno.ELOOP:
-                raise CallError('Symlinks are not permitted.', errno.ELOOP)
-            raise
-
-    with open(path, mode, buffering, encoding, errors, newline, opener=_opener) as f:
-        yield f
 
 
 class FileChanges(enum.IntFlag):
@@ -78,165 +51,6 @@ def set_io_uring_enabled(enabled_val: bool) -> bool:
         f.flush()
 
     return get_io_uring_enabled()
-
-
-def atomic_replace(
-    *,
-    temp_path: str,
-    target_file: str,
-    data: bytes,
-    uid: int = 0,
-    gid: int = 0,
-    perms: int = 0o644
-) -> None:
-    """Atomically replace a file's contents with symlink race protection.
-
-    Uses openat2 with RESOLVE_NO_SYMLINKS and renameat2 with AT_RENAME_EXCHANGE
-    to safely replace a file's contents without risk of:
-    - Partially written files visible to readers
-    - Symlink race conditions (TOCTOU attacks)
-    - Data loss if write operation fails
-
-    The function creates a temporary file in a secure temporary directory,
-    writes the data with proper ownership and permissions, syncs to disk,
-    then atomically exchanges it with the target file.
-
-    Args:
-        temp_path: Directory for temporary file creation. Must be on the same
-                   filesystem as target_file and must not contain symlinks in path.
-        target_file: Absolute path to the file to replace. Path must not contain
-                     symlinks.
-        data: Binary data to write to the file.
-        uid: User ID for file ownership (default: 0/root). Use -1 to preserve existing file's uid.
-        gid: Group ID for file ownership (default: 0/root). Use -1 to preserve existing file's gid.
-        perms: File permissions as octal integer (default: 0o644).
-
-    Raises:
-        OSError: If openat2/renameat2 operations fail.
-
-    Note:
-        - temp_path and target_file must be on the same filesystem for rename to work
-        - If target_file doesn't exist, uses regular rename instead of exchange
-        - If an intermediate symlink is detected during openat2 call then errno
-          will be set to ELOOP
-        - When uid/gid are -1, the existing file's ownership is preserved if it exists
-    """
-    with atomic_write(target_file, "wb", tmppath=temp_path, uid=uid, gid=gid, perms=perms) as f:
-        f.write(data)
-
-
-@typing.overload
-@contextmanager
-def atomic_write(target: str, mode: typing.Literal["w"] = "w", *, tmppath: str | None = None,
-                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.TextIO, None, None]: ...
-
-
-@typing.overload
-@contextmanager
-def atomic_write(target: str, mode: typing.Literal["wb"], *, tmppath: str | None = None,
-                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.BinaryIO, None, None]: ...
-
-
-@contextmanager
-def atomic_write(target: str, mode: typing.Literal["w", "wb"] = "w", *, tmppath: str | None = None,
-                 uid: int = 0, gid: int = 0, perms: int = 0o644) -> typing.Generator[typing.IO[typing.Any], None, None]:
-    """Context manager for atomic file writes with symlink race protection.
-
-    Yields a file-like object for writing. On successful context manager exit,
-    atomically replaces the target file using renameat2 with proper synchronization.
-    Uses openat2 with RESOLVE_NO_SYMLINKS and renameat2 with AT_RENAME_EXCHANGE
-    to safely replace a file's contents without risk of:
-    - Partially written files visible to readers
-    - Symlink race conditions (TOCTOU attacks)
-    - Data loss if write operation fails
-
-    Args:
-        target: Absolute path to the file to write/replace. Path must not contain
-                symlinks.
-        mode: File open mode, either "w" (text) or "wb" (binary). Defaults to "w".
-        tmppath: Directory for temporary file creation. If None, uses dirname(target).
-                 Must be on same filesystem as target and must not contain symlinks.
-        uid: User ID for file ownership (default: 0/root).
-        gid: Group ID for file ownership (default: 0/root).
-        perms: File permissions as octal integer (default: 0o644).
-
-    Yields:
-        File-like object for writing
-
-    Raises:
-        OSError: If openat2/renameat2 operations fail.
-
-    Note:
-        - tmppath and target must be on the same filesystem for rename to work
-        - If target doesn't exist, uses regular rename instead of exchange
-        - File is only replaced if the context manager exits successfully
-        - If an intermediate symlink is detected during openat2 call then errno
-          will be set to ELOOP
-
-    Example:
-        with atomic_write('/etc/config.conf') as f:
-            f.write("config data")
-        # File is atomically replaced here
-    """
-    if mode not in ("w", "wb"):
-        raise ValueError(f'{mode}: invalid mode. Only "w" and "wb" are supported.')
-
-    if tmppath is None:
-        tmppath = os.path.dirname(target)
-
-    with TemporaryDirectory(dir=tmppath) as tmpdir:
-        # We're using absolute paths here initially to open dir fds for the write and rename operations. This is
-        # generally susceptible to symlink races and so it's being mitigated by setting RESOLVE_NO_SYMLINKS. *IF* an
-        # intermediate symlink is discovered during path resolution in kernel (e.g. /etc/default/foo and the
-        # `/etc/default` component is a symlink), then this will fail with an OSError with errno set to ELOOP
-        dst_dirpath = os.path.dirname(target)
-        target_filename = os.path.basename(target)
-
-        dst_dirfd = truenas_os.openat2(dst_dirpath, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-        try:
-            src_dirfd = truenas_os.openat2(tmpdir, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-            try:
-                # Check if target file exists and get its stat
-                existing_stat = None
-                try:
-                    existing_stat = os.lstat(target_filename, dir_fd=dst_dirfd)
-                    if uid == -1:
-                        uid = existing_stat.st_uid
-
-                    if gid == -1:
-                        gid = existing_stat.st_gid
-
-                except FileNotFoundError:
-                    pass
-
-                temp_fd = os.open(target_filename, os.O_RDWR | os.O_CREAT, mode=perms, dir_fd=src_dirfd)
-                try:
-                    os.fchown(temp_fd, uid, gid)
-                    os.fchmod(temp_fd, perms)
-                except Exception:
-                    os.close(temp_fd)
-                    raise
-
-                # From this point onward, the open context manager handles closing temp_fd
-                with open(temp_fd, mode) as f:
-                    yield f
-                    f.flush()
-                    os.fsync(temp_fd)
-
-                # Determine rename flags based on whether target exists
-                rename_flags = truenas_os.AT_RENAME_EXCHANGE if existing_stat else 0
-
-                truenas_os.renameat2(
-                    src=target_filename,
-                    dst=target_filename,
-                    src_dir_fd=src_dirfd,
-                    dst_dir_fd=dst_dirfd,
-                    flags=rename_flags
-                )
-            finally:
-                os.close(src_dirfd)
-        finally:
-            os.close(dst_dirfd)
 
 
 def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, perms: int = 0o755,

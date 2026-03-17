@@ -115,7 +115,7 @@ class MailService(ConfigService):
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
 
         await self.middleware.call('mail.gmail_initialize')
-        await self.middleware.call('alert.oneshot_delete', 'GMailConfigurationDiscarded', None)
+        await self.call2(self.s.alert.oneshot_delete, 'GMailConfigurationDiscarded', None)
 
         return await self.config()
 

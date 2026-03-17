@@ -165,11 +165,11 @@ class CloudBackupService(Service):
             )
 
             if "id" in cloud_backup:
-                self.middleware.call_sync("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
+                self.call_sync2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", cloud_backup["id"])
             job.set_progress(description="Done")
         except Exception:
             if "id" in cloud_backup:
-                self.middleware.call_sync("alert.oneshot_create", CloudBackupTaskFailedAlert(
+                self.call_sync2(self.s.alert.oneshot_create, CloudBackupTaskFailedAlert(
                     id=cloud_backup["id"],
                     name=cloud_backup["description"],
                 ))

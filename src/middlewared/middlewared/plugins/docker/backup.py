@@ -16,7 +16,7 @@ from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, ge
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, ServiceContext
-from middlewared.utils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write
 
 from .state_management import validate_state
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup

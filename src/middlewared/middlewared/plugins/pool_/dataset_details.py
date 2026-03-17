@@ -8,7 +8,7 @@ from middlewared.api.current import (
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
-from middlewared.utils.mount import statmount
+from truenas_os_pyutils.mount import statmount
 
 
 class PoolDatasetService(Service):
@@ -147,7 +147,13 @@ class PoolDatasetService(Service):
         # nfs, smb and webshare
         for key in ('nfs', 'smb', 'webshare'):
             for share in self.middleware.call_sync(f'sharing.{key}.query'):
-                share['mount_info'] = self.get_mount_info(share['path'])
+                if isinstance(share, dict):
+                    # FIXME: Remove this eventually
+                    path = share['path']
+                else:
+                    path = share.path
+
+                share['mount_info'] = self.get_mount_info(path)
                 results[key].append(share)
 
         # nvmet

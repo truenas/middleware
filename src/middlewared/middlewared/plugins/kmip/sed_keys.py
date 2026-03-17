@@ -275,11 +275,11 @@ class KMIPService(Service, KMIPServerMixin):
         except ValueError:
             pass
         else:
-            self.middleware.call_sync('alert.oneshot_create', KMIPSEDGlobalPasswordSyncFailureAlert())
+            self.call_sync2(self.s.alert.oneshot_create, KMIPSEDGlobalPasswordSyncFailureAlert())
         finally:
             if failed:
-                self.middleware.call_sync(
-                    'alert.oneshot_create', KMIPSEDDisksSyncFailureAlert(disks=','.join(failed))
+                self.call_sync2(
+                    self.s.alert.oneshot_create, KMIPSEDDisksSyncFailureAlert(disks=','.join(failed))
                 )
         self.middleware.call_hook_sync('kmip.sed_keys_sync')
         return ret_failed
