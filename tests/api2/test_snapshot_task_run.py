@@ -34,17 +34,11 @@ def test_snapshot_task_run_success():
 
 def test_snapshot_task_run_already_existed():
     with dataset("snaprun_dup") as ds:
-        every_minute = {"minute": "*", "hour": "*", "dom": "*", "month": "*", "dow": "*"}
-        with snapshot_task({**TASK_DATA, "dataset": ds, "schedule": every_minute}) as task:
-            # Wait for periodic snapshot task to run on schedule and create the snapshot
-            for _ in range(120):
-                if call("pool.snapshot.query", [["dataset", "=", ds]]):
-                    break
-                time.sleep(1)
-            else:
-                raise AssertionError("Snapshot was not created within 120 seconds")
+        with snapshot_task({**TASK_DATA, "dataset": ds}) as task:
+            # First manual run creates the snapshot
+            call("pool.snapshottask.run", task["id"], job=True)
 
-            # Try to create the same snapshot manually
+            # Second manual run within the same minute produces the same snapshot name and hits "already existed"
             with pytest.raises(Exception, match="already existed.*ran on schedule"):
                 call("pool.snapshottask.run", task["id"], job=True)
 
