@@ -260,7 +260,10 @@ class ZettareplProcess:
                         break
                 else:
                     logger.warning("Task %s(%r) not found", class_name, task_id)
-                    self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
+                    if class_name == "PeriodicSnapshotTask":
+                        self.observer_queue.put(PeriodicSnapshotTaskError(task_id, "Task not found"))
+                    if class_name == "ReplicationTask":
+                        self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
 
 
 class ZettareplService(Service):
@@ -284,6 +287,7 @@ class ZettareplService(Service):
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.replication_jobs_channels = defaultdict(list)
+        self.periodic_snapshot_task_jobs_channels = defaultdict(list)
         self.onetime_replication_tasks = {}
         self.queue = None
         self.process = None
@@ -362,17 +366,25 @@ class ZettareplService(Service):
 
         if restart:
             self.logger.error("Abnormal zettarepl process termination with code %r, restarting", process.exitcode)
+            error = f"Abnormal zettarepl process termination with code {process.exitcode}."
+            task_error_channels = [
+                ("replication_", self.replication_jobs_channels,
+                 lambda task_id: ReplicationTaskError(task_id, error)),
+                ("periodic_snapshot_", self.periodic_snapshot_task_jobs_channels,
+                 lambda task_id: PeriodicSnapshotTaskError(task_id, error)),
+            ]
             for k, v in self.middleware.call_sync("zettarepl.get_state").get("tasks", {}).items():
-                if k.startswith("replication_") and v.get("state") in ("WAITING", "RUNNING"):
-                    error = f"Abnormal zettarepl process termination with code {process.exitcode}."
-                    self.middleware.call_sync("zettarepl.set_state", k, {
-                        "state": "ERROR",
-                        "datetime": utc_now(),
-                        "error": error,
-                    })
-                    task_id = k[len("replication_"):]
-                    for channel in self.replication_jobs_channels[task_id]:
-                        channel.put(ReplicationTaskError(task_id, error))
+                for prefix, channels, make_error in task_error_channels:
+                    if k.startswith(prefix) and v.get("state") in ("WAITING", "RUNNING"):
+                        self.middleware.call_sync("zettarepl.set_state", k, {
+                            "state": "ERROR",
+                            "datetime": utc_now(),
+                            "error": error,
+                        })
+                        task_id = k[len(prefix):]
+                        for channel in channels[task_id]:
+                            channel.put(make_error(task_id))
+
             self.middleware.call_sync("zettarepl.start")
 
     def update_config(self, config):
@@ -401,11 +413,31 @@ class ZettareplService(Service):
 
         self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
-    async def run_periodic_snapshot_task(self, id_):
+    def run_periodic_snapshot_task(self, id_):
         try:
             self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id_}")))
         except Exception:
-            raise CallError("Replication service is not running")
+            raise CallError("Periodic snapshot task service is not running")
+
+        channels = self.periodic_snapshot_task_jobs_channels[f"task_{id_}"]
+        channel = queue.Queue()
+        channels.append(channel)
+        try:
+            while True:
+                message = channel.get()
+
+                if isinstance(message, PeriodicSnapshotTaskSuccess):
+                    if message.already_existed:
+                        raise CallError(
+                            f"Snapshot {message.dataset}@{message.snapshot} already existed. "
+                            f"This probably happened because the task already ran on schedule."
+                        )
+                    return
+
+                if isinstance(message, PeriodicSnapshotTaskError):
+                    raise CallError(make_sentence(message.error))
+        finally:
+            channels.remove(channel)
 
     def run_replication_task(self, id_, really_run, job):
         if really_run:
@@ -945,12 +977,18 @@ class ZettareplService(Service):
                         "datetime": utc_now(),
                     })
 
+                    for channel in self.periodic_snapshot_task_jobs_channels[message.task_id]:
+                        channel.put(message)
+
                 if isinstance(message, PeriodicSnapshotTaskError):
                     self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "ERROR",
                         "datetime": utc_now(),
                         "error": make_sentence(message.error),
                     })
+
+                    for channel in self.periodic_snapshot_task_jobs_channels[message.task_id]:
+                        channel.put(message)
 
                 # Replication task events
 

@@ -14,6 +14,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskCreate, PoolSnapshotTaskUpdate, PoolSnapshotTaskDeleteOptions,
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
+from middlewared.job import Job
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.types import AuditCallback
 
@@ -135,7 +136,8 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         roles=['SNAPSHOT_TASK_WRITE'],
         check_annotations=True,
     )
-    async def run(self, id_: int) -> None:
+    @job()
+    async def run(self, job: Job, id_: int) -> None:
         """
         Execute a Periodic Snapshot Task of `id`.
         """
