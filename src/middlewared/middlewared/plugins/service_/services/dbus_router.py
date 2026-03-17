@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import logging
 import time
 import types
@@ -138,6 +137,12 @@ class CachedSystemDBusRouter:
                 await self._teardown()
                 self._conn = await open_dbus_connection("SYSTEM")
                 self._router = DBusRouter(self._conn)
+                # Subscribe once per connection — reusing the same connection
+                # means AddMatch rules accumulate and hit dbus-daemon's
+                # max_match_rules_per_connection limit (default 512).
+                await Proxy(message_bus, self._router).AddMatch(
+                    _JOB_REMOVED_SUBSCRIPTION_RULE
+                )
         return self._router
 
     async def _invalidate(self) -> None:
@@ -615,8 +620,10 @@ class CachedSystemDBusRouter:
         """
         Call a unit action and wait for job completion via D-Bus signals.
 
-        Subscribes to JobRemoved signals before calling the action to avoid
-        race conditions where the job completes before we start listening.
+        The JobRemoved signal subscription is established once per connection
+        in _ensure_router(). This method sets up a local filter to match the
+        specific job, avoiding race conditions where the job completes before
+        we start listening.
 
         For Stop actions, delegates to _stop_unit_and_wait_for_exit() which waits
         for processes to actually exit by polling the service state.
@@ -627,14 +634,6 @@ class CachedSystemDBusRouter:
         start_time = time.monotonic()
 
         router = await self._ensure_router()
-        try:
-            await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
-        except Exception as e:
-            if isinstance(e, DBusErrorResponse):
-                raise
-            await self._invalidate()
-            router = await self._ensure_router()
-            await Proxy(message_bus, router).AddMatch(_JOB_REMOVED_SUBSCRIPTION_RULE)
 
         unit_path = await self._load_unit_path(service_name)
 
