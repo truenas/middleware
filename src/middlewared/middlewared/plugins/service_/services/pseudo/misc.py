@@ -122,7 +122,7 @@ class NfsMountdService(PseudoServiceBase):
     may_run_on_standby = False
 
     async def stop(self):
-        await systemd_unit("nfs-mountd", "stop")
+        await system_dbus.systemd_unit("nfs-mountd", "stop")
 
 
 class NtpdService(SimpleService):
