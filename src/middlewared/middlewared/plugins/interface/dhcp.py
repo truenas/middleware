@@ -6,10 +6,7 @@ import os
 import socket
 import struct
 
-from middlewared.plugins.service_.services.base import (
-    call_unit_action,
-    call_unit_action_and_wait,
-)
+from middlewared.plugins.service_.services.dbus_router import system_dbus
 
 __all__ = ("DHCPLease", "DHCPStatus", "dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
 
@@ -101,9 +98,9 @@ async def dhcp_start(interface: str, wait: int | None = None) -> None:
     """
     unit_name = f"ix-dhcpcd@{interface}.service"
     if wait is None:
-        await call_unit_action(unit_name, "Start")
+        await system_dbus.call_unit_action(unit_name, "Start")
     else:
-        await call_unit_action_and_wait(
+        await system_dbus.call_unit_action_and_wait(
             unit_name, "Start", timeout=min(120, max(5, wait))
         )
 
@@ -134,7 +131,7 @@ async def dhcp_stop(interface: str) -> None:
     Waits for the service to fully stop and all processes to exit.
     """
     unit_name = f"ix-dhcpcd@{interface}.service"
-    await call_unit_action_and_wait(unit_name, "Stop")
+    await system_dbus.call_unit_action_and_wait(unit_name, "Stop")
 
 
 def dhcp_leases(interface: str) -> DHCPLease | None:
