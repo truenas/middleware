@@ -84,6 +84,7 @@ _ACTION_TIMEOUT_PROPERTIES = types.MappingProxyType(
     }
 )
 
+
 @dataclass(slots=True)
 class CachedSystemDBusRouter:
     """Cached D-Bus router for the SYSTEM bus.
@@ -376,9 +377,7 @@ class CachedSystemDBusRouter:
             job_task = asyncio.create_task(
                 self._phase1_wait_for_job_removed(job_queue, job_path)
             )
-            poll_task = asyncio.create_task(
-                self._phase1_wait_for_inactive(unit_path)
-            )
+            poll_task = asyncio.create_task(self._phase1_wait_for_inactive(unit_path))
             done, pending = await asyncio.wait(
                 {job_task, poll_task},
                 timeout=timeout,
