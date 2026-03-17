@@ -301,6 +301,10 @@ class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     """
     Forward Error Correction (FEC) mode. Only valid for physical interfaces.
 
+    Configuring this field is only available on enterprise systems. It should be used as directed by TrueNAS Support \
+    for resolving link negotiation failures due to FEC mismatches with the upstream switch. Improper configuration of \
+    this field can cause a healthy interface to go down.
+
     * "AUTO": Selects the best FEC mode based on cable/port capabilities
     * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
     * "BASER": BaseR-FEC (FireCode)
