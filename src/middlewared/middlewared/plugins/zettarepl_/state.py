@@ -201,7 +201,8 @@ class ZettareplService(Service, TaskStateMixin):
                 table = "storage.task"
             elif RE_REPLICATION_TASK_ID.match(task_id):
                 table = "storage.replication"
-            else:
+
+            if table is None:
                 continue
 
             try:
