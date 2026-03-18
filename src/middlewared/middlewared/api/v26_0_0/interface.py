@@ -121,7 +121,7 @@ class InterfaceEntryState(BaseModel):
     pcp: int | None = NotRequired
     """Priority Code Point for VLAN traffic prioritization. Values 0-7 map to different QoS priority levels, \
     with 0 being lowest and 7 highest priority."""
-    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] | None = NotRequired
+    fec_mode: FecModeName | None = NotRequired
     """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces."""
 
 
@@ -146,7 +146,7 @@ class InterfaceEntry(BaseModel):
     """Human-readable description of the interface."""
     mtu: int | None
     """Maximum transmission unit size for the interface."""
-    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"] = NotRequired
+    fec_mode: FecModeName = NotRequired
     """Forward Error Correction (FEC) mode. Only valid for physical interfaces."""
     vlan_parent_interface: str | None = NotRequired
     """Parent interface for VLAN configuration."""
@@ -299,7 +299,7 @@ class InterfaceServicesRestartedOnSyncItem(BaseModel):
 
 class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
-    fec_mode: Literal["AUTO", "RS", "BASER", "OFF", "LLRS"]
+    fec_mode: FecModeName
     """
     Forward Error Correction (FEC) mode. Only valid for physical interfaces.
 
