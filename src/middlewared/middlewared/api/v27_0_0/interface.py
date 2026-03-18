@@ -9,7 +9,8 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "InterfaceEntry", "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
+    "InterfaceEntry", "InterfaceAvailableFecModesArgs", "InterfaceAvailableFecModesResult",
+    "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
     "InterfaceCancelRollbackArgs", "InterfaceCancelRollbackResult", "InterfaceCheckinArgs", "InterfaceCheckinResult",
     "InterfaceCheckinWaitingArgs", "InterfaceCheckinWaitingResult", "InterfaceChoicesArgs", "InterfaceChoicesResult",
     "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
@@ -24,6 +25,9 @@ __all__ = [
     "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIpArgs",
     "InterfaceWebsocketLocalIpResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
 ]
+
+
+FecModeName = Literal["AUTO", "OFF", "RS", "BASER", "LLRS"]
 
 
 class InterfaceEntryAlias(BaseModel):
@@ -117,6 +121,16 @@ class InterfaceEntryState(BaseModel):
     pcp: int | None = NotRequired
     """Priority Code Point for VLAN traffic prioritization. Values 0-7 map to different QoS priority levels, \
     with 0 being lowest and 7 highest priority."""
+    fec_mode: FecModeName | None = NotRequired
+    """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    * `null`: FEC not supported or mode cannot be determined
+    """
 
 
 class InterfaceEntry(BaseModel):
@@ -129,7 +143,10 @@ class InterfaceEntry(BaseModel):
     type: str
     """Type of interface (PHYSICAL, BRIDGE, LINK_AGGREGATION, VLAN, etc.)."""
     state: InterfaceEntryState
-    """Current runtime state information for the interface."""
+    """Current runtime state of the interface as reported by the OS kernel. This reflects what is actually configured \
+    in the kernel at query time and may differ from the top-level fields, which represent the persisted database \
+    configuration. Pending changes (after `interface.update` but before `interface.commit`) will not be visible here \
+    until the commit is applied and the interface is synchronized."""
     aliases: list[InterfaceEntryAlias]
     """List of IP address aliases configured on the interface."""
     ipv4_dhcp: bool
@@ -140,6 +157,15 @@ class InterfaceEntry(BaseModel):
     """Human-readable description of the interface."""
     mtu: int | None
     """Maximum transmission unit size for the interface."""
+    fec_mode: FecModeName = NotRequired
+    """Forward Error Correction (FEC) mode. Only valid for physical interfaces.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
     vlan_parent_interface: str | None = NotRequired
     """Parent interface for VLAN configuration."""
     vlan_tag: int | None = NotRequired
@@ -291,6 +317,20 @@ class InterfaceServicesRestartedOnSyncItem(BaseModel):
 
 class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
+    fec_mode: FecModeName
+    """
+    Forward Error Correction (FEC) mode. Only valid for physical interfaces.
+
+    Configuring this field is only available on enterprise systems. It should be used as directed by TrueNAS Support \
+    for resolving link negotiation failures due to FEC mismatches with the upstream switch. Improper configuration of \
+    this field can cause a healthy interface to go down.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
 
 
 # -------------------   Args and Results   ------------------- #
@@ -521,3 +561,20 @@ class InterfaceXmitHashPolicyChoicesResult(BaseModel):
     """Use MAC and IP addresses for traffic distribution across bond members."""
     LAYER3_4: Literal["LAYER3+4"] = Field(alias="LAYER3+4")
     """Use MAC, IP, and TCP/UDP port information for traffic distribution across bond members."""
+
+
+class InterfaceAvailableFecModesArgs(BaseModel):
+    id: str
+    """ID of the interface to query for supported FEC modes."""
+
+
+class InterfaceAvailableFecModesResult(BaseModel):
+    result: list[FecModeName]
+    """List of FEC modes supported by the interface. Empty list if FEC is not supported.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
