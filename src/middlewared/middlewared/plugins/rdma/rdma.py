@@ -18,7 +18,7 @@ PART_NUMBER_PREFIX = '[PN] Part number: '
 
 
 class RdmaLinkConfigArgs(BaseModel):
-    all: bool = False
+    include_all: bool = False
 
 
 class RdmaLinkConfigResult(BaseModel):
@@ -52,12 +52,12 @@ class RDMAService(Service):
         return result
 
     @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True)
-    async def get_link_choices(self, all):
+    async def get_link_choices(self, include_all):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
         Unless all is set to True, configured interfaces will be excluded."""
         all_links = await self.middleware.call('rdma._get_link_choices')
-        if all:
+        if include_all:
             return all_links
 
         existing = await self.middleware.call('interface.get_configured_interfaces')

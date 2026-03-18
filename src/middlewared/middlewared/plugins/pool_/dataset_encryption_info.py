@@ -452,7 +452,7 @@ class PoolDatasetService(Service):
 
         keys = self.query_encrypted_roots_keys([['name', '=', id_]])
         if id_ not in keys:
-            raise CallError('Specified dataset does not have it\'s own encryption key.', errno.EINVAL)
+            raise CallError("Specified dataset does not have its own encryption key.", errno.EINVAL)
 
         key = keys[id_]
 

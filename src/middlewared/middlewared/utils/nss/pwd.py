@@ -179,7 +179,7 @@ def __getpwent_impl(
     if res != NssReturnCode.SUCCESS:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 def __getpwall_impl(module: str, as_dict: bool) -> list[pwd_struct | PasswdDict]:
@@ -218,7 +218,7 @@ def __getpwnam_impl(
     if res == NssReturnCode.NOTFOUND:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 def __getpwuid_impl(
@@ -245,7 +245,7 @@ def __getpwuid_impl(
     if res == NssReturnCode.NOTFOUND:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 @overload
@@ -316,7 +316,6 @@ def getpwnam(name: str, module: str = NssModule.ALL.name, as_dict: bool = False)
         except NssError as e:
             if e.return_code != NssReturnCode.UNAVAIL:
                 raise e from None
-
 
     raise KeyError(f"getpwnam(): name not found: '{name}'")
 

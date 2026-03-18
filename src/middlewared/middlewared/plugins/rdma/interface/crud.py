@@ -137,7 +137,9 @@ class RDMAInterfaceService(CRUDService):
 
         # Attempt to remove the live configuration
         try:
-            result = await self.middleware.call('rdma.interface.configure_interface', data['node'], data['ifname'], None)
+            result = await self.middleware.call(
+                'rdma.interface.configure_interface', data['node'], data['ifname'], None
+            )
             if not result:
                 self.logger.warning("Failed to delete active RDMA interface configuration")
         except Exception:

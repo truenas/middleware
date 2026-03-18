@@ -11,7 +11,8 @@ from middlewared.api.base import (
 __all__ = [
     'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
     'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
-    'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs', 'DNSAuthenticatorAuthenticatorSchemasResult',
+    'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs',
+    'DNSAuthenticatorAuthenticatorSchemasResult',
     'Route53SchemaArgs', 'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs',
     'OVHSchemaArgs', 'ShellSchemaArgs', 'TrueNASConnectSchemaArgs',
 ]

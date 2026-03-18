@@ -190,9 +190,9 @@ class DocumentationGenerator:
                     # Add note about core.download for jobs with output pipes
                     result += f"*This job {modal} be used with* :doc:`core.download <api_methods_core.download>`.\n\n"
 
-        result += f".. raw:: html\n\n"
+        result += ".. raw:: html\n\n"
         result += textwrap.indent(
-            f"<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
+            "<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
         ) + "\n\n"
 
         result += "*Required roles:* " + " | ".join(item.roles) + "\n\n"

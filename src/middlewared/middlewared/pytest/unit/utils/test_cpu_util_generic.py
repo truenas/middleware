@@ -1,6 +1,4 @@
 # -*- coding=utf-8 -*-
-from unittest.mock import Mock
-
 import pytest
 
 from middlewared.utils.cpu import generic_cpu_temperatures

@@ -36,7 +36,7 @@ UNSET_ENTRY = frozenset([ACL_UNDEFINED_ID, None])
 class FilesystemRecursionOptions(BaseModel):
     recursive: bool = False
     traverse: bool = False
-    "If set do not limit to single dataset / filesystem."
+    """If set do not limit to single dataset / filesystem."""
 
 
 class FilesystemChownOptions(FilesystemRecursionOptions):

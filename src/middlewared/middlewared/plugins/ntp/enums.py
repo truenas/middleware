@@ -53,7 +53,7 @@ class State(enum.Enum):
 
     @staticmethod
     def is_active_qq(val: str | State) -> bool:
-        if type(val) == str:
+        if isinstance(val, str):
             val = State.from_str(val)
         return val in [State.BEST, State.SELECTED]
 

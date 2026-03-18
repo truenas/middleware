@@ -108,12 +108,16 @@ class iSCSITargetToExtentService(CRUDService):
 
     async def _mapping_summary(self, data):
         try:
-            target = (await self.middleware.call('iscsi.target.query', [['id', '=', data.get('target')]], {'get': True}))['name']
+            target = (await self.middleware.call(
+                'iscsi.target.query', [['id', '=', data.get('target')]], {'get': True}
+            ))['name']
         except Exception:
             target = data.get('target')
 
         try:
-            extent = (await self.middleware.call('iscsi.extent.query', [['id', '=', data.get('extent')]], {'get': True}))['name']
+            extent = (await self.middleware.call(
+                'iscsi.extent.query', [['id', '=', data.get('extent')]], {'get': True}
+            ))['name']
         except Exception:
             extent = data.get('extent')
 
@@ -178,13 +182,20 @@ class iSCSITargetToExtentService(CRUDService):
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Next, perform any necessary fixup on the STANDBY system if ALUA is enabled.
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
-            target_name = (await self.middleware.call('iscsi.target.query',
-                                                      [['id', '=', associated_target['target']]],
-                                                      {'select': ['name'], 'get': True}))['name']
-            extent_name = (await self.middleware.call('iscsi.extent.query',
-                                                      [['id', '=', associated_target['extent']]],
-                                                      {'select': ['name'], 'get': True}))['name']
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call('failover.remote_connected')
+        ):
+            target_name = (await self.middleware.call(
+                'iscsi.target.query',
+                [['id', '=', associated_target['target']]],
+                {'select': ['name'], 'get': True},
+            ))['name']
+            extent_name = (await self.middleware.call(
+                'iscsi.extent.query',
+                [['id', '=', associated_target['extent']]],
+                {'select': ['name'], 'get': True},
+            ))['name']
 
             # Check that the HA target is no longer offering the LUN that we just deleted.  Wait a short period
             # if necessary (though this should not be required).

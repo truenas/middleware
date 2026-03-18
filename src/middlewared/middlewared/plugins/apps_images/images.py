@@ -56,7 +56,6 @@ class AppImageService(CRUDService):
         `auth_config` should be specified if image to be retrieved is under a private repository.
         """
         def callback(entry):
-            nonlocal job
             # Just having some sanity checks in place in case we come across some weird registry
             if not isinstance(entry, dict) or any(
                 k not in entry for k in ('progressDetail', 'status')

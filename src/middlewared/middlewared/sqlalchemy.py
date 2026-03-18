@@ -5,8 +5,8 @@ from typing import Any
 
 import isodate
 from sqlalchemy import (
-    Table, Column as _Column, ForeignKey, Index,
-    Boolean, CHAR, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
+    CHAR, Table, Column as _Column, ForeignKey, Index,
+    Boolean, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )
 from sqlalchemy import JSON as NativeJSON
 from sqlalchemy.orm import declarative_base, relationship, Mapped
@@ -16,8 +16,8 @@ from truenas_api_client import json
 
 from middlewared.utils.pwenc import encrypt, decrypt
 
-__all__ = ["Model", "Column", "Boolean", "ForeignKey", "Index", "Integer", "NativeJSON", "Mapped", "SmallInteger",
-           "String", "Table", "Text", "UniqueConstraint", "relationship"]
+__all__ = ["CHAR", "Model", "Column", "Boolean", "ForeignKey", "Index", "Integer", "NativeJSON", "Mapped",
+           "SmallInteger", "String", "Table", "Text", "UniqueConstraint", "relationship"]
 
 
 class Base:

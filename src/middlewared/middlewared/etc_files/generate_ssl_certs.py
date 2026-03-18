@@ -37,7 +37,7 @@ def write_certificates(certs: list) -> set:
     cp = subprocess.Popen('update-ca-certificates', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     err = cp.communicate()[1]
     if cp.returncode:
-        raise CallError(f'Failed to update system\'s trusted certificate store: {err.decode()}')
+        raise CallError(f"Failed to update system's trusted certificate store: {err.decode()}")
 
     return expected_files
 

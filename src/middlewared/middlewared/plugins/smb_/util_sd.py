@@ -319,7 +319,10 @@ class SMBService(Service):
             if must_special_convert:
                 entry["flags"]["INHERIT_ONLY"] = True
                 dup_entry = entry.copy()
-                dup_entry["trustee"] = sd_out["owner"].copy() if entry["trustee"]["sid"] == "S-1-3-0" else sd_out["group"].copy()
+                dup_entry["trustee"] = (
+                    sd_out["owner"].copy() if entry["trustee"]["sid"] == "S-1-3-0"
+                    else sd_out["group"].copy()
+                )
                 dup_entry["flags"].update({
                     "OBJECT_INHERIT": False,
                     "CONTAINER_INHERIT": False,

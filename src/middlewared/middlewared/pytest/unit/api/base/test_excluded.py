@@ -122,7 +122,7 @@ def test_not_required():
 def test_update_metaclass():
     class NestedModel(BaseModel):
         a: int
-    
+
     class NestedUpdateModel(BaseModel, metaclass=ForUpdateMetaclass):
         y: str
 

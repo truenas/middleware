@@ -46,8 +46,8 @@ class CertificateService(Service):
         endpoints which we display automatically in the UI
         """
         return {
-            'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
-            'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
+            'https://acme-staging-v02.api.letsencrypt.org/directory': "Let's Encrypt Staging Directory",
+            'https://acme-v02.api.letsencrypt.org/directory': "Let's Encrypt Production Directory"
         }
 
     @api_method(
