@@ -377,8 +377,11 @@ class FCPortService(CRUDService):
 
     @private
     async def get_options(self, options):
-        # Override superclass method called by query in order to add a side effect
-        await self.middleware.call('fc.fc_host.ensure_wired')
+        # Override superclass method called by query in order to add a side effect.
+        # Skip ensure_wired during failover: the DB is already valid and wire() would
+        # attempt a blocking remote call inside the become_active time-critical window.
+        if not await self.middleware.call('failover.in_progress'):
+            await self.middleware.call('fc.fc_host.ensure_wired')
         return await super().get_options(options)
 
     @private
