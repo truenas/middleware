@@ -3,6 +3,7 @@ import re
 
 from truenas_api_client import json as ejson
 
+from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
 from middlewared.service import Service
 from middlewared.utils.service.task_state import TaskStateMixin
 
@@ -199,11 +200,11 @@ class ZettareplService(Service, TaskStateMixin):
                 try:
                     await self.middleware.call("datastore.update", "storage.task", int(task_id.split("_")[-1]),
                                                {"task_state": ejson.dumps(state)})
-                except RuntimeError:
+                except NoRowsWereUpdatedException:
                     pass
             elif RE_REPLICATION_TASK_ID.match(task_id):
                 try:
                     await self.middleware.call("datastore.update", "storage.replication", int(task_id.split("_")[-1]),
                                                {"repl_state": ejson.dumps(state)})
-                except RuntimeError:
+                except NoRowsWereUpdatedException:
                     pass
