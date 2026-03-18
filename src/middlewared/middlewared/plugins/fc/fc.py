@@ -20,6 +20,7 @@ FC_HOST_PAT = re.compile('/sys/devices/(.*)/(?P<host>host.*)/fc_host/(?P=host)')
 class FCService(Service):
 
     class Config:
+        cli_private = True
         role_prefix = 'SHARING_ISCSI_TARGET'
 
     @api_method(

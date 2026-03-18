@@ -27,6 +27,9 @@ class RdmaLinkConfigResult(BaseModel):
 
 class RDMAService(Service):
 
+    class Config:
+        cli_private = True
+
     @private
     def get_pci_vpd(self, pci_addr):
         lspci_cmd = ['lspci', '-vv', '-s', pci_addr]
