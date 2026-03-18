@@ -33,7 +33,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
-from truenas_pynetif.ethtool import get_ethtool
+from truenas_pynetif.ethtool import NetlinkError, get_ethtool
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.utils import INTERNAL_INTERFACES
@@ -1498,7 +1498,11 @@ class InterfaceService(CRUDService):
 
         Returns an empty list if the interface does not exist or does not support FEC.
         """
-        return get_ethtool().get_fec_modes(id_)
+        try:
+            return get_ethtool().get_fec_modes(id_)
+        except NetlinkError as e:
+            self.logger.error(f'Failed to retrieve available FEC modes for {id_}', exc_info=e)
+            return []
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):

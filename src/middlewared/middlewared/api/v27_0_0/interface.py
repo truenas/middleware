@@ -122,7 +122,15 @@ class InterfaceEntryState(BaseModel):
     """Priority Code Point for VLAN traffic prioritization. Values 0-7 map to different QoS priority levels, \
     with 0 being lowest and 7 highest priority."""
     fec_mode: FecModeName | None = NotRequired
-    """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces."""
+    """Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    * `null`: FEC not supported or mode cannot be determined
+    """
 
 
 class InterfaceEntry(BaseModel):
@@ -150,7 +158,14 @@ class InterfaceEntry(BaseModel):
     mtu: int | None
     """Maximum transmission unit size for the interface."""
     fec_mode: FecModeName = NotRequired
-    """Forward Error Correction (FEC) mode. Only valid for physical interfaces."""
+    """Forward Error Correction (FEC) mode. Only valid for physical interfaces.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
     vlan_parent_interface: str | None = NotRequired
     """Parent interface for VLAN configuration."""
     vlan_tag: int | None = NotRequired
@@ -555,4 +570,11 @@ class InterfaceAvailableFecModesArgs(BaseModel):
 
 class InterfaceAvailableFecModesResult(BaseModel):
     result: list[FecModeName]
-    """List of FEC modes supported by the interface. Empty list if FEC is not supported."""
+    """List of FEC modes supported by the interface. Empty list if FEC is not supported.
+
+    * "AUTO": Selects the best FEC mode based on cable/port capabilities
+    * "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs
+    * "BASER": BaseR-FEC (FireCode)
+    * "OFF": Disables FEC
+    * "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR
+    """
