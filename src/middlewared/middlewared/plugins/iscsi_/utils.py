@@ -3,7 +3,7 @@ import re
 from enum import StrEnum
 from time import sleep
 
-HBTL = re.compile('^\\d:\\d:\\d:\\d$')
+HBTL = re.compile(r'^\d:\d:\d:\d$')
 
 
 class IscsiAuthType(StrEnum):

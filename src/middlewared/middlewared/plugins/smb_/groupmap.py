@@ -384,12 +384,12 @@ class SMBService(Service):
 
     @private
     def groupmap_listmem(self, sid):
-        """
+        r"""
         This method returns a list of SIDS that are members of the specified SID.
 
         Samba's group mapping database can contain foreign group mappings for particular SID entries
         This provides nesting for groups, and SID membership is evaluated when samba overrides
-        POSIX permissions for example when a user is a member of the S-1-5-32-544 (BUILTIN\\admininstrators)
+        POSIX permissions for example when a user is a member of the S-1-5-32-544 (BUILTIN\admininstrators)
 
         Per MS-DTYP certain well-known SIDs / rids must be members of certain builtin groups. For
         example, the administrators RID for a domain (remote and local) must be a member of S-1-5-32-544

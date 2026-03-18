@@ -23,9 +23,9 @@ class AuditServiceHealthAlertClass(AlertClass):
 
 
 class AuditServiceHealthAlertSource(AlertSource):
-    '''
+    """
     Run simple query every 20 minutes as a heath check
-    '''
+    """
     schedule = IntervalSchedule(timedelta(minutes=20))
     run_on_backup_node = False
 

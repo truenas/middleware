@@ -248,7 +248,10 @@ class ADJoinMixin:
                 self.unregister_dns(ds_config_to_fqdn(ds_config), True)
             except Exception:
                 # We're committed now and so we need to finish up our local reconfiguration
-                self.logger.warning('Failed to unregister from active directory DNS. Manual cleanup required', exc_info=True)
+                self.logger.warning(
+                    'Failed to unregister from active directory DNS. Manual cleanup required',
+                    exc_info=True,
+                )
 
         self._ad_cleanup(job, ds_config)
         job.set_progress(description='Completed active directory leave.')
@@ -360,8 +363,10 @@ class ADJoinMixin:
                     if not retries or 'Server not found in Kerberos database' not in exc.errmsg:
                         raise
 
-                    self.logger.debug('%s: Failed to perform nsupdate due to potentially slow sysvol replication. Retrying.',
-                                      conf['dns_name'])
+                    self.logger.debug(
+                        '%s: Failed to perform nsupdate due to potentially slow sysvol replication. Retrying.',
+                        conf['dns_name'],
+                    )
                     sleep(5)
                     retries -= 1
 
@@ -459,7 +464,10 @@ class ADJoinMixin:
 
             # Allow job failure if our best guess at a valid netbiosname fails
             validate_netbios_name(smb['netbiosname'])
-            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_netbiosname': smb['netbiosname']})
+            self.middleware.call_sync(
+                'datastore.update', 'services.cifs', smb['id'],
+                {'cifs_srv_netbiosname': smb['netbiosname']},
+            )
 
         ds_config['configuration']['hostname'] = hostname
         workgroup = smb['workgroup']
@@ -548,7 +556,10 @@ class ADJoinMixin:
         except KRB5Error:
             # Attempt to kinit against DC we were talking to failed and so we'll switch to generic
             # kinit loop to wait for things to settle.
-            self.logger.debug('Initial attempt to kinit with new kerberos pricipal failed. Starting kinit loop.', exc_info=True)
+            self.logger.debug(
+                'Initial attempt to kinit with new kerberos pricipal failed. Starting kinit loop.',
+                exc_info=True,
+            )
             job.set_progress(80, 'Waiting for active directory to replicate machine account changes.')
             self._ad_wait_kerberos_start()
         else:

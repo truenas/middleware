@@ -143,7 +143,10 @@ class iSCSITargetService(CRUDService):
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call('failover.remote_connected')
+        ):
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
             )
@@ -382,7 +385,10 @@ class iSCSITargetService(CRUDService):
                     ha_iqn = f'{global_basename}:HA:{new["name"]}'
                     await self.middleware.call('iscsi.scst.reset_target_parameters', ha_iqn, list(reset_params))
                 if run_on_peer:
-                    await self.middleware.call('failover.call_remote', 'iscsi.scst.reset_target_parameters', [iqn, list(reset_params)])
+                    await self.middleware.call(
+                        'failover.call_remote', 'iscsi.scst.reset_target_parameters',
+                        [iqn, list(reset_params)],
+                    )
 
         return await self.get_instance(id_)
 
@@ -422,7 +428,10 @@ class iSCSITargetService(CRUDService):
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         # If HA and ALUA handle BACKUP first
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call('failover.remote_connected')
+        ):
             await self.middleware.call('failover.call_remote', 'iscsi.target.remove_target', [target["name"]])
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
@@ -638,7 +647,10 @@ class iSCSITargetService(CRUDService):
             await self.discover(remote_ip)
 
             # Then login the targets (in parallel)
-            exceptions = await asyncio.gather(*[self.login_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            exceptions = await asyncio.gather(
+                *[self.login_iqn(remote_ip, iqn, no_wait) for iqn in todo],
+                return_exceptions=True,
+            )
             failures = []
             for iqn, exc in zip(todo, exceptions):
                 if isinstance(exc, Exception):
@@ -693,7 +705,10 @@ class iSCSITargetService(CRUDService):
             remote_ip = await self.middleware.call('failover.remote_ip')
 
             # Logout the targets (in parallel)
-            exceptions = await asyncio.gather(*[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            exceptions = await asyncio.gather(
+                *[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo],
+                return_exceptions=True,
+            )
             failures = []
             for iqn, exc in zip(todo, exceptions):
                 if isinstance(exc, Exception):
@@ -731,7 +746,10 @@ class iSCSITargetService(CRUDService):
             remote_ip = await self.middleware.call('failover.remote_ip')
 
             # Logout the targets (in parallel)
-            exceptions = await asyncio.gather(*[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            exceptions = await asyncio.gather(
+                *[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo],
+                return_exceptions=True,
+            )
             failures = []
             for iqn, exc in zip(todo, exceptions):
                 if isinstance(exc, Exception):
@@ -769,7 +787,10 @@ class iSCSITargetService(CRUDService):
         Returns a list of target names that are currently in cluster_mode on this controller.
         """
         targets = await self.middleware.call('iscsi.target.query')
-        extents = {extent['id']: extent for extent in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
+        extents = {
+            extent['id']: extent for extent in
+            await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])
+        }
         assoc = await self.middleware.call('iscsi.targetextent.query')
 
         # Generate a dict, keyed by target ID whose value is a set of associated extent names
@@ -797,10 +818,14 @@ class iSCSITargetService(CRUDService):
         """
         Returns a tuple containing:
         - list of target names that are currently in cluster_mode on this controller.
-        - dict keyed by target name, where the value is a list of luns that are currently in cluster_mode on this controller.
+        - dict keyed by target name, where the value is a list of luns that are currently
+          in cluster_mode on this controller.
         """
         targets = await self.middleware.call('iscsi.target.query')
-        extents = {extent['id']: extent for extent in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
+        extents = {
+            extent['id']: extent for extent in
+            await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])
+        }
         assoc = await self.middleware.call('iscsi.targetextent.query')
 
         # Generate a dict, keyed by target ID whose value is a set of associated extent names

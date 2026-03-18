@@ -8,12 +8,12 @@ from middlewared.api.base.handler.accept import accept_params
 from middlewared.service_exception import ValidationErrors
 
 
-@pytest.mark.parametrize("type,value,error", [
+@pytest.mark.parametrize("type_,value,error", [
     (str, "0" * 2000, "String should have at most 1024 characters")
 ])
-def test_base_types(type, value, error):
+def test_base_types(type_, value, error):
     class Model(BaseModel):
-        param: type
+        param: type_
 
     with pytest.raises(ValidationErrors) as ve:
         assert accept_params(Model, [value])

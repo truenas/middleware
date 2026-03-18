@@ -37,7 +37,7 @@ class PoolDatasetService(Service):
         """
         minimum_recordsize = self.MAPPING[0][0]
         if pool_name and self.middleware.call_sync('pool.is_draid_pool', pool_name):
-                minimum_recordsize = 1 << 17  # We want minimum of 128k for dRAID pools
+            minimum_recordsize = 1 << 17  # We want minimum of 128k for dRAID pools
 
         with open('/sys/module/zfs/parameters/zfs_max_recordsize') as f:
             val = int(f.read().strip())

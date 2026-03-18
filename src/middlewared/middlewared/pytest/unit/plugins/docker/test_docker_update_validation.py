@@ -180,7 +180,7 @@ SYSTEM_STATE = {
             'pool': 'tank',
             'address_pools': [],
         },
-        ['Migration of \'tank/ix-apps\' to \'test\' not possible as test/ix-apps already exists.']
+        ["Migration of 'tank/ix-apps' to 'test' not possible as test/ix-apps already exists."]
     ),
     (
         {
@@ -197,7 +197,7 @@ SYSTEM_STATE = {
             'pool': 'tank',
             'address_pools': [],
         },
-        ['\'tank/ix-apps\' does not exist, migration not possible.']
+        ["'tank/ix-apps' does not exist, migration not possible."]
     ),
     (
         {
@@ -224,7 +224,7 @@ SYSTEM_STATE = {
             'pool': 'tank',
             'address_pools': [],
         },
-        ['\'tank/ix-apps\' is encrypted which is not a supported configuration']
+        ["'tank/ix-apps' is encrypted which is not a supported configuration"]
     ),
     (
         {
@@ -318,7 +318,7 @@ SYSTEM_STATE = {
             'pool': 'tank',
             'address_pools': [],
         },
-        ['Migration not possible as \'test\' is locked']
+        ["Migration not possible as 'test' is locked"]
     ),
     (
         {
@@ -345,8 +345,8 @@ SYSTEM_STATE = {
             'address_pools': [],
         },
         [
-            'Migration not possible as \'test\' is locked',
-            'Migration not possible as system does not has encryption key for \'test\' stored'
+            "Migration not possible as 'test' is locked",
+            "Migration not possible as system does not has encryption key for 'test' stored"
         ]
     ),
 ])

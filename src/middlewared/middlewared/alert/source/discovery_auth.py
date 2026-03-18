@@ -7,7 +7,10 @@ class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "iSCSI Discovery Authorization Global"
-    text = "Prior to upgrade had specified iSCSI discovery auth on only some portals, now applies globally.  May need to update client configuration when using %(ips)s"
+    text = (
+        "Prior to upgrade had specified iSCSI discovery auth on only some portals,"
+        " now applies globally.  May need to update client configuration when using %(ips)s"
+    )
 
 
 class ISCSIDiscoveryAuthMultipleCHAPAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -21,4 +24,7 @@ class ISCSIDiscoveryAuthMultipleMutualCHAPAlertClass(AlertClass, SimpleOneShotAl
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "iSCSI Discovery Authorization Multiple Mutual CHAP"
-    text = "Multiple mutual CHAP peers defined for discovery auth, but only first one (\"%(peeruser)s\") applies.  May need to update client configuration."
+    text = (
+        "Multiple mutual CHAP peers defined for discovery auth, but only first one"
+        " (\"%(peeruser)s\") applies.  May need to update client configuration."
+    )

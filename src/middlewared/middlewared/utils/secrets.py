@@ -53,7 +53,7 @@ def token_bytes(nbytes: int | None = None) -> bytes:
     default is used.
 
     >>> token_bytes(16)
-    b'\\xebr\\x17D*t\\xae\\xd4\\xe3S\\xb6\\xe2\\xebP1\\x8b'
+    rb'\xebr\x17D*t\xae\xd4\xe3S\xb6\xe2\xebP1\x8b'
 
     """
     if nbytes is None:

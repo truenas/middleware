@@ -13,7 +13,8 @@ __all__ = [
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult',
+    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
+    'AppContainerConsoleChoicesResult',
     'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppCertificateAuthorityArgs',
     'AppCertificateAuthorityResult', 'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppIpChoicesArgs', 'AppIpChoicesResult',
     'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
@@ -96,13 +97,13 @@ class AppCreateArgs(BaseModel):
     custom_compose_config_string: Secret[LongString] = ''
     catalog_app: str | None = None
     app_name: str = Field(pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
-    '''
+    """
     Application name must have the following:
     1) Lowercase alphanumeric characters can be specified
     2) Name must start with an alphabetic character and can end with alphanumeric character
     3) Hyphen '-' is allowed but not as the first or last character
     e.g abc123, abc, abcd-1232
-    '''
+    """
     train: NonEmptyString = 'stable'
     version: NonEmptyString = 'latest'
 
@@ -349,23 +350,23 @@ class AppUpgradeSummaryArgs(BaseModel):
 
 class AppVersionInfo(BaseModel):
     version: str
-    '''Version of the app'''
+    """Version of the app"""
     human_version: str
-    '''Human readable version of the app'''
+    """Human readable version of the app"""
 
 
 @single_argument_result
 class AppUpgradeSummaryResult(BaseModel):
     latest_version: str
-    '''Latest version available for the app'''
+    """Latest version available for the app"""
     latest_human_version: str
-    '''Latest human readable version available for the app'''
+    """Latest human readable version available for the app"""
     upgrade_version: str
-    '''Version user has requested to be upgraded at'''
+    """Version user has requested to be upgraded at"""
     upgrade_human_version: str
-    '''Human readable version user has requested to be upgraded at'''
+    """Human readable version user has requested to be upgraded at"""
     available_versions_for_upgrade: list[AppVersionInfo]
-    '''List of available versions for upgrade'''
+    """List of available versions for upgrade"""
     changelog: LongString | None
 
 

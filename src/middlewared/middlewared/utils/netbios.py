@@ -45,7 +45,7 @@ def __validate_netbios_name(val: str, regex: re.Pattern[str]) -> str:
     if not regex.match(val):
         raise ValueError(
             'Invalid NetBIOS name. NetBIOS names must be between 1 and 15 characters in '
-            'length and may not contain the following characters: \\/:*?"<>|.'
+            r'length and may not contain the following characters: \/:*?"<>|.'
         )
 
     if val.casefold() in RESERVED_WORDS:

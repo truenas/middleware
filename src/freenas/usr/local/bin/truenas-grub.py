@@ -55,7 +55,10 @@ if __name__ == "__main__":
     if advanced["serialconsole"]:
         port = get_serial_ports().get(advanced['serialport'], advanced['serialport'])
         port_nr = port.replace('ttyS', '')
-        config.append(f'GRUB_SERIAL_COMMAND="serial --unit={port_nr} --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"')
+        config.append(
+            f'GRUB_SERIAL_COMMAND="serial --unit={port_nr}'
+            f' --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"'
+        )
         if os.path.exists("/sys/firmware/efi"):
             terminal_output = ["gfxterm"]
         terminal_output.append("serial")

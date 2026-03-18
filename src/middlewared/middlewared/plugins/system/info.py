@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from middlewared.api import api_method
 from middlewared.api.current import SystemHostIdArgs, SystemHostIdResult, SystemInfoArgs, SystemInfoResult
-from middlewared.service import no_authz_required, private, Service
+from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
 from middlewared.utils.cpu import cpu_info, cpu_flags
 

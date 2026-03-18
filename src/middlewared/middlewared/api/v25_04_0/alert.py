@@ -78,7 +78,6 @@ class AlertListCategoriesResult(BaseModel):
     result: list[AlertCategory]
 
 
-
 class AlertListPoliciesArgs(BaseModel):
     pass
 

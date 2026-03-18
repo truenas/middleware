@@ -106,21 +106,21 @@ class NfsDebugSetResult(BaseModel):
 
 
 class NFSService(Service):
-    '''
+    """
     NFSService class holds the functions to set and get the debug flags
     for nfs_debug, nfsd_debug, nlm_debug and rpc_debug.  All of these
     are files in /proc/sys/sunrpc.
-    '''
+    """
 
     dbgcls = {'NFS': NFS_DBGFLAGS, 'NFSD': NFSD_DBGFLAGS, 'NLM': NLM_DBGFLAGS, 'RPC': RPC_DBGFLAGS}
 
     @api_method(NfsDebugGetArgs, NfsDebugGetResult, private=True)
     def get_debug(self):
-        '''
+        """
         Display current debug settings for NFS, NFSD, NLM and RPC
         All settings are reported as uppercase.
         See man (8) rpcdebug for more information.
-        '''
+        """
         output = {}
         with suppress(FileNotFoundError):
             for svc in os.listdir("/proc/sys/sunrpc"):
@@ -156,11 +156,11 @@ class NFSService(Service):
 
     @api_method(NfsDebugSetArgs, NfsDebugSetResult, private=True)
     def set_debug(self, services):
-        '''
+        """
         Set debug flags for NFS, NFSD, NLM and RPC.
         All flag names are uppercase.
         See man (8) rpcdebug for more information.
-        '''
+        """
         def debug_level_to_int(svc, opts):
             rv = 0
 

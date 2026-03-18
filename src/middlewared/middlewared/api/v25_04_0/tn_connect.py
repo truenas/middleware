@@ -4,8 +4,11 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, No
 
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs', 'TrueNASConnectGenerateClaimTokenResult', 'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
+    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
+    'TrueNASConnectGetRegistrationUriResult', 'TrueNASConnectUpdateArgs',
+    'TrueNASConnectUpdateResult', 'TrueNASConnectGenerateClaimTokenArgs',
+    'TrueNASConnectGenerateClaimTokenResult', 'TrueNASConnectIpChoicesArgs',
+    'TrueNASConnectIpChoicesResult',
 ]
 
 

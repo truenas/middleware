@@ -5,7 +5,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
     PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
-    PeriodicSnapshotTaskEntry, PoolSnapshotTaskUpdateWillChangeRetentionFor,
+    PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.service import CallError, Service
 
@@ -18,7 +18,7 @@ class PeriodicSnapshotTaskService(Service):
     @api_method(
         PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs,
         PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
-		roles=['SNAPSHOT_TASK_READ'],
+        roles=['SNAPSHOT_TASK_READ'],
         check_annotations=True,
     )
     async def update_will_change_retention_for(
@@ -55,7 +55,7 @@ class PeriodicSnapshotTaskService(Service):
     @api_method(
         PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs,
         PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
-		roles=['SNAPSHOT_TASK_READ'],
+        roles=['SNAPSHOT_TASK_READ'],
         check_annotations=True,
     )
     async def delete_will_change_retention_for(self, id_: int) -> dict[str, list[str]]:

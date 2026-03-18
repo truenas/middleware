@@ -5,7 +5,6 @@
 #
 # NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_statx.py
 
-import os
 import stat as statlib
 import truenas_os
 from enum import IntFlag, StrEnum

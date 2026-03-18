@@ -444,7 +444,10 @@ class IPAJoinMixin:
 
             # Allow job failure if our best guess at a valid netbiosname fails
             validate_netbios_name(smb['netbiosname'])
-            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_netbiosname': smb['netbiosname']})
+            self.middleware.call_sync(
+                'datastore.update', 'services.cifs', smb['id'],
+                {'cifs_srv_netbiosname': smb['netbiosname']},
+            )
 
         ds_config['configuration']['hostname'] = hostname.lower()
 

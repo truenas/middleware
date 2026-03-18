@@ -276,6 +276,7 @@ SAMPLE_AUDIT = [
     }
 ]
 
+
 def test__filter_list_equal():
     assert len(filter_list(DATA, [['foo', '=', 'foo1']])) == 1
 
@@ -484,7 +485,7 @@ def test__filter_list_nested_select():
 
 
 def test__filter_list_nested_select_escape():
-    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': ['foo\\.bar']})
+    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': [r'foo\.bar']})
     assert len(data) == 1
     entry = data[0]
     assert 'foo.bar' in entry

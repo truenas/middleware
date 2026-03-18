@@ -125,7 +125,7 @@ def map_plx_nvme(model, ctx):
         for slot in pathlib.Path('/sys/bus/pci/slots').iterdir()
     }
     mapped = dict()
-    for i in filter(lambda x: x.attributes.get('path') == b'\\_SB_.PC03.BR3A', ctx.list_devices(subsystem='acpi')):
+    for i in filter(lambda x: x.attributes.get('path') == rb'\_SB_.PC03.BR3A', ctx.list_devices(subsystem='acpi')):
         try:
             physical_node = Devices.from_path(ctx, f'{i.sys_path}/physical_node')
         except DeviceNotFoundAtPathError:
@@ -215,9 +215,9 @@ def map_vseries_nvme(model, ctx):
 def map_r50_or_r50b(model, ctx):
     num_of_nvme_slots = 3 if model == 'R50' else 2  # r50 has 3 rear nvme slots, r50b has 2
     if model == 'R50':
-        acpihandles = {b'\\_SB_.PC00.RP01.PXSX': 3, b'\\_SB_.PC01.BR1A.OCL0': 1, b'\\_SB_.PC01.BR1B.OCL1': 2}
+        acpihandles = {rb'\_SB_.PC00.RP01.PXSX': 3, rb'\_SB_.PC01.BR1A.OCL0': 1, rb'\_SB_.PC01.BR1B.OCL1': 2}
     else:
-        acpihandles = {b'\\_SB_.PC03.BR3A': 2, b'\\_SB_.PC00.RP01.PXSX': 1}
+        acpihandles = {rb'\_SB_.PC03.BR3A': 2, rb'\_SB_.PC00.RP01.PXSX': 1}
 
     mapped = dict()
     for i in filter(lambda x: x.attributes.get('path') in acpihandles, ctx.list_devices(subsystem='acpi')):
