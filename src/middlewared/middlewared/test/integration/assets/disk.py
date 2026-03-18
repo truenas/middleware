@@ -10,9 +10,9 @@ def fake_disks(disks):
             from dataclasses import asdict
             from functools import cached_property
             import inspect
-            
+
             from middlewared.utils.disks_.disk_class import DiskEntry, iterate_disks
-            
+
             def serialize(disk):
                 return {
                     **asdict(disk),

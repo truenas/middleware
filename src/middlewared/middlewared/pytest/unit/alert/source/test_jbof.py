@@ -295,16 +295,22 @@ jbof_data_one = [
                                        'status': 'OK',
                                        'value': 'SpeedRPM=21792.0',
                                        'value_raw': None}},
-                  'Power Supply': {'PSU1': {'descriptor': 'PSU1,YSEF1600EM-2A01P10,S0A00A3032029000366,'
-                                                            'A00,3Y POWER,1600W',
-                                           'status': 'OK',
-                                           'value': 'Normal',
-                                           'value_raw': None},
-                                  'PSU2': {'descriptor': 'PSU2,YSEF1600EM-2A01P10,S0A00A3032029000366,'
-                                                          'A00,3Y POWER,1600W',
-                                           'status': 'OK',
-                                           'value': 'Normal',
-                                            'value_raw': None}},
+                  'Power Supply': {
+                      'PSU1': {
+                          'descriptor': ('PSU1,YSEF1600EM-2A01P10,'
+                                         'S0A00A3032029000366,A00,3Y POWER,1600W'),
+                          'status': 'OK',
+                          'value': 'Normal',
+                          'value_raw': None,
+                      },
+                      'PSU2': {
+                          'descriptor': ('PSU2,YSEF1600EM-2A01P10,'
+                                         'S0A00A3032029000366,A00,3Y POWER,1600W'),
+                          'status': 'OK',
+                          'value': 'Normal',
+                          'value_raw': None,
+                      },
+                  },
                   'Temperature Sensors': {'TempDrive1': {'descriptor': 'Temperature Sensor Drive 1',
                                                          'status': 'OK',
                                                          'value': '18.0 C',

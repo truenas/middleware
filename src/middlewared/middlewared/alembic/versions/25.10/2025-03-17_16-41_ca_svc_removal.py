@@ -22,7 +22,7 @@ down_revision = 'cf1f98f4c3b1'
 branch_labels = None
 depends_on = None
 
-'''
+"""
 Okay so what we would like to do here is essentially are the following steps:
 
 1. Update certificate attr for both certs/cas to include complete chain
@@ -31,7 +31,7 @@ Okay so what we would like to do here is essentially are the following steps:
 4. Drop cert_signedby_id from both tables and revoked date column from cert table
 5. Update usages of CA foreign key to certs table
 6. Drop CA table
-'''
+"""
 
 CA_TYPE_EXISTING = 0x01
 CA_TYPE_INTERNAL = 0x02

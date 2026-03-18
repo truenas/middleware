@@ -313,7 +313,7 @@ class SupportService(ConfigService):
             raise CallError('Connection time out', errno.ETIMEDOUT)
 
         if r.status_code == 413:
-            raise CallError(f'Uploaded file is too large', errno.EFBIG)
+            raise CallError('Uploaded file is too large', errno.EFBIG)
 
         try:
             data = r.json()

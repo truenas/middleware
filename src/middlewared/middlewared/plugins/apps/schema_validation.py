@@ -72,10 +72,10 @@ class AppSchemaService(Service):
                     )
 
         # FIXME: See if this is valid or not and port appropriately
-        '''
+        """
         if schema['type'] == 'hostpath':
             await self.validate_host_path_field(value, verrors, schema_name)
-        '''
+        """
         for validator_def in filter(lambda k: k in VALIDATION_REF_MAPPING, schema.get('$ref', [])):
             await self.middleware.call(
                 f'app.schema.validate_{VALIDATION_REF_MAPPING[validator_def]}',

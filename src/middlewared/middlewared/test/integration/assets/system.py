@@ -14,13 +14,13 @@ except ImportError:
 
 @contextlib.contextmanager
 def standby_syslog_to_remote_syslog(remote_log_path="/var/log/remote_log.txt"):
-    '''
+    """
     Temporarily convert the syslog server on the standby node
     to a remote syslog server.  HA systems only.
     NOTE: Any operation that involves restarting or reloading syslog-ng may
           break the remote syslog configuration.
     NOTE: This is unstable when run from Jenkins.  It fails in restart_systemd_svc.
-    '''
+    """
     assert ha is True, "Remote log config is available on HA systems only."
 
     remote_syslog_config = (

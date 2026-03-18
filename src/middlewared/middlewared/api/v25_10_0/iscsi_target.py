@@ -49,7 +49,8 @@ class iSCSITargetEntry(BaseModel):
                     AfterValidator(
                         match_validator(
                             RE_TARGET_NAME,
-                            "Name can only contain lowercase alphanumeric charactersplus dot (.), dash (-), and colon (:)",
+                            "Name can only contain lowercase alphanumeric characters"
+                            "plus dot (.), dash (-), and colon (:)",
                         )
                     ),
                     StringConstraints(max_length=120)]

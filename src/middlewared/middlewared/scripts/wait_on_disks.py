@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 from collections import deque
 from time import time, sleep
-from sys import exit
+import sys
 
 from pyudev import Context, Monitor, MonitorObserver
 
@@ -55,4 +55,4 @@ if __name__ == '__main__':
     try:
         main()
     finally:
-        exit(0)  # always exit success (for now)
+        sys.exit(0)  # always exit success (for now)

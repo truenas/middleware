@@ -1,6 +1,3 @@
-from .utils import CERT_TYPE_EXISTING
-
-
 async def setup(middleware):
     failure = False
     try:

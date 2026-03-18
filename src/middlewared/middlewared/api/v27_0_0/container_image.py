@@ -16,11 +16,11 @@ class ContainerImageQueryRegistryResult(BaseModel):
 
 class ContainerImageQueryRegistryResultImage(BaseModel):
     name: str
-    "Image name."
+    """Image name."""
     versions: list["ContainerImageQueryRegistryResultImageVersion"]
-    "Available image versions."
+    """Available image versions."""
 
 
 class ContainerImageQueryRegistryResultImageVersion(BaseModel):
     version: str
-    "Image version name."
+    """Image version name."""

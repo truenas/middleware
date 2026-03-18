@@ -116,12 +116,12 @@ class CertificateService(CRUDService):
         elif not cert['key_length']:
             verrors.add(
                 schema_name,
-                'Failed to parse certificate\'s private key'
+                "Failed to parse certificate's private key"
             )
         elif cert['key_length'] < valid_key_size[cert['key_type']]:
             verrors.add(
                 schema_name,
-                f'{cert["name"]}\'s private key size is less than {valid_key_size[cert["key_type"]]} bits'
+                f"{cert['name']}'s private key size is less than {valid_key_size[cert['key_type']]} bits"
             )
 
         if cert['until'] and datetime.datetime.strptime(
@@ -451,7 +451,7 @@ class CertificateService(CRUDService):
             if new['add_to_trusted_store'] and new['cert_type_CSR']:
                 verrors.add(
                     'certificate_update.add_to_trusted_store',
-                    'A CSR cannot be added to the system\'s trusted store'
+                    "A CSR cannot be added to the system's trusted store"
                 )
 
             verrors.check()

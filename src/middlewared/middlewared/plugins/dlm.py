@@ -114,7 +114,10 @@ class DistributedLockManagerService(Service):
     async def lockspace_members(self, lockspace_name):
         await self.middleware.call('dlm.create')
         result = set()
-        exceptions = await asyncio.gather(*[self.lockspace_member(nodeid, lockspace_name) for nodeid in self.nodes], return_exceptions=True)
+        exceptions = await asyncio.gather(
+            *[self.lockspace_member(nodeid, lockspace_name) for nodeid in self.nodes],
+            return_exceptions=True,
+        )
         for exc in exceptions:
             if isinstance(exc, Exception):
                 self.logger.warning(exc)
@@ -157,7 +160,10 @@ class DistributedLockManagerService(Service):
     async def join_kernel_lockspace(self, dest_nodeid, lockspace_name, joining_nodeid, nodeIDs):
         if dest_nodeid == self.nodeID:
             # Local operation
-            self.logger.debug('[LOCAL] Joining kernel lockspace %s for node %s on node %s', lockspace_name, joining_nodeid, dest_nodeid)
+            self.logger.debug(
+                '[LOCAL] Joining kernel lockspace %s for node %s on node %s',
+                lockspace_name, joining_nodeid, dest_nodeid,
+            )
 
             # Ensure kernel lockspace is stopped
             if not await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace_name):
@@ -182,9 +188,13 @@ class DistributedLockManagerService(Service):
 
         elif await self.middleware.call('failover.remote_connected'):
             # Remote operation
-            self.logger.debug('[REMOTE] Joining kernel lockspace %s for node %s on node %s', lockspace_name, joining_nodeid, dest_nodeid)
+            self.logger.debug(
+                '[REMOTE] Joining kernel lockspace %s for node %s on node %s',
+                lockspace_name, joining_nodeid, dest_nodeid,
+            )
             await self.middleware.call(
-                'failover.call_remote', 'dlm.join_kernel_lockspace', [dest_nodeid, lockspace_name, joining_nodeid, nodeIDs], {'timeout': 5}
+                'failover.call_remote', 'dlm.join_kernel_lockspace',
+                [dest_nodeid, lockspace_name, joining_nodeid, nodeIDs], {'timeout': 5}
             )
 
     @private
@@ -206,9 +216,13 @@ class DistributedLockManagerService(Service):
 
         elif await self.middleware.call('failover.remote_connected'):
             # Remote operation
-            self.logger.debug('[REMOTE] Node %s leaving kernel lockspace %s on %s', leaving_nodeid, lockspace_name, dest_nodeid)
+            self.logger.debug(
+                '[REMOTE] Node %s leaving kernel lockspace %s on %s',
+                leaving_nodeid, lockspace_name, dest_nodeid,
+            )
             await self.middleware.call(
-                'failover.call_remote', 'dlm.leave_kernel_lockspace', [dest_nodeid, lockspace_name, leaving_nodeid], {'timeout': 5}
+                'failover.call_remote', 'dlm.leave_kernel_lockspace',
+                [dest_nodeid, lockspace_name, leaving_nodeid], {'timeout': 5}
             )
 
     @private
@@ -226,7 +240,10 @@ class DistributedLockManagerService(Service):
 
             nodeIDs.add(self.nodeID)
             # Join the kernel lockspace (on all nodes)
-            await asyncio.gather(*[self.join_kernel_lockspace(nodeid, lockspace_name, self.nodeID, list(nodeIDs)) for nodeid in nodeIDs])
+            await asyncio.gather(*[
+                self.join_kernel_lockspace(nodeid, lockspace_name, self.nodeID, list(nodeIDs))
+                for nodeid in nodeIDs
+            ])
         except Exception:
             self.logger.error('Failed to join lockspace %s', lockspace_name, exc_info=True)
             await self.middleware.call('dlm.kernel.set_sysfs_event_done', lockspace_name, 1)
@@ -248,7 +265,10 @@ class DistributedLockManagerService(Service):
             await asyncio.gather(*[self.stop_kernel_lockspace(nodeid, lockspace_name) for nodeid in nodeIDs])
 
             # Leave the kernel lockspace (on all nodes).
-            await asyncio.gather(*[self.leave_kernel_lockspace(nodeid, lockspace_name, self.nodeID) for nodeid in nodeIDs])
+            await asyncio.gather(*[
+                self.leave_kernel_lockspace(nodeid, lockspace_name, self.nodeID)
+                for nodeid in nodeIDs
+            ])
 
             nodeIDs.remove(self.nodeID)
             # Start the kernel lockspace on remaining nodes
@@ -287,9 +307,16 @@ class DistributedLockManagerService(Service):
                 # Anticipate the day when we have N nodes, but for now this equates to this node.
                 nodeIDs = set(await self.middleware.call('dlm.lockspace_members', lockspace_name))
                 nodeIDs.remove(nodeid)
-                await asyncio.gather(*[self.stop_kernel_lockspace(node_id, lockspace_name) for node_id in nodeIDs])
-                await asyncio.gather(*[self.leave_kernel_lockspace(node_id, lockspace_name, nodeid) for node_id in nodeIDs])
-                await asyncio.gather(*[self.start_kernel_lockspace(node_id, lockspace_name) for node_id in nodeIDs])
+                await asyncio.gather(*[
+                    self.stop_kernel_lockspace(node_id, lockspace_name) for node_id in nodeIDs
+                ])
+                await asyncio.gather(*[
+                    self.leave_kernel_lockspace(node_id, lockspace_name, nodeid)
+                    for node_id in nodeIDs
+                ])
+                await asyncio.gather(*[
+                    self.start_kernel_lockspace(node_id, lockspace_name) for node_id in nodeIDs
+                ])
 
             # await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
 
