@@ -32,6 +32,21 @@ def _get_whole_disk(disk: str) -> str:
     return dev_name
 
 
+def _collect_leaf_disks(vdev: typing.Any, disks: list[str]) -> None:
+    """Recursively walk a vdev tree and collect leaf disk devices.
+
+    Descends into children (e.g. mirrors, raidz, draid) until it
+    reaches leaf vdevs. Only vdevs with vdev_type ``"disk"`` are
+    collected, which filters out virtual devices like dRAID
+    distributed spares (vdev_type ``"dspare"``).
+    """
+    if vdev.children:
+        for child in vdev.children:
+            _collect_leaf_disks(child, disks)
+    elif vdev.vdev_type == "disk":
+        disks.append(_get_whole_disk(vdev.name))
+
+
 def get_zpool_disks_impl(lzh: typing.Any, pool_name: str | None) -> list[str]:
     """Return all whole-disk device names belonging to a zpool.
 
@@ -52,18 +67,13 @@ def get_zpool_disks_impl(lzh: typing.Any, pool_name: str | None) -> list[str]:
         return disks
 
     for i in status.storage_vdevs:
-        if i.children:
-            for j in i.children:
-                disks.append(_get_whole_disk(j.name))
-        else:
-            # stripe vdevs have no children; the vdev itself is the disk
-            disks.append(_get_whole_disk(i.name))
+        _collect_leaf_disks(i, disks)
 
     for vtype in ("cache", "log", "special", "dedup"):
         for j in getattr(status.support_vdevs, vtype):
-            disks.append(_get_whole_disk(j.name))
+            _collect_leaf_disks(j, disks)
 
     for i in status.spares:
-        disks.append(_get_whole_disk(i.name))
+        _collect_leaf_disks(i, disks)
 
     return disks
