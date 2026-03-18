@@ -13,7 +13,6 @@ class WebUICryptoService(Service):
 
     class Config:
         namespace = 'webui.crypto'
-        private = True
         cli_private = True
 
     @api_method(

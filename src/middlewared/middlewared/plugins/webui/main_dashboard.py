@@ -6,7 +6,7 @@ from middlewared.api.current import (
     WebUIMainDashboardSysInfoArgs,
     WebUIMainDashboardSysInfoResult
 )
-from middlewared.service import Service
+from middlewared.service import Service, private
 from middlewared.utils import sw_info
 
 
@@ -14,8 +14,8 @@ class WebUIMainDashboardService(Service):
     class Config:
         namespace = 'webui.main.dashboard'
         cli_private = True
-        private = True
 
+    @private
     def sys_info_impl(self):
         dmi = self.middleware.call_sync('system.dmidecode_info')
         platform = 'Generic'

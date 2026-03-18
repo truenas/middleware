@@ -6,7 +6,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import Enclosure2Entry, Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult
-from middlewared.service import Service, filterable_api_method
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils.filter_list import filter_list
 
@@ -26,8 +26,8 @@ class Enclosure2Service(Service):
 
     class Config:
         cli_namespace = 'storage.enclosure2'
-        private = True
 
+    @private
     def get_ses_enclosures(self):
         """This generates the "raw" list of enclosures detected on the system. It
         serves as the "entry" point to "enclosure2.query" and is foundational in
@@ -40,6 +40,7 @@ class Enclosure2Service(Service):
         """
         return get_ses_enclosures()
 
+    @private
     async def map_jbof(self, jbof_qry=None):
         """This method serves as an endpoint to easily be able to test
         the JBOF mapping logic specifically without having to call enclosure2.query
@@ -49,6 +50,7 @@ class Enclosure2Service(Service):
             jbof_qry = await self.middleware.call('jbof.query')
         return await map_jbof(jbof_qry)
 
+    @private
     def map_nvme(self):
         """This method serves as an endpoint to easily be able to test
         the nvme mapping logic specifically without having to call enclosure2.query
@@ -56,6 +58,7 @@ class Enclosure2Service(Service):
         """
         return map_nvme()
 
+    @private
     def get_original_disk_slot(self, slot, enc_info):
         """Get the original slot based on the `slot` passed to us via the end-user.
         NOTE: Most drives original slot will match their "mapped" slot because there
@@ -131,6 +134,7 @@ class Enclosure2Service(Service):
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
 
+    @private
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 

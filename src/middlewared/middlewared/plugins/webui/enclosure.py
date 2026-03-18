@@ -3,16 +3,16 @@ from middlewared.api.current import (
     WebUIEnclosureDashboardArgs,
     WebUIEnclosureDashboardResult
 )
-from middlewared.service import Service
+from middlewared.service import Service, private
 
 
 class WebUIEnclosureService(Service):
     class Config:
         namespace = 'webui.enclosure'
-        private = True
         cli_private = True
         role_prefix = 'ENCLOSURE'
 
+    @private
     def disk_detail_dict(self):
         return {
             'size': None,
@@ -22,10 +22,12 @@ class WebUIEnclosureService(Service):
             'rotationrate': None,
         }
 
+    @private
     def map_disk_details(self, slot_info, disk_deets):
         for key in self.disk_detail_dict():
             slot_info[key] = disk_deets.get(slot_info['dev'], {}).get(key)
 
+    @private
     def map_zpool_info(self, enc_id, disk_slot, dev, pool_info):
         info = {'enclosure_id': enc_id, 'slot': int(disk_slot), 'dev': dev}
         try:
@@ -40,6 +42,7 @@ class WebUIEnclosureService(Service):
             # which will give more insight into what's going on
             pool_info['vdev_disks'].append(info)
 
+    @private
     def dashboard_impl(self):
         enclosures = self.middleware.call_sync('enclosure2.query')
         if enclosures:
