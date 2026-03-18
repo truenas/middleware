@@ -7,7 +7,8 @@ from ipaddress import ip_address, ip_interface
 from middlewared.api import api_method
 from middlewared.plugins.interface.dhcp import dhcp_start
 from middlewared.api.current import (
-    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
+    InterfaceEntry, InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult,
+    InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
     InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
     InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,
@@ -32,6 +33,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
+from truenas_pynetif.ethtool import NetlinkError, get_ethtool
 from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.utils import INTERNAL_INTERFACES
@@ -81,6 +83,7 @@ class NetworkInterfaceModel(sa.Model):
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
+    int_fec_mode = sa.Column(sa.String(10), nullable=True)
 
 
 class NetworkInterfaceLinkAddressModel(sa.Model):
@@ -254,6 +257,9 @@ class InterfaceService(CRUDService):
             'description': config['int_name'],
             'mtu': config['int_mtu'],
         })
+        if itype == InterfaceType.PHYSICAL:
+            if fec_mode := config.get('int_fec_mode'):
+                iface['fec_mode'] = fec_mode
 
         if ha_hardware:
             info = ('INET', 32) if config['int_version'] == 4 else ('INET6', 128)
@@ -1088,6 +1094,7 @@ class InterfaceService(CRUDService):
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'mtu': data.get('mtu') or None,
+            'fec_mode': data.get('fec_mode'),
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1221,6 +1228,25 @@ class InterfaceService(CRUDService):
         )
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+
+        # Validate fec_mode field
+        if 'fec_mode' in data:
+            if await self.middleware.call('system.is_enterprise'):
+                if new['type'] == 'PHYSICAL':
+                    if available := self.available_fec_modes(oid):
+                        if data['fec_mode'] not in available:
+                            verrors.add(
+                                'interface_update.fec_mode',
+                                f'Unsupported FEC mode. Available: {", ".join(available)}'
+                            )
+                    else:
+                        verrors.add(
+                            'interface_update.fec_mode', 'This interface does not support FEC mode configuration.'
+                        )
+                else:
+                    verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+            else:
+                verrors.add('interface_update.fec_mode', 'Configuring FEC mode is an enterprise feature.')
 
         verrors.check()
 
@@ -1464,6 +1490,19 @@ class InterfaceService(CRUDService):
         Available lacpdu rate policies for the LACP lagg type interfaces.
         """
         return {i.value: i.value for i in LacpduRateChoices}
+
+    @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
+    def available_fec_modes(self, id_):
+        """
+        Returns FEC modes supported by interface `id`.
+
+        Returns an empty list if the interface does not exist or does not support FEC.
+        """
+        try:
+            return get_ethtool().get_fec_modes(id_)
+        except NetlinkError as e:
+            self.logger.error(f'Failed to retrieve available FEC modes for {id_}', exc_info=e)
+            return []
 
     @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def choices(self, options):
