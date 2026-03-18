@@ -196,13 +196,15 @@ class ZettareplService(Service, TaskStateMixin):
 
     async def flush_state(self):
         for task_id, state in self.serializable_state.items():
-            table = None
+            table = key = None
             if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
                 table = "storage.task"
+                key = "task_state"
             elif RE_REPLICATION_TASK_ID.match(task_id):
                 table = "storage.replication"
+                key = "repl_state"
 
-            if table is None:
+            if table is None or key is None:
                 continue
 
             try:
@@ -210,7 +212,7 @@ class ZettareplService(Service, TaskStateMixin):
                     "datastore.update",
                     table,
                     int(task_id.split("_")[-1]),
-                    {"task_state": ejson.dumps(state)}
+                    {key: ejson.dumps(state)}
                 )
             except NoRowsWereUpdatedException:
                 pass
