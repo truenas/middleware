@@ -25,7 +25,7 @@ from .sysfs_disks import toggle_enclosure_slot_identifier
 class Enclosure2Service(Service):
 
     class Config:
-        cli_namespace = 'storage.enclosure2'
+        cli_private = True
 
     @private
     def get_ses_enclosures(self):
