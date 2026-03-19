@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 async def check_path_resides_within_volume(
     verrors: ValidationErrors, middleware: Middleware, schema_name: str, path: str, must_be_dir: bool = False
-) -> bool:
+) -> None:
     """
     async wrapper around synchronous general-purpose path validation function
     """

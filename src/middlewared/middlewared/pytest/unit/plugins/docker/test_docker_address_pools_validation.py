@@ -5,12 +5,12 @@ from middlewared.service_exception import ValidationErrors
 
 
 IP_IN_USE = [
-  {
-    'type': 'INET',
-    'address': '172.20.0.33',
-    'netmask': 16,
-    'broadcast': '172.20.0.63'
-  },
+    {
+        'type': 'INET',
+        'address': '172.20.0.33',
+        'netmask': 16,
+        'broadcast': '172.20.0.63'
+    },
     {
         "type": "INET6",
         "address": "fe80::5054:ff:fe4f:bbbe",

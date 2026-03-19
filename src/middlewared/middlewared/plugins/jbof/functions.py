@@ -5,11 +5,11 @@ from middlewared.utils.disks import RE_IS_PART
 
 
 def jbof_static_ip(shelf_index, eth_index):
-    return f'169.254.{20 + shelf_index}.{(eth_index <<2)+1}'
+    return f'169.254.{20 + shelf_index}.{(eth_index << 2) + 1}'
 
 
 def initiator_static_ip(shelf_index, eth_index):
-    return f'169.254.{20 + shelf_index}.{(eth_index <<2)+2}'
+    return f'169.254.{20 + shelf_index}.{(eth_index << 2) + 2}'
 
 
 def static_ip_netmask_int():

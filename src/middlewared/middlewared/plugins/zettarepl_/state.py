@@ -196,15 +196,23 @@ class ZettareplService(Service, TaskStateMixin):
 
     async def flush_state(self):
         for task_id, state in self.serializable_state.items():
+            table = key = None
             if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
-                try:
-                    await self.middleware.call("datastore.update", "storage.task", int(task_id.split("_")[-1]),
-                                               {"task_state": ejson.dumps(state)})
-                except (RuntimeError, NoRowsWereUpdatedException):
-                    pass
+                table = "storage.task"
+                key = "task_state"
             elif RE_REPLICATION_TASK_ID.match(task_id):
-                try:
-                    await self.middleware.call("datastore.update", "storage.replication", int(task_id.split("_")[-1]),
-                                               {"repl_state": ejson.dumps(state)})
-                except (RuntimeError, NoRowsWereUpdatedException):
-                    pass
+                table = "storage.replication"
+                key = "repl_state"
+
+            if table is None or key is None:
+                continue
+
+            try:
+                await self.middleware.call(
+                    "datastore.update",
+                    table,
+                    int(task_id.split("_")[-1]),
+                    {key: ejson.dumps(state)}
+                )
+            except NoRowsWereUpdatedException:
+                pass

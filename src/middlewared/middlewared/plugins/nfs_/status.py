@@ -140,7 +140,8 @@ class NFSService(Service):
                 "name": "Linux NFSv4.2 debian12-hv",
                 "minor version": 2,
                 "Implementation domain": "kernel.org",
-                "Implementation name": "Linux 6.1.0-12-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.52-1 (2023-09-07) x86_64",
+                "Implementation name": "Linux 6.1.0-12-amd64 #1 SMP PREEMPT_DYNAMIC"
+                                      " Debian 6.1.52-1 (2023-09-07) x86_64",
                 "Implementation time": [0, 0],
                 "callback state": "UP",
                 "callback address": "192.168.40.247:0"

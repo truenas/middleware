@@ -62,7 +62,7 @@ class SNMPService(SystemServiceService):
             try:
                 # This call will timeout if SNMP is not running
                 res = subprocess.run(cmd, capture_output=True)
-                users = [x.split()[-1].strip('\"') for x in res.stdout.decode().splitlines()]
+                users = [x.split()[-1].strip('"') for x in res.stdout.decode().splitlines()]
             except Exception:
                 self.logger.warning("Failed to list snmp v3 users")
         else:

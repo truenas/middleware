@@ -1022,7 +1022,9 @@ class SharingSMBService(SharingService):
             self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
-            await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
+            await (await self.middleware.call(
+                'service.control', 'RELOAD', 'mdns', {'ha_propagate': False}
+            )).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
 

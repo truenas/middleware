@@ -195,7 +195,7 @@ class CloudBackupService(Service):
     def validate_zvol(self, path):
         dataset = zvol_path_to_name(path)
         if not (
-            self.middleware.call_sync("vm.query_snapshot_begin", dataset, False) or
+            self.call_sync2(self.s.vm.query_snapshot_begin, dataset, False) or
             self.middleware.call_sync("vmware.dataset_has_vms", dataset, False)
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")

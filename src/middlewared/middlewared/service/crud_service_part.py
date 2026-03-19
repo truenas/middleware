@@ -3,13 +3,16 @@ from __future__ import annotations
 from collections.abc import Awaitable
 from typing import Any, Literal, TYPE_CHECKING, cast, overload
 
+from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.filter_list import filter_list
 
 from .part import ServicePart
 
-if TYPE_CHECKING:
+if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryOptions
+
+if TYPE_CHECKING:
 
     class _QueryGetOptions(QueryOptions):
         get: Literal[True]
@@ -50,9 +53,17 @@ class CRUDServicePart[E, PK = int](ServicePart):
     async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: QueryOptions) -> list[E]: ...
+    async def query(
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[E]: ...
 
-    async def query(self, filters: list[Any], options: QueryOptions) -> list[E] | E | int:
+    async def query(
+        self, filters: list[Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[E] | E | int:
+        if filters is None:
+            filters = []
+        if options is None:
+            options = QueryOptions()
         opts = options.model_dump()
         extra = opts.get('extra', {}) or {}
 

@@ -2249,10 +2249,14 @@ class GroupService(CRUDService):
         """
         async with ASYNC_NEXT_GID_LOCK:
             groups = await self.middleware.call(
-                'datastore.query', 'account.bsdgroups', [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
+                'datastore.query', 'account.bsdgroups',
+                [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
             )
             used_gids = set(group['bsdgrp_gid'] for group in groups)
-            used_gids |= set([gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys() if gid >= MIN_AUTO_XID])
+            used_gids |= set([
+                gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys()
+                if gid >= MIN_AUTO_XID
+            ])
             in_flight_gids = self.ReservedGids.in_use()
             total_gids = used_gids | in_flight_gids
             max_gid = max(total_gids) if total_gids else MIN_AUTO_XID - 1
@@ -2506,8 +2510,8 @@ class GroupService(CRUDService):
             if notfound:
                 verrors.add(
                     f'{schema}.users',
-                    f'This group is primary for the following users: {", ".join(map(str, notfound))}. '
-                    'You can\'t remove them.',
+                    f"This group is primary for the following users: {', '.join(map(str, notfound))}. "
+                    "You can't remove them.",
                 )
 
         # Special handling for builtin_administrators group

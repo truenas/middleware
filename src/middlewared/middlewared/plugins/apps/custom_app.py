@@ -30,7 +30,7 @@ class AppCustomService(Service):
         # Do an uninstall of the app and create it again with the new compose file
         # Update metadata to reflect that this is a custom app
         # Finally update collective metadata
-        job.set_progress(20, 'Removing existing app\'s docker resources')
+        job.set_progress(20, "Removing existing app's docker resources")
         self.middleware.call_sync(
             'app.delete_internal', type('dummy_job', (object,), {'set_progress': lambda *args: None})(),
             app_name, app, {'remove_images': False, 'remove_ix_volumes': False, 'send_event': False}
@@ -50,7 +50,6 @@ class AppCustomService(Service):
         app_being_converted = data.get('conversion', False)
 
         def update_progress(percentage_done, message):
-            nonlocal progress_base
             job.set_progress(int((100 - progress_base) * (percentage_done / 100)) + progress_base, message)
 
         # For debug purposes

@@ -615,6 +615,12 @@ class FailoverEventsService(Service):
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
+        # Reset the alert system before importing zpools so that alerts
+        # created by ZFS import events (e.g. PoolUpgraded) are not wiped.
+        logger.info('Initializing alert system')
+        self.call_sync2(self.s.alert.initialize, False)
+        logger.info('Done initializing alert system')
+
         failed = []
         options = {'altroot': '/mnt'}
         import_options = {'missing_log': True}
@@ -800,10 +806,6 @@ class FailoverEventsService(Service):
         logger.info('Temporarily blocking failover alerts')
         self.call_sync2(self.s.alert.block_failover_alerts)
         logger.info('Done temporarily blocking failover alerts')
-
-        logger.info('Initializing alert system')
-        self.call_sync2(self.s.alert.initialize, False)
-        logger.info('Done initializing alert system')
 
         logger.info('Initializing task to renew certs if necessary')
         self.middleware.create_task(self.middleware.call('certificate.renew_certs'))
@@ -1087,12 +1089,12 @@ class FailoverEventsService(Service):
 
     def start_vms(self):
         logger.info('Starting VMs which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('vm.start_on_boot'))
+        self.middleware.create_task(self.call2(self.s.vm.start_on_boot))
 
     def stop_vms(self):
         logger.info('Trying to gracefully stop VMs')
         try:
-            self.run_call('vm.handle_shutdown')
+            self.call_sync2(self.s.vm.handle_shutdown)
         except Exception:
             logger.error('Failed to gracefully stop VMs', exc_info=True)
 

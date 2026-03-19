@@ -24,15 +24,15 @@ class ServicePartBaseMeta(ServiceBase):
         for name, original_method in inspect.getmembers(base, predicate=inspect.isfunction):
             new_method = attrs.get(name)
             if new_method is None:
-                raise RuntimeError(f'{klass!r} does not define method {name!r} that is defined in it\'s base {base!r}')
+                raise RuntimeError(f"{klass!r} does not define method {name!r} that is defined in its base {base!r}")
 
             if hasattr(original_method, 'wraps'):
                 original_argspec = inspect.getfullargspec(original_method.wraps)
             else:
                 original_argspec = inspect.getfullargspec(original_method)
             if original_argspec != inspect.getfullargspec(new_method):
-                raise RuntimeError(f'Signature for method {name!r} does not match between {klass!r} and it\'s base '
-                                   f'{base!r}')
+                raise RuntimeError(f"Signature for method {name!r} does not match between {klass!r} and its base "
+                                   f"{base!r}")
 
             copy_function_metadata(original_method, new_method)
 

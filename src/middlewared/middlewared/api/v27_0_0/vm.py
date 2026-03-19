@@ -1,10 +1,10 @@
 from typing import Literal
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result, UUIDv4String,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
+    UUIDv4String,
 )
 
 from .vm_device import VMDisplayDevice, VMDeviceEntry
@@ -16,7 +16,7 @@ __all__ = [
     'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
     'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
     'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
-    'VMSupportsVirtualizationArgs',
+    'VMSupportsVirtualizationArgs', 'VMDisplayDeviceInfo', 'VMGetDisplayWebUri', 'VMDisplayWebURIOptions',
     'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
     'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
     'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
@@ -26,7 +26,9 @@ __all__ = [
     'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
     'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
     'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
-    'VMRandomMacResult',
+    'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
+    'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
+    'VMBootloaderOptions',
 ]
 
 
@@ -100,8 +102,8 @@ class VMEntry(BaseModel):
     """Guest architecture type. `null` to use hypervisor default."""
     machine_type: str | None = None
     """Virtual machine type/chipset. `null` to use hypervisor default."""
-    uuid: UUIDv4String | None = None
-    """Unique UUID for the VM. `null` to auto-generate."""
+    uuid: UUIDv4String
+    """Unique UUID for the VM."""
     devices: list[VMDeviceEntry]
     """Array of virtual devices attached to this VM."""
     display_available: bool
@@ -119,13 +121,15 @@ class VMCreate(VMEntry):
     id: Excluded = excluded_field()
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
+    uuid: UUIDv4String | None = None
+    """Unique UUID for the VM. `null` to auto-generate."""
     bootloader_ovmf: str | None = Field(default=None, examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
     """OVMF firmware file to use for UEFI boot."""
 
 
-@single_argument_args('vm_create')
-class VMCreateArgs(VMCreate):
-    pass
+class VMCreateArgs(BaseModel):
+    vm_create: VMCreate
+    """VM creation parameters."""
 
 
 class VMCreateResult(BaseModel):
@@ -172,9 +176,8 @@ class VMBootloaderOvmfChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
 class VMBootloaderOvmfChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    result: dict[str, str]
     """Available OVMF firmware files for UEFI booting."""
 
 
@@ -182,12 +185,16 @@ class VMBootloaderOptionsArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMBootloaderOptionsResult(BaseModel):
+class VMBootloaderOptions(BaseModel):
     UEFI: Literal['UEFI'] = 'UEFI'
     """Modern UEFI firmware with secure boot support."""
     UEFI_CSM: Literal['Legacy BIOS'] = 'Legacy BIOS'
     """UEFI with Compatibility Support Module for legacy BIOS compatibility."""
+
+
+class VMBootloaderOptionsResult(BaseModel):
+    result: VMBootloaderOptions
+    """Supported motherboard firmware options."""
 
 
 class VMStatusArgs(BaseModel):
@@ -223,9 +230,9 @@ class VMGuestArchitectureAndMachineChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
 class VMGuestArchitectureAndMachineChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    result: dict[str, list[str]]
+    """VM Guest architecture and machine choices."""
 
 
 class VMCloneArgs(BaseModel):
@@ -253,12 +260,16 @@ class VMVirtualizationDetailsArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMVirtualizationDetailsResult(BaseModel):
+class VMVirtualizationDetails(BaseModel):
     supported: bool
     """Whether hardware virtualization is supported and available."""
     error: str | None
     """Error message if virtualization is not available. `null` if supported."""
+
+
+class VMVirtualizationDetailsResult(BaseModel):
+    result: VMVirtualizationDetails
+    """VM Virtualization details."""
 
 
 class VMMaximumSupportedVcpusArgs(BaseModel):
@@ -274,8 +285,7 @@ class VMFlagsArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMFlagsResult(BaseModel):
+class VMFlags(BaseModel):
     intel_vmx: bool
     """Whether Intel VT-x (VMX) virtualization is available."""
     unrestricted_guest: bool
@@ -284,6 +294,11 @@ class VMFlagsResult(BaseModel):
     """Whether AMD Rapid Virtualization Indexing (RVI/NPT) is available."""
     amd_asids: bool
     """Whether AMD Address Space Identifiers (ASIDs) are supported."""
+
+
+class VMFlagsResult(BaseModel):
+    result: VMFlags
+    """VM Flags."""
 
 
 class VMGetConsoleArgs(BaseModel):
@@ -300,10 +315,9 @@ class VMCpuModelChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
 class VMCpuModelChoicesResult(BaseModel):
+    result: dict[str, str]
     """Available CPU models for virtual machine emulation."""
-    model_config = ConfigDict(extra='allow')
 
 
 class VMGetMemoryUsageArgs(BaseModel):
@@ -320,12 +334,16 @@ class VMPortWizardArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMPortWizardResult(BaseModel):
+class VMPortWizard(BaseModel):
     port: int
-    """Available server port"""
+    """Available server port."""
     web: int
-    """Web port to be used based on available port"""
+    """Web port to be used based on available port."""
+
+
+class VMPortWizardResult(BaseModel):
+    result: VMPortWizard
+    """VM port wizard."""
 
 
 class VMResolutionChoicesArgs(BaseModel):
@@ -347,17 +365,17 @@ class GetDisplayDevice(VMDisplayDevice):
     """Whether a password has been configured for display access."""
 
 
-class DisplayDevice(VMDeviceEntry):
+class VMDisplayDeviceInfo(VMDeviceEntry):
     attributes: GetDisplayDevice
     """Display device attributes including password configuration status."""
 
 
 class VMGetDisplayDevicesResult(BaseModel):
-    result: list[DisplayDevice]
+    result: list[VMDisplayDeviceInfo]
     """Array of display devices configured for the virtual machine."""
 
 
-class DisplayWebURIOptions(BaseModel):
+class VMDisplayWebURIOptions(BaseModel):
     protocol: Literal['HTTP', 'HTTPS'] = 'HTTP'
     """Protocol to use for the web display URI (HTTP or HTTPS)."""
 
@@ -367,16 +385,20 @@ class VMGetDisplayWebUriArgs(BaseModel):
     """ID of the virtual machine to get display web URI for."""
     host: str = ''
     """Hostname or IP address to use in the URI. Empty string for automatic detection."""
-    options: DisplayWebURIOptions = DisplayWebURIOptions()
+    options: VMDisplayWebURIOptions = VMDisplayWebURIOptions()
     """Options for generating the web display URI."""
 
 
-@single_argument_result
-class VMGetDisplayWebUriResult(BaseModel):
+class VMGetDisplayWebUri(BaseModel):
     error: str | None
     """Error message if URI generation failed. `null` on success."""
     uri: str | None
     """Generated web URI for accessing the VM display. `null` on error."""
+
+
+class VMGetDisplayWebUriResult(BaseModel):
+    result: VMGetDisplayWebUri
+    """VM display web URI for accessing the VM display."""
 
 
 class VMStartOptions(BaseModel):
@@ -459,14 +481,18 @@ class VMGetVmemoryInUseArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class VMGetVmemoryInUseResult(BaseModel):
+class VMGetVmemoryInUse(BaseModel):
     RNP: int
-    """Running but not provisioned, in bytes"""
+    """Running but not provisioned, in bytes."""
     PRD: int
-    """Provisioned but not running, in bytes"""
+    """Provisioned but not running, in bytes."""
     RPRD: int
-    """Running and provisioned, in bytes"""
+    """Running and provisioned, in bytes."""
+
+
+class VMGetVmemoryInUseResult(BaseModel):
+    result: VMGetVmemoryInUse
+    """VM get vmemory inuse details."""
 
 
 class VMGetAvailableMemoryArgs(BaseModel):
@@ -484,30 +510,34 @@ class VMGetVmMemoryInfoArgs(BaseModel):
     """ID of the virtual machine to get memory information for."""
 
 
-@single_argument_result
-class VMGetVmMemoryInfoResult(BaseModel):
+class VMGetVmMemoryInfo(BaseModel):
     minimum_memory_requested: int | None
-    """Minimum memory requested by the VM"""
+    """Minimum memory requested by the VM."""
     total_memory_requested: int
-    """Maximum / total memory requested by the VM"""
+    """Maximum / total memory requested by the VM."""
     overcommit_required: bool
-    """Overcommit of memory is required to start VM"""
+    """Overcommit of memory is required to start VM."""
     memory_req_fulfilled_after_overcommit: bool
-    """Memory requirements of VM are fulfilled if over-committing memory is specified"""
+    """Memory requirements of VM are fulfilled if over-committing memory is specified."""
     arc_to_shrink: int | None
-    """Size of ARC to shrink in bytes"""
+    """Size of ARC to shrink in bytes."""
     current_arc_max: int
-    """Current size of max ARC in bytes"""
+    """Current size of max ARC in bytes."""
     arc_min: int
-    """Minimum size of ARC in bytes"""
+    """Minimum size of ARC in bytes."""
     arc_max_after_shrink: int
-    """Size of max ARC in bytes after shrinking"""
+    """Size of max ARC in bytes after shrinking."""
     actual_vm_requested_memory: int
     """
     VM memory in bytes to consider when making calculations for available/required memory. If VM ballooning is \
     specified for the VM, the minimum VM memory specified by user will be taken into account otherwise total VM \
     memory requested will be taken into account.
     """
+
+
+class VMGetVmMemoryInfoResult(BaseModel):
+    result: VMGetVmMemoryInfo
+    """VM memory info."""
 
 
 class VMRandomMacArgs(BaseModel):

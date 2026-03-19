@@ -153,9 +153,11 @@ class iSCSITargetAluaService(Service):
         thisnode = await self.middleware.call('failover.node')
 
         # extents: dict[id] : {id, name, type}
-        extents = {ext['id']: ext for ext in await self.middleware.call('iscsi.extent.query',
-                                                                        [['enabled', '=', True], ['locked', '=', False]],
-                                                                        {'select': ['name', 'id', 'type']})}
+        extents = {ext['id']: ext for ext in await self.middleware.call(
+            'iscsi.extent.query',
+            [['enabled', '=', True], ['locked', '=', False]],
+            {'select': ['name', 'id', 'type']},
+        )}
 
         # targets: dict[id]: {'name': name, 'mode': mode}
         targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query',
@@ -444,11 +446,16 @@ class iSCSITargetAluaService(Service):
                     # First we will ensure they are in cluster_mode on the ACTIVE
                     while self.standby_starting:
                         try:
-                            remote_clustered_extents = set(await self.middleware.call('failover.call_remote', 'iscsi.target.clustered_extents'))
+                            remote_clustered_extents = set(await self.middleware.call(
+                                'failover.call_remote', 'iscsi.target.clustered_extents',
+                            ))
                             todo_remote = to_enable - remote_clustered_extents
                             if todo_remote:
                                 remote_requires_reload = True
-                                await self.middleware.call('failover.call_remote', 'iscsi.scst.set_devices_cluster_mode', [list(todo_remote), 1])
+                                await self.middleware.call(
+                                    'failover.call_remote', 'iscsi.scst.set_devices_cluster_mode',
+                                    [list(todo_remote), 1],
+                                )
                             else:
                                 break
                         except Exception:
@@ -611,7 +618,9 @@ class iSCSITargetAluaService(Service):
                 return
 
             # We can only deal with active targets.  Otherwise we cannot login to the HA target from the STANDBY node.
-            targetname = (await self.middleware.call('iscsi.target.query', [['id', '=', target_id]], {'select': ['name']}))[0]['name']
+            targetname = (await self.middleware.call(
+                'iscsi.target.query', [['id', '=', target_id]], {'select': ['name']}
+            ))[0]['name']
             active_targets = await self.middleware.call('iscsi.target.active_targets')
             if targetname not in active_targets:
                 self.logger.debug(f'Target {targetname} is not active (in an ALUA sense)')
@@ -620,7 +629,9 @@ class iSCSITargetAluaService(Service):
             retries -= 1
 
             # The locked and enabled are already handled by active_targets check
-            lextent = (await self.middleware.call('iscsi.extent.query', [['id', '=', extent_id]], {'select': ['name']}))[0]['name']
+            lextent = (await self.middleware.call(
+                'iscsi.extent.query', [['id', '=', extent_id]], {'select': ['name']}
+            ))[0]['name']
 
             # Check to see if the extent is available on the remote node yet
             logged_in_extents = await self.middleware.call('failover.call_remote', 'iscsi.extent.logged_in_extents')
@@ -638,7 +649,9 @@ class iSCSITargetAluaService(Service):
                 await asyncio.sleep(1)
                 continue
             # - remote
-            if not await self.middleware.call('failover.call_remote', 'iscsi.scst.check_cluster_mode_paths_present', [[rextent]]):
+            if not await self.middleware.call(
+                'failover.call_remote', 'iscsi.scst.check_cluster_mode_paths_present', [[rextent]]
+            ):
                 self.logger.debug(f'Sleep while we wait for {rextent} cluster_mode to surface')
                 await asyncio.sleep(1)
                 continue
@@ -650,7 +663,9 @@ class iSCSITargetAluaService(Service):
                 await asyncio.sleep(1)
                 continue
             # - remote
-            if await self.middleware.call('failover.call_remote', 'iscsi.scst.get_cluster_mode', [rextent]) != "1":
+            if await self.middleware.call(
+                'failover.call_remote', 'iscsi.scst.get_cluster_mode', [rextent]
+            ) != "1":
                 self.logger.debug(f'Sleep while we wait for {rextent} to enter cluster_mode')
                 await asyncio.sleep(1)
                 continue
@@ -661,7 +676,10 @@ class iSCSITargetAluaService(Service):
 
     async def removed_target_extent(self, target_name, lun, extent_name, do_reload=True):
         """This is called on the STANDBY node to remove an extent from a target."""
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call("failover.status") == 'BACKUP'
+        ):
             try:
                 # First we will remove the LUN from the target.  We need to determine whether it
                 # is ISCSI, FC, or BOTH
@@ -742,7 +760,10 @@ class iSCSITargetAluaService(Service):
 
     async def added_target_extent(self, target_name):
         """This is called on the STANDBY node after an extent has been added to a target."""
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call("failover.status") == 'BACKUP'
+        ):
             global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
             iqn = f'{global_basename}:HA:{target_name}'
             try:

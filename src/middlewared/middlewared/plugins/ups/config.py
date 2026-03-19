@@ -68,7 +68,7 @@ class UPSServicePart(SystemServicePart[UPSEntry]):
             if data.driver not in (await self.call2(self.s.ups.driver_choices)):
                 verrors.add(
                     'ups_update.driver',
-                    'Driver selected does not match local machine\'s driver list'
+                    "Driver selected does not match local machine's driver list"
                 )
 
         if data.port:

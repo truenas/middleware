@@ -51,19 +51,22 @@ class DisplayDelegate(DeviceDelegate):
                 ]
 
             instance['devices'].append(device)
-            self.middleware.call_sync('vm.device.validate_display_devices', verrors, instance)
+            self.middleware.call_sync2(self.middleware.services.vm.device.validate_display_devices, verrors, instance)
 
         verrors = self.validate_port_attrs(device, verrors)
 
-        if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
+        if device['attributes']['bind'] not in self.middleware.call_sync2(
+            self.middleware.services.vm.device.bind_choices
+        ):
             verrors.add('attributes.bind', 'Requested bind address is not valid')
 
     def validate_port_attrs(self, device: dict[str, Any], verrors: ValidationErrors | None = None) -> ValidationErrors:
         verrors = ValidationErrors() if verrors is None else verrors
-        display_devices_ports = self.middleware.call_sync(
-            'vm.all_used_display_device_ports', [['id', '!=', device.get('id') or self.id]]
+        display_devices_ports = self.middleware.call_sync2(
+            self.middleware.services.vm.all_used_display_device_ports, [['id', '!=', device.get('id') or self.id]]
         )
-        new_ports = list((self.middleware.call_sync('vm.port_wizard')).values())
+        port_wizard = self.middleware.call_sync2(self.middleware.services.vm.port_wizard)
+        new_ports = [port_wizard.port, port_wizard.web]
         dev_attrs = device['attributes']
         for port in filter(lambda p: p in new_ports, (dev_attrs.get('port'), dev_attrs.get('web_port'))):
             new_ports.remove(port)
@@ -81,8 +84,9 @@ class DisplayDelegate(DeviceDelegate):
                         f'Specified display port({dev_attrs[key]}) is already in use by another Display device'
                     )
                 else:
-                    verrors.extend(self.middleware.call_sync(
-                        'port.validate_port', f'attributes.{key}', dev_attrs[key], dev_attrs['bind'], 'vm.device'
+                    verrors.extend(self.middleware.call_sync2(
+                        self.middleware.services.port.validate_port,
+                        f'attributes.{key}', dev_attrs[key], dev_attrs['bind'], 'vm.device'
                     ))
             else:
                 device['attributes'][key] = new_ports.pop(0)
@@ -90,7 +94,7 @@ class DisplayDelegate(DeviceDelegate):
 
     def is_available(self, device: Device) -> bool:
         assert isinstance(device, DisplayDevice)
-        bind_ip_available = device.bind in self.middleware.call_sync('vm.device.bind_choices')
+        bind_ip_available = device.bind in self.middleware.call_sync2(self.middleware.services.vm.device.bind_choices)
         return bind_ip_available and not self.validate_port_attrs({
             'attributes': device.__dict__
         })

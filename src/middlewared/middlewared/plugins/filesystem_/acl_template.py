@@ -356,5 +356,4 @@ class ACLTemplateService(CRUDService):
                 st = await self.middleware.run_in_thread(os.stat, data['path'])
                 await self.resolve_names(st.st_uid, st.st_gid, t)
 
-
         return templates

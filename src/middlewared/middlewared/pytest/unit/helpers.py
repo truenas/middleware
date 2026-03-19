@@ -25,10 +25,19 @@ def load_compound_service(name: str) -> 'Callable[[Middleware], CompoundService]
 
 
 def _compound_service_wrapper(service: 'CompoundService', fake_middleware: 'Middleware') -> 'CompoundService':
-    service.middleware = fake_middleware
-    for part in service.parts:
-        part.middleware = fake_middleware
+    _patch_service_middleware(service, fake_middleware)
+    if hasattr(service, 'parts'):
+        for part in service.parts:
+            _patch_service_middleware(part, fake_middleware)
     return service
+
+
+def _patch_service_middleware(service: 'Service', fake_middleware: 'Middleware') -> None:
+    service.middleware = fake_middleware
+    if hasattr(service, 'context'):
+        service.context.middleware = fake_middleware
+    if hasattr(service, '_svc_part'):
+        service._svc_part.middleware = fake_middleware
 
 
 def create_service(middleware: 'Middleware', cls: 'type[Service]') -> 'Service':

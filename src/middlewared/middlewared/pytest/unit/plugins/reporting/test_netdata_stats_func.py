@@ -1,6 +1,5 @@
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
-from middlewared.plugins.reporting.netdata.utils import NETDATA_UPDATE_EVERY
 from middlewared.plugins.reporting.realtime_reporting import (
     get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats
 )
@@ -721,7 +720,6 @@ def test_get_pool_stats():
         )
 
 
-
 def test_arc_stats():
     arc_stats = get_arc_stats(NETDATA_ALL_METRICS)
 
@@ -799,7 +797,7 @@ def test_cpu_stats():
         assert value == {
             'usage': safely_retrieve_dimension(
                 NETDATA_ALL_METRICS,
-                f'truenas_cpu_usage.cpu',
+                'truenas_cpu_usage.cpu',
                 f'{metric}', 0
             ),
             'temp': safely_retrieve_dimension(

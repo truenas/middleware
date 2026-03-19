@@ -1,3 +1,4 @@
+from middlewared.api.current import VMStartOptions, VMStopOptions
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import private, Service
 
@@ -12,12 +13,12 @@ class PoolDatasetService(Service):
     @private
     async def unlock_restarted_vms(self, dataset):
         result = []
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
-            for device in vm['devices']:
-                if device['attributes']['dtype'] not in ('DISK', 'RAW'):
+        for vm in await self.call2(self.s.vm.query, [('autostart', '=', True)]):
+            for device in vm.devices:
+                if device.attributes.dtype not in ('DISK', 'RAW'):
                     continue
 
-                path = device['attributes'].get('path')
+                path = device.attributes.path
                 if not path:
                     continue
 
@@ -37,13 +38,13 @@ class PoolDatasetService(Service):
 
     @private
     async def restart_vms_after_unlock(self, dataset):
-        for vm in await self.middleware.call('pool.dataset.unlock_restarted_vms', dataset):
-            if (await self.middleware.call('vm.status', vm['id']))['state'] == 'RUNNING':
-                stop_job = await self.middleware.call('vm.stop', vm['id'])
+        for vm in await self.unlock_restarted_vms(dataset):
+            if (await self.call2(self.s.vm.status, vm.id)).state == 'RUNNING':
+                stop_job = await self.call2(self.s.vm.stop, vm.id, VMStopOptions())
                 await stop_job.wait()
                 if stop_job.error:
-                    self.logger.error('Failed to stop %r VM: %s', vm['name'], stop_job.error)
+                    self.logger.error('Failed to stop %r VM: %s', vm.name, stop_job.error)
             try:
-                await self.middleware.call('vm.start', vm['id'])
+                await self.call2(self.s.vm.start, vm.id, VMStartOptions())
             except Exception:
-                self.logger.error('Failed to start %r VM after %r unlock', vm['name'], dataset['name'], exc_info=True)
+                self.logger.error('Failed to start %r VM after %r unlock', vm.name, dataset['name'], exc_info=True)

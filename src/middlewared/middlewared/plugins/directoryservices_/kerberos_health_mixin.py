@@ -75,11 +75,11 @@ class KerberosHealthMixin:
 
         if (err_str := self._perm_check(st, 0o600)) is not None:
             faulted_reason = (
-                'Unexpected permissions or ownership on the keberos keytab '
-                f'file: {err_str} '
-                'This error may have exposed the TrueNAS server\'s host principal '
-                'credentials to unauthorized users. Revoking keytab and rejoining '
-                'domain may be required.'
+                "Unexpected permissions or ownership on the keberos keytab "
+                f"file: {err_str} "
+                "This error may have exposed the TrueNAS server's host principal "
+                "credentials to unauthorized users. Revoking keytab and rejoining "
+                "domain may be required."
             )
             raise KRB5HealthError(
                 KRB5HealthCheckFailReason.KRB5_KEYTAB_PERM,

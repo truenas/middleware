@@ -576,6 +576,7 @@ class EtcService(Service):
             RendererType.MAKO: MakoRenderer(self),
             RendererType.PY: PyRenderer(self),
         })
+        self.initialize_renderers()
 
     async def gather_ctx(self, methods: tuple[CtxMethod, ...]) -> dict:
         rv = {}
@@ -695,7 +696,6 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
-    await middleware.call('etc.initialize_renderers')
     middleware.event_subscribe('system.ready', __event_system_ready)
     # Generate `etc` files before executing other post-boot-time-pool-import actions.
     # There are no explicit requirements for that, we are just preserving execution order

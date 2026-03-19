@@ -128,7 +128,7 @@ MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
 class TNLogFormatter(logging.Formatter):
     """ logging formatter to convert python exception into structured data """
 
-    BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
+    BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': r'\n'})
 
     def _escape_rfc_generic(self, msg: str) -> str:
         return msg.translate(self.BASIC_SYSLOG_TRANSLATION)
@@ -168,18 +168,18 @@ class ConsoleLogFormatter(logging.Formatter):
     """Format the console log messages"""
 
     class ConsoleColor(StrEnum):
-        YELLOW  = '\033[1;33m'  # (warning)
-        GREEN   = '\033[1;32m'  # (info)
-        RED     = '\033[1;31m'  # (error)
+        YELLOW = '\033[1;33m'  # (warning)
+        GREEN = '\033[1;32m'  # (info)
+        RED = '\033[1;31m'  # (error)
         HIGHRED = '\033[1;41m'  # (critical)
-        RESET   = '\033[1;m'    # Reset
+        RESET = '\033[1;m'  # Reset
 
     color_mapping = {
         logging.CRITICAL: ConsoleColor.HIGHRED,
-        logging.ERROR   : ConsoleColor.HIGHRED,
-        logging.WARNING : ConsoleColor.RED,
-        logging.INFO    : ConsoleColor.GREEN,
-        logging.DEBUG   : ConsoleColor.YELLOW,
+        logging.ERROR: ConsoleColor.HIGHRED,
+        logging.WARNING: ConsoleColor.RED,
+        logging.INFO: ConsoleColor.GREEN,
+        logging.DEBUG: ConsoleColor.YELLOW,
     }
 
     def format(self, record):

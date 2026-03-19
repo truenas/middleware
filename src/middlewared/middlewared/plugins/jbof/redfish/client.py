@@ -493,7 +493,10 @@ class AsyncRedfishClient(AbstractRedfishClient):
                     if auth_token:
                         # Save the Location for logout purposes
                         self.session_location[base_url] = response.headers.get('Location')
-                newsession = aiohttp.ClientSession(base_url, timeout=self.timeout, raise_for_status=True, headers={'X-Auth-Token': auth_token})
+                newsession = aiohttp.ClientSession(
+                    base_url, timeout=self.timeout, raise_for_status=True,
+                    headers={'X-Auth-Token': auth_token},
+                )
             else:
                 raise ValueError('Invalid auth supplied:', authtype)
         # Save the session for reuse

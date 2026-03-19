@@ -133,7 +133,9 @@ def validate_smb_share_name(name: str) -> str:
         raise ValueError(f'{name}: share name is reserved.')
 
     if invalid_characters := (INVALID_SHARE_NAME_CHARACTERS & set(name)):
-        raise ValueError(f'{name}: share name contains the following invalid characters: {", ".join(invalid_characters)}')
+        raise ValueError(
+            f'{name}: share name contains the following invalid characters: {", ".join(invalid_characters)}'
+        )
 
     if any(category(char) == 'Cc' for char in name):
         raise ValueError(f'{name}: share name contains unicode control characters')
