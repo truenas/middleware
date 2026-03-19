@@ -435,7 +435,11 @@ class ZfsTierService(ConfigService):
                     except Exception:
                         self.logger.warning('%s: failed to resolve path for failed file %r',
                                             dataset_name, f.name, exc_info=True)
-                failures.append({'filename': f.name, 'error_message': os.strerror(eff_errno), 'path': path})
+                failures.append({
+                    'filename': f.name,
+                    'error': {'errno': eff_errno, 'strerror': os.strerror(eff_errno)},
+                    'path': path,
+                })
         finally:
             if mount_fd is not None:
                 os.close(mount_fd)

@@ -25,7 +25,7 @@ __all__ = [
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
     'ZfsTierRewriteJobRecoverArgs', 'ZfsTierRewriteJobRecoverResult',
     'ZfsTierRewriteJobStatusArgs', 'ZfsTierRewriteJobStatusResult',
-    'ZfsTierRewriteJobFailureEntry',
+    'ZfsTierRewriteJobFailureError', 'ZfsTierRewriteJobFailureEntry',
     'ZfsTierRewriteJobFailuresArgs', 'ZfsTierRewriteJobFailuresResult',
     'TierInfo',
     'ZfsTierDatasetSetTierArgs', 'ZfsTierDatasetSetTierResult',
@@ -220,11 +220,18 @@ class ZfsTierRewriteJobStatusResult(BaseModel):
     """Current status and statistics for the requested rewrite job."""
 
 
+class ZfsTierRewriteJobFailureError(BaseModel):
+    errno: int
+    """Error number from the failed storage tier migration."""
+    strerror: str
+    """Human-readable description of the error."""
+
+
 class ZfsTierRewriteJobFailureEntry(BaseModel):
     filename: str
-    """Name of the file that failed to be rewritten."""
-    error_message: str
-    """Human-readable error description."""
+    """Name of the file that failed to migrate storage tier."""
+    error: ZfsTierRewriteJobFailureError
+    """Error details for the failed storage tier migration."""
     path: str | None
     """Absolute path of the file resolved via its file handle, or `null` if the file \
     no longer exists on the filesystem."""
