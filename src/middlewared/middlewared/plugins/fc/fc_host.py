@@ -442,14 +442,15 @@ class FCHostService(CRUDService):
             await self.middleware.call('cache.pop', 'fc.fc_host_nport_wwpn_choices')
             await self.middleware.call('cache.pop', 'fc.fc_host.hbas_changed')
             if await self.middleware.call('failover.licensed'):
-                await self.middleware.call('failover.call_remote',
-                                           'cache.pop',
-                                           ['fc.fc_host_nport_wwpn_choices'],
-                                           {'raise_connect_error': False})
-                await self.middleware.call('failover.call_remote',
-                                           'cache.pop',
-                                           ['fc.fc_host.hbas_changed'],
-                                           {'raise_connect_error': False})
+                if await self.middleware.call('failover.remote_connected'):
+                    await self.middleware.call('failover.call_remote',
+                                               'cache.pop',
+                                               ['fc.fc_host_nport_wwpn_choices'],
+                                               {'raise_connect_error': False, 'timeout': 5})
+                    await self.middleware.call('failover.call_remote',
+                                               'cache.pop',
+                                               ['fc.fc_host.hbas_changed'],
+                                               {'raise_connect_error': False, 'timeout': 5})
 
     @private
     async def hbas_changed(self):
