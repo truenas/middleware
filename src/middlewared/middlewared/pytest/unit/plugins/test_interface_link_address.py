@@ -4,6 +4,7 @@ from unittest.mock import ANY, AsyncMock
 
 import pytest
 
+from middlewared.api.current import VMDeviceEntry
 from middlewared.plugins.interface.link_address import InterfaceService, setup as link_address_setup
 from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
 import middlewared.sqlalchemy as sa
@@ -216,8 +217,8 @@ async def test__interface_link_address_setup(before, after):
             id_ = await ds.insert("vm.device", {
                 "attributes": {"nic_attach": interface, "dtype": "NIC"},
             })
-            ds.middleware["vm.device.query"] = lambda *args: [
-                {'id': id_, "attributes": {"nic_attach": interface, "dtype": "NIC"}}
+            ds.middleware.services.vm.device.query = lambda *args, _id=id_, _iface=interface: [
+                VMDeviceEntry(id=_id, vm=1, order=1002, attributes={"nic_attach": _iface, "dtype": "NIC"})
             ]
 
         ds.middleware["interface.query"] = AsyncMock(return_value=[
@@ -296,10 +297,9 @@ async def test__interface_link_address_setup(before, after):
             for vint, pint in after.get("vlan", {}).items()
         ]
 
-        assert await ds.query("vm.device") == [
-            {
-                "id": ANY,
-                "attributes": {"nic_attach": interface, "dtype": "NIC"},
-            }
-            for interface in after.get("vm", [])
-        ]
+        vm_devices = await ds.query("vm.device")
+        expected_vm_nics = list(after.get("vm", []))
+        assert len(vm_devices) == len(expected_vm_nics)
+        for device, expected_iface in zip(vm_devices, expected_vm_nics):
+            assert device["attributes"]["nic_attach"] == expected_iface
+            assert device["attributes"]["dtype"] == "NIC"

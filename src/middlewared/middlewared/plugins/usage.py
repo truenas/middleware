@@ -388,29 +388,28 @@ class UsageService(Service):
 
     async def gather_vms(self, context):
         vms = []
-        for v in await self.middleware.call('vm.query'):
+        for v in await self.call2(self.s.vm.query):
             nics = disks = 0
             display_list = []
-            for d in v['devices']:
-                dtype = d['attributes']['dtype']
+            for d in v.devices:
+                dtype = d.attributes.dtype
                 if dtype == 'NIC':
                     nics += 1
                 elif dtype == 'DISK':
                     disks += 1
                 elif dtype == 'DISPLAY':
-                    attrs = d['attributes']
                     display_list.append({
-                        'wait': attrs.get('wait'),
-                        'resolution': attrs.get('resolution'),
-                        'web': attrs.get('web')
+                        'wait': d.attributes.wait,
+                        'resolution': d.attributes.resolution,
+                        'web': d.attributes.web,
                     })
 
             vms.append({
-                'bootloader': v['bootloader'],
-                'memory': v['memory'],
-                'vcpus': v['vcpus'],
-                'autostart': v['autostart'],
-                'time': v['time'],
+                'bootloader': v.bootloader,
+                'memory': v.memory,
+                'vcpus': v.vcpus,
+                'autostart': v.autostart,
+                'time': v.time,
                 'nics': nics,
                 'disks': disks,
                 'display_devices': len(display_list),

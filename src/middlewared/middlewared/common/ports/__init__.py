@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any, TypedDict, TYPE_CHECKING
 
+from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -24,7 +25,7 @@ class PortInUse(TypedDict):
     port_details: list[PortDetail]
 
 
-class PortDelegate:
+class PortDelegate(CallMixin):
 
     name: str
     namespace: str

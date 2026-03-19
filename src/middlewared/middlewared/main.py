@@ -112,6 +112,7 @@ from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
+from middlewared.plugins.vm import VMService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
@@ -206,6 +207,7 @@ class ServiceContainer(BaseServiceContainer):
         self.truesearch = TrueSearchService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
+        self.vm = VMService(middleware)
         self.webshare = WebshareService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
