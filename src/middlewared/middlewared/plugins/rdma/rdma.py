@@ -90,7 +90,7 @@ class RDMAService(Service):
     @api_method(RDMAGetCardChoicesArgs, RDMAGetCardChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     @cache
     def get_card_choices(self):
-        """Return a list containing details about each RDMA card.  Dual cards
+        """Return an array containing details about each RDMA card. Dual cards
         will contain two RDMA links."""
         self.logger.info('Fetching RDMA card choices')
         links = self.middleware.call_sync('rdma.get_link_choices', True)
@@ -134,6 +134,12 @@ class RDMAService(Service):
 
     @api_method(RDMACapableProtocolsArgs, RDMACapableProtocolsResult, roles=['NETWORK_INTERFACE_READ'])
     async def capable_protocols(self):
+        """Return the list of RDMA-capable protocols supported by this system.
+
+        Possible values are ``NFS``, ``ISER``, and ``NVMET``. An empty array is
+        returned when the system is not enterprise, is a MINI, or has no RDMA-capable
+        network cards installed.
+        """
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
         if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):

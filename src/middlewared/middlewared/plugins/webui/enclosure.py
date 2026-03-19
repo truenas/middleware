@@ -76,11 +76,10 @@ class WebUIEnclosureService(Service):
         roles=['ENCLOSURE_READ']
     )
     def dashboard(self):
-        """This endpoint is used exclusively by the webUI team for
-        the enclosure dashboard page for iX sold hardware.
+        """This endpoint is used by the webUI for the enclosure dashboard page for TrueNAS sold hardware.
 
-        An example of what this returns looks like the following:
-            (NOTE: some redundant information cut out for brevity)
+        An example of what this returns looks like the following (some redundant information cut out for brevity)::
+
         [{
             "name": "iX 4024Sp c205",
             "model": "M40",

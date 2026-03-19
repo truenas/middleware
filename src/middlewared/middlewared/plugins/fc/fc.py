@@ -30,8 +30,8 @@ class FCService(Service):
     )
     async def capable(self):
         """
-        Returns True if the system is licensed for FIBRECHANNEL and contains
-        one or more Fibre Channel cards.  False otherwise.
+        Returns ``true`` if the system is licensed for FIBRECHANNEL and contains
+        one or more Fibre Channel cards. ``false`` otherwise.
         """
         if await self.middleware.call('system.is_enterprise'):
             if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):

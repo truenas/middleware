@@ -49,10 +49,8 @@ class WebUIMainDashboardService(Service):
         roles=['READONLY_ADMIN']
     )
     def sys_info(self):
-        """This endpoint was designed to be exclusively
-        consumed by the webUI team. This is what makes
-        up the System Information card on the main
-        dashboard after a user logs in.
+        """This endpoint was designed to be exclusively consumed by the webUI. This is what makes
+        up the System Information card on the main dashboard after a user logs in.
         """
         info = self.sys_info_impl()
         info['remote_info'] = None

@@ -11,7 +11,7 @@ class Enclosure2Entry(BaseModel):
         extra = "allow"
 
 
-@single_argument_args("Enclosure2SetSlotStatus")
+@single_argument_args("enclosure2_set_slot_status")
 class Enclosure2SetSlotStatusArgs(BaseModel):
     enclosure_id: str
     """Logical identifier of the enclosure."""

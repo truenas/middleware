@@ -76,7 +76,7 @@ class Enclosure2Service(Service):
 
     @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
-        """Set enclosure bay number `slot` to `status` for `enclosure_id`."""
+        """Set enclosure bay number ``slot`` to ``status`` for ``enclosure_id``."""
         try:
             enc_info = self.middleware.call_sync(
                 'enclosure2.query', [['id', '=', data['enclosure_id']]], {'get': True}
@@ -140,6 +140,38 @@ class Enclosure2Service(Service):
 
     @filterable_api_method(roles=['ENCLOSURE_READ'], item=Enclosure2Entry)
     def query(self, filters, options):
+        """Query detected enclosures on TrueNAS hardware.
+
+        Returns an array of enclosure objects representing the head unit (controller)
+        and any attached JBODs or JBOFs. Each entry contains hardware identification,
+        physical layout information, and per-slot element details including disk
+        mappings and status.
+
+        .. note::
+            This method only returns results on TrueNAS-sold hardware.
+            An empty array is returned on generic or non-TrueNAS systems.
+
+        Results are sorted with controller enclosures first, then by enclosure ID.
+
+        Examples:
+
+        Query all enclosures::
+
+            []
+
+        Query only the controller (head unit)::
+
+            [
+                [["controller", "=", true]]
+            ]
+
+        Query a specific enclosure by ID::
+
+            [
+                [["id", "=", "5b0bd6d1a30714bf"]],
+                {"get": true}
+            ]
+        """
         enclosures = []
         if not self.middleware.call_sync('truenas.is_ix_hardware'):
             # this feature is only available on hardware that ix sells
