@@ -1,6 +1,8 @@
 import asyncio
 import itertools
+import os
 import pathlib
+import signal
 
 from middlewared.service import Service
 from middlewared.utils import run
@@ -8,6 +10,7 @@ from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
+ISCSI_SCSTD_PIDFILE = '/run/iscsi-scstd.pid'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
 COPY_MANAGER_LUNS_PATH = (
     '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
@@ -121,6 +124,25 @@ class iSCSITargetService(Service):
 
     def suspend(self, value=10):
         pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
+
+    def suspend_logins(self):
+        """Send SIGUSR1 to iscsi-scstd to reject new logins with a retriable error."""
+        self._signal_scstd(signal.SIGUSR1)
+
+    def resume_logins(self):
+        """Send SIGUSR2 to iscsi-scstd to resume accepting new logins."""
+        self._signal_scstd(signal.SIGUSR2)
+
+    def _signal_scstd(self, sig):
+        try:
+            pid = int(pathlib.Path(ISCSI_SCSTD_PIDFILE).read_text().strip())
+            os.kill(pid, sig)
+        except FileNotFoundError:
+            self.logger.warning('iscsi-scstd pidfile not found, daemon may not be running')
+        except ProcessLookupError:
+            self.logger.warning('iscsi-scstd process not found (stale pidfile?)')
+        except ValueError:
+            self.logger.warning('iscsi-scstd pidfile contains invalid PID')
 
     def clear_suspend(self):
         """suspend could have been called several times, and will need to be decremented
