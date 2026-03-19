@@ -18,7 +18,7 @@ from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_port
                                     verify_ha_inquiry, verify_luns)
 from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
-from auto_config import ha, hostname, isns_ip, password, pool_name, user
+from auto_config import extended_tests, ha, hostname, isns_ip, password, pool_name, user
 from functions import SSH_TEST
 from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
@@ -47,6 +47,7 @@ skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
                                           reason="PYSCSI does not support persistent reservations")
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
+skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
 
 
 skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
@@ -1847,6 +1848,14 @@ def _pr_release(s, pr_type, scope=LU_SCOPE, **kwargs):
                            **kwargs)
 
 
+def _pr_clear(s, key):
+    opcodes = s.device.opcodes
+    s.persistentreserveout(
+        opcodes.PERSISTENT_RESERVE_OUT.serviceaction.CLEAR,
+        reservation_key=key,
+    )
+
+
 @contextlib.contextmanager
 def _pr_registration(s, key):
     _pr_register_key(s, key)
@@ -2476,6 +2485,148 @@ def test__alua_persistent_reservation_two_initiators(request, iscsi_running):
                         _check_persistent_reservations(s1, s2)
                         # Do it all again, the other way around
                         _check_persistent_reservations(s2, s1)
+
+
+@pytest.fixture
+def restore_active_node():
+    """Restore the original ACTIVE node after the test, even on failure."""
+    initial_node = _get_node()
+    try:
+        yield
+    finally:
+        if _get_node() != initial_node:
+            _ha_reboot_master(description='restoring original active node')
+
+
+@skip_persistent_reservations
+@skip_multi_initiator
+@skip_ha_tests
+@skip_extended_tests
+@pytest.mark.timeout(2400)
+def test__alua_persistent_reservation_across_failover(request, iscsi_running, restore_active_node):
+    """
+    Verify that Persistent Reservation state is preserved across an HA failover.
+
+    Two initiators register keys and one holds a WRITE EXCLUSIVE reservation.
+    The system is failed over twice (returning to the original active node) and
+    after each failover both keys and the reservation are verified on both paths.
+    """
+    depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
+    initiator_name2 = f'iqn.2018-01.org.pyscsi:{socket.gethostname()}:second'
+    with alua_enabled():
+        with initiator_portal() as config:
+            with configured_target_to_zvol_extent(config, target_name, zvol):
+                iqn = f'{basename}:{target_name}'
+                _wait_for_alua_settle()
+                with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
+                    TUR(s1)
+                    with iscsi_scsi_connection(
+                        truenas_server.nodeb_ip, iqn, initiator_name=initiator_name2
+                    ) as s2:
+                        TUR(s2)
+                        # Register a key on each connection and take a reservation on s1
+                        _pr_register_key(s1, PR_KEY1)
+                        _pr_register_key(s2, PR_KEY2)
+                        _pr_reserve(
+                            s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1
+                        )
+                        try:
+                            # Verify initial PR state on both paths
+                            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+                            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+                            _pr_check_reservation(
+                                s1,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+                            _pr_check_reservation(
+                                s2,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+
+                            # First failover
+                            _ha_reboot_master(description='first failover')
+                            _wait_for_alua_settle()
+                            expect_check_condition(
+                                s1, sense_ascq_dict[0x2900]
+                            )  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                            expect_check_condition(
+                                s2, sense_ascq_dict[0x2900]
+                            )  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
+                            # Verify PR state is preserved after first failover
+                            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+                            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+                            _pr_check_reservation(
+                                s1,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+                            _pr_check_reservation(
+                                s2,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+
+                            # Second failover (failback to original active node)
+                            _ha_reboot_master(description='second failover')
+                            _wait_for_alua_settle()
+                            expect_check_condition(
+                                s1, sense_ascq_dict[0x2900]
+                            )  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                            expect_check_condition(
+                                s2, sense_ascq_dict[0x2900]
+                            )  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
+                            # Verify PR state is preserved after failback
+                            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+                            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+                            _pr_check_reservation(
+                                s1,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+                            _pr_check_reservation(
+                                s2,
+                                {
+                                    'reservation_key': PR_KEY1,
+                                    'scope': LU_SCOPE,
+                                    'type': PR_TYPE.WRITE_EXCLUSIVE,
+                                },
+                            )
+                        finally:
+                            # After failover the reconnected sessions are new
+                            # I_T nexuses and cannot release/unregister the old
+                            # nexus's registrations directly. Re-register on the
+                            # new nexus then CLEAR to remove all registrations
+                            # and reservations.
+                            #
+                            # A sufficiently capable initiator using Session
+                            # Continuation (same ISID on reconnect) would have
+                            # its existing registration and reservation seamlessly
+                            # intact — the point of preserving PR state across
+                            # failover. Our test initiator does not implement
+                            # this, so we clean up explicitly.
+                            _pr_register_key(s1, PR_KEY1)
+                            _pr_clear(s1, PR_KEY1)
+
+    _ensure_alua_state(False)
 
 
 def _get_designator(s, designator_type):
