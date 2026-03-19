@@ -1,5 +1,6 @@
 import copy
 import contextlib
+import logging
 import pathlib
 import tempfile
 import typing
@@ -16,6 +17,7 @@ from .path import (
 )
 from .utils import CONTEXT_KEY_NAME, dump_yaml, run
 
+logger = logging.getLogger("app_lifecycle")
 
 def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
     rendered_config = {}
@@ -47,10 +49,12 @@ def get_current_app_config(app_name: str, version: str) -> dict:
 
 
 def render_compose_templates(app_version_path: str, values_file_path: str):
+    logger.debug('Rendering compose templates for app version path %r with values file %r', app_version_path, values_file_path)
     cp = run(['/usr/bin/apps_render_app', 'render', '--path', app_version_path, '--values', values_file_path])
     if cp.returncode != 0:
         # FIXME: We probably want to log app related issues to it's own logging file so as to not spam middleware
         raise CallError(f'Failed to render compose templates: {cp.stderr}')
+    logger.debug('Compose templates rendered successfully for app version path %r', app_version_path)
 
 
 def update_app_config(app_name: str, version: str, values: dict[str, typing.Any], custom_app: bool = False) -> None:
