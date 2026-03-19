@@ -615,6 +615,12 @@ class FailoverEventsService(Service):
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
+        # Reset the alert system before importing zpools so that alerts
+        # created by ZFS import events (e.g. PoolUpgraded) are not wiped.
+        logger.info('Initializing alert system')
+        self.run_call('alert.initialize', False)
+        logger.info('Done initializing alert system')
+
         failed = []
         options = {'altroot': '/mnt'}
         import_options = {'missing_log': True}
@@ -800,10 +806,6 @@ class FailoverEventsService(Service):
         logger.info('Temporarily blocking failover alerts')
         self.run_call('alert.block_failover_alerts')
         logger.info('Done temporarily blocking failover alerts')
-
-        logger.info('Initializing alert system')
-        self.run_call('alert.initialize', False)
-        logger.info('Done initializing alert system')
 
         logger.info('Initializing task to renew certs if necessary')
         self.middleware.create_task(self.middleware.call('certificate.renew_certs'))

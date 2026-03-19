@@ -311,6 +311,18 @@ class PoolService(Service):
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
+        # ZFS import events fire before the DB entry exists so the
+        # PoolUpgraded alert cannot be created at that time. Check
+        # here where the pool is guaranteed to be in the database.
+        if pool['name'] != await self.middleware.call('boot.pool_name'):
+            try:
+                if not await self.middleware.call('pool.is_upgraded', pool['id']):
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'PoolUpgraded', {'pool_name': pool['name']}
+                    )
+            except Exception:
+                pass
+
         self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
 
     @private
