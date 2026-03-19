@@ -15,7 +15,7 @@ from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, job, private, Service
 
 from .bridge import container_bridge_name, configure_container_bridge
-from .utils import container_instance_dataset_mountpoint
+from .utils import container_instance_dataset_mountpoint, nsenter_set_hostname, update_etc_hosts, write_etc_hostname
 
 
 IDMAP_COUNT = 65536
@@ -43,7 +43,32 @@ class ContainerService(Service):
         """Start container."""
         container = self.middleware.call_sync("container.get_instance", id_)
         configure_container_bridge(self)
-        self.middleware.libvirt_domains_manager.containers.start(self.pylibvirt_container(container, True))
+
+        pylibvirt_obj = self.pylibvirt_container(container, True)
+
+        # Configure hostname files BEFORE start so init reads correct values
+        try:
+            write_etc_hostname(pylibvirt_obj.configuration.root, container['name'])
+            update_etc_hosts(pylibvirt_obj.configuration.root, container['name'])
+        except Exception as e:
+            raise CallError(f'Failed to configure hostname for container {container["name"]!r}: {e}')
+
+        self.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
+
+        # Set kernel UTS hostname AFTER start (needs PID)
+        try:
+            pid = pylibvirt_obj.pid()
+            if pid is not None:
+                nsenter_set_hostname(pid, container['name'])
+        except Exception as e:
+            # Container started but hostname couldn't be set — stop it to avoid running in a broken state
+            try:
+                self.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_obj)
+            except Exception:
+                self.logger.error(
+                    'Failed to stop container %r after UTS hostname failure', container['name'], exc_info=True
+                )
+            raise CallError(f'Failed to set UTS hostname for container {container["name"]!r}: {e}')
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
     @job(lock=lambda args: f'container_stop_{args[0]}')
