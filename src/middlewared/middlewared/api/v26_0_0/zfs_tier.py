@@ -21,7 +21,7 @@ __all__ = [
     'ZfsTierRewriteJobQueryEventSourceArgs', 'ZfsTierRewriteJobQueryEventSourceEvent',
     'ZfsTierRewriteJobStatusEventSourceArgs', 'ZfsTierRewriteJobStatusEventSourceEvent',
     'ZfsTierRewriteJobCreateArgs', 'ZfsTierRewriteJobCreateResult',
-    'ZfsTierRewriteJobAbortArgs', 'ZfsTierRewriteJobAbortResult',
+    'ZfsTierRewriteJobCancelArgs', 'ZfsTierRewriteJobCancelResult',
     'ZfsTierRewriteJobQueryArgs', 'ZfsTierRewriteJobQueryResult',
     'ZfsTierRewriteJobRecoverArgs', 'ZfsTierRewriteJobRecoverResult',
     'ZfsTierRewriteJobStatusArgs', 'ZfsTierRewriteJobStatusResult',
@@ -97,7 +97,7 @@ class ZfsTierRewriteJobEntry(BaseModel):
     * `COMPLETE` - All files in the dataset have been processed.
     * `RUNNING` - Job is actively processing files.
     * `QUEUED` - Job is waiting for a free execution slot (see `max_concurrent_jobs`).
-    * `CANCELLED` - Job was stopped via `zfs_tier_job.abort`. Not resumable.
+    * `CANCELLED` - Job was stopped via `zfs_tier_job.cancel`. Not resumable.
     * `STOPPED` - Job was RUNNING but its process is no longer active (e.g. daemon restart). \
     This state is computed on read and is never written to persistent storage.
     * `ERROR` - Job halted due to an unrecoverable error. Use `zfs_tier_job.recover` to \
@@ -172,15 +172,15 @@ class ZfsTierRewriteJobCreateResult(BaseModel):
     """The newly created rewrite job, initially in `QUEUED` state."""
 
 
-@single_argument_args('zfs_tier_rewrite_job_abort')
-class ZfsTierRewriteJobAbortArgs(BaseModel):
+@single_argument_args('zfs_tier_rewrite_job_cancel')
+class ZfsTierRewriteJobCancelArgs(BaseModel):
     tier_job_id: NonEmptyString
-    """Rewrite job to abort, in `dataset_name@job_uuid` format."""
+    """Rewrite job to cancel, in `dataset_name@job_uuid` format."""
 
 
-class ZfsTierRewriteJobAbortResult(BaseModel):
+class ZfsTierRewriteJobCancelResult(BaseModel):
     result: None
-    """Returns `null` when the job has been successfully aborted."""
+    """Returns `null` when the job has been successfully cancelled."""
 
 
 @single_argument_args('zfs_tier_rewrite_job_query')

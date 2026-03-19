@@ -13,7 +13,7 @@ from middlewared.api.current import (
     ZfsTierRewriteJobCreateArgs, ZfsTierRewriteJobCreateResult,
     ZfsTierRewriteJobQueryArgs, ZfsTierRewriteJobQueryResult,
     ZfsTierRewriteJobStatusArgs, ZfsTierRewriteJobStatusResult,
-    ZfsTierRewriteJobAbortArgs, ZfsTierRewriteJobAbortResult,
+    ZfsTierRewriteJobCancelArgs, ZfsTierRewriteJobCancelResult,
     ZfsTierRewriteJobRecoverArgs, ZfsTierRewriteJobRecoverResult,
     ZfsTierRewriteJobQueryEventSourceArgs, ZfsTierRewriteJobQueryEventSourceEvent,
     ZfsTierRewriteJobStatusEventSourceArgs, ZfsTierRewriteJobStatusEventSourceEvent,
@@ -129,8 +129,8 @@ def _map_recover_result(result) -> dict:
     }
 
 
-def _map_abort_result(result) -> dict:
-    """Build a ZfsTierRewriteJobEntry dict from a RewriteClient AbortJobResult."""
+def _map_cancel_result(result) -> dict:
+    """Build a ZfsTierRewriteJobEntry dict from a RewriteClient CancelJobResult."""
     return {
         'tier_job_id': f'{result.dataset_name}@{result.job_uuid}',
         'dataset_name': result.dataset_name,
@@ -446,16 +446,16 @@ class ZfsTierService(ConfigService):
 
         return filter_list(failures, data.get('query-filters') or [], data.get('query-options') or {})
 
-    @api_method(ZfsTierRewriteJobAbortArgs, ZfsTierRewriteJobAbortResult, roles=['DATASET_WRITE'],
-                audit='ZFS tier rewrite job abort', audit_extended=lambda data: data['tier_job_id'])
-    async def rewrite_job_abort(self, data):
-        """Abort a running or queued rewrite job."""
+    @api_method(ZfsTierRewriteJobCancelArgs, ZfsTierRewriteJobCancelResult, roles=['DATASET_WRITE'],
+                audit='ZFS tier rewrite job cancel', audit_extended=lambda data: data['tier_job_id'])
+    async def rewrite_job_cancel(self, data):
+        """Cancel a running or queued rewrite job."""
         dataset_name, job_uuid = self._parse_tier_job_id(data['tier_job_id'])
         async with RewriteClient() as client:
             try:
                 result = await client.abort_job(dataset_name, job_uuid)
             except RewriteClientException as e:
-                _raise_client_error(e, 'zfs_tier_rewrite_job_abort.tier_job_id')
+                _raise_client_error(e, 'zfs_tier_rewrite_job_cancel.tier_job_id')
 
     @api_method(ZfsTierRewriteJobRecoverArgs, ZfsTierRewriteJobRecoverResult, roles=['DATASET_WRITE'],
                 audit='ZFS tier rewrite job recover', audit_extended=lambda data: data['tier_job_id'])
