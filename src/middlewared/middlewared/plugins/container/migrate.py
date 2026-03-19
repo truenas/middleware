@@ -33,6 +33,7 @@ class ContainerService(Service):
         devices = manifest["devices"]
         container_name = container_instance["name"]
         nic_choices = await self.middleware.call("container.device.nic_attach_choices")
+        all_nic_choices = set(nic_choices['BRIDGE']) | set(nic_choices['MACVLAN'])
         gpu_choices = await self.middleware.call("container.device.gpu_choices")
         for device_name, device_data in devices.items():
             dtype = None
@@ -54,7 +55,7 @@ class ContainerService(Service):
                         "target": device_data["path"],
                     }
                 elif dtype == "nic":
-                    if device_data.get("parent") not in nic_choices:
+                    if device_data.get("parent") not in all_nic_choices:
                         await job.logs_fd_write((
                             f"Skipping migrating {device_name!r} NIC device for {container_name!r} because "
                             f"{device_data.get('parent')!r} is not a valid NIC\n"
@@ -66,7 +67,7 @@ class ContainerService(Service):
                         "nic_attach": device_data["parent"],
                         "type": "VIRTIO",
                         "trust_guest_rx_filters": False,
-                        "mac": manifest["config"].get(f"volatile.{device_data['parent']}.hwaddr")
+                        "mac": manifest["config"].get(f"volatile.{device_name}.hwaddr")
                     }
                 elif dtype == "usb":
                     if (bus_num := device_data.get("busnum")) and (devnum := device_data.get("devnum")):
@@ -280,6 +281,7 @@ class ContainerService(Service):
                         "autostart": config.get("user.autostart") == "true",
                         "dataset": dst_dataset,
                         "init": "/sbin/init",
+                        'cpuset': config.get('limits.cpu', None),
                     },
                 )
                 self.middleware.call_sync(
