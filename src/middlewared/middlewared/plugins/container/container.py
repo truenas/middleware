@@ -173,13 +173,16 @@ class ContainerService(CRUDService):
 
         # Validate cpuset format if provided
         if data.get('cpuset'):
-            try:
-                parse_numeric_set(data['cpuset'])
-            except ValueError as e:
-                verrors.add(
-                    f'{schema_name}.cpuset',
-                    f'Invalid cpuset format: {e}'
-                )
+            if '_' in data['cpuset']:
+                verrors.add(f'{schema_name}.cpuset', 'Underscores are not allowed in CPU set values')
+            else:
+                try:
+                    parse_numeric_set(data['cpuset'])
+                except ValueError as e:
+                    verrors.add(
+                        f'{schema_name}.cpuset',
+                        f'Invalid cpuset format: {e}'
+                    )
 
         filters = [('name', '=', data['name'])]
         if old:
