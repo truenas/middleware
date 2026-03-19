@@ -311,6 +311,9 @@ class CoreService(Service):
                 if hasattr(method, '_private') and method._private is True:
                     continue
 
+                if svc._config.private is True:
+                    continue
+
                 # terminate is a private method used to clean up a service on shutdown
                 if attr == 'terminate':
                     continue
