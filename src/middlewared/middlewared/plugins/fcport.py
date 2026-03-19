@@ -6,9 +6,11 @@ from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (FCPortPortChoicesArgs, FCPortPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
-                                     FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortStatusArgs,
-                                     FCPortStatusResult, FCPortUpdateArgs, FCPortUpdateResult)
+from middlewared.api.current import (
+    FCPortPortChoicesArgs, FCPortPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
+    FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortStatusArgs,
+    FCPortStatusResult, FCPortUpdateArgs, FCPortUpdateResult,
+)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
@@ -199,7 +201,9 @@ class FCPortService(CRUDService):
 
     async def _get_remote_local_status(self, node, port, with_lun_access):
         try:
-            return await self.middleware.call('failover.call_remote', 'fcport.local_status', [node, port, with_lun_access])
+            return await self.middleware.call(
+                'failover.call_remote', 'fcport.local_status', [node, port, with_lun_access]
+            )
         except CallError as e:
             if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
                 # swallow error, but don't present any choices
@@ -283,12 +287,14 @@ class FCPortService(CRUDService):
                         if int(chan) > npiv_setting:
                             verrors.add(
                                 f'{schema_name}.port',
-                                f'Invalid FC port ({port}) supplied, chan {chan} is greater than NPIV setting {npiv_setting}'
+                                f'Invalid FC port ({port}) supplied, chan {chan}'
+                                f' is greater than NPIV setting {npiv_setting}',
                             )
                         elif int(chan) == 0:
                             verrors.add(
                                 f'{schema_name}.port',
-                                f'Invalid FC port ({port}) supplied, chan {chan} must be greater than 0 and less than NPIV setting {npiv_setting}'
+                                f'Invalid FC port ({port}) supplied, chan {chan} must be greater'
+                                f' than 0 and less than NPIV setting {npiv_setting}',
                             )
                     else:
                         verrors.add(
@@ -322,7 +328,8 @@ class FCPortService(CRUDService):
                     target_name = target['name']
                     verrors.add(
                         f'{schema_name}.target_id',
-                        f'Specified target "{target_name}" ({target_id}) does not have a "mode" ({target_mode}) that permits FC access'
+                        f'Specified target "{target_name}" ({target_id}) does not have'
+                        f' a "mode" ({target_mode}) that permits FC access',
                     )
 
         verrors.check()
@@ -409,9 +416,14 @@ class FCPortService(CRUDService):
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the BACKUP config if we are HA and ALUA is enabled.
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+        if (
+            await self.middleware.call("iscsi.global.alua_enabled")
+            and await self.middleware.call('failover.remote_connected')
+        ):
             if do_module_load:
                 await self.middleware.call('failover.call_remote', 'fcport.load_kernel_module')
-            await self.middleware.call('failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'],
-                                       {'job': True})
+            await self.middleware.call(
+                'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'],
+                {'job': True},
+            )
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')

@@ -54,7 +54,7 @@ def check_docstring(docstr: str | None, must_have: bool = False):
     if not docstr.endswith("."):
         return "Docstring must end with a period"
     if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
-        return r"Use '\' at ends of lines to wrap text"
+        return "Use '\\' at ends of lines to wrap text"  # noqa: LIT102
 
 
 def test_api_current_module_exports(current_api_package):

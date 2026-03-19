@@ -100,8 +100,12 @@ class TruecommandService(Service):
             if TruecommandStatus(config['api_key_state']) == TruecommandStatus.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
-                await (await self.middleware.call('service.control', 'START', 'truecommand', {'ha_propagate': False})).wait(raise_error=True)
-                await (await self.middleware.call('service.control', 'RELOAD', 'http', {'ha_propagate': False})).wait(raise_error=True)
+                await (await self.middleware.call(
+                    'service.control', 'START', 'truecommand', {'ha_propagate': False}
+                )).wait(raise_error=True)
+                await (await self.middleware.call(
+                    'service.control', 'RELOAD', 'http', {'ha_propagate': False}
+                )).wait(raise_error=True)
                 asyncio.get_event_loop().call_later(
                     30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
                     lambda: self.middleware.create_task(self.middleware.call('truecommand.health_check')),

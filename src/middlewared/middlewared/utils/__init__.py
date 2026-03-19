@@ -7,7 +7,7 @@ import json
 import logging
 import subprocess
 import time
-from typing import Any, Callable, Iterable, Sequence, TypeVar, overload
+from typing import Any, Callable, Iterable, Sequence, TypeVar
 
 from .prctl import die_with_parent
 from .threading import io_thread_pool_executor

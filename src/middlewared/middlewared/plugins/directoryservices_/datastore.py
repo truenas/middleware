@@ -372,7 +372,9 @@ class DirectoryServices(ConfigService):
 
         if new['kerberos_realm']:
             try:
-                self.middleware.call_sync('kerberos.realm.query', [['realm', '=', new['kerberos_realm']]], {'get': True})
+                self.middleware.call_sync(
+                    'kerberos.realm.query', [['realm', '=', new['kerberos_realm']]], {'get': True}
+                )
             except MatchNotFound:
                 verrors.add(f'{SCHEMA}.kerberos_realm', 'Unknown kerberos realm')
 

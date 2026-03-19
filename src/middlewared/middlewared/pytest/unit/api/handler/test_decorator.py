@@ -6,7 +6,8 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 
 
-class MethodArgs(BaseModel): ...
+class MethodArgs(BaseModel):
+    ...
 
 
 class MethodResult(BaseModel):

@@ -480,7 +480,7 @@ class SMBService(ConfigService):
 
     @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
-        """
+        r"""
         Update SMB Service Configuration.
 
         `netbiosname` defaults to the original hostname of the system.
@@ -502,7 +502,7 @@ class SMBService(ConfigService):
         `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
 
         The group specified as the SMB `admin_group` will be automatically added as a foreign group member
-        of S-1-5-32-544 (builtin\\admins). This will afford the group all privileges granted to a local admin.
+        of S-1-5-32-544 (builtin\admins). This will afford the group all privileges granted to a local admin.
         Any SMB group may be selected (including AD groups).
 
         `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
@@ -1020,7 +1020,9 @@ class SharingSMBService(SharingService):
             self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
-            await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
+            await (await self.middleware.call(
+                'service.control', 'RELOAD', 'mdns', {'ha_propagate': False}
+            )).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
 

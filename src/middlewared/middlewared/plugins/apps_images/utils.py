@@ -78,7 +78,9 @@ def normalize_reference(reference: str) -> dict:
     # when checking for update alerts as registry-1.docker.io is the one used to actually query that information
     reference = reference.removeprefix('docker.io/')
     registry_idx = reference.find('/')
-    if registry_idx == -1 or (not any(c in reference[:registry_idx] for c in ('.', ':')) and reference[:registry_idx] != 'localhost'):
+    if registry_idx == -1 or (
+        not any(c in reference[:registry_idx] for c in ('.', ':')) and reference[:registry_idx] != 'localhost'
+    ):
         registry, tagged_image = DEFAULT_DOCKER_REGISTRY, reference
     else:
         registry, tagged_image = reference[:registry_idx], reference[registry_idx + 1:]

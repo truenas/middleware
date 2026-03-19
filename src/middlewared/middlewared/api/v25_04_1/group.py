@@ -22,7 +22,7 @@ class GroupEntry(BaseModel):
     sudo_commands: list[NonEmptyString] = []
     sudo_commands_nopasswd: list[NonEmptyString] = []
     smb: bool = True
-    "Specifies whether the group should be mapped into an NT group."
+    """Specifies whether the group should be mapped into an NT group."""
     userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
     """
     Species the subgid mapping for this group. If DIRECT then the GID will be
@@ -38,7 +38,7 @@ class GroupEntry(BaseModel):
     sid: str | None
     roles: list[str]
     users: list[int] = []
-    "A list of user ids (`id` attribute from `user.query`)."
+    """A list of user ids (`id` attribute from `user.query`)."""
 
 
 class GroupCreate(GroupEntry):
@@ -51,7 +51,7 @@ class GroupCreate(GroupEntry):
     roles: Excluded = excluded_field()
 
     gid: LocalUID | None = None
-    "If `null`, it is automatically filled with the next one available."
+    """If `null`, it is automatically filled with the next one available."""
 
 
 class GroupCreateArgs(BaseModel):
@@ -77,7 +77,7 @@ class GroupUpdateResult(BaseModel):
 
 class GroupDeleteOptions(BaseModel):
     delete_users: bool = False
-    "Deletes all users that have this group as their primary group."
+    """Deletes all users that have this group as their primary group."""
 
 
 class GroupDeleteArgs(BaseModel):
@@ -107,13 +107,13 @@ class GroupGetGroupObjArgs(BaseModel):
 @single_argument_result
 class GroupGetGroupObjResult(BaseModel):
     gr_name: str
-    "name of the group"
+    """name of the group"""
     gr_gid: int
-    "group id of the group"
+    """group id of the group"""
     gr_mem: list[str]
-    "list of group names that are members of the group"
+    """list of group names that are members of the group"""
     sid: str | None = None
-    "optional SID value for the account that is present if `sid_info` is specified in payload."
+    """optional SID value for the account that is present if `sid_info` is specified in payload."""
     source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
     """
     the name server switch module that provided the user. Options are:
@@ -122,7 +122,7 @@ class GroupGetGroupObjResult(BaseModel):
         SSS - user provided by SSSD.
     """
     local: bool
-    "boolean indicating whether this group is local to the NAS or provided by a directory service."
+    """boolean indicating whether this group is local to the NAS or provided by a directory service."""
 
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):

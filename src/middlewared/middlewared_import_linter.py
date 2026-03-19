@@ -1,6 +1,6 @@
 import sys
 
-from importlinter import Contract, ContractCheck, fields, output
+from importlinter import Contract, ContractCheck, output
 
 
 class APISchemaContract(Contract):

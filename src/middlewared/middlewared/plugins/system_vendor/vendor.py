@@ -51,7 +51,7 @@ class VendorService(Service):
         except FileNotFoundError:
             pass
         except json.JSONDecodeError:
-            self.logger.exception('Can\'t retrieve vendor name: %r is not proper JSON format', SENTINEL_FILE_PATH)
+            self.logger.exception("Can't retrieve vendor name: %r is not proper JSON format", SENTINEL_FILE_PATH)
         except Exception:
             self.logger.exception('Unexpected error while reading %r', SENTINEL_FILE_PATH)
 

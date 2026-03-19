@@ -134,7 +134,6 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                     })
                     logger.debug('TNC Heartbeat: Resetting last heartbeat failure datetime')
 
-
                 await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
                 await asyncio.sleep(HEARTBEAT_INTERVAL)
 

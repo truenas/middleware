@@ -107,7 +107,7 @@ class PoolDatasetService(Service):
         if not processes:
             return
 
-        self.logger.info('The following processes don\'t want to stop: %r', processes)
+        self.logger.info("The following processes don't want to stop: %r", processes)
         raise CallError('Unable to stop processes that have open files', errno.EBUSY, {
             'code': 'unstoppable_processes',
             'processes': processes,

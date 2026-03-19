@@ -188,7 +188,9 @@ async def authenticate(
                     text='API key authentication is not permitted by server authentication security level'
                 )
 
-            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], origin, app=app)
+            api_key = await middleware.call(
+                'api_key.authenticate', credentials['credentials_data']['api_key'], origin, app=app
+            )
             if api_key is None:
                 raise web.HTTPUnauthorized(text='Invalid API key')
 

@@ -32,9 +32,9 @@ class BinaryMock:
 
 def set_usr_readonly(value):
     cmd = 'python3 -c "import libzfs;'
-    cmd += 'hdl = libzfs.ZFS().get_dataset_by_path(\\\"/usr\\\");'
-    cmd += 'hdl.update_properties({\\\"readonly\\\": {\\\"value\\\": '
-    cmd += f'\\\"{value}\\\"' + '}});"'
+    cmd += r'hdl = libzfs.ZFS().get_dataset_by_path(\"/usr\");'
+    cmd += r'hdl.update_properties({\"readonly\": {\"value\": '
+    cmd += f'\\"{value}\\"' + '}});"'
     ssh(cmd)
 
 
@@ -51,7 +51,7 @@ def mock_binary(path, code="", exitcode=1):
                 #!/usr/bin/python3
                 import json
                 import sys
-                
+
                 exitcode = """ + repr(exitcode) + """
                 result = {
                     "argv": sys.argv,
@@ -61,7 +61,7 @@ def mock_binary(path, code="", exitcode=1):
                     json.dump(result, f)
                 sys.exit(exitcode)
             """).replace("%code%", code).encode("utf-8")).decode("ascii"),
-             {"mode": 0o755},
+            {"mode": 0o755},
         )
         yield BinaryMock()
     finally:

@@ -172,7 +172,7 @@ def __getgrent_impl(
     if res != NssReturnCode.SUCCESS:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 def __getgrall_impl(module: str, as_dict: bool) -> list[group_struct | GroupDict]:
@@ -212,7 +212,7 @@ def __getgrnam_impl(
     if res == NssReturnCode.NOTFOUND:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 def __getgrgid_impl(
@@ -239,7 +239,7 @@ def __getgrgid_impl(
     if res == NssReturnCode.NOTFOUND:
         return None
 
-    return  __parse_nss_result(result, as_dict, mod.name)
+    return __parse_nss_result(result, as_dict, mod.name)
 
 
 @overload

@@ -8,7 +8,7 @@ from middlewared.service import job, private, Service
 from .connection import KMIPServerMixin
 
 
-'''
+"""
 SED keys are stored in 2 places:
 1) system.advanced table
 2) storage.disk table
@@ -21,7 +21,7 @@ There are 3 possible cases which we need to handle for storage.disk
 There are 2 possible cases which we need to handle for system.advanced
 1) system.advanced.config can have global SED password
 2) system.advanced.config cannot have global SED password
-'''
+"""
 
 
 class KMIPService(Service, KMIPServerMixin):

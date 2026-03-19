@@ -28,7 +28,7 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
 
     async def check(self):
         alerts = list()
-        map = {i.name: i for i in await self.middleware.call("disk.get_disks")}
+        disk_map = {i.name: i for i in await self.middleware.call("disk.get_disks")}
         temp_cache = await self.middleware.call("disk.temperatures", [], True)
         for disk, (temp, crit) in temp_cache.items():
             if temp is None or crit is None or crit <= 0:
@@ -37,7 +37,7 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
                 continue
 
             try:
-                di = map[disk]
+                di = disk_map[disk]
             except KeyError:
                 # We're checking a cache of disk temps
                 # so disk could have gone away by the time

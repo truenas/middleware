@@ -16,8 +16,8 @@ from truenas_api_client import json
 
 from middlewared.utils.pwenc import encrypt, decrypt
 
-__all__ = ["Model", "Column", "Boolean", "ForeignKey", "Index", "Integer", "NativeJSON", "Mapped", "SmallInteger",
-           "String", "Table", "Text", "UniqueConstraint", "relationship"]
+__all__ = ["Model", "Column", "Boolean", "CHAR", "ForeignKey", "Index", "Integer", "NativeJSON", "Mapped",
+           "SmallInteger", "String", "Table", "Text", "UniqueConstraint", "relationship"]
 
 
 class Base:

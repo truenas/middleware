@@ -105,7 +105,8 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         Snapshots will be automatically destroyed after a certain amount of time, specified by
         `lifetime_value` and `lifetime_unit`.
 
-        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the snapshot
+        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the
+        snapshot
         will be kept until the last of these tasks reaches its expiry time.
 
         Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
@@ -162,8 +163,8 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
                        for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
                     verrors.add(
                         'periodic_snapshot_update.enabled',
-                        (f'You can\'t disable this periodic snapshot task because it is bound to enabled replication '
-                         f'task {replication_task["id"]!r}')
+                        (f"You can't disable this periodic snapshot task because it is bound to enabled replication "
+                         f"task {replication_task['id']!r}")
                     )
                     break
 

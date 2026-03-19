@@ -6,7 +6,6 @@ from middlewared.api.base import (
     LongNonEmptyString,
     NonEmptyString,
     single_argument_args,
-    single_argument_result,
     LDAP_DN,
     LDAP_URL,
     NetbiosDomain,

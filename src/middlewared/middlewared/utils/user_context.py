@@ -31,10 +31,16 @@ def set_user_context(user_details: dict[str, Any]) -> None:
     new_uids = os.getresuid()
 
     if new_gids != gids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}')
+        raise Exception(
+            f'{user_details["pw_name"]}: Unable to set gids for user context'
+            f' received {new_gids}, expected {gids}'
+        )
 
     if new_uids != uids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}')
+        raise Exception(
+            f'{user_details["pw_name"]}: Unable to set uids for user context'
+            f' received {new_uids}, expected {uids}'
+        )
 
     try:
         os.chdir(user_details['pw_dir'])
