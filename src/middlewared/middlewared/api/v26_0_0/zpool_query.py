@@ -25,6 +25,8 @@ class ZPoolPropertyValue(BaseModel):
 
 
 class ZPoolVdevStats(BaseModel):
+    timestamp: int = 0
+    """High-resolution timestamp (nanoseconds)."""
     allocated: int = 0
     """Allocated space in bytes."""
     space: int = 0
