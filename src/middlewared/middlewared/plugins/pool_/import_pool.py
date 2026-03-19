@@ -9,7 +9,6 @@ from middlewared.api.current import (
     PoolReimportArgs, PoolReimportResult,
     ZFSResourceQuery,
 )
-from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationError
@@ -311,19 +310,6 @@ class PoolService(Service):
     async def _post_import_actions(self, pool, event_type):
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
-
-        # ZFS import events fire before the DB entry exists so the
-        # PoolUpgraded alert cannot be created at that time. Check
-        # here where the pool is guaranteed to be in the database.
-        if pool['name'] != await self.middleware.call('boot.pool_name'):
-            try:
-                if not await self.middleware.call('pool.is_upgraded', pool['id']):
-                    await self.middleware.call2(
-                        self.middleware.services.alert.oneshot_create,
-                        PoolUpgradedAlert(pool['name'])
-                    )
-            except Exception:
-                pass
 
         self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
 
