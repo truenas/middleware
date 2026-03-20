@@ -12,6 +12,7 @@ from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
+from middlewared.utils.iscsi.constants import ISCSIMODE
 
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
@@ -29,6 +30,7 @@ class ISCSIGlobalModel(sa.Model):
     iscsi_listen_port = sa.Column(sa.Integer(), nullable=False, default=3260)
     iscsi_iser = sa.Column(sa.Boolean(), default=False)
     iscsi_direct_config = sa.Column(sa.Boolean(), nullable=True)
+    iscsi_mode = sa.Column(sa.Integer(), default=0)
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -110,6 +112,12 @@ class ISCSIGlobalService(SystemServiceService):
         data['isns_servers'] = data['isns_servers'].split()
         return data
 
+    @private
+    def _validate_mode(self, schema_name, mode, old_mode, verrors):
+        # Placeholder for future mode-specific validation
+        if mode not in ISCSIMODE:
+            verrors.add(schema_name, f'Invalid mode ({mode})')
+
     @api_method(
         ISCSIGlobalUpdateArgs,
         ISCSIGlobalUpdateResult,
@@ -125,6 +133,10 @@ class ISCSIGlobalService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
+
+        if (mode := data.get('mode')) is not None:
+            if mode != old['mode']:
+                self._validate_mode('iscsiglobal_update.mode', mode, old['mode'], verrors)
 
         servers = data.get('isns_servers') or []
         server_addresses = []
@@ -276,3 +288,13 @@ class ISCSIGlobalService(SystemServiceService):
         if direct_config is None:
             return DEFAULT_DIRECT_CONFIG
         return direct_config
+
+    @private
+    async def using_dlm(self):
+        """
+        Returns whether iSCSI is configured to use DLM.
+        """
+        if await self.alua_enabled():
+            if (await self.config()).get('mode') in (ISCSIMODE.SCST_DLM_PRSTATE_SAVE, ISCSIMODE.SCST_DLM_PRSTATE_NOSAVE):
+                return True
+        return False
