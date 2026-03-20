@@ -2,22 +2,22 @@ import contextlib
 import os
 import time
 
+from truenas_pynetif.address.constants import AddressFamily
+from truenas_pynetif.address.netlink import get_default_route, netlink_route
+
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 
 IFACE_LINK_STATE_MAX_WAIT: int = 60
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
-RTF_GATEWAY: int = 0x0002
-RTF_UP: int = 0x0001
 
 
 def get_default_interface() -> str | None:
-    with contextlib.suppress(FileNotFoundError):
-        with open('/proc/net/route', 'r') as f:
-            for entry in filter(lambda i: len(i) == 11, map(str.split, f.readlines()[1:])):
-                with contextlib.suppress(ValueError):
-                    if int(entry[3], 16) == (RTF_UP | RTF_GATEWAY):
-                        return entry[0].strip()
+    with contextlib.suppress(Exception):
+        with netlink_route() as sock:
+            for family in (AddressFamily.INET, AddressFamily.INET6):
+                if (route := get_default_route(sock, family=family)) and route.oif_name:
+                    return route.oif_name
     return None
 
 
