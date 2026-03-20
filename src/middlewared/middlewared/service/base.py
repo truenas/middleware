@@ -192,6 +192,8 @@ class ServiceBase(type):
       - namespace_alias: another namespace identifier of the service, mostly used to rename and
                          slowly deprecate old name.
       - private: whether or not the service is deemed private
+            **NOTE**: Setting this field in one Service class effectively sets it in all Service classes with the same
+            name. All methods in the namespace will be considered private.
       - verbose_name: human-friendly singular name for the service
       - thread_pool: thread pool to use for threaded methods
       - cli_namespace: replace namespace identifier for CLI

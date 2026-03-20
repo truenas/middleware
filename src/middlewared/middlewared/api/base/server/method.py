@@ -36,7 +36,7 @@ class Method:
 
     @property
     def private(self):
-        return getattr(self.methodobj, "_private", False)
+        return getattr(self.methodobj, "_private", False) or self.serviceobj._config.private
 
     async def call(self, app: "RpcWebSocketApp", id_: Any, params: list):
         """
