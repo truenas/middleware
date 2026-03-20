@@ -152,11 +152,11 @@ class iSCSITargetAluaService(Service):
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
         thisnode = await self.middleware.call('failover.node')
 
-        # extents: dict[id] : {id, name, type}
+        # extents: dict[id] : {id, name, type, serial}
         extents = {ext['id']: ext for ext in await self.middleware.call(
             'iscsi.extent.query',
             [['enabled', '=', True], ['locked', '=', False]],
-            {'select': ['name', 'id', 'type']},
+            {'select': ['name', 'id', 'type', 'serial']},
         )}
 
         # targets: dict[id]: {'name': name, 'mode': mode}
@@ -193,6 +193,12 @@ class iSCSITargetAluaService(Service):
         self.logger.debug('Updating LUNs')
         await self.middleware.call('iscsi.scst.suspend', 10)
         self.logger.debug('iSCSI suspended')
+
+        # Restore saved PR state to vdisk devices before the LUN swap.
+        # Returns the set of extent names that were successfully restored;
+        # those get replace_no_ua, everything else gets replace-with-UA.
+        no_ua = await self.middleware.call('iscsi.scst.restore_pr_state', extents)
+
         for assoc in assocs:
             extent_id = assoc['extent']
             if extent_id in extents:
@@ -200,18 +206,22 @@ class iSCSITargetAluaService(Service):
                 if target_id in targets:
                     target_name = targets[target_id]['name']
                     target_mode = targets[target_id]['mode']
+                    extent_name = extents[extent_id]['name']
+                    ua = extent_name not in no_ua
                     if target_mode in ['ISCSI', 'BOTH']:
                         iqn = f'{iqn_basename}:{target_name}'
                         await self.middleware.call('iscsi.scst.replace_iscsi_lun',
                                                    iqn,
-                                                   extents[extent_id]['name'],
-                                                   assoc['lunid'])
+                                                   extent_name,
+                                                   assoc['lunid'],
+                                                   ua)
                     if target_mode in ['FC', 'BOTH'] and target_id in fcports:
                         if wwpn := wwn_as_colon_hex(fcports[target_id]):
                             await self.middleware.call('iscsi.scst.replace_fc_lun',
                                                        wwpn,
-                                                       extents[extent_id]['name'],
-                                                       assoc['lunid'])
+                                                       extent_name,
+                                                       assoc['lunid'],
+                                                       ua)
         self.logger.debug('Updated LUNs')
         await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
         self.logger.debug('Switched optimized node')
