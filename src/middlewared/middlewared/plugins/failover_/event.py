@@ -22,6 +22,8 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.service_.services.all import all_services
+from middlewared.utils.iscsi.constants import ISCSIMODE
+
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
@@ -399,12 +401,14 @@ class FailoverEventsService(Service):
         suspended = cleaned = False
 
         try:
-            # Configure dev_disk to dump PR state to files as devices are
-            # detached during reset_active().  Files are keyed by device
-            # serial number and consumed by restore_pr_state() in
-            # become_active().  This is race-free: the dump happens at the
-            # exact moment each device is torn down, after all commands drain.
-            self.run_call('iscsi.scst.set_pr_dump_dir', '/var/lib/scst/pr_dump')
+            config = self.run_call('iscsi.global.config')
+            if config.get('mode') == ISCSIMODE.SCST_DLM_PRSTATE_SAVE:
+                # Configure dev_disk to dump PR state to files as devices are
+                # detached during reset_active().  Files are keyed by device
+                # serial number and consumed by restore_pr_state() in
+                # become_active().  This is race-free: the dump happens at the
+                # exact moment each device is torn down, after all commands drain.
+                self.run_call('iscsi.scst.set_pr_dump_dir', '/var/lib/scst/pr_dump')
 
             try:
                 # Ensure the internal (inter-node) target sessions

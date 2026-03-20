@@ -5,6 +5,7 @@ from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import Service, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
+from middlewared.utils.iscsi.constants import ISCSIMODE
 
 from .utils import delete_scsi_disk
 
@@ -149,7 +150,8 @@ class iSCSITargetAluaService(Service):
 
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
-        iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        config = await self.middleware.call('iscsi.global.config')
+        iqn_basename = config['basename']
         thisnode = await self.middleware.call('failover.node')
 
         # extents: dict[id] : {id, name, type, serial}
@@ -194,10 +196,13 @@ class iSCSITargetAluaService(Service):
         await self.middleware.call('iscsi.scst.suspend', 10)
         self.logger.debug('iSCSI suspended')
 
-        # Restore saved PR state to vdisk devices before the LUN swap.
-        # Returns the set of extent names that were successfully restored;
-        # those get replace_no_ua, everything else gets replace-with-UA.
-        no_ua = await self.middleware.call('iscsi.scst.restore_pr_state', extents)
+        if config.get('mode') == ISCSIMODE.SCST_DLM_PRSTATE_SAVE:
+            # Restore saved PR state to vdisk devices before the LUN swap.
+            # Returns the set of extent names that were successfully restored;
+            # those get replace_no_ua, everything else gets replace-with-UA.
+            no_ua = await self.middleware.call('iscsi.scst.restore_pr_state', extents)
+        else:
+            no_ua = set()
 
         for assoc in assocs:
             extent_id = assoc['extent']
