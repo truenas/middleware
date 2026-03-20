@@ -1,6 +1,12 @@
 from collections.abc import Iterable
+from typing import Required, TypedDict
 
 from middlewared.plugins.ports.utils import WILDCARD_IPS
+
+
+class PortEntry(TypedDict, total=False):
+    port: Required[int]
+    bindip: str
 
 
 class PortDelegate:
