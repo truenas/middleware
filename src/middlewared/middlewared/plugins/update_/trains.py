@@ -22,6 +22,7 @@ class UpdateManifest(BaseModel):
 
 class TrainDescription(BaseModel):
     description: str = ""
+    stable: bool = True
 
 
 class Trains(BaseModel):
@@ -121,8 +122,9 @@ async def get_next_trains_names(context: ServiceContext, trains: Trains) -> list
     Returns the names of trains to which this system can be upgraded, listed in descending order (most recent
     train first).
 
-    Currently, the system can be upgraded only to the next train — skipping trains is not allowed. If the next train
-    does not include a version that matches the requested update profile, the current train will also be considered.
+    Currently, the system can be upgraded to any train between the current train and the next stable train.
+    Skipping stable trains is not allowed. If none of the next trains include a version that matches the requested
+    update profile, the current train will also be considered.
     """
     current_train_name = await get_current_train_name(context, trains)
     trains_names = list(trains.trains.keys())
@@ -132,11 +134,15 @@ async def get_next_trains_names(context: ServiceContext, trains: Trains) -> list
         raise CallError(f'Current train {current_train_name!r} is not present in the update trains list') from None
 
     next_trains_names = []
-    try:
-        next_trains_names.append(trains_names[index + 1])
-    except IndexError:
-        # Current train is the newest train
-        pass
+    for next_train_name in trains_names[index + 1:]:
+        next_trains_names.append(next_train_name)
+        if trains.trains[next_train_name].stable:
+            # When a stable train is found, stop. Skipping stable trains is not allowed.
+            # All trains are stable by default
+            break
+
+    # Trains came in in ascending order. The result should be in descending order.
+    next_trains_names = list(reversed(next_trains_names))
 
     next_trains_names.append(current_train_name)
 
