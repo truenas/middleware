@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any, TypedDict, TYPE_CHECKING
+from typing import Any, Required, TypedDict, TYPE_CHECKING
 
 from middlewared.utils.service.call_mixin import CallMixin
 
@@ -11,6 +11,11 @@ if TYPE_CHECKING:
 
 
 WILDCARD_IPS: list[str] = ['0.0.0.0', '::']
+
+
+class PortEntry(TypedDict, total=False):
+    port: Required[int]
+    bindip: str
 
 
 class PortDetail(TypedDict):

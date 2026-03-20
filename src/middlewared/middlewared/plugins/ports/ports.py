@@ -4,7 +4,7 @@ import itertools
 from collections import defaultdict
 from typing import Any
 
-from middlewared.common.ports import PortDelegate
+from middlewared.common.ports import PortDelegate, PortEntry
 from middlewared.service import ValidationErrors
 
 from .utils import SYSTEM_PORTS, get_ip_version
@@ -66,24 +66,26 @@ async def ports_mapping(whitelist_namespace: str | None = None) -> defaultdict[i
     return ports
 
 
-async def validate_port(
+def _validate_single_port(
     schema: str,
     port: int,
-    bindip: str = '0.0.0.0',
-    whitelist_namespace: str | None = None,
-    raise_error: bool = False,
-) -> ValidationErrors | None:
+    bindip: str,
+    port_mapping: defaultdict[int, dict[str, Any]],
+) -> ValidationErrors:
+    """Validate a single port/bindip against a pre-computed port mapping.
+
+    Returns a ValidationErrors object (empty if no conflict found).
+    """
     verrors = ValidationErrors()
     bindip_version = get_ip_version(bindip)
     wildcard_ip = '0.0.0.0' if bindip_version == 4 else '::'
-    port_mapping = await ports_mapping(whitelist_namespace)
     port_attachment = port_mapping[port]
     if not any(
         get_ip_version(ip) == bindip_version for ip in port_attachment
     ) or (
         bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
     ):
-        return verrors if not raise_error else None
+        return verrors
 
     ip_errors: list[str] = []
     for index, port_detail in enumerate(port_attachment.items()):
@@ -112,8 +114,55 @@ async def validate_port(
         f'The port is being used by following services:\n{err}'
     )
 
+    return verrors
+
+
+async def validate_port(
+    schema: str,
+    port: int,
+    bindip: str = '0.0.0.0',
+    whitelist_namespace: str | None = None,
+    raise_error: bool = False,
+) -> ValidationErrors | None:
+    """Validate whether a single port/bindip combination is available.
+
+    When raise_error is True, raises ValidationErrors if the port conflicts
+    and returns None otherwise. When False, returns a ValidationErrors object
+    (which may be empty if no conflict).
+    """
+    port_mapping = await ports_mapping(whitelist_namespace)
+    verrors = _validate_single_port(schema, port, bindip, port_mapping)
     if raise_error:
         verrors.check()
         return None
     else:
         return verrors
+
+
+async def validate_ports(
+    schema: str,
+    ports: list[PortEntry],
+    whitelist_namespace: str | None = None,
+    raise_error: bool = False,
+) -> list[tuple[str, str, int]] | None:
+    """Validate multiple port/bindip combinations in a single call.
+
+    Calls ports_mapping() once and checks all entries against it.
+    Each entry is a dict with a required 'port' key and an optional
+    'bindip' key (defaults to '0.0.0.0').
+
+    When raise_error is True, raises a single ValidationErrors containing
+    all conflicts and returns None if there are none. When False, returns
+    a JSON-serializable list of (attribute, errmsg, errno) tuples.
+    """
+    port_mapping = await ports_mapping(whitelist_namespace)
+    all_verrors = ValidationErrors()
+    for entry in ports:
+        verrors = _validate_single_port(schema, entry['port'], entry.get('bindip', '0.0.0.0'), port_mapping)
+        all_verrors.extend(verrors)
+
+    if raise_error:
+        all_verrors.check()
+        return None
+    else:
+        return list(all_verrors)

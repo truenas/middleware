@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import pytest
 
 from unittest.mock import patch
@@ -527,3 +528,180 @@ async def test_port_validation_logic(port, bindip, should_work):
         else:
             with pytest.raises(ValidationErrors):
                 await port_service.validate_port('test', port, bindip, raise_error=True)
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_no_conflicts():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test', [{'port': 81, 'bindip': '0.0.0.0'}, {'port': 82, 'bindip': '0.0.0.0'}]
+        )
+        assert result == []
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_some_conflicts():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test', [{'port': 80, 'bindip': '0.0.0.0'}, {'port': 81, 'bindip': '0.0.0.0'}]
+        )
+        assert len(result) == 1
+        assert result[0][0] == 'test'
+        assert '80' in result[0][1]
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_all_conflicts():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test', [{'port': 80, 'bindip': '0.0.0.0'}, {'port': 22, 'bindip': '0.0.0.0'}]
+        )
+        assert len(result) == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_raise_error():
+    with get_port_service() as port_service:
+        with pytest.raises(ValidationErrors) as exc_info:
+            await port_service.validate_ports(
+                'test',
+                [{'port': 80, 'bindip': '0.0.0.0'}, {'port': 22, 'bindip': '0.0.0.0'}],
+                raise_error=True,
+            )
+        errors = list(exc_info.value)
+        assert len(errors) == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_raise_error_no_conflicts():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test',
+            [{'port': 81, 'bindip': '0.0.0.0'}],
+            raise_error=True,
+        )
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_whitelist_namespace():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test',
+            [{'port': 80, 'bindip': '0.0.0.0'}],
+            whitelist_namespace='system.general',
+        )
+        assert result == []
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_default_bindip():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports('test', [{'port': 80}])
+        assert len(result) == 1
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_empty_list():
+    with get_port_service() as port_service:
+        assert await port_service.validate_ports('test', []) == []
+        assert await port_service.validate_ports('test', [], raise_error=True) is None
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_mixed_ip_versions():
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test',
+            [
+                {'port': 80, 'bindip': '0.0.0.0'},   # Conflicts (WebUI on IPv4)
+                {'port': 80, 'bindip': '::'},          # No conflict (WebUI not on ::)
+                {'port': 8080, 'bindip': '::'},        # Conflicts (WebUI on ::)
+            ],
+        )
+        assert len(result) == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_serialized_tuple_structure():
+    """Each entry in the serialized result must be a (schema, errmsg, errno) tuple."""
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'my.schema', [{'port': 80, 'bindip': '0.0.0.0'}]
+        )
+        assert len(result) == 1
+        attr, errmsg, err_no = result[0]
+        assert attr == 'my.schema'
+        assert isinstance(errmsg, str)
+        assert err_no == errno.EINVAL
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_serialized_error_message_content():
+    """Serialized error message should contain the port, IP, and service title."""
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test', [{'port': 80, 'bindip': '0.0.0.0'}]
+        )
+        errmsg = result[0][1]
+        assert 'The port is being used by following services:' in errmsg
+        assert '"0.0.0.0:80"' in errmsg
+        assert 'WebUI Service' in errmsg
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_serialized_multiple_errors():
+    """Multiple conflicts should each produce a separate serialized entry with correct content."""
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'app.schema',
+            [
+                {'port': 80, 'bindip': '0.0.0.0'},
+                {'port': 22, 'bindip': '0.0.0.0'},
+                {'port': 59999, 'bindip': '0.0.0.0'},
+            ],
+        )
+        assert len(result) == 2
+        # First error is for port 80
+        assert result[0][0] == 'app.schema'
+        assert '"0.0.0.0:80"' in result[0][1]
+        assert 'WebUI Service' in result[0][1]
+        assert result[0][2] == errno.EINVAL
+        # Second error is for port 22
+        assert result[1][0] == 'app.schema'
+        assert '"0.0.0.0:22"' in result[1][1]
+        assert 'SSH Service' in result[1][1]
+        assert result[1][2] == errno.EINVAL
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_serialized_is_json_safe():
+    """Serialized result must contain only JSON-serializable types."""
+    import json
+    with get_port_service() as port_service:
+        result = await port_service.validate_ports(
+            'test',
+            [
+                {'port': 80, 'bindip': '0.0.0.0'},
+                {'port': 22, 'bindip': '0.0.0.0'},
+            ],
+        )
+        # Should not raise - proves the result is JSON serializable
+        serialized = json.dumps(result)
+        deserialized = json.loads(serialized)
+        # json.loads returns lists instead of tuples, so compare as lists
+        assert deserialized == [list(entry) for entry in result]
+
+
+@pytest.mark.asyncio
+async def test_batch_validate_ports_serialized_matches_old_endpoint():
+    """Serialized output from validate_ports should match what validate_port produces."""
+    with get_port_service() as port_service:
+        # Get error from old endpoint
+        old_verrors = await port_service.validate_port('test', 80, '0.0.0.0')
+        old_serialized = list(old_verrors)
+
+        # Get error from new endpoint
+        new_serialized = await port_service.validate_ports('test', [{'port': 80, 'bindip': '0.0.0.0'}])
+
+        assert old_serialized == new_serialized
