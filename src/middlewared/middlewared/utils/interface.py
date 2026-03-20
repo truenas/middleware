@@ -18,6 +18,14 @@ def get_default_interface() -> str | None:
                 with contextlib.suppress(ValueError):
                     if int(entry[3], 16) == (RTF_UP | RTF_GATEWAY):
                         return entry[0].strip()
+
+    with contextlib.suppress(FileNotFoundError):
+        with open('/proc/net/ipv6_route', 'r') as f:
+            for entry in f:
+                parts = entry.split()
+            if len(parts) >= 10:
+                if parts[0] == '0' * 32 and parts[1] == '00':
+                    return parts[9].strip()
     return None
 
 
