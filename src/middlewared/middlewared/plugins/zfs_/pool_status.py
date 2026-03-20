@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from middlewared.service import Service
+from middlewared.service import Service, private
 
 from .status_util import get_normalized_disk_info, get_zfs_vdev_disks, get_zpool_status
 
@@ -9,9 +9,9 @@ class ZPoolService(Service):
 
     class Config:
         namespace = 'zpool'
-        private = True
         cli_private = True
 
+    @private
     def resolve_block_path(self, path, should_resolve):
         if not should_resolve:
             return path
@@ -32,12 +32,14 @@ class ZPoolService(Service):
         except Exception:
             return path
 
+    @private
     def resolve_block_paths(self, paths, should_resolve):
         if not should_resolve:
             return paths
 
         return [self.resolve_block_path(i, should_resolve) for i in paths]
 
+    @private
     def status_impl(self, pool_name, vdev_type, members, **kwargs):
         real_paths = kwargs.setdefault('real_paths', False)
         final = dict()
@@ -66,6 +68,7 @@ class ZPoolService(Service):
 
         return final
 
+    @private
     def status(self, data: dict | None = None):
         """The equivalent of running 'zpool status' from the cli.
 

@@ -18,7 +18,7 @@ from typing import Any, TypedDict
 from websocket._exceptions import WebSocketBadStatusException
 
 from truenas_api_client import Client, ClientException, CALL_TIMEOUT
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
@@ -279,11 +279,9 @@ class RemoteClient:
 
 class FailoverService(Service):
 
-    class Config:
-        private = True
-
     CLIENT = RemoteClient()
 
+    @private
     async def remote_ip(self):
         node = await self.middleware.call('failover.node')
         if node == 'A':
@@ -294,6 +292,7 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
+    @private
     async def local_ip(self):
         node = await self.middleware.call('failover.node')
         if node == 'A':
@@ -304,6 +303,7 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid', errno.EHOSTUNREACH)
         return local
 
+    @private
     def call_remote(
         self,
         method: str,
@@ -339,13 +339,16 @@ class FailoverService(Service):
             else:
                 raise CallError(str(e), errno.EFAULT)
 
+    @private
     def get_remote_os_version(self):
         if self.CLIENT.remote_ip is not None:
             return self.CLIENT.get_remote_os_version()
 
+    @private
     def send_file(self, token, src, dst, options=None):
         self.CLIENT.send_file(token, src, dst, options)
 
+    @private
     async def ensure_remote_client(self):
         if self.CLIENT.remote_ip is not None:
             return
@@ -356,15 +359,19 @@ class FailoverService(Service):
         except CallError:
             pass
 
+    @private
     def remote_connected(self):
         return self.CLIENT.is_connected()
 
+    @private
     def remote_subscribe(self, name, callback):
         self.CLIENT.subscribe(name, callback)
 
+    @private
     def remote_on_connect(self, callback):
         self.CLIENT.register_connect(callback)
 
+    @private
     def remote_on_disconnect(self, callback):
         self.CLIENT.register_disconnect(callback)
 
