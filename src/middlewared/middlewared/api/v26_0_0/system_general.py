@@ -63,9 +63,12 @@ class SystemGeneralEntry(BaseModel):
     ds_auth: bool
     """Controls whether configured Directory Service users that are granted with Privileges are allowed to log in to \
     the Web UI or use TrueNAS API."""
+    ui_certificate_name: str | None
+    """Name of the certificate used for HTTPS access. `null` if no certificate is configured."""
 
     @classmethod
     def to_previous(cls, value):
+        value.pop('ui_certificate_name', None)
         if (cert_id := value.get('ui_certificate')) is not None:
             value['ui_certificate'] = {'id': cert_id}
         return value
@@ -79,6 +82,7 @@ class SystemGeneralUpdateArgs(SystemGeneralEntry, metaclass=ForUpdateMetaclass):
     created by the system."""
     wizardshown: Excluded = excluded_field()
     usage_collection_is_set: Excluded = excluded_field()
+    ui_certificate_name: Excluded = excluded_field()
     ui_restart_delay: int | None
     """Delay in seconds before restarting the UI after configuration changes. `null` to use default."""
     rollback_timeout: int | None
