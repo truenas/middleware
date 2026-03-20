@@ -62,8 +62,10 @@ class SystemGeneralService(ConfigService):
                 data['ui_' + key[3:]] = data.pop(key)
 
         if data['ui_certificate']:
+            data['ui_certificate_name'] = data['ui_certificate']['cert_name']
             data['ui_certificate'] = data['ui_certificate']['id']
         else:
+            data['ui_certificate_name'] = None
             data['ui_certificate'] = None
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
@@ -198,6 +200,7 @@ class SystemGeneralService(ConfigService):
         config = await self.config()
         if not config.pop('usage_collection_is_set'):
             config['usage_collection'] = None
+        config.pop('ui_certificate_name')
         new_config = config.copy()
         new_config.update(data)
 
