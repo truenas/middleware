@@ -6,7 +6,7 @@ from pathlib import Path
 
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
-from middlewared.service import Service, filterable_api_method
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
 from .utils import dmi_pci_slot_info
@@ -20,7 +20,7 @@ FC_HOST_PAT = re.compile('/sys/devices/(.*)/(?P<host>host.*)/fc_host/(?P=host)')
 class FCService(Service):
 
     class Config:
-        private = True
+        cli_private = True
         role_prefix = 'SHARING_ISCSI_TARGET'
 
     @api_method(
@@ -30,8 +30,8 @@ class FCService(Service):
     )
     async def capable(self):
         """
-        Returns True if the system is licensed for FIBRECHANNEL and contains
-        one or more Fibre Channel cards.  False otherwise.
+        Returns ``true`` if the system is licensed for FIBRECHANNEL and contains
+        one or more Fibre Channel cards. ``false`` otherwise.
         """
         if await self.middleware.call('system.is_enterprise'):
             if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
@@ -39,6 +39,7 @@ class FCService(Service):
                     return True
         return False
 
+    @private
     @cache
     def hba_present(self):
         """
@@ -115,6 +116,7 @@ class FCService(Service):
                         result.append(entry)
         return filter_list(result, filters, options)
 
+    @private
     async def fc_host_nport_wwpn_choices(self):
         """
         Return a list of physical N_Port WWPNs on this node.
@@ -143,6 +145,7 @@ class FCService(Service):
             except subprocess.CalledProcessError as e:
                 self.logger.error('Failed to load kernel module. Error %r', e)
 
+    @private
     async def load_kernel_module(self):
         """
         Load the Fibre Channel HBA kernel module.
@@ -150,6 +153,7 @@ class FCService(Service):
         if await self.middleware.call('fc.capable'):
             await self.middleware.run_in_thread(self.__load_kernel_module)
 
+    @private
     @cache
     def slot_info(self):
         """

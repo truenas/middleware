@@ -6,7 +6,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import Enclosure2Entry, Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult
-from middlewared.service import Service, filterable_api_method
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils.filter_list import filter_list
 
@@ -25,9 +25,9 @@ from .sysfs_disks import toggle_enclosure_slot_identifier
 class Enclosure2Service(Service):
 
     class Config:
-        cli_namespace = 'storage.enclosure2'
-        private = True
+        cli_private = True
 
+    @private
     def get_ses_enclosures(self):
         """This generates the "raw" list of enclosures detected on the system. It
         serves as the "entry" point to "enclosure2.query" and is foundational in
@@ -40,6 +40,7 @@ class Enclosure2Service(Service):
         """
         return get_ses_enclosures()
 
+    @private
     async def map_jbof(self, jbof_qry=None):
         """This method serves as an endpoint to easily be able to test
         the JBOF mapping logic specifically without having to call enclosure2.query
@@ -49,6 +50,7 @@ class Enclosure2Service(Service):
             jbof_qry = await self.middleware.call('jbof.query')
         return await map_jbof(jbof_qry)
 
+    @private
     def map_nvme(self):
         """This method serves as an endpoint to easily be able to test
         the nvme mapping logic specifically without having to call enclosure2.query
@@ -56,6 +58,7 @@ class Enclosure2Service(Service):
         """
         return map_nvme()
 
+    @private
     def get_original_disk_slot(self, slot, enc_info):
         """Get the original slot based on the `slot` passed to us via the end-user.
         NOTE: Most drives original slot will match their "mapped" slot because there
@@ -73,7 +76,7 @@ class Enclosure2Service(Service):
 
     @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
-        """Set enclosure bay number `slot` to `status` for `enclosure_id`."""
+        """Set enclosure bay number ``slot`` to ``status`` for ``enclosure_id``."""
         try:
             enc_info = self.middleware.call_sync(
                 'enclosure2.query', [['id', '=', data['enclosure_id']]], {'get': True}
@@ -131,11 +134,44 @@ class Enclosure2Service(Service):
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
 
+    @private
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 
     @filterable_api_method(roles=['ENCLOSURE_READ'], item=Enclosure2Entry)
     def query(self, filters, options):
+        """Query detected enclosures on TrueNAS hardware.
+
+        Returns an array of enclosure objects representing the head unit (controller)
+        and any attached JBODs or JBOFs. Each entry contains hardware identification,
+        physical layout information, and per-slot element details including disk
+        mappings and status.
+
+        .. note::
+            This method only returns results on TrueNAS-sold hardware.
+            An empty array is returned on generic or non-TrueNAS systems.
+
+        Results are sorted with controller enclosures first, then by enclosure ID.
+
+        Examples:
+
+        Query all enclosures::
+
+            []
+
+        Query only the controller (head unit)::
+
+            [
+                [["controller", "=", true]]
+            ]
+
+        Query a specific enclosure by ID::
+
+            [
+                [["id", "=", "5b0bd6d1a30714bf"]],
+                {"get": true}
+            ]
+        """
         enclosures = []
         if not self.middleware.call_sync('truenas.is_ix_hardware'):
             # this feature is only available on hardware that ix sells

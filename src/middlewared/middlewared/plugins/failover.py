@@ -157,7 +157,7 @@ class FailoverService(ConfigService):
         authorization_required=False,
     )
     def licensed(self):
-        """Checks whether this instance is licensed as a HA unit"""
+        """Checks whether this instance is licensed as an HA unit."""
         try:
             is_ha = self.middleware.call_sync('cache.get', HA_LICENSE_CACHE_KEY)
         except KeyError:
@@ -200,9 +200,10 @@ class FailoverService(ConfigService):
         """
         Returns the slot position in the chassis that
         the controller is located.
-          A - First node
-          B - Seconde Node
-          MANUAL - slot position in chassis could not be determined
+
+        * "A" - First node
+        * "B" - Seconde Node
+        * "MANUAL" - Slot position in chassis could not be determined
         """
         return (await self.ha_mode())[1]
 
@@ -224,13 +225,14 @@ class FailoverService(ConfigService):
         """
         Get the current HA status.
 
-        Returns:
-            MASTER
-            BACKUP
-            ELECTING
-            IMPORTING
-            ERROR
-            SINGLE
+        Returns one of:
+
+        * "MASTER"
+        * "BACKUP"
+        * "ELECTING"
+        * "IMPORTING"
+        * "ERROR"
+        * "SINGLE"
         """
         status = await self._status(app)
         if status != self.LAST_STATUS:
@@ -311,7 +313,7 @@ class FailoverService(ConfigService):
         roles=['FAILOVER_READ']
     )
     async def get_ips(self):
-        """Get a list of IPs for which the webUI can be accessed."""
+        """Get a list of IPs for which the Web UI can be accessed."""
         return await self.middleware.call('system.general.get_ui_urls')
 
     @api_method(
@@ -328,13 +330,13 @@ class FailoverService(ConfigService):
         is because the failover logic (on the other node) will ignore any failover "event"
         that comes in if failover has been administratively disabled. This immediately causes
         the HA system to go into a "faulted" state because the other node will get the VIPs
-        but it will not import the zpool and it will not start fenced. Only way out of that
-        situation is to manually fix things (import zpool, migrate VIPs, start fenced, etc).
+        but it will not import the zpool and it will not start ``fenced``. Only way out of that
+        situation is to manually fix things (import zpool, migrate VIPs, start ``fenced``, etc).
 
-        NOTE: The only "safe" way to "become passive" is to use the STCNITH method (similar to STONITH).
-        (i.e. Shoot The Current Node In The Head)
+        NOTE: The only "safe" way to "become passive" is to use the **STCNITH** method, or "Shoot The Current Node In
+        The Head" (similar to **STONITH**).
 
-        This ensures that the current node gets out of the way _completely_ so there is no chance
+        This ensures that the current node gets out of the way *completely* so there is no chance
         of the zpool being imported at the same time on both nodes (which can ultimately end in data corruption).
         """
         if self.middleware.call_sync('failover.config')['disabled'] is True:
@@ -382,11 +384,7 @@ class FailoverService(ConfigService):
         roles=['FAILOVER_WRITE'],
     )
     def sync_to_peer(self, options):
-        """
-        Sync database and files to the other controller.
-
-        `reboot` as true will reboot the other controller after syncing.
-        """
+        """Sync database and files to the other controller."""
         standby = ' standby controller.'
 
         self.logger.debug('Persisting interface link addresses')

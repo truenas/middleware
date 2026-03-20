@@ -36,7 +36,7 @@ class FailoverEntry(BaseModel):
 
 class FailoverSyncToPeer(BaseModel):
     reboot: bool = False
-    """Reboot the other controller."""
+    """Reboot the other controller after syncing."""
 
 
 class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
@@ -49,7 +49,7 @@ class FailoverUpgrade(BaseModel):
     version: str | None = None
     """Specific version to upgrade to or `null` for latest."""
     resume: bool = False
-    """Should be set to true if a previous call to this method returned a \
+    """Should be set to `true` if a previous call to this method returned a \
     `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed \
     with a warning and that warning is accepted. In that case, you also have \
     to set `resume_manual` to `true` if a previous call to this method was \

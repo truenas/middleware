@@ -6,7 +6,7 @@ from middlewared.api.current import (
     WebUIMainDashboardSysInfoArgs,
     WebUIMainDashboardSysInfoResult
 )
-from middlewared.service import Service
+from middlewared.service import Service, private
 from middlewared.utils import sw_info
 
 
@@ -14,8 +14,8 @@ class WebUIMainDashboardService(Service):
     class Config:
         namespace = 'webui.main.dashboard'
         cli_private = True
-        private = True
 
+    @private
     def sys_info_impl(self):
         dmi = self.middleware.call_sync('system.dmidecode_info')
         platform = 'Generic'
@@ -49,10 +49,8 @@ class WebUIMainDashboardService(Service):
         roles=['READONLY_ADMIN']
     )
     def sys_info(self):
-        """This endpoint was designed to be exclusively
-        consumed by the webUI team. This is what makes
-        up the System Information card on the main
-        dashboard after a user logs in.
+        """This endpoint was designed to be exclusively consumed by the webUI. This is what makes
+        up the System Information card on the main dashboard after a user logs in.
         """
         info = self.sys_info_impl()
         info['remote_info'] = None

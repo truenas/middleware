@@ -153,9 +153,9 @@ class ZPoolEntry(BaseModel):
 
 class ZPoolQuery(BaseModel):
     pool_names: list[str] | None = None
-    """Pool names to query. None queries all imported pools."""
+    """Pool names to query. `null` queries all imported pools."""
     properties: list[str] | None = None
-    """Property names to retrieve. None returns no properties."""
+    """Property names to retrieve. `null` returns no properties."""
     topology: bool = False
     """Include vdev topology."""
     scan: bool = False
