@@ -295,6 +295,9 @@ class ISCSIGlobalService(SystemServiceService):
         Returns whether iSCSI is configured to use DLM.
         """
         if await self.alua_enabled():
-            if (await self.config()).get('mode') in (ISCSIMODE.SCST_DLM_PRSTATE_SAVE, ISCSIMODE.SCST_DLM_PRSTATE_NOSAVE):
+            if (await self.config()).get('mode') in (
+                ISCSIMODE.SCST_DLM_PRSTATE_SAVE,
+                ISCSIMODE.SCST_DLM_PRSTATE_NOSAVE,
+            ):
                 return True
         return False
