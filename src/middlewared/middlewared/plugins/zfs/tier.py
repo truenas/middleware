@@ -1,10 +1,11 @@
 import errno
 import os
 
-import truenas_os
 import truenas_pylibzfs
-import truenas_zfsrewrited
-from truenas_zfsrewrited_client import RewriteClient, RewriteClientException
+from truenas_zfsrewrited_client import (
+    RewriteClient, RewriteClientException,
+    enum_jobs, get_info, get_last_job, get_resolved_failures,
+)
 from truenas_zfsrewrited_common import JSONRPCErrorCode, RewriteJobStatus
 
 from middlewared.api import api_method
@@ -53,33 +54,7 @@ class ZfsTierModel(sa.Model):
     enabled = sa.Column(sa.Boolean(), default=False)
     max_concurrent_jobs = sa.Column(sa.Integer(), default=2)
     min_available_space = sa.Column(sa.Integer(), default=0)
-
-
-def _build_status_entry(jinfo, dataset_name: str, job_uuid: str) -> dict:
-    """Build a ZfsTierRewriteJobStatusEntry dict from a raw truenas_zfsrewrited job info."""
-    stats = None
-    if jinfo.stats:
-        stats = {
-            'start_time': jinfo.stats.start_time,
-            'initial_time': jinfo.stats.initial_time,
-            'update_time': jinfo.stats.update_time,
-            'count_items': jinfo.stats.count_items,
-            'count_bytes': jinfo.stats.count_bytes,
-            'total_items': jinfo.stats.total_items,
-            'total_bytes': jinfo.stats.total_bytes,
-            'failures': jinfo.stats.failures,
-            'success': jinfo.stats.success,
-            'parent': jinfo.stats.parent,
-            'name': jinfo.stats.name,
-        }
-    return {
-        'tier_job_id': f'{dataset_name}@{job_uuid}',
-        'dataset_name': dataset_name,
-        'job_uuid': job_uuid,
-        'status': jinfo.state.name,
-        'stats': stats,
-        'error': jinfo.error,
-    }
+    special_class_metadata_reserve_pct = sa.Column(sa.Integer(), default=25)
 
 
 def _map_info_result(info) -> dict:
@@ -197,14 +172,12 @@ def get_dataset_tier_info_cached(
 
         tier_job = None
         try:
-            job_id = truenas_zfsrewrited.dataset_last_job_id(hdl.name)
-            dataset_name, _, job_uuid = job_id.partition('@')
-            jinfo = truenas_zfsrewrited.get_job_info(dataset_name, job_uuid)
+            last = get_last_job(hdl.name)
             tier_job = {
-                'tier_job_id': job_id,
-                'dataset_name': dataset_name,
-                'job_uuid': job_uuid,
-                'status': jinfo.state.name,
+                'tier_job_id': f'{last.dataset_name}@{last.job_uuid}',
+                'dataset_name': last.dataset_name,
+                'job_uuid': last.job_uuid,
+                'status': last.status,
             }
         except KeyError:
             pass
@@ -228,12 +201,11 @@ class ZfsTierRewriteJobStatusEventSource(TypedEventSource[ZfsTierRewriteJobStatu
     def _poll_job_info(self, dataset_name: str) -> dict | None:
         """Return a status entry for the given dataset's active job, or None if not found."""
         try:
-            job_id = truenas_zfsrewrited.dataset_last_job_id(dataset_name)
+            last = get_last_job(dataset_name)
         except KeyError:
             return None
-        ds_name, _, job_uuid = job_id.partition('@')
-        jinfo = truenas_zfsrewrited.get_job_info(ds_name, job_uuid)
-        return _build_status_entry(jinfo, ds_name, job_uuid)
+        info = get_info(last.dataset_name, last.job_uuid)
+        return _map_info_result(info)
 
     def run_sync(self):
         dataset_name = self.typed_arg.dataset_name
@@ -270,9 +242,9 @@ class ZfsTierRewriteJobQueryEventSource(TypedEventSource[ZfsTierRewriteJobQueryE
 
         while not self._cancel_sync.is_set():
             current: dict[str, str] = {}
-            for job in truenas_zfsrewrited.iter_jobs():
-                tier_job_id = f'{job.dataset_name}@{job.uuid}'
-                current[tier_job_id] = job.state.name
+            for job in enum_jobs():
+                tier_job_id = f'{job.dataset_name}@{job.job_uuid}'
+                current[tier_job_id] = job.status
 
             for tier_job_id, status in current.items():
                 prev = known.get(tier_job_id)
@@ -367,14 +339,14 @@ class ZfsTierService(ConfigService):
         """Query rewrite jobs, optionally filtered by status."""
         status_filter = set(data.get('status') or [])
         jobs = []
-        for job in truenas_zfsrewrited.iter_jobs():
-            if status_filter and job.state.name not in status_filter:
+        for job in enum_jobs():
+            if status_filter and job.status not in status_filter:
                 continue
             jobs.append({
-                'tier_job_id': f'{job.dataset_name}@{job.uuid}',
+                'tier_job_id': f'{job.dataset_name}@{job.job_uuid}',
                 'dataset_name': job.dataset_name,
-                'job_uuid': job.uuid,
-                'status': job.state.name,
+                'job_uuid': job.job_uuid,
+                'status': job.status,
             })
         return filter_list(jobs, data.get('query-filters') or [], data.get('query-options') or {})
 
@@ -393,56 +365,18 @@ class ZfsTierService(ConfigService):
     async def rewrite_job_failures(self, data):
         """List files that failed to be rewritten during a rewrite job."""
         dataset_name, job_uuid = self._parse_tier_job_id(data['tier_job_id'])
-        client = RewriteClient()
         try:
-            result = client.get_failures(dataset_name, job_uuid)
+            resolved = get_resolved_failures(dataset_name, job_uuid)
         except Exception as e:
             raise CallError(f'Failed to get job failures: {e}')
 
-        mountpoint = os.path.join('/mnt', dataset_name)
-        try:
-            mount_id = truenas_os.statx(mountpoint, mask=truenas_os.STATX_MNT_ID).stx_mnt_id
-            mount_fd = os.open(mountpoint, os.O_RDONLY)
-        except Exception:
-            self.logger.warning('%s: failed to open mountpoint %r for file handle resolution; '
-                                'path will be null for all failures', dataset_name, mountpoint, exc_info=True)
-            mount_id = None
-            mount_fd = None
-
         failures = []
-        try:
-            for f in result.failures:
-                # error entry stores filename, but not full path info. We reconstruct
-                # the actual path based on fhandle. Primary reason why it would fail to open
-                # is user deleting file after we failed.
-                eff_errno = errno.EACCES if f.errno == errno.EBADF else f.errno
-                path = None
-                if mount_fd is not None:
-                    try:
-                        # f.handle is a fixed-size 136-byte buffer; the first 4 bytes are
-                        # struct file_handle::handle_bytes (actual data length). Trim to
-                        # 8-byte header + actual data so truenas_os doesn't reject it.
-                        # fhandle is connectable, which means it has enough info to rebuild
-                        # dentry tree and get the actual path via readlink.
-                        actual_size = int.from_bytes(f.handle[:4], 'little')
-                        trimmed_handle = f.handle[:8 + actual_size]
-                        fh = truenas_os.fhandle(handle_bytes=trimmed_handle, mount_id=mount_id)
-                        fd = fh.open(mount_fd, os.O_RDONLY | os.O_PATH)
-                        try:
-                            path = os.readlink(f'/proc/self/fd/{fd}')
-                        finally:
-                            os.close(fd)
-                    except Exception:
-                        self.logger.warning('%s: failed to resolve path for failed file %r',
-                                            dataset_name, f.name, exc_info=True)
-                failures.append({
-                    'filename': f.name,
-                    'error': {'errno': eff_errno, 'strerror': os.strerror(eff_errno)},
-                    'path': path,
-                })
-        finally:
-            if mount_fd is not None:
-                os.close(mount_fd)
+        for f in resolved:
+            failures.append({
+                'filename': f.filename,
+                'error': {'errno': f.errno, 'strerror': f.strerror},
+                'path': f.path,
+            })
 
         return filter_list(failures, data.get('query-filters') or [], data.get('query-options') or {})
 
@@ -636,7 +570,7 @@ class ZfsTierService(ConfigService):
         """
         Efficiently returns {dataset_name: TierInfo|None} for multiple datasets.
         Checks license and enabled flag once; groups by pool for a single pool
-        property check; calls truenas_zfsrewrited.iter_jobs() once.
+        property check.
         """
         config = self.call_sync2(self.s.zfs.tier.config)
         if not config['enabled']:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-import truenas_zfsrewrited
+from truenas_zfsrewrited_client import enum_jobs, get_info
 from truenas_zfsrewrited_common import RewriteJobStatus
 
 from middlewared.alert.base import (
@@ -79,21 +79,21 @@ class TierJobAlertSource(ThreadedAlertSource):
         alerts = []
 
         try:
-            for job in truenas_zfsrewrited.iter_jobs():
-                tier_job_id = f'{job.dataset_name}@{job.uuid}'
+            for job in enum_jobs():
+                tier_job_id = f'{job.dataset_name}@{job.job_uuid}'
 
-                if job.state == RewriteJobStatus.ERROR:
+                if job.status == RewriteJobStatus.ERROR:
                     try:
-                        jinfo = truenas_zfsrewrited.get_job_info(job.dataset_name, job.uuid)
-                        error = jinfo.error or ''
+                        info = get_info(job.dataset_name, job.job_uuid)
+                        error = info.error or ''
                     except Exception:
                         error = ''
                     alerts.append(Alert(TierJobErrorAlert(tier_job_id=tier_job_id, error=error)))
 
-                elif job.state == RewriteJobStatus.COMPLETE:
+                elif job.status == RewriteJobStatus.COMPLETE:
                     try:
-                        jinfo = truenas_zfsrewrited.get_job_info(job.dataset_name, job.uuid)
-                        stats = jinfo.stats
+                        info = get_info(job.dataset_name, job.job_uuid)
+                        stats = info.stats
                     except Exception:
                         stats = None
 

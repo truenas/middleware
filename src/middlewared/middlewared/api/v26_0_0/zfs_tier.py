@@ -45,6 +45,12 @@ class ZfsTierEntry(BaseModel):
     min_available_space: Annotated[int, Field(ge=0)]
     """If available space on the dataset falls below this value (GiB), any active rewrite on \
     that dataset is aborted. Set to 0 to disable the check."""
+    special_class_metadata_reserve_pct: Annotated[int, Field(ge=10, le=30)]
+    """Percentage of PERFORMANCE tier space reserved for metadata. Metadata is always written \
+    to the PERFORMANCE tier, but data is only placed there while allocated space stays below \
+    `100 - special_class_metadata_reserve_pct` percent of total PERFORMANCE tier capacity. \
+    Beyond that threshold data falls back to the REGULAR tier. Corresponds to the ZFS kernel \
+    parameter `zfs_special_class_metadata_reserve_pct` (default: 25)."""
 
 
 @single_argument_args('zfs_tier_update')

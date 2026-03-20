@@ -7,7 +7,7 @@ def render(service, middleware):
         max_concurrent_jobs=config['max_concurrent_jobs'],
         reporting_write_interval=60,
         rewrite_chunk_size=1024,
-        reporting_callback_interval=100,
+        reporting_callback_interval=1,
         max_used_percent=80,
     )
     return generate_config(cfg)
