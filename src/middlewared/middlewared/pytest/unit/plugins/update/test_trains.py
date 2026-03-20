@@ -59,6 +59,41 @@ async def test_update_get_trains(manifest, trains, result):
         "TrueNAS-SCALE-Fangtooth",
         ["TrueNAS-SCALE-Fangtooth"],
     ),
+    # There's an unstable train between the current train and the next stable train
+    (
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Goldeye": {},
+                                          "TrueNAS-26-Nightlies": {"stable": False},
+                                          "TrueNAS-26": {}}}),
+        "TrueNAS-SCALE-Goldeye",
+        ["TrueNAS-26", "TrueNAS-26-Nightlies", "TrueNAS-SCALE-Goldeye"],
+    ),
+    # Current train is the last stable train
+    (
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Goldeye": {},
+                               "TrueNAS-26-Nightlies": {"stable": False},
+                               "TrueNAS-26-BETA": {"stable": False}}}),
+        "TrueNAS-SCALE-Goldeye",
+        ["TrueNAS-26-BETA", "TrueNAS-26-Nightlies", "TrueNAS-SCALE-Goldeye"],
+    ),
+    # There're two unstable train between the current train and the next stable train
+    (
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Goldeye": {},
+                               "TrueNAS-26-Nightlies": {"stable": False},
+                               "TrueNAS-26-BETA": {"stable": False},
+                               "TrueNAS-26": {}}}),
+        "TrueNAS-SCALE-Goldeye",
+        ["TrueNAS-26", "TrueNAS-26-BETA", "TrueNAS-26-Nightlies", "TrueNAS-SCALE-Goldeye"],
+    ),
+    # Should stop on the first stable train
+    (
+        Trains.model_validate({"trains": {"TrueNAS-SCALE-Goldeye": {},
+                               "TrueNAS-26-Nightlies": {"stable": False},
+                               "TrueNAS-26-BETA": {"stable": False},
+                               "TrueNAS-26": {},
+                               "TrueNAS-27": {}}}),
+        "TrueNAS-SCALE-Goldeye",
+        ["TrueNAS-26", "TrueNAS-26-BETA", "TrueNAS-26-Nightlies", "TrueNAS-SCALE-Goldeye"],
+    ),
 ])
 async def test_update_get_next_trains_names(trains, current_train_name, result):
     middleware = Middleware()
