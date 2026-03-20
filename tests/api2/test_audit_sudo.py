@@ -8,6 +8,7 @@ import pytest
 
 from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.time_utils import utc_now
 
@@ -145,7 +146,17 @@ def initialize_for_sudo_tests(username, password, data):
 
 
 @pytest.fixture(scope='module')
-def sudo_to_user():
+def enable_sudo_auditing():
+    with product_type():
+        call('etc.generate', 'user')
+        try:
+            yield
+        finally:
+            call('etc.generate', 'user')
+
+
+@pytest.fixture(scope='module')
+def sudo_to_user(enable_sudo_auditing):
     with initialize_for_sudo_tests(SUDO_TO_USER, SUDO_TO_PASSWORD, {}) as u:
         yield u
 
@@ -307,7 +318,7 @@ class TestSudoAllowedNonePasswd(SudoTests, SudoPasswd):
         with initialize_for_sudo_tests(self.USER, self.PASSWORD, {}) as u:
             yield u
 
-    def test_audit_query(self, create_user):
+    def test_audit_query(self, enable_sudo_auditing, create_user):
         self.allowed_none()
 
 
@@ -323,7 +334,7 @@ class TestSudoAllowedSomeNoPasswd(SudoTests, SudoNoPasswd):
                                        {'sudo_commands_nopasswd': [ECHO_COMMAND]}) as u:
             yield u
 
-    def test_audit_query(self, create_user):
+    def test_audit_query(self, enable_sudo_auditing, create_user):
         self.allowed_some()
 
 
@@ -339,5 +350,5 @@ class TestSudoAllowedSomePasswd(SudoTests, SudoPasswd):
                                        {'sudo_commands': [ECHO_COMMAND]}) as u:
             yield u
 
-    def test_audit_query(self, create_user):
+    def test_audit_query(self, enable_sudo_auditing, create_user):
         self.allowed_some()
