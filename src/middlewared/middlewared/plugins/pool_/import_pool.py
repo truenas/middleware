@@ -291,6 +291,18 @@ class PoolService(Service):
         job.set_progress(70, 'Resetting mountpoints')
         await self.reset_mountpoint_recursively(vol_name)
 
+        if await self.middleware.call('failover.licensed'):
+            job.set_progress(75, 'Scheduling disk cache update on standby controller')
+            try:
+                await self.middleware.call(
+                    'failover.call_remote',
+                    'disk.retaste',
+                    [],
+                    {'raise_connect_error': False}
+                )
+            except Exception:
+                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+
         job.set_progress(80, 'Re-enabling services')
 
         for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
