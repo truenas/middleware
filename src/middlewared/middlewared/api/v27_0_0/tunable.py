@@ -4,8 +4,11 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, exclud
 
 
 __all__ = [
-    "TunableEntry", "TunableCreateArgs", "TunableCreateResult", "TunableDeleteArgs", "TunableDeleteResult",
-    "TunableUpdateArgs", "TunableUpdateResult", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
+    "TunableCreate", "TunableEntry", "TunableUpdate",
+    "TunableCreateArgs", "TunableCreateResult",
+    "TunableDeleteArgs", "TunableDeleteResult",
+    "TunableUpdateArgs", "TunableUpdateResult",
+    "TunableTunableTypeChoices", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
 ]
 
 

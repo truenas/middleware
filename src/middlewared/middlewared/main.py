@@ -108,6 +108,7 @@ from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.plugins.tunable import TunableService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
@@ -205,6 +206,7 @@ class ServiceContainer(BaseServiceContainer):
         self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
         self.truesearch = TrueSearchService(middleware)
+        self.tunable = TunableService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
         self.vm = VMService(middleware)

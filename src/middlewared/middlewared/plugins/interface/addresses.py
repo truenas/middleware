@@ -169,9 +169,7 @@ def configure_addresses_impl(
         or any(alias["alias_version"] == 6 for alias in aliases)
     )
     autoconf = "1" if has_ipv6 else "0"
-    ctx.middleware.call_sync(
-        "tunable.set_sysctl", f"net.ipv6.conf.{name}.autoconf", autoconf
-    )
+    ctx.call_sync2(ctx.s.tunable.set_sysctl, f"net.ipv6.conf.{name}.autoconf", autoconf)
 
     # Add addresses in database but not configured
     for addr in addrs_database - addrs_configured:
