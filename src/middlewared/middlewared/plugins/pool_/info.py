@@ -7,7 +7,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.service import private, Service, ValidationError
-from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
+from middlewared.plugins.zpool import get_zpool_disks_impl, is_upgraded_impl
 
 from truenas_pylibzfs import ZFSException, ZFSError
 
@@ -158,12 +158,8 @@ class PoolService(Service):
             )
 
         pname = pool[0]['vol_name']
-        is_upgraded = True
         try:
-            for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
-                if info.state not in ('ENABLED', 'ACTIVE'):
-                    is_upgraded = False
-                    break
+            return is_upgraded_impl(tls.lzh, pname)
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 raise ValidationError(
@@ -172,4 +168,3 @@ class PoolService(Service):
                     errno.ENOENT
                 )
             raise
-        return is_upgraded
