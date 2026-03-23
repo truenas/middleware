@@ -145,7 +145,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
        next check cycle runs on the new MASTER.
     """
 
-    def flatten_topology(self, topology):
+    def flatten_topology(self, topology: dict | None) -> list[dict]:
         """Walk a pool topology tree and return all leaf disk vdevs.
 
         Iteratively traverses all vdev categories (data, stripe, cache,
@@ -163,7 +163,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             A list of disk vdev dicts, each containing at minimum
             ``name``, ``guid``, ``state``, and ``children`` keys.
         """
-        disks = []
+        disks: list[dict] = []
         if not topology:
             return disks
 
@@ -179,7 +179,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             stack.extend(vdev["children"])
         return disks
 
-    def handle_unhealthy(self, pool, disks_in_db):
+    def handle_unhealthy(self, pool: dict, disks_in_db: list[dict]) -> list[Alert[Any]]:
         """Check for non-ONLINE disks in the pool topology and build
         a detailed alert listing each bad disk.
 
@@ -243,7 +243,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             )
         return alerts
 
-    def handle_upgraded(self, pool):
+    def handle_upgraded(self, pool: dict) -> list[Alert[Any]]:
         """Check whether the pool has ZFS feature flags available for upgrade.
 
         A pool with ``status_code == "FEAT_DISABLED"`` has features that
@@ -268,7 +268,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             alerts.append(Alert(ZpoolUpgradedAlert(pool["name"])))
         return alerts
 
-    def handle_scrub(self, pool):
+    def handle_scrub(self, pool: dict) -> list[Alert[Any]]:
         """Check whether a scrub has been paused for an unreasonable duration.
 
         ZFS allows pausing an in-progress scrub. If a scrub remains
@@ -293,7 +293,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             alerts.append(Alert(ScrubPausedAlert(pool["name"])))
         return alerts
 
-    def handle_boot_pool(self):
+    def handle_boot_pool(self) -> list[Alert[Any]]:
         """Check the boot pool for health, capacity, and scrub status.
 
         The boot pool is always imported on every controller in both
@@ -337,7 +337,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
             alerts.extend(self.handle_scrub(pool))
         return alerts
 
-    def handle_capacity(self, pool):
+    def handle_capacity(self, pool: dict) -> list[Alert[Any]]:
         """Check pool space usage against tiered alert thresholds.
 
         Evaluates capacity against three thresholds in descending order:
@@ -408,7 +408,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
 
         return alerts
 
-    def check_sync(self):
+    def check_sync(self) -> list[Alert[Any]]:
         """Main entry point called by the alert system on each check cycle.
 
         Execution is split into two phases:
@@ -449,7 +449,7 @@ class ZpoolsAlertSource(ThreadedAlertSource):
         if self.middleware.call_sync("system.is_enterprise"):
             if self.middleware.call_sync("failover.in_progress"):
                 return alerts
-            elif self.middleware.call_sync("failover.status") != "MASTER":
+            elif self.middleware.call_sync("failover.status") not in ("MASTER", "SINGLE"):
                 return alerts
 
         zpools_in_db = [

@@ -44,7 +44,6 @@ from middlewared.alert.source import (  # noqa: F401
     rsync,
     sata_dom_wear,
     scheduled_reboot,
-    scrub_paused,
     security,
     sensors,
     sharing_tasks,
@@ -63,7 +62,5 @@ from middlewared.alert.source import (  # noqa: F401
     usb_storage,
     vmware_login,
     vmware_snapshot,
-    volume_status,
     web_ui_root_login,
-    zpool_capacity,
 )
