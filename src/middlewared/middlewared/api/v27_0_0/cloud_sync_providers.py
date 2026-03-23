@@ -174,6 +174,9 @@ class S3CredentialsModel(BaseModel):
     """S3 provider. See `cloudsync.credentials.s3_provider_choices` for possible values."""
     force_path_style: bool = True
     """If true use path style access if false use virtual hosted style."""
+    sign_accept_encoding: bool = True
+    """Set this to `false` if your S3 server is behind a proxy that modified HTTP headers and you are experiencing \
+    `SignatureDoesNotMatch` error."""
 
 
 class SFTPCredentialsModel(BaseModel):
