@@ -93,7 +93,34 @@ async def test_update_get_trains(manifest, trains, result):
     ),
 ])
 async def test_update_get_next_trains_names(trains, current_train_name, result):
-    service = UpdateService(Mock())
+    middleware = Middleware()
+    middleware["update.config"] = Mock(return_value={"profile": "DEVELOPER"})
+
+    service = UpdateService(middleware)
     service.get_current_train_name = AsyncMock(return_value=current_train_name)
 
     assert await service.get_next_trains_names(trains) == result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("profile,trains", [
+    ("DEVELOPER", ["TrueNAS-26", "TrueNAS-26-BETA", "TrueNAS-26-Nightlies", "TrueNAS-SCALE-Goldeye"]),
+    ("EARLY_ADOPTER", ["TrueNAS-26", "TrueNAS-26-BETA", "TrueNAS-SCALE-Goldeye"]),
+    ("GENERAL", ["TrueNAS-26", "TrueNAS-SCALE-Goldeye"]),
+    ("MISSION_CRITICAL", ["TrueNAS-SCALE-Goldeye"]),
+])
+async def test_update_get_next_trains_names_skips_trains(profile, trains):
+    middleware = Middleware()
+    middleware["update.config"] = Mock(return_value={"profile": profile})
+
+    service = UpdateService(middleware)
+    service.get_current_train_name = AsyncMock(return_value="TrueNAS-SCALE-Goldeye")
+
+    assert await service.get_next_trains_names({
+        "trains": {
+            "TrueNAS-SCALE-Goldeye": {},
+            "TrueNAS-26-Nightlies": {"max_profile": "DEVELOPER", "stable": False},
+            "TrueNAS-26-BETA": {"max_profile": "EARLY_ADOPTER", "stable": False},
+            "TrueNAS-26": {"max_profile": "GENERAL"},
+        }
+    }) == trains

@@ -8,6 +8,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import MANIFEST_FILE, UPDATE_TRAINS_FILE_NAME
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.utils.functools_ import cache
+from .profile_ import UpdateProfiles
 from .utils import scale_update_server
 
 
@@ -89,6 +90,8 @@ class UpdateService(Service):
         Returns the names of trains to which this system can be upgraded, listed in descending order (most recent
         train first).
 
+        Only trains that can potentially contain a release with a configured profile level (or higher) are returned.
+
         Currently, the system can be upgraded to any train between the current train and the next stable train.
         Skipping stable trains is not allowed. If none of the next trains include a version that matches the requested
         update profile, the current train will also be considered.
@@ -100,15 +103,26 @@ class UpdateService(Service):
         except ValueError:
             raise CallError(f'Current train {current_train_name!r} is not present in the update trains list') from None
 
+        profile = UpdateProfiles[(await self.middleware.call('update.config'))['profile']]
+
         next_trains_names = []
         for next_train_name in trains_names[index + 1:]:
-            next_trains_names.append(next_train_name)
-            if trains['trains'][next_train_name].get('stable', True):
+            train = trains['trains'][next_train_name]
+
+            try:
+                train_max_profile = UpdateProfiles[train.get('max_profile', 'DEVELOPER')]
+            except KeyError:
+                train_max_profile = UpdateProfiles.DEVELOPER
+
+            if train_max_profile >= profile:
+                next_trains_names.append(next_train_name)
+
+            if train.get('stable', True):
                 # When a stable train is found, stop. Skipping stable trains is not allowed.
                 # All trains are stable by default
                 break
 
-        # Trains came in in ascending order. The result should be in descending order.
+        # Trains came in ascending order. The result should be in descending order.
         next_trains_names = list(reversed(next_trains_names))
 
         next_trains_names.append(current_train_name)
