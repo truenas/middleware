@@ -92,7 +92,7 @@ class EnclosureStatusAlertSource(AlertSource):
         return len(s) >= 2 and s[0].isdigit() and s[-1] == 'V'
 
     @staticmethod
-    def _zero_fail_other_rail_is_healthy(descriptor: str, current_sensors: dict) -> bool:
+    def _zero_fail_other_rail_is_healthy(descriptor: str, current_sensors: dict[Any, dict[str, Any]]) -> bool:
         """Return True if another current sensor for the same component on a different
         voltage rail shows healthy current, indicating the component is powered.
 
