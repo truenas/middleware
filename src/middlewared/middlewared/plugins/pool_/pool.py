@@ -16,7 +16,6 @@ from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.sed import SEDStatus
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -186,7 +185,7 @@ class PoolService(CRUDService):
             if all_sed_pool and not sed_cache:
                 sed_enabled = await self.middleware.call('system.sed_enabled')
                 locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
-                    ['sed_status', '=', SEDStatus.LOCKED]
+                    ['sed_status', '=', 'LOCKED']
                 ], {'extra': {'sed_status': True}})} if sed_enabled else set()
                 sed_cache.update({
                     'sed_enabled': sed_enabled,
