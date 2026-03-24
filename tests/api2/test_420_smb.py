@@ -132,7 +132,7 @@ def test__basic_smb_ops(enable_smb1, enable_guest, proto, runas):
 
 @pytest.mark.parametrize('path_suffix', ['%m/%u', '%u', '%m'])
 def test__legacy_share_path_suffix_lowercase_vars(smb_info, path_suffix):
-    """ Verify that LEGACY_SHARE accepts various samba macros. """.
+    """ Verify that LEGACY_SHARE accepts various samba macros. """
     reset_systemd_svcs('smbd')
     smb_id = smb_info['share']['id']
     share = call('sharing.smb.update', smb_id, {
