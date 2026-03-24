@@ -5,6 +5,7 @@
 
 import os
 
+import truenas_pylicensed
 from licenselib.license import License
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -72,8 +73,8 @@ class SystemService(Service):
         return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
 
     @private
-    async def sed_enabled(self):
-        return await self.is_enterprise() and await self.feature_enabled('SED')
+    def sed_enabled(self):
+        return truenas_pylicensed.is_feature_licensed('SED')
 
     @api_method(
         SystemVersionShortArgs,

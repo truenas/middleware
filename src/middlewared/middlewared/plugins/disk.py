@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     DiskEntry, DiskUpdateArgs, DiskUpdateResult, DiskQueryAddedEvent, DiskQueryChangedEvent, DiskQueryRemovedEvent,
@@ -5,7 +7,7 @@ from middlewared.api.current import (
 from middlewared.service import filterable_api_method, private, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductType
-from middlewared.utils.sed import sed_status
+from middlewared.utils.disks_.disk_class import DiskEntry as DiskEntryObj
 
 
 class DiskModel(sa.Model):
@@ -108,7 +110,11 @@ class DiskService(CRUDService):
             disk['real_name'] = context['identifier_to_name'].get(disk['identifier'])
 
         if context['sed_status']:
-            disk['sed_status'] = await sed_status(disk['name']) if disk['sed'] else None
+            if disk['sed']:
+                entry = DiskEntryObj(name=disk['name'], devpath=f'/dev/{disk["name"]}')
+                disk['sed_status'] = await asyncio.to_thread(entry.sed_status)
+            else:
+                disk['sed_status'] = None
 
         return disk
 
