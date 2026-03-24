@@ -1,20 +1,13 @@
+import asyncio
 import errno
-import re
-import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult, DiskResetSedArgs, DiskResetSedResult,
 )
 from middlewared.service import CallError, Service, private, ValidationErrors
-from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.sed import is_sed_disk, revert_sed_with_psid, SEDStatus, unlock_impl
-
-
-RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
-RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
-RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
+from middlewared.utils.disks_.disk_class import DiskEntry
 
 
 class DiskService(Service):
@@ -27,12 +20,13 @@ class DiskService(Service):
         It will return tuple true if it succeeded, false otherwise with the other value being disk name
         """
         password = disk['passwd'] or disk['global_passwd']
-        if disk['sed_status'] is SEDStatus.UNINITIALIZED:
-            return await self.sed_initial_setup(disk['real_name'], password) == 'SUCCESS', disk['name']
-        elif disk['sed_status'] is SEDStatus.LOCKED:
-            unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
-            # parse unlock info returns string if it failed to unlock and none otherwise
-            return await self.parse_unlock_info(unlock_info) is None, disk['name']
+        entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
+        if disk['sed_status'] == 'UNINITIALIZED':
+            result = await asyncio.to_thread(entry.sed_initial_setup, password)
+            return result == 'SUCCESS', disk['name']
+        elif disk['sed_status'] == 'LOCKED':
+            success, error = await asyncio.to_thread(entry.sed_unlock, password)
+            return success, disk['name']
 
         return False, disk['name']
 
@@ -62,9 +56,9 @@ class DiskService(Service):
         for disk in disks_to_check:
             if validate_all_disks_are_sed and disk['sed'] is False:
                 non_sed_disks.append(disk['name'])
-            if disk['sed_status'] in [SEDStatus.UNINITIALIZED, SEDStatus.LOCKED]:
+            if disk['sed_status'] in ['UNINITIALIZED', 'LOCKED']:
                 to_setup_sed_disks.append(disk)
-            elif disk['sed_status'] == SEDStatus.FAILED:
+            elif disk['sed_status'] == 'FAILED':
                 failed_sed_status_disks.append(disk['name'])
 
         if non_sed_disks:
@@ -100,10 +94,10 @@ class DiskService(Service):
                 if success is False:
                     failed_setup_disks.append(disk_name)
 
-            if failed_sed_status_disks:
+            if failed_setup_disks:
                 verrors.add(
                     schema_name,
-                    f'Failed to setup {", ".join(failed_sed_status_disks)!r} SED disk(s).'
+                    f'Failed to setup {", ".join(failed_setup_disks)!r} SED disk(s).'
                 )
                 verrors.check()
 
@@ -115,7 +109,8 @@ class DiskService(Service):
         # TODO: See if we should have validation or force flag in place to see if a disk
         #  is part of a zfs pool and to safely then allow resetting it
         disk, verrors = await self.common_sed_validation('disk_reset_sed', options)
-        success, message = await revert_sed_with_psid(disk['real_name'], options['psid'])
+        entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
+        success, message = await asyncio.to_thread(entry.sed_factory_reset, options['psid'])
         if not success:
             raise CallError(f'Failed to reset SED disk {disk["name"]!r} ({message})')
 
@@ -161,7 +156,7 @@ class DiskService(Service):
         """
         Setup specified `options.name` SED disk.
         """
-        disk, verrors = await self.common_sed_validation('disk_sed_setup', options, SEDStatus.UNINITIALIZED)
+        disk, verrors = await self.common_sed_validation('disk_sed_setup', options, 'UNINITIALIZED')
         password = options.get('password') or disk['passwd'] or await self.middleware.call(
             'system.advanced.sed_global_password'
         )
@@ -170,7 +165,8 @@ class DiskService(Service):
 
         verrors.check()
 
-        status = await self.sed_initial_setup(disk['real_name'], password)
+        entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
+        status = await asyncio.to_thread(entry.sed_initial_setup, password)
         if status != 'SUCCESS':
             raise CallError(f'Failed to set up SED disk {disk["name"]!r} (got {status!r} status)')
 
@@ -188,7 +184,7 @@ class DiskService(Service):
         """
         Unlock specified `options.name` SED disk.
         """
-        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, SEDStatus.LOCKED)
+        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, 'LOCKED')
         global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
         password = options.get('password') or disk['passwd'] or global_sed_password
         if not password:
@@ -197,17 +193,17 @@ class DiskService(Service):
             )
         verrors.check()
 
-        unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
-        if failed_err_msg := await self.parse_unlock_info(unlock_info, True):
-            raise CallError(f'Failed to unlock SED disk {disk["name"]!r} (got {failed_err_msg!r})', errno.EACCES)
+        entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
+        success, error = await asyncio.to_thread(entry.sed_unlock, password)
+        if not success:
+            raise CallError(f'Failed to unlock SED disk {disk["name"]!r} ({error!r})', errno.EACCES)
 
-        # This means that we have unlocked the SED disk
         # After discussion with William, the idea behind this method is to cater for those cases
         # where user inserted a new disk perhaps and it is locked and it's password differs from
-        # the global pasword
+        # the global password.
         # In such a case, we would like to update the password in the database to reflect that case
         # but that would only be done if the password differs from the disk entry and the global sed password
-        # entry
+        # entry.
         if options.get('password'):
             # If this is set, it means that this was used to unlock the disk and it worked
             # Let's just see now that if it is same as disk pass or the global pass
@@ -248,55 +244,13 @@ class DiskService(Service):
         for disk in await self.middleware.call(
             'disk.query', filters, {'extra': {'passwords': True, 'real_names': True}}
         ):
-            path = f'/dev/{disk["real_name"]}'
+            name = disk['real_name']
             # user can specify a per-disk password and/or a global password
             # we default to using the per-disk password with fallback to global
             passwd = disk['passwd'] if disk['passwd'] else global_passwd
             if passwd:
-                disks.append({'path': path, 'passwd': passwd})
+                disks.append({'name': name, 'passwd': passwd})
         return disks
-
-    @private
-    async def parse_unlock_info(self, info, return_failed_error=False):
-        """Purpose of this method is to parse the unlock object
-        since we have to run multiple commands for each disk.
-        This will log the appropriate error message and return
-        the absolute path of the disk that we failed to unlock.
-        """
-        if info.invalid_or_unsupported:
-            # disk doesn't exist, or doesn't even return
-            # properly from the --query command
-            return
-
-        errmsg = None
-        failed = None
-        if info.locked is True:
-            failed = info.disk_path
-            errmsg = f'{info.disk_path!r}'
-            # means disk supports SED and we failed to unlock
-            # the disk (either bad password or unhandled error)
-            if info.query_cp and info.query_cp.returncode:
-                errmsg += f' QUERY ERROR {info.query_cp.returncode}: {info.query_cp.stderr.decode(errors="ignore")!r}'
-            if info.unlock_cp and info.unlock_cp.returncode:
-                errmsg += (
-                    f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
-                )
-            if not return_failed_error:
-                self.logger.warning(errmsg)
-
-        if info.mbr_cp and info.mbr_cp.returncode:
-            # if we successfully unlock the disk, we disable
-            # the MBR shadow protection since this is a feature
-            # used by the OS to protect boot partitions. We
-            # dont use this functionality since we're only
-            # locking/unlocking disks used in zpools.
-            self.logger.warning(
-                '%r MBR ERROR: %r',
-                info.disk_path,
-                info.mbr_cp.stderr.decode(errors="ignore")
-            )
-
-        return errmsg if return_failed_error else failed
 
     @private
     async def sed_unlock_all(self, force=False):
@@ -305,14 +259,17 @@ class DiskService(Service):
 
         disks_to_unlock = await self.map_disks_to_passwd()
         if not disks_to_unlock:
-            # If no SED password was found for any disk
-            # then there is no reason to continue
             return
 
-        failed_to_unlock = list()
-        for i in await asyncio_map(unlock_impl, disks_to_unlock, limit=16):
-            if failed := await self.parse_unlock_info(i):
-                failed_to_unlock.append(failed)
+        def _unlock(d):
+            entry = DiskEntry(name=d['name'], devpath=f'/dev/{d["name"]}')
+            return d['name'], *entry.sed_unlock(d['passwd'])
+
+        failed_to_unlock = []
+        for name, success, error in await asyncio_map(_unlock, disks_to_unlock, limit=16):
+            if not success:
+                self.logger.warning('/dev/%s: failed to unlock SED disk: %s', name, error)
+                failed_to_unlock.append(name)
 
         if failed_to_unlock:
             raise CallError(
@@ -331,14 +288,14 @@ class DiskService(Service):
         if not disk:
             return
 
-        info = await unlock_impl(disk[0])
-        failed = await self.parse_unlock_info(info)
-
-        return failed is None or not info.locked
+        d = disk[0]
+        entry = DiskEntry(name=d['name'], devpath=f'/dev/{d["name"]}')
+        success, error = await asyncio.to_thread(entry.sed_unlock, d['passwd'])
+        return success
 
     @private
-    async def is_sed(self, disk_name):
-        return await is_sed_disk(disk_name)
+    def is_sed(self, disk_name):
+        return DiskEntry(name=disk_name, devpath=f'/dev/{disk_name}').is_sed()
 
     @private
     async def sed_initial_setup(self, disk_name, password):
@@ -356,61 +313,5 @@ class DiskService(Service):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        devname = f'/dev/{disk_name}'
-        cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
-        if b' SED ' not in cp.stdout:
-            return 'NO_SED'
-
-        cp = await run('sedutil-cli', '--listLockingRange', '0', password, devname, check=False)
-        if cp.returncode == 0:
-            output = cp.stdout.decode()
-            if RE_SED_RDLOCK_EN.search(output) and RE_SED_WRLOCK_EN.search(output):
-                return 'ACCESS_GRANTED'
-            else:
-                return 'LOCKING_DISABLED'
-
-        try:
-            await run('sedutil-cli', '--initialSetup', password, devname)
-        except subprocess.CalledProcessError as e:
-            self.logger.debug(f'initialSetup failed for {disk_name}:\n{e.stdout}{e.stderr}')
-            return 'SETUP_FAILED'
-
-        # OPAL 2.0 disks do not enable locking range on setup like Enterprise does
-        try:
-            await run('sedutil-cli', '--enableLockingRange', '0', password, devname)
-        except subprocess.CalledProcessError as e:
-            self.logger.debug(f'enableLockingRange failed for {disk_name}:\n{e.stdout}{e.stderr}')
-            return 'SETUP_FAILED'
-
-        return 'SUCCESS'
-
-    @private
-    async def unlock_ata_security(self, devname, password):
-        # FIXME: REMOVE THIS METHOD. We don't sell non-TCG password protected
-        # disks so there is a high chance this does NOT work for anyone
-        # with this type of drive. Unless we can test this in-house on real
-        # drives, we're doing ourselves a disservice by having it. Especially
-        # since this is dealing with user's data
-        cp = await run('hdparm', '-I', devname, check=False)
-        if cp.returncode:
-            return False
-
-        adv = await self.middleware.call('system.advanced.config')
-        locked = False
-        if RE_HDPARM_DRIVE_LOCKED.search(cp.stdout.decode()):
-            locked = True
-            cp = await run(
-                [
-                    'hdparm',
-                    '--user-master',
-                    adv['sed_user'][0].lower(),
-                    '--security-unlock',
-                    password,
-                    devname
-                ],
-                check=False
-            )
-            if cp.returncode == 0:
-                locked = False
-
-        return locked
+        entry = DiskEntry(name=disk_name, devpath=f'/dev/{disk_name}')
+        return await asyncio.to_thread(entry.sed_initial_setup, password)
