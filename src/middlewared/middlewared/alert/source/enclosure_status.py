@@ -125,7 +125,7 @@ class EnclosureStatusAlertSource(AlertSource):
         for enc in await self.middleware.call("enclosure2.query"):
             enc_title = f"{enc['name']} (id: {enc['id']})"
             good_enclosures.append([enc_title])
-            enc["elements"].pop("Array Device Slot")  # dont care about disk slots
+            enc["elements"].pop("Array Device Slot", None)  # dont care about disk slots
             current_sensors = enc["elements"].get("Current Sensor", {})  # used for edge case in should_report
             for element_type, element_values in enc["elements"].items():
                 for ele_value in element_values.values():
