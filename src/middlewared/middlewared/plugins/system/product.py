@@ -138,6 +138,11 @@ class SystemService(Service):
     )
     def license_update(self, license_):
         """Update license file"""
+        raise ValidationError(
+            'system.license_update',
+            'Legacy license upload is no longer supported. Use truenas.license.upload instead.'
+        )
+
         try:
             dser_license = License.load(license_)
         except Exception:
