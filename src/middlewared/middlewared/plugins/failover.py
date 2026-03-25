@@ -401,6 +401,7 @@ class FailoverService(ConfigService):
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
+        self.send_small_file('/data/truenas/license')
         self.send_pwenc_secret()
         self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
