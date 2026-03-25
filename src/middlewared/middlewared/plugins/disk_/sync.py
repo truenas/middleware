@@ -276,7 +276,12 @@ class DiskService(Service, ServiceChangeMixin):
         except IndexError:
             return
 
-        if int(disk.get('disk_size', '0')) != current_size:
+        try:
+            stored_size = int(disk.get('disk_size') or 0)
+        except (ValueError, TypeError):
+            stored_size = 0
+
+        if stored_size != current_size:
             self.middleware.call_sync(
                 'datastore.update', 'storage.disk',
                 disk['disk_identifier'], {'disk_size': current_size}
