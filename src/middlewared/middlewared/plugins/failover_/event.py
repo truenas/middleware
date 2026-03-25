@@ -567,6 +567,7 @@ class FailoverEventsService(Service):
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
                 self.run_call('iscsi.scst.suspend_logins')
+                self.run_call('iscsi.scst.set_alua_transitioning')
                 iscsi_suspended, iscsi_cleaned = self.iscsi_cleanup_alua_state()
         else:
             handle_alua = False
@@ -770,6 +771,7 @@ class FailoverEventsService(Service):
                 logger.exception('Failed to complete iSCSI bringup')
             finally:
                 self.run_call('iscsi.scst.resume_logins')
+                self.run_call('iscsi.scst.set_alua_active')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
