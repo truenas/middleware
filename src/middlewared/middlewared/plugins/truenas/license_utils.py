@@ -1,6 +1,7 @@
 import contextlib
 import os
 import shutil
+import typing
 
 import truenas_pylicensed
 from truenas_os_pyutils.io import atomic_write
@@ -47,7 +48,7 @@ def upload_license(license_pem: str) -> None:
             os.unlink(LICENSE_BACKUP)
 
 
-def get_license_info() -> dict | None:
+def get_license_info() -> dict[str, typing.Any] | None:
     """Query the daemon for the current license. Returns None if no valid license."""
     result = truenas_pylicensed.verify()
     if not result.valid:
