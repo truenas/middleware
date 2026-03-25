@@ -18,7 +18,6 @@ from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
-from .ransomwared import RansomwaredService
 from .webshare import WebShareService
 
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
@@ -81,7 +80,6 @@ all_services = [
     NVMfService,
     PowerdService,
     RcService,
-    RansomwaredService,
     ResolvConfService,
     RoutingService,
     RpcGssService,
