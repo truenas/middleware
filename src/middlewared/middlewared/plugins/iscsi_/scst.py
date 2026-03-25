@@ -14,6 +14,7 @@ SCST_DEVICES = '/sys/kernel/scst_tgt/devices'
 SCST_SUSPEND = '/sys/kernel/scst_tgt/suspend'
 SCST_CONTROLLER_A_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
 SCST_CONTROLLER_B_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
+SCST_ASYNC_LUN_REPLACE = '/sys/kernel/scst_tgt/async_lun_replace'
 
 
 class iSCSITargetService(Service):
@@ -205,6 +206,13 @@ class iSCSITargetService(Service):
             pathlib.Path(path).write_text('active\n')
         except Exception:
             self.logger.warning('Failed to set ALUA active state')
+
+    def enable_async_lun_replace(self):
+        """Enable async LUN replace to avoid blocking failover on tgt_dev drain."""
+        try:
+            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('1\n')
+        except Exception:
+            self.logger.warning('Failed to enable async_lun_replace')
 
     def copy_manager_devices(self):
         result = []

@@ -137,6 +137,7 @@ class iSCSITargetAluaService(Service):
             self.logger.debug('iscsitarget restarted')
             return
 
+        await self.middleware.call('iscsi.scst.enable_async_lun_replace')
         self.logger.debug('Updating LUNs')
         for assoc in assocs:
             extent_id = assoc['extent']
