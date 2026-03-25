@@ -189,8 +189,6 @@ class iSCSITargetAluaService(Service):
             return
 
         self.logger.debug('Updating LUNs')
-        await self.middleware.call('iscsi.scst.suspend', 10)
-        self.logger.debug('iSCSI suspended')
         for assoc in assocs:
             extent_id = assoc['extent']
             if extent_id in extents:
@@ -213,8 +211,6 @@ class iSCSITargetAluaService(Service):
         self.logger.debug('Updated LUNs')
         await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
         self.logger.debug('Switched optimized node')
-        if await self.middleware.call('iscsi.scst.clear_suspend'):
-            self.logger.debug('iSCSI unsuspended')
 
     async def check_luns(self):
         try:
