@@ -667,12 +667,6 @@ class FailoverEventsService(Service):
         else:
             logger.info('Volume imports complete')
 
-        # Now that the volumes have been imported, get a head-start on activating extents.
-        if handle_alua:
-            logger.info('Activating ALUA extents')
-            self.run_call('iscsi.alua.activate_extents')
-            logger.info('Done activating ALUA extents')
-
         # need to make sure failover status is updated in the middleware cache
         logger.info('Refreshing failover status')
         self.run_call('failover.status_refresh')

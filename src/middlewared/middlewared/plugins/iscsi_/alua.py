@@ -50,8 +50,6 @@ class iSCSITargetAluaService(Service):
         self.standby_alua_ready = False
         self.standby_skip_cluster_mode = False
 
-        self.activate_extents_job = None
-
         # standby_write_empty_config will be used to control whether the
         # STANDBY node initially writes a minimal scst.conf
         # We initialize it to None here, as we could just be restarting
@@ -104,49 +102,6 @@ class iSCSITargetAluaService(Service):
                 self._standby_write_empty_config = True
         return self._standby_write_empty_config
 
-    @job(lock='activate_extents', transient=True, lock_queue_size=1)
-    async def activate_extents(self, job):
-        self.activate_extents_job = job
-        job.set_progress(0, 'Start activate_extents')
-
-        # First get all the currently active extents
-        extents = await self.middleware.call('iscsi.extent.query',
-                                             [['enabled', '=', True], ['locked', '=', False]],
-                                             {'select': ['name', 'id', 'type', 'path', 'disk']})
-
-        # Calculate what we want to do
-        todo = []
-        for extent in extents:
-            if extent['type'] == 'DISK':
-                path = f'/dev/{extent["disk"]}'
-            else:
-                path = extent['path']
-            todo.append([extent['name'], extent['type'], path])
-
-        job.set_progress(20, 'Read to activate')
-
-        if todo:
-            self.logger.debug(f'Activating {len(todo)} extents')
-            retries = 10
-            while todo and retries:
-                do_again = []
-                for item in todo:
-                    # Mark them active
-                    if not await self.middleware.call('iscsi.scst.activate_extent', *item):
-                        self.logger.debug(f'Cannot Activate extent {item}')
-                        do_again.append(item)
-                if not do_again:
-                    break
-                await asyncio.sleep(1)
-                retries -= 1
-                todo = do_again
-            self.logger.debug('Activated extents')
-            await asyncio.sleep(2)
-        else:
-            self.logger.debug('No extent to activate')
-
-        job.set_progress(100, 'All extents activated')
-
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
@@ -167,12 +122,6 @@ class iSCSITargetAluaService(Service):
         fcports = {t['target']['id']: t[key] for t in await self.middleware.call('fcport.query')}
 
         assocs = await self.middleware.call('iscsi.targetextent.query')
-
-        if self.activate_extents_job:
-            self.logger.debug('Waiting for activate to complete')
-            await self.activate_extents_job.wait()
-            self.logger.debug('Waited for activate to complete')
-            self.activate_extents_job = None
 
         # If we have NOT completed standby_after_start then we cannot just
         # become ready, instead we will need to restart iscsitarget
