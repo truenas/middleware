@@ -80,7 +80,7 @@ def test_001_check_ipvx(request):
     # For IPv6, dpcpcd sets the interface autoconf value based on the sensed
     # routing capability.
     # NOTE: The 'equivalent' IPv4 proto setting is 'dhcp'
-    interface_ipv6_autoconf = int(call("tunable.get_sysctl", f"net.ipv6.conf.{interface}.autoconf"))
+    interface_ipv6_autoconf = int(ssh(f"sysctl -n net.ipv6.conf.{interface}.autoconf"))
 
     # Get the route settings for this interfadce
     ip6_route_show = ssh(f"ip -6 route show dev {interface}")
@@ -150,7 +150,7 @@ def test_002_configure_interface(request, ws_client, get_payload):
 
 
 def test_003_recheck_ipvx(request):
-    assert int(call("tunable.get_sysctl", f"net.ipv6.conf.{interface}.autoconf")) == 0
+    assert int(ssh(f"sysctl -n net.ipv6.conf.{interface}.autoconf")) == 0
 
 
 @pytest.mark.skipif(not ha, reason="Test valid on HA systems only")

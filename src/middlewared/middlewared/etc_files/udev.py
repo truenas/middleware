@@ -8,5 +8,8 @@ def render(service, middleware):
         if f.is_file():
             f.unlink()
 
-    for tunable in middleware.call_sync("tunable.query", [["type", "=", "UDEV"], ["enabled", "=", True]]):
-        (path / f"{tunable['var']}.rules").write_text(tunable["value"] + "\n")
+    tunables = middleware.call_sync2(
+        middleware.services.tunable.query, [["type", "=", "UDEV"], ["enabled", "=", True]]
+    )
+    for tunable in tunables:
+        (path / f"{tunable.var}.rules").write_text(tunable.value + "\n")

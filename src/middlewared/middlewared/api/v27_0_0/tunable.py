@@ -4,8 +4,11 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, exclud
 
 
 __all__ = [
-    "TunableEntry", "TunableCreateArgs", "TunableCreateResult", "TunableDeleteArgs", "TunableDeleteResult",
-    "TunableUpdateArgs", "TunableUpdateResult", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
+    "TunableCreate", "TunableEntry", "TunableUpdate",
+    "TunableCreateArgs", "TunableCreateResult",
+    "TunableDeleteArgs", "TunableDeleteResult",
+    "TunableUpdateArgs", "TunableUpdateResult",
+    "TunableTunableTypeChoices", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
 ]
 
 
@@ -36,6 +39,7 @@ class TunableEntry(TunableCreate):
     """Unique identifier for the tunable configuration."""
     orig_value: str
     """Original system value of the parameter before this tunable was applied."""
+    update_initramfs: Excluded = excluded_field()
 
 
 class TunableTunableTypeChoices(BaseModel):
