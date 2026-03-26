@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "middlewared"
 description = "TrueNAS Middleware Daemon"
 version = "0.0.0"
-license = {text = "BSD-3-Clause"}
+license = "BSD-3-Clause"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
