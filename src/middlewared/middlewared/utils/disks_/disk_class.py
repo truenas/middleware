@@ -113,7 +113,9 @@ class DiskEntry:
 
         try:
             with open(path, mode) as f:
-                return f.read()  # type: ignore[no-any-return]
+                # sysfs files include a trailing newline that breaks
+                # string comparisons (e.g. hwmon name matching in temp())
+                return f.read().strip()  # type: ignore[no-any-return]
         except Exception:
             return None
 
