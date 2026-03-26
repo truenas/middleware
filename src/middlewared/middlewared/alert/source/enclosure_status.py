@@ -50,7 +50,7 @@ class EnclosureStatusAlertSource(AlertSource):
     bad = ("critical", "noncritical", "unknown", "unrecoverable")
     bad_elements: list | list[tuple[BadElement, int]] = list()
 
-    async def should_report(self, ele_type: str, ele_value: dict[str]):
+    async def should_report(self, ele_type: str, ele_value: dict[str], model: str = ""):
         """We only want to raise an alert for an element's status
         if it meets a certain criteria"""
         if not ele_value["value"]:
@@ -61,6 +61,18 @@ class EnclosureStatusAlertSource(AlertSource):
             return False
         elif ele_value["status"].lower() not in self.bad:
             return False
+        elif (
+            model in ("ES60G1", "ES60G2")
+            and ele_type == "Current Sensor"
+            and ele_value["descriptor"].startswith("CURR IOM")
+            and ele_value["value_raw"] == 0x02400000  # Critical, Fail on, 0.0A
+        ):
+            # ES60G1/ES60G2 JBOD enclosures (HGST H4060-J) assert "Fail on" on
+            # IOM current sensors when drives draw no current on that rail. This
+            # is a false positive caused by 12V-primary drives (e.g. Kioxia PM7)
+            # that legitimately draw 0A on the 5V rail. The 12V IOM sensors on
+            # the same enclosure show healthy current, confirming drives are powered.
+            return False
 
         return True
 
@@ -69,10 +81,10 @@ class EnclosureStatusAlertSource(AlertSource):
         for enc in await self.middleware.call("enclosure2.query"):
             enc_title = f"{enc['name']} (id: {enc['id']})"
             good_enclosures.append([enc_title])
-            enc["elements"].pop("Array Device Slot")  # dont care about disk slots
+            enc["elements"].pop("Array Device Slot", None)  # dont care about disk slots
             for element_type, element_values in enc["elements"].items():
                 for ele_value in element_values.values():
-                    if await self.should_report(element_type, ele_value):
+                    if await self.should_report(element_type, ele_value, enc["model"]):
                         current_bad_element = BadElement(
                             enc_name=enc["name"],
                             descriptor=ele_value["descriptor"],

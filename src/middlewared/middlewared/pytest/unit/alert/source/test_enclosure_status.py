@@ -19,6 +19,7 @@ def make_enclosure(name, enc_id, extra_elements=None):
     return {
         "name": name,
         "id": enc_id,
+        "model": "",
         "elements": elements,
     }
 
