@@ -1,3 +1,5 @@
+import os
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     TrueNASLicenseUploadArgs,
@@ -6,11 +8,12 @@ from middlewared.api.current import (
     TrueNASLicenseInfoResult,
 )
 from middlewared.service import Service, ValidationError
+from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from truenas_pylicensed import LicenseType
 
 from .license_utils import (
-    LICENSE_FILE,
     LicenseInfo,
+    configure_ha_license,
     get_license_info,
     upload_license,
 )
@@ -29,43 +32,31 @@ class TrueNASLicenseService(Service):
     def upload(self, license_: str) -> None:
         """Upload a PEM-wrapped license file."""
         lic = upload_license(license_)
-        if lic.type == LicenseType.ENTERPRISE_HA:
-            try:
-                self.middleware.call_sync("failover.ensure_remote_client")
-            except Exception as e:
-                # this is fatal because we can't determine what the remote ip address
-                # is to so any failover.call_remote calls will fail
-                raise ValidationError(
-                    "truenas.license.updload",
-                    f"Failed to determine remote heartbeat IP address: {e}",
-                )
+        if not lic.valid:
+            raise ValidationError(
+                "truenas.license.upload", f"Invalid license: {lic.error}"
+            )
 
-            try:
-                self.middleware.call_sync(
-                    "failover.call_remote", "failover.ensure_remote_client"
-                )
-            except Exception:
-                # this is not fatal, so no reason to return early
-                # it just means that any "failover.call_remote" calls initiated from the remote node
-                # will fail but that shouldn't be happening anyways
-                self.logger.warning(
-                    "Remote node failed to determine this nodes heartbeat IP address",
-                    exc_info=True,
-                )
+        # FIXME: is this even needed still??
+        self.middleware.call_sync("etc.generate", "rc")
+        # FIXME: probably need new license but have to have
+        # old for backwards compat??
+        # TODO: what do we do if legacy license exists
+        # and we get a new one? raise ValidationError
+        # or maybe add a "replace_legacy" boolean to
+        # new API so that the old one is removed (need
+        # to update in-memory cache if we do this)
+        self.call_sync2(self.s.alert.alert_source_clear_run, 'LicenseStatus')
+        if lic.type in (
+            LicenseType.ENTERPRISE_HA,
+            LicenseType.ENTERPRISE_SINGLE
+        ):
+            if lic.type == LicenseType.ENTERPRISE_HA:
+                configure_ha_license(self)
 
-            try:
-                self.middleware.call_sync("failover.send_small_file", LICENSE_FILE)
-            except Exception:
-                self.logger.warning(
-                    "Failed to sync database to remote node", exc_info=True
-                )
+            with open(EULA_PENDING_PATH, "a+") as f:
+                os.fchmod(f.fileno(), 0o600)
 
-            try:
-                self.middleware.call_sync(
-                    "failover.call_remote", "etc.generate", ["rc"]
-                )
-            except Exception:
-                self.logger.warning("etc.generate failed on standby", exc_info=True)
 
     @api_method(
         TrueNASLicenseInfoArgs,

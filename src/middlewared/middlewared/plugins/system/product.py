@@ -6,7 +6,6 @@
 import os
 
 import truenas_pylicensed
-from licenselib.license import License
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemFeatureEnabledArgs,
@@ -31,17 +30,14 @@ from .product_utils import get_license, LICENSE_FILE
 
 
 LICENSE_FILE_MODE = 0o600
-PRODUCT_NAME = 'TrueNAS'
+PRODUCT_NAME = "TrueNAS"
 
 
 class SystemService(Service):
-
     PRODUCT_TYPE = None
 
     @api_method(
-        SystemProductTypeArgs,
-        SystemProductTypeResult,
-        roles=['SYSTEM_PRODUCT_READ']
+        SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
     async def product_type(self):
         """Returns the type of the product"""
@@ -50,8 +46,8 @@ class SystemService(Service):
                 # HA capable hardware
                 SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
-                if license_ := await self.middleware.call('system.license'):
-                    if license_['model'].lower().startswith('freenas'):
+                if license_ := await self.middleware.call("system.license"):
+                    if license_["model"].lower().startswith("freenas"):
                         # legacy freenas certified
                         SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                     else:
@@ -66,15 +62,17 @@ class SystemService(Service):
 
     @private
     async def is_ha_capable(self):
-        return await self.middleware.call('failover.hardware') != 'MANUAL'
+        return await self.middleware.call("failover.hardware") != "MANUAL"
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
+        return (
+            await self.middleware.call("system.product_type") == ProductType.ENTERPRISE
+        )
 
     @private
     def sed_enabled(self):
-        return truenas_pylicensed.is_feature_licensed('SED')
+        return truenas_pylicensed.is_feature_licensed("SED")
 
     @api_method(
         SystemVersionShortArgs,
@@ -88,7 +86,7 @@ class SystemService(Service):
     @api_method(
         SystemReleaseNotesUrlArgs,
         SystemReleaseNotesUrlResult,
-        roles=['SYSTEM_PRODUCT_READ']
+        roles=["SYSTEM_PRODUCT_READ"],
     )
     def release_notes_url(self, version_str):
         """Returns the release notes URL for a version of SCALE.
@@ -100,15 +98,15 @@ class SystemService(Service):
         """
         parsed_version = parse_version_string(version_str or self.version_short())
         if parsed_version is None:
-            raise CallError(f'Invalid version string specified: {version_str}')
+            raise CallError(f"Invalid version string specified: {version_str}")
 
-        version_split = parsed_version.split('.')
-        major_version = '.'.join(version_split[0:2])
-        base_url = f'https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes'
+        version_split = parsed_version.split(".")
+        major_version = ".".join(version_split[0:2])
+        base_url = f"https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes"
         if len(version_split) == 2:
             return base_url
         else:
-            return f'{base_url}/#{"".join(version_split)}'
+            return f"{base_url}/#{''.join(version_split)}"
 
     @api_method(
         SystemVersionArgs,
@@ -121,7 +119,7 @@ class SystemService(Service):
 
     @private
     async def platform(self):
-        return 'LINUX'
+        return "LINUX"
 
     @private
     def license(self, include_raw_license: bool = False):
@@ -134,60 +132,57 @@ class SystemService(Service):
     @api_method(
         SystemLicenseUpdateArgs,
         SystemLicenseUpdateResult,
-        roles=['SYSTEM_PRODUCT_WRITE']
+        roles=["SYSTEM_PRODUCT_WRITE"],
     )
     def license_update(self, license_):
         """Update license file"""
         raise ValidationError(
-            'system.license_update',
-            'Legacy license upload is no longer supported. Use truenas.license.upload instead.'
+            "system.license_update",
+            "Legacy license upload is no longer supported. Use truenas.license.upload instead.",
         )
 
-        try:
-            dser_license = License.load(license_)
-        except Exception:
-            raise ValidationError('system.license', 'This is not a valid license.')
-        else:
-            if dser_license.system_serial_ha:
-                if not self.middleware.call_sync('system.is_ha_capable'):
-                    raise ValidationError('system.license', 'This is not an HA capable system.')
-
-        prev_license = self.middleware.call_sync('system.license')
-        with open(LICENSE_FILE, 'w+') as f:
-            f.write(license_)
-            os.fchmod(f.fileno(), LICENSE_FILE_MODE)
-
-        self.middleware.call_sync('etc.generate', 'rc')
+        self.middleware.call_sync("etc.generate", "rc")
         SystemService.PRODUCT_TYPE = None
-        if self.middleware.call_sync('system.is_enterprise'):
-            with open(EULA_PENDING_PATH, 'a+') as f:
+        if self.middleware.call_sync("system.is_enterprise"):
+            with open(EULA_PENDING_PATH, "a+") as f:
                 os.fchmod(f.fileno(), 0o600)
 
+        """
+        # FIXME: new license check but need old one for backwards compat
         self.call_sync2(self.s.alert.alert_source_clear_run, 'LicenseStatus')
+
+        # FIXME: rm -rf failover_/configure.py entirely
         self.middleware.call_sync('failover.configure.license', dser_license)
+
+        # FIXME: no need for a hook, the license daemon caches the license
+        # in memory so simplify on middleware side
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_license=prev_license), wait=False,
         )
+        """
 
     @api_method(
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
-        roles=['SYSTEM_PRODUCT_READ'],
+        roles=["SYSTEM_PRODUCT_READ"],
     )
     async def feature_enabled(self, name):
         """
         Returns whether the `feature` is enabled or not
         """
-        license_ = await self.middleware.call('system.license')
-        if license_ and name in license_['features']:
+        license_ = await self.middleware.call("system.license")
+        if license_ and name in license_["features"]:
             return True
         return False
 
 
 async def hook_license_update(middleware, prev_license, *args, **kwargs):
-    if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
-        await middleware.call('system.advanced.update', {'autotune': True})
+    if (
+        prev_license is None
+        and await middleware.call("system.product_type") == "ENTERPRISE"
+    ):
+        await middleware.call("system.advanced.update", {"autotune": True})
 
 
 async def setup(middleware):
-    middleware.register_hook('system.post_license_update', hook_license_update)
+    middleware.register_hook("system.post_license_update", hook_license_update)
