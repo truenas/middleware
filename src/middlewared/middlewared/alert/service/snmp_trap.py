@@ -1,24 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
-import pysnmp.hlapi
-import pysnmp.smi
-import pysnmp.smi.compiler
+import truenas_pysnmp
 
 from middlewared.alert.base import Alert, ThreadedAlertService
-
-if TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 
 class SNMPTrapAlertService(ThreadedAlertService):
     title = "SNMP Trap"
-
-    def __init__(self, middleware: Middleware, attributes: dict[str, Any]) -> None:
-        super().__init__(middleware, attributes)
-
-        self.initialized = False
 
     def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
         if self.attributes["host"] in ("localhost", "127.0.0.1", "::1"):
@@ -26,101 +16,30 @@ class SNMPTrapAlertService(ThreadedAlertService):
                 self.logger.trace("Local SNMP service not started, not sending traps")  # type: ignore[attr-defined]
                 return
 
-        if not self.initialized:
-            self.snmp_engine = pysnmp.hlapi.SnmpEngine()
-            if self.attributes["v3"]:
-                self.auth_data = pysnmp.hlapi.UsmUserData(
-                    self.attributes["v3_username"] or "",
-                    self.attributes["v3_authkey"],
-                    self.attributes["v3_privkey"],
-                    {
-                        None: pysnmp.hlapi.usmNoAuthProtocol,
-                        "MD5": pysnmp.hlapi.usmHMACMD5AuthProtocol,
-                        "SHA": pysnmp.hlapi.usmHMACSHAAuthProtocol,
-                        "128SHA224": pysnmp.hlapi.usmHMAC128SHA224AuthProtocol,
-                        "192SHA256": pysnmp.hlapi.usmHMAC192SHA256AuthProtocol,
-                        "256SHA384": pysnmp.hlapi.usmHMAC256SHA384AuthProtocol,
-                        "384SHA512": pysnmp.hlapi.usmHMAC384SHA512AuthProtocol,
-                    }[self.attributes["v3_authprotocol"]],
-                    {
-                        None: pysnmp.hlapi.usmNoPrivProtocol,
-                        "DES": pysnmp.hlapi.usmDESPrivProtocol,
-                        "3DESEDE": pysnmp.hlapi.usm3DESEDEPrivProtocol,
-                        "AESCFB128": pysnmp.hlapi.usmAesCfb128Protocol,
-                        "AESCFB192": pysnmp.hlapi.usmAesCfb192Protocol,
-                        "AESCFB256": pysnmp.hlapi.usmAesCfb256Protocol,
-                        "AESBLUMENTHALCFB192": pysnmp.hlapi.usmAesBlumenthalCfb192Protocol,
-                        "AESBLUMENTHALCFB256": pysnmp.hlapi.usmAesBlumenthalCfb256Protocol,
-                    }[self.attributes["v3_privprotocol"]],
-                )
-            else:
-                self.auth_data = pysnmp.hlapi.CommunityData(self.attributes["community"])
-            self.transport_target = pysnmp.hlapi.UdpTransportTarget((self.attributes["host"], self.attributes["port"]))
-            self.context_data = pysnmp.hlapi.ContextData()
-
-            mib_builder = pysnmp.smi.builder.MibBuilder()
-            # Use pySMI compiler to compile the ASN.1 .txt MIB on-the-fly into Python format
-            pysnmp.smi.compiler.addMibCompiler(
-                mib_builder,
-                sources=['/usr/local/share/snmp/mibs/'] + pysnmp.smi.compiler.defaultSources,
-            )
-            mib_builder.loadModules("TRUENAS-MIB")
-            self.snmp_alert_level_type = mib_builder.importSymbols("TRUENAS-MIB", "AlertLevelType")[0]
-            mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
-            self.snmp_alert = pysnmp.hlapi.ObjectIdentity("TRUENAS-MIB", "alert"). \
-                resolveWithMib(mib_view_controller)
-            self.snmp_alert_id = pysnmp.hlapi.ObjectIdentity("TRUENAS-MIB", "alertId"). \
-                resolveWithMib(mib_view_controller)
-            self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("TRUENAS-MIB", "alertLevel"). \
-                resolveWithMib(mib_view_controller)
-            self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("TRUENAS-MIB", "alertMessage"). \
-                resolveWithMib(mib_view_controller)
-            self.snmp_alert_cancellation = pysnmp.hlapi.ObjectIdentity("TRUENAS-MIB", "alertCancellation"). \
-                resolveWithMib(mib_view_controller)
-
-            self.initialized = True
+        auth = {
+            "host": self.attributes["host"],
+            "port": self.attributes["port"],
+            "v3": self.attributes["v3"],
+            "community": self.attributes["community"],
+            "v3_username": self.attributes["v3_username"],
+            "v3_authprotocol": self.attributes["v3_authprotocol"],
+            "v3_authkey": self.attributes["v3_authkey"],
+            "v3_privprotocol": self.attributes["v3_privprotocol"],
+            "v3_privkey": self.attributes["v3_privkey"],
+        }
 
         classes = self.call_sync2(self.s.alertclasses.config).classes
 
         for alert in gone_alerts:
-            error_indication, error_status, error_index, var_binds = next(
-                pysnmp.hlapi.sendNotification(
-                    self.snmp_engine,
-                    self.auth_data,
-                    self.transport_target,
-                    self.context_data,
-                    "trap",
-                    pysnmp.hlapi.NotificationType(self.snmp_alert_cancellation).addVarBinds(
-                        (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id),
-                         pysnmp.hlapi.OctetString(alert.uuid))
-                    )
-                )
-            )
-
-            if error_indication:
-                self.logger.error("Failed to send SNMP trap: %s", error_indication)
+            try:
+                truenas_pysnmp.send_alert_cancellation(**auth, alert_id=alert.uuid)
+            except truenas_pysnmp.SNMPError:
+                self.logger.error("Failed to send SNMP trap for alert %s", alert.uuid, exc_info=True)
 
         for alert in new_alerts:
-            error_indication, error_status, error_index, var_binds = next(
-                pysnmp.hlapi.sendNotification(
-                    self.snmp_engine,
-                    self.auth_data,
-                    self.transport_target,
-                    self.context_data,
-                    "trap",
-                    pysnmp.hlapi.NotificationType(self.snmp_alert).addVarBinds(
-                        (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id),
-                         pysnmp.hlapi.OctetString(alert.uuid)),
-                        (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
-                         self.snmp_alert_level_type(
-                             self.snmp_alert_level_type.namedValues.getValue(
-                                 classes.get(alert.instance.config.name, {}).get(  # type: ignore
-                                     "level", alert.instance.config.level.name).lower()))),
-                        (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message),
-                         pysnmp.hlapi.OctetString(alert.formatted))
-                    )
-                )
-            )
-
-            if error_indication:
-                self.logger.warning("Failed to send SNMP trap: %s", error_indication)
+            level = classes.get(alert.instance.config.name, {}).get(  # type: ignore[union-attr,call-overload]
+                "level", alert.instance.config.level.name).lower()
+            try:
+                truenas_pysnmp.send_alert(**auth, alert_id=alert.uuid, level=level, message=alert.formatted)
+            except truenas_pysnmp.SNMPError:
+                self.logger.warning("Failed to send SNMP trap for alert %s", alert.uuid, exc_info=True)
