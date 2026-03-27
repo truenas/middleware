@@ -141,9 +141,10 @@ def mock_sysfs(tmp_path):
         # UTF-16LE encoded serial from buggy USB bridge firmware (NAS-139489)
         # The bridge incorrectly copies UTF-16LE data into VPD page 80 which expects ASCII.
         # Pattern: ASCII chars interleaved with 0x00 high bytes, plus garbage prefix.
-        # Real world example: b"\x22\x03\x38\x00\x39\x00..." should become "89..."
+        # The 0x22 byte is a USB string descriptor type, not a real serial character.
+        # Real world example: b"\x22\x03\x38\x00\x39\x00..." should become "8915289"
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x10" + b"\x22\x03" + b"8\x009\x001\x005\x002\x008\x009"},
-         "\"8915289"),
+         "8915289"),
 
         # VPD with trailing spaces that should be stripped
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x08" + b"SERIAL  "},

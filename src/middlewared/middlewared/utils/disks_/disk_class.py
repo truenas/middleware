@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
 
-RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f]')
+RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f\x22\x5c]')
 # sedutil-cli PBKDF2 parameters for legacy password compatibility
 SEDUTIL_ITERATIONS = 75000
 SEDUTIL_HASH_LEN = 32
@@ -187,11 +187,14 @@ class DiskEntry:
 
                     # Extract only the serial number data, skipping the 4-byte header
                     serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
-                    # Remove control characters (0x00-0x1F) and DEL (0x7F) which are either:
-                    # 1. UTF-16LE encoding artifacts from buggy USB bridge firmware
-                    # 2. Firmware corruption/garbage data
-                    # Per SPC-4, only 0x00 and 0x20-0x7E are valid, but interleaved 0x00s
-                    # from UTF-16LE should also be stripped along with other control chars.
+                    # Strip characters that are either invalid per SCSI spec or break
+                    # downstream JSON serialization (netdata embeds these in chart names
+                    # without escaping):
+                    # - 0x00-0x1F, 0x7F: control chars / DEL (invalid per SPC-4)
+                    # - 0x22 ("): valid per SPC-4 but never used in real serials;
+                    #   appears as UTF-16LE descriptor type byte from buggy USB firmware
+                    # - 0x5C (\): valid per SPC-4 but never used in real serials;
+                    #   would break JSON string escaping
                     serial = RE_SERIAL_STRIP.sub('', serial_txt).strip()
                 else:
                     serial = ""
