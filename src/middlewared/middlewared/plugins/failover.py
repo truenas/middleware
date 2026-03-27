@@ -158,6 +158,9 @@ class FailoverService(ConfigService):
     )
     def licensed(self):
         """Checks whether this instance is licensed as an HA unit."""
+        # FIXME: no need to cache this anymore, license daemon
+        # caches this in memory and monitors for file changes
+        # on its own. HOWEVER must have backwards compat...
         try:
             is_ha = self.middleware.call_sync('cache.get', HA_LICENSE_CACHE_KEY)
         except KeyError:
@@ -401,6 +404,7 @@ class FailoverService(ConfigService):
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
+        self.send_small_file('/data/truenas/license')
         self.send_pwenc_secret()
         self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')

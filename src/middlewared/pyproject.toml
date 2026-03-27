@@ -33,6 +33,7 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 module = [
     "apps_ci.*", "apps_schema.*", "apps_validation.*", "catalog_reader.*", "influxdb.*",
     "isodate.*", "ixhardware.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pysnmp.*", "pyudev.*", "tdb.*",
+    "truenas_pylicensed.*",
 ]
 ignore_missing_imports = true
 
