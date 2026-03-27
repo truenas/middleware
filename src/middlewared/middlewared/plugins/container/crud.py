@@ -18,7 +18,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CRUDServicePart, ValidationErrors
+from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 
 from .dataset import ensure_datasets
 from .info import license_active, pool_choices
@@ -34,7 +34,21 @@ if TYPE_CHECKING:
 
 ContainerDataT = TypeVar('ContainerDataT', bound=ContainerEntry)
 
-RE_NAME = re.compile(r'^[a-zA-Z_0-9\-]+$')
+
+# Based on RFC 1123 hostname rules but with a tighter total-length cap of 100
+# characters (RFC 1123 allows 253).  Container names become part of ZFS dataset
+# paths (e.g. pool/.truenas_containers/containers/<name>) and ZFS has a practical
+# limit of ZFS_MAX_DATASET_NAME_LEN.  Capping at 100 leaves
+# comfortable headroom for the dataset path prefix and snapshot names.
+RE_NAME = re.compile(
+    r"\A"
+    r"(?!\d{1,3}(?:\.\d{1,3}){3}\Z)"                    # reject IPv4 dotted-decimal
+    r"(?=.{1,100}\Z)"                                    # total length 1-100 (see above)
+    r"(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)*"     # zero or more non-final labels
+    r"[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?"            # final label (1-63 chars)
+    r"\Z",
+    re.IGNORECASE,
+)
 
 
 class ContainerCreateWithDataset(ContainerCreate):
@@ -208,6 +222,16 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         new = await self.validate(verrors, 'container_update', new, old=old)
         verrors.check()
 
+        name_changed = old.name != new.name
+        if name_changed:
+            if old.status.state == 'RUNNING':
+                raise CallError('Container must be stopped before renaming.')
+
+            old_dataset = old.dataset
+            new_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new.name
+            await self.call2(self.s.zfs.resource.rename, old_dataset, new_dataset)
+            new = new.model_copy(update={'dataset': new_dataset})
+
         entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'status'}))
 
         if old.shutdown_timeout != new.shutdown_timeout:
@@ -286,10 +310,12 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
                 f'{schema_name}.name',
                 'A container with this name already exists.', errno.EEXIST
             )
-        elif not RE_NAME.search(data.name):
+        elif not RE_NAME.match(data.name):
             verrors.add(
                 f'{schema_name}.name',
-                'Name can only contain alphanumeric and hyphen characters.'
+                'Name must be a valid hostname (up to 100 characters total): 1-63 characters per label, '
+                'only letters, digits, and hyphens within each label, labels separated by dots, '
+                'and must not be an IPv4 address.'
             )
 
         return data
