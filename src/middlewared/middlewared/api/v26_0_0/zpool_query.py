@@ -130,13 +130,13 @@ class ZPoolEntry(BaseModel):
     guid: int
     """Globally unique identifier for the pool."""
     status: str
-    """Current pool status (ONLINE, DEGRADED, FAULTED, etc.)."""
+    """Current pool status (ONLINE, DEGRADED, FAULTED, OFFLINE, etc.)."""
     healthy: bool
     """Whether the pool is in a healthy state."""
     warning: bool
     """Whether the pool has warning conditions."""
-    status_code: str
-    """Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED)."""
+    status_code: str | None
+    """Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED, LOCKED_SED_DISKS)."""
     status_detail: str | None
     """Human-readable status description."""
     properties: dict[str, ZPoolPropertyValue] | None = None
