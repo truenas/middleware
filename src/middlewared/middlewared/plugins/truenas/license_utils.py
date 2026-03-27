@@ -14,11 +14,14 @@ __all__ = (
     "LicenseInfo",
     "upload_license",
     "get_license_info",
+    "configure_ha_license",
 )
 
 LICENSE_DIR = "/data/truenas"
 LICENSE_FILE = f"{LICENSE_DIR}/license"
 LICENSE_BACKUP = "/data/truenas/license.bak"
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class FeatureInfo(typing.TypedDict):
@@ -122,7 +125,44 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
         ],
         serials=lic.system_id["serials"] if lic.system_id else [],
         enclosures={
-            model: entry["count"]
-            for model, entry in (lic.enclosures or {}).items()
+            model: entry["count"] for model, entry in (lic.enclosures or {}).items()
         },
     )
+
+
+def configure_ha_license(mw: Middleware) -> None:
+    if not mw.middleware.call_sync("system.is_ha_capable"):
+        raise ValidationError(
+            "truenas.license.upload", "This is not an HA capable system"
+        )
+
+    try:
+        mw.middleware.call_sync("failover.ensure_remote_client")
+    except Exception as e:
+        # this is fatal because we can't determine what the remote ip address
+        # is to so any failover.call_remote calls will fail
+        raise ValidationError(
+            "truenas.license.updload",
+            f"Failed to determine remote heartbeat IP address: {e}",
+        )
+
+    try:
+        mw.middleware.call_sync("failover.call_remote", "failover.ensure_remote_client")
+    except Exception:
+        # this is not fatal, so no reason to return early
+        # it just means that any "failover.call_remote" calls initiated from the remote node
+        # will fail but that shouldn't be happening anyways
+        mw.logger.warning(
+            "Remote node failed to determine this nodes heartbeat IP address",
+            exc_info=True,
+        )
+
+    try:
+        mw.middleware.call_sync("failover.send_small_file", LICENSE_FILE)
+    except Exception:
+        mw.logger.warning("Failed to sync database to remote node", exc_info=True)
+
+    try:
+        mw.middleware.call_sync("failover.call_remote", "etc.generate", ["rc"])
+    except Exception:
+        mw.logger.warning("etc.generate failed on standby", exc_info=True)
