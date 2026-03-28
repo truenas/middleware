@@ -12,19 +12,6 @@ from middlewared.service.decorators import pass_thread_local_storage
 from .query_impl import query_impl
 
 
-def _offline_entry(name, guid=0, status_code=None, status_detail=None):
-    """Build an OFFLINE ZPoolEntry dict for a pool not currently imported."""
-    return {
-        "name": name,
-        "guid": guid,
-        "status": "OFFLINE",
-        "healthy": False,
-        "warning": False,
-        "status_code": status_code,
-        "status_detail": status_detail,
-    }
-
-
 class ZPoolService(Service):
     class Config:
         namespace = "zpool"
@@ -82,12 +69,15 @@ class ZPoolService(Service):
                     )
 
             entries.append(
-                _offline_entry(
-                    name,
-                    int(pool_info["guid"]) if pool_info else 0,
-                    status_code,
-                    status_detail,
-                )
+                {
+                    "name": name,
+                    "guid": int(pool_info["guid"]) if pool_info else 0,
+                    "status": "OFFLINE",
+                    "healthy": False,
+                    "warning": False,
+                    "status_code": status_code,
+                    "status_detail": status_detail,
+                }
             )
         return entries
 
