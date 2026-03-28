@@ -128,7 +128,6 @@ class ZPoolService(Service):
         """
         boot_pool_name = self.middleware.call_sync("boot.pool_name")
         requested_names = data.get("pool_names")
-
         db_pools = {}
         pool_names = []
         for p in self.middleware.call_sync(
