@@ -137,31 +137,19 @@ class ZPoolService(Service):
         boot_pool_name = self.middleware.call_sync("boot.pool_name")
         requested_names = data.get("pool_names")
 
-        # Step 1: Build the list of pool names to query and collect DB metadata
-        # for constructing OFFLINE entries when a pool is not imported.
-        if requested_names is None:
-            db_pools = {}
-            for p in self.middleware.call_sync(
-                "datastore.query", "storage.volume", [], {"prefix": "vol_"}
-            ):
+        # Always fetch all DB pools (cheap), then resolve which names to query.
+        db_pools = {}
+        pool_names = []
+        for p in self.middleware.call_sync(
+            "datastore.query", "storage.volume", [], {"prefix": "vol_"}
+        ):
+            if requested_names is None or p["name"] in requested_names:
                 db_pools[p["name"]] = p
-            pool_names = list(db_pools)
-        else:
-            db_pools = {}
-            pool_names = []
-            if boot_pool_name in requested_names:
-                # Boot pool is never in the database
-                pool_names.append(boot_pool_name)
-            non_boot_names = [n for n in requested_names if n != boot_pool_name]
-            if non_boot_names:
-                for p in self.middleware.call_sync(
-                    "datastore.query",
-                    "storage.volume",
-                    [["name", "in", non_boot_names]],
-                    {"prefix": "vol_"},
-                ):
-                    db_pools[p["name"]] = p
-                    pool_names.append(p["name"])
+                pool_names.append(p["name"])
+
+        # Boot pool is never in the database but can be explicitly requested.
+        if requested_names is not None and boot_pool_name in requested_names:
+            pool_names.append(boot_pool_name)
 
         # Step 2: Query live zpool data for the resolved names
         results = self.middleware.call_sync(
