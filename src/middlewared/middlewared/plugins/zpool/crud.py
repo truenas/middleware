@@ -83,8 +83,10 @@ class ZPoolService(Service):
 
             entries.append(
                 _offline_entry(
-                    name, int(pool_info["guid"]) if pool_info else 0,
-                    status_code, status_detail,
+                    name,
+                    int(pool_info["guid"]) if pool_info else 0,
+                    status_code,
+                    status_detail,
                 )
             )
         return entries
@@ -137,7 +139,6 @@ class ZPoolService(Service):
         boot_pool_name = self.middleware.call_sync("boot.pool_name")
         requested_names = data.get("pool_names")
 
-        # Always fetch all DB pools (cheap), then resolve which names to query.
         db_pools = {}
         pool_names = []
         for p in self.middleware.call_sync(
@@ -151,11 +152,9 @@ class ZPoolService(Service):
         if requested_names is not None and boot_pool_name in requested_names:
             pool_names.append(boot_pool_name)
 
-        # Step 2: Query live zpool data for the resolved names
         results = self.middleware.call_sync(
             "zpool.query_impl", data | {"pool_names": pool_names}
         )
-        # Step 3: Add OFFLINE entries for pools that are not imported
         imported_names = {p["name"] for p in results}
         offline_names = [name for name in pool_names if name not in imported_names]
         results.extend(self.offline_entries(db_pools, offline_names))
