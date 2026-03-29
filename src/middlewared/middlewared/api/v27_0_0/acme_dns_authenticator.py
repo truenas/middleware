@@ -9,6 +9,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
+    'ACMEDNSAuthenticatorCreate', 'ACMEDNSAuthenticatorUpdate',
     'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
     'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
     'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs',

@@ -32,7 +32,9 @@ class ACMEService(Service):
         # Validate domain dns mapping for handling DNS challenges
         # Ensure that there is an authenticator for each domain in the CSR
         domains = self.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
-        dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('acme.dns.authenticator.query')]
+        dns_authenticator_ids = [
+            o.id for o in self.middleware.call_sync2(self.s.acme.dns.authenticator.query)
+        ]
 
         dns_mapping_copy = copy.deepcopy(data['dns_mapping'])
         # We will normalise domain authenticators to ensure consistency between SAN "DNS:*" prefixes
@@ -81,17 +83,22 @@ class ACMEService(Service):
 
     def issue_certificate_impl(self, job, progress, acme_client_key_payload, csr, dns_mapping_copy):
         # Let's make sure for dns mapping, we have authenticator objects in place
+        dns_auth = self.middleware.services.acme.dns.authenticator
         authenticators = {
-            o['id']: o
-            for o in self.middleware.call_sync(
-                'acme.dns.authenticator.query', [['id', 'in', list(dns_mapping_copy.values())]]
+            o.id: o
+            for o in self.middleware.call_sync2(
+                dns_auth.query, [['id', 'in', list(dns_mapping_copy.values())]]
             )
         }
         for domain, authenticator_id in dns_mapping_copy.items():
             auth_details = authenticators[authenticator_id]
-            dns_mapping_copy[domain] = self.middleware.call_sync(
-                'acme.dns.authenticator.get_authenticator_internal', auth_details['attributes']['authenticator'],
-            )(self.middleware, auth_details['attributes'])
+            attrs = auth_details.attributes.get_secret_value()
+            authenticator_cls = self.middleware.call_sync2(
+                dns_auth.get_authenticator_internal, attrs.authenticator,
+            )
+            dns_mapping_copy[domain] = authenticator_cls(
+                self.middleware, attrs.model_dump(context={'expose_secrets': True})
+            )
 
         def progress_callback(progress_int, description):
             job.set_progress(progress_int, description)
