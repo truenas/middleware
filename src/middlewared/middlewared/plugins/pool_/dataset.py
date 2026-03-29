@@ -126,11 +126,14 @@ class PoolDatasetService(CRUDService):
         for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
         if `null` is specified all properties of the snapshot would be retrieved in this case.
         """
+        extra = options.pop('extra', {})
+        exclude_internal_datasets = extra.pop('exclude_internal_datasets', True)
         return generic_query(
             tls.lzh.iter_root_filesystems,
             filters,
             options,
-            options.pop("extra", {})
+            extra,
+            exclude_internal_datasets=exclude_internal_datasets,
         )
 
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
