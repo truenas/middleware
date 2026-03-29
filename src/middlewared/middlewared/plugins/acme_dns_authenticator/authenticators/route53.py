@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import errno
+import time
+from typing import Any, TYPE_CHECKING
 
 import boto3
-import time
 
 from botocore import exceptions as boto_exceptions
 
@@ -10,28 +13,31 @@ from middlewared.service import CallError
 
 from .base import Authenticator
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
     SCHEMA_MODEL = Route53SchemaArgs
 
-    def initialize_credentials(self):
-        self.access_key_id = self.attributes['access_key_id']
-        self.secret_access_key = self.attributes['secret_access_key']
-        self.client = boto3.Session(
+    def initialize_credentials(self) -> None:
+        self.access_key_id: str = self.attributes['access_key_id']
+        self.secret_access_key: str = self.attributes['secret_access_key']
+        self.client: Any = boto3.Session(
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
         ).client('route53')
 
     @staticmethod
-    async def validate_credentials(middleware, data):
+    async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:
         return data
 
-    def _perform(self, domain, validation_name, validation_content):
+    def _perform(self, domain: str, validation_name: str, validation_content: str) -> Any:
         return self._change_txt_record('UPSERT', validation_name, validation_content)
 
-    def wait_for_records_to_propagate(self, resp_change_info):
+    def wait_for_records_to_propagate(self, resp_change_info: Any) -> None:
         """
         Wait for a change to be propagated to all Route53 DNS servers.
         https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html
@@ -40,16 +46,16 @@ class Route53Authenticator(Authenticator):
         for unused_n in range(0, 120):
             r = self.client.get_change(Id=resp_change_info['Id'])
             if r['ChangeInfo']['Status'] == 'INSYNC':
-                return resp_change_info['Id']
+                return
             time.sleep(5)
 
         raise CallError(f'Timed out waiting for Route53 change. Current status: {r["Status"]}')
 
-    def _find_zone_id_for_domain(self, domain):
+    def _find_zone_id_for_domain(self, domain: str) -> Any:
         # Finding zone id for the given domain
         paginator = self.client.get_paginator('list_hosted_zones')
         target_labels = domain.rstrip('.').split('.')
-        zones = []
+        zones: list[tuple[str, Any]] = []
         try:
             for page in paginator.paginate():
                 for zone in page['HostedZones']:
@@ -71,7 +77,7 @@ class Route53Authenticator(Authenticator):
         zones.sort(key=lambda z: len(z[0]), reverse=True)
         return zones[0][1]
 
-    def _change_txt_record(self, action, validation_domain_name, validation):
+    def _change_txt_record(self, action: str, validation_domain_name: str, validation: str) -> Any:
         if action not in ('UPSERT', 'DELETE'):
             raise CallError('Please specify a valid action for changing TXT record for Route53')
 
@@ -98,5 +104,5 @@ class Route53Authenticator(Authenticator):
         except Exception as e:
             raise CallError(f'Failed to {action} Route53 record sets: {e}')
 
-    def _cleanup(self, domain, validation_name, validation_content):
+    def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
         self._change_txt_record('DELETE', validation_name, validation_content)

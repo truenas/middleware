@@ -21,7 +21,10 @@ from middlewared.service import GenericCRUDService, private
 from .crud import DNSAuthenticatorServicePart
 
 if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
     from middlewared.main import Middleware
+
+    from .authenticators.base import Authenticator
 
 
 __all__ = ('DNSAuthenticatorService',)
@@ -74,11 +77,11 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
         return self._svc_part.authenticator_schemas()
 
     @private
-    def get_authenticator_internal(self, authenticator_name: str) -> Any:
+    def get_authenticator_internal(self, authenticator_name: str) -> type[Authenticator]:
         return self._svc_part.get_authenticator_internal(authenticator_name)
 
     @private
-    def get_authenticator_schemas(self) -> dict[str, Any]:
+    def get_authenticator_schemas(self) -> dict[str, type[BaseModel]]:
         return self._svc_part.get_authenticator_schemas()
 
 

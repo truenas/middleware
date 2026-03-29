@@ -30,8 +30,10 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
 module = [
-    "apps_ci.*", "apps_schema.*", "apps_validation.*", "catalog_reader.*", "influxdb.*",
-    "isodate.*", "ixhardware.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pyudev.*", "tdb.*", "truenas_pysnmp.*",
+    "apps_ci.*", "apps_schema.*", "apps_validation.*", "boto3.*", "botocore.*",
+    "catalog_reader.*", "certbot_dns_cloudflare.*", "certbot_dns_digitalocean.*", "influxdb.*",
+    "isodate.*", "ixhardware.*", "lexicon.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pyudev.*", "tdb.*",
+    "truenas_pysnmp.*",
 ]
 ignore_missing_imports = true
 

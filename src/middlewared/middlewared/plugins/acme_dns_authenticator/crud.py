@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import middlewared.sqlalchemy as sa
 from middlewared.api.base.jsonschema import get_json_schema
@@ -9,7 +9,11 @@ from middlewared.api.current import (
 )
 from middlewared.service import CRUDServicePart, ValidationErrors
 
+from .authenticators.base import Authenticator
 from .authenticators.factory import auth_factory
+
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
 
 
 class ACMEDNSAuthenticatorModel(sa.Model):
@@ -23,7 +27,7 @@ class ACMEDNSAuthenticatorModel(sa.Model):
 class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
     _datastore = 'system.acmednsauthenticator'
     _entry = DNSAuthenticatorEntry
-    _schemas: dict[str, Any] = None
+    _schemas: dict[str, type[BaseModel]] | None = None
 
     async def do_create(self, data: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
         data_dict = data.model_dump(context={'expose_secrets': True})
@@ -81,13 +85,13 @@ class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
         verrors.check()
 
     @staticmethod
-    def get_authenticator_internal(authenticator_name: str) -> Any:
-        return auth_factory.authenticator(authenticator_name)  # type: ignore[no-untyped-call]
+    def get_authenticator_internal(authenticator_name: str) -> type[Authenticator]:
+        return auth_factory.authenticator(authenticator_name)
 
-    def get_authenticator_schemas(self) -> dict[str, Any]:
+    def get_authenticator_schemas(self) -> dict[str, type[BaseModel]]:
         if self._schemas:
             return self._schemas
-        authenticators = auth_factory.get_authenticators()  # type: ignore[no-untyped-call]
+        authenticators = auth_factory.get_authenticators()
         self._schemas = {k: klass.SCHEMA_MODEL for k, klass in authenticators.items()}
         return self._schemas
 
