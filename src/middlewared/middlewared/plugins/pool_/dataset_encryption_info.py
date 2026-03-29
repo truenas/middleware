@@ -321,7 +321,7 @@ class PoolDatasetService(Service):
                         f'{name}/'
                     ) and check_key(d)
                 ),
-                self.middleware.call_sync('pool.dataset.query')
+                self.middleware.call_sync('pool.dataset.query', [], {'extra': {'exclude_internal_datasets': False}})
             )
         ))
 
