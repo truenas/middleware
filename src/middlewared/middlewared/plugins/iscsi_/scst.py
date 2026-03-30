@@ -23,8 +23,6 @@ SCST_CONTROLLER_A_TARGET_GROUPS_STATE = (
 SCST_CONTROLLER_B_TARGET_GROUPS_STATE = (
     '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
 )
-SCST_CONTROLLER_A_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
-SCST_CONTROLLER_B_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
 SCST_ASYNC_LUN_REPLACE = '/sys/kernel/scst_tgt/async_lun_replace'
 
 
