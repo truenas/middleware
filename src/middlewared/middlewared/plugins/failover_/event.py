@@ -22,7 +22,6 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.service_.services.all import all_services
-from middlewared.utils.iscsi.constants import ISCSIMODE
 
 
 logger = logging.getLogger('failover')
@@ -390,57 +389,6 @@ class FailoverEventsService(Service):
 
         return fenced_error
 
-    def iscsi_cleanup_alua_state(self):
-        """
-        Cleanup iSCSI ALUA state if we are now becoming ACTIVE node, and
-        previously were STANDBY node.
-        """
-        # We will suspend iSCSI and then close any existing iSCSI sessions
-        # to avoid inflight I/O interfering with the LUN replacement during
-        # become_active.  Suspending iSCSI means BUSY will be returned.
-        suspended = cleaned = False
-
-        try:
-            config = self.run_call('iscsi.global.config')
-            if config.get('mode') == ISCSIMODE.SCST_DLM_PRSTATE_SAVE:
-                # Configure dev_disk to dump PR state to files as devices are
-                # detached during reset_active().  Files are keyed by device
-                # serial number and consumed by restore_pr_state() in
-                # become_active().  This is race-free: the dump happens at the
-                # exact moment each device is torn down, after all commands drain.
-                self.run_call('iscsi.scst.set_pr_dump_dir', '/var/lib/scst/pr_dump')
-
-            try:
-                # Ensure the internal (inter-node) target sessions
-                # are stopped, as otherwise inflight IO could
-                # prevent the suspend from completing.
-                logger.info('Reset active start')
-                rajob = self.run_call('iscsi.alua.reset_active')
-                rajob.wait_sync(timeout=10)
-                logger.info('Reset active job done')
-            except TimeoutError:
-                logger.warning('Reset active job is continuing')
-            except Exception:
-                logger.exception('Reset active failed')
-
-            try:
-                logger.info('Suspending iSCSI')
-                self.run_call('iscsi.scst.suspend', 30)
-                suspended = True
-                logger.info('Suspended iSCSI')
-            except FileNotFoundError:
-                # This can occur if we are booting into ACTIVE node
-                # rather than becoming ACTIVE from STANDBY.
-                logger.info('Did not suspend iSCSI')
-            else:
-                logger.info('Closing iSCSI sessions')
-                self.run_call('iscsi.alua.force_close_sessions')
-                logger.info('Closed iSCSI sessions')
-                cleaned = True
-        except Exception:
-            logger.exception('Unexpected failure setting up iscsi')
-        return (suspended, cleaned)
-
     @job(lock=FAILOVER_LOCK_NAME, read_roles=['READONLY_ADMIN'])
     def vrrp_master(self, job, fobj, ifname, event):
 
@@ -580,15 +528,17 @@ class FailoverEventsService(Service):
         except Exception:
             logger.exception("Failed to regenerate user info")
 
-        # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
+        # Suspend new iSCSI logins and set FC ALUA state to transitioning to keep FC paths alive
+        # during the failover window.  The HA session logout (reset_active) is deferred until
+        # after the LUN replace so that the ALUA tgt_dev filter stays in place throughout.
         logger.info('Verifying iSCSI service')
-        iscsi_suspended = iscsi_cleaned = False
         if self.run_call('service.started_or_enabled', 'iscsitarget'):
             logger.info('Checking if ALUA is enabled')
             handle_alua = self.run_call('iscsi.global.alua_enabled')
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
-                iscsi_suspended, iscsi_cleaned = self.iscsi_cleanup_alua_state()
+                self.run_call('iscsi.scst.suspend_logins')
+                self.run_call('iscsi.scst.set_alua_transitioning')
         else:
             handle_alua = False
         logger.info('Done verifying iSCSI service')
@@ -746,12 +696,6 @@ class FailoverEventsService(Service):
         logger.info('Starting background task to scan all SED based pools (if any)')
         self.middleware.create_task(self.middleware.call('pool.ha_update_all_sed_attr'))
 
-        # Now that the volumes have been imported, get a head-start on activating extents.
-        if handle_alua and iscsi_cleaned:
-            logger.info('Activating ALUA extents')
-            self.run_call('iscsi.alua.activate_extents')
-            logger.info('Done activating ALUA extents')
-
         # need to make sure failover status is updated in the middleware cache
         logger.info('Refreshing failover status')
         self.run_call('failover.status_refresh')
@@ -801,12 +745,18 @@ class FailoverEventsService(Service):
 
         if handle_alua:
             try:
-                if iscsi_suspended:
-                    logger.info('Clearing iSCSI suspend')
-                    if self.run_call('iscsi.scst.clear_suspend'):
-                        logger.info('Cleared iSCSI suspend')
+                # Deferred: tear down the HA iSCSI session now that all LUN mappings
+                # have been swapped to dev_vdisk.  dev_disk detaching at this point
+                # cascades through SCST but finds no remaining LUN references (they
+                # were replaced in become_active), so the cascade is harmless.
+                logger.info('Reset active start (deferred)')
+                self.run_call('iscsi.alua.reset_active')
+                logger.info('Reset active job started')
             except Exception:
-                logger.exception('Failed to complete iSCSI bringup')
+                logger.exception('Reset active failed')
+            finally:
+                self.run_call('iscsi.scst.resume_logins')
+                self.run_call('iscsi.scst.set_alua_active')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
