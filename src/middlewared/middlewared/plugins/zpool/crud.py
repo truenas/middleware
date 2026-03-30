@@ -2,13 +2,16 @@ import threading
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZPoolCreateArgs,
+    ZPoolCreateResult,
     ZPoolEntry,
     ZPoolQueryArgs,
     ZPoolQueryResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import job, private, Service
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .create_impl import create_impl
 from .query_impl import query_impl
 
 
@@ -26,6 +29,44 @@ class ZPoolService(Service):
         if data is None:
             data = dict()
         return query_impl(tls.lzh, data)
+
+    @api_method(
+        ZPoolCreateArgs,
+        ZPoolCreateResult,
+        roles=["POOL_WRITE"],
+    )
+    @pass_thread_local_storage
+    @job()
+    def create(self, job, tls: threading.local, data: dict) -> None:
+        """
+        Create a ZFS pool.
+
+        Formats the specified disks and creates the pool directly via truenas_pylibzfs.
+        Pool and filesystem properties are passed through to ZFS as-is.
+
+        Examples::
+
+            # Simple mirror
+            {
+                "name": "tank",
+                "topology": {
+                    "data": [{"type": "MIRROR", "disks": ["sda", "sdb"]}]
+                }
+            }
+
+            # RAIDZ1 with cache and spare
+            {
+                "name": "tank",
+                "topology": {
+                    "data": [{"type": "RAIDZ1", "disks": ["sda", "sdb", "sdc"]}],
+                    "cache": [{"type": "STRIPE", "disks": ["sdd"]}],
+                    "spares": ["sde"]
+                },
+                "properties": {"ashift": "12"},
+                "fsoptions": {"compression": "lz4"}
+            }
+        """
+        create_impl(tls.lzh, self.middleware, job, data)
 
     @private
     def offline_entries(self, db_pools, offline_names):
