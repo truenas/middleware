@@ -520,7 +520,7 @@ class TestFixtureConfiguredALUA:
 
         if self.VERBOSE:
             _debug(f'Validate shape seen by Node {newnode}...')
-        self.validate_shape(new_ip, fix_write_patterns, 0)
+        self.validate_shape(new_ip, fix_write_patterns)
         if self.VERBOSE:
             _debug(f'Validate data pattern seen by Node {newnode}...')
         self.check_patterns(new_ip, fix_write_patterns)
@@ -581,7 +581,7 @@ class TestFixtureConfiguredALUA:
         # Ensure that the targets look OK on BACKUP
         if self.VERBOSE:
             _debug(f'Validate shape seen by Node {othernode}...')
-        self.validate_shape(other_ip, fix_write_patterns, 1)
+        self.validate_shape(other_ip, fix_write_patterns)
 
         if self.VERBOSE:
             _debug(f'Validate data pattern seen by Node {othernode}...')

@@ -1,6 +1,8 @@
 import asyncio
 import itertools
+import os
 import pathlib
+import signal
 
 from middlewared.service import Service
 from middlewared.utils import run
@@ -8,6 +10,7 @@ from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
+ISCSI_SCSTD_PIDFILE = '/run/iscsi-scstd.pid'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
 COPY_MANAGER_LUNS_PATH = (
     '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
@@ -20,6 +23,7 @@ SCST_CONTROLLER_A_TARGET_GROUPS_STATE = (
 SCST_CONTROLLER_B_TARGET_GROUPS_STATE = (
     '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
 )
+SCST_ASYNC_LUN_REPLACE = '/sys/kernel/scst_tgt/async_lun_replace'
 
 
 class iSCSITargetService(Service):
@@ -119,6 +123,25 @@ class iSCSITargetService(Service):
     def suspend(self, value=10):
         pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
 
+    def suspend_logins(self):
+        """Send SIGUSR1 to iscsi-scstd to reject new logins with a retriable error."""
+        self._signal_scstd(signal.SIGUSR1)
+
+    def resume_logins(self):
+        """Send SIGUSR2 to iscsi-scstd to resume accepting new logins."""
+        self._signal_scstd(signal.SIGUSR2)
+
+    def _signal_scstd(self, sig):
+        try:
+            pid = int(pathlib.Path(ISCSI_SCSTD_PIDFILE).read_text().strip())
+            os.kill(pid, sig)
+        except FileNotFoundError:
+            self.logger.warning('iscsi-scstd pidfile not found, daemon may not be running')
+        except ProcessLookupError:
+            self.logger.warning('iscsi-scstd process not found (stale pidfile?)')
+        except ValueError:
+            self.logger.warning('iscsi-scstd pidfile contains invalid PID')
+
     def clear_suspend(self):
         """suspend could have been called several times, and will need to be decremented
         several times to clean"""
@@ -169,20 +192,36 @@ class iSCSITargetService(Service):
             f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
         ).write_text(f'del {lun}\n')
 
-    def replace_iscsi_lun(self, iqn, extent, lun):
-        mgmt_path = (
-            f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
-        )
-        pathlib.Path(mgmt_path).write_text(f'replace {sanitize_extent(extent)} {lun}\n')
+    def _xfer_prstate(self, luns_path, extent, lun):
+        try:
+            srcpath = pathlib.Path(luns_path, str(lun), 'device/pr_state')
+            dstpath = pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(extent)}/pr_state')
+            dstpath.write_text(srcpath.read_text())
+            return 'replace_no_ua'
+        except OSError:
+            pass
+        return 'replace'
+
+    def replace_iscsi_lun(self, iqn, extent, lun, prstate_save):
+        luns_path = f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns'
+        if prstate_save:
+            op = self._xfer_prstate(luns_path, extent, lun)
+        else:
+            op = 'replace'
+        pathlib.Path(luns_path, 'mgmt').write_text(f'{op} {sanitize_extent(extent)} {lun}\n')
 
     def delete_fc_lun(self, wwpn, lun):
         pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(
             f'del {lun}\n'
         )
 
-    def replace_fc_lun(self, wwpn, extent, lun):
-        mgmt_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt')
-        mgmt_path.write_text(f'replace {sanitize_extent(extent)} {lun}\n')
+    def replace_fc_lun(self, wwpn, extent, lun, prstate_save):
+        luns_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns')
+        if prstate_save:
+            op = self._xfer_prstate(luns_path, extent, lun)
+        else:
+            op = 'replace'
+        pathlib.Path(luns_path, 'mgmt').write_text(f'{op} {sanitize_extent(extent)} {lun}\n')
 
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
@@ -218,6 +257,31 @@ class iSCSITargetService(Service):
             self.logger.debug('Failed to apply SCST configuration', exc_info=True)
             return False
         return True
+
+    def set_alua_transitioning(self):
+        """Set the local controller's ALUA target group state to transitioning."""
+        node = self.middleware.call_sync('failover.node')
+        path = SCST_CONTROLLER_A_TARGET_GROUPS_STATE if node == 'A' else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        try:
+            pathlib.Path(path).write_text('transitioning\n')
+        except Exception:
+            self.logger.warning('Failed to set ALUA transitioning state')
+
+    def set_alua_active(self):
+        """Set the local controller's ALUA target group state to active."""
+        node = self.middleware.call_sync('failover.node')
+        path = SCST_CONTROLLER_A_TARGET_GROUPS_STATE if node == 'A' else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        try:
+            pathlib.Path(path).write_text('active\n')
+        except Exception:
+            self.logger.warning('Failed to set ALUA active state')
+
+    def enable_async_lun_replace(self):
+        """Enable async LUN replace to avoid blocking failover on tgt_dev drain."""
+        try:
+            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('1\n')
+        except Exception:
+            self.logger.warning('Failed to enable async_lun_replace')
 
     def copy_manager_devices(self):
         result = []
