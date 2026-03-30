@@ -1,8 +1,10 @@
+from typing import Literal
+
 from middlewared.api.base import BaseModel
 
-from .pool_scrub import PoolScan
-
 __all__ = (
+    "ZPoolScan",
+    "ZPoolExpand",
     "ZPoolPropertyValue",
     "ZPoolVdevStats",
     "ZPoolVdev",
@@ -113,6 +115,52 @@ class ZPoolTopology(BaseModel):
     """Array of deduplication table vdev configurations."""
 
 
+class ZPoolScan(BaseModel):
+    function: Literal["RESILVER", "SCRUB"]
+    """Type of ZFS pool scan."""
+    state: Literal["SCANNING", "FINISHED", "CANCELED"]
+    """Current lifecycle state of the scan."""
+    start_time: int
+    """Scan start time (unix timestamp)."""
+    end_time: int | None
+    """Scan end time as unix timestamp (`null` while the scan is still running)."""
+    percentage: float
+    """Scan progress (between 0 and 100%)."""
+    bytes_to_process: int
+    """Total bytes located by scanner."""
+    bytes_processed: int
+    """Total bytes to scan."""
+    bytes_issued: int
+    """Issued bytes per scan pass."""
+    pause: int | None
+    """Pause time as unix timestamp (`null` if the scan is not paused)."""
+    errors: int
+    """Number of scan errors."""
+    total_secs_left: int | None
+    """Number of seconds left (`null` if the scan is not running)."""
+
+
+class ZPoolExpand(BaseModel):
+    state: str
+    """Expansion state (e.g., SCANNING, FINISHED)."""
+    expanding_vdev: int
+    """Index of the vdev being expanded."""
+    start_time: int
+    """Expansion start time (unix timestamp)."""
+    end_time: int | None
+    """Expansion end time as unix timestamp (`null` while expanding)."""
+    bytes_to_reflow: int
+    """Total bytes that need to be reflowed."""
+    bytes_reflowed: int
+    """Total bytes reflowed so far."""
+    waiting_for_resilver: int
+    """Non-zero if expansion is waiting for a resilver to complete."""
+    total_secs_left: int | None
+    """Estimated seconds remaining (`null` if not expanding)."""
+    percentage: float
+    """Expansion progress (between 0 and 100%)."""
+
+
 class ZPoolFeature(BaseModel):
     name: str
     """Feature name."""
@@ -130,23 +178,23 @@ class ZPoolEntry(BaseModel):
     guid: int
     """Globally unique identifier for the pool."""
     status: str
-    """Current pool status (ONLINE, DEGRADED, FAULTED, etc.)."""
+    """Current pool status (ONLINE, DEGRADED, FAULTED, OFFLINE, etc.)."""
     healthy: bool
     """Whether the pool is in a healthy state."""
     warning: bool
     """Whether the pool has warning conditions."""
-    status_code: str
-    """Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED)."""
+    status_code: str | None
+    """Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED, LOCKED_SED_DISKS)."""
     status_detail: str | None
     """Human-readable status description."""
     properties: dict[str, ZPoolPropertyValue] | None = None
     """Pool properties, keyed by property name."""
     topology: ZPoolTopology | None = None
     """Pool vdev topology."""
-    scan: PoolScan | None = None
+    scan: ZPoolScan | None = None
     """Most recent scrub or resilver information."""
-    expand: dict | None = None
-    """Information about active pool expansion."""
+    expand: ZPoolExpand | None = None
+    """RAIDZ expansion information."""
     features: list[ZPoolFeature] | None = None
     """Pool feature flags."""
 
