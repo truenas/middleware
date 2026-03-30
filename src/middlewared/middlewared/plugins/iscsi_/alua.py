@@ -50,8 +50,6 @@ class iSCSITargetAluaService(Service):
         self.standby_alua_ready = False
         self.standby_skip_cluster_mode = False
 
-        self.activate_extents_job = None
-
         # standby_write_empty_config will be used to control whether the
         # STANDBY node initially writes a minimal scst.conf
         # We initialize it to None here, as we could just be restarting
@@ -104,49 +102,6 @@ class iSCSITargetAluaService(Service):
                 self._standby_write_empty_config = True
         return self._standby_write_empty_config
 
-    @job(lock='activate_extents', transient=True, lock_queue_size=1)
-    async def activate_extents(self, job):
-        self.activate_extents_job = job
-        job.set_progress(0, 'Start activate_extents')
-
-        # First get all the currently active extents
-        extents = await self.middleware.call('iscsi.extent.query',
-                                             [['enabled', '=', True], ['locked', '=', False]],
-                                             {'select': ['name', 'id', 'type', 'path', 'disk']})
-
-        # Calculate what we want to do
-        todo = []
-        for extent in extents:
-            if extent['type'] == 'DISK':
-                path = f'/dev/{extent["disk"]}'
-            else:
-                path = extent['path']
-            todo.append([extent['name'], extent['type'], path])
-
-        job.set_progress(20, 'Read to activate')
-
-        if todo:
-            self.logger.debug(f'Activating {len(todo)} extents')
-            retries = 10
-            while todo and retries:
-                do_again = []
-                for item in todo:
-                    # Mark them active
-                    if not await self.middleware.call('iscsi.scst.activate_extent', *item):
-                        self.logger.debug(f'Cannot Activate extent {item}')
-                        do_again.append(item)
-                if not do_again:
-                    break
-                await asyncio.sleep(1)
-                retries -= 1
-                todo = do_again
-            self.logger.debug('Activated extents')
-            await asyncio.sleep(2)
-        else:
-            self.logger.debug('No extent to activate')
-
-        job.set_progress(100, 'All extents activated')
-
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
@@ -168,12 +123,6 @@ class iSCSITargetAluaService(Service):
 
         assocs = await self.middleware.call('iscsi.targetextent.query')
 
-        if self.activate_extents_job:
-            self.logger.debug('Waiting for activate to complete')
-            await self.activate_extents_job.wait()
-            self.logger.debug('Waited for activate to complete')
-            self.activate_extents_job = None
-
         # If we have NOT completed standby_after_start then we cannot just
         # become ready, instead we will need to restart iscsitarget
         if not self.standby_alua_ready:
@@ -188,9 +137,9 @@ class iSCSITargetAluaService(Service):
             self.logger.debug('iscsitarget restarted')
             return
 
+        await self.middleware.call('iscsi.scst.enable_async_lun_replace')
         self.logger.debug('Updating LUNs')
-        await self.middleware.call('iscsi.scst.suspend', 10)
-        self.logger.debug('iSCSI suspended')
+
         for assoc in assocs:
             extent_id = assoc['extent']
             if extent_id in extents:
@@ -198,23 +147,24 @@ class iSCSITargetAluaService(Service):
                 if target_id in targets:
                     target_name = targets[target_id]['name']
                     target_mode = targets[target_id]['mode']
+                    extent_name = extents[extent_id]['name']
                     if target_mode in ['ISCSI', 'BOTH']:
                         iqn = f'{iqn_basename}:{target_name}'
                         await self.middleware.call('iscsi.scst.replace_iscsi_lun',
                                                    iqn,
-                                                   extents[extent_id]['name'],
-                                                   assoc['lunid'])
+                                                   extent_name,
+                                                   assoc['lunid'],
+                                                   True)
                     if target_mode in ['FC', 'BOTH'] and target_id in fcports:
                         if wwpn := wwn_as_colon_hex(fcports[target_id]):
                             await self.middleware.call('iscsi.scst.replace_fc_lun',
                                                        wwpn,
-                                                       extents[extent_id]['name'],
-                                                       assoc['lunid'])
+                                                       extent_name,
+                                                       assoc['lunid'],
+                                                       True)
         self.logger.debug('Updated LUNs')
         await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
         self.logger.debug('Switched optimized node')
-        if await self.middleware.call('iscsi.scst.clear_suspend'):
-            self.logger.debug('iSCSI unsuspended')
 
     async def check_luns(self):
         try:
