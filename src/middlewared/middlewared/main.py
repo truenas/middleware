@@ -93,8 +93,8 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
-from middlewared.plugins.acme import ACMEService
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
+from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.alert.alert import AlertService
 from middlewared.plugins.alert.classes import AlertClassesService
 from middlewared.plugins.alert.service import AlertServiceService
@@ -170,6 +170,13 @@ class AcmeDnsServicesContainer(BaseServiceContainer):
         self.authenticator = ACMEDNSAuthenticatorService(middleware)
 
 
+class AcmeServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.protocol = ACMEProtocolService(middleware)
+        self.dns = AcmeDnsServicesContainer(middleware)
+
+
 class PoolServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -198,7 +205,7 @@ class ServiceContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super(ServiceContainer, self).__init__(middleware)
 
-        self.acme = ACMEService(middleware)
+        self.acme = AcmeServicesContainer(middleware)
         self.alert = AlertService(middleware)
         self.alertclasses = AlertClassesService(middleware)
         self.alertservice = AlertServiceService(middleware)

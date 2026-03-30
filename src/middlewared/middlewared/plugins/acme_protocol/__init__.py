@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from middlewared.service import Service, private
+from middlewared.service import Service
 
 from .issue_cert import issue_certificate as _issue_certificate, issue_certificate_impl as _issue_certificate_impl
 from .revoke_cert import revoke_certificate as _revoke_certificate
@@ -13,23 +13,16 @@ from .utils import (
 
 if TYPE_CHECKING:
     from middlewared.job import Job
-    from middlewared.main import Middleware
 
 
-__all__ = ('ACMEService',)
+__all__ = ('ACMEProtocolService',)
 
 
-class ACMEService(Service):
+class ACMEProtocolService(Service):
 
     class Config:
-        namespace = 'acme'
+        namespace = 'acme.protocol'
         private = True
-
-    def __init__(self, middleware: Middleware) -> None:
-        super().__init__(middleware)
-        # Imported here to avoid circular imports at module level
-        from middlewared.main import AcmeDnsServicesContainer
-        self.dns = AcmeDnsServicesContainer(middleware)
 
     def get_acme_client_and_key_payload(
         self, acme_directory_uri: str, tos: bool = False,
