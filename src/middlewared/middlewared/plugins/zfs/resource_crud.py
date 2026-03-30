@@ -443,7 +443,7 @@ class ZFSResourceService(Service):
     @api_method(
         ZFSResourceDestroyArgs,
         ZFSResourceDestroyResult,
-        roles=["ZFS_RESOURCE_WRITE"],
+        roles=["ZFS_RESOURCE_DELETE"],
         check_annotations=True,
     )
     def destroy(self, data: ZFSResourceDestroyArgsData) -> None:
