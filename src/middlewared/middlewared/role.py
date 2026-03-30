@@ -233,6 +233,7 @@ ROLES = {
     'SHARING_ADMIN': Role(includes=['READONLY_ADMIN',
                                     'DATASET_WRITE',
                                     'SHARING_WRITE',
+                                    'ZFS_RESOURCE_WRITE',
                                     'FILESYSTEM_ATTRS_WRITE',
                                     'SERVICE_READ'],
                           builtin=False),
@@ -262,6 +263,7 @@ ROLES = {
     # ZFS Resources (query, create/update/delete)
     'ZFS_RESOURCE_READ': Role(),
     'ZFS_RESOURCE_WRITE': Role(includes=['ZFS_RESOURCE_READ']),
+    'ZFS_RESOURCE_DELETE': Role(),
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
