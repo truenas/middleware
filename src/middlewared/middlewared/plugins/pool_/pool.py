@@ -147,7 +147,6 @@ class PoolService(CRUDService):
                     expand['start_time'] = datetime.fromtimestamp(expand['start_time'], tz=timezone.utc)
                 if expand['end_time']:
                     expand['end_time'] = datetime.fromtimestamp(expand['end_time'], tz=timezone.utc)
-            # expand stays None when no expansion has occurred
 
             rv.update({
                 'status': status,
