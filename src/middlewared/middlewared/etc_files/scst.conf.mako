@@ -841,6 +841,18 @@ DEVICE_GROUP targets {
 %                 endfor
 %             endif
 %         endfor
+##
+## Also add dev_vdisk devices to the DEVICE_GROUP so that bind_alua
+## callbacks fire for them when the target group state changes during
+## failover.  Without this, set_node_optimized (ALUA -> active) would not
+## call blockio_on_alua_state_change_finish for the vdisk devices, leaving
+## dev_active=0 and bdev_desc.bdev=NULL, which causes I/O errors (even
+## though paths appear alive via INQUIRY/TEST_UNIT_READY).
+%         for handler in extents_io:
+%             for extent in extents_io[handler]:
+        DEVICE ${extent['name']}
+%             endfor
+%         endfor
 
         TARGET_GROUP controller_${nodes[node]["other"]} {
                 group_id ${nodes[nodes[node]["other"]]["group_id"]}
