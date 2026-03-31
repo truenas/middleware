@@ -23,14 +23,16 @@ class CertificateService(Service):
 
         system_cert_ids = []
         tnc_config = self.middleware.call_sync('tn_connect.config')
-        if system_cert and (
-            all(
-                system_cert[k] == v for k, v in (
-                    ('organization', 'iXsystems'),
-                    ('san', ['DNS:localhost']),
-                    ('cert_type_existing', True),
+        if (
+            system_cert
+            and (
+                (
+                    system_cert['organization'] in ('iXsystems Inc. dba TrueNAS', 'iXsystems')
+                    and system_cert['san'] == ['DNS:localhost']
+                    and system_cert['cert_type_existing'] == True
                 )
-            ) or tnc_config['certificate'] == system_cert['id']
+                or tnc_config['certificate'] == system_cert['id']
+            )
         ):
             system_cert_ids.append(system_cert['id'])
 
