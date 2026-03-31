@@ -29,18 +29,19 @@ class ContainerImageService(Service):
         """
         products = self.query_registry_images()["products"]
 
-        return [
-            {
-                "name": name,
-                "versions": [
-                    {
-                        "version": version
-                    }
-                    for version in product["versions"].keys()
-                ]
-            }
-            for name, product in products.items()
-        ]
+        # Only include versions that have a root.tar.xz (container rootfs).
+        # VM-only images (desktop, freebsd, etc.) only ship disk.qcow2.
+        result = []
+        for name, product in products.items():
+            versions = []
+            for version, vdata in product["versions"].items():
+                if "root.tar.xz" in vdata.get("items", {}):
+                    versions.append({"version": version})
+
+            if versions:
+                result.append({"name": name, "versions": versions})
+
+        return result
 
     @private
     def query_registry_images(self):
