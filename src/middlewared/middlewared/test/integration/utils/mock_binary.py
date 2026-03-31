@@ -5,6 +5,7 @@ import json
 import textwrap
 
 from .call import call
+from .client import truenas_server
 from .ssh import ssh
 
 RESULT_PATH = "/tmp/mocked_binary_launch"
@@ -42,18 +43,17 @@ def set_usr_readonly(value, ip=None):
 
 
 @contextlib.contextmanager
-def mock_binary(path, code="", exitcode=1, ip=None):
+def mock_binary(path, code="", exitcode=1, remote=False):
+    ip = None
+    if remote:
+        ip = truenas_server.ha_ips()["standby"]
+
     set_usr_readonly("off", ip)
     ssh(f"rm -f {RESULT_PATH}", ip=ip)
     ssh(f"mv {path} {path}.bak", ip=ip)
     try:
-        if ip:
-            client_kwargs = {"host_ip": ip}
-        else:
-            client_kwargs = {}
-
-        call(
-            "filesystem.file_receive",
+        method = "filesystem.file_receive"
+        args = [
             path,
             base64.b64encode(textwrap.dedent("""\
                 #!/usr/bin/python3
@@ -70,7 +70,15 @@ def mock_binary(path, code="", exitcode=1, ip=None):
                 sys.exit(exitcode)
             """).replace("%code%", code).encode("utf-8")).decode("ascii"),
              {"mode": 0o755},
-            client_kwargs=client_kwargs,
+        ]
+
+        if remote:
+            args = [method, args]
+            method = "failover.call_remote"
+
+        call(
+            method,
+            *args,
         )
         yield BinaryMock()
     finally:

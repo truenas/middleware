@@ -151,7 +151,7 @@ def test_zfs_lifecycle():
         stack.enter_context(mock_binary(binary, code=code, exitcode=exitcode))
         if ha:
             stack.enter_context(
-                mock_binary(binary, code=code, exitcode=exitcode, ip=truenas_server.ha_ips()["standby"])
+                mock_binary(binary, code=code, exitcode=exitcode, remote=True)
             )
 
         def assert_default_value():
