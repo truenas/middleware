@@ -1,7 +1,11 @@
+import contextlib
+import textwrap
+
 import pytest
 
+from auto_config import ha
 from truenas_api_client import ValidationErrors
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ssh, truenas_server
 from middlewared.test.integration.utils.mock_binary import mock_binary
 
 SYSCTL = "kernel.watchdog"
@@ -11,6 +15,14 @@ SYSCTL_NEW_VALUE = "0"
 ZFS = "zil_nocacheflush"
 ZFS_DEFAULT_VALUE = "0"
 ZFS_NEW_VALUE = "1"
+
+
+def assert_ssh_both_nodes(command, output, **kwargs):
+    ips = [None]
+    if ha:
+        ips.append(truenas_server.ha_ips()["standby"])
+
+        assert ssh(command, **kwargs) == output
 
 
 def test_create_invalid_sysctl():
@@ -48,12 +60,12 @@ def test_create_invalid_zfs():
 
 def test_sysctl_lifecycle():
     def assert_default_value():
-        assert ssh("cat /etc/sysctl.d/tunables.conf", check=False) == f""
-        assert ssh(f"sysctl -n {SYSCTL}") == f"{SYSCTL_DEFAULT_VALUE}\n"
+        assert_ssh_both_nodes("cat /etc/sysctl.d/tunables.conf", "", check=False)
+        assert_ssh_both_nodes(f"sysctl -n {SYSCTL}", f"{SYSCTL_DEFAULT_VALUE}\n")
 
     def assert_new_value():
-        assert ssh("cat /etc/sysctl.d/tunables.conf") == f"{SYSCTL}={SYSCTL_NEW_VALUE}\n"
-        assert ssh(f"sysctl -n {SYSCTL}") == f"{SYSCTL_NEW_VALUE}\n"
+        assert_ssh_both_nodes("cat /etc/sysctl.d/tunables.conf", f"{SYSCTL}={SYSCTL_NEW_VALUE}\n")
+        assert_ssh_both_nodes(f"sysctl -n {SYSCTL}", f"{SYSCTL_NEW_VALUE}\n")
 
     assert_default_value()
 
@@ -84,10 +96,13 @@ def test_sysctl_lifecycle():
 
 def test_udev_lifecycle():
     def assert_exists():
-        assert ssh("cat /etc/udev/rules.d/10-disable-usb.rules") == f"BUS==\"usb\", OPTIONS+=\"ignore_device\"\n"
+        assert_ssh_both_nodes(
+            "cat /etc/udev/rules.d/10-disable-usb.rules",
+            f"BUS==\"usb\", OPTIONS+=\"ignore_device\"\n",
+        )
 
     def assert_does_not_exist():
-        assert ssh("cat /etc/udev/rules.d/10-disable-usb.rules", check=False) == f""
+        assert_ssh_both_nodes("cat /etc/udev/rules.d/10-disable-usb.rules", "", check=False)
 
     tunable = call("tunable.create", {
         "type": "UDEV",
@@ -115,14 +130,40 @@ def test_udev_lifecycle():
 
 
 def test_zfs_lifecycle():
-    with mock_binary("/usr/sbin/update-initramfs", exitcode=0):
+    binary = "/usr/sbin/update-initramfs"
+    code = textwrap.dedent("""\
+        import os
+
+        path = "/tmp/mock-update-initramfs-run-count"
+        if os.path.exists(path):
+            run_count = int(open(path).read().strip())
+        else:
+            run_count = 0
+        
+        run_count += 1
+        
+        with open(path, "w") as f:
+            f.write(f"{run_count}\\n")
+    """)
+    exitcode = 0
+
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(mock_binary(binary, code=code, exitcode=exitcode))
+        if ha:
+            stack.enter_context(
+                mock_binary(binary, code=code, exitcode=exitcode, remote=True)
+            )
+
         def assert_default_value():
-            assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f""
-            assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_DEFAULT_VALUE}\n"
+            assert_ssh_both_nodes("cat /etc/modprobe.d/zfs.conf", "", check=False)
+            assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_DEFAULT_VALUE}\n")
 
         def assert_new_value():
-            assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f"options zfs {ZFS}={ZFS_NEW_VALUE}\n"
-            assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_NEW_VALUE}\n"
+            assert_ssh_both_nodes("cat /etc/modprobe.d/zfs.conf", f"options zfs {ZFS}={ZFS_NEW_VALUE}\n", check=False)
+            assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_NEW_VALUE}\n")
+
+        def assert_update_initramfs_run_count(value):
+            assert_ssh_both_nodes(f"cat /tmp/mock-update-initramfs-run-count", f"{value}\n")
 
         assert_default_value()
 
@@ -133,22 +174,26 @@ def test_zfs_lifecycle():
         }, job=True)
 
         assert_new_value()
+        assert_update_initramfs_run_count(1)
 
         call("tunable.update", tunable["id"], {
             "enabled": False,
         }, job=True)
 
         assert_default_value()
+        assert_update_initramfs_run_count(2)
 
         call("tunable.update", tunable["id"], {
             "enabled": True,
         }, job=True)
 
         assert_new_value()
+        assert_update_initramfs_run_count(3)
 
         call("tunable.delete", tunable["id"], job=True)
 
         assert_default_value()
+        assert_update_initramfs_run_count(4)
 
 
 def test_arc_max_set():
