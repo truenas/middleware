@@ -29,7 +29,7 @@ class CertificateService(Service):
                 (
                     system_cert['organization'] in ('iXsystems Inc. dba TrueNAS', 'iXsystems')
                     and system_cert['san'] == ['DNS:localhost']
-                    and system_cert['cert_type_existing'] == True
+                    and system_cert['cert_type_existing'] is True
                 )
                 or tnc_config['certificate'] == system_cert['id']
             )
