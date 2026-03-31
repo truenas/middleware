@@ -1,7 +1,6 @@
-from datetime import datetime
 import asyncio
-import re
-import shlex
+import errno
+import time
 
 from middlewared.api import api_method, Event
 from middlewared.plugins.zfs_.zfs_events import ScrubNotStartedAlert, ScrubStartedAlert
@@ -11,12 +10,13 @@ from middlewared.api.current import (
     PoolScrubRunResult, PoolScanChangedEvent,
 )
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
+from middlewared.plugins.zpool.query_impl import query_impl
 
 
-RE_HISTORY_ZPOOL_SCRUB_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool (scrub|create)', re.MULTILINE)
+HISTORY_CREATE_IMPORT_CMDS = ('zpool create', 'zpool import')
 
 
 class ScrubError(CallError):
@@ -230,55 +230,101 @@ class PoolScrubService(CRUDService):
 
                 await asyncio.sleep(1)
 
-    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'])
-    async def run(self, name, threshold):
+    @api_method(
+        PoolScrubRunArgs,
+        PoolScrubRunResult,
+        pass_thread_local_storage=True,
+        roles=['POOL_WRITE']
+    )
+    def run(self, tls, name: str, threshold: int):
         """
-        Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
+        Initiate a scrub of pool `name` if last scrub was performed more than
+        `threshold` days before.
         """
-        await self.call2(self.s.alert.oneshot_delete, 'ScrubNotStarted', name)
-        await self.call2(self.s.alert.oneshot_delete, 'ScrubStarted', name)
+        for alert in ('ScrubNotStarted', 'ScrubStarted'):
+            self.call_sync2(self.s.alert.oneshot_delete, alert, name)
+
         try:
-            started = await self.__run(name, threshold)
+            started = self._run_impl(tls, name, threshold)
         except ScrubError as e:
-            await self.call2(self.s.alert.oneshot_create, ScrubNotStartedAlert(
-                pool=name,
-                text=e.errmsg,
-            ))
+            self.call_sync2(
+                self.s.alert.oneshot_create,
+                ScrubNotStartedAlert(pool=name, text=e.errmsg),
+            )
         else:
             if started:
-                await self.call2(self.s.alert.oneshot_create, ScrubStartedAlert(name))
+                self.call_sync2(
+                    self.s.alert.oneshot_create,
+                    ScrubStartedAlert(name),
+                )
 
-    async def __run(self, name, threshold):
-        if name == await self.middleware.call('boot.pool_name'):
-            pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [name], 'scan': True}))[0]
-        else:
-            if await self.middleware.call('failover.licensed'):
-                if await self.middleware.call('failover.status') == 'BACKUP':
+    def _run_impl(self, tls, name, threshold):
+        """Return True if scrub was started, False/None if not needed.
+
+        Raises ScrubError for expected pool problems (-> ScrubNotStartedAlert).
+        """
+        if name != self.middleware.call_sync('boot.pool_name'):
+            if self.middleware.call_sync('failover.licensed'):
+                if self.middleware.call_sync('failover.status') == 'BACKUP':
                     return
 
-            pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
-            if pool['status'] == 'OFFLINE':
-                raise ScrubError(f'Pool {name} is offline, not running scrub')
+            if not any(
+                i['vol_name'] == name
+                for i in self.middleware.call_sync('datastore.query', 'storage.volume')
+            ):
+                raise ValidationError(
+                    'pool.scrub.run',
+                    f'{name!r} zpool not found in database',
+                    errno.ENOENT,
+                )
 
-        if pool['scan'] and pool['scan']['state'] == 'SCANNING':
+        info = query_impl(
+            tls.lzh,
+            {'pool_names': [name], 'scan': True},
+            return_pool_obj=True,
+        )
+        if not info:
+            raise ScrubError(f'Pool {name} is not imported, not running scrub')
+
+        status, zpool_obj = info[0]
+
+        if not status['healthy']:
+            raise ScrubError(
+                f'Pool {name} is not healthy ({status["status"]}), not running scrub'
+            )
+
+        # Already scanning — nothing to do
+        if status['scan'] and status['scan']['state'] == 'SCANNING':
             return False
 
-        last_scrubs = (await run(
-            'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create|import)"',
-            encoding='utf-8',
-            errors='ignore',
-            check=False,
-        )).stdout
-        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB_CREATE.finditer(last_scrubs))):
-            last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
-            break
-        else:
-            self.logger.warning("Could not find last scrub of pool %r", name)
-            last_scrub = datetime.min
+        # Threshold check via scan end_time
+        start_scrub = False
+        cutoff = int(time.time()) - (threshold - 1) * 86400
 
-        if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
-            self.logger.debug('Pool %r last scrub %r', name, last_scrub)
+        if (
+            status['scan']
+            and status['scan']['function'] == 'SCRUB'
+            and status['scan']['state'] == 'FINISHED'
+        ):
+            if status['scan']['end_time'] >= cutoff:
+                return False  # recent enough — skip
+            start_scrub = True
+
+        # Slow path: check pool history for recent create/import
+        if not start_scrub:
+            for entry in zpool_obj.iter_history(since=cutoff):
+                cmd = entry.get('history command', '')
+                if any(s in cmd for s in HISTORY_CREATE_IMPORT_CMDS):
+                    self.logger.trace(
+                        'Pool %r recent create/import within threshold window',
+                        name,
+                    )
+                    break
+            else:
+                start_scrub = True
+
+        if not start_scrub:
             return False
 
-        await self.middleware.call('pool.scrub.scrub', pool['name'])
+        self.middleware.call_sync('pool.scrub.scrub', name)
         return True

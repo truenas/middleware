@@ -1,5 +1,6 @@
 __all__ = (
     "ZpoolNotFoundException",
+    "ZpoolPoolUnhealthyException",
     "ZpoolScanInvalidAction",
     "ZpoolScanInvalidType",
     "ZpoolScrubAlreadyRunningException",
@@ -14,6 +15,12 @@ __all__ = (
 class ZpoolNotFoundException(Exception):
     def __init__(self, pool: str):
         self.message = f"{pool!r} not found"
+        super().__init__(self.message)
+
+
+class ZpoolPoolUnhealthyException(Exception):
+    def __init__(self, pool: str, health: str):
+        self.message = f"{pool!r}: pool is {health}"
         super().__init__(self.message)
 
 

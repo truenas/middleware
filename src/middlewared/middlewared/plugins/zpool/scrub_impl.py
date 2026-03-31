@@ -81,16 +81,17 @@ def do_scan_action(tls: Any, pool_name: str, scan_type: str, action: str) -> Non
     try:
         zpool.scan(func=scan_func, cmd=scan_cmd)
     except truenas_pylibzfs.ZFSException as e:
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_SCRUBBING:
-            raise ZpoolScrubAlreadyRunningException(pool_name) from None
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_SCRUB_PAUSED:
-            raise ZpoolScrubPausedException(pool_name) from None
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_SCRUB_PAUSED_TO_CANCEL:
-            raise ZpoolScrubPausedToCancelException(pool_name) from None
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_ERRORSCRUBBING:
-            raise ZpoolErrorScrubAlreadyRunningException(pool_name) from None
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_ERRORSCRUB_PAUSED:
-            raise ZpoolErrorScrubPausedException(pool_name) from None
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_RESILVERING:
-            raise ZpoolResiliverInProgressException(pool_name) from None
+        match e.code:
+            case truenas_pylibzfs.ZFSError.EZFS_SCRUBBING:
+                raise ZpoolScrubAlreadyRunningException(pool_name) from None
+            case truenas_pylibzfs.ZFSError.EZFS_SCRUB_PAUSED:
+                raise ZpoolScrubPausedException(pool_name) from None
+            case truenas_pylibzfs.ZFSError.EZFS_SCRUB_PAUSED_TO_CANCEL:
+                raise ZpoolScrubPausedToCancelException(pool_name) from None
+            case truenas_pylibzfs.ZFSError.EZFS_ERRORSCRUBBING:
+                raise ZpoolErrorScrubAlreadyRunningException(pool_name) from None
+            case truenas_pylibzfs.ZFSError.EZFS_ERRORSCRUB_PAUSED:
+                raise ZpoolErrorScrubPausedException(pool_name) from None
+            case truenas_pylibzfs.ZFSError.EZFS_RESILVERING:
+                raise ZpoolResiliverInProgressException(pool_name) from None
         raise
