@@ -333,12 +333,6 @@ class ShellApplication:
                         self.middleware.services.vm.get_instance, options["vm_id"]
                     )
 
-                if options.get("container_id"):
-                    options["nsenter"] = await self.middleware.call2(
-                        self.middleware.services.container.nsenter, options["container_id"],
-                    )
-                    options["command"] = options.get("command") or "/bin/sh"
-
                 if options.get("app_name"):
                     if not options.get("container_id"):
                         raise CallError("Container id must be specified")
@@ -346,6 +340,11 @@ class ShellApplication:
                         "app.container_console_choices", options["app_name"]
                     ):
                         raise CallError("Provided container id is not valid")
+                elif options.get("container_id"):
+                    options["nsenter"] = await self.middleware.call2(
+                        self.middleware.services.container.nsenter, options["container_id"],
+                    )
+                    options["command"] = options.get("command") or "/bin/sh"
 
                 # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
