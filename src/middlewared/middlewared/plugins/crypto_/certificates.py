@@ -347,10 +347,10 @@ class CertificateService(CRUDService):
         job.set_progress(95, 'Final order received from ACME server')
 
         cert_dict = {
-            'acme': self.middleware.call_sync(
-                'acme.registration.query',
+            'acme': self.call_sync2(
+                self.s.acme.registration.query,
                 [['directory', '=', data['acme_directory_uri']]]
-            )[0]['id'],
+            )[0].id,
             'acme_uri': final_order.uri,
             'certificate': final_order.fullchain_pem,
             'CSR': csr_data['CSR'],
