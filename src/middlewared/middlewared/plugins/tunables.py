@@ -117,9 +117,7 @@ class TunableService(CRUDService):
         """
         update_initramfs = data.pop('update_initramfs')
 
-        failover_licensed = await self.middleware.call('failover.licensed')
-        if failover_licensed:
-            await self.check_ha()
+        failover_licensed = await self.check_ha()
 
         verrors = ValidationErrors()
 
@@ -187,9 +185,7 @@ class TunableService(CRUDService):
 
         update_initramfs = data.pop('update_initramfs', True)
 
-        failover_licensed = await self.middleware.call('failover.licensed')
-        if failover_licensed:
-            await self.check_ha()
+        failover_licensed = await self.check_ha()
 
         new = old.copy()
         new.update(data)
@@ -235,9 +231,7 @@ class TunableService(CRUDService):
         """
         entry = await self.get_instance(id_)
 
-        failover_licensed = await self.middleware.call('failover.licensed')
-        if failover_licensed:
-            await self.check_ha()
+        failover_licensed = await self.check_ha()
 
         await self.middleware.call('datastore.delete', self._config.datastore, entry['id'])
 
@@ -254,13 +248,17 @@ class TunableService(CRUDService):
 
     @private
     async def check_ha(self):
-        # Backup node must be up in order to be able to regenerate its initrd
+        failover_licensed = await self.middleware.call('failover.licensed')
+        if failover_licensed:
+            # Backup node must be up in order to be able to regenerate its initrd
 
-        if (status := await self.middleware.call('failover.status')) != 'MASTER':
-            raise CallError(f'Updating tunables is only allowed on MASTER mode. The current node is {status!r}.')
+            if (status := await self.middleware.call('failover.status')) != 'MASTER':
+                raise CallError(f'Updating tunables is only allowed on MASTER mode. The current node is {status!r}.')
 
-        if not await self.middleware.call('failover.remote_connected'):
-            raise CallError('Updating tunables is only allowed when remote node is up. The remote node is down.')
+            if not await self.middleware.call('failover.remote_connected'):
+                raise CallError('Updating tunables is only allowed when remote node is up. The remote node is down.')
+
+        return failover_licensed
 
     @private
     async def generate_sysctl(self, failover_licensed):
