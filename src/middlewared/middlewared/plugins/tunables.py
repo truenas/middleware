@@ -64,46 +64,43 @@ class TunableService(CRUDService):
             return f.read().strip()
 
     @private
-    def set_sysctl(self, var, value, ha_propagate=True):
+    def set_sysctl(self, var, value, ha_propagate=False):
         path = f'/proc/sys/{var.replace(".", "/")}'
         with contextlib.suppress(FileNotFoundError, PermissionError):
             with open(path, 'w') as f:
                 f.write(value)
 
         if ha_propagate:
-            if self.middleware.call_sync('failover.licensed'):
-                self.middleware.call_sync('failover.call_remote', 'tunable.set_sysctl', [var, value, False])
+            self.middleware.call_sync('failover.call_remote', 'tunable.set_sysctl', [var, value])
 
     @private
-    def reset_sysctl(self, tunable):
-        self.set_sysctl(tunable['var'], tunable['orig_value'])
+    def reset_sysctl(self, tunable, ha_propagate=False):
+        self.set_sysctl(tunable['var'], tunable['orig_value'], ha_propagate)
 
     @private
-    def set_zfs_parameter(self, name, value, ha_propagate=True):
+    def set_zfs_parameter(self, name, value, ha_propagate=False):
         path = zfs_parameter_path(name)
         with contextlib.suppress(FileNotFoundError, PermissionError):
             with open(path, 'w') as f:
                 f.write(value)
 
         if ha_propagate:
-            if self.middleware.call_sync('failover.licensed'):
-                self.middleware.call_sync('failover.call_remote', 'tunable.set_zfs_parameter', [name, value, False])
+            self.middleware.call_sync('failover.call_remote', 'tunable.set_zfs_parameter', [name, value])
 
     @private
-    def reset_zfs_parameter(self, tunable):
-        self.set_zfs_parameter(tunable['var'], tunable['orig_value'])
+    def reset_zfs_parameter(self, tunable, ha_propagate=False):
+        self.set_zfs_parameter(tunable['var'], tunable['orig_value'], ha_propagate)
 
     @private
-    async def handle_tunable_change(self, tunable, failover_licensed, ha_propagate=True):
+    async def handle_tunable_change(self, tunable, ha_propagate=False):
         if tunable['type'] == 'UDEV':
             await self.middleware.call('etc.generate', 'udev')
             await run(['udevadm', 'control', '-R'])
 
             if ha_propagate:
-                if failover_licensed:
-                    await self.middleware.call(
-                        'failover.call_remote', 'tunable.handle_tunable_change', [tunable, failover_licensed, False],
-                    )
+                await self.middleware.call(
+                    'failover.call_remote', 'tunable.handle_tunable_change', [tunable],
+                )
 
     @api_method(TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult, authorization_required=False)
     async def tunable_type_choices(self):
@@ -164,10 +161,12 @@ class TunableService(CRUDService):
             if data['type'] == 'SYSCTL':
                 if data['enabled']:
                     await self.generate_sysctl(failover_licensed)
-                    await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
+                    await self.middleware.call('tunable.set_sysctl', data['var'], data['value'], failover_licensed)
             elif data['type'] == 'ZFS':
                 if data['enabled']:
-                    await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
+                    await self.middleware.call(
+                        'tunable.set_zfs_parameter', data['var'], data['value'], failover_licensed,
+                    )
                     if update_initramfs:
                         await self.update_initramfs(failover_licensed)
             else:
@@ -207,14 +206,14 @@ class TunableService(CRUDService):
                 await self.generate_sysctl(failover_licensed)
 
                 if new['enabled']:
-                    await self.middleware.call('tunable.set_sysctl', new['var'], new['value'])
+                    await self.middleware.call('tunable.set_sysctl', new['var'], new['value'], failover_licensed)
                 else:
-                    await self.middleware.call('tunable.reset_sysctl', new)
+                    await self.middleware.call('tunable.reset_sysctl', new, failover_licensed)
             elif new['type'] == 'ZFS':
                 if new['enabled']:
-                    await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
+                    await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'], failover_licensed)
                 else:
-                    await self.middleware.call('tunable.reset_zfs_parameter', new)
+                    await self.middleware.call('tunable.reset_zfs_parameter', new, failover_licensed)
 
                 if update_initramfs:
                     await self.update_initramfs(failover_licensed)
@@ -245,9 +244,9 @@ class TunableService(CRUDService):
         if entry['type'] == 'SYSCTL':
             await self.generate_sysctl(failover_licensed)
 
-            await self.middleware.call('tunable.reset_sysctl', entry)
+            await self.middleware.call('tunable.reset_sysctl', entry, failover_licensed)
         elif entry['type'] == 'ZFS':
-            await self.middleware.call('tunable.reset_zfs_parameter', entry)
+            await self.middleware.call('tunable.reset_zfs_parameter', entry, failover_licensed)
 
             await self.update_initramfs(failover_licensed)
         else:
