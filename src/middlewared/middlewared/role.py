@@ -20,6 +20,8 @@ class Role:
     stig: STIGType = STIGType.GPOS  # By default roles are available under GPOS STIG
 
 
+# NOTE: When adding, removing, or modifying roles here, update the individual
+# roles reference table in src/middlewared_docs/docs/rbac.rst accordingly.
 ROLES = {
     'ACCOUNT_READ': Role(),
     'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
