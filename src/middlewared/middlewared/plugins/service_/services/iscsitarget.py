@@ -1,8 +1,10 @@
 import asyncio
 
 from middlewared.utils import run
+from middlewared.utils.lio.config import ISCSI_DIR, teardown_lio_config
 
 from .base import SimpleService
+from .base_state import ServiceState
 
 
 class ISCSITargetService(SimpleService):
@@ -13,6 +15,14 @@ class ISCSITargetService(SimpleService):
     etc = ["scst", "scst_targets"]
 
     systemd_unit = "scst"
+
+    async def _lio_mode(self):
+        return await self.middleware.call('iscsi.global.lio_enabled')
+
+    async def get_state(self):
+        if await self._lio_mode():
+            return ServiceState(ISCSI_DIR.exists(), [])
+        return await super().get_state()
 
     async def _wait_to_avoid_states(self, states, retries=10):
         initial_retries = retries
@@ -30,20 +40,30 @@ class ISCSITargetService(SimpleService):
 
     async def before_start(self):
         await self.middleware.call("iscsi.alua.before_start")
-        # Because we are a systemd_async_start service, it is possible that
-        # a start could be requested while a stop is still in progress.
-        if await self.middleware.call("failover.in_progress"):
-            await self._wait_to_avoid_states(['deactivating'], 5)
-        else:
-            await self._wait_to_avoid_states(['deactivating'])
+        if not await self._lio_mode():
+            # Because we are a systemd_async_start service, it is possible that
+            # a start could be requested while a stop is still in progress.
+            if await self.middleware.call("failover.in_progress"):
+                await self._wait_to_avoid_states(['deactivating'], 5)
+            else:
+                await self._wait_to_avoid_states(['deactivating'])
         await self.middleware.call("iscsi.iser.before_start")
 
     async def start(self):
+        if await self._lio_mode():
+            await self.middleware.call('etc.generate', 'lio')
+            return
         if await self.middleware.call("failover.status") not in ["MASTER", "SINGLE"]:
             if not await self.middleware.call("iscsi.global.alua_enabled"):
                 # Do not start SCST on STANDBY node unless ALUA is enabled.
                 return
         await super().start()
+
+    async def stop(self):
+        if await self._lio_mode():
+            await self.middleware.run_in_thread(teardown_lio_config)
+            return
+        await super().stop()
 
     async def after_start(self):
         await self.middleware.call("iscsi.alua.after_start")
@@ -55,6 +75,9 @@ class ISCSITargetService(SimpleService):
         await self.middleware.call("iscsi.alua.after_stop")
 
     async def reload(self):
+        if await self._lio_mode():
+            await self.middleware.call('etc.generate', 'lio')
+            return True
         if await self.middleware.call("iscsi.global.direct_config_enabled"):
             return await self.middleware.call("iscsi.scst.apply_config_file")
         else:
@@ -66,13 +89,14 @@ class ISCSITargetService(SimpleService):
         """If we are becoming the ACTIVE node on a HA system, and if SCST was already loaded
         then we can perform a shortcut operation to switch from being the STANDBY node to the
         ACTIVE one, *without* restarting SCST, but just by reconfiguring it."""
-        if await self.middleware.call('iscsi.global.alua_enabled'):
-            if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
-                try:
-                    return await self.middleware.call("iscsi.alua.become_active")
-                except Exception:
-                    self.logger.warning('Failover exception', exc_info=True)
-                    # Fall through
+        if not await self._lio_mode():
+            if await self.middleware.call('iscsi.global.alua_enabled'):
+                if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
+                    try:
+                        return await self.middleware.call("iscsi.alua.become_active")
+                    except Exception:
+                        self.logger.warning('Failover exception', exc_info=True)
+                        # Fall through
         # Fallback to doing a regular restart
         rjob = await self.middleware.call(
             'service.control',

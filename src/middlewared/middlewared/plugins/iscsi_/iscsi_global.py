@@ -113,10 +113,26 @@ class ISCSIGlobalService(SystemServiceService):
         return data
 
     @private
-    def _validate_mode(self, schema_name, mode, old_mode, verrors):
-        # Placeholder for future mode-specific validation
+    async def _validate_mode(self, schema_name, mode, old, verrors):
+        old_mode = old['mode']
+
+        # Basic sanity: reject unknown mode values before any further checks.
         if mode not in ISCSIMODE:
             verrors.add(schema_name, f'Invalid mode ({mode})')
+            return
+
+        # Mode switches require the service to be stopped so the old stack can
+        # be torn down cleanly before the new one is brought up.
+        if await self.middleware.call('service.started', 'iscsitarget'):
+            verrors.add(schema_name, 'Cannot switch iSCSI mode while the service is running.')
+            return
+
+        # Switching from SCST to LIO requires additional compatibility checks
+        # because the two stacks have different capability constraints.
+        if mode >= ISCSIMODE.LIO and old_mode < ISCSIMODE.LIO:
+            verrors.extend(
+                await self.middleware.call('iscsi.lio.validate_scst_compat', schema_name)
+            )
 
     @api_method(
         ISCSIGlobalUpdateArgs,
@@ -136,7 +152,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         if (mode := data.get('mode')) is not None:
             if mode != old['mode']:
-                self._validate_mode('iscsiglobal_update.mode', mode, old['mode'], verrors)
+                await self._validate_mode('iscsiglobal_update.mode', mode, old, verrors)
 
         servers = data.get('isns_servers') or []
         server_addresses = []
@@ -288,6 +304,11 @@ class ISCSIGlobalService(SystemServiceService):
         if direct_config is None:
             return DEFAULT_DIRECT_CONFIG
         return direct_config
+
+    @private
+    async def lio_enabled(self):
+        """Returns True when the iSCSI target stack is set to LIO."""
+        return (await self.config()).get('mode') == ISCSIMODE.LIO
 
     @private
     async def using_dlm(self):
