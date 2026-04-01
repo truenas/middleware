@@ -80,7 +80,7 @@ def issue_certificate_impl(
     context: ServiceContext, job: Job[Any], progress: int,
     acme_client_key_payload: dict[str, Any], csr: str, dns_mapping_copy: dict[str, Any],
 ) -> Any:
-    dns_auth = context.middleware.services.acme.dns.authenticator
+    dns_auth = context.s.acme.dns.authenticator
     authenticators = {
         o.id: o
         for o in context.call_sync2(

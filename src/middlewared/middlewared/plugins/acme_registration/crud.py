@@ -62,11 +62,12 @@ class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
         # 3) SAVE REGISTRATION OBJECT
         # 4) SAVE REGISTRATION BODY
         verrors = ValidationErrors()
-        directory = _get_directory(self.middleware, data.acme_directory_uri)
-        if not isinstance(directory, messages.Directory):
+        try:
+            directory = _get_directory(self.middleware, data.acme_directory_uri)
+        except CallError as e:
             verrors.add(
                 'acme_registration_create.acme_directory_uri',
-                f'System was unable to retrieve the directory with the specified acme_directory_uri: {directory}',
+                f'System was unable to retrieve the directory with the specified acme_directory_uri: {e.errmsg}',
             )
 
         # Normalizing uri after directory call as let's encrypt staging api
@@ -137,4 +138,4 @@ def _get_directory(middleware: Middleware, acme_directory_uri: str) -> messages.
             key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
         })
     except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
-        raise CallError(f'Unable to retrieve directory : {e}')
+        raise CallError(str(e))
