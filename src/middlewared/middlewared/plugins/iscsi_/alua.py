@@ -59,6 +59,8 @@ class iSCSITargetAluaService(Service):
         self._standby_write_empty_config = None
 
     async def before_start(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            return
         self.standby_skip_cluster_mode = True
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
@@ -66,14 +68,20 @@ class iSCSITargetAluaService(Service):
                 await self.middleware.call('etc.generate', 'scst')
 
     async def after_start(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            return
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 await self.middleware.call('iscsi.alua.standby_after_start')
 
     async def before_stop(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            return
         self.standby_starting = False
 
     async def after_stop(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            return
         self.standby_skip_cluster_mode = True
         if await self.middleware.call('failover.status') == 'BACKUP':
             # Good hygiene
