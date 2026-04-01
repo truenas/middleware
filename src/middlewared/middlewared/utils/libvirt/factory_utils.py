@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from truenas_pylibvirt.device import (
@@ -8,6 +9,11 @@ from truenas_pylibvirt.device import (
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 
 from .delegate import DeviceDelegate
+
+
+def is_bridge_device(name: str) -> bool:
+    """Check if a network interface is a bridge by looking at sysfs."""
+    return os.path.isdir(f'/sys/class/net/{name}/bridge')
 
 
 def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
@@ -38,7 +44,7 @@ def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
             )
         case 'NIC':
             nic_attach = device['attributes']['nic_attach']
-            if nic_attach and nic_attach.startswith('br'):
+            if nic_attach and is_bridge_device(nic_attach):
                 type_ = NICDeviceType.BRIDGE
             else:
                 type_ = NICDeviceType.DIRECT
