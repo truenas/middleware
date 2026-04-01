@@ -20,6 +20,8 @@ class Role:
     stig: STIGType = STIGType.GPOS  # By default roles are available under GPOS STIG
 
 
+# NOTE: When adding, removing, or modifying roles here, update the individual
+# roles reference table in src/middlewared_docs/docs/rbac.rst accordingly.
 ROLES = {
     'ACCOUNT_READ': Role(),
     'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
@@ -233,6 +235,7 @@ ROLES = {
     'SHARING_ADMIN': Role(includes=['READONLY_ADMIN',
                                     'DATASET_WRITE',
                                     'SHARING_WRITE',
+                                    'ZFS_RESOURCE_WRITE',
                                     'FILESYSTEM_ATTRS_WRITE',
                                     'SERVICE_READ'],
                           builtin=False),
@@ -262,6 +265,7 @@ ROLES = {
     # ZFS Resources (query, create/update/delete)
     'ZFS_RESOURCE_READ': Role(),
     'ZFS_RESOURCE_WRITE': Role(includes=['ZFS_RESOURCE_READ']),
+    'ZFS_RESOURCE_DELETE': Role(),
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 

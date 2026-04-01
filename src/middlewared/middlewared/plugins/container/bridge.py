@@ -60,17 +60,22 @@ def _bridge_impl(
             was_created = True
             link = get_link(sock, BRIDGE_NAME)
             if ip4:
+                # Use first host address (.1), not the network address (.0),
+                # to match the --listen-address passed to dnsmasq.
+                v4_listen_addr = ip4.network[1].exploded
                 add_address(
                     sock,
-                    ip4.ip.exploded,
+                    v4_listen_addr,
                     ip4.network.prefixlen,
                     index=link.index,
                     broadcast=ip4.network.broadcast_address.exploded,
                 )
             if ip6:
+                # Use first host address (::1), not the network address (::).
+                v6_listen_addr = ip6.network[1].exploded
                 add_address(
                     sock,
-                    ip6.ip.exploded,
+                    v6_listen_addr,
                     ip6.network.prefixlen,
                     index=link.index,
                 )
@@ -85,7 +90,7 @@ def _start_dnsmasq(ctx: ServiceContext, dnsmasq_args: list[str]) -> None:
         "dnsmasq",
         "--keep-in-foreground",
         "--strict-order",
-        "--bind-interfaces",
+        "--bind-dynamic",
         "--except-interface=lo",
         "--pid-file=",
         "--no-ping",

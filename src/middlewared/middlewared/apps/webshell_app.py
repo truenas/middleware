@@ -239,8 +239,7 @@ class ShellWorkerThread(threading.Thread):
         run_coro_threadsafe(self.ws.close(), self.loop)
 
         # Close the master FD
-        if self.master_fd is not None:
-            self.close_master_fd()
+        self.close_master_fd()
 
         # Terminate the child process
         if self.shell_pid:
@@ -251,10 +250,12 @@ class ShellWorkerThread(threading.Thread):
         self.die()
 
     def close_master_fd(self):
-        """Raises TypeError if self.master_fd is None."""
-        with contextlib.suppress(OSError):
-            os.close(self.master_fd)
-            self.master_fd = None
+        # Atomic swap so that concurrent calls from run() and abort()
+        # don't race to close the same fd (GIL makes the swap atomic).
+        fd, self.master_fd = self.master_fd, None
+        if fd is not None:
+            with contextlib.suppress(OSError):
+                os.close(fd)
 
 
 class ShellConnectionData:
@@ -333,12 +334,6 @@ class ShellApplication:
                         self.middleware.services.vm.get_instance, options["vm_id"]
                     )
 
-                if options.get("container_id"):
-                    options["nsenter"] = await self.middleware.call2(
-                        self.middleware.services.container.nsenter, options["container_id"],
-                    )
-                    options["command"] = options.get("command") or "/bin/sh"
-
                 if options.get("app_name"):
                     if not options.get("container_id"):
                         raise CallError("Container id must be specified")
@@ -346,6 +341,11 @@ class ShellApplication:
                         "app.container_console_choices", options["app_name"]
                     ):
                         raise CallError("Provided container id is not valid")
+                elif options.get("container_id"):
+                    options["nsenter"] = await self.middleware.call2(
+                        self.middleware.services.container.nsenter, options["container_id"],
+                    )
+                    options["command"] = options.get("command") or "/bin/sh"
 
                 # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
