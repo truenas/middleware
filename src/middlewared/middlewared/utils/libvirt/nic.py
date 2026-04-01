@@ -6,6 +6,7 @@ from typing import Any
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
+from .factory_utils import is_bridge_device
 
 
 class NICDelegate(DeviceDelegate):
@@ -33,7 +34,7 @@ class NICDelegate(DeviceDelegate):
         if nic:
             if nic not in itertools.chain(*self.middleware.call_sync(self.nic_choices_endpoint).values()):
                 verrors.add('attributes.nic_attach', 'Not a valid choice.')
-            elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
+            elif is_bridge_device(nic) and device['attributes']['trust_guest_rx_filters']:
                 verrors.add(
                     'attributes.trust_guest_rx_filters',
                     'This can only be set when "nic_attach" is not a bridge device'
