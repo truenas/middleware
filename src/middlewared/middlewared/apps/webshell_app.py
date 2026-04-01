@@ -239,8 +239,7 @@ class ShellWorkerThread(threading.Thread):
         run_coro_threadsafe(self.ws.close(), self.loop)
 
         # Close the master FD
-        if self.master_fd is not None:
-            self.close_master_fd()
+        self.close_master_fd()
 
         # Terminate the child process
         if self.shell_pid:
@@ -251,10 +250,12 @@ class ShellWorkerThread(threading.Thread):
         self.die()
 
     def close_master_fd(self):
-        """Raises TypeError if self.master_fd is None."""
-        with contextlib.suppress(OSError):
-            os.close(self.master_fd)
-            self.master_fd = None
+        # Atomic swap so that concurrent calls from run() and abort()
+        # don't race to close the same fd (GIL makes the swap atomic).
+        fd, self.master_fd = self.master_fd, None
+        if fd is not None:
+            with contextlib.suppress(OSError):
+                os.close(fd)
 
 
 class ShellConnectionData:
