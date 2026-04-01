@@ -32,6 +32,7 @@ from .scrub_impl import do_scan_action
 class ZpoolScrubService(Service):
     class Config:
         namespace = "zpool.scrub"
+        cli_private = True
 
     @private
     @pass_thread_local_storage
