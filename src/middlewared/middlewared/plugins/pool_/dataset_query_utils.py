@@ -3,18 +3,13 @@ from dataclasses import dataclass, field
 from typing import TypeAlias
 
 import truenas_pylibzfs
+import truenas_pyfilter as _tf
 
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filter_list import (
-    filter_list,
-    validate_options,
-    do_select,
-    do_order,
-    get_impl,
-)
+from middlewared.utils.filter_list import compile_filters, validate_options
 from middlewared.utils.size import format_size
 
 
@@ -113,12 +108,6 @@ class ExtraArgs:
 class QueryFiltersCallbackState:
     filters: list = field(default_factory=list)
     """list of filters"""
-    filter_fn: Callable = filter_list
-    """function to do filtering"""
-    get_fn: Callable = get_impl
-    """function to get value from dict"""
-    select_fn: Callable = do_select
-    """function to select values"""
     select: list = field(default_factory=list)
     """list of fields to select. None means all"""
     count_only: bool = False
@@ -1061,8 +1050,19 @@ def generic_query(
     Raises:
         MatchNotFound: When get=True but no results found
     """
-    # parse query-options
+    # parse query-options; select is also used by the callback for ZFS property narrowing
     options, select, order_by = validate_options(options_in)
+
+    # pre-compile before iteration so the C-level objects are ready when tnfilter is called
+    cf = compile_filters(filters_in)
+    co = _tf.compile_options(
+        get=options.get('get', False),
+        count=options.get('count', False),
+        select=list(select) if select else None,
+        order_by=list(order_by) if order_by else None,
+        offset=options.get('offset', 0),
+        limit=options.get('limit', 0),
+    )
 
     # set up callback state
     state = QueryFiltersCallbackState(
@@ -1090,43 +1090,14 @@ def generic_query(
     if options["count"]:
         return state.count
 
-    # Apply filtering - we need to filter on a flat structure regardless of final output format
-    if state.filters:
-        # Always flatten for filtering to ensure we can find nested datasets
-        flat_for_filtering = _flatten_hierarchy(state.results)
-        filtered_flat = state.filter_fn(
-            flat_for_filtering, filters=state.filters, options={}
-        )
+    # Always flatten before filtering; hierarchy is not supported with filters applied
+    flat = _flatten_hierarchy(state.results) if state.extra.flat or filters_in else state.results
 
-        # If we want flat output, use the filtered flat results
-        if state.extra.flat:
-            state.results = filtered_flat
-        else:
-            # If we want hierarchical output, rebuild hierarchy from filtered results
-            # For now, when flat=False with filters, return the filtered items as a flat list
-            # This matches the behavior when specific datasets are requested
-            state.results = filtered_flat
-    else:
-        # No filtering needed, apply flattening if requested
-        if state.extra.flat:
-            state.results = _flatten_hierarchy(state.results)
-
-    if order_by:
-        state.results = do_order(state.results, order_by)
-
-    # Apply selection AFTER all business logic (hierarchy, filtering, ordering)
-    if select:
-        state.results = do_select(state.results, select)
-
-    if options["get"]:
-        if not state.results:
+    rv = _tf.tnfilter(flat, filters=cf, options=co)
+    if isinstance(rv, int):
+        return rv
+    if options.get('get'):
+        if not rv:
             raise MatchNotFound()
-        return state.results[0]
-
-    if offset := options.get("offset", 0):
-        state.results = state.results[offset:]
-
-    if limit := options.get("limit", 0):
-        state.results = state.results[:limit]
-
-    return state.results
+        return rv[0]
+    return rv

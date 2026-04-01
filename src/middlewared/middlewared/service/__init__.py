@@ -1,7 +1,9 @@
 from middlewared.service_exception import (
     CallException, CallError, InstanceNotFound, NetworkActivityDisabled, ValidationError, ValidationErrors
 )
-from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filter_list import (
+    CF_EMPTY, CO_EMPTY, filter_list, compile_filters, compile_options, filter_list_compiled, match
+)
 
 from .compound_service import CompoundService
 from .config_service import ConfigService, GenericConfigService
@@ -33,7 +35,13 @@ __all__ = [
     'NetworkActivityDisabled',
     'ValidationError',
     'ValidationErrors',
+    'CF_EMPTY',
+    'CO_EMPTY',
     'filter_list',
+    'compile_filters',
+    'compile_options',
+    'filter_list_compiled',
+    'match',
     'CompoundService',
     'ConfigService',
     'ConfigServicePart',
