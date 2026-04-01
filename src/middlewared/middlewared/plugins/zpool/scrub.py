@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import errno
 import time
+from typing import TYPE_CHECKING
 
 import truenas_pylibzfs
 from truenas_pylibzfs import ZPOOLProperty
@@ -13,6 +16,9 @@ from middlewared.api.current import (
 from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 from .exceptions import (
     ZpoolErrorScrubAlreadyRunningException,
@@ -84,9 +90,9 @@ class ZpoolScrubService(Service):
                     if progress_callback and scrub.percentage is not None:
                         progress_callback(scrub.percentage, f'{scan_type} in progress')
 
-    @api_method(ZpoolScrubRunArgs, ZpoolScrubRunResult, roles=["POOL_WRITE"])
+    @api_method(ZpoolScrubRunArgs, ZpoolScrubRunResult, roles=["POOL_WRITE"], check_annotations=True)
     @job()
-    def run(self, job, data: ZpoolScrubRunEntry):
+    def run(self, job: Job, data: ZpoolScrubRunEntry) -> None:
         schema = "zpool.scrub.run"
         try:
             self.run_impl(
