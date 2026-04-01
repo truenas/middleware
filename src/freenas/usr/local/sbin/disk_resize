@@ -168,6 +168,10 @@ nvme)
 	# Get controller and current namespace ID.
 	ctrlr=/dev/${dev%n*}
 	nsid=`nvme get-ns-id /dev/${dev} | awk -F 'namespace-id:' '{ print $2 }'`
+	if [ ${nsid} -le 0 ]; then
+		echo "Unable to get namespace ID"
+		exit 1
+	fi
 
 	# if nvme device provided is a "fabric" device
 	# (i.e. nvme over tcp/rdma) then gracefully exit
@@ -182,7 +186,7 @@ nvme)
 
 	# Identify controller properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
-	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '/^\[\s*[0-9]+\]/ { print $2 }' | xargs | tr ' ' ,`
+	ctrls=`nvme list-ctrl ${ctrlr} -n ${nsid} | awk -F: '/^\[\s*[0-9]+\]/ { print $2 }' | xargs | tr ' ' ,`
 
 	# Check Namespace Management is supported by the controller.
 	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
