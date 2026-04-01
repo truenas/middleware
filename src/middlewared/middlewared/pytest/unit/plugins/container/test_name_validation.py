@@ -31,12 +31,17 @@ from middlewared.plugins.container.crud import RE_NAME
     'a.b.c.d.e',
     '123.abc',
     'my-host.example.com',
-    # multi-label with max label length
-    'a' * 63 + '.' + 'b' * 63,
     # realistic names
     'test-container-123',
     'ubuntu-24-04',
     'web-server-01',
+    # --- total-length boundary (100 chars) ---
+    # exactly 99 chars (dotted: 63 + 1 + 35)
+    'a' * 63 + '.' + 'b' * 35,
+    # exactly 100 chars (dotted: 63 + 1 + 36)
+    'a' * 63 + '.' + 'b' * 36,
+    # exactly 100 chars (three labels: 40 + 1 + 40 + 1 + 16)
+    'a' * 40 + '.' + 'b' * 40 + '.' + 'c' * 16,
 ])
 def test__valid_container_names(name):
     assert RE_NAME.match(name), f'{name!r} should be a valid container name'
@@ -84,8 +89,13 @@ def test__valid_container_names(name):
     'foo.-bar',
     # trailing hyphen in a label before dot
     'foo-.bar',
-    # total length over 253
-    ('a' * 63 + '.') * 3 + 'a' * 63 + '.b',
+    # --- total-length boundary (100 chars) ---
+    # 101 chars (dotted: 63 + 1 + 37)
+    'a' * 63 + '.' + 'b' * 37,
+    # 127 chars (two max labels: 63 + 1 + 63)
+    'a' * 63 + '.' + 'b' * 63,
+    # well over 100
+    'a' * 50 + '.' + 'b' * 50 + '.' + 'c' * 50,
 ])
 def test__invalid_container_names(name):
     assert not RE_NAME.match(name), f'{name!r} should NOT be a valid container name'

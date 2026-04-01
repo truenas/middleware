@@ -19,13 +19,15 @@ branch_labels = None
 depends_on = None
 
 # Local copy of the container name regex — migrations must be self-contained.
-# RFC 1123 hostname: labels are 1-63 alphanumeric/hyphen chars starting and
-# ending with alphanumeric, separated by dots, total 1-253 chars.
+# Based on RFC 1123 hostname rules but capped at 100 characters total (RFC 1123
+# allows 253).  Container names become part of ZFS dataset paths and ZFS has a
+# practical limit of ZFS_MAX_DATASET_NAME_LEN.  Capping at 100
+# leaves headroom for the dataset path prefix and snapshot names.
 # IPv4 dotted-decimal (e.g. 10.2.0.52) is rejected.
 _RE_NAME = re.compile(
     r"\A"
     r"(?!\d{1,3}(?:\.\d{1,3}){3}\Z)"
-    r"(?=.{1,253}\Z)"
+    r"(?=.{1,100}\Z)"
     r"(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)*"
     r"[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?"
     r"\Z",
