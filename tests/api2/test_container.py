@@ -175,6 +175,21 @@ def test_container_update(started_ubuntu_container):
     assert "/bin/sleep infinity" in ssh(f"ps -p {container['status']['pid']} -o args")
 
 
+def test_container_rename(ubuntu_container):
+    old_dataset = ubuntu_container["dataset"]
+    new_name = "renamed-container"
+
+    call("container.update", ubuntu_container["id"], {"name": new_name})
+
+    updated = call("container.get_instance", ubuntu_container["id"])
+    assert updated["name"] == new_name
+    expected_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new_name
+    assert updated["dataset"] == expected_dataset
+    # Verify ZFS dataset actually exists at new path
+    result = call("zfs.resource.query", {"paths": [expected_dataset], "properties": ["mountpoint"]})
+    assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
+
+
 def test_container_stop_force_after_timeout(ubuntu_container):
     container = ubuntu_container
 
