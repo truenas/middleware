@@ -7,7 +7,7 @@ from middlewared.api.current import (
     ACLTemplateDeleteArgs, ACLTemplateDeleteResult,
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.service import private
+from middlewared.service import filterable_api_method, private
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 import truenas_os
@@ -105,6 +105,17 @@ class ACLTemplateService(CRUDService):
                 truenas_os.validate_acl(-1, acl_obj)
             except (ValueError, KeyError) as e:
                 verrors.add(schema, str(e))
+
+    @filterable_api_method(item=ACLTemplateEntry, roles=['FILESYSTEM_ATTRS_READ'])
+    async def query(self, filters, options):
+        templates = await super().query(filters, options)
+        if isinstance(templates, list):
+            for t in templates:
+                if t['builtin']:
+                    await self.append_builtins(t)
+        elif isinstance(templates, dict) and templates.get('builtin'):
+            await self.append_builtins(templates)
+        return templates
 
     @api_method(
         ACLTemplateCreateArgs,
