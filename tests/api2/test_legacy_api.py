@@ -69,6 +69,7 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
     if (
         version in APIVersions.FT.value
         and query_method in (
+            "enclosure2.query",
             "vm.query",
             "vm.device.query",
         )
@@ -101,6 +102,7 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "nvmet.port_subsys.query",
             "nvmet.subsys.query",
             "pool.query",
+            "zpool.query",
             "pool.dataset.query",
             "pool.snapshot.query",
             "privilege.query",
@@ -131,6 +133,7 @@ def test_config_method(legacy_api_client, config_method):
             "audit.config",
             "auth.twofactor.config",
             "directoryservices.config",
+            "failover.config",
             "kerberos.config",
             "kmip.config",
             "lxc.config",
