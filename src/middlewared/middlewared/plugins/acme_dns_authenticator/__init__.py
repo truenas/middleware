@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     ACMEDNSAuthenticatorCreate,
+    ACMEDNSAuthenticatorSchema,
     ACMEDNSAuthenticatorUpdate,
     DNSAuthenticatorEntry,
     DNSAuthenticatorCreateArgs,
@@ -44,19 +45,19 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
         self._svc_part = DNSAuthenticatorServicePart(self.context)
 
     @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, check_annotations=True)
-    async def do_create(self, data: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
+    async def do_create(self, dns_authenticator_create: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
         """
         Create a DNS Authenticator
 
         Create a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it.
         """
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(dns_authenticator_create)
 
     @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, check_annotations=True)
-    async def do_update(self, id_: int, data: ACMEDNSAuthenticatorUpdate) -> DNSAuthenticatorEntry:
+    async def do_update(self, id_: int, dns_authenticator_update: ACMEDNSAuthenticatorUpdate) -> DNSAuthenticatorEntry:
         """Update DNS Authenticator of `id`."""
-        return await self._svc_part.do_update(id_, data)
+        return await self._svc_part.do_update(id_, dns_authenticator_update)
 
     @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:
@@ -69,7 +70,7 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
         roles=['READONLY_ADMIN'],
         check_annotations=True,
     )
-    def authenticator_schemas(self) -> list[dict[str, Any]]:
+    def authenticator_schemas(self) -> list[ACMEDNSAuthenticatorSchema]:
         """
         Get the schemas for all DNS providers we support for ACME DNS Challenge and the respective
         attributes required for connecting to them while validating a DNS Challenge.

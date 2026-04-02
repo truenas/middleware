@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from middlewared.api.base import BaseModel, LongString, single_argument_args
+from middlewared.api.base import BaseModel, LongString
 
 
 class JWKCreate(BaseModel):
@@ -32,11 +32,8 @@ class ACMERegistrationCreate(BaseModel):
     acme_directory_uri: str
 
 
-@single_argument_args('acme_registration_create')
 class ACMERegistrationCreateArgs(BaseModel):
-    tos: bool = False
-    JWK_create: JWKCreate = JWKCreate()
-    acme_directory_uri: str
+    acme_registration_create: ACMERegistrationCreate
 
 
 class ACMERegistrationCreateResult(BaseModel):

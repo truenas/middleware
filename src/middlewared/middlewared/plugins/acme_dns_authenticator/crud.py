@@ -5,7 +5,8 @@ from typing import Any, TYPE_CHECKING
 import middlewared.sqlalchemy as sa
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    ACMEDNSAuthenticatorCreate, ACMEDNSAuthenticatorUpdate, DNSAuthenticatorEntry,
+    ACMEDNSAuthenticatorCreate, ACMEDNSAuthenticatorSchema, ACMEDNSAuthenticatorUpdate,
+    DNSAuthenticatorEntry,
 )
 from middlewared.service import CRUDServicePart, ValidationErrors
 
@@ -95,9 +96,9 @@ class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
         self._schemas = {k: klass.SCHEMA_MODEL for k, klass in authenticators.items()}
         return self._schemas
 
-    def authenticator_schemas(self) -> list[dict[str, Any]]:
+    def authenticator_schemas(self) -> list[ACMEDNSAuthenticatorSchema]:
         schemas = self.get_authenticator_schemas()
         return [
-            {'schema': get_json_schema(model)[0], 'key': key}
+            ACMEDNSAuthenticatorSchema.model_validate({'schema': get_json_schema(model)[0], 'key': key})
             for key, model in schemas.items()
         ]
