@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from typing import Any, TYPE_CHECKING
 
 from truenas_acme_utils.event import event_callbacks
@@ -29,7 +28,7 @@ def issue_certificate(
         o.id for o in context.call_sync2(context.s.acme.dns.authenticator.query)
     ]
 
-    dns_mapping_copy: dict[str, Any] = copy.deepcopy(data['dns_mapping'])
+    dns_mapping_copy: dict[str, Any] = data['dns_mapping'].copy()
     for domain in data['dns_mapping']:
         if ':' in domain and domain.split(':', 1)[-1] not in dns_mapping_copy:
             dns_mapping_copy[domain.split(':', 1)[-1]] = dns_mapping_copy[domain]
