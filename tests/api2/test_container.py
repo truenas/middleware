@@ -226,7 +226,7 @@ def test_container_shell(started_ubuntu_container):
 def idmap_slice_1_container(ubuntu_image):
     # A container that uses idmap slice 2 to test idmap slice auto-allocation
     with container(ubuntu_image, {
-        "name": "idmap_slice_1",
+        "name": "idmap-slice-1",
         "idmap": {"type": "ISOLATED", "slice": 1},
     }, True):
         yield

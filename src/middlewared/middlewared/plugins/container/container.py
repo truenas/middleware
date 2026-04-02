@@ -21,7 +21,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -29,7 +29,20 @@ from middlewared.utils.zfs import query_imported_fast_impl
 from .nsenter import CAPABILITIES
 from .utils import container_dataset
 
-RE_NAME = re.compile(r'^[a-zA-Z_0-9\-]+$')
+# Based on RFC 1123 hostname rules but with a tighter total-length cap of 100
+# characters (RFC 1123 allows 253).  Container names become part of ZFS dataset
+# paths (e.g. pool/.truenas_containers/containers/<name>) and ZFS has a practical
+# limit of ZFS_MAX_DATASET_NAME_LEN.  Capping at 100 leaves
+# comfortable headroom for the dataset path prefix and snapshot names.
+RE_NAME = re.compile(
+    r"\A"
+    r"(?!\d{1,3}(?:\.\d{1,3}){3}\Z)"                    # reject IPv4 dotted-decimal
+    r"(?=.{1,100}\Z)"                                    # total length 1-100 (see above)
+    r"(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)*"     # zero or more non-final labels
+    r"[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?"            # final label (1-63 chars)
+    r"\Z",
+    re.IGNORECASE,
+)
 
 
 class ContainerModel(sa.Model):
@@ -193,10 +206,12 @@ class ContainerService(CRUDService):
                 f'{schema_name}.name',
                 'A container with this name already exists.', errno.EEXIST
             )
-        elif not RE_NAME.search(data['name']):
+        elif not RE_NAME.match(data['name']):
             verrors.add(
                 f'{schema_name}.name',
-                'Name can only contain alphanumeric and hyphen characters.'
+                'Name must be a valid hostname (up to 100 characters total): 1-63 characters per label, '
+                'only letters, digits, and hyphens within each label, labels separated by dots, '
+                'and must not be an IPv4 address.'
             )
 
     @api_method(
@@ -295,6 +310,16 @@ class ContainerService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(verrors, 'container_update', new, old=old)
         verrors.check()
+
+        name_changed = old['name'] != new['name']
+        if name_changed:
+            if old['status']['state'] == 'RUNNING':
+                raise CallError('Container must be stopped before renaming.')
+
+            old_dataset = old['dataset']
+            new_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new['name']
+            await self.call2(self.s.zfs.resource.rename, old_dataset, new_dataset)
+            new['dataset'] = new_dataset
 
         for key in ('status', ):
             new.pop(key, None)
