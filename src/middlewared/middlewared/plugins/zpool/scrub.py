@@ -65,13 +65,13 @@ class ZpoolScrubService(Service):
         scrub = zpool.scrub_info()
         if (
             scrub is not None
-            and scrub.func == truenas_pylibzfs.enums.ScanFunction.RESILVER
-            and scrub.state == truenas_pylibzfs.enums.ScanState.SCANNING
+            and scrub.func == truenas_pylibzfs.libzfs_types.ScanFunction.RESILVER
+            and scrub.state == truenas_pylibzfs.libzfs_types.ScanState.SCANNING
         ):
             raise ZpoolResiliverInProgressException(pool_name)
 
         # Perform the scan action
-        do_scan_action(tls, pool_name, scan_type, action)
+        do_scan_action(tls, pool_name, scan_type, action, zpool)
 
         # Poll until scan completes (only meaningful for START)
         if wait and action.upper() == "START":
@@ -80,13 +80,13 @@ class ZpoolScrubService(Service):
                 scrub = zpool.scrub_info()
                 if scrub is None:
                     break
-                if scrub.state == truenas_pylibzfs.enums.ScanState.FINISHED:
+                if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.FINISHED:
                     if progress_callback:
                         progress_callback(100, f'{scan_type} finished')
                     break
-                if scrub.state == truenas_pylibzfs.enums.ScanState.CANCELED:
+                if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.CANCELED:
                     break
-                if scrub.state == truenas_pylibzfs.enums.ScanState.SCANNING:
+                if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.SCANNING:
                     if progress_callback and scrub.percentage is not None:
                         progress_callback(scrub.percentage, f'{scan_type} in progress')
 

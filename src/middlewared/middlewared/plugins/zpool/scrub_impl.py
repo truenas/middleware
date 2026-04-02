@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Any
+from typing import Any, Literal
 
 import truenas_pylibzfs
 
@@ -18,7 +16,10 @@ from .exceptions import (
 __all__ = ("do_scan_action",)
 
 
-def _get_scan_function(scan_type: str) -> truenas_pylibzfs.enums.ScanFunction:
+def _get_scan_function(scan_type: str) -> Literal[
+    truenas_pylibzfs.libzfs_types.ScanFunction.SCRUB,
+    truenas_pylibzfs.libzfs_types.ScanFunction.ERRORSCRUB,
+]:
     """Resolve a scan type string to a ScanFunction enum.
 
     Only SCRUB and ERRORSCRUB are allowed:
@@ -29,18 +30,18 @@ def _get_scan_function(scan_type: str) -> truenas_pylibzfs.enums.ScanFunction:
     when a replacement or re-attached vdev is detected.
 
     Raises ZpoolScanInvalidType if scan_type is not recognized."""
-    func = getattr(truenas_pylibzfs.enums.ScanFunction, scan_type.upper(), None)
+    func = getattr(truenas_pylibzfs.libzfs_types.ScanFunction, scan_type.upper(), None)
     if func not in (
-        truenas_pylibzfs.enums.ScanFunction.SCRUB,
-        truenas_pylibzfs.enums.ScanFunction.ERRORSCRUB,
+        truenas_pylibzfs.libzfs_types.ScanFunction.SCRUB,
+        truenas_pylibzfs.libzfs_types.ScanFunction.ERRORSCRUB,
     ):
         raise ZpoolScanInvalidType(scan_type)
     return func
 
 
 def _get_scan_action(
-    func: truenas_pylibzfs.enums.ScanFunction, action: str
-) -> tuple[truenas_pylibzfs.enums.ScanFunction, truenas_pylibzfs.enums.ScanScrubCmd]:
+    func: truenas_pylibzfs.libzfs_types.ScanFunction, action: str
+) -> tuple[truenas_pylibzfs.libzfs_types.ScanFunction, truenas_pylibzfs.libzfs_types.ScanScrubCmd]:
     """Resolve an action string to the (ScanFunction, ScanScrubCmd) pair for zpool.scan().
 
       - START: begin or resume the scan (func=<scan_type>, cmd=NORMAL)
@@ -50,19 +51,22 @@ def _get_scan_action(
     Raises ZpoolScanInvalidAction if action is not recognized."""
     match action.upper():
         case "START":
-            return func, truenas_pylibzfs.enums.ScanScrubCmd.NORMAL
+            return func, truenas_pylibzfs.libzfs_types.ScanScrubCmd.NORMAL
         case "PAUSE":
-            return func, truenas_pylibzfs.enums.ScanScrubCmd.PAUSE
+            return func, truenas_pylibzfs.libzfs_types.ScanScrubCmd.PAUSE
         case "CANCEL":
             return (
-                truenas_pylibzfs.enums.ScanFunction.NONE,
-                truenas_pylibzfs.enums.ScanScrubCmd.NORMAL,
+                truenas_pylibzfs.libzfs_types.ScanFunction.NONE,
+                truenas_pylibzfs.libzfs_types.ScanScrubCmd.NORMAL,
             )
         case _:
             raise ZpoolScanInvalidAction(action)
 
 
-def do_scan_action(tls: Any, pool_name: str, scan_type: str, action: str) -> None:
+def do_scan_action(
+    tls: Any, pool_name: str, scan_type: str, action: str,
+    zpool: truenas_pylibzfs.libzfs_types.ZFSPool | None = None
+) -> None:
     """Start, pause, or cancel a scan on a zpool.
 
     scan_type: "SCRUB" for a full integrity scan, "ERRORSCRUB" for a targeted
@@ -79,7 +83,8 @@ def do_scan_action(tls: Any, pool_name: str, scan_type: str, action: str) -> Non
     func = _get_scan_function(scan_type)
     scan_func, scan_cmd = _get_scan_action(func, action)
 
-    zpool = tls.lzh.open_pool(name=pool_name)
+    if zpool is None:
+        zpool = tls.lzh.open_pool(name=pool_name)
     try:
         zpool.scan(func=scan_func, cmd=scan_cmd)
     except truenas_pylibzfs.ZFSException as e:

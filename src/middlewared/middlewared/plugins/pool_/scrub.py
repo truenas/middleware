@@ -285,9 +285,9 @@ class PoolScrubService(CRUDService):
 
         status, zpool_obj = info[0]
 
-        if not status['healthy']:
+        if status['status'] not in ('ONLINE', 'DEGRADED'):
             raise ScrubError(
-                f'Pool {name} is not healthy ({status["status"]}), not running scrub'
+                f'Pool {name} is {status["status"]}, not running scrub'
             )
 
         scan = status['scan']
