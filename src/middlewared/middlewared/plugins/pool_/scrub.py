@@ -324,5 +324,5 @@ class PoolScrubService(CRUDService):
         if not start_scrub:
             return False
 
-        self.middleware.call_sync('zpool.scrub.run_impl', name, 'SCRUB', 'START')
+        self.middleware.call_sync('zpool.scrub.run_impl', tls, name, 'SCRUB', 'START')
         return True

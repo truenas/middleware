@@ -41,7 +41,6 @@ class ZpoolScrubService(Service):
         cli_private = True
 
     @private
-    @pass_thread_local_storage
     def run_impl(self, tls, pool_name, scan_type, action, *, wait=False, progress_callback=None):
         """Start, pause, or cancel a scan on a zpool.
 
@@ -91,12 +90,13 @@ class ZpoolScrubService(Service):
                         progress_callback(scrub.percentage, f'{scan_type} in progress')
 
     @api_method(ZpoolScrubRunArgs, ZpoolScrubRunResult, roles=["POOL_WRITE"], check_annotations=True)
+    @pass_thread_local_storage
     @job()
-    def run(self, job: Job, data: ZpoolScrubRunEntry) -> None:
+    def run(self, job: Job, tls, data: ZpoolScrubRunEntry) -> None:
         schema = "zpool.scrub.run"
         try:
             self.run_impl(
-                data.pool_name, data.scan_type, data.action,
+                tls, data.pool_name, data.scan_type, data.action,
                 wait=data.wait,
                 progress_callback=job.set_progress,
             )
