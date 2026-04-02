@@ -33,7 +33,10 @@ def _build_compiled_options(
     )
 
 
-def _preprocess_date_filters(filters: Iterable[Sequence[Any]]) -> list | None:
+_TIMESTAMP_OPS = frozenset(('=', '!=', '<', '>', '<=', '>='))
+
+
+def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -> list | None:
     """
     Walk a filter tree for .$date operands; return a rebuilt tree with suffixes stripped
     and ISO strings replaced with datetime objects, or None if no .$date was found.
@@ -41,19 +44,40 @@ def _preprocess_date_filters(filters: Iterable[Sequence[Any]]) -> list | None:
     e.g. ["expires.$date", ">", "2024-01-01T00:00:00"] ->
          ["expires", ">", datetime(2024, 1, 1)]
     """
+    if depth > 3:
+        raise ValueError('query-filters max recursion depth exceeded')
+
     result = []
     changed = False
     for f in filters:
-        if len(f) == 2:  # OR node
-            sub = _preprocess_date_filters(f[1])
+        if len(f) == 2 and isinstance(f[0], str) and f[0] == 'OR':
+            # OR node: ['OR', [branch, ...]]
+            sub = _preprocess_date_filters(f[1], depth + 1)
             result.append([f[0], sub if sub is not None else list(f[1])])
+            if sub is not None:
+                changed = True
+        elif f and isinstance(f[0], list):
+            # AND group inside OR: [[filter, ...], ...]
+            sub = _preprocess_date_filters(f, depth + 1)
+            result.append(sub if sub is not None else list(f))
             if sub is not None:
                 changed = True
         else:
             field, op, value = f
             if isinstance(field, str) and field.endswith(TIMESTAMP_DESIGNATOR):
+                if op not in _TIMESTAMP_OPS:
+                    raise ValueError(f'{op}: invalid timestamp operation.')
+                if not isinstance(value, str):
+                    raise ValueError(
+                        f'{value}: must be an ISO-8601 formatted timestamp string'
+                    )
                 field = field[:-len(TIMESTAMP_DESIGNATOR)]
-                value = datetime.fromisoformat(value)
+                try:
+                    value = datetime.fromisoformat(value)
+                except ValueError:
+                    raise ValueError(
+                        f'{value}: must be an ISO-8601 formatted timestamp string'
+                    ) from None
                 changed = True
             result.append([field, op, value])
     return result if changed else None
