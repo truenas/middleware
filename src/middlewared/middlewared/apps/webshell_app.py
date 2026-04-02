@@ -361,7 +361,9 @@ class ShellApplication:
                     # Currently only local users can be sudoers
                     pass
                 else:
-                    if (
+                    if user["uid"] == 0:
+                        as_root = True
+                    elif (
                         "ALL" in user["sudo_commands"]
                         or "ALL" in user["sudo_commands_nopasswd"]
                     ):
