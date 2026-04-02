@@ -236,7 +236,7 @@ class PoolScrubService(CRUDService):
         pass_thread_local_storage=True,
         roles=['POOL_WRITE']
     )
-    def run(self, tls, name: str, threshold: int):
+    def run(self, tls, name: str, threshold: int) -> None:
         """
         Initiate a scrub of pool `name` if last scrub was performed more than
         `threshold` days before.
@@ -258,20 +258,17 @@ class PoolScrubService(CRUDService):
                     ScrubStartedAlert(name),
                 )
 
-    def _run_impl(self, tls, name, threshold):
-        """Return True if scrub was started, False/None if not needed.
+    def _run_impl(self, tls, name: str, threshold: int) -> bool:
+        """Return True if scrub was started, False if not needed.
 
         Raises ScrubError for expected pool problems (-> ScrubNotStartedAlert).
         """
         if name != self.middleware.call_sync('boot.pool_name'):
             if self.middleware.call_sync('failover.licensed'):
                 if self.middleware.call_sync('failover.status') == 'BACKUP':
-                    return
+                    return False
 
-            if not any(
-                i['vol_name'] == name
-                for i in self.middleware.call_sync('datastore.query', 'storage.volume')
-            ):
+            if not self.middleware.call_sync('datastore.query', 'storage.volume', [['vol_name', '=', name]]):
                 raise ValidationError(
                     'pool.scrub.run',
                     f'{name!r} zpool not found in database',
@@ -293,8 +290,9 @@ class PoolScrubService(CRUDService):
                 f'Pool {name} is not healthy ({status["status"]}), not running scrub'
             )
 
-        # Already scanning — nothing to do
-        if status['scan'] and status['scan']['state'] == 'SCANNING':
+        scan = status['scan']
+        if scan and scan['state'] == 'SCANNING':
+            # Already scanning — nothing to do
             return False
 
         # Threshold check via scan end_time
@@ -302,11 +300,11 @@ class PoolScrubService(CRUDService):
         cutoff = int(time.time()) - (threshold - 1) * 86400
 
         if (
-            status['scan']
-            and status['scan']['function'] == 'SCRUB'
-            and status['scan']['state'] == 'FINISHED'
+            scan
+            and scan['function'] == 'SCRUB'
+            and scan['state'] == 'FINISHED'
         ):
-            if status['scan']['end_time'] >= cutoff:
+            if scan['end_time'] >= cutoff:
                 return False  # recent enough — skip
             start_scrub = True
 
@@ -326,5 +324,5 @@ class PoolScrubService(CRUDService):
         if not start_scrub:
             return False
 
-        self.middleware.call_sync('pool.scrub.scrub', name)
+        self.middleware.call_sync('zpool.scrub.run_impl', name, 'SCRUB', 'START')
         return True
