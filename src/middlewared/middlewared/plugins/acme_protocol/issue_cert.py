@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
+from acme import messages
+from truenas_acme_utils.client_utils import ACMEClientAndKeyData
 from truenas_acme_utils.event import event_callbacks
 from truenas_acme_utils.exceptions import CallError as AcmeUtilsCallError
 from truenas_acme_utils.issue_cert import issue_certificate as _issue_cert
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 def issue_certificate(
     context: ServiceContext, job: Job[Any], progress: int,
     data: dict[str, Any], csr_data: dict[str, Any],
-) -> Any:
+) -> messages.OrderResource:
     context.middleware.call_sync('network.general.will_perform_activity', 'acme')
     verrors = ValidationErrors()
 
@@ -77,8 +79,8 @@ def issue_certificate(
 
 def issue_certificate_impl(
     context: ServiceContext, job: Job[Any], progress: int,
-    acme_client_key_payload: dict[str, Any], csr: str, dns_mapping_copy: dict[str, Any],
-) -> Any:
+    acme_client_key_payload: ACMEClientAndKeyData, csr: str, dns_mapping_copy: dict[str, Any],
+) -> messages.OrderResource:
     dns_auth = context.s.acme.dns.authenticator
     authenticators = {
         o.id: o
