@@ -217,8 +217,8 @@ class TNCACMEService(Service):
             return
 
         try:
-            await self.middleware.call(
-                'acme.revoke_certificate', acme_config['acme_details'], certificate['certificate'],
+            await self.call2(
+                self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], certificate['certificate'],
             )
         except CallError:
             logger.error('Failed to revoke TNC certificate', exc_info=True)

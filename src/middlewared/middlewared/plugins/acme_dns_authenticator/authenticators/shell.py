@@ -8,7 +8,10 @@ The authenticator script is called two times during the certificate generation:
 
 It is up to script implementation to handle both calls and perform the record creation.
 """
+from __future__ import annotations
+
 import logging
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api.current import ShellSchemaArgs
 from middlewared.async_validators import check_path_resides_within_volume
@@ -17,6 +20,9 @@ from middlewared.utils.user_context import run_command_with_user_context
 
 from .base import Authenticator
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +30,17 @@ logger = logging.getLogger(__name__)
 class ShellAuthenticator(Authenticator):
 
     NAME = 'shell'
-    PROPAGATION_DELAY = 60
+    PROPAGATION_DELAY: float = 60
     SCHEMA_MODEL = ShellSchemaArgs
 
-    def initialize_credentials(self):
-        self.script = self.attributes['script']
-        self.user = self.attributes['user']
-        self.timeout = self.attributes['timeout']
+    def initialize_credentials(self) -> None:
+        self.script: str = self.attributes['script']
+        self.user: str = self.attributes['user']
+        self.timeout: int = self.attributes['timeout']
         self.PROPAGATION_DELAY = self.attributes['delay']
 
     @staticmethod
-    async def validate_credentials(middleware, data):
+    async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:
         # We would like to validate the following bits:
         # 1) script exists and is executable
         # 2) user exists
@@ -60,13 +66,13 @@ class ShellAuthenticator(Authenticator):
         verrors.check()
         return data
 
-    def _perform(self, domain, validation_name, validation_content):
+    def _perform(self, domain: str, validation_name: str, validation_content: str) -> None:
         run_command_with_user_context(
             f'{self.script} set {domain} {validation_name} {validation_content}', self.user,
             output=False, timeout=self.timeout
         )
 
-    def _cleanup(self, domain, validation_name, validation_content):
+    def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
         run_command_with_user_context(
             f'{self.script} unset {domain} {validation_name} {validation_content}', self.user,
             output=False, timeout=self.timeout
