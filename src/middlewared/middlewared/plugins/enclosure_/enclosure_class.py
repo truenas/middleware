@@ -26,6 +26,8 @@ from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info
+from .utils import parse_model
+
 
 logger = logging.getLogger(__name__)
 
@@ -144,11 +146,7 @@ class Enclosure:
             using a standard inquiry command
         """
         spn = self.dmi.system_product_name
-        model = spn.removeprefix('TRUENAS-').removeprefix('FREENAS-')
-        for suffix in ('-HA', '-S', '-PC', '-SC', '-C'):
-            # "-PC", "-SC", and "-C" are used on R60 platform
-            model = model.removesuffix(suffix)
-
+        model = parse_model(spn)
         try:
             dmi_model = ControllerModels[model]
         except KeyError:
