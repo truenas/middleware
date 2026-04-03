@@ -65,7 +65,7 @@ class PoolService(Service):
             disk['name'] for disk in await self.middleware.call(
                 'disk.query', [['sed', '=', True]], {'force_sql_filters': True, 'extra': {'sed_status': True}}
             )
-            if disk.get('sed_status') and disk['sed_status'] != 'UNINITIALIZED'
+            if disk.get('sed_status') in ('LOCKED', 'UNLOCKED')
         }
 
         for pool in db_pools:
