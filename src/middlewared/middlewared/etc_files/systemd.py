@@ -12,6 +12,14 @@ async def render(service, middleware):
 
     licensed = await middleware.call('failover.licensed')
 
+    # Services whose lifecycle is managed exclusively by middleware after
+    # pool import. These depend on the system dataset (/var/db/system)
+    # which is only available after middleware imports the pool and runs
+    # systemdataset.setup(). Keeping them disabled in systemd prevents
+    # noisy failures at boot when systemd tries to auto-start them before
+    # the system dataset is mounted.
+    middleware_managed_units = frozenset({'nfs-server'})
+
     for unit, enable in services_enabled.items():
         state = await system_dbus.get_unit_file_state(unit)
         if state not in ("enabled", "disabled"):
@@ -21,6 +29,10 @@ async def render(service, middleware):
             continue
 
         is_enabled = state == "enabled"
+        if unit in middleware_managed_units:
+            if is_enabled:
+                await system_dbus.set_unit_file_state(unit, False)
+            continue
         if unit == "scst" and licensed:
             enable = False
 

@@ -962,7 +962,13 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        middleware.create_task(middleware.call('etc.generate', 'nfsd'))
+        await middleware.call('etc.generate', 'nfsd')
+        # NFS may not be running if the system dataset was unavailable at boot.
+        # Now that pools are imported and the system dataset is mounted, start
+        # NFS if it is enabled but not yet running.
+        if await middleware.call('service.query', [['service', '=', 'nfs'], ['enable', '=', True]], {'count': True}):
+            if not await middleware.call('service.started', 'nfs'):
+                middleware.create_task(middleware.call('service.start', 'nfs'))
         return
 
     path = f'/mnt/{pool["name"]}'
