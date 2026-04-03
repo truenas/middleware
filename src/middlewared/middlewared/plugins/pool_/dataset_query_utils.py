@@ -106,10 +106,11 @@ class ExtraArgs:
 
 @dataclass(slots=True, kw_only=True)
 class QueryFiltersCallbackState:
-    filters: list = field(default_factory=list)
-    """list of filters"""
-    select: list = field(default_factory=list)
-    """list of fields to select. None means all"""
+    filters_compiled: _tf.CompiledFilters | None = None
+    """pre-compiled filters; drives child recursion and, when count_only is True,
+    per-item matching so we never accumulate a full list just to count it"""
+    options_compiled: _tf.CompiledOptions | None = None
+    """pre-compiled options; passed to _tf.match() alongside filters_compiled"""
     count_only: bool = False
     """only count entries"""
     extra: ExtraArgs
@@ -950,7 +951,10 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     # Note: Filtering and select will be applied at the end in generic_query function
 
     if state.count_only:
-        state.count += 1
+        if state.filters_compiled is None or _tf.match(
+            data, filters=state.filters_compiled, options=state.options_compiled
+        ) is not None:
+            state.count += 1
     else:
         # When retrieve_children is False, don't build hierarchy - just add datasets directly
         # This fixes filtering issues where specific datasets get lost in hierarchy building
@@ -990,7 +994,7 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
 
     # Always recurse when we have filters, even if retrieve_children is False
     # This ensures filtered queries can find child datasets
-    if state.extra.retrieve_children or state.filters:
+    if state.extra.retrieve_children or state.filters_compiled is not None:
         hdl.iter_filesystems(callback=generic_query_callback, state=state)
 
     return True
@@ -1050,10 +1054,10 @@ def generic_query(
     Raises:
         MatchNotFound: When get=True but no results found
     """
-    # parse query-options; select is also used by the callback for ZFS property narrowing
+    # parse query-options
     options, select, order_by = validate_options(options_in)
 
-    # pre-compile before iteration so the C-level objects are ready when tnfilter is called
+    # pre-compile before iteration so the C-level objects are ready when tnfilter/match is called
     cf = compile_filters(filters_in)
     co = _tf.compile_options(
         get=options.get('get', False),
@@ -1066,8 +1070,8 @@ def generic_query(
 
     # set up callback state
     state = QueryFiltersCallbackState(
-        filters=filters_in,
-        select=select,
+        filters_compiled=cf if filters_in else None,
+        options_compiled=co if filters_in else None,
         count_only=options["count"],
         extra=ExtraArgs(
             flat=extra.get("flat", True),
