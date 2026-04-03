@@ -112,7 +112,7 @@ class PermLockRegistry:
       exact(sibling)     |  N               |  N  (unrelated)
       traverse(X)        |  Y  (same ds)    |  Y  (same ds)
       traverse(child)    |  N               |  Y  (descendant)
-      traverse(parent)   |  N               |  Y  (ancestor)
+      traverse(parent)   |  Y  (ancestor)   |  Y  (ancestor)
       traverse(sibling)  |  N               |  N  (unrelated)
 
     The optional `on_wait` callback passed to `lock()` is called roughly every second
@@ -145,9 +145,9 @@ class PermLockRegistry:
                     errno.EBUSY,
                 )
             while self._conflicts(dataset, is_traverse):
+                self._cond.wait(timeout=_PERM_LOCK_POLL_INTERVAL)
                 if on_wait:
                     on_wait()
-                self._cond.wait(timeout=_PERM_LOCK_POLL_INTERVAL)
             self._active[dataset] = is_traverse
         try:
             yield
@@ -177,6 +177,7 @@ class AclTool:
         'fd', 'action', 'uid', 'gid', 'options', 'job', 'tls',
         'nfs4_inh', 'posix_file_acl', '_action_fd_fn',
         'total_objects', 'cumulative_processed', 'last_report_time',
+        'root_fn',
     )
 
     _OPTIONS_TYPE = types.MappingProxyType({
@@ -193,7 +194,7 @@ class AclTool:
         AclToolAction.INHERIT: '_do_acl',
     })
 
-    def __init__(self, fd, action, uid, gid, options, job=None, tls=None):
+    def __init__(self, fd, action, uid, gid, options, job=None, tls=None, root_fn=None):
         expected = self._OPTIONS_TYPE[action]
         if not isinstance(options, expected):
             raise TypeError(f'{action}: expected {expected.__name__}, got {type(options).__name__}')
@@ -210,6 +211,7 @@ class AclTool:
         self.nfs4_inh = None
         self.posix_file_acl = None
         self._action_fd_fn = getattr(self, self._ACTION_FN[action])
+        self.root_fn = root_fn
 
     def _estimate_total(self, fs_name, mnt_id):
         """Populate self.total_objects before iteration begins."""
@@ -305,6 +307,8 @@ class AclTool:
             self._run_locked(mountpoint, fs_name, rel_path, mnt_id)
 
     def _run_locked(self, mountpoint, fs_name, rel_path, mnt_id):
+        if self.root_fn is not None:
+            self.root_fn(self.fd)
         self._estimate_total(fs_name, mnt_id)
 
         if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):

@@ -299,3 +299,92 @@ def test_cap_does_not_affect_already_waiting_job():
     release3.set()
     t2.join(timeout=_LOCK_TIMEOUT)
     t3.join(timeout=_LOCK_TIMEOUT)
+
+
+# ---------------------------------------------------------------------------
+# _conflicts() unit tests — one per matrix cell plus prefix-safety cases
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize('active_ds, active_trav, incoming_ds, incoming_trav, expect', [
+    # ── same dataset: always a conflict ────────────────────────────────────
+    ('tank/x', False, 'tank/x', False, True),   # exact vs active exact(same)
+    ('tank/x', True,  'tank/x', False, True),   # exact vs active traverse(same)
+    ('tank/x', False, 'tank/x', True,  True),   # traverse vs active exact(same)
+    ('tank/x', True,  'tank/x', True,  True),   # traverse vs active traverse(same)
+
+    # ── exact active on X, incoming targets child ───────────────────────────
+    # exact on a child does not conflict with a non-traversing parent lock
+    ('tank/x', False, 'tank/x/child', False, False),
+    # traverse on a child does not conflict with a non-traversing parent lock
+    ('tank/x', False, 'tank/x/child', True,  False),
+
+    # ── traverse active on X, incoming targets child ────────────────────────
+    # exact on child conflicts with traversing parent (parent will descend into child)
+    ('tank/x', True,  'tank/x/child', False, True),
+    # traverse on child also conflicts with traversing parent
+    ('tank/x', True,  'tank/x/child', True,  True),
+
+    # ── exact active on a child, incoming traverse targets parent ───────────
+    # traverse(parent) MUST conflict with exact(child) — this is the cell the
+    # docstring previously mislabelled as N; the code was always correct.
+    ('tank/x/child', False, 'tank/x', True, True),
+
+    # ── traverse active on a child, incoming traverse targets parent ─────────
+    ('tank/x/child', True,  'tank/x', True, True),
+
+    # ── sibling datasets: never conflict ────────────────────────────────────
+    ('tank/a', False, 'tank/b', False, False),
+    ('tank/a', True,  'tank/b', False, False),
+    ('tank/a', False, 'tank/b', True,  False),
+    ('tank/a', True,  'tank/b', True,  False),
+
+    # ── prefix-safety: 'tank/xa' must not match the 'tank/x' prefix ─────────
+    # The code uses startswith(active_ds + '/') so 'tank/xa' != child of 'tank/x'.
+    ('tank/x',  False, 'tank/xa', False, False),
+    ('tank/x',  True,  'tank/xa', False, False),
+    ('tank/x',  False, 'tank/xa', True,  False),
+    ('tank/xa', True,  'tank/x',  True,  False),
+])
+def test_conflicts_matrix(active_ds, active_trav, incoming_ds, incoming_trav, expect):
+    """
+    _conflicts() must return the value shown in the PermLockRegistry docstring
+    conflict matrix for every combination of active and incoming lock type.
+    """
+    reg = PermLockRegistry()
+    reg._active[active_ds] = active_trav
+    assert reg._conflicts(incoming_ds, incoming_trav) is expect
+
+
+# ---------------------------------------------------------------------------
+# Threading tests for conflict cases not already covered above
+# ---------------------------------------------------------------------------
+
+
+def test_traverse_parent_blocks_when_exact_child_active():
+    """
+    A traverse lock on a parent dataset must be blocked when an exact lock on
+    a child dataset is already held.  This corresponds to the matrix cell
+    traverse(parent) | Active: exact(child) which was previously misdocumented
+    as N; the locking code has always been correct.
+    """
+    reg = PermLockRegistry()
+    holding_child = threading.Event()
+    release_child = threading.Event()
+    holding_trav = threading.Event()
+    release_trav = threading.Event()
+
+    t1 = _run_in_thread(reg, 'tank/shares/data', False, holding_child, release_child)
+    assert holding_child.wait(timeout=_LOCK_TIMEOUT), 'exact child lock not acquired'
+
+    t2 = _run_in_thread(reg, 'tank/shares', True, holding_trav, release_trav)
+    assert not holding_trav.wait(timeout=0.3), \
+        'traverse on parent should be blocked by exact lock on child'
+
+    release_child.set()
+    t1.join(timeout=_LOCK_TIMEOUT)
+    assert holding_trav.wait(timeout=_LOCK_TIMEOUT), \
+        'traverse on parent should proceed after child exact lock is released'
+
+    release_trav.set()
+    t2.join(timeout=_LOCK_TIMEOUT)
