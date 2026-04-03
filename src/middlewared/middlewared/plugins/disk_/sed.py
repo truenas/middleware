@@ -17,18 +17,22 @@ class DiskService(Service):
         """
         Will attempt to setup SED disk for pool by either unlocking it using disk or global pass
         or alternatively set it up if it is not initialized.
-        It will return tuple true if it succeeded, false otherwise with the other value being disk name
+        It will return tuple of (success, disk_name, error) where error is a string describing the failure.
         """
         password = disk['passwd'] or disk['global_passwd']
         entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
         if disk['sed_status'] == 'UNINITIALIZED':
             result = await asyncio.to_thread(entry.sed_initial_setup, password)
-            return result == 'SUCCESS', disk['name']
+            if result == 'SUCCESS':
+                return True, disk['name'], None
+            return False, disk['name'], f'initial setup returned {result!r}'
         elif disk['sed_status'] == 'LOCKED':
             success, error = await asyncio.to_thread(entry.sed_unlock, password)
-            return success, disk['name']
+            if success:
+                return True, disk['name'], None
+            return False, disk['name'], f'unlock failed: {error}'
 
-        return False, disk['name']
+        return False, disk['name'], f'unexpected sed_status {disk["sed_status"]!r}'
 
     @private
     async def setup_sed_disks_for_pool(self, disks, schema_name, validate_all_disks_are_sed=False):
@@ -54,12 +58,13 @@ class DiskService(Service):
         failed_sed_status_disks = []
         non_sed_disks = []
         for disk in disks_to_check:
-            if validate_all_disks_are_sed and disk['sed'] is False:
-                non_sed_disks.append(disk['name'])
-            if disk['sed_status'] in ['UNINITIALIZED', 'LOCKED']:
+            status = disk['sed_status']
+            if status in ('UNINITIALIZED', 'LOCKED'):
                 to_setup_sed_disks.append(disk)
-            elif disk['sed_status'] == 'FAILED':
+            elif status == 'FAILED':
                 failed_sed_status_disks.append(disk['name'])
+            elif status == 'NO_SED' or (validate_all_disks_are_sed and disk['sed'] is False):
+                non_sed_disks.append(disk['name'])
 
         if non_sed_disks:
             verrors.add(
@@ -87,17 +92,17 @@ class DiskService(Service):
                 verrors.check()
 
             failed_setup_disks = []
-            for success, disk_name in await asyncio_map(
+            for success, disk_name, error in await asyncio_map(
                 self.setup_sed_disk, [d | {'global_passwd': global_sed_password} for d in to_setup_sed_disks],
                 limit=16
             ):
                 if success is False:
-                    failed_setup_disks.append(disk_name)
+                    failed_setup_disks.append(f'{disk_name} ({error})')
 
             if failed_setup_disks:
                 verrors.add(
                     schema_name,
-                    f'Failed to setup {", ".join(failed_setup_disks)!r} SED disk(s).'
+                    f'Failed to setup SED disk(s): {", ".join(failed_setup_disks)}'
                 )
                 verrors.check()
 
