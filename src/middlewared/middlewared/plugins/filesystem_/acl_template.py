@@ -7,7 +7,8 @@ from middlewared.api.current import (
     ACLTemplateDeleteArgs, ACLTemplateDeleteResult,
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.service import private
+from middlewared.service import filterable_api_method, private
+from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 import truenas_os
@@ -105,6 +106,14 @@ class ACLTemplateService(CRUDService):
                 truenas_os.validate_acl(-1, acl_obj)
             except (ValueError, KeyError) as e:
                 verrors.add(schema, str(e))
+
+    @filterable_api_method(item=ACLTemplateEntry, roles=['FILESYSTEM_ATTRS_READ'])
+    async def query(self, filters, options):
+        templates = await super().query(filters or [], {})
+        for t in templates:
+            if t['builtin']:
+                await self.append_builtins(t)
+        return filter_list(templates, [], options or {})
 
     @api_method(
         ACLTemplateCreateArgs,
@@ -216,7 +225,7 @@ class ACLTemplateService(CRUDService):
             return
 
         has_default_mask = any(filter(lambda x: x["tag"] == "MASK" and x["default"], data['acl']))
-        has_access_mask = any(filter(lambda x: x["tag"] == "MASK" and x["default"], data['acl']))
+        has_access_mask = any(filter(lambda x: x["tag"] == "MASK" and not x["default"], data['acl']))
         all_perms = {"READ": True, "WRITE": True, "EXECUTE": True}
         if bu_id != -1:
             data['acl'].extend([
@@ -231,10 +240,10 @@ class ACLTemplateService(CRUDService):
             ])
 
         if not has_default_mask:
-            data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": False})
+            data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": True})
 
         if not has_access_mask:
-            data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": True})
+            data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": False})
 
         return
 
@@ -349,7 +358,7 @@ class ACLTemplateService(CRUDService):
 
         templates = await self.query(filters, data['query-options'])
         for t in templates:
-            if data['format-options']['ensure_builtins']:
+            if data['format-options']['ensure_builtins'] and not t['builtin']:
                 await self.append_builtins(t)
 
             if data['format-options']['resolve_names']:
