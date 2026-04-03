@@ -189,19 +189,6 @@ def compile_options(options: dict | None = None) -> CompiledOptions:
     )
 
 
-def filter_list_compiled(
-    _list: Iterable[_Entry],
-    compiled_filters: CompiledFilters,
-    compiled_options: CompiledOptions,
-) -> list[_Entry] | int:
-    """
-    Filter an iterable using pre-compiled filters and options. Skips all validation.
-    Use when compiled_filters / compiled_options are stored persistently (e.g. module-level).
-    For single-item boolean checks use match() instead.
-    """
-    return _tf.tnfilter(_list, filters=compiled_filters, options=compiled_options)
-
-
 def filter_getattrs(filters: list[Sequence[Any]]) -> set[str]:
     """
     Get a set of attributes in a filter list.
