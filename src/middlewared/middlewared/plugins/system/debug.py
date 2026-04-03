@@ -9,6 +9,7 @@ import time
 from middlewared.api import api_method
 from middlewared.api.current import SystemDebugArgs, SystemDebugResult
 from middlewared.service import CallError, job, private, Service
+from middlewared.utils.privilege import credential_has_full_admin
 
 from ixdiagnose.config import conf
 from ixdiagnose.event import event_callbacks
@@ -20,7 +21,7 @@ from .utils import DEBUG_MAX_SIZE, get_debug_execution_dir
 class SystemService(Service):
     @private
     @job(lock="system.debug_generate", lock_queue_size=1)
-    def debug_generate(self, job):
+    def debug_generate(self, job, caller_has_full_admin=True):
         """
         Generate system debug file.
 
@@ -54,6 +55,7 @@ class SystemService(Service):
                 "debug_path": os.path.join(execution_dir, "debug"),
                 "clean_debug_path": True,
                 "compressed_path": dump,
+                "caller_has_full_admin": caller_has_full_admin,
             }
         )
 
@@ -74,8 +76,10 @@ class SystemService(Service):
         Download a debug file.
         """
         job.set_progress(0, "Generating debug file")
+        caller_has_full_admin = job.credentials is not None and credential_has_full_admin(job.credentials)
         debug_job = self.middleware.call_sync(
             "system.debug_generate",
+            caller_has_full_admin,
             job_on_progress_cb=lambda encoded: job.set_progress(
                 int(encoded["progress"]["percent"] * 0.9),
                 encoded["progress"]["description"],
@@ -85,9 +89,18 @@ class SystemService(Service):
         standby_debug = None
         if self.middleware.call_sync("failover.licensed"):
             try:
-                standby_debug = self.middleware.call_sync(
-                    "failover.call_remote", "system.debug_generate", [], {"job": True}
-                )
+                try:
+                    standby_debug = self.middleware.call_sync(
+                        "failover.call_remote", "system.debug_generate",
+                        [caller_has_full_admin], {"job": True}
+                    )
+                except Exception:
+                    # Remote node may be running older version without caller_has_full_admin param
+                    self.logger.warning("Retrying standby debug generation without caller_has_full_admin")
+                    standby_debug = self.middleware.call_sync(
+                        "failover.call_remote", "system.debug_generate",
+                        [], {"job": True}
+                    )
             except Exception:
                 self.logger.exception("Failed to get debug from standby node")
             else:
