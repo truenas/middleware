@@ -75,6 +75,7 @@ class iSCSITargetExtentService(SharingService):
 
     share_task_type = 'iSCSI Extent'
     path_resolution_filters = [['iscsi_target_extent_type', '=', 'FILE']]
+    include_tier_info = False
 
     class Config:
         namespace = 'iscsi.extent'

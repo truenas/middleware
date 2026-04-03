@@ -2,6 +2,7 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field, AfterValidator
 
+from .zfs_tier import TierInfo
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -175,6 +176,10 @@ class SharingNFSEntry(BaseModel):
     Enterprise feature to enable access to the ZFS snapshot directory for the export.
     Export path must be the root directory of a ZFS dataset.
     """
+    tier: TierInfo | None = None
+    """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
+    available exclusively through `pool.dataset.update`. \
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed or if tiering is disabled."""
 
 
 class NfsShareCreate(SharingNFSEntry):
@@ -182,6 +187,7 @@ class NfsShareCreate(SharingNFSEntry):
     dataset: Excluded = excluded_field()
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
 
 class SharingNFSCreateArgs(BaseModel):
