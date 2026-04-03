@@ -20,6 +20,7 @@ from .constants import (
 )
 from .enums import ControllerModels
 from .slot_mappings import get_nvme_slot_info
+from .utils import parse_model
 
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
@@ -299,8 +300,7 @@ def map_r30_r60_or_fseries(model, ctx):
 
 
 def map_nvme():
-    model = parse_dmi().system_product_name.removeprefix('TRUENAS-')
-    model = model.removesuffix('-S').removesuffix('-HA')
+    model = parse_model(parse_dmi().system_product_name)
     ctx = Context()
     if model in (
         ControllerModels.R50.value,
