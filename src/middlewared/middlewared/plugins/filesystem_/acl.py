@@ -171,7 +171,7 @@ class FilesystemService(Service):
         audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def chown(self, job, tls, data):
         """
         Change owner or group of file at `path`.
@@ -231,7 +231,7 @@ class FilesystemService(Service):
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def setperm(self, job, tls, data):
         """
         Set unix permissions on given `path`.
@@ -634,7 +634,7 @@ class FilesystemService(Service):
         audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def setacl(self, job, tls, data):
         """
         Set ACL of a given path. Takes the following parameters:

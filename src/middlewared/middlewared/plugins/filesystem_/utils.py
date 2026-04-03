@@ -1,8 +1,12 @@
+import contextlib
 import dataclasses
 import enum
+import errno
 import os
+import threading
 import time
 import types
+from collections.abc import Callable
 
 import truenas_os
 
@@ -74,6 +78,86 @@ def _get_mount_info(fd: int):
     abs_path = os.readlink(f'/proc/self/fd/{fd}')
     rel = os.path.relpath(abs_path, sm.mnt_point)
     return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
+
+
+_PERM_LOCK_POLL_INTERVAL = 1.0  # seconds between on_wait callbacks while blocked
+_DEFAULT_MAX_CONCURRENT_PERM_OPS = 10
+
+
+class PermLockRegistry:
+    """
+    Global registry of active permission operation locks for filesystem ACL/chown/setperm jobs.
+
+    Tracks (dataset, is_traverse) pairs for all in-flight recursive operations and enforces
+    hierarchical conflict detection.
+
+    Terms used below:
+      exact(X)    -- a non-traverse lock on dataset X; the operation recurses within X but
+                     does not cross into child dataset mount points.
+      traverse(X) -- a traverse lock on dataset X; the operation recurses into X and all
+                     ZFS datasets mounted beneath X in the filesystem tree.
+      X, child, parent, sibling -- ZFS dataset name relationships in the mount hierarchy.
+                     "child of X" means a dataset whose name starts with X + '/'.
+                     "parent of X" means a dataset whose name is a prefix of X + '/'.
+                     "sibling" means a dataset that shares the same parent as X but is
+                     not X itself (e.g. tank/a and tank/b are siblings).
+
+    Conflict matrix (Y = conflict/blocks, N = allowed concurrently):
+
+      Incoming lock type
+      |                   Active: exact(X)   Active: traverse(X)
+      +------------------+------------------+--------------------
+      exact(X)           |  Y  (same ds)    |  Y  (same ds)
+      exact(child of X)  |  N               |  Y  (descendant)
+      exact(sibling)     |  N               |  N  (unrelated)
+      traverse(X)        |  Y  (same ds)    |  Y  (same ds)
+      traverse(child)    |  N               |  Y  (descendant)
+      traverse(parent)   |  N               |  Y  (ancestor)
+      traverse(sibling)  |  N               |  N  (unrelated)
+
+    The optional `on_wait` callback passed to `lock()` is called roughly every second
+    while the caller is blocked, allowing job progress messages to be updated.
+    """
+
+    def __init__(self, max_concurrent: int = _DEFAULT_MAX_CONCURRENT_PERM_OPS):
+        self._cond = threading.Condition(threading.Lock())
+        # dataset -> is_traverse for all currently held locks
+        self._active: dict[str, bool] = {}
+        self._max_concurrent = max_concurrent
+
+    def _conflicts(self, dataset: str, is_traverse: bool) -> bool:
+        for active_ds, active_trav in self._active.items():
+            if active_ds == dataset:
+                return True
+            # Traverse ops conflict with ancestor/descendant datasets
+            if is_traverse or active_trav:
+                if dataset.startswith(active_ds + '/') or active_ds.startswith(dataset + '/'):
+                    return True
+        return False
+
+    @contextlib.contextmanager
+    def lock(self, dataset: str, is_traverse: bool, on_wait: Callable | None = None):
+        with self._cond:
+            if len(self._active) >= self._max_concurrent:
+                raise CallError(
+                    f'Too many concurrent permission operations in progress '
+                    f'(maximum {self._max_concurrent}). Try again later.',
+                    errno.EBUSY,
+                )
+            while self._conflicts(dataset, is_traverse):
+                if on_wait:
+                    on_wait()
+                self._cond.wait(timeout=_PERM_LOCK_POLL_INTERVAL)
+            self._active[dataset] = is_traverse
+        try:
+            yield
+        finally:
+            with self._cond:
+                del self._active[dataset]
+                self._cond.notify_all()
+
+
+_perm_lock_registry = PermLockRegistry()
 
 
 class AclTool:
@@ -213,7 +297,14 @@ class AclTool:
 
     def run(self):
         mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(self.fd)
+        is_traverse = self.options.traverse
+        wait_msg = f'Waiting to acquire {"traverse " if is_traverse else ""}lock on dataset {fs_name!r}'
+        on_wait = (lambda: self.job.set_progress(0, wait_msg)) if self.job is not None else None
 
+        with _perm_lock_registry.lock(fs_name, is_traverse, on_wait=on_wait):
+            self._run_locked(mountpoint, fs_name, rel_path, mnt_id)
+
+    def _run_locked(self, mountpoint, fs_name, rel_path, mnt_id):
         self._estimate_total(fs_name, mnt_id)
 
         if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
