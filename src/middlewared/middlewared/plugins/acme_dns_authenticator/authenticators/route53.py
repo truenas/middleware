@@ -49,7 +49,7 @@ class Route53Authenticator(Authenticator):
                 return
             time.sleep(5)
 
-        raise CallError(f'Timed out waiting for Route53 change. Current status: {r["Status"]}')
+        raise CallError(f'Timed out waiting for Route53 change. Current status: {r["ChangeInfo"]["Status"]}')
 
     def _find_zone_id_for_domain(self, domain: str) -> Any:
         # Finding zone id for the given domain
