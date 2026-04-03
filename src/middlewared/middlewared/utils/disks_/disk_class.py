@@ -551,20 +551,31 @@ class DiskEntry:
     def sed_status(self, dev_fd: int | None = None) -> str:
         """Return the SED status string for this disk.
 
-        Returns one of: 'FAILED', 'UNINITIALIZED', 'LOCKED', 'UNLOCKED'.
+        Returns one of: 'NO_SED', 'FAILED', 'UNINITIALIZED', 'LOCKED', 'UNLOCKED'.
         """
-        info = self.sed_device_info(dev_fd)
-        if info is None:
-            return "FAILED"
+        fd, should_close = self._sed_open(dev_fd, writable=False)
+        try:
+            info = sed.get_device_info(fd)
 
-        locking = info["locking"]
-        if not locking["supported"]:
+            locking = info["locking"]
+            if not locking["supported"]:
+                return "NO_SED"
+            if info.get("ssc_type") == "enterprise":
+                # Enterprise SSC drives may or may not report locking.enabled
+                # accurately when factory-fresh — this is manufacturer-dependent.
+                # Use the MSID authentication probe as the source of truth.
+                if sed.is_uninitialized(fd, device_info=info):
+                    return "UNINITIALIZED"
+            elif not locking["enabled"]:
+                return "UNINITIALIZED"
+            if locking["locked"]:
+                return "LOCKED"
+            return "UNLOCKED"
+        except Exception:
             return "FAILED"
-        if not locking["enabled"]:
-            return "UNINITIALIZED"
-        if locking["locked"]:
-            return "LOCKED"
-        return "UNLOCKED"
+        finally:
+            if should_close:
+                os.close(fd)
 
     def sed_unlock(self, password: str, dev_fd: int | None = None) -> tuple[bool, str | None]:
         """Unlock a SED disk.
@@ -629,7 +640,23 @@ class DiskEntry:
 
             pw_bytes = password.encode("utf-8")
 
-            if info["locking"]["enabled"]:
+            if info.get("ssc_type") == "enterprise":
+                # Enterprise SSC drives may or may not report locking.enabled
+                # accurately when factory-fresh — this is manufacturer-dependent.
+                # Use the MSID authentication probe as the source of truth.
+                try:
+                    uninitialized = sed.is_uninitialized(fd, device_info=info)
+                except Exception:
+                    return "SETUP_FAILED"
+                if not uninitialized:
+                    try:
+                        locking_info = sed.get_locking_info(fd, pw_bytes, device_info=info)
+                        if locking_info["read_lock_enabled"] and locking_info["write_lock_enabled"]:
+                            return "ACCESS_GRANTED"
+                        return "LOCKING_DISABLED"
+                    except Exception:
+                        return "SETUP_FAILED"
+            elif info["locking"]["enabled"]:
                 try:
                     locking_info = sed.get_locking_info(fd, pw_bytes, device_info=info)
                     if locking_info["read_lock_enabled"] and locking_info["write_lock_enabled"]:
