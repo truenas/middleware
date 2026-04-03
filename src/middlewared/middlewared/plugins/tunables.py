@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import errno
 import os
@@ -9,6 +10,7 @@ from middlewared.api.current import (
     TunableDeleteResult, TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult
 )
 from middlewared.service import CRUDService, ValidationErrors, job, private
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
@@ -61,32 +63,43 @@ class TunableService(CRUDService):
             return f.read().strip()
 
     @private
-    def set_sysctl(self, var, value):
+    def set_sysctl(self, var, value, ha_propagate=False):
         path = f'/proc/sys/{var.replace(".", "/")}'
         with contextlib.suppress(FileNotFoundError, PermissionError):
             with open(path, 'w') as f:
                 f.write(value)
 
-    @private
-    def reset_sysctl(self, tunable):
-        self.set_sysctl(tunable['var'], tunable['orig_value'])
+        if ha_propagate:
+            self.middleware.call_sync('failover.call_remote', 'tunable.set_sysctl', [var, value])
 
     @private
-    def set_zfs_parameter(self, name, value):
+    def reset_sysctl(self, tunable, ha_propagate=False):
+        self.set_sysctl(tunable['var'], tunable['orig_value'], ha_propagate)
+
+    @private
+    def set_zfs_parameter(self, name, value, ha_propagate=False):
         path = zfs_parameter_path(name)
         with contextlib.suppress(FileNotFoundError, PermissionError):
             with open(path, 'w') as f:
                 f.write(value)
 
-    @private
-    def reset_zfs_parameter(self, tunable):
-        self.set_zfs_parameter(tunable['var'], tunable['orig_value'])
+        if ha_propagate:
+            self.middleware.call_sync('failover.call_remote', 'tunable.set_zfs_parameter', [name, value])
 
     @private
-    async def handle_tunable_change(self, tunable):
+    def reset_zfs_parameter(self, tunable, ha_propagate=False):
+        self.set_zfs_parameter(tunable['var'], tunable['orig_value'], ha_propagate)
+
+    @private
+    async def handle_tunable_change(self, tunable, ha_propagate=False):
         if tunable['type'] == 'UDEV':
             await self.middleware.call('etc.generate', 'udev')
             await run(['udevadm', 'control', '-R'])
+
+            if ha_propagate:
+                await self.middleware.call(
+                    'failover.call_remote', 'tunable.handle_tunable_change', [tunable],
+                )
 
     @api_method(TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult, authorization_required=False)
     async def tunable_type_choices(self):
@@ -102,6 +115,8 @@ class TunableService(CRUDService):
         Create a tunable.
         """
         update_initramfs = data.pop('update_initramfs')
+
+        failover_licensed = await self.check_ha()
 
         verrors = ValidationErrors()
 
@@ -142,15 +157,17 @@ class TunableService(CRUDService):
         try:
             if data['type'] == 'SYSCTL':
                 if data['enabled']:
-                    await self.middleware.call('etc.generate', 'sysctl')
-                    await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
+                    await self.generate_sysctl(failover_licensed)
+                    await self.middleware.call('tunable.set_sysctl', data['var'], data['value'], failover_licensed)
             elif data['type'] == 'ZFS':
                 if data['enabled']:
-                    await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
+                    await self.middleware.call(
+                        'tunable.set_zfs_parameter', data['var'], data['value'], failover_licensed,
+                    )
                     if update_initramfs:
-                        await self.middleware.call('boot.update_initramfs')
+                        await self.update_initramfs(failover_licensed)
             else:
-                await self.handle_tunable_change(data)
+                await self.handle_tunable_change(data, failover_licensed)
         except Exception:
             await self.middleware.call('datastore.delete', self._config.datastore, id_)
             raise
@@ -167,6 +184,8 @@ class TunableService(CRUDService):
 
         update_initramfs = data.pop('update_initramfs', True)
 
+        failover_licensed = await self.check_ha()
+
         new = old.copy()
         new.update(data)
         if old == new:
@@ -179,22 +198,22 @@ class TunableService(CRUDService):
 
         try:
             if new['type'] == 'SYSCTL':
-                await self.middleware.call('etc.generate', 'sysctl')
+                await self.generate_sysctl(failover_licensed)
 
                 if new['enabled']:
-                    await self.middleware.call('tunable.set_sysctl', new['var'], new['value'])
+                    await self.middleware.call('tunable.set_sysctl', new['var'], new['value'], failover_licensed)
                 else:
-                    await self.middleware.call('tunable.reset_sysctl', new)
+                    await self.middleware.call('tunable.reset_sysctl', new, failover_licensed)
             elif new['type'] == 'ZFS':
                 if new['enabled']:
-                    await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
+                    await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'], failover_licensed)
                 else:
-                    await self.middleware.call('tunable.reset_zfs_parameter', new)
+                    await self.middleware.call('tunable.reset_zfs_parameter', new, failover_licensed)
 
                 if update_initramfs:
-                    await self.middleware.call('boot.update_initramfs')
+                    await self.update_initramfs(failover_licensed)
             else:
-                await self.handle_tunable_change(new)
+                await self.handle_tunable_change(new, failover_licensed)
         except Exception:
             await self.middleware.call(
                 'datastore.update', self._config.datastore, id_, old, {'prefix': self._config.datastore_prefix}
@@ -211,15 +230,62 @@ class TunableService(CRUDService):
         """
         entry = await self.get_instance(id_)
 
+        failover_licensed = await self.check_ha()
+
         await self.middleware.call('datastore.delete', self._config.datastore, entry['id'])
 
         if entry['type'] == 'SYSCTL':
-            await self.middleware.call('etc.generate', 'sysctl')
+            await self.generate_sysctl(failover_licensed)
 
-            await self.middleware.call('tunable.reset_sysctl', entry)
+            await self.middleware.call('tunable.reset_sysctl', entry, failover_licensed)
         elif entry['type'] == 'ZFS':
-            await self.middleware.call('tunable.reset_zfs_parameter', entry)
+            await self.middleware.call('tunable.reset_zfs_parameter', entry, failover_licensed)
 
-            await self.middleware.call('boot.update_initramfs')
+            await self.update_initramfs(failover_licensed)
         else:
-            await self.handle_tunable_change(entry)
+            await self.handle_tunable_change(entry, failover_licensed)
+
+    @private
+    async def check_ha(self):
+        failover_licensed = await self.middleware.call('failover.licensed')
+        if failover_licensed:
+            # Backup node must be up in order to be able to regenerate its initrd
+
+            if (status := await self.middleware.call('failover.status')) != 'MASTER':
+                raise CallError(f'Updating tunables is only allowed on MASTER mode. The current node is {status!r}.')
+
+            if not await self.middleware.call('failover.remote_connected'):
+                raise CallError('Updating tunables is only allowed when remote node is up. The remote node is down.')
+
+        return failover_licensed
+
+    @private
+    async def generate_sysctl(self, failover_licensed):
+        await self.middleware.call('etc.generate', 'sysctl')
+        if failover_licensed:
+            await self.middleware.call('failover.call_remote', 'etc.generate', ['sysctl'])
+
+    @private
+    async def update_initramfs(self, failover_licensed):
+        if failover_licensed:
+            tasks = [
+                self.middleware.create_task(self.middleware.call('boot.update_initramfs')),
+                self.middleware.call('failover.call_remote', 'boot.update_initramfs', [], {
+                    'timeout': 300,
+                })
+            ]
+
+            errors = []
+            for i, result in enumerate(await asyncio.gather(*tasks, return_exceptions=True)):
+                if isinstance(result, Exception):
+                    if i == 0:
+                        error = 'Failed to update initramfs on local node: '
+                    else:
+                        error = 'Failed to update initramfs on remote node node: '
+
+                    errors.append(error + str(result))
+
+            if errors:
+                raise CallError('\n'.join(errors))
+        else:
+            await self.middleware.call('boot.update_initramfs')
