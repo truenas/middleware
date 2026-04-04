@@ -15,14 +15,18 @@ from middlewared.plugins.auth_.login_ex_impl import login_ex_api_key_plain
 from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils.filter_list import filter_list
+import truenas_pyfilter as _tf
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
+from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
 from truenas_pypam import PAMCode
+
+_ADMIN_UID_FILTER = compile_filters([['uid', '=', 950]])
+_ADMIN_UID_GET_OPTS = compile_options({'get': True})
 
 RAW_KEY_SZ = 64
 RAW_KEY_PATTERN = re.compile(rf'^\d+-[a-zA-Z0-9]{{{RAW_KEY_SZ}}}$')
@@ -67,8 +71,8 @@ class ApiKeyService(CRUDService):
 
         # We want to convert legacy keys into the appropriate local
         # administrator account
-        if (admin_user := filter_list(users, [['uid', '=', 950]])):
-            root_name = admin_user[0]['username']
+        if result := _tf.tnfilter(users, filters=_ADMIN_UID_FILTER, options=_ADMIN_UID_GET_OPTS):
+            root_name = result[0]['username']
         else:
             root_name = 'root'
 
