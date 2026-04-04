@@ -10,8 +10,8 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     TrueNASConnectEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
-    TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
-    TrueNASConnectConfigChangedEvent, TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
+    TrueNASConnectConfigChangedEvent,
+    TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
 )
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
@@ -35,10 +35,6 @@ class TrueNASConnectModel(sa.Model):
     enabled = sa.Column(sa.Boolean(), default=False, nullable=False)
     jwt_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
     registration_details = sa.Column(sa.JSON(dict), nullable=False)
-    ips = sa.Column(sa.JSON(list), nullable=False)
-    interfaces = sa.Column(sa.JSON(list), nullable=False, default=list)
-    interfaces_ips = sa.Column(sa.JSON(list), nullable=False, default=list)
-    use_all_interfaces = sa.Column(sa.Boolean(), default=True, nullable=False)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     account_service_base_url = sa.Column(
@@ -99,62 +95,23 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         return vips
 
     @private
-    async def validate_data(self, old_config, data):
+    async def validate_data(self, data):
         verrors = ValidationErrors()
         if data['enabled']:
             if await self.middleware.call('system.is_ha_capable'):
-                # In case of HA, we want to ensure following:
-                # 1) We have VIP available
-                # 2) User has not specified interfaces/use all interfaces
                 if not await self.ha_vips():
                     verrors.add(
                         'tn_connect_update.enabled',
                         'HA systems must be in a healthy state to enable TNC ensuring we have VIP available'
                     )
-                for k in filter(lambda k: data[k], ('interfaces', 'use_all_interfaces')):
+            else:
+                effective_ips = await self.get_effective_ips()
+                if not effective_ips:
                     verrors.add(
-                        f'tn_connect_update.{k}',
-                        'Must be unset on HA systems'
+                        'tn_connect_update.enabled',
+                        'System must have at least one IP address configured in System > General settings '
+                        'to enable TrueNAS Connect'
                     )
-            elif not data['ips'] and not data['interfaces'] and not data['use_all_interfaces']:
-                # Ensure at least one interface or at least one IP is provided (unless use_all_interfaces is True)
-                verrors.add(
-                    'tn_connect_update',
-                    'At least one IP or interface must be provided when TrueNAS Connect is enabled '
-                    '(or use_all_interfaces must be set to true)'
-                )
-
-        data['ips'] = [str(ip) for ip in data['ips']]
-
-        if data['interfaces']:
-            all_interfaces = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
-            interface_names = {iface['name'] for iface in all_interfaces}
-
-            for interface in data['interfaces']:
-                if interface not in interface_names:
-                    verrors.add('tn_connect_update.interfaces', f'Interface "{interface}" does not exist')
-
-            # If no direct IPs are provided, ensure selected interfaces have at least one IP
-            if data['enabled'] and not data['ips'] and data['use_all_interfaces'] is False:
-                interface_ips = await self.get_interface_ips(data['interfaces'])
-                if not interface_ips:
-                    verrors.add(
-                        'tn_connect_update.interfaces',
-                        'Selected interfaces must have at least one IP address configured'
-                    )
-
-        ips_changed = set(old_config['ips']) != set(data['ips'])
-        interfaces_changed = set(old_config.get('interfaces', [])) != set(data.get('interfaces', []))
-        interfaces_changed |= old_config['use_all_interfaces'] != data['use_all_interfaces']
-
-        if (ips_changed or interfaces_changed) and (
-            data['enabled'] is True and old_config['status'] not in (Status.DISABLED.name, Status.CONFIGURED.name)
-        ):
-            verrors.add(
-                'tn_connect_update',
-                'IPs and interfaces settings cannot be changed when TrueNAS Connect is in a state '
-                'other than disabled or completely configured'
-            )
 
         verrors.check()
 
@@ -166,22 +123,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         config = await self.config()
         data = config | data
 
-        await self.validate_data(config, data)
+        await self.validate_data(data)
 
         db_payload = {
             'enabled': data['enabled'],
-            'ips': data['ips'],
-            'interfaces': data['interfaces'],
-            'use_all_interfaces': data['use_all_interfaces'],
         }
         tnc_disabled = False
 
-        # Extract IPs from interfaces using ip_in_use method
-        # If use_all_interfaces is True, get IPs from all interfaces
-        if db_payload['use_all_interfaces']:
-            db_payload['interfaces_ips'] = await self.get_all_interface_ips()
-        else:
-            db_payload['interfaces_ips'] = await self.get_interface_ips(db_payload['interfaces'])
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
@@ -195,22 +143,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             await self.unset_registration_details()
             db_payload.update(get_unset_payload())
             tnc_disabled = True
-
-        # Check if IPs or interfaces have changed
-        combined_ips_old = config['ips'] + config.get('interfaces_ips', [])
-        combined_ips_new = db_payload['ips'] + db_payload['interfaces_ips']
-
-        if (
-            config['status'] == Status.CONFIGURED.name and db_payload.get(
-                'status', Status.CONFIGURED.name
-            ) == Status.CONFIGURED.name
-        ) and set(combined_ips_old) != set(combined_ips_new):
-            # Make sure we remove TNC IPs cache if IPs have changed
-            with contextlib.suppress(KeyError):
-                await self.middleware.call('cache.pop', TNC_IPS_CACHE_KEY)
-
-            # Send combined IPs to TNC service
-            await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
@@ -250,35 +182,38 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         return await self.middleware.call('tn_connect.config')
 
     @private
-    async def get_interface_ips(self, interfaces):
+    async def get_effective_ips(self):
         """
-        Returns a list of IPs for the given interfaces.
-        """
-        if not interfaces:
-            return []
+        Derive the IPs TNC should advertise from system.general UI binding config.
 
-        ip_data = await self.middleware.call('interface.ip_in_use', {
-            'ipv4': True,
-            'ipv6': True,
-            'ipv6_link_local': False,
-            'interfaces': interfaces,
-            'static': False,
-            'loopback': False,
-            'any': False,
-        })
-        return [ip['address'] for ip in ip_data]
-
-    @private
-    async def get_all_interface_ips(self):
+        - If ui_address contains '0.0.0.0' (wildcard), resolve to all IPv4 addresses on the system.
+        - If ui_v6address contains '::' (wildcard), resolve to all non-link-local IPv6 addresses.
+        - Otherwise, use the specific addresses configured in system.general directly.
         """
-        Returns a list of IPs from all interfaces.
-        """
-        # Get all interface names
-        all_interfaces = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
-        interface_names = [iface['name'] for iface in all_interfaces]
+        config = await self.middleware.call('system.general.config')
+        ips = []
 
-        # Get IPs from all interfaces
-        return await self.get_interface_ips(interface_names)
+        if '0.0.0.0' in config['ui_address']:
+            ips.extend(
+                ip['address'] for ip in await self.middleware.call('interface.ip_in_use', {
+                    'ipv4': True, 'ipv6': False, 'ipv6_link_local': False,
+                    'static': False, 'loopback': False, 'any': False,
+                })
+            )
+        else:
+            ips.extend(config['ui_address'])
+
+        if '::' in config['ui_v6address']:
+            ips.extend(
+                ip['address'] for ip in await self.middleware.call('interface.ip_in_use', {
+                    'ipv4': False, 'ipv6': True, 'ipv6_link_local': False,
+                    'static': False, 'loopback': False, 'any': False,
+                })
+            )
+        else:
+            ips.extend(config['ui_v6address'])
+
+        return ips
 
     @private
     async def unset_registration_details(self, revoke_cert_and_account=True):
@@ -325,18 +260,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         await delete_job.wait()
         if delete_job.error:
             logger.error('Failed to delete TNC certificate: %s', delete_job.error)
-
-    @api_method(TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'])
-    async def ip_choices(self):
-        """
-        Returns IP choices which can be used with TrueNAS Connect.
-        """
-        # This is used by UI to present some options to the user but user can choose any other
-        # IP as well of course
-        return {
-            ip['address']: ip['address']
-            for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
-        }
 
     @api_method(
         TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult, roles=['TRUENAS_CONNECT_READ']
