@@ -136,6 +136,9 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options['extend_context'] = self._config.datastore_extend_context
         options['extend_fk'] = self._config.datastore_extend_fk
         options['prefix'] = self._config.datastore_prefix
+        options.setdefault('force_sql_filters', False)
+        options.setdefault('count', False)
+        options.setdefault('get', False)
         return options
 
     async def query(self, filters: list | None = None, options: dict | None = None) -> list[E] | E | int:
