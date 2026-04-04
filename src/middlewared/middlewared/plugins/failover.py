@@ -582,10 +582,8 @@ class FailoverService(ConfigService):
 
     @private
     async def encryption_keys(self):
-        # TODO: remove GELI key since it's
-        # not supported in SCALE
         return await self.middleware.call(
-            'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
+            'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'zfs': {}}
         )
 
     @private
@@ -594,12 +592,6 @@ class FailoverService(ConfigService):
         `options` should look like
             {
                 'sync_keys': True,
-                'pools': [
-                    {
-                        'name': 'tank',
-                        'passphrase': 'blah',
-                    },
-                ],
                 'datasets': [
                     {
                         'name': 'tank/dataset',
@@ -608,18 +600,13 @@ class FailoverService(ConfigService):
                 ]
             }
         """
-        # TODO: remove `pools` key and `geli` logic
-        # since GELI is not supported in SCALE
         options.setdefault('sync_keys', True)
-        options.setdefault('pools', [])
         options.setdefault('datasets', [])
-        if not options['pools'] and not options['datasets']:
-            raise CallError('Please specify pools/datasets to update')
+        if not options['datasets']:
+            raise CallError('Please specify datasets to update')
 
         async with ENCRYPTION_CACHE_LOCK:
             keys = await self.encryption_keys()
-            for pool in options['pools']:
-                keys['geli'][pool['name']] = pool['passphrase']
             for dataset in options['datasets']:
                 keys['zfs'][dataset['name']] = dataset['passphrase']
             await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
@@ -632,22 +619,27 @@ class FailoverService(ConfigService):
         `options` should look like
             {
                 'sync_keys': True,
-                'pools': ['tank',],
+                'pool': 'tank',
                 'datasets': ['tank/dataset',]
             }
+
+        If `pool` is specified, all ZFS dataset keys under that pool
+        are removed (used on pool export).
         """
-        # TODO: remove `pools` key and `geli` logic
-        # since GELI is not supported in SCALE
         options.setdefault('sync_keys', True)
-        options.setdefault('pools', [])
+        options.setdefault('pool', None)
         options.setdefault('datasets', [])
-        if not options['pools'] and not options['datasets']:
-            raise CallError('Please specify pools/datasets to remove')
+        if not options['pool'] and not options['datasets']:
+            raise CallError('Please specify pool or datasets to remove')
 
         async with ENCRYPTION_CACHE_LOCK:
             keys = await self.encryption_keys()
-            for pool in options['pools']:
-                keys['geli'].pop(pool, None)
+            if options['pool']:
+                pool = options['pool']
+                keys['zfs'] = {
+                    k: v for k, v in keys['zfs'].items()
+                    if k != pool and not k.startswith(f'{pool}/')
+                }
             for dataset in options['datasets']:
                 keys['zfs'] = {
                     k: v for k, v in keys['zfs'].items() if k != dataset and not k.startswith(f'{dataset}/')
@@ -1168,7 +1160,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
-    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
+    await middleware.call('failover.remove_encryption_keys', {'pool': pool})
 
 
 async def hook_pool_dataset_unlock(middleware, datasets):
