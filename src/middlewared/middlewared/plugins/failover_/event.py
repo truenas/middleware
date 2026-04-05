@@ -820,6 +820,12 @@ class FailoverEventsService(Service):
         logger.info('Done migrating interface information (if required)')
 
         try:
+            logger.info('Consuming local DB reboot reasons')
+            self.run_call('failover.reboot.consume_local_db_reasons')
+        except Exception:
+            logger.warning('Failed to consume local DB reboot reasons', exc_info=True)
+
+        try:
             logger.info('Updating HA reboot info')
             self.run_call('failover.reboot.info')
         except Exception:
