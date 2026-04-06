@@ -49,7 +49,7 @@ def _auth_ctx_check(
     # service file doesn't exist. We want to try to etc.generate, and if that fails, error out cleanly.
     if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
         middleware.logger.error('PAM service file is missing. Attempting to regenerate')
-        middleware.call_sync('etc.generate', 'pam_truenas')
+        middleware.call_sync('etc.generate', 'pam')
         if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
             errmsg = 'Unable to generate PAM service file for middleware. Denying access.'
 
@@ -233,7 +233,7 @@ def login_ex_api_key_plain(
             middleware.logger.warning('%s: unexpected PAM_AUTHINFO_UNAVAIL response '
                                       'for API key. Forcibly regenerating API keys.',
                                       key['name'])
-            middleware.call_sync('etc.generate', 'pam_truenas')
+            middleware.call_sync('etc.generate', 'pam')
 
     if resp.code == PAMCode.PAM_SUCCESS:
         if not app.origin.secure_transport:

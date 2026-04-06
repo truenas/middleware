@@ -339,8 +339,11 @@ class EtcService(Service):
         ),
         'pam': EtcGroup(
             ctx=(
+                CtxMethod(method='datastore.config', args=['system.settings']),
                 CtxMethod(method='directoryservices.status'),
                 CtxMethod(method='system.security.config'),
+                CtxMethod(method='auth.twofactor.config'),
+                CtxMethod(method='api_key.query', args=[[['revoked', '=', False]]]),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-account'),
@@ -351,16 +354,6 @@ class EtcService(Service):
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-session'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='security/pam_winbind.conf'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='security/limits.conf'),
-            ),
-        ),
-        'pam_truenas': EtcGroup(
-            ctx=(
-                CtxMethod(method='datastore.config', args=['system.settings']),
-                CtxMethod(method='system.security.config'),
-                CtxMethod(method='auth.twofactor.config'),
-                CtxMethod(method='api_key.query', args=[[['revoked', '=', False]]]),
-            ),
-            entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-api-key'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-session'),

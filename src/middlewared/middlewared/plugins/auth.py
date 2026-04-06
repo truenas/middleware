@@ -959,7 +959,7 @@ class AuthService(Service):
                         'configuration error: %s. Attempting to recover. Error: %s', cred.dump(),
                         auth_ctx.pam_hdl.session_error
                     )
-                    await self.middleware.call('etc.generate', 'pam_truenas')
+                    await self.middleware.call('etc.generate', 'pam')
 
                 # Remove reference to pam handle. This ensures that logout occurs when
                 # the SessionManagerCredential is deallocated or logout() explicitly called
@@ -1200,7 +1200,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
             'PAM stack failed to allocate session UUID. This may indicate a configuration error. Attempting to '
             'recover. Error: %s', authenticator.session_error
         )
-        await middleware.call('etc.generate', 'pam_truenas')
+        await middleware.call('etc.generate', 'pam')
 
 
 def setup(middleware: Middleware):

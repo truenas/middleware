@@ -228,7 +228,11 @@ class SystemGeneralService(ConfigService):
             await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
         if config['ds_auth'] != new_config['ds_auth']:
-            await self.middleware.call('etc.generate', 'pam_truenas')
+            await self.middleware.call('etc.generate', 'pam')
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
+            except Exception:
+                self.logger.warning('Failed to generate pam configuration on standby controller', exc_info=True)
 
         # If self._changed_https_port[0] is True, this means this method was called after the port was updated and
         # before https_port_changed was called. We want to leave the flag set to show that the port still needs to be

@@ -524,7 +524,7 @@ class FailoverEventsService(Service):
         # as well as local account configuration and OATH information
         try:
             self.run_call('etc.generate', 'user')
-            self.run_call('etc.generate', 'pam_truenas')
+            self.run_call('etc.generate', 'pam')
         except Exception:
             logger.exception("Failed to regenerate user info")
 
