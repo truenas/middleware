@@ -69,6 +69,7 @@ def pylibvirt_container(
     container.pop('id', None)
     container.pop('status', None)
     container.pop('autostart', None)
+    container.pop('default_network', None)
 
     dataset = container.pop('dataset')
     pool = dataset.split('/')[0]
