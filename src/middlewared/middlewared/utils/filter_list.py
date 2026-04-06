@@ -8,8 +8,6 @@ from middlewared.api.base.validators.filters import TIMESTAMP_DESIGNATOR
 from middlewared.api.base.validators.options import _SelectList, validate_options
 from middlewared.service_exception import MatchNotFound
 
-# Pre-built compiled objects for the common match-all / no-op case.
-# Use these instead of calling _tf.compile_filters([]) / _tf.compile_options() per call.
 CF_EMPTY: CompiledFilters = _tf.compile_filters([])
 CO_EMPTY: CompiledOptions = _tf.compile_options()
 

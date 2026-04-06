@@ -110,7 +110,6 @@ class QueryFiltersCallbackState:
     """pre-compiled filters; drives child recursion and, when count_only is True,
     per-item matching so we never accumulate a full list just to count it"""
     options_compiled: _tf.CompiledOptions | None = None
-    """pre-compiled options; passed to _tf.match() alongside filters_compiled"""
     count_only: bool = False
     """only count entries"""
     extra: ExtraArgs
@@ -1057,7 +1056,6 @@ def generic_query(
     # parse query-options
     options, select, order_by = validate_options(options_in)
 
-    # pre-compile before iteration so the C-level objects are ready when tnfilter/match is called
     cf = CF_EMPTY if not filters_in else compile_filters(filters_in)
     co = _tf.compile_options(
         get=options.get('get', False),

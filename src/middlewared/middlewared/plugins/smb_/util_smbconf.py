@@ -19,12 +19,10 @@ from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
-# Pre-compiled filters/options for the constant share-property checks in generate_smb_conf_dict()
 _GUESTOK_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]])
 _FSRVP_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]])
 _HOME_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.HOME}', '=', True]])
 _SHARES_OPTIONS = compile_options()
-# get=True options short-circuit after the first match — used for pure existence checks
 _SHARES_GET_OPTS = compile_options({'get': True})
 
 LOGGER = getLogger(__name__)
