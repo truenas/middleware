@@ -9,7 +9,7 @@ from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filter_list import compile_filters, validate_options
+from middlewared.utils.filter_list import CF_EMPTY, compile_filters, validate_options
 from middlewared.utils.size import format_size
 
 
@@ -1058,7 +1058,7 @@ def generic_query(
     options, select, order_by = validate_options(options_in)
 
     # pre-compile before iteration so the C-level objects are ready when tnfilter/match is called
-    cf = compile_filters(filters_in)
+    cf = CF_EMPTY if not filters_in else compile_filters(filters_in)
     co = _tf.compile_options(
         get=options.get('get', False),
         count=options.get('count', False),

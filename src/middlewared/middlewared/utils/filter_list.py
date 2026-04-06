@@ -150,7 +150,7 @@ def filter_list(
         if (preprocessed := _preprocess_date_filters(filters)) is not None:
             filters = preprocessed
 
-    cf = _tf.compile_filters(list(filters) if filters else [])
+    cf = CF_EMPTY if not filters else _tf.compile_filters(list(filters))
     co = _build_compiled_options(options, select, order_by)  # type: ignore[arg-type]
     rv = _tf.tnfilter(_list, filters=cf, options=co)
     if isinstance(rv, int):
