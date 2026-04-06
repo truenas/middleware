@@ -106,6 +106,10 @@ class ContainerEntry(BaseModel):
     sys_module, sys_time, mknod, audit_control, mac_admin. Or keep all capabilities, or drop all capabilities."""
     capabilities_state: dict[str, bool] = {}
     """Enable or disable specific capabilities."""
+    default_network: str | None = None
+    """The default network bridge this container will use when no NIC devices are explicitly attached. When the\
+    container has explicitly configured NIC devices, this is `null` because the NIC configuration is visible in\
+    the `devices` list."""
     status: ContainerStatus
     """Container state."""
 
@@ -115,6 +119,7 @@ class ContainerCreate(ContainerEntry):
     dataset: Excluded = excluded_field()
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
+    default_network: Excluded = excluded_field()
     pool: str | None = None
     """Pool to use for this container. Leave it null to use container preferred pool instead."""
     image: "ContainerCreateImage"
