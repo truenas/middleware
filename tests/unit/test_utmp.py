@@ -44,7 +44,6 @@ def pam_stig():
     with Client() as c:
         c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': True})
         c.call('etc.generate', 'pam')
-        c.call('etc.generate', 'pam_truenas')
         c.call('auth.twofactor.update', {'enabled': True, 'services': {'ssh': True}})
         c.call('etc.generate', 'ssh')
         try:
@@ -52,7 +51,6 @@ def pam_stig():
         finally:
             c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': False})
             c.call('etc.generate', 'pam')
-            c.call('etc.generate', 'pam_truenas')
             c.call('auth.twofactor.update', {'enabled': False, 'services': {'ssh': False}})
             c.call('etc.generate', 'ssh')
 
