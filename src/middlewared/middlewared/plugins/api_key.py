@@ -226,7 +226,7 @@ class ApiKeyService(CRUDService):
             'revoked_reason': None,
         })
 
-        self.middleware.call_sync('etc.generate', 'pam_truenas')
+        self.middleware.call_sync('etc.generate', 'pam')
         return dict(data, key=f"{data['id']}-{key}")
 
     @api_method(
@@ -279,7 +279,7 @@ class ApiKeyService(CRUDService):
         if not key:
             return new
 
-        self.middleware.call_sync('etc.generate', 'pam_truenas')
+        self.middleware.call_sync('etc.generate', 'pam')
         self.middleware.call_sync('api_key.check_status')
         return dict(new, key=f"{new['id']}-{key}")
 
@@ -306,7 +306,7 @@ class ApiKeyService(CRUDService):
             id_
         )
 
-        await self.middleware.call('etc.generate', 'pam_truenas')
+        await self.middleware.call('etc.generate', 'pam')
         await self.check_status()
         return response
 
@@ -389,7 +389,7 @@ class ApiKeyService(CRUDService):
             'expiry': -1,
             'revoked_reason': reason,
         })
-        await self.middleware.call('etc.generate', 'pam_truenas')
+        await self.middleware.call('etc.generate', 'pam')
         await self.check_status()
 
     @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'],

@@ -102,7 +102,7 @@ class TwoFactorAuthService(ConfigService):
             # Going through service.control ensures HA is handled.
             await (await self.middleware.call('service.control', 'RELOAD', svc)).wait(raise_error=True)
 
-        await self.middleware.call('etc.generate', 'pam_truenas')
+        await self.middleware.call('etc.generate', 'pam')
 
         return await self.config()
 
