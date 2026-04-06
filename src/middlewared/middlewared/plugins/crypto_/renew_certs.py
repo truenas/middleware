@@ -71,8 +71,8 @@ class CertificateService(Service):
                 }
 
             else:
-                final_order = self.middleware.call_sync(
-                    'acme.issue_certificate',
+                final_order = self.call_sync2(
+                    self.s.acme.protocol.issue_certificate,
                     job, progress / 4, {
                         'tos': True,
                         'acme_directory_uri': cert['acme']['directory'],

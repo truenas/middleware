@@ -61,11 +61,15 @@ class PoolService(Service):
         # We only want to consider disks that are SED-capable AND initialized (not UNINITIALIZED).
         # A pool should only be marked as all_sed if all its disks are already SED-initialized.
         # This prevents auto-marking pools as all_sed when disks are SED-capable but not yet initialized.
+        # NO_SED is excluded because it definitively means the drive lacks SED support.
+        # FAILED is intentionally kept: it means the drive was temporarily unqueryable (e.g. SCSI
+        # bus reset), not that it has lost SED capability. Excluding it would let a transient error
+        # flip all_sed=False and bypass SED enforcement on replace_disk/attach_disk.
         sed_disks = {
             disk['name'] for disk in await self.middleware.call(
                 'disk.query', [['sed', '=', True]], {'force_sql_filters': True, 'extra': {'sed_status': True}}
             )
-            if disk.get('sed_status') and disk['sed_status'] != 'UNINITIALIZED'
+            if disk.get('sed_status') not in (None, 'UNINITIALIZED', 'NO_SED')
         }
 
         for pool in db_pools:

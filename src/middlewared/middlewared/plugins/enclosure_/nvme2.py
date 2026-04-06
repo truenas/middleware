@@ -20,6 +20,7 @@ from .constants import (
 )
 from .enums import ControllerModels
 from .slot_mappings import get_nvme_slot_info
+from .utils import parse_model
 
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
@@ -118,14 +119,17 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
     return [fake_enclosure]
 
 
-def map_plx_nvme(model, ctx):
-    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60, v-series and r50bm have 4 nvme drive bays
+def map_plx_mseries(model, ctx):
+    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60 have 4 nvme drive bays
     addresses_to_slots = {
         (slot / 'address').read_text().strip(): slot.name
         for slot in pathlib.Path('/sys/bus/pci/slots').iterdir()
     }
     mapped = dict()
-    for i in filter(lambda x: x.attributes.get('path') == rb'\_SB_.PC03.BR3A', ctx.list_devices(subsystem='acpi')):
+    for i in ctx.list_devices(subsystem='acpi'):
+        if i.attributes.get('path') != rb'\_SB_.PC03.BR3A':
+            continue
+
         try:
             physical_node = Devices.from_path(ctx, f'{i.sys_path}/physical_node')
         except DeviceNotFoundAtPathError:
@@ -148,22 +152,80 @@ def map_plx_nvme(model, ctx):
                     continue
 
                 slot = int(m.group(1))
-                if model == 'R50BM':
-                    # When adding this code and testing on internal R50BM, the starting slot
-                    # number for the rear nvme drive bays starts at 2 and goes to 5. This means
-                    # we're always off by 1. The easiest solution is to just check for this
-                    # specific platform and subtract 1 from the slot number to keep everything
-                    # in check.
-                    # To make things event more complicated, we found (by testing on internal hardware)
-                    # that slot 2 on OS is actually slot 3 and vice versa. This means we need to swap
-                    # those 2 numbers with each other to keep the webUI lined up with reality.
-                    slot -= 1
-                    if slot == 2:
-                        slot = 3
-                    elif slot == 3:
-                        slot = 2
-
                 mapped[slot] = child.sys_name
+
+    return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
+
+
+def map_plx_r50bm(model, ctx):
+    """Map NVMe devices for R50BM using PLX PEX 9733 downstream port topology.
+
+    Unlike /sys/bus/pci/slots/ names, which shift when other PCI devices share
+    the same root port complex (e.g. a second SAS HBA in CPU SLOT 3), the PLX
+    downstream port addresses are a fixed property of the switch and provide
+    stable slot identity regardless of system configuration.
+    """
+    num_of_nvme_slots = 4
+    mapped = dict()
+    pci_bdf_re = re.compile(r'[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]')
+
+    for i in ctx.list_devices(subsystem='acpi'):
+        if i.attributes.get('path') != rb'\_SB_.PC03.BR3A':
+            continue
+
+        try:
+            physical_node = Devices.from_path(ctx, f'{i.sys_path}/physical_node')
+        except DeviceNotFoundAtPathError:
+            # happens when there are no rear-nvme drives plugged in
+            pass
+        else:
+            plx_switch_path = None
+            nvme_info = []
+            for child in physical_node.children:
+                if child.properties.get('SUBSYSTEM') != 'block':
+                    continue
+
+                try:
+                    # block dev -> nvme ctrl -> nvme PCI dev -> PLX downstream port
+                    downstream_port = child.parent.parent.parent
+                    plx = downstream_port.parent
+                except AttributeError:
+                    continue
+
+                if plx.subsystem != 'pci' or plx.properties.get('PCI_ID') != '10B5:9733':
+                    continue
+
+                if plx_switch_path is None:
+                    plx_switch_path = plx.sys_path
+
+                nvme_info.append((downstream_port.sys_name, child.sys_name))
+
+            if plx_switch_path is None:
+                continue
+
+            # Enumerate all downstream ports of the PLX switch.  The NVMe
+            # bays are wired to the highest-numbered ports on the switch;
+            # lower-numbered ports (if any) serve other functions.
+            all_ports = []
+            for entry in pathlib.Path(plx_switch_path).iterdir():
+                if pci_bdf_re.match(entry.name):
+                    all_ports.append(entry.name)
+            all_ports.sort()
+            nvme_ports = all_ports[-num_of_nvme_slots:]
+            port_to_slot = {port: idx for idx, port in enumerate(nvme_ports, start=1)}
+            for port_name, dev_name in nvme_info:
+                slot = port_to_slot.get(port_name)
+                if slot is None:
+                    continue
+
+                # Slots 2 and 3 are swapped
+                # due to backplane wiring
+                if slot == 2:
+                    slot = 3
+                elif slot == 3:
+                    slot = 2
+
+                mapped[slot] = dev_name
 
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
@@ -308,8 +370,7 @@ def map_r30_r60_or_fseries(model, ctx):
 
 
 def map_nvme():
-    model = parse_dmi().system_product_name.removeprefix('TRUENAS-')
-    model = model.removesuffix('-S').removesuffix('-HA')
+    model = parse_model(parse_dmi().system_product_name)
     ctx = Context()
     if model in (
         ControllerModels.R50.value,
@@ -332,13 +393,14 @@ def map_nvme():
         ControllerModels.V280.value,
     ):
         return map_vseries_nvme(model, ctx)
+    elif model == ControllerModels.R50BM.value:
+        return map_plx_r50bm(model, ctx)
     elif model in (
         ControllerModels.M30.value,
         ControllerModels.M40.value,
         ControllerModels.M50.value,
         ControllerModels.M60.value,
-        ControllerModels.R50BM.value,
     ):
-        return map_plx_nvme(model, ctx)
+        return map_plx_mseries(model, ctx)
     else:
         return []

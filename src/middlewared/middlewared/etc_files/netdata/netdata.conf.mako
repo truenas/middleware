@@ -42,7 +42,10 @@
 	debugfs = no
 	ebpf = no
 	systemd-journal = no
+	systemd-units = no
 	network-viewer = no
+	otel = no
+	otel-signal-viewer = no
 	proc = yes
 	diskspace = no
 	cgroups = yes

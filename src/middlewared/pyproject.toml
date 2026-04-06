@@ -21,7 +21,6 @@ ha_panic = "middlewared.scripts.ha_panic:main"
 setup_cgroups = "middlewared.scripts.setup_cgroups:main"
 middlewared = "middlewared.main:main"
 midgdb = "middlewared.scripts.gdb:main"
-sedhelper = "middlewared.scripts.sedhelper:main"
 wait_to_hang_and_dump_core = "middlewared.scripts.wait_to_hang_and_dump_core:main"
 wait_on_disks = "middlewared.scripts.wait_on_disks:main"
 start_vendor_service = "middlewared.scripts.vendor_service:main"
@@ -31,8 +30,10 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
 module = [
-    "apps_ci.*", "apps_schema.*", "apps_validation.*", "catalog_reader.*", "influxdb.*",
-    "isodate.*", "ixhardware.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pyudev.*", "tdb.*", "truenas_pysnmp.*",
+    "acme.*", "apps_ci.*", "apps_schema.*", "apps_validation.*", "boto3.*", "botocore.*",
+    "catalog_reader.*", "certbot_dns_cloudflare.*", "certbot_dns_digitalocean.*", "influxdb.*",
+    "isodate.*", "ixhardware.*", "josepy.*", "lexicon.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pyudev.*",
+    "tdb.*", "truenas_pysnmp.*", "truenas_acme_utils.*", "truenas_crypto_utils.*",
 ]
 ignore_missing_imports = true
 

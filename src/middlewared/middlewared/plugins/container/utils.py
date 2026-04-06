@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 from truenas_os_pyutils.io import atomic_write
 
@@ -8,7 +7,6 @@ __all__ = (
     "container_dataset",
     "container_dataset_mountpoint",
     "container_instance_dataset_mountpoint",
-    "nsenter_set_hostname",
     "update_etc_hosts",
     "write_etc_hostname",
 )
@@ -62,10 +60,3 @@ def update_etc_hosts(rootfs: str, name: str) -> None:
 
     with atomic_write(hosts_path, 'w') as f:
         f.writelines(build_etc_hosts_content(existing_lines, name))
-
-
-def nsenter_set_hostname(pid: int, name: str) -> None:
-    subprocess.run(
-        ['/usr/bin/nsenter', '--target', str(pid), '--uts', '--', 'hostname', name],
-        capture_output=True, check=True,
-    )

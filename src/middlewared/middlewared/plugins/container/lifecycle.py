@@ -11,7 +11,7 @@ from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, ServiceContext
 
 from .bridge import container_bridge_name, configure_container_bridge
-from .utils import container_instance_dataset_mountpoint, nsenter_set_hostname, update_etc_hosts, write_etc_hostname
+from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
 
 IDMAP_COUNT = 65536
@@ -38,29 +38,14 @@ def start(context: ServiceContext, id_: int) -> None:
 
     pylibvirt_obj = pylibvirt_container(context, container.model_dump(by_alias=True), True)
 
-    # Configure hostname files BEFORE start so init reads correct values
+    # Configure hostname files before start so init reads correct values
     try:
         write_etc_hostname(pylibvirt_obj.configuration.root, container.name)
         update_etc_hosts(pylibvirt_obj.configuration.root, container.name)
-    except Exception as e:
-        raise CallError(f'Failed to configure hostname for container {container.name!r}: {e}')
+    except Exception:
+        context.logger.warning('Failed to configure hostname for container %r', container.name, exc_info=True)
 
     context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
-
-    # Set kernel UTS hostname AFTER start (needs PID)
-    try:
-        pid = pylibvirt_obj.pid()
-        if pid is not None:
-            nsenter_set_hostname(pid, container.name)
-    except Exception as e:
-        # Container started but hostname couldn't be set — stop it to avoid running in a broken state
-        try:
-            context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_obj)
-        except Exception:
-            context.logger.error(
-                'Failed to stop container %r after UTS hostname failure', container.name, exc_info=True
-            )
-        raise CallError(f'Failed to set UTS hostname for container {container.name!r}: {e}')
 
 
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
@@ -84,6 +69,7 @@ def pylibvirt_container(
     container.pop('id', None)
     container.pop('status', None)
     container.pop('autostart', None)
+    container.pop('default_network', None)
 
     dataset = container.pop('dataset')
     pool = dataset.split('/')[0]

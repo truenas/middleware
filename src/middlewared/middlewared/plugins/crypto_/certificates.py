@@ -342,15 +342,15 @@ class CertificateService(CRUDService):
 
         data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
 
-        final_order = self.middleware.call_sync('acme.issue_certificate', job, 25, data, csr_data)
+        final_order = self.call_sync2(self.s.acme.protocol.issue_certificate, job, 25, data, csr_data)
 
         job.set_progress(95, 'Final order received from ACME server')
 
         cert_dict = {
-            'acme': self.middleware.call_sync(
-                'acme.registration.query',
+            'acme': self.call_sync2(
+                self.s.acme.registration.query,
                 [['directory', '=', data['acme_directory_uri']]]
-            )[0]['id'],
+            )[0].id,
             'acme_uri': final_order.uri,
             'certificate': final_order.fullchain_pem,
             'CSR': csr_data['CSR'],
@@ -522,9 +522,9 @@ class CertificateService(CRUDService):
         if certificate.get('acme') and not certificate['expired']:
             # We won't try revoking a certificate which has expired already
             try:
-                self.middleware.call_sync(
-                    'acme.revoke_certificate', self.middleware.call_sync(
-                        'acme.get_acme_client_and_key_payload', certificate['acme']['directory'], True
+                self.call_sync2(
+                    self.s.acme.protocol.revoke_certificate, self.call_sync2(
+                        self.s.acme.protocol.get_acme_client_and_key_payload, certificate['acme']['directory'], True
                     ), certificate['certificate'],
                 )
             except CallError:

@@ -26,6 +26,9 @@ jobs:
           mypy \
             middlewared/job.py \
             middlewared/alert/ \
+            middlewared/plugins/acme_protocol/ \
+            middlewared/plugins/acme_dns_authenticator/ \
+            middlewared/plugins/acme_registration/ \
             middlewared/plugins/alert/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/container/ \
