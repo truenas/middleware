@@ -1,13 +1,16 @@
 import contextlib
+import logging
 import os
 import shutil
 import time
 import typing
 
-from truenas_pylicensed import LicenseError, LicenseStatus, LicenseType, verify
+from truenas_pylicensed import LicenseStatus, LicenseType, verify
 from truenas_os_pyutils.io import atomic_write
 
-from middlewared.service import ValidationError
+from middlewared.service import CallError, ValidationError
+
+logger = logging.getLogger(__name__)
 
 __all__ = (
     "FeatureInfo",
@@ -51,9 +54,45 @@ class LicenseInfo(typing.TypedDict):
     """Licensed enclosure models mapped to count."""
 
 
-def upload_license(license_pem: str) -> LicenseStatus:
-    """Write a license to disk, verify via daemon, roll back on failure."""
+@typing.overload
+def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: typing.Literal[True] = ...) -> LicenseStatus: ...
+
+@typing.overload
+def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: typing.Literal[False]) -> LicenseStatus | None: ...
+
+def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: bool = True) -> LicenseStatus | None:
+    """Poll verify() until reload_seq differs from *seq*, returning the new status.
+
+    If the sequence does not change within ~3 seconds, raises CallError when
+    raise_=True (default) or logs an error and returns None when raise_=False.
+    """
+    lic = verify()
+    for _ in range(6):
+        if lic.reload_seq != seq:
+            return lic
+        time.sleep(0.5)
+        lic = verify()
+
+    if raise_:
+        raise CallError(error_msg)
+
+    logger.error(error_msg)
+    return None
+
+
+@contextlib.contextmanager
+def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, None]:
+    """Write a license to disk, verify via daemon, roll back on failure.
+
+    Used as a context manager: yields the validated LicenseStatus so the
+    caller can perform follow-up work inside the ``with`` block.  If the
+    block raises an exception the previously installed license is restored.
+    """
     os.makedirs(LICENSE_DIR, mode=0o700, exist_ok=True)
+
+    # Snapshot the current reload_seq so we can detect when the daemon
+    # has picked up and processed the new file via inotify
+    initial_seq = verify().reload_seq
 
     # Back up existing license so we can restore on validation failure
     try:
@@ -63,46 +102,46 @@ def upload_license(license_pem: str) -> LicenseStatus:
         had_backup = False
 
     # Write the new license to disk -- daemon picks this up via inotify
-    with atomic_write(LICENSE_FILE, "w") as f:
+    with atomic_write(LICENSE_FILE, "w", perms=0o600) as f:
         f.write(license_pem)
-    os.chmod(LICENSE_FILE, 0o600)
 
-    # Let the daemon validate (schema, system ID, signature)
-    lic = verify()
-    if lic.code == LicenseError.NO_LICENSE:
-        # 0.5 * 6 == 3 seconds
-        for i in range(6):
-            lic = verify()
-            if lic.code == LicenseError.NO_LICENSE:
-                # daemon uses inotify which could take a moment
-                # so don't error here immediately, though, we're
-                # talking milliseconds for normal behavior
-                time.sleep(0.5)
-            else:
-                break
+    # Wait for the daemon to reload the new license
+    lic = _wait_for_reload_seq_change(
+        initial_seq,
+        "License daemon did not reload after upload (reload_seq unchanged). "
+        "The daemon may be unresponsive.",
+    )
 
-    if not lic.valid:
-        # Roll back: restore backup or remove the bad file
+    try:
+        yield lic
+    except Exception:
         if had_backup:
             shutil.move(LICENSE_BACKUP, LICENSE_FILE)
         else:
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(LICENSE_FILE)
 
-        raise ValidationError("truenas.license.upload", lic.error)
+        # Wait for the daemon to acknowledge the rollback
+        _wait_for_reload_seq_change(
+            lic.reload_seq,
+            "License daemon did not reload after rollback (reload_seq unchanged). "
+            "The daemon may be unresponsive.",
+            raise_=False,
+        )
+
+        raise
 
     # Success -- clean up backup
     if had_backup:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(LICENSE_BACKUP)
 
-    return lic
-
 
 def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     """Query the daemon for the current license. Returns None if no valid license."""
     if lic is None:
         lic = verify()
+
     if not lic.valid:
         return None
 
