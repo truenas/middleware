@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import errno
 import time
 from typing import TYPE_CHECKING
 
@@ -13,7 +12,7 @@ from middlewared.api.current import (
     ZpoolScrubRunEntry,
     ZpoolScrubRunResult,
 )
-from middlewared.service import Service, job, private
+from middlewared.service import CallError, Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
 
@@ -21,16 +20,12 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 from .exceptions import (
-    ZpoolErrorScrubAlreadyRunningException,
-    ZpoolErrorScrubPausedException,
+    ZpoolException,
     ZpoolNotFoundException,
     ZpoolPoolUnhealthyException,
     ZpoolResiliverInProgressException,
     ZpoolScanInvalidAction,
     ZpoolScanInvalidType,
-    ZpoolScrubAlreadyRunningException,
-    ZpoolScrubPausedException,
-    ZpoolScrubPausedToCancelException,
 )
 from .scrub_impl import do_scan_action
 
@@ -93,23 +88,16 @@ class ZpoolScrubService(Service):
     @pass_thread_local_storage
     @job()
     def run(self, job: Job, tls, data: ZpoolScrubRunEntry) -> None:
-        schema = "zpool.scrub.run"
+        schema = "zpool_scrub_run"
         try:
             self.run_impl(
                 tls, data.pool_name, data.scan_type, data.action,
                 wait=data.wait,
                 progress_callback=job.set_progress,
             )
-        except ZpoolNotFoundException as e:
-            raise ValidationError(schema, e.message, errno.ENOENT)
-        except (ZpoolPoolUnhealthyException, ZpoolScanInvalidType, ZpoolScanInvalidAction) as e:
-            raise ValidationError(schema, e.message, errno.EINVAL)
-        except (
-            ZpoolScrubAlreadyRunningException,
-            ZpoolScrubPausedException,
-            ZpoolScrubPausedToCancelException,
-            ZpoolErrorScrubAlreadyRunningException,
-            ZpoolErrorScrubPausedException,
-            ZpoolResiliverInProgressException,
-        ) as e:
-            raise ValidationError(schema, e.message, errno.EBUSY)
+        except (ZpoolNotFoundException, ZpoolScanInvalidType, ZpoolScanInvalidAction) as e:
+            raise ValidationError(schema, e.message, e.errno)
+        except ZpoolException as e:
+            raise CallError(e.message, e.errno)
+        except truenas_pylibzfs.ZFSException as e:
+            raise CallError(str(e), e.code)

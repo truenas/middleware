@@ -270,7 +270,7 @@ class PoolScrubService(CRUDService):
 
             if not self.middleware.call_sync('datastore.query', 'storage.volume', [['vol_name', '=', name]]):
                 raise ValidationError(
-                    'pool.scrub.run',
+                    'pool_scrub_run.name',
                     f'{name!r} zpool not found in database',
                     errno.ENOENT,
                 )

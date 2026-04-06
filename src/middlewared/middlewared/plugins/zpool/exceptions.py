@@ -1,3 +1,5 @@
+import errno
+
 __all__ = (
     "ZpoolNotFoundException",
     "ZpoolPoolUnhealthyException",
@@ -12,61 +14,79 @@ __all__ = (
 )
 
 
-class ZpoolNotFoundException(Exception):
+class ZpoolException(Exception):
+    errno = errno.EFAULT
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
+class ZpoolNotFoundException(ZpoolException):
+    errno = errno.ENOENT
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r} not found"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r} not found")
 
 
-class ZpoolPoolUnhealthyException(Exception):
+class ZpoolPoolUnhealthyException(ZpoolException):
+    errno = errno.EINVAL
+
     def __init__(self, pool: str, health: str):
-        self.message = f"{pool!r}: pool is {health}"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: pool is {health}")
 
 
-class ZpoolScanInvalidAction(Exception):
+class ZpoolScanInvalidAction(ZpoolException):
+    errno = errno.EINVAL
+
     def __init__(self, action: str):
-        self.message = f"{action!r} is not a valid scan action (expected: start, pause, cancel)"
-        super().__init__(self.message)
+        super().__init__(f"{action!r} is not a valid scan action (expected: start, pause, cancel)")
 
 
-class ZpoolScanInvalidType(Exception):
+class ZpoolScanInvalidType(ZpoolException):
+    errno = errno.EINVAL
+
     def __init__(self, scan_type: str):
-        self.message = f"{scan_type!r} is not a valid scan type (expected: scrub, errorscrub)"
-        super().__init__(self.message)
+        super().__init__(f"{scan_type!r} is not a valid scan type (expected: scrub, errorscrub)")
 
 
-class ZpoolScrubAlreadyRunningException(Exception):
+class ZpoolScrubAlreadyRunningException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: scrub already in progress"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: scrub already in progress")
 
 
-class ZpoolScrubPausedException(Exception):
+class ZpoolScrubPausedException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: scrub is paused"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: scrub is paused")
 
 
-class ZpoolScrubPausedToCancelException(Exception):
+class ZpoolScrubPausedToCancelException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: scrub is paused and must be canceled before starting error scrub"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: scrub is paused and must be canceled before starting error scrub")
 
 
-class ZpoolErrorScrubAlreadyRunningException(Exception):
+class ZpoolErrorScrubAlreadyRunningException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: error scrub already in progress"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: error scrub already in progress")
 
 
-class ZpoolErrorScrubPausedException(Exception):
+class ZpoolErrorScrubPausedException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: error scrub is paused"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: error scrub is paused")
 
 
-class ZpoolResiliverInProgressException(Exception):
+class ZpoolResiliverInProgressException(ZpoolException):
+    errno = errno.EBUSY
+
     def __init__(self, pool: str):
-        self.message = f"{pool!r}: resilver in progress"
-        super().__init__(self.message)
+        super().__init__(f"{pool!r}: resilver in progress")
