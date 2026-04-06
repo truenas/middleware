@@ -213,11 +213,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         else:
             extend_context_value = None
 
-        # co_select is per-query (depends on the select projection); CF_EMPTY and CO_EMPTY are module-level constants
-        co_select = _tf.compile_options(select=list(select) if select else None)
+        query_options = CO_EMPTY if not select else _tf.compile_options(select=list(select))
 
         result = [
-            await self._extend(data, extend, extend_context, extend_context_value, CF_EMPTY, co_select)
+            await self._extend(data, extend, extend_context, extend_context_value, query_options)
             for data in rows
         ]
 
@@ -234,7 +233,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                                                  attrs['extend'],
                                                  attrs['extend_context'],
                                                  extend_context_value,
-                                                 CF_EMPTY, CO_EMPTY)
+                                                 CO_EMPTY)
         return result
 
     def _serialize(self, obj, table, aliases, relationships, field_prefix, fk_attrs):
@@ -250,16 +249,16 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 result[fk] = {self._strip_prefix(k, attrs['prefix']): v for k, v in result[fk].items()}
         return result
 
-    async def _extend(self, data, extend, extend_context, extend_context_value, cf, co):
+    async def _extend(self, data, extend, extend_context, extend_context_value, query_options):
         if extend:
             if extend_context:
                 data = await self.middleware.call(extend, data, extend_context_value)
             else:
                 data = await self.middleware.call(extend, data)
 
-        # match() with an empty (match-all) filter always returns the item;
-        # co carries the select projection (if any) and is applied in C.
-        return match(data, filters=cf, options=co)
+        if query_options is CO_EMPTY:
+            return data
+        return match(data, filters=CF_EMPTY, options=query_options)
 
     def _strip_prefix(self, k, field_prefix):
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k
