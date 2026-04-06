@@ -383,9 +383,9 @@ def test_login_ex_expired_api_key():
         # Bypass the future-only validation by writing the expiry directly to
         # the datastore (epoch = 1970-01-01, unambiguously in the past).
         call("datastore.update", "account.api_key", key_id, {"expiry": 1})
-        # Regenerate the PAM keyring so pam_truenas sees the past expiry
+        # Regenerate the PAM keyring so pam sees the past expiry
         # and returns PAM_AUTHINFO_UNAVAIL on the next auth attempt.
-        call("etc.generate", "pam_truenas")
+        call("etc.generate", "pam")
 
         with client(auth=None) as c:
             with expect_audit_log([
