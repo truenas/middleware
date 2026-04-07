@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -20,7 +20,7 @@ from middlewared.api.current import (
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import TunableServicePart
-from .utils import TUNABLE_TYPES, set_sysctl as _set_sysctl
+from .utils import TUNABLE_TYPES, handle_tunable_change, set_sysctl, set_zfs_parameter
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -72,4 +72,12 @@ class TunableService(GenericCRUDService[TunableEntry]):
 
     @private
     def set_sysctl(self, var: str, value: str) -> None:
-        _set_sysctl(var, value)
+        set_sysctl(self.middleware, var, value)
+
+    @private
+    def set_zfs_parameter(self, name: str, value: str) -> None:
+        set_zfs_parameter(self.middleware, name, value)
+
+    @private
+    async def handle_tunable_change(self, tunable: dict[str, Any]) -> None:
+        await handle_tunable_change(self.middleware, tunable)

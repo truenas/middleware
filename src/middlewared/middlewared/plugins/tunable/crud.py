@@ -7,14 +7,17 @@ from typing import Any
 import middlewared.sqlalchemy as sa
 from middlewared.api.current import TunableCreate, TunableEntry, TunableUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
-from middlewared.utils import run
+from middlewared.service_exception import CallError
 from .utils import (
+    generate_sysctl,
     get_sysctl,
     get_sysctls,
+    handle_tunable_change,
     reset_sysctl,
     reset_zfs_parameter,
     set_sysctl,
     set_zfs_parameter,
+    update_initramfs,
     zfs_parameter_path,
     zfs_parameter_value,
 )
@@ -42,7 +45,7 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
         return data
 
     async def do_create(self, data: TunableCreate) -> TunableEntry:
-        update_initramfs = data.update_initramfs
+        failover_licensed = await self._check_ha()
 
         verrors = ValidationErrors()
 
@@ -92,15 +95,15 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
         try:
             if entry.type == 'SYSCTL':
                 if entry.enabled:
-                    await self.middleware.call('etc.generate', 'sysctl')
-                    await self.to_thread(set_sysctl, entry.var, entry.value)
+                    await generate_sysctl(self.middleware, failover_licensed)
+                    await self.to_thread(set_sysctl, self.middleware, entry.var, entry.value, failover_licensed)
             elif entry.type == 'ZFS':
                 if entry.enabled:
-                    await self.to_thread(set_zfs_parameter, entry.var, entry.value)
-                    if update_initramfs:
-                        await self.middleware.call('boot.update_initramfs')
+                    await self.to_thread(set_zfs_parameter, self.middleware, entry.var, entry.value, failover_licensed)
+                    if data.update_initramfs:
+                        await update_initramfs(self.middleware, failover_licensed)
             else:
-                await self._handle_tunable_change(entry)
+                await handle_tunable_change(self.middleware, entry.model_dump(), failover_licensed)
         except Exception:
             await self._delete(entry.id)
             raise
@@ -110,8 +113,7 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
     async def do_update(self, id_: int, data: TunableUpdate) -> TunableEntry:
         old = await self.get_instance(id_)
 
-        update_data = data.model_dump()
-        update_initramfs: bool = update_data.get('update_initramfs', True)
+        failover_licensed = await self._check_ha()
 
         new = old.updated(data)
 
@@ -122,22 +124,22 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
 
         try:
             if new.type == 'SYSCTL':
-                await self.middleware.call('etc.generate', 'sysctl')
+                await generate_sysctl(self.middleware, failover_licensed)
 
                 if new.enabled:
-                    await self.to_thread(set_sysctl, new.var, new.value)
+                    await self.to_thread(set_sysctl, self.middleware, new.var, new.value, failover_licensed)
                 else:
-                    await self.to_thread(reset_sysctl, new)
+                    await self.to_thread(reset_sysctl, self.middleware, new, failover_licensed)
             elif new.type == 'ZFS':
                 if new.enabled:
-                    await self.to_thread(set_zfs_parameter, new.var, new.value)
+                    await self.to_thread(set_zfs_parameter, self.middleware, new.var, new.value, failover_licensed)
                 else:
-                    await self.to_thread(reset_zfs_parameter, new)
+                    await self.to_thread(reset_zfs_parameter, self.middleware, new, failover_licensed)
 
-                if update_initramfs:
-                    await self.middleware.call('boot.update_initramfs')
+                if data.update_initramfs:
+                    await update_initramfs(self.middleware, failover_licensed)
             else:
-                await self._handle_tunable_change(new)
+                await handle_tunable_change(self.middleware, new.model_dump(), failover_licensed)
         except Exception:
             await self._update(id_, old.model_dump())
             raise
@@ -147,18 +149,26 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
     async def do_delete(self, id_: int) -> None:
         entry = await self.get_instance(id_)
 
+        failover_licensed = await self._check_ha()
+
         await self._delete(entry.id)
 
         if entry.type == 'SYSCTL':
-            await self.middleware.call('etc.generate', 'sysctl')
-            await self.to_thread(reset_sysctl, entry)
+            await generate_sysctl(self.middleware, failover_licensed)
+            await self.to_thread(reset_sysctl, self.middleware, entry, failover_licensed)
         elif entry.type == 'ZFS':
-            await self.to_thread(reset_zfs_parameter, entry)
-            await self.middleware.call('boot.update_initramfs')
+            await self.to_thread(reset_zfs_parameter, self.middleware, entry, failover_licensed)
+            await update_initramfs(self.middleware, failover_licensed)
         else:
-            await self._handle_tunable_change(entry)
+            await handle_tunable_change(self.middleware, entry.model_dump(), failover_licensed)
 
-    async def _handle_tunable_change(self, entry: TunableEntry) -> None:
-        if entry.type == 'UDEV':
-            await self.middleware.call('etc.generate', 'udev')
-            await run(['udevadm', 'control', '-R'])
+    async def _check_ha(self) -> bool:
+        failover_licensed = await self.middleware.call('failover.licensed')
+        if failover_licensed:
+            if (status := await self.middleware.call('failover.status')) != 'MASTER':
+                raise CallError(f'Updating tunables is only allowed on MASTER mode. The current node is {status!r}.')
+
+            if not await self.middleware.call('failover.remote_connected'):
+                raise CallError('Updating tunables is only allowed when remote node is up. The remote node is down.')
+
+        return bool(failover_licensed)
