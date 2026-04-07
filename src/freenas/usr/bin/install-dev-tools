@@ -48,6 +48,8 @@ PIP_PACKAGES=(
     flake8-tidy-imports
     flake8-literal
     import-linter
+    # Dependency of pykmip. No-op on python 3.4+. Just to prevent pip from complaining.
+    enum-compat
 )
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
