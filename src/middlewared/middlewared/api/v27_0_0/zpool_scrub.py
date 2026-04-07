@@ -23,6 +23,7 @@ class ZpoolScrubRunEntry(BaseModel):
 
 class ZpoolScrubRunArgs(BaseModel):
     data: ZpoolScrubRunEntry
+    """Scrub run parameters."""
 
 
 class ZpoolScrubRunResult(BaseModel):

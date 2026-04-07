@@ -104,6 +104,10 @@ async def do_create(self, app, data):
     pass
 ```
 
+**API Model Field Descriptions**:
+- Every field in API models (`Args`, `Result`, `Entry` classes) **must** have a description, either as a docstring or via `Field(description=...)`.
+- This is enforced by `test_api_docstrings` in the unit test suite.
+
 **API Versioning**:
 - Multiple API versions maintained in parallel (`src/middlewared/middlewared/api/v*/`)
 - Legacy methods wrapped with `LegacyAPIMethod`
