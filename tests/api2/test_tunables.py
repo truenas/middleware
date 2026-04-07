@@ -22,7 +22,8 @@ def assert_ssh_both_nodes(command, output, **kwargs):
     if ha:
         ips.append(truenas_server.ha_ips()["standby"])
 
-        assert ssh(command, **kwargs) == output
+    for ip in ips:
+        assert ssh(command, ip=ip, **kwargs) == output
 
 
 def test_create_invalid_sysctl():
