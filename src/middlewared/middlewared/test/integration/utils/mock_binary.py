@@ -39,7 +39,7 @@ def set_usr_readonly(value, ip=None):
     cmd += r'hdl = libzfs.ZFS().get_dataset_by_path(\"/usr\");'
     cmd += r'hdl.update_properties({\"readonly\": {\"value\": '
     cmd += f'\\"{value}\\"' + '}});"'
-    ssh(cmd)
+    ssh(cmd, ip=ip)
 
 
 @contextlib.contextmanager
