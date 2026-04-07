@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 from .exceptions import (
     ZpoolException,
     ZpoolNotFoundException,
-    ZpoolScanInvalidAction,
-    ZpoolScanInvalidType,
+    ZpoolScanInvalidActionException,
+    ZpoolScanInvalidTypeException,
 )
 from .scrub_impl import run_impl
 
@@ -42,7 +42,7 @@ class ZpoolScrubService(Service):
                 wait=data.wait,
                 progress_callback=job.set_progress,
             )
-        except (ZpoolNotFoundException, ZpoolScanInvalidType, ZpoolScanInvalidAction) as e:
+        except (ZpoolNotFoundException, ZpoolScanInvalidTypeException, ZpoolScanInvalidActionException) as e:
             raise ValidationError(schema, e.message, e.errno) from e
         except ZpoolException as e:
             raise CallError(e.message, e.errno) from e

@@ -3,8 +3,8 @@ import errno
 __all__ = (
     "ZpoolNotFoundException",
     "ZpoolPoolUnhealthyException",
-    "ZpoolScanInvalidAction",
-    "ZpoolScanInvalidType",
+    "ZpoolScanInvalidActionException",
+    "ZpoolScanInvalidTypeException",
     "ZpoolScrubAlreadyRunningException",
     "ZpoolScrubPausedException",
     "ZpoolScrubPausedToCancelException",
@@ -30,20 +30,20 @@ class ZpoolNotFoundException(ZpoolException):
 
 
 class ZpoolPoolUnhealthyException(ZpoolException):
-    errno = errno.EINVAL
+    errno = errno.ENXIO
 
     def __init__(self, pool: str, health: str):
         super().__init__(f"{pool!r}: pool is {health}")
 
 
-class ZpoolScanInvalidAction(ZpoolException):
+class ZpoolScanInvalidActionException(ZpoolException):
     errno = errno.EINVAL
 
     def __init__(self, action: str):
         super().__init__(f"{action!r} is not a valid scan action (expected: start, pause, cancel)")
 
 
-class ZpoolScanInvalidType(ZpoolException):
+class ZpoolScanInvalidTypeException(ZpoolException):
     errno = errno.EINVAL
 
     def __init__(self, scan_type: str):

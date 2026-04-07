@@ -8,8 +8,8 @@ from .exceptions import (
     ZpoolErrorScrubPausedException,
     ZpoolNotFoundException,
     ZpoolResiliverInProgressException,
-    ZpoolScanInvalidAction,
-    ZpoolScanInvalidType,
+    ZpoolScanInvalidActionException,
+    ZpoolScanInvalidTypeException,
     ZpoolScrubAlreadyRunningException,
     ZpoolScrubPausedException,
     ZpoolScrubPausedToCancelException,
@@ -32,13 +32,13 @@ def _get_scan_function(scan_type: str) -> Literal[
     RESILVER is excluded because it is initiated automatically by ZFS
     when a replacement or re-attached vdev is detected.
 
-    Raises ZpoolScanInvalidType if scan_type is not recognized."""
+    Raises ZpoolScanInvalidTypeException if scan_type is not recognized."""
     func = getattr(truenas_pylibzfs.libzfs_types.ScanFunction, scan_type.upper(), None)
     if func not in (
         truenas_pylibzfs.libzfs_types.ScanFunction.SCRUB,
         truenas_pylibzfs.libzfs_types.ScanFunction.ERRORSCRUB,
     ):
-        raise ZpoolScanInvalidType(scan_type)
+        raise ZpoolScanInvalidTypeException(scan_type)
     return func
 
 
@@ -51,7 +51,7 @@ def _get_scan_action(
       - PAUSE: pause an in-progress scan (func=<scan_type>, cmd=PAUSE)
       - CANCEL: cancel the scan entirely (func=NONE, cmd=NORMAL)
 
-    Raises ZpoolScanInvalidAction if action is not recognized."""
+    Raises ZpoolScanInvalidActionException if action is not recognized."""
     match action.upper():
         case "START":
             return func, truenas_pylibzfs.libzfs_types.ScanScrubCmd.NORMAL
@@ -63,7 +63,7 @@ def _get_scan_action(
                 truenas_pylibzfs.libzfs_types.ScanScrubCmd.NORMAL,
             )
         case _:
-            raise ZpoolScanInvalidAction(action)
+            raise ZpoolScanInvalidActionException(action)
 
 
 def do_scan_action(
