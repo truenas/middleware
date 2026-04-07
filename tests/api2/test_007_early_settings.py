@@ -5,7 +5,7 @@ from middlewared.test.integration.utils import call
 # this is found in middlewared.plugins.sysctl.sysctl_info
 # but the client running the tests isn't guaranteed to have
 # the middlewared application installed locally
-DEFAULT_ARC_MAX_FILE = '/var/run/middleware/default_arc_max'
+DEFAULT_ARC_MAX_FILE = '/run/middleware/default_arc_max'
 
 
 def test_sysctl_arc_max_is_set():

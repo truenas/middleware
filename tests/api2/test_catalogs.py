@@ -28,7 +28,7 @@ def test_catalog_sync():
 @pytest.mark.dependency(depends=['unconfigure_apps'])
 def test_catalog_cloned_location():
     config = call('catalog.config')
-    assert config['location'] == '/var/run/middleware/ix-apps/catalogs', config
+    assert config['location'] == '/run/middleware/ix-apps/catalogs', config
 
 
 @pytest.mark.dependency(depends=['unconfigure_apps'])

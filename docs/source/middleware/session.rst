@@ -114,7 +114,7 @@ Unix socket origin
 ==================
 
 Processes on the TrueNAS host may establish authenticated middleware sessions by using the truenas_api_client
-to connect to the middlewared AF_UNIX socket at `/var/run/middlewared/middlewared.sock`. When the session is
+to connect to the middlewared AF_UNIX socket at `/run/middleware/middlewared.sock`. When the session is
 established, the client is automatically authenticated to middleware using the client credentials used by the
 peer process connected to the socket. See SO_PEERCRED in unix(7). If the peer process has an unset loginuid,
 then the session will be treated by middlewared as an internal session. This makes the `login` and `logout`

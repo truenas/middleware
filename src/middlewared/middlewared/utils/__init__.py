@@ -28,7 +28,7 @@ class ProductNames:
 ProductType = ProductTypes()
 ProductName = ProductNames()
 
-MIDDLEWARE_RUN_DIR = '/var/run/middleware'
+MIDDLEWARE_RUN_DIR = '/run/middleware'
 MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
