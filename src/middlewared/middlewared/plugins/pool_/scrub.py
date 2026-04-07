@@ -14,6 +14,7 @@ from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.plugins.zpool.query_impl import query_impl
+from middlewared.plugins.zpool.scrub_impl import run_impl
 
 
 HISTORY_CREATE_IMPORT_CMDS = ('zpool create', 'zpool import')
@@ -324,5 +325,5 @@ class PoolScrubService(CRUDService):
         if not start_scrub:
             return False
 
-        self.middleware.call_sync('zpool.scrub.run_impl', tls, name, 'SCRUB', 'START')
+        run_impl(tls, name, 'SCRUB', 'START')
         return True

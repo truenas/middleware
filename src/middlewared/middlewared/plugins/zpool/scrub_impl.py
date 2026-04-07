@@ -1,19 +1,22 @@
-from typing import Any, Literal
+import time
+from typing import Any, Callable, Literal
 
 import truenas_pylibzfs
 
 from .exceptions import (
     ZpoolErrorScrubAlreadyRunningException,
     ZpoolErrorScrubPausedException,
+    ZpoolNotFoundException,
     ZpoolResiliverInProgressException,
     ZpoolScanInvalidAction,
     ZpoolScanInvalidType,
     ZpoolScrubAlreadyRunningException,
     ZpoolScrubPausedException,
     ZpoolScrubPausedToCancelException,
+    ZpoolPoolUnhealthyException,
 )
 
-__all__ = ("do_scan_action",)
+__all__ = ("do_scan_action", "run_impl")
 
 
 def _get_scan_function(scan_type: str) -> Literal[
@@ -102,3 +105,55 @@ def do_scan_action(
             case truenas_pylibzfs.ZFSError.EZFS_RESILVERING:
                 raise ZpoolResiliverInProgressException(pool_name) from None
         raise
+
+
+def run_impl(
+    tls, pool_name: str, scan_type: str, action: str,
+    *, wait: bool = False, progress_callback: Callable[[float | None, str | None], None] | None = None
+) -> None:
+    """Start, pause, or cancel a scan on a zpool.
+
+    Raises domain exceptions (Zpool*Exception) directly for internal
+    callers to catch and handle as needed.
+    """
+    # Open pool
+    try:
+        zpool = tls.lzh.open_pool(name=pool_name)
+    except truenas_pylibzfs.ZFSException as e:
+        if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+            raise ZpoolNotFoundException(pool_name) from None
+        raise
+
+    # Check pool health
+    health = zpool.get_properties(properties={truenas_pylibzfs.ZPOOLProperty.HEALTH}).health.value
+    if health not in ("ONLINE", "DEGRADED"):
+        raise ZpoolPoolUnhealthyException(pool_name, health)
+
+    # Pre-check: reject if resilver is active
+    scrub = zpool.scrub_info()
+    if (
+        scrub is not None
+        and scrub.func == truenas_pylibzfs.libzfs_types.ScanFunction.RESILVER
+        and scrub.state == truenas_pylibzfs.libzfs_types.ScanState.SCANNING
+    ):
+        raise ZpoolResiliverInProgressException(pool_name)
+
+    # Perform the scan action
+    do_scan_action(tls, pool_name, scan_type, action, zpool)
+
+    # Poll until scan completes (only meaningful for START)
+    if wait and action.upper() == "START":
+        while True:
+            time.sleep(5)
+            scrub = zpool.scrub_info()
+            if scrub is None:
+                break
+            if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.FINISHED:
+                if progress_callback:
+                    progress_callback(100, f'{scan_type} finished')
+                break
+            if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.CANCELED:
+                break
+            if scrub.state == truenas_pylibzfs.libzfs_types.ScanState.SCANNING:
+                if progress_callback and scrub.percentage is not None:
+                    progress_callback(scrub.percentage, f'{scan_type} in progress')
