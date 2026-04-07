@@ -47,7 +47,8 @@ class ContainerStatus(BaseModel):
     state: Literal["RUNNING", "STOPPED"]
     """Container state."""
     pid: int | None
-    """Container PID (if running)."""
+    """Container host PID (if running). Informational only\
+    do not rely on this value to identify the container's init process."""
     domain_state: NonEmptyString | None
     """Domain state reported by libvirt."""
 
