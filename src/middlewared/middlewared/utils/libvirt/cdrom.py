@@ -36,8 +36,15 @@ class CDROMDelegate(DeviceDelegate):
         if verrors:
             return
 
-        if self.middleware.call_sync('filesystem.statfs', path)['dest'].count('/') < 3:
-            verrors.add('attributes.path', 'The path must be a dataset or a directory within a dataset.')
+        st = self.middleware.call_sync('filesystem.statfs', path)
+        if '/' not in st['source']:
+            verrors.add(
+                'attributes.path',
+                f'The specified path is located in the root dataset of pool {st["source"]!r}. '
+                'VM resources must be stored within a child dataset of the pool, not the '
+                f'pool root. Create a dataset under {st["source"]!r} (e.g., {st["source"]}/iso) '
+                'and move your files there.'
+            )
             return
 
         # We would like to check now if libvirt will actually be able to read the iso file
