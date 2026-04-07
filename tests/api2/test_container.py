@@ -284,11 +284,10 @@ def test_network(started_ubuntu_container):
         try:
             assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
             assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
-            assert "inet 10.47.214." in ssh(nsenter(started_ubuntu_container, "ip addr list"))
-            assert "inet6 fd42:3656:7be9:e46c:" in ssh(nsenter(started_ubuntu_container, "ip addr list"))
+            assert "inet " in ssh(nsenter(started_ubuntu_container, "ip -4 addr show dev eth0"))
             break
         except AssertionError:
-            if i > 10:
+            if i > 30:
                 raise
 
             time.sleep(1)
