@@ -456,7 +456,7 @@ class TestNotAuthorizedOps:
     @pytest.mark.parametrize('cmd, args, is_job', [
         pp('truecommand.update', {'enabled': True, 'api_key': '1234567890-ABCDE'}, True, id="Truecommand"),
         pp('docker.update', {'pool': 'NotApplicable'}, True, id="Docker"),
-        pp('tn_connect.update', {'enabled': True, 'ips': ['1.2.3.4']}, False, id="TrueNAS Connect"),
+        pp('tn_connect.update', {'enabled': True}, False, id="TrueNAS Connect"),
         # VM operations
         pp('vm.create', {'name': 'test_vm', 'vcpus': 1, 'memory': 512, 'bootloader': 'UEFI'}, False, id="VM create"),
         pp('vm.update', (1, {'vcpus': 2}), False, id="VM update"),
