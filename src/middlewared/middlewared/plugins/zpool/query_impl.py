@@ -299,7 +299,7 @@ def query_impl(
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 if data.get("raise_on_noent", False):
-                    raise ZpoolNotFoundException(name)
+                    raise ZpoolNotFoundException(name) from None
                 else:
                     continue
             raise

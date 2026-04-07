@@ -96,8 +96,8 @@ class ZpoolScrubService(Service):
                 progress_callback=job.set_progress,
             )
         except (ZpoolNotFoundException, ZpoolScanInvalidType, ZpoolScanInvalidAction) as e:
-            raise ValidationError(schema, e.message, e.errno)
+            raise ValidationError(schema, e.message, e.errno) from e
         except ZpoolException as e:
-            raise CallError(e.message, e.errno)
+            raise CallError(e.message, e.errno) from e
         except truenas_pylibzfs.ZFSException as e:
-            raise CallError(str(e), e.code)
+            raise CallError(str(e), e.code) from e
