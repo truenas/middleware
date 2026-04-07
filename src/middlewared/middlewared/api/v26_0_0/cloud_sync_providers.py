@@ -175,7 +175,7 @@ class S3CredentialsModel(BaseModel):
     force_path_style: bool = True
     """If true use path style access if false use virtual hosted style."""
     sign_accept_encoding: bool = True
-    """Set this to `false` if your S3 server is behind a proxy that modified HTTP headers and you are experiencing
+    """Set this to `false` if your S3 server is behind a proxy that modified HTTP headers and you are experiencing \
     `SignatureDoesNotMatch` error."""
 
 
