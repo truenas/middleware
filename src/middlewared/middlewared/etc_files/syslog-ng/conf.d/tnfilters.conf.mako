@@ -46,7 +46,10 @@ filter f_nfs_mountd {
 };
 filter f_ctdb {
   program("ctdbd") or
-  program("ctdb-recoverd");
+  program("ctdb-recoverd") or
+  program("ctdb-recovery") or
+  program("ctdb-takeover") or
+  program("ctdb-eventd");
 };
 filter f_scst {
   program("iscsi-scstd") or
