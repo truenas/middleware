@@ -3,9 +3,10 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import os
+from datetime import date
 
 import truenas_pylicensed
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemFeatureEnabledArgs,
@@ -21,16 +22,29 @@ from middlewared.api.current import (
     SystemVersionShortArgs,
     SystemVersionShortResult,
 )
-from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string
 
-from .product_utils import get_license, LICENSE_FILE
+from middlewared.plugins.truenas.license_utils import LICENSE_FILE
+from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
 
-
-LICENSE_FILE_MODE = 0o600
 PRODUCT_NAME = "TrueNAS"
+LICENSE_ADDHW_REVERSE_MAPPING = {
+    "E16": 1,
+    "E24": 2,
+    "E60": 3,
+    "ES60": 4,
+    "ES12": 5,
+    "ES24": 6,
+    "ES24F": 7,
+    "ES60S": 8,
+    "ES102": 9,
+    "ES102G2": 10,
+    "ES60G2": 11,
+    "ES24N": 12,
+    "ES60G3": 13,
+}
 
 
 class SystemService(Service):
@@ -46,8 +60,8 @@ class SystemService(Service):
                 # HA capable hardware
                 SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
-                if license_ := await self.middleware.call("system.license"):
-                    if license_["model"].lower().startswith("freenas"):
+                if license_ := await self.call2(self.s.truenas.license.info_private):
+                    if license_.model.lower().startswith("freenas"):
                         # legacy freenas certified
                         SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                     else:
@@ -123,11 +137,42 @@ class SystemService(Service):
 
     @private
     def license(self, include_raw_license: bool = False):
-        return get_license(include_raw_license)
+        info = self.call_sync2(self.s.truenas.license.info_private)
+        if info is None:
+            return None
 
-    @private
-    def license_path(self):
-        return LICENSE_FILE
+        result = {
+            'model': info.model,
+            'system_serial': info.serials[0] if info.serials else None,
+            'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
+            'contract_type': None,
+            'contract_start': None,
+            'contract_end': info.expires_at,
+            'legacy_contract_hardware': None,
+            'legacy_contract_software': None,
+            'customer_name': None,
+            'expired': info.expires_at is not None and info.expires_at < date.today(),
+            'features': [f.name for f in info.features],
+            'addhw': [],
+            'addhw_detail': [],
+        }
+
+        for name, quantity in info.enclosures.items():
+            result['addhw'].append([quantity, LICENSE_ADDHW_REVERSE_MAPPING.get(name, 0)])
+            result['addhw_detail'].append(f'{quantity} x {name} Expansion shelf')
+
+        if include_raw_license:
+            for f in [LICENSE_FILE, LEGACY_LICENSE_FILE]:
+                try:
+                    with open(f) as f:
+                        result['raw_license'] = f.read().strip()
+                        break
+                except FileNotFoundError:
+                    pass
+            else:
+                result['raw_license'] = None
+
+        return result
 
     @api_method(
         SystemLicenseUpdateArgs,
@@ -141,26 +186,6 @@ class SystemService(Service):
             "Legacy license upload is no longer supported. Use truenas.license.upload instead.",
         )
 
-        self.middleware.call_sync("etc.generate", "rc")
-        SystemService.PRODUCT_TYPE = None
-        if self.middleware.call_sync("system.is_enterprise"):
-            with open(EULA_PENDING_PATH, "a+") as f:
-                os.fchmod(f.fileno(), 0o600)
-
-        """
-        # FIXME: new license check but need old one for backwards compat
-        self.call_sync2(self.s.alert.alert_source_clear_run, 'LicenseStatus')
-
-        # FIXME: rm -rf failover_/configure.py entirely
-        self.middleware.call_sync('failover.configure.license', dser_license)
-
-        # FIXME: no need for a hook, the license daemon caches the license
-        # in memory so simplify on middleware side
-        self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', prev_license=prev_license), wait=False,
-        )
-        """
-
     @api_method(
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
@@ -170,17 +195,15 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        license_ = await self.middleware.call("system.license")
-        if license_ and name in license_["features"]:
-            return True
+        info = await self.call2(self.s.truenas.license.info_private)
+        if info is not None:
+            return any(f.name == name for f in info.features)
+
         return False
 
 
-async def hook_license_update(middleware, prev_license, *args, **kwargs):
-    if (
-        prev_license is None
-        and await middleware.call("system.product_type") == "ENTERPRISE"
-    ):
+async def hook_license_update(middleware, had_license, *args, **kwargs):
+    if not had_license and await middleware.call("system.product_type") == "ENTERPRISE":
         await middleware.call("system.advanced.update", {"autotune": True})
 
 

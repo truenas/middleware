@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
 import contextlib
 import logging
 import os
@@ -5,14 +9,18 @@ import shutil
 import time
 import typing
 
-from truenas_pylicensed import LicenseStatus, LicenseType, verify
 from truenas_os_pyutils.io import atomic_write
+from truenas_pylicensed import LicenseStatus, LicenseType, verify
 
 from middlewared.service import CallError, ValidationError
+
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 logger = logging.getLogger(__name__)
 
 __all__ = (
+    "LICENSE_FILE",
     "FeatureInfo",
     "LicenseInfo",
     "upload_license",
@@ -22,28 +30,28 @@ __all__ = (
 
 LICENSE_DIR = "/data/truenas"
 LICENSE_FILE = f"{LICENSE_DIR}/license"
-LICENSE_BACKUP = "/data/truenas/license.bak"
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
+LICENSE_BACKUP = f"{LICENSE_DIR}/license.bak"
 
 
-class FeatureInfo(typing.TypedDict):
+@dataclass(frozen=True, kw_only=True, slots=True)
+class FeatureInfo:
     name: str
     """Feature key (e.g. "DEDUP", "SED")."""
-    start_date: str | None
-    """Feature start date (YYYY-MM-DD) or None."""
-    expires_at: str | None
-    """Feature expiration date (YYYY-MM-DD) or None for perpetual."""
+    start_date: date | None
+    """Feature start date or None."""
+    expires_at: date | None
+    """Feature expiration date or None for perpetual."""
 
 
-class LicenseInfo(typing.TypedDict):
+@dataclass(frozen=True, kw_only=True, slots=True)
+class LicenseInfo:
     id: str
     """Unique UUID string for the license."""
     type: LicenseType
     """The license type."""
     model: str | None
     """Hardware model (e.g. "H30") for enterprise types, None otherwise."""
-    expires_at: str | None
+    expires_at: date | None
     """Synthesized expiration: top-level expires_at for test licenses,
     SUPPORT feature expires_at for all other types."""
     features: list[FeatureInfo]
@@ -57,8 +65,10 @@ class LicenseInfo(typing.TypedDict):
 @typing.overload
 def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: typing.Literal[True] = ...) -> LicenseStatus: ...
 
+
 @typing.overload
 def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: typing.Literal[False]) -> LicenseStatus | None: ...
+
 
 def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: bool = True) -> LicenseStatus | None:
     """Poll verify() until reload_seq differs from *seq*, returning the new status.
@@ -70,6 +80,7 @@ def _wait_for_reload_seq_change(seq: int, error_msg: str, raise_: bool = True) -
     for _ in range(6):
         if lic.reload_seq != seq:
             return lic
+
         time.sleep(0.5)
         lic = verify()
 
@@ -148,18 +159,22 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     # Synthesize expires_at: test licenses use top-level,
     # all others use the SUPPORT feature's expiry
     if lic.type == LicenseType.TEST:
-        expires_at = lic.expires_at
+        expires_at = date.fromisoformat(lic.expires_at) if lic.expires_at else None
     else:
         support = lic.features.get("SUPPORT") if lic.features else None
-        expires_at = support.expires_at if support else None
+        expires_at = date.fromisoformat(support.expires_at) if support and support.expires_at else None
 
     return LicenseInfo(
-        id=lic.id,
-        type=lic.type,
+        id=lic.id,  # type: ignore[arg-type]
+        type=lic.type,  # type: ignore[arg-type]
         model=lic.model,
         expires_at=expires_at,
         features=[
-            FeatureInfo(name=name, start_date=f.start_date, expires_at=f.expires_at)
+            FeatureInfo(
+                name=name,
+                start_date=date.fromisoformat(f.start_date) if f.start_date else None,
+                expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
+            )
             for name, f in (lic.features or {}).items()
         ],
         serials=lic.system_id["serials"] if lic.system_id else [],
@@ -169,39 +184,30 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     )
 
 
-def configure_ha_license(mw: Middleware) -> None:
-    if not mw.middleware.call_sync("system.is_ha_capable"):
-        raise ValidationError(
-            "truenas.license.upload", "This is not an HA capable system"
-        )
-
+def configure_ha_license(middleware: Middleware, had_license: bool) -> None:
     try:
-        mw.middleware.call_sync("failover.ensure_remote_client")
+        middleware.call_sync("failover.ensure_remote_client")
     except Exception as e:
         # this is fatal because we can't determine what the remote ip address
         # is to so any failover.call_remote calls will fail
-        raise ValidationError(
-            "truenas.license.updload",
-            f"Failed to determine remote heartbeat IP address: {e}",
-        )
+        raise ValidationError("license", f"Failed to determine remote heartbeat IP address: {e}")
 
     try:
-        mw.middleware.call_sync("failover.call_remote", "failover.ensure_remote_client")
+        middleware.call_sync("failover.call_remote", "failover.ensure_remote_client")
     except Exception:
         # this is not fatal, so no reason to return early
         # it just means that any "failover.call_remote" calls initiated from the remote node
-        # will fail but that shouldn't be happening anyways
-        mw.logger.warning(
+        # will fail but that shouldn't be happening anyway
+        logger.warning(
             "Remote node failed to determine this nodes heartbeat IP address",
             exc_info=True,
         )
 
     try:
-        mw.middleware.call_sync("failover.send_small_file", LICENSE_FILE)
+        middleware.call_sync("failover.send_license")
     except Exception:
-        mw.logger.warning("Failed to sync database to remote node", exc_info=True)
+        logger.warning("Failed to send file to remote node", exc_info=True)
 
-    try:
-        mw.middleware.call_sync("failover.call_remote", "etc.generate", ["rc"])
-    except Exception:
-        mw.logger.warning("etc.generate failed on standby", exc_info=True)
+    middleware.run_coroutine(
+        middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
+    )

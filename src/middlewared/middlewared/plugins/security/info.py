@@ -21,7 +21,7 @@ class SystemSecurityInfoService(Service):
     def fips_available(self):
         """Returns a boolean identifying whether FIPS mode may be toggled on this system"""
         # being able to toggle fips mode is hinged on whether this is an iX licensed piece of hardware
-        return bool(self.middleware.call_sync('system.license'))
+        return bool(self.call_sync2(self.s.truenas.license.info))
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,

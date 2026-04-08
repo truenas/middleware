@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SupportNewTicket,
@@ -13,6 +17,7 @@ from middlewared.api.current import (
 from middlewared.job import Job
 from middlewared.service import job, private, Service
 
+from .license import TrueNASLicenseService
 from .tn import (
     managed_by_truecommand as tn_managed_by_truecommand,
     get_chassis_hardware as tn_get_chassis_hardware,
@@ -25,6 +30,9 @@ from .tn import (
     set_production as tn_set_production,
 )
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 __all__ = ('TrueNASService',)
 
@@ -33,6 +41,10 @@ class TrueNASService(Service):
 
     class Config:
         cli_namespace = 'system.truenas'
+
+    def __init__(self, middleware: Middleware):
+        super().__init__(middleware)
+        self.license = TrueNASLicenseService(middleware)
 
     @api_method(
         TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult,

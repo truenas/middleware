@@ -17,7 +17,6 @@ from middlewared.api.current import (
 from middlewared.plugins.jbof.redfish import InvalidCredentialsError, RedfishClient
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 from .functions import (
     decode_static_ip, get_sys_class_nvme, initiator_ip_from_jbof_static_ip, initiator_static_ip, jbof_static_ip,
@@ -333,24 +332,21 @@ class JBOFService(CRUDService):
         """Return a count of the number of JBOF units licensed."""
         result = 0
         # Do we have a license at all?
-        license_ = await self.middleware.call('system.license')
+        license_ = await self.call2(self.s.truenas.license.info_private)
         if not license_:
             return result
 
         # check if this node's system serial matches the serial in the license
         local_serial = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
-        if local_serial not in (license_['system_serial'], license_['system_serial_ha']):
+        if local_serial not in license_.serials:
             return result
 
         # Check to see if we're licensed to attach a JBOF
-        if license_['addhw']:
-            for quantity, code in license_['addhw']:
-                if code not in LICENSE_ADDHW_MAPPING:
-                    self.logger.warning('Unknown additional hardware code %d', code)
-                    continue
-                name = LICENSE_ADDHW_MAPPING[code]
+        if license_.enclosures:
+            for name, quantity in license_.enclosures.items():
                 if name == 'ES24N':
                     result += quantity
+
         return result
 
     @api_method(JBOFSetMgmtIPArgs, JBOFSetMgmtIPResult, private=True)
