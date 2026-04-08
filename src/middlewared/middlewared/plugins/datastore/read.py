@@ -9,7 +9,10 @@ from sqlalchemy.sql.expression import nullsfirst, nullslast
 
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.filter_list import do_select, validate_filters, validate_options
+import truenas_pyfilter as _tf
+
+from middlewared.api.base.validators.filters import validate_filters
+from middlewared.utils.filter_list import CF_EMPTY, CO_EMPTY, match, validate_options
 from .filter import FilterMixin
 from .schema import SchemaMixin
 
@@ -210,8 +213,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         else:
             extend_context_value = None
 
+        query_options = CO_EMPTY if not select else _tf.compile_options(select=list(select))
+
         result = [
-            await self._extend(data, extend, extend_context, extend_context_value, select)
+            await self._extend(data, extend, extend_context, extend_context_value, query_options)
             for data in rows
         ]
 
@@ -228,7 +233,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                                                  attrs['extend'],
                                                  attrs['extend_context'],
                                                  extend_context_value,
-                                                 {})
+                                                 CO_EMPTY)
         return result
 
     def _serialize(self, obj, table, aliases, relationships, field_prefix, fk_attrs):
@@ -244,17 +249,16 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 result[fk] = {self._strip_prefix(k, attrs['prefix']): v for k, v in result[fk].items()}
         return result
 
-    async def _extend(self, data, extend, extend_context, extend_context_value, select):
+    async def _extend(self, data, extend, extend_context, extend_context_value, query_options):
         if extend:
             if extend_context:
                 data = await self.middleware.call(extend, data, extend_context_value)
             else:
                 data = await self.middleware.call(extend, data)
 
-        if not select:
+        if query_options is CO_EMPTY:
             return data
-        else:
-            return do_select([data], select)[0]
+        return match(data, filters=CF_EMPTY, options=query_options)
 
     def _strip_prefix(self, k, field_prefix):
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k

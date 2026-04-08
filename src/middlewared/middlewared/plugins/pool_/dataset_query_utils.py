@@ -3,18 +3,13 @@ from dataclasses import dataclass, field
 from typing import TypeAlias
 
 import truenas_pylibzfs
+import truenas_pyfilter as _tf
 
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filter_list import (
-    filter_list,
-    validate_options,
-    do_select,
-    do_order,
-    get_impl,
-)
+from middlewared.utils.filter_list import CF_EMPTY, compile_filters, validate_options
 from middlewared.utils.size import format_size
 
 
@@ -111,16 +106,10 @@ class ExtraArgs:
 
 @dataclass(slots=True, kw_only=True)
 class QueryFiltersCallbackState:
-    filters: list = field(default_factory=list)
-    """list of filters"""
-    filter_fn: Callable = filter_list
-    """function to do filtering"""
-    get_fn: Callable = get_impl
-    """function to get value from dict"""
-    select_fn: Callable = do_select
-    """function to select values"""
-    select: list = field(default_factory=list)
-    """list of fields to select. None means all"""
+    filters_compiled: _tf.CompiledFilters | None = None
+    """pre-compiled filters; drives child recursion and, when count_only is True,
+    per-item matching so we never accumulate a full list just to count it"""
+    options_compiled: _tf.CompiledOptions | None = None
     count_only: bool = False
     """only count entries"""
     extra: ExtraArgs
@@ -961,7 +950,10 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     # Note: Filtering and select will be applied at the end in generic_query function
 
     if state.count_only:
-        state.count += 1
+        if state.filters_compiled is None or _tf.match(
+            data, filters=state.filters_compiled, options=state.options_compiled
+        ) is not None:
+            state.count += 1
     else:
         # When retrieve_children is False, don't build hierarchy - just add datasets directly
         # This fixes filtering issues where specific datasets get lost in hierarchy building
@@ -1001,7 +993,7 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
 
     # Always recurse when we have filters, even if retrieve_children is False
     # This ensures filtered queries can find child datasets
-    if state.extra.retrieve_children or state.filters:
+    if state.extra.retrieve_children or state.filters_compiled is not None:
         hdl.iter_filesystems(callback=generic_query_callback, state=state)
 
     return True
@@ -1064,10 +1056,20 @@ def generic_query(
     # parse query-options
     options, select, order_by = validate_options(options_in)
 
+    cf = CF_EMPTY if not filters_in else compile_filters(filters_in)
+    co = _tf.compile_options(
+        get=options.get('get', False),
+        count=options.get('count', False),
+        select=list(select) if select else None,
+        order_by=list(order_by) if order_by else None,
+        offset=options.get('offset', 0),
+        limit=options.get('limit', 0),
+    )
+
     # set up callback state
     state = QueryFiltersCallbackState(
-        filters=filters_in,
-        select=select,
+        filters_compiled=cf if filters_in else None,
+        options_compiled=co if filters_in else None,
         count_only=options["count"],
         extra=ExtraArgs(
             flat=extra.get("flat", True),
@@ -1090,43 +1092,14 @@ def generic_query(
     if options["count"]:
         return state.count
 
-    # Apply filtering - we need to filter on a flat structure regardless of final output format
-    if state.filters:
-        # Always flatten for filtering to ensure we can find nested datasets
-        flat_for_filtering = _flatten_hierarchy(state.results)
-        filtered_flat = state.filter_fn(
-            flat_for_filtering, filters=state.filters, options={}
-        )
+    # Always flatten before filtering; hierarchy is not supported with filters applied
+    flat = _flatten_hierarchy(state.results) if state.extra.flat or filters_in else state.results
 
-        # If we want flat output, use the filtered flat results
-        if state.extra.flat:
-            state.results = filtered_flat
-        else:
-            # If we want hierarchical output, rebuild hierarchy from filtered results
-            # For now, when flat=False with filters, return the filtered items as a flat list
-            # This matches the behavior when specific datasets are requested
-            state.results = filtered_flat
-    else:
-        # No filtering needed, apply flattening if requested
-        if state.extra.flat:
-            state.results = _flatten_hierarchy(state.results)
-
-    if order_by:
-        state.results = do_order(state.results, order_by)
-
-    # Apply selection AFTER all business logic (hierarchy, filtering, ordering)
-    if select:
-        state.results = do_select(state.results, select)
-
-    if options["get"]:
-        if not state.results:
+    rv = _tf.tnfilter(flat, filters=cf, options=co)
+    if isinstance(rv, int):
+        return rv
+    if options.get('get'):
+        if not rv:
             raise MatchNotFound()
-        return state.results[0]
-
-    if offset := options.get("offset", 0):
-        state.results = state.results[offset:]
-
-    if limit := options.get("limit", 0):
-        state.results = state.results[:limit]
-
-    return state.results
+        return rv[0]
+    return rv

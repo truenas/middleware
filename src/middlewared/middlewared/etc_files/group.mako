@@ -15,7 +15,7 @@
 
     def order_groups():
         groups = []
-        filtered = filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'group', 'gid']})
+        filtered = filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'gid', 'group']})
         idx = 0
         while idx < len(filtered):
             this_entry = filtered[idx]
