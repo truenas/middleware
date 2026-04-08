@@ -7,7 +7,7 @@
 [logging]
 
 	location = syslog:nonblocking
-	log level = NOTICE
+	log level = WARNING
 
 
 [cluster]
