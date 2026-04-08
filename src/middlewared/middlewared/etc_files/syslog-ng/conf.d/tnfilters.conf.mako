@@ -44,6 +44,10 @@ filter f_tnremote {
 filter f_nfs_mountd {
   program("rpc.mountd") and level(debug..notice);
 };
+filter f_ctdb {
+  program("ctdbd") or
+  program("ctdb-recoverd");
+};
 filter f_scst {
   program("iscsi-scstd") or
   program("scst") or
@@ -65,6 +69,7 @@ filter f_truenas_exclude {
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
+  not filter(f_ctdb) and
   not filter(f_scst);
 };
 

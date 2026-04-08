@@ -130,6 +130,13 @@ ${generate_syslog_remote_destination(server, 'loghost' + str(i))}
 ########################
 log {
   source(s_src);
+  filter(f_ctdb);
+  destination { file("/var/log/ctdb/ctdb.log" create-dirs(yes)); };
+  flags(final);
+};
+
+log {
+  source(s_src);
   filter(f_scst);
   destination { file("/var/log/scst.log"); };
   flags(final);
