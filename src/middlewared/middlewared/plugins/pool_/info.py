@@ -86,34 +86,30 @@ class PoolService(Service):
         Queries the database for the pool matching the given `id` and
         resolves each vdev, cache, log, special, dedup, and spare device
         to its whole-disk device name (e.g. sda, nvme0n1). If `id` is
-        not provided, disks for all pools in the database are returned.
+        not provided, disks for all imported pools in the database are
+        returned. Pools that are not currently imported are skipped.
 
-        Raises a `ValidationError` if no pool matches the given `id` or
-        if the pool is not currently imported.
+        Raises a `ValidationError` if `id` is provided but does not
+        match any pool in the database.
         """
         filters = list() if not oid else [['id', '=', oid]]
         pools = self.middleware.call_sync(
             'datastore.query', 'storage.volume', filters
         )
-        disks = list()
         if not pools and oid:
             raise ValidationError(
                 'pool.get_disks',
                 f'pool with database id {oid!r} does not exist',
                 errno.ENOENT
             )
-            return disks
 
+        disks = list()
         for i in pools:
             try:
                 disks.extend(get_zpool_disks_impl(tls.lzh, i['vol_name']))
             except ZFSException as e:
                 if e.code == ZFSError.EZFS_NOENT:
-                    raise ValidationError(
-                        'pool.get_disks',
-                        f'pool {i["vol_name"]!r} is not imported',
-                        errno.ENOENT
-                    )
+                    continue
                 raise
         return disks
 
@@ -143,9 +139,11 @@ class PoolService(Service):
         Queries the database for the pool matching the given `id`, then
         checks each ZFS feature flag on the pool. Returns `true` only
         when every feature flag is in the ENABLED or ACTIVE state.
+        Returns `false` if the pool is not currently imported or if
+        the feature flags cannot be read for any reason.
 
-        Raises a `ValidationError` if no pool matches the given `id` or
-        if the pool is not currently imported.
+        Raises a `ValidationError` if `id` does not match any pool in
+        the database.
         """
         pool = self.middleware.call_sync(
             'datastore.query', 'storage.volume', [['id', '=', oid]]
@@ -158,18 +156,10 @@ class PoolService(Service):
             )
 
         pname = pool[0]['vol_name']
-        is_upgraded = True
         try:
             for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
                 if info.state not in ('ENABLED', 'ACTIVE'):
-                    is_upgraded = False
-                    break
-        except ZFSException as e:
-            if e.code == ZFSError.EZFS_NOENT:
-                raise ValidationError(
-                    'pool.is_upgraded',
-                    f'pool {pname!r} is not imported',
-                    errno.ENOENT
-                )
-            raise
-        return is_upgraded
+                    return False
+        except Exception:
+            return False
+        return True
