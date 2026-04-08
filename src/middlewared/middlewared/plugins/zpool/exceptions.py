@@ -1,6 +1,7 @@
 import errno
 
 __all__ = (
+    "ZpoolException",
     "ZpoolNotFoundException",
     "ZpoolPoolUnhealthyException",
     "ZpoolScanInvalidActionException",
