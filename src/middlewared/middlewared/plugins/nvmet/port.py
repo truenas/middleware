@@ -412,7 +412,7 @@ class NVMetPortService(CRUDService):
                             try:
                                 addr = vlan['aliases'][0]['address']
                                 if addr:
-                                    choices[addr] = f'{addr}/{addr}'
+                                    choices[addr] = addr
                             except (KeyError, IndexError):
                                 pass
 
