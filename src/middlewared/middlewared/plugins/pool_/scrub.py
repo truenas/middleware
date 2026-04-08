@@ -265,9 +265,8 @@ class PoolScrubService(CRUDService):
         Raises ScrubError for expected pool problems (-> ScrubNotStartedAlert).
         """
         if name != self.middleware.call_sync('boot.pool_name'):
-            if self.middleware.call_sync('failover.licensed'):
-                if self.middleware.call_sync('failover.status') == 'BACKUP':
-                    return False
+            if not self.middleware.call_sync('failover.is_single_master_node'):
+                return False
 
             if not self.middleware.call_sync('datastore.query', 'storage.volume', [['vol_name', '=', name]]):
                 raise ValidationError(
