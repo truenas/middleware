@@ -20,6 +20,9 @@ LOCKFILE = os.path.join(CTDB_DATA_DIR, '.reclock')
 ERROR_OCCURRED = 3
 CONTENTION = 1
 HOLDING = 0
+POLL_TIMEOUT_MS = 1000
+
+_terminate = False
 
 
 def has_sysdataset_pool():
@@ -49,10 +52,9 @@ def block_while_has_sysdataset():
                 poller = select.poll()
                 poller.register(f, select.POLLERR | select.POLLPRI)
                 write_stdout(HOLDING)
-                while True:
-                    # Block until the kernel signals a mount table change
-                    poller.poll()  # returns on mount/umount/propagation/etc.
-                    if not has_sysdataset_pool():
+                while not _terminate:
+                    poller.poll(POLL_TIMEOUT_MS)
+                    if _terminate or not has_sysdataset_pool():
                         break
 
             finally:
@@ -60,11 +62,12 @@ def block_while_has_sysdataset():
 
 
 def sigterm_handler(signum, frame):
-    sys.exit(1)
+    global _terminate
+    _terminate = True
 
 
 def main():
-    if os.getppid == 1:
+    if os.getppid() == 1:
         write_stderr("Unexpected ppid of 1")
         sys.exit(1)
 
@@ -93,7 +96,8 @@ def main():
                 write_stdout(ERROR_OCCURRED)
                 exit_code = 1
             else:
-                write_stdout(CONTENTION)
+                if not _terminate:
+                    write_stdout(CONTENTION)
                 exit_code = 0
         else:
             write_stdout(CONTENTION)
