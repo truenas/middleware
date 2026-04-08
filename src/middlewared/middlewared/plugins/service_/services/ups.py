@@ -10,14 +10,15 @@ class UPSService(SimpleService):
 
     async def check_configuration(self):
         config = await self.middleware.call("ups.config")
+        prefix = "UPS service cannot start:"
         if config.mode == "MASTER":
             if not config.driver:
-                raise CallError("UPS service cannot start: driver is required for MASTER mode")
+                raise CallError(f"{prefix} driver is required for MASTER mode")
             if not config.port:
-                raise CallError("UPS service cannot start: port is required for MASTER mode")
+                raise CallError(f"{prefix} port is required for MASTER mode")
         else:
             if not config.remotehost:
-                raise CallError("UPS service cannot start: remote host is required for SLAVE mode")
+                raise CallError(f"{prefix} remote host is required for SLAVE mode")
 
     async def systemd_extra_units(self):
         if (await self.middleware.call("ups.config")).mode == "MASTER":
