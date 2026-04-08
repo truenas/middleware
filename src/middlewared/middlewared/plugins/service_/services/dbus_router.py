@@ -26,6 +26,7 @@ class ServiceActionError(Exception):
         self.detail = detail
         super().__init__(f"{unit} {action}: {detail}")
 
+
 logger = logging.getLogger(__name__)
 
 _UNIT_SUFFIXES = (
