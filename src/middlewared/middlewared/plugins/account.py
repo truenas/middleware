@@ -1634,10 +1634,11 @@ class UserService(CRUDService):
 
                 entry = existing_groups.get(dbid)
                 if entry and entry['bsdgrp_builtin'] and entry['bsdgrp_gid'] not in ALLOWED_BUILTIN_GIDS:
-                    verrors.add(
-                        f'{schema}.groups.{idx}',
-                        f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
-                    )
+                    if not old or dbid not in old.get('groups', []):
+                        verrors.add(
+                            f'{schema}.groups.{idx}',
+                            f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
+                        )
 
         # Root user restrictions
         if old and old['uid'] == 0:  # Root user being updated
