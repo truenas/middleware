@@ -405,6 +405,7 @@ class FailoverService(ConfigService):
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
         self.send_small_file('/root/.ssh/authorized_keys')
         self.send_small_file(ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
+        self.send_small_file('/data/subsystems/snmp/truenas_pysnmp.conf')
         self.middleware.call_sync('failover.call_remote', 'failover.zpool.cachefile.setup', ['SYNC'])
 
         self.middleware.call_sync(
