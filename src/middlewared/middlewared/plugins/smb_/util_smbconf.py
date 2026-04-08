@@ -379,7 +379,7 @@ def generate_smb_conf_dict(
 ):
     guest_enabled = bool(_tf.tnfilter(smb_shares, filters=_GUESTOK_FILTER, options=_SHARES_GET_OPTS))
     fsrvp_enabled = bool(_tf.tnfilter(smb_shares, filters=_FSRVP_FILTER, options=_SHARES_GET_OPTS))
-    if ds_config['service_type']:
+    if ds_config['service_type'] and ds_config['enable']:
         ds_type = DSType(ds_config['service_type'])
     else:
         ds_type = None
