@@ -62,6 +62,8 @@ class ZPoolCreate(BaseModel):
     """Pool properties passed directly to ZFS (e.g. ``{"ashift": "12"}``)."""
     fsoptions: dict[str, str] = {}
     """Root dataset properties passed directly to ZFS (e.g. ``{"compression": "lz4"}``)."""
+    allow_duplicate_serials: bool = False
+    """Whether to allow disks with duplicate serial numbers."""
 
 
 class ZPoolCreateArgs(BaseModel):

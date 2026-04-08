@@ -1,3 +1,4 @@
+import errno
 import os
 import time
 import threading
@@ -5,10 +6,64 @@ import typing
 
 import truenas_pylibzfs
 
+from middlewared.service import ValidationErrors
+
 __all__ = ("create_impl",)
 
 _PARTUUID_DIR = "/dev/disk/by-partuuid"
 _VDEV_GROUPS = ("data", "cache", "log", "special", "dedup")
+
+
+def _validate(
+    lzh: typing.Any,
+    middleware: typing.Any,
+    data: dict,
+) -> None:
+    """Pre-format validation: pool name, disk availability, DRAID+spares."""
+    verrors = ValidationErrors()
+    name = data["name"]
+    topology = data["topology"]
+
+    # Pool name format
+    if not truenas_pylibzfs.name_is_valid(
+        name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_POOL
+    ):
+        verrors.add("zpool_create.name", "Invalid pool name", errno.EINVAL)
+
+    # Pool name uniqueness (only check if format is valid)
+    if not verrors:
+        try:
+            lzh.open_pool(name=name)
+        except truenas_pylibzfs.ZFSException:
+            pass  # Pool does not exist — good
+        else:
+            verrors.add(
+                "zpool_create.name",
+                "A pool with this name already exists.",
+                errno.EEXIST,
+            )
+
+    # Disk availability
+    disk_names = _collect_disk_names(topology)
+    if disk_names:
+        disk_verrors = middleware.call_sync(
+            "disk.check_disks_availability",
+            disk_names,
+            data.get("allow_duplicate_serials", False),
+        )
+        verrors.extend(disk_verrors)
+
+    # DRAID + dedicated spares
+    has_draid = any(
+        vdev["type"].startswith("DRAID") for vdev in topology.get("data") or []
+    )
+    if has_draid and topology.get("spares"):
+        verrors.add(
+            "zpool_create.topology.spares",
+            "Dedicated spare disks should not be used with dRAID.",
+        )
+
+    verrors.check()
 
 
 def _collect_disk_names(topology: dict) -> list[str]:
@@ -146,6 +201,8 @@ def create_impl(
         job: Job object for progress reporting.
         data: Validated ZPoolCreate dict.
     """
+    _validate(lzh, middleware, data)
+
     topology = data["topology"]
     disk_to_path = _format_disks(middleware, job, topology)
     spare_vdevs = None
@@ -165,3 +222,4 @@ def create_impl(
         properties=data.get("properties") or None,
         filesystem_properties=data.get("fsoptions") or None,
     )
+    job.set_progress(100, "ZFS pool created successfully")

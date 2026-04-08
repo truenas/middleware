@@ -1,15 +1,24 @@
+from __future__ import annotations
+
 import threading
+from typing import TYPE_CHECKING
+
+import truenas_pylibzfs
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZPoolCreate,
     ZPoolCreateArgs,
     ZPoolCreateResult,
     ZPoolEntry,
     ZPoolQueryArgs,
     ZPoolQueryResult,
 )
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
 from middlewared.service.decorators import pass_thread_local_storage
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 from .create_impl import create_impl
 from .query_impl import query_impl
@@ -34,10 +43,13 @@ class ZPoolService(Service):
         ZPoolCreateArgs,
         ZPoolCreateResult,
         roles=["POOL_WRITE"],
+        audit="ZPool create",
+        audit_extended=lambda data: data["name"],
+        check_annotations=True,
     )
     @pass_thread_local_storage
-    @job()
-    def create(self, job, tls: threading.local, data: dict) -> None:
+    @job(lock="pool_createupdate")
+    def create(self, job: Job, tls: threading.local, data: ZPoolCreate) -> None:
         """
         Create a ZFS pool.
 
@@ -66,7 +78,12 @@ class ZPoolService(Service):
                 "fsoptions": {"compression": "lz4"}
             }
         """
-        create_impl(tls.lzh, self.middleware, job, data)
+        try:
+            create_impl(tls.lzh, self.middleware, job, data.model_dump())
+        except truenas_pylibzfs.ZFSException as e:
+            raise CallError(f"Failed to create ZFS pool {data.name!r}: {e}") from e
+        except (ValueError, OSError) as e:
+            raise CallError(str(e)) from e
 
     @private
     def offline_entries(self, db_pools, offline_names):
