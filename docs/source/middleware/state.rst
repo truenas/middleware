@@ -16,7 +16,7 @@ created during installation and upgrade).
 Volatile state
 **************
 
-Volatile middleware state is stored in the middleware run directory `/var/run/middleware`.
+Volatile middleware state is stored in the middleware run directory `/run/middleware`.
 The expected permissions on the volatile state directory are 0o755. This is typically where
 sentinel files should be placed. This is defined by `MIDDLEWARE_RUN_DIR` in `middlewared/utils`.
 
