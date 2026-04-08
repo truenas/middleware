@@ -131,11 +131,24 @@ class SMBService(ConfigService):
         smb_config = self.middleware.call_sync('smb.config')
         if self.middleware.call_sync('failover.is_single_master_node'):
             smb_shares = self.middleware.call_sync('sharing.smb.query', [
-                [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
+                [share_field.ENABLED, '=', True]
             ])
         else:
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
+
+        # Skip locked shares and generate alerts for them
+        active_shares = []
+        for share in smb_shares:
+            if share[share_field.LOCKED]:
+                self.logger.debug(
+                    'Skipping generation of share %r as the underlying resource is locked',
+                    share[share_field.NAME]
+                )
+                self.middleware.call_sync('sharing.smb.generate_locked_alert', share['id'])
+                continue
+            active_shares.append(share)
+        smb_shares = active_shares
 
         ds_config = self.middleware.call_sync('directoryservices.config')
         if ds_config['enable'] and ds_config['service_type'] == 'IPA':
@@ -728,6 +741,10 @@ class SharingSMBService(SharingService):
         cli_namespace = 'sharing.smb'
         role_prefix = 'SHARING_SMB'
         entry = SharingSMBEntry
+
+    @private
+    async def human_identifier(self, share_task):
+        return share_task[share_field.NAME]
 
     @api_method(
         SharingSMBCreateArgs, SharingSMBCreateResult,
@@ -1788,6 +1805,8 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def stop(self, attachments):
         for share in attachments:
             await self.middleware.call('sharing.smb.close_share', share[share_field.NAME])
+        if attachments:
+            await self.restart_reload_services(attachments)
 
     async def restart_reload_services(self, attachments):
         """
@@ -1849,5 +1868,4 @@ async def setup(middleware):
     await middleware.run_in_thread(create_samba_directories, middleware)
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
-    middleware.register_hook('dataset.post_unlock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
