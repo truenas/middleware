@@ -13,6 +13,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
+from middlewared.plugins.service_.services.dbus_router import ServiceActionError
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
 from middlewared.service import filterable_api_method, CallError, CRUDService, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
@@ -182,7 +183,10 @@ class ServiceService(CRUDService):
                     raise
 
                 await service_object.before_start()
-                await service_object.start()
+                try:
+                    await service_object.start()
+                except ServiceActionError as e:
+                    self.logger.warning('%s: %s', service, e)
                 state = await service_object.get_state()
                 if state.running:
                     await service_object.after_start()
@@ -290,7 +294,10 @@ class ServiceService(CRUDService):
     async def _restart(self, service, service_object):
         if service_object.restartable:
             await service_object.before_restart()
-            await service_object.restart()
+            try:
+                await service_object.restart()
+            except ServiceActionError as e:
+                self.logger.warning('%s: %s', service, e)
             await service_object.after_restart()
 
             state = await service_object.get_state()
@@ -312,7 +319,10 @@ class ServiceService(CRUDService):
                 self.logger.error("Service %r running after restart-caused stop", service)
 
             await service_object.before_start()
-            await service_object.start()
+            try:
+                await service_object.start()
+            except ServiceActionError as e:
+                self.logger.warning('%s: %s', service, e)
             state = await service_object.get_state()
             if not state.running:
                 await self.middleware.call('service.notify_running', service)
@@ -349,7 +359,10 @@ class ServiceService(CRUDService):
 
                 if service_object.reloadable:
                     await service_object.before_reload()
-                    await service_object.reload()
+                    try:
+                        await service_object.reload()
+                    except ServiceActionError as e:
+                        self.logger.warning('%s: %s', service, e)
                     await service_object.after_reload()
 
                     state = await service_object.get_state()
