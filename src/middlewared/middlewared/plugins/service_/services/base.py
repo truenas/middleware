@@ -51,23 +51,27 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def identify(self, procname):
         pass
 
-    async def failure_logs(self):
+    async def get_failed_sub_units(self):
         unit_name = self._get_systemd_unit_name()
+        try:
+            wants_tree = await system_dbus.get_wants_tree(unit_name)
+            return await system_dbus.get_failed_units(wants_tree)
+        except Exception:
+            logger.debug("Failed to walk Wants tree for %s", unit_name, exc_info=True)
+            return {}
 
+    async def failure_logs(self, failed_units=None):
         # Walk the Wants dependency tree and find failed/crash-looping units.
         # This catches sub-unit failures (e.g. nut-driver@ups crash-looping
         # under nut-monitor) that the main unit's logs wouldn't show.
-        try:
-            wants_tree = await system_dbus.get_wants_tree(unit_name)
-            failed_units = await system_dbus.get_failed_units(wants_tree)
-        except Exception:
-            logger.debug("Failed to walk Wants tree for %s", unit_name, exc_info=True)
-            failed_units = {}
+        if failed_units is None:
+            failed_units = await self.get_failed_sub_units()
 
         if failed_units:
             units_info = list(failed_units.items())
         else:
             # Fall back to querying the main unit (original behavior)
+            unit_name = self._get_systemd_unit_name()
             monotonic_ts = await system_dbus.get_inactive_exit_timestamp(unit_name)
             units_info = [(unit_name, ("unknown", monotonic_ts))]
 
