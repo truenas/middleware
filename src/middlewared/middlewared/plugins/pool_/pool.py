@@ -10,10 +10,12 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
     PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
-    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult,
+    ZPoolCreate, ZPoolCreateTopology,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
+from middlewared.plugins.zpool.create_impl import create_impl
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
@@ -409,9 +411,13 @@ class PoolService(CRUDService):
 
         return verrors
 
-    @api_method(PoolCreateArgs, PoolCreateResult, audit='Pool create', audit_extended=lambda data: data['name'])
+    @api_method(
+        PoolCreateArgs, PoolCreateResult,
+        audit='Pool create', audit_extended=lambda data: data['name'],
+        pass_thread_local_storage=True,
+    )
     @job(lock='pool_createupdate')
-    async def do_create(self, job, data):
+    def do_create(self, job, tls, data):
         """
         Create a new ZFS Pool.
 
@@ -445,12 +451,12 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        if await self.middleware.call('pool.query', [('name', '=', data['name'])]):
+        if self.middleware.call_sync('pool.query', [('name', '=', data['name'])]):
             verrors.add('pool_create.name', 'A pool with this name already exists.', errno.EEXIST)
         elif not validate_pool_name(data['name']):
             verrors.add('pool_create.name', 'Invalid pool name', errno.EINVAL)
 
-        encryption_dict = await self.middleware.call(
+        encryption_dict = self.middleware.call_sync(
             'pool.dataset.validate_encryption_data', None, verrors, {
                 'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
             }, 'pool_create.encryption_options',
@@ -458,15 +464,57 @@ class PoolService(CRUDService):
 
         dedup_table_quota_value = None
         if data['deduplication'] == 'ON':
-            dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors)
+            dedup_table_quota_value = self.middleware.call_sync(
+                'pool.validate_dedup_table_quota', data, verrors,
+            )
+
+        # Disk availability
+        all_disks = []
+        for group in ('data', 'cache', 'log', 'special', 'dedup'):
+            for vdev in data['topology'].get(group) or []:
+                all_disks.extend(vdev['disks'])
+        all_disks.extend(data['topology'].get('spares') or [])
+        if all_disks:
+            verrors.add_child(
+                'pool_create',
+                self.middleware.call_sync(
+                    'disk.check_disks_availability', all_disks,
+                    data.get('allow_duplicate_serials', False),
+                ),
+            )
+
+        # Spare size >= smallest data disk
+        if not verrors and data['topology'].get('spares'):
+            disks_cache = {e.name: e.size_bytes for e in self.middleware.call_sync('disk.get_disks', all_disks)}
+            data_disks = sum([vdev['disks'] for vdev in data['topology'].get('data', [])], [])
+            if data_disks:
+                min_data_size = min(disks_cache[d] for d in data_disks if d in disks_cache)
+                for spare_disk in data['topology']['spares']:
+                    spare_size = disks_cache.get(spare_disk, 0)
+                    if spare_size < min_data_size:
+                        verrors.add(
+                            'pool_create.topology',
+                            f'Spare {spare_disk} ({format_size(spare_size)}) is smaller than the smallest '
+                            f'data disk ({format_size(min_data_size)})'
+                        )
+
+        # DRAID + dedicated spares
+        has_draid = any(
+            vdev['type'].startswith('DRAID') for vdev in data['topology'].get('data') or []
+        )
+        if has_draid and data['topology'].get('spares'):
+            verrors.add(
+                'pool_create.topology.spares',
+                'Dedicated spare disks should not be used with dRAID.',
+            )
 
         verrors.check()
 
-        is_ha = await self.middleware.call('failover.licensed')
-        if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
+        is_ha = self.middleware.call_sync('failover.licensed')
+        if is_ha and (rc := self.middleware.call_sync('failover.fenced.start')):
             if rc == FencedExitCodes.ALREADY_RUNNING.value[0]:
                 try:
-                    await self.middleware.call('failover.fenced.signal', {'reload': True})
+                    self.middleware.call_sync('failover.fenced.signal', {'reload': True})
                 except Exception:
                     self.logger.error('Unhandled exception reloading fenced', exc_info=True)
             else:
@@ -475,23 +523,26 @@ class PoolService(CRUDService):
                     err = i.value[1]
                 raise CallError(err)
 
-        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
+        # SED disk setup
+        if data['all_sed']:
+            self.middleware.call_sync(
+                'disk.setup_sed_disks_for_pool', all_disks, 'pool_create.topology', True
+            )
 
-        if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
+        # Overprovision log disks
+        if osize := self.middleware.call_sync('system.advanced.config')['overprovision']:
             if log_disks := {disk: osize
                              for disk in sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])}:
-                # will log errors if there are any so it won't crash here (this matches CORE behavior)
-                await (await self.middleware.call('disk.resize', log_disks, True)).wait()
+                self.middleware.call_sync('disk.resize', log_disks, True).wait()
 
-        await self.middleware.call('pool.format_disks', job, disks, 0, 30)
-
-        options = {
+        # Build pool and filesystem properties
+        properties = {
             'feature@lz4_compress': 'enabled',
             'altroot': '/mnt',
             'cachefile': ZPOOL_CACHE_FILE,
             'failmode': 'continue',
             'autoexpand': 'on',
-            'ashift': 12,
+            'ashift': '12',
         }
 
         fsoptions = {
@@ -506,8 +557,8 @@ class PoolService(CRUDService):
         }
 
         if any(
-            topology['type'].startswith('DRAID')
-            for topology in data['topology']['data'] + data['topology'].get('special', [])
+            vdev['type'].startswith('DRAID')
+            for vdev in data['topology']['data'] + data['topology'].get('special', [])
         ):
             fsoptions['recordsize'] = '1M'
 
@@ -515,7 +566,7 @@ class PoolService(CRUDService):
         if dedup:
             fsoptions['dedup'] = dedup.lower()
         if dedup_table_quota_value is not None:
-            options['dedup_table_quota'] = dedup_table_quota_value
+            properties['dedup_table_quota'] = str(dedup_table_quota_value)
 
         if data['checksum'] is not None:
             fsoptions['checksum'] = data['checksum'].lower()
@@ -524,37 +575,38 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
+        # Format disks and create pool via truenas_pylibzfs
+        zpool_data = ZPoolCreate(
+            name=data['name'],
+            topology=ZPoolCreateTopology(**data['topology']),
+            properties=properties,
+            fsoptions=fsoptions,
+        )
+
         pool_id = z_pool = encrypted_dataset_pk = None
         try:
-            job.set_progress(90, 'Creating ZFS Pool')
-
-            await self.middleware.call('zfs.pool.create', {
-                'name': data['name'],
-                'vdevs': vdevs,
-                'options': options,
-                'fsoptions': fsoptions,
-            })
+            create_impl(self.middleware, job, tls.lzh, zpool_data, skip_validate=True)
 
             job.set_progress(95, 'Setting pool options')
 
-            z_pool = (await self.middleware.call(
+            z_pool = self.middleware.call_sync(
                 'zpool.query_impl', {'pool_names': [data['name']]}
-            ))[0]
+            )[0]
 
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'pool.dataset.update_impl',
                 UpdateImplArgs(name=data['name'], iprops={'mountpoint'})
             )
-            await self.call2(self.s.zfs.resource.mount, data['name'])
+            self.call_sync2(self.s.zfs.resource.mount, data['name'])
 
             pool = {
                 'name': data['name'],
                 'guid': str(z_pool['guid']),
                 'all_sed': data['all_sed'],
             }
-            pool_id = await self.middleware.call(
+            pool_id = self.middleware.call_sync(
                 'datastore.insert',
                 'storage.volume',
                 pool,
@@ -565,22 +617,24 @@ class PoolService(CRUDService):
                 'name': data['name'], 'encryption_key': encryption_dict.get('key'),
                 'key_format': encryption_dict.get('keyformat')
             }
-            encrypted_dataset_pk = await self.middleware.call(
+            encrypted_dataset_pk = self.middleware.call_sync(
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-            await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
+            self.middleware.call_sync(
+                'datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'}
+            )
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
             self.logger.debug('Pool %s failed to create with topology %s', data['name'], data['topology'])
             if z_pool:
                 try:
-                    await self.middleware.call('zfs.pool.delete', data['name'])
+                    tls.lzh.destroy_pool(name=data['name'])
                 except Exception:
                     self.logger.warning('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
-                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+                self.middleware.call_sync('datastore.delete', 'storage.volume', pool_id)
             if encrypted_dataset_pk:
-                await self.middleware.call(
+                self.middleware.call_sync(
                     'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
                 )
             raise e
@@ -589,10 +643,10 @@ class PoolService(CRUDService):
         # in background.
         self.middleware.create_task(self.middleware.call('pool.restart_services'))
 
-        pool = await self.get_instance(pool_id)
-        await self.middleware.call_hook('pool.post_create', pool=pool)
-        await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
-        await self.middleware.call_hook(
+        pool = self.middleware.call_sync('pool.get_instance', pool_id)
+        self.middleware.call_hook_sync('pool.post_create', pool=pool)
+        self.middleware.call_hook_sync('pool.post_create_or_update', pool=pool)
+        self.middleware.call_hook_sync(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)

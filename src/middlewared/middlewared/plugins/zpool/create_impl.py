@@ -192,6 +192,8 @@ def create_impl(
     job: Job,
     lzh: truenas_pylibzfs.libzfs_types.ZFS,
     data: ZPoolCreate,
+    *,
+    skip_validate: bool = False,
 ) -> None:
     """Format disks and create a ZFS pool.
 
@@ -199,9 +201,13 @@ def create_impl(
         middleware: Middleware instance for calling other services.
         job: Job object for progress reporting.
         lzh: pylibzfs handle (from tls.lzh).
-        data: Validated ZPoolCreate dict.
+        data: Validated ZPoolCreate model.
+        skip_validate: Skip pre-flight validation (pool name, disk availability,
+            DRAID+spares). Set when the caller has already performed its own
+            validation, e.g. ``pool.create``.
     """
-    _validate(middleware, lzh, data)
+    if not skip_validate:
+        _validate(middleware, lzh, data)
 
     topology = data.topology
     disk_to_path = _format_disks(middleware, job, topology)
