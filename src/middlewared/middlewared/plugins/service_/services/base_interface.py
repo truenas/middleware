@@ -69,6 +69,16 @@ class ServiceInterface(CallMixin):
     async def after_reload(self):
         pass
 
+    async def get_failed_sub_units(self):
+        """Return dict of failed/crash-looping units in the dependency tree.
+
+        Returns:
+            ``{unit_name: (active_state, inactive_exit_timestamp_monotonic)}``
+            for every unit whose ``ActiveState`` is ``"failed"`` or whose
+            ``SubState`` indicates crash-looping. Empty dict means healthy.
+        """
+        return {}
+
 
 class IdentifiableServiceInterface:
     async def identify(self, procname):

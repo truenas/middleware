@@ -187,7 +187,7 @@ class ServiceService(CRUDService):
                 except ServiceActionError as e:
                     self.logger.warning('%s: %s', service, e)
                 state = await service_object.get_state()
-                if state.running:
+                if state.running and not await service_object.get_failed_sub_units():
                     await service_object.after_start()
                     await self.middleware.call('service.notify_running', service)
                     if service_object.deprecated:
@@ -305,7 +305,7 @@ class ServiceService(CRUDService):
             await service_object.after_restart()
 
             state = await service_object.get_state()
-            if not state.running:
+            if not state.running or await service_object.get_failed_sub_units():
                 await self.middleware.call('service.notify_running', service)
                 self.logger.error("Service %r not running after restart", service)
                 return False
@@ -328,7 +328,7 @@ class ServiceService(CRUDService):
             except ServiceActionError as e:
                 self.logger.warning('%s: %s', service, e)
             state = await service_object.get_state()
-            if not state.running:
+            if not state.running or await service_object.get_failed_sub_units():
                 await self.middleware.call('service.notify_running', service)
                 self.logger.error("Service %r not running after restart-caused start", service)
                 return False
@@ -370,7 +370,7 @@ class ServiceService(CRUDService):
                     await service_object.after_reload()
 
                     state = await service_object.get_state()
-                    if state.running:
+                    if state.running and not await service_object.get_failed_sub_units():
                         return True
                     else:
                         self.logger.error("Service %r not running after reload", service)
