@@ -296,6 +296,27 @@ class CachedSystemDBusRouter:
         if state in acceptable_states:
             return
 
+        # Oneshot services (e.g. nut-driver-enumerator) go to
+        # ActiveState=inactive after successful completion — this is
+        # normal and should not be treated as a failure.
+        if state == "inactive" and action in ("Start", "Restart"):
+            try:
+                svc_type = await self._get_unit_property(
+                    unit_path,
+                    "org.freedesktop.systemd1.Service",
+                    "Type",
+                )
+                if svc_type == "oneshot":
+                    result = await self._get_unit_property(
+                        unit_path,
+                        "org.freedesktop.systemd1.Service",
+                        "Result",
+                    )
+                    if result == "success":
+                        return
+            except Exception:
+                pass
+
         conditions = await self._get_unit_property(
             unit_path, "org.freedesktop.systemd1.Unit", "Conditions"
         )
