@@ -12,12 +12,12 @@ def check_zvol_in_boot_pool_using_path(zvol_path: str) -> bool:
 
 
 def validate_pool_name(name: str) -> bool:
-    return truenas_pylibzfs.name_is_valid(name, truenas_pylibzfs.ZFSType.ZFS_TYPE_POOL)
+    return truenas_pylibzfs.name_is_valid(name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_POOL)
 
 
 def validate_dataset_name(name: str) -> bool:
-    return truenas_pylibzfs.name_is_valid(name, truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
+    return truenas_pylibzfs.name_is_valid(name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
 
 
 def validate_snapshot_name(name: str) -> bool:
-    return truenas_pylibzfs.name_is_valid(name, truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT)
+    return truenas_pylibzfs.name_is_valid(name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT)
