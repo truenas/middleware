@@ -7,12 +7,13 @@ from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
 from middlewared.api.current import (
     AppCertificate, AppCertificateChoices, AppContainerIDOptions, AppContainerResponse,
-    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, QueryOptions,
+    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, QueryOptions, ZFSResourceQuery,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import ServiceContext
 
 from .crud import query_apps
+from .ix_apps.path import get_app_parent_volume_ds
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
 from .utils import IX_APPS_MOUNT_PATH
@@ -108,3 +109,15 @@ async def get_hostpaths_datasets(context: ServiceContext, app_name: str) -> dict
     ]
 
     return await context.middleware.run_in_thread(paths_to_datasets_impl, host_paths)
+
+
+def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:
+    # This will return volume dataset of app if it exists, otherwise null
+    docker_ds = context.call_sync2(context.s.docker.config).dataset
+    apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
+    rv = context.call_sync2(
+        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
+    )
+    if rv:
+        return rv[0]['name']
+    return None

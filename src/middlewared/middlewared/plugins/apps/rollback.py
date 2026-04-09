@@ -10,6 +10,7 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
+from .resources import get_app_volume_ds
 
 
 class AppService(Service):
@@ -71,7 +72,7 @@ class AppService(Service):
         self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
-                app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
+                app_volume_ds := get_app_volume_ds(self.context, app_name)
             ):
                 snap_name = f'{app_volume_ds}@{options["app_version"]}'
                 if self.call_sync2(self.s.zfs.resource.snapshot.exists, snap_name):

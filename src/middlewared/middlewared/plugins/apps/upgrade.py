@@ -25,7 +25,7 @@ from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
-from .resources import get_hostpaths_datasets
+from .resources import get_hostpaths_datasets, get_app_volume_ds
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
 
@@ -157,7 +157,7 @@ class AppService(Service):
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
-            if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
+            if app_volume_ds := get_app_volume_ds(self.context, app_name):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
                 try:
                     self.call_sync2(self.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
