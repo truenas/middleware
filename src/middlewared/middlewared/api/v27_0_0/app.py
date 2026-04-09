@@ -2,14 +2,14 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_result
 
 from .catalog import CatalogAppInfo
 
 
 __all__ = [
     'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
+    'AppEntry', 'AppCreate', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
@@ -140,8 +140,7 @@ class AppEntry(BaseModel):
     """Current configuration values for the application. `null` if configuration is not requested."""
 
 
-@single_argument_args('app_create')
-class AppCreateArgs(BaseModel):
+class AppCreate(BaseModel):
     custom_app: bool = False
     """Whether to create a custom application (`true`) or install from catalog (`false`)."""
     values: Secret[dict] = Field(default_factory=dict)
@@ -166,6 +165,11 @@ class AppCreateArgs(BaseModel):
     """The catalog train to install from."""
     version: NonEmptyString = Field(default='latest', examples=['latest', '1.2.3'])
     """The version of the application to install."""
+
+
+class AppCreateArgs(BaseModel):
+    app_create: AppCreate
+    """AppCreate parameters."""
 
 
 class AppCreateResult(BaseModel):

@@ -8,6 +8,7 @@ from middlewared.api.current import (
     AppCertificateChoices, AppCertificateChoicesArgs, AppCertificateChoicesResult,
     AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult, AppContainerIDOptions,
     AppContainerIdsArgs, AppContainerIdsResult, AppContainerResponse,
+    AppCreate, AppDelete, AppUpdate,
     AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
     AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
     AppUsedHostIpsArgs, AppUsedHostIpsResult, AppUsedPortsArgs, AppUsedPortsResult,
@@ -20,7 +21,10 @@ from middlewared.api.current import (
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
-from .crud import get_instance as get_app_instance, query_apps, get_app_config
+from .crud import (
+    get_instance as get_app_instance, query_apps, get_app_config,
+    create_app, update_app, delete_app,
+)
 from .custom_app_ops import convert_to_custom_app
 from .metadata import app_metadata_generate
 from .resources import (
@@ -86,13 +90,64 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return query_apps(self.context, filters, options, app)
 
+    @api_method(
+        AppCreateArgs, AppCreateResult,
+        audit='App: Creating',
+        audit_extended=lambda data: data['app_name'],
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True)
+    def do_create(self, job: Job, data: AppCreate) -> AppEntry:
+        """Create an app with `app_name` using `catalog_app` with `train` and `version`."""
+        return create_app(self.context, job, data)
+
+    @api_method(
+        AppUpdateArgs, AppUpdateResult,
+        audit='App: Updating',
+        audit_extended=lambda app_name, data: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_update_{args[0]}')
+    def do_update(self, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
+        """Update `app_name` app with new configuration."""
+        return update_app(self.context, job, app_name, data)
+
+    @api_method(
+        AppDeleteArgs, AppDeleteResult,
+        audit='App: Deleting',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_delete_{args[0]}')
+    def do_delete(self, job: Job, app_name: str, options: AppDelete) -> bool:
+        """
+        Delete `app_name` app.
+
+        `force_remove_ix_volumes` should be set when the ix-volumes were created by the system for apps which were
+        migrated from k8s to docker and the user wants to remove them. This is to prevent accidental deletion of
+        the original ix-volumes which were created in dragonfish and before for kubernetes based apps. When this
+        is set, it will result in the deletion of ix-volumes from both docker based apps and k8s based apps and should
+        be carefully set.
+
+        `force_remove_custom_app` should be set when the app being deleted is a custom app and the user wants to
+        forcefully remove the app. A use-case for this attribute is that user had an invalid yaml in his custom
+        app and there are no actual docker resources (network/containers/volumes) in place for the custom app, then
+        docker compose down will fail as the yaml itself is invalid. In this case this flag can be set to proceed
+        with the deletion of the custom app. However if this app had any docker resources in place, then this flag
+        will have no effect.
+        """
+        return delete_app(self.context, job, app_name, options)
+
     async def get_instance(self, id_: str, options: QueryOptions | None = None) -> AppEntry:
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
         Please see `query` method documentation for `options`.
         """
-        return get_app_instance(self.context, id_, options)
+        return await self.context.to_thread(get_app_instance(self.context, id_, options))
 
     @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'], check_annotations=True)
     async def available_space(self) -> int:
