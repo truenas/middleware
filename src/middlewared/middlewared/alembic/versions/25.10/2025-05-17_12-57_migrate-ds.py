@@ -479,17 +479,16 @@ def upgrade():
     # Migrate from old to new
     ds_migrate()
 
-    # Drop old tables
-    with op.batch_alter_table('directoryservice_ldap', schema=None) as batch_op:
-        batch_op.drop_index('ix_directoryservice_ldap_ldap_certificate_id')
-        batch_op.drop_index('ix_directoryservice_ldap_ldap_kerberos_realm_id')
-
+    # Drop old tables. Use DROP INDEX IF EXISTS because prior batch_alter_table
+    # operations (autoincrement migration, ldap-extend-schema) may have silently
+    # lost indexes during SQLite table recreation.
+    conn = op.get_bind()
+    conn.execute(text('DROP INDEX IF EXISTS ix_directoryservice_ldap_ldap_certificate_id'))
+    conn.execute(text('DROP INDEX IF EXISTS ix_directoryservice_ldap_ldap_kerberos_realm_id'))
     op.drop_table('directoryservice_ldap')
-    with op.batch_alter_table('directoryservice_idmap_domain', schema=None) as batch_op:
-        batch_op.drop_index('ix_directoryservice_idmap_domain_idmap_domain_certificate_id')
 
+    conn.execute(text('DROP INDEX IF EXISTS ix_directoryservice_idmap_domain_idmap_domain_certificate_id'))
     op.drop_table('directoryservice_idmap_domain')
-    with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
-        batch_op.drop_index('ix_directoryservice_activedirectory_ad_kerberos_realm_id')
 
+    conn.execute(text('DROP INDEX IF EXISTS ix_directoryservice_activedirectory_ad_kerberos_realm_id'))
     op.drop_table('directoryservice_activedirectory')
