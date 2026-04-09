@@ -11,6 +11,7 @@ __all__ = (
     "ZPoolCreate",
     "ZPoolCreateArgs",
     "ZPoolCreateResult",
+    "ZPoolCreateDataVdev",
 )
 
 

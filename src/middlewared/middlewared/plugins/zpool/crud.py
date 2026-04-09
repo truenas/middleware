@@ -79,7 +79,7 @@ class ZPoolService(Service):
             }
         """
         try:
-            create_impl(tls.lzh, self.middleware, job, data.model_dump())
+            create_impl(self.middleware, job, tls.lzh, data)
         except truenas_pylibzfs.ZFSException as e:
             raise CallError(f"Failed to create ZFS pool {data.name!r}: {e}") from e
         except (ValueError, OSError) as e:
