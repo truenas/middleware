@@ -34,61 +34,6 @@ class AppService(CRUDService):
         role_prefix = 'APPS'
         entry = AppEntry
 
-    @filterable_api_method(item=AppEntry, pass_app=True)
-    def query(self, app, filters, options):
-        """
-        Query all apps with `query-filters` and `query-options`.
-
-        `query-options.extra.host_ip` is a string which can be provided to override portal IP address
-        if it is a wildcard.
-
-        `query-options.extra.include_app_schema` is a boolean which can be set to include app schema in the response.
-
-        `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
-        used to install/manage app.
-        """
-        if not self.middleware.call_sync('docker.validate_state', False):
-            return filter_list([], filters, options)
-
-        extra = options.get('extra', {})
-        host_ip = extra.get('host_ip')
-        if not host_ip:
-            try:
-                if app.origin.is_tcp_ip_family:
-                    host_ip = app.origin.loc_addr
-            except AttributeError:
-                pass
-
-        retrieve_app_schema = extra.get('include_app_schema', False)
-        kwargs = {
-            'host_ip': host_ip,
-            'retrieve_config': extra.get('retrieve_config', False),
-            'image_update_cache': self.middleware.call_sync('app.image.op.get_update_cache', True),
-        }
-        if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
-            kwargs['specific_app'] = filters[0][2]
-
-        available_apps_mapping = self.call_sync2(self.s.catalog.train_to_apps_version_mapping)
-
-        apps = list_apps(available_apps_mapping, **kwargs)
-        if not retrieve_app_schema:
-            return filter_list(apps, filters, options)
-
-        questions_context = self.call_sync2(self.s.catalog.get_normalized_questions_context)
-        for app in apps:
-            if app['custom_app']:
-                version_details = get_version_details()
-            else:
-                version_details = self.call_sync2(
-                    self.s.catalog.app_version_details,
-                    get_installed_app_version_path(app['name'], app['version']),
-                    questions_context,
-                )
-
-            app['version_details'] = version_details
-
-        return filter_list(apps, filters, options)
-
     @api_method(AppConfigArgs, AppConfigResult, roles=['APPS_READ'])
     def config(self, app_name):
         """
