@@ -3,10 +3,7 @@ from typing import Any
 
 import yaml
 
-from catalog_reader.library import RE_VERSION  # noqa
-from middlewared.plugins.apps_images.utils import normalize_reference  # noqa
-from middlewared.plugins.apps.schema_construction_utils import CONTEXT_KEY_NAME  # noqa
-from middlewared.plugins.apps.utils import IX_APPS_MOUNT_PATH, PROJECT_PREFIX, run  # noqa
+from middlewared.plugins.apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: I250
 
 
 class AppState(enum.Enum):
@@ -29,7 +26,7 @@ class QuotedStrDumper(yaml.SafeDumper):
     pass
 
 
-def _repr_str(dumper, data: str):
+def _repr_str(dumper: QuotedStrDumper, data: str) -> yaml.ScalarNode:
     if '\n' in data:
         return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
     return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')

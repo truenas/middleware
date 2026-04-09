@@ -1,15 +1,18 @@
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any
+
 from packaging.version import Version
 
+from middlewared.plugins.apps_images.utils import normalize_reference
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 
 from .docker.query import list_resources_by_project
 from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
 from .path import get_app_parent_config_path
-from .utils import AppState, ContainerState, get_app_name_from_project_name, normalize_reference, PROJECT_PREFIX
+from .utils import AppState, ContainerState, get_app_name_from_project_name, PROJECT_PREFIX
 
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
@@ -22,13 +25,13 @@ class VolumeMount:
     mode: str
     type: str
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.source, self.destination, self.type))
 
 
 def upgrade_available_for_app(
     version_mapping: dict[str, dict[str, dict[str, str | None]]],
-    app_metadata: dict,
+    app_metadata: dict[str, Any],
     image_updates_available: bool = False,
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
@@ -69,7 +72,9 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
     return portal_uri.replace('0.0.0.0', host_ip)
 
 
-def get_config_of_app(app_data: dict, collective_config: dict, retrieve_config: bool) -> dict:
+def get_config_of_app(
+    app_data: dict[str, Any], collective_config: dict[str, Any], retrieve_config: bool,
+) -> dict[str, Any]:
     return {
         'config': collective_config.get(app_data['name']) or (
             get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
@@ -86,8 +91,8 @@ def list_apps(
     specific_app: str | None = None,
     host_ip: str | None = None,
     retrieve_config: bool = False,
-    image_update_cache: dict | None = None,
-) -> list[dict]:
+    image_update_cache: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     apps = []
     image_update_cache = image_update_cache or {}
     app_names = set()
@@ -107,7 +112,7 @@ def list_apps(
         # When we stop docker service and start it again - the containers can be in exited
         # state which means we need to account for this.
         state = AppState.STOPPED
-        workload_stats = defaultdict(int)
+        workload_stats: defaultdict[str, int] = defaultdict(int)
         workloads_len = len(workloads['container_details'])
         for container in workloads['container_details']:
             workload_stats[container['state']] += 1
@@ -121,10 +126,10 @@ def list_apps(
         ) and workload_stats[ContainerState.RUNNING.value]:
             state = AppState.RUNNING
 
-        state = state.value
+        state_value: str = state.value
 
         app_metadata = metadata[app_name]
-        active_workloads = get_default_workload_values() if state == 'STOPPED' else workloads
+        active_workloads = get_default_workload_values() if state_value == 'STOPPED' else workloads
         image_updates_available = any(
             image_update_cache.get(normalize_reference(k)['complete_tag']) for k in active_workloads['images']
         )
@@ -135,7 +140,7 @@ def list_apps(
             'name': app_name,
             'id': app_name,
             'active_workloads': active_workloads,
-            'state': state,
+            'state': state_value,
             'upgrade_available': upgrade_available,
             'latest_version': latest_version,
             'action_required': False,
@@ -190,7 +195,7 @@ def list_apps(
     return apps
 
 
-def get_default_workload_values() -> dict:
+def get_default_workload_values() -> dict[str, Any]:
     return {
         'containers': 0,
         'used_ports': [],
@@ -202,7 +207,7 @@ def get_default_workload_values() -> dict:
     }
 
 
-def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
+def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> dict[str, Any]:
     # We are looking for following data points
     # No of containers
     # Used ports

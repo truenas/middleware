@@ -1,6 +1,7 @@
 import os
 import shutil
 import textwrap
+from typing import Any
 
 from middlewared.utils.io import write_if_changed
 
@@ -9,7 +10,7 @@ from .path import get_app_parent_config_path, get_installed_app_version_path
 from .utils import dump_yaml
 
 
-def setup_install_app_dir(app_name: str, app_version_details: dict, custom_app: bool = False):
+def setup_install_app_dir(app_name: str, app_version_details: dict[str, Any], custom_app: bool = False) -> None:
     os.makedirs(os.path.join(get_app_parent_config_path(), app_name, 'versions'), exist_ok=True)
     to_install_app_version = os.path.basename(app_version_details['version'])
     destination = get_installed_app_version_path(app_name, to_install_app_version)
