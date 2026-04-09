@@ -36,27 +36,6 @@ class AppService(CRUDService):
         role_prefix = 'APPS'
         entry = AppEntry
 
-    @api_method(AppConfigArgs, AppConfigResult, roles=['APPS_READ'])
-    def config(self, app_name):
-        """
-        Retrieve user specified configuration of `app_name`.
-        """
-        app = self.get_instance__sync(app_name)
-        return get_current_app_config(app_name, app['version'])
-
-    @api_method(
-        AppConvertToCustomArgs, AppConvertToCustomResult,
-        audit='App: Converting',
-        audit_extended=lambda app_name: f'{app_name} to custom app',
-        roles=['APPS_WRITE']
-    )
-    @job(lock=lambda args: f'app_start_{args[0]}', logs=True)
-    async def convert_to_custom(self, job, app_name):
-        """
-        Convert `app_name` to a custom app.
-        """
-        return self.context.to_thread(convert_to_custom_app(self.context, job, app_name))
-
     @api_method(
         AppCreateArgs, AppCreateResult,
         audit='App: Creating',

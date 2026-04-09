@@ -8,6 +8,7 @@ from middlewared.api.current import AppEntry, QueryOptions
 from middlewared.service import InstanceNotFound, ServiceContext
 from middlewared.utils.filter_list import filter_list
 
+from .ix_apps.lifecycle import get_current_app_config
 from .ix_apps.query import list_apps
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 
@@ -97,3 +98,8 @@ def get_instance(context: ServiceContext, app_name: str, options: QueryOptions |
     if not results:
         raise InstanceNotFound(f'App {app_name} does not exist')
     return results[0]
+
+
+def get_app_config(context: ServiceContext, app_name: str) -> dict[str, Any]:
+    app = get_instance(context, app_name)
+    return get_current_app_config(app_name, app.version)

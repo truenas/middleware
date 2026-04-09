@@ -11,11 +11,17 @@ from middlewared.api.current import (
     AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
     AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
     AppUsedHostIpsArgs, AppUsedHostIpsResult, AppUsedPortsArgs, AppUsedPortsResult,
+    AppConvertToCustomArgs, AppConvertToCustomResult,
+    AppConfigArgs, AppConfigResult,
+    AppCreateArgs, AppCreateResult,
+    AppUpdateArgs, AppUpdateResult,
+    AppDeleteArgs, AppDeleteResult,
     QueryOptions,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
-from .crud import get_instance as get_app_instance, query_apps
+from .crud import get_instance as get_app_instance, query_apps, get_app_config
+from .custom_app_ops import convert_to_custom_app
 from .metadata import app_metadata_generate
 from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
@@ -102,6 +108,13 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await certificate_choices(self.context)
 
+    @api_method(AppConfigArgs, AppConfigResult, roles=['APPS_READ'], check_annotations=True)
+    def config(self, app_name: str) -> dict[str, typing.Any]:
+        """
+        Retrieve user specified configuration of `app_name`.
+        """
+        return get_app_config(self.context, app_name)
+
     @api_method(
         AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
         roles=['APPS_READ'], check_annotations=True,
@@ -118,6 +131,20 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Returns container IDs for `app_name`.
         """
         return await container_ids(self.context, app_name, options)
+
+    @api_method(
+        AppConvertToCustomArgs, AppConvertToCustomResult,
+        audit='App: Converting',
+        audit_extended=lambda app_name: f'{app_name} to custom app',
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_start_{args[0]}', logs=True)
+    def convert_to_custom(self, job: Job, app_name: str) -> AppEntry:
+        """
+        Convert `app_name` to a custom app.
+        """
+        return convert_to_custom_app(self.context, job, app_name)
 
     @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=['APPS_READ'], check_annotations=True)
     async def gpu_choices(self) -> AppGPUResponse:

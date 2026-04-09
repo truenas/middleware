@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
@@ -223,7 +223,7 @@ class AppConfigArgs(BaseModel):
 
 
 class AppConfigResult(BaseModel):
-    result: dict
+    result: dict[str, Any]
     """The current configuration object for the application."""
 
 
