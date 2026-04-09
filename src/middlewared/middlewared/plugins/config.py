@@ -24,6 +24,7 @@ CONFIG_FILES = {
     'admin_authorized_keys': '/home/admin/.ssh/authorized_keys',
     'truenas_admin_authorized_keys': '/home/truenas_admin/.ssh/authorized_keys',
     'root_authorized_keys': '/root/.ssh/authorized_keys',
+    'snmp_engine_id': '/data/subsystems/snmp/truenas_pysnmp.conf',
 }
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
@@ -31,6 +32,7 @@ PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
 ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
 TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
+SNMP_ENGINE_ID_UPLOADED = '/data/snmp_engine_id_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 PWENC_SECRET_NAME = os.path.basename(PWENC_FILE_SECRET)
 CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
@@ -78,6 +80,8 @@ class ConfigService(Service):
                         files['truenas_admin_authorized_keys'] = CONFIG_FILES['truenas_admin_authorized_keys']
                     if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                         files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
+                    if os.path.exists(CONFIG_FILES['snmp_engine_id']):
+                        files['snmp_engine_id'] = CONFIG_FILES['snmp_engine_id']
                     for arcname, path in files.items():
                         tar.add(path, arcname=arcname)
 
@@ -205,6 +209,10 @@ class ConfigService(Service):
                 if i.name == 'root_authorized_keys':
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
+
+                if i.name == 'snmp_engine_id':
+                    shutil.move(abspath, SNMP_ENGINE_ID_UPLOADED)
+                    send_to_remote.append(SNMP_ENGINE_ID_UPLOADED)
 
         job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
@@ -337,6 +345,10 @@ def handle_db_upload_path(middleware):
         else:
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(CONFIG_FILES['root_authorized_keys'])
+
+        if os.path.exists(SNMP_ENGINE_ID_UPLOADED):
+            os.makedirs(os.path.dirname(CONFIG_FILES['snmp_engine_id']), exist_ok=True)
+            shutil.move(SNMP_ENGINE_ID_UPLOADED, CONFIG_FILES['snmp_engine_id'])
 
 
 async def setup(middleware):
