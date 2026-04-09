@@ -39,15 +39,15 @@ def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> A
     )
     # FIXME: Fix above usage
 
-    return create_custom_app(context, {
+    return create_custom_app(context, job, {
         'app_name': app_name,
         'custom_compose_config': rendered_config,
         'conversion': True,
-    }, job)
+    })
 
 
 def create_custom_app(
-    context: ServiceContext, data: dict[str, Any], job: Job | None = None, progress_base: int = 0,
+    context: ServiceContext, job: Job, data: dict[str, Any], progress_base: int = 0,
 ) -> AppEntry:
     compose_config = validate_payload(data, 'app_create')
     app_being_converted = data.get('conversion', False)
@@ -55,8 +55,6 @@ def create_custom_app(
     def update_progress(percentage_done: int, message: str) -> None:
         job.set_progress(int((100 - progress_base) * (percentage_done / 100)) + progress_base, message)
 
-    # For debug purposes
-    job = job or type('dummy_job', (object,), {'set_progress': lambda *args: None})()
     update_progress(25, 'Initial validation completed for custom app creation')
 
     app_name = data['app_name']

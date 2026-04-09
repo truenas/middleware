@@ -16,6 +16,7 @@ from middlewared.service import (
 from middlewared.utils.filter_list import filter_list
 
 from .compose_utils import collect_logs, compose_action
+from .custom_app_ops import convert_to_custom_app, create_custom_app
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
@@ -53,7 +54,7 @@ class AppService(CRUDService):
         """
         Convert `app_name` to a custom app.
         """
-        return await self.middleware.call('app.custom.convert', job, app_name)
+        return self.context.to_thread(convert_to_custom_app(self.context, job, app_name))
 
     @api_method(
         AppCreateArgs, AppCreateResult,
@@ -74,7 +75,7 @@ class AppService(CRUDService):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
 
         if data['custom_app']:
-            return self.middleware.call_sync('app.custom.create', data, job)
+            return create_custom_app(self.context, job, data)
 
         verrors = ValidationErrors()
         if not data.get('catalog_app'):
