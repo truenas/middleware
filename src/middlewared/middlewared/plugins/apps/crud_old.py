@@ -23,7 +23,7 @@ from .ix_apps.metadata import get_collective_metadata, update_app_metadata, upda
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
-from .resources import remove_failed_resources, get_app_volume_ds
+from .resources import remove_failed_resources, get_app_volume_ds, delete_internal_resources
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -251,39 +251,4 @@ class AppService(CRUDService):
         if options['force_remove_custom_app'] and not app_config['custom_app']:
             raise CallError('`force_remove_custom_app` flag is only valid for a custom app', errno=errno.EINVAL)
 
-        return self.delete_internal(job, app_name, app_config, options)
-
-    @private
-    def delete_internal(self, job, app_name, app_config, options):
-        job.set_progress(20, f'Deleting {app_name!r} app')
-        try:
-            compose_action(
-                app_name, app_config['version'], 'down', remove_orphans=True,
-                remove_volumes=True, remove_images=options['remove_images'],
-            )
-        except Exception:
-            # We want to make sure if this fails for a custom app which has no resources deployed, and the explicit
-            # boolean flag is set, we allow the deletion of the app as there really isn't anything which compose down
-            # is going to accomplish as there are no containers/networks/volumes in place for the app
-            if not (
-                app_config.get('custom_app') and options.get('force_remove_custom_app') and all(
-                    app_config.get('active_workloads', {}).get(k, []) == []
-                    for k in ('container_details', 'volumes', 'networks')
-                )
-            ):
-                raise
-
-        # Remove app from metadata first as if someone tries to query filesystem info of the app
-        # where the app resources have been nuked from filesystem, it will error out
-        self.middleware.call_sync('app.metadata.generate', [app_name]).wait_sync(raise_error=True)
-        job.set_progress(80, 'Cleaning up resources')
-        shutil.rmtree(get_installed_app_path(app_name))
-        if options['remove_ix_volumes'] and (apps_volume_ds := get_app_volume_ds(self.context, app_name)):
-            self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
-
-        if options.get('send_event', True):
-            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
-
-        self.middleware.call_sync('app.update_app_upgrade_alert')
-        job.set_progress(100, f'Deleted {app_name!r} app')
-        return True
+        return delete_internal_resources(self.context, app_name, app_config, options, job)

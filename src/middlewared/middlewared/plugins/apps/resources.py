@@ -3,13 +3,13 @@ from __future__ import annotations
 import contextlib
 import shutil
 from collections import defaultdict
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
 from middlewared.api.current import (
-    AppCertificate, AppCertificateChoices, AppContainerIDOptions, AppContainerResponse,
-    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, QueryOptions, ZFSResourceQuery,
+    AppCertificate, AppCertificateChoices, AppContainerIDOptions, AppContainerResponse, AppDelete,
+    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, QueryOptions, ZFSResourceQuery, AppEntry,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import ServiceContext
@@ -20,6 +20,10 @@ from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
 from .utils import IX_APPS_MOUNT_PATH
+
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
 async def container_ids(
@@ -142,3 +146,48 @@ def remove_failed_resources(context: ServiceContext, app_name: str, version: str
 
     context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
     context.middleware.send_event('app.query', 'REMOVED', id=app_name)
+
+
+def delete_internal_resources(
+    context: ServiceContext, app_name: str, app_config: AppEntry, options: AppDelete, job: Job | None = None,
+    send_event: bool = True,
+) -> bool:
+    if job is not None:
+        job.set_progress(20, f'Deleting {app_name!r} app')
+    try:
+        compose_action(
+            app_name, app_config.version, 'down', remove_orphans=True,
+            remove_volumes=True, remove_images=options.remove_images,
+        )
+    except Exception:
+        # We want to make sure if this fails for a custom app which has no resources deployed, and the explicit
+        # boolean flag is set, we allow the deletion of the app as there really isn't anything which compose down
+        # is going to accomplish as there are no containers/networks/volumes in place for the app
+        if not (
+            app_config.custom_app and options.force_remove_custom_app and all(
+                not getattr(app_config.active_workloads, k, [])
+                for k in ('container_details', 'volumes', 'networks')
+            )
+        ):
+            raise
+
+    # Remove app from metadata first as if someone tries to query filesystem info of the app
+    # where the app resources have been nuked from filesystem, it will error out
+    context.call_sync2(context.s.app.metadata_generate, [app_name]).wait_sync(raise_error=True)
+    if job is not None:
+        job.set_progress(80, 'Cleaning up resources')
+
+    shutil.rmtree(get_installed_app_path(app_name))
+
+    if options.remove_ix_volumes and (apps_volume_ds := get_app_volume_ds(context, app_name)):
+        context.call_sync2(context.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
+
+    if send_event:
+        context.middleware.send_event('app.query', 'REMOVED', id=app_name)
+
+    # FIXME: fix this usage
+    context.middleware.call_sync('app.update_app_upgrade_alert')
+    if job is not None:
+        job.set_progress(100, f'Deleted {app_name!r} app')
+
+    return True

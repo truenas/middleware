@@ -4,7 +4,7 @@ from typing import Any, TYPE_CHECKING
 
 from catalog_reader.custom_app import get_version_details
 
-from middlewared.api.current import AppEntry
+from middlewared.api.current import AppEntry, AppDelete
 from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import collect_logs, compose_action
@@ -13,7 +13,7 @@ from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.setup import setup_install_app_dir
-from .resources import remove_failed_resources
+from .resources import remove_failed_resources, delete_internal_resources
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -34,11 +34,9 @@ def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> A
     # Update metadata to reflect that this is a custom app
     # Finally update collective metadata
     job.set_progress(20, "Removing existing app's docker resources")
-    context.middleware.call_sync(
-        'app.delete_internal', type('dummy_job', (object,), {'set_progress': lambda *args: None})(),
-        app_name, app, {'remove_images': False, 'remove_ix_volumes': False, 'send_event': False}
+    delete_internal_resources(
+        context, app_name, app, AppDelete(remove_images=False, remove_ix_volumes=False), None, False,
     )
-    # FIXME: Fix above usage
 
     return create_custom_app(context, job, {
         'app_name': app_name,
