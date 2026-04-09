@@ -8,6 +8,8 @@ from middlewared.api.current import (
 )
 from middlewared.service import GenericCRUDService, job, private
 
+from .crud import AppServicePart
+
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
@@ -28,3 +30,4 @@ class AppService(GenericCRUDService[AppEntry]):
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
+        self._svc_part = AppServicePart(self.context)
