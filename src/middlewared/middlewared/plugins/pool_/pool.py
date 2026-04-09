@@ -1,6 +1,8 @@
+from __future__ import annotations
 import errno
 import os
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import middlewared.sqlalchemy as sa
 
@@ -9,7 +11,7 @@ from fenced.fence import ExitCode as FencedExitCodes
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
-    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
+    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolCreate, PoolUpdateArgs,
     PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult,
     ZPoolCreate, ZPoolCreateTopology,
 )
@@ -17,8 +19,11 @@ from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.plugins.zpool.create_impl import create_impl
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
+if TYPE_CHECKING:
+    from middlewared.main import Job
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
 
@@ -413,11 +418,11 @@ class PoolService(CRUDService):
 
     @api_method(
         PoolCreateArgs, PoolCreateResult,
-        audit='Pool create', audit_extended=lambda data: data['name'],
-        pass_thread_local_storage=True,
+        audit='Pool create', audit_extended=lambda data: data['name'], check_annotations=True,
     )
+    @pass_thread_local_storage
     @job(lock='pool_createupdate')
-    def do_create(self, job, tls, data):
+    def do_create(self, job: Job, tls, data: PoolCreate) -> PoolEntry:
         """
         Create a new ZFS Pool.
 
@@ -451,19 +456,19 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        if self.middleware.call_sync('pool.query', [('name', '=', data['name'])]):
+        if self.middleware.call_sync('pool.query', [('name', '=', data.name)]):
             verrors.add('pool_create.name', 'A pool with this name already exists.', errno.EEXIST)
-        elif not validate_pool_name(data['name']):
+        elif not validate_pool_name(data.name):
             verrors.add('pool_create.name', 'Invalid pool name', errno.EINVAL)
 
         encryption_dict = self.middleware.call_sync(
             'pool.dataset.validate_encryption_data', None, verrors, {
-                'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
+                'enabled': data.encryption, **data.encryption_options.model_dump(), 'key_file': False,
             }, 'pool_create.encryption_options',
         )
 
         dedup_table_quota_value = None
-        if data['deduplication'] == 'ON':
+        if data.deduplication == 'ON':
             dedup_table_quota_value = self.middleware.call_sync(
                 'pool.validate_dedup_table_quota', data, verrors,
             )
