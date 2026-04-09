@@ -4,12 +4,23 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppEntry, QueryOptions,
+    AppAvailableSpaceArgs, AppAvailableSpaceResult,
+    AppCertificateChoices, AppCertificateChoicesArgs, AppCertificateChoicesResult,
+    AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult, AppContainerIDOptions,
+    AppContainerIdsArgs, AppContainerIdsResult, AppContainerResponse,
+    AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
+    AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
+    AppUsedHostIpsArgs, AppUsedHostIpsResult, AppUsedPortsArgs, AppUsedPortsResult,
+    QueryOptions,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
 from .crud import get_instance as get_app_instance, query_apps
 from .metadata import app_metadata_generate
+from .resources import (
+    container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
+    available_space, gpu_choices, gpu_choices_internal, get_hostpaths_datasets,
+)
 
 
 if typing.TYPE_CHECKING:
@@ -76,6 +87,73 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Please see `query` method documentation for `options`.
         """
         return get_app_instance(self.context, id_, options)
+
+    @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'], check_annotations=True)
+    async def available_space(self) -> int:
+        """
+        Returns space available in bytes in the configured apps pool which apps can consume.
+        """
+        return await available_space(self.context)
+
+    @api_method(AppCertificateChoicesArgs, AppCertificateChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    async def certificate_choices(self) -> AppCertificateChoices:
+        """
+        Returns certificates which can be used by applications.
+        """
+        return await certificate_choices(self.context)
+
+    @api_method(
+        AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
+        roles=['APPS_READ'], check_annotations=True,
+    )
+    async def container_console_choices(self, app_name: str) -> AppContainerResponse:
+        """
+        Returns container console choices for `app_name`.
+        """
+        return await container_console_choices(self.context, app_name)
+
+    @api_method(AppContainerIdsArgs, AppContainerIdsResult, roles=['APPS_READ'], check_annotations=True)
+    async def container_ids(self, app_name: str, options: AppContainerIDOptions) -> AppContainerResponse:
+        """
+        Returns container IDs for `app_name`.
+        """
+        return await container_ids(self.context, app_name, options)
+
+    @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    async def gpu_choices(self) -> AppGPUResponse:
+        """
+        Returns GPU choices which can be used by applications.
+        """
+        return await gpu_choices(self.context)
+
+    @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    async def ip_choices(self) -> AppIpChoices:
+        """
+        Returns IP choices which can be used by applications.
+        """
+        return await ip_choices(self.context)
+
+    @api_method(AppUsedHostIpsArgs, AppUsedHostIpsResult, roles=['APPS_READ'], check_annotations=True)
+    async def used_host_ips(self) -> dict[str, list[str]]:
+        """
+        Returns host IPs in use by applications.
+        """
+        return await used_host_ips(self.context)
+
+    @api_method(AppUsedPortsArgs, AppUsedPortsResult, roles=['APPS_READ'], check_annotations=True)
+    async def used_ports(self) -> list[int]:
+        """
+        Returns ports in use by applications.
+        """
+        return await used_ports(self.context)
+
+    @private
+    async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
+        return await gpu_choices_internal(self.context)
+
+    @private
+    async def get_hostpaths_datasets(self, app_name: str) -> dict[str, str]:
+        return await get_hostpaths_datasets(self.context, app_name)
 
     @private
     @job(lock='app_metadata_generate', lock_queue_size=1)
