@@ -10,6 +10,7 @@ from packaging.version import InvalidVersion, Version
 from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
+    AppEntry, AppPullImages,
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
     ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
     AppUpgradeBulkArgs, AppUpgradeBulkResult,
@@ -25,6 +26,7 @@ from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
+from .pull_images import pull_images_internal
 from .resources import get_hostpaths_datasets, get_app_volume_ds
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
@@ -114,7 +116,7 @@ class AppService(Service):
         if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
             job.set_progress(10, 'Pulling app images')
             try:
-                self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
+                pull_images_internal(self.context, app_name, AppEntry(**app), AppPullImages(redeploy=True))
             finally:
                 app = self.middleware.call_sync('app.get_instance', app_name)
                 if app['upgrade_available'] is False or app['custom_app']:

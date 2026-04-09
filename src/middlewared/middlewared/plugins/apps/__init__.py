@@ -11,6 +11,8 @@ from middlewared.api.current import (
     AppCreate, AppDelete, AppUpdate,
     AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
     AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
+    AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult,
+    AppPullImages, AppPullImagesArgs, AppPullImagesResult,
     AppRedeployArgs, AppRedeployResult,
     AppStartArgs, AppStartResult,
     AppStopArgs, AppStopResult,
@@ -30,6 +32,7 @@ from .crud import (
     create_app, update_app, delete_app,
 )
 from .custom_app_ops import convert_to_custom_app
+from .pull_images import outdated_docker_images_for_app, pull_images_for_app
 from .metadata import app_metadata_generate
 from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
@@ -232,6 +235,23 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Returns ports in use by applications.
         """
         return await used_ports(self.context)
+
+    @api_method(AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult, roles=['APPS_READ'], check_annotations=True)
+    def outdated_docker_images(self, app_name: str) -> list[str]:
+        """Returns a list of outdated docker images for the specified app `name`."""
+        return outdated_docker_images_for_app(self.context, app_name)
+
+    @api_method(
+        AppPullImagesArgs, AppPullImagesResult,
+        audit='App: Pulling Images for',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'pull_images_{args[0]}')
+    def pull_images(self, job: Job, app_name: str, options: AppPullImages) -> None:
+        """Pulls docker images for the specified app `name`."""
+        return pull_images_for_app(self.context, job, app_name, options)
 
     @api_method(
         AppRedeployArgs, AppRedeployResult,
