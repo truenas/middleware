@@ -60,11 +60,12 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             logger.debug("Failed to walk Wants tree for %s", unit_name, exc_info=True)
             return {}
 
-    async def failure_logs(self):
+    async def failure_logs(self, failed_units=None):
         # Walk the Wants dependency tree and find failed/crash-looping units.
         # This catches sub-unit failures (e.g. nut-driver@ups crash-looping
         # under nut-monitor) that the main unit's logs wouldn't show.
-        failed_units = await self.get_failed_sub_units()
+        if failed_units is None:
+            failed_units = await self.get_failed_sub_units()
 
         if failed_units:
             units_info = list(failed_units.items())

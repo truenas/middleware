@@ -187,8 +187,10 @@ class ServiceService(CRUDService):
                     await service_object.start()
                 except ServiceActionError as e:
                     self.logger.warning('%s: %s', service, e)
-                state = await service_object.get_state()
-                if state.running and not await service_object.get_failed_sub_units():
+                ok, failed_units = await self._check_service_health(
+                    service, service_object, "start",
+                )
+                if ok:
                     await service_object.after_start()
                     await self.middleware.call('service.notify_running', service)
                     if service_object.deprecated:
@@ -198,12 +200,14 @@ class ServiceService(CRUDService):
                         )
                     return True
 
-                self.logger.error("Service %r not running after start", service)
                 await self.middleware.call('service.notify_running', service)
                 if options['silent']:
                     return False
 
-                raise CallError(await service_object.failure_logs() or 'Service not running after start')
+                raise CallError(
+                    await service_object.failure_logs(failed_units=failed_units)
+                    or 'Service not running after start'
+                )
         except asyncio.TimeoutError:
             if options['silent']:
                 return False
@@ -291,6 +295,28 @@ class ServiceService(CRUDService):
 
             raise CallError('Timed out while restarting the service', errno.ETIMEDOUT)
 
+    async def _check_service_health(self, service, service_object, action):
+        """Check service state and sub-unit health after a start/restart/reload.
+
+        Returns (ok, failed_units) where ok is True if the service is running
+        with no failed dependencies.
+        """
+        state = await service_object.get_state()
+        failed_units = await service_object.get_failed_sub_units()
+        if state.running and not failed_units:
+            return True, failed_units
+
+        if failed_units:
+            self.logger.error(
+                "Service %r has failed dependencies after %s: %s",
+                service,
+                action,
+                ", ".join(failed_units),
+            )
+        else:
+            self.logger.error("Service %r not running after %s", service, action)
+        return False, failed_units
+
     async def _restart(self, service, service_object):
         if service_object.restartable:
             await service_object.before_restart()
@@ -300,10 +326,11 @@ class ServiceService(CRUDService):
                 self.logger.warning('%s: %s', service, e)
             await service_object.after_restart()
 
-            state = await service_object.get_state()
-            if not state.running or await service_object.get_failed_sub_units():
+            ok, failed_units = await self._check_service_health(
+                service, service_object, "restart",
+            )
+            if not ok:
                 await self.middleware.call('service.notify_running', service)
-                self.logger.error("Service %r not running after restart", service)
                 return False
 
         else:
@@ -323,10 +350,11 @@ class ServiceService(CRUDService):
                 await service_object.start()
             except ServiceActionError as e:
                 self.logger.warning('%s: %s', service, e)
-            state = await service_object.get_state()
-            if not state.running or await service_object.get_failed_sub_units():
+            ok, failed_units = await self._check_service_health(
+                service, service_object, "restart",
+            )
+            if not ok:
                 await self.middleware.call('service.notify_running', service)
-                self.logger.error("Service %r not running after restart-caused start", service)
                 return False
 
             await service_object.after_start()
@@ -365,12 +393,10 @@ class ServiceService(CRUDService):
                         self.logger.warning('%s: %s', service, e)
                     await service_object.after_reload()
 
-                    state = await service_object.get_state()
-                    if state.running and not await service_object.get_failed_sub_units():
-                        return True
-                    else:
-                        self.logger.error("Service %r not running after reload", service)
-                        return False
+                    ok, failed_units = await self._check_service_health(
+                        service, service_object, "reload",
+                    )
+                    return ok
                 else:
                     return await self._restart(service, service_object)
         except asyncio.TimeoutError:
