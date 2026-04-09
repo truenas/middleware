@@ -25,6 +25,7 @@ from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
+from .resources import get_hostpaths_datasets
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
 
@@ -43,7 +44,7 @@ class AppService(Service):
     @private
     def take_snapshot_of_hostpath_and_stop_app(self, app, snapshot_hostpath):
         app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
-        host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_info['name'])
+        host_path_mapping = self.context.run_coroutine(get_hostpaths_datasets(self.context, app_info['name']))
         # Stop the app itself before we attempt to take snapshots
         self.middleware.call_sync('app.stop', app_info['name']).wait_sync()
         if not snapshot_hostpath:

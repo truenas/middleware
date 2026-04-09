@@ -19,7 +19,7 @@ from .crud import get_instance as get_app_instance, query_apps
 from .metadata import app_metadata_generate
 from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
-    available_space, gpu_choices, gpu_choices_internal, get_hostpaths_datasets,
+    available_space, gpu_choices, gpu_choices_internal,
 )
 
 
@@ -149,11 +149,8 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
+        # FIXME: This should be removed too
         return await gpu_choices_internal(self.context)
-
-    @private
-    async def get_hostpaths_datasets(self, app_name: str) -> dict[str, str]:
-        return await get_hostpaths_datasets(self.context, app_name)
 
     @private
     @job(lock='app_metadata_generate', lock_queue_size=1)
