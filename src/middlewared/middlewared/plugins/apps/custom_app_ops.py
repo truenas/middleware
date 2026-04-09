@@ -13,6 +13,7 @@ from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.setup import setup_install_app_dir
+from .resources import remove_failed_resources
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -84,8 +85,7 @@ def create_custom_app(
             f'{"converting" if app_being_converted else "installing"} {app_name!r}, cleaning up'
         )
 
-        context.middleware.call_sync('app.remove_failed_resources', app_name, version)
-        # FIXME: fix above usage
+        remove_failed_resources(context, app_name, version)
 
         raise e from None
     else:

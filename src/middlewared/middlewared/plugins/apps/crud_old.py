@@ -23,6 +23,7 @@ from .ix_apps.metadata import get_collective_metadata, update_app_metadata, upda
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
+from .resources import remove_failed_resources, get_app_volume_ds
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -120,7 +121,7 @@ class AppService(CRUDService):
         app_version_details = complete_app_details.versions[version]
         self.call_sync2(self.s.catalog.version_supported_error_check, app_version_details)
 
-        app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
+        app_volume_ds_exists = bool(get_app_volume_ds(self.context, app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = self.middleware.call_sync(
@@ -159,31 +160,13 @@ class AppService(CRUDService):
                 job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n'.encode())
             # We only want to remove app volume ds if it did not exist before the installation
             # and was created during this installation process
-            self.remove_failed_resources(app_name, version, app_volume_ds_exists is False)
+            remove_failed_resources(self.context, app_name, version, app_volume_ds_exists is False)
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             if dry_run is False:
                 job.set_progress(100, f'{app_name!r} installed successfully')
                 return self.get_instance__sync(app_name)
-
-    @private
-    def remove_failed_resources(self, app_name, version, remove_ds=False):
-        apps_volume_ds = self.get_app_volume_ds(app_name) if remove_ds else None
-
-        with contextlib.suppress(Exception):
-            compose_action(app_name, version, 'down', remove_orphans=True)
-
-        shutil.rmtree(get_installed_app_path(app_name), ignore_errors=True)
-
-        if apps_volume_ds and remove_ds:
-            try:
-                self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
-            except Exception:
-                self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
-
-        self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
-        self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
     @api_method(
         AppUpdateArgs, AppUpdateResult,
@@ -295,7 +278,7 @@ class AppService(CRUDService):
         self.middleware.call_sync('app.metadata.generate', [app_name]).wait_sync(raise_error=True)
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
-        if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
+        if options['remove_ix_volumes'] and (apps_volume_ds := get_app_volume_ds(self.context, app_name)):
             self.call_sync2(self.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
 
         if options.get('send_event', True):
@@ -304,14 +287,3 @@ class AppService(CRUDService):
         self.middleware.call_sync('app.update_app_upgrade_alert')
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
-
-    @private
-    def get_app_volume_ds(self, app_name):
-        # This will return volume dataset of app if it exists, otherwise null
-        docker_ds = self.middleware.call_sync('docker.config').dataset
-        apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
-        rv = self.call_sync2(
-            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
-        )
-        if rv:
-            return rv[0]['name']
