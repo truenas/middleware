@@ -485,7 +485,11 @@ class ServiceService(CRUDService):
         try:
             return terminate_pid(pid, timeout)
         except ProcessLookupError:
-            raise ValidationError('terminate_process.pid', f'No such process with PID: {pid}')
+            raise ValidationError(
+                'terminate_process.pid',
+                f'No such process with PID: {pid}',
+                errno.ENOENT,
+            )
 
     @periodic(3600, run_on_start=False)
     @private
