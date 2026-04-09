@@ -30,8 +30,8 @@ def _iter_leaf_vdevs(vdevs):
 
 def update_zfs_default(root, readonly_rootfs):
     pool_names = []
-    with truenas_pylibzfs.open_handle() as lzh:
-        lzh.iter_pools(callback=lambda p, s: s.append(p.name) or True, state=pool_names)
+    lzh = truenas_pylibzfs.open_handle()
+    lzh.iter_pools(callback=lambda p, s: s.append(p.name) or True, state=pool_names)
     existing_pools = pool_names
 
     for i in ['freenas-boot', 'boot-pool']:
@@ -41,8 +41,7 @@ def update_zfs_default(root, readonly_rootfs):
     else:
         raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(existing_pools)}')
 
-    with truenas_pylibzfs.open_handle() as lzh:
-        status = lzh.open_pool(name=boot_pool).status(get_stats=False, full_path=True)
+    status = lzh.open_pool(name=boot_pool).status(get_stats=False, full_path=True)
     disks = [v.name.replace('/dev/', '') for v in _iter_leaf_vdevs(status.storage_vdevs)]
 
     mapping = {}
