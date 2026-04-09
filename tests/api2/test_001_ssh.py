@@ -43,7 +43,7 @@ def test_002_firstboot_checks(ws_client):
     # now verify that they are mounted with the expected options
     mounts = {i['mount_source']: i for i in ws_client.call('filesystem.mount_info', [['fs_type', '=', 'zfs']])}
     for ds in expected_ds:
-        assert mounts[ds]['super_opts'] == ['XATTR', 'NOACL', 'CASESENSITIVE'], f'{ds}: super_opts {mounts[ds]["super_opts"]} != expected [XATTR, NOACL, CASESENSITIVE]'
+        assert mounts[ds]['super_opts'] == ['RW', 'XATTR', 'NOACL', 'CASESENSITIVE'], f'{ds}: super_opts {mounts[ds]["super_opts"]} != expected [RW, XATTR, NOACL, CASESENSITIVE]'
         assert 'RW' in mounts[ds]['mount_opts'], f'{ds}: RW not in mount_opts {mounts[ds]["mount_opts"]}'
 
     # Verify we don't have any unexpected services running
