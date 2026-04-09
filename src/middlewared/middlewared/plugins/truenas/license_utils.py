@@ -28,7 +28,7 @@ __all__ = (
     "configure_ha_license",
 )
 
-LICENSE_DIR = "/data/truenas"
+LICENSE_DIR = "/data/subsystems/truenas_license"
 LICENSE_FILE = f"{LICENSE_DIR}/license"
 LICENSE_BACKUP = f"{LICENSE_DIR}/license.bak"
 
