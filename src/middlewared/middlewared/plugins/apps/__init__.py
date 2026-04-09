@@ -10,6 +10,7 @@ from middlewared.service import GenericCRUDService, filterable_api_method, job, 
 
 from .crud import get_instance as get_app_instance, query_apps
 from .custom_app import AppCustomService
+from .metadata import app_metadata_generate
 
 
 if typing.TYPE_CHECKING:
@@ -77,3 +78,8 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Please see `query` method documentation for `options`.
         """
         return get_app_instance(self.context, id_, options)
+
+    @private
+    @job(lock='app_metadata_generate', lock_queue_size=1)
+    def metadata_generate(self, job: Job, blacklisted_apps: list[str] | None = None) -> None:
+        return app_metadata_generate(job, blacklisted_apps)

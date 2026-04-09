@@ -181,7 +181,7 @@ class AppService(Service):
                 app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
             )
         finally:
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            self.context.call_sync2(self.s.app.metadata_generate).wait_sync(raise_error=True)
             new_app_instance = self.middleware.call_sync('app.get_instance', app_name)
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance)
 

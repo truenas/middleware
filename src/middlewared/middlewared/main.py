@@ -99,6 +99,7 @@ from middlewared.plugins.acme_registration import ACMERegistrationService
 from middlewared.plugins.alert.alert import AlertService
 from middlewared.plugins.alert.classes import AlertClassesService
 from middlewared.plugins.alert.service import AlertServiceService
+from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.cron import CronJobService
@@ -211,6 +212,7 @@ class ServiceContainer(BaseServiceContainer):
         self.alert = AlertService(middleware)
         self.alertclasses = AlertClassesService(middleware)
         self.alertservice = AlertServiceService(middleware)
+        self.app = AppService(middleware)
         self.catalog = CatalogService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)

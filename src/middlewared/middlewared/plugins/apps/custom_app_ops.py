@@ -91,8 +91,7 @@ def create_custom_app(
 
         raise e from None
     else:
-        context.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
-        # FIXME: Fix above usage
+        context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         app_info = get_instance(context, app_name)
         if app_being_converted is False:
             # We only want to send this when a new custom app is being installed, not when an

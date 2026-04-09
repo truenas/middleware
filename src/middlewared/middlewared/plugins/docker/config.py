@@ -132,7 +132,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 job.set_progress(60, 'Applying requested configuration')
                 await docker_status_change(self)
                 if new_config.pool:
-                    await self.middleware.call('app.metadata.generate')
+                    await self.call2(self.s.app.metadata_generate)
             elif new_config.pool and (address_pools_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await mount_docker_ds(self)

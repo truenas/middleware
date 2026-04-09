@@ -87,7 +87,7 @@ class AppService(Service):
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            self.context.call_sync2(self.s.app.metadata_generate).wait_sync(raise_error=True)
             clean_newer_versions(app_name, options['app_version'])
 
         job.set_progress(100, f'Rollback completed for {app_name!r} app to {options["app_version"]!r} version')
