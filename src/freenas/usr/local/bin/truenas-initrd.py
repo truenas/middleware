@@ -14,16 +14,25 @@ import subprocess
 import sys
 import textwrap
 
-import libzfs
 import pyudev
 
 
 logger = logging.getLogger(__name__)
 
 
+def _iter_leaf_vdevs(vdevs):
+    for v in vdevs:
+        if v.vdev_type == 'disk':
+            yield v
+        if v.children:
+            yield from _iter_leaf_vdevs(v.children)
+
+
 def update_zfs_default(root, readonly_rootfs):
-    with libzfs.ZFS() as zfs:
-        existing_pools = [p.name for p in zfs.pools]
+    pool_names = []
+    with truenas_pylibzfs.open_handle() as lzh:
+        lzh.iter_pools(callback=lambda p, s: s.append(p.name) or True, state=pool_names)
+    existing_pools = pool_names
 
     for i in ['freenas-boot', 'boot-pool']:
         if i in existing_pools:
@@ -32,8 +41,9 @@ def update_zfs_default(root, readonly_rootfs):
     else:
         raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(existing_pools)}')
 
-    with libzfs.ZFS() as zfs:
-        disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
+    with truenas_pylibzfs.open_handle() as lzh:
+        status = lzh.open_pool(name=boot_pool).status(get_stats=False, full_path=True)
+    disks = [v.name.replace('/dev/', '') for v in _iter_leaf_vdevs(status.storage_vdevs)]
 
     mapping = {}
     for dev in filter(
@@ -219,6 +229,7 @@ if __name__ == "__main__":
 
     # BEGIN LAZY IMPORTS
     # ------------------
+    import truenas_pylibzfs
     from truenas_pylibvirt.utils.gpu import get_gpus
     from truenas_os_pyutils.io import atomic_write
 
