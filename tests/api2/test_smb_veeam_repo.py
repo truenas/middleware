@@ -1,4 +1,5 @@
 import os
+import time
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
@@ -16,12 +17,26 @@ def enterprise_licensed():
         yield
 
 
-def check_veeam_alert(expected):
+def check_veeam_alert(expected, timeout=10):
+    # Alert creation/deletion is handled by background jobs; poll until the expected state is reached.
     alert = None
-    for a in call('alert.list'):
-        if a['klass'] == 'SMBVeeamFastClone':
-            alert = a
+    deadline = time.monotonic() + timeout
+    while True:
+        alert = None
+        for a in call('alert.list'):
+            if a['klass'] == 'SMBVeeamFastClone':
+                alert = a
+                break
+
+        if bool(alert) is expected:
+            if expected:
+                assert SHARE_NAME in alert['formatted']
+            return
+
+        if time.monotonic() >= deadline:
             break
+
+        time.sleep(1)
 
     assert bool(alert) is expected, str(alert)
     if expected:
