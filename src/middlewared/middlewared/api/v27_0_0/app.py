@@ -20,7 +20,7 @@ __all__ = [
     'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
     'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
-    'AppRollbackArgs', 'AppDelete',
+    'AppRollbackArgs', 'AppDelete', 'AppUpdate',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',

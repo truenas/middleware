@@ -16,7 +16,7 @@ from .custom_app_ops import create_custom_app
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
-from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
+from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import remove_failed_resources, get_app_volume_ds, delete_internal_resources

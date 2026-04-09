@@ -11,6 +11,9 @@ from middlewared.api.current import (
     AppCreate, AppDelete, AppUpdate,
     AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
     AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
+    AppRedeployArgs, AppRedeployResult,
+    AppStartArgs, AppStartResult,
+    AppStopArgs, AppStopResult,
     AppUsedHostIpsArgs, AppUsedHostIpsResult, AppUsedPortsArgs, AppUsedPortsResult,
     AppConvertToCustomArgs, AppConvertToCustomResult,
     AppConfigArgs, AppConfigResult,
@@ -21,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
+from .app_scale import redeploy_app, start_app, stop_app
 from .crud import (
     get_instance as get_app_instance, query_apps, get_app_config,
     create_app, update_app, delete_app,
@@ -228,6 +232,42 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Returns ports in use by applications.
         """
         return await used_ports(self.context)
+
+    @api_method(
+        AppRedeployArgs, AppRedeployResult,
+        audit='App: Redeploying',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_redeploy_{args[0]}')
+    def redeploy(self, job: Job, app_name: str) -> AppEntry:
+        """Redeploy `app_name` app."""
+        return redeploy_app(self.context, job, app_name)
+
+    @api_method(
+        AppStartArgs, AppStartResult,
+        audit='App: Starting',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_start_{args[0]}')
+    def start(self, job: Job, app_name: str) -> None:
+        """Start `app_name` app."""
+        return start_app(self.context, job, app_name)
+
+    @api_method(
+        AppStopArgs, AppStopResult,
+        audit='App: Stopping',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_stop_{args[0]}')
+    def stop(self, job: Job, app_name: str) -> None:
+        """Stop `app_name` app."""
+        return stop_app(self.context, job, app_name)
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
