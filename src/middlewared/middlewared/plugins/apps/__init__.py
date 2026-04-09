@@ -9,6 +9,7 @@ from middlewared.api.current import (
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
 from .crud import get_instance as get_app_instance, query_apps
+from .custom_app import AppCustomService
 
 
 if typing.TYPE_CHECKING:
@@ -36,6 +37,10 @@ class AppService(GenericCRUDService[AppEntry, str]):
         cli_namespace = 'app'
         role_prefix = 'APPS'
         entry = AppEntry
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self.custom = AppCustomService(middleware)
 
     @typing.overload
     def query(self, app: App, filters: list[typing.Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
