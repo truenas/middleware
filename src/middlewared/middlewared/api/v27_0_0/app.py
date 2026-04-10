@@ -18,7 +18,7 @@ __all__ = [
     'AppContainerIDOptions', 'AppContainerIdsArgs', 'AppContainerIdsResult',
     'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult', 'AppContainerResponse',
     'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
-    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult',
+    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppRollbackOptions',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
     'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
     'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',

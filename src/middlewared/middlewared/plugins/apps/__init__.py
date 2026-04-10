@@ -26,6 +26,8 @@ from middlewared.api.current import (
     AppUpgradeOptions, AppUpgradeArgs, AppUpgradeResult,
     AppUpgradeBulkArgs, AppUpgradeBulkResult, AppUpgradeBulkEntry, AppBulkUpgradeJobResult,
     AppUpgradeSummaryArgs, AppUpgradeSummaryResult, AppUpgradeSummaryOptions, AppUpgradeSummary,
+    AppRollbackArgs, AppRollbackResult, AppRollbackOptions,
+    AppRollbackVersionsArgs, AppRollbackVersionsResult,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
@@ -41,6 +43,7 @@ from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
 )
+from .rollback import rollback_versions, rollback
 from .upgrade import (
     upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary, clear_upgrade_alerts_for_all, update_app_upgrade_alert
 )
@@ -270,6 +273,27 @@ class AppService(GenericCRUDService[AppEntry, str]):
     def redeploy(self, job: Job, app_name: str) -> AppEntry:
         """Redeploy `app_name` app."""
         return redeploy_app(self.context, job, app_name)
+
+    @api_method(
+        AppRollbackArgs, AppRollbackResult,
+        audit='App: Rollback',
+        audit_extended=lambda app_name, options: app_name,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock=lambda args: f'app_rollback_{args[0]}')
+    def rollback(self, job: Job, app_name: str, options: AppRollbackOptions) -> AppEntry:
+        """
+        Rollback `app_name` app to previous version.
+        """
+        return rollback(self.context, job, app_name, options)
+
+    @api_method(AppRollbackVersionsArgs, AppRollbackVersionsResult, roles=['APPS_READ'], check_annotations=True)
+    def rollback_versions(self, app_name: str) -> list[str]:
+        """
+        Retrieve versions available for rollback for `app_name` app.
+        """
+        return rollback_versions(self.context, app_name)
 
     @api_method(
         AppStartArgs, AppStartResult,
