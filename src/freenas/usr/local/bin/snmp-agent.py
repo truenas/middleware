@@ -293,10 +293,13 @@ class DiskTempThread(threading.Thread):
 
 
 def gather_zpool_iostat_info(prev_data, name, pool_status):
-    r_ops = sum(v.stats.ops_read for v in pool_status.storage_vdevs if v.stats is not None)
-    w_ops = sum(v.stats.ops_write for v in pool_status.storage_vdevs if v.stats is not None)
-    r_bytes = sum(v.stats.bytes_read for v in pool_status.storage_vdevs if v.stats is not None)
-    w_bytes = sum(v.stats.bytes_write for v in pool_status.storage_vdevs if v.stats is not None)
+    r_ops = w_ops = r_bytes = w_bytes = 0
+    for v in pool_status.storage_vdevs:
+        if v.stats is not None:
+            r_ops += v.stats.ops_read
+            w_ops += v.stats.ops_write
+            r_bytes += v.stats.bytes_read
+            w_bytes += v.stats.bytes_write
 
     # the current values as reported by libzfs
     values_overall = {name: {
