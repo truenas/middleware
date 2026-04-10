@@ -1,3 +1,5 @@
+from middlewared.service_exception import CallError
+
 from .base import SimpleService
 
 
@@ -5,6 +7,18 @@ class UPSService(SimpleService):
     name = "ups"
     etc = ["ups"]
     systemd_unit = "nut-monitor"
+
+    async def check_configuration(self):
+        config = await self.middleware.call("ups.config")
+        prefix = "UPS service cannot start:"
+        if config.mode == "MASTER":
+            if not config.driver:
+                raise CallError(f"{prefix} driver is required for MASTER mode")
+            if not config.port:
+                raise CallError(f"{prefix} port is required for MASTER mode")
+        else:
+            if not config.remotehost:
+                raise CallError(f"{prefix} remote host is required for SLAVE mode")
 
     async def systemd_extra_units(self):
         if (await self.middleware.call("ups.config")).mode == "MASTER":

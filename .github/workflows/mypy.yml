@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install mypy
-        run: apt install -y mypy
-
       - name: Test
         run: |
           cd src/middlewared

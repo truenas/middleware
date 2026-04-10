@@ -1,7 +1,9 @@
 import os
+import time
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
 
@@ -9,12 +11,32 @@ SHARE_NAME = 'offset_test'
 VEEAM_BLOCKSIZE = 131072
 
 
-def check_veeam_alert(expected):
+@pytest.fixture(autouse=True)
+def enterprise_licensed():
+    with product_type('ENTERPRISE'):
+        yield
+
+
+def check_veeam_alert(expected, timeout=10):
+    # Alert creation/deletion is handled by background jobs; poll until the expected state is reached.
     alert = None
-    for a in call('alert.list'):
-        if a['klass'] == 'SMBVeeamFastClone':
-            alert = a
+    deadline = time.monotonic() + timeout
+    while True:
+        alert = None
+        for a in call('alert.list'):
+            if a['klass'] == 'SMBVeeamFastClone':
+                alert = a
+                break
+
+        if bool(alert) is expected:
+            if expected:
+                assert SHARE_NAME in alert['formatted']
+            return
+
+        if time.monotonic() >= deadline:
             break
+
+        time.sleep(1)
 
     assert bool(alert) is expected, str(alert)
     if expected:

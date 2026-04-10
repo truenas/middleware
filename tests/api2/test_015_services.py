@@ -8,77 +8,159 @@ import pytest
 
 from truenas_api_client import ClientException
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.mock import mock
+
+
+UPS_NUT_UNITS = 'nut-driver@ups nut-server nut-driver-enumerator nut-monitor'
+
+
+def cleanup_ups():
+    """Stop NUT units, reset failed state, and restore default UPS config."""
+    ssh(f'systemctl stop {UPS_NUT_UNITS} || true')
+    ssh(f'systemctl reset-failed {UPS_NUT_UNITS} || true')
+    call('service.control', 'STOP', 'ups', job=True)
+
+
+def set_fake_ups_driver():
+    """Configure UPS with a nonexistent driver that passes check_configuration
+    but crashes at the systemd level (nut-driver@ups fails).
+
+    Uses mock to bypass driver_choices validation.
+    """
+    with mock('ups.driver_choices', return_value={
+        'fake-nonexistent-driver': 'Fake driver for testing'
+    }):
+        call('ups.update', {
+            'mode': 'MASTER',
+            'driver': 'fake-nonexistent-driver',
+            'port': '/dev/null',
+            'monpwd': 'testpass',
+        })
+
+
+def restore_default_ups_config():
+    """Restore default UPS config via datastore.sql to bypass validation."""
+    call(
+        'datastore.sql',
+        "UPDATE services_ups SET "
+        "ups_driver='', ups_port='', ups_mode='MASTER', ups_monpwd='secretpwd'"
+    )
+
 
 def test_001_oom_check():
     pid = call('core.get_pid')
     assert call('core.get_oom_score_adj', pid) == -1000
 
 
-@pytest.mark.flaky(reruns=5, reruns_delay=5)  # Sometimes systemd unit state is erroneously reported as active
 def test_non_silent_service_start_failure():
     """
-    This test for 2 conditions:
-        1. middleware raises CallError that isn't empty
-        2. each time a CallError is raised, the message
-            has a timestamp and that timestamp changes
-            with each failure
+    Test that starting a service with invalid configuration raises a
+    non-empty CallError when silent=False. UPS with no driver configured
+    in MASTER mode should fail in check_configuration before starting.
     """
-    with pytest.raises(ClientException) as e:
-        call('service.control', 'START', 'ups', {'silent': False}, job=True)
-
-    # Error looks like
-    """
-    middlewared.service_exception.CallError: [EFAULT] Jan 10 08:49:14 systemd[1]: Starting Network UPS Tools - power device monitor and shutdown controller...
-    Jan 10 08:49:14 nut-monitor[3032658]: fopen /run/nut/upsmon.pid: No such file or directory
-    Jan 10 08:49:14 nut-monitor[3032658]: Unable to use old-style MONITOR line without a username
-    Jan 10 08:49:14 nut-monitor[3032658]: Convert it and add a username to upsd.users - see the documentation
-    Jan 10 08:49:14 nut-monitor[3032658]: Fatal error: unusable configuration
-    Jan 10 08:49:14 nut-monitor[3032658]: Network UPS Tools upsmon 2.7.4
-    Jan 10 08:49:14 systemd[1]: nut-monitor.service: Control process exited, code=exited, status=1/FAILURE
-    Jan 10 08:49:14 systemd[1]: nut-monitor.service: Failed with result 'exit-code'.
-    Jan 10 08:49:14 systemd[1]: Failed to start Network UPS Tools - power device monitor and shutdown controller.
-    """
-    lines1 = e.value.error.splitlines()
-    first_ts, len_lines1 = ' '.join(lines1.pop(0).split()[:4]), len(lines1)
-    assert any('nut-monitor[' in line for line in lines1), lines1
-    assert any('systemd[' in line for line in lines1), lines1
-
-    # make sure we don't trigger system StartLimitBurst threshold
-    # by removing this service from failed unit list (if it's there)
-    ssh('systemctl reset-failed nut-monitor')
-
-    # we have to sleep 1 second here or the timestamp will be the
-    # same as when we first tried to start the service which is
-    # what we're testing to make sure the message is up to date
-    # with reality
-    time.sleep(1)
+    restore_default_ups_config()
+    cleanup_ups()
 
     with pytest.raises(ClientException) as e:
         call('service.control', 'START', 'ups', {'silent': False}, job=True)
 
-    # Error looks like: (Notice timestamp change, which is what we verify
+    assert e.value.error, 'Error message should not be empty'
+    assert 'cannot start' in e.value.error.lower()
+
+
+def test_systemd_failure_produces_journal_output():
     """
-    middlewared.service_exception.CallError: [EFAULT] Jan 10 08:49:15 systemd[1]: Starting Network UPS Tools - power device monitor and shutdown controller...
-    Jan 10 08:49:15 nut-monitor[3032739]: fopen /run/nut/upsmon.pid: No such file or directory
-    Jan 10 08:49:15 nut-monitor[3032739]: Unable to use old-style MONITOR line without a username
-    Jan 10 08:49:15 nut-monitor[3032739]: Convert it and add a username to upsd.users - see the documentation
-    Jan 10 08:49:15 nut-monitor[3032739]: Fatal error: unusable configuration
-    Jan 10 08:49:15 nut-monitor[3032739]: Network UPS Tools upsmon 2.7.4
-    Jan 10 08:49:15 systemd[1]: nut-monitor.service: Control process exited, code=exited, status=1/FAILURE
-    Jan 10 08:49:15 systemd[1]: nut-monitor.service: Failed with result 'exit-code'.
-    Jan 10 08:49:15 systemd[1]: Failed to start Network UPS Tools - power device monitor and shutdown controller.
+    When check_configuration passes but the service crashes at the
+    systemd level, the error should contain actual journalctl output
+    from the failed sub-unit (nut-driver@ups).
+
+    This tests that failure_logs() walks the Wants dependency tree
+    and collects logs from failed transitive dependencies.
+
+    Configure UPS with a non-empty but nonexistent driver so
+    check_configuration() passes but nut-driver@ups crashes.
     """
-    lines2 = e.value.error.splitlines()
-    second_ts, len_lines2 = ' '.join(lines2.pop(0).split()[:4]), len(lines2)
-    assert any('nut-monitor[' in line for line in lines2), lines2
-    assert any('systemd[' in line for line in lines2), lines2
+    try:
+        set_fake_ups_driver()
 
-    # timestamp should change since we sleep(1)
-    assert first_ts != second_ts
+        with pytest.raises(ClientException) as exc_info:
+            call('service.control', 'START', 'ups', {'silent': False}, job=True)
 
-    # the error messages will differ slightly (different PID for upsmon) but the number
-    # of lines should be the same
-    assert len_lines1 == len_lines2
+        error = exc_info.value.error
+        assert error, 'Error message should not be empty'
 
-    # Stop the service to avoid syslog spam
-    call('service.control', 'STOP', 'ups', job=True)
+        # Should NOT be the check_configuration static message
+        assert 'cannot start' not in error.lower(), (
+            f'Got check_configuration error instead of journal output: {error!r}'
+        )
+
+        # Should contain journalctl content from nut-driver@ups
+        lines = error.splitlines()
+        assert any('nut-' in line for line in lines), (
+            f'Expected NUT-related journal entries in error, got: {error!r}'
+        )
+        assert any('systemd[' in line for line in lines), (
+            f'Expected systemd journal entries in error, got: {error!r}'
+        )
+    finally:
+        cleanup_ups()
+        restore_default_ups_config()
+
+
+def test_systemd_failure_timestamps_change():
+    """
+    Each start attempt should produce fresh journal output with
+    different timestamps, proving the logs are re-queried each time.
+
+    Uses the same fake-driver approach as test_systemd_failure_produces_journal_output.
+    """
+    try:
+        set_fake_ups_driver()
+
+        # First attempt
+        with pytest.raises(ClientException) as exc1:
+            call('service.control', 'START', 'ups', {'silent': False}, job=True)
+
+        # Fully stop all NUT units and clear failed state before retrying.
+        # reset-failed alone doesn't stop a crash-looping unit.
+        cleanup_ups()
+        time.sleep(2)
+
+        # Second attempt
+        with pytest.raises(ClientException) as exc2:
+            call('service.control', 'START', 'ups', {'silent': False}, job=True)
+
+        # Extract first journal timestamp from each error
+        # Journal lines: "Apr 08 10:29:13 syslog_id[pid]: message"
+        # The error string starts with "[EFAULT] " prefix — strip it
+        def first_timestamp(error_str):
+            first_line = error_str.splitlines()[0]
+            if first_line.startswith('['):
+                first_line = first_line.split('] ', 1)[-1]
+            return ' '.join(first_line.split()[:3])
+
+        ts1 = first_timestamp(exc1.value.error)
+        ts2 = first_timestamp(exc2.value.error)
+        assert ts1 != ts2, (
+            f'Timestamps should differ between attempts: {ts1!r} == {ts2!r}'
+        )
+    finally:
+        cleanup_ups()
+        restore_default_ups_config()
+
+
+def test_systemd_failure_silent_returns_false():
+    """
+    When a service crashes at the systemd level with silent=True,
+    it should return False (not True, not raise).
+    """
+    try:
+        set_fake_ups_driver()
+
+        result = call('service.control', 'START', 'ups', {'silent': True}, job=True)
+        assert result is False, (
+            f'Expected False for failed silent start, got: {result!r}'
+        )
+    finally:
+        cleanup_ups()
+        restore_default_ups_config()

@@ -72,6 +72,18 @@ class FailoverRebootService(Service):
         self.remote_reboot_reasons[code] = RemoteRebootReason(boot_id, reason)
         await self.persist_remote_reboot_reasons()
 
+        # Eager push: also write to the remote node's local cache so it self-reports correctly.
+        # Best effort — if the remote is unreachable, the DB entry is the safety net
+        # and will be consumed on MASTER event.
+        if boot_id is not None:
+            try:
+                await self.middleware.call(
+                    'failover.call_remote', 'system.reboot.add_reason', [code, reason],
+                    {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2},
+                )
+            except Exception:
+                self.logger.warning('Failed to push reboot reason %r to remote node', code, exc_info=True)
+
         await self.send_event()
 
     @api_method(FailoverRebootInfoArgs, FailoverRebootInfoResult, roles=['FAILOVER_READ'])
@@ -126,6 +138,7 @@ class FailoverRebootService(Service):
                             }
 
         if other_node is not None:
+            existing_codes = {r['code'] for r in other_node['reboot_required_reasons']}
             for remote_reboot_reason_code, remote_reboot_reason in list(self._remote_reboot_reasons_items()):
                 if remote_reboot_reason.boot_id is None:
                     # This reboot reason was added while the remote node was not functional.
@@ -138,10 +151,11 @@ class FailoverRebootService(Service):
                     changed = True
 
                 if remote_reboot_reason.boot_id == other_node['boot_id']:
-                    other_node['reboot_required_reasons'].append({
-                        'code': remote_reboot_reason_code,
-                        'reason': remote_reboot_reason.reason,
-                    })
+                    if remote_reboot_reason_code not in existing_codes:
+                        other_node['reboot_required_reasons'].append({
+                            'code': remote_reboot_reason_code,
+                            'reason': remote_reboot_reason.reason,
+                        })
                 else:
                     # The system was rebooted, this reason is not valid anymore
                     self.remote_reboot_reasons.pop(remote_reboot_reason_code)
@@ -240,7 +254,7 @@ class FailoverRebootService(Service):
     def _remote_reboot_reasons_items(self):
         if self.loaded:
             return self.remote_reboot_reasons.items()
-        return {}
+        return []
 
     async def _ensure_remote_be(self, id_: str):
         try:
@@ -286,7 +300,9 @@ class FailoverRebootService(Service):
 
     @private
     async def load_remote_reboot_reasons(self):
-        self.remote_reboot_reasons_key = f'remote_reboot_reasons_{await self.middleware.call("failover.node")}'
+        self_node = await self.middleware.call('failover.node')
+        other_node = 'B' if self_node == 'A' else 'A'
+        self.remote_reboot_reasons_key = f'reboot_reasons_{other_node}'
         self.remote_reboot_reasons = {
             k: RemoteRebootReason(**v)
             for k, v in (await self.call2(self.s.keyvalue.get, self.remote_reboot_reasons_key, {})).items()
@@ -299,6 +315,23 @@ class FailoverRebootService(Service):
             k: asdict(v)
             for k, v in self.remote_reboot_reasons.items()
         })
+
+    @private
+    async def consume_local_db_reasons(self):
+        """Transfer DB-stored reasons for this node (written by previous master) into local cache."""
+        self_node = await self.middleware.call('failover.node')
+        db_key = f'reboot_reasons_{self_node}'
+        db_reasons = await self.call2(self.s.keyvalue.get, db_key, {})
+        if not db_reasons:
+            return
+
+        boot_id = await self.middleware.call('system.boot_id')
+        for code, entry in db_reasons.items():
+            if isinstance(entry, dict) and entry.get('boot_id') == boot_id:
+                await self.middleware.call('system.reboot.add_reason', code, entry['reason'])
+
+        # Clear the DB key — reasons have been consumed
+        await self.call2(self.s.keyvalue.set, db_key, {})
 
     @private
     async def discard_unbound_remote_reboot_reasons(self):

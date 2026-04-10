@@ -96,6 +96,11 @@ def dummy_ups_driver_configured():
     old_config = call('ups.config')
     # Exclude fields that can't be passed to ups.update
     old_config_dict = {k: v for k, v in old_config.items() if k not in ('complete_identifier', 'id')}
+
+    # Stop the service before reconfiguring to avoid _service_change
+    # trying to restart with the old (hardware-dependent) driver config.
+    call('service.control', 'STOP', 'ups', job=True)
+
     payload = {
         'mode': 'MASTER',
         'driver': 'dummy-ups',
@@ -106,10 +111,12 @@ def dummy_ups_driver_configured():
     with mock('ups.driver_choices', return_value={'dummy-ups': 'Driver for multi-purpose UPS emulation',
                                                   'usbhid-ups$PROTECT NAS': 'AEG Power Solutions ups 3 PROTECT NAS (usbhid-ups)'}):
         call('ups.update', payload)
+        # Start fresh with the dummy-ups config
+        call('service.control', 'START', 'ups', {'silent': False}, job=True)
         try:
             yield
         finally:
-            # Reuse the same mock for teardown (don't create a nested mock!)
+            call('service.control', 'STOP', 'ups', job=True)
             call('ups.update', old_config_dict)
             remove_file(SHUTDOWN_MARKER_FILE)
             remove_file(DUMMY_FAKEDATA_DEV)
@@ -130,12 +137,6 @@ def test__set_ups_options():
         assert first_ups_payload[data] == results[data], results
 
 
-def test__start_ups_service():
-    call('service.control', 'START', 'ups', job=True)
-    results = get_service_state()
-    assert results['state'] == 'RUNNING', results
-
-
 def test__get_reports_configuration_as_saved():
     results = call('ups.config')
     for data in first_ups_payload.keys():
@@ -153,14 +154,6 @@ def test__change_ups_options_while_service_is_running():
     results = call('ups.config')
     for data in ['port', 'identifier']:
         assert payload[data] == results[data], results
-
-
-def test__stop_ups_service():
-    results = get_service_state()
-    assert results['state'] == 'RUNNING', results
-    call('service.control', 'STOP', 'ups', job=True)
-    results = get_service_state()
-    assert results['state'] == 'STOPPED', results
 
 
 def test__change_ups_options():

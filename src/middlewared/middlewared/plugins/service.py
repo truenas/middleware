@@ -13,6 +13,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
+from middlewared.plugins.service_.services.dbus_router import ServiceActionError
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
 from middlewared.service import filterable_api_method, CallError, CRUDService, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
@@ -182,9 +183,14 @@ class ServiceService(CRUDService):
                     raise
 
                 await service_object.before_start()
-                await service_object.start()
-                state = await service_object.get_state()
-                if state.running:
+                try:
+                    await service_object.start()
+                except ServiceActionError as e:
+                    self.logger.warning('%s: %s', service, e)
+                ok, failed_units = await self._check_service_health(
+                    service, service_object, "start",
+                )
+                if ok:
                     await service_object.after_start()
                     await self.middleware.call('service.notify_running', service)
                     if service_object.deprecated:
@@ -194,12 +200,14 @@ class ServiceService(CRUDService):
                         )
                     return True
 
-                self.logger.error("Service %r not running after start", service)
                 await self.middleware.call('service.notify_running', service)
                 if options['silent']:
                     return False
 
-                raise CallError(await service_object.failure_logs() or 'Service not running after start')
+                raise CallError(
+                    await service_object.failure_logs(failed_units=failed_units)
+                    or 'Service not running after start'
+                )
         except asyncio.TimeoutError:
             if options['silent']:
                 return False
@@ -287,16 +295,42 @@ class ServiceService(CRUDService):
 
             raise CallError('Timed out while restarting the service', errno.ETIMEDOUT)
 
+    async def _check_service_health(self, service, service_object, action):
+        """Check service state and sub-unit health after a start/restart/reload.
+
+        Returns (ok, failed_units) where ok is True if the service is running
+        with no failed dependencies.
+        """
+        state = await service_object.get_state()
+        failed_units = await service_object.get_failed_sub_units()
+        if state.running and not failed_units:
+            return True, failed_units
+
+        if failed_units:
+            self.logger.error(
+                "Service %r has failed dependencies after %s: %s",
+                service,
+                action,
+                ", ".join(failed_units),
+            )
+        else:
+            self.logger.error("Service %r not running after %s", service, action)
+        return False, failed_units
+
     async def _restart(self, service, service_object):
         if service_object.restartable:
             await service_object.before_restart()
-            await service_object.restart()
+            try:
+                await service_object.restart()
+            except ServiceActionError as e:
+                self.logger.warning('%s: %s', service, e)
             await service_object.after_restart()
 
-            state = await service_object.get_state()
-            if not state.running:
+            ok, failed_units = await self._check_service_health(
+                service, service_object, "restart",
+            )
+            if not ok:
                 await self.middleware.call('service.notify_running', service)
-                self.logger.error("Service %r not running after restart", service)
                 return False
 
         else:
@@ -312,11 +346,15 @@ class ServiceService(CRUDService):
                 self.logger.error("Service %r running after restart-caused stop", service)
 
             await service_object.before_start()
-            await service_object.start()
-            state = await service_object.get_state()
-            if not state.running:
+            try:
+                await service_object.start()
+            except ServiceActionError as e:
+                self.logger.warning('%s: %s', service, e)
+            ok, failed_units = await self._check_service_health(
+                service, service_object, "restart",
+            )
+            if not ok:
                 await self.middleware.call('service.notify_running', service)
-                self.logger.error("Service %r not running after restart-caused start", service)
                 return False
 
             await service_object.after_start()
@@ -349,15 +387,16 @@ class ServiceService(CRUDService):
 
                 if service_object.reloadable:
                     await service_object.before_reload()
-                    await service_object.reload()
+                    try:
+                        await service_object.reload()
+                    except ServiceActionError as e:
+                        self.logger.warning('%s: %s', service, e)
                     await service_object.after_reload()
 
-                    state = await service_object.get_state()
-                    if state.running:
-                        return True
-                    else:
-                        self.logger.error("Service %r not running after reload", service)
-                        return False
+                    ok, failed_units = await self._check_service_health(
+                        service, service_object, "reload",
+                    )
+                    return ok
                 else:
                     return await self._restart(service, service_object)
         except asyncio.TimeoutError:
@@ -388,7 +427,7 @@ class ServiceService(CRUDService):
 
     @private
     async def generate_etc(self, object_: 'ServiceInterface'):
-        for etc in object_.etc:
+        for etc in await object_.select_etc():
             await self.middleware.call("etc.generate", etc)
 
     @private
@@ -442,7 +481,11 @@ class ServiceService(CRUDService):
         try:
             return terminate_pid(pid, timeout)
         except ProcessLookupError:
-            raise ValidationError('terminate_process.pid', f'No such process with PID: {pid}')
+            raise ValidationError(
+                'terminate_process.pid',
+                f'No such process with PID: {pid}',
+                errno.ENOENT,
+            )
 
     @periodic(3600, run_on_start=False)
     @private

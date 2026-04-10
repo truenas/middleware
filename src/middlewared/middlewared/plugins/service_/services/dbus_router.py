@@ -14,7 +14,18 @@ from jeepney.bus_messages import message_bus, MatchRule
 from jeepney.io.asyncio import DBusConnection, DBusRouter, open_dbus_connection, Proxy
 from jeepney.wrappers import DBusErrorResponse, unwrap_msg
 
-__all__ = ("system_dbus",)
+__all__ = ("ServiceActionError", "system_dbus")
+
+
+class ServiceActionError(Exception):
+    """Service not in expected state after a systemd action."""
+
+    def __init__(self, unit, action, detail):
+        self.unit = unit
+        self.action = action
+        self.detail = detail
+        super().__init__(f"{unit} {action}: {detail}")
+
 
 logger = logging.getLogger(__name__)
 
@@ -241,7 +252,15 @@ class CachedSystemDBusRouter:
         self, unit_path: str, service_name: str, action: str
     ) -> None:
         """
-        Verify service is in expected running state after action, log warnings if not.
+        Verify service is in expected running state after action.
+
+        Raises ServiceActionError when the service is detected as:
+        - crash-looping (SubState = auto-restart)
+        - failed (ActiveState = failed)
+        - in an unexpected state after the action
+
+        Unmet conditions (systemd skipped the unit by design) are logged
+        as warnings but do not raise, since the service was never attempted.
 
         For Start/Restart: expects "active" or "activating"
         For Reload: expects "active" or "reloading"
@@ -262,8 +281,9 @@ class CachedSystemDBusRouter:
         )
 
         if substate in ("auto-restart", "auto-restart-queued"):
-            logger.warning("%s %s: service is crash-looping", service_name, action)
-            return
+            raise ServiceActionError(
+                service_name, action, "service is crash-looping"
+            )
 
         # Determine acceptable states based on action
         if action == "Reload":
@@ -275,6 +295,27 @@ class CachedSystemDBusRouter:
 
         if state in acceptable_states:
             return
+
+        # Oneshot services (e.g. nut-driver-enumerator) go to
+        # ActiveState=inactive after successful completion — this is
+        # normal and should not be treated as a failure.
+        if state == "inactive" and action in ("Start", "Restart"):
+            try:
+                svc_type = await self._get_unit_property(
+                    unit_path,
+                    "org.freedesktop.systemd1.Service",
+                    "Type",
+                )
+                if svc_type == "oneshot":
+                    result = await self._get_unit_property(
+                        unit_path,
+                        "org.freedesktop.systemd1.Service",
+                        "Result",
+                    )
+                    if result == "success":
+                        return
+            except Exception:
+                pass
 
         conditions = await self._get_unit_property(
             unit_path, "org.freedesktop.systemd1.Unit", "Conditions"
@@ -293,11 +334,13 @@ class CachedSystemDBusRouter:
             result = await self._get_unit_property(
                 unit_path, "org.freedesktop.systemd1.Service", "Result"
             )
-            logger.warning("%s %s failed: %s", service_name, action, result)
-        else:
-            logger.warning(
-                "%s %s completed but service is %s", service_name, action, state
+            raise ServiceActionError(
+                service_name, action, f"failed: {result}"
             )
+
+        raise ServiceActionError(
+            service_name, action, f"unexpected state: {state}"
+        )
 
     @staticmethod
     async def _phase1_wait_for_job_removed(job_queue, job_path: str) -> str | None:
@@ -498,6 +541,58 @@ class CachedSystemDBusRouter:
                     service_name,
                     timeout_remaining,
                 )
+
+    async def get_wants_tree(self, service_name: str | bytes) -> set[str]:
+        """Walk the Wants dependency tree recursively.
+
+        Returns set of all unit names that are (transitively) wanted by the
+        given unit.  Only follows the ``Wants`` property — ``Requires``
+        failures are already propagated by systemd itself, so ``Wants`` is
+        where silent failures hide.
+        """
+        service_name = self._normalize_unit_name(service_name)
+        visited: set[str] = set()
+        await self._walk_wants(service_name, visited)
+        return visited
+
+    async def _walk_wants(self, unit_name: str, visited: set[str]) -> None:
+        if unit_name in visited:
+            return
+        visited.add(unit_name)
+        path = await self._load_unit_path(unit_name)
+        wants = await self._get_unit_property(
+            path, "org.freedesktop.systemd1.Unit", "Wants"
+        )
+        for dep in wants:
+            await self._walk_wants(dep, visited)
+
+    async def get_failed_units(
+        self, unit_names: set[str]
+    ) -> dict[str, tuple[str, int]]:
+        """Check a set of units for failed or crash-looping state.
+
+        Returns:
+            ``{unit_name: (active_state, inactive_exit_timestamp_monotonic)}``
+            for every unit whose ``ActiveState`` is ``"failed"`` or whose
+            ``SubState`` indicates crash-looping.
+        """
+        failed: dict[str, tuple[str, int]] = {}
+        for name in unit_names:
+            path = await self._load_unit_path(name)
+            active = await self._get_unit_property(
+                path, "org.freedesktop.systemd1.Unit", "ActiveState"
+            )
+            sub = await self._get_unit_property(
+                path, "org.freedesktop.systemd1.Unit", "SubState"
+            )
+            if active == "failed" or sub in ("auto-restart", "auto-restart-queued"):
+                ts = await self._get_unit_property(
+                    path,
+                    "org.freedesktop.systemd1.Unit",
+                    "InactiveExitTimestampMonotonic",
+                )
+                failed[name] = (active, ts)
+        return failed
 
     async def get_inactive_exit_timestamp(self, service_name: str | bytes) -> int:
         """

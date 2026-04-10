@@ -4,19 +4,26 @@ import os
 import enum
 
 from logging import getLogger
-from middlewared.utils.filter_list import filter_list
+import truenas_pyfilter as _tf
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
+from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.utils.smb import SMBSharePurpose, SearchProtocol, TRUESEARCH_ES_PATH
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
-from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
+from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+_GUESTOK_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]])
+_FSRVP_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]])
+_HOME_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.HOME}', '=', True]])
+_SHARES_OPTIONS = compile_options()
+_SHARES_GET_OPTS = compile_options({'get': True})
 
 LOGGER = getLogger(__name__)
 
@@ -370,14 +377,14 @@ def generate_smb_conf_dict(
     is_enterprise: bool,
     security_config: dict[str, bool]
 ):
-    guest_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]]))
-    fsrvp_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]]))
-    if ds_config['service_type']:
+    guest_enabled = bool(_tf.tnfilter(smb_shares, filters=_GUESTOK_FILTER, options=_SHARES_GET_OPTS))
+    fsrvp_enabled = bool(_tf.tnfilter(smb_shares, filters=_FSRVP_FILTER, options=_SHARES_GET_OPTS))
+    if ds_config['service_type'] and ds_config['enable']:
         ds_type = DSType(ds_config['service_type'])
     else:
         ds_type = None
 
-    home_share = filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.HOME}', '=', True]])
+    home_share = _tf.tnfilter(smb_shares, filters=_HOME_FILTER, options=_SHARES_OPTIONS)
     if home_share:
         if ds_type is DSType.AD:
             home_path_suffix = '%D/%U'

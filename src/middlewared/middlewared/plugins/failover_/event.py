@@ -12,7 +12,7 @@ import logging
 import errno
 from collections import defaultdict
 
-from middlewared.utils.filter_list import filter_list
+import truenas_pyfilter as _tf
 from truenas_os_pyutils.io import atomic_write
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
@@ -22,6 +22,11 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.service_.services.all import all_services
+from middlewared.utils.filter_list import compile_filters, compile_options
+
+_FAILOVER_CRITICAL_FILTER = compile_filters([['failover_critical', '=', True]])
+_FAILOVER_NON_CRITICAL_FILTER = compile_filters([['failover_critical', '!=', True]])
+_FAILOVER_OPTIONS = compile_options()
 
 
 logger = logging.getLogger('failover')
@@ -262,14 +267,14 @@ class FailoverEventsService(Service):
             'groups': defaultdict(list),
             'volumes': volumes,
             'non_crit_interfaces': [
-                i['id'] for i in filter_list(interfaces, [
-                    ('failover_critical', '!=', True),
-                ])
+                i['id'] for i in _tf.tnfilter(
+                    interfaces, filters=_FAILOVER_NON_CRITICAL_FILTER, options=_FAILOVER_OPTIONS
+                )
             ],
             'internal_interfaces': internal_ints,
         }
 
-        for i in filter_list(interfaces, [('failover_critical', '=', True)]):
+        for i in _tf.tnfilter(interfaces, filters=_FAILOVER_CRITICAL_FILTER, options=_FAILOVER_OPTIONS):
             data['groups'][i['failover_group']].append(i['id'])
 
         return data
@@ -524,7 +529,7 @@ class FailoverEventsService(Service):
         # as well as local account configuration and OATH information
         try:
             self.run_call('etc.generate', 'user')
-            self.run_call('etc.generate', 'pam_truenas')
+            self.run_call('etc.generate', 'pam')
         except Exception:
             logger.exception("Failed to regenerate user info")
 
@@ -813,6 +818,12 @@ class FailoverEventsService(Service):
         logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
         logger.info('Done migrating interface information (if required)')
+
+        try:
+            logger.info('Consuming local DB reboot reasons')
+            self.run_call('failover.reboot.consume_local_db_reasons')
+        except Exception:
+            logger.warning('Failed to consume local DB reboot reasons', exc_info=True)
 
         try:
             logger.info('Updating HA reboot info')

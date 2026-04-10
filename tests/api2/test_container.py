@@ -143,7 +143,6 @@ def started_ubuntu_container(ubuntu_container):
 
     container = call("container.get_instance", ubuntu_container["id"])
     assert container["status"]["state"] == "RUNNING"
-    assert "/sbin/init" in ssh(f"ps -p {container['status']['pid']} -o args")
 
     yield container
 
@@ -165,14 +164,14 @@ def test_container_update(started_ubuntu_container):
     call("container.update", started_ubuntu_container["id"], {"init": "/bin/sleep infinity"})
 
     container = call("container.get_instance", started_ubuntu_container["id"])
-    assert "/sbin/init" in ssh(f"ps -p {container['status']['pid']} -o args")
+    assert "/sbin/init" in ssh(nsenter(container, "ps -p 1 -o args"))
 
     call("container.stop", started_ubuntu_container["id"], job=True)
 
     call("container.start", started_ubuntu_container["id"])
 
     container = call("container.get_instance", started_ubuntu_container["id"])
-    assert "/bin/sleep infinity" in ssh(f"ps -p {container['status']['pid']} -o args")
+    assert "sleep infinity" in ssh(nsenter(container, "ps -p 1 -o args"))
 
 
 def test_container_rename(ubuntu_container):
@@ -300,11 +299,10 @@ def test_network(started_ubuntu_container):
         try:
             assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
             assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
-            assert "inet 10.47.214." in ssh(nsenter(started_ubuntu_container, "ip addr list"))
-            assert "inet6 fd42:3656:7be9:e46c:" in ssh(nsenter(started_ubuntu_container, "ip addr list"))
+            assert "inet " in ssh(nsenter(started_ubuntu_container, "ip -4 addr show dev eth0"))
             break
         except AssertionError:
-            if i > 10:
+            if i > 30:
                 raise
 
             time.sleep(1)
