@@ -37,8 +37,10 @@ from .crud import (
     create_app, update_app, delete_app,
 )
 from .custom_app_ops import convert_to_custom_app
-from .pull_images import outdated_docker_images_for_app, pull_images_for_app
+from .events import process_event
+from .ix_apps.utils import get_app_name_from_project_name
 from .metadata import app_metadata_generate
+from .pull_images import outdated_docker_images_for_app, pull_images_for_app
 from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
@@ -64,6 +66,9 @@ if typing.TYPE_CHECKING:
 
 
 __all__ = ('AppService',)
+
+
+PROCESSING_APP_EVENT = set()
 
 
 class AppService(GenericCRUDService[AppEntry, str]):
@@ -374,6 +379,29 @@ class AppService(GenericCRUDService[AppEntry, str]):
         return app_metadata_generate(job, blacklisted_apps)
 
     @private
+    async def process_event(self, app_name: str) -> None:
+        await process_event(self.context, app_name)
+
+    @private
     @job(lock=lambda args: f'app_upgrade_impl_{args[0]}', transient=True)
     def upgrade_impl(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
         return upgrade_impl(self.context, job, app_name, options)
+
+
+async def app_event(middleware: Middleware, event_type: str, args: typing.Any) -> None:
+    app_name = get_app_name_from_project_name(args['id'])
+    if app_name in PROCESSING_APP_EVENT:
+        return
+
+    PROCESSING_APP_EVENT.add(app_name)
+
+    try:
+        await middleware.call('app.process_event', app_name)
+    except Exception as e:
+        middleware.logger.warning('Unhandled exception: %s', e)
+    finally:
+        PROCESSING_APP_EVENT.remove(app_name)
+
+
+async def setup(middleware: Middleware) -> None:
+    middleware.event_subscribe('docker.events', app_event)
