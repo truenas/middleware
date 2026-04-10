@@ -41,7 +41,9 @@ from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
 )
-from .upgrade import upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary
+from .upgrade import (
+    upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary, clear_upgrade_alerts_for_all, update_app_upgrade_alert
+)
 
 
 if typing.TYPE_CHECKING:
@@ -328,6 +330,14 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Retrieve upgrade summary for `app_name`.
         """
         return await upgrade_summary(self.context, app_name, options)
+
+    @private
+    async def check_upgrade_alerts(self) -> None:
+        await update_app_upgrade_alert(self.context)
+
+    @private
+    async def clear_upgrade_alerts_for_all(self) -> None:
+        await clear_upgrade_alerts_for_all(self.context)
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:

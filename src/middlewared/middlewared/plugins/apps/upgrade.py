@@ -366,3 +366,8 @@ async def update_app_upgrade_alert(context: ServiceContext) -> None:
         ))
 
     await context.middleware.call('cache.put', APP_UPGRADE_ALERT_CACHE_KEY, new_apps, 86400)
+
+
+async def clear_upgrade_alerts_for_all(context: ServiceContext) -> None:
+    await context.call2(context.s.alert.oneshot_delete, 'AppUpdate', None)
+    await context.middleware.call('cache.pop', APP_UPGRADE_ALERT_CACHE_KEY)
