@@ -427,7 +427,7 @@ class ServiceService(CRUDService):
 
     @private
     async def generate_etc(self, object_: 'ServiceInterface'):
-        for etc in object_.etc:
+        for etc in await object_.select_etc():
             await self.middleware.call("etc.generate", etc)
 
     @private
