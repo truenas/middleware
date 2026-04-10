@@ -23,6 +23,7 @@ from middlewared.api.current import (
     AppUpdateArgs, AppUpdateResult,
     AppDeleteArgs, AppDeleteResult,
     QueryOptions,
+    AppUpgradeOptions, AppUpgradeArgs, AppUpgradeResult,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
@@ -38,6 +39,7 @@ from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
 )
+from .upgrade import upgrade_impl, upgrade_app
 
 
 if typing.TYPE_CHECKING:
@@ -289,6 +291,19 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """Stop `app_name` app."""
         return stop_app(self.context, job, app_name)
 
+    @api_method(
+        AppUpgradeArgs, AppUpgradeResult,
+        audit='App: Upgrading',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE']
+    )
+    @job(lock=lambda args: f'app_upgrade_{args[0]}')
+    async def upgrade(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
+        """
+        Upgrade `app_name` app to `app_version`.
+        """
+        return await upgrade_app(self.context, job, app_name, options)
+
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
         # FIXME: This should be removed too
@@ -298,3 +313,8 @@ class AppService(GenericCRUDService[AppEntry, str]):
     @job(lock='app_metadata_generate', lock_queue_size=1)
     def metadata_generate(self, job: Job, blacklisted_apps: list[str] | None = None) -> None:
         return app_metadata_generate(job, blacklisted_apps)
+
+    @private
+    @job(lock=lambda args: f'app_upgrade_impl_{args[0]}', transient=True)
+    def upgrade_impl(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
+        return upgrade_impl(self.context, job, app_name, options)

@@ -25,7 +25,7 @@ __all__ = [
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult',
+    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult', 'AppUpgradeOptions', 'AppUpgradeSummaryOptions',
 ]
 
 
@@ -457,7 +457,7 @@ class AppRollbackVersionsResult(BaseModel):
     """Array of version strings available for rollback."""
 
 
-class UpgradeOptions(BaseModel):
+class AppUpgradeOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     """Target version to upgrade to. Use 'latest' for the newest available version."""
     values: Secret[dict] = Field(default_factory=dict)
@@ -469,7 +469,7 @@ class UpgradeOptions(BaseModel):
 class AppUpgradeArgs(BaseModel):
     app_name: NonEmptyString
     """Name of the application to upgrade."""
-    options: UpgradeOptions = UpgradeOptions()
+    options: AppUpgradeOptions = AppUpgradeOptions()
     """Options controlling the upgrade process including target version and snapshot behavior."""
 
 
@@ -481,7 +481,7 @@ class AppUpgradeResult(BaseModel):
 class AppUpgradeBulkEntry(BaseModel):
     app_name: NonEmptyString
     """Name of the application to upgrade."""
-    options: UpgradeOptions = UpgradeOptions()
+    options: AppUpgradeOptions = AppUpgradeOptions()
     """Upgrade options for this specific application."""
 
 
@@ -504,7 +504,7 @@ class AppUpgradeBulkResult(BaseModel):
     """Per-app upgrade results in the same order as the input list."""
 
 
-class UpgradeSummaryOptions(BaseModel):
+class AppUpgradeSummaryOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     """Target version to generate upgrade summary for. Use 'latest' for the newest available version."""
 
@@ -512,7 +512,7 @@ class UpgradeSummaryOptions(BaseModel):
 class AppUpgradeSummaryArgs(BaseModel):
     app_name: NonEmptyString
     """Name of the application to get upgrade summary for."""
-    options: UpgradeSummaryOptions = UpgradeSummaryOptions()
+    options: AppUpgradeSummaryOptions = AppUpgradeSummaryOptions()
     """Options specifying the target version for the summary."""
 
 
