@@ -1314,6 +1314,64 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
+    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    # Overloads for normal methods (no pass_app)
     @typing.overload
     async def call2[**P, T](
         self,

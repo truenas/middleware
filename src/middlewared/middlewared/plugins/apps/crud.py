@@ -105,7 +105,7 @@ def query_apps(
 
 def get_instance(context: ServiceContext, app_name: str, options: QueryOptions | None = None) -> AppEntry:
     options = options or QueryOptions()
-    results = query_apps(context, [['id', '=', app_name]], options)
+    results = query_apps(context, [['id', '=', app_name]], QueryOptions(extra=options.extra))
     if not results:
         raise InstanceNotFound(f'App {app_name} does not exist')
     return results[0]

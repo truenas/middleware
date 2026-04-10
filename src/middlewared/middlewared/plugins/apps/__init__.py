@@ -91,12 +91,12 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @typing.overload
     def query(
-        self, app: App, filters: list[typing.Any], options: QueryOptions,
+        self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry]: ...
 
     @filterable_api_method(item=AppEntry, pass_app=True)
     def query(
-        self, app: App, filters: list[typing.Any], options: QueryOptions,
+        self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry] | AppEntry | int:
         """
         Query all apps with `query-filters` and `query-options`.
@@ -109,7 +109,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
         used to install/manage app.
         """
-        return query_apps(self.context, filters, options, app)
+        return query_apps(self.context, filters or [], options or QueryOptions(), app)
 
     @api_method(
         AppCreateArgs, AppCreateResult,
