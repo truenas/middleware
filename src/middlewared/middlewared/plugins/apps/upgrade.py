@@ -11,7 +11,7 @@ from packaging.version import InvalidVersion, Version
 
 from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api.current import (
-    AppEntry, AppPullImages,
+    AppEntry, AppPullImages, QueryOptions,
     AppUpgradeSummary, AppVersionInfo,
     ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
     AppBulkUpgradeJobResult, AppUpgradeOptions, AppUpgradeSummaryOptions, AppUpgradeBulkEntry,
@@ -29,6 +29,7 @@ from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .pull_images import pull_images_internal
 from .resources import get_hostpaths_datasets, get_app_volume_ds
+from .schema_normalization import normalize_and_validate_values
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
 
@@ -111,7 +112,7 @@ async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options:
 
 
 def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
-    app = context.call_sync2(context.s.app.get_instance, app_name)
+    app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={'retrieve_config': True}))
     if app.state == 'STOPPED':
         raise CallError('In order to upgrade an app, it must not be in stopped state')
 
@@ -153,11 +154,9 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     with upgrade_config(app_name, upgrade_version):
         config = upgrade_values(app, upgrade_version)
         config.update(options.values)
-        # FIXME: Fix this usage
-        new_values = context.middleware.call_sync(
-            'app.schema.normalize_and_validate_values', upgrade_version, config, False,
-            get_installed_app_path(app_name), app,
-        )
+        new_values = context.run_coroutine(normalize_and_validate_values(
+            context, upgrade_version, config, False, get_installed_app_path(app_name), app,
+        ))
         new_values = add_context_to_values(
             app_name, new_values, upgrade_version['app_metadata'], upgrade=True, upgrade_metadata={
                 'old_version_metadata': app.metadata,

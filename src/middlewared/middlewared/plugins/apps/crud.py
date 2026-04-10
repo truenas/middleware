@@ -20,6 +20,7 @@ from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import remove_failed_resources, get_app_volume_ds, delete_internal_resources
+from .schema_normalization import normalize_and_validate_values
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -171,13 +172,13 @@ def create_internal(
 @overload
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict, complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any,
     dry_run: Literal[False] = False, migrated_app: bool = False,
 ) -> AppEntry: ...
 
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict, complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any,
     dry_run: bool = False, migrated_app: bool = False,
 ) -> AppEntry | None:
     app_version_details = complete_app_details.versions[version]
@@ -186,10 +187,9 @@ def create_internal(
     app_volume_ds_exists = bool(get_app_volume_ds(context, app_name))
     # The idea is to validate the values provided first and if it passes our validation test, we
     # can move forward with setting up the datasets and installing the catalog item
-    new_values = context.middleware.call_sync(
-        'app.schema.normalize_and_validate_values', app_version_details, user_values, False,
-        get_installed_app_path(app_name), None, dry_run is False,
-    )
+    new_values = context.run_coroutine(normalize_and_validate_values(
+        context, app_version_details, user_values, False, get_installed_app_path(app_name), None, dry_run is False
+    ))
 
     job.set_progress(25, 'Initial Validation completed')
 
@@ -254,11 +254,9 @@ def update_internal(
             context.s.catalog.app_version_details, get_installed_app_version_path(app_name, app.version)
         )
 
-        # FIXME: fix this usage
-        new_values = context.middleware.call_sync(
-            'app.schema.normalize_and_validate_values', app_version_details, config, True,
-            get_installed_app_path(app_name), app,
-        )
+        new_values = context.run_coroutine(normalize_and_validate_values(
+            context, app_version_details, config, True, get_installed_app_path(app_name), app,
+        ))
         new_values = add_context_to_values(app_name, new_values, app.metadata, update=True)
 
     job.set_progress(25, 'Initial Validation completed')

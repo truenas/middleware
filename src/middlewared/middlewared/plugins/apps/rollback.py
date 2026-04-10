@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import AppEntry, AppRollbackOptions, ZFSResourceSnapshotRollbackQuery
+from middlewared.api.current import AppEntry, AppRollbackOptions, QueryOptions, ZFSResourceSnapshotRollbackQuery
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .compose_utils import compose_action
@@ -11,6 +11,7 @@ from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
 from .resources import get_app_volume_ds
+from .schema_normalization import normalize_and_validate_values
 
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
     """
     Rollback `app_name` app to previous version.
     """
-    app = context.call_sync2(context.s.app.get_instance, app_name)
+    app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={'retrieve_config': True}))
     verrors = ValidationErrors()
     if options.app_version == app.version:
         verrors.add('options.app_version', 'Cannot rollback to same version')
@@ -38,11 +39,9 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
         get_installed_app_version_path(app_name, options.app_version)
     )
     config = get_current_app_config(app_name, options.app_version)
-    # FIXME: Fix this usage
-    new_values = context.middleware.call_sync(
-        'app.schema.normalize_and_validate_values', rollback_version, config, False,
-        get_installed_app_path(app_name), app,
-    )
+    new_values = context.run_coroutine(normalize_and_validate_values(
+        context, rollback_version, config, False, get_installed_app_path(app_name), app,
+    ))
     new_values = add_context_to_values(app_name, new_values, rollback_version['app_metadata'], rollback=True)
     update_app_config(app_name, options.app_version, new_values)
 
