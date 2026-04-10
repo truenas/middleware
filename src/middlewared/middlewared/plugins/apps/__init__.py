@@ -25,6 +25,7 @@ from middlewared.api.current import (
     QueryOptions,
     AppUpgradeOptions, AppUpgradeArgs, AppUpgradeResult,
     AppUpgradeBulkArgs, AppUpgradeBulkResult, AppUpgradeBulkEntry, AppBulkUpgradeJobResult,
+    AppUpgradeSummaryArgs, AppUpgradeSummaryResult, AppUpgradeSummaryOptions, AppUpgradeSummary,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
@@ -40,7 +41,7 @@ from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
 )
-from .upgrade import upgrade_impl, upgrade_app, upgrade_bulk
+from .upgrade import upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary
 
 
 if typing.TYPE_CHECKING:
@@ -320,6 +321,13 @@ class AppService(GenericCRUDService[AppEntry, str]):
         a single consolidated alert once all upgrades have completed.
         """
         return await upgrade_bulk(self.context, job, apps)
+
+    @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'], check_annotations=True)
+    async def upgrade_summary(self, app_name: str, options: AppUpgradeSummaryOptions) -> AppUpgradeSummary:
+        """
+        Retrieve upgrade summary for `app_name`.
+        """
+        return await upgrade_summary(self.context, app_name, options)
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:

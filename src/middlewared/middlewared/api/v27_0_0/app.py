@@ -20,7 +20,7 @@ __all__ = [
     'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
     'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
     'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
@@ -523,8 +523,7 @@ class AppVersionInfo(BaseModel):
     """Human-readable version of the app."""
 
 
-@single_argument_result
-class AppUpgradeSummaryResult(BaseModel):
+class AppUpgradeSummary(BaseModel):
     latest_version: str
     """Latest version available for the app."""
     latest_human_version: str
@@ -537,6 +536,11 @@ class AppUpgradeSummaryResult(BaseModel):
     """List of available versions for upgrade."""
     changelog: LongString | None
     """Changelog or release notes for the upgrade version. `null` if not available."""
+
+
+class AppUpgradeSummaryResult(BaseModel):
+    result: AppUpgradeSummary
+    """App upgrade summary."""
 
 
 class AppAvailableItem(CatalogAppInfo):

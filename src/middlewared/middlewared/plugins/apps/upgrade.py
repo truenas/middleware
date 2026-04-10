@@ -12,7 +12,7 @@ from packaging.version import InvalidVersion, Version
 from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api.current import (
     AppEntry, AppPullImages,
-    AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
+    AppUpgradeSummary, AppVersionInfo,
     ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
     AppBulkUpgradeJobResult, AppUpgradeOptions, AppUpgradeSummaryOptions, AppUpgradeBulkEntry,
 )
@@ -40,6 +40,41 @@ if TYPE_CHECKING:
 logger = logging.getLogger('app_lifecycle')
 
 APP_UPGRADE_ALERT_CACHE_KEY = 'app_upgrade_alert_apps'
+
+
+async def upgrade_summary(
+    context: ServiceContext, app_name: str, options: AppUpgradeSummaryOptions
+) -> AppUpgradeSummary:
+    app = await context.call2(context.s.app.get_instance, app_name)
+    if app.upgrade_available is False:
+        raise CallError(f'No upgrade available for {app_name!r}')
+
+    if app.custom_app:
+        return upgrade_summary_info(app)
+
+    try:
+        versions_config = await get_versions(context, app, options.app_version)
+    except ValidationErrors:
+        # We want to safely handle the case where ix-app has only image updates available
+        # but not a version upgrade of compose files
+        # If we come at this point for an ix-app, it means that version upgrade was not available
+        # and only image updates were available for ix-app
+        if app.metadata['name'] == IX_APP_NAME and app.image_updates_available:
+            return upgrade_summary_info(app)
+
+        raise
+
+    return AppUpgradeSummary(
+        latest_version=versions_config['latest_version']['version'],
+        latest_human_version=versions_config['latest_version']['human_version'],
+        upgrade_version=versions_config['specified_version']['version'],
+        upgrade_human_version=versions_config['specified_version']['human_version'],
+        changelog=versions_config['specified_version']['changelog'],
+        available_versions_for_upgrade=[
+            AppVersionInfo(version=v['version'], human_version=v['human_version'])
+            for v in versions_config['versions'].values()
+        ],
+    )
 
 
 async def upgrade_bulk(

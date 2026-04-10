@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from middlewared.api.current import AppEntry, AppUpgradeSummary
 from middlewared.plugins.docker.state_utils import DatasetDefaults, IX_APPS_MOUNT_PATH  # noqa
 
 
@@ -8,15 +9,15 @@ PROJECT_PREFIX = 'ix-'
 UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'
 
 
-def upgrade_summary_info(app: dict) -> dict:
-    return {
-        'latest_version': app['version'],
-        'latest_human_version': app['human_version'],
-        'upgrade_version': app['version'],
-        'upgrade_human_version': app['human_version'],
-        'changelog': 'Image updates are available for this app',
-        'available_versions_for_upgrade': [],
-    }
+def upgrade_summary_info(app: AppEntry) -> AppUpgradeSummary:
+    return AppUpgradeSummary(
+        latest_version=app.version,
+        latest_human_version=app.human_version,
+        upgrade_version=app.version,
+        upgrade_human_version=app.human_version,
+        change_log='Image updates are available for this app',
+        available_versions_for_upgrade=[],
+    )
 
 
 def get_upgrade_snap_name(app_name: str, app_version: str) -> str:
