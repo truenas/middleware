@@ -43,35 +43,6 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @api_method(
-        AppUpgradeBulkArgs, AppUpgradeBulkResult,
-        audit='Apps: Bulk Upgrade',
-        audit_extended=lambda apps: f'{len(apps)} apps',
-        roles=['APPS_WRITE']
-    )
-    @job(lock='app_upgrade_bulk')
-    async def upgrade_bulk(self, job, apps):
-        """
-        Upgrade multiple apps sequentially, each with its own options, emitting
-        a single consolidated alert once all upgrades have completed.
-        """
-        results = []
-        total = len(apps)
-        for i, entry in enumerate(apps):
-            app_name = entry['app_name']
-            job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
-            upgrade_job = await self.middleware.call('app.upgrade_impl', app_name, entry['options'])
-            result = await upgrade_job.wait(raise_error=False)
-            results.append({
-                'app_name': app_name,
-                'error': upgrade_job.error,
-                'result': result,
-            })
-
-        job.set_progress(100, 'Bulk upgrade complete')
-        await self.middleware.call('app.update_app_upgrade_alert')
-        return results
-
     @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'])
     async def upgrade_summary(self, app_name, options):
         """

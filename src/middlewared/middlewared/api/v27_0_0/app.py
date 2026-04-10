@@ -21,7 +21,7 @@ __all__ = [
     'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
     'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
-    'AppRollbackArgs', 'AppDelete', 'AppUpdate',
+    'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',

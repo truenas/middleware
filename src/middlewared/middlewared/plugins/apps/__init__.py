@@ -24,6 +24,7 @@ from middlewared.api.current import (
     AppDeleteArgs, AppDeleteResult,
     QueryOptions,
     AppUpgradeOptions, AppUpgradeArgs, AppUpgradeResult,
+    AppUpgradeBulkArgs, AppUpgradeBulkResult, AppUpgradeBulkEntry, AppBulkUpgradeJobResult,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
@@ -39,7 +40,7 @@ from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
     available_space, gpu_choices, gpu_choices_internal,
 )
-from .upgrade import upgrade_impl, upgrade_app
+from .upgrade import upgrade_impl, upgrade_app, upgrade_bulk
 
 
 if typing.TYPE_CHECKING:
@@ -295,7 +296,8 @@ class AppService(GenericCRUDService[AppEntry, str]):
         AppUpgradeArgs, AppUpgradeResult,
         audit='App: Upgrading',
         audit_extended=lambda app_name, options=None: app_name,
-        roles=['APPS_WRITE']
+        roles=['APPS_WRITE'],
+        check_annotations=True,
     )
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
     async def upgrade(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
@@ -303,6 +305,21 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Upgrade `app_name` app to `app_version`.
         """
         return await upgrade_app(self.context, job, app_name, options)
+
+    @api_method(
+        AppUpgradeBulkArgs, AppUpgradeBulkResult,
+        audit='Apps: Bulk Upgrade',
+        audit_extended=lambda apps: f'{len(apps)} apps',
+        roles=['APPS_WRITE'],
+        check_annotations=True,
+    )
+    @job(lock='app_upgrade_bulk')
+    async def upgrade_bulk(self, job: Job, apps: list[AppUpgradeBulkEntry]) -> list[AppBulkUpgradeJobResult]:
+        """
+        Upgrade multiple apps sequentially, each with its own options, emitting
+        a single consolidated alert once all upgrades have completed.
+        """
+        return await upgrade_bulk(self.context, job, apps)
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:

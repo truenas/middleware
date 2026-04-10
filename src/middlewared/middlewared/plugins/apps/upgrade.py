@@ -14,7 +14,7 @@ from middlewared.api.current import (
     AppEntry, AppPullImages,
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
     ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
-    AppUpgradeBulkArgs, AppUpgradeBulkResult, AppUpgradeOptions, AppUpgradeSummaryOptions,
+    AppBulkUpgradeJobResult, AppUpgradeOptions, AppUpgradeSummaryOptions, AppUpgradeBulkEntry,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, ServiceContext, ValidationErrors
@@ -40,6 +40,27 @@ if TYPE_CHECKING:
 logger = logging.getLogger('app_lifecycle')
 
 APP_UPGRADE_ALERT_CACHE_KEY = 'app_upgrade_alert_apps'
+
+
+async def upgrade_bulk(
+    context: ServiceContext, job: Job, apps: list[AppUpgradeBulkEntry]
+) -> list[AppBulkUpgradeJobResult]:
+    results = []
+    total = len(apps)
+    for i, entry in enumerate(apps):
+        app_name = entry.app_name
+        job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
+        upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, entry.options)
+        result = await upgrade_job.wait(raise_error=False)
+        results.append(AppUpgradeBulkEntry(
+            app_name=app_name,
+            error=upgrade_job.error,
+            result=result,
+        ))
+
+    job.set_progress(100, 'Bulk upgrade complete')
+    await update_app_upgrade_alert(context)
+    return results
 
 
 async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
