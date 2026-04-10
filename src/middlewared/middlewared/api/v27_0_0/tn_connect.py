@@ -11,7 +11,6 @@ __all__ = [
     'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
     'TrueNASConnectConfigChangedEvent',
     'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
 ]
@@ -79,15 +78,6 @@ class TrueNASConnectGenerateClaimTokenArgs(BaseModel):
 class TrueNASConnectGenerateClaimTokenResult(BaseModel):
     result: NonEmptyString
     """Generated claim token for authenticating with TrueNAS Connect services."""
-
-
-class TrueNASConnectIpChoicesArgs(BaseModel):
-    pass
-
-
-class TrueNASConnectIpChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object of available IP addresses and their associated interface descriptions."""
 
 
 class TrueNASConnectConfigChangedEvent(BaseModel):

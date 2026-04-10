@@ -10,7 +10,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     TrueNASConnectEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
-    TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
     TrueNASConnectConfigChangedEvent,
     TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
 )
@@ -261,21 +260,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         await delete_job.wait()
         if delete_job.error:
             logger.error('Failed to delete TNC certificate: %s', delete_job.error)
-
-    @api_method(
-        TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'], removed_in='v26',
-    )
-    async def ip_choices(self):
-        """
-        Returns IP choices which can be used with TrueNAS Connect.
-
-        .. deprecated::
-            TrueNAS Connect now derives IPs from System > General settings.
-        """
-        return {
-            ip['address']: ip['address']
-            for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
-        }
 
     @api_method(
         TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult, roles=['TRUENAS_CONNECT_READ']
