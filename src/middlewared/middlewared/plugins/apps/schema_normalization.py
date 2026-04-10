@@ -4,6 +4,7 @@ from collections.abc import Callable
 from middlewared.service import Service
 
 from .ix_apps.path import get_app_volume_path
+from .schema_action_context import apply_acls, update_volumes
 from .schema_construction_utils import RESERVED_NAMES
 
 
@@ -45,7 +46,10 @@ class AppSchemaService(Service):
 
     async def perform_actions(self, context):
         for action in sorted(context['actions'], key=lambda d: 0 if d['method'] == 'update_volumes' else 1):
-            await self.middleware.call(f'app.schema.action.{action["method"]}', *action['args'])
+            if action['method'] == 'update_volumes':
+                await update_volumes(self.context, action['args'][0], action['args'][1])
+            elif action['method'] == 'apply_acls':
+                await apply_acls(self.context, action['args'][0])
 
     async def normalize_values(self, dict_attrs: list[dict], values, update, context):
         for k in RESERVED_NAMES:
