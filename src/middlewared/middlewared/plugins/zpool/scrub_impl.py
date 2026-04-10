@@ -1,5 +1,5 @@
 import time
-from typing import Any, Callable, Literal
+from typing import Callable, Literal
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types
 
@@ -66,10 +66,7 @@ def _get_scan_action(
             raise ZpoolScanInvalidActionException(action)
 
 
-def do_scan_action(
-    tls: Any, pool_name: str, scan_type: str, action: str,
-    zpool: libzfs_types.ZFSPool | None = None
-) -> None:
+def do_scan_action(zpool: libzfs_types.ZFSPool, scan_type: str, action: str) -> None:
     """Start, pause, or cancel a scan on a zpool.
 
     scan_type: "SCRUB" for a full integrity scan, "ERRORSCRUB" for a targeted
@@ -86,39 +83,31 @@ def do_scan_action(
     func = _get_scan_function(scan_type)
     scan_func, scan_cmd = _get_scan_action(func, action)
 
-    if zpool is None:
-        zpool = tls.lzh.open_pool(name=pool_name)
     try:
         zpool.scan(func=scan_func, cmd=scan_cmd)
     except ZFSException as e:
         match e.code:
             case ZFSError.EZFS_SCRUBBING:
-                raise ZpoolScrubAlreadyRunningException(pool_name) from None
+                raise ZpoolScrubAlreadyRunningException(zpool.name) from None
             case ZFSError.EZFS_SCRUB_PAUSED:
-                raise ZpoolScrubPausedException(pool_name) from None
+                raise ZpoolScrubPausedException(zpool.name) from None
             case ZFSError.EZFS_SCRUB_PAUSED_TO_CANCEL:
-                raise ZpoolScrubPausedToCancelException(pool_name) from None
+                raise ZpoolScrubPausedToCancelException(zpool.name) from None
             case ZFSError.EZFS_ERRORSCRUBBING:
-                raise ZpoolErrorScrubAlreadyRunningException(pool_name) from None
+                raise ZpoolErrorScrubAlreadyRunningException(zpool.name) from None
             case ZFSError.EZFS_ERRORSCRUB_PAUSED:
-                raise ZpoolErrorScrubPausedException(pool_name) from None
+                raise ZpoolErrorScrubPausedException(zpool.name) from None
             case ZFSError.EZFS_RESILVERING:
-                raise ZpoolResiliverInProgressException(pool_name) from None
+                raise ZpoolResiliverInProgressException(zpool.name) from None
         raise
 
 
-def run_impl(
-    tls, pool_name: str, scan_type: str, action: str,
-    *, wait: bool = False, progress_callback: Callable[[float | None, str | None], None] | None = None
-) -> None:
-    """Start, pause, or cancel a scan on a zpool.
-
-    Raises domain exceptions (Zpool*Exception) directly for internal
-    callers to catch and handle as needed.
-    """
+def validate_pool(
+    lzh: libzfs_types.ZFS, pool_name: str
+) -> tuple[libzfs_types.ZFSPool, libzfs_types.struct_zpool_scrub | None]:
     # Open pool
     try:
-        zpool = tls.lzh.open_pool(name=pool_name)
+        zpool = lzh.open_pool(name=pool_name)
     except ZFSException as e:
         if e.code == ZFSError.EZFS_NOENT:
             raise ZpoolNotFoundException(pool_name) from None
@@ -136,24 +125,42 @@ def run_impl(
         and scrub.func == libzfs_types.ScanFunction.RESILVER
         and scrub.state == libzfs_types.ScanState.SCANNING
     ):
-        raise ZpoolResiliverInProgressException(pool_name)
+        raise ZpoolResiliverInProgressException(pool_name)  # don't raise alert
 
+    return zpool, scrub
+
+
+def run_impl(
+    zpool: libzfs_types.ZFSPool, scan_type: str, action: str,
+    *, wait: bool = False, progress_callback: Callable[[float | None, str | None], None] | None = None
+) -> None:
+    """Start, pause, or cancel a scan on a zpool.
+
+    Raises domain exceptions (Zpool*Exception) directly for internal
+    callers to catch and handle as needed.
+    """
     # Perform the scan action
-    do_scan_action(tls, pool_name, scan_type, action, zpool)
+    do_scan_action(zpool, scan_type, action)
+
+    if not (wait and action.upper() == "START"):
+        return
 
     # Poll until scan completes (only meaningful for START)
-    if wait and action.upper() == "START":
-        while True:
-            time.sleep(5)
-            scrub = zpool.scrub_info()
-            if scrub is None:
-                break
-            if scrub.state == libzfs_types.ScanState.FINISHED:
+    while True:
+        time.sleep(5)
+        scrub = zpool.scrub_info()
+        if scrub is None:
+            break
+
+        match scrub.state:
+            case libzfs_types.ScanState.FINISHED:
                 if progress_callback:
                     progress_callback(100, f'{scan_type} finished')
                 break
-            if scrub.state == libzfs_types.ScanState.CANCELED:
+
+            case libzfs_types.ScanState.CANCELED:
                 break
-            if scrub.state == libzfs_types.ScanState.SCANNING:
+
+            case libzfs_types.ScanState.SCANNING:
                 if progress_callback and scrub.percentage is not None:
                     progress_callback(scrub.percentage, f'{scan_type} in progress')

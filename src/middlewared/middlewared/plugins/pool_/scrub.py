@@ -2,6 +2,7 @@ import asyncio
 import errno
 import time
 
+from truenas_pylibzfs import libzfs_types, ZFSException
 from middlewared.api import api_method, Event
 from middlewared.plugins.zfs_.zfs_events import ScrubNotStartedAlert, ScrubStartedAlert
 from middlewared.api.current import (
@@ -9,19 +10,15 @@ from middlewared.api.current import (
     PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
     PoolScrubRunResult, PoolScanChangedEvent,
 )
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CRUDService, job, private, ValidationErrors
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
-from middlewared.plugins.zpool.query_impl import query_impl
-from middlewared.plugins.zpool.scrub_impl import run_impl
+from middlewared.plugins.zpool.exceptions import ZpoolResiliverInProgressException
+from middlewared.plugins.zpool.scrub_impl import run_impl, validate_pool
 
 
 HISTORY_CREATE_IMPORT_CMDS = ('zpool create', 'zpool import')
-
-
-class ScrubError(CallError):
-    pass
 
 
 class PoolScrubModel(sa.Model):
@@ -246,11 +243,11 @@ class PoolScrubService(CRUDService):
             self.call_sync2(self.s.alert.oneshot_delete, alert, name)
 
         try:
-            started = self._run_impl(tls, name, threshold)
-        except ScrubError as e:
+            started = self._run_impl(tls.lzh, name, threshold)
+        except (ZFSException) as e:  # FIXME
             self.call_sync2(
                 self.s.alert.oneshot_create,
-                ScrubNotStartedAlert(pool=name, text=e.errmsg),
+                ScrubNotStartedAlert(pool=name, text=getattr(e, 'errmsg', str(e))),
             )
         else:
             if started:
@@ -259,7 +256,7 @@ class PoolScrubService(CRUDService):
                     ScrubStartedAlert(name),
                 )
 
-    def _run_impl(self, tls, name: str, threshold: int) -> bool:
+    def _run_impl(self, lzh: libzfs_types.ZFS, name: str, threshold: int) -> bool:
         """Return True if scrub was started, False if not needed.
 
         Raises ScrubError for expected pool problems (-> ScrubNotStartedAlert).
@@ -275,24 +272,9 @@ class PoolScrubService(CRUDService):
                     errno.ENOENT,
                 )
 
-        info = query_impl(
-            tls.lzh,
-            {'pool_names': [name], 'scan': True},
-            return_pool_obj=True,
-        )
-        if not info:
-            raise ScrubError(f'Pool {name} is not imported, not running scrub')
-
-        status, zpool_obj = info[0]
-
-        if status['status'] not in ('ONLINE', 'DEGRADED'):
-            raise ScrubError(
-                f'Pool {name} is {status["status"]}, not running scrub'
-            )
-
-        scan = status['scan']
-        if scan and scan['state'] == 'SCANNING':
-            # Already scanning — nothing to do
+        try:
+            pool, scan = validate_pool(lzh, name)
+        except ZpoolResiliverInProgressException:
             return False
 
         # Threshold check via scan end_time
@@ -301,22 +283,19 @@ class PoolScrubService(CRUDService):
 
         if (
             scan
-            and scan['function'] == 'SCRUB'
-            and scan['state'] == 'FINISHED'
+            and scan.func == libzfs_types.ScanFunction.SCRUB
+            and scan.state == libzfs_types.ScanState.FINISHED
         ):
-            if scan['end_time'] >= cutoff:
+            if scan.end_time >= cutoff:
                 return False  # recent enough — skip
             start_scrub = True
 
         # Slow path: check pool history for recent create/import
         if not start_scrub:
-            for entry in zpool_obj.iter_history(since=cutoff):
+            for entry in pool.iter_history(since=cutoff):
                 cmd = entry.get('history command', '')
                 if any(s in cmd for s in HISTORY_CREATE_IMPORT_CMDS):
-                    self.logger.trace(
-                        'Pool %r recent create/import within threshold window',
-                        name,
-                    )
+                    self.logger.trace('Pool %r recent create/import within threshold window', name)
                     break
             else:
                 start_scrub = True
@@ -324,5 +303,5 @@ class PoolScrubService(CRUDService):
         if not start_scrub:
             return False
 
-        run_impl(tls, name, 'SCRUB', 'START')
+        run_impl(pool, 'SCRUB', 'START')
         return True

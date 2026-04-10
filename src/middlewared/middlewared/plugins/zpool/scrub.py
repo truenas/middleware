@@ -23,7 +23,7 @@ from .exceptions import (
     ZpoolScanInvalidActionException,
     ZpoolScanInvalidTypeException,
 )
-from .scrub_impl import run_impl
+from .scrub_impl import run_impl, validate_pool
 
 
 class ZpoolScrubService(Service):
@@ -35,15 +35,15 @@ class ZpoolScrubService(Service):
     @pass_thread_local_storage
     @job()
     def run(self, job: Job, tls, data: ZpoolScrubRunEntry) -> None:
-        schema = "zpool_scrub_run"
         try:
+            zpool, _ = validate_pool(tls.lzh, data.pool_name)
             run_impl(
-                tls, data.pool_name, data.scan_type, data.action,
+                zpool, data.scan_type, data.action,
                 wait=data.wait,
                 progress_callback=job.set_progress,
             )
         except (ZpoolNotFoundException, ZpoolScanInvalidTypeException, ZpoolScanInvalidActionException) as e:
-            raise ValidationError(schema, e.message, e.errno) from e
+            raise ValidationError("zpool_scrub_run", e.message, e.errno) from e
         except ZpoolException as e:
             raise CallError(e.message, e.errno) from e
         except truenas_pylibzfs.ZFSException as e:

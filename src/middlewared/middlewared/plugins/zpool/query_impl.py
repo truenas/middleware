@@ -269,7 +269,7 @@ def query_impl(
     lzh: libzfs_types.ZFS,
     data: dict,
     return_pool_obj: bool = False
-) -> list[dict] | list[tuple[dict, typing.Any]]:
+) -> list[dict] | list[tuple[dict, libzfs_types.ZFSPool]]:
     """Query zpools status.
 
     Args:
