@@ -56,9 +56,8 @@ class TNCPostInstallService(Service):
             'heartbeat_url': tnc_config['heartbeat_service_base_url'],
         }
         for k in (
-            'ips', 'jwt_token', 'registration_details', 'account_service_base_url',
+            'jwt_token', 'registration_details', 'account_service_base_url',
             'leca_service_base_url', 'tnc_base_url',
-            'interfaces_ips', 'use_all_interfaces', 'interfaces',
         ):
             payload[k] = tnc_config[k]
 
@@ -67,9 +66,9 @@ class TNCPostInstallService(Service):
             Status.CONFIGURED.name,
             payload,
         )
-        logger.debug('TNC Post Install: Triggering task for syncing interface IPs to run after 5 minutes')
+        logger.debug('TNC Post Install: Triggering task for syncing IPs to run after 5 minutes')
         asyncio.get_event_loop().call_later(
             5 * 60,
-            lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_interface_ips')),
+            lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_ips')),
         )
         logger.debug('TNC Post Install: TNC setup completed successfully')

@@ -31,9 +31,8 @@ class TNCHostnameService(Service):
 
     async def register_update_ips(self, ips=None, create_wildcard=False):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
-        # If no IPs provided, use combined IPs from config (direct IPs + interface IPs)
         if ips is None:
-            ips = tnc_config['ips'] + tnc_config.get('interfaces_ips', [])
+            ips = await self.middleware.call('tn_connect.get_effective_ips')
 
         if await self.middleware.call('system.is_ha_capable'):
             # For HA based systems, we want to ensure that VIP(s) always get added
@@ -53,7 +52,7 @@ class TNCHostnameService(Service):
         except TNCCallError as e:
             raise CallError(str(e))
 
-    async def sync_interface_ips(self, event_details=None):
+    async def sync_ips(self, event_details=None):
         if not await self.middleware.call('failover.is_single_master_node'):
             return
 
@@ -62,29 +61,26 @@ class TNCHostnameService(Service):
         if tnc_config['status'] not in CONFIGURED_TNC_STATES:
             return
 
-        # Skip if not monitoring all interfaces and event interface not in watch list
-        if event_details and not tnc_config['use_all_interfaces']:
-            if event_details['iface'] not in tnc_config['interfaces']:
+        # When triggered by a network event, only proceed if system.general has
+        # wildcards configured for the relevant address family — specific IPs
+        # don't change with interface events.
+        if event_details:
+            general_config = await self.middleware.call('system.general.config')
+            has_v4_wildcard = '0.0.0.0' in general_config['ui_address']
+            has_v6_wildcard = '::' in general_config['ui_v6address']
+            if not has_v4_wildcard and not has_v6_wildcard:
                 return
 
         async with _sync_lock:
-            # Reuse tnc_config — it reflects user settings that only change via
-            # tn_connect.update() (which triggers its own sync). No need to re-fetch.
-
-            # Get interface IPs based on use_all_interfaces flag
-            if tnc_config['use_all_interfaces']:
-                interfaces_ips = await self.middleware.call('tn_connect.get_all_interface_ips')
-            else:
-                interfaces_ips = await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces'])
+            effective_ips = await self.middleware.call('tn_connect.get_effective_ips')
 
             try:
                 cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
             except KeyError:
                 skip_syncing = False
             else:
-                skip_syncing = set(cached_ips) == set(interfaces_ips)
+                skip_syncing = set(cached_ips) == set(effective_ips)
 
-            # If cached IPs are the same as current, skip syncing
             if skip_syncing:
                 return
 
@@ -94,28 +90,19 @@ class TNCHostnameService(Service):
                     event_details['type'], event_details['iface'],
                 )
 
-            logger.debug('Updating TrueNAS Connect database with interface IPs: %r', ', '.join(interfaces_ips))
-            await self.middleware.call(
-                'datastore.update', 'truenas_connect', tnc_config['id'], {
-                    'interfaces_ips': interfaces_ips,
-                }
-            )
-
-            # Skip HTTP call if no IPs available (static + dynamic combined)
-            # to avoid sending an empty payload that would cause a 400 error.
+            # Skip HTTP call if no IPs available to avoid sending an empty payload.
             # Still cache the empty result to prevent retry storms from repeated netlink events.
-            combined_ips = tnc_config['ips'] + interfaces_ips
-            if not combined_ips:
-                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
+            if not effective_ips:
+                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, effective_ips, 60 * 60)
                 return
 
-            logger.debug('Syncing interface IPs for TrueNAS Connect')
+            logger.debug('Syncing IPs for TrueNAS Connect')
             try:
                 await self.middleware.call('tn_connect.hostname.register_update_ips')
             except CallError:
                 logger.error('Failed to update IPs with TrueNAS Connect', exc_info=True)
             else:
-                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
+                await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, effective_ips, 60 * 60)
                 await self.middleware.call_hook('tn_connect.hostname.updated', await self.config())
 
     async def handle_update_ips(self, event_type, args):
@@ -129,9 +116,9 @@ class TNCHostnameService(Service):
             return
 
         try:
-            await self.sync_interface_ips({'type': event_type, 'iface': args['fields']['iface']})
+            await self.sync_ips({'type': event_type, 'iface': args['fields']['iface']})
         except Exception:
-            logger.error('Failed to sync interface IPs for TrueNAS Connect', exc_info=True)
+            logger.error('Failed to sync IPs for TrueNAS Connect', exc_info=True)
 
 
 async def update_ips(middleware, event_type, args):
@@ -160,5 +147,21 @@ async def update_ips(middleware, event_type, args):
     )
 
 
+async def on_general_config_update(middleware, *args, **kwargs):
+    """Re-sync TNC IPs when system.general UI address settings change.
+
+    We intentionally do not invalidate the TNC IPs cache here. sync_ips()
+    compares the freshly resolved effective IPs against the cached set and
+    only sends an update to TNC when they actually differ. This avoids
+    unnecessary HTTP calls when unrelated system.general fields change
+    (timezone, keyboard layout, certificate, etc.).
+    """
+    try:
+        await middleware.call('tn_connect.hostname.sync_ips')
+    except Exception:
+        logger.error('Failed to sync IPs after system.general update', exc_info=True)
+
+
 async def setup(middleware):
     middleware.event_subscribe('ipaddress.change', update_ips)
+    middleware.register_hook('system.general.post_update', on_general_config_update)

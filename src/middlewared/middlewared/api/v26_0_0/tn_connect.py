@@ -1,7 +1,7 @@
 from typing import Literal
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, IPvAnyAddress, NonEmptyString, single_argument_args,
+    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args,
 )
 
 
@@ -12,7 +12,8 @@ __all__ = [
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
     'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
-    'TrueNASConnectConfigChangedEvent', 'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
+    'TrueNASConnectConfigChangedEvent',
+    'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
 ]
 
 
@@ -23,14 +24,6 @@ class TrueNASConnectEntry(BaseModel):
     """Whether TrueNAS Connect service is enabled."""
     registration_details: dict
     """Object containing registration information and credentials for TrueNAS Connect."""
-    ips: list[NonEmptyString]
-    """Array of IP addresses that TrueNAS Connect will bind to and advertise."""
-    interfaces: list[str]
-    """Array of network interface names that TrueNAS Connect will use."""
-    interfaces_ips: list[str]
-    """Array of IP addresses associated with the selected interfaces."""
-    use_all_interfaces: bool
-    """Whether to automatically use all available network interfaces."""
     status: NonEmptyString
     """Current operational status of the TrueNAS Connect service."""
     status_reason: NonEmptyString
@@ -50,17 +43,19 @@ class TrueNASConnectEntry(BaseModel):
     last_heartbeat_failure_datetime: str | None
     """Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."""
 
+    @classmethod
+    def to_previous(cls, value):
+        value.setdefault('ips', [])
+        value.setdefault('interfaces', [])
+        value.setdefault('interfaces_ips', [])
+        value.setdefault('use_all_interfaces', False)
+        return value
+
 
 @single_argument_args('tn_connect_update')
 class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     """Whether to enable the TrueNAS Connect service."""
-    ips: list[IPvAnyAddress]
-    """Array of IP addresses that TrueNAS Connect should bind to and advertise."""
-    interfaces: list[str]
-    """Array of network interface names that TrueNAS Connect should use."""
-    use_all_interfaces: bool
-    """Whether to automatically use all available network interfaces."""
 
 
 class TrueNASConnectUpdateResult(BaseModel):
