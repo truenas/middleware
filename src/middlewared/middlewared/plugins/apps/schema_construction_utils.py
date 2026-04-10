@@ -1,6 +1,6 @@
 import contextlib
 import re
-from typing import Annotated, Any, Callable, Literal, TypeAlias, Union
+from typing import Annotated, Any, Callable, Literal, TypeAlias, TypedDict, Union
 
 from pydantic import AfterValidator, create_model, Field, ValidationError
 from pydantic.fields import FieldInfo
@@ -193,9 +193,15 @@ def clean_single_error_path(path: str) -> str:
     return cleaned_path
 
 
+class ConstructSchemaResult(TypedDict):
+    verrors: ValidationErrors
+    new_values: dict[str, Any]
+    schema_name: str
+
+
 def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
-) -> dict:
+) -> ConstructSchemaResult:
     schema_name = f'app_{"update" if update else "create"}'
     model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values, old_values)
     verrors = ValidationErrors()

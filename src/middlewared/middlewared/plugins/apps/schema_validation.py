@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +32,10 @@ async def validate_values(
     else:
         config = app_data.config
 
-    verrors, new_values, schema_name = (construct_schema(app_version_details, new_values, update, config)).values()
+    result = construct_schema(app_version_details, new_values, update, config)
+    verrors = result['verrors']
+    new_values = result['new_values']
+    schema_name = result['schema_name']
 
     verrors.check()
 
@@ -92,9 +94,7 @@ async def validate_question(
                 raise ValueError(f'Unrecognized validator def {validator_def!r}')
 
 
-        result = func(context, verrors, value, schema_name, app_data)
-        if inspect.isawaitable(result):
-            await result
+        await func(context, verrors, value, schema_name, app_data)
 
     return verrors
 
@@ -109,16 +109,21 @@ async def validate_certificate(
         verrors.add(schema_name, 'Unable to locate certificate.')
 
 
-def validate_acl_entries(
+def _acl_path_has_data(path: str) -> bool:
+    return next(Path(path).iterdir(), None) is not None
+
+
+async def validate_acl_entries(
     context: ServiceContext, verrors: ValidationErrors, value: Any, schema_name: str, app_data: AppEntry | None,
 ) -> None:
+    path = value.get('path')
+    if not path or value.get('options', {}).get('force'):
+        return
     try:
-        if value.get('path') and not value.get('options', {}).get('force') and next(
-            Path(value['path']).iterdir(), None
-        ):
-            verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
+        if await context.to_thread(_acl_path_has_data, path):
+            verrors.add(schema_name, f'{path}: path contains existing data and `force` was not specified')
     except FileNotFoundError:
-        verrors.add(schema_name, f'{value["path"]}: path does not exist')
+        verrors.add(schema_name, f'{path}: path does not exist')
 
 
 async def validate_port_available_on_node(
