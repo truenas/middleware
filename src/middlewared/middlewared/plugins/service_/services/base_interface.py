@@ -69,6 +69,9 @@ class ServiceInterface(CallMixin):
     async def after_reload(self):
         pass
 
+    async def select_etc(self) -> list:
+        return self.etc
+
     async def get_failed_sub_units(self):
         """Return dict of failed/crash-looping units in the dependency tree.
 
