@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService, REF_MAPPING
+from middlewared.plugins.apps.schema_normalization_old import AppSchemaService, REF_MAPPING
 from middlewared.pytest.unit.middleware import Middleware
 
 

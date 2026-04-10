@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService
+from middlewared.plugins.apps.schema_normalization_old import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
 
 
