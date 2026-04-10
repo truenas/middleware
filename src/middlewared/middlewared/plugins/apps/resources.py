@@ -15,7 +15,6 @@ from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import ServiceContext
 
 from .compose_utils import compose_action
-from .crud import query_apps  # FIXME: Remove this dep
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
@@ -59,7 +58,7 @@ async def certificate_choices(context: ServiceContext) -> AppCertificateChoices:
 async def used_ports(context: ServiceContext) -> list[int]:
     return sorted(list(set({
         host_port.host_port
-        for app in query_apps(context, [], QueryOptions())
+        for app in await context.call2(context.s.app.query)
         for port_entry in app.active_workloads.used_ports
         for host_port in port_entry.host_ports
     })))
@@ -67,7 +66,7 @@ async def used_ports(context: ServiceContext) -> list[int]:
 
 async def used_host_ips(context: ServiceContext) -> dict[str, list[str]]:
     app_ip_info: dict[str, list[str]] = defaultdict(list)
-    for app in query_apps(context, [], QueryOptions()):
+    for app in await context.call2(context.s.app.query):
         for host_ip in app.active_workloads.used_host_ips:
             app_ip_info[host_ip].append(app.name)
 
@@ -185,8 +184,7 @@ def delete_internal_resources(
     if send_event:
         context.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
-    # FIXME: fix this usage
-    context.middleware.call_sync('app.update_app_upgrade_alert')
+    context.call_sync2(context.s.app.check_upgrade_alerts)
     if job is not None:
         job.set_progress(100, f'Deleted {app_name!r} app')
 

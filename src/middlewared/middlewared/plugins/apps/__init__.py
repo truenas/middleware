@@ -370,7 +370,6 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
-        # FIXME: This should be removed too
         return await gpu_choices_internal(self.context)
 
     @private
