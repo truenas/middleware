@@ -3,11 +3,11 @@ import asyncio
 from middlewared.utils import run
 from middlewared.utils.lio.config import ISCSI_DIR, teardown_lio_config
 
-from .base import SimpleService
+from .base import SwitchableSimpleService
 from .base_state import ServiceState
 
 
-class ISCSITargetService(SimpleService):
+class ISCSITargetService(SwitchableSimpleService):
     name = "iscsitarget"
     reloadable = True
     systemd_async_start = True
@@ -19,10 +19,18 @@ class ISCSITargetService(SimpleService):
     async def _lio_mode(self):
         return await self.middleware.call('iscsi.global.lio_enabled')
 
-    async def get_state(self):
+    async def select_systemd_unit_name(self):
         if await self._lio_mode():
-            return ServiceState(ISCSI_DIR.exists(), [])
-        return await super().get_state()
+            return None
+        return self.systemd_unit
+
+    async def get_state_no_unit(self):
+        return ServiceState(ISCSI_DIR.exists(), [])
+
+    async def select_etc(self):
+        if await self._lio_mode():
+            return ['lio']
+        return self.etc
 
     async def _wait_to_avoid_states(self, states, retries=10):
         initial_retries = retries
@@ -51,7 +59,6 @@ class ISCSITargetService(SimpleService):
 
     async def start(self):
         if await self._lio_mode():
-            await self.middleware.call('etc.generate', 'lio')
             return
         if await self.middleware.call("failover.status") not in ["MASTER", "SINGLE"]:
             if not await self.middleware.call("iscsi.global.alua_enabled"):
@@ -76,7 +83,6 @@ class ISCSITargetService(SimpleService):
 
     async def reload(self):
         if await self._lio_mode():
-            await self.middleware.call('etc.generate', 'lio')
             return True
         if await self.middleware.call("iscsi.global.direct_config_enabled"):
             return await self.middleware.call("iscsi.scst.apply_config_file")
