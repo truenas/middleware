@@ -4,8 +4,9 @@ import subprocess
 from middlewared.api.current import AppEntry, AppUpgradeSummary
 from middlewared.plugins.docker.state_utils import DatasetDefaults, IX_APPS_MOUNT_PATH  # noqa
 
+from .ix_apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: F401,I250
 
-PROJECT_PREFIX = 'ix-'
+
 UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'
 
 
@@ -15,7 +16,7 @@ def upgrade_summary_info(app: AppEntry) -> AppUpgradeSummary:
         latest_human_version=app.human_version,
         upgrade_version=app.version,
         upgrade_human_version=app.human_version,
-        change_log='Image updates are available for this app',
+        changelog='Image updates are available for this app',
         available_versions_for_upgrade=[],
     )
 

@@ -8,7 +8,6 @@ from middlewared.api.current import AppEntry, AppDelete
 from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import collect_logs, compose_action
-from .crud import get_instance
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> AppEntry:
-    app = get_instance(context, app_name)
+    app = context.call_sync2(context.s.app.get_instance, app_name)
     if app.custom_app is True:
         raise CallError(f'{app_name!r} is already a custom app')
 
@@ -88,7 +87,7 @@ def create_custom_app(
         raise e from None
     else:
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
-        app_info = get_instance(context, app_name)
+        app_info = context.call_sync2(context.s.app.get_instance, app_name)
         if app_being_converted is False:
             # We only want to send this when a new custom app is being installed, not when an
             # existing app is being converted to a custom app

@@ -143,7 +143,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         check_annotations=True,
     )
     @job(lock=lambda args: f'app_delete_{args[0]}')
-    def do_delete(self, job: Job, app_name: str, options: AppDelete) -> bool:
+    def do_delete(self, job: Job, app_name: str, options: AppDelete) -> typing.Literal[True]:
         """
         Delete `app_name` app.
 
@@ -168,7 +168,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
         Please see `query` method documentation for `options`.
         """
-        return await self.context.to_thread(get_app_instance(self.context, id_, options))
+        return await self.context.to_thread(get_app_instance, self.context, id_, options)
 
     @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'], check_annotations=True)
     async def available_space(self) -> int:

@@ -74,6 +74,7 @@ async def upgrade_summary(
         available_versions_for_upgrade=[
             AppVersionInfo(version=v['version'], human_version=v['human_version'])
             for v in versions_config['versions'].values()
+            if Version(v['version']) > Version(app.version)
         ],
     )
 
@@ -88,7 +89,7 @@ async def upgrade_bulk(
         job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
         upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, entry.options)
         result = await upgrade_job.wait(raise_error=False)
-        results.append(AppUpgradeBulkEntry(
+        results.append(AppBulkUpgradeJobResult(
             app_name=app_name,
             error=upgrade_job.error,
             result=result,
@@ -119,7 +120,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     if app.upgrade_available is False:
         raise CallError(f'No upgrade available for {app_name!r}')
 
-    if app.custom_app or app.metadata.name == IX_APP_NAME:
+    if app.custom_app or app.metadata['name'] == IX_APP_NAME:
         job.set_progress(10, 'Pulling app images')
         try:
             pull_images_internal(context, app_name, app, AppPullImages(redeploy=True))
@@ -140,7 +141,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
         20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
     )
     # Stop the app itself before we attempt to take snapshots
-    context.call_sync2(context.s.app.stop).wait_sync()
+    context.call_sync2(context.s.app.stop, app_name).wait_sync()
     if options.snapshot_hostpaths:
         take_snapshot_of_hostpath_and_stop_app(context, app)
     # In order for upgrade to complete, following must happen
@@ -153,7 +154,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     # 7) Finally create ix-volumes snapshot for rollback
     with upgrade_config(app_name, upgrade_version):
         config = upgrade_values(app, upgrade_version)
-        config.update(options.values)
+        config.update(options.values.get_secret_value())
         new_values = context.run_coroutine(normalize_and_validate_values(
             context, upgrade_version, config, False, get_installed_app_path(app_name), app,
         ))

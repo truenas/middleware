@@ -105,7 +105,7 @@ async def validate_certificate(
     if not value:
         return
 
-    if not any(choice.id for choice in await certificate_choices(context)):
+    if not any(choice.id == value for choice in await certificate_choices(context)):
         verrors.add(schema_name, 'Unable to locate certificate.')
 
 

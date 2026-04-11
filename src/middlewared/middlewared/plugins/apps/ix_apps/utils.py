@@ -3,7 +3,7 @@ from typing import Any
 
 import yaml
 
-from middlewared.plugins.apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: I250
+PROJECT_PREFIX = 'ix-'
 
 
 class AppState(enum.Enum):

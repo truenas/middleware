@@ -1,10 +1,13 @@
+import logging
+
 import pytest
 
-from middlewared.plugins.apps.schema_normalization_old import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_ix_volume
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('attr, value, complete_config, context', [
+@pytest.mark.parametrize('attr, value, complete_config, normalization_context', [
     (
         {'schema': {'type': 'dict'}},
         {
@@ -59,7 +62,7 @@ from middlewared.pytest.unit.middleware import Middleware
             'actions': [
                 {
                     'method': 'update_volumes',
-                    'args': [[
+                    'args': ['test_app', [
                         {
                             'name': 'volume_1'
                         }
@@ -89,7 +92,7 @@ from middlewared.pytest.unit.middleware import Middleware
             'actions': [
                 {
                     'method': 'update_volumes',
-                    'args': [[
+                    'args': ['test_app', [
                         {
                             'name': 'volume_2'
                         }
@@ -101,10 +104,9 @@ from middlewared.pytest.unit.middleware import Middleware
     ),
 ])
 @pytest.mark.asyncio
-async def test_normalize_ix_volumes(attr, value, complete_config, context):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    result = await app_schema_obj.normalize_ix_volume(attr, value, complete_config, context)
-    assert len(context['actions']) > 0
-    assert value['dataset_name'] in [v['name'] for v in context['actions'][0]['args'][-1]]
+async def test_normalize_ix_volumes(attr, value, complete_config, normalization_context):
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_ix_volume(ctx, attr, value, complete_config, normalization_context)
+    assert len(normalization_context['actions']) > 0
+    assert value['dataset_name'] in [v['name'] for v in normalization_context['actions'][0]['args'][-1]]
     assert result == value

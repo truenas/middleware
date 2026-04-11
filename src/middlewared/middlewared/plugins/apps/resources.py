@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import shutil
 from collections import defaultdict
-from typing import Any, TYPE_CHECKING
+from typing import Any, Literal, TYPE_CHECKING
 
 from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
@@ -150,7 +150,7 @@ def remove_failed_resources(context: ServiceContext, app_name: str, version: str
 def delete_internal_resources(
     context: ServiceContext, app_name: str, app_config: AppEntry, options: AppDelete, job: Job | None = None,
     send_event: bool = True,
-) -> bool:
+) -> Literal[True]:
     if job is not None:
         job.set_progress(20, f'Deleting {app_name!r} app')
     try:

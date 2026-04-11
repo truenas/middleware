@@ -275,7 +275,7 @@ def update_internal(
     return get_instance(context, app_name)
 
 
-def delete_app(context: ServiceContext, job: Job, app_name: str, options: AppDelete) -> bool:
+def delete_app(context: ServiceContext, job: Job, app_name: str, options: AppDelete) -> Literal[True]:
     app_config = get_instance(context, app_name)
     if options.force_remove_custom_app and not app_config.custom_app:
         raise CallError('`force_remove_custom_app` flag is only valid for a custom app', errno=errno.EINVAL)

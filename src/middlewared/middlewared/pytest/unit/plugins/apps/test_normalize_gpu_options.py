@@ -1,8 +1,11 @@
+import logging
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from middlewared.plugins.apps.schema_normalization_old import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_gpu_configuration
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
 @pytest.mark.parametrize('gpu_list, value, expected', [
@@ -125,11 +128,12 @@ from middlewared.pytest.unit.middleware import Middleware
 
     )
 ])
+@patch('middlewared.plugins.apps.schema_normalization.kfd_exists', return_value=False)
+@patch('middlewared.plugins.apps.schema_normalization.gpu_choices_internal', new_callable=AsyncMock)
 @pytest.mark.asyncio
-async def test_normalize_gpu_option(gpu_list, value, expected):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    middleware['app.gpu_choices_internal'] = lambda *args: gpu_list
-    result = await app_schema_obj.normalize_gpu_configuration('', value, '', '')
+async def test_normalize_gpu_option(mock_gpu_choices, mock_kfd, gpu_list, value, expected):
+    mock_gpu_choices.return_value = gpu_list
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_gpu_configuration(ctx, {'schema': {'type': 'dict'}}, value, {}, {})
     assert result is not None
     assert result == expected

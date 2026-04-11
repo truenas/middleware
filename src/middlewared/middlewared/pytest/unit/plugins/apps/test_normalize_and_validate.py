@@ -1,7 +1,10 @@
+import logging
+
 import pytest
 
-from middlewared.plugins.apps.schema_normalization_old import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_and_validate_values
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
 @pytest.mark.parametrize('app_detail, values, expected', [
@@ -104,21 +107,9 @@ from middlewared.pytest.unit.middleware import Middleware
 ])
 @pytest.mark.asyncio
 async def test_normalize_and_validate(app_detail, values, expected):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    # Use the actual validation logic from construct_schema instead of a simple mock
-    from middlewared.plugins.apps.schema_construction_utils import construct_schema
-
-    def validate_values_mock(item_details, values, update, app_data):
-        result = construct_schema(item_details, values, update)
-        return result['new_values']
-
-    middleware['app.schema.validate_values'] = validate_values_mock
-    new_values = await app_schema_obj.normalize_and_validate_values(
-        item_details=app_detail,
-        values=values,
-        update=False,
-        app_dir='/path/to/app'
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    new_values = await normalize_and_validate_values(
+        ctx, app_detail, values, False, '/path/to/app', perform_actions=False,
     )
     # Update expected to include the default from the schema
     expected_with_defaults = {
