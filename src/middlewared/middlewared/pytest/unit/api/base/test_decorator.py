@@ -280,6 +280,20 @@ class TestCheckMethodAnnotations:
 
         check_method_annotations(method, 1, OptionalListArgs, DummyResult)
 
+    def test_filterable_pattern_with_model_default(self):
+        """list[Any] field + model field with default matches list[Any] | None, Model | None."""
+        class Options(BaseModel):
+            extra: dict[str, Any] = {}
+
+        class FilterArgs(BaseModel):
+            filters: list[Any] = []
+            options: Options = Options()
+
+        def method(self, filters: list[Any] | None = None, options: Options | None = None) -> str:
+            pass
+
+        check_method_annotations(method, 1, FilterArgs, SimpleResult)
+
     def test_error_message_includes_function_name(self):
         """Test that error messages include the function name."""
         def my_special_method(self, name: int, count: int) -> str:

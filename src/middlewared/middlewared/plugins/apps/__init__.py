@@ -84,17 +84,21 @@ class AppService(GenericCRUDService[AppEntry, str]):
         super().__init__(middleware)
 
     @typing.overload
-    def query(self, app: App, filters: list[typing.Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
+    def query(  # type: ignore[overload-overlap]
+        self, app: App, filters: list[typing.Any], options: _QueryCountOptions,
+    ) -> int: ...
 
     @typing.overload
-    def query(self, app: App, filters: list[typing.Any], options: _QueryGetOptions) -> AppEntry: ...  # type: ignore[overload-overlap]
+    def query(  # type: ignore[overload-overlap]
+        self, app: App, filters: list[typing.Any], options: _QueryGetOptions,
+    ) -> AppEntry: ...
 
     @typing.overload
     def query(
         self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry]: ...
 
-    @filterable_api_method(item=AppEntry, pass_app=True)
+    @filterable_api_method(item=AppEntry, pass_app=True, check_annotations=True)
     def query(
         self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry] | AppEntry | int:
