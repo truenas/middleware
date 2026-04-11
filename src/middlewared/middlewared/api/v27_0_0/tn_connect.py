@@ -42,14 +42,6 @@ class TrueNASConnectEntry(BaseModel):
     last_heartbeat_failure_datetime: str | None
     """Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."""
 
-    @classmethod
-    def to_previous(cls, value):
-        value.setdefault('ips', [])
-        value.setdefault('interfaces', [])
-        value.setdefault('interfaces_ips', [])
-        value.setdefault('use_all_interfaces', False)
-        return value
-
 
 @single_argument_args('tn_connect_update')
 class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
