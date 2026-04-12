@@ -4,7 +4,7 @@ import tdb
 
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
-from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.sid import (
     db_id_to_rid,
     get_domain_rid,
@@ -127,17 +127,11 @@ class SMBService(Service):
                 self.logger.warning('%s: SMB admin group does not exist', admin_group)
 
         ds = self.middleware.call_sync('directoryservices.status')
-        match ds['type']:
-            case DSType.AD.value:
-                ad_state = ds['status']
-            case _:
-                ad_state = DSStatus.DISABLED.name
-
-        if ad_state == DSStatus.HEALTHY.name:
+        if ds['type'] == DSType.AD.value:
             try:
                 workgroup = self.middleware.call_sync('smb.config')['workgroup']
-                domain_info = self.middleware.call_sync('idmap.domain_info', workgroup)
-                domain_sid = domain_info['sid']
+                domain_sid = self.middleware.call_sync('directoryservices.secrets.domain_sid', workgroup)
+
                 # add domain account SIDS
                 entries.append((SMBGroupMembership(
                     sid=f'{domain_sid}-{DomainRid.ADMINS}',
@@ -155,7 +149,7 @@ class SMBService(Service):
                 )))
                 guests.append(f'{domain_sid}-{DomainRid.GUESTS}')
             except Exception:
-                self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
+                self.logger.warning('Failed to retrieve domain SID from secrets', exc_info=True)
 
         insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
