@@ -9,6 +9,7 @@ from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.service import Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.sid import raw_sid_to_str
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBDataType,
@@ -89,6 +90,17 @@ class DomainSecrets(Service):
             return False
 
         return True
+
+    def domain_sid(self, domain):
+        """
+        Retrieve the SID for the specified domain from secrets.tdb
+        and return it as a SID string (e.g. 'S-1-5-21-x-y-z').
+        """
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        encoded_sid = fetch_secrets_entry(
+            f"{Secrets.DOMAIN_SID.value}/{domain.upper()}", cluster
+        )
+        return raw_sid_to_str(b64decode(encoded_sid))
 
     def last_password_change(self, domain):
         """
