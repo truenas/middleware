@@ -26,7 +26,7 @@
 
     ipv4_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': True, 'ipv6': False}))
     ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
-    deny_interfaces = middleware.call_sync("interface.internal_interfaces")
+    deny_interfaces = [i for i in middleware.call_sync("interface.internal_interfaces") if not i.startswith("br-")] + ["br-*"]
     allow_interfaces = filter_list(render_ctx['interface.query'], [["name", "!^", "macvtap"]])
 %>
 
