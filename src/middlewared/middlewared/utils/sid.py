@@ -1,4 +1,5 @@
 import enum
+import struct
 
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID, IDType
 from middlewared.utils.secrets import randbits
@@ -97,6 +98,40 @@ class lsa_sidtype(enum.IntEnum):
     UNKNOWN = 8
     COMPUTER = 9
     LABEL = 10  # mandatory label
+
+
+def raw_sid_to_str(sid_bytes: bytes) -> str:
+    """Convert raw struct dom_sid bytes (as stored in secrets.tdb) to SID string.
+
+    Binary layout (MS-DTYP 2.4.2 / Samba's struct dom_sid):
+        uint8:     sid_rev_num
+        uint8:     num_auths
+        uint8[6]:  id_auth (big-endian)
+        uint32[15]: sub_auths (little-endian, only num_auths are meaningful)
+    """
+    if len(sid_bytes) < 8:
+        raise ValueError(f'SID buffer too short: {len(sid_bytes)} bytes')
+
+    revision = sid_bytes[0]
+    num_auths = sid_bytes[1]
+
+    if num_auths > 15:
+        raise ValueError(f'Invalid sub-authority count: {num_auths}')
+
+    required = 8 + (num_auths * 4)
+    if len(sid_bytes) < required:
+        raise ValueError(
+            f'SID buffer too short for {num_auths} sub-authorities: '
+            f'{len(sid_bytes)} < {required}'
+        )
+
+    id_auth = int.from_bytes(sid_bytes[2:8], byteorder='big')
+
+    parts = [f'S-{revision}-{id_auth}']
+    for i in range(num_auths):
+        parts.append(str(struct.unpack_from('<I', sid_bytes, 8 + i * 4)[0]))
+
+    return '-'.join(parts)
 
 
 def random_sid() -> str:
