@@ -3,6 +3,7 @@ import errno
 __all__ = (
     "ZpoolException",
     "ZpoolNotFoundException",
+    "ZpoolNotMasterNodeException",
     "ZpoolPoolUnhealthyException",
     "ZpoolScanInvalidActionException",
     "ZpoolScanInvalidTypeException",
@@ -11,6 +12,7 @@ __all__ = (
     "ZpoolScrubPausedToCancelException",
     "ZpoolErrorScrubAlreadyRunningException",
     "ZpoolErrorScrubPausedException",
+    "ZpoolScrubNotDueException",
     "ZpoolResiliverInProgressException",
 )
 
@@ -84,6 +86,20 @@ class ZpoolErrorScrubPausedException(ZpoolException):
 
     def __init__(self, pool: str):
         super().__init__(f"{pool!r}: error scrub is paused")
+
+
+class ZpoolNotMasterNodeException(ZpoolException):
+    errno = errno.ENXIO
+
+    def __init__(self, pool: str):
+        super().__init__(f"{pool!r}: scrub skipped because this node is not the active controller")
+
+
+class ZpoolScrubNotDueException(ZpoolException):
+    errno = errno.EALREADY
+
+    def __init__(self, pool: str):
+        super().__init__(f"{pool!r}: scrub not due yet")
 
 
 class ZpoolResiliverInProgressException(ZpoolException):

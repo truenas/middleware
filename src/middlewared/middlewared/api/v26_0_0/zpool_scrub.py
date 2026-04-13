@@ -19,6 +19,8 @@ class ZpoolScrubRunEntry(BaseModel):
     """START: begin or resume. PAUSE: pause in-progress scan. CANCEL: stop entirely."""
     wait: bool = False
     """If True and action is START, poll scrub progress until completion. Ignored for PAUSE/CANCEL."""
+    threshold: int = 35
+    """Days before a scrub is due when the scrub should start."""
 
 
 class ZpoolScrubRunArgs(BaseModel):

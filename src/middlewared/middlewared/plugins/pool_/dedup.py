@@ -28,10 +28,10 @@ class PoolService(Service):
     @job(lock=lambda args: f'ddt_prefetch_{args[0]}')
     async def ddt_prefetch(self, job, pool_name):
         """
-        Prefetch DDT entries in pool `pool_name`.
+        Prefetch DDT entries in pool ``pool_name``.
 
-        .. deprecated::
-            Use `pool.prefetch` instead, which prefetches both DDT and BRT metadata.
+        .. version-removed:: 26
+            Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
         """
         return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
 

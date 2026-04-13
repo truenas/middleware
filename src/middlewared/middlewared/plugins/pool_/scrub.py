@@ -1,24 +1,17 @@
 import asyncio
-import errno
-import time
 
-from truenas_pylibzfs import libzfs_types, ZFSException
 from middlewared.api import api_method, Event
-from middlewared.plugins.zfs_.zfs_events import ScrubNotStartedAlert, ScrubStartedAlert
 from middlewared.api.current import (
-    PoolScrubEntry, PoolScrubCreateArgs, PoolScrubCreateResult, PoolScrubUpdateArgs, PoolScrubUpdateResult,
-    PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
-    PoolScrubRunResult, PoolScanChangedEvent,
+    PoolScrubEntry, PoolScanChangedEvent,
+    PoolScrubCreateArgs, PoolScrubCreateResult,
+    PoolScrubUpdateArgs, PoolScrubUpdateResult,
+    PoolScrubDeleteArgs, PoolScrubDeleteResult,
+    PoolScrubScrubArgs, PoolScrubScrubResult,
+    PoolScrubRunArgs, PoolScrubRunResult,
 )
 from middlewared.service import CRUDService, job, private, ValidationErrors
-from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
-from middlewared.plugins.zpool.exceptions import ZpoolResiliverInProgressException
-from middlewared.plugins.zpool.scrub_impl import run_impl, validate_pool
-
-
-HISTORY_CREATE_IMPORT_CMDS = ('zpool create', 'zpool import')
 
 
 class PoolScrubModel(sa.Model):
@@ -231,77 +224,12 @@ class PoolScrubService(CRUDService):
     @api_method(
         PoolScrubRunArgs,
         PoolScrubRunResult,
-        pass_thread_local_storage=True,
-        roles=['POOL_WRITE']
+        roles=['POOL_WRITE'],
+        removed_in='v27',
     )
-    def run(self, tls, name: str, threshold: int) -> None:
+    def run(self, name: str, threshold: int) -> None:
         """
         Initiate a scrub of pool `name` if last scrub was performed more than
         `threshold` days before.
         """
-        for alert in ('ScrubNotStarted', 'ScrubStarted'):
-            self.call_sync2(self.s.alert.oneshot_delete, alert, name)
-
-        try:
-            started = self._run_impl(tls.lzh, name, threshold)
-        except (ZFSException) as e:  # FIXME
-            self.call_sync2(
-                self.s.alert.oneshot_create,
-                ScrubNotStartedAlert(pool=name, text=getattr(e, 'errmsg', str(e))),
-            )
-        else:
-            if started:
-                self.call_sync2(
-                    self.s.alert.oneshot_create,
-                    ScrubStartedAlert(name),
-                )
-
-    def _run_impl(self, lzh: libzfs_types.ZFS, name: str, threshold: int) -> bool:
-        """Return True if scrub was started, False if not needed.
-
-        Raises ScrubError for expected pool problems (-> ScrubNotStartedAlert).
-        """
-        if name != self.middleware.call_sync('boot.pool_name'):
-            if not self.middleware.call_sync('failover.is_single_master_node'):
-                return False
-
-            if not self.middleware.call_sync('datastore.query', 'storage.volume', [['vol_name', '=', name]]):
-                raise ValidationError(
-                    'pool_scrub_run.name',
-                    f'{name!r} zpool not found in database',
-                    errno.ENOENT,
-                )
-
-        try:
-            pool, scan = validate_pool(lzh, name)
-        except ZpoolResiliverInProgressException:
-            return False
-
-        # Threshold check via scan end_time
-        start_scrub = False
-        cutoff = int(time.time()) - (threshold - 1) * 86400
-
-        if (
-            scan
-            and scan.func == libzfs_types.ScanFunction.SCRUB
-            and scan.state == libzfs_types.ScanState.FINISHED
-        ):
-            if scan.end_time >= cutoff:
-                return False  # recent enough — skip
-            start_scrub = True
-
-        # Slow path: check pool history for recent create/import
-        if not start_scrub:
-            for entry in pool.iter_history(since=cutoff):
-                cmd = entry.get('history command', '')
-                if any(s in cmd for s in HISTORY_CREATE_IMPORT_CMDS):
-                    self.logger.trace('Pool %r recent create/import within threshold window', name)
-                    break
-            else:
-                start_scrub = True
-
-        if not start_scrub:
-            return False
-
-        run_impl(pool, 'SCRUB', 'START')
-        return True
+        self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
