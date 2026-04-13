@@ -1,5 +1,7 @@
 import os
 
+from truenas_pylibzfs import kstat
+
 from middlewared.service import CallError, Service
 from middlewared.utils import run, MIDDLEWARE_RUN_DIR
 
@@ -22,7 +24,7 @@ class SysctlService(Service):
         """This method should be called _BEFORE_ we initialize any VMs
         so that we can capture what the ARC max value was before we start
         changing the various ARC sysctls based on VM memory configurations"""
-        val = self.get_arcstats()['c_max']
+        val = kstat.get_arcstats().c_max
         try:
             with open(DEFAULT_ARC_MAX_FILE, 'x') as f:
                 f.write(str(val))
@@ -40,10 +42,10 @@ class SysctlService(Service):
             return self.store_default_arc_max()
 
     def get_arc_max(self):
-        return self.get_arcstats()['c_max']
+        return kstat.get_arcstats().c_max
 
     def get_arc_min(self):
-        return self.get_arcstats()['c_min']
+        return kstat.get_arcstats().c_min
 
     async def get_pagesize(self):
         cp = await run(['getconf', 'PAGESIZE'], check=False)
@@ -52,22 +54,11 @@ class SysctlService(Service):
         return int(cp.stdout.decode().strip())
 
     def get_arcstats(self):
-        stats = {}
-        with open('/proc/spl/kstat/zfs/arcstats') as f:
-            for lineno, line in enumerate(f, start=1):
-                if lineno > 2:  # skip first 2 lines
-                    try:
-                        key, _, value = line.strip().split()
-                        key, value = key.strip(), value.strip()
-                    except ValueError:
-                        continue
-                    else:
-                        stats[key] = int(value) if value.isdigit() else value
-
-        return stats
+        arcstats = kstat.get_arcstats()
+        return {name: getattr(arcstats, name) for name in kstat.ArcStats.__match_args__}
 
     def get_arcstats_size(self):
-        return self.get_arcstats()['size']
+        return kstat.get_arcstats().size
 
     async def set_value(self, key, value):
         await run(['sysctl', f'{key}={value}'])
