@@ -9,7 +9,7 @@ from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
 from middlewared.api.current import (
     AppCertificate, AppCertificateChoices, AppContainerIDOptions, AppContainerResponse, AppDelete,
-    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, QueryOptions, ZFSResourceQuery, AppEntry,
+    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, ZFSResourceQuery, AppEntry,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import ServiceContext

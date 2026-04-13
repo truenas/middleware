@@ -143,7 +143,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     # Stop the app itself before we attempt to take snapshots
     context.call_sync2(context.s.app.stop, app_name).wait_sync()
     if options.snapshot_hostpaths:
-        take_snapshot_of_hostpath_and_stop_app(context, app)
+        take_snapshot_of_hostpath(context, app)
     # In order for upgrade to complete, following must happen
     # 1) New version should be copied over to app config's dir
     # 2) Metadata should be updated to reflect new version
@@ -225,7 +225,7 @@ async def get_versions(context: ServiceContext, app: AppEntry, new_version: str)
     }
 
 
-def take_snapshot_of_hostpath_and_stop_app(context: ServiceContext, app_info: AppEntry) -> None:
+def take_snapshot_of_hostpath(context: ServiceContext, app_info: AppEntry) -> None:
     host_path_mapping = context.run_coroutine(get_hostpaths_datasets(context, app_info.name))
     if not host_path_mapping:
         return

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 
-def app_metadata_generate(job: Job, blacklisted_apps: list[str | None] = None) -> None:
+def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -> None:
     config = {}
     metadata = {}
     blacklisted_apps = blacklisted_apps or []
