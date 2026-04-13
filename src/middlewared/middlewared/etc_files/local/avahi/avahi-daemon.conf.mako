@@ -14,8 +14,6 @@
 # USA.
 # See avahi-daemon.conf(5).
 <%
-    from middlewared.utils.filter_list import filter_list
-
     hostname_override = None
 
     failover_status = middleware.call_sync('failover.status')
@@ -26,8 +24,7 @@
 
     ipv4_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': True, 'ipv6': False}))
     ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
-    deny_interfaces = middleware.call_sync("interface.internal_interfaces")
-    allow_interfaces = filter_list(render_ctx['interface.query'], [["name", "!^", "macvtap"]])
+    allow_interfaces = render_ctx['interface.query']
 %>
 
 [server]
@@ -40,7 +37,6 @@ use-ipv6=${"yes" if ipv6_enabled else "no"}
 %endif
 ratelimit-interval-usec=1000000
 ratelimit-burst=1000
-deny-interfaces=${", ".join(deny_interfaces)}
 allow-interfaces=${", ".join([x["name"] for x in allow_interfaces])}
 disallow-other-stacks=yes
 
