@@ -121,7 +121,7 @@ class Enclosure2Service(Service):
                     'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
                 )
             else:
-                if enc_info['model'].startswith('V'):
+                if enc_info['model'].startswith(('V', 'R50')):
                     bsg = enc_info['elements']['Array Device Slot'][data['slot']]['original']['enclosure_bsg']
                     pci = bsg.rsplit('/', 1)[-1]
                 else:
