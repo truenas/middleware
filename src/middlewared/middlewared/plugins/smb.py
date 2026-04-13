@@ -234,6 +234,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
 
         # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
@@ -274,6 +275,7 @@ class SMBService(ConfigService):
             bind_ip_choices,
             is_enterprise,
             security_config,
+            tiering_enabled,
         )
 
     @api_method(SMBBindipChoicesArgs, SMBBindipChoicesResult)
