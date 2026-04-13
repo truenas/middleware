@@ -1,7 +1,13 @@
 import pathlib
 
 from middlewared.service import private, Service, ValidationErrors
-from middlewared.utils.lio.config import FILEIO_DIR, IBLOCK_DIR, sanitize_lio_extent
+from middlewared.utils.lio.config import (
+    FC_DIR,
+    FILEIO_DIR,
+    IBLOCK_DIR,
+    ISCSI_DIR,
+    sanitize_lio_extent,
+)
 
 
 def _tpg_params(tpg_dir: pathlib.Path) -> dict:
@@ -293,6 +299,53 @@ class iSCSILIOService(Service):
                     sess.update(_tpg_params(tpg_dir))
                     sessions.append(sess)
         return sessions
+
+    @private
+    def remove_target_lun(self, target_name: str, lun_id: int):
+        if target_name.startswith('iqn.'):
+            tpg_dir = ISCSI_DIR / target_name / 'tpgt_1'
+        else:
+            tpg_dir = FC_DIR / target_name / 'tpgt_1'
+        lun_dir = tpg_dir / 'lun' / f'lun_{lun_id}'
+        if not lun_dir.exists():
+            return
+
+        # Remember the storage object path before we remove the LUN symlink.
+        so_path = None
+        for child in lun_dir.iterdir():
+            if child.is_symlink():
+                so_path = child.resolve()
+                break
+
+        # Remove mapped LUN entries from all ACLs for this lun_id.
+        acls_dir = tpg_dir / 'acls'
+        if acls_dir.exists():
+            for acl_dir in acls_dir.iterdir():
+                mapped = acl_dir / f'lun_{lun_id}'
+                if mapped.is_dir():
+                    for child in mapped.iterdir():
+                        if child.is_symlink():
+                            child.unlink()
+                    try:
+                        mapped.rmdir()
+                    except OSError:
+                        pass
+
+        # Remove the TPG LUN directory.
+        for child in lun_dir.iterdir():
+            if child.is_symlink():
+                child.unlink()
+        try:
+            lun_dir.rmdir()
+        except OSError:
+            pass
+
+        # Remove the storage object if it still exists.
+        if so_path and so_path.exists():
+            try:
+                so_path.rmdir()
+            except OSError:
+                pass
 
     @private
     def resync_lun_size_for_zvol(self, name):

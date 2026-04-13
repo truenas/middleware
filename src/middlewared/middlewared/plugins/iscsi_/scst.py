@@ -191,6 +191,33 @@ class iSCSITargetService(Service):
         else:
             return False
 
+    @private
+    async def remove_target_lun(self, target_name: str, lun_id: int):
+        # TBD: consider switching to sysfs mgmt write (del {lun_id}) instead of scstadmin
+        driver = 'iscsi' if target_name.startswith('iqn.') else 'qla2x00t'
+        cp = await run(
+            [
+                'scstadmin',
+                '-noprompt',
+                '-rem_lun',
+                str(lun_id),
+                '-driver',
+                driver,
+                '-target',
+                target_name,
+                '-group',
+                'security_group',
+            ],
+            check=False,
+        )
+        if cp.returncode:
+            self.logger.error(
+                'Failed to remove LUN %d from target %r: %s',
+                lun_id,
+                target_name,
+                cp.stderr.decode(),
+            )
+
     def delete_iscsi_lun(self, iqn, lun):
         pathlib.Path(
             f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'

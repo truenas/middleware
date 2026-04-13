@@ -1,7 +1,7 @@
 from middlewared.api.current import ISCSIGlobalSessionsItem
+from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import private, Service, filterable_api_method
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import run
 from middlewared.utils.filter_list import filter_list
 
 
@@ -119,6 +119,16 @@ class ISCSIGlobalService(Service):
                 {'select': ['enabled', 'path', 'id']},
             )
         }
+        lio = await self.middleware.call('iscsi.global.lio_enabled')
+        alua = await self.middleware.call('iscsi.global.alua_enabled')
+
+        node = await self.middleware.call('failover.node')
+        fcports_by_target = {}
+        for fp in await self.middleware.call('fcport.query'):
+            tid = fp['target']['id']
+            wwpn_str = fp['wwpn_b'] if node == 'B' else fp['wwpn']
+            fcports_by_target.setdefault(tid, [])
+            fcports_by_target[tid].append(wwn_as_colon_hex(wwpn_str))
 
         for associated_target in filter(
             lambda a: (
@@ -127,28 +137,37 @@ class ISCSIGlobalService(Service):
             ),
             await self.middleware.call('iscsi.targetextent.query'),
         ):
+            target = targets[associated_target['target']]
+            lun_id = associated_target['lunid']
+            mode = target['mode']
             self.middleware.logger.debug(
                 'Terminating associated target %r', associated_target['id']
             )
-            cp = await run(
-                [
-                    'scstadmin',
-                    '-noprompt',
-                    '-rem_lun',
-                    str(associated_target['lunid']),
-                    '-driver',
-                    'iscsi',
-                    '-target',
-                    f'{g_config["basename"]}:{targets[associated_target["target"]]["name"]}',
-                    '-group',
-                    'security_group',
-                ],
-                check=False,
-            )
 
-            if cp.returncode:
-                self.middleware.logger.error(
-                    'Failed to remove associated target %r : %s',
-                    associated_target['id'],
-                    cp.stderr.decode(),
+            if mode in ('ISCSI', 'BOTH'):
+                iqn = f'{g_config["basename"]}:{target["name"]}'
+                if lio:
+                    await self.middleware.call(
+                        'iscsi.lio.remove_target_lun', iqn, lun_id
+                    )
+                else:
+                    await self.middleware.call(
+                        'iscsi.scst.remove_target_lun', iqn, lun_id
+                    )
+
+            if mode in ('FC', 'BOTH'):
+                for wwpn in fcports_by_target.get(target['id'], []):
+                    if lio:
+                        await self.middleware.call(
+                            'iscsi.lio.remove_target_lun', wwpn, lun_id
+                        )
+                    else:
+                        await self.middleware.call(
+                            'iscsi.scst.remove_target_lun', wwpn, lun_id
+                        )
+
+            if not lio and alua:
+                ha_iqn = f'{g_config["basename"]}:HA:{target["name"]}'
+                await self.middleware.call(
+                    'iscsi.scst.remove_target_lun', ha_iqn, lun_id
                 )
