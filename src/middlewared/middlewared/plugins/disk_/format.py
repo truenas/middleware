@@ -99,17 +99,18 @@ class DiskService(Service):
         alignment = None
         if size is None:
             size = self.get_data_partition_size(disk)
-            for info in self.middleware.call_sync('disk.get_disks', [disk]):
-                # Old TrueNAS systems:
-                # * Used the entire disk for the data partition
-                # * Used smaller partition alignment
-                #
-                # When replacing a disk with such a partition, the new partition must be at least
-                # as large as the one being replaced (ZFS requires this). However, when using a
-                # larger alignment, the new partition may not fit on the disk. In that case,
-                # we must use a smaller alignment.
-                alignment = sgdisk_explicit_alignment(info.size_bytes, info.pbs, size)
-                break
+
+        for info in self.middleware.call_sync('disk.get_disks', [disk]):
+            # Old TrueNAS systems:
+            # * Used the entire disk for the data partition
+            # * Used smaller partition alignment
+            #
+            # When replacing a disk with such a partition, the new partition must be at least
+            # as large as the one being replaced (ZFS requires this). However, when using a
+            # larger alignment, the new partition may not fit on the disk. In that case,
+            # we must use a smaller alignment.
+            alignment = sgdisk_explicit_alignment(info.size_bytes, info.pbs, size)
+            break
 
         cmd = ["sgdisk"]
         if alignment is not None:
