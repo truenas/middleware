@@ -59,6 +59,9 @@ class ISCSITargetService(SwitchableSimpleService):
 
     async def start(self):
         if await self._lio_mode():
+            # In LIO mode there is no systemd unit to start (select_systemd_unit_name
+            # returns None) and config is written by etc.generate('lio') before this
+            # method is called.  Nothing further to do here.
             return
         if await self.middleware.call("failover.status") not in ["MASTER", "SINGLE"]:
             if not await self.middleware.call("iscsi.global.alua_enabled"):
@@ -68,6 +71,8 @@ class ISCSITargetService(SwitchableSimpleService):
 
     async def stop(self):
         if await self._lio_mode():
+            # In LIO mode there is no systemd unit; tear down the configfs tree
+            # directly and return without invoking the SCST stop path.
             await self.middleware.run_in_thread(teardown_lio_config)
             return
         await super().stop()
@@ -83,6 +88,8 @@ class ISCSITargetService(SwitchableSimpleService):
 
     async def reload(self):
         if await self._lio_mode():
+            # In LIO mode reloads are handled by etc.generate('lio') which rewrites
+            # the configfs tree directly.  No scstadmin reload is needed.
             return True
         if await self.middleware.call("iscsi.global.direct_config_enabled"):
             return await self.middleware.call("iscsi.scst.apply_config_file")
