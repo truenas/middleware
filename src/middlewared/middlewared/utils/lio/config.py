@@ -114,7 +114,7 @@ def _write_vpd_serial(path: pathlib.Path, value: str):
     current = _read(path)
     _VPD_SERIAL_PREFIX = "T10 VPD Unit Serial Number: "
     if current.startswith(_VPD_SERIAL_PREFIX):
-        current = current[len(_VPD_SERIAL_PREFIX):]
+        current = current[len(_VPD_SERIAL_PREFIX) :]
     if current != value:
         _write(path, value)
 
@@ -246,9 +246,11 @@ def _configure_storage_object(so_dir: pathlib.Path, extent: dict, render_ctx: di
 
     if extent["type"] == "DISK":
         # iblock: write device path via udev_path file and control knob
-        _wait_for(control)
+        if not _wait_for(control):
+            raise RuntimeError(f"LIO configfs: {control} never appeared")
         _write(control, f"udev_path={device_path}")
         udev_path_file = so_dir / "udev_path"
+        # udev_path_file is a secondary confirmation attribute; best-effort write only
         if _wait_for(udev_path_file):
             _write(udev_path_file, device_path)
         if extent.get("ro"):
@@ -257,7 +259,8 @@ def _configure_storage_object(so_dir: pathlib.Path, extent: dict, render_ctx: di
             _write(control, "readonly=0")
     else:
         # fileio: write device path and size via control knob
-        _wait_for(control)
+        if not _wait_for(control):
+            raise RuntimeError(f"LIO configfs: {control} never appeared")
         size = extent.get("filesize") or 0
         if size:
             _write(control, f"fd_dev_name={device_path},fd_dev_size={size}")
@@ -271,8 +274,9 @@ def _configure_storage_object(so_dir: pathlib.Path, extent: dict, render_ctx: di
 
     # Enable the storage object
     enable = so_dir / "enable"
-    if _wait_for(enable):
-        _write(enable, "1")
+    if not _wait_for(enable):
+        raise RuntimeError(f"LIO configfs: {enable} never appeared")
+    _write(enable, "1")
 
     # Configure ALUA groups (after enable so alua/ is populated)
     _configure_alua(so_dir, render_ctx)
@@ -289,7 +293,7 @@ def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
     """
     wwn_dir = so_dir / "wwn"
     if not _wait_for(wwn_dir):
-        return
+        raise RuntimeError(f"LIO configfs: {wwn_dir} never appeared")
 
     components = _naa_to_vpd_components(extent.get("naa") or "")
     if components:
@@ -298,6 +302,7 @@ def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
         if company_id_path.exists():
             _write_if_changed(company_id_path, company_id_hex)
         vpd_serial_path = wwn_dir / "vpd_unit_serial"
+        # vpd_unit_serial appears shortly after wwn_dir; best-effort write only
         if _wait_for(vpd_serial_path):
             _write_vpd_serial(vpd_serial_path, vpd_serial_str)
     else:
@@ -305,6 +310,7 @@ def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
         serial = extent.get("serial") or ""
         if serial:
             vpd_serial_path = wwn_dir / "vpd_unit_serial"
+            # vpd_unit_serial appears shortly after wwn_dir; best-effort write only
             if _wait_for(vpd_serial_path):
                 _write_vpd_serial(vpd_serial_path, serial)
 
@@ -575,8 +581,9 @@ def _create_iscsi_tpg(target_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict)
     _reconcile_acls(tpg_dir, tpg_cfg)
 
     enable = tpg_dir / "enable"
-    if _wait_for(enable):
-        _write(enable, "1")
+    if not _wait_for(enable):
+        raise RuntimeError(f"LIO configfs: {enable} never appeared")
+    _write(enable, "1")
 
 
 def _update_iscsi_tpg(tpg_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict):
@@ -672,7 +679,7 @@ def _reconcile_portals(tpg_dir: pathlib.Path, tpg_cfg: dict):
         p = desired[key]
         portal_dir = np_dir / key
         portal_dir.mkdir()
-        # Set iSER attribute if supported
+        # Set iSER attribute if supported — best-effort; older kernels may not expose it
         iser_path = portal_dir / "iser"
         if _wait_for(iser_path, retries=5):
             _write(iser_path, "1" if p.get("iser") else "0")
@@ -1028,8 +1035,9 @@ def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
     _reconcile_luns(tpg_dir, fc_cfg)
     _reconcile_acls(tpg_dir, fc_cfg)
     enable = tpg_dir / "enable"
-    if _wait_for(enable):
-        _write(enable, "1")
+    if not _wait_for(enable):
+        raise RuntimeError(f"LIO configfs: {enable} never appeared")
+    _write(enable, "1")
 
 
 def _update_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
