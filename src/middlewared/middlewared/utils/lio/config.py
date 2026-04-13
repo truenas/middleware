@@ -114,7 +114,7 @@ def _write_vpd_serial(path: pathlib.Path, value: str):
     current = _read(path)
     _VPD_SERIAL_PREFIX = "T10 VPD Unit Serial Number: "
     if current.startswith(_VPD_SERIAL_PREFIX):
-        current = current[len(_VPD_SERIAL_PREFIX) :]
+        current = current[len(_VPD_SERIAL_PREFIX):]
     if current != value:
         _write(path, value)
 
