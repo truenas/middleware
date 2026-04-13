@@ -45,11 +45,11 @@ class AppContainerLogsFollowTailEventSource(EventSource):
         self.logs_stream = None
 
     def validate_log_args(self, app_name, container_id):
-        app = self.middleware.call_sync('app.get_instance', app_name)
-        if app['state'] not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
+        app = self.middleware.call_sync2(self.middleware.services.app.get_instance, app_name)
+        if app.state not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
             raise CallError(f'Unable to retrieve logs of stopped {app_name!r} app')
 
-        if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
+        if not any(c.id == container_id for c in app.active_workloads.container_details):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)
 
     def run_sync(self):

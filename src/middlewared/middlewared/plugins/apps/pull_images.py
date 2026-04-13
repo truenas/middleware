@@ -49,6 +49,6 @@ def pull_images_internal(
         context.middleware.call_sync('app.image.op.clear_update_flag_for_tag', image_tag)
 
     if options.redeploy:
-        context.middleware.call_sync('app.redeploy', app_name).wait_sync(raise_error=True)
+        context.call_sync2(context.s.app.redeploy, app_name).wait_sync(raise_error=True)
         if job is not None:
             job.set_progress(100, 'App redeployed successfully')

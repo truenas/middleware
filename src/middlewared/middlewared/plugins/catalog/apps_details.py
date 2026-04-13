@@ -175,9 +175,9 @@ async def get_normalized_questions_context(context: ServiceContext) -> Normalize
     return NormalizedQuestions.model_validate({
         'timezones': await context.middleware.call('system.general.timezone_choices'),
         'system.general.config': await context.middleware.call('system.general.config'),
-        'certificates': await context.middleware.call('app.certificate_choices'),
-        'ip_choices': await context.middleware.call('app.ip_choices'),
-        'gpu_choices': await context.middleware.call('app.gpu_choices_internal'),
+        'certificates': await context.call2(context.s.app.certificate_choices),
+        'ip_choices': await context.call2(context.s.app.ip_choices),
+        'gpu_choices': await context.call2(context.s.app.gpu_choices_internal),
     })
 
 

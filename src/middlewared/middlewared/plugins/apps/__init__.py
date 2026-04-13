@@ -399,7 +399,7 @@ async def app_event(middleware: Middleware, event_type: str, args: typing.Any) -
     PROCESSING_APP_EVENT.add(app_name)
 
     try:
-        await middleware.call('app.process_event', app_name)
+        await middleware.call2(middleware.services.app.process_event, app_name)
     except Exception as e:
         middleware.logger.warning('Unhandled exception: %s', e)
     finally:

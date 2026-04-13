@@ -10,16 +10,16 @@ class AppPortDelegate(PortDelegate):
     async def get_ports(self):
         ports = []
         for app in filter(
-            lambda a: a['active_workloads']['used_ports'],
-            await self.middleware.call('app.query')
+            lambda a: a.active_workloads.used_ports,
+            await self.call2(self.s.app.query)
         ):
             app_ports = []
-            for port_entry in app['active_workloads']['used_ports']:
-                for host_port in port_entry['host_ports']:
-                    app_ports.append((host_port['host_ip'], host_port['host_port']))
+            for port_entry in app.active_workloads.used_ports:
+                for host_port in port_entry.host_ports:
+                    app_ports.append((host_port.host_ip, host_port.host_port))
 
             ports.append({
-                'description': f'{app["id"]!r} application',
+                'description': f'{app.id!r} application',
                 'ports': app_ports,
             })
 

@@ -41,8 +41,8 @@ class AppService(Service):
 
         results: list[dict[str, Any]] = []
         installed_apps = [
-            (app['metadata']['name'], app['metadata']['train'])
-            for app in self.middleware.call_sync('app.query')
+            (app.metadata['name'], app.metadata['train'])
+            for app in self.call_sync2(self.s.app.query)
         ]
 
         catalog = self.call_sync2(self.s.catalog.config)

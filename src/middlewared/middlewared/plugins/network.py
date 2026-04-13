@@ -1046,7 +1046,7 @@ class InterfaceService(CRUDService):
 
                 if removed_aliases:
                     # Check if any removed IPs are used by apps
-                    apps_using_ips = await self.middleware.call('app.used_host_ips')
+                    apps_using_ips = await self.call2(self.s.app.used_host_ips)
                     for removed_ip in removed_aliases:
                         if removed_ip in apps_using_ips:
                             apps_list = ', '.join(apps_using_ips[removed_ip])

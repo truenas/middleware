@@ -119,7 +119,7 @@ def backup(context: ServiceContext, job: Job, backup_name: str | None) -> str:
 
     with atomic_write(backup_apps_state_file_path(name), 'w') as f:
         f.write(dump_yaml(
-            {app['name']: app for app in context.middleware.call_sync('app.query')})
+            {app.name: app.model_dump() for app in context.call_sync2(context.s.app.query)})
         )
 
     with atomic_write(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
