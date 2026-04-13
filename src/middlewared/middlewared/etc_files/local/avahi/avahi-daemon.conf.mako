@@ -41,7 +41,7 @@ allow-interfaces=${", ".join([x["name"] for x in allow_interfaces])}
 disallow-other-stacks=yes
 
 [wide-area]
-enable-wide-area=yes
+enable-wide-area=no
 
 [publish]
 publish-hinfo=no
