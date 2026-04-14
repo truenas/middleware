@@ -59,6 +59,31 @@ def _entry(value: int) -> dict:
             {"nvme_self_test_log": {"table": [_entry(0), _entry(0), None, _entry(5)]}},
             False,
         ),
+        # Same shape as above, but pinning the exact firmware-leak signature
+        # observed in the NAS-140652 raw `nvme self-test-log` dump: the
+        # trailing slot carries power_on_hours = 109951162777600
+        # (= 0x640000000000), which is uninitialized memory — proof the
+        # controller is not zeroing unused ring-buffer slots. If such a slot's
+        # op/result bytes ever align to a valid-looking failure code, smartctl
+        # keeps it and the old [-1] lookup would grab the garbage. Must not
+        # alert with the fix.
+        (
+            {
+                "nvme_self_test_log": {
+                    "table": [
+                        _entry(0),
+                        _entry(0),
+                        None,
+                        {
+                            "self_test_code": {"value": 1, "string": "Short"},
+                            "self_test_result": {"value": 5, "string": "x"},
+                            "power_on_hours": 109951162777600,
+                        },
+                    ]
+                }
+            },
+            False,
+        ),
         # Genuine failures at index 0 — must still alert for all three NVMe
         # failure codes (5 = fatal error, 6 = unknown failed segment,
         # 7 = known failed segments).
