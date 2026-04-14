@@ -63,7 +63,7 @@ def tier_pool():
                 {
                     "enabled": original_config["enabled"],
                     "max_concurrent_jobs": original_config["max_concurrent_jobs"],
-                    "min_available_space": original_config["min_available_space"],
+                    "max_used_percentage": original_config["max_used_percentage"],
                 },
             )
 
@@ -85,9 +85,9 @@ def test_config_fields():
     assert isinstance(config["id"], int)
     assert isinstance(config["enabled"], bool)
     assert isinstance(config["max_concurrent_jobs"], int)
-    assert isinstance(config["min_available_space"], int)
+    assert isinstance(config["max_used_percentage"], int)
     assert 1 <= config["max_concurrent_jobs"] <= 10
-    assert config["min_available_space"] >= 0
+    assert 70 <= config["max_used_percentage"] <= 95
 
 
 def test_config_update_max_concurrent_jobs(tier_pool):
@@ -101,15 +101,15 @@ def test_config_update_max_concurrent_jobs(tier_pool):
         call("zfs.tier.update", {"max_concurrent_jobs": original})
 
 
-def test_config_update_min_available_space(tier_pool):
-    original = call("zfs.tier.config")["min_available_space"]
-    new_val = 10
+def test_config_update_max_used_percentage(tier_pool):
+    original = call("zfs.tier.config")["max_used_percentage"]
+    new_val = 90 if original != 90 else 85
     try:
-        result = call("zfs.tier.update", {"min_available_space": new_val})
-        assert result["min_available_space"] == new_val
-        assert call("zfs.tier.config")["min_available_space"] == new_val
+        result = call("zfs.tier.update", {"max_used_percentage": new_val})
+        assert result["max_used_percentage"] == new_val
+        assert call("zfs.tier.config")["max_used_percentage"] == new_val
     finally:
-        call("zfs.tier.update", {"min_available_space": original})
+        call("zfs.tier.update", {"max_used_percentage": original})
 
 
 def test_dataset_set_tier_performance(tier_ds):
