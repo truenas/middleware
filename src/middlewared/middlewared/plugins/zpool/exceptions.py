@@ -14,6 +14,7 @@ __all__ = (
     "ZpoolErrorScrubPausedException",
     "ZpoolScrubNotDueException",
     "ZpoolResiliverInProgressException",
+    "ZpoolTooManyScrubsException",
 )
 
 
@@ -107,3 +108,13 @@ class ZpoolResiliverInProgressException(ZpoolException):
 
     def __init__(self, pool: str):
         super().__init__(f"{pool!r}: resilver in progress")
+
+
+class ZpoolTooManyScrubsException(ZpoolException):
+    errno = errno.EBUSY
+
+    def __init__(self, running: int):
+        super().__init__(
+            f'{running} scrubs are already running. Running too many scrubs simultaneously '
+            'will result in an unresponsive system. Refusing to start scrub.'
+        )

@@ -10,6 +10,7 @@ from middlewared.api.current import (
     PoolScrubScrubArgs, PoolScrubScrubResult,
     PoolScrubRunArgs, PoolScrubRunResult,
 )
+from middlewared.plugins.zpool.exceptions import ZpoolException
 from middlewared.plugins.zpool.scrub_impl import scrub_pool
 from middlewared.service import CRUDService, job, private, CallError, ValidationErrors
 from middlewared.service.decorators import pass_thread_local_storage
@@ -211,7 +212,9 @@ class PoolScrubService(CRUDService):
 
         try:
             zpool = tls.lzh.open_pool(name=name)
-            scrub_pool(zpool, "SCRUB", scrub_action, wait=True, progress_callback=job.set_progress)
+            scrub_pool(tls.lzh, zpool, "SCRUB", scrub_action, wait=True, progress_callback=job.set_progress)
+        except ZpoolException as e:
+            raise CallError(str(e), e.errno) from e
         except Exception as e:
             raise CallError(str(e)) from e
 
