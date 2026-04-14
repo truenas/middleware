@@ -156,10 +156,8 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     if not lic.valid:
         return None
 
-    # Synthesize expires_at: test licenses use top-level,
-    # all others use the SUPPORT feature's expiry
-    if lic.type == LicenseType.TEST:
-        expires_at = date.fromisoformat(lic.expires_at) if lic.expires_at else None
+    if lic.expires_at:
+        expires_at: date | None = date.fromisoformat(lic.expires_at)
     else:
         support = lic.features.get("SUPPORT") if lic.features else None
         expires_at = date.fromisoformat(support.expires_at) if support and support.expires_at else None

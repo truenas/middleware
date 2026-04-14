@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.api.base import BaseModel, LongString, NonEmptyString
 
 from .support import SupportNewTicket
@@ -114,5 +116,5 @@ class TrueNASLicenseInfoArgs(BaseModel):
 
 
 class TrueNASLicenseInfoResult(BaseModel):
-    result: dict | None
+    result: dict[str, Any] | None
     """Parsed license JSON object, or `null` if no license file exists."""

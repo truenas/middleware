@@ -33,6 +33,7 @@ class TrueNASLicenseService(Service):
         TrueNASLicenseUploadArgs,
         TrueNASLicenseUploadResult,
         roles=["FULL_ADMIN"],
+        check_annotations=True,
     )
     def upload(self, license_: str, options: TrueNASLicenseUploadOptions) -> None:
         """Upload a PEM-wrapped license file."""
@@ -72,6 +73,7 @@ class TrueNASLicenseService(Service):
         TrueNASLicenseInfoArgs,
         TrueNASLicenseInfoResult,
         roles=["READONLY_ADMIN"],
+        check_annotations=True,
     )
     def info(self) -> dict[str, Any] | None:
         """Returns the parsed license object, or null if no license exists."""

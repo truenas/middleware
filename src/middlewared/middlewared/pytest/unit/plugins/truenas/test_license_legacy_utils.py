@@ -34,7 +34,7 @@ from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
             model="X10",
             expires_at=date(2026, 4, 30),
             features=[
-                FeatureInfo(name="JAILS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
+                FeatureInfo(name="APPS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
             ],
             serials=["TEST-000001"],
             enclosures={},

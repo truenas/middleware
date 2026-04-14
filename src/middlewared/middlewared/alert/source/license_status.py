@@ -150,7 +150,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                     days_left = (local_license.expires_at - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
                     if days == 14:
-                        opening = textwrap.dedent(f"""\
+                        opening = textwrap.dedent("""\
                             Your TrueNAS support contract is approaching its expiration date.
                             Renewal options may be available — we suggest contacting us before expiration.
                         """)

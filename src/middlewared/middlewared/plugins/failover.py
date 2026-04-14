@@ -432,7 +432,7 @@ class FailoverService(ConfigService):
 
             try:
                 self.middleware.call_sync(
-                    'failover.call_remote', 'truenas.license.upload', [license_],
+                    'failover.call_remote', 'truenas.license.upload', [license_, {"ha_propagate": False}],
                 )
             except Exception as e:
                 self.logger.error(f'Failed to call truenas.license.upload on the remote node: {e!r}')

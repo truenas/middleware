@@ -18,7 +18,7 @@ async def license_active(context: ServiceContext) -> bool:
         # 2. OR if it's a MINI, then allow containers/vms
         return True
 
-    return await context.middleware.call('system.feature_enabled', 'JAILS')  # type: ignore[no-any-return]
+    return await context.middleware.call('system.feature_enabled', 'APPS')  # type: ignore[no-any-return]
 
 
 async def pool_choices(context: ServiceContext) -> dict[str, str]:
