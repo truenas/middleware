@@ -79,6 +79,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         cli_namespace = 'app'
         role_prefix = 'APPS'
         entry = AppEntry
+        generic = True
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
