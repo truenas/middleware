@@ -50,7 +50,8 @@ class IPMISELAlertSource(AlertSource):
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
     async def get_sensor_values(self):
-        # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
+        # Sensor type / event strings come from FreeIPMI's `ipmi-sel`:
+        # https://git.savannah.gnu.org/cgit/freeipmi.git/tree/libfreeipmi/spec/ipmi-sensor-and-event-code-tables-spec.c
         sensor_types = (
             "Redundancy State",
             "Temperature",
@@ -79,7 +80,7 @@ class IPMISELAlertSource(AlertSource):
 
         sensor_events_to_ignore = (
             ("Redundancy State", "Fully Redundant"),
-            ("Processor", "Presence detected"),
+            ("Processor", "Processor Presence detected"),
             ("Power Supply", "Presence detected"),
             ("Power Supply", "Fully Redundant"),
         )
