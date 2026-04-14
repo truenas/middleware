@@ -1,13 +1,52 @@
 """
 LIO (Linux I/O target) configfs reconciler.
 
-Reconciles the live LIO configfs state against the desired state derived from
-render_ctx.  Follows the same pattern as utils/nvmet/kernel.py: compute desired
-state, then add what is missing, update what has changed, and delete what is
-stale.  All operations are direct pathlib writes to configfs; no rtslib-fb
-dependency.
+Computes the desired state from render_ctx, then adds what is missing, updates
+what has changed, and deletes what is stale.  All operations are direct pathlib
+writes to /sys/kernel/config/target/; no rtslib-fb dependency.
 
 Phase 1: non-HA iSCSI/TCP + iSER + FC (tcm_qla2xxx), with ALUA stubs.
+
+Configfs tree
+-------------
+/sys/kernel/config/target/
++-- core/
+|   +-- iblock_0/
+|   |   +-- {extent}/             storage object (block device)
+|   |       +-- udev_path         write device path to open
+|   |       +-- enable            write "1" to activate
+|   |       +-- wwn/vpd_unit_serial
+|   +-- fileio_0/
+|       +-- {extent}/             storage object (file/zvol via file I/O)
+|           +-- fd_dev_name
+|           +-- enable
+|           +-- wwn/vpd_unit_serial
++-- iscsi/
+|   +-- {iqn}/                    iSCSI target
+|       +-- tpgt_{tag}/           TPG; tag = portal["tag"], NOT hardcoded to 1
+|           +-- enable
+|           +-- param/            negotiation parameters
+|           +-- portals/
+|           |   +-- {ip}:{port}/  listen address
+|           +-- lun/
+|           |   +-- lun_{id}/
+|           |       +-- {alias}   symlink -> core/{backstore}/{extent}/
+|           +-- acls/
+|               +-- {initiator}/  one dir per allowed initiator IQN
+|                   +-- auth/     CHAP credentials
+|                   +-- lun_{id}/
+|                       +-- default  symlink -> ../../lun/lun_{id}/
++-- qla2xxx/                      FC fabric (tcm_qla2xxx)
+    +-- {wwpn}/                   FC target; WWPN in colon-hex
+        +-- tpgt_1/               always tag 1 -- FC has exactly one TPG
+            +-- enable
+            +-- lun/
+            |   +-- lun_{id}/
+            |       +-- {alias}   symlink -> core/{backstore}/{extent}/
+            +-- acls/
+                +-- {initiator}/  one dir per allowed initiator WWPN
+                    +-- lun_{id}/
+                        +-- default  symlink -> ../../lun/lun_{id}/
 """
 
 import os
@@ -568,7 +607,13 @@ def _update_iscsi_target(target_dir: pathlib.Path, target_cfg: dict, render_ctx:
 
 
 def _create_iscsi_tpg(target_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict):
-    """Create a TPG and all its sub-objects."""
+    """Create a TPG and all its sub-objects.
+
+    Note: the TPG tag comes from portal["tag"] and is not hardcoded to 1.
+    A target can have multiple TPGs with different tags (one per portal group).
+    All TPGs on a target share the same LUN set.  Contrast with FC targets,
+    which always have exactly one TPG with tag 1.
+    """
     tag = tpg_cfg["tag"]
     tpg_dir = target_dir / f"tpgt_{tag}"
     tpg_dir.mkdir()
@@ -1029,7 +1074,13 @@ def _fc_targets(render_ctx: dict):
 
 
 def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
-    """Create FC TPG (always tag 1) with LUNs."""
+    """Create FC TPG (always tag 1) with LUNs.
+
+    Note: FC targets always have exactly one TPG with tag 1.  iSCSI targets
+    differ — their TPG tag comes from portal["tag"] and is not hardcoded.
+    Code that manipulates TPG directories must account for this asymmetry
+    (e.g. do not assume tpgt_1 when iterating iSCSI targets).
+    """
     tpg_dir = target_dir / "tpgt_1"
     tpg_dir.mkdir()
     _reconcile_luns(tpg_dir, fc_cfg)
