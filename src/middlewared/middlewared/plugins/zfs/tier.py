@@ -69,7 +69,7 @@ _DATASET_NOT_FOUND = (
 )  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
 
 
-def _apply_metadata_reserve_pct(middleware, value: int) -> None:
+def _apply_metadata_reserve_pct(middleware: Middleware, value: int) -> None:
     """Write special_class_metadata_reserve_pct to the ZFS kernel module if it differs."""
     str_value = str(value)
     try:
@@ -731,8 +731,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         return _bulk_tier_map(tls.lzh, dataset_names, self.logger)
 
 
-async def setup(middleware):
-    async def _apply_tier_tunables(middleware, pool):
+async def setup(middleware: Middleware) -> None:
+    async def _apply_tier_tunables(middleware: Middleware, pool: dict | None) -> None:
         if pool is not None:
             return
         config = await middleware.call('zfs.tier.config')
