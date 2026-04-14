@@ -6,7 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.current import ZpoolScrubRun, ZpoolScrubRunArgs, ZpoolScrubRunResult
 from middlewared.service import Service, job
 from middlewared.service.decorators import pass_thread_local_storage
-from .scrub_impl import run
+from .scrub_impl import run_impl
 if TYPE_CHECKING:
     from middlewared.job import Job
 
@@ -20,4 +20,4 @@ class ZpoolScrubService(Service):
     @pass_thread_local_storage
     @job()
     def run(self, job: Job, tls, data: ZpoolScrubRun) -> None:
-        run(self.context, tls.lzh, data, job.set_progress)
+        run_impl(self.context, tls.lzh, data, job.set_progress)

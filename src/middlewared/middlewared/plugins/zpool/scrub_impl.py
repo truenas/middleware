@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.service import ServiceContext
 
-__all__ = ("do_scan_action", "run_impl")
+__all__ = ("do_scan_action", "scrub_pool")
 
 
 ScrubProgressCallback = Callable[[float | None, str | None], None]
@@ -177,7 +177,7 @@ def validate_pool(
     return zpool
 
 
-def run_impl(
+def scrub_pool(
     zpool: libzfs_types.ZFSPool, scan_type: Literal["SCRUB", "ERRORSCRUB"], action: Literal["START", "PAUSE", "CANCEL"],
     *, wait: bool = False, progress_callback: ScrubProgressCallback | None = None
 ) -> None:
@@ -216,10 +216,10 @@ def run_impl(
                 if progress_callback and scrub.percentage is not None:
                     progress_callback(scrub.percentage, f'{prog_scan_type} in progress')
 
-        time.sleep(3)
+        time.sleep(1)
 
 
-def run(
+def run_impl(
     ctx: ServiceContext, lzh: libzfs_types.ZFS, data: ZpoolScrubRun,
     progress_cb: ScrubProgressCallback | None = None
 ) -> None:
@@ -228,7 +228,7 @@ def run(
 
     try:
         pool = validate_pool(ctx.middleware, lzh, data.pool_name, data.threshold)
-        run_impl(pool, data.scan_type, data.action, wait=data.wait, progress_callback=progress_cb)
+        scrub_pool(pool, data.scan_type, data.action, wait=data.wait, progress_callback=progress_cb)
     except (ZpoolNotMasterNodeException, ZpoolScrubNotDueException, ZpoolResiliverInProgressException):
         # fail silently, no alert
         pass

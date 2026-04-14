@@ -265,20 +265,14 @@ def _get_zpools_cb(pool, state: list):
     return True
 
 
-def query_impl(
-    lzh: libzfs_types.ZFS,
-    data: dict,
-    return_pool_obj: bool = False
-) -> list[dict] | list[tuple[dict, libzfs_types.ZFSPool]]:
+def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
     """Query zpools status.
 
     Args:
         lzh: pylibzfs handle (from tls.lzh or truenas_pylibzfs.open_handle()).
         data: dict with keys matching ZPoolQuery fields:
             pool_names, properties, topology, scan, expand, features.
-        return_pool_obj: bool when set to True will return the open_pool()
-            object from truenas_pylibzfs. This is for internal callers only
-            to prevent unnecessary open_pool() calls within a single function.
+
     Returns:
         list[dict] matching ZPoolEntry schema.
     """
@@ -291,15 +285,11 @@ def query_impl(
     for name in pool_names:
         try:
             pool = lzh.open_pool(name=name)
-            rv = _build_pool_dict(pool, lzh, data)
-            if return_pool_obj:
-                results.append((rv, pool))
-            else:
-                results.append(rv)
+            results.append(_build_pool_dict(pool, lzh, data))
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 if data.get("raise_on_noent", False):
-                    raise ZpoolNotFoundException(name) from None
+                    raise ZpoolNotFoundException(name) from e
                 else:
                     continue
             raise
