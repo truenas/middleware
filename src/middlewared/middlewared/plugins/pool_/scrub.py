@@ -201,11 +201,14 @@ class PoolScrubService(CRUDService):
     )
     def scrub(self, job: Job, tls, name: str, action: Literal["START", "STOP", "PAUSE"]) -> None:
         """
-        Start/Stop/Pause a scrub on pool ``name``.
+        Start, stop, or pause a scrub on pool ``name``.
+
+        START begins a regular scrub and blocks until it finishes, is paused,
+        or is canceled. STOP cancels an in-progress scrub. PAUSE pauses it.
 
         .. version-deprecated:: 26.0.0
-            Use ``zpool.scrub.run`` instead.
-    
+            Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
+
         .. version-removed:: 27.0.0
         """
         scrub_action = "CANCEL" if action == "STOP" else action
@@ -221,11 +224,13 @@ class PoolScrubService(CRUDService):
     @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'], removed_in='v27')
     def run(self, name: str, threshold: int) -> None:
         """
-        Initiate a scrub of pool ``name`` if last scrub was performed more than ``threshold`` days before.
-    
+        Initiate a scrub of pool ``name`` if the most recent scrub finished
+        more than ``threshold`` days ago. Does nothing if the scrub is not yet
+        due or if this node is not the active controller on an HA system.
+
         .. version-deprecated:: 26.0.0
-            Use ``zpool.scrub.run`` instead.
-    
+            Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
+
         .. version-removed:: 27.0.0
         """
         self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})

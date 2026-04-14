@@ -20,7 +20,22 @@ class ZpoolScrubService(Service):
     @pass_thread_local_storage
     @job()
     def run(self, job: Job, tls, data: ZpoolScrubRun) -> None:
-        """Insert RST description here.
+        """Start, pause, or cancel a scrub on a ZFS pool.
+
+        When ``action`` is START, the pool is validated before the scrub begins:
+        the pool must be ONLINE or DEGRADED, must not have an active resilver,
+        and the most recent scrub must be older than ``threshold`` days. If any
+        of these checks fail the call returns silently (no error, no alert).
+
+        PAUSE and CANCEL skip validation entirely and operate on the pool
+        directly.
+
+        At most 10 scrubs may run concurrently across all pools. Attempting to
+        start an 11th raises an error.
+
+        On a successful START a ``ScrubStarted`` alert is created. If the start
+        fails for a reason other than the threshold or HA checks, a
+        ``ScrubNotStarted`` alert is created instead.
 
         .. version-added:: 26.0.0
         """

@@ -93,6 +93,15 @@ def _get_scan_action(
             raise ZpoolScanInvalidActionException(action)
 
 
+def _open_pool_handle(lzh: libzfs_types.ZFS, pool_name: str) -> libzfs_types.ZFSPool:
+    try:
+        return lzh.open_pool(name=pool_name)
+    except ZFSException as e:
+        if e.code == ZFSError.EZFS_NOENT:
+            raise ZpoolNotFoundException(pool_name) from e
+        raise
+
+
 def do_scan_action(
     zpool: libzfs_types.ZFSPool, scan_type: Literal["SCRUB", "ERRORSCRUB"], action: Literal["START", "PAUSE", "CANCEL"]
 ) -> None:
@@ -134,6 +143,34 @@ def do_scan_action(
 def validate_pool(
     middleware: Middleware, lzh: libzfs_types.ZFS, pool_name: str, threshold: int
 ) -> libzfs_types.ZFSPool:
+    """Validate that a pool exists, is healthy, and is due for a scrub.
+
+    Checks performed in order:
+      1. On HA systems, this node must be the active controller.
+      2. Non-boot pools must exist in the middleware datastore.
+      3. Pool health must be ONLINE or DEGRADED.
+      4. No resilver may be in progress.
+      5. The last scrub (or pool create/import/scrub history entry) must
+         be older than ``threshold`` days.
+
+    Args:
+        middleware: Middleware instance for service calls.
+        lzh: Open libzfs handle.
+        pool_name: Name of the zpool.
+        threshold: Minimum age in days since the last scrub before a new
+            one is considered due.
+
+    Returns:
+        The opened ZFSPool handle.
+
+    Raises:
+        ZpoolNotMasterNodeException: This node is not the active HA controller.
+        ZpoolNotFoundException: Pool not in the datastore or ZFS.
+        ZpoolPoolUnhealthyException: Pool is FAULTED, OFFLINE, etc.
+        ZpoolResiliverInProgressException: A resilver is currently running.
+        ZpoolScrubNotDueException: A recent scrub or pool event is within
+            the threshold window.
+    """
     if pool_name != middleware.call_sync('boot.pool_name'):
         if not middleware.call_sync('failover.is_single_master_node'):
             raise ZpoolNotMasterNodeException(pool_name)
@@ -142,12 +179,7 @@ def validate_pool(
             raise ZpoolNotFoundException(pool_name)
 
     # Open pool
-    try:
-        zpool = lzh.open_pool(name=pool_name)
-    except ZFSException as e:
-        if e.code == ZFSError.EZFS_NOENT:
-            raise ZpoolNotFoundException(pool_name) from e
-        raise
+    zpool = _open_pool_handle(lzh, pool_name)
 
     # Check pool health
     health = zpool.get_properties(properties={ZPOOLProperty.HEALTH}).health.value
@@ -200,8 +232,28 @@ def scrub_pool(
 ) -> None:
     """Start, pause, or cancel a scan on a zpool.
 
-    Raises domain exceptions (Zpool*Exception) directly for internal
-    callers to catch and handle as needed.
+    On START, enforces a system-wide limit of MAX_CONCURRENT_SCRUBS active
+    scrubs. When ``wait`` is True and the action is START, polls
+    ``zpool.scrub_info()`` until the scan finishes, is canceled, or is
+    paused externally.
+
+    Args:
+        lzh: Open libzfs handle (used to count running scrubs).
+        zpool: The pool to operate on.
+        scan_type: "SCRUB" for a full integrity scan, "ERRORSCRUB" for a
+            targeted scan of blocks with known errors.
+        action: "START", "PAUSE", or "CANCEL".
+        wait: If True and action is START, block until the scrub completes
+            or is paused/canceled.
+        progress_callback: Called during the wait loop with
+            (percentage, description). May be None.
+
+    Raises:
+        ZpoolTooManyScrubsException: 10 or more scrubs already running.
+        ZpoolScrubAlreadyRunningException: A scrub is already active on
+            this pool.
+        ZpoolScrubPausedToCancelException: A paused scrub must be canceled
+            before starting an error scrub.
     """
     # Refuse to start if too many scrubs are already running
     if action.upper() == "START":
@@ -250,14 +302,26 @@ def run_impl(
     ctx: ServiceContext, lzh: libzfs_types.ZFS, data: ZpoolScrubRun,
     progress_cb: ScrubProgressCallback | None = None
 ) -> None:
+    """Execute a scrub run request with alert management.
+
+    For START: clears existing scrub alerts, validates the pool via
+    validate_pool(), starts the scrub, and creates a ScrubStarted or
+    ScrubNotStarted alert depending on the outcome. Threshold, HA, and
+    resilver failures are swallowed silently (no error, no alert).
+
+    For PAUSE/CANCEL: opens the pool directly and performs the action,
+    skipping validation and alert management entirely.
+
+    Args:
+        ctx: Service context for middleware and alert calls.
+        lzh: Open libzfs handle.
+        data: Validated ZpoolScrubRun model with pool_name, scan_type,
+            action, wait, and threshold.
+        progress_cb: Optional progress callback forwarded to scrub_pool().
+    """
     if data.action != "START":
         # PAUSE/CANCEL: skip threshold validation and alerts
-        try:
-            zpool = lzh.open_pool(name=data.pool_name)
-        except ZFSException as e:
-            if e.code == ZFSError.EZFS_NOENT:
-                raise ZpoolNotFoundException(data.pool_name) from e
-            raise
+        zpool = _open_pool_handle(lzh, data.pool_name)
         scrub_pool(lzh, zpool, data.scan_type, data.action)
         return
 
