@@ -53,6 +53,7 @@ from middlewared.api.current import (
 )
 from middlewared.event import TypedEventSource
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.plugins.tunable.utils import set_zfs_parameter, zfs_parameter_value
 from middlewared.service import CallError, ConfigServicePart, GenericConfigService, private, ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
@@ -61,10 +62,22 @@ from middlewared.utils.filter_list import filter_list
 
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"
+_ZFS_METADATA_RESERVE_PARAM = 'zfs_special_class_metadata_reserve_pct'
 
 _DATASET_NOT_FOUND = (
     object()
 )  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
+
+
+def _apply_metadata_reserve_pct(middleware, value: int) -> None:
+    """Write special_class_metadata_reserve_pct to the ZFS kernel module if it differs."""
+    str_value = str(value)
+    try:
+        if zfs_parameter_value(_ZFS_METADATA_RESERVE_PARAM) == str_value:
+            return
+    except FileNotFoundError:
+        pass
+    set_zfs_parameter(middleware, _ZFS_METADATA_RESERVE_PARAM, str_value)
 
 
 def _raise_client_error(e: RewriteClientException, field: str) -> None:
@@ -84,7 +97,7 @@ class ZfsTierModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean(), default=False)
     max_concurrent_jobs = sa.Column(sa.Integer(), default=2)
-    min_available_space = sa.Column(sa.Integer(), default=0)
+    max_used_percentage = sa.Column(sa.Integer(), default=80)
     special_class_metadata_reserve_pct = sa.Column(sa.Integer(), default=25)
 
 
@@ -145,7 +158,7 @@ def _map_cancel_result(result: AbortJobResult) -> dict[str, typing.Any]:
     }
 
 
-def _bulk_tier_map(lzh: typing.Any, dataset_names: list[str]) -> dict[str, typing.Any]:
+def _bulk_tier_map(lzh: typing.Any, dataset_names: list[str], log: typing.Any = None) -> dict[str, typing.Any]:
     """
     Core tier-map computation: given an open lzh handle and a list of dataset
     names, returns {dataset_name: TierInfo|None} without checking license or
@@ -161,13 +174,14 @@ def _bulk_tier_map(lzh: typing.Any, dataset_names: list[str]) -> dict[str, typin
                 result[ds] = _DATASET_NOT_FOUND
                 continue
             raise
-        result[ds] = get_dataset_tier_info_cached(rsrc, pool_special_cache)
+        result[ds] = get_dataset_tier_info_cached(rsrc, pool_special_cache, log)
     return result
 
 
 def get_dataset_tier_info_cached(
     hdl: typing.Any,
     pool_special_cache: dict[str, bool],
+    log: typing.Any = None,
 ) -> dict[str, typing.Any] | None:
     """
     Returns TierInfo for a single dataset using a caller-maintained pool cache.
@@ -185,6 +199,8 @@ def get_dataset_tier_info_cached(
             slot = props.class_special_size
             pool_special_cache[pool_name] = slot is not None and slot.value > 0
         except Exception:
+            if log:
+                log.debug('Failed to check special class for pool %r', pool_name, exc_info=True)
             pool_special_cache[pool_name] = False
 
     if not pool_special_cache[pool_name]:
@@ -219,6 +235,8 @@ def get_dataset_tier_info_cached(
 
         return {"tier_type": tier_type, "tier_job": tier_job}
     except Exception:
+        if log:
+            log.debug('Failed to get tier info for dataset %r', hdl.name, exc_info=True)
         return None
 
 
@@ -257,7 +275,7 @@ class ZfsTierRewriteJobStatusEventSource(
 
                     last_info = current_info
             except Exception:
-                pass
+                self.middleware.logger.debug('Error polling tier job status for %r', dataset_name, exc_info=True)
 
             self._cancel_sync.wait(2)
 
@@ -351,6 +369,10 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         old = await self.config()
         new = await self._svc_part.do_update(data)
         await self.middleware.call("etc.generate", "truenas_zfstierd")
+        if new.special_class_metadata_reserve_pct != old.special_class_metadata_reserve_pct:
+            await self.middleware.run_in_thread(
+                _apply_metadata_reserve_pct, self.middleware, new.special_class_metadata_reserve_pct
+            )
         if new.enabled != old.enabled:
             verb = "START" if new.enabled else "STOP"
             await self.middleware.call("service.control", verb, "truenas_zfstierd")
@@ -706,4 +728,16 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         if not config.enabled:
             return {ds: None for ds in dataset_names}
 
-        return _bulk_tier_map(tls.lzh, dataset_names)
+        return _bulk_tier_map(tls.lzh, dataset_names, self.logger)
+
+
+async def setup(middleware):
+    async def _apply_tier_tunables(middleware, pool):
+        if pool is not None:
+            return
+        config = await middleware.call('zfs.tier.config')
+        await middleware.run_in_thread(
+            _apply_metadata_reserve_pct, middleware, config['special_class_metadata_reserve_pct']
+        )
+
+    middleware.register_hook('pool.post_import', _apply_tier_tunables)
