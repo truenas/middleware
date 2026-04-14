@@ -104,11 +104,17 @@ class SMARTAlertSource(ThreadedAlertSource):
         )
 
     def parse_nvme_smart_info(self, data: dict) -> SmartInfo:
-        latest_entry = data.get("nvme_self_test_log", {}).get(
-            "table", [{"self_test_result": {"value": -1}}]
-        )[-1]
+        # Per NVMe spec, self-test log entries are ordered newest-first, so
+        # index 0 is the most recent test. smartctl writes each kept entry at
+        # its hardware index, so the JSON table may be sparse (null gaps) when
+        # firmware leaves stale bytes in unused ring-buffer slots; skip nulls
+        # and take the first real entry rather than relying on position -1.
+        table = data.get("nvme_self_test_log", {}).get("table", [])
+        latest = next((e for e in table if e), None)
+        if latest is None:
+            return SmartInfo()
         return SmartInfo(
-            smart_testfail=latest_entry["self_test_result"]["value"] in (5, 6, 7),
+            smart_testfail=latest["self_test_result"]["value"] in (5, 6, 7),
         )
 
     def parse_smart_info(self, data: dict) -> SmartInfo:
