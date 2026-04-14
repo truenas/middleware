@@ -453,6 +453,9 @@ class iSCSITargetService(CRUDService):
         # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
         # So this is the best way to do this without going through a restart of the service
         if await self.middleware.call('service.started', 'iscsitarget'):
+            if await self.middleware.call('iscsi.global.lio_enabled'):
+                # LIO: the reload (etc.generate 'lio') reconciler removes the target; nothing to do here.
+                return
             g_config = await self.middleware.call('iscsi.global.config')
             iqn = f'{g_config["basename"]}:{name}'
             # By the time we reach here the extent mapping has already been
