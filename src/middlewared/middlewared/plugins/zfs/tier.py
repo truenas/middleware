@@ -732,12 +732,9 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    async def _apply_tier_tunables(middleware: Middleware, pool: dict | None) -> None:
-        if pool is not None:
-            return
-        config = await middleware.call('zfs.tier.config')
-        await middleware.run_in_thread(
-            _apply_metadata_reserve_pct, middleware, config['special_class_metadata_reserve_pct']
-        )
-
-    middleware.register_hook('pool.post_import', _apply_tier_tunables)
+    config = await middleware.call('zfs.tier.config')
+    if not config['enabled']:
+        return
+    await middleware.run_in_thread(
+        _apply_metadata_reserve_pct, middleware, config['special_class_metadata_reserve_pct']
+    )
