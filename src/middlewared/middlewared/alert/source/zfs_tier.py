@@ -93,6 +93,9 @@ class TierJobAlertSource(ThreadedAlertSource):
                         info = get_info(job.dataset_name, job.job_uuid)
                         error = info.error or ""
                     except Exception:
+                        self.middleware.logger.debug(
+                            'Failed to get info for tier job %s', tier_job_id, exc_info=True
+                        )
                         error = ""
                     alerts.append(
                         Alert(TierJobErrorAlert(tier_job_id=tier_job_id, error=error))
@@ -103,6 +106,9 @@ class TierJobAlertSource(ThreadedAlertSource):
                         info = get_info(job.dataset_name, job.job_uuid)
                         stats = info.stats
                     except Exception:
+                        self.middleware.logger.debug(
+                            'Failed to get info for tier job %s', tier_job_id, exc_info=True
+                        )
                         stats = None
 
                     tier_map = self.middleware.call_sync(
@@ -121,6 +127,6 @@ class TierJobAlertSource(ThreadedAlertSource):
                             )
                         )
         except Exception:
-            pass
+            self.middleware.logger.warning('Failed to check tier job alerts', exc_info=True)
 
         return alerts

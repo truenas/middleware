@@ -58,9 +58,8 @@ class ZfsTierEntry(BaseModel):
     max_concurrent_jobs: Annotated[int, Field(ge=1, le=10)]
     """Maximum number of rewrite jobs that execute simultaneously. Jobs submitted beyond this \
     limit are held in a QUEUED state until a slot becomes available (1-10)."""
-    min_available_space: Annotated[int, Field(ge=0)]
-    """If available space on the dataset falls below this value (GiB), any active rewrite on \
-    that dataset is aborted. Set to 0 to disable the check."""
+    max_used_percentage: Annotated[int, Field(ge=70, le=95)]
+    """Abort rewrites when filesystem usage reaches this percentage threshold (70-95)."""
     special_class_metadata_reserve_pct: Annotated[int, Field(ge=10, le=30)]
     """Percentage of PERFORMANCE tier space reserved for metadata. Metadata is always written \
     to the PERFORMANCE tier, but data is only placed there while allocated space stays below \
