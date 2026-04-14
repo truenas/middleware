@@ -1,10 +1,12 @@
 import asyncio
+import glob
 import itertools
 import os
 import pathlib
 import signal
+from contextlib import suppress
 
-from middlewared.service import Service
+from middlewared.service import private, Service
 from middlewared.utils import run
 from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
@@ -136,7 +138,9 @@ class iSCSITargetService(Service):
             pid = int(pathlib.Path(ISCSI_SCSTD_PIDFILE).read_text().strip())
             os.kill(pid, sig)
         except FileNotFoundError:
-            self.logger.warning('iscsi-scstd pidfile not found, daemon may not be running')
+            self.logger.warning(
+                'iscsi-scstd pidfile not found, daemon may not be running'
+            )
         except ProcessLookupError:
             self.logger.warning('iscsi-scstd process not found (stale pidfile?)')
         except ValueError:
@@ -187,6 +191,33 @@ class iSCSITargetService(Service):
         else:
             return False
 
+    @private
+    async def remove_target_lun(self, target_name: str, lun_id: int):
+        # TBD: consider switching to sysfs mgmt write (del {lun_id}) instead of scstadmin
+        driver = 'iscsi' if target_name.startswith('iqn.') else 'qla2x00t'
+        cp = await run(
+            [
+                'scstadmin',
+                '-noprompt',
+                '-rem_lun',
+                str(lun_id),
+                '-driver',
+                driver,
+                '-target',
+                target_name,
+                '-group',
+                'security_group',
+            ],
+            check=False,
+        )
+        if cp.returncode:
+            self.logger.error(
+                'Failed to remove LUN %d from target %r: %s',
+                lun_id,
+                target_name,
+                cp.stderr.decode(),
+            )
+
     def delete_iscsi_lun(self, iqn, lun):
         pathlib.Path(
             f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
@@ -208,7 +239,9 @@ class iSCSITargetService(Service):
             op = self._xfer_prstate(luns_path, extent, lun)
         else:
             op = 'replace'
-        pathlib.Path(luns_path, 'mgmt').write_text(f'{op} {sanitize_extent(extent)} {lun}\n')
+        pathlib.Path(luns_path, 'mgmt').write_text(
+            f'{op} {sanitize_extent(extent)} {lun}\n'
+        )
 
     def delete_fc_lun(self, wwpn, lun):
         pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(
@@ -221,7 +254,9 @@ class iSCSITargetService(Service):
             op = self._xfer_prstate(luns_path, extent, lun)
         else:
             op = 'replace'
-        pathlib.Path(luns_path, 'mgmt').write_text(f'{op} {sanitize_extent(extent)} {lun}\n')
+        pathlib.Path(luns_path, 'mgmt').write_text(
+            f'{op} {sanitize_extent(extent)} {lun}\n'
+        )
 
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
@@ -261,7 +296,11 @@ class iSCSITargetService(Service):
     def set_alua_transitioning(self):
         """Set the local controller's ALUA target group state to transitioning."""
         node = self.middleware.call_sync('failover.node')
-        path = SCST_CONTROLLER_A_TARGET_GROUPS_STATE if node == 'A' else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        path = (
+            SCST_CONTROLLER_A_TARGET_GROUPS_STATE
+            if node == 'A'
+            else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        )
         try:
             pathlib.Path(path).write_text('transitioning\n')
         except Exception:
@@ -270,7 +309,11 @@ class iSCSITargetService(Service):
     def set_alua_active(self):
         """Set the local controller's ALUA target group state to active."""
         node = self.middleware.call_sync('failover.node')
-        path = SCST_CONTROLLER_A_TARGET_GROUPS_STATE if node == 'A' else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        path = (
+            SCST_CONTROLLER_A_TARGET_GROUPS_STATE
+            if node == 'A'
+            else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
+        )
         try:
             pathlib.Path(path).write_text('active\n')
         except Exception:
@@ -327,3 +370,99 @@ class iSCSITargetService(Service):
             retries,
             cp.stdout.decode() or cp.stderr.decode(),
         )
+
+    @private
+    def resync_lun_size_for_zvol(self, name):
+        # CORE ctl device names are incompatible with SCALE SCST
+        # so (similarly to scst.mako.conf) replace period with underscore, slash with dash
+        extent_name = name.replace('.', '_').replace('/', '-')
+        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
+            f.write('1')
+
+    @private
+    def resync_lun_size_for_file(self, name):
+        extent_name = name.replace('.', '_')
+        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
+            f.write('1')
+
+    @private
+    def sessions(self, global_info):
+        """Enumerate active iSCSI sessions from the SCST sysfs tree."""
+        sessions = []
+        base_path = '/sys/kernel/scst_tgt/targets/iscsi'
+        for target_dir in glob.glob(f'{base_path}/{global_info["basename"]}*'):
+            target = target_dir.rsplit('/', 1)[-1]
+            if target.startswith(f'{global_info["basename"]}:HA:'):
+                continue
+            for session in os.listdir(os.path.join(target_dir, 'sessions')):
+                session_dir = os.path.join(target_dir, 'sessions', session)
+                ip_file = glob.glob(f'{session_dir}/*/ip')
+                if not ip_file:
+                    continue
+
+                # Initiator alias is another name sent by initiator but we are unable to retrieve it in scst
+                session_dict = {
+                    'initiator': session.rsplit('#', 1)[0],
+                    'initiator_alias': None,
+                    'target': target,
+                    'target_alias': target.rsplit(':', 1)[-1],
+                    'header_digest': None,
+                    'data_digest': None,
+                    'max_data_segment_length': None,
+                    'max_receive_data_segment_length': None,
+                    'max_xmit_data_segment_length': None,
+                    'max_burst_length': None,
+                    'first_burst_length': None,
+                    'immediate_data': False,
+                    'iser': False,
+                    'offload': False,  # It is a chelsio NIC driver to offload iscsi, we are not using it so far
+                }
+                with open(ip_file[0], 'r') as f:
+                    session_dict['initiator_addr'] = f.read().strip()
+                transport = os.path.join(os.path.dirname(ip_file[0]), 'transport')
+                with suppress(FileNotFoundError):
+                    with open(transport, 'r') as f:
+                        session_dict['iser'] = 'iSER' == f.read().strip()
+                for k, f, op in (
+                    ('header_digest', 'HeaderDigest', None),
+                    ('data_digest', 'DataDigest', None),
+                    ('max_burst_length', 'MaxBurstLength', lambda i: int(i)),
+                    (
+                        'max_receive_data_segment_length',
+                        'MaxRecvDataSegmentLength',
+                        lambda i: int(i),
+                    ),
+                    (
+                        'max_xmit_data_segment_length',
+                        'MaxXmitDataSegmentLength',
+                        lambda i: int(i),
+                    ),
+                    ('first_burst_length', 'FirstBurstLength', lambda i: int(i)),
+                    (
+                        'immediate_data',
+                        'ImmediateData',
+                        lambda i: True if i == 'Yes' else False,
+                    ),
+                ):
+                    f_path = os.path.join(session_dir, f)
+                    if os.path.exists(f_path):
+                        with open(f_path, 'r') as fd:
+                            data = fd.read().strip()
+                            if data != 'None':
+                                if op:
+                                    data = op(data)
+                                session_dict[k] = data
+
+                # We get recv/emit data segment length, keeping consistent with freebsd, we can
+                # take the maximum of two and show it for max_data_segment_length
+                if (
+                    session_dict['max_xmit_data_segment_length']
+                    and session_dict['max_receive_data_segment_length']
+                ):
+                    session_dict['max_data_segment_length'] = max(
+                        session_dict['max_receive_data_segment_length'],
+                        session_dict['max_xmit_data_segment_length'],
+                    )
+
+                sessions.append(session_dict)
+        return sessions

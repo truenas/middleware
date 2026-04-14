@@ -9,11 +9,15 @@ class iSCSITargetISERService(Service):
     """
     Support iSER configuration.
     """
+
     class Config:
         private = True
         namespace = 'iscsi.iser'
 
     async def before_start(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            # ib_isert is loaded by utils/lio/config.py _load_modules() if needed
+            return
         if await self.middleware.call('iscsi.global.iser_enabled'):
             await self.middleware.run_in_thread(self._load_kernel_module)
 
