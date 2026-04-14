@@ -38,11 +38,12 @@ if TYPE_CHECKING:
 
 
 def _to_entries(result: list[dict[str, Any]] | dict[str, Any] | int) -> list[AppEntry] | AppEntry | int:
+    constructor = AppEntry.__query_result_item__
     if isinstance(result, int):
         return result
     if isinstance(result, dict):
-        return AppEntry(**result)
-    return [AppEntry(**row) for row in result]
+        return constructor(**result)
+    return [constructor(**row) for row in result]
 
 
 @overload

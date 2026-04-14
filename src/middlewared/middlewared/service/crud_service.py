@@ -106,7 +106,7 @@ class CRUDServiceMetabase(ServiceBase):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
                     QueryArgs, query_result_model, private=private, cli_private=cli_private,
-                    check_annotations=use_check_annotations,
+                    check_annotations=use_check_annotations, pass_app=config.pass_app_to_query,
                 )(klass.query)
 
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)

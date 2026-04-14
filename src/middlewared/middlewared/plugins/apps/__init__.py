@@ -29,7 +29,7 @@ from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackOptions,
     AppRollbackVersionsArgs, AppRollbackVersionsResult,
 )
-from middlewared.service import GenericCRUDService, filterable_api_method, job, private
+from middlewared.service import GenericCRUDService, job, private
 
 from .app_scale import redeploy_app, start_app, stop_app
 from .crud import (
@@ -80,6 +80,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         role_prefix = 'APPS'
         entry = AppEntry
         generic = True
+        pass_app_to_query = True
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -99,7 +100,6 @@ class AppService(GenericCRUDService[AppEntry, str]):
         self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry]: ...
 
-    @filterable_api_method(item=AppEntry, pass_app=True, check_annotations=True)
     def query(
         self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry] | AppEntry | int:
