@@ -20,4 +20,8 @@ class ZpoolScrubService(Service):
     @pass_thread_local_storage
     @job()
     def run(self, job: Job, tls, data: ZpoolScrubRun) -> None:
+        """Insert RST description here.
+
+        .. version-added:: 26.0.0
+        """
         run_impl(self.context, tls.lzh, data, job.set_progress)

@@ -1,4 +1,5 @@
-import asyncio
+from __future__ import annotations
+from typing import Literal, TYPE_CHECKING
 
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
@@ -9,9 +10,13 @@ from middlewared.api.current import (
     PoolScrubScrubArgs, PoolScrubScrubResult,
     PoolScrubRunArgs, PoolScrubRunResult,
 )
-from middlewared.service import CRUDService, job, private, ValidationErrors
+from middlewared.plugins.zpool.scrub_impl import scrub_pool
+from middlewared.service import CRUDService, job, private, CallError, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
+if TYPE_CHECKING:
+    from middlewared.main import Job
 
 
 class PoolScrubModel(sa.Model):
@@ -184,7 +189,8 @@ class PoolScrubService(CRUDService):
         await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
         return response
 
-    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])
+    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'], removed_in='v27')
+    @pass_thread_local_storage
     @job(
         description=lambda name, action="START": (
             f"Scrub of pool {name!r}" if action == "START"
@@ -192,44 +198,31 @@ class PoolScrubService(CRUDService):
         ),
         lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else '',
     )
-    async def scrub(self, job, name, action):
+    def scrub(self, job: Job, tls, name: str, action: Literal["START", "STOP", "PAUSE"]) -> None:
         """
-        Start/Stop/Pause a scrub on pool `name`.
+        Start/Stop/Pause a scrub on pool ``name``.
+
+        .. version-deprecated:: 26.0.0
+            Use ``zpool.scrub.run`` instead.
+    
+        .. version-removed:: 27.0.0
         """
-        await self.middleware.call('zfs.pool.scrub_action', name, action)
+        scrub_action = "CANCEL" if action == "STOP" else action
 
-        if action == 'START':
-            while True:
-                scrub = await self.middleware.call('zfs.pool.scrub_state', name)
+        try:
+            zpool = tls.lzh.open_pool(name=name)
+            scrub_pool(zpool, "SCRUB", scrub_action, wait=True, progress_callback=job.set_progress)
+        except Exception as e:
+            raise CallError(str(e)) from e
 
-                if scrub['pause']:
-                    job.set_progress(100, 'Scrub paused')
-                    break
-
-                if scrub['function'] != 'SCRUB':
-                    break
-
-                if scrub['state'] == 'FINISHED':
-                    job.set_progress(100, 'Scrub finished')
-                    break
-
-                if scrub['state'] == 'CANCELED':
-                    break
-
-                if scrub['state'] == 'SCANNING':
-                    job.set_progress(scrub['percentage'], 'Scrubbing')
-
-                await asyncio.sleep(1)
-
-    @api_method(
-        PoolScrubRunArgs,
-        PoolScrubRunResult,
-        roles=['POOL_WRITE'],
-        removed_in='v27',
-    )
+    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'], removed_in='v27')
     def run(self, name: str, threshold: int) -> None:
         """
-        Initiate a scrub of pool `name` if last scrub was performed more than
-        `threshold` days before.
+        Initiate a scrub of pool ``name`` if last scrub was performed more than ``threshold`` days before.
+    
+        .. version-deprecated:: 26.0.0
+            Use ``zpool.scrub.run`` instead.
+    
+        .. version-removed:: 27.0.0
         """
         self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
