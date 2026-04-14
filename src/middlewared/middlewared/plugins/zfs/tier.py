@@ -69,7 +69,7 @@ _DATASET_NOT_FOUND = (
 )  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
 
 
-def _apply_metadata_reserve_pct(middleware: Middleware, value: int) -> None:
+def _apply_metadata_reserve_pct(middleware: Middleware, value: int, ha_propagate: bool = False) -> None:
     """Write special_class_metadata_reserve_pct to the ZFS kernel module if it differs."""
     str_value = str(value)
     try:
@@ -77,7 +77,7 @@ def _apply_metadata_reserve_pct(middleware: Middleware, value: int) -> None:
             return
     except FileNotFoundError:
         pass
-    set_zfs_parameter(middleware, _ZFS_METADATA_RESERVE_PARAM, str_value)
+    set_zfs_parameter(middleware, _ZFS_METADATA_RESERVE_PARAM, str_value, ha_propagate)
 
 
 def _raise_client_error(e: RewriteClientException, field: str) -> None:
@@ -371,7 +371,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         await self.middleware.call("etc.generate", "truenas_zfstierd")
         if new.special_class_metadata_reserve_pct != old.special_class_metadata_reserve_pct:
             await self.middleware.run_in_thread(
-                _apply_metadata_reserve_pct, self.middleware, new.special_class_metadata_reserve_pct
+                _apply_metadata_reserve_pct, self.middleware, new.special_class_metadata_reserve_pct, True
             )
         if new.enabled != old.enabled:
             verb = "START" if new.enabled else "STOP"
