@@ -18,7 +18,6 @@ from truenas_zfstierd_client import (
     get_resolved_failures,
 )
 from truenas_zfstierd_common import (
-    AbortJobResult,
     CreateJobResult,
     InfoResult,
     JSONRPCErrorCode,
@@ -77,6 +76,7 @@ def _apply_metadata_reserve_pct(middleware: Middleware, value: int, ha_propagate
             return
     except FileNotFoundError:
         pass
+
     set_zfs_parameter(middleware, _ZFS_METADATA_RESERVE_PARAM, str_value, ha_propagate)
 
 
@@ -128,28 +128,8 @@ def _map_info_result(info: InfoResult) -> dict[str, typing.Any]:
     }
 
 
-def _map_create_result(result: CreateJobResult) -> dict[str, typing.Any]:
-    """Build a ZfsTierRewriteJobEntry dict from a RewriteClient CreateJobResult."""
-    return {
-        "tier_job_id": f"{result.dataset_name}@{result.job_uuid}",
-        "dataset_name": result.dataset_name,
-        "job_uuid": result.job_uuid,
-        "status": result.status,
-    }
-
-
-def _map_recover_result(result: RecoverResult) -> dict[str, typing.Any]:
-    """Build a ZfsTierRewriteJobEntry dict from a RewriteClient RecoverResult."""
-    return {
-        "tier_job_id": f"{result.dataset_name}@{result.job_uuid}",
-        "dataset_name": result.dataset_name,
-        "job_uuid": result.job_uuid,
-        "status": result.status,
-    }
-
-
-def _map_cancel_result(result: AbortJobResult) -> dict[str, typing.Any]:
-    """Build a ZfsTierRewriteJobEntry dict from a RewriteClient CancelJobResult."""
+def _map_result_common(result: CreateJobResult | RecoverResult) -> dict[str, typing.Any]:
+    """ Convert some client return types into ZfsTierRewriteJobEntry dict """
     return {
         "tier_job_id": f"{result.dataset_name}@{result.job_uuid}",
         "dataset_name": result.dataset_name,
@@ -424,7 +404,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             except RewriteClientException as e:
                 _raise_client_error(e, field)
 
-        return _map_create_result(result)
+        return _map_result_common(result)
 
     @api_method(
         ZfsTierRewriteJobQueryArgs, ZfsTierRewriteJobQueryResult, roles=["DATASET_READ"]
@@ -524,7 +504,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             except RewriteClientException as e:
                 _raise_client_error(e, "zfs_tier_rewrite_job_recover.tier_job_id")
 
-        return _map_recover_result(result)
+        return _map_result_common(result)
 
     @private
     async def _validate_dataset_writable(self, dataset_name: str, field: str) -> None:
