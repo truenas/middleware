@@ -34,6 +34,7 @@ class SharingWebshareModel(sa.Model):
 
 class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
+    include_tier_info = True
     share_task_type = 'Webshare'
     allowed_path_types = [FSLocation.LOCAL]
 
@@ -162,6 +163,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     def compress(self, data: SharingWebshareEntry) -> dict[str, Any]:
         compressed = data.model_dump()
         compressed.pop(self.locked_field, None)
+        compressed.pop('tier', None)
         return compressed
 
 

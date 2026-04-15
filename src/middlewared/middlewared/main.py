@@ -118,6 +118,7 @@ from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
 from middlewared.plugins.vm import VMService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
+from middlewared.plugins.zfs.tier import ZfsTierService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
@@ -201,6 +202,7 @@ class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.resource = ZFSResourceService(middleware)
+        self.tier = ZfsTierService(middleware)
 
 
 class ServiceContainer(BaseServiceContainer):
