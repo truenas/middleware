@@ -26,6 +26,7 @@ class ZpoolScrubService(Service):
         the pool must be ONLINE or DEGRADED, must not have an active resilver,
         and the most recent scrub must be older than ``threshold`` days. If any
         of these checks fail the call returns silently (no error, no alert).
+        The job blocks until the scrub finishes, is paused, or is canceled.
 
         PAUSE and CANCEL skip validation entirely and operate on the pool
         directly.

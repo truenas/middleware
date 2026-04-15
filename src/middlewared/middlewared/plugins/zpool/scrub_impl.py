@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.service import ServiceContext
 
-__all__ = ("do_scan_action", "scrub_pool")
+__all__ = ("do_scan_action", "scrub_pool", "start_scrub", "wait_for_scrub")
 
 MAX_CONCURRENT_SCRUBS = 10
 
@@ -149,7 +149,7 @@ def validate_pool(
       1. On HA systems, this node must be the active controller.
       2. Non-boot pools must exist in the middleware datastore.
       3. Pool health must be ONLINE or DEGRADED.
-      4. No resilver may be in progress.
+      4. No resilver or scrub may already be in progress.
       5. The last scrub (or pool create/import/scrub history entry) must
          be older than ``threshold`` days.
 
@@ -168,6 +168,7 @@ def validate_pool(
         ZpoolNotFoundException: Pool not in the datastore or ZFS.
         ZpoolPoolUnhealthyException: Pool is FAULTED, OFFLINE, etc.
         ZpoolResiliverInProgressException: A resilver is currently running.
+        ZpoolScrubAlreadyRunningException: A scrub is already in progress.
         ZpoolScrubNotDueException: A recent scrub or pool event is within
             the threshold window.
     """
@@ -186,14 +187,13 @@ def validate_pool(
     if health not in ("ONLINE", "DEGRADED"):
         raise ZpoolPoolUnhealthyException(pool_name, health)
 
-    # Pre-check: reject if resilver is active
+    # Pre-check: reject if resilver is active or scrub already running
     scan = zpool.scrub_info()
-    if (
-        scan is not None
-        and scan.func == libzfs_types.ScanFunction.RESILVER
-        and scan.state == libzfs_types.ScanState.SCANNING
-    ):
-        raise ZpoolResiliverInProgressException(pool_name)
+    if scan is not None and scan.state == libzfs_types.ScanState.SCANNING:
+        if scan.func == libzfs_types.ScanFunction.RESILVER:
+            raise ZpoolResiliverInProgressException(pool_name)
+        if not scan.pass_scrub_pause:
+            raise ZpoolScrubAlreadyRunningException(pool_name)
 
     # Threshold check via scan end_time
     start_scrub = False
@@ -209,14 +209,15 @@ def validate_pool(
             raise ZpoolScrubNotDueException(pool_name)
         start_scrub = True
 
-    # Slow path: check pool history for recent create/import
+    # Slow path: check pool history for recent create/scrub/import
     if not start_scrub:
         for entry in zpool.iter_history(since=cutoff):
             cmd = entry.get('history command', '')
             if any(zpool_cmd in cmd for zpool_cmd in ('zpool create', 'zpool import', 'zpool scrub')):
-                middleware.logger.trace('Pool %r recent create/import within threshold window', pool_name)
+                middleware.logger.trace('Pool %r recent create/scrub within threshold window', pool_name)
                 break
         else:
+            middleware.logger.warning('Could not find last scrub of pool %r', pool_name)
             start_scrub = True
 
     if not start_scrub:
@@ -225,28 +226,16 @@ def validate_pool(
     return zpool
 
 
-def scrub_pool(
+def start_scrub(
     lzh: libzfs_types.ZFS, zpool: libzfs_types.ZFSPool,
     scan_type: Literal["SCRUB", "ERRORSCRUB"], action: Literal["START", "PAUSE", "CANCEL"],
-    *, wait: bool = False, progress_callback: ScrubProgressCallback | None = None
 ) -> None:
     """Start, pause, or cancel a scan on a zpool.
 
-    On START, enforces a system-wide limit of MAX_CONCURRENT_SCRUBS active
-    scrubs. When ``wait`` is True and the action is START, polls
-    ``zpool.scrub_info()`` until the scan finishes, is canceled, or is
-    paused externally.
-
-    Args:
-        lzh: Open libzfs handle (used to count running scrubs).
-        zpool: The pool to operate on.
-        scan_type: "SCRUB" for a full integrity scan, "ERRORSCRUB" for a
-            targeted scan of blocks with known errors.
-        action: "START", "PAUSE", or "CANCEL".
-        wait: If True and action is START, block until the scrub completes
-            or is paused/canceled.
-        progress_callback: Called during the wait loop with
-            (percentage, description). May be None.
+    For START, enforces a system-wide limit of MAX_CONCURRENT_SCRUBS
+    active scrubs before issuing the ZFS scan command.  Returns
+    immediately after the command succeeds — use ``wait_for_scrub``
+    to block until the scan finishes.
 
     Raises:
         ZpoolTooManyScrubsException: 10 or more scrubs already running.
@@ -255,27 +244,31 @@ def scrub_pool(
         ZpoolScrubPausedToCancelException: A paused scrub must be canceled
             before starting an error scrub.
     """
-    # Refuse to start if too many scrubs are already running
     if action.upper() == "START":
         running = _count_running_scrubs(lzh)
         if running >= MAX_CONCURRENT_SCRUBS:
             raise ZpoolTooManyScrubsException(running)
 
-    # Perform the scan action
     do_scan_action(zpool, scan_type, action)
 
-    if not (wait and action.upper() == "START"):
-        return
 
+def wait_for_scrub(
+    zpool: libzfs_types.ZFSPool, scan_type: Literal["SCRUB", "ERRORSCRUB"],
+    *, progress_callback: ScrubProgressCallback | None = None,
+) -> None:
+    """Poll until a running scan finishes, is canceled, or is paused."""
+    expected_func = _get_scan_function(scan_type)
     if scan_type.upper() == 'ERRORSCRUB':
         prog_scan_type = 'Error scrub'
     else:
         prog_scan_type = 'Scrub'
 
-    # Poll until scan completes (only meaningful for START)
     while True:
         scrub = zpool.scrub_info()
         if scrub is None:
+            break
+
+        if scrub.func != expected_func:
             break
 
         match scrub.state:
@@ -298,6 +291,21 @@ def scrub_pool(
         time.sleep(1)
 
 
+def scrub_pool(
+    lzh: libzfs_types.ZFS, zpool: libzfs_types.ZFSPool,
+    scan_type: Literal["SCRUB", "ERRORSCRUB"], action: Literal["START", "PAUSE", "CANCEL"],
+    *, progress_callback: ScrubProgressCallback | None = None,
+) -> None:
+    """Start, pause, or cancel a scan on a zpool, blocking until done.
+
+    Convenience wrapper that calls ``start_scrub`` followed by
+    ``wait_for_scrub`` (for START actions only).
+    """
+    start_scrub(lzh, zpool, scan_type, action)
+    if action.upper() == "START":
+        wait_for_scrub(zpool, scan_type, progress_callback=progress_callback)
+
+
 def run_impl(
     ctx: ServiceContext, lzh: libzfs_types.ZFS, data: ZpoolScrubRun,
     progress_cb: ScrubProgressCallback | None = None
@@ -306,8 +314,11 @@ def run_impl(
 
     For START: clears existing scrub alerts, validates the pool via
     validate_pool(), starts the scrub, and creates a ScrubStarted or
-    ScrubNotStarted alert depending on the outcome. Threshold, HA, and
-    resilver failures are swallowed silently (no error, no alert).
+    ScrubNotStarted alert depending on the outcome. ScrubStarted is
+    created immediately after the scrub starts (before the polling
+    loop), matching the original pool.scrub.run fire-and-forget
+    behavior. Threshold, HA, resilver, and already-running failures
+    are swallowed silently (no error, no alert).
 
     For PAUSE/CANCEL: opens the pool directly and performs the action,
     skipping validation and alert management entirely.
@@ -316,7 +327,7 @@ def run_impl(
         ctx: Service context for middleware and alert calls.
         lzh: Open libzfs handle.
         data: Validated ZpoolScrubRun model with pool_name, scan_type,
-            action, wait, and threshold.
+            action, and threshold.
         progress_cb: Optional progress callback forwarded to scrub_pool().
     """
     if data.action != "START":
@@ -330,17 +341,23 @@ def run_impl(
 
     try:
         pool = validate_pool(ctx.middleware, lzh, data.pool_name, data.threshold)
-        scrub_pool(lzh, pool, data.scan_type, data.action, wait=data.wait, progress_callback=progress_cb)
-    except (ZpoolNotMasterNodeException, ZpoolScrubNotDueException, ZpoolResiliverInProgressException):
+        start_scrub(lzh, pool, data.scan_type, data.action)
+    except (
+        ZpoolNotMasterNodeException, ZpoolScrubNotDueException,
+        ZpoolResiliverInProgressException, ZpoolScrubAlreadyRunningException,
+    ):
         # fail silently, no alert
-        pass
+        return
     except Exception as e:
         ctx.call_sync2(
             ctx.s.alert.oneshot_create,
             ScrubNotStartedAlert(pool=data.pool_name, text=str(e)),
         )
-    else:
-        ctx.call_sync2(
-            ctx.s.alert.oneshot_create,
-            ScrubStartedAlert(data.pool_name),
-        )
+        return
+
+    # Scrub started — create alert and wait for completion
+    ctx.call_sync2(
+        ctx.s.alert.oneshot_create,
+        ScrubStartedAlert(data.pool_name),
+    )
+    wait_for_scrub(pool, data.scan_type, progress_callback=progress_cb)

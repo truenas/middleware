@@ -190,7 +190,7 @@ class PoolScrubService(CRUDService):
         await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
         return response
 
-    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'], removed_in='v27')
+    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])
     @pass_thread_local_storage
     @job(
         description=lambda name, action="START": (
@@ -208,20 +208,18 @@ class PoolScrubService(CRUDService):
 
         .. version-deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
-
-        .. version-removed:: 27.0.0
         """
         scrub_action = "CANCEL" if action == "STOP" else action
 
         try:
             zpool = tls.lzh.open_pool(name=name)
-            scrub_pool(tls.lzh, zpool, "SCRUB", scrub_action, wait=True, progress_callback=job.set_progress)
+            scrub_pool(tls.lzh, zpool, "SCRUB", scrub_action, progress_callback=job.set_progress)
         except ZpoolException as e:
             raise CallError(str(e), e.errno) from e
         except Exception as e:
             raise CallError(str(e)) from e
 
-    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'], removed_in='v27')
+    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'])
     def run(self, name: str, threshold: int) -> None:
         """
         Initiate a scrub of pool ``name`` if the most recent scrub finished
@@ -230,7 +228,5 @@ class PoolScrubService(CRUDService):
 
         .. version-deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
-
-        .. version-removed:: 27.0.0
         """
         self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})

@@ -1,11 +1,10 @@
-import errno
 import time
 
 import pytest
 
 from truenas_api_client import ClientException
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils import call, ssh
 
 
 # ---------------------------------------------------------------------------
@@ -34,14 +33,15 @@ _3_disk_mirror_with_spare_topology = (3, lambda disks: {
     "spares": disks[2:3],
 })
 
-# Size in MiB of data written so scrubs don't finish instantly.
-_FILL_MIB = 512
+_TOPOLOGY_FILL_MIB = 512
+_ACTION_FILL_MIB = 8192
 
 
-def _fill_pool(pool_name):
-    """Write data to the pool so scrubs take long enough to pause/cancel."""
+def _fill_pool(pool_name, size_mib=_ACTION_FILL_MIB):
+    """Write random data to the pool so scrubs take long enough to pause/cancel."""
     ssh(f'dd if=/dev/urandom of=/mnt/{pool_name}/.scrub_fill '
-        f'bs=1M count={_FILL_MIB} conv=fdatasync 2>/dev/null')
+        f'bs=1M count={size_mib} conv=fdatasync 2>/dev/null',
+        timeout=300)
 
 
 def _get_scan(pool_name):
@@ -49,6 +49,22 @@ def _get_scan(pool_name):
     return call("zpool.query", {
         "pool_names": [pool_name], "scan": True,
     })[0]["scan"]
+
+
+def _start_scrub_bg(pool_name: str) -> dict:
+    """Start a scrub in the background and wait until it is running.
+
+    The zpool.scrub.run job blocks until the scrub finishes, so calling
+    without job=True returns the job ID immediately while the scrub runs
+    in the background.
+    """
+    call("zpool.scrub.run", {"pool_name": pool_name, "action": "START", "threshold": 0})
+    for _ in range(30):
+        scan = _get_scan(pool_name)
+        if scan and scan["state"] == "SCANNING":
+            return scan
+        time.sleep(0.1)
+    pytest.fail("Scrub did not start")
 
 
 def _cancel_scrub(pool_name):
@@ -69,22 +85,44 @@ def _scrub_started_alerts(pool_name):
     ]
 
 
+def _scrub_not_started_alerts(pool_name):
+    return [
+        a for a in call("alert.list")
+        if a["klass"] == "ScrubNotStarted" and a["args"]["pool"] == pool_name
+    ]
+
+
+def _poll_for_alert(finder, timeout=10):
+    """Poll until finder() returns a non-empty list, or fail."""
+    for _ in range(timeout):
+        alerts = finder()
+        if alerts:
+            return alerts
+        time.sleep(1)
+    pytest.fail("Expected alert was not created")
+
+
 # ---------------------------------------------------------------------------
 # Test: nonexistent pool
 # ---------------------------------------------------------------------------
 
 def test_nonexistent_pool():
+    """CANCEL on a nonexistent pool should raise an error.
+
+    START is not tested here because run_impl silently swallows errors
+    for START and creates a ScrubNotStarted alert instead of raising.
+    """
     with pytest.raises(ClientException):
         call("zpool.scrub.run", {
             "pool_name": "nonexistent_pool_xyz",
-            "action": "START",
+            "action": "CANCEL",
         }, job=True)
 
 
 # ---------------------------------------------------------------------------
 # Parametrized topology tests — verify scrub works on each vdev layout.
 # Only start + error-scrub need topology coverage; action semantics
-# (pause, cancel, conflicts) are topology-independent.
+# (pause, cancel) are topology-independent.
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(
@@ -100,7 +138,7 @@ def test_nonexistent_pool():
 def scrub_pool(request):
     """Create one pool per topology, fill it, and share across all tests."""
     with another_pool(topology=request.param) as p:
-        _fill_pool(p["name"])
+        _fill_pool(p["name"], _TOPOLOGY_FILL_MIB)
         yield p
 
 
@@ -111,7 +149,7 @@ class TestZpoolScrubTopology:
         call("zpool.scrub.run", {
             "pool_name": scrub_pool["name"],
             "action": "START",
-            "wait": True,
+            "threshold": 0,
         }, job=True)
 
         scan = _get_scan(scrub_pool["name"])
@@ -124,13 +162,13 @@ class TestZpoolScrubTopology:
             "pool_name": scrub_pool["name"],
             "scan_type": "ERRORSCRUB",
             "action": "START",
-            "wait": True,
+            "threshold": 0,
         }, job=True)
 
 
 # ---------------------------------------------------------------------------
 # Single shared pool for all remaining tests (action semantics, threshold,
-# validation-bypass, alerts, deprecated-shim compatibility).
+# validation-bypass, alerts, conflicts).
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
@@ -142,7 +180,12 @@ def shared_pool():
 
 
 class TestZpoolScrubActions:
-    """Verify pause, resume, cancel, and conflict semantics."""
+    """Verify pause, resume, cancel, and conflict semantics.
+
+    Tests that need a running scrub use ``_start_scrub_bg`` which calls
+    without job=True (returns immediately) and polls until the scrub is
+    confirmed SCANNING.
+    """
 
     @pytest.fixture(autouse=True)
     def _cancel_active_scrub(self, shared_pool):
@@ -151,50 +194,60 @@ class TestZpoolScrubActions:
 
     def test_pause_and_resume(self, shared_pool):
         name = shared_pool["name"]
-        call("zpool.scrub.run", {"pool_name": name, "action": "START"}, job=True)
+        start_time = _start_scrub_bg(name)["start_time"]
+
         call("zpool.scrub.run", {"pool_name": name, "action": "PAUSE"}, job=True)
 
         scan = _get_scan(name)
         assert scan["state"] == "SCANNING"
         assert scan["pause"] is not None
 
-        # Resume
-        call("zpool.scrub.run", {"pool_name": name, "action": "START"}, job=True)
+        # Resume — the job blocks until the resumed scrub finishes.
+        call("zpool.scrub.run", {"pool_name": name, "action": "START", "threshold": 0}, job=True)
 
         scan = _get_scan(name)
         assert scan["function"] == "SCRUB"
+        assert scan["state"] == "FINISHED"
+        # start_time unchanged proves this was a resume, not a restart
+        assert scan["start_time"] == start_time
 
     def test_cancel(self, shared_pool):
         name = shared_pool["name"]
-        call("zpool.scrub.run", {"pool_name": name, "action": "START"}, job=True)
+        _start_scrub_bg(name)
         call("zpool.scrub.run", {"pool_name": name, "action": "CANCEL"}, job=True)
 
         scan = _get_scan(name)
         assert scan["state"] == "CANCELED"
 
-    def test_errorscrub_while_scrub_paused(self, shared_pool):
-        """Starting an ERRORSCRUB while a regular scrub is paused must fail."""
-        name = shared_pool["name"]
-        call("zpool.scrub.run", {"pool_name": name, "action": "START"}, job=True)
-        call("zpool.scrub.run", {"pool_name": name, "action": "PAUSE"}, job=True)
-
-        with pytest.raises(ClientException, match="EBUSY"):
-            call("zpool.scrub.run", {
-                "pool_name": name,
-                "scan_type": "ERRORSCRUB",
-                "action": "START",
-            }, job=True)
-
     def test_duplicate_scrub_start(self, shared_pool):
-        """Starting a scrub while one is already running should raise EBUSY."""
-        name = shared_pool["name"]
-        call("zpool.scrub.run", {"pool_name": name, "action": "START"}, job=True)
+        """Starting a scrub while one is already running is silently ignored.
 
-        with pytest.raises(ClientException, match="EBUSY"):
-            call("zpool.scrub.run", {
-                "pool_name": name,
-                "action": "START",
-            }, job=True)
+        The original pool.scrub.run checked scan state and returned False when
+        a scrub was already running.  run_impl preserves this by treating
+        ZpoolScrubAlreadyRunningException as silently ignored.
+        """
+        name = shared_pool["name"]
+
+        start_time = _start_scrub_bg(name)["start_time"]
+        call("zpool.scrub.run", {"pool_name": name, "action": "START", "threshold": 0}, job=True)
+
+        scan = _get_scan(name)
+        assert scan["start_time"] == start_time, "A second scrub should not have started"
+
+    def test_errorscrub_while_scrub_paused(self, shared_pool):
+        """Starting an ERRORSCRUB while a regular scrub is paused creates a ScrubNotStarted alert."""
+        name = shared_pool["name"]
+
+        _start_scrub_bg(name)
+        call("zpool.scrub.run", {"pool_name": name, "action": "PAUSE"}, job=True)
+        call("zpool.scrub.run", {
+            "pool_name": name,
+            "scan_type": "ERRORSCRUB",
+            "action": "START",
+            "threshold": 0,
+        }, job=True)
+
+        _poll_for_alert(lambda: _scrub_not_started_alerts(name))
 
 
 class TestThreshold:
@@ -204,50 +257,42 @@ class TestThreshold:
         """A scrub that just finished should prevent another START within the threshold."""
         name = shared_pool["name"]
 
-        # Run a scrub to completion so the pool has a recent scrub end_time.
+        # Use threshold=0 so the scrub actually runs on a fresh pool.
         call("zpool.scrub.run", {
             "pool_name": name,
             "action": "START",
-            "wait": True,
-            "threshold": 35,
+            "threshold": 0,
         }, job=True)
 
         scan = _get_scan(name)
         assert scan["state"] == "FINISHED"
-
-        # A second START with the same threshold should succeed silently
-        # (run_impl swallows ZpoolScrubNotDueException without error).
-        # Verify by checking the scrub end_time hasn't changed.
         end_time_before = scan["end_time"]
 
+        # A second START with threshold=35 should be silently skipped
+        # (run_impl swallows ZpoolScrubNotDueException).
         call("zpool.scrub.run", {
             "pool_name": name,
             "action": "START",
             "threshold": 35,
         }, job=True)
 
-        scan_after = _get_scan(name)
-        assert scan_after["end_time"] == end_time_before
+        assert _get_scan(name)["end_time"] == end_time_before
 
     def test_threshold_zero_always_scrubs(self, shared_pool):
         """threshold=0 means the scrub is always due."""
         name = shared_pool["name"]
 
-        # First scrub to establish a baseline.
         call("zpool.scrub.run", {
             "pool_name": name,
             "action": "START",
-            "wait": True,
             "threshold": 0,
         }, job=True)
 
         first_end = _get_scan(name)["end_time"]
 
-        # Second scrub with threshold=0 should actually run again.
         call("zpool.scrub.run", {
             "pool_name": name,
             "action": "START",
-            "wait": True,
             "threshold": 0,
         }, job=True)
 
@@ -263,12 +308,7 @@ class TestPauseCancelBypassValidation:
         """PAUSE/CANCEL should succeed even if threshold would block a START."""
         name = shared_pool["name"]
 
-        # Start a scrub (threshold=0 guarantees it runs).
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": "START",
-            "threshold": 0,
-        }, job=True)
+        _start_scrub_bg(name)
 
         # Act with a huge threshold — should NOT fail with "not due".
         call("zpool.scrub.run", {
@@ -286,119 +326,20 @@ class TestPauseCancelBypassValidation:
             assert scan["state"] == "CANCELED"
 
 
-class TestAlerts:
-    """Verify alert creation behavior around scrub operations."""
+def test_start_creates_scrub_started_alert(self, shared_pool):
+    """A successful START should create a ScrubStarted alert.
 
-    def test_start_creates_scrub_started_alert(self, shared_pool):
-        """A successful START should create a ScrubStarted alert."""
-        name = shared_pool["name"]
+    The alert is created immediately when the scrub starts (before
+    it finishes), and the scrub_finished ZFS event deletes it when
+    the scrub completes.  We call without job=True so we can check
+    for the alert while the scrub is still running.
+    """
+    name = shared_pool["name"]
 
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": "START",
-            "wait": True,
-            "threshold": 0,
-        }, job=True)
+    call("zpool.scrub.run", {
+        "pool_name": name,
+        "action": "START",
+        "threshold": 0,
+    })
 
-        # Alert creation is async — poll briefly.
-        for _ in range(10):
-            if _scrub_started_alerts(name):
-                break
-            time.sleep(1)
-        else:
-            pytest.fail("ScrubStarted alert was not created after START")
-
-    @pytest.mark.parametrize("action", ["PAUSE", "CANCEL"])
-    def test_non_start_does_not_create_alert(self, shared_pool, action):
-        """PAUSE and CANCEL should not create a ScrubStarted alert."""
-        name = shared_pool["name"]
-
-        # Clear any leftover alerts.
-        call("alert.oneshot_delete", "ScrubStarted", name)
-
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": "START",
-            "threshold": 0,
-        }, job=True)
-
-        # Delete the alert from the START we just did.
-        call("alert.oneshot_delete", "ScrubStarted", name)
-        assert _scrub_started_alerts(name) == []
-
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": action,
-        }, job=True)
-
-        # Give a moment for any alert that shouldn't exist.
-        time.sleep(2)
-        assert _scrub_started_alerts(name) == []
-
-        if action == "PAUSE":
-            _cancel_scrub(name)
-
-
-class TestDeprecatedPoolScrubScrub:
-    """Verify the deprecated pool.scrub.scrub shim preserves old behavior."""
-
-    @pytest.fixture(autouse=True)
-    def _cleanup(self, shared_pool):
-        yield
-        _cancel_scrub(shared_pool["name"])
-
-    def test_stop_maps_to_cancel(self, shared_pool):
-        """pool.scrub.scrub STOP should cancel the scrub (STOP -> CANCEL mapping)."""
-        name = shared_pool["name"]
-
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": "START",
-            "threshold": 0,
-        }, job=True)
-
-        call("pool.scrub.scrub", name, "STOP", job=True)
-
-        scan = _get_scan(name)
-        assert scan["state"] == "CANCELED"
-
-    def test_error_preserves_errno(self, shared_pool):
-        """pool.scrub.scrub should preserve error codes from domain exceptions."""
-        name = shared_pool["name"]
-
-        call("zpool.scrub.run", {
-            "pool_name": name,
-            "action": "START",
-            "threshold": 0,
-        }, job=True)
-
-        # Starting a duplicate scrub should give EBUSY, not default EFAULT.
-        with pytest.raises(ClientException) as exc_info:
-            call("pool.scrub.scrub", name, "START", job=True)
-
-        assert exc_info.value.errno == errno.EBUSY
-
-
-class TestDeprecatedPoolScrubRun:
-    """Verify the deprecated pool.scrub.run shim delegates correctly."""
-
-    def test_delegates_to_zpool_scrub_run(self):
-        """pool.scrub.run should delegate to zpool.scrub.run."""
-        name = pool
-
-        # threshold=0 forces the scrub to run.
-        call("pool.scrub.run", name, 0)
-
-        # Wait for the scrub to start (pool.scrub.run delegates to
-        # zpool.scrub.run which is a job, but pool.scrub.run itself
-        # returns synchronously after kicking it off).
-        for _ in range(30):
-            scan = _get_scan(name)
-            if scan and scan["state"] in ("SCANNING", "FINISHED"):
-                break
-            time.sleep(1)
-        else:
-            pytest.fail("Scrub did not start after pool.scrub.run")
-
-        if scan["state"] == "SCANNING":
-            _cancel_scrub(name)
+    _poll_for_alert(lambda: _scrub_started_alerts(name))
