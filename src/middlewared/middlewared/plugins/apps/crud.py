@@ -21,6 +21,7 @@ from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import remove_failed_resources, get_app_volume_ds, delete_internal_resources
 from .schema_normalization import normalize_and_validate_values
+from .utils import to_entries
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -35,15 +36,6 @@ if TYPE_CHECKING:
     class _QueryCountOptions(QueryOptions):
         count: Literal[True]
         get: Literal[False]
-
-
-def _to_entries(result: list[dict[str, Any]] | dict[str, Any] | int) -> list[AppEntry] | AppEntry | int:
-    constructor = AppEntry.__query_result_item__
-    if isinstance(result, int):
-        return result
-    if isinstance(result, dict):
-        return constructor(**result)
-    return [constructor(**row) for row in result]
 
 
 @overload
@@ -61,7 +53,7 @@ def query_apps(
     context: ServiceContext, filters: list[Any], options: QueryOptions, app: App | None = None,
 ) -> list[AppEntry] | AppEntry | int:
     if not context.call_sync2(context.s.docker.validate_state, False):
-        return _to_entries(filter_list([], filters, options.model_dump()))
+        return to_entries(filter_list([], filters, options.model_dump()), AppEntry)
 
     extra = options.extra
     host_ip = extra.get('host_ip')
@@ -86,7 +78,7 @@ def query_apps(
 
     apps = list_apps(available_apps_mapping, **kwargs)
     if not retrieve_app_schema:
-        return _to_entries(filter_list(apps, filters, options.model_dump()))
+        return to_entries(filter_list(apps, filters, options.model_dump()), AppEntry)
 
     questions_context = context.call_sync2(context.s.catalog.get_normalized_questions_context)
     for app_entry in apps:
@@ -101,7 +93,7 @@ def query_apps(
 
         app_entry['version_details'] = version_details
 
-    return _to_entries(filter_list(apps, filters, options.model_dump()))
+    return to_entries(filter_list(apps, filters, options.model_dump()), AppEntry)
 
 
 def get_instance(context: ServiceContext, app_name: str, options: QueryOptions | None = None) -> AppEntry:

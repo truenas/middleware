@@ -1,13 +1,28 @@
 import os
 import subprocess
+from typing import Any, TypeVar, cast
 
+from middlewared.api.base import BaseModel
 from middlewared.api.current import AppEntry, AppUpgradeSummary
 from middlewared.plugins.docker.state_utils import DatasetDefaults, IX_APPS_MOUNT_PATH  # noqa
 
 from .ix_apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: F401,I250
 
 
+T = TypeVar('T', bound=BaseModel)
 UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'
+
+
+def to_entries(
+    result: list[dict[str, Any]] | dict[str, Any] | int,
+    model: type[T],
+) -> list[T] | T | int:
+    constructor = cast(type[T], getattr(model, '__query_result_item__', model))
+    if isinstance(result, int):
+        return result
+    if isinstance(result, dict):
+        return constructor(**result)
+    return [constructor(**row) for row in result]
 
 
 def upgrade_summary_info(app: AppEntry) -> AppUpgradeSummary:
