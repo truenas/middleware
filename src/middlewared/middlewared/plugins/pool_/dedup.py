@@ -30,7 +30,7 @@ class PoolService(Service):
         """
         Prefetch DDT entries in pool ``pool_name``.
 
-        .. version-removed:: 26
+        .. versionremoved:: 26
             Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
         """
         return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)

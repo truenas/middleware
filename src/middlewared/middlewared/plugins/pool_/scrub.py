@@ -206,7 +206,7 @@ class PoolScrubService(CRUDService):
         START begins a regular scrub and blocks until it finishes, is paused,
         or is canceled. STOP cancels an in-progress scrub. PAUSE pauses it.
 
-        .. version-deprecated:: 26.0.0
+        .. deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
         scrub_action = "CANCEL" if action == "STOP" else action
@@ -226,7 +226,7 @@ class PoolScrubService(CRUDService):
         more than ``threshold`` days ago. Does nothing if the scrub is not yet
         due or if this node is not the active controller on an HA system.
 
-        .. version-deprecated:: 26.0.0
+        .. deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
         self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})

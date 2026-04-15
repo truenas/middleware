@@ -38,6 +38,6 @@ class ZpoolScrubService(Service):
         fails for a reason other than the threshold or HA checks, a
         ``ScrubNotStarted`` alert is created instead.
 
-        .. version-added:: 26.0.0
+        .. versionadded:: 26.0.0
         """
         run_impl(self.context, tls.lzh, data, job.set_progress)
