@@ -250,6 +250,11 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         container = self.get_instance__sync(id_)
         audit_callback(container.name)
 
+        self.delete_container_from_db_and_libvirt(container)
+        self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)
+        self.middleware.call_sync('etc.generate', 'libvirt_guests')
+
+    def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
         pylibvirt_container_obj = pylibvirt_container(self, container.model_dump(by_alias=True))
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container_obj)
@@ -259,9 +264,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         for device in container.devices:
             self.middleware.call_sync('datastore.delete', 'container.device', device.id)
 
-        self.run_coroutine(self._delete(id_))
-        self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)
-        self.middleware.call_sync('etc.generate', 'libvirt_guests')
+        self.run_coroutine(self._delete(container.id))
 
     async def validate(
         self, verrors: ValidationErrors, schema_name: str, data: ContainerDataT, old: ContainerEntry | None = None,

@@ -121,6 +121,10 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         return await self._svc_part.create_with_dataset(data)
 
     @private
+    def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
+        self._svc_part.delete_container_from_db_and_libvirt(container)
+
+    @private
     def start_on_boot(self) -> None:
         start_on_boot(self.context)
 
