@@ -351,7 +351,12 @@ class ContainerService(CRUDService):
         """
         container = self.middleware.call_sync("container.get_instance", id_)
         audit_callback(container['name'])
+        self.delete_container_from_db_and_libvirt(container)
+        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
+        self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
+    @private
+    def delete_container_from_db_and_libvirt(self, container):
         pylibvirt_container = self.middleware.call_sync("container.pylibvirt_container", container)
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container)
@@ -361,9 +366,7 @@ class ContainerService(CRUDService):
         for device in container['devices']:
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
-        self.middleware.call_sync('datastore.delete', 'container.container', id_)
-        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
-        self.middleware.call_sync('etc.generate', 'libvirt_guests')
+        self.middleware.call_sync('datastore.delete', 'container.container', container['id'])
 
     @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'])
     async def pool_choices(self):

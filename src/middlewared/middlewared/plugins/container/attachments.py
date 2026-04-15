@@ -88,7 +88,14 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         return containers_attached
 
     async def delete(self, attachments):
-        await self.toggle(attachments, False)
+        for attachment in attachments:
+            try:
+                container = await self.middleware.call('container.get_instance', attachment['id'])
+                await self.middleware.call('container.delete_container_from_db_and_libvirt', container)
+            except Exception:
+                self.middleware.logger.warning('Unable to delete %r container', attachment['id'])
+        else:
+            await self.middleware.call('etc.generate', 'libvirt_guests')
 
     async def toggle(self, attachments, enabled):
         return await getattr(self, 'start' if enabled else 'stop')(attachments)
