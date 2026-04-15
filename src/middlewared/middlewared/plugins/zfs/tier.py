@@ -733,8 +733,9 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
 async def setup(middleware: Middleware) -> None:
     config = await middleware.call('zfs.tier.config')
-    if not config['enabled']:
+    if not config.enabled:
         return
+
     await middleware.run_in_thread(
         _apply_metadata_reserve_pct, middleware, config['special_class_metadata_reserve_pct']
     )
