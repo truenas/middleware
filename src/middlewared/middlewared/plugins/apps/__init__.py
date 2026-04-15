@@ -28,10 +28,16 @@ from middlewared.api.current import (
     AppUpgradeSummaryArgs, AppUpgradeSummaryResult, AppUpgradeSummaryOptions, AppUpgradeSummary,
     AppRollbackArgs, AppRollbackResult, AppRollbackOptions,
     AppRollbackVersionsArgs, AppRollbackVersionsResult,
+    AppCategoriesArgs, AppCategoriesResult,
+    AppLatestItem, AppAvailableItem,
+    AppSimilarArgs, AppSimilarResult,
 )
-from middlewared.service import GenericCRUDService, job, private
+from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
 from .app_scale import redeploy_app, start_app, stop_app
+from .available_apps_info import (
+    available, categories, similar, latest,
+)
 from .crud import (
     get_instance as get_app_instance, query_apps, get_app_config,
     create_app, update_app, delete_app,
@@ -175,12 +181,28 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await self.context.to_thread(get_app_instance, self.context, id_, options)
 
+    @filterable_api_method(item=AppAvailableItem, roles=['CATALOG_READ'], check_annotations=True)
+    def available(
+        self, filters: list[typing.Any], options: QueryOptions
+    ) -> list[AppAvailableItem] | AppAvailableItem | int:
+        """
+        Retrieve all available applications from all configured catalogs.
+        """
+        return available(self.context, filters, options)
+
     @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'], check_annotations=True)
     async def available_space(self) -> int:
         """
         Returns space available in bytes in the configured apps pool which apps can consume.
         """
         return await available_space(self.context)
+
+    @api_method(AppCategoriesArgs, AppCategoriesResult, roles=['CATALOG_READ'], check_annotations=True)
+    async def categories(self) -> list[str]:
+        """
+        Retrieve list of valid categories which have associated applications.
+        """
+        return await categories()
 
     @api_method(AppCertificateChoicesArgs, AppCertificateChoicesResult, roles=['APPS_READ'], check_annotations=True)
     async def certificate_choices(self) -> AppCertificateChoices:
@@ -240,6 +262,22 @@ class AppService(GenericCRUDService[AppEntry, str]):
         Returns IP choices which can be used by applications.
         """
         return await ip_choices(self.context)
+
+    @filterable_api_method(item=AppLatestItem, roles=['CATALOG_READ'], check_annotations=True)
+    async def latest(
+        self, filters: list[typing.Any], options: QueryOptions
+    ) -> list[AppLatestItem] | AppLatestItem | int:
+        """
+        Retrieve latest updated apps.
+        """
+        return await latest(self.context, filters, options)
+
+    @api_method(AppSimilarArgs, AppSimilarResult, roles=['CATALOG_READ'], check_annotations=True)
+    def similar(self, app_name: str, train: str) -> list[AppAvailableItem]:
+        """
+        Retrieve applications which are similar to `app_name`.
+        """
+        return similar(self.context, app_name, train)
 
     @api_method(AppUsedHostIpsArgs, AppUsedHostIpsResult, roles=['APPS_READ'], check_annotations=True)
     async def used_host_ips(self) -> dict[str, list[str]]:
