@@ -99,7 +99,11 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         return containers_attached
 
     async def delete(self, attachments: list[dict[str, Any]]) -> None:
-        await self.toggle(attachments, False)
+        for attachment in attachments:
+            try:
+                await self.middleware.call2(self.s.container.delete, attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to delete %r container', attachment['id'])
 
     async def toggle(self, attachments: list[dict[str, Any]], enabled: bool) -> None:
         await getattr(self, 'start' if enabled else 'stop')(attachments)

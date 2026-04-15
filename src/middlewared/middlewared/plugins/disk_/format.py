@@ -29,6 +29,9 @@ def sgdisk_explicit_alignment(
     if disk_size_bytes % sector_size_bytes != 0:
         return None  # disk_size_bytes must be divisible by sector_size_bytes
 
+    if sector_size_bytes % 512 != 0:
+        return None  # sector_size_bytes must be divisible by 512
+
     if requested_partition_size % sector_size_bytes != 0:
         return None  # requested_partition_size must be divisible by sector_size_bytes
 
@@ -36,14 +39,17 @@ def sgdisk_explicit_alignment(
     requested_partition_sectors = requested_partition_size // sector_size_bytes
 
     # GPT partition-entry array size in sectors
+    mbr_size_bytes = 512
+    gpt_header_size_bytes = 512
     num_partition_entries = 128
     partition_entry_size_bytes = 128
     entry_array_bytes = num_partition_entries * partition_entry_size_bytes
-    entry_array_sectors = math.ceil(entry_array_bytes / sector_size_bytes)
+    gpt_size_bytes = mbr_size_bytes + gpt_header_size_bytes + entry_array_bytes
+    gpt_size_sectors = math.ceil(gpt_size_bytes / sector_size_bytes)
 
     # Standard GPT usable range
-    first_usable_sector = 2 + entry_array_sectors
-    last_usable_sector = total_sectors - entry_array_sectors - 2
+    first_usable_sector = gpt_size_sectors
+    last_usable_sector = total_sectors - gpt_size_sectors - 1
 
     latest_start_sector = last_usable_sector - requested_partition_sectors + 1
     if latest_start_sector < first_usable_sector:
@@ -63,7 +69,7 @@ def sgdisk_explicit_alignment(
     if best_alignment == default_alignment:
         return None
 
-    return best_alignment
+    return best_alignment * (sector_size_bytes // 512)
 
 
 class DiskService(Service):
@@ -99,17 +105,18 @@ class DiskService(Service):
         alignment = None
         if size is None:
             size = self.get_data_partition_size(disk)
-            for info in self.middleware.call_sync('disk.get_disks', [disk]):
-                # Old TrueNAS systems:
-                # * Used the entire disk for the data partition
-                # * Used smaller partition alignment
-                #
-                # When replacing a disk with such a partition, the new partition must be at least
-                # as large as the one being replaced (ZFS requires this). However, when using a
-                # larger alignment, the new partition may not fit on the disk. In that case,
-                # we must use a smaller alignment.
-                alignment = sgdisk_explicit_alignment(info.size_bytes, info.pbs, size)
-                break
+
+        for info in self.middleware.call_sync('disk.get_disks', [disk]):
+            # Old TrueNAS systems:
+            # * Used the entire disk for the data partition
+            # * Used smaller partition alignment
+            #
+            # When replacing a disk with such a partition, the new partition must be at least
+            # as large as the one being replaced (ZFS requires this). However, when using a
+            # larger alignment, the new partition may not fit on the disk. In that case,
+            # we must use a smaller alignment.
+            alignment = sgdisk_explicit_alignment(info.size_bytes, info.pbs, size)
+            break
 
         cmd = ["sgdisk"]
         if alignment is not None:

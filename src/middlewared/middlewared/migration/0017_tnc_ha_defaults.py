@@ -1,9 +1,5 @@
 async def migrate(middleware):
-    if await middleware.call('system.is_ha_capable'):
-        tnc_config = await middleware.call('tn_connect.config')
-        # For HA machines, we do not want to allow users to set use_all_interfaces which is
-        # the default to account for non-HA machines
-        await middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
-            'interfaces': [],
-            'use_all_interfaces': False,
-        })
+    # This migration earlier used to make sure that HA systems are not setting interfaces/ips
+    # However we have now removed the ability for setting those attrs altogether in TNC
+    # hence this migration is a no-op now
+    pass

@@ -410,6 +410,26 @@ class EtcService(Service):
                          checkpoint=Checkpoint.POOL_IMPORT, mode=0o744),
             ),
         ),
+        'lio': EtcGroup(
+            ctx=(
+                CtxMethod(method='failover.licensed'),
+                CtxMethod(method='failover.node'),
+                CtxMethod(method='failover.status'),
+                CtxMethod(method='fc.capable'),
+                CtxMethod(method='fcport.query'),
+                CtxMethod(method='iscsi.auth.query'),
+                CtxMethod(method='iscsi.extent.query', args=[[['enabled', '=', True]]]),
+                CtxMethod(method='iscsi.global.config'),
+                CtxMethod(method='iscsi.initiator.query'),
+                CtxMethod(method='iscsi.portal.query'),
+                CtxMethod(method='iscsi.target.query'),
+                CtxMethod(method='iscsi.targetextent.query'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.PY, path='lio',
+                         checkpoint=Checkpoint.POOL_IMPORT),
+            ),
+        ),
         'scst_direct': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='scst.direct',
                      checkpoint=Checkpoint.POOL_IMPORT, mode=0o600),

@@ -66,7 +66,8 @@ class FCService(Service):
     def fc_hosts(self, filters, options):
         result = []
         if self.middleware.call_sync('fc.capable'):
-            self.__load_kernel_module()
+            if not self.middleware.call_sync('iscsi.global.lio_enabled'):
+                self.__load_kernel_module()
             slots = self.middleware.call_sync('fc.slot_info')
             with os.scandir('/sys/class/fc_host') as scan:
                 for i in filter(lambda x: x.is_symlink() and x.name.startswith('host'), scan):
@@ -151,7 +152,8 @@ class FCService(Service):
         Load the Fibre Channel HBA kernel module.
         """
         if await self.middleware.call('fc.capable'):
-            await self.middleware.run_in_thread(self.__load_kernel_module)
+            if not await self.middleware.call('iscsi.global.lio_enabled'):
+                await self.middleware.run_in_thread(self.__load_kernel_module)
 
     @private
     @cache
