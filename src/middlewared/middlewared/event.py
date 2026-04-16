@@ -89,10 +89,10 @@ class EventSource:
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
 
-    def send_event(self, event_type: str, **kwargs):
+    def send_event(self, event_type: str, **kwargs: typing.Any) -> None:
         self.send_event_internal(event_type, **kwargs)
 
-    async def validate_arg(self):
+    async def validate_arg(self) -> None:
         if self.arg is None:
             data = {}
         else:
@@ -105,7 +105,7 @@ class EventSource:
 
         self.arg = validate_model(self.args, data)
 
-    async def process(self):
+    async def process(self) -> None:
         error = None
 
         try:
@@ -126,21 +126,21 @@ class EventSource:
         if not self._canceled:
             await self.unsubscribe_all(error)
 
-    async def run(self):
+    async def run(self) -> None:
         await self.middleware.run_in_thread(self.run_sync)
 
-    def run_sync(self):
+    def run_sync(self) -> None:
         raise NotImplementedError('run_sync() method not implemented')
 
-    async def cancel(self):
+    async def cancel(self) -> None:
         self._canceled = True
         self._cancel.set()
         await self.middleware.run_in_thread(self._cancel_sync.set)
 
-    async def on_finish(self):
+    async def on_finish(self) -> None:
         await self.middleware.run_in_thread(self.on_finish_sync)
 
-    def on_finish_sync(self):
+    def on_finish_sync(self) -> None:
         pass
 
 

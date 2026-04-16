@@ -92,7 +92,7 @@ class AppContainerLogsFollowTailEventSource(
                 self.send_event('ADDED', fields={'data': log_entry, 'timestamp': timestamp})
 
     async def cancel(self) -> None:
-        await super().cancel()  # type: ignore[no-untyped-call]
+        await super().cancel()
         if self.logs_stream:
             await self.middleware.run_in_thread(self.logs_stream.close)
 
