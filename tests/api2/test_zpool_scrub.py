@@ -88,7 +88,7 @@ def _scrub_started_alerts(pool_name):
 def _scrub_not_started_alerts(pool_name):
     return [
         a for a in call("alert.list")
-        if a["klass"] == "ScrubNotStarted" and a["args"]["pool"] == pool_name
+        if a["klass"] == "ScrubNotStarted" and a["key"] == pool_name
     ]
 
 
@@ -326,7 +326,7 @@ class TestPauseCancelBypassValidation:
             assert scan["state"] == "CANCELED"
 
 
-def test_start_creates_scrub_started_alert(self, shared_pool):
+def test_start_creates_scrub_started_alert(shared_pool):
     """A successful START should create a ScrubStarted alert.
 
     The alert is created immediately when the scrub starts (before
