@@ -45,6 +45,7 @@ from .crud import (
 from .custom_app_ops import convert_to_custom_app
 from .events import process_event
 from .ix_apps.utils import get_app_name_from_project_name
+from .logs import AppContainerLogsFollowTailEventSource
 from .metadata import app_metadata_generate
 from .pull_images import outdated_docker_images_for_app, pull_images_for_app
 from .resources import (
@@ -52,6 +53,7 @@ from .resources import (
     available_space, gpu_choices, gpu_choices_internal,
 )
 from .rollback import rollback_versions, rollback
+from .stats import AppStatsEventSource
 from .upgrade import (
     upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary, clear_upgrade_alerts_for_all, update_app_upgrade_alert
 )
@@ -87,6 +89,10 @@ class AppService(GenericCRUDService[AppEntry, str]):
         entry = AppEntry
         generic = True
         pass_app_to_query = True
+        event_sources = {
+            'app.container_log_follow': AppContainerLogsFollowTailEventSource,
+            'app.stats': AppStatsEventSource,
+        }
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)

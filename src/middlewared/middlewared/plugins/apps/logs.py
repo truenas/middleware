@@ -11,7 +11,7 @@ from middlewared.api.current import (
     AppContainerLogsFollowTailEventSourceArgs, AppContainerLogsFollowTailEventSourceEvent,
 )
 from middlewared.event import TypedEventSource
-from middlewared.service import CallError, Service
+from middlewared.service import CallError
 
 from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
@@ -98,11 +98,3 @@ class AppContainerLogsFollowTailEventSource(
 
     async def on_finish(self) -> None:
         self.logs_stream = None
-
-
-class AppService(Service):
-
-    class Config:
-        event_sources = {
-            'app.container_log_follow': AppContainerLogsFollowTailEventSource,
-        }
