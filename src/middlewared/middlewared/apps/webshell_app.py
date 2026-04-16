@@ -105,7 +105,6 @@ class ShellWorkerThread(threading.Thread):
             env = {
                 "TERM": "xterm",
                 "HOME": homedir,
-                "LANG": "en_US.UTF-8",
                 "PATH": "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
                 "LC_ALL": "C.UTF-8",
             }
