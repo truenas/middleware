@@ -1,25 +1,23 @@
-from datetime import datetime
-import asyncio
-import re
-import shlex
+from __future__ import annotations
+from typing import Literal, TYPE_CHECKING
 
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
-    PoolScrubEntry, PoolScrubCreateArgs, PoolScrubCreateResult, PoolScrubUpdateArgs, PoolScrubUpdateResult,
-    PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
-    PoolScrubRunResult, PoolScanChangedEvent,
+    PoolScrubEntry, PoolScanChangedEvent,
+    PoolScrubCreateArgs, PoolScrubCreateResult,
+    PoolScrubUpdateArgs, PoolScrubUpdateResult,
+    PoolScrubDeleteArgs, PoolScrubDeleteResult,
+    PoolScrubScrubArgs, PoolScrubScrubResult,
+    PoolScrubRunArgs, PoolScrubRunResult,
 )
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.plugins.zpool.exceptions import ZpoolException
+from middlewared.plugins.zpool.scrub_impl import scrub_pool
+from middlewared.service import CRUDService, job, private, CallError, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
-
-
-RE_HISTORY_ZPOOL_SCRUB_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool (scrub|create)', re.MULTILINE)
-
-
-class ScrubError(CallError):
-    pass
+if TYPE_CHECKING:
+    from middlewared.main import Job
 
 
 class PoolScrubModel(sa.Model):
@@ -193,6 +191,7 @@ class PoolScrubService(CRUDService):
         return response
 
     @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])
+    @pass_thread_local_storage
     @job(
         description=lambda name, action="START": (
             f"Scrub of pool {name!r}" if action == "START"
@@ -200,84 +199,34 @@ class PoolScrubService(CRUDService):
         ),
         lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else '',
     )
-    async def scrub(self, job, name, action):
+    def scrub(self, job: Job, tls, name: str, action: Literal["START", "STOP", "PAUSE"]) -> None:
         """
-        Start/Stop/Pause a scrub on pool `name`.
+        Start, stop, or pause a scrub on pool ``name``.
+
+        START begins a regular scrub and blocks until it finishes, is paused,
+        or is canceled. STOP cancels an in-progress scrub. PAUSE pauses it.
+
+        .. deprecated:: 26.0.0
+            Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
-        await self.middleware.call('zfs.pool.scrub_action', name, action)
+        scrub_action = "CANCEL" if action == "STOP" else action
 
-        if action == 'START':
-            while True:
-                scrub = await self.middleware.call('zfs.pool.scrub_state', name)
-
-                if scrub['pause']:
-                    job.set_progress(100, 'Scrub paused')
-                    break
-
-                if scrub['function'] != 'SCRUB':
-                    break
-
-                if scrub['state'] == 'FINISHED':
-                    job.set_progress(100, 'Scrub finished')
-                    break
-
-                if scrub['state'] == 'CANCELED':
-                    break
-
-                if scrub['state'] == 'SCANNING':
-                    job.set_progress(scrub['percentage'], 'Scrubbing')
-
-                await asyncio.sleep(1)
+        try:
+            zpool = tls.lzh.open_pool(name=name)
+            scrub_pool(tls.lzh, zpool, "SCRUB", scrub_action, progress_callback=job.set_progress)
+        except ZpoolException as e:
+            raise CallError(str(e), e.errno) from e
+        except Exception as e:
+            raise CallError(str(e)) from e
 
     @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'])
-    async def run(self, name, threshold):
+    def run(self, name: str, threshold: int) -> None:
         """
-        Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
+        Initiate a scrub of pool ``name`` if the most recent scrub finished
+        more than ``threshold`` days ago. Does nothing if the scrub is not yet
+        due or if this node is not the active controller on an HA system.
+
+        .. deprecated:: 26.0.0
+            Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
-        await self.middleware.call('alert.oneshot_delete', 'ScrubNotStarted', name)
-        await self.middleware.call('alert.oneshot_delete', 'ScrubStarted', name)
-        try:
-            started = await self.__run(name, threshold)
-        except ScrubError as e:
-            await self.middleware.call('alert.oneshot_create', 'ScrubNotStarted', {
-                'pool': name,
-                'text': e.errmsg,
-            })
-        else:
-            if started:
-                await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
-
-    async def __run(self, name, threshold):
-        if name == await self.middleware.call('boot.pool_name'):
-            pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [name], 'scan': True}))[0]
-        else:
-            if await self.middleware.call('failover.licensed'):
-                if await self.middleware.call('failover.status') == 'BACKUP':
-                    return
-
-            pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
-            if pool['status'] == 'OFFLINE':
-                raise ScrubError(f'Pool {name} is offline, not running scrub')
-
-        if pool['scan'] and pool['scan']['state'] == 'SCANNING':
-            return False
-
-        last_scrubs = (await run(
-            'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create|import)"',
-            encoding='utf-8',
-            errors='ignore',
-            check=False,
-        )).stdout
-        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB_CREATE.finditer(last_scrubs))):
-            last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
-            break
-        else:
-            self.logger.warning("Could not find last scrub of pool %r", name)
-            last_scrub = datetime.min
-
-        if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
-            self.logger.debug('Pool %r last scrub %r', name, last_scrub)
-            return False
-
-        await self.middleware.call('pool.scrub.scrub', pool['name'])
-        return True
+        self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
