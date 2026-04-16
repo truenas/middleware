@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, overload, TYPE_CHECKING
+from typing import Any, Callable, Literal, overload, TYPE_CHECKING, cast
 
 from middlewared.api.current import (
     AppLatestItem, AppAvailableItem, CatalogApps, QueryOptions,
@@ -36,17 +36,33 @@ async def latest(
         ['name', '!=', IX_APP_NAME],
     ])
     options.order_by = ['-last_update']
-    return await context.to_thread(available, context, filters, options)
+    available_fn: Callable[
+        [ServiceContext, list[Any], QueryOptions],
+        list[AppAvailableItem] | AppAvailableItem | int,
+    ] = available
+    return cast(
+        list[AppLatestItem] | AppLatestItem | int,
+        await context.to_thread(available_fn, context, filters, options),
+    )
 
 
 @overload
-def available(context: ServiceContext, filters: list[Any], options: _QueryCountOptions) -> int: ...
+def available(  # type: ignore[overload-overlap]
+    context: ServiceContext, filters: list[Any], options: _QueryCountOptions,
+) -> int: ...
+
 
 @overload
-def available(context: ServiceContext, filters: list[Any], options: _QueryGetOptions) -> AppAvailableItem: ...
+def available(  # type: ignore[overload-overlap]
+    context: ServiceContext, filters: list[Any], options: _QueryGetOptions,
+) -> AppAvailableItem: ...
+
 
 @overload
-def available(context: ServiceContext, filters: list[Any], options: QueryOptions) -> list[AppAvailableItem]: ...
+def available(
+    context: ServiceContext, filters: list[Any], options: QueryOptions,
+) -> list[AppAvailableItem]: ...
+
 
 def available(
     context: ServiceContext, filters: list[Any], options: QueryOptions

@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import shutil
 from collections import defaultdict
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any, Literal, TYPE_CHECKING, cast
 
 from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
@@ -82,7 +82,7 @@ async def ip_choices(context: ServiceContext) -> AppIpChoices:
 
 async def available_space(context: ServiceContext) -> int:
     await context.call2(context.s.docker.validate_state)
-    return (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes']
+    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes'])
 
 
 async def gpu_choices(context: ServiceContext) -> AppGPUResponse:
@@ -107,25 +107,28 @@ async def gpu_choices_internal(context: ServiceContext) -> list[dict[str, Any]]:
     )
 
 
-async def get_hostpaths_datasets(context: ServiceContext, app_name: str) -> dict[str, str]:
+async def get_hostpaths_datasets(context: ServiceContext, app_name: str) -> dict[str, str | None]:
     app_info = await context.call2(context.s.app.get_instance, app_name)
     host_paths = [
         volume.source for volume in app_info.active_workloads.volumes
         if volume.source.startswith(f'{IX_APPS_MOUNT_PATH}/') is False
     ]
 
-    return await context.middleware.run_in_thread(paths_to_datasets_impl, host_paths)
+    return await context.to_thread(paths_to_datasets_impl, host_paths)
 
 
 def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:
     # This will return volume dataset of app if it exists, otherwise null
     docker_ds = context.call_sync2(context.s.docker.config).dataset
+    if docker_ds is None:
+        raise ValueError('Docker dataset must not be null')
+
     apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
     rv = context.call_sync2(
         context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
     )
     if rv:
-        return rv[0]['name']
+        return cast(str, rv[0]['name'])
     return None
 
 

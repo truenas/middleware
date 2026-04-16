@@ -39,15 +39,22 @@ if TYPE_CHECKING:
 
 
 @overload
-def query_apps(context: ServiceContext, filters: list[Any], options: _QueryCountOptions, app: App | None = None) -> int: ...  # type: ignore[overload-overlap]
+def query_apps(  # type: ignore[overload-overlap]
+    context: ServiceContext, filters: list[Any], options: _QueryCountOptions, app: App | None = None,
+) -> int: ...
+
 
 @overload
-def query_apps(context: ServiceContext, filters: list[Any], options: _QueryGetOptions, app: App | None = None) -> AppEntry: ...  # type: ignore[overload-overlap]
+def query_apps(  # type: ignore[overload-overlap]
+    context: ServiceContext, filters: list[Any], options: _QueryGetOptions, app: App | None = None,
+) -> AppEntry: ...
+
 
 @overload
 def query_apps(
     context: ServiceContext, filters: list[Any], options: QueryOptions, app: App | None = None,
 ) -> list[AppEntry]: ...
+
 
 def query_apps(
     context: ServiceContext, filters: list[Any], options: QueryOptions, app: App | None = None,
@@ -57,12 +64,9 @@ def query_apps(
 
     extra = options.extra
     host_ip = extra.get('host_ip')
-    if not host_ip:
-        try:
-            if app.origin.is_tcp_ip_family:
-                host_ip = app.origin.loc_addr
-        except AttributeError:
-            pass
+    if app is not None and not host_ip:
+        if app.origin.is_tcp_ip_family:
+            host_ip = app.origin.loc_addr
 
     retrieve_app_schema = extra.get('include_app_schema', False)
     kwargs = {
@@ -122,6 +126,7 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
     if not data.catalog_app:
         verrors.add('app_create.catalog_app', 'This field is required')
     verrors.check()
+    assert data.catalog_app is not None
 
     app_name = data.app_name
     complete_app_details = context.call_sync2(
@@ -158,9 +163,10 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
 @overload
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict, complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any,
     dry_run: Literal[True], migrated_app: bool = False,
 ) -> None: ...
+
 
 @overload
 def create_internal(
@@ -168,6 +174,7 @@ def create_internal(
     user_values: dict[str, Any], complete_app_details: Any,
     dry_run: Literal[False] = False, migrated_app: bool = False,
 ) -> AppEntry: ...
+
 
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
@@ -192,6 +199,7 @@ def create_internal(
     # 2) Copy app version into app dir
     # 3) Have docker compose deploy the app in question
 
+    assert job.logs_fd is not None
     try:
         setup_install_app_dir(app_name, app_version_details)
         app_version_details = context.call_sync2(
@@ -221,6 +229,7 @@ def create_internal(
         if dry_run is False:
             job.set_progress(100, f'{app_name!r} installed successfully')
             return get_instance(context, app_name)
+        return None
 
 
 def update_app(context: ServiceContext, job: Job, app_name: str, data: AppUpdate) -> AppEntry:

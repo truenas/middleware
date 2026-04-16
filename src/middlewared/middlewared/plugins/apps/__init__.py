@@ -91,7 +91,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
 
-    @typing.overload
+    @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
         self, app: App, filters: list[typing.Any], options: _QueryCountOptions,
     ) -> int: ...

@@ -71,6 +71,7 @@ def create_custom_app(
         update_progress(60, msg)
         compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
     except Exception as e:
+        assert job.logs_fd is not None
         if logs := collect_logs(app_name, version):
             job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}'.encode())
         else:

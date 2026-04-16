@@ -7,7 +7,7 @@ from middlewared.api.current import AppEntry
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .resources import certificate_choices, used_ports
-from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
+from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES, USER_VALUES
 
 
 VALIDATION_REF_MAPPING = {
@@ -27,10 +27,7 @@ async def validate_values(
     for k in RESERVED_NAMES:
         new_values.pop(k[0], None)
 
-    if app_data is None:
-        config = NOT_PROVIDED
-    else:
-        config = app_data.config
+    config: USER_VALUES = NOT_PROVIDED if app_data is None or app_data.config is None else app_data.config
 
     result = construct_schema(app_version_details, new_values, update, config)
     verrors = result['verrors']
@@ -92,7 +89,6 @@ async def validate_question(
                 func = validate_acl_entries
             case _:
                 raise ValueError(f'Unrecognized validator def {validator_def!r}')
-
 
         await func(context, verrors, value, schema_name, app_data)
 
