@@ -572,11 +572,14 @@ class KeychainCredentialService(CRUDService):
                 if not c.call("auth.login_with_token", data["token"]):
                     raise CallError("Invalid token")
             elif data["password"]:
-                args = [data["admin_username"], data["password"]]
-                if data["otp_token"]:
-                    args.append(data["otp_token"])
-                if not c.call("auth.login", *args):
-                    raise CallError("Invalid username or password")
+                try:
+                    c.login_with_password(data["admin_username"], data["password"],
+                                          otp_token=data["otp_token"] or None)
+                except ValueError as e:
+                    # login_with_password raises ValueError with a descriptive message for:
+                    # invalid credentials, OTP required / invalid OTP, expired account,
+                    # account lacks API access, or HA redirect to active controller.
+                    raise CallError(str(e))
             else:
                 raise CallError("You should specify either remote system password or temporary authentication token")
 
