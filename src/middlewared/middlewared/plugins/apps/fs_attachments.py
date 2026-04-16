@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
+
 from middlewared.common.attachment import FSAttachmentDelegate
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class AppFSAttachmentDelegate(FSAttachmentDelegate):
@@ -7,8 +14,10 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
     # Apps depend on Docker, so they start after and stop before Docker
     priority = 5
 
-    async def query(self, path, enabled, options=None):
-        apps_attached = []
+    async def query(
+        self, path: str, enabled: bool, options: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        apps_attached: list[dict[str, str]] = []
         for app in await self.call2(self.s.app.query):
             # We don't want to consider those apps which fit in the following criteria:
             # - app has no volumes
@@ -33,14 +42,14 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
 
         return apps_attached
 
-    async def delete(self, attachments):
+    async def delete(self, attachments: list[dict[str, str]]) -> None:
         for attachment in attachments:
             try:
                 await (await self.call2(self.s.app.stop, attachment['id'])).wait(raise_error=True)
             except Exception:
                 self.middleware.logger.error('Unable to stop %r app', attachment['id'], exc_info=True)
 
-    async def toggle(self, attachments, enabled):
+    async def toggle(self, attachments: list[dict[str, str]], enabled: bool) -> None:
         # if enabled is true - we are going to ignore that as we don't want to scale up releases
         # automatically when a path becomes available
         for attachment in ([] if enabled else attachments):
@@ -49,14 +58,14 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.error('Unable to stop %r app', attachment['id'], exc_info=True)
 
-    async def stop(self, attachments):
+    async def stop(self, attachments: list[dict[str, str]]) -> None:
         await self.toggle(attachments, False)
 
-    async def start(self, attachments):
+    async def start(self, attachments: list[dict[str, str]]) -> None:
         await self.toggle(attachments, True)
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     middleware.create_task(
         middleware.call('pool.dataset.register_attachment_delegate', AppFSAttachmentDelegate(middleware))
     )

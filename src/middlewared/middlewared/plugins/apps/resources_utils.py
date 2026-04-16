@@ -1,4 +1,7 @@
-def get_gpu_base_dict() -> dict:
+from typing import Any
+
+
+def get_gpu_base_dict() -> dict[str, Any]:
     return {
         'vendor': '',
         'description': '',
@@ -9,10 +12,12 @@ def get_gpu_base_dict() -> dict:
     }
 
 
-def get_normalized_gpu_choices(all_gpus_info: list[dict], nvidia_gpus: dict) -> list[dict]:
-    all_gpus_info = {gpu['addr']['pci_slot']: gpu for gpu in all_gpus_info}
-    gpus = []
-    for pci_slot, gpu_info in all_gpus_info.items():
+def get_normalized_gpu_choices(
+    all_gpus_info: list[dict[str, Any]], nvidia_gpus: dict[str, Any],
+) -> list[dict[str, Any]]:
+    gpus_by_slot = {gpu['addr']['pci_slot']: gpu for gpu in all_gpus_info}
+    gpus: list[dict[str, Any]] = []
+    for pci_slot, gpu_info in gpus_by_slot.items():
         gpu_config = get_gpu_base_dict() | {
             'vendor': gpu_info['vendor'],
             'description': gpu_info['description'],
