@@ -1,7 +1,7 @@
 import time
 
 from middlewared.api.current import AppStatsEventSourceArgs, AppStatsEventSourceEvent
-from middlewared.event import EventSource
+from middlewared.event import TypedEventSource
 from middlewared.plugins.docker.state_utils import Status
 from middlewared.service import CallError, Service
 
@@ -9,7 +9,7 @@ from .ix_apps.docker.stats import list_resources_stats_by_project
 from .stats_util import normalize_projects_stats
 
 
-class AppStatsEventSource(EventSource):
+class AppStatsEventSource(TypedEventSource[AppStatsEventSourceArgs]):
     """
     Retrieve statistics of apps.
     """
@@ -18,12 +18,12 @@ class AppStatsEventSource(EventSource):
     event = AppStatsEventSourceEvent
     roles = ['APPS_READ']
 
-    def run_sync(self):
+    def run_sync(self) -> None:
         if not self.middleware.call_sync('docker.validate_state', False):
             raise CallError('Apps are not available')
 
         old_projects_stats = list_resources_stats_by_project()
-        interval = self.arg['interval']
+        interval = self.typed_arg.interval
         time.sleep(interval)
 
         while not self._cancel_sync.is_set():
