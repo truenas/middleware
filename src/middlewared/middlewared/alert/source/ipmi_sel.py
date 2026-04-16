@@ -9,6 +9,21 @@ from middlewared.alert.base import (
 from middlewared.alert.schedule import IntervalSchedule
 
 
+THRESHOLD_SENSOR_TYPES = (
+    "Fan",
+    "Temperature",
+    "Voltage",
+    "Current",
+)
+
+
+def is_threshold_sensor_assertion_event(record: dict[str, Any]) -> bool:
+    return bool(
+        record["type"].startswith(THRESHOLD_SENSOR_TYPES)
+        and record["event_direction"] == "Assertion Event"
+    )
+
+
 def remove_deasserted_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     nullable_records: list[dict[str, Any] | None] = list(records)
     assertions: defaultdict[Any, defaultdict[Any, set[int]]] = defaultdict(lambda: defaultdict(set))
@@ -23,6 +38,25 @@ def remove_deasserted_records(records: list[dict[str, Any]]) -> list[dict[str, A
             event_assertions.clear()
 
     return [r for r in nullable_records if r is not None]
+
+
+def remove_orphaned_assertions(
+    records: list[dict[str, Any]],
+    sensor_states: dict[str, str],
+) -> list[dict[str, Any]]:
+    # A BMC that is powered off when a threshold sensor recovers will never
+    # log the matching deassertion, so `remove_deasserted_records` cannot
+    # clear the assertion. If the live sensor is currently reporting
+    # Nominal, the condition is resolved regardless of what the SEL says.
+    # Limited to threshold sensors because discrete-sensor "Nominal" does
+    # not imply past assertions are stale.
+    return [
+        r for r in records
+        if not (
+            is_threshold_sensor_assertion_event(r)
+            and sensor_states.get(r["name"]) == "Nominal"
+        )
+    ]
 
 
 @dataclass(kw_only=True)
@@ -137,6 +171,11 @@ class IPMISELAlertSource(AlertSource):
                     records.append(i)
 
         records = remove_deasserted_records(records)
+
+        if any(is_threshold_sensor_assertion_event(r) for r in records):
+            live_sensors = await self.middleware.call("ipmi.sensors.query")
+            sensor_states = {s["name"]: s["state"] for s in live_sensors}
+            records = remove_orphaned_assertions(records, sensor_states)
 
         alerts = []
         if records:
