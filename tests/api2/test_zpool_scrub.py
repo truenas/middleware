@@ -326,7 +326,7 @@ class TestPauseCancelBypassValidation:
             assert scan["state"] == "CANCELED"
 
 
-def test_start_creates_scrub_started_alert(self, shared_pool):
+def test_start_creates_scrub_started_alert(shared_pool):
     """A successful START should create a ScrubStarted alert.
 
     The alert is created immediately when the scrub starts (before

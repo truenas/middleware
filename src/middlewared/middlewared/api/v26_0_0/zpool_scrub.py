@@ -4,13 +4,13 @@ from middlewared.api.base import BaseModel
 
 
 __all__ = [
-    "ZpoolScrubRunEntry",
+    "ZpoolScrubRun",
     "ZpoolScrubRunArgs",
     "ZpoolScrubRunResult",
 ]
 
 
-class ZpoolScrubRunEntry(BaseModel):
+class ZpoolScrubRun(BaseModel):
     pool_name: str
     """Name of the zpool."""
     scan_type: Literal["SCRUB", "ERRORSCRUB"] = "SCRUB"
@@ -22,7 +22,7 @@ class ZpoolScrubRunEntry(BaseModel):
 
 
 class ZpoolScrubRunArgs(BaseModel):
-    data: ZpoolScrubRunEntry
+    data: ZpoolScrubRun
     """Scrub run parameters."""
 
 
