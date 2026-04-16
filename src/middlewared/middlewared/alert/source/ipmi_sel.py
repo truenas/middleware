@@ -119,7 +119,8 @@ class IPMISELAlertSource(AlertSource):
     async def get_sensor_values(
         self,
     ) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]:
-        # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
+        # Sensor type / event strings come from FreeIPMI's `ipmi-sel`:
+        # https://git.savannah.gnu.org/cgit/freeipmi.git/tree/libfreeipmi/spec/ipmi-sensor-and-event-code-tables-spec.c
         sensor_types = (
             "Redundancy State",
             "Temperature",
