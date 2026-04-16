@@ -572,10 +572,10 @@ class KeychainCredentialService(CRUDService):
                 if not c.call("auth.login_with_token", data["token"]):
                     raise CallError("Invalid token")
             elif data["password"]:
-                args = [data["admin_username"], data["password"]]
-                if data["otp_token"]:
-                    args.append(data["otp_token"])
-                if not c.call("auth.login", *args):
+                try:
+                    c.login_with_password(data["admin_username"], data["password"],
+                                          otp_token=data["otp_token"] or None)
+                except ValueError:
                     raise CallError("Invalid username or password")
             else:
                 raise CallError("You should specify either remote system password or temporary authentication token")
