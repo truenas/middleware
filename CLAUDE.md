@@ -104,6 +104,10 @@ async def do_create(self, app, data):
     pass
 ```
 
+**API Model Field Descriptions**:
+- Every field in API models (`Args`, `Result`, `Entry` classes) **must** have a description, either as a docstring or via `Field(description=...)`.
+- This is enforced by `test_api_docstrings` in the unit test suite.
+
 **API Versioning**:
 - Multiple API versions maintained in parallel (`src/middlewared/middlewared/api/v*/`)
 - Legacy methods wrapped with `LegacyAPIMethod`
@@ -314,5 +318,5 @@ self.logger.error('%s: %s', resource_identifier, description)
 
 - **Service Access**: Always call other services via `self.middleware.call('service.method', ...)`, never import and instantiate directly.
 - **Database Access**: Use the datastore service abstraction, not direct SQL queries.
-- **Error Handling**: Use `CallError` for general errors and `ValidationError` for input validation failures.
+- **Error Handling**: Use `CallError` for operational/runtime failures (system state, resource busy, I/O errors). Use `ValidationError` only when the **caller's input** is the problem (invalid argument value, nonexistent entity referenced by an argument, incompatible options). If the input is valid but the system can't perform the operation, that's a `CallError`, not a `ValidationError`.
 - **Logging**: Use `self.logger` in services for consistent logging (see Logging Guidelines above).

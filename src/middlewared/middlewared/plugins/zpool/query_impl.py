@@ -3,7 +3,7 @@ import typing
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
-from truenas_pylibzfs import property_sets, ZFSException, ZFSError, ZPOOLProperty
+from truenas_pylibzfs import libzfs_types, property_sets, ZFSException, ZFSError, ZPOOLProperty
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
@@ -68,7 +68,7 @@ def _format_topology(status_dict: dict) -> dict:
     return top
 
 
-def _format_scan(s: typing.Any) -> dict | None:
+def _format_scan(s: libzfs_types.struct_zpool_scrub | None) -> dict | None:
     """Transform a struct_zpool_scrub into a scan dict, or None.
 
     Args:
@@ -118,7 +118,7 @@ def _format_scan(s: typing.Any) -> dict | None:
     }
 
 
-def _format_expand(e: typing.Any) -> dict | None:
+def _format_expand(e: libzfs_types.struct_zpool_expand | None) -> dict | None:
     """Transform a struct_zpool_expand into an expansion dict, or None.
 
     Args:
@@ -157,7 +157,7 @@ def _format_expand(e: typing.Any) -> dict | None:
     }
 
 
-def _format_properties(props_struct: typing.Any, requested_names: list[str]) -> dict:
+def _format_properties(props_struct: libzfs_types.struct_zpool_property, requested_names: list[str]) -> dict:
     """Transform struct_zpool_property to a dict of property value dicts."""
     result = {}
     for name in requested_names:
@@ -171,7 +171,7 @@ def _format_properties(props_struct: typing.Any, requested_names: list[str]) -> 
     return result
 
 
-def _format_features(features_dict: dict) -> list[dict]:
+def _format_features(features_dict: dict[str, libzfs_types.struct_zpool_feature]) -> list[dict]:
     """Transform dict[str, struct_zpool_feature] to a list of feature dicts."""
     rv = list()
     for name, feat in features_dict.items():
@@ -186,7 +186,7 @@ def _format_features(features_dict: dict) -> list[dict]:
     return rv
 
 
-def _build_pool_dict(pool: typing.Any, lzh: typing.Any, data: dict) -> dict:
+def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: dict) -> dict:
     """Build a pool dict from pylibzfs pool object.
 
     Args:
@@ -265,7 +265,7 @@ def _get_zpools_cb(pool, state: list):
     return True
 
 
-def query_impl(lzh: typing.Any, data: dict) -> list[dict]:
+def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
     """Query zpools status.
 
     Args:
@@ -289,7 +289,7 @@ def query_impl(lzh: typing.Any, data: dict) -> list[dict]:
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 if data.get("raise_on_noent", False):
-                    raise ZpoolNotFoundException(name)
+                    raise ZpoolNotFoundException(name) from e
                 else:
                     continue
             raise
