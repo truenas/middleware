@@ -1,9 +1,9 @@
-import typing
+from truenas_pylibzfs import libzfs_types
 
 __all__ = ("get_zpool_features_impl",)
 
 
-def get_zpool_features_impl(lzh: typing.Any, pool_name: str) -> dict:
+def get_zpool_features_impl(lzh: libzfs_types.ZFS, pool_name: str) -> dict[str, libzfs_types.struct_zpool_feature]:
     """Return all feature flags and their states for a zpool.
 
     Opens the pool by name and retrieves the full set of known ZFS

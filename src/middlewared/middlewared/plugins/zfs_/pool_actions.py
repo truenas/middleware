@@ -1,10 +1,8 @@
 import errno
 import libzfs
-import subprocess
 import functools
 
 from middlewared.service import CallError, Service
-from middlewared.service_exception import ValidationError
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 
@@ -112,47 +110,6 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    def scrub_action(self, name: str, action: str = 'START'):
-        """Start/Stop/Pause a scrub on pool `name`."""
-        allowed_acts = ('START', 'STOP', 'PAUSE')
-        if action not in allowed_acts:
-            raise ValidationError('action', f'action must be one of {",".join(allowed_acts)}')
-
-        if action != 'PAUSE':
-            try:
-                with libzfs.ZFS() as zfs:
-                    pool = zfs.get(name)
-
-                    if action == 'START':
-                        running_scrubs = len([
-                            pool for pool in zfs.pools
-                            if pool.scrub.state == libzfs.ScanState.SCANNING
-                        ])
-                        if running_scrubs >= 10:
-                            raise CallError(
-                                f'{running_scrubs} scrubs are already running. Running too many scrubs simultaneously '
-                                'will result in an unresponsive system. Refusing to start scrub.'
-                            )
-
-                        pool.start_scrub()
-                    else:
-                        pool.stop_scrub()
-            except libzfs.ZFSException as e:
-                raise CallError(str(e), e.code)
-        else:
-            proc = subprocess.Popen(
-                f'zpool scrub -p {name}'.split(' '),
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            proc.communicate()
-
-            if proc.returncode != 0:
-                raise CallError('Unable to pause scrubbing')
-
-    def scrub_state(self, name):
-        with libzfs.ZFS() as zfs:
-            return zfs.get(name).scrub.asdict()
-
     def expand_state(self, name):
         with libzfs.ZFS() as zfs:
             return zfs.get(name).expand.asdict()
@@ -216,32 +173,3 @@ class ZFSPoolService(Service):
                 zfs.get(options['pool_name']).ddt_prune(percentage=options['percentage'], days=options['days'])
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
-
-    def find_not_online(self, pool: str):
-        pool = self.middleware.call_sync('zpool.query_impl', {'pool_names': [pool], 'topology': True})[0]
-
-        unavails = []
-        for nodes in pool['topology'].values():
-            for node in nodes:
-                unavails.extend(self.__find_not_online(node))
-        return unavails
-
-    def __find_not_online(self, node):
-        if len(node['children']) == 0 and node['state'] not in ('ONLINE', 'AVAIL'):
-            return [node]
-
-        unavails = []
-        for child in node['children']:
-            unavails.extend(self.__find_not_online(child))
-        return unavails
-
-    def get_vdev(self, name, vname):
-        try:
-            with libzfs.ZFS() as zfs:
-                pool = zfs.get(name)
-                vdev = find_vdev(pool, vname)
-                if not vdev:
-                    raise CallError(f'{vname} not found in {name}', errno.ENOENT)
-                return vdev.asdict()
-        except libzfs.ZFSException as e:
-            raise CallError(str(e))
