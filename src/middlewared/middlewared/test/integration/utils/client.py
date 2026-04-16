@@ -124,12 +124,7 @@ class TrueNAS_Server:
         uri = host_websocket_uri(addr)
         cl = Client(uri, private_methods=True, py_exceptions=True, log_py_exceptions=True, verify_ssl=False)
         try:
-            resp = cl.call('auth.login_ex', {
-                'mechanism': 'PASSWORD_PLAIN',
-                'username': 'root',
-                'password': password()
-            })
-            assert resp['response_type'] == 'SUCCESS'
+            cl.login_with_password('root', password())
         except Exception:
             cl.close()
             raise
@@ -176,13 +171,8 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
         with Client(uri, private_methods=True, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions,
                     verify_ssl=False) as c:
             if auth is not None:
-                auth_req = {
-                    "mechanism": "PASSWORD_PLAIN",
-                    "username": auth[0],
-                    "password": auth[1]
-                }
                 try:
-                    resp = c.call("auth.login_ex", auth_req)
+                    c.login_with_password(auth[0], auth[1])
                 except CallError as e:
                     if e.errno == errno.EBUSY and e.errmsg == 'Rate Limit Exceeded':
                         # our "roles" tests (specifically common_checks() function)
@@ -192,19 +182,19 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                         # this is easiest path forward to not cause a bunch of roles
                         # related tests to trip on our rate limiting functionality
                         truenas_server.client.call("rate.limit.cache_clear")
-                        resp = c.call("auth.login_ex", auth_req)
+                        c.login_with_password(auth[0], auth[1])
                     else:
                         raise
                 except ClientException as e:
                     if e.errno == errno.EBUSY and e.error == 'Rate Limit Exceeded':
                         # Same as above, but for clients with `py_exceptions=False`
                         truenas_server.client.call("rate.limit.cache_clear")
-                        resp = c.call("auth.login_ex", auth_req)
+                        c.login_with_password(auth[0], auth[1])
                     else:
                         raise
-
-                if auth_required:
-                    assert resp['response_type'] == 'SUCCESS'
+                except ValueError:
+                    if auth_required:
+                        raise
             yield c
     except socket.timeout:
         fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
