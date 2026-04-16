@@ -17,7 +17,7 @@ from middlewared.api.current import (
     AppBulkUpgradeJobResult, AppUpgradeOptions, AppUpgradeSummaryOptions, AppUpgradeBulkEntry,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
-from middlewared.service import CallError, job, ServiceContext, ValidationErrors
+from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.yaml import safe_yaml_load
 
