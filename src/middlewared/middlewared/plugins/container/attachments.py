@@ -101,7 +101,10 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments: list[dict[str, Any]]) -> None:
         for attachment in attachments:
             try:
-                await self.middleware.call2(self.s.container.delete, attachment['id'])
+                await self.middleware.call2(
+                    self.s.container.delete_container_from_db_and_libvirt,
+                    await self.middleware.call2(self.s.container.get_instance, attachment['id']),
+                )
             except Exception:
                 self.middleware.logger.warning('Unable to delete %r container', attachment['id'])
 
