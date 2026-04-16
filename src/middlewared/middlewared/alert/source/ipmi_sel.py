@@ -18,7 +18,7 @@ THRESHOLD_SENSOR_TYPES = (
 
 
 def is_threshold_sensor_assertion_event(record: dict[str, Any]) -> bool:
-    return (
+    return bool(
         record["type"].startswith(THRESHOLD_SENSOR_TYPES)
         and record["event_direction"] == "Assertion Event"
     )
