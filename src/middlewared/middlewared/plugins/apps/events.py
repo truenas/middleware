@@ -11,5 +11,5 @@ async def process_event(context: ServiceContext, app_name: str) -> None:
         'cache.has_key', cache_key
     ):
         context.middleware.send_event(
-            'app.query', 'CHANGED', id=app_name, fields=app[0].model_dump(),
+            'app.query', 'CHANGED', id=app_name, fields=app[0].model_dump(by_alias=True),
         )

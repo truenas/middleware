@@ -22,7 +22,9 @@ def stop_app(context: ServiceContext, job: Job, app_name: str) -> None:
         context.middleware.call_sync('cache.put', cache_key, True)
         context.middleware.send_event(
             'app.query', 'CHANGED', id=app_name,
-            fields=app.model_dump() | {'state': 'STOPPING', 'active_workloads': get_default_workload_values()},
+            fields=app.model_dump(by_alias=True) | {
+                'state': 'STOPPING', 'active_workloads': get_default_workload_values(),
+            },
         )
         job.set_progress(20, f'Stopping {app_name!r} app')
         compose_action(
@@ -32,7 +34,9 @@ def stop_app(context: ServiceContext, job: Job, app_name: str) -> None:
     finally:
         context.middleware.send_event(
             'app.query', 'CHANGED', id=app_name,
-            fields=app.model_dump() | {'state': 'STOPPED', 'active_workloads': get_default_workload_values()},
+            fields=app.model_dump(by_alias=True) | {
+                'state': 'STOPPED', 'active_workloads': get_default_workload_values(),
+            },
         )
         context.middleware.call_sync('cache.pop', cache_key)
 

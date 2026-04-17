@@ -129,7 +129,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             if app.upgrade_available is False or app.custom_app:
                 # Pull may have succeeded but redeploy failed - we early-return here
                 # so that the caller can update alerts based on the refreshed app state
-                context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump())
+                context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump(by_alias=True))
                 job.set_progress(100, 'App successfully upgraded and redeployed')
                 return app
 
@@ -140,10 +140,14 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     job.set_progress(
         20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
     )
+    host_path_mapping: dict[str, str | None] = {}
+    if options.snapshot_hostpaths:
+        host_path_mapping = context.run_coroutine(get_hostpaths_datasets(context, app_name))
+
     # Stop the app itself before we attempt to take snapshots
     context.call_sync2(context.s.app.stop, app_name).wait_sync()
     if options.snapshot_hostpaths:
-        take_snapshot_of_hostpath(context, app)
+        take_snapshot_of_hostpath(context, app, host_path_mapping)
     # In order for upgrade to complete, following must happen
     # 1) New version should be copied over to app config's dir
     # 2) Metadata should be updated to reflect new version
@@ -195,7 +199,9 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     finally:
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         new_app_instance = context.call_sync2(context.s.app.get_instance, app_name)
-        context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance.model_dump())
+        context.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name, fields=new_app_instance.model_dump(by_alias=True),
+        )
 
     job.set_progress(100, 'Upgraded app successfully')
     return new_app_instance
@@ -225,8 +231,9 @@ async def get_versions(context: ServiceContext, app: AppEntry, new_version: str)
     }
 
 
-def take_snapshot_of_hostpath(context: ServiceContext, app_info: AppEntry) -> None:
-    host_path_mapping = context.run_coroutine(get_hostpaths_datasets(context, app_info.name))
+def take_snapshot_of_hostpath(
+    context: ServiceContext, app_info: AppEntry, host_path_mapping: dict[str, str | None]
+) -> None:
     if not host_path_mapping:
         return
 

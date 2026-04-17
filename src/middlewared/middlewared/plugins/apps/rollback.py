@@ -59,7 +59,7 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
     update_app_metadata(app_name, rollback_version)
     context.middleware.send_event(
         'app.query', 'CHANGED', id=app_name,
-        fields=context.call_sync2(context.s.app.get_instance, app_name).model_dump()
+        fields=context.call_sync2(context.s.app.get_instance, app_name).model_dump(by_alias=True)
     )
     context.call_sync2(context.s.app.stop, app_name).wait_sync()
     try:

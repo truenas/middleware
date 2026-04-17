@@ -92,7 +92,7 @@ def create_custom_app(
         if app_being_converted is False:
             # We only want to send this when a new custom app is being installed, not when an
             # existing app is being converted to a custom app
-            context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info.model_dump())
+            context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info.model_dump(by_alias=True))
         job.set_progress(
             100, f'{app_name!r} {"converted to custom app" if app_being_converted else "installed"} successfully'
         )
