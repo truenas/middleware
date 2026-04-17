@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Literal, overload, TYPE_CHECKING, cast
+from typing import Any, Literal, overload, TYPE_CHECKING
 
 from middlewared.api.current import (
     AppLatestItem, AppAvailableItem, CatalogApps, QueryOptions,
@@ -36,14 +36,13 @@ async def latest(
         ['name', '!=', IX_APP_NAME],
     ])
     options.order_by = ['-last_update']
-    available_fn: Callable[
-        [ServiceContext, list[Any], QueryOptions],
-        list[AppAvailableItem] | AppAvailableItem | int,
-    ] = available
-    return cast(
-        list[AppLatestItem] | AppLatestItem | int,
-        await context.to_thread(available_fn, context, filters, options),
-    )
+
+    def _run() -> list[AppLatestItem] | AppLatestItem | int:
+        return to_entries(
+            filter_list(_available_raw(context), filters, options.model_dump()), AppLatestItem,
+        )
+
+    return await context.to_thread(_run)
 
 
 @overload
@@ -67,6 +66,12 @@ def available(
 def available(
     context: ServiceContext, filters: list[Any], options: QueryOptions
 ) -> list[AppAvailableItem] | AppAvailableItem | int:
+    return to_entries(
+        filter_list(_available_raw(context), filters, options.model_dump()), AppAvailableItem,
+    )
+
+
+def _available_raw(context: ServiceContext) -> list[dict[str, Any]]:
     if not sync_state.synced:
         context.call_sync2(context.s.catalog.sync).wait_sync()
 
@@ -90,7 +95,7 @@ def available(
                 **app_data.model_dump(),
             })
 
-    return to_entries(filter_list(results, filters, options.model_dump()), AppAvailableItem)
+    return results
 
 
 def similar(context: ServiceContext, app_name: str, train: str) -> list[AppAvailableItem]:
