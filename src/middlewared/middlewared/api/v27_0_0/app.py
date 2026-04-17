@@ -144,11 +144,11 @@ class AppEntry(BaseModel):
 class AppCreate(BaseModel):
     custom_app: bool = False
     """Whether to create a custom application (`true`) or install from catalog (`false`)."""
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Configuration values for the application installation."""
-    custom_compose_config: Secret[dict] = Field(default_factory=dict)
+    custom_compose_config: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Docker Compose configuration as a structured object for custom applications."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = Field(default='', validate_default=True)
     """Docker Compose configuration as a YAML string for custom applications."""
     catalog_app: str | None = None
     """Name of the catalog application to install. Required when `custom_app` is `false`."""
@@ -179,11 +179,11 @@ class AppCreateResult(BaseModel):
 
 
 class AppUpdate(BaseModel):
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Updated configuration values for the application."""
-    custom_compose_config: Secret[dict] = Field(default_factory=dict)
+    custom_compose_config: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Updated Docker Compose configuration as a structured object."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = Field(default='', validate_default=True)
     """Updated Docker Compose configuration as a YAML string."""
 
 
@@ -460,7 +460,7 @@ class AppRollbackVersionsResult(BaseModel):
 class AppUpgradeOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     """Target version to upgrade to. Use 'latest' for the newest available version."""
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Configuration values to apply during the upgrade."""
     snapshot_hostpaths: bool = False
     """Whether to create snapshots of host path volumes before upgrade."""
