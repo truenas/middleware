@@ -32,6 +32,7 @@ class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
         namespace = 'app.ix_volume'
         cli_namespace = 'app.ix_volume'
         event_send = False
+        event_register = False
         role_prefix = 'APPS'
         entry = AppsIxVolumeEntry
         generic = True

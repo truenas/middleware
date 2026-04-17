@@ -211,7 +211,7 @@ def create_internal(
         update_app_metadata(app_name, app_version_details, migrated_app)
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         entry = get_instance(context, app_name)
-        context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=entry)
+        context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=entry.model_dump())
 
         job.set_progress(60, 'App installation in progress, pulling images')
         if dry_run is False:
@@ -268,7 +268,9 @@ def update_internal(
         # TODO: Eventually we would want this to be executed for custom apps as well
         update_app_metadata_for_portals(app_name, app.version)
     job.set_progress(60, 'Configuration updated')
-    context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=get_instance(context, app_name))
+    context.middleware.send_event(
+        'app.query', 'CHANGED', id=app_name, fields=get_instance(context, app_name).model_dump()
+    )
     if trigger_compose:
         job.set_progress(70, 'Updating docker resources')
         compose_action(app_name, app.version, 'up', force_recreate=True, remove_orphans=True)

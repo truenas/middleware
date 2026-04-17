@@ -51,7 +51,7 @@ from .metadata import app_metadata_generate
 from .pull_images import outdated_docker_images_for_app, pull_images_for_app
 from .resources import (
     container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
-    available_space, gpu_choices, gpu_choices_internal,
+    available_space, gpu_choices, gpu_choices_internal, get_app_volume_ds,
 )
 from .rollback import rollback_versions, rollback
 from .stats import AppStatsEventSource
@@ -418,6 +418,10 @@ class AppService(GenericCRUDService[AppEntry, str]):
     @private
     async def clear_upgrade_alerts_for_all(self) -> None:
         await clear_upgrade_alerts_for_all(self.context)
+
+    @private
+    def get_app_volume_ds(self, app_name: str) -> str | None:
+        return get_app_volume_ds(self.context, app_name)
 
     @private
     async def gpu_choices_internal(self) -> list[dict[str, typing.Any]]:
