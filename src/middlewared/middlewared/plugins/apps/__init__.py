@@ -45,6 +45,7 @@ from .crud import (
 from .custom_app_ops import convert_to_custom_app
 from .events import process_event
 from .ix_apps.utils import get_app_name_from_project_name
+from .ix_volumes import AppsIxVolumeService
 from .logs import AppContainerLogsFollowTailEventSource
 from .metadata import app_metadata_generate
 from .pull_images import outdated_docker_images_for_app, pull_images_for_app
@@ -96,6 +97,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
+        self.ix_volume = AppsIxVolumeService(middleware)
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
