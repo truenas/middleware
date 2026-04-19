@@ -75,11 +75,14 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
 def get_config_of_app(
     app_data: dict[str, Any], collective_config: dict[str, Any], retrieve_config: bool,
 ) -> dict[str, Any]:
-    return {
-        'config': collective_config.get(app_data['name']) or (
-            get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
-        )
-    } if retrieve_config else {}
+    if retrieve_config:
+        return {
+            'config': collective_config.get(app_data['name']) or (
+                get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
+            )
+        }
+    else:
+        return {'config': None}
 
 
 def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
@@ -146,6 +149,7 @@ def list_apps(
             'action_required': False,
             'latest_app_version': latest_app_version,
             'image_updates_available': image_updates_available,
+            'version_details': None,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
         if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
@@ -184,6 +188,7 @@ def list_apps(
                     'action_required': False,
                     'latest_app_version': latest_app_version,
                     'image_updates_available': False,
+                    'version_details': None,
                     **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
                 }
                 apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
