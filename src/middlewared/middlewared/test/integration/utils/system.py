@@ -20,8 +20,20 @@ def reset_systemd_svcs(svcs_to_reset):
     Input a space delimited string of systemd services to reset.
     Example usage:
         reset_systemd_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
+    A unit that has never been started in this boot is not loaded by
+    systemd and cannot be reset; that specific case is treated as a
+    benign no-op so any other failure is still surfaced.
     """
-    ssh(f"systemctl reset-failed {svcs_to_reset}")
+    result = ssh(
+        f"systemctl reset-failed {svcs_to_reset}",
+        check=False,
+        complete_response=True,
+    )
+    if result["result"] or "not loaded" in result["output"]:
+        return
+
+    assert False, result["output"]
 
 
 def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
