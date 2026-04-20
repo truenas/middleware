@@ -3,6 +3,7 @@ from typing import Any
 from middlewared.service import ValidationErrors
 
 from .delegate import DeviceDelegate
+from .utils import device_uniqueness_check
 
 
 class GPUDelegate(DeviceDelegate):
@@ -38,4 +39,10 @@ class GPUDelegate(DeviceDelegate):
             verrors.add(
                 'attribute.gpu_type',
                 'NVIDIA drivers must be enabled in system advanced settings before using nvidia gpu for containers'
+            )
+
+        if instance is not None and not device_uniqueness_check(device, instance, 'GPU'):
+            verrors.add(
+                'attributes.pci_address',
+                f'{instance["name"]} already has GPU at {pci_addr!r} configured'
             )
