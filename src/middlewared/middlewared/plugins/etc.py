@@ -458,22 +458,32 @@ class EtcService(Service):
         'motd': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='motd'),
         )),
-        'mdns': EtcGroup(
+        'discovery': EtcGroup(
             ctx=(
+                CtxMethod(method='directoryservices.config'),
+                CtxMethod(method='failover.status'),
                 CtxMethod(method='interface.query'),
                 CtxMethod(method='smb.config'),
                 CtxMethod(method='ups.config'),
                 CtxMethod(method='system.general.config'),
+                CtxMethod(method='network.configuration.config'),
                 CtxMethod(method='service.started_or_enabled', args=['cifs']),
                 CtxMethod(method='service.started_or_enabled', args=['ups'], ctx_prefix='ups'),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/avahi/avahi-daemon.conf', checkpoint=None),
-                EtcEntry(renderer_type=RendererType.PY, path='local/avahi/services/ADISK.service', checkpoint=None),
-                EtcEntry(renderer_type=RendererType.PY, path='local/avahi/services/DEV_INFO.service', checkpoint=None),
-                EtcEntry(renderer_type=RendererType.PY, path='local/avahi/services/HTTP.service', checkpoint=None),
-                EtcEntry(renderer_type=RendererType.PY, path='local/avahi/services/SMB.service', checkpoint=None),
-                EtcEntry(renderer_type=RendererType.PY, path='local/avahi/services/nut.service', checkpoint=None),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/truenas-discoveryd.conf',
+                         checkpoint=Checkpoint.POST_INIT),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/services.d/ADISK.conf', checkpoint=None),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/services.d/DEV_INFO.conf', checkpoint=None),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/services.d/HTTP.conf', checkpoint=None),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/services.d/SMB.conf', checkpoint=None),
+                EtcEntry(renderer_type=RendererType.PY,
+                         path='local/truenas-discovery/services.d/NUT.conf', checkpoint=None),
             ),
         ),
         'nscd': EtcGroup(entries=(
@@ -481,9 +491,6 @@ class EtcService(Service):
         )),
         'nss': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='nsswitch.conf'),
-        )),
-        'wsd': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/wsdd.conf', checkpoint=Checkpoint.POST_INIT),
         )),
         'ups': EtcGroup(
             ctx=(

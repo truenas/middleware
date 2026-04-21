@@ -61,6 +61,9 @@ filter f_scst {
   program("kernel") and match("dev_disk:" value("MESSAGE")); or
   program("kernel") and match("dlm:" value("MESSAGE"));
 };
+filter f_discovery {
+  program("truenas-discoveryd");
+};
 
 # TrueNAS middleware filters
 % for tnlog in ALL_LOG_FILES:
@@ -73,7 +76,8 @@ filter f_truenas_exclude {
 % endif
   not filter(f_tnaudit_all) and
   not filter(f_ctdb) and
-  not filter(f_scst);
+  not filter(f_scst) and
+  not filter(f_discovery);
 };
 
 #####################
