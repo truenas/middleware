@@ -132,25 +132,25 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlert
                     alert_text = textwrap.dedent("""\
-                        SUPPORT CONTRACT EXPIRATION: Please reactivate and continue to receive technical support and
-                        assistance. Contact by email: sales@TrueNAS.com, or telephone: 1-855-473-7449
+                        SUPPORT CONTRACT EXPIRED: Your support contract has ended. Renewal options may be
+                        available — contact sales@TrueNAS.com or 1-855-473-7449 to find out.
                     """)
                     subject = "Your TrueNAS support contract has expired"
                     opening = textwrap.dedent("""\
-                        Your support contract has ended. A support contract may be renewed after contract expiration.
-                        Please contact your authorized reseller or TrueNAS (sales@TrueNAS.com).
+                        Your support contract has ended. Renewal options may be available depending on your
+                        situation. Please contact your authorized reseller or TrueNAS (sales@TrueNAS.com)
+                        to find out what may be possible.
                     """)
                     encouraging = textwrap.dedent("""\
-                        Please renew the support contract for your TrueNAS product as soon as possible to maintain
-                        support services. Contact your authorized reseller or TrueNAS
-                        (email: sales@TrueNAS.com, phone: 1-855-473-7449).
+                        Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com,
+                        phone: 1-855-473-7449) to find out what renewal options may be available to you.
                     """)
                 else:
                     alert_klass = LicenseIsExpiringAlert
                     alert_text = textwrap.dedent(f"""\
-                        RENEW YOUR SUPPORT CONTRACT:  The support contract for this product will expire
-                        on {contract_expiration}. Please avoid service interruptions, contact your
-                        authorized reseller or email: sales@TrueNAS.com, phone: 1-855-473-7449.
+                        SUPPORT CONTRACT EXPIRING SOON: The support contract for this product expires
+                        on {contract_expiration}. Renewal options may be available — contact your authorized
+                        reseller or TrueNAS: sales@TrueNAS.com, 1-855-473-7449.
                     """)
                     days_left = (local_license['contract_end'] - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
@@ -158,22 +158,24 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         opening = textwrap.dedent(f"""\
                             The support contracts for the following TrueNAS products are expiring in 14 days:
                             {serial_numbers}
-                            This is a reminder regarding the impending expiration of your TrueNAS
-                            {contract_type} support contract.
+                            Your TrueNAS {contract_type} support contract is approaching its expiration date.
+                            Renewal options may be available — we suggest contacting us before expiration.
                         """)
                         encouraging = textwrap.dedent("""\
-                            We encourage you to urgently contact your authorized reseller or TrueNAS
-                            (email: sales@TrueNAS.com, telephone: 1-855-473-7449) and renew your support contracts.
+                            Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com,
+                            telephone: 1-855-473-7449) to find out what renewal options may be available
+                            for your contract.
                         """)
                     else:
                         opening = textwrap.dedent(f"""\
                             Your TrueNAS {contract_type} support contract will expire in {days_left} days.
-                            Please consider renewing your support contract now.  Contact your authorized
-                            reseller or TrueNAS.  email: sales@TrueNAS.com, telephone: 1-855-473-7449.
+                            Renewal options may be available — contact your authorized reseller or TrueNAS
+                            (email: sales@TrueNAS.com, telephone: 1-855-473-7449) to find out more.
                         """)
                         encouraging = textwrap.dedent("""\
-                            Please contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com,
-                            telephone: 1-855-473-7449) to renew your contract before expiration.
+                            Contact your authorized reseller or TrueNAS (email: sales@TrueNAS.com,
+                            telephone: 1-855-473-7449) to find out what renewal options may be available
+                            before your contract expires.
                         """)
 
                 alerts.append(Alert(
@@ -196,8 +198,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                             Your TrueNAS system will remain accessible after the support contract expires.
                             However, after expiration it will no longer be eligible for support from TrueNAS.
-                            A support contract may be renewed after it has expired and there may be additional
-                            costs associated with contract reactivation and lapsed-contract fees.
+                            Renewal options may be available depending on your circumstances, though additional
+                            costs such as reactivation or lapsed-contract fees may apply.
 
                             Sincerely,
 
