@@ -10,13 +10,12 @@ enable zfs-zed.service
 enable nginx.service
 enable chronyd.service
 enable syslog-ng.service
+enable truenas-discoveryd.service
 
 # Disabled services
 disable certmonger.service
 disable smbd.service
 disable proftpd.service
-disable avahi-daemon.service
-disable nmbd.service
 disable nfs*
 disable rsync.service
 disable netdata.service
@@ -26,7 +25,6 @@ disable ssh*
 disable wg-quick*
 disable nut-*
 disable nut.target
-disable wsdd.service
 disable libvirtd.service
 disable virtlogd.service
 disable winbind.service
