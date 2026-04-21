@@ -3,7 +3,7 @@ from typing import Any
 from middlewared.service import ValidationErrors
 
 from .delegate import DeviceDelegate
-from .utils import ACTIVE_STATES
+from .utils import ACTIVE_STATES, device_uniqueness_check
 
 
 class PCIDelegate(DeviceDelegate):
@@ -26,4 +26,10 @@ class PCIDelegate(DeviceDelegate):
             verrors.add(
                 'attribute.pptdev',
                 'Changing PCI device is not allowed while the VM is active.'
+            )
+
+        if instance is not None and not device_uniqueness_check(device, instance, 'PCI'):
+            verrors.add(
+                'attributes.pptdev',
+                f'{instance["name"]} already has PCI device {pptdev!r} configured'
             )
