@@ -14,63 +14,14 @@ import subprocess
 import sys
 import textwrap
 
-import pyudev
-
-
 logger = logging.getLogger(__name__)
 
 
-def _iter_leaf_vdevs(vdevs):
-    for v in vdevs:
-        if v.children:
-            yield from _iter_leaf_vdevs(v.children)
-        elif v.vdev_type == 'disk':
-            yield v
-
-
-def _append_pool_name(pool, state):
-    state.append(pool.name)
-    return True
-
-
 def update_zfs_default(root, readonly_rootfs):
-    pool_names = []
-    lzh = truenas_pylibzfs.open_handle()
-    lzh.iter_pools(callback=_append_pool_name, state=pool_names)
-
-    for i in ['freenas-boot', 'boot-pool']:
-        if i in pool_names:
-            boot_pool = i
-            break
-    else:
-        raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(pool_names)}')
-
-    # follow_links=False so the vdev path stays in the form stored in
-    # the pool nvlist (e.g. /dev/disk/by-partuuid/...) to match the
-    # udev-keyed mapping built below, rather than realpath()-resolved.
-    status = lzh.open_pool(name=boot_pool).status(
-        get_stats=False, follow_links=False, full_path=True,
-    )
-    disks = [v.name.replace('/dev/', '') for v in _iter_leaf_vdevs(status.storage_vdevs)]
-
-    mapping = {}
-    for dev in filter(
-        lambda d: not d.sys_name.startswith("sr") and d.get("DEVTYPE") in ("disk", "partition"),
-        pyudev.Context().list_devices(subsystem="block")
-    ):
-        if dev.get("DEVTYPE") == "disk":
-            mapping[dev.sys_name] = dev.get("ID_BUS")
-        elif dev.get("ID_PART_ENTRY_UUID"):
-            parent = dev.find_parent("block")
-            mapping[dev.sys_name] = parent.get("ID_BUS")
-            mapping[os.path.join("disk/by-partuuid", dev.get("ID_PART_ENTRY_UUID"))] = parent.get("ID_BUS")
-
-    has_usb = False
-    for dev in disks:
-        if mapping.get(dev) == "usb":
-            has_usb = True
-            break
-
+    # Older versions wrote ZFS_INITRD_POST_MODPROBE_SLEEP=15 here when the boot pool was on
+    # USB, to let USB enumeration finish before zpool import. USB boot is no longer supported,
+    # so this function only strips the line from upgraded installs; can be removed once
+    # versions that wrote it are past EOL.
     zfs_config_path = os.path.join(root, "etc/default/zfs")
     with open(zfs_config_path) as f:
         original_config = f.read()
@@ -78,8 +29,6 @@ def update_zfs_default(root, readonly_rootfs):
 
     zfs_var_name = "ZFS_INITRD_POST_MODPROBE_SLEEP"
     lines = [line for line in lines if not line.startswith(f"{zfs_var_name}=")]
-    if has_usb:
-        lines.append(f"{zfs_var_name}=15")
 
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
@@ -237,11 +186,9 @@ if __name__ == "__main__":
 
     # BEGIN LAZY IMPORTS
     # ------------------
-    import truenas_pylibzfs
     from truenas_pylibvirt.utils.gpu import get_gpus
     from truenas_os_pyutils.io import atomic_write
 
-    from middlewared.service_exception import CallError
     from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
     from middlewared.utils.rootfs import ReadonlyRootfsManager
     # ------------------
