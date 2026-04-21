@@ -245,7 +245,7 @@ class ContainerService(Service):
 
                 self.middleware.call_sync(
                     "pool.dataset.update_impl",
-                    UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
+                    UpdateImplArgs(name=dataset["name"], iprops={"mountpoint", "canmount"})
                 )
                 self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
 
