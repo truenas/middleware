@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 trueNas MODULE-IDENTITY
-    LAST-UPDATED "202602111800Z"
+    LAST-UPDATED "202604211800Z"
     ORGANIZATION "www.truenas.com"
     CONTACT-INFO
         "postal:   541 Division Street
@@ -16,6 +16,9 @@ trueNas MODULE-IDENTITY
          email:    support@TrueNAS.com"
     DESCRIPTION
         "TrueNAS Specific MIBs"
+    REVISION     "202604211800Z"
+    DESCRIPTION
+        "Added datasetTable covering both ZFS filesystems and zvols."
     REVISION     "202602111800Z"
     DESCRIPTION
         ""
@@ -46,6 +49,7 @@ zvol    OBJECT IDENTIFIER ::= { zfs 2 }
 arc     OBJECT IDENTIFIER ::= { zfs 3 }
 l2arc   OBJECT IDENTIFIER ::= { zfs 4 }
 zil     OBJECT IDENTIFIER ::= { zfs 5 }
+dataset OBJECT IDENTIFIER ::= { zfs 6 }
 
 zpoolTable OBJECT-TYPE
     SYNTAX     SEQUENCE OF ZpoolEntry
@@ -238,6 +242,71 @@ zvolReferencedBytes OBJECT-TYPE
     DESCRIPTION
         "The zfs referenced property value"
     ::= { zvolEntry 5 }
+
+datasetTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF DatasetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table of ZFS datasets, covering both filesystems and zvols."
+    ::= { dataset 1 }
+
+datasetEntry OBJECT-TYPE
+    SYNTAX     DatasetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    INDEX { datasetIndex }
+    ::= { datasetTable 1 }
+
+DatasetEntry ::= SEQUENCE {
+        datasetIndex                 Integer32,
+        datasetDescr                 DisplayString,
+        datasetUsedBytes             Counter64,
+        datasetAvailableBytes        Counter64,
+        datasetReferencedBytes       Counter64
+    }
+
+datasetIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 1 }
+
+datasetDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The name of the dataset (filesystem or zvol)"
+    ::= { datasetEntry 2 }
+
+datasetUsedBytes OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The zfs used property value"
+    ::= { datasetEntry 3 }
+
+datasetAvailableBytes OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The zfs available property value"
+    ::= { datasetEntry 4 }
+
+datasetReferencedBytes OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The zfs referenced property value"
+    ::= { datasetEntry 5 }
 
 zfsArcSize OBJECT-TYPE
     SYNTAX Gauge32
