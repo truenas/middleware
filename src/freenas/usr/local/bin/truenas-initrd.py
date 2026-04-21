@@ -22,26 +22,35 @@ logger = logging.getLogger(__name__)
 
 def _iter_leaf_vdevs(vdevs):
     for v in vdevs:
-        if v.vdev_type == 'disk':
-            yield v
         if v.children:
             yield from _iter_leaf_vdevs(v.children)
+        elif v.vdev_type == 'disk':
+            yield v
+
+
+def _append_pool_name(pool, state):
+    state.append(pool.name)
+    return True
 
 
 def update_zfs_default(root, readonly_rootfs):
     pool_names = []
     lzh = truenas_pylibzfs.open_handle()
-    lzh.iter_pools(callback=lambda p, s: s.append(p.name) or True, state=pool_names)
-    existing_pools = pool_names
+    lzh.iter_pools(callback=_append_pool_name, state=pool_names)
 
     for i in ['freenas-boot', 'boot-pool']:
-        if i in existing_pools:
+        if i in pool_names:
             boot_pool = i
             break
     else:
-        raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(existing_pools)}')
+        raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(pool_names)}')
 
-    status = lzh.open_pool(name=boot_pool).status(get_stats=False, full_path=True)
+    # follow_links=False so the vdev path stays in the form stored in
+    # the pool nvlist (e.g. /dev/disk/by-partuuid/...) to match the
+    # udev-keyed mapping built below, rather than realpath()-resolved.
+    status = lzh.open_pool(name=boot_pool).status(
+        get_stats=False, follow_links=False, full_path=True,
+    )
     disks = [v.name.replace('/dev/', '') for v in _iter_leaf_vdevs(status.storage_vdevs)]
 
     mapping = {}
