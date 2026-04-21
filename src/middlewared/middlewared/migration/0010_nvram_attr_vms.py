@@ -24,7 +24,7 @@ def migrate(middleware):
 
 
 def migrate_vm_nvram_file(middleware, vm):
-    file_name = get_vm_nvram_file_name(vm)
+    file_name = get_vm_nvram_file_name(vm['id'], vm['name'])
     new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, file_name)
     to_copy_path = os.path.join(DEFAULT_NVRAM_FOLDER_PATH, file_name)
     if os.path.exists(to_copy_path):

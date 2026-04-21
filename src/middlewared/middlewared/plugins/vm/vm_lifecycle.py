@@ -1,5 +1,3 @@
-import os
-
 from truenas_pylibvirt import VmBootloader, VmCpuMode
 
 from middlewared.api import api_method
@@ -11,7 +9,7 @@ from middlewared.service import CallError, job, private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .vm_domain import VmDomain, VmDomainConfiguration
-from .utils import get_vm_tpm_state_dir_name, get_vm_nvram_file_name, SYSTEM_TPM_FOLDER_PATH, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import vm_nvram_path, vm_tpm_path
 
 
 class VMService(Service):
@@ -153,11 +151,8 @@ class VMService(Service):
         vm.update({
             'bootloader': VmBootloader(vm["bootloader"]),
             'cpu_mode': VmCpuMode(vm["cpu_mode"]),
-            'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name({
-                'id': vm['id'],
-                'name': vm['name'],
-            })),
-            'tpm_path': os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(vm)),
+            'nvram_path': vm_nvram_path(vm['id'], vm['name']),
+            'tpm_path': vm_tpm_path(vm['id'], vm['name']),
             'devices': devices,
         })
 
