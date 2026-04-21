@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import threading
 import time
-import contextlib
-import os
 
 import truenas_pylibzfs
 from truenas_pylibzfs import kstat
@@ -214,6 +212,18 @@ zvol_table = agent.Table(
     ],
 )
 
+dataset_table = agent.Table(
+    oidstr="TRUENAS-MIB::datasetTable",
+    indexes=[agent.Integer32()],
+    columns=[
+        (1, agent.Integer32()),
+        (2, agent.DisplayString()),
+        (3, agent.Counter64()),
+        (4, agent.Counter64()),
+        (5, agent.Counter64()),
+    ],
+)
+
 hdd_temp_table = agent.Table(
     oidstr="TRUENAS-MIB::hddTempTable",
     indexes=[
@@ -340,56 +350,68 @@ def fill_in_zvol_snmp_row_info(idx, name, props):
     row.setRowCell(5, agent.Counter64(props.referenced.value))
 
 
+def fill_in_dataset_snmp_row_info(idx, name, props):
+    row = dataset_table.addRow([agent.Integer32(idx)])
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(name))
+    row.setRowCell(3, agent.Counter64(props.used.value))
+    row.setRowCell(4, agent.Counter64(props.available.value))
+    row.setRowCell(5, agent.Counter64(props.referenced.value))
+
+
+def collect_dataset_info(hdl, state):
+    try:
+        props = hdl.get_properties(properties=state["zfs_props"])
+    except truenas_pylibzfs.ZFSException:
+        pass
+    else:
+        state["dataset_idx"] += 1
+        fill_in_dataset_snmp_row_info(state["dataset_idx"], hdl.name, props)
+        if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
+            state["zvol_idx"] += 1
+            fill_in_zvol_snmp_row_info(state["zvol_idx"], hdl.name, props)
+
+    hdl.iter_filesystems(callback=collect_dataset_info, state=state)
+    return True
+
+
+def collect_zfs_info(pool, state):
+    state["pool_idx"] += 1
+    idx = state["pool_idx"]
+    name = pool.name
+
+    health = pool.get_properties(
+        properties={truenas_pylibzfs.ZPOOLProperty.HEALTH}
+    ).health.value
+    pool_status = pool.status(get_stats=True)
+    io_overall, io_1s = gather_zpool_iostat_info(state["prev_zpool_info"], name, pool_status)
+    fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s)
+    # be sure and update our zpool io data so next time it's called
+    # we calculate the 1sec values properly
+    state["prev_zpool_info"].update(io_overall)
+
+    collect_dataset_info(pool.root_dataset(), state)
+    return True
+
+
 def report_zfs_info(prev_zpool_info):
     zpool_table.clear()
     zvol_table.clear()
+    dataset_table.clear()
 
     lz = truenas_pylibzfs.open_handle()
-
-    # zpool related information
-    pools = []
-
-    def collect_pool(pool, state):
-        state.append(pool)
-        return True
-
-    lz.iter_pools(callback=collect_pool, state=pools)
-
-    for idx, pool in enumerate(pools, start=1):
-        name = pool.name
-        health = pool.get_properties(
-            properties={truenas_pylibzfs.ZPOOLProperty.HEALTH}
-        ).health.value
-        pool_status = pool.status(get_stats=True)
-        io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, pool_status)
-        fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s)
-        # be sure and update our zpool io data so next time it's called
-        # we calculate the 1sec values properly
-        prev_zpool_info.update(io_overall)
-
-    zvol_props = {
-        truenas_pylibzfs.ZFSProperty.USED,
-        truenas_pylibzfs.ZFSProperty.AVAILABLE,
-        truenas_pylibzfs.ZFSProperty.REFERENCED,
+    state = {
+        "prev_zpool_info": prev_zpool_info,
+        "pool_idx": 0,
+        "zvol_idx": 0,
+        "dataset_idx": 0,
+        "zfs_props": {
+            truenas_pylibzfs.ZFSProperty.USED,
+            truenas_pylibzfs.ZFSProperty.AVAILABLE,
+            truenas_pylibzfs.ZFSProperty.REFERENCED,
+        },
     }
-    for idx, zvol_name in enumerate(get_list_of_zvols(), start=1):
-        try:
-            rsrc = lz.open_resource(name=zvol_name)
-            props = rsrc.get_properties(properties=zvol_props)
-            fill_in_zvol_snmp_row_info(idx, zvol_name, props)
-        except truenas_pylibzfs.ZFSException:
-            continue
-
-
-def get_list_of_zvols():
-    zvols = set()
-    root_dir = '/dev/zvol/'
-    with contextlib.suppress(FileNotFoundError):  # no zvols
-        for dir_path, unused_dirs, files in os.walk(root_dir):
-            for file in filter(lambda x: '@' not in x, files):
-                zvols.add(os.path.join(dir_path, file).removeprefix(root_dir).replace('+', ' '))
-
-    return list(zvols)
+    lz.iter_pools(callback=collect_zfs_info, state=state)
 
 
 if __name__ == "__main__":
