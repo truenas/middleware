@@ -138,6 +138,7 @@ def list_apps(
             'state': state,
             'upgrade_available': upgrade_available,
             'latest_version': latest_version,
+            'action_required': False,
             'latest_app_version': latest_app_version,
             'image_updates_available': image_updates_available,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
@@ -175,6 +176,7 @@ def list_apps(
                     'state': AppState.STOPPED.value,
                     'upgrade_available': upgrade_available,
                     'latest_version': latest_version,
+                    'action_required': False,
                     'latest_app_version': latest_app_version,
                     'image_updates_available': False,
                     **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}

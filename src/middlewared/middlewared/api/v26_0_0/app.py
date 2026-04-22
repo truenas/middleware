@@ -128,6 +128,8 @@ class AppEntry(BaseModel):
     """Information about the running containers, ports, and resources used by this application."""
     notes: LongString | None
     """User-provided notes or comments about this application instance."""
+    action_required: bool
+    """Whether this application requires user action (e.g., configuration migration or deprecation handling)."""
     portals: dict
     """Web portals and access points provided by the application (URLs, ports, etc.)."""
     version_details: dict | None = None
