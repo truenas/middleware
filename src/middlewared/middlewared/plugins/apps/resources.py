@@ -12,7 +12,7 @@ from middlewared.api.current import (
     AppGPUResponse, AppIpChoices, ContainerDetails, GPU, ZFSResourceQuery, AppEntry,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
-from middlewared.service import ServiceContext
+from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import compose_action
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
@@ -121,7 +121,7 @@ def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:
     # This will return volume dataset of app if it exists, otherwise null
     docker_ds = context.call_sync2(context.s.docker.config).dataset
     if docker_ds is None:
-        raise ValueError('Docker dataset must not be null')
+        raise CallError('Docker dataset must not be null')
 
     apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
     rv = context.call_sync2(

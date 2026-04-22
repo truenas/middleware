@@ -35,7 +35,7 @@ class AppStatsEventSource(TypedEventSource[AppStatsEventSourceArgs]):
                 old_projects_stats = project_stats
                 time.sleep(interval)
             except Exception:
-                if self.middleware.call_sync('docker.status').status != Status.RUNNING.value:
+                if self.middleware.call_sync2(self.middleware.services.docker.status).status != Status.RUNNING.value:
                     return
 
                 raise

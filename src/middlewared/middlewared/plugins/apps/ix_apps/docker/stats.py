@@ -28,7 +28,7 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict[str
             retries -= 1
             if retries == 0:
                 raise
-    raise AssertionError("unreachable")
+    raise RuntimeError("unreachable")
 
 
 def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict[str, dict[str, Any]]:

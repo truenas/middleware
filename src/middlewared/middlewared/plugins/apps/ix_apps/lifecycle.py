@@ -48,10 +48,7 @@ def write_new_app_config(app_name: str, version: str, values: dict[str, typing.A
 
 def get_current_app_config(app_name: str, version: str) -> dict[str, typing.Any]:
     with open(get_installed_app_config_path(app_name, version), 'r') as f:
-        result = safe_yaml_load(f)
-        if not isinstance(result, dict):
-            raise ValueError(f'Expected dict in app config for {app_name!r} v{version}, got {type(result).__name__}')
-        return result
+        return safe_yaml_load(f, dict)
 
 
 def render_compose_templates(app_version_path: str, values_file_path: str) -> None:

@@ -11,16 +11,11 @@ from .utils import dump_yaml
 
 
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
-    """ wrapper around safe_yaml_load that ensure dict always returned """
+    """ wrapper around safe_yaml_load that ensures a dict is always returned """
     try:
         with open(yaml_path, 'r') as f:
-            if (data := safe_yaml_load(f)) is None:
-                # safe_yaml_load may return None if file empty
-                return {}
-
-            assert isinstance(data, dict)
-            return data
-    except (FileNotFoundError, yaml.YAMLError):
+            return safe_yaml_load(f, dict)
+    except (FileNotFoundError, yaml.YAMLError, ValueError):
         return {}
 
 

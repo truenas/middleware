@@ -35,7 +35,7 @@ async def latest(
         ['last_update', '!=', None],
         ['name', '!=', IX_APP_NAME],
     ])
-    options.order_by = ['-last_update']
+    options.order_by.extend(['-last_update'])
 
     def _run() -> list[AppLatestItem] | AppLatestItem | int:
         return to_entries(

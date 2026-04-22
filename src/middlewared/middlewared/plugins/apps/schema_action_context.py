@@ -14,7 +14,7 @@ from .utils import DatasetDefaults
 async def update_volumes(context: ServiceContext, app_name: str, volumes: list[dict[str, typing.Any]]) -> None:
     docker_ds = (await context.call2(context.s.docker.config)).dataset
     if docker_ds is None:
-        raise ValueError('Docker dataset must not be null')
+        raise CallError('Docker dataset must not be null')
 
     app_volume_ds = get_app_parent_volume_ds_name(docker_ds, app_name)
 
