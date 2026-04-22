@@ -469,6 +469,7 @@ class EtcService(Service):
                 CtxMethod(method='iscsi.global.config'),
                 CtxMethod(method='iscsi.global.iser_enabled'),
                 CtxMethod(method='iscsi.initiator.query'),
+                CtxMethod(method='iscsi.portal.listen_ip_choices'),
                 CtxMethod(method='iscsi.portal.query'),
                 CtxMethod(method='iscsi.target.query'),
                 CtxMethod(method='iscsi.targetextent.query'),
