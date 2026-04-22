@@ -1,7 +1,7 @@
 import asyncio
 
 from middlewared.utils import run
-from middlewared.utils.lio.config import ISCSI_DIR, teardown_lio_config
+from middlewared.utils.lio.config import ISCSI_DIR, MOD_LIO_HA, teardown_lio_config
 
 from .base import SwitchableSimpleService
 from .base_state import ServiceState
@@ -99,17 +99,26 @@ class ISCSITargetService(SwitchableSimpleService):
             )).returncode == 0
 
     async def become_active(self):
-        """If we are becoming the ACTIVE node on a HA system, and if SCST was already loaded
-        then we can perform a shortcut operation to switch from being the STANDBY node to the
-        ACTIVE one, *without* restarting SCST, but just by reconfiguring it."""
-        if not await self._lio_mode():
+        """If we are becoming the ACTIVE node on a HA system and the appropriate
+        target stack is already loaded (SCST or lio_ha), perform a shortcut
+        switch from STANDBY to ACTIVE *without* restarting the service -- just
+        by reconfiguring the running kernel module."""
+        if await self._lio_mode():
+            if await self.middleware.call('iscsi.global.alua_enabled'):
+                if MOD_LIO_HA.exists():
+                    try:
+                        return await self.middleware.call("iscsi.alua.become_active")
+                    except Exception:
+                        self.logger.warning('Failover exception', exc_info=True)
+                        # Fall through to RESTART
+        else:
             if await self.middleware.call('iscsi.global.alua_enabled'):
                 if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
                     try:
                         return await self.middleware.call("iscsi.alua.become_active")
                     except Exception:
                         self.logger.warning('Failover exception', exc_info=True)
-                        # Fall through
+                        # Fall through to RESTART
         # Fallback to doing a regular restart
         rjob = await self.middleware.call(
             'service.control',
