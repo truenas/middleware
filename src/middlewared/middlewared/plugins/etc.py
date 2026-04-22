@@ -413,7 +413,9 @@ class EtcService(Service):
         'lio': EtcGroup(
             ctx=(
                 CtxMethod(method='failover.licensed'),
+                CtxMethod(method='failover.local_ip'),
                 CtxMethod(method='failover.node'),
+                CtxMethod(method='failover.remote_ip'),
                 CtxMethod(method='failover.status'),
                 CtxMethod(method='fc.capable'),
                 CtxMethod(method='fcport.query'),

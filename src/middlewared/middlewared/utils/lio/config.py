@@ -5,8 +5,6 @@ Computes the desired state from render_ctx, then adds what is missing, updates
 what has changed, and deletes what is stale.  All operations are direct pathlib
 writes to /sys/kernel/config/target/; no rtslib-fb dependency.
 
-Phase 1: non-HA iSCSI/TCP + iSER + FC (tcm_qla2xxx), with ALUA stubs.
-
 Configfs tree
 -------------
 /sys/kernel/config/target/
@@ -16,11 +14,21 @@ Configfs tree
 |   |       +-- udev_path         write device path to open
 |   |       +-- enable            write "1" to activate
 |   |       +-- wwn/vpd_unit_serial
+|   |       +-- alua/
+|   |           +-- default_tg_pt_gp/          auto-created; non-HA only
+|   |           |   +-- alua_access_state      write ALUA_STATE value
+|   |           +-- controller_A/              HA only (mkdir to create)
+|   |           |   +-- tg_pt_gp_id            write 101
+|   |           |   +-- alua_access_state      write ALUA_STATE value
+|   |           +-- controller_B/              HA only (mkdir to create)
+|   |               +-- tg_pt_gp_id            write 102
+|   |               +-- alua_access_state      write ALUA_STATE value
 |   +-- fileio_0/
 |       +-- {extent}/             storage object (file/zvol via file I/O)
 |           +-- fd_dev_name
 |           +-- enable
 |           +-- wwn/vpd_unit_serial
+|           +-- alua/             same structure as iblock_0 above
 +-- iscsi/
 |   +-- {iqn}/                    iSCSI target
 |       +-- tpgt_{tag}/           TPG; tag = portal["tag"], NOT hardcoded to 1
@@ -30,7 +38,8 @@ Configfs tree
 |           |   +-- {ip}:{port}/  listen address
 |           +-- lun/
 |           |   +-- lun_{id}/
-|           |       +-- {alias}   symlink -> core/{backstore}/{extent}/
+|           |       +-- {alias}          symlink -> core/{backstore}/{extent}/
+|           |       +-- alua_tg_pt_gp   HA only: write controller_A or controller_B
 |           +-- acls/
 |               +-- {initiator}/  one dir per allowed initiator IQN
 |                   +-- auth/     CHAP credentials
@@ -42,7 +51,8 @@ Configfs tree
             +-- enable
             +-- lun/
             |   +-- lun_{id}/
-            |       +-- {alias}   symlink -> core/{backstore}/{extent}/
+            |       +-- {alias}          symlink -> core/{backstore}/{extent}/
+            |       +-- alua_tg_pt_gp   HA only: write controller_A or controller_B
             +-- acls/
                 +-- {initiator}/  one dir per allowed initiator WWPN
                     +-- lun_{id}/
@@ -57,7 +67,13 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
-from middlewared.utils.iscsi.constants import ALUA_STATE
+from middlewared.utils.iscsi.constants import (
+    ALUA_GROUP_A,
+    ALUA_GROUP_B,
+    ALUA_GROUP_ID_A,
+    ALUA_GROUP_ID_B,
+    ALUA_STATE,
+)
 
 
 LIO_CONFIG_DIR = pathlib.Path("/sys/kernel/config/target")
@@ -90,6 +106,13 @@ MOD_TCM_IBLOCK = _SYSMOD / "target_core_iblock"
 MOD_TCM_FILE = _SYSMOD / "target_core_file"
 MOD_TCM_PSCSI = _SYSMOD / "target_core_pscsi"
 MOD_TCM_USER = _SYSMOD / "target_core_user"
+MOD_LIO_HA = _SYSMOD / "lio_ha"
+
+# lio_ha TCP port (matches LIO_HA_DEFAULT_PORT in lio_ha.h)
+LIO_HA_PORT = 999
+
+# lio_ha configfs subsystem directory (present when the lio_ha module is loaded)
+LIO_HA_DIR = pathlib.Path("/sys/kernel/config/lio_ha")
 
 # ALUA default group name (always present, created by kernel on SO creation)
 ALUA_DEFAULT_GROUP = "default_tg_pt_gp"
@@ -125,6 +148,21 @@ def _write_if_changed(path: pathlib.Path, value: str):
     current = _read(path)
     if current != str(value):
         _write(path, value)
+
+
+def _write_alua_tg_pt_gp(path: pathlib.Path, group_name: str):
+    """Write group_name to an alua_tg_pt_gp attribute only if the assignment differs.
+
+    The kernel stores the current group as "Group Name: {name}" on read but
+    accepts just the name on write.  Strip the prefix before comparing so the
+    write only fires when the assignment genuinely needs to change — zero
+    overhead on the common reconcile path where nothing has changed.
+    """
+    current = _read(path)
+    if current.startswith("Group Name: "):
+        current = current[len("Group Name: ") :]
+    if current != group_name:
+        _write(path, group_name)
 
 
 def _write_auth_cred(path: pathlib.Path, value: str):
@@ -259,13 +297,13 @@ def _storage_objects(render_ctx: dict):
         extent = desired[name]
         so_dir = _so_dir(extent)
         so_dir.mkdir(parents=True, exist_ok=True)
-        _configure_storage_object(so_dir, extent, render_ctx)
+        _configure_storage_object(so_dir, extent)
 
-    # Update existing storage objects (identity or ALUA state may have changed)
+    # Update existing storage objects (identity may have changed)
     for name in set(desired) & live:
         extent = desired[name]
         so_dir = _so_dir(extent)
-        _update_storage_object_attrs(so_dir, extent, render_ctx)
+        _update_storage_object_attrs(so_dir, extent)
 
     yield
 
@@ -278,7 +316,7 @@ def _storage_objects(render_ctx: dict):
         _delete_storage_object(so_dir)
 
 
-def _configure_storage_object(so_dir: pathlib.Path, extent: dict, render_ctx: dict):
+def _configure_storage_object(so_dir: pathlib.Path, extent: dict):
     """Write configfs attributes for a newly created storage object."""
     device_path = _extent_device_path(extent)
     control = so_dir / "control"
@@ -311,14 +349,11 @@ def _configure_storage_object(so_dir: pathlib.Path, extent: dict, render_ctx: di
     # Set serial and identity attributes (wwn/ appears after control write)
     _set_storage_object_identity(so_dir, extent)
 
-    # Enable the storage object
+    # Enable the storage object (alua/ is populated by the kernel after this write)
     enable = so_dir / "enable"
     if not _wait_for(enable):
         raise RuntimeError(f"LIO configfs: {enable} never appeared")
     _write(enable, "1")
-
-    # Configure ALUA groups (after enable so alua/ is populated)
-    _configure_alua(so_dir, render_ctx)
 
 
 def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
@@ -364,35 +399,9 @@ def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
         )
 
 
-def _configure_alua(so_dir: pathlib.Path, render_ctx: dict):
-    """Configure ALUA groups for a storage object.
-
-    Phase 1 (non-HA / SINGLE): the kernel auto-creates default_tg_pt_gp with state
-    ACTIVE_OPTIMIZED (0).  We write it explicitly so the intent is clear and so the
-    correct state is restored if something externally altered it.
-
-    Phase 2 (HA): create controller_A and controller_B groups under alua/, set their
-    tg_pt_gp_id values to match the SCST group IDs, and write the initial access state
-    (ACTIVE_OPTIMIZED for ACTIVE node, OFFLINE for STANDBY).  Also assign each LUN in
-    every TPG to the correct group via lun/lun_N/alua_tg_pt_gp (see _reconcile_luns).
-    """
-    failover_status = render_ctx.get("failover.status", "SINGLE")
-    if failover_status != "SINGLE":
-        # Phase 2: HA ALUA not yet implemented.
-        return
-
-    alua_dir = so_dir / "alua" / "default_tg_pt_gp"
-    if not alua_dir.exists():
-        return
-    state_path = alua_dir / "alua_access_state"
-    if state_path.exists():
-        _write_if_changed(state_path, str(ALUA_STATE.OPTIMIZED))
-
-
-def _update_storage_object_attrs(so_dir: pathlib.Path, extent: dict, render_ctx: dict):
-    """Update identity attributes and ALUA state on an existing storage object."""
+def _update_storage_object_attrs(so_dir: pathlib.Path, extent: dict):
+    """Update identity attributes on an existing storage object."""
     _set_storage_object_identity(so_dir, extent)
-    _configure_alua(so_dir, render_ctx)
 
 
 def _delete_storage_object(so_dir: pathlib.Path):
@@ -622,7 +631,7 @@ def _create_iscsi_tpg(target_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict)
     _set_tpg_alias(tpg_dir, tpg_cfg)
     _set_tpg_auth(tpg_dir, tpg_cfg)
     _reconcile_portals(tpg_dir, tpg_cfg)
-    _reconcile_luns(tpg_dir, tpg_cfg)
+    _reconcile_luns(tpg_dir, tpg_cfg, render_ctx)
     _reconcile_acls(tpg_dir, tpg_cfg)
 
     enable = tpg_dir / "enable"
@@ -637,7 +646,7 @@ def _update_iscsi_tpg(tpg_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict):
     _set_tpg_alias(tpg_dir, tpg_cfg)
     _set_tpg_auth(tpg_dir, tpg_cfg)
     _reconcile_portals(tpg_dir, tpg_cfg)
-    _reconcile_luns(tpg_dir, tpg_cfg)
+    _reconcile_luns(tpg_dir, tpg_cfg, render_ctx)
     _reconcile_acls(tpg_dir, tpg_cfg)
 
 
@@ -737,8 +746,17 @@ def _reconcile_portals(tpg_dir: pathlib.Path, tpg_cfg: dict):
             pass
 
 
-def _reconcile_luns(tpg_dir: pathlib.Path, tpg_cfg: dict):
-    """Reconcile LUN -> storage object associations in this TPG."""
+def _reconcile_luns(tpg_dir: pathlib.Path, tpg_cfg: dict, render_ctx: dict):
+    """Reconcile LUN -> storage object associations in this TPG.
+
+    In HA mode, each new LUN entry's alua_tg_pt_gp attribute is written with
+    the local controller's group name (controller_A on node A, controller_B on
+    node B), assigning the LUN to the correct ALUA target port group for this
+    node.  The kernel stores the current assignment as "Group Name: {name}" on
+    read, but accepts just the name on write; always written unconditionally on
+    new LUN creation (no read-compare guard needed since the file only appears
+    after the LUN directory is created).
+    """
     lun_dir = tpg_dir / "lun"
     if not lun_dir.exists():
         return
@@ -749,6 +767,17 @@ def _reconcile_luns(tpg_dir: pathlib.Path, tpg_cfg: dict):
         for d in lun_dir.iterdir()
         if d.is_dir() and d.name.startswith("lun_")
     }
+
+    # Determine the ALUA group that LUNs in this TPG should belong to.
+    ha_mode = render_ctx.get(
+        "failover.status", "SINGLE"
+    ) != "SINGLE" and render_ctx.get("iscsi.global.config", {}).get("alua")
+    if ha_mode:
+        node = render_ctx.get("failover.node", "A")
+        local_group = ALUA_GROUP_A if node == "A" else ALUA_GROUP_B
+        alua_target_group = local_group
+    else:
+        alua_target_group = ALUA_DEFAULT_GROUP
 
     # Add missing LUNs
     for lun_id, extent in desired_luns.items():
@@ -764,8 +793,22 @@ def _reconcile_luns(tpg_dir: pathlib.Path, tpg_cfg: dict):
             )
             link = lun_path / alias
             link.symlink_to(so_path)
-            # Phase 2: write the ALUA group name to lun_path / "alua_tg_pt_gp"
-            # to assign this LUN to controller_A or controller_B as appropriate.
+            # Assign the new LUN to the correct ALUA group.
+            if ha_mode:
+                alua_attr = lun_path / "alua_tg_pt_gp"
+                if _wait_for(alua_attr, retries=5):
+                    _write(alua_attr, local_group)
+
+    # Reconcile ALUA group assignment for existing LUNs.  Uses read-compare
+    # with prefix stripping so this is a no-op when already correct; it fires
+    # on the first reconcile after ALUA is enabled (assigns to controller group)
+    # or disabled (reassigns back to default_tg_pt_gp, unblocking the rmdir
+    # of the controller group dirs in _configure_alua on the next reconcile).
+    for lun_id, lun_path in live_lun_dirs.items():
+        if lun_id in desired_luns:
+            alua_attr = lun_path / "alua_tg_pt_gp"
+            if alua_attr.exists():
+                _write_alua_tg_pt_gp(alua_attr, alua_target_group)
 
     # Remove stale LUNs
     for lun_id, lun_path in live_lun_dirs.items():
@@ -1060,11 +1103,11 @@ def _fc_targets(render_ctx: dict):
     for wwpn in add_targets:
         target_dir = FC_DIR / wwpn
         target_dir.mkdir()
-        _configure_fc_target(target_dir, desired[wwpn])
+        _configure_fc_target(target_dir, desired[wwpn], render_ctx)
 
     for wwpn in update_targets:
         target_dir = FC_DIR / wwpn
-        _update_fc_target(target_dir, desired[wwpn])
+        _update_fc_target(target_dir, desired[wwpn], render_ctx)
 
     yield
 
@@ -1073,7 +1116,7 @@ def _fc_targets(render_ctx: dict):
         _delete_fc_target(target_dir)
 
 
-def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
+def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict, render_ctx: dict):
     """Create FC TPG (always tag 1) with LUNs.
 
     Note: FC targets always have exactly one TPG with tag 1.  iSCSI targets
@@ -1083,7 +1126,7 @@ def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
     """
     tpg_dir = target_dir / "tpgt_1"
     tpg_dir.mkdir()
-    _reconcile_luns(tpg_dir, fc_cfg)
+    _reconcile_luns(tpg_dir, fc_cfg, render_ctx)
     _reconcile_acls(tpg_dir, fc_cfg)
     enable = tpg_dir / "enable"
     if not _wait_for(enable):
@@ -1091,11 +1134,11 @@ def _configure_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
     _write(enable, "1")
 
 
-def _update_fc_target(target_dir: pathlib.Path, fc_cfg: dict):
+def _update_fc_target(target_dir: pathlib.Path, fc_cfg: dict, render_ctx: dict):
     """Update an existing FC target's LUNs."""
     tpg_dir = target_dir / "tpgt_1"
     if tpg_dir.exists():
-        _reconcile_luns(tpg_dir, fc_cfg)
+        _reconcile_luns(tpg_dir, fc_cfg, render_ctx)
         _reconcile_acls(tpg_dir, fc_cfg)
 
 
@@ -1125,7 +1168,11 @@ def _load_modules(render_ctx: dict):
       target_core_mod + iscsi_target_mod -> MOD_ISCSI_TARGET exists
       tcm_qla2xxx                        -> MOD_TCM_QLA2XXX exists
       ib_isert                           -> MOD_IB_ISERT exists
+      lio_ha                             -> MOD_LIO_HA exists (alua only)
 
+    lio_ha is loaded with module parameters rather than via modprobe -a
+    because it needs per-node IP addresses and the initial forward_active
+    value baked in at load time.
     """
     needed = []
 
@@ -1141,6 +1188,22 @@ def _load_modules(render_ctx: dict):
 
     if needed:
         subprocess.run(["modprobe", "-a"] + needed, capture_output=True)
+
+    # lio_ha is loaded/unloaded separately (needs per-module parameters).
+    alua_enabled = render_ctx.get("iscsi.global.config", {}).get("alua")
+    if alua_enabled and not MOD_LIO_HA.exists():
+        local_ip = render_ctx.get("failover.local_ip", "")
+        remote_ip = render_ctx.get("failover.remote_ip", "")
+        is_backup = render_ctx.get("failover.status") == "BACKUP"
+        params = [
+            f"default_local_addr={local_ip}",
+            f"default_peer_addr={remote_ip}",
+        ]
+        if is_backup:
+            params.append("default_forward_active=1")
+        subprocess.run(["modprobe", "lio_ha"] + params, capture_output=True)
+    elif not alua_enabled and MOD_LIO_HA.exists():
+        subprocess.run(["modprobe", "-r", "lio_ha"], capture_output=True)
 
 
 def _wait_for_iscsi_threads(timeout: float = 10.0) -> None:
@@ -1234,6 +1297,7 @@ def teardown_lio_config():
     # Order: fabric modules first (most dependent), then backends, then core.
     to_unload = []
     for mod, name in (
+        (MOD_LIO_HA, "lio_ha"),  # must unload before the modules it depends on
         (MOD_IB_ISERT, "ib_isert"),
         (MOD_TCM_QLA2XXX, "tcm_qla2xxx"),
         (MOD_ISCSI_TARGET, "iscsi_target_mod"),
@@ -1249,12 +1313,134 @@ def teardown_lio_config():
         subprocess.run(["modprobe", "-ra"] + to_unload, capture_output=True)
 
 
+@contextmanager
+def _alua_groups(render_ctx: dict):
+    """Manage the full lifecycle of ALUA target port groups across all storage objects.
+
+    Positioned between _storage_objects and _iscsi_targets/_fc_targets so that:
+    - Enter runs after all storage objects exist (alua/ is populated by the kernel
+      on enable), before LUN alua_tg_pt_gp assignments are written by _reconcile_luns.
+    - Exit runs after _iscsi_targets/_fc_targets have reassigned LUN alua_tg_pt_gp
+      attributes, so controller group dirs can be safely rmdir'd on the first
+      reconcile after ALUA is disabled.
+
+    Non-HA: writes ACTIVE_OPTIMIZED to default_tg_pt_gp on all SOs.
+
+    HA: creates controller_A and controller_B under alua/ on all SOs, sets their
+    tg_pt_gp_id values to match the SCST group IDs (101/102), and writes access
+    state according to the 4-row state table:
+
+      MASTER  + synced:   local=ACTIVE_OPTIMIZED   remote=NONOPTIMIZED
+      MASTER  + other:    local=ACTIVE_OPTIMIZED   remote=TRANSITIONING
+      BACKUP  + synced:   local=NONOPTIMIZED       remote=ACTIVE_OPTIMIZED
+      BACKUP  + other:    local=TRANSITIONING      remote=ACTIVE_OPTIMIZED
+
+    "local" is the controller group for this node (controller_A on node A,
+    controller_B on node B); "remote" is the other node's group.
+
+    ha_state is read live from LIO_HA_DIR so the reconciler always reflects
+    the current link state rather than stale render_ctx data.
+
+    default_tg_pt_gp is not removed in HA mode: the kernel auto-creates it on
+    every SO creation, so removing it would be pointless churn.
+    """
+    failover_status = render_ctx.get("failover.status", "SINGLE")
+    alua_enabled = render_ctx.get("iscsi.global.config", {}).get("alua")
+    ha_mode = failover_status != "SINGLE" and alua_enabled
+
+    if ha_mode:
+        node = render_ctx.get("failover.node", "A")
+        is_master = failover_status == "MASTER"
+        # Read ha_state live so the state table is accurate even if the reconciler
+        # runs between a ha_state transition and the event handler that would
+        # otherwise trigger a state write.
+        try:
+            ha_state = (LIO_HA_DIR / "ha_state").read_text().strip()
+        except OSError:
+            ha_state = "disconnected"
+        synced = ha_state == "synced"
+
+        if node == "A":
+            local_group, local_id = ALUA_GROUP_A, ALUA_GROUP_ID_A
+            remote_group, remote_id = ALUA_GROUP_B, ALUA_GROUP_ID_B
+        else:
+            local_group, local_id = ALUA_GROUP_B, ALUA_GROUP_ID_B
+            remote_group, remote_id = ALUA_GROUP_A, ALUA_GROUP_ID_A
+
+        if is_master:
+            local_state = ALUA_STATE.OPTIMIZED
+            remote_state = (
+                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
+            )
+        else:
+            local_state = (
+                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
+            )
+            remote_state = ALUA_STATE.OPTIMIZED
+
+    for backstore in (IBLOCK_DIR, FILEIO_DIR):
+        if not backstore.exists():
+            continue
+        for so_dir in backstore.iterdir():
+            if not so_dir.is_dir():
+                continue
+            alua_dir = so_dir / "alua"
+            if not alua_dir.exists():
+                continue
+
+            if ha_mode:
+                for group_name, group_id, state in (
+                    (local_group, local_id, local_state),
+                    (remote_group, remote_id, remote_state),
+                ):
+                    group_dir = alua_dir / group_name
+                    if not group_dir.exists():
+                        group_dir.mkdir()
+                    id_path = group_dir / "tg_pt_gp_id"
+                    if _wait_for(id_path, retries=5):
+                        _write_if_changed(id_path, str(group_id))
+                    state_path = group_dir / "alua_access_state"
+                    if state_path.exists():
+                        _write_if_changed(state_path, str(state))
+            else:
+                # Non-HA: ensure default_tg_pt_gp state is ACTIVE_OPTIMIZED so the
+                # intent is clear and the correct state is restored if altered externally.
+                default_dir = alua_dir / ALUA_DEFAULT_GROUP
+                if default_dir.exists():
+                    state_path = default_dir / "alua_access_state"
+                    if state_path.exists():
+                        _write_if_changed(state_path, str(ALUA_STATE.OPTIMIZED))
+
+    yield
+
+    # Exit: remove controller groups if ALUA is now disabled.  LUN alua_tg_pt_gp
+    # attributes have already been reassigned to default_tg_pt_gp by _reconcile_luns,
+    # so the kernel will accept the rmdir.
+    if alua_enabled:
+        return
+    for backstore in (IBLOCK_DIR, FILEIO_DIR):
+        if not backstore.exists():
+            continue
+        for so_dir in backstore.iterdir():
+            if not so_dir.is_dir():
+                continue
+            for group_name in (ALUA_GROUP_A, ALUA_GROUP_B):
+                group_dir = so_dir / "alua" / group_name
+                if group_dir.exists():
+                    try:
+                        group_dir.rmdir()
+                    except OSError:
+                        pass
+
+
 def write_lio_config(render_ctx: dict):
     """
     Reconcile the live LIO configfs state against the desired state.
 
-    Context managers are nested so that:
+    Context managers are ordered so that:
     - Storage objects are created before targets reference them (LUNs)
+    - LUN alua_tg_pt_gp assignments are reconciled before controller groups
+      are removed (_alua_groups exit after _iscsi_targets/_fc_targets exit)
     - LUN symlinks are removed before storage objects are deleted
     """
     _load_modules(render_ctx)
@@ -1274,6 +1460,7 @@ def write_lio_config(render_ctx: dict):
 
     with (
         _storage_objects(render_ctx),
+        _alua_groups(render_ctx),
         _iscsi_targets(render_ctx),
         _fc_targets(render_ctx),
         _discovery_auth(render_ctx),
