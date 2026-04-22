@@ -13,7 +13,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import Service, ValidationError, private
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
-from truenas_pylicensed import LicenseType
+from truenas_pylicensed import LicenseError, LicenseType, verify
 
 from .license_legacy_utils import LEGACY_LICENSE_FILE, get_legacy_license_info
 from .license_utils import (
@@ -49,6 +49,8 @@ class TrueNASLicenseService(Service):
 
         with contextlib.suppress(FileNotFoundError):
             os.remove(LEGACY_LICENSE_FILE)
+
+        get_legacy_license_info.cache_clear()
 
         self.middleware.call_sync("etc.generate", "rc")
 
@@ -91,4 +93,9 @@ class TrueNASLicenseService(Service):
 
     @private
     def info_private(self) -> LicenseInfo | None:
-        return get_license_info() or get_legacy_license_info()
+        license_status = verify()
+
+        if license_status.code in [LicenseError.NO_LICENSE, LicenseError.DAEMON_UNAVAILABLE]:
+            return get_legacy_license_info()
+
+        return get_license_info(license_status)
