@@ -10,6 +10,27 @@ if [ "$#" -lt 1 -o "$#" -gt 2 -o -z "$1" ]; then
 	exit 1
 fi
 
+# Strip leading path if absolute path provided (e.g. /dev/sda -> sda)
+case "${dev}" in
+/*)
+	dev=${dev##*/}
+	;;
+esac
+
+# If an NVMe controller is given (no namespace), resolve to its single namespace.
+if [ -e "/sys/class/nvme/${dev}" ] && ! echo "${dev}" | grep -q 'n[0-9]'; then
+	ns_devs=$(ls -d /sys/class/nvme/${dev}/${dev}n* 2>/dev/null)
+	ns_count=$(echo "${ns_devs}" | wc -w)
+	if [ ${ns_count} -eq 0 ]; then
+		echo "No namespaces found on ${dev}"
+		exit 1
+	elif [ ${ns_count} -gt 1 ]; then
+		echo "Multiple namespaces on ${dev}, specify a namespace device"
+		exit 1
+	fi
+	dev=$(basename ${ns_devs})
+fi
+
 # Make sure provided disk is valid
 if ! grep -q " ${dev}$" /proc/partitions; then
 	echo "The disk is specified incorrectly, aborting."
@@ -225,8 +246,20 @@ nvme)
 		echo "Can't detach old namespace, but continuing anyway"
 	fi
 
+	# For certain drives, data written to namespace before delete can
+	# take more time than the default 60 second timeout. Worst case
+	# for the largest capacity drive from at least one vendor with
+	# worst case data layout needs 21 minutes. In practice this is
+	# unlikely to be hit — the middleware only calls disk_resize for
+	# SLOG overprovisioning during pool creation, and SLOGs typically
+	# use smaller capacity drives where delete times are much shorter.
+	# However even modest data on affected drives can exceed 60 seconds.
+	# NOTE: nvme-cli delete-ns has a bug where it does not pass the -t
+	# timeout to the kernel ioctl, so we use admin-passthru with
+	# opcode 0x0d (NS Management) and cdw10=1 (delete) which
+	# correctly honors the timeout.
 	echo "Deleting old namespace."
-	nvme delete-ns -n ${nsid} ${ctrlr}
+	nvme admin-passthru --opcode=0x0d --cdw10=1 --namespace-id=${nsid} -t 1260000 ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Can't delete old namespace, but continuing anyway"
 	fi
