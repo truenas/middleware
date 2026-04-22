@@ -22,7 +22,7 @@ from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
-from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import delete_vm_state, rename_vm_state, vm_state_missing_sources
 
 
 BOOT_LOADER_OPTIONS = {
@@ -356,24 +356,51 @@ class VMService(CRUDService):
         for key in ('devices', 'status', 'display_available'):
             new.pop(key, None)
 
-        await self.middleware.call('datastore.update', 'vm.vm', id_, new)
-
+        renamed = False
         if new['name'] != old['name']:
             try:
-                new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(new))
                 await self.middleware.run_in_thread(
-                    os.rename, os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(old)), new_path
+                    rename_vm_state, old['id'], old['name'], new['id'], new['name'],
                 )
-            except FileNotFoundError:
-                if old['bootloader'] == new['bootloader'] == 'UEFI':
-                    # So we only want to raise an error if bootloader is UEFI because for BIOS
-                    # nvram file will not exist and it is fine. If bootloader is changed from
-                    # BIOS to UEFI, even then we will not have it and it is fine so we don't want
-                    # to raise an error in that case.
-                    raise CallError(
-                        f'VM name has been updated but nvram file for {old["name"]} does not exist '
-                        f'which can result in {new["name"]} VM not booting properly.'
+            except FileExistsError as e:
+                raise CallError(
+                    f'Cannot rename VM {old["name"]!r} -> {new["name"]!r}: on-disk state already '
+                    'exists at the destination (likely stale NVRAM/TPM left over from a '
+                    'previously deleted VM). Name change aborted; VM configuration is unchanged.'
+                ) from e
+            except OSError as e:
+                raise CallError(
+                    f'Failed to rename VM state for {old["name"]!r} -> {new["name"]!r}: '
+                    f'{e.strerror or e} (errno={e.errno}). Name change aborted; '
+                    f'VM configuration is unchanged.'
+                ) from e
+            renamed = True
+
+            missing = await self.middleware.run_in_thread(
+                vm_state_missing_sources, new['id'], new['name'],
+                old['bootloader'], old['trusted_platform_module'],
+            )
+            if missing:
+                self.logger.warning(
+                    '%s: rename to %r proceeded with no prior on-disk state for %s; '
+                    'libvirt/swtpm will initialise fresh state on next start.',
+                    old['name'], new['name'], ', '.join(missing),
+                )
+
+        try:
+            await self.middleware.call('datastore.update', 'vm.vm', id_, new)
+        except Exception:
+            if renamed:
+                try:
+                    await self.middleware.run_in_thread(
+                        rename_vm_state, new['id'], new['name'], old['id'], old['name'],
                     )
+                except Exception:
+                    self.logger.error(
+                        '%s: state-file rollback failed after DB update failure',
+                        old['name'], exc_info=True,
+                    )
+            raise
 
         if old['shutdown_timeout'] != new['shutdown_timeout']:
             await self.middleware.call('etc.generate', 'libvirt_guests')
@@ -425,6 +452,12 @@ class VMService(CRUDService):
             self.middleware.call_sync('vm.device.delete', device['id'], {'force': data['force']})
 
         self.middleware.call_sync('datastore.delete', 'vm.vm', id_)
+        try:
+            delete_vm_state(vm['id'], vm['name'])
+        except Exception:
+            self.logger.error(
+                '%s: failed to remove on-disk VM state (nvram/tpm)', vm['name'], exc_info=True,
+            )
 
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
