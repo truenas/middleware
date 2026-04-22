@@ -66,35 +66,51 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
         if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
-            target_id = data['target']
-            target_name = (await self.middleware.call('iscsi.target.query',
-                                                      [['id', '=', target_id]],
-                                                      {'select': ['name'], 'get': True}))['name']
+            if await self.middleware.call('iscsi.global.lio_enabled'):
+                # LIO: STANDBY holds its own storage objects/LUNs; a plain remote
+                # reload reconciles the new mapping into its configfs directly.
+                # No HA-proxy wait/rescan/cluster_mode dance, and nothing async
+                # left running afterward to settle on.
+                await self.middleware.call(
+                    'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
+                )
+            else:
+                # SCST: STANDBY re-exports the ACTIVE's storage via an internal HA
+                # proxy target that it logs into over iSCSI, so the new mapping has
+                # to be pushed to it explicitly -- wait for the LUN to appear on the
+                # HA target, ask STANDBY to rescan, reload it, then wait for
+                # cluster_mode/ALUA to settle.
+                target_id = data['target']
+                target_name = (await self.middleware.call('iscsi.target.query',
+                                                          [['id', '=', target_id]],
+                                                          {'select': ['name'], 'get': True}))['name']
 
-            # We just added a mapping.  Ensure it is available from the ACTIVE
-            await self.middleware.call(
-                'iscsi.target.wait_for_ha_lun_present',
-                target_name,
-                data['lunid']
-            )
+                # We just added a mapping.  Ensure it is available from the ACTIVE
+                await self.middleware.call(
+                    'iscsi.target.wait_for_ha_lun_present',
+                    target_name,
+                    data['lunid']
+                )
 
-            # If we have just added a new extent to an existing target, then STANDBY node may already be logged
-            # into the target, so we should force a rescan.  Check the target LUN count.
-            if await self.middleware.call('iscsi.targetextent.query',
-                                          [['target', '=', target_id]],
-                                          {'count': True}) > 1:
-                try:
-                    await self.middleware.call('failover.call_remote', 'iscsi.alua.added_target_extent', [target_name])
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
-                        # Better to continue than to raise the exception
-            # Now update the remote node
-            await self.middleware.call(
-                'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
-            )
-            await self.middleware.call('iscsi.alua.wait_cluster_mode', data['target'], data['extent'])
-            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+                # If we have just added a new extent to an existing target, then STANDBY node may already be logged
+                # into the target, so we should force a rescan.  Check the target LUN count.
+                if await self.middleware.call('iscsi.targetextent.query',
+                                              [['target', '=', target_id]],
+                                              {'count': True}) > 1:
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'iscsi.alua.added_target_extent', [target_name]
+                        )
+                    except CallError as e:
+                        if e.errno != CallError.ENOMETHOD:
+                            self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                            # Better to continue than to raise the exception
+                # Now update the remote node
+                await self.middleware.call(
+                    'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
+                )
+                await self.middleware.call('iscsi.alua.wait_cluster_mode', data['target'], data['extent'])
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         return await self.get_instance(data['id'])
 
@@ -180,40 +196,55 @@ class iSCSITargetToExtentService(CRUDService):
 
         # Next, perform any necessary fixup on the STANDBY system if ALUA is operating.
         if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
-            target_name = (await self.middleware.call(
-                'iscsi.target.query',
-                [['id', '=', associated_target['target']]],
-                {'select': ['name'], 'get': True},
-            ))['name']
-            extent_name = (await self.middleware.call(
-                'iscsi.extent.query',
-                [['id', '=', associated_target['extent']]],
-                {'select': ['name'], 'get': True},
-            ))['name']
-
-            # Check that the HA target is no longer offering the LUN that we just deleted.  Wait a short period
-            # if necessary (though this should not be required).
-            await self.middleware.call(
-                'iscsi.target.wait_for_ha_lun_absent',
-                target_name,
-                associated_target['lunid']
-            )
-
-            try:
-                # iscsi.alua.removed_target_extent includes a local service reload
-                await self.middleware.call(
-                    'failover.call_remote',
-                    'iscsi.alua.removed_target_extent',
-                    [target_name, associated_target['lunid'], extent_name]
-                )
-            except CallError as e:
-                if e.errno != CallError.ENOMETHOD:
-                    self.logger.warning('Failed up update STANDBY node', exc_info=True)
-                    # Better to continue than to raise the exception
+            if await self.middleware.call('iscsi.global.lio_enabled'):
+                # LIO: STANDBY holds its own storage objects/LUNs; a plain remote
+                # reload reconciles the removed mapping into its configfs directly.
+                # No HA-proxy wait/rescan dance, and nothing async left running
+                # afterward to settle on.
                 await self.middleware.call(
                     'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
                 )
-            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+            else:
+                # SCST: STANDBY re-exports the ACTIVE's storage via an internal HA
+                # proxy target that it logs into over iSCSI, so the removal has to
+                # be pushed to it explicitly -- wait for the LUN to disappear from
+                # the HA target, then ask STANDBY to drop/optimize it
+                # (removed_target_extent does its own local reload; fall back to a
+                # plain reload if that call itself failed).
+                target_name = (await self.middleware.call(
+                    'iscsi.target.query',
+                    [['id', '=', associated_target['target']]],
+                    {'select': ['name'], 'get': True},
+                ))['name']
+                extent_name = (await self.middleware.call(
+                    'iscsi.extent.query',
+                    [['id', '=', associated_target['extent']]],
+                    {'select': ['name'], 'get': True},
+                ))['name']
+
+                # Check that the HA target is no longer offering the LUN that we just deleted.  Wait a short period
+                # if necessary (though this should not be required).
+                await self.middleware.call(
+                    'iscsi.target.wait_for_ha_lun_absent',
+                    target_name,
+                    associated_target['lunid']
+                )
+
+                try:
+                    # iscsi.alua.removed_target_extent includes a local service reload
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'iscsi.alua.removed_target_extent',
+                        [target_name, associated_target['lunid'], extent_name]
+                    )
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        # Better to continue than to raise the exception
+                    await self.middleware.call(
+                        'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
+                    )
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         return result
 
