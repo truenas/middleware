@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.utils.cpu import cpu_info
 
 from .ix_apps.metadata import get_collective_metadata
@@ -6,7 +8,9 @@ from .ix_apps.utils import get_app_name_from_project_name
 NANO_SECOND = 1000000000
 
 
-def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval: int) -> list[dict]:
+def normalize_projects_stats(
+    all_projects_stats: dict[str, Any], old_stats: dict[str, Any], interval: int,
+) -> list[dict[str, Any]]:
     normalized_projects_stats = []
     all_configured_apps = get_collective_metadata()
     for project, data in all_projects_stats.items():
@@ -29,7 +33,9 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
         # 3. Multiply by 100 to convert to percentage.
         cpu_delta = data['cpu_usage'] - old_stats[project]['cpu_usage']
         if cpu_delta >= 0:
-            normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND * cpu_info()['core_count'])) * 100
+            core_count = cpu_info()['core_count']
+            assert core_count is not None
+            normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND * core_count)) * 100
         else:
             # This will happen when there were multiple containers and an app is being stopped
             # and old stats contain cpu usage times of multiple containers and current stats

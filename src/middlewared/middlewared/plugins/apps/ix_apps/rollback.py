@@ -1,10 +1,10 @@
 import os
 import shutil
 
+from catalog_reader.library import RE_VERSION
 from packaging.version import Version
 
 from .path import get_installed_app_versions_dir_path
-from .utils import RE_VERSION
 
 
 def get_rollback_versions(app_name: str, current_version: str) -> list[str]:
@@ -20,7 +20,7 @@ def get_rollback_versions(app_name: str, current_version: str) -> list[str]:
     return sorted(rollback_versions, key=Version)
 
 
-def clean_newer_versions(app_name: str, current_version: str):
+def clean_newer_versions(app_name: str, current_version: str) -> None:
     """
     Any versions above current_version will be removed from app's config
     """

@@ -45,3 +45,12 @@ def test__accept_alias():
 
 def test__accept_alias_default():
     assert accept_params(AliasMethodArgs, []) == [1]
+
+
+def test__accept_params_no_dump():
+    """When dump_models=False, accept_params returns Pydantic instances."""
+    result = accept_params(MethodArgs, [{"name": "test"}, True], dump_models=False)
+    assert isinstance(result[0], Param)
+    assert result[0].name == "test"
+    assert result[0].count == 1
+    assert result[1] is True

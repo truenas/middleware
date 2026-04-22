@@ -336,9 +336,10 @@ class ShellApplication:
                 if options.get("app_name"):
                     if not options.get("container_id"):
                         raise CallError("Container id must be specified")
-                    if options["container_id"] not in await self.middleware.call(
-                        "app.container_console_choices", options["app_name"]
-                    ):
+                    choices = await self.middleware.call2(
+                        self.middleware.services.app.container_console_choices, options["app_name"]
+                    )
+                    if options["container_id"] not in choices.root:
                         raise CallError("Provided container id is not valid")
                 elif options.get("container_id"):
                     options["nsenter"] = await self.middleware.call2(

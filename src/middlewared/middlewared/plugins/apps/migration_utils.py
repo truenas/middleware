@@ -1,4 +1,6 @@
 import os
+from typing import Any
+
 import yaml
 
 from apps_validation.json_schema_utils import APP_CONFIG_MIGRATIONS_SCHEMA
@@ -9,7 +11,7 @@ from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
 from middlewared.utils.yaml import safe_yaml_load
 
 
-def version_in_range(version: str, min_version: str = None, max_version: str = None) -> bool:
+def version_in_range(version: str, min_version: str | None = None, max_version: str | None = None) -> bool:
     parsed_version = Version(version)
     if min_version and max_version and (min_version == max_version):
         return parsed_version == Version(min_version)
@@ -20,7 +22,7 @@ def version_in_range(version: str, min_version: str = None, max_version: str = N
     return True
 
 
-def validate_versions(current_version: str, target_version: str):
+def validate_versions(current_version: str, target_version: str) -> dict[str, Any]:
     if not current_version or not target_version:
         return {
             'error': 'Both current and target version should be specified',
@@ -42,7 +44,7 @@ def validate_versions(current_version: str, target_version: str):
     return {'error': None, 'migration_files': []}
 
 
-def get_migration_scripts(app_name: str, current_version: str, target_version: str) -> dict:
+def get_migration_scripts(app_name: str, current_version: str, target_version: str) -> dict[str, Any]:
     migration_files = validate_versions(current_version, target_version)
     if migration_files['error']:
         return migration_files

@@ -1,6 +1,6 @@
 import os
 
-from .utils import IX_APPS_MOUNT_PATH
+from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 
 
 def get_collective_config_path() -> str:

@@ -13,4 +13,4 @@ def get_docker_client() -> Iterator[docker.DockerClient]:
     try:
         yield client
     finally:
-        client.close()
+        client.close()  # type: ignore[no-untyped-call]

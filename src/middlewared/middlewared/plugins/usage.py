@@ -189,11 +189,10 @@ class UsageService(Service):
             'catalog_items': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
             'docker_images': set(),
         }
-        apps = await self.middleware.call('app.query')
+        apps = await self.call2(self.s.app.query)
         output['apps'] = len(apps)
         for app in apps:
-            app_metadata = app['metadata']
-            output['catalog_items'][app_metadata['train']][app_metadata['name']][app['version']] += 1
+            output['catalog_items'][app.metadata['train']][app.metadata['name']][app.version] += 1
 
         for image in await self.middleware.call('app.image.query'):
             output['docker_images'].update(image['repo_tags'])

@@ -1,77 +1,53 @@
-from middlewared.api import api_method
-from middlewared.api.current import (
-    AppStartArgs, AppStartResult, AppStopArgs, AppStopResult, AppRedeployArgs, AppRedeployResult,
-)
-from middlewared.service import job, Service
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from middlewared.api.current import AppEntry, AppUpdate, QueryOptions
+from middlewared.service import ServiceContext
 
 from .compose_utils import compose_action
+from .crud import get_instance, update_internal
 from .ix_apps.query import get_default_workload_values
 from .utils import get_app_stop_cache_key
 
 
-class AppService(Service):
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
-    class Config:
-        namespace = 'app'
-        cli_namespace = 'app'
 
-    @api_method(
-        AppStopArgs, AppStopResult,
-        audit='App: Stopping',
-        audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE']
-    )
-    @job(lock=lambda args: f'app_stop_{args[0]}')
-    def stop(self, job, app_name):
-        """
-        Stop `app_name` app.
-        """
-        app_config = self.middleware.call_sync('app.get_instance', app_name)
-        cache_key = get_app_stop_cache_key(app_name)
-        try:
-            self.middleware.call_sync('cache.put', cache_key, True)
-            self.middleware.send_event(
-                'app.query', 'CHANGED', id=app_name,
-                fields=app_config | {'state': 'STOPPING', 'active_workloads': get_default_workload_values()},
-            )
-            job.set_progress(20, f'Stopping {app_name!r} app')
-            compose_action(
-                app_name, app_config['version'], 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
-            )
-            job.set_progress(100, f'Stopped {app_name!r} app')
-        finally:
-            self.middleware.send_event(
-                'app.query', 'CHANGED', id=app_name,
-                fields=app_config | {'state': 'STOPPED', 'active_workloads': get_default_workload_values()},
-            )
-            self.middleware.call_sync('cache.pop', cache_key)
+def stop_app(context: ServiceContext, job: Job, app_name: str) -> None:
+    app = get_instance(context, app_name)
+    cache_key = get_app_stop_cache_key(app_name)
+    try:
+        context.middleware.call_sync('cache.put', cache_key, True)
+        context.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name,
+            fields=app.model_dump(by_alias=True) | {
+                'state': 'STOPPING', 'active_workloads': get_default_workload_values(),
+            },
+        )
+        job.set_progress(20, f'Stopping {app_name!r} app')
+        compose_action(
+            app_name, app.version, 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
+        )
+        job.set_progress(100, f'Stopped {app_name!r} app')
+    finally:
+        context.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name,
+            fields=app.model_dump(by_alias=True) | {
+                'state': 'STOPPED', 'active_workloads': get_default_workload_values(),
+            },
+        )
+        context.middleware.call_sync('cache.pop', cache_key)
 
-    @api_method(
-        AppStartArgs, AppStartResult,
-        audit='App: Starting',
-        audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE']
-    )
-    @job(lock=lambda args: f'app_start_{args[0]}')
-    def start(self, job, app_name):
-        """
-        Start `app_name` app.
-        """
-        app_config = self.middleware.call_sync('app.get_instance', app_name)
-        job.set_progress(20, f'Starting {app_name!r} app')
-        compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
-        job.set_progress(100, f'Started {app_name!r} app')
 
-    @api_method(
-        AppRedeployArgs, AppRedeployResult,
-        audit='App: Redeploying',
-        audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE']
-    )
-    @job(lock=lambda args: f'app_redeploy_{args[0]}')
-    async def redeploy(self, job, app_name):
-        """
-        Redeploy `app_name` app.
-        """
-        app = await self.middleware.call('app.get_instance', app_name)
-        return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
+def start_app(context: ServiceContext, job: Job, app_name: str) -> None:
+    app = get_instance(context, app_name)
+    job.set_progress(20, f'Starting {app_name!r} app')
+    compose_action(app_name, app.version, 'up', force_recreate=True, remove_orphans=True)
+    job.set_progress(100, f'Started {app_name!r} app')
+
+
+def redeploy_app(context: ServiceContext, job: Job, app_name: str) -> AppEntry:
+    app = get_instance(context, app_name, QueryOptions(extra={'retrieve_config': True}))
+    return update_internal(context, job, app, AppUpdate(), 'Redeployment')

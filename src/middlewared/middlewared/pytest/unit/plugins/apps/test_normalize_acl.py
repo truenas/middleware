@@ -1,10 +1,13 @@
+import logging
+
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_acl
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('attr, value, context', [
+@pytest.mark.parametrize('attr, value, normalization_context', [
     (
         {'schema': {'type': 'dict'}},
         {
@@ -57,12 +60,11 @@ from middlewared.pytest.unit.middleware import Middleware
     ),
 ])
 @pytest.mark.asyncio
-async def test_normalize_acl(attr, value, context):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    result = await app_schema_obj.normalize_acl(attr, value, '', context)
+async def test_normalize_acl(attr, value, normalization_context):
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_acl(ctx, attr, value, {}, normalization_context)
     if all(value[k] for k in ('entries', 'path')):
-        assert len(context['actions']) > 0
+        assert len(normalization_context['actions']) > 0
     else:
-        assert len(context['actions']) == 0
+        assert len(normalization_context['actions']) == 0
     assert result == value

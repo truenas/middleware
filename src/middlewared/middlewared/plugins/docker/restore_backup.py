@@ -68,7 +68,7 @@ def restore_backup(context: ServiceContext, job: Job, backup_name: str) -> None:
         if app_info.state == AppState.RUNNING.name:
             apps_to_start.append(app_info.id)
 
-    metadata_job = context.middleware.call_sync('app.metadata.generate')
+    metadata_job = context.call_sync2(context.s.app.metadata_generate)
     metadata_job.wait_sync()
     if metadata_job.error:
         raise CallError(f'Failed to generate app metadata: {metadata_job.error}')

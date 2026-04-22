@@ -83,13 +83,13 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
         if db_changed:
             if pool_changed:
-                await self.middleware.call('app.clear_upgrade_alerts_for_all')
+                await self.call2(self.s.app.clear_upgrade_alerts_for_all)
                 job.set_progress(15, 'Stopping Apps')
-                apps = await self.middleware.call('app.query', [['state', '!=', 'STOPPED']])
+                apps = await self.call2(self.s.app.query, [['state', '!=', 'STOPPED']])
                 batch_size = 10
                 for i in range(0, len(apps), batch_size):
                     await (await self.middleware.call(
-                        'core.bulk', 'app.stop', [[app['name']] for app in apps[i:i + batch_size]]
+                        'core.bulk', 'app.stop', [[app.name] for app in apps[i:i + batch_size]]
                     )).wait()
 
             if pool_changed or address_pools_changed or registry_mirrors_changed:
@@ -132,7 +132,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 job.set_progress(60, 'Applying requested configuration')
                 await docker_status_change(self)
                 if new_config.pool:
-                    await self.middleware.call('app.metadata.generate')
+                    await self.call2(self.s.app.metadata_generate)
             elif new_config.pool and (address_pools_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await mount_docker_ds(self)
@@ -145,7 +145,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
                 await self.middleware.call(
                     'core.bulk', 'app.redeploy', [
-                        [app['name']] for app in await self.middleware.call('app.query', [['state', '!=', 'STOPPED']])
+                        [app.name] for app in await self.call2(self.s.app.query, [['state', '!=', 'STOPPED']])
                     ]
                 )
 

@@ -64,7 +64,7 @@ def zvol_path_to_name(path):
 
 def paths_to_datasets_impl(
     paths: list[str],
-) -> dict | dict[str, str | None]:
+) -> dict[str, str | None]:
     """
     Convert `paths` to a dictionary of ZFS dataset names. This
     performs lookup through mountinfo.

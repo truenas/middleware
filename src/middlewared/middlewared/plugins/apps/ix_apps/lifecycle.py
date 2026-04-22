@@ -6,6 +6,8 @@ import tempfile
 import typing
 import yaml
 
+from middlewared.plugins.apps.schema_construction_utils import CONTEXT_KEY_NAME
+from middlewared.plugins.apps.utils import run
 from middlewared.service_exception import CallError
 from middlewared.utils import sw_version
 from middlewared.utils.io import write_if_changed
@@ -15,12 +17,12 @@ from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
     get_installed_custom_app_compose_file,
 )
-from .utils import CONTEXT_KEY_NAME, dump_yaml, run
+from .utils import dump_yaml
 
 logger = logging.getLogger("app_lifecycle")
 
 
-def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
+def get_rendered_template_config_of_app(app_name: str, version: str) -> dict[str, typing.Any]:
     rendered_config = {}
     for rendered_file in get_rendered_templates_of_app(app_name, version):
         with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
@@ -44,12 +46,12 @@ def write_new_app_config(app_name: str, version: str, values: dict[str, typing.A
     write_if_changed(app_config_path, dump_yaml(values), perms=0o600, raise_error=False)
 
 
-def get_current_app_config(app_name: str, version: str) -> dict:
+def get_current_app_config(app_name: str, version: str) -> dict[str, typing.Any]:
     with open(get_installed_app_config_path(app_name, version), 'r') as f:
-        return safe_yaml_load(f) or {}
+        return safe_yaml_load(f, dict)
 
 
-def render_compose_templates(app_version_path: str, values_file_path: str):
+def render_compose_templates(app_version_path: str, values_file_path: str) -> None:
     logger.debug(
         'Rendering compose templates for app version path %r with values file %r', app_version_path, values_file_path
     )
@@ -91,8 +93,9 @@ def get_action_context(app_name: str) -> dict[str, typing.Any]:
 
 
 def add_context_to_values(
-    app_name: str, values: dict[str, typing.Any], app_metadata: dict, *, install: bool = False, update: bool = False,
-    upgrade: bool = False, upgrade_metadata: dict[str, typing.Any] = None, rollback: bool = False,
+    app_name: str, values: dict[str, typing.Any], app_metadata: dict[str, typing.Any], *,
+    install: bool = False, update: bool = False,
+    upgrade: bool = False, upgrade_metadata: dict[str, typing.Any] | None = None, rollback: bool = False,
 ) -> dict[str, typing.Any]:
     assert install or update or upgrade or rollback, 'At least one of install, update, rollback or upgrade must be True'
     assert sum([install, rollback, update, upgrade]) <= 1, 'Only one of install, update, or upgrade can be True.'
