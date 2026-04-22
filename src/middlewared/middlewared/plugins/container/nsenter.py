@@ -44,4 +44,12 @@ async def nsenter(context: ServiceContext, container_id: int) -> list[str]:
     nsenter_cmd = ['/usr/bin/nsenter', '--target', f'{pid}', '--mount', '--uts', '--ipc', '--net', '--pid']
     if container.idmap:
         nsenter_cmd.append('--user')
-    return nsenter_cmd + ['--', 'capsh'] + capsh + ['--', '-c']
+    # capsh runs on the host (not inside the container) because minimal
+    # images such as Alpine do not ship capsh. Bounding-set restrictions
+    # are per-task and survive both execve and the nsenter namespace
+    # switch, so the final shell ends up with the same capabilities it
+    # would have had if capsh had been invoked inside the container.
+    return (
+        ['/sbin/capsh'] + capsh + ['--', '-c', 'exec "$@"', '_'] +
+        nsenter_cmd + ['--', '/bin/sh', '-c']
+    )
