@@ -27,24 +27,10 @@ from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string
 
 from middlewared.plugins.truenas.license_utils import LICENSE_FILE
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
+from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
 
 PRODUCT_NAME = "TrueNAS"
-LICENSE_ADDHW_REVERSE_MAPPING = {
-    "E16": 1,
-    "E24": 2,
-    "E60": 3,
-    "ES60": 4,
-    "ES12": 5,
-    "ES24": 6,
-    "ES24F": 7,
-    "ES60S": 8,
-    "ES102": 9,
-    "ES102G2": 10,
-    "ES60G2": 11,
-    "ES24N": 12,
-    "ES60G3": 13,
-}
+LICENSE_ADDHW_REVERSE_MAPPING = {v: k for k, v in LICENSE_ADDHW_MAPPING.items()}
 
 
 class SystemService(Service):
