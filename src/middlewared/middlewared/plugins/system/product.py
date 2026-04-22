@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from datetime import date
+from types import MappingProxyType
 
 import truenas_pylicensed
 
@@ -30,7 +31,7 @@ from middlewared.plugins.truenas.license_utils import LICENSE_FILE
 from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
 
 PRODUCT_NAME = "TrueNAS"
-LICENSE_ADDHW_REVERSE_MAPPING = {v: k for k, v in LICENSE_ADDHW_MAPPING.items()}
+LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW_MAPPING.items()})
 
 
 class SystemService(Service):

@@ -165,10 +165,7 @@ for output, arg in myopts:
     elif output == '--test_dir':
         test_dir = arg
     elif output == '--ha_license':
-        ha_license = """-----BEGIN TRUENAS LICENSE-----
-eyJpZCI6ICJjMmI4YTM3ZS03MjgwLTRkNjYtYThmYy0zNmVmNGFjNjIyODYiLCAidmVyc2lvbiI6IDEsICJ0eXBlIjogImVudGVycHJpc2VfaGEiLCAibW9kZWwiOiAiWDEwIiwgInNmIjogeyJvcHBfaWQiOiBudWxsfSwgInRuYyI6IHsiYWNjb3VudF9pZCI6IG51bGx9LCAic3lzdGVtX2lkIjogeyJzZXJpYWxzIjogWyJiZVRoaWloZWk1eWllYzNvaENoYSIsICJlaWphMWJpZTVxdW85SGFpbmdlZSJdLCAiZmluZ2VycHJpbnQiOiBudWxsfSwgImZlYXR1cmVzIjogeyJBUFBTIjogeyJzb3VyY2UiOiAiZW50ZXJwcmlzZSJ9LCAiREVEVVAiOiB7InNvdXJjZSI6ICJlbnRlcnByaXNlIn0sICJGSUJSRUNIQU5ORUwiOiB7InNvdXJjZSI6ICJlbnRlcnByaXNlIn0sICJTRUQiOiB7InNvdXJjZSI6ICJlbnRlcnByaXNlIn0sICJTVVBQT1JUIjogeyJzb3VyY2UiOiAiZW50ZXJwcmlzZSJ9LCAiVk0iOiB7InNvdXJjZSI6ICJlbnRlcnByaXNlIn0sICJaRlNfVElFUiI6IHsic291cmNlIjogImVudGVycHJpc2UifX0sICJlbmNsb3N1cmVzIjoge30sICJleHBpcmVzX2F0IjogIjIwMjYtMDQtMjkiLCAidGVzdCI6IHRydWUsICJzaWduYXR1cmUiOiAiTUVZQ0lRRFNISENHNFdPMTJ2eUZuVTlPMEdqVXBoWjhpdHVIbEUvTXU4MGZCaW0rZkFJaEFKNXB3V3V2RGV6U2xPN0JGaFpKK2QwbGNUWnRzUzVRcVRwbE9XR1JZQ1l4In0=
------END TRUENAS LICENSE-----
-"""
+        ha_license = arg
     elif output == '--show_locals':
         show_locals = True
     elif output == '--extended_tests':
@@ -280,7 +277,7 @@ keyPath = "{keyPath}"
 pool_name = "{pool_name}"
 ha_pool_name = "ha"
 ha = {ha}
-ha_license ={ha_license!r}
+ha_license = {ha_license!r}
 update = {update}
 artifacts = "{artifacts}"
 isns_ip = "{isns_ip}"

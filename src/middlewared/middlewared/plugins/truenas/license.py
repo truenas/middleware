@@ -32,6 +32,7 @@ class TrueNASLicenseService(Service):
     @api_method(
         TrueNASLicenseUploadArgs,
         TrueNASLicenseUploadResult,
+        audit="License upload",
         roles=["FULL_ADMIN"],
         check_annotations=True,
     )

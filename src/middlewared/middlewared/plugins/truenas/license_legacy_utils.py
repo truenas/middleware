@@ -1,6 +1,7 @@
 from functools import lru_cache
 from datetime import date
 import logging
+from types import MappingProxyType
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 LEGACY_LICENSE_FILE = '/data/license'
-LICENSE_ADDHW_MAPPING = {
+LICENSE_ADDHW_MAPPING = MappingProxyType({
     1: "E16",
     2: "E24",
     3: "E60",
@@ -26,7 +27,7 @@ LICENSE_ADDHW_MAPPING = {
     11: "ES60G2",
     12: "ES24N",
     13: "ES60G3",
-}
+})
 
 
 @lru_cache()
