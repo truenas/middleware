@@ -112,18 +112,19 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
     except FileNotFoundError:
         had_backup = False
 
-    # Write the new license to disk -- daemon picks this up via inotify
-    with atomic_write(LICENSE_FILE, "w", perms=0o600) as f:
-        f.write(license_pem)
-
-    # Wait for the daemon to reload the new license
-    lic = _wait_for_reload_seq_change(
-        initial_seq,
-        "License daemon did not reload after upload (reload_seq unchanged). "
-        "The daemon may be unresponsive.",
-    )
-
+    lic = None
     try:
+        # Write the new license to disk -- daemon picks this up via inotify
+        with atomic_write(LICENSE_FILE, "w", perms=0o600) as f:
+            f.write(license_pem)
+
+        # Wait for the daemon to reload the new license
+        lic = _wait_for_reload_seq_change(
+            initial_seq,
+            "License daemon did not reload after upload (reload_seq unchanged). "
+            "The daemon may be unresponsive.",
+        )
+
         yield lic
     except Exception:
         if had_backup:
@@ -132,13 +133,14 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(LICENSE_FILE)
 
-        # Wait for the daemon to acknowledge the rollback
-        _wait_for_reload_seq_change(
-            lic.reload_seq,
-            "License daemon did not reload after rollback (reload_seq unchanged). "
-            "The daemon may be unresponsive.",
-            raise_=False,
-        )
+        if lic is not None:
+            # Wait for the daemon to acknowledge the rollback
+            _wait_for_reload_seq_change(
+                lic.reload_seq,
+                "License daemon did not reload after rollback (reload_seq unchanged). "
+                "The daemon may be unresponsive.",
+                raise_=False,
+            )
 
         raise
 
