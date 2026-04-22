@@ -60,10 +60,14 @@ class TrueNASLicenseService(Service):
                 LicenseType.ENTERPRISE_SINGLE
             ):
                 if lic.type == LicenseType.ENTERPRISE_HA:
-                    configure_ha_license(self.middleware, had_license)
+                    configure_ha_license(self.middleware)
 
                 with open(EULA_PENDING_PATH, "a+") as f:
                     os.fchmod(f.fileno(), 0o600)
+
+        self.middleware.run_coroutine(
+            self.middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
+        )
 
     @private
     def reset_legacy_license_cache(self) -> None:

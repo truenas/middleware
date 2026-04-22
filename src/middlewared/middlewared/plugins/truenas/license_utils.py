@@ -182,7 +182,7 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     )
 
 
-def configure_ha_license(middleware: Middleware, had_license: bool) -> None:
+def configure_ha_license(middleware: Middleware) -> None:
     try:
         middleware.call_sync("failover.ensure_remote_client")
     except Exception as e:
@@ -205,7 +205,3 @@ def configure_ha_license(middleware: Middleware, had_license: bool) -> None:
         middleware.call_sync("failover.send_license")
     except Exception:
         logger.warning("Failed to send file to remote node", exc_info=True)
-
-    middleware.run_coroutine(
-        middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
-    )
