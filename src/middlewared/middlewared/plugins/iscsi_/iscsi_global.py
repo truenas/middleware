@@ -113,7 +113,7 @@ class ISCSIGlobalService(SystemServiceService):
         return data
 
     @private
-    async def _validate_mode(self, schema_name, mode, old, verrors):
+    async def _validate_mode(self, schema_name, mode, old, verrors, new_alua=False):
         old_mode = old['mode']
 
         # Basic sanity: reject unknown mode values before any further checks.
@@ -127,7 +127,7 @@ class ISCSIGlobalService(SystemServiceService):
         # and can reconfigure while the service is still running.
         if mode >= ISCSIMODE.LIO and old_mode < ISCSIMODE.LIO:
             verrors.extend(
-                await self.middleware.call('iscsi.lio.validate_scst_compat', schema_name)
+                await self.middleware.call('iscsi.lio.validate_scst_compat', schema_name, new_alua)
             )
 
         # Mode switches require the service to be stopped so the old stack can
@@ -151,9 +151,23 @@ class ISCSIGlobalService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if (mode := data.get('mode')) is not None:
-            if mode != old['mode']:
-                await self._validate_mode('iscsiglobal_update.mode', mode, old, verrors)
+        mode_changing = data.get('mode') is not None and data['mode'] != old['mode']
+        if mode_changing:
+            await self._validate_mode(
+                'iscsiglobal_update.mode', data['mode'], old, verrors,
+                new_alua=new.get('alua', old['alua']),
+            )
+
+        # When ALUA is being enabled without a simultaneous mode switch, check
+        # that all targets are compatible (mode switch path covers this via
+        # validate_scst_compat → validate_alua_compat, so avoid double-running).
+        if data.get('alua') and not old['alua'] and not mode_changing:
+            if new.get('mode', old['mode']) >= ISCSIMODE.LIO:
+                verrors.extend(
+                    await self.middleware.call(
+                        'iscsi.lio.validate_alua_compat', 'iscsiglobal_update.alua'
+                    )
+                )
 
         servers = data.get('isns_servers') or []
         server_addresses = []
@@ -194,20 +208,21 @@ class ISCSIGlobalService(SystemServiceService):
                 await self.middleware.call(
                     'failover.call_remote', 'service.control', ['STOP', 'iscsitarget'], {'job': True}
                 )
-                # Ensure we have actually fully unloaded before we proceed
-                for retry in range(0, 20):
-                    loaded = await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.scst.is_kernel_module_loaded'
-                    )
-                    if not loaded:
-                        if retry > 5:
-                            self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
-                        break
-                    await asyncio.sleep(1)
-                if loaded:
-                    self.logger.warning('Insufficent unload delay when turning off ALUA')
-                await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                if old['mode'] < ISCSIMODE.LIO:
+                    # Ensure we have actually fully unloaded before we proceed
+                    for retry in range(0, 20):
+                        loaded = await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.scst.is_kernel_module_loaded'
+                        )
+                        if not loaded:
+                            if retry > 5:
+                                self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
+                            break
+                        await asyncio.sleep(1)
+                    if loaded:
+                        self.logger.warning('Insufficent unload delay when turning off ALUA')
+                    await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
 
         await self._update_service(old, new, options={'ha_propagate': False})
 

@@ -540,12 +540,17 @@ class FailoverEventsService(Service):
         if self.run_call('service.started_or_enabled', 'iscsitarget'):
             logger.info('Checking if ALUA is enabled')
             handle_alua = self.run_call('iscsi.global.alua_enabled')
+            lio_mode = self.run_call('iscsi.global.lio_enabled')
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
-                self.run_call('iscsi.scst.suspend_logins')
-                self.run_call('iscsi.scst.set_alua_transitioning')
+                if lio_mode:
+                    self.run_call('iscsi.lio.set_alua_transitioning')
+                else:
+                    self.run_call('iscsi.scst.suspend_logins')
+                    self.run_call('iscsi.scst.set_alua_transitioning')
         else:
             handle_alua = False
+            lio_mode = False
         logger.info('Done verifying iSCSI service')
 
         if not fobj['volumes']:
@@ -749,19 +754,22 @@ class FailoverEventsService(Service):
         logger.info('Done syncing disks')
 
         if handle_alua:
-            try:
-                # Deferred: tear down the HA iSCSI session now that all LUN mappings
-                # have been swapped to dev_vdisk.  dev_disk detaching at this point
-                # cascades through SCST but finds no remaining LUN references (they
-                # were replaced in become_active), so the cascade is harmless.
-                logger.info('Reset active start (deferred)')
-                self.run_call('iscsi.alua.reset_active')
-                logger.info('Reset active job started')
-            except Exception:
-                logger.exception('Reset active failed')
-            finally:
-                self.run_call('iscsi.scst.resume_logins')
-                self.run_call('iscsi.scst.set_alua_active')
+            if lio_mode:
+                self.run_call('iscsi.lio.set_alua_active')
+            else:
+                try:
+                    # Deferred: tear down the HA iSCSI session now that all LUN mappings
+                    # have been swapped to dev_vdisk.  dev_disk detaching at this point
+                    # cascades through SCST but finds no remaining LUN references (they
+                    # were replaced in become_active), so the cascade is harmless.
+                    logger.info('Reset active start (deferred)')
+                    self.run_call('iscsi.alua.reset_active')
+                    logger.info('Reset active job started')
+                except Exception:
+                    logger.exception('Reset active failed')
+                finally:
+                    self.run_call('iscsi.scst.resume_logins')
+                    self.run_call('iscsi.scst.set_alua_active')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
@@ -1000,15 +1008,19 @@ class FailoverEventsService(Service):
         if self.run_call('iscsi.global.alua_enabled'):
             if self.run_call('service.started_or_enabled', 'iscsitarget'):
                 logger.info('Starting iSCSI for ALUA')
-                # Rewrite the scst.conf config to a clean slate state
-                self.run_call('iscsi.alua.standby_write_empty_config', True)
-                self.run_call('etc.generate', 'scst')
+                if not self.run_call('iscsi.global.lio_enabled'):
+                    # Rewrite the scst.conf config to a clean slate state
+                    self.run_call('iscsi.alua.standby_write_empty_config', True)
+                    self.run_call('etc.generate', 'scst')
 
-                # The most likely situation is that scst is not running
-                if self.run_call('iscsi.scst.is_kernel_module_loaded'):
-                    self.run_call('service.control', 'RESTART', 'iscsitarget', self.HA_PROPAGATE, job=True)
+                    # The most likely situation is that scst is not running
+                    if self.run_call('iscsi.scst.is_kernel_module_loaded'):
+                        self.run_call('service.control', 'RESTART', 'iscsitarget', self.HA_PROPAGATE, job=True)
+                    else:
+                        self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
                 else:
                     self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
+                    self.run_call('iscsi.lio.set_alua_transitioning')
 
         if self.run_call('nvmet.global.ana_active') and self.run_call('service.started_or_enabled', 'nvmet'):
             if self.run_call('nvmet.global.running'):

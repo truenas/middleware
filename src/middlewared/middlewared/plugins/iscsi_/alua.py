@@ -7,6 +7,8 @@ from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 from middlewared.utils.iscsi.constants import ISCSIMODE
 
+from middlewared.utils.lio.config import LIO_HA_DIR
+
 from .utils import delete_scsi_disk
 
 CHUNK_SIZE = 20
@@ -68,15 +70,11 @@ class iSCSITargetAluaService(Service):
                 await self.middleware.call('etc.generate', 'scst')
 
     async def after_start(self):
-        if await self.middleware.call('iscsi.global.lio_enabled'):
-            return
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 await self.middleware.call('iscsi.alua.standby_after_start')
 
     async def before_stop(self):
-        if await self.middleware.call('iscsi.global.lio_enabled'):
-            return
         self.standby_starting = False
 
     async def after_stop(self):
@@ -112,6 +110,16 @@ class iSCSITargetAluaService(Service):
         return self._standby_write_empty_config
 
     async def become_active(self):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            self.logger.debug('Becoming active (LIO)')
+            if not LIO_HA_DIR.exists():
+                rjob = await self.middleware.call(
+                    'service.control', 'START', 'iscsitarget', self.HA_PROPAGATE
+                )
+                await rjob.wait(raise_error=True)
+            await self.middleware.call('iscsi.lio.become_active')
+            return
+
         self.logger.debug('Becoming active upon failover event starting')
         config = await self.middleware.call('iscsi.global.config')
         iqn_basename = config['basename']
@@ -221,6 +229,37 @@ class iSCSITargetAluaService(Service):
 
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            self.logger.debug('ALUA starting on STANDBY (LIO)')
+            job.set_progress(0, 'Waiting for lio_ha to sync')
+            self.standby_starting = True
+            self.standby_alua_ready = False
+
+            while self.standby_starting:
+                state = await self.middleware.call('iscsi.lio.ha_state')
+                if state == 'synced':
+                    break
+                await asyncio.sleep(2)
+
+            if not self.standby_starting:
+                job.set_progress(100, 'Abandoned.')
+                return
+
+            await self.middleware.call('iscsi.lio.set_alua_nonoptimized')
+            try:
+                await self.middleware.call(
+                    'failover.call_remote', 'iscsi.lio.refresh_alua_states',
+                    [], {'timeout': 10},
+                )
+            except Exception:
+                self.logger.warning(
+                    'Failed to refresh ALUA states on ACTIVE node', exc_info=True
+                )
+            self.standby_alua_ready = True
+            job.set_progress(100, 'lio_ha synced')
+            self.logger.debug('ALUA started on STANDBY (LIO)')
+            return
+
         job.set_progress(0, 'ALUA starting on STANDBY')
         self.logger.debug('ALUA starting on STANDBY')
         self.standby_starting = True
