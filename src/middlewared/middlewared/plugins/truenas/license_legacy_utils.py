@@ -1,11 +1,14 @@
 from functools import lru_cache
 from datetime import date
+import logging
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
 from truenas_pylicensed import LicenseType
 
 from .license_utils import FeatureInfo, LicenseInfo
+
+logger = logging.getLogger(__name__)
 
 
 LEGACY_LICENSE_FILE = '/data/license'
@@ -32,7 +35,10 @@ def get_legacy_license_info() -> LicenseInfo | None:
     try:
         with open(LEGACY_LICENSE_FILE) as f:
             return parse_legacy_license(f.read().strip('\n'))
-    except Exception:
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        logger.warning("Error loading legacy license: %r", e)
         return None
 
 
