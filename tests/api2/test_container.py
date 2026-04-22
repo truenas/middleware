@@ -15,6 +15,7 @@ from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
 UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
+ALPINE_IMAGE_NAME = "alpine:edge:amd64:default"
 VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {
@@ -76,6 +77,14 @@ def ubuntu_image():
     version = [image["versions"][-1]["version"] for image in images if image["name"] == UBUNTU_IMAGE_NAME][0]
 
     yield {"name": UBUNTU_IMAGE_NAME, "version": version}
+
+
+@pytest.fixture(scope="module")
+def alpine_image():
+    images = call("container.image.query_registry")
+    version = [image["versions"][-1]["version"] for image in images if image["name"] == ALPINE_IMAGE_NAME][0]
+
+    yield {"name": ALPINE_IMAGE_NAME, "version": version}
 
 
 @contextlib.contextmanager
@@ -205,6 +214,14 @@ def test_container_stop_force_after_timeout(ubuntu_container):
     call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "STOPPED"
+
+
+def test_container_shell_alpine(alpine_image):
+    # NAS-140496: Alpine images do not ship capsh, so the capsh wrapper
+    # produced by container.nsenter must run on the host before nsenter
+    # switches into the container's mount namespace.
+    with container(alpine_image, start=True) as c:
+        assert "alpine" in ssh(nsenter(c, "cat /etc/os-release")).lower()
 
 
 def test_container_shell(started_ubuntu_container):
