@@ -171,3 +171,31 @@ class ISCSIGlobalService(Service):
                 await self.middleware.call(
                     'iscsi.scst.remove_target_lun', ha_iqn, lun_id
                 )
+
+            if lio and alua:
+                # In LIO HA the STANDBY has its own storage objects in configfs
+                # that forward to ACTIVE.  They must be removed explicitly since
+                # there is no HA IQN login to drop (unlike SCST ALUA).
+                if mode in ('ISCSI', 'BOTH'):
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'iscsi.lio.remove_target_lun',
+                            [iqn, lun_id], {'timeout': 10},
+                        )
+                    except Exception:
+                        self.logger.warning(
+                            'Failed to remove iSCSI LUN %r/%r from STANDBY configfs',
+                            iqn, lun_id, exc_info=True,
+                        )
+                if mode in ('FC', 'BOTH'):
+                    for wwpn in fcports_by_target.get(target['id'], []):
+                        try:
+                            await self.middleware.call(
+                                'failover.call_remote', 'iscsi.lio.remove_target_lun',
+                                [wwpn, lun_id], {'timeout': 10},
+                            )
+                        except Exception:
+                            self.logger.warning(
+                                'Failed to remove FC LUN %r/%r from STANDBY configfs',
+                                wwpn, lun_id, exc_info=True,
+                            )
