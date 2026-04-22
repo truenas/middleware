@@ -307,8 +307,12 @@ class AlertService(Service):
                 alert["_text"] = alert.pop("text")
 
                 args = alert.pop("args")
-                instance = klass.from_args(args)
-                alert = Alert(instance, **alert)
+                try:
+                    instance = klass.from_args(args)
+                    alert = Alert(instance, **alert)
+                except Exception as e:
+                    self.logger.info("Error loading alert class %r: %r", class_name, e)
+                    continue
 
                 if alert.uuid not in alerts_uuids:
                     alerts_uuids.add(alert.uuid)
@@ -316,7 +320,11 @@ class AlertService(Service):
 
             for alerts in alerts_by_classes.values():
                 if isinstance(alerts[0].instance, OneShotAlertClass):
-                    alerts = await alerts[0].instance.load(self.middleware, alerts)
+                    try:
+                        alerts = await alerts[0].instance.load(self.middleware, alerts)
+                    except Exception as e:
+                        self.logger.info("Error loading one-shot alert %r: %r", alerts[0].instance, e)
+                        continue
 
                 self.alerts.extend(alerts)
         else:
