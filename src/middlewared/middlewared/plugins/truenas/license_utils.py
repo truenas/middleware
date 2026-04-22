@@ -127,20 +127,23 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
 
         yield lic
     except Exception:
-        if had_backup:
-            shutil.move(LICENSE_BACKUP, LICENSE_FILE)
-        else:
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink(LICENSE_FILE)
+        try:
+            if had_backup:
+                shutil.move(LICENSE_BACKUP, LICENSE_FILE)
+            else:
+                with contextlib.suppress(FileNotFoundError):
+                    os.unlink(LICENSE_FILE)
 
-        if lic is not None:
-            # Wait for the daemon to acknowledge the rollback
-            _wait_for_reload_seq_change(
-                lic.reload_seq,
-                "License daemon did not reload after rollback (reload_seq unchanged). "
-                "The daemon may be unresponsive.",
-                raise_=False,
-            )
+            if lic is not None:
+                # Wait for the daemon to acknowledge the rollback
+                _wait_for_reload_seq_change(
+                    lic.reload_seq,
+                    "License daemon did not reload after rollback (reload_seq unchanged). "
+                    "The daemon may be unresponsive.",
+                    raise_=False,
+                )
+        except Exception as e:
+            logger.error("Error rolling back license: %r", e)
 
         raise
 
