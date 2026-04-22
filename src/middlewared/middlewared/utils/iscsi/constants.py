@@ -19,3 +19,10 @@ class ALUA_STATE(enum.IntEnum):
 
     def __str__(self):
         return str(self.value)
+
+
+# HA ALUA target port group names and IDs (must match SCST scst.conf.mako hardcoding)
+ALUA_GROUP_A = "controller_A"
+ALUA_GROUP_B = "controller_B"
+ALUA_GROUP_ID_A = 101
+ALUA_GROUP_ID_B = 102

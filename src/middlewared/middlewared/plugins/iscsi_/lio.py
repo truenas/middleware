@@ -1,11 +1,13 @@
 import pathlib
 
 from middlewared.service import Service, ValidationErrors, private
+from middlewared.utils.iscsi.constants import ALUA_GROUP_A, ALUA_GROUP_B, ALUA_STATE
 from middlewared.utils.lio.config import (
     FC_DIR,
     FILEIO_DIR,
     IBLOCK_DIR,
     ISCSI_DIR,
+    LIO_HA_DIR,
     sanitize_lio_extent,
 )
 
@@ -44,12 +46,53 @@ class iSCSILIOService(Service):
         private = True
 
     @private
-    async def validate_scst_compat(self, schema_name):
+    async def validate_alua_compat(self, schema_name):
+        """Check that no target has an open or absent initiator group.
+
+        An absent or empty initiator group causes LIO to use generate_node_acls=1
+        (demo mode), which is incompatible with ALUA HA: lio_ha forwarding
+        sessions do not match any static ACL entry.
+
+        Returns a ValidationErrors object; the caller extends its own collection.
+        """
+        verrors = ValidationErrors()
+        initiator_groups = {
+            ig['id']: ig['initiators']
+            for ig in await self.middleware.call('iscsi.initiator.query')
+        }
+        targets = await self.middleware.call(
+            'iscsi.target.query', [], {'select': ['name', 'groups']}
+        )
+        open_targets = []
+        for t in targets:
+            for g in t.get('groups', []):
+                ig_id = g.get('initiator')
+                if not ig_id or not initiator_groups.get(ig_id):
+                    open_targets.append(t['name'])
+                    break
+        if open_targets:
+            names = ', '.join(open_targets)
+            verrors.add(
+                schema_name,
+                f'ALUA requires a static initiator ACL (at least one IQN) on '
+                f'every target group. The following targets have an open or '
+                f'absent initiator group, which produces generate_node_acls=1 '
+                f'and is incompatible with ALUA: {names}. Assign a named '
+                f'initiator group with at least one IQN to each target before '
+                f'enabling ALUA.',
+            )
+        return verrors
+
+    @private
+    async def validate_scst_compat(self, schema_name, new_alua=False):
         """Check that the current configuration is compatible with LIO.
 
         Called when switching from any SCST mode to LIO.  Returns a
         ValidationErrors object; the caller extends its own error collection
         with the result.
+
+        new_alua: if True, also run validate_alua_compat (ALUA is being
+        enabled alongside the mode switch).
         """
         verrors = ValidationErrors()
 
@@ -168,7 +211,142 @@ class iSCSILIOService(Service):
                 f'implement equivalent filtering before switching.',
             )
 
+        if new_alua:
+            verrors.extend(await self.validate_alua_compat(schema_name))
+
         return verrors
+
+    @private
+    def ha_state(self) -> str:
+        """Return the current lio_ha channel state.
+
+        Reads LIO_HA_DIR/ha_state.  Possible values (matching kernel enum):
+          'disconnected' -- TCP link is down (module just loaded, or link lost)
+          'connected'    -- TCP link is up; LUN_SYNC in progress
+          'synced'       -- LUN_SYNC_DONE received; PR state is current
+
+        Returns 'disconnected' on OSError (module not loaded yet, or
+        configfs not mounted).
+        """
+        try:
+            return (LIO_HA_DIR / 'ha_state').read_text().strip()
+        except OSError:
+            return 'disconnected'
+
+    @private
+    def become_active(self):
+        """Write forward_active=0 to trigger LIO HA failover on this node.
+
+        Writing 0 to the forward_active configfs attribute causes the lio_ha
+        kernel module to transfer PR state from the wire channel, open all
+        iblock/fileio backends, and stop forwarding I/O to the PRIMARY node.
+        After this write returns the LIO target is serving I/O from local
+        storage.
+        """
+        (LIO_HA_DIR / 'forward_active').write_text('0\n')
+
+    @private
+    def _set_local_alua_state(self, state: ALUA_STATE):
+        """Write `state` to the local controller's ALUA group for every storage object.
+
+        The local controller group is controller_A on node A, controller_B on node B.
+        Iterates all iblock and fileio storage objects and writes to
+        alua/{group_name}/alua_access_state for each.  Missing group directories
+        (storage object not yet in HA mode, or SO just created) are skipped silently.
+        """
+        node = self.middleware.call_sync('failover.node')
+        group_name = ALUA_GROUP_A if node == 'A' else ALUA_GROUP_B
+        for backstore in (IBLOCK_DIR, FILEIO_DIR):
+            if not backstore.exists():
+                continue
+            for so_dir in backstore.iterdir():
+                if not so_dir.is_dir():
+                    continue
+                state_path = so_dir / 'alua' / group_name / 'alua_access_state'
+                if state_path.exists():
+                    state_path.write_text(f'{state}\n')
+
+    @private
+    def set_alua_transitioning(self):
+        """Set the local node's ALUA target port group to TRANSITIONING.
+
+        Called on the ACTIVE node before pool import (vrrp_master) and on the
+        STANDBY node immediately after iscsitarget starts (vrrp_backup) to
+        signal to initiators that path states are in flux.
+        """
+        self._set_local_alua_state(ALUA_STATE.TRANSITIONING)
+
+    @private
+    def set_alua_active(self):
+        """Set the local node's ALUA target port group to ACTIVE_OPTIMIZED.
+
+        Called on the new ACTIVE node after become_active() and all LUN
+        backends are open (vrrp_master post-failover).
+        """
+        self._set_local_alua_state(ALUA_STATE.OPTIMIZED)
+
+    @private
+    def set_alua_nonoptimized(self):
+        """Set the local node's ALUA target port group to NONOPTIMIZED.
+
+        Called on the STANDBY node from standby_after_start() once lio_ha
+        reports ha_state == 'synced', signalling that STANDBY paths are
+        available but not preferred.
+        """
+        self._set_local_alua_state(ALUA_STATE.NONOPTIMIZED)
+
+    @private
+    def refresh_alua_states(self):
+        """Re-evaluate the 4-row ALUA state table and write both controller groups.
+
+        Called on the ACTIVE node via failover.call_remote when the STANDBY's
+        ha_state transitions to 'synced', to update the remote group from
+        TRANSITIONING to NONOPTIMIZED.
+
+        Reads failover.node, failover.status, and ha_state live so the result
+        is always consistent with current system state.
+        """
+        node = self.middleware.call_sync('failover.node')
+        failover_status = self.middleware.call_sync('failover.status')
+        is_master = failover_status == 'MASTER'
+
+        try:
+            ha_state = (LIO_HA_DIR / 'ha_state').read_text().strip()
+        except OSError:
+            ha_state = 'disconnected'
+        synced = ha_state == 'synced'
+
+        if node == 'A':
+            local_group = ALUA_GROUP_A
+            remote_group = ALUA_GROUP_B
+        else:
+            local_group = ALUA_GROUP_B
+            remote_group = ALUA_GROUP_A
+
+        if is_master:
+            local_state = ALUA_STATE.OPTIMIZED
+            remote_state = (
+                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
+            )
+        else:
+            local_state = (
+                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
+            )
+            remote_state = ALUA_STATE.OPTIMIZED
+
+        for backstore in (IBLOCK_DIR, FILEIO_DIR):
+            if not backstore.exists():
+                continue
+            for so_dir in backstore.iterdir():
+                if not so_dir.is_dir():
+                    continue
+                for group_name, state in (
+                    (local_group, local_state),
+                    (remote_group, remote_state),
+                ):
+                    state_path = so_dir / 'alua' / group_name / 'alua_access_state'
+                    if state_path.exists():
+                        state_path.write_text(f'{state}\n')
 
     @private
     def sessions(self, global_info):

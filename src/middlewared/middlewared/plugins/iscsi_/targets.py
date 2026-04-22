@@ -249,6 +249,19 @@ class iSCSITargetService(CRUDService):
             )
         )
 
+        # In LIO ALUA mode every group must have a static initiator list;
+        # an absent or empty initiator group produces generate_node_acls=1
+        # which is incompatible with lio_ha forwarding.
+        lio_alua = (
+            await self.middleware.call('iscsi.global.lio_enabled') and
+            await self.middleware.call('iscsi.global.alua_enabled')
+        )
+        if lio_alua:
+            lio_initiator_groups = {
+                ig['id']: ig['initiators']
+                for ig in await self.middleware.call('iscsi.initiator.query')
+            }
+
         portals = []
         for i, group in enumerate(data['groups']):
             if group['portal'] in portals:
@@ -269,6 +282,13 @@ class iSCSITargetService(CRUDService):
                     f'{schema_name}.groups.{i}.initiator',
                     f'{group["initiator"]} Initiator not found in database'
                 )
+            elif lio_alua:
+                ig_id = group.get('initiator')
+                if not ig_id or not lio_initiator_groups.get(ig_id):
+                    verrors.add(
+                        f'{schema_name}.groups.{i}.initiator',
+                        'ALUA requires a static initiator group with at least one IQN.',
+                    )
 
             if not group['auth'] and group['authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
                 verrors.add(
