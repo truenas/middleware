@@ -214,60 +214,72 @@ class iSCSITargetExtentService(SharingService):
         if assoc and target_name:
             # ALUA is enabled and we changed the enabled state of a mapped extent
             await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
-            if new['enabled']:
-                # Just re-enabled the extent
+            if await self.middleware.call('iscsi.global.lio_enabled'):
+                # LIO: STANDBY holds its own storage objects/LUNs; a plain remote
+                # reload reconciles the enable/disable change into its configfs
+                # directly.  No HA-proxy wait/rescan/cluster_mode dance, and
+                # nothing async left running afterward to settle on.
                 await self.middleware.call(
-                    'iscsi.target.wait_for_ha_lun_present',
-                    target_name,
-                    assoc['lunid']
+                    'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
                 )
-                try:
-                    await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.alua.added_target_extent',
-                        [target_name]
-                    )
-                    # Now update the remote node.  Since it is
-                    # not the MASTER it will not propagate back.
-                    await self.middleware.call(
-                        'failover.call_remote',
-                        'service.control',
-                        ['RELOAD', 'iscsitarget'],
-                        {'job': True},
-                    )
-                    await self.middleware.call(
-                        'iscsi.alua.wait_cluster_mode',
-                        assoc['target'],
-                        assoc['extent']
-                    )
-                except Exception:
-                    self.logger.exception('Failed to update STANDBY node')
             else:
-                # Just disenabled the extent
-                await self.middleware.call(
-                    'iscsi.target.wait_for_ha_lun_absent',
-                    target_name,
-                    assoc['lunid']
-                )
-                try:
-                    # iscsi.alua.removed_target_extent includes a local service reload
+                # SCST: STANDBY re-exports the ACTIVE's storage via an internal HA
+                # proxy target that it logs into over iSCSI, so the enable/disable
+                # change has to be pushed to it explicitly.
+                if new['enabled']:
+                    # Just re-enabled the extent
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.alua.removed_target_extent',
-                        [target_name, assoc['lunid'], old['name']]
+                        'iscsi.target.wait_for_ha_lun_present',
+                        target_name,
+                        assoc['lunid']
                     )
-                    # Now update the remote node.  Since it is
-                    # not the MASTER it will not propagate back.
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.alua.added_target_extent',
+                            [target_name]
+                        )
+                        # Now update the remote node.  Since it is
+                        # not the MASTER it will not propagate back.
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'service.control',
+                            ['RELOAD', 'iscsitarget'],
+                            {'job': True},
+                        )
+                        await self.middleware.call(
+                            'iscsi.alua.wait_cluster_mode',
+                            assoc['target'],
+                            assoc['extent']
+                        )
+                    except Exception:
+                        self.logger.exception('Failed to update STANDBY node')
+                else:
+                    # Just disenabled the extent
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'service.control',
-                        ['RELOAD', 'iscsitarget'],
-                        {'job': True},
+                        'iscsi.target.wait_for_ha_lun_absent',
+                        target_name,
+                        assoc['lunid']
                     )
-                except Exception:
-                    self.logger.exception('Failed to update STANDBY node')
-            # Either way wait for ALUA settle
-            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+                    try:
+                        # iscsi.alua.removed_target_extent includes a local service reload
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.alua.removed_target_extent',
+                            [target_name, assoc['lunid'], old['name']]
+                        )
+                        # Now update the remote node.  Since it is
+                        # not the MASTER it will not propagate back.
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'service.control',
+                            ['RELOAD', 'iscsitarget'],
+                            {'job': True},
+                        )
+                    except Exception:
+                        self.logger.exception('Failed to update STANDBY node')
+                # Either way wait for ALUA settle
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
         else:
             await self._service_change('iscsitarget', 'reload')
 
