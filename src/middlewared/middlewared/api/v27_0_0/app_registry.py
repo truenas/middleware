@@ -4,8 +4,10 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 
 
 __all__ = [
-    'AppRegistryEntry', 'AppRegistryCreateArgs', 'AppRegistryCreateResult', 'AppRegistryUpdateArgs',
-    'AppRegistryUpdateResult', 'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
+    'AppRegistryEntry', 'AppRegistryCreate', 'AppRegistryUpdate',
+    'AppRegistryCreateArgs', 'AppRegistryCreateResult',
+    'AppRegistryUpdateArgs', 'AppRegistryUpdateResult',
+    'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
 ]
 
 

@@ -32,6 +32,7 @@ from middlewared.api.current import (
     AppLatestItem, AppAvailableItem,
     AppSimilarArgs, AppSimilarResult,
 )
+from middlewared.plugins.app_registry import AppRegistryService
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
 from .app_scale import redeploy_app, start_app, stop_app
@@ -98,6 +99,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self.ix_volume = AppsIxVolumeService(middleware)
+        self.registry = AppRegistryService(middleware)
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]

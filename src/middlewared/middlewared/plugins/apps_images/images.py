@@ -81,7 +81,8 @@ class AppImageService(CRUDService):
             # If user has not provided any auth creds, we will try to see if the registry to which the image
             # belongs to, we already have it's creds and if yes we will try to use that when pulling the image
             app_registries = {
-                registry['uri']: registry for registry in self.middleware.call_sync('app.registry.query')
+                registry.uri: registry
+                for registry in self.middleware.call_sync2(self.middleware.services.app.registry.query)
             }
             auth_config = get_normalized_auth_config(app_registries, image_tag)
 
