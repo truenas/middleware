@@ -46,12 +46,13 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
-from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.failover_.event import BACKUP_STOP_SERVICES
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.truenas.license_utils import LICENSE_FILE
+from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
@@ -157,16 +158,7 @@ class FailoverService(ConfigService):
     )
     def licensed(self):
         """Checks whether this instance is licensed as an HA unit."""
-        try:
-            is_ha = self.middleware.call_sync('cache.get', HA_LICENSE_CACHE_KEY)
-        except KeyError:
-            is_ha = is_licensed_for_ha()
-            if is_ha:
-                # We only set this cache if it is HA keeping in line with previous behaviour
-                # We probably should invalidate this cache on system license update
-                self.middleware.call_sync('cache.put', HA_LICENSE_CACHE_KEY, is_ha)
-
-        return is_ha
+        return is_licensed_for_ha()
 
     @private
     async def ha_mode(self):
@@ -399,7 +391,7 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
-        self.send_small_file('/data/license')
+        self.send_license()
         self.send_pwenc_secret()
         self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
@@ -413,11 +405,8 @@ class FailoverService(ConfigService):
             {'timeout': 300},  # Give more time for potential initrd update
         )
 
-        # need to make sure the license information is updated on the standby node since
-        # it's cached in memory
-        _prev = self.middleware.call_sync('system.license')
         self.middleware.call_sync(
-            'failover.call_remote', 'core.call_hook', ['system.post_license_update', [_prev]]
+            'failover.call_remote', 'core.call_hook', ['system.post_license_update', [True]]
         )
 
         if options['reboot']:
@@ -433,6 +422,30 @@ class FailoverService(ConfigService):
         Sync database and files from the other controller.
         """
         self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
+
+    @private
+    def send_license(self):
+        if os.path.exists(LICENSE_FILE):
+            with open(LICENSE_FILE, 'r') as f:
+                license_ = f.read()
+
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote', 'truenas.license.upload', [license_, {"ha_propagate": False}],
+                )
+            except Exception as e:
+                self.logger.error(f'Failed to call truenas.license.upload on the remote node: {e!r}')
+
+            return
+
+        if os.path.exists(LEGACY_LICENSE_FILE):
+            self.send_small_file(LEGACY_LICENSE_FILE)
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote', 'truenas.license.reset_legacy_license_cache', [],
+                )
+            except Exception as e:
+                self.logger.error(f'Failed to reset legacy license cache on the remote node: {e!r}')
 
     @private
     def send_pwenc_secret(self):

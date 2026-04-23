@@ -36,8 +36,7 @@ class VMService(Service):
         """
         can_run_vms = True
         if await self.middleware.call('system.is_ha_capable'):
-            license_ = await self.middleware.call('system.license')
-            can_run_vms = license_ is not None and 'VM' in license_['features']
+            can_run_vms = await self.middleware.call('system.feature_enabled', 'VM')
 
         return can_run_vms
 

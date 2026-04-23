@@ -1,12 +1,10 @@
 name: pytest CI
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
-
-  workflow_dispatch:
+    types:
+      - 'synchronize'
+      - 'opened'
 
 jobs:
   build:

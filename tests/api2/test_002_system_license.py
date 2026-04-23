@@ -16,7 +16,7 @@ def test_apply_and_verify_license():
             _license_string = f.read()
 
     # apply license
-    call('system.license_update', _license_string)
+    call('truenas.license.upload', _license_string)
 
     # verify license is applied
     assert call('failover.licensed') is True

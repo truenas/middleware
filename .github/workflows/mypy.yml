@@ -1,12 +1,10 @@
 name: mypy static type checks
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
-
-  workflow_dispatch:
+    types:
+      - 'synchronize'
+      - 'opened'
 
 jobs:
   build:

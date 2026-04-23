@@ -8,7 +8,6 @@ import time
 import aiohttp
 import requests
 
-from licenselib.utils import proactive_support_allowed
 from middlewared.api import api_method
 from middlewared.api.current import (
     SupportEntry, SupportAttachTicketArgs, SupportAttachTicketResult, SupportAttachTicketMaxSizeArgs,
@@ -107,11 +106,7 @@ class SupportService(ConfigService):
         if not await self.middleware.call('system.is_enterprise'):
             return False
 
-        license_ = await self.middleware.call('system.license')
-        if license_ is None:
-            return False
-
-        return proactive_support_allowed(license_['contract_type'])
+        return await self.middleware.call('system.feature_enabled', 'SUPPORT')
 
     @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
     async def is_available_and_enabled(self):
@@ -179,11 +174,9 @@ class SupportService(ConfigService):
         else:
             required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
-            license_ = await self.middleware.call('system.license')
+            license_ = (await self.call2(self.s.truenas.license.info_private))
             if license_:
-                data['company'] = license_['customer_name']
-            else:
-                data['company'] = 'Unknown'
+                data['license_id'] = license_.id
 
         for i in required_attrs:
             if i not in data:
