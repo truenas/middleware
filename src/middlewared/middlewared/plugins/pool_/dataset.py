@@ -325,9 +325,18 @@ class PoolDatasetService(CRUDService):
         if (c_value := data.get('special_small_block_size')) is not None:
             tier_config = await self.middleware.call('zfs.tier.config')
             if tier_config.enabled:
-                # On CREATE, INHERIT is allowed and snapped to a canonical tier
-                # value (0 or 16 MiB) based on the parent's tier in do_create.
-                if c_value != 'INHERIT' or mode == 'UPDATE':
+                if mode == 'UPDATE':
+                    # Allow no-op resubmissions (effective value unchanged)
+                    cur_ssb = cur_dataset['special_small_block_size']
+                    reject = not (
+                        (c_value == 'INHERIT' and cur_ssb['source'] in ('INHERITED', 'DEFAULT', 'NONE'))
+                        or (c_value != 'INHERIT' and c_value == cur_ssb['parsed'])
+                    )
+                else:
+                    # CREATE: INHERIT is allowed (snapped to a canonical tier
+                    # value in do_create); numeric values are rejected.
+                    reject = c_value != 'INHERIT'
+                if reject:
                     verrors.add(
                         f'{schema}.special_small_block_size',
                         'ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage this property.'
