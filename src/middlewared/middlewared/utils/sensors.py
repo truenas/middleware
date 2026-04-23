@@ -9,6 +9,7 @@ from __future__ import annotations
 import ctypes
 import ctypes.util
 import enum
+import platform
 from types import TracebackType
 
 
@@ -189,9 +190,11 @@ class SensorsWrapper:
         lib_path: str | None = ctypes.util.find_library("sensors")
         if not lib_path:
             # Try common paths
+            arch_triplet = f'{platform.machine()}-linux-gnu'
             for path in [
                 "/usr/lib/libsensors.so",
-                "/usr/lib/x86_64-linux-gnu/libsensors.so",
+                f"/usr/lib/{arch_triplet}/libsensors.so",
+                f"/usr/lib/{arch_triplet}/libsensors.so.5",
             ]:
                 try:
                     self.lib = ctypes.CDLL(path)

@@ -7,11 +7,11 @@ Standards-Version: 4.4.0
 Homepage: http://www.truenas.com
 
 Package: truenas
-Architecture: all
+Architecture: amd64 arm64
 Depends: acl,
          console-setup,
          containerd.io,
-         cpuid,
+         cpuid [amd64],
 # We need to bring in dnsmasq-base explicitly as that is used for internal/automatic bridge network in virt plugin
          dnsmasq-base,
          docker-buildx-plugin,
@@ -45,7 +45,8 @@ Depends: acl,
          proftpd,
          proftpd-mod-crypto,
          python3-midcli,
-         qemu-system-x86,
+         qemu-system-x86 [amd64],
+         qemu-system-arm [arm64],
          truenas-samba,
          truenas-sssd,
          snmpd,

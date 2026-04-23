@@ -1,12 +1,13 @@
 import enum
 import ctypes
 import os
+import platform
 from typing import Any
 
 from collections import defaultdict
 
 
-NSS_MODULES_DIR = '/usr/lib/x86_64-linux-gnu'
+NSS_MODULES_DIR = f'/usr/lib/{platform.machine()}-linux-gnu'
 FILES_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_files.so.2')
 SSS_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_sss.so.2')
 WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_winbind.so.2')
@@ -27,7 +28,7 @@ class NSSModuleFN(defaultdict[str, Any]):
 
 class NSSModuleCDLL(defaultdict[str, NSSModuleFN]):
     """ A default dictionary that holds references to loaded shared libaries for the NSS modules above.
-    For example, '/usr/lib/x86_64-linux-gnu/libnss_files.so.2'. The returned value is an NSSModuleFN
+    For example, '/usr/lib/<triplet>/libnss_files.so.2'. The returned value is an NSSModuleFN
     that will hold references to lazy-initialized C function pointers."""
     def __missing__(self, key: str) -> NSSModuleFN:
         mod, path = key.split('.', 1)

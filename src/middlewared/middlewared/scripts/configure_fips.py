@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import logging
 import os
+import platform
 import shutil
 import sqlite3
 import subprocess
@@ -33,7 +34,7 @@ def configure_fips(enable_fips: bool) -> None:
     if enable_fips:
         subprocess.check_call([
             'openssl', 'fipsinstall', '-out', FIPS_MODULE_FILE,
-            '-module', '/usr/lib/x86_64-linux-gnu/ossl-modules/fips.so',
+            '-module', f'/usr/lib/{platform.machine()}-linux-gnu/ossl-modules/fips.so',
         ], timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     modify_openssl_config(enable_fips)
