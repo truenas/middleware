@@ -79,7 +79,7 @@ Standards-Version: 4.4.0
 Homepage: https://github.com/truenas/middleware
 
 Package: middlewared
-Architecture: all
+Architecture: amd64 arm64
 Depends: alembic,
          bsd-mailx,
          chrony,
@@ -102,7 +102,8 @@ Depends: alembic,
          lsof,
          mdadm,
          openresolv,
-         ovmf,
+         ovmf [amd64],
+         qemu-efi-aarch64 [arm64],
          parted,
          python3-acme,
          python3-aiohttp,
