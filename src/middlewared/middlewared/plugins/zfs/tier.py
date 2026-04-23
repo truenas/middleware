@@ -717,5 +717,5 @@ async def setup(middleware: Middleware) -> None:
         return
 
     await middleware.run_in_thread(
-        _apply_metadata_reserve_pct, middleware, config['special_class_metadata_reserve_pct']
+        _apply_metadata_reserve_pct, middleware, config.special_class_metadata_reserve_pct
     )
