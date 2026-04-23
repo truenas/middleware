@@ -3,10 +3,11 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import os
+from datetime import date
+from types import MappingProxyType
 
 import truenas_pylicensed
-from licenselib.license import License
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemFeatureEnabledArgs,
@@ -22,26 +23,22 @@ from middlewared.api.current import (
     SystemVersionShortArgs,
     SystemVersionShortResult,
 )
-from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string
 
-from .product_utils import get_license, LICENSE_FILE
+from middlewared.plugins.truenas.license_utils import LICENSE_FILE
+from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
 
-
-LICENSE_FILE_MODE = 0o600
-PRODUCT_NAME = 'TrueNAS'
+PRODUCT_NAME = "TrueNAS"
+LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW_MAPPING.items()})
 
 
 class SystemService(Service):
-
     PRODUCT_TYPE = None
 
     @api_method(
-        SystemProductTypeArgs,
-        SystemProductTypeResult,
-        roles=['SYSTEM_PRODUCT_READ']
+        SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
     async def product_type(self):
         """Returns the type of the product"""
@@ -50,8 +47,8 @@ class SystemService(Service):
                 # HA capable hardware
                 SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
-                if license_ := await self.middleware.call('system.license'):
-                    if license_['model'].lower().startswith('freenas'):
+                if license_ := await self.call2(self.s.truenas.license.info_private):
+                    if license_.model.lower().startswith("freenas"):
                         # legacy freenas certified
                         SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                     else:
@@ -66,15 +63,17 @@ class SystemService(Service):
 
     @private
     async def is_ha_capable(self):
-        return await self.middleware.call('failover.hardware') != 'MANUAL'
+        return await self.middleware.call("failover.hardware") != "MANUAL"
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
+        return (
+            await self.middleware.call("system.product_type") == ProductType.ENTERPRISE
+        )
 
     @private
     def sed_enabled(self):
-        return truenas_pylicensed.is_feature_licensed('SED')
+        return truenas_pylicensed.is_feature_licensed("SED")
 
     @api_method(
         SystemVersionShortArgs,
@@ -88,7 +87,7 @@ class SystemService(Service):
     @api_method(
         SystemReleaseNotesUrlArgs,
         SystemReleaseNotesUrlResult,
-        roles=['SYSTEM_PRODUCT_READ']
+        roles=["SYSTEM_PRODUCT_READ"],
     )
     def release_notes_url(self, version_str):
         """Returns the release notes URL for a version of SCALE.
@@ -100,15 +99,15 @@ class SystemService(Service):
         """
         parsed_version = parse_version_string(version_str or self.version_short())
         if parsed_version is None:
-            raise CallError(f'Invalid version string specified: {version_str}')
+            raise CallError(f"Invalid version string specified: {version_str}")
 
-        version_split = parsed_version.split('.')
-        major_version = '.'.join(version_split[0:2])
-        base_url = f'https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes'
+        version_split = parsed_version.split(".")
+        major_version = ".".join(version_split[0:2])
+        base_url = f"https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes"
         if len(version_split) == 2:
             return base_url
         else:
-            return f'{base_url}/#{"".join(version_split)}'
+            return f"{base_url}/#{''.join(version_split)}"
 
     @api_method(
         SystemVersionArgs,
@@ -121,68 +120,79 @@ class SystemService(Service):
 
     @private
     async def platform(self):
-        return 'LINUX'
+        return "LINUX"
 
     @private
     def license(self, include_raw_license: bool = False):
-        return get_license(include_raw_license)
+        info = self.call_sync2(self.s.truenas.license.info_private)
+        if info is None:
+            return None
 
-    @private
-    def license_path(self):
-        return LICENSE_FILE
+        result = {
+            'model': info.model,
+            'system_serial': info.serials[0] if info.serials else None,
+            'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
+            'contract_type': None,
+            'contract_start': None,
+            'contract_end': info.expires_at,
+            'legacy_contract_hardware': None,
+            'legacy_contract_software': None,
+            'customer_name': None,
+            'expired': info.expires_at is not None and info.expires_at < date.today(),
+            'features': [f.name for f in info.features],
+            'addhw': [],
+            'addhw_detail': [],
+        }
+
+        for name, quantity in info.enclosures.items():
+            result['addhw'].append([quantity, LICENSE_ADDHW_REVERSE_MAPPING.get(name, 0)])
+            result['addhw_detail'].append(f'{quantity} x {name} Expansion shelf')
+
+        if include_raw_license:
+            for f in [LICENSE_FILE, LEGACY_LICENSE_FILE]:
+                try:
+                    with open(f) as f:
+                        result['raw_license'] = f.read().strip()
+                        break
+                except FileNotFoundError:
+                    pass
+            else:
+                result['raw_license'] = None
+
+        return result
 
     @api_method(
         SystemLicenseUpdateArgs,
         SystemLicenseUpdateResult,
-        roles=['SYSTEM_PRODUCT_WRITE']
+        roles=["SYSTEM_PRODUCT_WRITE"],
     )
     def license_update(self, license_):
         """Update license file"""
-        try:
-            dser_license = License.load(license_)
-        except Exception:
-            raise ValidationError('system.license', 'This is not a valid license.')
-        else:
-            if dser_license.system_serial_ha:
-                if not self.middleware.call_sync('system.is_ha_capable'):
-                    raise ValidationError('system.license', 'This is not an HA capable system.')
-
-        prev_license = self.middleware.call_sync('system.license')
-        with open(LICENSE_FILE, 'w+') as f:
-            f.write(license_)
-            os.fchmod(f.fileno(), LICENSE_FILE_MODE)
-
-        self.middleware.call_sync('etc.generate', 'rc')
-        SystemService.PRODUCT_TYPE = None
-        if self.middleware.call_sync('system.is_enterprise'):
-            with open(EULA_PENDING_PATH, 'a+') as f:
-                os.fchmod(f.fileno(), 0o600)
-
-        self.call_sync2(self.s.alert.alert_source_clear_run, 'LicenseStatus')
-        self.middleware.call_sync('failover.configure.license', dser_license)
-        self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', prev_license=prev_license), wait=False,
+        raise ValidationError(
+            "system.license_update",
+            "Legacy license upload is no longer supported. Use truenas.license.upload instead.",
         )
 
     @api_method(
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
-        roles=['SYSTEM_PRODUCT_READ'],
+        roles=["SYSTEM_PRODUCT_READ"],
     )
     async def feature_enabled(self, name):
         """
         Returns whether the `feature` is enabled or not
         """
-        license_ = await self.middleware.call('system.license')
-        if license_ and name in license_['features']:
-            return True
+        info = await self.call2(self.s.truenas.license.info_private)
+        if info is not None:
+            return any(f.name == name for f in info.features)
+
         return False
 
 
-async def hook_license_update(middleware, prev_license, *args, **kwargs):
-    if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
-        await middleware.call('system.advanced.update', {'autotune': True})
+async def hook_license_update(middleware, had_license, *args, **kwargs):
+    if not had_license and await middleware.call("system.product_type") == "ENTERPRISE":
+        await middleware.call("system.advanced.update", {"autotune": True})
 
 
 async def setup(middleware):
-    middleware.register_hook('system.post_license_update', hook_license_update)
+    middleware.register_hook("system.post_license_update", hook_license_update)

@@ -8,12 +8,13 @@ from datetime import date, timedelta
 import textwrap
 from typing import Any
 
+from truenas_pylicensed import LicenseType
+
 from middlewared.alert.base import (
     AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
 )
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
-from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
@@ -54,19 +55,19 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
     def check_sync(self) -> list[Alert[Any]] | Alert[Any]:
         alerts: list[Alert[Any]] = []
 
-        local_license = self.middleware.call_sync('system.license')
+        local_license = self.call_sync2(self.s.truenas.license.info_private)
         if local_license is None:
             return Alert(LicenseAlert("Your TrueNAS has no license, contact support."))
 
         # check if this node's system serial matches the serial in the license
         local_serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
-        if local_serial not in (local_license['system_serial'], local_license['system_serial_ha']):
+        if local_serial not in local_license.serials:
             alerts.append(Alert(LicenseAlert('System serial does not match license.')))
 
         standby_license = standby_serial = None
         try:
-            if local_license['system_serial_ha']:
-                standby_license = self.middleware.call_sync('failover.call_remote', 'system.license')
+            if local_license.type == LicenseType.ENTERPRISE_HA:
+                standby_license = self.middleware.call_sync('failover.call_remote', 'truenas.license.info')
                 standby_serial = self.middleware.call_sync(
                     'failover.call_remote', 'system.dmidecode_info')['system-serial-number']
         except Exception:
@@ -74,16 +75,16 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         if standby_license and standby_serial is not None:
             # check if the remote node's system serial matches the serial in the license
-            if standby_serial not in (standby_license['system_serial'], standby_license['system_serial_ha']):
+            if standby_serial not in standby_license['serials']:
                 alerts.append(Alert(LicenseAlert('System serial of standby node does not match license.')))
 
         model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
         if model == 'UNKNOWN':
             alerts.append(Alert(LicenseAlert('TrueNAS is running on unsupported hardware.')))
-        elif model != local_license['model']:
+        elif model != local_license.model:
             alerts.append(Alert(
                 LicenseAlert(
-                    f'Your license was issued for model {local_license["model"]!r} '
+                    f'Your license was issued for model {local_license.model!r} '
                     f'but the system was detected as model {model!r}'
                 )
             ))
@@ -92,13 +93,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
             enc_nums[enc['model']] += 1
 
-        if local_license['addhw']:
-            for quantity, code in local_license['addhw']:
-                if code not in LICENSE_ADDHW_MAPPING:
-                    self.middleware.logger.warning('Unknown additional hardware code %d', code)
-                    continue
-
-                name = LICENSE_ADDHW_MAPPING[code]
+        if local_license.enclosures:
+            for name, quantity in local_license.enclosures.items():
                 if name == 'ES60':
                     continue
 
@@ -119,14 +115,13 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 )
             ))
 
+        if local_license.expires_at is None:
+            return alerts
+
         for days in [0, 14, 30, 90, 180]:
-            if local_license['contract_end'] <= date.today() + timedelta(days=days):
-                serial_numbers = ", ".join(list(filter(None, [local_license['system_serial'],
-                                                              local_license['system_serial_ha']])))
-                contract_start = local_license['contract_start'].strftime("%B %-d, %Y")
-                contract_expiration = local_license['contract_end'].strftime("%B %-d, %Y")
-                contract_type = local_license['contract_type']  # Display as stored, usually upper case.
-                customer_name = local_license['customer_name']
+            if local_license.expires_at <= date.today() + timedelta(days=days):
+                serial_numbers = ", ".join(list(filter(None, local_license.serials)))
+                contract_expiration = local_license.expires_at.strftime("%B %-d, %Y")
 
                 alert_klass: type[LicenseHasExpiredAlert] | type[LicenseIsExpiringAlert]
                 if days == 0:
@@ -152,13 +147,11 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         on {contract_expiration}. Renewal options may be available — contact your authorized
                         reseller or TrueNAS: sales@TrueNAS.com, 1-855-473-7449.
                     """)
-                    days_left = (local_license['contract_end'] - date.today()).days
+                    days_left = (local_license.expires_at - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
                     if days == 14:
-                        opening = textwrap.dedent(f"""\
-                            The support contracts for the following TrueNAS products are expiring in 14 days:
-                            {serial_numbers}
-                            Your TrueNAS {contract_type} support contract is approaching its expiration date.
+                        opening = textwrap.dedent("""\
+                            Your TrueNAS support contract is approaching its expiration date.
                             Renewal options may be available — we suggest contacting us before expiration.
                         """)
                         encouraging = textwrap.dedent("""\
@@ -168,7 +161,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         """)
                     else:
                         opening = textwrap.dedent(f"""\
-                            Your TrueNAS {contract_type} support contract will expire in {days_left} days.
+                            Your TrueNAS support contract will expire in {days_left} days.
                             Renewal options may be available — contact your authorized reseller or TrueNAS
                             (email: sales@TrueNAS.com, telephone: 1-855-473-7449) to find out more.
                         """)
@@ -184,14 +177,12 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         "cc": ["support-renewal@truenas.com"],
                         "subject": subject,
                         "text": textwrap.dedent("""\
-                            Hello, {customer_name}
+                            Hello,
 
                             {opening}
 
-                            Support Level: {contract_type}
                             Product: {chassis_hardware}
                             Serial Numbers: {serial_numbers}
-                            Support Contract Start Date: {contract_start}
                             Support Contract Expiration Date: {contract_expiration}
 
                             {encouraging}
@@ -208,12 +199,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                             Email: support@TrueNAS.com
                             Telephone: 1-855-473-7449
                         """).format(**{
-                            "customer_name": customer_name,
                             "opening": opening,
-                            "contract_type": contract_type,
                             "chassis_hardware": model,
                             "serial_numbers": serial_numbers,
-                            "contract_start": contract_start,
                             "contract_expiration": contract_expiration,
                             "encouraging": encouraging,
                         })

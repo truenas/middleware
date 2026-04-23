@@ -89,8 +89,7 @@ def supports_virtualization() -> bool:
 async def license_active(context: ServiceContext) -> bool:
     can_run_vms = True
     if await context.middleware.call('system.is_ha_capable'):
-        license_ = await context.middleware.call('system.license')
-        can_run_vms = license_ is not None and 'VM' in license_['features']
+        can_run_vms = await context.middleware.call('system.feature_enabled', 'VM')
 
     return can_run_vms
 
