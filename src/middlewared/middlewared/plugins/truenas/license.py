@@ -55,7 +55,7 @@ class TrueNASLicenseService(Service):
 
         self.middleware.call_sync("etc.generate", "rc")
 
-        self.call_sync2(self.s.alert.alert_source_clear_run, "LicenseStatus")
+        self.middleware.call_sync("alert.alert_source_clear_run", "LicenseStatus")
 
         if options.ha_propagate:
             if lic.type in (
