@@ -82,6 +82,8 @@ from pydantic import create_model, Field
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
+    from concurrent.futures import Future
     from types import MethodType, ModuleType
     from aiohttp.web_request import Request
     from .api.base.server.app import App
@@ -1387,7 +1389,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         else:
             raise RuntimeError(f"Unknown executor: {executor!r}")
 
-    def run_coroutine(self, coro, wait=True):
+    @typing.overload
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: typing.Literal[True] = True,
+    ) -> T: ...
+
+    @typing.overload
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: typing.Literal[False] = False,
+    ) -> Future[T]: ...
+
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: bool = True,
+    ) -> T | Future[T]:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use run_coroutine from main thread')
 
@@ -1406,6 +1426,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         while not event.wait(1):
             if not self.loop.is_running():
                 raise RuntimeError('Middleware is terminating')
+
         return fut.result()
 
     def event_subscribe(self, name: str, handler: _SubHandler):

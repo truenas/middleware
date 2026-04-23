@@ -54,8 +54,7 @@ class DockerService(ConfigService):
     async def license_active(self):
         can_run_apps = True
         if await self.middleware.call('system.is_ha_capable'):
-            license_ = await self.middleware.call('system.license')
-            can_run_apps = license_ is not None and 'JAILS' in license_['features']
+            can_run_apps = await self.middleware.call('system.feature_enabled', 'APPS')
 
         return can_run_apps
 

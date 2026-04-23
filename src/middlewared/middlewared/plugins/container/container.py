@@ -404,9 +404,4 @@ class ContainerService(CRUDService):
             # 2. OR if it's a MINI, then allow containers/vms
             return True
 
-        license_ = await self.middleware.call('system.license')
-        if license_ is None:
-            # it's iX branded hardware but has no license
-            return False
-
-        return 'JAILS' in license_['features']
+        return await self.middleware.call('system.feature_enabled', 'APPS')
