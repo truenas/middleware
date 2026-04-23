@@ -1,7 +1,17 @@
-# The v-series will use a regular interface for HA
-# inter-node communication.
+# V-Series HA inter-node communication:
+#   DMI Version "1.x" — external 10 GbE cable on this bnxt_en NIC is
+#                       renamed to `internode0` and used as the HA interconnect.
+#   DMI Version "2.x" or higher / invalid — NOT renamed: `internode0` is
+#                       instead a kernel bond across the two internal
+#                       X710 cross-connect ports, created by middleware
+#                       (failover.internal_interface.ensure_vseries_bond).
+# The product_version $= "1.*" glob matches only explicit 1.<something>
+# strings, so 2.x, 3.x, un-stamped, and malformed values all fall through
+# to the middleware bond path — which matches middleware's binary
+# < 2.0 vs >= 2.0 interconnect model.
 [Match]
 Firmware=smbios-field(product_name $= "TRUENAS-V*")
+Firmware=smbios-field(product_version $= "1.*")
 Property=INTERFACE=ens10f1np1
 Driver=bnxt_en
 Type=ether
