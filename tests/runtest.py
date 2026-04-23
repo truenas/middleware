@@ -91,6 +91,7 @@ option_list = [
     "test_dir=",
     "tests=",
     "ha_license=",
+    "ha-license-path=",
     "hostname=",
     "show_locals",
     "extended_tests",
@@ -166,6 +167,9 @@ for output, arg in myopts:
         test_dir = arg
     elif output == '--ha_license':
         ha_license = arg
+    elif output == '--ha-license-path':
+        with open(arg) as f:
+            ha_license = f.read()
     elif output == '--show_locals':
         show_locals = True
     elif output == '--extended_tests':
