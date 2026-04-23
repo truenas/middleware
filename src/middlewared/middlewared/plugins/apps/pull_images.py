@@ -15,8 +15,7 @@ if TYPE_CHECKING:
 
 def outdated_docker_images_for_app(context: ServiceContext, app_name: str) -> list[str]:
     app = get_instance(context, app_name)
-    # FIXME: Fix this usage
-    image_update_cache = context.middleware.call_sync('app.image.op.get_update_cache', True)
+    image_update_cache = context.call_sync2(context.s.app.image.get_update_cache, True)
     images = []
     for image_tag in app.active_workloads.images:
         if image_update_cache.get(normalize_reference(image_tag)['complete_tag']):
@@ -45,7 +44,7 @@ def pull_images_internal(
     # compose action didn't fail and that means the pull succeeded and we should have the newer version
     # already in the system
     for image_tag in app.active_workloads.images:
-        context.middleware.call_sync('app.image.op.clear_update_flag_for_tag', image_tag)
+        context.call_sync2(context.s.app.image.clear_update_flag_for_tag, image_tag)
 
     if options.redeploy:
         context.call_sync2(context.s.app.redeploy, app_name).wait_sync(raise_error=True)

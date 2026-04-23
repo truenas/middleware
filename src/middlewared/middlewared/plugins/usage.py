@@ -194,8 +194,8 @@ class UsageService(Service):
         for app in apps:
             output['catalog_items'][app.metadata['train']][app.metadata['name']][app.version] += 1
 
-        for image in await self.middleware.call('app.image.query'):
-            output['docker_images'].update(image['repo_tags'])
+        for image in await self.call2(self.s.app.image.query):
+            output['docker_images'].update(image.repo_tags)
 
         output['docker_images'] = list(output['docker_images'])
         return output

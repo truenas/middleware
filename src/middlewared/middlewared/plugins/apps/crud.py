@@ -76,8 +76,7 @@ def query_apps(
     kwargs = {
         'host_ip': host_ip,
         'retrieve_config': extra.get('retrieve_config', False),
-        'image_update_cache': context.middleware.call_sync('app.image.op.get_update_cache', True),
-        # FIXME: Fix above usage
+        'image_update_cache': context.call_sync2(context.s.app.image.get_update_cache, True),
     }
     if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
         kwargs['specific_app'] = filters[0][2]

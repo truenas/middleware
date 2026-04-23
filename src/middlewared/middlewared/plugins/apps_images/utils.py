@@ -1,5 +1,7 @@
-from collections import defaultdict
+from __future__ import annotations
+
 import re
+from typing import Any
 
 from middlewared.api.current import AppRegistryEntry
 from middlewared.service import CallError
@@ -24,7 +26,7 @@ DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.l
 DOCKER_RATELIMIT_URL = 'https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest'
 
 
-def parse_digest_from_schema(response: dict) -> list[str]:
+def parse_digest_from_schema(response: dict[str, Any]) -> list[str]:
     """
     Parses out the digest according to schemas specs:
     https://docs.docker.com/registry/spec/manifest-v2-1/
@@ -56,7 +58,7 @@ def parse_auth_header(header: str) -> dict[str, str]:
         'service': 'service',
         'scope': 'scope',
     }
-    results = {}
+    results: dict[str, str] = {}
     parts = header.split()
     if len(parts) > 1:
         for part in parts[1].split(','):
@@ -66,7 +68,7 @@ def parse_auth_header(header: str) -> dict[str, str]:
     return results
 
 
-def normalize_reference(reference: str) -> dict:
+def normalize_reference(reference: str) -> dict[str, Any]:
     """
     Parses the reference for image, tag and repository.
 
@@ -108,6 +110,9 @@ def normalize_reference(reference: str) -> dict:
     elif ':' in tagged_image:
         image, tag = tagged_image.rsplit(':', 1)
         sep = ':'
+    else:
+        # Unreachable: we added `:<tag>` above if no colon was present.
+        raise CallError(f'Invalid reference format: {tagged_image}')
 
     return {
         'reference': reference,
@@ -119,29 +124,11 @@ def normalize_reference(reference: str) -> dict:
     }
 
 
-def get_chart_releases_consuming_image(
-    image_names: list | set, chart_releases: list, get_mapping: bool = False
-) -> dict | list:
-    chart_releases_consuming_image = defaultdict(list) if get_mapping else set()
-    images = {i['complete_tag']: i for i in map(normalize_reference, image_names)}
-    for chart_release in chart_releases:
-        for image in chart_release['resources']['container_images']:
-            parsed_image = normalize_reference(image)
-            if parsed_image['complete_tag'] in images and images[
-                parsed_image['complete_tag']
-            ]['tag'] == parsed_image['tag']:
-                if get_mapping:
-                    chart_releases_consuming_image[chart_release['name']].append(parsed_image['reference'])
-                else:
-                    chart_releases_consuming_image.add(chart_release['name'])
-    return chart_releases_consuming_image if get_mapping else list(chart_releases_consuming_image)
-
-
-def parse_tags(references: list[str]) -> list[dict[str, str]]:
+def parse_tags(references: list[str]) -> list[dict[str, Any]]:
     return [normalize_reference(reference=reference) for reference in references]
 
 
-def normalize_docker_limits_header(headers: dict) -> dict:
+def normalize_docker_limits_header(headers: dict[str, Any]) -> dict[str, Any]:
     if not all(limit_key in headers for limit_key in ['ratelimit-limit', 'ratelimit-remaining']):
         return {'error': 'Unable to retrieve rate limit information from registry'}
 
@@ -157,7 +144,9 @@ def normalize_docker_limits_header(headers: dict) -> dict:
     }
 
 
-def get_normalized_auth_config(registry_info: dict[str, AppRegistryEntry], image_tag: str) -> dict:
+def get_normalized_auth_config(
+    registry_info: dict[str, AppRegistryEntry], image_tag: str,
+) -> dict[str, Any]:
     if not registry_info:
         return {}
 

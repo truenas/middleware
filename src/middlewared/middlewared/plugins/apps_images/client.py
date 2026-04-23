@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import urllib.parse
+from typing import Any
 
 import aiohttp
 
@@ -24,11 +27,17 @@ from .utils import (
 class ContainerRegistryClientMixin:
 
     @staticmethod
-    async def _api_call(url, options=None, headers=None, mode='get', auth=None):
+    async def _api_call(
+        url: str,
+        options: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        mode: str = 'get',
+        auth: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         options = options or {}
         timeout = options.get('timeout', 15)
         assert mode in ('get', 'head')
-        response = {'error': None, 'response': {}, 'response_obj': None}
+        response: dict[str, Any] = {'error': None, 'response': {}, 'response_obj': None}
         try:
             async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as ss:
@@ -60,7 +69,13 @@ class ContainerRegistryClientMixin:
             response.update({'error': str(e), 'error_obj': e})
         return response
 
-    async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE, auth=None):
+    async def _get_token(
+        self,
+        scope: str,
+        auth_url: str = DOCKER_AUTH_URL,
+        service: str = DOCKER_AUTH_SERVICE,
+        auth: dict[str, str] | None = None,
+    ) -> str:
         query_params = urllib.parse.urlencode({
             'service': service,
             'scope': scope,
@@ -69,9 +84,17 @@ class ContainerRegistryClientMixin:
         if response['error']:
             raise CallError(f'Unable to retrieve token for {scope!r}: {response["error"]}')
 
-        return response['response']['token']
+        return str(response['response']['token'])
 
-    async def _get_manifest_response(self, registry, image, tag, headers, mode, raise_error):
+    async def _get_manifest_response(
+        self,
+        registry: str,
+        image: str,
+        tag: str,
+        headers: dict[str, str],
+        mode: str,
+        raise_error: bool,
+    ) -> dict[str, Any]:
         manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
         # 1) try getting manifest
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
@@ -79,7 +102,12 @@ class ContainerRegistryClientMixin:
             if error.status == 401:
                 # 2) try to get token from manifest api call's response headers
                 auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
-                headers['Authorization'] = f'Bearer {await self._get_token(**auth_data)}'
+                token = await self._get_token(
+                    scope=auth_data['scope'],
+                    auth_url=auth_data.get('auth_url', DOCKER_AUTH_URL),
+                    service=auth_data.get('service', DOCKER_AUTH_SERVICE),
+                )
+                headers['Authorization'] = f'Bearer {token}'
                 # 3) Redo the manifest call with updated token
                 response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
@@ -91,12 +119,14 @@ class ContainerRegistryClientMixin:
 
         return response
 
-    async def get_manifest_call_headers(self, registry, image, headers):
+    async def get_manifest_call_headers(
+        self, registry: str, image: str, headers: dict[str, str],
+    ) -> dict[str, str]:
         if registry == DEFAULT_DOCKER_REGISTRY:
             headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
         return headers
 
-    async def _get_repo_digest(self, registry, image, tag):
+    async def _get_repo_digest(self, registry: str, image: str, tag: str) -> list[str]:
         response = await self._get_manifest_response(
             registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
@@ -109,7 +139,9 @@ class ContainerRegistryClientMixin:
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
 
-    async def get_docker_hub_rate_limit_preview(self, auth=None):
+    async def get_docker_hub_rate_limit_preview(
+        self, auth: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         token = (await self._get_token(scope="repository:ratelimitpreview/test:pull", auth=auth))
         return await self._api_call(
             url=DOCKER_RATELIMIT_URL,

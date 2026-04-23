@@ -1,10 +1,13 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import BaseModel, LongString, NonEmptyString
 
 __all__ = [
-    'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
-    'AppImagePullArgs', 'AppImagePullResult', 'AppImageDeleteArgs', 'AppImageDeleteResult',
+    'AppImageEntry', 'AppImageParsedRepoTags', 'AppImageAuthConfig',
+    'AppImagePull', 'AppImagePullArgs', 'AppImagePullResult',
+    'AppImageDeleteOptions', 'AppImageDeleteArgs', 'AppImageDeleteResult',
+    'AppImageDockerhubRateLimitInfo',
+    'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
 ]
 
 
@@ -46,24 +49,6 @@ class AppImageEntry(BaseModel):
     """Parsed repository tag information or `null` if not available."""
 
 
-class ContainerImagesDockerhubRateLimitArgs(BaseModel):
-    pass
-
-
-@single_argument_result
-class ContainerImagesDockerhubRateLimitResult(BaseModel):
-    total_pull_limit: int | None = None
-    """Total pull limit for Docker Hub registry."""
-    total_time_limit_in_secs: int | None = None
-    """Total time limit in seconds for Docker Hub registry before the limit renews."""
-    remaining_pull_limit: int | None = None
-    """Remaining pull limit for Docker Hub registry."""
-    remaining_time_limit_in_secs: int | None = None
-    """Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed."""
-    error: str | None = None
-    """Error message if rate limit information could not be retrieved or `null` on success."""
-
-
 class AppImageAuthConfig(BaseModel):
     username: str
     """Username for container registry authentication."""
@@ -73,12 +58,16 @@ class AppImageAuthConfig(BaseModel):
     """Container registry URI or `null` to use default registry."""
 
 
-@single_argument_args('image_pull')
-class AppImagePullArgs(BaseModel):
+class AppImagePull(BaseModel):
     auth_config: AppImageAuthConfig | None = None
     """Authentication configuration for private registries or `null` for public images."""
     image: NonEmptyString
     """Container image reference to pull (registry/repository:tag)."""
+
+
+class AppImagePullArgs(BaseModel):
+    image_pull: AppImagePull
+    """Container image pull parameters."""
 
 
 class AppImagePullResult(BaseModel):
@@ -101,3 +90,25 @@ class AppImageDeleteArgs(BaseModel):
 class AppImageDeleteResult(BaseModel):
     result: Literal[True]
     """Returns `true` when the container image is successfully deleted."""
+
+
+class AppImageDockerhubRateLimitInfo(BaseModel):
+    total_pull_limit: int | None = None
+    """Total pull limit for Docker Hub registry."""
+    total_time_limit_in_secs: int | None = None
+    """Total time limit in seconds for Docker Hub registry before the limit renews."""
+    remaining_pull_limit: int | None = None
+    """Remaining pull limit for Docker Hub registry."""
+    remaining_time_limit_in_secs: int | None = None
+    """Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed."""
+    error: str | None = None
+    """Error message if rate limit information could not be retrieved or `null` on success."""
+
+
+class AppImageDockerhubRateLimitArgs(BaseModel):
+    pass
+
+
+class AppImageDockerhubRateLimitResult(BaseModel):
+    result: AppImageDockerhubRateLimitInfo
+    """Docker Hub rate-limit information for the configured credentials."""
