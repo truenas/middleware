@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.api.base import BaseModel, LongString, NonEmptyString
 
 from .support import SupportNewTicket
@@ -12,7 +14,7 @@ __all__ = [
     'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
     'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
     'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult',
-    'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
+    'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
     'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
 ]
 
@@ -92,9 +94,16 @@ class TrueNASSetProductionResult(BaseModel):
     """Support ticket details if system was newly marked as production. `null` otherwise."""
 
 
+class TrueNASLicenseUploadOptions(BaseModel):
+    ha_propagate: bool = True
+    """Propagate to another HA system."""
+
+
 class TrueNASLicenseUploadArgs(BaseModel):
     license: NonEmptyString
     """PEM-wrapped license to apply to the system."""
+    options: TrueNASLicenseUploadOptions = TrueNASLicenseUploadOptions()
+    """Options."""
 
 
 class TrueNASLicenseUploadResult(BaseModel):
@@ -107,5 +116,5 @@ class TrueNASLicenseInfoArgs(BaseModel):
 
 
 class TrueNASLicenseInfoResult(BaseModel):
-    result: dict | None
+    result: dict[str, Any] | None
     """Parsed license JSON object, or `null` if no license file exists."""
