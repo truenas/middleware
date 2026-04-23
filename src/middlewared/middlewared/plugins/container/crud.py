@@ -24,7 +24,7 @@ from .bridge import container_bridge_name
 from .dataset import ensure_datasets
 from .info import license_active, pool_choices
 from .lifecycle import pylibvirt_container
-from .nsenter import CAPABILITIES
+from truenas_pylibvirt.nsexec import ALL_CAPABILITIES as CAPABILITIES
 from .utils import container_dataset
 
 
