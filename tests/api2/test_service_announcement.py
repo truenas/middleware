@@ -72,17 +72,58 @@ def wait_for(predicate, timeout: float = 30.0, interval: float = 1.0):
     return predicate()
 
 
+# Map service_announcement toggle keys to the daemon's child names.
+_TOGGLE_TO_CHILD = {"mdns": "mdns", "netbios": "netbiosns", "wsd": "wsd"}
+
+
+def wait_for_enabled_set(cfg: dict, timeout: float = 30.0) -> None:
+    """Block until the daemon's ``children`` dict matches *cfg*.
+
+    *cfg* is a ``service_announcement`` mapping (mdns/netbios/wsd →
+    bool).  Polls ``truenas-discovery-status`` until the reported
+    children exactly match the enabled toggles, or the whole daemon
+    is stopped when every toggle is off.
+
+    The fixture/helper API calls that trigger a daemon RELOAD or
+    RESTART return as soon as the middleware-side action is dispatched,
+    not when the daemon has actually applied the change.  mDNS host
+    rename reloads in particular re-probe every record (seconds of
+    wall-clock work) and a SIGHUP arriving during that window is
+    silently dropped by the daemon.  Blocking here until the daemon
+    reflects the change prevents the *next* test's SIGHUP from racing
+    an in-flight reload."""
+    expected = {
+        child for toggle, child in _TOGGLE_TO_CHILD.items()
+        if cfg.get(toggle)
+    }
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        status = get_discovery_status()
+        if not expected:
+            # All off — daemon should be stopped.
+            if status is None:
+                return
+        elif status is not None:
+            if set(status.get("children", {}).keys()) == expected:
+                return
+        time.sleep(1)
+
+
 @contextlib.contextmanager
 def service_announcement(cfg: dict):
-    """Scope a ``service_announcement`` override and restore on exit."""
+    """Scope a ``service_announcement`` override and restore on exit.
+
+    Blocks until the daemon reflects *cfg* before yielding, and again
+    after the restore, so the next API call doesn't race an in-flight
+    reload."""
     prev = call("network.configuration.config")["service_announcement"]
     call("network.configuration.update", {"service_announcement": cfg})
-    time.sleep(1)
+    wait_for_enabled_set(cfg)
     try:
         yield
     finally:
         call("network.configuration.update", {"service_announcement": prev})
-        time.sleep(1)
+        wait_for_enabled_set(prev)
 
 
 @contextlib.contextmanager
@@ -119,10 +160,9 @@ def baseline_config():
     }
 
     # Known-good starting state: all three announcements on.
-    call("network.configuration.update", {
-        "service_announcement": {"mdns": True, "netbios": True, "wsd": True},
-    })
-    time.sleep(1)
+    all_on = {"mdns": True, "netbios": True, "wsd": True}
+    call("network.configuration.update", {"service_announcement": all_on})
+    wait_for_enabled_set(all_on)
     try:
         yield orig
     finally:
@@ -130,7 +170,7 @@ def baseline_config():
             "service_announcement": orig["service_announcement"],
             "hostname": orig["hostname"],
         })
-        time.sleep(1)
+        wait_for_enabled_set(orig["service_announcement"])
         call("smb.update", {
             "netbiosname": orig["netbiosname"],
             "netbiosalias": orig["netbiosalias"],
@@ -214,7 +254,6 @@ class TestHostnameFlow:
         new_hostname = f"pydisc{DIGITS}"
         hostname_field = "hostname_virtual" if call("failover.licensed") else "hostname"
         call("network.configuration.update", {hostname_field: new_hostname})
-        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
@@ -230,10 +269,15 @@ class TestHostnameFlow:
             assert status["children"]["mdns"]["hostname"].startswith(new_hostname)
             assert status["children"]["wsd"]["hostname"] == new_hostname
         finally:
-            call("network.configuration.update", {
-                hostname_field: baseline_config[hostname_field],
-            })
-            time.sleep(1)
+            orig = baseline_config[hostname_field]
+            call("network.configuration.update", {hostname_field: orig})
+            # Block until the daemon's mDNS hostname reverts, so the
+            # next test's SIGHUP doesn't race this restore's reload.
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("mdns", {}).get("hostname", "").startswith(orig),
+                timeout=60,
+            )
 
 
 # ---- SMB config flow ----------------------------------------------
@@ -250,7 +294,6 @@ class TestSmbConfigFlow:
     def test_netbiosname_flows_into_netbiosns(self, baseline_config):
         new_name = f"PYDNB{DIGITS}"[:15]
         call("smb.update", {"netbiosname": new_name})
-        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
@@ -264,13 +307,16 @@ class TestSmbConfigFlow:
             )
             assert status["children"]["netbiosns"]["netbios_name"] == new_name
         finally:
-            call("smb.update", {"netbiosname": baseline_config["netbiosname"]})
-            time.sleep(1)
+            orig = baseline_config["netbiosname"]
+            call("smb.update", {"netbiosname": orig})
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("netbiosns", {}).get("netbios_name") == orig,
+            )
 
     def test_workgroup_flows_into_netbiosns_and_wsd(self, baseline_config):
         new_wg = f"PYDWG{DIGITS}"[:15]
         call("smb.update", {"workgroup": new_wg})
-        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
@@ -286,8 +332,13 @@ class TestSmbConfigFlow:
             assert status["children"]["netbiosns"]["workgroup"] == new_wg
             assert status["children"]["wsd"]["workgroup"] == new_wg
         finally:
-            call("smb.update", {"workgroup": baseline_config["workgroup"]})
-            time.sleep(1)
+            orig = baseline_config["workgroup"]
+            call("smb.update", {"workgroup": orig})
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("netbiosns", {}).get("workgroup") == orig
+                and s.get("children", {}).get("wsd", {}).get("workgroup") == orig,
+            )
 
 
 # ---- interfaces ---------------------------------------------------
