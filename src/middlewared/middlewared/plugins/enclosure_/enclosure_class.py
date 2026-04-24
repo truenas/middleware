@@ -172,8 +172,14 @@ class Enclosure:
                 # M series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'ECStream_4IXGA-NTBp' | 'ECStream_4IXGA-NTBs':
-                # V series
+            case (
+                'ECStream_4IXGA-NTBp'
+                | 'ECStream_4IXGA-NTBs'
+                | 'ECStream_4IXGA-NTGp'
+                | 'ECStream_4IXGA-NTGs'
+            ):
+                # V series — NTB on the original board, NTG on the new
+                # 4IXGA_PEX89032 (X710) board. Same -p/-s convention.
                 self.model = dmi_model.value
                 self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
