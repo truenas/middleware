@@ -234,7 +234,22 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "mdns" not in s["children"] and s,
             )
-            assert status, "daemon never saw mdns disabled"
+            final = get_discovery_status()
+            diag = ssh(
+                "echo '--- rundir ---'; "
+                "ls -la /run/truenas-discovery/ /run/truenas-discovery/mdns/ 2>&1; "
+                "echo '--- config ---'; "
+                "cat /etc/truenas-discovery/truenas-discoveryd.conf 2>&1; "
+                "echo '--- systemd ---'; "
+                "systemctl show truenas-discoveryd "
+                "-p MainPID -p ActiveState -p SubState -p ExecMainStartTimestamp 2>&1",
+                check=False,
+            )
+            assert status, (
+                f"daemon never saw mdns disabled\n"
+                f"last status: {final}\n"
+                f"diag:\n{diag}"
+            )
             assert "mdns" not in status["children"]
         # Back on after scope exit.
         status = wait_for(
@@ -248,7 +263,11 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "netbiosns" not in s["children"] and s,
             )
-            assert status and "netbiosns" not in status["children"]
+            final = get_discovery_status()
+            assert status, (
+                f"daemon never saw netbios disabled; last status: {final}"
+            )
+            assert "netbiosns" not in status["children"]
 
     def test_wsd_toggle(self):
         with service_announcement({"mdns": True, "netbios": True, "wsd": False}):
@@ -256,7 +275,11 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "wsd" not in s["children"] and s,
             )
-            assert status and "wsd" not in status["children"]
+            final = get_discovery_status()
+            assert status, (
+                f"daemon never saw wsd disabled; last status: {final}"
+            )
+            assert "wsd" not in status["children"]
 
     def test_all_disabled_stops_daemon(self):
         with service_announcement({"mdns": False, "netbios": False, "wsd": False}):
