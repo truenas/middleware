@@ -4,6 +4,7 @@ Runs every case in runtest_cases.json, writes results to runtest_results/,
 then compares with runtest_references/ and prints any differences.
 """
 
+from difflib import unified_diff
 import json
 import os
 import subprocess
@@ -92,6 +93,7 @@ def compare_case(case_name: str) -> list[str]:
                 actual_text = f.read()
             if ref_text != actual_text:
                 diffs.append(f"  {filename!r} differs")
+                print("\n".join(unified_diff(ref_text.split("\n"), actual_text.split("\n"))))
 
     return diffs
 

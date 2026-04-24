@@ -10,6 +10,8 @@ from .ssh import setup_ssh_agent, create_key, add_ssh_key
 
 @dataclasses.dataclass
 class Context(RunArgs):
+    workdir: str
+    artifacts: str
     domain: str
     netmask: str
     gateway: str
@@ -21,8 +23,12 @@ class Context(RunArgs):
     ssh_key: str
 
 
-def context_from_args(args: RunArgs) -> Context:
+def context_from_args(args: RunArgs, workdir: str) -> Context:
     d = dataclasses.asdict(args)
+
+    artifacts = f"{workdir}/artifacts/"
+    if not os.path.exists(artifacts):
+        os.makedirs(artifacts)
 
     if args.ha_license_path:
         with open(args.ha_license_path) as f:
@@ -78,8 +84,8 @@ def context_from_args(args: RunArgs) -> Context:
     with open(ssh_key_path, 'r') as f:
         ssh_key = f.readlines()[0].rstrip()
 
-    return Context(**d, domain=domain, netmask=netmask, gateway=gateway, ns1=ns1, ns2=ns2, local_home=local_home,
-                   ssh_key_path=ssh_key_path, ssh_key=ssh_key)
+    return Context(**d, workdir=workdir, artifacts=artifacts, domain=domain, netmask=netmask, gateway=gateway,
+                   ns1=ns1, ns2=ns2, local_home=local_home, ssh_key_path=ssh_key_path, ssh_key=ssh_key)
 
 
 def get_ipinfo(ip_to_use):

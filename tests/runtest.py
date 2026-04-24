@@ -3,6 +3,7 @@
 # License: BSD
 
 from middlewared.test.integration.utils import client
+from middlewared.test.integration.runner.config import write_config
 from middlewared.test.integration.runner.context import context_from_args
 from middlewared.test.integration.runner.env import set_env
 from middlewared.test.integration.runner.args import parse
@@ -34,8 +35,6 @@ initial_env_key = set(os.environ.keys())
 
 workdir = os.getcwd()
 sys.path.append(workdir)
-localHome = os.path.expanduser('~')
-keyPath = localHome + '/.ssh/test_id_rsa'
 
 ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/" \
     "ixautomation/master/src/etc/ixautomation.conf.dist"
@@ -46,7 +45,7 @@ if not os.path.exists('config.py'):
     print(config_file_msg)
     exit(1)
 
-ctx = context_from_args(parse())
+ctx = context_from_args(parse(), workdir)
 
 callargs = []
 if ctx.no_capture:
@@ -55,41 +54,11 @@ if ctx.log_cli_level:
     callargs.append('--log-cli-level')
     callargs.append(ctx.log_cli_level)
 
-artifacts = f"{workdir}/artifacts/"
-if not os.path.exists(artifacts):
-    os.makedirs(artifacts)
 
 set_env(ctx)
+write_config(ctx)
 
-cfg_content = f"""#!{sys.executable}
 
-user = "root"
-password = "{ctx.password}"
-netmask = "{ctx.netmask}"
-gateway = "{ctx.gateway}"
-vip = "{ctx.vip}"
-vm_name = {f"'{ctx.vm_name}'" if ctx.vm_name else None}
-hostname = "{ctx.hostname}"
-domain = "{ctx.domain}"
-api_url = 'http://{ctx.ip}/api/v2.0'
-interface = "{ctx.interface}"
-badNtpServer = "10.20.20.122"
-localHome = "{ctx.local_home}"
-keyPath = "{ctx.ssh_key_path}"
-pool_name = "{ctx.pool_name}"
-ha_pool_name = "ha"
-ha = {ctx.ha}
-ha_license = {ctx.ha_license!r}
-update = {ctx.update}
-artifacts = "{artifacts}"
-isns_ip = "{ctx.isns_ip}"
-extended_tests = {ctx.extended_tests}
-sshKey = "{ctx.ssh_key}"
-"""
-
-cfg_file = open("auto_config.py", 'w')
-cfg_file.writelines(cfg_content)
-cfg_file.close()
 
 from functions import get_folder
 from functions import SSH_TEST
@@ -150,7 +119,7 @@ with open(f"{runtest_test_dir}/result", "w") as f:
         "argv": sys.argv[1:],
         "command": pytest_command,
         "returncode": ctx.returncode,
-        "artifacts": artifacts,
+        "artifacts": ctx.artifacts,
         "ip": ctx.ip,
         "ip2": ctx.ip2,
         "environ": {k: v for k, v in os.environ.items() if k not in initial_env_key},
