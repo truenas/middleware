@@ -224,30 +224,36 @@ if not all((interface, netmask, gateway)):
     print(f'Unable to determine interface ({interface!r}), netmask ({netmask!r}) and gateway ({gateway!r}) for {ip_to_use!r}')
     exit()
 
+
+def get_random_vip():
+    # reduce risk of trying to assign same VIP to two VMs
+    # starting at roughly the same time
+    vip_pool = list(ip_interface(f'{ip}/{netmask}').network)
+    random.shuffle(vip_pool)
+
+    for i in vip_pool:
+        last_octet = int(i.compressed.split('.')[-1])
+        if last_octet < 15 or last_octet >= 250:
+            # addresses like *.255, *.0 and any of them that
+            # are < *.15 we'll ignore. Those are typically
+            # reserved for routing/switch devices anyways
+            continue
+        elif run(['ping', '-c', '2', '-w', '4', i.compressed]).returncode != 0:
+            # sent 2 packets to the address and got no response so assume
+            # it's safe to use
+            return i.compressed
+
+    raise RuntimeError('Unable to come up with vip address')
+
+
 if ha:
     if vip:
         os.environ['virtual_ip'] = vip
     elif os.environ.get('virtual_ip'):
         vip = os.environ['virtual_ip']
     else:
-        # reduce risk of trying to assign same VIP to two VMs
-        # starting at roughly the same time
-        vip_pool = list(ip_interface(f'{ip}/{netmask}').network)
-        random.shuffle(vip_pool)
-
-        for i in vip_pool:
-            last_octet = int(i.compressed.split('.')[-1])
-            if last_octet < 15 or last_octet >= 250:
-                # addresses like *.255, *.0 and any of them that
-                # are < *.15 we'll ignore. Those are typically
-                # reserved for routing/switch devices anyways
-                continue
-            elif run(['ping', '-c', '2', '-w', '4', i.compressed]).returncode != 0:
-                # sent 2 packets to the address and got no response so assume
-                # it's safe to use
-                os.environ['virtual_ip'] = i.compressed
-                vip = i.compressed
-                break
+        os.environ['virtual_ip'] = get_random_vip()
+        vip = os.environ['virtual_ip']
 
     # Set various env variables for HA, if not already set
     if not os.environ.get('domain'):
