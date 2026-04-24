@@ -76,6 +76,25 @@ def wait_for(predicate, timeout: float = 30.0, interval: float = 1.0):
 _TOGGLE_TO_CHILD = {"mdns": "mdns", "netbios": "netbiosns", "wsd": "wsd"}
 
 
+def _clear_stale_status_files(cfg: dict) -> None:
+    """Remove per-child ``status.json`` files for protocols that will
+    be disabled by *cfg*.
+
+    ``truenas-discovery-status`` merges every per-protocol
+    ``status.json`` it finds in ``/run/truenas-discovery/<child>/``,
+    regardless of whether the current daemon instance actually hosts
+    that child.  A file left behind by a previous daemon run (before a
+    RESTART that drops the protocol) makes the CLI report a stale
+    child that looks alive to the test.  Deleting the file here closes
+    that window so the CLI output matches the running children."""
+    for toggle, child in _TOGGLE_TO_CHILD.items():
+        if not cfg.get(toggle):
+            ssh(
+                f"rm -f /run/truenas-discovery/{child}/status.json",
+                check=False,
+            )
+
+
 def wait_for_enabled_set(cfg: dict, timeout: float = 30.0) -> None:
     """Block until the daemon's ``children`` dict matches *cfg*.
 
@@ -92,6 +111,7 @@ def wait_for_enabled_set(cfg: dict, timeout: float = 30.0) -> None:
     silently dropped by the daemon.  Blocking here until the daemon
     reflects the change prevents the *next* test's SIGHUP from racing
     an in-flight reload."""
+    _clear_stale_status_files(cfg)
     expected = {
         child for toggle, child in _TOGGLE_TO_CHILD.items()
         if cfg.get(toggle)
@@ -255,15 +275,19 @@ class TestHostnameFlow:
         hostname_field = "hostname_virtual" if call("failover.licensed") else "hostname"
         call("network.configuration.update", {hostname_field: new_hostname})
         try:
+            # mdns and wsd reload concurrently via the composite's
+            # asyncio.gather; mdns may finish first (or vice versa).
+            # Require BOTH to reflect the new hostname before yielding.
             status = wait_for(
                 lambda: (s := get_discovery_status())
                 and s.get("children", {}).get("mdns", {}).get("hostname", "").startswith(new_hostname)
+                and s.get("children", {}).get("wsd", {}).get("hostname") == new_hostname
                 and s,
                 timeout=60,
             )
             final = get_discovery_status()
             assert status, (
-                f"mdns hostname never reflected {new_hostname!r}; "
+                f"mdns/wsd hostname never reflected {new_hostname!r}; "
                 f"last status: {final}"
             )
             assert status["children"]["mdns"]["hostname"].startswith(new_hostname)
