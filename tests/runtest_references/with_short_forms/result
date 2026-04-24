@@ -1,0 +1,1 @@
+{"argv": ["-i", "-p", "-I", "-t"], "command": ["/usr/bin/python3", "-m", "pytest", "-o", "junit_family=xunit2", "--timeout=300", "--junitxml", "results/api_v2_tests_result.xml", "api2/"], "returncode": false, "artifacts": "/root/freenas/freenas/tests/artifacts/", "ip": "", "ip2": "", "environ": {"MIDDLEWARE_TEST_IP": "", "MIDDLEWARE_TEST_PASSWORD": "", "SERVER_TYPE": "STANDARD"}}

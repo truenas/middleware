@@ -1,0 +1,140 @@
+{
+    "basic": {
+        "cmd": [
+            "--ip", "192.168.10.50",
+            "--password", "Hunter2!Basic",
+            "--interface", "igb0"
+        ]
+    },
+    "with_test": {
+        "cmd": [
+            "--ip", "172.16.5.100",
+            "--password", "Tango!Fox99",
+            "--interface", "em0",
+            "--test", "test_account.py"
+        ]
+    },
+    "with_tests": {
+        "cmd": [
+            "--ip", "10.42.1.9",
+            "--password", "BlueSky#714",
+            "--interface", "bge0",
+            "--tests", "test_smb.py,test_nfs.py"
+        ]
+    },
+    "with_tests_dir_prefix": {
+        "cmd": [
+            "--ip", "192.168.100.200",
+            "--password", "Zephyr$Dir9",
+            "--interface", "vmx0",
+            "--tests", "api2/test_smb.py"
+        ]
+    },
+    "with_tests_dot_prefix": {
+        "cmd": [
+            "--ip", "10.77.3.15",
+            "--password", "Kappa&Dot42",
+            "--interface", "bnxt0",
+            "--tests", "api2.test_smb.py"
+        ]
+    },
+    "with_tests_jenkins": {
+        "cmd": [
+            "--ip", "172.31.200.1",
+            "--password", "Xenon*Jnk5",
+            "--interface", "ixl0",
+            "--tests", "test_smb.testCreate"
+        ]
+    },
+    "with_tests_absolute": {
+        "cmd": [
+            "--ip", "10.0.88.3",
+            "--password", "Magenta#Abs7",
+            "--interface", "cxgb0",
+            "--tests", "/absolute/path/test_smb.py"
+        ]
+    },
+    "with_k": {
+        "cmd": [
+            "--ip", "192.168.55.22",
+            "--password", "Winter@Kex3",
+            "--interface", "oce0",
+            "-k", "test_smb"
+        ]
+    },
+    "with_flags": {
+        "cmd": [
+            "--ip", "10.99.1.1",
+            "--password", "PelicanQ8Flg",
+            "--interface", "bxe0",
+            "-v",
+            "-x",
+            "-s",
+            "--show_locals",
+            "--returncode",
+            "--log-cli-level", "DEBUG",
+            "--extended_tests"
+        ]
+    },
+    "with_optional_params": {
+        "cmd": [
+            "--ip", "172.20.10.4",
+            "--password", "Crimson^Opt5",
+            "--interface", "hn0",
+            "--pool", "zpool-crimson",
+            "--isns_ip", "10.254.0.3",
+            "--vm-name", "vm-crimson-5",
+            "--hostname", "crimson-host-5",
+            "--ha_license", "Y3JpbXNvbmxpY2Vuc2U=",
+            "--update"
+        ]
+    },
+    "with_test_dir": {
+        "cmd": [
+            "--ip", "10.33.7.77",
+            "--password", "Onyx&Dir11",
+            "--interface", "vtnet0",
+            "--test_dir", "sharing_protocols"
+        ]
+    },
+    "with_ha_vip": {
+        "cmd": [
+            "--ip", "10.11.11.11",
+            "--password", "Falcon!HA44",
+            "--interface", "bce0",
+            "--ha",
+            "--ip2", "10.11.11.22",
+            "--vip", "10.11.11.33"
+        ]
+    },
+    "with_ha_no_vip": {
+        "cmd": [
+            "--ip", "172.25.5.5",
+            "--password", "Delta@NoVip88",
+            "--interface", "mlx5en0",
+            "--ha",
+            "--ip2", "172.25.5.6"
+        ]
+    },
+    "with_ha_env_vip": {
+        "env": {"virtual_ip": "10.55.0.12"},
+        "cmd": [
+            "--ip", "10.55.0.10",
+            "--password", "Sierra*EnvVip6",
+            "--interface", "cxl0",
+            "--ha",
+            "--ip2", "10.55.0.11"
+        ]
+    },
+    "with_ha_license_path": {
+        "cmd": [
+            "--ip", "192.168.200.50",
+            "--password", "Bravo%LicPth3",
+            "--interface", "igc0",
+            "--ha-license-path", "test_license.txt"
+        ]
+    },
+    "with_short_forms": {
+        "cmd": ["-i", "-p", "-I", "-t"]
+    }
+}
