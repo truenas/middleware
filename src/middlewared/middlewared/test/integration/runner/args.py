@@ -2,7 +2,7 @@ import argparse
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass
 class RunArgs:
     ip: str
     password: str
