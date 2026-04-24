@@ -169,26 +169,7 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     async def toggle_announcement(self, data, prev=None):
-        await self.middleware.call('etc.generate', 'discovery')
-        new_enabled = {k for k in ('mdns', 'netbios', 'wsd') if data.get(k)}
-        started = await self.middleware.call('service.started', 'discovery')
-
-        if not new_enabled:
-            verb = 'STOP' if started else None
-        elif not started:
-            verb = 'START'
-        elif prev is not None and {k for k in ('mdns', 'netbios', 'wsd') if prev.get(k)} != new_enabled:
-            # Adding or removing a subsystem requires a full restart:
-            # truenas-discoveryd's composite can update existing
-            # children's config on SIGHUP but cannot add/remove them.
-            verb = 'RESTART'
-        else:
-            verb = 'RELOAD'
-
-        if verb is None:
-            return
-
-        await (await self.middleware.call('service.control', verb, 'discovery')).wait(raise_error=True)
+        await (await self.middleware.call('service.control', 'RESTART', 'discovery')).wait(raise_error=True)
 
     @api_method(
         NetworkConfigurationUpdateArgs,
