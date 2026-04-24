@@ -168,20 +168,8 @@ class NetworkConfigurationService(ConfigService):
         return verrors
 
     @private
-    async def toggle_announcement(self, data):
-        await self.middleware.call('etc.generate', 'discovery')
-        any_enabled = any(data.get(k) for k in ('mdns', 'netbios', 'wsd'))
-        started = await self.middleware.call('service.started', 'discovery')
-
-        if any_enabled:
-            verb = 'RELOAD' if started else 'START'
-        else:
-            verb = 'STOP' if started else None
-
-        if verb is None:
-            return
-
-        await (await self.middleware.call('service.control', verb, 'discovery')).wait(raise_error=True)
+    async def toggle_announcement(self, data, prev=None):
+        await (await self.middleware.call('service.control', 'RESTART', 'discovery')).wait(raise_error=True)
 
     @api_method(
         NetworkConfigurationUpdateArgs,
@@ -357,9 +345,15 @@ class NetworkConfigurationService(ConfigService):
 
         # The unified truenas-discoveryd daemon advertises mDNS, NetBIOS NS
         # and WSD from a single config file; toggle_announcement regenerates
-        # it and reloads/starts/stops the daemon based on which announcements
-        # are enabled. Runs unconditionally so the daemon picks up hostname
-        # or announcement changes.
-        await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
+        # it and reloads/starts/stops/restarts the daemon based on which
+        # announcements are enabled. Pass the previous service_announcement
+        # so toggle_announcement can pick RESTART when the enabled subsystem
+        # set changes (SIGHUP can't add or remove children in the daemon).
+        # Runs unconditionally so the daemon picks up hostname changes.
+        await self.middleware.call(
+            'network.configuration.toggle_announcement',
+            new_config['service_announcement'],
+            config['service_announcement'],
+        )
 
         return await self.config()

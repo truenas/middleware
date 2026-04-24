@@ -29,6 +29,11 @@ DIGITS = "".join(random.choices(string.digits, k=4))
 DATASET_TM = f"tm{DIGITS}"
 DATASET_SMB = f"smb{DIGITS}"
 
+# Matches middlewared.utils.mdns.DevType.MACPRORACK — the literal
+# that ends up in the ``model`` TXT record.  macOS Finder parses
+# this form (``<model>@ECOLOR=r,g,b``) to pick the rack-mount icon.
+DEV_INFO_MODEL = "MacPro7,1@ECOLOR=226,226,224"
+
 
 # ---- helpers -------------------------------------------------------
 
@@ -67,15 +72,78 @@ def wait_for(predicate, timeout: float = 30.0, interval: float = 1.0):
     return predicate()
 
 
+# Map service_announcement toggle keys to the daemon's child names.
+_TOGGLE_TO_CHILD = {"mdns": "mdns", "netbios": "netbiosns", "wsd": "wsd"}
+
+
+def _clear_stale_status_files(cfg: dict) -> None:
+    """Remove per-child ``status.json`` files for protocols that will
+    be disabled by *cfg*.
+
+    ``truenas-discovery-status`` merges every per-protocol
+    ``status.json`` it finds in ``/run/truenas-discovery/<child>/``,
+    regardless of whether the current daemon instance actually hosts
+    that child.  A file left behind by a previous daemon run (before a
+    RESTART that drops the protocol) makes the CLI report a stale
+    child that looks alive to the test.  Deleting the file here closes
+    that window so the CLI output matches the running children."""
+    for toggle, child in _TOGGLE_TO_CHILD.items():
+        if not cfg.get(toggle):
+            ssh(
+                f"rm -f /run/truenas-discovery/{child}/status.json",
+                check=False,
+            )
+
+
+def wait_for_enabled_set(cfg: dict, timeout: float = 30.0) -> None:
+    """Block until the daemon's ``children`` dict matches *cfg*.
+
+    *cfg* is a ``service_announcement`` mapping (mdns/netbios/wsd →
+    bool).  Polls ``truenas-discovery-status`` until the reported
+    children exactly match the enabled toggles, or the whole daemon
+    is stopped when every toggle is off.
+
+    The fixture/helper API calls that trigger a daemon RELOAD or
+    RESTART return as soon as the middleware-side action is dispatched,
+    not when the daemon has actually applied the change.  mDNS host
+    rename reloads in particular re-probe every record (seconds of
+    wall-clock work) and a SIGHUP arriving during that window is
+    silently dropped by the daemon.  Blocking here until the daemon
+    reflects the change prevents the *next* test's SIGHUP from racing
+    an in-flight reload."""
+    _clear_stale_status_files(cfg)
+    expected = {
+        child for toggle, child in _TOGGLE_TO_CHILD.items()
+        if cfg.get(toggle)
+    }
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        status = get_discovery_status()
+        if not expected:
+            # All off — daemon should be stopped.
+            if status is None:
+                return
+        elif status is not None:
+            if set(status.get("children", {}).keys()) == expected:
+                return
+        time.sleep(1)
+
+
 @contextlib.contextmanager
 def service_announcement(cfg: dict):
-    """Scope a ``service_announcement`` override and restore on exit."""
+    """Scope a ``service_announcement`` override and restore on exit.
+
+    Blocks until the daemon reflects *cfg* before yielding, and again
+    after the restore, so the next API call doesn't race an in-flight
+    reload."""
     prev = call("network.configuration.config")["service_announcement"]
     call("network.configuration.update", {"service_announcement": cfg})
+    wait_for_enabled_set(cfg)
     try:
         yield
     finally:
         call("network.configuration.update", {"service_announcement": prev})
+        wait_for_enabled_set(prev)
 
 
 @contextlib.contextmanager
@@ -112,9 +180,9 @@ def baseline_config():
     }
 
     # Known-good starting state: all three announcements on.
-    call("network.configuration.update", {
-        "service_announcement": {"mdns": True, "netbios": True, "wsd": True},
-    })
+    all_on = {"mdns": True, "netbios": True, "wsd": True}
+    call("network.configuration.update", {"service_announcement": all_on})
+    wait_for_enabled_set(all_on)
     try:
         yield orig
     finally:
@@ -122,12 +190,14 @@ def baseline_config():
             "service_announcement": orig["service_announcement"],
             "hostname": orig["hostname"],
         })
+        wait_for_enabled_set(orig["service_announcement"])
         call("smb.update", {
             "netbiosname": orig["netbiosname"],
             "netbiosalias": orig["netbiosalias"],
             "workgroup": orig["workgroup"],
             "description": orig["description"],
         })
+        time.sleep(1)
 
 
 # ---- sanity -------------------------------------------------------
@@ -164,7 +234,22 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "mdns" not in s["children"] and s,
             )
-            assert status, "daemon never saw mdns disabled"
+            final = get_discovery_status()
+            diag = ssh(
+                "echo '--- rundir ---'; "
+                "ls -la /run/truenas-discovery/ /run/truenas-discovery/mdns/ 2>&1; "
+                "echo '--- config ---'; "
+                "cat /etc/truenas-discovery/truenas-discoveryd.conf 2>&1; "
+                "echo '--- systemd ---'; "
+                "systemctl show truenas-discoveryd "
+                "-p MainPID -p ActiveState -p SubState -p ExecMainStartTimestamp 2>&1",
+                check=False,
+            )
+            assert status, (
+                f"daemon never saw mdns disabled\n"
+                f"last status: {final}\n"
+                f"diag:\n{diag}"
+            )
             assert "mdns" not in status["children"]
         # Back on after scope exit.
         status = wait_for(
@@ -178,7 +263,11 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "netbiosns" not in s["children"] and s,
             )
-            assert status and "netbiosns" not in status["children"]
+            final = get_discovery_status()
+            assert status, (
+                f"daemon never saw netbios disabled; last status: {final}"
+            )
+            assert "netbiosns" not in status["children"]
 
     def test_wsd_toggle(self):
         with service_announcement({"mdns": True, "netbios": True, "wsd": False}):
@@ -186,7 +275,11 @@ class TestAnnouncementToggle:
                 lambda: (s := get_discovery_status())
                 and "wsd" not in s["children"] and s,
             )
-            assert status and "wsd" not in status["children"]
+            final = get_discovery_status()
+            assert status, (
+                f"daemon never saw wsd disabled; last status: {final}"
+            )
+            assert "wsd" not in status["children"]
 
     def test_all_disabled_stops_daemon(self):
         with service_announcement({"mdns": False, "netbios": False, "wsd": False}):
@@ -205,19 +298,33 @@ class TestHostnameFlow:
         hostname_field = "hostname_virtual" if call("failover.licensed") else "hostname"
         call("network.configuration.update", {hostname_field: new_hostname})
         try:
+            # mdns and wsd reload concurrently via the composite's
+            # asyncio.gather; mdns may finish first (or vice versa).
+            # Require BOTH to reflect the new hostname before yielding.
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["mdns"]["hostname"].startswith(new_hostname)
+                and s.get("children", {}).get("mdns", {}).get("hostname", "").startswith(new_hostname)
+                and s.get("children", {}).get("wsd", {}).get("hostname") == new_hostname
                 and s,
                 timeout=60,
             )
-            assert status, "mdns hostname never reflected the new value"
+            final = get_discovery_status()
+            assert status, (
+                f"mdns/wsd hostname never reflected {new_hostname!r}; "
+                f"last status: {final}"
+            )
             assert status["children"]["mdns"]["hostname"].startswith(new_hostname)
             assert status["children"]["wsd"]["hostname"] == new_hostname
         finally:
-            call("network.configuration.update", {
-                hostname_field: baseline_config[hostname_field],
-            })
+            orig = baseline_config[hostname_field]
+            call("network.configuration.update", {hostname_field: orig})
+            # Block until the daemon's mDNS hostname reverts, so the
+            # next test's SIGHUP doesn't race this restore's reload.
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("mdns", {}).get("hostname", "").startswith(orig),
+                timeout=60,
+            )
 
 
 # ---- SMB config flow ----------------------------------------------
@@ -237,13 +344,22 @@ class TestSmbConfigFlow:
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["netbiosns"]["netbios_name"] == new_name
+                and s.get("children", {}).get("netbiosns", {}).get("netbios_name") == new_name
                 and s,
             )
-            assert status
+            final = get_discovery_status()
+            assert status, (
+                f"netbiosns.netbios_name never became {new_name!r}; "
+                f"last status: {final}"
+            )
             assert status["children"]["netbiosns"]["netbios_name"] == new_name
         finally:
-            call("smb.update", {"netbiosname": baseline_config["netbiosname"]})
+            orig = baseline_config["netbiosname"]
+            call("smb.update", {"netbiosname": orig})
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("netbiosns", {}).get("netbios_name") == orig,
+            )
 
     def test_workgroup_flows_into_netbiosns_and_wsd(self, baseline_config):
         new_wg = f"PYDWG{DIGITS}"[:15]
@@ -251,15 +367,25 @@ class TestSmbConfigFlow:
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["netbiosns"]["workgroup"] == new_wg
-                and s["children"]["wsd"]["workgroup"] == new_wg
+                and s.get("children", {}).get("netbiosns", {}).get("workgroup") == new_wg
+                and s.get("children", {}).get("wsd", {}).get("workgroup") == new_wg
                 and s,
             )
-            assert status
+            final = get_discovery_status()
+            assert status, (
+                f"workgroup never became {new_wg!r} in netbiosns+wsd; "
+                f"last status: {final}"
+            )
             assert status["children"]["netbiosns"]["workgroup"] == new_wg
             assert status["children"]["wsd"]["workgroup"] == new_wg
         finally:
-            call("smb.update", {"workgroup": baseline_config["workgroup"]})
+            orig = baseline_config["workgroup"]
+            call("smb.update", {"workgroup": orig})
+            wait_for(
+                lambda: (s := get_discovery_status())
+                and s.get("children", {}).get("netbiosns", {}).get("workgroup") == orig
+                and s.get("children", {}).get("wsd", {}).get("workgroup") == orig,
+            )
 
 
 # ---- interfaces ---------------------------------------------------
@@ -425,7 +551,7 @@ class TestAlwaysOnServices:
         # record is discovery-only, not a real connect target.
         assert all(e["port"] == 9 for e in entries), entries
         for entry in entries:
-            assert entry.get("txt", {}).get("model") == "MACPRORACK", entry
+            assert entry.get("txt", {}).get("model") == DEV_INFO_MODEL, entry
 
     def test_http_service_port_matches_ui_port(self):
         status = get_discovery_status()
