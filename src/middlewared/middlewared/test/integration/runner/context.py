@@ -5,6 +5,7 @@ import string
 import sys
 
 from .args import RunArgs
+from .ssh import setup_ssh_agent, create_key, add_ssh_key
 
 
 @dataclasses.dataclass
@@ -15,6 +16,9 @@ class Context(RunArgs):
     ns1: str | None
     ns2: str | None
     vip: str
+    local_home: str
+    ssh_key_path: str
+    ssh_key: str
 
 
 def context_from_args(args: RunArgs) -> Context:
@@ -61,7 +65,21 @@ def context_from_args(args: RunArgs) -> Context:
     # FIXME
     d['vip'] = vip
 
-    return Context(**d, domain=domain, netmask=netmask, gateway=gateway, ns1=ns1, ns2=ns2)
+    # Setup ssh agent before starting test.
+    local_home = os.path.expanduser('~')
+    dotssh_path = local_home + '/.ssh'
+    ssh_key_path = dotssh_path + '/test_id_rsa'
+    # FIXME
+    #setup_ssh_agent()
+    os.makedirs(dotssh_path, exist_ok=True)
+    if not os.path.exists(ssh_key_path):
+        create_key(ssh_key_path)
+    add_ssh_key(ssh_key_path)
+    with open(ssh_key_path, 'r') as f:
+        ssh_key = f.readlines()[0].rstrip()
+
+    return Context(**d, domain=domain, netmask=netmask, gateway=gateway, ns1=ns1, ns2=ns2, local_home=local_home,
+                   ssh_key_path=ssh_key_path, ssh_key=ssh_key)
 
 
 def get_ipinfo(ip_to_use):

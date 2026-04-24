@@ -74,8 +74,8 @@ domain = "{ctx.domain}"
 api_url = 'http://{ctx.ip}/api/v2.0'
 interface = "{ctx.interface}"
 badNtpServer = "10.20.20.122"
-localHome = "{localHome}"
-keyPath = "{keyPath}"
+localHome = "{ctx.local_home}"
+keyPath = "{ctx.ssh_key_path}"
 pool_name = "{ctx.pool_name}"
 ha_pool_name = "ha"
 ha = {ctx.ha}
@@ -84,30 +84,15 @@ update = {ctx.update}
 artifacts = "{artifacts}"
 isns_ip = "{ctx.isns_ip}"
 extended_tests = {ctx.extended_tests}
+sshKey = "{ctx.ssh_key}"
 """
 
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
 
-from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
+from functions import get_folder
 from functions import SSH_TEST
-"""
-# Setup ssh agent before starting test.
-setup_ssh_agent()
-if os.path.isdir(dotsshPath) is False:
-    os.makedirs(dotsshPath)
-if os.path.exists(keyPath) is False:
-    create_key(keyPath)
-add_ssh_key(keyPath)
-"""
-
-f = open(keyPath + '.pub', 'r')
-Key = f.readlines()[0].rstrip()
-
-cfg_file = open("auto_config.py", 'a')
-cfg_file.writelines(f'sshKey = "{Key}"\n')
-cfg_file.close()
 
 if ctx.verbose:
     callargs.append("-" + "v" * ctx.verbose)
