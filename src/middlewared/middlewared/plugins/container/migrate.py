@@ -247,7 +247,11 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
 
             context.middleware.call_sync(
                 'pool.dataset.update_impl',
-                UpdateImplArgs(name=dataset['name'], iprops={'mountpoint', 'canmount'})
+                UpdateImplArgs(
+                    name=dataset['name'],
+                    zprops={'canmount': 'on'},
+                    iprops={'mountpoint'},
+                )
             )
             context.call_sync2(context.s.zfs.resource.mount, dataset['name'])
 
