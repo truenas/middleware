@@ -20,7 +20,7 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VM", "ZFS_TIER"]
+    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VM", "ZFSTIER"]
     """Feature to check for availability on this system."""
 
 
