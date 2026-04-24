@@ -30,6 +30,10 @@ class Context(RunArgs):
 
 
 def context_from_args(args: RunArgs, workdir: str) -> Context:
+    os.environ["MIDDLEWARE_TEST_IP"] = args.ip
+    os.environ["MIDDLEWARE_TEST_PASSWORD"] = args.password
+    os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if args.ha else "STANDARD"
+
     d = dataclasses.asdict(args)
 
     artifacts = f"{workdir}/artifacts/"

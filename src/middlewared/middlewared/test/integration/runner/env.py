@@ -4,10 +4,6 @@ from .context import Context
 
 
 def set_env(ctx: Context) -> None:
-    os.environ["MIDDLEWARE_TEST_IP"] = ctx.ip
-    os.environ["MIDDLEWARE_TEST_PASSWORD"] = ctx.password
-    os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ctx.ha else "STANDARD"
-
     if ctx.ha and ctx.ip2:
         os.environ['controller1_ip'] = ctx.ip
         os.environ['controller2_ip'] = ctx.ip2
