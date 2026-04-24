@@ -155,7 +155,7 @@ def destroy_impl(
             errnum = errno.EBUSY
         else:
             errnum = res["return"]["failed"].get(path, errno.EFAULT)
-            if errnum in truenas_pylibzfs.ZFSError:
+            if isinstance(errnum, int) and errnum in truenas_pylibzfs.ZFSError:
                 failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
     else:
         for i in mntpnts:
