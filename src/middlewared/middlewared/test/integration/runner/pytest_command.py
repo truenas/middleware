@@ -17,7 +17,7 @@ TEST_DIR_TO_RESULT = {
 }
 
 
-def get_pytest_command(ctx: Context):
+def get_pytest_command(ctx: Context) -> list[str]:
     callargs = []
 
     if ctx.no_capture:
@@ -59,7 +59,7 @@ def get_pytest_command(ctx: Context):
     return pytest_command
 
 
-def parse_test_name(ctx: Context, test):
+def parse_test_name(ctx: Context, test: str) -> str:
     test = test.removeprefix(f"{ctx.test_dir}/")
     test = test.removeprefix(f"{ctx.test_dir}.")
     if ".py" not in test and test.count(".") == 1:
@@ -70,7 +70,7 @@ def parse_test_name(ctx: Context, test):
     return test
 
 
-def parse_test_name_prefix_dir(ctx: Context, test_name):
+def parse_test_name_prefix_dir(ctx: Context, test_name: str) -> str:
     name = parse_test_name(ctx, test_name)
     if name.startswith('/'):
         return name

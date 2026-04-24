@@ -4,7 +4,7 @@ import textwrap
 from .context import Context
 
 
-def write_config(ctx: Context):
+def write_config(ctx: Context) -> None:
     cfg_content = textwrap.dedent(f"""\
         #!{sys.executable}
 

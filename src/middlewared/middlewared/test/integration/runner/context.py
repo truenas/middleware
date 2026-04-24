@@ -52,7 +52,7 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
     ip_to_use = args.ip
     interface, netmask, gateway, ns1, ns2 = get_ipinfo(ip_to_use)
 
-    if not all((interface, netmask, gateway)):
+    if interface is None or netmask is None or gateway is None:
         print(
             f'Unable to determine interface ({interface!r}), netmask ({netmask!r}) and gateway ({gateway!r}) '
             f'for {ip_to_use!r}'
@@ -89,7 +89,7 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
                    ns1=ns1, ns2=ns2, local_home=local_home, ssh_key_path=ssh_key_path, ssh_key=ssh_key)
 
 
-def get_ipinfo(ip_to_use):
+def get_ipinfo(ip_to_use: str) -> tuple[str | None, str | None, str | None, str | None, str | None]:
     iface = net = gate = ns1 = ns2 = None
     with client(host_ip=ip_to_use) as c:
         net_config = c.call('network.configuration.config')

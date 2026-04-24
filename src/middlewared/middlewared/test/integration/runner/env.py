@@ -3,7 +3,7 @@ import os
 from .context import Context
 
 
-def set_env(ctx: Context):
+def set_env(ctx: Context) -> None:
     os.environ["MIDDLEWARE_TEST_IP"] = ctx.ip
     os.environ["MIDDLEWARE_TEST_PASSWORD"] = ctx.password
     os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ctx.ha else "STANDARD"
@@ -19,7 +19,7 @@ def set_env(ctx: Context):
         if not os.environ.get('domain'):
             os.environ['domain'] = ctx.domain
         if not os.environ.get('hostname_virtual'):
-            os.environ['hostname_virtual'] = ctx.hostname
+            os.environ['hostname_virtual'] = ctx.hostname or ''
         if not os.environ.get('hostname'):
             os.environ['hostname'] = f'{ctx.hostname}-nodea'
         if not os.environ.get('hostname_b'):

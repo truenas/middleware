@@ -5,7 +5,7 @@ from middlewared.test.integration.utils.ssh import ssh
 from .context import Context
 
 
-def get_artifacts(ctx: Context):
+def get_artifacts(ctx: Context) -> None:
     if ctx.verbose:
         if ctx.ha:
             get_folder('/var/log', f'{ctx.artifacts}/log_nodea', 'root', 'testing', ctx.ip)
@@ -20,7 +20,7 @@ def get_artifacts(ctx: Context):
             get_cmd_result('dmesg', f'{ctx.artifacts}/dmesg.json', ctx.ip)
 
 
-def get_folder(folder, destination, username, passwrd, host):
+def get_folder(folder: str, destination: str, username: str, passwrd: str | None, host: str) -> dict[str, bool | str]:
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
     cmd += [
         "scp",
@@ -42,9 +42,9 @@ def get_folder(folder, destination, username, passwrd, host):
         return {'result': True, 'output': output}
 
 
-def get_cmd_result(cmd: str, target_file: str, target_ip: str):
+def get_cmd_result(cmd: str, target_file: str, target_ip: str) -> None:
     try:
-        results = ssh(cmd, ip=target_ip)
+        results = ssh(cmd, ip=target_ip)  # type: ignore[no-untyped-call]
     except Exception as exc:
         with open(f'{target_file}.error.txt', 'w') as f:
             f.write(f'{target_ip}: command [{cmd}] failed: {exc}\n')

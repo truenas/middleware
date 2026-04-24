@@ -38,7 +38,7 @@ class RunArgs:
     dev_test: bool
 
 
-def parse(args=None) -> RunArgs:
+def parse(args: list[str] | None = None) -> RunArgs:
     parser = argparse.ArgumentParser(description='Run TrueNAS integration tests')
 
     conn = parser.add_argument_group('connection')

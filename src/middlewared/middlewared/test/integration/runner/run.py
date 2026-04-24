@@ -8,7 +8,7 @@ from .env import set_env
 from .pytest_command import get_pytest_command
 
 
-def run(workdir: str):
+def run(workdir: str) -> None:
     ixautomation_dot_conf_url = (
         "https://raw.githubusercontent.com/iXsystems/ixautomation/master/src/etc/ixautomation.conf.dist"
     )
