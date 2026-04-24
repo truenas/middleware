@@ -3,11 +3,11 @@
 # License: BSD
 
 from middlewared.test.integration.utils import client
+from middlewared.test.integration.runner import parse
 from ipaddress import ip_interface
 from subprocess import run, call
-from sys import argv, exit
+from sys import exit
 import os
-import getopt
 import random
 import socket
 import sys
@@ -34,13 +34,8 @@ initial_env_key = set(os.environ.keys())
 
 workdir = os.getcwd()
 sys.path.append(workdir)
-workdir = os.getcwd()
-results_xml = f'{workdir}/results/'
 localHome = os.path.expanduser('~')
-dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
-isns_ip = '10.234.24.50'  # isns01.qe.ixsystems.net
-pool_name = "tank"
 
 ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/" \
     "ixautomation/master/src/etc/ixautomation.conf.dist"
@@ -51,137 +46,22 @@ if not os.path.exists('config.py'):
     print(config_file_msg)
     exit(1)
 
-error_msg = f"""Usage for %s:
-Mandatory option
-    --ip <###.###.###.###>      - IP of the TrueNAS
-    --password <root password>  - Password of the TrueNAS root user
-    --interface <interface>     - The interface that TrueNAS is run one
+args = parse()
 
-Optional option
-    --ip2                       - B controller IPv4 of TrueNAS HA machine
-    --vip                       - VIP (ipv4) of TrueNAS HA machine
-    --test <test name>          - Test name (Network, ALL)
-    --tests <test1>[,test2,...] - List of tests to be supplied to pytest
-    --vm-name <VM_NAME>         - Name the the Bhyve VM
-    --ha                        - Run test for HA
-    --ha_license                - The base64 encoded string of an HA license
-    --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
-    --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
-    --test_dir <api2>           - Name of the tests directory from which to run tests
-    --extended_tests            - Run extended tests
-    """ % argv[0]
-
-# if have no argument stop
-if len(argv) == 1:
-    print(error_msg)
-    exit()
-
-option_list = [
-    "ip=",
-    "ip2=",
-    "vip=",
-    "password=",
-    "interface=",
-    'test=',
-    "vm-name=",
-    "ha",
-    "update",
-    "dev-test",
-    "log-cli-level=",
-    "returncode",
-    "isns_ip=",
-    "pool=",
-    "test_dir=",
-    "tests=",
-    "ha_license=",
-    "ha-license-path=",
-    "hostname=",
-    "show_locals",
-    "extended_tests",
-]
-
-# look if all the argument are there.
-try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItk:vxs', option_list)
-except getopt.GetoptError as e:
-    print(str(e))
-    print(error_msg)
-    exit()
-
-vm_name = None
-testName = ''
-testexpr = None
-ha = False
-update = False
-verbose = 0
-exitfirst = ''
-returncode = False
 callargs = []
-tests = []
-test_dir = 'api2'
-ip2 = vip = ''
-netmask = None
-gateway = None
-ha_license = ''
-hostname = None
-show_locals = False
-extended_tests = False
-for output, arg in myopts:
-    if output in ('-i', '--ip'):
-        ip = arg
-    elif output == '--ip2':
-        ip2 = arg
-    elif output == '--vip':
-        vip = arg
-    elif output in ('-p', '--password'):
-        passwd = arg
-    elif output in ('-I', '--interface'):
-        interface = arg
-    elif output in ('-t', '--test'):
-        testName = arg
-    elif output == '-k':
-        testexpr = arg
-    elif output in ('--vm-name',):
-        vm_name = f"'{arg}'"
-    elif output == '--ha':
-        ha = True
-    elif output == '--hostname':
-        hostname = arg
-    elif output == '--update':
-        update = True
-    elif output == '-v':
-        verbose += 1
-    elif output == '-x':
-        exitfirst = True
-    elif output == '--log-cli-level':
-        callargs.append('--log-cli-level')
-        callargs.append(arg)
-    elif output == '--returncode':
-        returncode = True
-    elif output == '--isns_ip':
-        isns_ip = arg
-    elif output == '--pool':
-        pool_name = arg
-    elif output == '-s':
-        callargs.append('-s')
-    elif output == '--tests':
-        tests.extend(arg.split(','))
-    elif output == '--test_dir':
-        test_dir = arg
-    elif output == '--ha_license':
-        ha_license = arg
-    elif output == '--ha-license-path':
-        with open(arg) as f:
-            ha_license = f.read()
-    elif output == '--show_locals':
-        show_locals = True
-    elif output == '--extended_tests':
-        extended_tests = True
+if args.no_capture:
+    callargs.append('-s')
+if args.log_cli_level:
+    callargs.append('--log-cli-level')
+    callargs.append(args.log_cli_level)
 
-if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
-    print("Mandatory option missing!\n")
-    print(error_msg)
-    exit()
+ha_license = args.ha_license
+if args.ha_license_path:
+    with open(args.ha_license_path) as f:
+        ha_license = f.read()
+
+vip = args.vip
+hostname = args.hostname
 
 # create random hostname and random fake domain
 digit = ''.join(secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10))
@@ -193,15 +73,15 @@ artifacts = f"{workdir}/artifacts/"
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
-os.environ["MIDDLEWARE_TEST_IP"] = ip
-os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
-os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ha else "STANDARD"
+os.environ["MIDDLEWARE_TEST_IP"] = args.ip
+os.environ["MIDDLEWARE_TEST_PASSWORD"] = args.password
+os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if args.ha else "STANDARD"
 
-ip_to_use = ip
-if ha and ip2:
+ip_to_use = args.ip
+if args.ha and args.ip2:
     domain = 'tn.ixsystems.com'
-    os.environ['controller1_ip'] = ip
-    os.environ['controller2_ip'] = ip2
+    os.environ['controller1_ip'] = args.ip
+    os.environ['controller2_ip'] = args.ip2
 
 
 def get_ipinfo(ip_to_use):
@@ -238,11 +118,11 @@ if not all((interface, netmask, gateway)):
 
 
 def get_random_vip():
-    return '.'.join(ip.split('.')[:3] + ['132'])
+    return '.'.join(args.ip.split('.')[:3] + ['132'])
 
     # reduce risk of trying to assign same VIP to two VMs
     # starting at roughly the same time
-    vip_pool = list(ip_interface(f'{ip}/{netmask}').network)
+    vip_pool = list(ip_interface(f'{args.ip}/{netmask}').network)
     random.shuffle(vip_pool)
 
     for i in vip_pool:
@@ -260,7 +140,7 @@ def get_random_vip():
     raise RuntimeError('Unable to come up with vip address')
 
 
-if ha:
+if args.ha:
     if vip:
         os.environ['virtual_ip'] = vip
     elif os.environ.get('virtual_ip'):
@@ -286,26 +166,26 @@ if ha:
 cfg_content = f"""#!{sys.executable}
 
 user = "root"
-password = "{passwd}"
+password = "{args.password}"
 netmask = "{netmask}"
 gateway = "{gateway}"
 vip = "{vip}"
-vm_name = {vm_name}
+vm_name = {f"'{args.vm_name}'" if args.vm_name else None}
 hostname = "{hostname}"
 domain = "{domain}"
-api_url = 'http://{ip}/api/v2.0'
+api_url = 'http://{args.ip}/api/v2.0'
 interface = "{interface}"
 badNtpServer = "10.20.20.122"
 localHome = "{localHome}"
 keyPath = "{keyPath}"
-pool_name = "{pool_name}"
+pool_name = "{args.pool_name}"
 ha_pool_name = "ha"
-ha = {ha}
+ha = {args.ha}
 ha_license = {ha_license!r}
-update = {update}
+update = {args.update}
 artifacts = "{artifacts}"
-isns_ip = "{isns_ip}"
-extended_tests = {extended_tests}
+isns_ip = "{args.isns_ip}"
+extended_tests = {args.extended_tests}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -331,12 +211,12 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
-if verbose:
-    callargs.append("-" + "v" * verbose)
-if exitfirst:
+if args.verbose:
+    callargs.append("-" + "v" * args.verbose)
+if args.exit_first:
     callargs.append("-x")
 
-if show_locals:
+if args.show_locals:
     callargs.append('--showlocals')
 
 # Use the right python version to start pytest with sys.executable
@@ -349,15 +229,15 @@ pytest_command = [
     "-o", "junit_family=xunit2",
     '--timeout=300',
     "--junitxml",
-    TEST_DIR_TO_RESULT[test_dir],
+    TEST_DIR_TO_RESULT[args.test_dir],
 ]
-if testexpr:
-    pytest_command.extend(['-k', testexpr])
+if args.testexpr:
+    pytest_command.extend(['-k', args.testexpr])
 
 
 def parse_test_name(test):
-    test = test.removeprefix(f"{test_dir}/")
-    test = test.removeprefix(f"{test_dir}.")
+    test = test.removeprefix(f"{args.test_dir}/")
+    test = test.removeprefix(f"{args.test_dir}.")
     if ".py" not in test and test.count(".") == 1:
         # Test name from Jenkins
         filename, testname = test.split(".")
@@ -370,13 +250,13 @@ def parse_test_name_prefix_dir(test_name):
     if name.startswith('/'):
         return name
     else:
-        return f"{test_dir}/{name}"
+        return f"{args.test_dir}/{name}"
 
 
-if tests:
-    pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
+if args.tests:
+    pytest_command.extend(list(map(parse_test_name_prefix_dir, args.tests.split(','))))
 else:
-    pytest_command.append(parse_test_name_prefix_dir(testName))
+    pytest_command.append(parse_test_name_prefix_dir(args.test))
 
 runtest_output_dir = os.environ.get('RUNTEST_OUTPUT_DIR', 'runtest_references')
 runtest_test_dir = f"{runtest_output_dir}/{os.environ['RUNTEST_TEST_NAME']}"
@@ -386,10 +266,10 @@ with open(f"{runtest_test_dir}/result", "w") as f:
     f.write(json.dumps({
         "argv": sys.argv[1:],
         "command": pytest_command,
-        "returncode": returncode,
+        "returncode": args.returncode,
         "artifacts": artifacts,
-        "ip": ip,
-        "ip2": ip2,
+        "ip": args.ip,
+        "ip2": args.ip2,
         "environ": {k: v for k, v in os.environ.items() if k not in initial_env_key},
     }))
 
@@ -411,17 +291,17 @@ def get_cmd_result(cmd: str, target_file: str, target_ip: str):
             f.flush()
 
 
-if ha:
-    get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', ip)
-    get_folder('/var/log', f'{artifacts}/log_nodeb', 'root', 'testing', ip2)
-    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodea.json', ip)
-    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodeb.json', ip2)
-    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodea.json', ip)
-    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodeb.json', ip2)
+if args.ha:
+    get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', args.ip)
+    get_folder('/var/log', f'{artifacts}/log_nodeb', 'root', 'testing', args.ip2)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodea.json', args.ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodeb.json', args.ip2)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodea.json', args.ip)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodeb.json', args.ip2)
 else:
-    get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
-    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs.json', ip)
-    get_cmd_result('dmesg', f'{artifacts}/dmesg.json', ip)
+    get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', args.ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs.json', args.ip)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg.json', args.ip)
 
-if returncode:
+if args.returncode:
     exit(proc_returncode)
