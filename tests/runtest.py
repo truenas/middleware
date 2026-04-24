@@ -3,10 +3,11 @@
 # License: BSD
 
 from middlewared.test.integration.utils import client
+from middlewared.test.integration.runner.args import parse
 from middlewared.test.integration.runner.config import write_config
 from middlewared.test.integration.runner.context import context_from_args
 from middlewared.test.integration.runner.env import set_env
-from middlewared.test.integration.runner.args import parse
+from middlewared.test.integration.runner.pytest_command import get_pytest_command
 from ipaddress import ip_interface
 from subprocess import run, call
 from sys import exit
@@ -16,20 +17,6 @@ import socket
 import sys
 import json
 import shutil
-
-TEST_DIR_TO_RESULT = {
-    'api2': 'results/api_v2_tests_result.xml',
-    'directory_services': 'results/directoryservices_tests_result.xml',
-    'stig': 'results/stig_tests_result.xml',
-    'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
-    'sharing_protocols/fibre_channel': 'results/sharing_protocols_fibre_channel_tests_result.xml',
-    'sharing_protocols/iscsi': 'results/sharing_protocols_iscsi_tests_result.xml',
-    'sharing_protocols/nfs': 'results/sharing_protocols_nfs_tests_result.xml',
-    'sharing_protocols/nvmet': 'results/sharing_protocols_nvmet_tests_result.xml',
-    'sharing_protocols/smb': 'results/sharing_protocols_smb_tests_result.xml',
-    'cloud': 'results/cloud_tests_result.xml',
-    'vm': 'results/vm_result.xml',
-}
 
 initial_env_key = set(os.environ.keys())
 
@@ -47,68 +34,14 @@ if not os.path.exists('config.py'):
 
 ctx = context_from_args(parse(), workdir)
 
-callargs = []
-if ctx.no_capture:
-    callargs.append('-s')
-if ctx.log_cli_level:
-    callargs.append('--log-cli-level')
-    callargs.append(ctx.log_cli_level)
-
-
 set_env(ctx)
 write_config(ctx)
-
+pytest_command = get_pytest_command(ctx)
 
 
 from functions import get_folder
 from functions import SSH_TEST
 
-if ctx.verbose:
-    callargs.append("-" + "v" * ctx.verbose)
-if ctx.exit_first:
-    callargs.append("-x")
-
-if ctx.show_locals:
-    callargs.append('--showlocals')
-
-# Use the right python version to start pytest with sys.executable
-# So that we can support virtualenv python pytest.
-pytest_command = [
-    sys.executable,
-    '-m',
-    'pytest'
-] + callargs + [
-    "-o", "junit_family=xunit2",
-    '--timeout=300',
-    "--junitxml",
-    TEST_DIR_TO_RESULT[ctx.test_dir],
-]
-if ctx.testexpr:
-    pytest_command.extend(['-k', ctx.testexpr])
-
-
-def parse_test_name(test):
-    test = test.removeprefix(f"{ctx.test_dir}/")
-    test = test.removeprefix(f"{ctx.test_dir}.")
-    if ".py" not in test and test.count(".") == 1:
-        # Test name from Jenkins
-        filename, testname = test.split(".")
-        return f"{filename}.py::{testname}"
-    return test
-
-
-def parse_test_name_prefix_dir(test_name):
-    name = parse_test_name(test_name)
-    if name.startswith('/'):
-        return name
-    else:
-        return f"{ctx.test_dir}/{name}"
-
-
-if ctx.tests:
-    pytest_command.extend(list(map(parse_test_name_prefix_dir, ctx.tests.split(','))))
-else:
-    pytest_command.append(parse_test_name_prefix_dir(ctx.test))
 
 runtest_output_dir = os.environ.get('RUNTEST_OUTPUT_DIR', 'runtest_references')
 runtest_test_dir = f"{runtest_output_dir}/{os.environ['RUNTEST_TEST_NAME']}"
