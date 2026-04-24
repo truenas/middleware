@@ -142,6 +142,13 @@ log {
   flags(final);
 };
 
+log {
+  source(s_src);
+  filter(f_discovery);
+  destination { file("/var/log/truenas-discoveryd.log"); };
+  flags(final);
+};
+
 #######################
 # Middlewared-related log files
 ########################
