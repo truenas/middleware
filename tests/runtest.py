@@ -61,41 +61,13 @@ os.environ["MIDDLEWARE_TEST_IP"] = ctx.ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = ctx.password
 os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ctx.ha else "STANDARD"
 
-ip_to_use = ctx.ip
 if ctx.ha and ctx.ip2:
     ctx.domain = 'tn.ixsystems.com'
     os.environ['controller1_ip'] = ctx.ip
     os.environ['controller2_ip'] = ctx.ip2
 
 
-def get_ipinfo(ip_to_use):
-    return (
-        'eth0',
-        '.'.join(ip_to_use.split('.')[:3] + ['128']),
-        '.'.join(ip_to_use.split('.')[:3] + ['129']),
-        '.'.join(ip_to_use.split('.')[:3] + ['130']),
-        '.'.join(ip_to_use.split('.')[:3] + ['131']),
-    )
 
-    iface = net = gate = ns1 = ns2 = None
-    with client(host_ip=ip_to_use) as c:
-        net_config = c.call('network.configuration.config')
-        ns1 = net_config.get('nameserver1')
-        ns2 = net_config.get('nameserver2')
-        _ip_to_use = socket.gethostbyname(ip_to_use)
-        for i in c.call('interface.query'):
-            for j in i['state']['aliases']:
-                if j.get('address') == _ip_to_use:
-                    iface = i['id']
-                    net = j['netmask']
-                    for k in c.call('route.system_routes'):
-                        if k.get('network') == '0.0.0.0' and k.get('gateway'):
-                            return iface, net, k['gateway'], ns1, ns2
-
-    return iface, net, gate, ns1, ns2
-
-
-ctx.interface, ctx.netmask, ctx.gateway, ctx.ns1, ctx.ns2 = get_ipinfo(ip_to_use)
 if not all((ctx.interface, ctx.netmask, ctx.gateway)):
     print(f'Unable to determine interface ({ctx.interface!r}), netmask ({ctx.netmask!r}) and gateway ({ctx.gateway!r}) for {ip_to_use!r}')
     exit()
