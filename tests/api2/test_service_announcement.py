@@ -29,6 +29,11 @@ DIGITS = "".join(random.choices(string.digits, k=4))
 DATASET_TM = f"tm{DIGITS}"
 DATASET_SMB = f"smb{DIGITS}"
 
+# Matches middlewared.utils.mdns.DevType.MACPRORACK — the literal
+# that ends up in the ``model`` TXT record.  macOS Finder parses
+# this form (``<model>@ECOLOR=r,g,b``) to pick the rack-mount icon.
+DEV_INFO_MODEL = "MacPro7,1@ECOLOR=226,226,224"
+
 
 # ---- helpers -------------------------------------------------------
 
@@ -72,10 +77,12 @@ def service_announcement(cfg: dict):
     """Scope a ``service_announcement`` override and restore on exit."""
     prev = call("network.configuration.config")["service_announcement"]
     call("network.configuration.update", {"service_announcement": cfg})
+    time.sleep(1)
     try:
         yield
     finally:
         call("network.configuration.update", {"service_announcement": prev})
+        time.sleep(1)
 
 
 @contextlib.contextmanager
@@ -115,6 +122,7 @@ def baseline_config():
     call("network.configuration.update", {
         "service_announcement": {"mdns": True, "netbios": True, "wsd": True},
     })
+    time.sleep(1)
     try:
         yield orig
     finally:
@@ -122,12 +130,14 @@ def baseline_config():
             "service_announcement": orig["service_announcement"],
             "hostname": orig["hostname"],
         })
+        time.sleep(1)
         call("smb.update", {
             "netbiosname": orig["netbiosname"],
             "netbiosalias": orig["netbiosalias"],
             "workgroup": orig["workgroup"],
             "description": orig["description"],
         })
+        time.sleep(1)
 
 
 # ---- sanity -------------------------------------------------------
@@ -204,20 +214,26 @@ class TestHostnameFlow:
         new_hostname = f"pydisc{DIGITS}"
         hostname_field = "hostname_virtual" if call("failover.licensed") else "hostname"
         call("network.configuration.update", {hostname_field: new_hostname})
+        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["mdns"]["hostname"].startswith(new_hostname)
+                and s.get("children", {}).get("mdns", {}).get("hostname", "").startswith(new_hostname)
                 and s,
                 timeout=60,
             )
-            assert status, "mdns hostname never reflected the new value"
+            final = get_discovery_status()
+            assert status, (
+                f"mdns hostname never reflected {new_hostname!r}; "
+                f"last status: {final}"
+            )
             assert status["children"]["mdns"]["hostname"].startswith(new_hostname)
             assert status["children"]["wsd"]["hostname"] == new_hostname
         finally:
             call("network.configuration.update", {
                 hostname_field: baseline_config[hostname_field],
             })
+            time.sleep(1)
 
 
 # ---- SMB config flow ----------------------------------------------
@@ -234,32 +250,44 @@ class TestSmbConfigFlow:
     def test_netbiosname_flows_into_netbiosns(self, baseline_config):
         new_name = f"PYDNB{DIGITS}"[:15]
         call("smb.update", {"netbiosname": new_name})
+        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["netbiosns"]["netbios_name"] == new_name
+                and s.get("children", {}).get("netbiosns", {}).get("netbios_name") == new_name
                 and s,
             )
-            assert status
+            final = get_discovery_status()
+            assert status, (
+                f"netbiosns.netbios_name never became {new_name!r}; "
+                f"last status: {final}"
+            )
             assert status["children"]["netbiosns"]["netbios_name"] == new_name
         finally:
             call("smb.update", {"netbiosname": baseline_config["netbiosname"]})
+            time.sleep(1)
 
     def test_workgroup_flows_into_netbiosns_and_wsd(self, baseline_config):
         new_wg = f"PYDWG{DIGITS}"[:15]
         call("smb.update", {"workgroup": new_wg})
+        time.sleep(1)
         try:
             status = wait_for(
                 lambda: (s := get_discovery_status())
-                and s["children"]["netbiosns"]["workgroup"] == new_wg
-                and s["children"]["wsd"]["workgroup"] == new_wg
+                and s.get("children", {}).get("netbiosns", {}).get("workgroup") == new_wg
+                and s.get("children", {}).get("wsd", {}).get("workgroup") == new_wg
                 and s,
             )
-            assert status
+            final = get_discovery_status()
+            assert status, (
+                f"workgroup never became {new_wg!r} in netbiosns+wsd; "
+                f"last status: {final}"
+            )
             assert status["children"]["netbiosns"]["workgroup"] == new_wg
             assert status["children"]["wsd"]["workgroup"] == new_wg
         finally:
             call("smb.update", {"workgroup": baseline_config["workgroup"]})
+            time.sleep(1)
 
 
 # ---- interfaces ---------------------------------------------------
@@ -425,7 +453,7 @@ class TestAlwaysOnServices:
         # record is discovery-only, not a real connect target.
         assert all(e["port"] == 9 for e in entries), entries
         for entry in entries:
-            assert entry.get("txt", {}).get("model") == "MACPRORACK", entry
+            assert entry.get("txt", {}).get("model") == DEV_INFO_MODEL, entry
 
     def test_http_service_port_matches_ui_port(self):
         status = get_discovery_status()

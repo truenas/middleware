@@ -168,15 +168,22 @@ class NetworkConfigurationService(ConfigService):
         return verrors
 
     @private
-    async def toggle_announcement(self, data):
+    async def toggle_announcement(self, data, prev=None):
         await self.middleware.call('etc.generate', 'discovery')
-        any_enabled = any(data.get(k) for k in ('mdns', 'netbios', 'wsd'))
+        new_enabled = {k for k in ('mdns', 'netbios', 'wsd') if data.get(k)}
         started = await self.middleware.call('service.started', 'discovery')
 
-        if any_enabled:
-            verb = 'RELOAD' if started else 'START'
-        else:
+        if not new_enabled:
             verb = 'STOP' if started else None
+        elif not started:
+            verb = 'START'
+        elif prev is not None and {k for k in ('mdns', 'netbios', 'wsd') if prev.get(k)} != new_enabled:
+            # Adding or removing a subsystem requires a full restart:
+            # truenas-discoveryd's composite can update existing
+            # children's config on SIGHUP but cannot add/remove them.
+            verb = 'RESTART'
+        else:
+            verb = 'RELOAD'
 
         if verb is None:
             return
@@ -357,9 +364,15 @@ class NetworkConfigurationService(ConfigService):
 
         # The unified truenas-discoveryd daemon advertises mDNS, NetBIOS NS
         # and WSD from a single config file; toggle_announcement regenerates
-        # it and reloads/starts/stops the daemon based on which announcements
-        # are enabled. Runs unconditionally so the daemon picks up hostname
-        # or announcement changes.
-        await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
+        # it and reloads/starts/stops/restarts the daemon based on which
+        # announcements are enabled. Pass the previous service_announcement
+        # so toggle_announcement can pick RESTART when the enabled subsystem
+        # set changes (SIGHUP can't add or remove children in the daemon).
+        # Runs unconditionally so the daemon picks up hostname changes.
+        await self.middleware.call(
+            'network.configuration.toggle_announcement',
+            new_config['service_announcement'],
+            config['service_announcement'],
+        )
 
         return await self.config()
