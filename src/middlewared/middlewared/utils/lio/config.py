@@ -355,6 +355,23 @@ def _configure_storage_object(so_dir: pathlib.Path, extent: dict):
         raise RuntimeError(f"LIO configfs: {enable} never appeared")
     _write(enable, "1")
 
+    _set_storage_object_attribs(so_dir)
+
+
+def _set_storage_object_attribs(so_dir: pathlib.Path):
+    """Write storage-object-level emulation attributes.
+
+    emulate_tpu=1: advertise thin provisioning support (sets LBPME in READ
+    CAPACITY 16) and accept UNMAP commands.  Safe to set unconditionally;
+    on non-thin-provisioned devices the command succeeds but frees no space.
+    """
+    attrib_dir = so_dir / "attrib"
+    if not attrib_dir.exists():
+        return
+    p = attrib_dir / "emulate_tpu"
+    if p.exists():
+        _write_if_changed(p, "1")
+
 
 def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
     """Write VPD serial and product identity attributes.
@@ -402,6 +419,7 @@ def _set_storage_object_identity(so_dir: pathlib.Path, extent: dict):
 def _update_storage_object_attrs(so_dir: pathlib.Path, extent: dict):
     """Update identity attributes on an existing storage object."""
     _set_storage_object_identity(so_dir, extent)
+    _set_storage_object_attribs(so_dir)
 
 
 def _delete_storage_object(so_dir: pathlib.Path):

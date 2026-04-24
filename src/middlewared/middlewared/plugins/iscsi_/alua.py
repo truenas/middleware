@@ -2,7 +2,7 @@ import asyncio
 import itertools
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
-from middlewared.service import Service, job
+from middlewared.service import Service, job, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 from middlewared.utils.iscsi.constants import ISCSIMODE
@@ -798,22 +798,36 @@ class iSCSITargetAluaService(Service):
         )
         return bool(running_jobs)
 
+    @private
+    async def iscsitarget_is_active(self):
+        """Return True if the iSCSI target service is fully active on this node.
+
+        In SCST mode the service has a systemd unit; we require unit_state == 'active'.
+        In LIO mode there is no systemd unit (select_systemd_unit_name() returns None),
+        so get_unit_state() returns None; fall back to service.started() which uses
+        get_state_no_unit() → ServiceState(ISCSI_DIR.exists(), []).
+        """
+        unit_state = await self.middleware.call('service.get_unit_state', 'iscsitarget')
+        if unit_state is None:
+            return await self.middleware.call('service.started', 'iscsitarget')
+        return unit_state == 'active'
+
     async def settled(self):
         """Check whether the ALUA state is settled"""
         if not await self.middleware.call("iscsi.global.alua_enabled"):
             return True
 
         # Check local: running & no active ALUA jobs
-        if (await self.middleware.call("service.get_unit_state", 'iscsitarget')) != 'active':
+        if not await self.middleware.call('iscsi.alua.iscsitarget_is_active'):
             return False
         if await self.middleware.call('iscsi.alua.has_active_jobs'):
             return False
 
         # Check remote: running & no active ALUA jobs
         try:
-            if (await self.middleware.call(
-                'failover.call_remote', 'service.get_unit_state', ['iscsitarget']
-            )) != 'active':
+            if not await self.middleware.call(
+                'failover.call_remote', 'iscsi.alua.iscsitarget_is_active'
+            ):
                 return False
             if await self.middleware.call('failover.call_remote', 'iscsi.alua.has_active_jobs'):
                 return False
