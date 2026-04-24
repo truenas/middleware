@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Author: Eric Turgeon
 # License: BSD
 
@@ -14,6 +13,8 @@ import socket
 import sys
 import secrets
 import string
+import json
+import shutil
 
 TEST_DIR_TO_RESULT = {
     'api2': 'results/api_v2_tests_result.xml',
@@ -201,6 +202,14 @@ if ha and ip2:
 
 
 def get_ipinfo(ip_to_use):
+    return (
+        'eth0',
+        '.'.join(ip_to_use.split('.')[:3] + ['128']),
+        '.'.join(ip_to_use.split('.')[:3] + ['129']),
+        '.'.join(ip_to_use.split('.')[:3] + ['130']),
+        '.'.join(ip_to_use.split('.')[:3] + ['131']),
+    )
+
     iface = net = gate = ns1 = ns2 = None
     with client(host_ip=ip_to_use) as c:
         net_config = c.call('network.configuration.config')
@@ -226,6 +235,8 @@ if not all((interface, netmask, gateway)):
 
 
 def get_random_vip():
+    return '.'.join(ip.split('.')[:3] + ['132'])
+
     # reduce risk of trying to assign same VIP to two VMs
     # starting at roughly the same time
     vip_pool = list(ip_interface(f'{ip}/{netmask}').network)
@@ -300,6 +311,7 @@ cfg_file.close()
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
+"""
 # Setup ssh agent before starting test.
 setup_ssh_agent()
 if os.path.isdir(dotsshPath) is False:
@@ -307,6 +319,7 @@ if os.path.isdir(dotsshPath) is False:
 if os.path.exists(keyPath) is False:
     create_key(keyPath)
 add_ssh_key(keyPath)
+"""
 
 f = open(keyPath + '.pub', 'r')
 Key = f.readlines()[0].rstrip()
@@ -361,6 +374,22 @@ if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
 else:
     pytest_command.append(parse_test_name_prefix_dir(testName))
+
+runtest_test_dir = f"runtest_references/{os.environ['RUNTEST_TEST_NAME']}"
+os.makedirs(runtest_test_dir, exist_ok=True)
+shutil.copy("auto_config.py", runtest_test_dir)
+with open(f"{runtest_test_dir}/result", "w") as f:
+    f.write(json.dumps({
+        "argv": sys.argv[1:],
+        "command": pytest_command,
+        "returncode": returncode,
+        "artifacts": artifacts,
+        "ip": ip,
+        "ip2": ip2,
+        "environ": dict(os.environ),
+    }))
+
+sys.exit(0)
 
 proc_returncode = call(pytest_command)
 
