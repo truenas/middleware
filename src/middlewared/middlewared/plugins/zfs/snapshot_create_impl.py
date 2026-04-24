@@ -114,7 +114,7 @@ def create_snapshots_impl(
         truenas_pylibzfs.lzc.create_snapshots(**kwargs)
     except truenas_pylibzfs.lzc.ZFSCoreException as e:
         # errors is tuple of (snapshot_path, error_code) pairs
-        for snap_path, err_code in e.errors:
+        for snap_path, err_code in (e.errors or ()):
             if err_code == errno.EEXIST:
                 raise ZFSPathAlreadyExistsException(snap_path)
         raise
