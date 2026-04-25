@@ -49,7 +49,7 @@ async def generate_claim_token_impl(context: ServiceContext) -> str:
     asyncio.get_event_loop().call_later(
         30,
         lambda: context.middleware.create_task(
-            context.call2(context.s.tn_connect.finalize.registration)
+            context.call2(context.s.tn_connect.finalize_registration)
         ),
     )
     return claim_token
