@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class TNCCertificateAttachment(CertificateServiceAttachmentDelegate):
@@ -8,7 +15,7 @@ class TNCCertificateAttachment(CertificateServiceAttachmentDelegate):
     SERVICE = 'tn_connect'
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     await middleware.call2(
         middleware.services.certificate.register_attachment_delegate,
         TNCCertificateAttachment(middleware),

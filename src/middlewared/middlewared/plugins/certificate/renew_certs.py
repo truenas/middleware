@@ -23,19 +23,19 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
         system_cert = context.call_sync2(context.s.certificate.get_instance, system_cert)
 
     system_cert_ids = []
-    tnc_config = context.middleware.call_sync("tn_connect.config")
+    tnc_config = context.call_sync2(context.s.tn_connect.config)
     if system_cert and (
         (
             system_cert.organization in ("iXsystems Inc. dba TrueNAS", "iXsystems")
             and system_cert.san == ["DNS:localhost"]
             and system_cert.cert_type_existing is True
         )
-        or tnc_config["certificate"] == system_cert.id
+        or tnc_config.certificate == system_cert.id
     ):
         system_cert_ids.append(system_cert.id)
 
-    if tnc_config["certificate"] and (not system_cert or tnc_config["certificate"] != system_cert.id):
-        system_cert_ids.append(tnc_config["certificate"])
+    if tnc_config.certificate and (not system_cert or tnc_config.certificate != system_cert.id):
+        system_cert_ids.append(tnc_config.certificate)
 
     filters: list[Any]
     if system_cert_ids:
@@ -60,7 +60,10 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
 
         # renew cert
         context.logger.debug(f"Renewing certificate {cert.name}")
-        if cert.id == tnc_config["certificate"]:
+        if cert.id == tnc_config.certificate:
+            context.create_task(
+                context.call2(context.s.tn_connect.acme.renew_cert)
+            )
             context.create_task(context.middleware.call("tn_connect.acme.renew_cert"))
             continue
         elif not cert.acme:
