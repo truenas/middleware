@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
@@ -11,23 +11,24 @@ from middlewared.api.current import (
     TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
     TrueNASConnectConfigChangedEvent,
 )
-from middlewared.service import GenericConfigService
+from middlewared.service import GenericConfigService, job, private
 
 from .acme import TNCACMEService, _event_system_ready, check_status
 from .cert_attachment import TNCCertificateAttachment
 from .config import TrueNASConnectConfigServicePart
-from .finalize_registration import TNCRegistrationFinalizeService
-from .heartbeat import TNCHeartbeatService
+from .finalize_registration import finalize_registration_impl
+from .heartbeat import heartbeat_start_impl
 from .hostname import TNCHostnameService, on_general_config_update, update_ips
-from .post_install import TNCPostInstallService
+from .post_install import post_install_process_impl
 from .private_models import (
     TrueNASConnectUpdateEnvironment,
     TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult,
 )
 from .register import generate_claim_token_impl, get_registration_uri_impl
-from .state import TrueNASConnectStateService
+from .state import state_check_impl
 
 if TYPE_CHECKING:
+    from middlewared.job import Job
     from middlewared.main import Middleware
 
 
@@ -54,11 +55,7 @@ class TrueNASConnectService(GenericConfigService[TrueNASConnectEntry]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self.acme = TNCACMEService(middleware)
-        self.finalize = TNCRegistrationFinalizeService(middleware)
-        self.heartbeat = TNCHeartbeatService(middleware)
         self.hostname = TNCHostnameService(middleware)
-        self.post_install = TNCPostInstallService(middleware)
-        self.state = TrueNASConnectStateService(middleware)
         self._svc_part = TrueNASConnectConfigServicePart(self.context)
 
     @api_method(
@@ -114,6 +111,23 @@ class TrueNASConnectService(GenericConfigService[TrueNASConnectEntry]):
     )
     async def update_environment(self, data: TrueNASConnectUpdateEnvironment) -> TrueNASConnectEntry:
         return await self._svc_part.update_environment(data)
+
+    @private
+    async def post_install_process(self, post_install_config: dict[str, Any] | None) -> None:
+        return await post_install_process_impl(self.context, post_install_config)
+
+    @private
+    async def state_check(self, restart_ui: bool = False) -> None:
+        return await state_check_impl(self.context, restart_ui)
+
+    @private
+    async def heartbeat_start(self) -> None:
+        return await heartbeat_start_impl(self.context)
+
+    @private
+    @job(lock='tnc_finalize_registration')
+    async def finalize_registration(self, job: Job) -> None:
+        return await finalize_registration_impl(self.context)
 
 
 async def setup(middleware: Middleware) -> None:

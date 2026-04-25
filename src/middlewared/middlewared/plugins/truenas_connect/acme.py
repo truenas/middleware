@@ -48,7 +48,7 @@ class TNCACMEService(Service):
             await set_status(self.context, Status.CONFIGURED.name)
             if start_heartbeat:
                 logger.debug('Initiating TNC heartbeat')
-                self.middleware.create_task(self.call2(self.s.tn_connect.heartbeat.start))
+                self.middleware.create_task(self.call2(self.s.tn_connect.heartbeat_start))
             # Let's restart UI now
             # TODO: Hash this out with everyone
             await self.middleware.call('system.general.ui_restart', 2)
@@ -252,7 +252,7 @@ async def check_status(middleware: Middleware) -> None:
     if not await middleware.call('failover.is_single_master_node'):
         return
 
-    await middleware.call2(middleware.services.tn_connect.state.check)
+    await middleware.call2(middleware.services.tn_connect.state_check)
 
 
 async def _event_system_ready(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:

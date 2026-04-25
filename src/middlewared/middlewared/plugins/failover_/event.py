@@ -790,7 +790,7 @@ class FailoverEventsService(Service):
 
         logger.info('Configuring TrueNAS Connect Service (if necessary)')
         self.middleware.create_task(
-            self.middleware.call2(self.middleware.services.tn_connect.state.check, True)
+            self.middleware.call2(self.middleware.services.tn_connect.state_check, True)
         )
         logger.info('Done configuring TrueNAS Connect Service (if necessary)')
 
