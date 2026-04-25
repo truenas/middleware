@@ -352,12 +352,10 @@ class FailoverService(Service):
     async def ensure_remote_client(self):
         if self.CLIENT.remote_ip is not None:
             return
-        try:
-            self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
-            self.CLIENT.middleware = self.middleware
-            start_daemon_thread(name="fo_rem_client", target=self.CLIENT.run)
-        except CallError:
-            pass
+
+        self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
+        self.CLIENT.middleware = self.middleware
+        start_daemon_thread(name="fo_rem_client", target=self.CLIENT.run)
 
     @private
     def remote_connected(self):
@@ -378,4 +376,7 @@ class FailoverService(Service):
 
 async def setup(middleware):
     if await middleware.call('failover.licensed'):
-        await middleware.call('failover.ensure_remote_client')
+        try:
+            await middleware.call('failover.ensure_remote_client')
+        except Exception:
+            middleware.logger.error("Failed to determine remote heartbeat IP address", exc_info=True)
