@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from docker.errors import APIError, DockerException
 
 from middlewared.plugins.apps.ix_apps.docker.utils import get_docker_client
@@ -17,7 +19,7 @@ def validate_registry_credentials(registry: str, username: str, password: str) -
     """
     with get_docker_client() as client:
         try:
-            client.login(username=username, password=password, registry=registry)
+            client.login(username=username, password=password, registry=registry)  # type: ignore[no-untyped-call]
         except (APIError, DockerException):
             return False
         else:
