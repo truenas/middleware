@@ -4,6 +4,7 @@ from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_a
 
 __all__ = [
     'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
+    'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
     'AppImagePullArgs', 'AppImagePullResult', 'AppImageDeleteArgs', 'AppImageDeleteResult',
 ]
 
@@ -74,3 +75,10 @@ class AppImageDeleteArgs(BaseModel):
 
 class AppImageDeleteResult(BaseModel):
     result: Literal[True]
+
+
+# Backcompat aliases: v27+ renamed these classes to follow the `AppImageService`
+# naming convention. Keeping aliases lets `APIVersionsAdapter` resolve the new
+# name when walking through this legacy version during cross-version adaptation.
+AppImageDockerhubRateLimitArgs = ContainerImagesDockerhubRateLimitArgs
+AppImageDockerhubRateLimitResult = ContainerImagesDockerhubRateLimitResult
