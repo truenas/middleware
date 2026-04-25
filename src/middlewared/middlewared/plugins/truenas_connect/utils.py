@@ -22,7 +22,7 @@ TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
 def decode_and_validate_token(token: str) -> dict[str, typing.Any]:
     """Decode a TNC JWT token and verify it contains required fields."""
     try:
-        decoded_token = jwt.decode(token, options={'verify_signature': False})
+        decoded_token: dict[str, typing.Any] = jwt.decode(token, options={'verify_signature': False})
     except jwt.exceptions.DecodeError as e:
         raise ValueError(f'Invalid JWT token: {e}')
 
@@ -32,7 +32,7 @@ def decode_and_validate_token(token: str) -> dict[str, typing.Any]:
     return decoded_token
 
 
-def get_unset_payload() -> dict:
+def get_unset_payload() -> dict[str, typing.Any]:
     return {
         'registration_details': {},
         'jwt_token': None,

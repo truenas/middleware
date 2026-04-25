@@ -431,8 +431,8 @@ class CertificateService(CRUDService):
         if any(new.get(k) != old.get(k) for k in ('name', 'renew_days', 'add_to_trusted_store')):
 
             verrors = ValidationErrors()
-            tnc_config = await self.middleware.call('tn_connect.config')
-            if tnc_config['certificate'] == id_:
+            tnc_config = await self.call2(self.s.tn_connect.config)
+            if tnc_config.certificate == id_:
                 verrors.add(
                     'certificate_update.name',
                     'This certificate is being used by TrueNAS Connect service and cannot be modified'

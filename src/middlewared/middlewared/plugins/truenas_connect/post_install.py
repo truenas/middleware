@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import uuid
+from typing import Any
 
 from truenas_connect_utils.status import Status
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
-from middlewared.service import Service
+from middlewared.service import private, Service
 
+from .internal import set_status
 from .utils import CERT_RENEW_DAYS
 
 
@@ -19,8 +23,9 @@ class TNCPostInstallService(Service):
         private = True
         namespace = 'tn_connect.post_install'
 
-    async def process(self, post_install_config):
-        if 'tnc_config' not in (post_install_config or {}):
+    @private
+    async def process(self, post_install_config: dict[str, Any] | None) -> None:
+        if not post_install_config or 'tnc_config' not in post_install_config:
             return
 
         tnc_config = post_install_config['tnc_config']
@@ -50,7 +55,7 @@ class TNCPostInstallService(Service):
         await self.middleware.call('etc.generate', 'ssl')
 
         logger.debug('TNC Post Install: TNC certificate saved to database successfully, updating configuration')
-        payload = {
+        payload: dict[str, Any] = {
             'certificate': cert_id,
             'enabled': True,
             'heartbeat_url': tnc_config['heartbeat_service_base_url'],
@@ -61,14 +66,12 @@ class TNCPostInstallService(Service):
         ):
             payload[k] = tnc_config[k]
 
-        await self.middleware.call(
-            'tn_connect.set_status',
-            Status.CONFIGURED.name,
-            payload,
-        )
+        await set_status(self.context, Status.CONFIGURED.name, payload)
         logger.debug('TNC Post Install: Triggering task for syncing IPs to run after 5 minutes')
         asyncio.get_event_loop().call_later(
             5 * 60,
-            lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_ips')),
+            lambda: self.middleware.create_task(
+                self.call2(self.s.tn_connect.hostname.sync_ips)
+            ),
         )
         logger.debug('TNC Post Install: TNC setup completed successfully')

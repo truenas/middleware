@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import datetime
 import logging
+from typing import Any
 
 from truenas_connect_utils.config import get_account_id_and_system_id
 from truenas_connect_utils.status import Status
@@ -14,7 +17,8 @@ from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
 
-from .mixin import TNCAPIMixin
+from .internal import config_internal, delete_cert, unset_registration_details
+from .request import auth_headers, Mode, tnc_request
 from .utils import (
     calculate_sleep, CONFIGURED_TNC_STATES, decode_and_validate_token, get_unset_payload, HEARTBEAT_INTERVAL,
 )
@@ -23,19 +27,23 @@ from .utils import (
 logger = logging.getLogger('truenas_connect')
 
 
-class TNCHeartbeatService(Service, TNCAPIMixin):
+class TNCHeartbeatService(Service):
 
     class Config:
         namespace = 'tn_connect.heartbeat'
         private = True
 
-    async def call(self, url, mode, payload=None, **kwargs):
-        config = await self.middleware.call('tn_connect.config_internal')
-        return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config), **(kwargs or {}))
+    async def call(
+        self, url: str, mode: Mode, payload: dict[str, Any] | None = None, **kwargs: Any,
+    ) -> dict[str, Any]:
+        config = await config_internal(self.context)
+        return await tnc_request(
+            url, mode, payload=payload, headers=auth_headers(config), **kwargs,
+        )
 
-    async def start(self):
+    async def start(self) -> None:
         logger.debug('TNC Heartbeat: Starting heartbeat service')
-        tnc_config = await self.middleware.call('tn_connect.config_internal')
+        tnc_config = await config_internal(self.context)
         creds = get_account_id_and_system_id(tnc_config)
         if tnc_config['status'] != Status.CONFIGURED.name or creds is None:
             raise CallError('TrueNAS Connect is not configured properly')
@@ -88,16 +96,17 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         with contextlib.suppress(Exception):
                             # This is called to just make sure that we setup a self-signed certificate and
                             # remove any alerts which might be there as we are going to unset TNC
-                            await self.middleware.call('tn_connect.unset_registration_details', False)
+                            await unset_registration_details(self.context, False)
 
                         await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
                             'enabled': False,
                         } | get_unset_payload())
+                        new_entry = await self.call2(self.s.tn_connect.config)
                         self.middleware.send_event(
-                            'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
+                            'tn_connect.config', 'CHANGED', fields=new_entry.model_dump(),
                         )
                         await self.call2(self.s.alert.oneshot_create, TNCDisabledAutoUnconfiguredAlert())
-                        await self.middleware.call('tn_connect.delete_cert', tnc_config['certificate'])
+                        await delete_cert(self.context, tnc_config['certificate'])
                         return
                     case 500:
                         logger.debug('TNC Heartbeat: Received 500')
@@ -140,9 +149,9 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 await self.call2(self.s.alert.oneshot_delete, 'TNCHeartbeatConnectionFailure')
                 await asyncio.sleep(HEARTBEAT_INTERVAL)
 
-            tnc_config = await self.middleware.call('tn_connect.config_internal')
+            tnc_config = await config_internal(self.context)
 
-    async def payload(self, disk_mapping=None):
+    async def payload(self, disk_mapping: dict[str, str] | None = None) -> dict[str, Any]:
         stats = await self.middleware.call('reporting.realtime.stats', disk_mapping)
         # We would like to add app/vm stats here as well now
         apps = await self.call2(self.s.app.query)
