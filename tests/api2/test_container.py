@@ -15,6 +15,7 @@ from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
 UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
+ALPINE_IMAGE_NAME = "alpine:edge:amd64:default"
 VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {
@@ -76,6 +77,14 @@ def ubuntu_image():
     version = [image["versions"][-1]["version"] for image in images if image["name"] == UBUNTU_IMAGE_NAME][0]
 
     yield {"name": UBUNTU_IMAGE_NAME, "version": version}
+
+
+@pytest.fixture(scope="module")
+def alpine_image():
+    images = call("container.image.query_registry")
+    version = [image["versions"][-1]["version"] for image in images if image["name"] == ALPINE_IMAGE_NAME][0]
+
+    yield {"name": ALPINE_IMAGE_NAME, "version": version}
 
 
 @contextlib.contextmanager
@@ -205,6 +214,36 @@ def test_container_stop_force_after_timeout(ubuntu_container):
     call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "STOPPED"
+
+
+def test_container_shell_alpine(alpine_image):
+    # NAS-140496: Alpine images do not ship capsh, so the capsh wrapper
+    # produced by container.nsenter must run on the host before nsenter
+    # switches into the container's mount namespace. Since Alpine lacks
+    # capsh (the tool test_capabilities uses to validate Ubuntu), verify
+    # the security claim — capsh's bounding-set drop applied on the host
+    # survives execve + the nsenter namespace switch — by reading CapBnd
+    # from /proc/self/status in the final shell and decoding it on the
+    # host side.
+    with container(
+        alpine_image,
+        {"capabilities_state": {"lease": False}},
+        start=True,
+    ) as c:
+        assert "alpine" in ssh(nsenter(c, "cat /etc/os-release")).lower()
+
+        status = ssh(nsenter(c, "cat /proc/self/status"))
+        cap_bnd = re.search(r"^CapBnd:\s+([0-9a-fA-F]+)", status, re.MULTILINE).group(1)
+        # Alpine has no capsh; decode on the host.
+        # Output: "0x00000...=cap_chown,cap_dac_override,..."
+        decoded = ssh(f"/sbin/capsh --decode={cap_bnd}").strip()
+        caps = decoded.split("=", 1)[1].split(",")
+
+        # Explicitly dropped via capabilities_state -> must be absent.
+        assert "cap_lease" not in caps, f"CAP_LEASE survived drop: {decoded}"
+        # Not dropped by DEFAULT policy -> must still be present. Confirms
+        # we aren't over-dropping on the host-side capsh path.
+        assert "cap_chown" in caps, f"CAP_CHOWN unexpectedly missing: {decoded}"
 
 
 def test_container_shell(started_ubuntu_container):

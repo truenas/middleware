@@ -1,11 +1,14 @@
 import ctypes
 import signal
 import threading
+from enum import IntEnum
 
-__all__ = ['set_name', 'set_cmdline', 'set_pdeath_sig']
+__all__ = ['Prctl', 'set_name', 'set_cmdline', 'set_pdeath_sig', 'die_with_parent']
 
-# from linux/prctl.h
-PR_SET_PDEATHSIG = 1
+
+class Prctl(IntEnum):
+    """PR_* operation codes from linux/prctl.h."""
+    SET_PDEATHSIG = 1
 
 
 def set_name(name: str) -> None:
@@ -61,7 +64,7 @@ def set_cmdline(cmdline: str) -> None:
 
 def set_pdeath_sig(sig: signal.Signals = signal.SIGKILL) -> None:
     libc = ctypes.CDLL("libc.so.6")
-    libc.prctl(PR_SET_PDEATHSIG, signal.Signals(sig).value, 0, 0, 0)
+    libc.prctl(Prctl.SET_PDEATHSIG, signal.Signals(sig).value, 0, 0, 0)
 
 
 def die_with_parent() -> None:
