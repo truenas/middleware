@@ -36,11 +36,14 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
         return getattr(self, 'NAMESPACE', self.SERVICE)
 
     async def state(self, cert_id):
+        # Config can be either a dict (legacy/unconverted services) or a Pydantic model
+        # (typesafe services with `generic = True`, e.g. tn_connect). Dispatch field
+        # access accordingly.
         config = await self.middleware.call(f'{await self.get_namespace()}.config')
-        if isinstance(config[self.CERT_FIELD], dict):
-            return config[self.CERT_FIELD]['id'] == cert_id
-        else:
-            return config[self.CERT_FIELD] == cert_id
+        cert_value = config[self.CERT_FIELD] if isinstance(config, dict) else getattr(config, self.CERT_FIELD)
+        if isinstance(cert_value, dict):
+            return cert_value['id'] == cert_id
+        return cert_value == cert_id
 
     async def redeploy(self, cert_id):
         if await self.middleware.call('service.started', self.SERVICE):
