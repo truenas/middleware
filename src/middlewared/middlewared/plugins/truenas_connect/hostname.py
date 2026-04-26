@@ -1,16 +1,23 @@
+from __future__ import annotations
+
 import asyncio
 import logging
+from typing import Any, cast, TYPE_CHECKING
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.hostname import hostname_config, register_update_ips, register_system_config
 
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
 
+from .internal import config_internal, get_effective_ips, ha_vips
 from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 logger = logging.getLogger('truenas_connect')
-_pending_sync = None
+_pending_sync: asyncio.TimerHandle | None = None
 _sync_lock = asyncio.Lock()
 
 
@@ -20,45 +27,50 @@ class TNCHostnameService(Service):
         namespace = 'tn_connect.hostname'
         private = True
 
-    async def basename_from_cert(self):
-        config = await self.middleware.call('tn_connect.config')
-        if config['enabled'] and config['status'] in CONFIGURED_TNC_STATES and config['certificate']:
-            san = await self.middleware.call('certificate.get_domain_names', config['certificate'])
+    async def basename_from_cert(self) -> str | None:
+        config = await self.call2(self.s.tn_connect.config)
+        if config.enabled and config.status in CONFIGURED_TNC_STATES and config.certificate:
+            san = await self.middleware.call('certificate.get_domain_names', config.certificate)
             return san[0].strip('DNS:') if san else None
+        return None
 
-    async def config(self):
-        return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
+    @private
+    async def config(self) -> dict[str, Any]:
+        return cast(dict[str, Any], await hostname_config(await config_internal(self.context)))
 
-    async def register_update_ips(self, ips=None, create_wildcard=False):
-        tnc_config = await self.middleware.call('tn_connect.config_internal')
+    async def register_update_ips(
+        self, ips: list[str] | None = None, create_wildcard: bool = False,
+    ) -> dict[str, Any]:
+        tnc_config = await config_internal(self.context)
         if ips is None:
-            ips = await self.middleware.call('tn_connect.get_effective_ips')
+            ips = await get_effective_ips(self.context)
 
         if await self.middleware.call('system.is_ha_capable'):
             # For HA based systems, we want to ensure that VIP(s) always get added
-            ips = (await self.middleware.call('tn_connect.ha_vips')) + ips
+            ips = (await ha_vips(self.context)) + ips
 
         try:
-            return await register_update_ips(tnc_config, ips, create_wildcard)
+            return cast(dict[str, Any], await register_update_ips(tnc_config, ips, create_wildcard))
         except TNCCallError as e:
             raise CallError(str(e))
 
-    async def register_system_config(self, websocket_port: int) -> dict:
+    @private
+    async def register_system_config(self, websocket_port: int) -> dict[str, Any]:
         """Register system configuration with TrueNAS Connect, including websocket port."""
-        tnc_config = await self.middleware.call('tn_connect.config_internal')
+        tnc_config = await config_internal(self.context)
 
         try:
-            return await register_system_config(tnc_config, websocket_port)
+            return cast(dict[str, Any], await register_system_config(tnc_config, websocket_port))
         except TNCCallError as e:
             raise CallError(str(e))
 
-    async def sync_ips(self, event_details=None):
+    async def sync_ips(self, event_details: dict[str, Any] | None = None) -> None:
         if not await self.middleware.call('failover.is_single_master_node'):
             return
 
-        tnc_config = await self.middleware.call('tn_connect.config')
+        tnc_config = await self.call2(self.s.tn_connect.config)
 
-        if tnc_config['status'] not in CONFIGURED_TNC_STATES:
+        if tnc_config.status not in CONFIGURED_TNC_STATES:
             return
 
         # When triggered by a network event, only proceed if system.general has
@@ -72,7 +84,7 @@ class TNCHostnameService(Service):
                 return
 
         async with _sync_lock:
-            effective_ips = await self.middleware.call('tn_connect.get_effective_ips')
+            effective_ips = await get_effective_ips(self.context)
 
             try:
                 cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
@@ -98,14 +110,14 @@ class TNCHostnameService(Service):
 
             logger.debug('Syncing IPs for TrueNAS Connect')
             try:
-                await self.middleware.call('tn_connect.hostname.register_update_ips')
+                await self.register_update_ips()
             except CallError:
                 logger.error('Failed to update IPs with TrueNAS Connect', exc_info=True)
             else:
                 await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, effective_ips, 60 * 60)
                 await self.middleware.call_hook('tn_connect.hostname.updated', await self.config())
 
-    async def handle_update_ips(self, event_type, args):
+    async def handle_update_ips(self, event_type: str, args: dict[str, Any]) -> None:
         """
         Handle IP address changes for TrueNAS Connect.
         This method is called when an IP address change event occurs.
@@ -121,7 +133,7 @@ class TNCHostnameService(Service):
             logger.error('Failed to sync IPs for TrueNAS Connect', exc_info=True)
 
 
-async def update_ips(middleware, event_type, args):
+async def update_ips(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:
     global _pending_sync
 
     iface = args['fields']['iface']
@@ -142,12 +154,14 @@ async def update_ips(middleware, event_type, args):
     _pending_sync = asyncio.get_event_loop().call_later(
         5,
         lambda: middleware.create_task(
-            middleware.call('tn_connect.hostname.handle_update_ips', event_type, args)
+            middleware.call2(
+                middleware.services.tn_connect.hostname.handle_update_ips, event_type, args,
+            )
         ),
     )
 
 
-async def on_general_config_update(middleware, *args, **kwargs):
+async def on_general_config_update(middleware: Middleware, *args: Any, **kwargs: Any) -> None:
     """Re-sync TNC IPs when system.general UI address settings change.
 
     We intentionally do not invalidate the TNC IPs cache here. sync_ips()
@@ -157,11 +171,6 @@ async def on_general_config_update(middleware, *args, **kwargs):
     (timezone, keyboard layout, certificate, etc.).
     """
     try:
-        await middleware.call('tn_connect.hostname.sync_ips')
+        await middleware.call2(middleware.services.tn_connect.hostname.sync_ips)
     except Exception:
         logger.error('Failed to sync IPs after system.general update', exc_info=True)
-
-
-async def setup(middleware):
-    middleware.event_subscribe('ipaddress.change', update_ips)
-    middleware.register_hook('system.general.post_update', on_general_config_update)

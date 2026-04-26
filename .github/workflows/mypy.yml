@@ -40,6 +40,7 @@ jobs:
             middlewared/plugins/ports/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/truenas/ \
+            middlewared/plugins/truenas_connect/ \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/tunable/ \
             middlewared/plugins/webshare/ \

@@ -66,14 +66,14 @@ class HttpService(PseudoServiceBase):
     async def _register_new_port(self):
         """Create a task that sends the new HTTPS port to TNC if configured."""
         port_changed, new_port = await self.middleware.call("system.general.https_port_changed")
-        if port_changed and (await self.middleware.call("tn_connect.config"))["status"] == Status.CONFIGURED.name:
+        if port_changed and (await self.call2(self.s.tn_connect.config)).status == Status.CONFIGURED.name:
             self.middleware.create_task(self._register_port_with_retry(new_port))
 
     async def _register_port_with_retry(self, new_port: int):
         """Register port with TNC with retry logic."""
         for attempt in range(3):
             try:
-                await self.middleware.call('tn_connect.hostname.register_system_config', new_port)
+                await self.call2(self.s.tn_connect.hostname.register_system_config, new_port)
                 return
             except Exception as e:
                 if attempt == 2:  # Last attempt
