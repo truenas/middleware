@@ -1,16 +1,39 @@
 import asyncio
-import pytest
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from truenas_connect_utils.status import Status
+import pytest
+
+from middlewared.api.current import TrueNASConnectEntry
 from middlewared.plugins.service_.services.pseudo.misc import HttpService
+from truenas_connect_utils.status import Status
+
+
+def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
+    """Build a fully-populated TrueNASConnectEntry for tests, allowing per-field overrides."""
+    defaults: dict[str, Any] = dict(
+        id=1,
+        enabled=True,
+        registration_details={},
+        status=Status.CONFIGURED.name,
+        status_reason='Configured',
+        certificate=None,
+        account_service_base_url='https://account.example/',
+        leca_service_base_url='https://leca.example/',
+        tnc_base_url='https://tnc.example/',
+        heartbeat_url='https://hb.example/',
+        tier=None,
+        last_heartbeat_failure_datetime=None,
+    )
+    return TrueNASConnectEntry(**(defaults | overrides))
 
 
 @pytest.fixture
 def mock_middleware():
-    """Create a mock middleware instance."""
+    """Create a mock middleware instance with both call (legacy/string) and call2 (typesafe)."""
     middleware = MagicMock()
     middleware.call = AsyncMock()
+    middleware.call2 = AsyncMock()
     middleware.create_task = MagicMock(side_effect=lambda coro: asyncio.create_task(coro))
     middleware.logger = MagicMock()
     return middleware
@@ -25,20 +48,31 @@ def http_service(mock_middleware):
 
 
 class TestHTTPServiceTNCPortRegistration:
-    """Test TrueNAS Connect port registration with retry logic."""
+    """Test TrueNAS Connect port registration with retry logic.
+
+    HttpService at ``service_/services/pseudo/misc.py`` uses ``self.call2`` to reach
+    typesafe ``tn_connect.config`` and ``tn_connect.hostname.register_system_config``.
+    Tests mock ``middleware.call2`` and identify the target by callable identity
+    (``mock_middleware.services.tn_connect.<endpoint>``) rather than method-name string.
+    """
 
     @pytest.mark.asyncio
     async def test_port_change_tnc_configured_success_first_attempt(
         self, http_service, mock_middleware
     ):
         """Test successful port registration on first attempt when TNC is configured and port changed."""
-        mock_middleware.call.return_value = None
+        mock_middleware.call2.return_value = None
 
         # Call retry method directly
         await http_service._register_port_with_retry(8443)
 
-        # Verify registration was called exactly once with correct port
-        mock_middleware.call.assert_called_once_with('tn_connect.hostname.register_system_config', 8443)
+        # Verify registration was called exactly once with correct callable and port.
+        # CallMixin.call2 wraps the call with framework kwargs (app, audit_callback, etc.) so
+        # we assert on the positional args only.
+        assert mock_middleware.call2.call_count == 1
+        assert mock_middleware.call2.call_args[0] == (
+            mock_middleware.services.tn_connect.hostname.register_system_config, 8443,
+        )
         # Verify no error was logged
         mock_middleware.logger.error.assert_not_called()
 
@@ -49,17 +83,22 @@ class TestHTTPServiceTNCPortRegistration:
         """Test that port is not registered when TNC status is DISABLED."""
         registration_called = False
 
-        async def mock_call(method, *args, **kwargs):
-            nonlocal registration_called
+        async def call_handler(method, *args, **kwargs):
             if method == 'system.general.https_port_changed':
                 return (True, 8443)
-            elif method == 'tn_connect.config':
-                return {'status': Status.DISABLED.name}
-            elif method == 'tn_connect.hostname.register_system_config':
+            raise AssertionError(f'Unexpected call: {method}')
+
+        async def call2_handler(fn, *args, **kwargs):
+            nonlocal registration_called
+            if fn is mock_middleware.services.tn_connect.config:
+                return make_tnc_entry(status=Status.DISABLED.name)
+            if fn is mock_middleware.services.tn_connect.hostname.register_system_config:
                 registration_called = True
                 return None
+            raise AssertionError(f'Unexpected call2: {fn}')
 
-        mock_middleware.call.side_effect = mock_call
+        mock_middleware.call.side_effect = call_handler
+        mock_middleware.call2.side_effect = call2_handler
 
         # Trigger registration
         await http_service._register_new_port()
@@ -77,22 +116,25 @@ class TestHTTPServiceTNCPortRegistration:
         """Test port registration succeeds after one failure."""
         call_count = 0
 
-        async def mock_call(method, *args, **kwargs):
+        async def call2_handler(fn, *args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
                 raise Exception("Network timeout")
+            return None
 
-        mock_middleware.call.side_effect = mock_call
+        mock_middleware.call2.side_effect = call2_handler
 
         # Call retry method directly
         await http_service._register_port_with_retry(8443)
 
         # Verify it was called twice (failed once, succeeded on retry)
-        assert mock_middleware.call.call_count == 2
-        # Verify both calls were with correct method and port
-        assert mock_middleware.call.call_args_list[0][0] == ('tn_connect.hostname.register_system_config', 8443)
-        assert mock_middleware.call.call_args_list[1][0] == ('tn_connect.hostname.register_system_config', 8443)
+        assert mock_middleware.call2.call_count == 2
+        # Verify both calls were with correct callable and port
+        for call_args in mock_middleware.call2.call_args_list:
+            assert call_args[0] == (
+                mock_middleware.services.tn_connect.hostname.register_system_config, 8443,
+            )
         # Verify no error was logged (since it eventually succeeded)
         mock_middleware.logger.error.assert_not_called()
 
@@ -101,16 +143,18 @@ class TestHTTPServiceTNCPortRegistration:
         self, http_service, mock_middleware
     ):
         """Test port registration failure is logged after 3 failed attempts."""
-        mock_middleware.call.side_effect = Exception("Connection refused")
+        mock_middleware.call2.side_effect = Exception("Connection refused")
 
         # Call retry method directly
         await http_service._register_port_with_retry(8443)
 
         # Verify it was called 3 times (all failed)
-        assert mock_middleware.call.call_count == 3
-        # Verify all calls were with correct method and port
-        for call_args in mock_middleware.call.call_args_list:
-            assert call_args[0] == ('tn_connect.hostname.register_system_config', 8443)
+        assert mock_middleware.call2.call_count == 3
+        # Verify all calls were with correct callable and port
+        for call_args in mock_middleware.call2.call_args_list:
+            assert call_args[0] == (
+                mock_middleware.services.tn_connect.hostname.register_system_config, 8443,
+            )
         # Verify error was logged
         mock_middleware.logger.error.assert_called_once()
         error_msg = mock_middleware.logger.error.call_args[0][0]
@@ -121,26 +165,19 @@ class TestHTTPServiceTNCPortRegistration:
         self, http_service, mock_middleware
     ):
         """Test that port is not registered when port has not changed."""
-        registration_called = False
-
-        async def mock_call(method, *args, **kwargs):
-            nonlocal registration_called
+        async def call_handler(method, *args, **kwargs):
             if method == 'system.general.https_port_changed':
                 return (False, 443)
-            elif method == 'tn_connect.config':
-                return {'status': Status.CONFIGURED.name}
-            elif method == 'tn_connect.hostname.register_system_config':
-                registration_called = True
-                return None
+            raise AssertionError(f'Unexpected call: {method}')
 
-        mock_middleware.call.side_effect = mock_call
+        mock_middleware.call.side_effect = call_handler
 
         # Trigger registration
         await http_service._register_new_port()
         await asyncio.sleep(0.1)
 
-        # Verify registration was NOT called
-        assert not registration_called
+        # Verify call2 was NOT invoked (short-circuited on port_changed=False)
+        mock_middleware.call2.assert_not_called()
         # Verify create_task was NOT called
         mock_middleware.create_task.assert_not_called()
 
@@ -149,34 +186,43 @@ class TestHTTPServiceTNCPortRegistration:
         self, http_service, mock_middleware
     ):
         """Test that the correct port value (7443) is passed to the registration method."""
-        mock_middleware.call.return_value = None
+        mock_middleware.call2.return_value = None
 
         # Call retry method directly with specific port
         await http_service._register_port_with_retry(7443)
 
-        # Verify correct port was passed
-        mock_middleware.call.assert_called_once_with('tn_connect.hostname.register_system_config', 7443)
+        # Verify correct port was passed (positional args only)
+        assert mock_middleware.call2.call_count == 1
+        assert mock_middleware.call2.call_args[0] == (
+            mock_middleware.services.tn_connect.hostname.register_system_config, 7443,
+        )
 
     @pytest.mark.asyncio
     async def test_after_restart_calls_register_new_port(
         self, http_service, mock_middleware
     ):
         """Test that after_restart hook calls _register_new_port and creates background task."""
-        async def mock_call(method, *args, **kwargs):
+        async def call_handler(method, *args, **kwargs):
             if method == 'system.general.https_port_changed':
                 return (True, 8443)
-            elif method == 'tn_connect.config':
-                return {'status': Status.CONFIGURED.name}
+            raise AssertionError(f'Unexpected call: {method}')
 
-        mock_middleware.call.side_effect = mock_call
+        async def call2_handler(fn, *args, **kwargs):
+            if fn is mock_middleware.services.tn_connect.config:
+                return make_tnc_entry(status=Status.CONFIGURED.name)
+            raise AssertionError(f'Unexpected call2: {fn}')
+
+        mock_middleware.call.side_effect = call_handler
+        mock_middleware.call2.side_effect = call2_handler
 
         # Call after_restart hook
         await http_service.after_restart()
 
-        # Verify middleware.call was called for checking port change and TNC config
-        assert mock_middleware.call.call_count == 2
-        mock_middleware.call.assert_any_call('system.general.https_port_changed')
-        mock_middleware.call.assert_any_call('tn_connect.config')
+        # Verify legacy call was for port-change check, and call2 was for tn_connect.config.
+        # call2 positional args don't include the framework kwargs added by CallMixin.
+        mock_middleware.call.assert_called_once_with('system.general.https_port_changed')
+        assert mock_middleware.call2.call_count == 1
+        assert mock_middleware.call2.call_args[0] == (mock_middleware.services.tn_connect.config,)
         # Verify create_task was called (background task created)
         mock_middleware.create_task.assert_called_once()
 
@@ -185,20 +231,26 @@ class TestHTTPServiceTNCPortRegistration:
         self, http_service, mock_middleware
     ):
         """Test that after_reload hook calls _register_new_port and creates background task."""
-        async def mock_call(method, *args, **kwargs):
+        async def call_handler(method, *args, **kwargs):
             if method == 'system.general.https_port_changed':
                 return (True, 8443)
-            elif method == 'tn_connect.config':
-                return {'status': Status.CONFIGURED.name}
+            raise AssertionError(f'Unexpected call: {method}')
 
-        mock_middleware.call.side_effect = mock_call
+        async def call2_handler(fn, *args, **kwargs):
+            if fn is mock_middleware.services.tn_connect.config:
+                return make_tnc_entry(status=Status.CONFIGURED.name)
+            raise AssertionError(f'Unexpected call2: {fn}')
+
+        mock_middleware.call.side_effect = call_handler
+        mock_middleware.call2.side_effect = call2_handler
 
         # Call after_reload hook
         await http_service.after_reload()
 
-        # Verify middleware.call was called for checking port change and TNC config
-        assert mock_middleware.call.call_count == 2
-        mock_middleware.call.assert_any_call('system.general.https_port_changed')
-        mock_middleware.call.assert_any_call('tn_connect.config')
+        # Verify legacy call was for port-change check, and call2 was for tn_connect.config.
+        # call2 positional args don't include the framework kwargs added by CallMixin.
+        mock_middleware.call.assert_called_once_with('system.general.https_port_changed')
+        assert mock_middleware.call2.call_count == 1
+        assert mock_middleware.call2.call_args[0] == (mock_middleware.services.tn_connect.config,)
         # Verify create_task was called (background task created)
         mock_middleware.create_task.assert_called_once()
