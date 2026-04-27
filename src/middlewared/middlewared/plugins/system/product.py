@@ -132,7 +132,7 @@ class SystemService(Service):
             'model': info.model,
             'system_serial': info.serials[0] if info.serials else None,
             'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
-            'contract_type': None,
+            'contract_type': info.contract_type,
             'contract_start': None,
             'contract_end': info.expires_at,
             'legacy_contract_hardware': None,

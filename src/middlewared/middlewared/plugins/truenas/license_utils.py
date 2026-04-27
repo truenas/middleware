@@ -60,6 +60,8 @@ class LicenseInfo:
     """System serial number(s) for hardware-bound licenses."""
     enclosures: dict[str, int]
     """Licensed enclosure models mapped to count."""
+    contract_type: str | None
+    """Support contract type."""
 
 
 @typing.overload
@@ -161,11 +163,19 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     if not lic.valid:
         return None
 
+    support = lic.features.get("SUPPORT") if lic.features else None
+
+    if support:
+        contract_type: str | None = support.type
+    else:
+        contract_type = None
+
     if lic.expires_at:
         expires_at: date | None = date.fromisoformat(lic.expires_at)
+    elif support and support.expires_at:
+        expires_at = date.fromisoformat(support.expires_at)
     else:
-        support = lic.features.get("SUPPORT") if lic.features else None
-        expires_at = date.fromisoformat(support.expires_at) if support and support.expires_at else None
+        expires_at = None
 
     return LicenseInfo(
         id=lic.id,  # type: ignore[arg-type]
@@ -184,6 +194,7 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
         enclosures={
             model: entry["count"] for model, entry in (lic.enclosures or {}).items()
         },
+        contract_type=contract_type,
     )
 
 
