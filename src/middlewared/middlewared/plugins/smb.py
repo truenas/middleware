@@ -627,8 +627,12 @@ class SMBService(ConfigService):
             await pdb_job.wait()
 
             await self.middleware.call('idmap.gencache.flush')
-            srv = (await self.middleware.call("network.configuration.config"))["service_announcement"]
-            await self.middleware.call("network.configuration.toggle_announcement", srv)
+
+        # These smb.config fields feed truenas-discoveryd.conf.
+        if any(old[f] != new_config[f] for f in ('netbiosname', 'netbiosalias', 'workgroup')):
+            await (await self.middleware.call(
+                'service.control', 'RELOAD', 'discovery'
+            )).wait(raise_error=True)
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
             grp_job = await self.middleware.call('smb.synchronize_group_mappings')
@@ -817,9 +821,9 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if is_time_machine_share(data):
-            mdns_reload = await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})
-            # Failure to reload mDNS shouldn't be passed to API consumer
-            await mdns_reload.wait()
+            disc_reload = await self.middleware.call('service.control', 'RELOAD', 'discovery', {'ha_propagate': False})
+            # Failure to reload discovery shouldn't be passed to API consumer
+            await disc_reload.wait()
 
         await self.call2(self.s.truesearch.configure)
 
@@ -998,7 +1002,7 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if check_mdns:
-            await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
+            await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -1038,7 +1042,7 @@ class SharingSMBService(SharingService):
 
         if is_time_machine_share(share):
             await (await self.middleware.call(
-                'service.control', 'RELOAD', 'mdns', {'ha_propagate': False}
+                'service.control', 'RELOAD', 'discovery', {'ha_propagate': False}
             )).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
@@ -1822,7 +1826,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             return
 
         await self.middleware.call('etc.generate', 'smb')
-        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
+        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         return await super().is_child_of_path(resource, path, check_parent, exact_match) if resource.get(

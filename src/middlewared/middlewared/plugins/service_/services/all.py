@@ -1,10 +1,9 @@
 from .cifs import CIFSService
 from .ctdb import CTDBService
+from .discovery import DiscoveryService
 from .docker import DockerService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
-from .mdns import MDNSService
-from .netbios import NetBIOSService
 from .netdata import NetdataService
 from .nfs import NFSService
 from .nscd import NSCDService
@@ -14,7 +13,6 @@ from .sssd import SSSDService
 from .truecommand import TruecommandService
 from .truesearch import TruesearchService
 from .ups import UPSService
-from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
@@ -48,18 +46,16 @@ from .pseudo.misc import (
 all_services = [
     CIFSService,
     CTDBService,
+    DiscoveryService,
     DockerService,
     FTPService,
     ISCSITargetService,
-    MDNSService,
-    NetBIOSService,
     NFSService,
     NSCDService,
     SNMPService,
     SSHService,
     SSSDService,
     UPSService,
-    WSDService,
     NetdataService,
     IdmapService,
     OpenIpmiService,
