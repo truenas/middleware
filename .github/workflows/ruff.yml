@@ -35,5 +35,8 @@ jobs:
     - name: Show formatting instructions
       if: failure() && steps.ruff-check.outcome == 'failure'
       run: |
+        echo "'ruff format' failed because some new files are incorrectly formatted.'
+        echo 'Open the spoiler in the step above to see which ones."
         echo "Please run 'pip install ruff' and then 'ruff format' on all newly added files."
         echo "If 'ruff format' causes flake8 errors, add '# fmt: skip' to the lines you don't want formatted."
+        exit 1

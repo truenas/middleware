@@ -11,7 +11,7 @@ from .pytest_command import get_pytest_command
 def run(workdir: str) -> None:
     ixautomation_dot_conf_url = (
         "https://raw.githubusercontent.com/iXsystems/ixautomation/master/src/etc/ixautomation.conf.dist"
-    )
+    )  # fmt: skip
     config_file_msg = (
         f"Please add config.py to freenas/tests which can be empty or contain settings from {ixautomation_dot_conf_url}"
     )  # fmt: skip
