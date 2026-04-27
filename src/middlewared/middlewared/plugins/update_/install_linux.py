@@ -32,6 +32,8 @@ def _enforce_lts_gate(manifest: dict) -> None:
     if not manifest.get("lts"):
         return
 
+    # Inline rather than is_feature_licensed("LTS") so status.id is
+    # available for the refusal message.
     status = truenas_pylicensed.verify()
     today = time.strftime("%Y-%m-%d", time.gmtime())
     if not status.has_feature("LTS", today):
