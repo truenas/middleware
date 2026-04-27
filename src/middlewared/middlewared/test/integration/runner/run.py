@@ -9,12 +9,8 @@ from .pytest_command import get_pytest_command
 
 
 def run(workdir: str) -> None:
-    ixautomation_dot_conf_url = (
-        "https://raw.githubusercontent.com/iXsystems/ixautomation/master/src/etc/ixautomation.conf.dist"
-    )
-    config_file_msg = (
-        f"Please add config.py to freenas/tests which can be empty or contain settings from {ixautomation_dot_conf_url}"
-    )
+    ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/ixautomation/master/src/etc/ixautomation.conf.dist"
+    config_file_msg = f"Please add config.py to freenas/tests which can be empty or contain settings from {ixautomation_dot_conf_url}"
     if not os.path.exists("config.py"):
         print(config_file_msg)
         exit(1)
