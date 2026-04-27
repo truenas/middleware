@@ -124,7 +124,7 @@ class ContainerImageService(Service):
                                     f'Downloading image: {downloaded_size_mb:.1f}MB / {total_size_mb:.1f}MB'
                                 )
                             else:
-                                job.set_progress(40, f'Downloading image: {total_size_mb:.1f}MB')
+                                job.set_progress(40, f'Downloading image: {downloaded_size_mb:.1f}MB')
 
                     # Extract tarball to mountpoint
                     job.set_progress(80, 'Extracting image files...')
