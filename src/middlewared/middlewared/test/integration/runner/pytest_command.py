@@ -53,11 +53,7 @@ def get_pytest_command(ctx: Context) -> list[str]:
         pytest_command.extend(["-k", ctx.testexpr])
 
     if ctx.tests:
-        pytest_command.extend(
-            list(
-                map(lambda s: parse_test_name_prefix_dir(ctx, s), ctx.tests.split(","))
-            )
-        )
+        pytest_command.extend(list(map(lambda s: parse_test_name_prefix_dir(ctx, s), ctx.tests.split(","))))
     else:
         pytest_command.append(parse_test_name_prefix_dir(ctx, ctx.test))
 

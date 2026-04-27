@@ -45,9 +45,7 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
             d["ha_license"] = f.read()
 
     # create random hostname and random fake domain
-    digit = "".join(
-        secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10)
-    )
+    digit = "".join(secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10))
     d["hostname"] = args.hostname or f"test{digit}"
 
     if args.ha and args.ip2:
@@ -140,9 +138,7 @@ def get_random_vip(ip: str, netmask: str) -> str:
             # are < *.15 we'll ignore. Those are typically
             # reserved for routing/switch devices anyway
             continue
-        elif (
-            subprocess.run(["ping", "-c", "2", "-w", "4", i.compressed]).returncode != 0
-        ):
+        elif subprocess.run(["ping", "-c", "2", "-w", "4", i.compressed]).returncode != 0:
             # sent 2 packets to the address and got no response so assume
             # it's safe to use
             return i.compressed
