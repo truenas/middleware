@@ -1,14 +1,14 @@
-from typing import Literal
+from typing import Any, Literal
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args,
+    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString,
 )
 
 
 __all__ = [
     'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
     'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
+    'TrueNASConnectUpdate', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
     'TrueNASConnectConfigChangedEvent',
@@ -21,7 +21,7 @@ class TrueNASConnectEntry(BaseModel):
     """Unique identifier for the TrueNAS Connect configuration."""
     enabled: bool
     """Whether TrueNAS Connect service is enabled."""
-    registration_details: dict
+    registration_details: dict[str, Any]
     """Object containing registration information and credentials for TrueNAS Connect."""
     status: NonEmptyString
     """Current operational status of the TrueNAS Connect service."""
@@ -43,10 +43,14 @@ class TrueNASConnectEntry(BaseModel):
     """Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."""
 
 
-@single_argument_args('tn_connect_update')
-class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+class TrueNASConnectUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     """Whether to enable the TrueNAS Connect service."""
+
+
+class TrueNASConnectUpdateArgs(BaseModel):
+    tn_connect_update: TrueNASConnectUpdate
+    """Updated TrueNAS Connect configuration."""
 
 
 class TrueNASConnectUpdateResult(BaseModel):

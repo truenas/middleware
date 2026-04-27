@@ -28,7 +28,7 @@ async def get_urls(context: ServiceContext) -> list[str]:
     try:
         hostnames = await context.call2(context.s.keyvalue.get, HOSTNAMES_KEY)
     except KeyError:
-        hostnames = hostnames_from_config(await context.middleware.call("tn_connect.hostname.config"))
+        hostnames = hostnames_from_config(await context.call2(context.s.tn_connect.hostname.config))
 
     return [f"https://{hostname}:755" for hostname in hostnames]
 

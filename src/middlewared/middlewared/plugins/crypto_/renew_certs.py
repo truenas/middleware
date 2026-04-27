@@ -22,7 +22,7 @@ class CertificateService(Service):
             system_cert = self.middleware.call_sync('certificate.get_instance', system_cert)
 
         system_cert_ids = []
-        tnc_config = self.middleware.call_sync('tn_connect.config')
+        tnc_config = self.call_sync2(self.s.tn_connect.config)
         if (
             system_cert
             and (
@@ -31,13 +31,13 @@ class CertificateService(Service):
                     and system_cert['san'] == ['DNS:localhost']
                     and system_cert['cert_type_existing'] is True
                 )
-                or tnc_config['certificate'] == system_cert['id']
+                or tnc_config.certificate == system_cert['id']
             )
         ):
             system_cert_ids.append(system_cert['id'])
 
-        if tnc_config['certificate'] and (not system_cert or tnc_config['certificate'] != system_cert['id']):
-            system_cert_ids.append(tnc_config['certificate'])
+        if tnc_config.certificate and (not system_cert or tnc_config.certificate != system_cert['id']):
+            system_cert_ids.append(tnc_config.certificate)
 
         if system_cert_ids:
             filters = [(
@@ -60,8 +60,10 @@ class CertificateService(Service):
 
             # renew cert
             self.logger.debug(f'Renewing certificate {cert["name"]}')
-            if cert['id'] == tnc_config['certificate']:
-                self.middleware.create_task(self.middleware.call('tn_connect.acme.renew_cert'))
+            if cert['id'] == tnc_config.certificate:
+                self.middleware.create_task(
+                    self.middleware.call2(self.middleware.services.tn_connect.acme.renew_cert)
+                )
                 continue
             elif not cert.get('acme'):
                 cert_str, key = generate_self_signed_certificate()

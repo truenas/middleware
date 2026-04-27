@@ -1,74 +1,72 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import uuid
+from typing import Any
 
 from truenas_connect_utils.status import Status
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
-from middlewared.service import Service
+from middlewared.service import ServiceContext
 
+from .internal import set_status
 from .utils import CERT_RENEW_DAYS
 
 
 logger = logging.getLogger('truenas_connect')
 
 
-class TNCPostInstallService(Service):
+async def post_install_process_impl(
+    context: ServiceContext, post_install_config: dict[str, Any] | None,
+) -> None:
+    if not post_install_config or 'tnc_config' not in post_install_config:
+        return
 
-    class Config:
-        private = True
-        namespace = 'tn_connect.post_install'
+    tnc_config = post_install_config['tnc_config']
+    if not tnc_config.get('enabled'):
+        logger.debug('TNC Post Install: TNC is not enabled')
+        return
 
-    async def process(self, post_install_config):
-        if 'tnc_config' not in (post_install_config or {}):
-            return
-
-        tnc_config = post_install_config['tnc_config']
-        if not tnc_config.get('enabled'):
-            logger.debug('TNC Post Install: TNC is not enabled')
-            return
-
-        if tnc_config.get('initialization_completed') is not True:
-            logger.debug(
-                'TNC Post Install: TNC initialization not completed, skipping setup%s',
-                f'({tnc_config["initialization_error"]})' if tnc_config.get('initialization_error') else ''
-            )
-            return
-
-        logger.debug('TNC Post Install: TNC initialization completed, setting up TNC')
-        cert_id = await self.middleware.call(
-            'datastore.insert',
-            'system.certificate', {
-                'name': f'truenas_connect_{str(uuid.uuid4())[-5:]}',
-                'type': CERT_TYPE_EXISTING,
-                'certificate': tnc_config['certificate_public_key'],
-                'privatekey': tnc_config['certificate_private_key'],
-                'renew_days': CERT_RENEW_DAYS,
-                'CSR': tnc_config['csr_public_key'],
-            }, {'prefix': 'cert_'}
+    if tnc_config.get('initialization_completed') is not True:
+        logger.debug(
+            'TNC Post Install: TNC initialization not completed, skipping setup%s',
+            f'({tnc_config["initialization_error"]})' if tnc_config.get('initialization_error') else ''
         )
-        await self.middleware.call('etc.generate', 'ssl')
+        return
 
-        logger.debug('TNC Post Install: TNC certificate saved to database successfully, updating configuration')
-        payload = {
-            'certificate': cert_id,
-            'enabled': True,
-            'heartbeat_url': tnc_config['heartbeat_service_base_url'],
-        }
-        for k in (
-            'jwt_token', 'registration_details', 'account_service_base_url',
-            'leca_service_base_url', 'tnc_base_url',
-        ):
-            payload[k] = tnc_config[k]
+    logger.debug('TNC Post Install: TNC initialization completed, setting up TNC')
+    cert_id = await context.middleware.call(
+        'datastore.insert',
+        'system.certificate', {
+            'name': f'truenas_connect_{str(uuid.uuid4())[-5:]}',
+            'type': CERT_TYPE_EXISTING,
+            'certificate': tnc_config['certificate_public_key'],
+            'privatekey': tnc_config['certificate_private_key'],
+            'renew_days': CERT_RENEW_DAYS,
+            'CSR': tnc_config['csr_public_key'],
+        }, {'prefix': 'cert_'}
+    )
+    await context.middleware.call('etc.generate', 'ssl')
 
-        await self.middleware.call(
-            'tn_connect.set_status',
-            Status.CONFIGURED.name,
-            payload,
-        )
-        logger.debug('TNC Post Install: Triggering task for syncing IPs to run after 5 minutes')
-        asyncio.get_event_loop().call_later(
-            5 * 60,
-            lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_ips')),
-        )
-        logger.debug('TNC Post Install: TNC setup completed successfully')
+    logger.debug('TNC Post Install: TNC certificate saved to database successfully, updating configuration')
+    payload: dict[str, Any] = {
+        'certificate': cert_id,
+        'enabled': True,
+        'heartbeat_url': tnc_config['heartbeat_service_base_url'],
+    }
+    for k in (
+        'jwt_token', 'registration_details', 'account_service_base_url',
+        'leca_service_base_url', 'tnc_base_url',
+    ):
+        payload[k] = tnc_config[k]
+
+    await set_status(context, Status.CONFIGURED.name, payload)
+    logger.debug('TNC Post Install: Triggering task for syncing IPs to run after 5 minutes')
+    asyncio.get_event_loop().call_later(
+        5 * 60,
+        lambda: context.middleware.create_task(
+            context.call2(context.s.tn_connect.hostname.sync_ips)
+        ),
+    )
+    logger.debug('TNC Post Install: TNC setup completed successfully')

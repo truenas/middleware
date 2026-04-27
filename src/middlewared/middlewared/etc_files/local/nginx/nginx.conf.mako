@@ -77,11 +77,11 @@
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
     display_devices = middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']])
 
-    tn_connect_config = middleware.call_sync('tn_connect.config')
-    has_tn_connect = tn_connect_config['certificate'] is not None
+    tn_connect_config = middleware.call_sync2(middleware.services.tn_connect.config)
+    has_tn_connect = tn_connect_config.certificate is not None
     try:
-        tnc_basename = middleware.call_sync('tn_connect.hostname.basename_from_cert')
-        tnc_cert = middleware.call_sync('certificate.get_instance', tn_connect_config['certificate']) if tn_connect_config['certificate'] else None
+        tnc_basename = middleware.call_sync2(middleware.services.tn_connect.hostname.basename_from_cert)
+        tnc_cert = middleware.call_sync('certificate.get_instance', tn_connect_config.certificate) if tn_connect_config.certificate else None
     except Exception:
         # This should not happen but better safe then sorry as we don't want to disrupt nginx configuration
         tnc_basename = tnc_cert = None
@@ -172,8 +172,8 @@ http {
     }
 
     map $http_origin $allow_origin {
-        ~^${tn_connect_config['tnc_base_url'].rstrip("/")}$ $http_origin;
-% if tn_connect_config['account_service_base_url'].split('.')[1] in ('dev', 'staging'):
+        ~^${str(tn_connect_config.tnc_base_url).rstrip("/")}$ $http_origin;
+% if str(tn_connect_config.account_service_base_url).split('.')[1] in ('dev', 'staging'):
         # Make CORS exception for localhost:4200 for internal development environments
         ~^http://localhost:4200$ $http_origin;
         ~^http://127\.0\.0\.1:4200$ $http_origin;
