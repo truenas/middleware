@@ -7,34 +7,27 @@ class RunArgs:
     ip: str
     password: str
     interface: str
-
     ip2: str
     vip: str
-
     ha: bool
     ha_license: str
     ha_license_path: str | None
-
     test: str
     tests: str | None
     test_dir: str
     testexpr: str | None
-
     update: bool
     extended_tests: bool
     returncode: bool
-
     verbose: int
     exit_first: bool
     no_capture: bool
     show_locals: bool
     log_cli_level: str | None
-
     isns_ip: str
     pool_name: str
     vm_name: str | None
     hostname: str | None
-
     dev_test: bool
 
 
