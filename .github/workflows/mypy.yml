@@ -47,6 +47,7 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/test/integration/runner/ \
             --exclude middlewared/etc_files \
             --follow-imports silent \
             --strict
