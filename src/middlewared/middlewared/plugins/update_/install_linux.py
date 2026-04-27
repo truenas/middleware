@@ -22,40 +22,14 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _enforce_lts_gate(mounted: str, manifest: dict) -> None:
-    """Layer A: verify manifest.sig and, if the image is LTS-gated, check
-    the "LTS" license feature on the running system.
-
-    Raises CallError(EACCES) on any failure. Fail-closed: an LTS-gated
-    image with a missing or invalid signature is refused. A non-LTS image
-    with a missing signature is allowed for backward compatibility with
-    pre-gating builds. CallError is surfaced via the outer
+def _enforce_lts_gate(manifest: dict) -> None:
+    """If the image is LTS-marked, refuse on systems whose license lacks
+    the LTS feature. Not a security boundary — purely a UX / accidental-
+    misapplication check. CallError(EACCES) is surfaced via the outer
     @api_method(audit=...) wrapper of update.run / update.manual, so a
-    denial is already recorded in the audit log.
+    denial is auto-audited.
     """
-    sig_path = os.path.join(mounted, "manifest.sig")
-    is_lts = bool(manifest.get("lts"))
-
-    try:
-        with open(sig_path, "rb") as f:
-            sig_bytes = f.read()
-    except FileNotFoundError:
-        if is_lts:
-            logger.warning("LTS update gate: image lacks manifest.sig")
-            raise CallError(
-                "This LTS update image is missing manifest.sig. "
-                "Contact TrueNAS support.",
-                errno.EACCES,
-            )
-        return
-
-    try:
-        truenas_pylicensed.verify_update_manifest(manifest, sig_bytes)
-    except truenas_pylicensed.SignatureError as e:
-        logger.warning("update gate: manifest signature invalid: %s", e)
-        raise CallError(f"Update image signature invalid: {e}", errno.EACCES)
-
-    if not is_lts:
+    if not manifest.get("lts"):
         return
 
     status = truenas_pylicensed.verify()
@@ -113,7 +87,7 @@ def install(
         with open(os.path.join(mounted, "manifest.json")) as f:
             manifest = json.load(f)
 
-        _enforce_lts_gate(mounted, manifest)
+        _enforce_lts_gate(manifest)
 
         old_version = sw_info().version
         new_version = manifest["version"]
