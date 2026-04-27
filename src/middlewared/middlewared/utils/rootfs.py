@@ -7,8 +7,6 @@ import subprocess
 from types import TracebackType
 from typing import Any, Self
 
-from truenas_os_pyutils.mount import statmount
-
 
 @dataclass
 class ReadonlyState:
@@ -94,7 +92,12 @@ class ReadonlyRootfsManager:
                 self.use_functioning_dpkg_sysext = True
                 continue
 
-            readonly = "RO" in statmount(path=mountpoint)["mount_opts"]
+            readonly = subprocess.run(
+                ["zfs", "get", "-H", "-o", "value", "readonly", mountpoint],
+                capture_output=True,
+                check=True,
+                text=True,
+            ).stdout.strip() == "on"
 
             self.datasets[dataset] = Dataset(name, mountpoint, ReadonlyState(readonly, readonly))
 
