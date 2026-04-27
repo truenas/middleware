@@ -77,4 +77,5 @@ def parse_legacy_license(text: str) -> LicenseInfo:
             for quantity, code in lic.addhw
             if code in LICENSE_ADDHW_MAPPING
         },
+        contract_type=lic.contract_type.name.upper(),
     )
