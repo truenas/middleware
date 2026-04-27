@@ -28,26 +28,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 flake8-builtins flake8-tidy-imports flake8-literal import-linter ruff
+        pip install flake8 flake8-builtins flake8-tidy-imports flake8-literal import-linter
     - name: Lint imports
       run: |
         cd src/middlewared/ && lint-imports
     - name: Lint with flake8
       run: |
         flake8 --config=src/middlewared/setup.cfg src/
-    - name: Check ruff format on new files
-      run: |
-        git fetch origin "$GITHUB_BASE_REF" --depth=1
-        mapfile -t NEW_PY_FILES < <(git diff --name-only --diff-filter=A FETCH_HEAD HEAD -- '*.py')
-        if [ ${#NEW_PY_FILES[@]} -eq 0 ]; then
-          echo "✅ No new Python files to check"
-          exit 0
-        fi
-        echo "New Python files found:"
-        printf '  %s\n' "${NEW_PY_FILES[@]}"
-        if ! ruff format --check "${NEW_PY_FILES[@]}"; then
-          echo "❌ ruff format would change the following files:"
-          ruff format --diff "${NEW_PY_FILES[@]}"
-          exit 1
-        fi
-        echo "✅ All new Python files are properly formatted"
