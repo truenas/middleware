@@ -23,6 +23,7 @@ from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
                 FeatureInfo(name="SUPPORT", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30))],
             serials=["TEST-000001", "TEST-000002"],
             enclosures={"E24": 3, "E16": 2},
+            contract_type="GOLD",
         )
     ),
     (
@@ -38,6 +39,7 @@ from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
             ],
             serials=["TEST-000001"],
             enclosures={},
+            contract_type="STANDARD",
         ),
     )
 ])
