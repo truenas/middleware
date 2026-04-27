@@ -1,6 +1,6 @@
 from typing import Any
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, LongString, LongNonEmptyString
 
 from .support import SupportNewTicket
 
@@ -100,7 +100,7 @@ class TrueNASLicenseUploadOptions(BaseModel):
 
 
 class TrueNASLicenseUploadArgs(BaseModel):
-    license: NonEmptyString
+    license: LongNonEmptyString
     """PEM-wrapped license to apply to the system."""
     options: TrueNASLicenseUploadOptions = TrueNASLicenseUploadOptions()
     """Options."""
