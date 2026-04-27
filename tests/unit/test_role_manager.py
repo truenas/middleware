@@ -22,6 +22,7 @@ FULL_ADMIN_STIG = ALL_METHODS - FAKE_METHODS_NOSTIG
 EXPECTED_FA_RESOURCES = frozenset({
     'failover.reboot.other_node',
     'truenas.accept_eula',
+    'truenas.license.upload',
     'filesystem.put',
     'truenas.set_production',
     'system.shutdown',
