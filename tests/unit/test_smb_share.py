@@ -122,17 +122,17 @@ def posixacl_dataset(create_dataset):
 
 @pytest.fixture(scope='function')
 def nfsacl_dataset(create_dataset):
-    create_dataset.update_properties({'acltype': {'parsed': 'nfsv4'}})
+    create_dataset.set_properties(properties={'acltype': 'nfsv4'})
     vfs_objects = set()
-    __parse_share_fs_acl(create_dataset.mountpoint, vfs_objects)
+    __parse_share_fs_acl(create_dataset.get_mountpoint(), vfs_objects)
     assert vfs_objects == {TrueNASVfsObjects.IXNAS}
-    yield create_dataset.mountpoint
+    yield create_dataset.get_mountpoint()
 
 
 @pytest.fixture(scope='function')
 def noacl_dataset(create_dataset):
-    create_dataset.update_properties({'acltype': {'parsed': 'off'}})
-    yield create_dataset.mountpoint
+    create_dataset.set_properties(properties={'acltype': 'off'})
+    yield create_dataset.get_mountpoint()
 
 
 @pytest.fixture(scope='function')
