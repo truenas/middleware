@@ -21,6 +21,8 @@ from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.libvirt.nic import NICDelegate
 
+from .utils import copy_vm_state, delete_vm_state, vm_state_missing_sources
+
 if typing.TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
@@ -133,8 +135,37 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
 
     created_snaps: list[str] = []
     created_clones: list[str] = []
+    state_copied = False
+    new_vm = None
     try:
         new_vm = await context.call2(context.s.vm.create, create_data)
+
+        try:
+            await context.to_thread(copy_vm_state, vm.id, vm.name, new_vm.id, new_vm.name)
+        except FileExistsError as fe:
+            raise CallError(
+                f'Cannot clone VM {vm.name!r} -> {new_vm.name!r}: on-disk state '
+                'already exists at the destination (likely stale NVRAM/TPM left '
+                'over from a previously deleted VM). Aborting; VM configuration '
+                'is unchanged.'
+            ) from fe
+        except OSError as oe:
+            raise CallError(
+                f'Failed to copy VM state for {vm.name!r} -> {new_vm.name!r}: '
+                f'{oe.strerror or oe} (errno={oe.errno}).'
+            ) from oe
+        state_copied = True
+
+        missing = await context.to_thread(
+            vm_state_missing_sources, vm.id, vm.name,
+            vm.bootloader, vm.trusted_platform_module,
+        )
+        if missing:
+            context.logger.warning(
+                '%s -> %s: clone proceeded with no source on-disk state for %s; '
+                'libvirt/swtpm will initialise fresh state on first boot.',
+                vm.name, new_vm.name, ', '.join(missing),
+            )
 
         for device in vm.devices:
             device_dict = device.model_dump(by_alias=True, context={'expose_secrets': True})
@@ -176,6 +207,14 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
                             )
                         except Exception:
                             context.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
+        if state_copied and new_vm is not None:
+            try:
+                await context.to_thread(delete_vm_state, new_vm.id, new_vm.name)
+            except Exception:
+                context.logger.error(
+                    '%s: failed to clean up cloned NVRAM/TPM state after clone failure',
+                    new_vm.name, exc_info=True,
+                )
         raise e
 
     context.logger.info('VM cloned from %r to %r', origin_name, clone_name)
