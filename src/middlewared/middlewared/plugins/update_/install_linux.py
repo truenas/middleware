@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+from datetime import date
 import errno
 import json
 import logging
 import os
-import time
 import typing
-
-import truenas_pylicensed
 
 from middlewared.plugins.config import UPLOADED_DB_PATH
 from middlewared.service import CallError, ServiceContext
@@ -18,16 +16,17 @@ from .utils_linux import mount_update
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
+    from middlewared.plugins.truenas.license_utils import LicenseInfo
 
 logger = logging.getLogger(__name__)
 
 
-def _enforce_lts_gate(manifest: dict, lts_mode: bool) -> None:
+def _enforce_lts_gate(manifest: dict, lts_mode: bool, license_info: LicenseInfo | None) -> None:
     """Two checks; both raise CallError(EACCES) on failure.
 
     1. If LTS mode is on, only LTS-marked images are allowed.
-    2. If the image is LTS-marked, the system's license must carry the
-       LTS feature.
+    2. If the image is LTS-marked, the system's license must carry an
+       unexpired LTS feature.
 
     CallError is surfaced via the outer @api_method(audit=...) wrapper of
     update.run / update.manual, so a denial is auto-audited.
@@ -45,12 +44,13 @@ def _enforce_lts_gate(manifest: dict, lts_mode: bool) -> None:
     if not is_lts_image:
         return
 
-    # Inline rather than is_feature_licensed("LTS") so status.id is
-    # available for the refusal message.
-    status = truenas_pylicensed.verify()
-    today = time.strftime("%Y-%m-%d", time.gmtime())
-    if not status.has_feature("LTS", today):
-        lic_id = status.id or "none"
+    today = date.today()
+    has_lts = license_info is not None and any(
+        f.name == "LTS" and (f.expires_at is None or today <= f.expires_at)
+        for f in license_info.features
+    )
+    if not has_lts:
+        lic_id = license_info.id if license_info is not None else "none"
         logger.warning(
             "LTS update gate: license %s does not carry an unexpired LTS feature",
             lic_id,
@@ -103,7 +103,8 @@ def install(
             manifest = json.load(f)
 
         lts_mode = context.middleware.call_sync('update.config_safe').lts
-        _enforce_lts_gate(manifest, lts_mode)
+        license_info = context.call_sync2(context.s.truenas.license.info_private)
+        _enforce_lts_gate(manifest, lts_mode, license_info)
 
         old_version = sw_info().version
         new_version = manifest["version"]

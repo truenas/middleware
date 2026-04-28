@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import time
+from datetime import date
 import typing
-
-import truenas_pylicensed
 
 from middlewared.api.current import UpdateConfigSafeEntry, UpdateEntry, UpdateUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
@@ -59,10 +57,14 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         verrors = ValidationErrors()
 
         if new.lts and not old.lts:
-            status = truenas_pylicensed.verify()
-            today = time.strftime("%Y-%m-%d", time.gmtime())
-            if not status.has_feature("LTS", today):
-                lic_id = status.id or "none"
+            info = await self.call2(self.s.truenas.license.info_private)
+            today = date.today()
+            has_lts = info is not None and any(
+                f.name == "LTS" and (f.expires_at is None or today <= f.expires_at)
+                for f in info.features
+            )
+            if not has_lts:
+                lic_id = info.id if info is not None else "none"
                 verrors.add(
                     'update.lts',
                     f"Enabling LTS mode requires a license with the LTS feature. "
