@@ -22,14 +22,27 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _enforce_lts_gate(manifest: dict) -> None:
-    """If the image is LTS-marked, refuse on systems whose license lacks
-    the LTS feature. Not a security boundary — purely a UX / accidental-
-    misapplication check. CallError(EACCES) is surfaced via the outer
-    @api_method(audit=...) wrapper of update.run / update.manual, so a
-    denial is auto-audited.
+def _enforce_lts_gate(manifest: dict, lts_mode: bool) -> None:
+    """Two checks; both raise CallError(EACCES) on failure.
+
+    1. If LTS mode is on, only LTS-marked images are allowed.
+    2. If the image is LTS-marked, the system's license must carry the
+       LTS feature.
+
+    CallError is surfaced via the outer @api_method(audit=...) wrapper of
+    update.run / update.manual, so a denial is auto-audited.
     """
-    if not manifest.get("lts"):
+    is_lts_image = bool(manifest.get("lts"))
+
+    if lts_mode and not is_lts_image:
+        logger.warning("LTS update gate: refusing non-LTS image while LTS mode is enabled")
+        raise CallError(
+            "LTS mode is enabled; only LTS update images may be installed. "
+            "Disable LTS mode or upload an LTS-marked image.",
+            errno.EACCES,
+        )
+
+    if not is_lts_image:
         return
 
     # Inline rather than is_feature_licensed("LTS") so status.id is
@@ -89,7 +102,8 @@ def install(
         with open(os.path.join(mounted, "manifest.json")) as f:
             manifest = json.load(f)
 
-        _enforce_lts_gate(manifest)
+        lts_mode = context.middleware.call_sync('update.config_safe').lts
+        _enforce_lts_gate(manifest, lts_mode)
 
         old_version = sw_info().version
         new_version = manifest["version"]

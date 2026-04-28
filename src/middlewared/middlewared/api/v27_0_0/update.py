@@ -28,11 +28,15 @@ class UpdateConfigSafeEntry(BaseModel):
     """Automatically check and download updates every night."""
     profile: str | None
     """Update profile used for the system."""
+    lts: bool
+    """Whether the system is opted in to the LTS (Long-Term Support) update channel. \
+When `true`, updates are pulled from the LTS server, the profile system is bypassed, and only LTS-marked update files \
+may be installed. Toggling on requires a license carrying the LTS feature."""
 
 
 class UpdateEntry(UpdateConfigSafeEntry):
-    profile: str
-    """Update profile used for the system."""
+    profile: str | None
+    """Update profile used for the system. `null` when `lts` is `true`."""
 
 
 class UpdateUpdate(UpdateEntry, metaclass=ForUpdateMetaclass):

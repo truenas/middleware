@@ -54,8 +54,12 @@ class ReleaseManifest(Release):
 
 # Module-level configuration
 _opts = {'raise_for_status': True, 'trust_env': True, 'timeout': ClientTimeout(INTERNET_TIMEOUT)}
-_update_srv = scale_update_server()
 _release_notes_cache: dict[str, tuple[str | None, float]] = {}
+
+
+async def get_update_server(context: ServiceContext) -> str:
+    cfg = await context.call2(context.s.update.config_safe)
+    return scale_update_server(lts=cfg.lts)
 
 
 @cache
@@ -101,7 +105,8 @@ async def get_trains(context: ServiceContext) -> Trains:
         }
     ```
     """
-    trains = Trains.model_validate(await fetch(context, f"{_update_srv}/{UPDATE_TRAINS_FILE_NAME}"))
+    update_srv = await get_update_server(context)
+    trains = Trains.model_validate(await fetch(context, f"{update_srv}/{UPDATE_TRAINS_FILE_NAME}"))
     current_train_name = await get_current_train_name(context, trains)
     if current_train_name not in trains.trains:
         trains.trains[current_train_name] = TrainDescription()
@@ -110,9 +115,10 @@ async def get_trains(context: ServiceContext) -> Trains:
 
 
 async def get_train_releases(context: ServiceContext, name: str) -> dict[str, Release]:
+    update_srv = await get_update_server(context)
     return {
         k: Release.model_validate(v)
-        for k, v in (await fetch(context, f"{_update_srv}/{name}/releases.json")).items()
+        for k, v in (await fetch(context, f"{update_srv}/{name}/releases.json")).items()
     }
 
 
@@ -185,7 +191,8 @@ async def release_notes(context: ServiceContext, train: str, filename: str) -> s
         if time.monotonic() > expires_at:
             _release_notes_cache.pop(key)
 
-    url = f"{_update_srv}/{train}/{filename.removesuffix('.update')}.release-notes.txt"
+    update_srv = await get_update_server(context)
+    url = f"{update_srv}/{train}/{filename.removesuffix('.update')}.release-notes.txt"
     if url in _release_notes_cache:
         return _release_notes_cache[url][0]
 

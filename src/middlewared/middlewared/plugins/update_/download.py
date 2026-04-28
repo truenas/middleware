@@ -108,6 +108,9 @@ def download_update(
                     f"required: {format_size(required_size)}", errno.ENOSPC
                 )
 
+            update_srv = scale_update_server(
+                lts=context.middleware.call_sync('update.config_safe').lts
+            )
             for i in itertools.count(1):
                 with open(dst, "ab") as f:
                     download_start = time.monotonic()
@@ -115,7 +118,7 @@ def download_update(
                     try:
                         start = os.path.getsize(dst)
                         with requests.get(
-                            f"{scale_update_server()}/{train}/{manifest.filename}",
+                            f"{update_srv}/{train}/{manifest.filename}",
                             stream=True,
                             timeout=30,
                             headers={"Range": f"bytes={start}-"}

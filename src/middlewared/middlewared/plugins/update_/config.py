@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import time
 import typing
+
+import truenas_pylicensed
 
 from middlewared.api.current import UpdateConfigSafeEntry, UpdateEntry, UpdateUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
@@ -18,6 +21,7 @@ class UpdateModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     upd_autocheck = sa.Column(sa.Boolean())
     upd_profile = sa.Column(sa.Text(), nullable=True)
+    upd_lts = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
@@ -35,7 +39,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
     async def config_internal(self, *, allow_null_profile: bool) -> UpdateConfigSafeEntry:
         data = await super().config()
 
-        if data.profile is None and not allow_null_profile:
+        if not data.lts and data.profile is None and not allow_null_profile:
             await self.middleware.call(
                 'datastore.update',
                 self._datastore,
@@ -48,16 +52,31 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         return data
 
     async def do_update(self, data: UpdateUpdate) -> UpdateEntry:
-        old = await self.config()
+        old = await self.config_safe()
 
         new = old.updated(data)
 
         verrors = ValidationErrors()
-        profiles = await self.call2(self.s.update.profile_choices)
-        if (profile := profiles.get(new.profile)) is None:
-            verrors.add('update.profile', 'Invalid profile.')
-        elif not profile.available:
-            verrors.add('update.profile', 'This profile is unavailable.')
+
+        if new.lts and not old.lts:
+            status = truenas_pylicensed.verify()
+            today = time.strftime("%Y-%m-%d", time.gmtime())
+            if not status.has_feature("LTS", today):
+                lic_id = status.id or "none"
+                verrors.add(
+                    'update.lts',
+                    f"Enabling LTS mode requires a license with the LTS feature. "
+                    f"Current license: {lic_id}.",
+                )
+
+        if new.lts:
+            new.profile = None
+        else:
+            profiles = await self.call2(self.s.update.profile_choices)
+            if (profile := profiles.get(new.profile)) is None:
+                verrors.add('update.profile', 'Invalid profile.')
+            elif not profile.available:
+                verrors.add('update.profile', 'This profile is unavailable.')
 
         verrors.check()
 
@@ -72,7 +91,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         if new.autocheck != old.autocheck:
             await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
-        if new.profile != old.profile:
+        if new.profile != old.profile or new.lts != old.lts:
             self.middleware.send_event(
                 'update.status', 'CHANGED', status=(await self.call2(self.s.update.status)).model_dump()
             )

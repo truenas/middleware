@@ -8,6 +8,7 @@ import re
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 DEFAULT_SCALE_UPDATE_SERVER = "https://auto-public.sys.truenas.net"
+DEFAULT_SCALE_LTS_UPDATE_SERVER = "https://auto-lts.sys.truenas.net"
 DOWNLOAD_UPDATE_FILE = "update.sqsh"
 UPLOAD_LOCATION = os.path.join(MIDDLEWARE_RUN_DIR, "upload_image")
 SEP = re.compile(r"[-.+]")
@@ -87,7 +88,9 @@ def can_update(old_version: str, new_version: str) -> bool:
     return False
 
 
-def scale_update_server() -> str:
+def scale_update_server(lts: bool = False) -> str:
     cfp = configparser.ConfigParser()
     cfp.read("/data/update.conf")
+    if lts:
+        return cfp.get("Defaults", "lts_url", fallback=DEFAULT_SCALE_LTS_UPDATE_SERVER)
     return cfp.get("Defaults", "url", fallback=DEFAULT_SCALE_UPDATE_SERVER)
