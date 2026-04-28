@@ -3,17 +3,18 @@ from dataclasses import asdict
 import os
 from typing import Any
 
+from truenas_pylicensed import LicenseError, LicenseType, verify
+
 from middlewared.api import api_method
 from middlewared.api.current import (
-    TrueNASLicenseUploadOptions,
-    TrueNASLicenseUploadArgs,
-    TrueNASLicenseUploadResult,
     TrueNASLicenseInfoArgs,
     TrueNASLicenseInfoResult,
+    TrueNASLicenseUploadArgs,
+    TrueNASLicenseUploadOptions,
+    TrueNASLicenseUploadResult,
 )
-from middlewared.service import Service, ValidationError, private
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
-from truenas_pylicensed import LicenseError, LicenseType, verify
+from middlewared.service import Service, ValidationError, private
 
 from .license_legacy_utils import LEGACY_LICENSE_FILE, get_legacy_license_info
 from .license_utils import (

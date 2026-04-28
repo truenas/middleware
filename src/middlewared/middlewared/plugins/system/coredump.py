@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils.journal import query_journal
 
 

@@ -5,7 +5,6 @@ import pstats
 from pstats import SortKey
 from typing import Any, Callable, Coroutine, ParamSpec, overload
 
-
 # Preserve order of args and kwargs with ParamSpec
 P = ParamSpec('P')
 

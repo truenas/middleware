@@ -1,22 +1,22 @@
+from datetime import datetime
 from typing import Annotated, Literal
 
 from annotated_types import Ge, Le
-from datetime import datetime
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
     ContainerXID,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
-    LocalUsername,
-    RemoteUsername,
     LocalUID,
+    LocalUsername,
     LongString,
     NonEmptyString,
+    RemoteUsername,
+    excluded_field,
     single_argument_args,
-    single_argument_result
+    single_argument_result,
 )
 
 __all__ = ["UserEntry",

@@ -9,12 +9,12 @@ from middlewared.api.current import ZFSResourceSnapshotCountQuery
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBBatchAction,
     TDBBatchOperation,
     TDBDataType,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
 
 from .utils import has_internal_path, open_resource

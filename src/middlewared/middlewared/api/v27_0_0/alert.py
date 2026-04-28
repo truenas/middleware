@@ -3,8 +3,7 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NotRequired
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, NotRequired, excluded_field
 
 __all__ = [
     'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',

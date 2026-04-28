@@ -1,11 +1,11 @@
 import contextlib
 import json
 import os
+from pathlib import Path
 import platform
 import time
-from pathlib import Path
 
-from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException
+from middlewared.test.integration.utils import RunOnRunnerException, call, run_on_runner
 
 # We could be running these tests on a Linux or FreeBSD test-runner, so the commands
 # used by a client can be different depending on the platform of the test runner

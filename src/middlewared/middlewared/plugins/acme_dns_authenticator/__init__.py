@@ -7,15 +7,15 @@ from middlewared.api.current import (
     ACMEDNSAuthenticatorCreate,
     ACMEDNSAuthenticatorSchema,
     ACMEDNSAuthenticatorUpdate,
-    DNSAuthenticatorEntry,
-    DNSAuthenticatorCreateArgs,
-    DNSAuthenticatorCreateResult,
-    DNSAuthenticatorUpdateArgs,
-    DNSAuthenticatorUpdateResult,
-    DNSAuthenticatorDeleteArgs,
-    DNSAuthenticatorDeleteResult,
     DNSAuthenticatorAuthenticatorSchemasArgs,
     DNSAuthenticatorAuthenticatorSchemasResult,
+    DNSAuthenticatorCreateArgs,
+    DNSAuthenticatorCreateResult,
+    DNSAuthenticatorDeleteArgs,
+    DNSAuthenticatorDeleteResult,
+    DNSAuthenticatorEntry,
+    DNSAuthenticatorUpdateArgs,
+    DNSAuthenticatorUpdateResult,
 )
 from middlewared.service import GenericCRUDService, private
 

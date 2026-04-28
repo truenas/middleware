@@ -1,16 +1,19 @@
-import uuid
-
 from typing import Literal
+import uuid
 
 from pydantic import ConfigDict, Field, field_validator
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
     single_argument_result,
 )
 
-from .vm_device import VMDisplayDevice, VMDeviceEntry
-
+from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',

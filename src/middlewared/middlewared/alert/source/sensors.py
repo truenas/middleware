@@ -4,17 +4,17 @@
 # See the file LICENSE.IX for complete terms and conditions
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
+import time
+from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.base import (
+    Alert,
+    AlertCategory,
     AlertClass,
     AlertClassConfig,
-    AlertCategory,
     AlertLevel,
     AlertSource,
-    Alert,
     UnavailableException,
 )
 from middlewared.utils import ProductType

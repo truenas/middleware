@@ -4,9 +4,12 @@ import socket
 
 from truenas_pynetif.configure import (
     BridgeConfig,
+)
+from truenas_pynetif.configure import (
     configure_bridge as pynetif_configure_bridge,
 )
 from truenas_pynetif.netlink import LinkInfo
+
 from middlewared.service import ServiceContext
 
 from .sync_data import SyncData

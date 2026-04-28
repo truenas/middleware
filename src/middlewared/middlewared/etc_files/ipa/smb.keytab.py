@@ -1,8 +1,8 @@
 from base64 import b64decode
 
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 
 
 def render(service, middleware, render_ctx):

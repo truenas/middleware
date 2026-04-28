@@ -1,4 +1,4 @@
-from middlewared.service import no_authz_required, private, Service
+from middlewared.service import Service, no_authz_required, private
 
 
 class InterfaceService(Service):

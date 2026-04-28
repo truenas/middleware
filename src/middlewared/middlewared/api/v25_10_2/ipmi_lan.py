@@ -2,9 +2,9 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, Secret
 
-from middlewared.api.base import BaseModel, IPv4Address, query_result, ForUpdateMetaclass, passwd_complexity_validator
-from .common import QueryFilters, QueryOptions
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, IPv4Address, passwd_complexity_validator, query_result
 
+from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "IPMILanEntry", "IPMILanQueryArgs", "IPMILanQueryResult", "IPMILanChannelsArgs",

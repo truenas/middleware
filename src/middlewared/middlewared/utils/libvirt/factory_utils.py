@@ -2,8 +2,21 @@ import os
 from typing import Any
 
 from truenas_pylibvirt.device import (
-    Device, CDROMDevice, DisplayDevice, DisplayDeviceType, FilesystemDevice, NICDevice, NICDeviceType, NICDeviceModel,
-    PCIDevice, DiskStorageDevice, GPUDevice, RawStorageDevice, StorageDeviceType, StorageDeviceIoType, USBDevice
+    CDROMDevice,
+    Device,
+    DiskStorageDevice,
+    DisplayDevice,
+    DisplayDeviceType,
+    FilesystemDevice,
+    GPUDevice,
+    NICDevice,
+    NICDeviceModel,
+    NICDeviceType,
+    PCIDevice,
+    RawStorageDevice,
+    StorageDeviceIoType,
+    StorageDeviceType,
+    USBDevice,
 )
 
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path

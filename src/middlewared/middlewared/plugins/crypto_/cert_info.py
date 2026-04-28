@@ -1,16 +1,17 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CertificateCountryChoicesArgs,
-    CertificateCountryChoicesResult,
+    EKU_OID,
     CertificateAcmeServerChoicesArgs,
     CertificateAcmeServerChoicesResult,
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
     CertificateEcCurveChoicesArgs,
     CertificateEcCurveChoicesResult,
     CertificateExtendedKeyUsageChoicesArgs,
     CertificateExtendedKeyUsageChoicesResult,
-    EKU_OID, ECCurves
+    ECCurves,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils.country_codes import get_country_codes
 
 

@@ -3,18 +3,18 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import subprocess
 import contextlib
 import os
 import signal
+import subprocess
+
+from fenced.fence import ExitCode as FencedExitCodes
 
 from middlewared.plugins.system.product import ProductType
-from middlewared.service import Service, CallError
+from middlewared.service import CallError, Service
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.utils.os import get_pids
-from fenced.fence import ExitCode as FencedExitCodes
-
 
 PID_FILE = os.path.join(MIDDLEWARE_RUN_DIR, 'fenced.pid')
 IS_ALIVE_SIGNAL = 0

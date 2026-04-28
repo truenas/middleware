@@ -1,7 +1,10 @@
-from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
 from datetime import datetime
-from pydantic import Field, Secret
 from typing import Any, ForwardRef, Literal
+
+from pydantic import Field, Secret
+
+from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
+
 from .user import UserGetUserObjResult
 
 

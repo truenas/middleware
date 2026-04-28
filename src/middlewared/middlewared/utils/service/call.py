@@ -4,8 +4,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from middlewared.service_exception import CallError
+
 if TYPE_CHECKING:
     from types import MethodType
+
     from middlewared.service import Service
 
 

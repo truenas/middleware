@@ -1,8 +1,7 @@
 import os
 import re
 
-from middlewared.utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_BOOT_ENV_STATE_DIR
-
+from middlewared.utils import MIDDLEWARE_BOOT_ENV_STATE_DIR, MIDDLEWARE_RUN_DIR
 
 DEBUG_MAX_SIZE = 30
 FIRST_INSTALL_SENTINEL = '/data/first-boot'

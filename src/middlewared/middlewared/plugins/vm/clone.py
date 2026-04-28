@@ -7,15 +7,19 @@ import typing
 import uuid
 
 from middlewared.api.current import (
-    VMCreate, VMDeviceCreate, VMDeviceEntry,
-    ZFSResourceSnapshotCloneQuery, ZFSResourceQuery, ZFSResourceSnapshotDestroyQuery,
-    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotQuery,
+    VMCreate,
+    VMDeviceCreate,
+    VMDeviceEntry,
+    ZFSResourceQuery,
+    ZFSResourceSnapshotCloneQuery,
+    ZFSResourceSnapshotCreateQuery,
+    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotQuery,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.libvirt.nic import NICDelegate
-
 
 if typing.TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback

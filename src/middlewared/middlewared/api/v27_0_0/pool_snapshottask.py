@@ -2,9 +2,9 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, TimeString, SnapshotNameSchema
-from .common import CronModel
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, SnapshotNameSchema, TimeString, excluded_field
 
+from .common import CronModel
 
 __all__ = [
     "PoolSnapshotTaskDBEntry", "PeriodicSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs",

@@ -2,9 +2,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
-from .common import CronModel
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
+from .common import CronModel
 
 __all__ = [
     "PoolScrubEntry", "PoolScrubCreateArgs", "PoolScrubCreateResult", "PoolScrubUpdateArgs", "PoolScrubUpdateResult",

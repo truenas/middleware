@@ -1,7 +1,15 @@
 from pydantic import Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString,
-                                  single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
+)
 
 __all__ = ["CredentialsEntry",
            "CredentialsCreateArgs", "CredentialsCreateResult",

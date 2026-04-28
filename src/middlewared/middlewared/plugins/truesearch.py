@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
-from typing import Any, AsyncGenerator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, AsyncGenerator
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service

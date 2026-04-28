@@ -1,10 +1,8 @@
-import enum
+from collections import defaultdict
 import ctypes
+import enum
 import os
 from typing import Any
-
-from collections import defaultdict
-
 
 NSS_MODULES_DIR = '/usr/lib/x86_64-linux-gnu'
 FILES_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_files.so.2')

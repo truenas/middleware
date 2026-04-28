@@ -1,8 +1,8 @@
 import enum
 import os
+
 from middlewared.utils import ctdb
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
-
 
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}

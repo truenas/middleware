@@ -7,8 +7,7 @@ from middlewared.api.current import AppEntry
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .resources import certificate_choices, used_ports
-from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES, USER_VALUES
-
+from .schema_construction_utils import NOT_PROVIDED, RESERVED_NAMES, USER_VALUES, construct_schema
 
 VALIDATION_REF_MAPPING = {
     'definitions/certificate',

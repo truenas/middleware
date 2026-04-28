@@ -3,9 +3,14 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult, DiskResetSedArgs, DiskResetSedResult,
+    DiskResetSedArgs,
+    DiskResetSedResult,
+    DiskSetupSedArgs,
+    DiskSetupSedResult,
+    DiskUnlockSedArgs,
+    DiskUnlockSedResult,
 )
-from middlewared.service import CallError, Service, private, ValidationErrors
+from middlewared.service import CallError, Service, ValidationErrors, private
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.disks_.disk_class import DiskEntry
 

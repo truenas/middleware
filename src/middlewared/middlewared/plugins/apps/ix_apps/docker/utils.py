@@ -1,8 +1,7 @@
-import contextlib
 from collections.abc import Iterator
+import contextlib
 
 import docker
-
 
 PROJECT_KEY: str = 'com.docker.compose.project'
 

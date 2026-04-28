@@ -3,7 +3,6 @@ from truenas_pymdns.server.config import ServiceConfig, generate_service_config
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils.mdns import DevType
 
-
 # The model TXT record controls the Finder icon on macOS clients.
 # MACPRORACK renders a rackmounted-server icon.
 

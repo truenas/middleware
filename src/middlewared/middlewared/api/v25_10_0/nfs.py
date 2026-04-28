@@ -1,16 +1,16 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, AfterValidator
+from pydantic import AfterValidator, Field
 
 from middlewared.api.base import (
     BaseModel,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
     NonEmptyString,
-    single_argument_args,
     TcpPort,
     exclude_tcp_ports,
+    excluded_field,
+    single_argument_args,
 )
 
 __all__ = [

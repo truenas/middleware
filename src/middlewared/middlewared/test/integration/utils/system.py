@@ -1,7 +1,9 @@
 import os
 import sys
-from .ssh import ssh
+
 from middlewared.test.integration.utils import truenas_server
+
+from .ssh import ssh
 
 try:
     apifolder = os.getcwd()

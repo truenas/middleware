@@ -1,15 +1,24 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import contextlib
 import shutil
-from collections import defaultdict
-from typing import Any, Literal, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
 
 from middlewared.api.current import (
-    AppCertificate, AppCertificateChoices, AppContainerIDOptions, AppContainerResponse, AppDelete,
-    AppGPUResponse, AppIpChoices, ContainerDetails, GPU, ZFSResourceQuery, AppEntry,
+    GPU,
+    AppCertificate,
+    AppCertificateChoices,
+    AppContainerIDOptions,
+    AppContainerResponse,
+    AppDelete,
+    AppEntry,
+    AppGPUResponse,
+    AppIpChoices,
+    ContainerDetails,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import CallError, ServiceContext
@@ -19,7 +28,6 @@ from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
 from .utils import IX_APPS_MOUNT_PATH
-
 
 if TYPE_CHECKING:
     from middlewared.job import Job

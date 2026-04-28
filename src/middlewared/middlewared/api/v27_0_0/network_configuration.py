@@ -1,9 +1,15 @@
 from typing import Literal
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, Excluded, IPvAnyAddress, Hostname, Domain, excluded_field, NotRequired,
+    BaseModel,
+    Domain,
+    Excluded,
+    ForUpdateMetaclass,
+    Hostname,
+    IPvAnyAddress,
+    NotRequired,
+    excluded_field,
 )
-
 
 __all__ = [
     "NetworkConfigurationEntry", "NetworkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",

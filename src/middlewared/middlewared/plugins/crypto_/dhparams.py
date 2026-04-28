@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 
 DHPARAM_PEM_PATH = '/data/dhparam.pem'
 

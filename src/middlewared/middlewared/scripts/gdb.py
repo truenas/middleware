@@ -1,9 +1,10 @@
 import argparse
 import logging
-import requests
 import subprocess
 import sys
 import tempfile
+
+import requests
 
 
 class MiddlewareGDB(object):

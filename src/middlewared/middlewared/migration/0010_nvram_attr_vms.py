@@ -5,8 +5,7 @@ import shutil
 import typing
 
 from middlewared.api.current import VMEntry
-from middlewared.plugins.vm.utils import get_vm_nvram_file_name, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
-
+from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID, get_vm_nvram_file_name
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware

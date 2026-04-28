@@ -1,5 +1,5 @@
-import pytest
 from pydantic import BaseModel, ValidationError
+import pytest
 
 from middlewared.plugins.apps.schema_construction_utils import _make_index_validator
 

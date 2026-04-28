@@ -4,10 +4,9 @@
 import enum
 import os
 import stat
+
 import truenas_os
-
 from truenas_os_pyutils.io import atomic_replace
-
 
 ID_MAX = 2 ** 32 - 2
 

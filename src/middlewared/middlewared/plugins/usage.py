@@ -1,15 +1,15 @@
 import asyncio
+from collections import defaultdict
 import os
 import random
-from collections import defaultdict
 
 import aiohttp
 
 from middlewared.api.current import ZFSResourceQuery
+from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 from middlewared.service import Service
 from middlewared.utils import ajson
 from middlewared.utils.time_utils import utc_now
-from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 

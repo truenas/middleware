@@ -1,6 +1,5 @@
 from functools import partial
-from string import digits, ascii_uppercase, ascii_lowercase, punctuation
-
+from string import ascii_lowercase, ascii_uppercase, digits, punctuation
 
 __all__ = ("passwd_complexity_validator",)
 

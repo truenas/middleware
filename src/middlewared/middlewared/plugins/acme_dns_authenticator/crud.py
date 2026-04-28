@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    ACMEDNSAuthenticatorCreate, ACMEDNSAuthenticatorSchema, ACMEDNSAuthenticatorUpdate,
+    ACMEDNSAuthenticatorCreate,
+    ACMEDNSAuthenticatorSchema,
+    ACMEDNSAuthenticatorUpdate,
     DNSAuthenticatorEntry,
 )
 from middlewared.service import CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 from .authenticators.base import Authenticator
 from .authenticators.factory import auth_factory

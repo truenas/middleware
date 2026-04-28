@@ -1,14 +1,19 @@
-import re
 from enum import Enum
+import re
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, EmailStr, Field, Secret, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, EKU_OID, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
-    NonEmptyString, single_argument_args,
+    EKU_OID,
+    BaseModel,
+    ForUpdateMetaclass,
+    LongNonEmptyString,
+    LongString,
+    NonEmptyString,
+    match_validator,
+    single_argument_args,
 )
-
 
 __all__ = [
     'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',

@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .adapter import DeviceAdapter
 from .factory_utils import get_device
 
-
 if TYPE_CHECKING:
-    from middlewared.main import Middleware
     from truenas_pylibvirt.device.base import Device
+
+    from middlewared.main import Middleware
+
     from .delegate import DeviceDelegate
 
 

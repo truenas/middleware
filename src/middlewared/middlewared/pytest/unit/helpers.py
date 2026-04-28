@@ -4,10 +4,11 @@ from unittest.mock import Mock
 
 from middlewared.api.base.handler.model_provider import ModelProvider
 from middlewared.utils.plugins import LoadPluginsMixin
+
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
     from middlewared.pytest.unit.middleware import Middleware
-    from middlewared.service import Service, CompoundService
+    from middlewared.service import CompoundService, Service
 
 
 def load_compound_service(name: str) -> 'Callable[[Middleware], CompoundService]':

@@ -2,7 +2,6 @@ from typing import Any, TextIO, TypeVar, overload
 
 import yaml
 
-
 T = TypeVar('T')
 
 

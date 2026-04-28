@@ -1,9 +1,8 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel
-
 from pydantic import Field
 
+from middlewared.api.base import BaseModel
 
 __all__ = [
     "IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult",

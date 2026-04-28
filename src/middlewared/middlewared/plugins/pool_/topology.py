@@ -1,7 +1,8 @@
 from collections import deque
 
-from middlewared.service import private, Service
-from .utils import RE_DRAID_SPARE_DISKS, RE_DRAID_DATA_DISKS, RE_DRAID_NAME
+from middlewared.service import Service, private
+
+from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_NAME, RE_DRAID_SPARE_DISKS
 
 
 def _transform_stats(stats):

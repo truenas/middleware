@@ -2,15 +2,18 @@ import base64
 import os
 import subprocess
 
-import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SSHEntry, SSHBindifaceChoicesArgs, SSHBindifaceChoicesResult, SSHUpdateArgs, SSHUpdateResult
+    SSHBindifaceChoicesArgs,
+    SSHBindifaceChoicesResult,
+    SSHEntry,
+    SSHUpdateArgs,
+    SSHUpdateResult,
 )
 from middlewared.async_validators import validate_port
 from middlewared.common.ports import ServicePortDelegate
-from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 class SSHModel(sa.Model):

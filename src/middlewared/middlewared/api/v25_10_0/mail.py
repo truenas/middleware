@@ -1,9 +1,16 @@
 from typing import Literal
 
-from pydantic import Secret, Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, EmailString, EmptyDict, ForUpdateMetaclass, Excluded, excluded_field, NotRequired, LongString
+    BaseModel,
+    EmailString,
+    EmptyDict,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    NotRequired,
+    excluded_field,
 )
 
 __all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "MailSendResult",

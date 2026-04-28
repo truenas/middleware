@@ -1,15 +1,21 @@
 import json
-import subprocess
 from pathlib import Path
+import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import (RDMACapableProtocolsArgs, RDMACapableProtocolsResult, RDMAGetCardChoicesArgs,
-                                     RDMAGetCardChoicesResult, RdmaLinkConfig)
+from middlewared.api.current import (
+    RDMACapableProtocolsArgs,
+    RDMACapableProtocolsResult,
+    RDMAGetCardChoicesArgs,
+    RDMAGetCardChoicesResult,
+    RdmaLinkConfig,
+)
 from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.functools_ import cache
+
 from .constants import RDMAprotocols
 
 PRODUCT_NAME_PREFIX = 'Product Name: '

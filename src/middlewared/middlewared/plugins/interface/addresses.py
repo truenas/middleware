@@ -8,7 +8,7 @@ from truenas_pynetif.address.address import add_address, remove_address, replace
 from truenas_pynetif.address.constants import AddressFamily, IFFlags
 from truenas_pynetif.address.get_ipaddresses import get_link_addresses
 from truenas_pynetif.address.link import set_link_alias, set_link_mtu, set_link_up
-from truenas_pynetif.ethtool import DeviceNotFound, get_ethtool, OperationNotSupported
+from truenas_pynetif.ethtool import DeviceNotFound, OperationNotSupported, get_ethtool
 from truenas_pynetif.netlink import AddressDoesNotExist, AddressInfo, LinkInfo
 
 from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop

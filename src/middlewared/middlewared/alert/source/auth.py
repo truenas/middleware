@@ -1,12 +1,11 @@
 from dataclasses import dataclass
+from time import time
 from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
 from middlewared.utils.audit import UNAUTHENTICATED
-from time import time
-
 
 URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/"
 MAX_LOGINS_LISTED = 100

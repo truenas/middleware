@@ -3,8 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
     'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',

@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from middlewared.utils.cpu import read_cpu_temps, get_cpu_temperatures
+from middlewared.utils.cpu import get_cpu_temperatures, read_cpu_temps
 
 
 @patch('middlewared.utils.cpu.sensors')

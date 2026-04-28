@@ -3,11 +3,11 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import datetime
 from dataclasses import dataclass
+import datetime
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 

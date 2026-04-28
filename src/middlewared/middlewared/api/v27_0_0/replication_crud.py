@@ -1,6 +1,7 @@
 from middlewared.api.base import (
     BaseModel,
 )
+
 from .replication import ReplicationEntry
 
 __all__ = [

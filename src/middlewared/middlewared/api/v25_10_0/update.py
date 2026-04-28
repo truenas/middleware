@@ -1,9 +1,12 @@
 from typing import Literal
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    excluded_field,
 )
-
 
 __all__ = [
     "UpdateEntry", "UpdateUpdateArgs", "UpdateUpdateResult",

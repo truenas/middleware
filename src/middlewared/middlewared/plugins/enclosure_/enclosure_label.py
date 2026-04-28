@@ -1,9 +1,8 @@
-import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import EnclosureLabelSetArgs, EnclosureLabelSetResult
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service_exception import MatchNotFound, ValidationError
+import middlewared.sqlalchemy as sa
 
 
 class EnclosureLabelModel(sa.Model):

@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias
 
 from pydantic import Field, field_validator
 
-from middlewared.api.base import IPvAnyAddress, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, IPvAnyAddress, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetPortEntry",

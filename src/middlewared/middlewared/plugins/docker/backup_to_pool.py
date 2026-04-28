@@ -8,7 +8,6 @@ from middlewared.service import CallError, ServiceContext, ValidationErrors
 
 from .utils import applications_ds_name
 
-
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
 

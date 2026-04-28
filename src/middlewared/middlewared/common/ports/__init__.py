@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any, Required, TypedDict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Required, TypedDict
 
 from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
     from logging import Logger
+
     from middlewared.main import Middleware
 
 

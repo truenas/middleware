@@ -1,7 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import (
-    KeychainCredentialSetupSshConnectionArgs, KeychainCredentialSetupSshConnectionResult
-)
+from middlewared.api.current import KeychainCredentialSetupSshConnectionArgs, KeychainCredentialSetupSshConnectionResult
 from middlewared.service import Service, ValidationErrors
 
 

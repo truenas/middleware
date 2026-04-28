@@ -3,17 +3,22 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import errno
 from dataclasses import dataclass
-
+import errno
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource,
-    NonDataclassAlertClass, UnavailableException,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    NonDataclassAlertClass,
+    UnavailableException,
 )
-from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
+from middlewared.utils import ProductType
 
 
 class FailoverInterfaceNotFoundAlert(AlertClass):

@@ -1,9 +1,8 @@
 from typing import Any
 
-from middlewared.api.base import BaseModel, LongString, LongNonEmptyString
+from middlewared.api.base import BaseModel, LongNonEmptyString, LongString
 
 from .support import SupportNewTicket
-
 
 __all__ = [
     'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',

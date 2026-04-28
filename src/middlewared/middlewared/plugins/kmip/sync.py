@@ -5,10 +5,14 @@
 from middlewared.alert.source.kmip import KMIPConnectionFailedAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
-    KMIPKmipSyncPendingArgs, KMIPKmipSyncPendingResult, KMIPSyncKeysArgs, KMIPSyncKeysResult,
-    KMIPClearSyncPendingKeysArgs, KMIPClearSyncPendingKeysResult,
+    KMIPClearSyncPendingKeysArgs,
+    KMIPClearSyncPendingKeysResult,
+    KMIPKmipSyncPendingArgs,
+    KMIPKmipSyncPendingResult,
+    KMIPSyncKeysArgs,
+    KMIPSyncKeysResult,
 )
-from middlewared.service import CallError, job, periodic, private, Service
+from middlewared.service import CallError, Service, job, periodic, private
 
 from .connection import KMIPServerMixin
 

@@ -3,7 +3,6 @@ import logging
 
 from .disks_.disk_class import iterate_disks
 
-
 # always 512 on Linux
 # https://github.com/torvalds/linux/blob/daa121128a2d2ac6006159e2c47676e4fcd21eab/include/linux/blk_types.h#L25-L34
 # Basically /proc/diskstats reports read/write sector counts in fixed 512 byte units independent of the

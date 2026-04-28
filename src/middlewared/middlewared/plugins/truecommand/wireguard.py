@@ -4,7 +4,7 @@ import time
 
 from middlewared.alert.source.truecommand import TruecommandConnectionHealthAlert
 from middlewared.api.current import TruecommandStatus
-from middlewared.service import CallError, periodic, private, Service
+from middlewared.service import CallError, Service, periodic, private
 from middlewared.utils import run
 
 from .utils import WIREGUARD_INTERFACE_NAME

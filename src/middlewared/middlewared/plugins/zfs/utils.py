@@ -1,13 +1,13 @@
 from collections.abc import Collection
-import pathlib
 from dataclasses import dataclass
+import pathlib
 from typing import Any, Literal
 
 import truenas_pylibzfs
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
-from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
+from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
 
 __all__ = (
     "get_encryption_info",

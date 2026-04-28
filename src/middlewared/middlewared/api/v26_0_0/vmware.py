@@ -4,7 +4,13 @@ from typing import Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired, single_argument_args, single_argument_result,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NotRequired,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
 __all__ = [

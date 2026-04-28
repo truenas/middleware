@@ -4,17 +4,23 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    WebshareEntry, WebshareUpdate, WebshareUpdateArgs, WebshareUpdateResult,
-    WebshareBindipChoicesArgs, WebshareBindipChoicesResult,
+    WebshareBindipChoicesArgs,
+    WebshareBindipChoicesResult,
+    WebshareEntry,
+    WebshareUpdate,
+    WebshareUpdateArgs,
+    WebshareUpdateResult,
 )
 from middlewared.service import GenericConfigService, private
 
 from .config import WebshareConfigPart
 from .utils import (
-    setup_directories as _setup_directories,
+    bindip_choices,
     get_urls,
     tn_connect_hostname_updated,
-    bindip_choices,
+)
+from .utils import (
+    setup_directories as _setup_directories,
 )
 
 if TYPE_CHECKING:

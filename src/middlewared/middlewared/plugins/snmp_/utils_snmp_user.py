@@ -1,8 +1,9 @@
+from logging import getLogger
 import os
 import subprocess
 
 from cryptography.fernet import Fernet
-from logging import getLogger
+
 from middlewared.service import CallError
 from middlewared.utils.crypto import generate_string
 

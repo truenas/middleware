@@ -3,12 +3,16 @@ from enum import StrEnum
 from time import monotonic, time
 from typing import Any
 
-from middlewared.service import periodic, Service
+from middlewared.service import Service, periodic
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.tdb import (
-    TDBBatchAction, TDBBatchOperation, TDBPathType, TDBOptions, TDBDataType, get_tdb_handle
+    TDBBatchAction,
+    TDBBatchOperation,
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+    get_tdb_handle,
 )
-
 
 CACHE_FILE_NAME = 'middleware_cache'
 CACHE_LOCAL_VOLATILE_OPTS = TDBOptions(TDBPathType.VOLATILE, TDBDataType.JSON)

@@ -6,7 +6,7 @@ from middlewared.api.current import (
     ZPoolQueryArgs,
     ZPoolQueryResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .query_impl import query_impl

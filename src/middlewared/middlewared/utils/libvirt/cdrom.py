@@ -1,5 +1,4 @@
 import os
-
 from typing import Any
 
 from middlewared.plugins.boot import BOOT_POOL_NAME

@@ -1,57 +1,87 @@
 from __future__ import annotations
+
 import asyncio
-import random
 from datetime import timedelta
 import errno
+import random
 import time
 from typing import TYPE_CHECKING
 
-from middlewared.api import api_method, Event
+from truenas_pypam import PAMCode
+
+from middlewared.api import Event, api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
-    AuthLoginArgs, AuthLoginResult,
-    AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult,
-    AuthLoginWithTokenArgs, AuthLoginWithTokenResult,
-    AuthLoginExArgs, AuthLoginExResult,
-    AuthLoginExContinueArgs, AuthLoginExContinueResult,
-    AuthMeArgs, AuthMeResult,
-    AuthMechanismChoicesArgs, AuthMechanismChoicesResult,
+    AuthGenerateOnetimePasswordArgs,
+    AuthGenerateOnetimePasswordResult,
+    AuthGenerateTokenArgs,
+    AuthGenerateTokenResult,
+    AuthLoginArgs,
+    AuthLoginExArgs,
+    AuthLoginExContinueArgs,
+    AuthLoginExContinueResult,
+    AuthLoginExResult,
+    AuthLoginResult,
+    AuthLoginWithApiKeyArgs,
+    AuthLoginWithApiKeyResult,
+    AuthLoginWithTokenArgs,
+    AuthLoginWithTokenResult,
+    AuthLogoutArgs,
+    AuthLogoutResult,
+    AuthMeArgs,
+    AuthMechanismChoicesArgs,
+    AuthMechanismChoicesResult,
+    AuthMeResult,
+    AuthSessionsAddedEvent,
     AuthSessionsEntry,
-    AuthGenerateTokenArgs, AuthGenerateTokenResult,
-    AuthLogoutArgs, AuthLogoutResult,
-    AuthSetAttributeArgs, AuthSetAttributeResult,
-    AuthTerminateSessionArgs, AuthTerminateSessionResult,
-    AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
-    AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
-    AuthSessionsAddedEvent, AuthSessionsRemovedEvent,
+    AuthSessionsRemovedEvent,
+    AuthSetAttributeArgs,
+    AuthSetAttributeResult,
+    AuthTerminateOtherSessionsArgs,
+    AuthTerminateOtherSessionsResult,
+    AuthTerminateSessionArgs,
+    AuthTerminateSessionResult,
 )
 from middlewared.auth import (
-    UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
-    AuthenticationContext, TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
-    dump_credentials
+    AuthenticationContext,
+    TokenSessionManagerCredentials,
+    TruenasNodeSessionManagerCredentials,
+    UnixSocketSessionManagerCredentials,
+    UserSessionManagerCredentials,
+    dump_credentials,
 )
-from middlewared.plugins.account_.constants import TRUENAS_PAM_SERVICE, TRUENAS_PAM_API_KEY_SERVICE
+from middlewared.plugins.account_.constants import TRUENAS_PAM_API_KEY_SERVICE, TRUENAS_PAM_SERVICE
 from middlewared.plugins.auth_.login_ex_impl import (
-    login_ex_password_plain,
     login_ex_api_key_plain,
     login_ex_oath_token,
-    login_ex_token_plain,
+    login_ex_password_plain,
     login_ex_scram,
+    login_ex_token_plain,
 )
 from middlewared.service import (
-    Service, filterable_api_method, filter_list,
-    pass_app, private, CallError,
+    CallError,
+    Service,
+    filter_list,
+    filterable_api_method,
+    pass_app,
+    private,
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.account.authenticator import TokenPamAuthenticator, UnixPamAuthenticator
 from middlewared.utils.auth import (
-    aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
-    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, OTPW_MANAGER,
+    AA_LEVEL1,
+    AA_LEVEL2,
+    AA_LEVEL3,
+    CURRENT_AAL,
+    OTPW_MANAGER,
+    AuthenticatorAssuranceLevel,
+    AuthMech,
+    AuthResp,
+    aal_auth_mechanism_check,
 )
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
-from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App

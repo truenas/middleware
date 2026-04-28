@@ -1,8 +1,15 @@
 from pydantic import Field
 import pytest
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args,
-                                  single_argument_result, model_subset)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    excluded_field,
+    model_subset,
+    single_argument_args,
+    single_argument_result,
+)
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.v25_04_0.pool_snapshottask import PoolSnapshotTaskCron

@@ -1,6 +1,5 @@
-import subprocess
-
 import sqlite3
+import subprocess
 
 from middlewared.service_exception import MatchNotFound
 

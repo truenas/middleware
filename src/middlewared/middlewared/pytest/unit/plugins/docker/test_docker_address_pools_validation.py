@@ -3,7 +3,6 @@ import pytest
 from middlewared.plugins.docker.validation_utils import validate_address_pools
 from middlewared.service_exception import ValidationErrors
 
-
 IP_IN_USE = [
     {
         'type': 'INET',

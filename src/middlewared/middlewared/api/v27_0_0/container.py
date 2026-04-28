@@ -3,11 +3,15 @@ from typing import Annotated, Literal, Union
 from pydantic import Discriminator, Field, PositiveInt
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, UUIDv4String,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    UUIDv4String,
+    excluded_field,
 )
 
 from .container_device import ContainerDeviceEntry
-
 
 __all__ = [
     "ContainerEntry",

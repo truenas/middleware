@@ -7,15 +7,15 @@
 # Tests that require access to a KDC are provided as part of API
 # test suite.
 
+from copy import deepcopy
+from enum import Enum, auto
 import ipaddress
 import logging
 import os
-
-from copy import deepcopy
-from enum import auto, Enum
 from tempfile import NamedTemporaryFile
 from typing import Optional
-from .krb5_constants import KRB_AppDefaults, KRB_ETYPE, KRB_LibDefaults, KRB_RealmProperty
+
+from .krb5_constants import KRB_ETYPE, KRB_AppDefaults, KRB_LibDefaults, KRB_RealmProperty
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,11 @@
+from contextlib import suppress
+import enum
 import os
 from typing import Literal
 
-from contextlib import suppress
 from middlewared.api import api_method
-from middlewared.api.base import (BaseModel, UniqueList)
+from middlewared.api.base import BaseModel, UniqueList
 from middlewared.service import Service
-
-import enum
 
 
 class NFS_DBGFLAGS(enum.Enum):

@@ -8,16 +8,15 @@ from truenas_connect_utils.urls import get_registration_uri
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    TrueNASConnectGetRegistrationUriArgs,
-    TrueNASConnectGetRegistrationUriResult,
     TrueNASConnectGenerateClaimTokenArgs,
     TrueNASConnectGenerateClaimTokenResult,
+    TrueNASConnectGetRegistrationUriArgs,
+    TrueNASConnectGetRegistrationUriResult,
 )
-from middlewared.utils.crypto import ssl_uuid4
 from middlewared.service import CallError, Service
+from middlewared.utils.crypto import ssl_uuid4
 
 from .utils import CLAIM_TOKEN_CACHE_KEY
-
 
 logger = logging.getLogger('truenas_connect')
 

@@ -4,24 +4,26 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import asyncio
-import os
-import time
-import contextlib
-import threading
-import logging
-import errno
 from collections import defaultdict
+import contextlib
+import errno
+import logging
+import os
+import threading
+import time
 
-import truenas_pyfilter as _tf
 from truenas_os_pyutils.io import atomic_write
-from middlewared.service import Service, job
-from middlewared.service_exception import CallError
+import truenas_pyfilter as _tf
+
 from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
 from middlewared.plugins.docker.state_utils import Status as DockerStatus
+
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
-from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
+from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, FencedError, IgnoreFailoverEvent
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.service_.services.all import all_services
+from middlewared.service import Service, job
+from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import compile_filters, compile_options
 
 _FAILOVER_CRITICAL_FILTER = compile_filters([['failover_critical', '=', True]])

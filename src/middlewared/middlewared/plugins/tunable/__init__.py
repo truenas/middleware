@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     TunableCreate,
-    TunableEntry,
-    TunableUpdate,
     TunableCreateArgs,
     TunableCreateResult,
-    TunableUpdateArgs,
-    TunableUpdateResult,
     TunableDeleteArgs,
     TunableDeleteResult,
+    TunableEntry,
     TunableTunableTypeChoices,
     TunableTunableTypeChoicesArgs,
     TunableTunableTypeChoicesResult,
+    TunableUpdate,
+    TunableUpdateArgs,
+    TunableUpdateResult,
 )
 from middlewared.service import GenericCRUDService, job, private
 

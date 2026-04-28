@@ -1,27 +1,46 @@
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    UpdateAvailableVersion, UpdateAvailableVersionsArgs, UpdateAvailableVersionsResult,
-    UpdateDownloadArgs, UpdateDownloadResult,
-    UpdateConfigSafeEntry, UpdateEntry,
-    UpdateFileArgs, UpdateFileOptions, UpdateFileResult,
-    UpdateManualArgs, UpdateManualOptions, UpdateManualResult,
-    UpdateProfileChoice, UpdateProfileChoicesArgs, UpdateProfileChoicesResult,
-    UpdateRunArgs, UpdateRunAttrs, UpdateRunResult,
-    UpdateStatus, UpdateStatusArgs, UpdateStatusResult, UpdateStatusChangedEvent,
-    UpdateUpdate, UpdateUpdateArgs, UpdateUpdateResult,
+    UpdateAvailableVersion,
+    UpdateAvailableVersionsArgs,
+    UpdateAvailableVersionsResult,
+    UpdateConfigSafeEntry,
+    UpdateDownloadArgs,
+    UpdateDownloadResult,
+    UpdateEntry,
+    UpdateFileArgs,
+    UpdateFileOptions,
+    UpdateFileResult,
+    UpdateManualArgs,
+    UpdateManualOptions,
+    UpdateManualResult,
+    UpdateProfileChoice,
+    UpdateProfileChoicesArgs,
+    UpdateProfileChoicesResult,
+    UpdateRunArgs,
+    UpdateRunAttrs,
+    UpdateRunResult,
+    UpdateStatus,
+    UpdateStatusArgs,
+    UpdateStatusChangedEvent,
+    UpdateStatusResult,
+    UpdateUpdate,
+    UpdateUpdateArgs,
+    UpdateUpdateResult,
 )
 from middlewared.service import ConfigService, job, private
+
 from .config import UpdateConfigPart
 from .download import download, get_update_location, verify_existing_update
-from .profile_ import profile_choices, current_version_profile
+from .profile_ import current_version_profile, profile_choices
 from .status import status
-from .update import run as update_run, manual as update_manual, file as update_file
+from .update import file as update_file
+from .update import manual as update_manual
+from .update import run as update_run
 from .version import available_versions
-
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App

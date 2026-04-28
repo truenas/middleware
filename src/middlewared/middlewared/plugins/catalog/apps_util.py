@@ -4,17 +4,16 @@ import os
 import re
 from typing import Any
 
-import jsonschema
 from apps_ci.names import CACHED_VERSION_FILE_NAME
 from apps_validation.json_schema_utils import VERSION_VALIDATION_SCHEMA
 from catalog_reader.app import get_app_version_details as get_catalog_app_version_details
 from catalog_reader.questions import normalize_questions
+import jsonschema
 
 from middlewared.plugins.apps.schema_construction_utils import construct_schema
 from middlewared.plugins.update_.utils import can_update
 from middlewared.service import CallError
 from middlewared.utils import sw_info
-
 
 RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{1,2}(?:\.\d+)*)')  # We are only interested in XX.XX or XX.X here
 

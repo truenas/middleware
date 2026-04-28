@@ -24,27 +24,28 @@
 # data(4) = "\04\00\00\00"
 # }
 
-import enum
-import os
-
 from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
+import enum
+import os
+from struct import pack, unpack
+from time import time
+
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import db_id_to_rid
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBBatchAction,
     TDBBatchOperation,
     TDBDataType,
     TDBHandle,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
-from struct import pack, unpack
-from time import time
+
 from .constants import SMBPath
 
 # Major and minor versions must be written to the passdb.tdb file

@@ -1,36 +1,37 @@
 import os
 import struct
+
 import tdb
 
-from middlewared.service import Service, job, private
-from middlewared.service_exception import CallError
-from middlewared.utils.directoryservices.constants import DSType
-from middlewared.utils.sid import (
-    db_id_to_rid,
-    get_domain_rid,
-    lsa_sidtype,
-    sid_is_valid,
-    BASE_RID_USER,
-    WellKnownSid,
-    DomainRid
-)
-from middlewared.utils.tdb import (
-    get_tdb_handle,
-    TDBDataType,
-    TDBPathType,
-    TDBOptions,
-)
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.smb_.constants import SMBBuiltin, SMBPath
 from middlewared.plugins.smb_.util_groupmap import (
+    GroupmapEntryType,
+    GroupmapFile,
+    SMBGroupMap,
+    SMBGroupMembership,
     delete_groupmap_entry,
     insert_groupmap_entries,
     list_foreign_group_memberships,
     query_groupmap_entries,
-    GroupmapFile,
-    GroupmapEntryType,
-    SMBGroupMap,
-    SMBGroupMembership,
+)
+from middlewared.service import Service, job, private
+from middlewared.service_exception import CallError
+from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.sid import (
+    BASE_RID_USER,
+    DomainRid,
+    WellKnownSid,
+    db_id_to_rid,
+    get_domain_rid,
+    lsa_sidtype,
+    sid_is_valid,
+)
+from middlewared.utils.tdb import (
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+    get_tdb_handle,
 )
 
 WINBINDD_AUTO_ALLOCATED = ('S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546')

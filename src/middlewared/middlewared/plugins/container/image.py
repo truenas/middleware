@@ -4,13 +4,14 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, ContainerImageQueryRegistryResultImage,
+    ContainerImageQueryRegistryArgs,
+    ContainerImageQueryRegistryResult,
+    ContainerImageQueryRegistryResultImage,
     ContainerImageQueryRegistryResultImageVersion,
 )
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 
-from .query_pull_images import query_registry_images, pull
-
+from .query_pull_images import pull, query_registry_images
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job

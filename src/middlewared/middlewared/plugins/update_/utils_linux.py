@@ -6,8 +6,9 @@ import subprocess
 import tempfile
 import typing
 
-from middlewared.service import CallError
 from truenas_os_pyutils.mount import umount
+
+from middlewared.service import CallError
 
 logger = logging.getLogger(__name__)
 

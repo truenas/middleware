@@ -1,12 +1,8 @@
-from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
-from middlewared.service import private, SystemServiceService, ValidationErrors
-import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
-from middlewared.api.current import (
-    FTPEntry,
-    FTPUpdateArgs, FTPUpdateResult
-)
+from middlewared.api.current import FTPEntry, FTPUpdateArgs, FTPUpdateResult
+from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
+from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 class FTPModel(sa.Model):

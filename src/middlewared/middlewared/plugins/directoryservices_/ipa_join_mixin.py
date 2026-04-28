@@ -1,17 +1,16 @@
 import base64
+from dataclasses import asdict
+from functools import cache
 import json
 import os
 import subprocess
+from tempfile import NamedTemporaryFile
 
-from dataclasses import asdict
-from functools import cache
 from middlewared.job import Job
-from middlewared.utils.directoryservices import (
-    ipa, ipa_constants
-)
+from middlewared.service_exception import CallError
+from middlewared.utils.directoryservices import ipa, ipa_constants
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
-from middlewared.utils.netbios import validate_netbios_name, NETBIOSNAME_MAX_LEN
-from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DSCredType, DSType
 from middlewared.utils.directoryservices.ipactl_constants import (
     ExitCode,
     IpaOperation,
@@ -19,8 +18,7 @@ from middlewared.utils.directoryservices.ipactl_constants import (
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, ktutil_list_impl
 from middlewared.utils.directoryservices.krb5_error import KRB5ErrCode, KRB5Error
 from middlewared.utils.lang import undefined
-from middlewared.service_exception import CallError
-from tempfile import NamedTemporaryFile
+from middlewared.utils.netbios import NETBIOSNAME_MAX_LEN, validate_netbios_name
 
 IPACTL = ipa_constants.IPACmd.IPACTL.value
 # We have seen at least in one instance with libldap hung indefinitely while requesting the IPA ca certificate.

@@ -2,13 +2,11 @@ import errno
 import json
 import subprocess
 
-from .ad_constants import (
-    ADUserAccountControl,
-    ADEncryptionTypes
-)
 from middlewared.plugins.smb_.constants import SMBCmd
-from middlewared.utils import gencache
 from middlewared.service_exception import CallError
+from middlewared.utils import gencache
+
+from .ad_constants import ADEncryptionTypes, ADUserAccountControl
 
 
 def _normalize_dict(dict_in) -> None:

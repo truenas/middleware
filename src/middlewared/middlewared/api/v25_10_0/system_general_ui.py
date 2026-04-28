@@ -1,7 +1,6 @@
-from middlewared.api.base import BaseModel
-
 from pydantic import NonNegativeInt
 
+from middlewared.api.base import BaseModel
 
 __all__ = [
     "SystemGeneralUiAddressChoicesArgs", "SystemGeneralUiAddressChoicesResult",

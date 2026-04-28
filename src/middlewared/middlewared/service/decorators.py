@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Any, Callable, Concatenate, Coroutine, Literal
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import BaseModel, query_result
+
 if not API_LOADING_FORBIDDEN:
-    from middlewared.api.current import QueryArgs, GenericQueryResult
+    from middlewared.api.current import GenericQueryResult, QueryArgs
 
 if TYPE_CHECKING:
     from middlewared.job import Job

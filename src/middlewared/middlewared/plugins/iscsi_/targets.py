@@ -1,23 +1,31 @@
 import asyncio
+from asyncio import Lock
+from collections import defaultdict
 import errno
 import os
 import pathlib
 import re
 import subprocess
-from asyncio import Lock
-from collections import defaultdict
 
 from pydantic import IPvAnyNetwork
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import (iSCSITargetCreateArgs, iSCSITargetCreateResult, iSCSITargetDeleteArgs,
-                                     iSCSITargetDeleteResult, iSCSITargetEntry, iSCSITargetUpdateArgs,
-                                     iSCSITargetUpdateResult, iSCSITargetValidateNameArgs,
-                                     iSCSITargetValidateNameResult)
+from middlewared.api.current import (
+    iSCSITargetCreateArgs,
+    iSCSITargetCreateResult,
+    iSCSITargetDeleteArgs,
+    iSCSITargetDeleteResult,
+    iSCSITargetEntry,
+    iSCSITargetUpdateArgs,
+    iSCSITargetUpdateResult,
+    iSCSITargetValidateNameArgs,
+    iSCSITargetValidateNameResult,
+)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import UnexpectedFailure, run
+
 from .utils import AUTHMETHOD_LEGACY_MAP, sanitize_extent
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')

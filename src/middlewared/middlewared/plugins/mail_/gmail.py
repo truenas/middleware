@@ -1,15 +1,15 @@
 import base64
 from threading import Lock
 
-import googleapiclient
-from googleapiclient.discovery import build
 from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 import google_auth_httplib2
+import googleapiclient
+from googleapiclient.discovery import build
 import httplib2
 
-from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
-from middlewared.service import private, Service
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
+from middlewared.service import Service, private
 
 
 class GMailConfigurationDiscardedAlert(OneShotAlertClass):

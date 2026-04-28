@@ -3,8 +3,16 @@ from typing import Annotated, Literal
 from annotated_types import Ge, Le
 from pydantic import Field, StringConstraints
 
-from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize, IscsiExtentRPM,
-                                  IscsiExtentType, NonEmptyString, excluded_field)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IscsiExtentBlockSize,
+    IscsiExtentRPM,
+    IscsiExtentType,
+    NonEmptyString,
+    excluded_field,
+)
 
 __all__ = [
     "iSCSITargetExtentEntry",

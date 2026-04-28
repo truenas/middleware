@@ -6,7 +6,7 @@ import pytest
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.pytest.unit.helpers import TestModelProvider
-from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.service_exception import ValidationError, ValidationErrors
 
 
 class SettingsV1(BaseModel):

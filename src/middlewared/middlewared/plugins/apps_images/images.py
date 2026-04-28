@@ -1,6 +1,10 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppImageEntry, AppImagePullArgs, AppImagePullResult, AppImageDeleteArgs, AppImageDeleteResult,
+    AppImageDeleteArgs,
+    AppImageDeleteResult,
+    AppImageEntry,
+    AppImagePullArgs,
+    AppImagePullResult,
 )
 from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_images, pull_image
 from middlewared.service import CRUDService, job

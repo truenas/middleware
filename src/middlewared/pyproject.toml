@@ -50,6 +50,8 @@ select = [
     "F",
     # flake8-tidy-imports
     "TID",
+    # isort
+    "I",
 ]
 ignore = [
     # Prefer absolute imports over relative imports from parent modules

@@ -1,8 +1,8 @@
 from typing import final
 
-from middlewared.api.base import BaseModel
-
 from pydantic import Field
+
+from middlewared.api.base import BaseModel
 
 __all__ = (
     "WebUICryptoCsrProfilesArgs",

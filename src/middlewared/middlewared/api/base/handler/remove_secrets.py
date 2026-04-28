@@ -3,9 +3,10 @@ import typing
 
 from pydantic import Discriminator, Secret
 
-from middlewared.api.base import BaseModel, SECRET_VALUE
+from middlewared.api.base import SECRET_VALUE, BaseModel
 from middlewared.utils.typing_ import is_union
-from .inspect import model_field_is_model, model_field_is_list_of_models, model_field_is_dict_of_models
+
+from .inspect import model_field_is_dict_of_models, model_field_is_list_of_models, model_field_is_model
 
 __all__ = ["remove_secrets"]
 

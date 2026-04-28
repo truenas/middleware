@@ -3,12 +3,12 @@ from time import time
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskTemperaturesArgs,
-    DiskTemperaturesResult,
     DiskTemperatureAggArgs,
     DiskTemperatureAggResult,
     DiskTemperatureAlertsArgs,
     DiskTemperatureAlertsResult,
+    DiskTemperaturesArgs,
+    DiskTemperaturesResult,
 )
 from middlewared.service import Service
 from middlewared.utils.disks_.disk_class import TempEntry

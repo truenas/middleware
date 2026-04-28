@@ -1,8 +1,9 @@
-import pyudev
 import subprocess
 import time
 
-from middlewared.service import private, Service
+import pyudev
+
+from middlewared.service import Service, private
 from middlewared.utils import run
 from middlewared.utils.threading import start_daemon_thread
 

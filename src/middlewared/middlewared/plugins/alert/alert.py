@@ -13,29 +13,40 @@ from typing import Any
 import uuid
 
 import html2text
-
 from truenas_api_client.exc import ReserveFDException
 
 from middlewared.alert.base import (
+    Alert,
     AlertCategory,
-    alert_category_names,
     AlertClass,
     AlertClassConfig,
-    OneShotAlertClass,
-    DismissableAlertClass,
     AlertLevel,
-    Alert,
-    AlertService as _AlertService,
     AlertSource,
+    DismissableAlertClass,
+    OneShotAlertClass,
     UnavailableException,
+    alert_category_names,
+)
+from middlewared.alert.base import (
+    AlertService as _AlertService,
 )
 import middlewared.alert.source  # noqa: F401
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
-    AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
-    AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
-    AlertListAddedEvent, AlertListChangedEvent, AlertListRemovedEvent,
+    AlertDismissArgs,
+    AlertDismissResult,
+    AlertListAddedEvent,
+    AlertListArgs,
+    AlertListCategoriesArgs,
+    AlertListCategoriesResult,
+    AlertListChangedEvent,
+    AlertListPoliciesArgs,
+    AlertListPoliciesResult,
+    AlertListRemovedEvent,
+    AlertListResult,
+    AlertRestoreArgs,
+    AlertRestoreResult,
 )
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import Service, job, periodic, private
@@ -46,6 +57,7 @@ from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
+
     from middlewared.main import Middleware
 
 POLICIES: list[str] = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]

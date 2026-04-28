@@ -3,6 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel
 from middlewared.api.base.jsonschema import add_attrs, replace_refs
 from middlewared.utils.pydantic_ import model_json_schema
+
 from .common import AuditEvent, convert_schema_to_set
 
 

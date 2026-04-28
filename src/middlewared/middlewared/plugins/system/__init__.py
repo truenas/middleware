@@ -3,7 +3,7 @@ import uuid
 
 from middlewared.utils import BOOTREADY
 
-from .utils import FIRST_INSTALL_SENTINEL, BOOTENV_FIRSTBOOT_SENTINEL, lifecycle_conf
+from .utils import BOOTENV_FIRSTBOOT_SENTINEL, FIRST_INSTALL_SENTINEL, lifecycle_conf
 
 
 def firstboot(middleware):

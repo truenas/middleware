@@ -5,7 +5,6 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.service import Service
 
-
 SENTINEL_FILE_PATH = '/data/.vendor'
 
 

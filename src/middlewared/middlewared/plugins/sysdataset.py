@@ -1,29 +1,32 @@
+from contextlib import contextmanager, suppress
 import errno
 import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import threading
 import uuid
 
-from contextlib import contextmanager, suppress
-from pathlib import Path
-
-import middlewared.sqlalchemy as sa
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemDatasetEntry, SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, SystemDatasetUpdateArgs,
-    SystemDatasetUpdateResult, ZFSResourceQuery
+    SystemDatasetEntry,
+    SystemDatasetPoolChoicesArgs,
+    SystemDatasetPoolChoicesResult,
+    SystemDatasetUpdateArgs,
+    SystemDatasetUpdateResult,
+    ZFSResourceQuery,
 )
+from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
-from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
+import middlewared.sqlalchemy as sa
+from middlewared.utils import BOOT_POOL_NAME_VALID, MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
-from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl

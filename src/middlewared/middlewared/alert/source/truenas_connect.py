@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClassConfig, AlertCategory, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
 class TNCHeartbeatConnectionFailureAlert(OneShotAlertClass):

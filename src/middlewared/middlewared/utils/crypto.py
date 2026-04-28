@@ -6,11 +6,10 @@ from string import ascii_letters, digits, punctuation
 from uuid import UUID
 
 from cryptit import cryptit
-from middlewared.utils.secrets import choice, token_urlsafe, token_hex
-
 from samba.crypto import md4_hash_blob
 from truenas_pyscram import CryptoDatum, generate_scram_auth_data
 
+from middlewared.utils.secrets import choice, token_hex, token_urlsafe
 
 # NOTE: these are lifted from cpython/Lib/uuid.py
 _RFC_4122_CLEARFLAGS_MASK = ~((0xf000 << 64) | (0xc000 << 48))

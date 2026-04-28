@@ -1,8 +1,8 @@
-import os
-
 from configparser import RawConfigParser
 from io import StringIO
+import os
 from tempfile import NamedTemporaryFile
+
 from .ipa_constants import IPAPath
 
 

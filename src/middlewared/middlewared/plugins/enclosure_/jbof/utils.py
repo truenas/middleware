@@ -2,18 +2,14 @@ from logging import getLogger
 
 from middlewared.plugins.enclosure_.constants import (
     DISK_FRONT_KEY,
+    DISK_INTERNAL_KEY,
     DISK_REAR_KEY,
     DISK_TOP_KEY,
-    DISK_INTERNAL_KEY,
     DRIVE_BAY_LIGHT_STATUS,
     SUPPORTS_IDENTIFY_KEY,
     SUPPORTS_IDENTIFY_STATUS_KEY,
 )
-from middlewared.plugins.enclosure_.enums import (
-    ElementStatus,
-    RedfishStatusHealth,
-    RedfishStatusState
-)
+from middlewared.plugins.enclosure_.enums import ElementStatus, RedfishStatusHealth, RedfishStatusState
 from middlewared.plugins.enclosure_.slot_mappings import get_jbof_slot_info
 
 LOGGER = getLogger(__name__)

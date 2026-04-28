@@ -1,15 +1,13 @@
-import ldap
 import os
 
+import ldap
+
+from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import ipa_constants
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
 from middlewared.utils.directoryservices.credential import dsconfig_to_ldap_client_config
-from middlewared.utils.directoryservices.health import (
-    IPAHealthCheckFailReason,
-    IPAHealthError
-)
+from middlewared.utils.directoryservices.health import IPAHealthCheckFailReason, IPAHealthError
 from middlewared.utils.directoryservices.ldap_client import LdapClient
-from middlewared.service_exception import CallError
 
 
 class IPAHealthMixin:

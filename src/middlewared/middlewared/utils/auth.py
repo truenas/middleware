@@ -1,10 +1,11 @@
+from dataclasses import asdict, dataclass
 import enum
-import threading
-from dataclasses import dataclass, asdict
 from random import uniform
+import threading
 from time import monotonic
 from typing import Any
-from .crypto import generate_string, sha512_crypt, check_unixhash
+
+from .crypto import check_unixhash, generate_string, sha512_crypt
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
 AUID_UNSET = 2 ** 32 - 1

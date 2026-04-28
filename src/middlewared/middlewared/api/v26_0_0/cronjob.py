@@ -1,8 +1,8 @@
 from typing import Literal
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
-from .common import CronModel
 
+from .common import CronModel
 
 __all__ = [
     "CronJobEntry", "CronJobCreateArgs", "CronJobCreateResult", "CronJobUpdateArgs", "CronJobUpdateResult",

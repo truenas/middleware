@@ -4,7 +4,6 @@ from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
 
-
 AVAILABLE_GPUS = [
     {
         'addr': {

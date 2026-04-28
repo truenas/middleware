@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 
-from .utils import get_docker_client, PROJECT_KEY
+from .utils import PROJECT_KEY, get_docker_client
 
 
 def get_default_stats() -> defaultdict[str, dict[str, Any]]:

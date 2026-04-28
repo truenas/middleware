@@ -1,6 +1,6 @@
-import os
 from collections import defaultdict
 from dataclasses import dataclass
+import os
 from typing import Any
 
 from packaging.version import Version
@@ -9,11 +9,10 @@ from middlewared.plugins.apps_images.utils import normalize_reference
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 
 from .docker.query import list_resources_by_project
-from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
+from .metadata import get_collective_config, get_collective_metadata
 from .path import get_app_parent_config_path
-from .utils import AppState, ContainerState, get_app_name_from_project_name, PROJECT_PREFIX
-
+from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_project_name
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 import stat
 from typing import Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import InitShutdownScriptCreate, InitShutdownScriptEntry, InitShutdownScriptUpdate
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 
 class InitShutdownScriptModel(sa.Model):

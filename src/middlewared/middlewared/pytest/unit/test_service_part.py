@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.service import job, private, Service, ServicePartBase
+from middlewared.service import Service, ServicePartBase, job, private
 
 
 class SumServiceBase(ServicePartBase):

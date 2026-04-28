@@ -1,6 +1,6 @@
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
 from typing import Literal
 
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
     'NTPPeerEntry', 'NTPServerEntry',

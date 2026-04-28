@@ -2,14 +2,15 @@ import ipaddress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NetworkConfigurationEntry, NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
+    NetworkConfigurationEntry,
+    NetworkConfigurationUpdateArgs,
+    NetworkConfigurationUpdateResult,
 )
-import middlewared.sqlalchemy as sa
-from middlewared.service import ConfigService, ValidationErrors, private
-from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.utils import are_indices_in_consecutive_order
 from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
-
+from middlewared.service import ConfigService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils import are_indices_in_consecutive_order
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
 

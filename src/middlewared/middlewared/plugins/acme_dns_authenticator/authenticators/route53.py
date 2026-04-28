@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import errno
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import boto3
-
 from botocore import exceptions as boto_exceptions
 
 from middlewared.api.current import Route53SchemaArgs

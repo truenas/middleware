@@ -2,7 +2,7 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
 from os import closerange, getpgid, kill, killpg, scandir
-from resource import getrlimit, RLIMIT_NOFILE, RLIM_INFINITY
+from resource import RLIM_INFINITY, RLIMIT_NOFILE, getrlimit
 from signal import SIGKILL, SIGTERM
 from time import sleep, time
 

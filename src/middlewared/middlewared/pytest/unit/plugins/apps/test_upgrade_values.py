@@ -1,13 +1,12 @@
 import textwrap
-import unittest.mock
 from types import SimpleNamespace
+import unittest.mock
 
 import pytest
 
-from middlewared.plugins.apps.upgrade import upgrade_values, get_data_for_upgrade_values
+from middlewared.plugins.apps.upgrade import get_data_for_upgrade_values, upgrade_values
 from middlewared.service import CallError
 from middlewared.utils.yaml import safe_yaml_load
-
 
 APP_CONFIG = textwrap.dedent(
     '''

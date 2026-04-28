@@ -2,8 +2,10 @@ from subprocess import run
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
-    SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,
+    SystemSecurityInfoFipsAvailableArgs,
+    SystemSecurityInfoFipsAvailableResult,
+    SystemSecurityInfoFipsEnabledArgs,
+    SystemSecurityInfoFipsEnabledResult,
 )
 from middlewared.service import CallError, Service
 

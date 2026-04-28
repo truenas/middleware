@@ -1,5 +1,6 @@
 import inspect
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
     from middlewared.api.base.handler.model_provider import ModelFactory

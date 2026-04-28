@@ -3,7 +3,13 @@ from datetime import timedelta
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, ProductType,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    ProductType,
 )
 from middlewared.alert.schedule import IntervalSchedule
 

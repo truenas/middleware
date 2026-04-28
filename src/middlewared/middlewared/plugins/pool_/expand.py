@@ -3,9 +3,8 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExpandArgs, PoolExpandResult
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 from middlewared.utils import run
-
 
 logger = logging.getLogger(__name__)
 

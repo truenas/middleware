@@ -13,9 +13,9 @@ from truenas_pynetif.address.link import set_link_down, set_link_name, set_link_
 from truenas_pynetif.address.route import add_route
 from truenas_pynetif.configure import BondConfig, configure_bond
 from truenas_pynetif.ethtool import get_ethtool
+from truenas_pynetif.netlink import DeviceNotFound
 from truenas_pynetif.netlink._core import netlink_route
 from truenas_pynetif.netlink._exceptions import NetlinkError, RouteAlreadyExists
-from truenas_pynetif.netlink import DeviceNotFound
 
 from middlewared.plugins.failover_.detect_utils import is_vseries_v2_interconnect
 from middlewared.service import Service

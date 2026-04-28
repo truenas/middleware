@@ -3,21 +3,21 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from collections import defaultdict
+from collections.abc import Callable
 import errno
+from functools import partial
 import json
 import logging
-import requests
 import socket
 import threading
 import time
-from collections.abc import Callable
-from collections import defaultdict
-from functools import partial
 from typing import Any, TypedDict
 
+import requests
+from truenas_api_client import CALL_TIMEOUT, Client, ClientException
 from websocket._exceptions import WebSocketBadStatusException
 
-from truenas_api_client import Client, ClientException, CALL_TIMEOUT
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.utils.threading import set_thread_name, start_daemon_thread

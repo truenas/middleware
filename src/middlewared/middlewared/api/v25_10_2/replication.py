@@ -3,9 +3,19 @@ from typing import Literal
 from pydantic import Field
 from pydantic.json_schema import SkipJsonSchema
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-                                  single_argument_args, single_argument_result, SnapshotNameSchema, TcpPort,
-                                  UniqueList)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    SnapshotNameSchema,
+    TcpPort,
+    UniqueList,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
+)
+
 from .common import CronModel, TimeCronModel
 from .keychain import KeychainCredentialEntry
 from .pool_snapshottask import PoolSnapshotTaskDBEntry

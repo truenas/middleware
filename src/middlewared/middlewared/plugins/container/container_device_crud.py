@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
-    ContainerDeviceCreate, ContainerDeviceDeleteOptions, ContainerDeviceEntry, ContainerDeviceUpdate,
+    ContainerDeviceCreate,
+    ContainerDeviceDeleteOptions,
+    ContainerDeviceEntry,
+    ContainerDeviceUpdate,
 )
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 if TYPE_CHECKING:

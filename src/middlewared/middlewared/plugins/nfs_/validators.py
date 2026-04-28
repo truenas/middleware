@@ -1,6 +1,6 @@
+from ipaddress import ip_address, ip_network
 import re
 
-from ipaddress import ip_address, ip_network
 from middlewared.service import ValidationErrors
 
 

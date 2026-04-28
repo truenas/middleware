@@ -1,9 +1,12 @@
 from typing import Literal
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args,
+    BaseModel,
+    ForUpdateMetaclass,
+    HttpsOnlyURL,
+    NonEmptyString,
+    single_argument_args,
 )
-
 
 __all__ = [
     'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',

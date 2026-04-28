@@ -1,10 +1,15 @@
 import asyncio
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    DiskEntry, DiskUpdateArgs, DiskUpdateResult, DiskQueryAddedEvent, DiskQueryChangedEvent, DiskQueryRemovedEvent,
+    DiskEntry,
+    DiskQueryAddedEvent,
+    DiskQueryChangedEvent,
+    DiskQueryRemovedEvent,
+    DiskUpdateArgs,
+    DiskUpdateResult,
 )
-from middlewared.service import filterable_api_method, private, CRUDService
+from middlewared.service import CRUDService, filterable_api_method, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductType
 from middlewared.utils.disks_.disk_class import DiskEntry as DiskEntryObj

@@ -1,8 +1,13 @@
 from typing import Any
 
 from apps_validation.portals import (
-    IX_ACTION_REQUIRED_KEY, IX_NOTES_KEY, IX_PORTAL_KEY, validate_portals_and_notes, ValidationErrors,
+    IX_ACTION_REQUIRED_KEY,
+    IX_NOTES_KEY,
+    IX_PORTAL_KEY,
+    ValidationErrors,
+    validate_portals_and_notes,
 )
+
 from .lifecycle import get_rendered_template_config_of_app
 
 

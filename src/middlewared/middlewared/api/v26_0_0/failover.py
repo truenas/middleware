@@ -1,11 +1,10 @@
 from middlewared.api.base import (
     BaseModel,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
     NonEmptyString,
+    excluded_field,
 )
-
 
 __all__ = [
     "FailoverEntry", "FailoverBecomePassiveArgs", "FailoverBecomePassiveResult", "FailoverGetIpsArgs",

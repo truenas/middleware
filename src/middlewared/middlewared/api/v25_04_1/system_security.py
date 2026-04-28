@@ -1,15 +1,9 @@
-from middlewared.api.base import (
-    BaseModel,
-    Excluded,
-    excluded_field,
-    ForUpdateMetaclass,
-    single_argument_args
-)
-from middlewared.utils.security import PasswordComplexity, MAX_PASSWORD_HISTORY
-
 from typing import Annotated, Literal
 
 from annotated_types import Ge, Le
+
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.utils.security import MAX_PASSWORD_HISTORY, PasswordComplexity
 
 __all__ = [
     'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',

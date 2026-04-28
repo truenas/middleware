@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterable
 
 from libsg3.ses import EnclosureDevice
+
 from .enclosure_class import ElementsDict, Enclosure, EnclosureStatusDict
 
 logger = getLogger(__name__)

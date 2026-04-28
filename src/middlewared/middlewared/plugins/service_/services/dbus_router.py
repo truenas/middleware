@@ -1,8 +1,8 @@
 import asyncio
+from dataclasses import dataclass, field
 import logging
 import time
 import types
-from dataclasses import dataclass, field
 
 # NOTE: We prefer to minimize third-party dependencies in critical service management code.
 # However, jeepney was chosen for D-Bus communication because:
@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 #   2. No transitive third-party dependencies
 #   3. Verified under stress testing to be free of memory leaks
 from jeepney import DBusAddress, new_method_call
-from jeepney.bus_messages import message_bus, MatchRule
-from jeepney.io.asyncio import DBusConnection, DBusRouter, open_dbus_connection, Proxy
+from jeepney.bus_messages import MatchRule, message_bus
+from jeepney.io.asyncio import DBusConnection, DBusRouter, Proxy, open_dbus_connection
 from jeepney.wrappers import DBusErrorResponse, unwrap_msg
 
 __all__ = ("ServiceActionError", "system_dbus")

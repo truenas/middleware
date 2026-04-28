@@ -1,14 +1,15 @@
 import pathlib
 
+from truenas_os_pyutils.mount import statmount
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResult,
 )
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
-from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
+from middlewared.plugins.zfs_.utils import TNUserProp, zvol_path_to_name
 from middlewared.service import Service, private
-from truenas_os_pyutils.mount import statmount
 
 
 class PoolDatasetService(Service):

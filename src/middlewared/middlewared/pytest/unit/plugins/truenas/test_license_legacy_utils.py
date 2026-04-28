@@ -1,7 +1,6 @@
 from datetime import date
 
 import pytest
-
 from truenas_pylicensed import LicenseType
 
 from middlewared.plugins.truenas.license_legacy_utils import parse_legacy_license

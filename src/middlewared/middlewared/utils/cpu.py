@@ -7,7 +7,6 @@ from typing import Any
 
 from middlewared.utils.sensors import SensorsWrapper
 
-
 AMD_PREFER_TDIE = (
     # https://github.com/torvalds/linux/blob/master/drivers/hwmon/k10temp.c#L121
     # static const struct tctl_offset tctl_offset_table[] = {

@@ -1,7 +1,7 @@
 from middlewared.api.base import BaseModel, NonEmptyString
+
 from .alert import AlertLevel
 from .alertservice_attributes import AlertServiceAttributes
-
 
 __all__ = [
     'AlertServiceCreate', 'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs',

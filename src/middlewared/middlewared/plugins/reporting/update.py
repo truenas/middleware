@@ -1,11 +1,16 @@
-import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ReportingEntry, ReportingGraphsItem, ReportingUpdateArgs, ReportingUpdateResult, ReportingGetDataArgs,
-    ReportingGetDataResult, ReportingGraphResult, ReportingGraphArgs,
+    ReportingEntry,
+    ReportingGetDataArgs,
+    ReportingGetDataResult,
+    ReportingGraphArgs,
+    ReportingGraphResult,
+    ReportingGraphsItem,
+    ReportingUpdateArgs,
+    ReportingUpdateResult,
 )
-from middlewared.service import filterable_api_method, ConfigService, private
+from middlewared.service import ConfigService, filterable_api_method, private
+import middlewared.sqlalchemy as sa
 
 
 class ReportingModel(sa.Model):

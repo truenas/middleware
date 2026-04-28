@@ -7,14 +7,16 @@ from dataclasses import asdict, dataclass
 import errno
 import time
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    FailoverRebootInfoArgs, FailoverRebootInfoResult,
-    FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
+    FailoverRebootInfoArgs,
     FailoverRebootInfoChangedEvent,
+    FailoverRebootInfoResult,
+    FailoverRebootOtherNodeArgs,
+    FailoverRebootOtherNodeResult,
 )
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils.threading import run_coro_threadsafe
 
 

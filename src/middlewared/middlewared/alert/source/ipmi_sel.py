@@ -4,10 +4,15 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    DismissableAlertClass,
 )
 from middlewared.alert.schedule import IntervalSchedule
-
 
 THRESHOLD_SENSOR_TYPES = (
     "Fan",

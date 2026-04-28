@@ -1,6 +1,5 @@
 import os
 
-
 BACKUP_NAME_PREFIX = 'ix-apps-backup-'
 MIGRATION_NAMING_SCHEMA = 'ix-apps-migrate-%Y-%m-%d_%H-%M'
 UPDATE_BACKUP_PREFIX = 'system-update-'

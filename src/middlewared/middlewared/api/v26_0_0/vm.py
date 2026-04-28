@@ -3,12 +3,17 @@ from typing import Literal
 from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result, UUIDv4String,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    UUIDv4String,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
-from .vm_device import VMDisplayDevice, VMDeviceEntry
-
+from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',

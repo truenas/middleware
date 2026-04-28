@@ -5,17 +5,16 @@
 from dataclasses import dataclass
 from typing import Any
 
-from middlewared.utils import ProductType
-
 from middlewared.alert.base import (
+    Alert,
+    AlertCategory,
     AlertClass,
     AlertClassConfig,
-    AlertCategory,
     AlertLevel,
-    Alert,
     AlertSource,
     NonDataclassAlertClass,
 )
+from middlewared.utils import ProductType
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

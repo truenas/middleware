@@ -4,9 +4,9 @@ import asyncio
 
 from middlewared.api.current import UpdateAvailableVersion, UpdateStatusNewVersion
 from middlewared.service import ServiceContext
-from .trains import ReleaseManifest
+
+from .trains import ReleaseManifest, get_next_trains_names, get_train_releases, get_trains, release_notes
 from .utils import can_update
-from .trains import get_trains, get_train_releases, get_next_trains_names, release_notes
 
 
 async def available_versions(context: ServiceContext) -> list[UpdateAvailableVersion]:

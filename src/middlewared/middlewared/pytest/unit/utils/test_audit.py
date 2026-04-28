@@ -1,17 +1,13 @@
+from socket import AF_UNIX
+from types import SimpleNamespace
+
 import pytest
 
-from middlewared.auth import (
-    UserSessionManagerCredentials,
-    TruenasNodeSessionManagerCredentials
-)
-
+from middlewared.auth import TruenasNodeSessionManagerCredentials, UserSessionManagerCredentials
 from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.audit import audit_username_from_session
 from middlewared.utils.auth import AA_LEVEL1
 from middlewared.utils.origin import ConnectionOrigin
-from socket import AF_UNIX
-from types import SimpleNamespace
-
 
 USER_SESSION = UserSessionManagerCredentials(
     {'username': 'bob', 'privilege': {'allowlist': []}},

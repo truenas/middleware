@@ -99,11 +99,11 @@ Remember each schema should follow the following json schema:
 }
 """
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from middlewared.api.base import NotRequired
-from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model, construct_schema, NOT_PROVIDED
+from middlewared.plugins.apps.schema_construction_utils import NOT_PROVIDED, construct_schema, generate_pydantic_model
 
 
 # Basic field type tests

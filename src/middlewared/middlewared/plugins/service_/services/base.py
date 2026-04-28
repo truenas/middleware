@@ -6,7 +6,7 @@ from middlewared.utils.journal import (
     query_journal,
 )
 
-from .base_interface import ServiceInterface, IdentifiableServiceInterface
+from .base_interface import IdentifiableServiceInterface, ServiceInterface
 from .base_state import ServiceState
 from .dbus_router import system_dbus
 

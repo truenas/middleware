@@ -8,7 +8,7 @@ import time
 
 import pyudev
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 from middlewared.utils.disks_.disk_class import DiskEntry, iterate_disks
 
 from .gpt_utils import read_gpt_partitions

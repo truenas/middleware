@@ -5,7 +5,8 @@ import errno
 from typing import TYPE_CHECKING
 
 from middlewared.api.current import (
-    PeriodicSnapshotTaskEntry, PoolSnapshotTaskUpdateWillChangeRetentionFor,
+    PeriodicSnapshotTaskEntry,
+    PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.service_exception import CallError
 

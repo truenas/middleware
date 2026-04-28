@@ -4,8 +4,8 @@ from typing import Any, Literal, Union
 from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
-from .user import UserGetUserObj
 
+from .user import UserGetUserObj
 
 __all__ = [
     'AuthSessionsEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',

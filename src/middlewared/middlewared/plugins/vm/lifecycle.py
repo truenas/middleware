@@ -10,7 +10,7 @@ from middlewared.service import CallError, ServiceContext
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .info import BOOT_LOADER_OPTIONS, license_active
-from .utils import get_vm_tpm_state_dir_name, get_vm_nvram_file_name, SYSTEM_TPM_FOLDER_PATH, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import SYSTEM_NVRAM_FOLDER_PATH, SYSTEM_TPM_FOLDER_PATH, get_vm_nvram_file_name, get_vm_tpm_state_dir_name
 from .vm_domain import VmDomain, VmDomainConfiguration
 
 

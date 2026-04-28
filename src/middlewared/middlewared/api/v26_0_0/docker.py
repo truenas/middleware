@@ -1,13 +1,18 @@
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
+from pydantic import Field, IPvAnyInterface, RootModel, field_validator, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    HttpUrl,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
 )
-
 
 __all__ = [
     'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',

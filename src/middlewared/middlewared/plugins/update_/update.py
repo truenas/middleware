@@ -7,8 +7,9 @@ import shutil
 import typing
 
 from middlewared.api.current import UpdateFileOptions, UpdateManualOptions, UpdateRunAttrs
-from middlewared.service import CallError, ServiceContext
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
+from middlewared.service import CallError, ServiceContext
+
 from .download import download_update, get_update_location
 from .install_linux import install
 from .upload_location_linux import create_upload_location, destroy_upload_location

@@ -4,17 +4,16 @@ import subprocess
 
 from dateutil.tz import tzlocal
 import isodate
-
-from middlewared.api.current import PeriodicSnapshotTaskEntry
-from middlewared.service import CallError, Service
-from middlewared.utils.time_utils import utc_now
-
 from zettarepl.snapshot.list import list_snapshots
 from zettarepl.snapshot.name import parse_snapshot_name
 from zettarepl.snapshot.task.snapshot_owner import PeriodicSnapshotTaskSnapshotOwner
 from zettarepl.snapshot.task.task import PeriodicSnapshotTask
 from zettarepl.transport.interface import ExecException
 from zettarepl.transport.local import LocalShell
+
+from middlewared.api.current import PeriodicSnapshotTaskEntry
+from middlewared.service import CallError, Service
+from middlewared.utils.time_utils import utc_now
 
 
 class ZettareplService(Service):

@@ -5,7 +5,7 @@ from truenas_pylibzfs import ZFSError, ZFSException
 
 from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result
-from .property_management import build_set_of_zfs_props, DeterminedProperties
+from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .utils import has_internal_path
 
 __all__ = ("query_impl",)

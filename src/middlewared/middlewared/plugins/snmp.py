@@ -1,20 +1,19 @@
-import middlewared.sqlalchemy as sa
-import subprocess
-import os
-
 from contextlib import suppress
-from middlewared.api import api_method
-from middlewared.api.current import (
-    SNMPEntry,
-    SNMPUpdateArgs, SNMPUpdateResult
-)
+import os
+import subprocess
 
+from middlewared.api import api_method
+from middlewared.api.current import SNMPEntry, SNMPUpdateArgs, SNMPUpdateResult
 from middlewared.common.ports import ServicePortDelegate
 from middlewared.plugins.snmp_.utils_snmp_user import (
-    SNMPSystem, _add_system_user,
-    add_snmp_user, delete_snmp_user, get_users_cmd
+    SNMPSystem,
+    _add_system_user,
+    add_snmp_user,
+    delete_snmp_user,
+    get_users_cmd,
 )
-from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 class SNMPModel(sa.Model):

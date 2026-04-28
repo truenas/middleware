@@ -3,10 +3,9 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from subprocess import run, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, run
 
-from middlewared.service import Service, job, CallError
-
+from middlewared.service import CallError, Service, job
 
 FW_RULES_FILE = '/tmp/fw-rules.nft'
 JOB_LOCK = 'firewall_rules_update'

@@ -12,8 +12,10 @@ from middlewared.utils.filter_list import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
 from .enums import JbofModels
-from .fseries_drive_identify import InsufficientPrivilege, set_slot_status as fseries_set_slot_status
-from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
+from .fseries_drive_identify import InsufficientPrivilege
+from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
+from .jbof_enclosures import map_jbof
+from .jbof_enclosures import set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status

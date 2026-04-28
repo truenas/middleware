@@ -3,7 +3,6 @@ import typing
 
 from .call import call
 
-
 __all__ = ['file_exists_and_perms_check']
 
 

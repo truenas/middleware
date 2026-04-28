@@ -1,11 +1,10 @@
-import re
 from datetime import timedelta
+import re
 
 from middlewared.alert.source.dif_formatted_disks import DifFormattedAlert
-from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.service import Service, ServiceChangeMixin, job, private
 from middlewared.utils.disks import dev_to_ident
 from middlewared.utils.time_utils import utc_now
-
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 

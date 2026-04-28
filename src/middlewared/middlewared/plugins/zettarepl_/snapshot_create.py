@@ -1,8 +1,8 @@
-from middlewared.service import Service
-
 from zettarepl.snapshot.create import create_snapshot
 from zettarepl.snapshot.snapshot import Snapshot
 from zettarepl.transport.local import LocalShell
+
+from middlewared.service import Service
 
 
 class ZettareplService(Service):

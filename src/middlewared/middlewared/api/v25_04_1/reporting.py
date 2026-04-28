@@ -3,9 +3,13 @@ import typing
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
 )
-
 
 __all__ = [
     'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',

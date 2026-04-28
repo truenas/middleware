@@ -4,8 +4,9 @@
 # path_in_ctldir() has test coverage via api tests for filesystem.stat
 # and filesystem.listdir methods since it requires access to zpool.
 
-from .constants import ZFSCTL
 from pathlib import Path
+
+from .constants import ZFSCTL
 
 
 def path_in_ctldir(path_in: str | Path) -> bool:

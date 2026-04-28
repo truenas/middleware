@@ -8,16 +8,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
-from middlewared.sqlalchemy import EncryptedText, JSON, Time
-
 import middlewared.plugins.datastore  # noqa
 import middlewared.plugins.datastore.connection  # noqa
 import middlewared.plugins.datastore.schema  # noqa
 import middlewared.plugins.datastore.util  # noqa
-
+from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.sqlalchemy import JSON, EncryptedText, Time
 
 DatastoreService = load_compound_service("datastore")
 

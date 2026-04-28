@@ -6,10 +6,13 @@ import pyotp
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, single_argument_result
 from middlewared.api.current import (
-    UserTwofactorConfigEntry, UserUnset2faSecretArgs, UserUnset2faSecretResult,
-    UserRenew2faSecretArgs, UserRenew2faSecretResult
+    UserRenew2faSecretArgs,
+    UserRenew2faSecretResult,
+    UserTwofactorConfigEntry,
+    UserUnset2faSecretArgs,
+    UserUnset2faSecretResult,
 )
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
 

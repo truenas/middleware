@@ -1,7 +1,5 @@
 from ipaddress import ip_network
 
-from middlewared.service import ServiceContext
-
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import (
     add_route,
@@ -10,6 +8,8 @@ from truenas_pynetif.address.netlink import (
     get_routes,
     netlink_route,
 )
+
+from middlewared.service import ServiceContext
 
 __all__ = ("sync_impl",)
 

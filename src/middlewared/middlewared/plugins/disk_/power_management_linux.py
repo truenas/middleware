@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils import run
 
 

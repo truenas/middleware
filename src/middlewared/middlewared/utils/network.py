@@ -3,7 +3,6 @@ import socket
 
 import aiohttp
 
-
 INTERNET_TIMEOUT = 15
 
 CONNECTIVITY_CHECK_URL = 'http://www.gstatic.com/generate_204'

@@ -4,7 +4,11 @@ from typing import Any, Literal
 from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, LongString, single_argument_args, single_argument_result,
+    BaseModel,
+    ForUpdateMetaclass,
+    LongString,
+    single_argument_args,
+    single_argument_result,
 )
 
 __all__ = [

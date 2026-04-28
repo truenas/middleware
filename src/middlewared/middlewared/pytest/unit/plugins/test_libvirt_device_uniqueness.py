@@ -2,7 +2,6 @@ import pytest
 
 from middlewared.utils.libvirt.utils import _extract_identity, device_uniqueness_check
 
-
 # Map used by the mock: (vendor_id, product_id) -> libvirt device name
 _MOCK_USB_IDS = {
     ('0x1d6b', '0x0002'): 'usb_1_1',

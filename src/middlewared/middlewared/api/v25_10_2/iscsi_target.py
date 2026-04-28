@@ -4,8 +4,15 @@ from typing import Literal
 from pydantic import AfterValidator, StringConstraints
 from typing_extensions import Annotated
 
-from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, IscsiAuthType, NonEmptyString,
-                                  excluded_field, match_validator)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IscsiAuthType,
+    NonEmptyString,
+    excluded_field,
+    match_validator,
+)
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 

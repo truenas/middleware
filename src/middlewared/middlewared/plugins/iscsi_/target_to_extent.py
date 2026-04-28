@@ -1,15 +1,15 @@
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    iSCSITargetToExtentEntry,
     iSCSITargetToExtentCreateArgs,
     iSCSITargetToExtentCreateResult,
+    iSCSITargetToExtentDeleteArgs,
+    iSCSITargetToExtentDeleteResult,
+    iSCSITargetToExtentEntry,
     iSCSITargetToExtentUpdateArgs,
     iSCSITargetToExtentUpdateResult,
-    iSCSITargetToExtentDeleteArgs,
-    iSCSITargetToExtentDeleteResult)
-
+)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 class iSCSITargetToExtentModel(sa.Model):

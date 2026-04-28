@@ -2,14 +2,19 @@ from abc import ABC
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BeforeValidator, Field, AfterValidator
+from pydantic import AfterValidator, BeforeValidator, Field
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 from middlewared.api.base import (
-    BaseModel, LongString, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field
+    BaseModel,
+    Excluded,
+    LongString,
+    NonEmptyString,
+    NotRequired,
+    excluded_field,
+    single_argument_args,
 )
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
-
 
 __all__ = [
     "PoolSnapshotEntry", "PoolSnapshotCloneArgs", "PoolSnapshotCloneResult", "PoolSnapshotCreateArgs",

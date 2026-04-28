@@ -10,14 +10,13 @@ reads.  Sysfs files include a trailing newline, so without .strip():
   - model / vendor / firmware_revision — all carry trailing newlines
 """
 import builtins
-import os
 from contextlib import contextmanager
+import os
 from unittest.mock import patch
 
 import pytest
 
 from middlewared.utils.disks_.disk_class import DiskEntry, TempEntry
-
 
 # ---------------------------------------------------------------------------
 # Fixture

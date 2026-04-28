@@ -1,10 +1,8 @@
-import re
-
 from collections import defaultdict
+import re
 
 from middlewared.api.current import AppRegistryEntry
 from middlewared.service import CallError
-
 
 # Default values
 DEFAULT_DOCKER_REGISTRY = 'registry-1.docker.io'

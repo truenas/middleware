@@ -6,7 +6,6 @@ from middlewared.service import Service
 
 from .utils import CONFIGURED_TNC_STATES
 
-
 logger = logging.getLogger('truenas_connect')
 
 

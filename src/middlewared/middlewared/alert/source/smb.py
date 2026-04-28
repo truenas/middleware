@@ -1,13 +1,18 @@
-import time
 from dataclasses import dataclass
+import time
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    OneShotAlertClass,
 )
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
-
 
 AUDIT_MAX_QUERY_ENTRIES = 1000
 

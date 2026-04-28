@@ -1,11 +1,22 @@
-import pytest
-
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from middlewared.plugins.reporting.netdata.graphs import (
-    CPUPlugin, CPUTempPlugin, DiskTempPlugin, DISKPlugin, InterfacePlugin, LoadPlugin, MemoryPlugin,
-    UptimePlugin, ARCSizePlugin, ARCFreeMemoryPlugin, ARCAvailableMemoryPlugin, DemandAccessesPerSecondPlugin,
-    DemandDataAccessesPerSecondPlugin, DemandMetadataAccessesPerSecondPlugin,
+    ARCAvailableMemoryPlugin,
+    ARCFreeMemoryPlugin,
+    ARCSizePlugin,
+    CPUPlugin,
+    CPUTempPlugin,
+    DemandAccessesPerSecondPlugin,
+    DemandDataAccessesPerSecondPlugin,
+    DemandMetadataAccessesPerSecondPlugin,
+    DISKPlugin,
+    DiskTempPlugin,
+    InterfacePlugin,
+    LoadPlugin,
+    MemoryPlugin,
+    UptimePlugin,
 )
 from middlewared.pytest.unit.middleware import Middleware
 

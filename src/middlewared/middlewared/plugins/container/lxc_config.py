@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import ipaddress
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import LXCConfigEntry, LXCConfigUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.network import system_ips_to_cidrs, validate_network_overlaps
 
 from .bridge import BRIDGE_AUTO, bridge_choices
 from .info import pool_choices
-
 
 # Network defaults for the auto-managed container bridge (truenasbr0).
 # Chosen to avoid overlap with:

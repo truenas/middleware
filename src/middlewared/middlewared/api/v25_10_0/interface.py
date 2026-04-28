@@ -3,10 +3,18 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
-    single_argument_args, single_argument_result, NotRequired, NonEmptyString,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IPv4Address,
+    IPvAnyAddress,
+    NonEmptyString,
+    NotRequired,
+    UniqueList,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
-
 
 __all__ = [
     "InterfaceEntry", "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",

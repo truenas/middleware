@@ -9,7 +9,6 @@ from middlewared.service import Service, private
 from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.disks_.disk_class import DiskEntry
 
-
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
 ISCSI_DEV_PATH = re.compile(
     r'/devices/platform/host[0-9]+/session[0-9]+/target[0-9]+:[0-9]+:[0-9]+/[0-9]+:[0-9]+:[0-9]+:[0-9]+/block/.*'

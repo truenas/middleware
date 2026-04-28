@@ -3,8 +3,7 @@ from typing import Any
 
 from pydantic import ConfigDict, Field, RootModel
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, LongString
-
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
 
 __all__ = [
     'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',

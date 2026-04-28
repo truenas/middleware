@@ -2,17 +2,22 @@ import errno
 import typing
 
 from truenas_pylibvirt import (
-    ContainerCapabilitiesPolicy, ContainerDomain, ContainerDomainConfiguration, ContainerIdmapConfiguration,
-    ContainerIdmapConfigurationItem, NICDevice, NICDeviceType, Time,
+    ContainerCapabilitiesPolicy,
+    ContainerDomain,
+    ContainerDomainConfiguration,
+    ContainerIdmapConfiguration,
+    ContainerIdmapConfigurationItem,
+    NICDevice,
+    NICDeviceType,
+    Time,
 )
 
 from middlewared.api.current import ContainerStopOptions, QueryOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, ServiceContext
 
-from .bridge import container_bridge_name, configure_container_bridge
+from .bridge import configure_container_bridge, container_bridge_name
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
-
 
 IDMAP_COUNT = 65536
 

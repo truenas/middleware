@@ -3,7 +3,9 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 from middlewared.api.base.handler.inspect import (
-    model_field_is_model, model_field_is_list_of_models, model_field_is_dict_of_models,
+    model_field_is_dict_of_models,
+    model_field_is_list_of_models,
+    model_field_is_model,
 )
 
 MockReturnModel = tuple[Literal['model', 'list', 'dict'], type[BaseModel]]

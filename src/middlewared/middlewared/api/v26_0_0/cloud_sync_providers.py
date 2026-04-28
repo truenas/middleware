@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import AfterValidator, Discriminator, Field, Secret
 
-from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString, HttpsOnlyURL
+from middlewared.api.base import BaseModel, HttpsOnlyURL, HttpUrl, LongNonEmptyString, NonEmptyString, match_validator
 
 __all__ = ["CloudCredentialProvider"]
 

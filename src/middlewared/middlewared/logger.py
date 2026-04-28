@@ -1,18 +1,17 @@
+from collections import deque
+from dataclasses import dataclass
+from enum import StrEnum
+from json import dumps
 import logging
 import logging.handlers
 import queue
 import socket
 import typing
 import warnings
-from collections import deque
-from dataclasses import dataclass
-from enum import StrEnum
-from json import dumps
 
 from cryptography.utils import CryptographyDeprecationWarning
 
 from .utils.time_utils import utc_now
-
 
 # Set logging levels
 for level, names in {

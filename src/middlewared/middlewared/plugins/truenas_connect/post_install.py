@@ -9,7 +9,6 @@ from middlewared.service import Service
 
 from .utils import CERT_RENEW_DAYS
 
-
 logger = logging.getLogger('truenas_connect')
 
 

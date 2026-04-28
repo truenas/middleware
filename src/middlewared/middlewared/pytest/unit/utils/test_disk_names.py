@@ -2,7 +2,7 @@ import unittest.mock
 
 import pytest
 
-from middlewared.utils.disks import get_disk_names, VALID_WHOLE_DISK
+from middlewared.utils.disks import VALID_WHOLE_DISK, get_disk_names
 
 
 @pytest.mark.parametrize('to_test, should_work', [

@@ -8,7 +8,8 @@ from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
 from middlewared.alert.source.truenas_connect import (
-    TNCDisabledAutoUnconfiguredAlert, TNCHeartbeatConnectionFailureAlert,
+    TNCDisabledAutoUnconfiguredAlert,
+    TNCHeartbeatConnectionFailureAlert,
 )
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
@@ -16,9 +17,12 @@ from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
 from .utils import (
-    calculate_sleep, CONFIGURED_TNC_STATES, decode_and_validate_token, get_unset_payload, HEARTBEAT_INTERVAL,
+    CONFIGURED_TNC_STATES,
+    HEARTBEAT_INTERVAL,
+    calculate_sleep,
+    decode_and_validate_token,
+    get_unset_payload,
 )
-
 
 logger = logging.getLogger('truenas_connect')
 

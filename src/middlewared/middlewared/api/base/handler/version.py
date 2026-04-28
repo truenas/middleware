@@ -4,8 +4,8 @@ from typing import Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from middlewared.api.base.handler.accept import validate_model
-from middlewared.api.base.handler.inspect import model_field_is_model, model_field_is_list_of_models
-from middlewared.api.base.handler.model_provider import ModelProvider, ModelFactory
+from middlewared.api.base.handler.inspect import model_field_is_list_of_models, model_field_is_model
+from middlewared.api.base.handler.model_provider import ModelFactory, ModelProvider
 from middlewared.api.base.model import _NotRequired
 from middlewared.utils.lang import Undefined
 

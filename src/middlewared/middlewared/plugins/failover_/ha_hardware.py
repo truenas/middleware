@@ -6,10 +6,10 @@
 import enum
 import re
 
+from truenas_pylicensed import LicenseType
+
 from middlewared.plugins.truenas.license_legacy_utils import get_legacy_license_info
 from middlewared.plugins.truenas.license_utils import get_license_info
-
-from truenas_pylicensed import LicenseType
 
 
 class HA_HARDWARE(enum.Enum):

@@ -1,15 +1,8 @@
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator, ValidationInfo
+from pydantic import Field, ValidationInfo, field_validator
 
-from middlewared.api.base import (
-    BaseModel,
-    Excluded,
-    excluded_field,
-    ForUpdateMetaclass,
-    single_argument_args,
-    UnixPerm
-)
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, UnixPerm, excluded_field, single_argument_args
 
 __all__ = ["FTPEntry",
            "FTPUpdateArgs", "FTPUpdateResult"]

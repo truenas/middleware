@@ -1,8 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import (
-    WebUIEnclosureDashboardArgs,
-    WebUIEnclosureDashboardResult
-)
+from middlewared.api.current import WebUIEnclosureDashboardArgs, WebUIEnclosureDashboardResult
 from middlewared.service import Service, private
 
 

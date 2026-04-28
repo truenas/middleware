@@ -1,5 +1,5 @@
-import subprocess
 import shutil
+import subprocess
 import textwrap
 
 from middlewared.service import CallError

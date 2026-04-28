@@ -1,8 +1,8 @@
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.handler.accept import model_dict_from_list
 from middlewared.api.base.handler.dump_params import dump_params
-from middlewared.api.base.handler.version import APIVersionsAdapter, APIVersionDoesNotContainModelException
+from middlewared.api.base.handler.version import APIVersionDoesNotContainModelException, APIVersionsAdapter
 from middlewared.api.base.server.method import Method
 from middlewared.utils.service.call import MethodNotFoundError
 from middlewared.utils.service.crud import real_crud_method

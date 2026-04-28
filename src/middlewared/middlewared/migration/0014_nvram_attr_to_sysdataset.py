@@ -1,8 +1,7 @@
 import os
 import shutil
 
-from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
-
+from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID
 
 OLD_NVRAM_FOLDER_PATH = '/data/subsystems/vm/nvram'
 NEW_NVRAM_FOLDER_PATH = '/var/db/system/vm/nvram'

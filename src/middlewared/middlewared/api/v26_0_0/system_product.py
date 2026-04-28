@@ -2,7 +2,6 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel, NonEmptyString
 
-
 __all__ = (
     "SystemFeatureEnabledArgs",
     "SystemFeatureEnabledResult",

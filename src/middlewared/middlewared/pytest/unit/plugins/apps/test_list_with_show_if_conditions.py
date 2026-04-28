@@ -7,9 +7,7 @@ Note: Immutability in lists is no longer supported and related tests have been d
 """
 from unittest.mock import patch
 
-from middlewared.plugins.apps.schema_construction_utils import (
-    generate_pydantic_model, NOT_PROVIDED, construct_schema
-)
+from middlewared.plugins.apps.schema_construction_utils import NOT_PROVIDED, construct_schema, generate_pydantic_model
 
 
 # Helper functions for schemas

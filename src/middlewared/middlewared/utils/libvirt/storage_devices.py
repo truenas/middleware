@@ -11,7 +11,6 @@ from middlewared.service_exception import ValidationErrors
 from .delegate import DeviceDelegate
 from .utils import device_uniqueness_check
 
-
 IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
 

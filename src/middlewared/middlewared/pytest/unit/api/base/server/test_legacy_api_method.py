@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.decorator import api_method

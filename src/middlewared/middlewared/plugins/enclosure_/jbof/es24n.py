@@ -1,11 +1,13 @@
 from logging import getLogger
 
 from middlewared.plugins.enclosure_.enums import ElementType, JbofModels
-from middlewared.plugins.enclosure_.jbof.utils import (fake_jbof_enclosure,
-                                                       map_cooling,
-                                                       map_power_supplies,
-                                                       map_temperature_sensors,
-                                                       map_voltage_sensors)
+from middlewared.plugins.enclosure_.jbof.utils import (
+    fake_jbof_enclosure,
+    map_cooling,
+    map_power_supplies,
+    map_temperature_sensors,
+    map_voltage_sensors,
+)
 from middlewared.plugins.jbof.functions import get_sys_class_nvme
 
 ES24N_EXPECTED_URI = '/redfish/v1/Chassis/2U24'

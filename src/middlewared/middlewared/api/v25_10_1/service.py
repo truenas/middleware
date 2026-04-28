@@ -4,7 +4,6 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-
 __all__ = [
     "ServiceEntry", "ServiceReloadArgs", "ServiceReloadResult", "ServiceRestartArgs", "ServiceRestartResult",
     "ServiceStartArgs", "ServiceStartResult", "ServiceStartedArgs", "ServiceStartedResult",

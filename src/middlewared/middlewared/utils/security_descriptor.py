@@ -10,9 +10,8 @@
 import enum
 from typing import Any
 
-from samba.ndr import ndr_pack, ndr_unpack
 from samba.dcerpc import security
-
+from samba.ndr import ndr_pack, ndr_unpack
 
 CUSTOM_ACCESS_MASK_STRING = "CUSTOM"
 

@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import patch
-from middlewared.api.base import BaseModel
+
+import pytest
+
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import QueryArgs
 from middlewared.service import Service
 

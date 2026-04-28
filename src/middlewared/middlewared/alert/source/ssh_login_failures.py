@@ -4,11 +4,11 @@ from time import time
 from typing import Any
 
 from middlewared.alert.base import (
+    Alert,
+    AlertCategory,
     AlertClass,
     AlertClassConfig,
-    AlertCategory,
     AlertLevel,
-    Alert,
     AlertSource,
 )
 from middlewared.alert.schedule import IntervalSchedule

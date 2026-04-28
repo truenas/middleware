@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from catalog_reader.custom_app import get_version_details
 
-from middlewared.api.current import AppEntry, AppDelete
+from middlewared.api.current import AppDelete, AppEntry
 from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import collect_logs, compose_action
@@ -12,7 +12,7 @@ from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.setup import setup_install_app_dir
-from .resources import remove_failed_resources, delete_internal_resources
+from .resources import delete_internal_resources, remove_failed_resources
 
 if TYPE_CHECKING:
     from middlewared.job import Job

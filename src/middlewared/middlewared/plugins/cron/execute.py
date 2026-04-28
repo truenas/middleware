@@ -7,7 +7,6 @@ from middlewared.api.current import CronJobSchedule
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.user_context import run_command_with_user_context
 
-
 if TYPE_CHECKING:
     from middlewared.job import Job
 

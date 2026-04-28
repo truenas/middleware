@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 
-
 if TYPE_CHECKING:
     from truenas_pylibvirt.device.base import Device
+
     from .delegate import DeviceDelegate
 
 

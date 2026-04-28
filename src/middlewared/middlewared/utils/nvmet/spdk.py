@@ -1,8 +1,8 @@
+from contextlib import contextmanager
 import copy
 import hashlib
 import os
 import tempfile
-from contextlib import contextmanager
 
 from spdk.rpc.client import JSONRPCClient
 
@@ -11,6 +11,7 @@ from middlewared.plugins.nvmet.constants import (
     NVMET_DISCOVERY_NQN,
     PORT_ADDR_FAMILY,
 )
+
 from .render_common import (
     ANA_INACCESSIBLE_STATE,
     ANA_OPTIMIZED_STATE,

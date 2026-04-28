@@ -1,14 +1,17 @@
 import asyncio
 
-import middlewared.sqlalchemy as sa
-
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    TRUECOMMAND_CONNECTING_STATUS_REASON, TruecommandStatus, TruecommandStatusReason, TruecommandEntry,
-    TruecommandUpdateArgs, TruecommandUpdateResult, TruecommandConfigChangedEvent,
+    TRUECOMMAND_CONNECTING_STATUS_REASON,
+    TruecommandConfigChangedEvent,
+    TruecommandEntry,
+    TruecommandStatus,
+    TruecommandStatusReason,
+    TruecommandUpdateArgs,
+    TruecommandUpdateResult,
 )
-from middlewared.service import ConfigService, private, ValidationErrors
-
+from middlewared.service import ConfigService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 

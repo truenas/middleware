@@ -1,11 +1,8 @@
 from datetime import datetime, timezone
-from time import clock_gettime, CLOCK_MONOTONIC_RAW, time
+from time import CLOCK_MONOTONIC_RAW, clock_gettime, time
 
 from middlewared.api import api_method
-from middlewared.api.current import (
-    WebUIMainDashboardSysInfoArgs,
-    WebUIMainDashboardSysInfoResult
-)
+from middlewared.api.current import WebUIMainDashboardSysInfoArgs, WebUIMainDashboardSysInfoResult
 from middlewared.service import Service, private
 from middlewared.utils import sw_info
 

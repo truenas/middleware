@@ -3,8 +3,17 @@ from typing import Annotated, Literal, Union
 
 from pydantic import Discriminator, Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
-                                  NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    HttpUrl,
+    LongString,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
+)
 
 __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",

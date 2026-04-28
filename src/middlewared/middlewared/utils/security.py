@@ -1,7 +1,7 @@
 import enum
+from string import punctuation
 from typing import Any
 
-from string import punctuation
 from .time_utils import datetime_to_epoch_days
 
 # WARNING: Changes to MAX_PASSWORD_HISTORY may impact API schemas

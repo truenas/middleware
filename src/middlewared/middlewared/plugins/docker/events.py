@@ -1,6 +1,6 @@
 import docker
 
-from middlewared.plugins.apps.ix_apps.docker.utils import get_docker_client, PROJECT_KEY
+from middlewared.plugins.apps.ix_apps.docker.utils import PROJECT_KEY, get_docker_client
 from middlewared.service import ServiceContext
 
 from .state_management import validate_state

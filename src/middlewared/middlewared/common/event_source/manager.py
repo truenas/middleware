@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 import asyncio
 from collections import defaultdict
 import functools
-from typing import Literal, NamedTuple, TypeAlias, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias
 from uuid import uuid4
 
 from middlewared.event import EventSource
 from middlewared.service_exception import ValidationErrors
+
 if TYPE_CHECKING:
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.main import Middleware

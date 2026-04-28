@@ -2,7 +2,11 @@ import os
 from typing import Annotated, Any, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, PlainSerializer,
+    AfterValidator,
+    AnyUrl,
+    BeforeValidator,
+    ConfigDict,
+    PlainSerializer,
 )
 
 from middlewared.api.base import BaseModel as PydanticBaseModel

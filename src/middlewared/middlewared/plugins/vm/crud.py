@@ -3,29 +3,38 @@ from __future__ import annotations
 import errno
 import re
 import shlex
+from typing import TYPE_CHECKING, Any, TypeVar
 import uuid
-from typing import Any, TypeVar, TYPE_CHECKING
 
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import (
-    QueryOptions, VMDeleteOptions, VMEntry, VMCreate, VMUpdate, VMDeviceDeleteOptions, VMDiskDevice,
+    QueryOptions,
+    VMCreate,
+    VMDeleteOptions,
+    VMDeviceDeleteOptions,
+    VMDiskDevice,
+    VMEntry,
+    VMUpdate,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .capabilities import guest_architecture_and_machine_choices
 from .info import (
-    bootloader_ovmf_choices, cpu_model_choices, license_active,
-    MAXIMUM_SUPPORTED_VCPUS, supports_virtualization, vm_flags,
+    MAXIMUM_SUPPORTED_VCPUS,
+    bootloader_ovmf_choices,
+    cpu_model_choices,
+    license_active,
+    supports_virtualization,
+    vm_flags,
 )
 from .lifecycle import pylibvirt_vm
 from .utils import delete_vm_state, rename_vm_state, vm_state_missing_sources
-
 
 if TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback

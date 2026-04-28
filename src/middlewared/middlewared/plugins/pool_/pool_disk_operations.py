@@ -6,10 +6,16 @@ import truenas_pylibzfs
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolDetachArgs, PoolDetachResult, PoolOfflineArgs, PoolOfflineResult,
-    PoolOnlineArgs, PoolOnlineResult, PoolRemoveArgs, PoolRemoveResult
+    PoolDetachArgs,
+    PoolDetachResult,
+    PoolOfflineArgs,
+    PoolOfflineResult,
+    PoolOnlineArgs,
+    PoolOnlineResult,
+    PoolRemoveArgs,
+    PoolRemoveResult,
 )
-from middlewared.service import CallError, job, Service, ValidationErrors
+from middlewared.service import CallError, Service, ValidationErrors, job
 
 
 class PoolService(Service):

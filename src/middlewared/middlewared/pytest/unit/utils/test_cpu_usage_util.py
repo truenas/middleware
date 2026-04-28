@@ -1,7 +1,6 @@
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
-from middlewared.utils.metrics.cpu_usage import get_cpu_usage, calculate_cpu_usage
-
+from middlewared.utils.metrics.cpu_usage import calculate_cpu_usage, get_cpu_usage
 
 INTR_LINE = (
     'intr 5139392 0 9 0 0 0 0 0 0 0 0 0 0 144 0 0 0 0 0 0 0 0 0 109 0 0 0 0'

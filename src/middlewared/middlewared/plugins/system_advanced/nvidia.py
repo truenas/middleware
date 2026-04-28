@@ -8,7 +8,7 @@ from middlewared.api.current import (
     SystemAdvancedNvidiaPresentArgs,
     SystemAdvancedNvidiaPresentResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 
 class SystemAdvancedService(Service):

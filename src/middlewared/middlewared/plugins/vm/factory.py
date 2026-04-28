@@ -1,13 +1,25 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from truenas_pylibvirt.device import (
-    CDROMDevice, DisplayDevice, NICDevice, PCIDevice, DiskStorageDevice, RawStorageDevice, USBDevice,
+    CDROMDevice,
+    DiskStorageDevice,
+    DisplayDevice,
+    NICDevice,
+    PCIDevice,
+    RawStorageDevice,
+    USBDevice,
 )
 
 from middlewared.api.current import (
-    VMCDROMDevice, VMDisplayDevice, VMNICDevice, VMPCIDevice, VMDiskDevice, VMRAWDevice, VMUSBDevice,
+    VMCDROMDevice,
+    VMDiskDevice,
+    VMDisplayDevice,
+    VMNICDevice,
+    VMPCIDevice,
+    VMRAWDevice,
+    VMUSBDevice,
 )
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.crypto import generate_string
