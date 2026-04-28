@@ -141,6 +141,7 @@ class ServiceService(CRUDService):
             'datastore.update', 'services.services', svc['id'], {'srv_enable': data['enable']}
         )
         await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('service.notify_running', svc['service'])
         return rv
 
     @api_method(
