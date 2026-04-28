@@ -1,8 +1,8 @@
 import filecmp
-import shutil
-import uuid
 import os
 import pathlib
+import shutil
+import uuid
 
 NQN_UUID_PREFIX = 'nqn.2011-06.com.truenas:uuid:'
 DATA_NVME_PATH = '/data/subsystems/nvme'

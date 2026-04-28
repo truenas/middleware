@@ -1,9 +1,9 @@
 # -*- coding=utf-8 -*-
 import contextlib
 import logging
+from time import sleep
 
 from middlewared.test.integration.utils import call
-from time import sleep
 
 logger = logging.getLogger(__name__)
 

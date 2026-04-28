@@ -5,11 +5,13 @@
 #
 # NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_statx.py
 
-import stat as statlib
-import truenas_os
 from enum import IntFlag, StrEnum
 from pathlib import Path
+import stat as statlib
 from typing import TypedDict
+
+import truenas_os
+
 from .utils import path_in_ctldir
 
 

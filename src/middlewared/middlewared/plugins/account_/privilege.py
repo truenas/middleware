@@ -1,24 +1,29 @@
 import enum
 import errno
+
 import wbclient
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    PrivilegeEntry, PrivilegeCreateArgs, PrivilegeCreateResult, PrivilegeUpdateArgs,
-    PrivilegeUpdateResult, PrivilegeDeleteArgs, PrivilegeDeleteResult, UserWebUiLoginDisabledAddedEvent,
-    PrivilegeBecomeReadonlyArgs, PrivilegeBecomeReadonlyResult,
+    PrivilegeBecomeReadonlyArgs,
+    PrivilegeBecomeReadonlyResult,
+    PrivilegeCreateArgs,
+    PrivilegeCreateResult,
+    PrivilegeDeleteArgs,
+    PrivilegeDeleteResult,
+    PrivilegeEntry,
+    PrivilegeUpdateArgs,
+    PrivilegeUpdateResult,
+    UserWebUiLoginDisabledAddedEvent,
 )
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, filter_list, private
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
-from middlewared.utils.privilege import (
-    privilege_has_webui_access,
-    privileges_group_mapping
-)
-from middlewared.utils.allowlist import Allowlist
-from middlewared.utils.security import system_security_config_to_stig_type
 import middlewared.sqlalchemy as sa
+from middlewared.utils.allowlist import Allowlist
+from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
+from middlewared.utils.security import system_security_config_to_stig_type
 
 
 class BuiltinPrivileges(enum.Enum):

@@ -4,7 +4,8 @@ import sys
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import user as default_user, password as default_password
+    from auto_config import password as default_password
+    from auto_config import user as default_user
     from functions import SSH_TEST
 except ImportError:
     default_user = None

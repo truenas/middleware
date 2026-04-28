@@ -1,7 +1,7 @@
+from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.credential import DSCredType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 
 
 class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):

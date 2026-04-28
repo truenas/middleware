@@ -1,8 +1,7 @@
-import dataclasses
 import collections
+import dataclasses
 import enum
 import os
-
 
 APPS_STATUS = collections.namedtuple('APPS_STATUS', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'
@@ -125,7 +124,7 @@ def docker_dataset_update_props(props: dict[str, str]) -> dict[str, str]:
 def missing_required_datasets(existing_datasets: set[str], docker_ds: str) -> set[str]:
     diff = existing_datasets ^ set(docker_datasets(docker_ds))
     if fatal_diff := diff.intersection(
-        set(docker_ds) | {
+        {docker_ds} | {
             os.path.join(docker_ds, k) for k in (
                 'app_configs', 'app_mounts', 'docker', CATALOG_DATASET_NAME,
             )

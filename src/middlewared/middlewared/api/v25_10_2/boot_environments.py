@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from middlewared.api.base import BaseModel, single_argument_args, NonEmptyString
-
+from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 
 __all__ = [
     "BootEnvironmentEntry", "BootEnvironmentActivateArgs", "BootEnvironmentActivateResult", "BootEnvironmentCloneArgs",

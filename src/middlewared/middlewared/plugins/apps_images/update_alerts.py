@@ -1,12 +1,11 @@
+from collections import defaultdict
 import contextlib
 import logging
-from collections import defaultdict
 
 from middlewared.service import CallError, Service
 
 from .client import ContainerRegistryClientMixin
 from .utils import normalize_reference
-
 
 logger = logging.getLogger('docker_image')
 

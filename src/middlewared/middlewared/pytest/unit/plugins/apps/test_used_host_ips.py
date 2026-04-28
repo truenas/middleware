@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
 from middlewared.plugins.apps.ix_apps.query import (
-    translate_resources_to_desired_workflow, get_default_workload_values, list_apps
+    get_default_workload_values,
+    list_apps,
+    translate_resources_to_desired_workflow,
 )
 
 

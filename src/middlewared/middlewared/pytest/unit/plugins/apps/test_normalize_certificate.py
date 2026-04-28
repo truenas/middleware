@@ -1,9 +1,11 @@
+import logging
 import textwrap
 
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_certificate
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
 @pytest.mark.parametrize('cert, value, should_work', [
@@ -92,10 +94,10 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.asyncio
 async def test_normalize_certificate(cert, value, should_work):
     middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
     middleware['certificate.get_instance'] = lambda *args: cert
+    ctx = ServiceContext(middleware, logging.getLogger('test'))
     complete_config = {'ix_certificates': {value: cert}}
-    result = await app_schema_obj.normalize_certificate({'schema': {'type': 'int'}}, value, complete_config, '')
+    result = await normalize_certificate(ctx, {'schema': {'type': 'int'}}, value, complete_config, {})
     if should_work:
         assert result is not None
     else:

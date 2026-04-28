@@ -6,27 +6,31 @@ import threading
 import libzfs
 
 from middlewared.alert.base import (
-    AlertCategory, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
+    AlertCategory,
+    AlertClassConfig,
+    AlertLevel,
+    NonDataclassAlertClass,
+    OneShotAlertClass,
 )
 from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.utils.zfs.event import (
-    ZfsEvent,
-    ZfsResilverStartEvent,
-    ZfsResilverFinishEvent,
-    ZfsScrubStartEvent,
-    ZfsScrubFinishEvent,
-    ZfsScrubAbortEvent,
-    ZfsStateChangeEvent,
     ZfsChecksumErrorEvent,
-    ZfsDataErrorEvent,
-    ZfsIoErrorEvent,
-    ZfsVdevClearEvent,
     ZfsConfigSyncEvent,
-    ZfsPoolImportEvent,
-    ZfsPoolDestroyEvent,
+    ZfsDataErrorEvent,
+    ZfsEvent,
     ZfsHistoryEvent,
+    ZfsIoErrorEvent,
+    ZfsPoolDestroyEvent,
+    ZfsPoolImportEvent,
+    ZfsResilverFinishEvent,
+    ZfsResilverStartEvent,
+    ZfsScrubAbortEvent,
+    ZfsScrubFinishEvent,
+    ZfsScrubStartEvent,
+    ZfsStateChangeEvent,
+    ZfsVdevClearEvent,
 )
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'

@@ -1,7 +1,14 @@
 from pydantic import Field
 
-from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, excluded_field, query_result,
-                                  single_argument_args)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    excluded_field,
+    query_result,
+    single_argument_args,
+)
+
 from .common import QueryFilters, QueryOptions
 
 __all__ = [

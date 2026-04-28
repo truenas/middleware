@@ -1,9 +1,8 @@
+from collections import defaultdict
 import re
 
-from collections import defaultdict
-
+from middlewared.api.current import AppRegistryEntry
 from middlewared.service import CallError
-
 
 # Default values
 DEFAULT_DOCKER_REGISTRY = 'registry-1.docker.io'
@@ -158,7 +157,7 @@ def normalize_docker_limits_header(headers: dict) -> dict:
     }
 
 
-def get_normalized_auth_config(registry_info: dict[str, dict], image_tag: str) -> dict:
+def get_normalized_auth_config(registry_info: dict[str, AppRegistryEntry], image_tag: str) -> dict:
     if not registry_info:
         return {}
 
@@ -166,8 +165,9 @@ def get_normalized_auth_config(registry_info: dict[str, dict], image_tag: str) -
     if user_wants_registry not in registry_info:
         return {}
 
+    entry = registry_info[user_wants_registry]
     return {
         'registry_uri': user_wants_registry,
-        'username': registry_info[user_wants_registry]['username'],
-        'password': registry_info[user_wants_registry]['password'],
+        'username': entry.username.get_secret_value(),
+        'password': entry.password.get_secret_value(),
     }

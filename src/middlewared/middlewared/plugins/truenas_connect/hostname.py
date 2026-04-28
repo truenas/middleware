@@ -2,12 +2,11 @@ import asyncio
 import logging
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
-from truenas_connect_utils.hostname import hostname_config, register_update_ips, register_system_config
+from truenas_connect_utils.hostname import hostname_config, register_system_config, register_update_ips
 
 from middlewared.service import CallError, Service
 
 from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
-
 
 logger = logging.getLogger('truenas_connect')
 _pending_sync = None

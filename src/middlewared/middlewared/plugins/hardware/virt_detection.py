@@ -3,9 +3,10 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    HardwareVirtualizationVariantArgs, HardwareVirtualizationVariantResult,
+    HardwareVirtualizationVariantArgs,
+    HardwareVirtualizationVariantResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils.functools_ import cache
 
 

@@ -1,15 +1,16 @@
 import textwrap
 import unittest.mock
 
+from jsonschema import ValidationError, validate
+from packaging.version import Version
 import pytest
 
-from jsonschema import validate, ValidationError
-from packaging.version import Version
-
 from middlewared.plugins.apps.migration_utils import (
-    APP_CONFIG_MIGRATIONS_SCHEMA, get_migration_scripts, validate_versions, version_in_range,
+    APP_CONFIG_MIGRATIONS_SCHEMA,
+    get_migration_scripts,
+    validate_versions,
+    version_in_range,
 )
-
 
 MOCKED_YAML = textwrap.dedent(
     '''

@@ -1,6 +1,7 @@
 from typing import Literal
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
+
 from .nvmet_port import NVMetPortEntry
 from .nvmet_subsys import NVMetSubsysEntry
 

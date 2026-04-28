@@ -1,7 +1,7 @@
-from ldap import dn
-from pydantic import AfterValidator
 from typing import Annotated
 
+from ldap import dn
+from pydantic import AfterValidator
 
 __all__ = ["LDAP_DN", "LDAP_URL",]
 

@@ -1,20 +1,27 @@
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CronJobEntry, CronJobSchedule,
-    CronJobCreateArgs, CronJobCreateResult, CronJobCreate,
-    CronJobUpdateArgs, CronJobUpdateResult, CronJobUpdate,
-    CronJobDeleteArgs, CronJobDeleteResult,
-    CronJobRunArgs, CronJobRunResult,
+    CronJobCreate,
+    CronJobCreateArgs,
+    CronJobCreateResult,
+    CronJobDeleteArgs,
+    CronJobDeleteResult,
+    CronJobEntry,
+    CronJobRunArgs,
+    CronJobRunResult,
+    CronJobSchedule,
+    CronJobUpdate,
+    CronJobUpdateArgs,
+    CronJobUpdateResult,
 )
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import CronJobServicePart
-from .execute import construct_cron_command as _construct_cron_command, execute_cron_task
-
+from .execute import construct_cron_command as _construct_cron_command
+from .execute import execute_cron_task
 
 if TYPE_CHECKING:
     from middlewared.job import Job

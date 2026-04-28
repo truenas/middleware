@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 import errno
 
 from pydantic_core import ValidationError

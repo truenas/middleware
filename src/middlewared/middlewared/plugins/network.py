@@ -1,36 +1,9 @@
 import asyncio
 import contextlib
 import ipaddress
-from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
+from itertools import zip_longest
 
-from middlewared.api import api_method
-from middlewared.plugins.interface.dhcp import dhcp_start
-from middlewared.api.current import (
-    InterfaceEntry, InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult,
-    InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
-    InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
-    InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
-    InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,
-    InterfaceNetworkConfigToBeRemovedArgs, InterfaceNetworkConfigToBeRemovedResult, InterfaceDeleteArgs,
-    InterfaceDeleteResult, InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult,
-    InterfaceIpInUseArgs, InterfaceIpInUseResult, InterfaceLacpduRateChoicesArgs, InterfaceLacpduRateChoicesResult,
-    InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, InterfaceRollbackArgs, InterfaceRollbackResult,
-    InterfaceSaveNetworkConfigArgs, InterfaceSaveNetworkConfigResult, InterfaceUpdateArgs, InterfaceUpdateResult,
-    InterfaceVlanParentInterfaceChoicesArgs, InterfaceVlanParentInterfaceChoicesResult,
-    InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
-    InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
-)
-from middlewared.service import (
-    CallError,
-    CRUDService,
-    ServiceContext,
-    ValidationErrors,
-    filterable_api_method,
-    private
-)
-import middlewared.sqlalchemy as sa
-from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.ethtool import NetlinkError, get_ethtool
@@ -38,8 +11,59 @@ from truenas_pynetif.interface import CLONED_PREFIXES
 from truenas_pynetif.interface_state import list_interface_states
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    InterfaceAvailableFecModesArgs,
+    InterfaceAvailableFecModesResult,
+    InterfaceBridgeMembersChoicesArgs,
+    InterfaceBridgeMembersChoicesResult,
+    InterfaceCancelRollbackArgs,
+    InterfaceCancelRollbackResult,
+    InterfaceCheckinArgs,
+    InterfaceCheckinResult,
+    InterfaceCheckinWaitingArgs,
+    InterfaceCheckinWaitingResult,
+    InterfaceChoicesArgs,
+    InterfaceChoicesResult,
+    InterfaceCommitArgs,
+    InterfaceCommitResult,
+    InterfaceCreateArgs,
+    InterfaceCreateResult,
+    InterfaceDeleteArgs,
+    InterfaceDeleteResult,
+    InterfaceEntry,
+    InterfaceHasPendingChangesArgs,
+    InterfaceHasPendingChangesResult,
+    InterfaceIpInUseArgs,
+    InterfaceIpInUseResult,
+    InterfaceLacpduRateChoicesArgs,
+    InterfaceLacpduRateChoicesResult,
+    InterfaceLagPortsChoicesArgs,
+    InterfaceLagPortsChoicesResult,
+    InterfaceNetworkConfigToBeRemovedArgs,
+    InterfaceNetworkConfigToBeRemovedResult,
+    InterfaceRollbackArgs,
+    InterfaceRollbackResult,
+    InterfaceSaveNetworkConfigArgs,
+    InterfaceSaveNetworkConfigResult,
+    InterfaceUpdateArgs,
+    InterfaceUpdateResult,
+    InterfaceVlanParentInterfaceChoicesArgs,
+    InterfaceVlanParentInterfaceChoicesResult,
+    InterfaceWebsocketInterfaceArgs,
+    InterfaceWebsocketInterfaceResult,
+    InterfaceWebsocketLocalIpArgs,
+    InterfaceWebsocketLocalIpResult,
+    InterfaceXmitHashPolicyChoicesArgs,
+    InterfaceXmitHashPolicyChoicesResult,
+)
+from middlewared.plugins.interface.dhcp import dhcp_start
+from middlewared.service import CallError, CRUDService, ServiceContext, ValidationErrors, filterable_api_method, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils.filter_list import filter_list
+
 from .interface.interface_types import InterfaceType
-from .interface.lag_options import XmitHashChoices, LacpduRateChoices
+from .interface.lag_options import LacpduRateChoices, XmitHashChoices
 from .interface.sync import sync_impl, sync_interface_impl
 from .interface.sync_data import SyncData
 
@@ -1046,7 +1070,7 @@ class InterfaceService(CRUDService):
 
                 if removed_aliases:
                     # Check if any removed IPs are used by apps
-                    apps_using_ips = await self.middleware.call('app.used_host_ips')
+                    apps_using_ips = await self.call2(self.s.app.used_host_ips)
                     for removed_ip in removed_aliases:
                         if removed_ip in apps_using_ips:
                             apps_list = ', '.join(apps_using_ips[removed_ip])

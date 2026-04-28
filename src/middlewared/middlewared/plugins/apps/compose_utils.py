@@ -11,7 +11,6 @@ from .ix_apps.lifecycle import get_rendered_templates_of_app
 from .ix_apps.path import get_installed_app_rendered_dir_path
 from .utils import PROJECT_PREFIX, run
 
-
 logger = logging.getLogger('app_lifecycle')
 
 
@@ -19,7 +18,7 @@ def compose_action(
     app_name: str, app_version: str, action: typing.Literal['up', 'down', 'pull'], *,
     force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
     remove_volumes: bool = False, pull_images: bool = False,
-):
+) -> None:
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
     ))

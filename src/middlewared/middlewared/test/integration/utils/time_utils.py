@@ -1,6 +1,6 @@
 """This is a copy of `middlewared.utils.time_utils`."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 
 def utc_now(naive=True):

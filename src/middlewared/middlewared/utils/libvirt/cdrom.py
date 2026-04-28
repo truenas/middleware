@@ -1,5 +1,4 @@
 import os
-
 from typing import Any
 
 from middlewared.plugins.boot import BOOT_POOL_NAME
@@ -8,7 +7,7 @@ from middlewared.utils.path import check_path_resides_within_volume_sync
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .delegate import DeviceDelegate
-from .utils import LIBVIRT_USER, disk_uniqueness_integrity_check
+from .utils import LIBVIRT_USER, device_uniqueness_check
 
 
 class CDROMDelegate(DeviceDelegate):
@@ -27,7 +26,9 @@ class CDROMDelegate(DeviceDelegate):
                 i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
             ]
         )
-        if instance and not disk_uniqueness_integrity_check(device, instance):
+        if instance and not device_uniqueness_check(
+            device, instance, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+        ):
             verrors.add(
                 'attributes.path',
                 f'{instance["name"]} has {path!r} already configured'

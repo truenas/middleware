@@ -1,8 +1,7 @@
 import asyncio
 
-from middlewared.service import private, Service
-from middlewared.utils.zfs.event import ZfsEvent, ZfsConfigSyncEvent
-
+from middlewared.service import Service, private
+from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
 
 SED_UPDATE_LOCK = asyncio.Lock()
 
@@ -111,7 +110,7 @@ async def _post_license_sed_update(middleware):
     await middleware.call('pool.update_all_sed_attr', True)
 
 
-async def hook_license_update(middleware, prev_license, *args, **kwargs):
+async def hook_license_update(middleware, *args, **kwargs):
     if await middleware.call('system.sed_enabled'):
         middleware.create_task(_post_license_sed_update(middleware))
 

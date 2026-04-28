@@ -4,8 +4,8 @@ import errno
 import hashlib
 import itertools
 import os
-import time
 import threading
+import time
 import typing
 
 import requests
@@ -14,11 +14,11 @@ import requests.exceptions
 from middlewared.api.current import UpdateDownloadProgress
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.size import format_size
-from .trains import Release
-from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server, UPLOAD_LOCATION
-from .status import status, status_internal, set_update_download_progress
+
+from .status import set_update_download_progress, status, status_internal
+from .trains import Release, get_train_releases
+from .utils import DOWNLOAD_UPDATE_FILE, UPLOAD_LOCATION, scale_update_server
 from .version import can_update_to
-from .trains import get_train_releases
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job

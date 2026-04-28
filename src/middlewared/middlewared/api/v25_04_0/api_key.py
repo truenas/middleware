@@ -4,8 +4,14 @@ from typing import Annotated, Literal
 from pydantic import Secret, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-    LocalUsername, RemoteUsername, HttpVerb,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    HttpVerb,
+    LocalUsername,
+    NonEmptyString,
+    RemoteUsername,
+    excluded_field,
 )
 
 

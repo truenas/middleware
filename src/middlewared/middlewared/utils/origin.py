@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import socket
 from dataclasses import dataclass
 from ipaddress import ip_address
+import socket
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 from typing import TYPE_CHECKING
 
 from aiohttp.web import Request
+from truenas_pynetif.diag import get_inet_diag, netlink_diag
 
-from truenas_pynetif.diag import netlink_diag, get_inet_diag
-
-from .auth import get_login_uid, AUID_UNSET
+from .auth import AUID_UNSET, get_login_uid
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App

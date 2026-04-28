@@ -6,22 +6,26 @@ import logging
 import os
 import shutil
 import typing
+
+from truenas_os_pyutils.io import atomic_write
 import yaml
 
 from middlewared.api.current import (
-    DockerBackupAppInfo, DockerBackupEntry, DockerBackupMap,
-    ZFSResourceQuery, ZFSResourceSnapshotQuery, ZFSResourceSnapshotDestroyQuery,
+    DockerBackupAppInfo,
+    DockerBackupEntry,
+    DockerBackupMap,
+    ZFSResourceQuery,
+    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotQuery,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, ServiceContext
-from truenas_os_pyutils.io import atomic_write
 
 from .state_management import validate_state
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup
 from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
-
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
@@ -119,7 +123,7 @@ def backup(context: ServiceContext, job: Job, backup_name: str | None) -> str:
 
     with atomic_write(backup_apps_state_file_path(name), 'w') as f:
         f.write(dump_yaml(
-            {app['name']: app for app in context.middleware.call_sync('app.query')})
+            {app.name: app.model_dump(by_alias=True) for app in context.call_sync2(context.s.app.query)})
         )
 
     with atomic_write(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:

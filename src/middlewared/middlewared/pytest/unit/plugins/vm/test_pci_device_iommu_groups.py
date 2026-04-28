@@ -1,7 +1,7 @@
 from pathlib import PosixPath
 from unittest.mock import Mock, patch
-from truenas_pylibvirt.utils.iommu import get_iommu_groups_info
 
+from truenas_pylibvirt.utils.iommu import get_iommu_groups_info
 
 DEVICES_PATH = [
     PosixPath('/sys/kernel/iommu_groups/55/devices/0000:64:0a.1'),

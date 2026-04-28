@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IscsiAuthType
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, IscsiAuthType, excluded_field
 
 __all__ = [
     "iSCSITargetAuthCredentialEntry",

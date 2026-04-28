@@ -1,34 +1,32 @@
 import csv
 import errno
+from itertools import batched
 import json
 import os
 import subprocess
 import threading
 import time
-import yaml
 
-from itertools import batched
 from pydantic import Field
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, create_engine, func, inspect, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
+from truenas_api_client import ejson
+import yaml
 
 from middlewared.alert.source.audit import AuditBackendSetupAlert
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.base.types import NonEmptyString
 from middlewared.api.current import GenericQueryResult, QueryFilters, QueryOptions
-from middlewared.service import job, periodic, Service
-from middlewared.service_exception import CallError, MatchNotFound
-
-from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_CHUNK_SZ
 from middlewared.plugins.audit.table import AUDIT_TABLES
+from middlewared.plugins.audit.utils import AUDIT_CHUNK_SZ, AUDITED_SERVICES, audit_file_path
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
-from middlewared.utils.jsonpath import json_path_parse, JSON_PATH_PREFIX
-from truenas_api_client import ejson
+from middlewared.service import Service, job, periodic
+from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.jsonpath import JSON_PATH_PREFIX, json_path_parse
 
 
 class AuditBackendQueryArgs(BaseModel):

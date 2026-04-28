@@ -8,8 +8,8 @@ from middlewared.api.current import (
     SystemAdvancedUpdateGpuPciIdsArgs,
     SystemAdvancedUpdateGpuPciIdsResult,
 )
-from middlewared.service import private, Service, ValidationErrors
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.service import Service, ValidationErrors, private
 
 
 class SystemAdvancedService(Service):

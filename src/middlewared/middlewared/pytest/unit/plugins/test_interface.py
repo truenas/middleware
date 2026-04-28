@@ -3,11 +3,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.service import ValidationErrors
 from middlewared.plugins.network import InterfaceService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
-
+from middlewared.service import ValidationErrors
 
 INTERFACES = [
     {

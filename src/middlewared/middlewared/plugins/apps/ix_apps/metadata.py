@@ -5,21 +5,18 @@ import yaml
 
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.yaml import safe_yaml_load
+
 from .path import get_collective_config_path, get_collective_metadata_path, get_installed_app_metadata_path
 from .portals import get_portals_and_app_notes
 from .utils import dump_yaml
 
 
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
-    """ wrapper around safe_yaml_load that ensure dict always returned """
+    """ wrapper around safe_yaml_load that ensures a dict is always returned """
     try:
         with open(yaml_path, 'r') as f:
-            if (data := safe_yaml_load(f)) is None:
-                # safe_yaml_load may return None if file empty
-                return {}
-
-            return data
-    except (FileNotFoundError, yaml.YAMLError):
+            return safe_yaml_load(f, dict)
+    except (FileNotFoundError, yaml.YAMLError, ValueError):
         return {}
 
 
@@ -28,8 +25,9 @@ def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
 
 
 def update_app_metadata(
-    app_name: str, app_version_details: dict, migrated: bool | None = None, custom_app: bool = False,
-):
+    app_name: str, app_version_details: dict[str, typing.Any], migrated: bool | None = None,
+    custom_app: bool = False,
+) -> None:
     migrated = get_app_metadata(app_name).get('migrated', False) if migrated is None else migrated
     write_if_changed(get_installed_app_metadata_path(app_name), dump_yaml({
             'metadata': app_version_details['app_metadata'],
@@ -41,7 +39,7 @@ def update_app_metadata(
         }), perms=0o600, raise_error=False)
 
 
-def update_app_metadata_for_portals(app_name: str, version: str):
+def update_app_metadata_for_portals(app_name: str, version: str) -> None:
     # This should be called after config of app has been updated as that will render compose files
     app_metadata = get_app_metadata(app_name)
 
@@ -53,15 +51,15 @@ def update_app_metadata_for_portals(app_name: str, version: str):
     }), perms=0o600, raise_error=False)
 
 
-def get_collective_config() -> dict[str, dict]:
+def get_collective_config() -> dict[str, typing.Any]:
     return _load_app_yaml(get_collective_config_path())
 
 
-def get_collective_metadata() -> dict[str, dict]:
+def get_collective_metadata() -> dict[str, typing.Any]:
     return _load_app_yaml(get_collective_metadata_path())
 
 
-def update_app_yaml_for_last_update(version_path: str, last_update: str):
+def update_app_yaml_for_last_update(version_path: str, last_update: str) -> None:
     app_yaml_path = os.path.join(version_path, 'app.yaml')
 
     app_config = _load_app_yaml(app_yaml_path)

@@ -1,22 +1,23 @@
 from ipaddress import ip_address, ip_interface, ip_network
 
+from truenas_pynetif.address.netlink import delete_route, netlink_route
+
 from middlewared.api import api_method
 from middlewared.api.current import (
-    StaticRouteEntry,
-    StaticRouteUpdateArgs,
-    StaticRouteUpdateResult,
     StaticRouteCreateArgs,
     StaticRouteCreateResult,
     StaticRouteDeleteArgs,
     StaticRouteDeleteResult,
+    StaticRouteEntry,
+    StaticRouteUpdateArgs,
+    StaticRouteUpdateResult,
 )
-import middlewared.sqlalchemy as sa
 from middlewared.plugins.network_.static_routes_sync import (
     sync_impl as staticroute_sync_impl,
 )
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import ValidationError
-from truenas_pynetif.address.netlink import delete_route, netlink_route
+import middlewared.sqlalchemy as sa
 
 
 class StaticRouteModel(sa.Model):

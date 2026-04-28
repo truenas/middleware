@@ -1,14 +1,22 @@
 from collections import defaultdict
 from typing import Literal
 
-import middlewared.sqlalchemy as sa
 from middlewared.alert.source.fibre_channel import FCHardwareAddedAlert, FCHardwareReplacedAlert
 from middlewared.api import api_method
-from middlewared.api.current import (FCHostCreateArgs, FCHostCreateResult, FCHostDeleteArgs, FCHostDeleteResult,
-                                     FCHostEntry, FCHostUpdateArgs, FCHostUpdateResult)
+from middlewared.api.current import (
+    FCHostCreateArgs,
+    FCHostCreateResult,
+    FCHostDeleteArgs,
+    FCHostDeleteResult,
+    FCHostEntry,
+    FCHostUpdateArgs,
+    FCHostUpdateResult,
+)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+
 from .utils import filter_by_wwpns_hex_string, str_to_naa
 
 

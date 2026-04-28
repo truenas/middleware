@@ -3,12 +3,18 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import datetime
 from dataclasses import dataclass
+import datetime
 from typing import Any
 
 from middlewared.alert.base import (
-    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, OneShotAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    OneShotAlertClass,
 )
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType

@@ -3,16 +3,18 @@ from __future__ import annotations
 import errno
 
 from middlewared.api.current import (
-    UpdateStatus, UpdateStatusCurrentVersion, UpdateStatusError, UpdateStatusStatus, UpdateDownloadProgress,
+    UpdateDownloadProgress,
+    UpdateStatus,
+    UpdateStatusCurrentVersion,
+    UpdateStatusError,
+    UpdateStatusStatus,
 )
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError, ErrnoMixin, get_errname  # type: ignore
 
-from .trains import ReleaseManifest
-from .trains import get_trains, get_train_releases, get_current_train_name, get_next_trains_names
 from .profile_ import current_version_profile, profile_matches
+from .trains import ReleaseManifest, get_current_train_name, get_next_trains_names, get_train_releases, get_trains
 from .version import can_update_to, version_from_manifest
-
 
 # Module-level state
 _update_download_progress: UpdateDownloadProgress | None = None

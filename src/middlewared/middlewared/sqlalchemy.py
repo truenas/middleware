@@ -4,17 +4,15 @@ import datetime
 from typing import Any
 
 import isodate
-from sqlalchemy import (
-    CHAR, Table, Column as _Column, ForeignKey, Index,
-    Boolean, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
-)
+from sqlalchemy import CHAR, Boolean, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, UniqueConstraint
 from sqlalchemy import JSON as NativeJSON
-from sqlalchemy.orm import declarative_base, relationship, Mapped
-from sqlalchemy.types import UserDefinedType, TypeDecorator
-
+from sqlalchemy import Column as _Column
+from sqlalchemy import DateTime as _DateTime
+from sqlalchemy.orm import Mapped, declarative_base, relationship
+from sqlalchemy.types import TypeDecorator, UserDefinedType
 from truenas_api_client import json
 
-from middlewared.utils.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import decrypt, encrypt
 
 __all__ = ["CHAR", "Model", "Column", "Boolean", "ForeignKey", "Index", "Integer", "NativeJSON", "Mapped",
            "SmallInteger", "String", "Table", "Text", "UniqueConstraint", "relationship"]

@@ -2,12 +2,17 @@ import time
 
 from middlewared.api.current import ReportingRealtimeEventSourceArgs, ReportingRealtimeEventSourceEvent
 from middlewared.event import EventSource
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils.disks import get_disk_names
 from middlewared.utils.disks_.disk_class import iterate_disks
 
 from .realtime_reporting import (
-    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats,
+    get_arc_stats,
+    get_cpu_stats,
+    get_disk_stats,
+    get_interface_stats,
+    get_memory_info,
+    get_pool_stats,
 )
 
 

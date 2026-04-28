@@ -1,25 +1,26 @@
 import asyncio
 
 from middlewared.alert.source.kdump import KdumpNotReadyAlert
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     SystemBootIdArgs,
     SystemBootIdResult,
+    SystemReadyAddedEvent,
     SystemReadyArgs,
     SystemReadyResult,
+    SystemRebootAddedEvent,
     SystemRebootArgs,
     SystemRebootResult,
+    SystemShutdownAddedEvent,
     SystemShutdownArgs,
     SystemShutdownResult,
     SystemStateArgs,
     SystemStateResult,
-    SystemReadyAddedEvent,
-    SystemRebootAddedEvent,
-    SystemShutdownAddedEvent,
 )
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 from middlewared.utils import run
-from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
+
+from .utils import RE_KDUMP_CONFIGURED, lifecycle_conf
 
 
 class SystemService(Service):

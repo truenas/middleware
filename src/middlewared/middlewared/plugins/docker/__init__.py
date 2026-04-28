@@ -5,15 +5,28 @@ import typing
 from middlewared.api import api_method
 from middlewared.api.base import Event
 from middlewared.api.current import (
-    DockerEntry, DockerEventsAddedEvent, DockerStateChangedEvent,
-    DockerStatusArgs, DockerStatusResult, DockerStatusInfo,
-    DockerUpdateArgs, DockerUpdateResult, DockerUpdate,
-    DockerNvidiaPresentArgs, DockerNvidiaPresentResult,
-    DockerBackupToPoolArgs, DockerBackupToPoolResult,
-    DockerBackupArgs, DockerBackupResult,
-    DockerListBackupsArgs, DockerListBackupsResult, DockerBackupMap,
-    DockerDeleteBackupArgs, DockerDeleteBackupResult,
-    DockerRestoreBackupArgs, DockerRestoreBackupResult,
+    DockerBackupArgs,
+    DockerBackupMap,
+    DockerBackupResult,
+    DockerBackupToPoolArgs,
+    DockerBackupToPoolResult,
+    DockerDeleteBackupArgs,
+    DockerDeleteBackupResult,
+    DockerEntry,
+    DockerEventsAddedEvent,
+    DockerListBackupsArgs,
+    DockerListBackupsResult,
+    DockerNvidiaPresentArgs,
+    DockerNvidiaPresentResult,
+    DockerRestoreBackupArgs,
+    DockerRestoreBackupResult,
+    DockerStateChangedEvent,
+    DockerStatusArgs,
+    DockerStatusInfo,
+    DockerStatusResult,
+    DockerUpdate,
+    DockerUpdateArgs,
+    DockerUpdateResult,
 )
 from middlewared.service import GenericConfigService, job, periodic, private
 
@@ -26,8 +39,18 @@ from .fs_manage import umount_docker_ds
 from .restore_backup import restore_backup
 from .service_utils import license_active, restart_docker_service
 from .state_management import (
-    after_start_check, before_start_check, initialize_state, set_status as docker_set_status, start_service,
-    validate_state, periodic_check, terminate, terminate_timeout, get_status,
+    after_start_check,
+    before_start_check,
+    get_status,
+    initialize_state,
+    periodic_check,
+    start_service,
+    terminate,
+    terminate_timeout,
+    validate_state,
+)
+from .state_management import (
+    set_status as docker_set_status,
 )
 from .state_utils import Status
 
@@ -224,7 +247,7 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
 
 async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
     if not await middleware.call('docker.license_active'):
-        # We will like to stop docker in this case
+        # We would like to stop docker in this case
         await middleware.call('service.control', 'STOP', 'docker')
 
 

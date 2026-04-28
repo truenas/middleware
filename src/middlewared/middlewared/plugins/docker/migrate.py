@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
 import os
 import typing
-from datetime import datetime
 
 from middlewared.api.current import DockerEntry, ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery
 from middlewared.plugins.pool_.utils import CreateImplArgs
@@ -14,8 +14,7 @@ from .backup_to_pool import incrementally_replicate_apps_dataset
 from .fs_manage import mount_docker_ds, umount_docker_ds
 from .state_management import set_status as docker_set_status
 from .state_utils import DatasetDefaults, Status
-from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
-
+from .utils import MIGRATION_NAMING_SCHEMA, applications_ds_name
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job

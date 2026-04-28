@@ -6,6 +6,7 @@ import typing
 from middlewared.api.current import UpdateProfileChoice
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
+
 from .trains import get_manifest_file, get_train_releases
 
 if typing.TYPE_CHECKING:
@@ -98,11 +99,11 @@ async def current_version_profile(context: ServiceContext) -> str:
 
 async def post_license_update(
     middleware: Middleware,
-    prev_license: typing.Any,
+    had_license: bool,
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> None:
-    if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
+    if not had_license and await middleware.call('system.product_type') == 'ENTERPRISE':
         await middleware.call2(middleware.services.update.set_profile, UpdateProfiles.MISSION_CRITICAL.name)
 
 

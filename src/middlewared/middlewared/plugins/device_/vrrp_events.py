@@ -1,10 +1,10 @@
 from asyncio import sleep as asyncio_sleep
-from dataclasses import dataclass
 from collections import deque
+from dataclasses import dataclass
 from logging import getLogger
 from math import floor
 from os import mkfifo
-from threading import Thread, Event
+from threading import Event, Thread
 from time import sleep, time
 
 from middlewared.service import Service

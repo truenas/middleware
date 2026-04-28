@@ -1,5 +1,5 @@
-from dataclasses import asdict, dataclass, field
 from collections import defaultdict
+from dataclasses import asdict, dataclass, field
 
 from middlewared.service import Service
 

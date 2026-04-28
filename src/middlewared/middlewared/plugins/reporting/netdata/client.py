@@ -10,8 +10,7 @@ import aiohttp.client_exceptions
 from middlewared.utils import ajson
 
 from .exceptions import ApiException, ClientConnectError
-from .utils import NETDATA_URI, NETDATA_REQUEST_TIMEOUT
-
+from .utils import NETDATA_REQUEST_TIMEOUT, NETDATA_URI
 
 logger = logging.getLogger('netdata_api')
 

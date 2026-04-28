@@ -27,6 +27,8 @@ jobs:
             middlewared/plugins/acme_dns_authenticator/ \
             middlewared/plugins/acme_registration/ \
             middlewared/plugins/alert/ \
+            middlewared/plugins/app_registry/ \
+            middlewared/plugins/apps/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
@@ -45,6 +47,7 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/test/integration/runner/ \
             --exclude middlewared/etc_files \
             --follow-imports silent \
             --strict

@@ -1,11 +1,10 @@
+from collections import defaultdict
 import logging
 import threading
 import typing
-from collections import defaultdict
 
 from middlewared.service import CallError
-from middlewared.utils.git import clone_repository, checkout_repository, update_repo, validate_git_repo
-
+from middlewared.utils.git import checkout_repository, clone_repository, update_repo, validate_git_repo
 
 GIT_LOCK: defaultdict[str, threading.Lock] = defaultdict(threading.Lock)
 logger = logging.getLogger('catalog_utils')

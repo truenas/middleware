@@ -4,14 +4,18 @@ import time
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CloudBackupSyncArgs, CloudBackupSyncResult, CloudBackupAbortArgs, CloudBackupAbortResult,
-    ZFSResourceSnapshotCloneQuery, ZFSResourceSnapshotDestroyQuery,
+    CloudBackupAbortArgs,
+    CloudBackupAbortResult,
+    CloudBackupSyncArgs,
+    CloudBackupSyncResult,
+    ZFSResourceSnapshotCloneQuery,
+    ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.cloud.path import check_local_path
-from middlewared.plugins.cloud_backup.crud import CloudBackupTaskFailedAlert
-from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
+from middlewared.plugins.cloud_backup.crud import CloudBackupTaskFailedAlert
+from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.time_utils import utc_now

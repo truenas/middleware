@@ -4,16 +4,20 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    UPSEntry, UPSUpdateArgs, UPSUpdateResult, UPSUpdate,
-    UPSDriverChoicesArgs, UPSDriverChoicesResult,
-    UPSPortChoicesArgs, UPSPortChoicesResult,
+    UPSDriverChoicesArgs,
+    UPSDriverChoicesResult,
+    UPSEntry,
+    UPSPortChoicesArgs,
+    UPSPortChoicesResult,
+    UPSUpdate,
+    UPSUpdateArgs,
+    UPSUpdateResult,
 )
-from middlewared.service import private, SystemServiceService
+from middlewared.service import SystemServiceService, private
 
 from .config import UPSServicePart
 from .upssched_event import handle_upssched_event
 from .utils import alerts_mapping, driver_choices, port_choices
-
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware

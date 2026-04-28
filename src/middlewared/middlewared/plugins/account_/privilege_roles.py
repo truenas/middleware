@@ -1,9 +1,8 @@
 from copy import deepcopy
 
 from middlewared.api.current import PrivilegeRolesEntry
-
 from middlewared.role import ROLES
-from middlewared.service import Service, filterable_api_method, filter_list, private
+from middlewared.service import Service, filter_list, filterable_api_method, private
 
 
 class PrivilegeService(Service):

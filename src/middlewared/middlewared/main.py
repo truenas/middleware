@@ -1,62 +1,8 @@
 from __future__ import annotations
 
-from .api.base.handler.dump_params import dump_params
-from .api.base.handler.model_provider import ModuleModelProvider, LazyModuleModelProvider
-from .api.base.handler.result import serialize_result
-from .api.base.handler.version import APIVersion, APIVersionsAdapter
-from .api.base.model import BaseModel
-from .api.base.server.api import API
-from .api.base.server.doc import APIDumper
-from .api.base.server.event import Event
-from .api.base.server.legacy_api_method import LegacyAPIMethod
-from .api.base.server.method import Method
-from .api.base.server.ws_handler.base import BaseWebSocketHandler
-from .api.base.server.ws_handler.rpc import RpcWebSocketHandler
-from .apps import FileApplication, ShellApplication, WebSocketApplication
-from .common.event_source.manager import EventSourceManager
-from .event import Events
-from .job import Job, JobsQueue, State
-from .logger import Logger, setup_audit_logging, setup_logging
-from .pipe import Pipe
-from .pylibvirt import create_pylibvirt_domains_manager
-from .role import ROLES, RoleManager
-import middlewared.service
-from .service_container import BaseServiceContainer
-from .service_exception import CallError, ErrnoMixin
-from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
-from .utils.audit import audit_username_from_session
-from .utils.debug import get_threads_stacks
-from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
-from .utils.mock import coerce_mock_result, get_mock_return_model
-from .utils.plugins import LoadPluginsMixin
-from .utils.prctl import set_cmdline, set_name
-from .utils.privilege import credential_has_full_admin
-from .utils.profile import profile_wrap
-from .utils.rate_limit.cache import RateLimitCache
-from .utils.service.call import ServiceCallMixin
-from .utils.service.call_mixin import CallMixin
-from .utils.service.crud import real_crud_method
-from .utils.systemd import SystemdNotifier
-from .utils.threading import (
-    set_thread_name,
-    run_coro_threadsafe,
-    IoThreadPoolExecutor,
-    io_thread_pool_executor,
-    thread_local_storage,
-)
-from .utils.types import AuditCallback, JobProgressCallback
-from .utils.time_utils import utc_now
-from .utils.type import copy_function_metadata
-from .utils.web_app import SiteManager
-
-from aiohttp import web
-from aiohttp.http_websocket import WSCloseCode
-from aiohttp.web_exceptions import HTTPPermanentRedirect
-from aiohttp.web_middlewares import normalize_path_middleware
-from collections import defaultdict
-
 import argparse
 import asyncio
+from collections import defaultdict
 import concurrent.futures
 import concurrent.futures.thread
 import contextlib
@@ -79,13 +25,70 @@ import types
 import typing
 import uuid
 
-from pydantic import create_model, Field
+from aiohttp import web
+from aiohttp.http_websocket import WSCloseCode
+from aiohttp.web_exceptions import HTTPPermanentRedirect
+from aiohttp.web_middlewares import normalize_path_middleware
+from pydantic import Field, create_model
 from truenas_api_client import json
+
+import middlewared.service
+
+from .api.base.handler.dump_params import dump_params
+from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider
+from .api.base.handler.result import serialize_result
+from .api.base.handler.version import APIVersion, APIVersionsAdapter
+from .api.base.model import BaseModel
+from .api.base.server.api import API
+from .api.base.server.doc import APIDumper
+from .api.base.server.event import Event
+from .api.base.server.legacy_api_method import LegacyAPIMethod
+from .api.base.server.method import Method
+from .api.base.server.ws_handler.base import BaseWebSocketHandler
+from .api.base.server.ws_handler.rpc import RpcWebSocketHandler
+from .apps import FileApplication, ShellApplication, WebSocketApplication
+from .common.event_source.manager import EventSourceManager
+from .event import Events
+from .job import Job, JobsQueue, State
+from .logger import Logger, setup_audit_logging, setup_logging
+from .pipe import Pipe
+from .pylibvirt import create_pylibvirt_domains_manager
+from .role import ROLES, RoleManager
+from .service_container import BaseServiceContainer
+from .service_exception import CallError, ErrnoMixin
+from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
+from .utils.audit import audit_username_from_session
+from .utils.debug import get_threads_stacks
+from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
+from .utils.mock import coerce_mock_result, get_mock_return_model
+from .utils.plugins import LoadPluginsMixin
+from .utils.prctl import set_cmdline, set_name
+from .utils.privilege import credential_has_full_admin
+from .utils.profile import profile_wrap
+from .utils.rate_limit.cache import RateLimitCache
+from .utils.service.call import ServiceCallMixin
+from .utils.service.call_mixin import CallMixin
+from .utils.service.crud import real_crud_method
+from .utils.systemd import SystemdNotifier
+from .utils.threading import (
+    IoThreadPoolExecutor,
+    io_thread_pool_executor,
+    run_coro_threadsafe,
+    set_thread_name,
+    thread_local_storage,
+)
+from .utils.time_utils import utc_now
+from .utils.type import copy_function_metadata
+from .utils.types import AuditCallback, JobProgressCallback
+from .utils.web_app import SiteManager
 
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
+    from concurrent.futures import Future
     from types import MethodType, ModuleType
+
     from aiohttp.web_request import Request
+
     from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
     from .pipe import Pipes
@@ -99,24 +102,25 @@ from middlewared.plugins.acme_registration import ACMERegistrationService
 from middlewared.plugins.alert.alert import AlertService
 from middlewared.plugins.alert.classes import AlertClassesService
 from middlewared.plugins.alert.service import AlertServiceService
+from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.container import ContainerService
+from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
-from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.tunable import TunableService
-from middlewared.plugins.webshare import WebshareService
-from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
 from middlewared.plugins.vm import VMService
+from middlewared.plugins.webshare import WebshareService
+from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
@@ -211,6 +215,7 @@ class ServiceContainer(BaseServiceContainer):
         self.alert = AlertService(middleware)
         self.alertclasses = AlertClassesService(middleware)
         self.alertservice = AlertServiceService(middleware)
+        self.app = AppService(middleware)
         self.catalog = CatalogService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
@@ -411,7 +416,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                         event_source.event.__name__,
                         __base__=(BaseModel,),
                         __module__=event_source.__module__,
-                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],
+                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],  # noqa: F821
                     ),
                 },
                 'roles': self.role_manager.roles_for_event(name),
@@ -1312,6 +1317,64 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
+    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> Job[T]: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    @typing.overload
+    async def call2[**P, T](
+        self,
+        f: typing.Callable[typing.Concatenate[App, P], T],
+        *args: P.args,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+        **kwargs: P.kwargs,
+    ) -> T: ...
+
+    # Overloads for normal methods (no pass_app)
     @typing.overload
     async def call2[**P, T](
         self,
@@ -1464,7 +1527,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         else:
             raise RuntimeError(f"Unknown executor: {executor!r}")
 
-    def run_coroutine(self, coro, wait=True):
+    @typing.overload
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: typing.Literal[True] = True,
+    ) -> T: ...
+
+    @typing.overload
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: typing.Literal[False] = False,
+    ) -> Future[T]: ...
+
+    def run_coroutine[T](
+        self,
+        coro: Coroutine[typing.Any, typing.Any, T],
+        wait: bool = True,
+    ) -> T | Future[T]:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use run_coroutine from main thread')
 
@@ -1483,6 +1564,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         while not event.wait(1):
             if not self.loop.is_running():
                 raise RuntimeError('Middleware is terminating')
+
         return fut.result()
 
     def event_subscribe(self, name: str, handler: _SubHandler):

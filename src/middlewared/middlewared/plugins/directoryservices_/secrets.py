@@ -1,20 +1,20 @@
+from base64 import b64decode, b64encode
 import enum
 import json
 import os
 import struct
 import subprocess
 
-from base64 import b64encode, b64decode
 from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.service import Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import raw_sid_to_str
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBDataType,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
 
 SECRETS_FILE = os.path.join(SMBPath.PRIVATEDIR.path, 'secrets.tdb')

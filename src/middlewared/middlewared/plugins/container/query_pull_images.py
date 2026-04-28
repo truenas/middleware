@@ -14,7 +14,6 @@ from middlewared.utils.network import INTERNET_TIMEOUT
 from .dataset import ensure_datasets
 from .utils import container_dataset, container_dataset_mountpoint
 
-
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
 
@@ -101,7 +100,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
                                 f'Downloading image: {downloaded_size_mb:.1f}MB / {total_size_mb:.1f}MB'
                             )
                         else:
-                            job.set_progress(40, f'Downloading image: {total_size_mb:.1f}MB')
+                            job.set_progress(40, f'Downloading image: {downloaded_size_mb:.1f}MB')
 
                 # Extract tarball to mountpoint
                 job.set_progress(80, 'Extracting image files...')

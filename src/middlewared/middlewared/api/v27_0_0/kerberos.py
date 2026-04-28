@@ -1,14 +1,15 @@
+from pydantic import Secret, field_validator
+
 from middlewared.api.base import (
     BaseModel,
-    excluded_field,
     Excluded,
     ForUpdateMetaclass,
     LongNonEmptyString,
     NonEmptyString,
+    excluded_field,
     single_argument_args,
 )
 from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
-from pydantic import field_validator, Secret
 
 __all__ = [
     'KerberosEntry', 'KerberosRealmEntry', 'KerberosKeytabEntry',

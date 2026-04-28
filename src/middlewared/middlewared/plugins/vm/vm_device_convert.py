@@ -6,7 +6,7 @@ import math
 import os
 import re
 import subprocess
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import VMDeviceConvert, VMDiskDevice, ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path

@@ -3,7 +3,7 @@ import logging
 
 from middlewared.api import api_method
 from middlewared.api.current import NetworkConfigurationActivityChoicesArgs, NetworkConfigurationActivityChoicesResult
-from middlewared.service import NetworkActivityDisabled, private, Service
+from middlewared.service import NetworkActivityDisabled, Service, private
 
 logger = logging.getLogger(__name__)
 

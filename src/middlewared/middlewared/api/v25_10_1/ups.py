@@ -3,10 +3,14 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, LongString,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    NonEmptyString,
+    excluded_field,
     single_argument_args,
 )
-
 
 __all__ = [
     'UPSEntry', 'UPSPortChoicesArgs', 'UPSPortChoicesResult', 'UPSDriverChoicesArgs',

@@ -1,9 +1,9 @@
 import inspect
 import linecache
+from logging import Logger
 import sys
 import traceback
 import types
-from logging import Logger
 from typing import Any, TypedDict
 
 

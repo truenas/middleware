@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import PeriodicSnapshotTaskEntry
 from middlewared.common.attachment import FSAttachmentDelegate

@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Any, Callable, Concatenate, Coroutine, Literal
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import BaseModel, query_result
+
 if not API_LOADING_FORBIDDEN:
-    from middlewared.api.current import QueryArgs, GenericQueryResult
+    from middlewared.api.current import GenericQueryResult, QueryArgs
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -29,6 +30,7 @@ def filterable_api_method[**P, T](
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_thread_local_storage: bool = False,
+    check_annotations: bool = False,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     def filterable_internal(fn: Callable[P, T]) -> Callable[P, T]:
         register_models = []
@@ -57,6 +59,7 @@ def filterable_api_method[**P, T](
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
             pass_thread_local_storage=pass_thread_local_storage,
+            check_annotations=check_annotations,
         )(fn)
         wrapped._register_models = register_models
         return wrapped

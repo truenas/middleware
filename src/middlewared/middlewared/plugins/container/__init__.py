@@ -1,32 +1,48 @@
 from __future__ import annotations
 
 import functools
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerEntry, QueryOptions,
-    ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
-    ContainerCreateArgs, ContainerCreateResult, ContainerCreate,
-    ContainerUpdateArgs, ContainerUpdateResult, ContainerUpdate,
-    ContainerDeleteArgs, ContainerDeleteResult,
-    ContainerStartArgs, ContainerStartResult,
-    ContainerStopArgs, ContainerStopResult, ContainerStopOptions,
-    ContainerMigrateArgs, ContainerMigrateResult,
+    ContainerCreate,
+    ContainerCreateArgs,
+    ContainerCreateResult,
+    ContainerDeleteArgs,
+    ContainerDeleteResult,
+    ContainerEntry,
+    ContainerMigrateArgs,
+    ContainerMigrateResult,
+    ContainerPoolChoicesArgs,
+    ContainerPoolChoicesResult,
+    ContainerStartArgs,
+    ContainerStartResult,
+    ContainerStopArgs,
+    ContainerStopOptions,
+    ContainerStopResult,
+    ContainerUpdate,
+    ContainerUpdateArgs,
+    ContainerUpdateResult,
+    QueryOptions,
 )
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.types import AuditCallback
 
 from .container_device import ContainerDeviceService
 from .crud import (
-    ContainerServicePart, ContainerCreateWithDataset, ContainerCreateWithDatasetArgs, ContainerCreateWithDatasetResult,
+    ContainerCreateWithDataset,
+    ContainerCreateWithDatasetArgs,
+    ContainerCreateWithDatasetResult,
+    ContainerServicePart,
 )
 from .image import ContainerImageService
 from .info import pool_choices
-from .lifecycle import handle_shutdown, start as start_container, start_on_boot, stop as stop_container
-from .migrate import maybe_migrate_legacy, migrate as migrate_containers
+from .lifecycle import handle_shutdown, start_on_boot
+from .lifecycle import start as start_container
+from .lifecycle import stop as stop_container
+from .migrate import maybe_migrate_legacy
+from .migrate import migrate as migrate_containers
 from .nsenter import nsenter
-
 
 if TYPE_CHECKING:
     from truenas_pylibvirt.libvirtd.connection import DomainEvent

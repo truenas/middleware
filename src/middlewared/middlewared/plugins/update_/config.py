@@ -8,8 +8,8 @@ import truenas_pylicensed
 from middlewared.api.current import UpdateConfigSafeEntry, UpdateEntry, UpdateUpdate
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
-from .profile_ import UpdateProfiles, current_version_profile
 
+from .profile_ import UpdateProfiles, current_version_profile
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware

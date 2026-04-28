@@ -1,4 +1,4 @@
-from middlewared.service import periodic, Service
+from middlewared.service import Service, periodic
 from middlewared.utils.rate_limit.cache import RateLimitCache
 
 CLEAR_CACHE_INTERVAL = 600

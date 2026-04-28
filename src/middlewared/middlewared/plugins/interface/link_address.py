@@ -2,7 +2,7 @@ import re
 
 from sqlalchemy.exc import IntegrityError
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 INTERFACE_FILTERS = [["type", "=", "PHYSICAL"]]
 RE_FREEBSD_BRIDGE = re.compile(r"bridge([0-9]+)$")

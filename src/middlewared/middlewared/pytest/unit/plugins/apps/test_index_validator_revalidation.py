@@ -15,14 +15,14 @@ The fix ensures the validator:
 3. Always returns dicts (not model instances)
 """
 
-import pytest
 from pydantic import Field, ValidationError
+import pytest
 
 from middlewared.plugins.apps.schema_construction_utils import (
-    _make_index_validator,
-    BaseModel,
-    construct_schema,
     NOT_PROVIDED,
+    BaseModel,
+    _make_index_validator,
+    construct_schema,
 )
 
 

@@ -1,6 +1,6 @@
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.utils.secrets import randbits
 from middlewared.utils.smb import SMBSharePurpose
-from middlewared.plugins.smb_.constants import SMBShareField as share_field
 
 
 def random_sid():

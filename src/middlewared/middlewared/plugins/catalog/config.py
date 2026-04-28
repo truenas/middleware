@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import typing
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import CatalogEntry, CatalogUpdate
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductType
 
 from .state import dataset_mounted

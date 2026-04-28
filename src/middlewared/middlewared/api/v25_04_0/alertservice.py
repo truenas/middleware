@@ -1,6 +1,5 @@
 from middlewared.api.base import BaseModel, NonEmptyString
 
-
 __all__ = [
     'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs', 'AlertServiceDeleteArgs',
     'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult', 'AlertServiceDeleteResult',

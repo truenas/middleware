@@ -1,11 +1,16 @@
 import os
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, PlainSerializer,
+    AfterValidator,
+    AnyUrl,
+    BeforeValidator,
+    ConfigDict,
+    PlainSerializer,
 )
 
-from middlewared.api.base import BaseModel as PydanticBaseModel, IPvAnyAddress  # noqa: F401
+from middlewared.api.base import BaseModel as PydanticBaseModel
+from middlewared.api.base import IPvAnyAddress as IPvAnyAddress  # noqa: F401,I250
 
 
 class BaseModel(PydanticBaseModel):
@@ -42,10 +47,12 @@ def _validate_host_path(value: str) -> str:
     return str(value)
 
 
-def create_length_validated_type(base_type, min_length: int | None = None, max_length: int | None = None):
+def create_length_validated_type(
+    base_type: Any, min_length: int | None = None, max_length: int | None = None,
+) -> Any:
     """Create a type with length validation applied before the base type validation"""
 
-    def validate_length(v):
+    def validate_length(v: Any) -> Any:
         if isinstance(v, str):
             if min_length is not None and len(v) < min_length:
                 raise ValueError(f'Value should have at least {min_length} items')

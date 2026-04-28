@@ -1,7 +1,7 @@
 from pydantic import Field, Secret
 import pytest
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired, query_result
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NotRequired, excluded_field, query_result
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.service_exception import ValidationErrors
 

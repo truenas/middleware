@@ -1,8 +1,8 @@
 import ctypes
 import errno
-
 from typing import Any, Generator, Literal, NamedTuple, TypedDict, overload
-from .nss_common import get_nss_func, NssError, NssModule, NssOperation, NssReturnCode
+
+from .nss_common import NssError, NssModule, NssOperation, NssReturnCode, get_nss_func
 
 GROUP_INIT_BUFLEN = 1024
 

@@ -1,8 +1,8 @@
 # Python secrets module equalivalent based on openssl RAND_bytes rather than os.urandom
 
 from base64 import urlsafe_b64encode
-from random import Random, RECIP_BPF  # type: ignore[attr-defined]
-from secrets import DEFAULT_ENTROPY  # type: ignore[attr-defined]
+from random import RECIP_BPF, Random  # type: ignore[attr-defined]
+from secrets import DEFAULT_ENTROPY  # type: ignore[attr-defined]  # noqa: TID251
 from ssl import RAND_bytes
 from typing import Any
 

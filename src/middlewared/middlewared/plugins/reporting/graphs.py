@@ -5,10 +5,13 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ReportingNetdataGraphArgs, ReportingNetdataGraphResult, ReportingNetdataGraphsItem, ReportingNetdataGetDataArgs,
+    ReportingNetdataGetDataArgs,
     ReportingNetdataGetDataResult,
+    ReportingNetdataGraphArgs,
+    ReportingNetdataGraphResult,
+    ReportingNetdataGraphsItem,
 )
-from middlewared.service import CallError, filterable_api_method, private, Service, ValidationErrors
+from middlewared.service import CallError, Service, ValidationErrors, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
 
 from .netdata import GRAPH_PLUGINS

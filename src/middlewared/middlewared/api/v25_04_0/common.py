@@ -4,7 +4,6 @@ from pydantic import AfterValidator, model_validator
 
 from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters, validate_options
 
-
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
 
 

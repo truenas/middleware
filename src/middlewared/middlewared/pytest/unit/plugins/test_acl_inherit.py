@@ -1,6 +1,6 @@
 from copy import deepcopy
-from middlewared.plugins.filesystem_.utils import calculate_inherited_acl
 
+from middlewared.plugins.filesystem_.utils import calculate_inherited_acl
 
 NFS4_ACL = {'acl': [
     {

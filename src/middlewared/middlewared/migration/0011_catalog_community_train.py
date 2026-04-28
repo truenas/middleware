@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
+
 from middlewared.plugins.catalog.utils import COMMUNITY_TRAIN, OFFICIAL_LABEL
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 

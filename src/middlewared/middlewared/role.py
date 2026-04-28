@@ -1,8 +1,9 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+import typing
+
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 from middlewared.utils.security import STIGType
-import typing
 
 
 @dataclass()

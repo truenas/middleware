@@ -6,8 +6,7 @@ import time
 
 from middlewared.api import api_method
 from middlewared.api.current import DiskWipeArgs, DiskWipeResult
-from middlewared.service import job, Service, private
-
+from middlewared.service import Service, job, private
 
 CHUNK = 1048576  # 1MB binary
 

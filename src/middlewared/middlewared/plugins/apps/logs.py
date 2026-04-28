@@ -1,22 +1,28 @@
 import errno
-
-import docker.errors
+from typing import Any, Generator
 from zoneinfo import ZoneInfo
 
-from dateutil.parser import parse, ParserError
+from dateutil.parser import ParserError, parse
 from docker.api.client import APIClient
+import docker.errors
 
 from middlewared.api.current import (
-    AppContainerLogsFollowTailEventSourceArgs, AppContainerLogsFollowTailEventSourceEvent,
+    AppContainerLogsFollowTailEventSourceArgs,
+    AppContainerLogsFollowTailEventSourceEvent,
 )
-from middlewared.event import EventSource
-from middlewared.service import CallError, Service
+from middlewared.event import TypedEventSource
+from middlewared.service import CallError
 
-from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
+from .ix_apps.utils import AppState
 
 
-def _fixed_stream_raw_result(self, response, chunk_size=None, decode=True):
+def _fixed_stream_raw_result(
+    self: Any,
+    response: Any,
+    chunk_size: int | None = None,
+    decode: bool = True,
+) -> Generator[bytes, None, None]:
     """
     Original docker-py bug: chunk_size defaults to 1, causing character-by-character
     streaming for TTY-enabled containers. This fix changes the default to None,
@@ -28,10 +34,12 @@ def _fixed_stream_raw_result(self, response, chunk_size=None, decode=True):
     yield from response.iter_content(chunk_size, decode)
 
 
-APIClient._stream_raw_result = _fixed_stream_raw_result
+APIClient._stream_raw_result = _fixed_stream_raw_result  # type: ignore[attr-defined]
 
 
-class AppContainerLogsFollowTailEventSource(EventSource):
+class AppContainerLogsFollowTailEventSource(
+    TypedEventSource[AppContainerLogsFollowTailEventSourceArgs]
+):
 
     """
     Retrieve logs of a container/service in an app.
@@ -40,22 +48,22 @@ class AppContainerLogsFollowTailEventSource(EventSource):
     event = AppContainerLogsFollowTailEventSourceEvent
     roles = ['APPS_READ']
 
-    def __init__(self, *args, **kwargs):
-        super(AppContainerLogsFollowTailEventSource, self).__init__(*args, **kwargs)
-        self.logs_stream = None
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.logs_stream: Any = None
 
-    def validate_log_args(self, app_name, container_id):
-        app = self.middleware.call_sync('app.get_instance', app_name)
-        if app['state'] not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
+    def validate_log_args(self, app_name: str, container_id: str) -> None:
+        app = self.middleware.call_sync2(self.middleware.services.app.get_instance, app_name)
+        if app.state not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
             raise CallError(f'Unable to retrieve logs of stopped {app_name!r} app')
 
-        if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
+        if not any(c.id == container_id for c in app.active_workloads.container_details):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)
 
-    def run_sync(self):
-        app_name = self.arg['app_name']
-        container_id = self.arg['container_id']
-        tail_lines = self.arg['tail_lines'] or 'all'
+    def run_sync(self) -> None:
+        app_name = self.typed_arg.app_name
+        container_id = self.typed_arg.container_id
+        tail_lines: int | str = self.typed_arg.tail_lines or 'all'
 
         self.validate_log_args(app_name, container_id)
         tz = ZoneInfo(self.middleware.call_sync('system.general.config')['timezone'])
@@ -65,14 +73,17 @@ class AppContainerLogsFollowTailEventSource(EventSource):
             except docker.errors.NotFound:
                 raise CallError(f'Container "{container_id}" not found')
 
-            self.logs_stream = container.logs(stream=True, follow=True, timestamps=True, tail=tail_lines)
+            self.logs_stream = container.logs(  # type: ignore[call-overload]
+                stream=True, follow=True, timestamps=True, tail=tail_lines,
+            )
 
             for log_entry in map(bytes.decode, self.logs_stream):
                 # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
                 # separately so UI can highlight the timestamp giving us a cleaner view of the logs
-                timestamp = log_entry.split(maxsplit=1)[0].strip()
+                ts_raw = log_entry.split(maxsplit=1)[0].strip()
+                timestamp: str | None
                 try:
-                    timestamp = str(parse(timestamp).astimezone(tz))
+                    timestamp = str(parse(ts_raw).astimezone(tz))
                 except (TypeError, ParserError):
                     timestamp = None
                 else:
@@ -80,18 +91,10 @@ class AppContainerLogsFollowTailEventSource(EventSource):
 
                 self.send_event('ADDED', fields={'data': log_entry, 'timestamp': timestamp})
 
-    async def cancel(self):
+    async def cancel(self) -> None:
         await super().cancel()
         if self.logs_stream:
             await self.middleware.run_in_thread(self.logs_stream.close)
 
-    async def on_finish(self):
+    async def on_finish(self) -> None:
         self.logs_stream = None
-
-
-class AppService(Service):
-
-    class Config:
-        event_sources = {
-            'app.container_log_follow': AppContainerLogsFollowTailEventSource,
-        }

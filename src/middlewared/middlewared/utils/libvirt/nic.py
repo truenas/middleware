@@ -1,12 +1,12 @@
 import itertools
 import random
-
 from typing import Any
 
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
 from .factory_utils import is_bridge_device
+from .utils import device_uniqueness_check
 
 
 class NICDelegate(DeviceDelegate):
@@ -44,3 +44,11 @@ class NICDelegate(DeviceDelegate):
         # Make sure NIC device has a MAC address
         if not device['attributes'].get('mac'):
             device['attributes']['mac'] = self.random_mac()
+
+        if instance is not None and device['attributes'].get('mac') and not device_uniqueness_check(
+            device, instance, 'NIC',
+        ):
+            verrors.add(
+                'attributes.mac',
+                f'{instance["name"]} already has a NIC with MAC address {device["attributes"]["mac"]!r} configured'
+            )

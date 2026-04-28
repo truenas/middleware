@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Any, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Iterable
 
-from middlewared.service import private
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
+from middlewared.service import private
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

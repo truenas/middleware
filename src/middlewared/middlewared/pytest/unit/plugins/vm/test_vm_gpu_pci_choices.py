@@ -1,6 +1,5 @@
 from middlewared.pytest.unit.helpers import load_compound_service
 
-
 VMDeviceService = load_compound_service('vm.device')
 
 AVAILABLE_GPUs = [

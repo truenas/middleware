@@ -6,8 +6,8 @@ import pytest
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args, single_argument_result
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.base.handler.dump_params import dump_params
-from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.base.handler.remove_secrets import remove_secrets
+from middlewared.api.base.handler.result import serialize_result
 
 
 @pytest.mark.parametrize("expose_secrets,result", [

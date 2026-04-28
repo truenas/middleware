@@ -8,9 +8,9 @@ from middlewared.api.current import (
     IpmiSelInfoArgs,
     IpmiSelInfoResult,
 )
-from middlewared.service import filterable_api_method, job, Service
-from middlewared.utils.filter_list import filter_list
+from middlewared.service import Service, filterable_api_method, job
 from middlewared.service_exception import CallError
+from middlewared.utils.filter_list import filter_list
 
 SEL_LOCK = 'sel_lock'
 

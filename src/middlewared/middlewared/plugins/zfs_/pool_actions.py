@@ -1,9 +1,11 @@
 import errno
-import libzfs
 import functools
 
+import libzfs
+
 from middlewared.service import CallError, Service
-from .pool_utils import find_vdev, SEARCH_PATHS
+
+from .pool_utils import SEARCH_PATHS, find_vdev
 
 
 class ZFSPoolService(Service):

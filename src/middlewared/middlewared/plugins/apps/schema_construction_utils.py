@@ -1,16 +1,18 @@
 import contextlib
+from functools import reduce
+from operator import or_
 import re
-from typing import Annotated, Any, Callable, Literal, TypeAlias, Union
+from typing import Annotated, Any, Callable, Literal, TypeAlias, TypedDict, Union, cast
 
-from pydantic import AfterValidator, create_model, Field, ValidationError
+from pydantic import AfterValidator, Field, ValidationError, create_model
 from pydantic.fields import FieldInfo
 
-from middlewared.api.base import LongString, match_validator, NotRequired
+from middlewared.api.base import LongString, NotRequired, match_validator
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.filter_list import filter_list
 
-from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_type, HostPath, IPvAnyAddress, URI
+from .pydantic_utils import URI, AbsolutePath, BaseModel, HostPath, IPvAnyAddress, create_length_validated_type
 
 
 class NotProvided:
@@ -25,7 +27,7 @@ RESERVED_NAMES = [
     (CONTEXT_KEY_NAME, dict),
 ]
 NOT_PROVIDED = NotProvided()
-USER_VALUES: TypeAlias = dict | NotProvided
+USER_VALUES: TypeAlias = dict[str, Any] | NotProvided
 
 
 def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -> Callable[[Any], list[Any]]:
@@ -59,9 +61,9 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
             except ValidationError as e:
                 # Re-raise Pydantic ValidationError with adjusted locations
                 # Pydantic will handle adding the parent field name
-                errors = []
+                errors: list[dict[str, Any]] = []
                 for err in e.errors():
-                    err_copy = err.copy()
+                    err_copy: dict[str, Any] = dict(err)
                     # Prepend the index to the location tuple
                     loc = (idx,) + err_copy.get('loc', ())
                     err_copy['loc'] = loc
@@ -70,40 +72,45 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                     elif 'error' not in err_copy.get('ctx', {}):
                         err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
                     errors.append(err_copy)
-                raise ValidationError.from_exception_data(e.title, errors)
+                raise ValidationError.from_exception_data(e.title, errors)  # type: ignore[arg-type]
             except ValidationErrors as e:
                 # Convert our ValidationErrors to Pydantic ValidationError
-                errors = []
+                ve_errors: list[dict[str, Any]] = []
                 for error in e.errors:
                     # Create Pydantic-compatible error dict
                     loc = tuple(error.attribute.split('.')) if error.attribute else ()
                     loc = (idx,) + loc
-                    errors.append({
+                    ve_errors.append({
                         'loc': loc,
                         'msg': error.errmsg,
                         'type': 'value_error',
                         'ctx': {'error': error.errmsg},
                     })
-                raise ValidationError.from_exception_data('ValidationError', errors)
+                raise ValidationError.from_exception_data('ValidationError', ve_errors)  # type: ignore[arg-type]
             except Exception as e:
                 # For other exceptions, create a Pydantic ValidationError
                 if hasattr(e, 'errors'):
-                    errors = []
+                    exc_errors: list[dict[str, Any]] = []
                     for err in e.errors():
-                        err_copy = err.copy()
+                        err_copy = dict(err)
                         loc = (idx,) + err_copy.get('loc', ())
                         err_copy['loc'] = loc
                         if 'ctx' not in err_copy:
                             err_copy['ctx'] = {'error': err_copy.get('msg', 'validation error')}
                         elif 'error' not in err_copy.get('ctx', {}):
                             err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
-                        errors.append(err_copy)
-                    raise ValidationError.from_exception_data('ValidationError', errors)
+                        exc_errors.append(err_copy)
+                    raise ValidationError.from_exception_data(
+                        'ValidationError', exc_errors,  # type: ignore[arg-type]
+                    )
                 else:
                     # Generic error at this index
+                    generic_error: dict[str, Any] = {
+                        'loc': (idx,), 'msg': str(e), 'type': 'value_error',
+                        'ctx': {'error': str(e)},
+                    }
                     raise ValidationError.from_exception_data(
-                        'ValidationError',
-                        [{'loc': (idx,), 'msg': str(e), 'type': 'value_error', 'ctx': {'error': str(e)}}]
+                        'ValidationError', [generic_error],  # type: ignore[list-item]
                     )
         return out
     return _validate
@@ -124,7 +131,7 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
 # 7) removing editable fields
 
 
-def remove_not_required(data):
+def remove_not_required(data: Any) -> Any:
     """Recursively remove fields with NotRequired values from the data structure."""
     if isinstance(data, dict):
         result = {}
@@ -193,18 +200,26 @@ def clean_single_error_path(path: str) -> str:
     return cleaned_path
 
 
+class ConstructSchemaResult(TypedDict):
+    verrors: ValidationErrors
+    new_values: dict[str, Any]
+    schema_name: str
+
+
 def construct_schema(
-    item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
-) -> dict:
+    item_version_details: dict[str, Any], new_values: dict[str, Any], update: bool,
+    old_values: USER_VALUES = NOT_PROVIDED,
+) -> ConstructSchemaResult:
     schema_name = f'app_{"update" if update else "create"}'
     model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values, old_values)
     verrors = ValidationErrors()
     try:
         # Validate the new values against the generated model
         # exclude_unset=False ensures defaults are populated for fields not provided by user
-        new_values = validate_model(model, new_values, exclude_unset=False, expose_secrets=False)
+        validated = validate_model(model, new_values, exclude_unset=False, expose_secrets=False)
+        assert isinstance(validated, dict)
         # Remove any fields that have NotRequired as their value
-        new_values = remove_not_required(new_values)
+        new_values = remove_not_required(validated)
     except ValidationErrors as e:
         # Clean up list item model names from error paths
         cleaned_errors = clean_list_item_error_paths(e)
@@ -219,17 +234,17 @@ def construct_schema(
 
 
 def generate_pydantic_model(
-    dict_attrs: list[dict], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
+    dict_attrs: list[dict[str, Any]], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
     old_values: USER_VALUES = NOT_PROVIDED, parent_hidden: bool = False,
 ) -> type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
     """
-    fields = {}
-    nested_models = {}
-    show_if_attrs = {}
+    fields: dict[str, Any] = {}
+    nested_models: dict[str, Any] = {}
+    show_if_attrs: dict[str, Any] = {}
     # Build a context with values and defaults for show_if evaluation
-    eval_context = {}
+    eval_context: dict[str, Any] = {}
     if isinstance(new_values, dict):
         eval_context.update(new_values)
 
@@ -275,11 +290,15 @@ def generate_pydantic_model(
         # It just means that a validation error occurred and we are going to raise it anyways
         # Also if a user already has provided value for some attr which has show_if set, there is
         # no need to mark that field as NotRequired etc
-        for attr in filter(lambda k: k not in provided_values, [] if defaults is None else show_if_attrs):
-            if not filter_list([defaults], show_if_attrs[attr]):
+        candidate_attrs: list[str] = (
+            [] if defaults is None else [k for k in show_if_attrs if k not in provided_values]
+        )
+        for attr_name in candidate_attrs:
+            assert defaults is not None
+            if not filter_list([defaults], show_if_attrs[attr_name]):
                 # This means we should not be injecting default values here and instead mark it as NotRequired
-                fields[attr][1].default = NotRequired
-                fields[attr][1].default_factory = None
+                fields[attr_name][1].default = NotRequired
+                fields[attr_name][1].default_factory = None
                 rebuild = True
 
         if rebuild:
@@ -288,24 +307,28 @@ def generate_pydantic_model(
     return model
 
 
-def get_defaults(model: type[BaseModel], new_values: dict) -> dict | None:
+def get_defaults(model: type[BaseModel], new_values: dict[str, Any]) -> dict[str, Any] | None:
     # We will try to get default values form the current model being passed by dumping values
     # if we are not able to do that, it is fine - it just probably means that we had
     # required fields and they were not found, in this case we will be raising a validation
     # error to the user anyways
     with contextlib.suppress(ValidationErrors):
-        return validate_model(model, new_values)
+        result = validate_model(model, new_values)
+        assert isinstance(result, dict)
+        return result
+    return None
 
 
 def process_schema_field(
-    schema_def: dict, model_name: str, new_values: USER_VALUES, old_values: USER_VALUES,
+    schema_def: dict[str, Any], model_name: str, new_values: USER_VALUES, old_values: USER_VALUES,
     field_hidden: bool = False,
-) -> tuple[type, FieldInfo, type[BaseModel] | None]:
+) -> tuple[Any, FieldInfo, type[BaseModel] | None]:
     """
     Process a schema field type / field information and any nested model if applicable which was generated.
     """
     schema_type = schema_def['type']
-    field_type = nested_model = None
+    field_type: Any = None
+    nested_model: type[BaseModel] | None = None
     field_info = create_field_info_from_schema(schema_def, field_hidden=field_hidden)
     match schema_type:
         case 'int':
@@ -355,7 +378,7 @@ def process_schema_field(
                 item_schema = list_items[0]['schema']
 
                 # Get actual list values for model generation
-                actual_list_values = []
+                actual_list_values: list[Any] = []
                 if isinstance(new_values, list):
                     actual_list_values = new_values
                 elif 'default' in schema_def and isinstance(schema_def['default'], list):
@@ -393,7 +416,11 @@ def process_schema_field(
                                 field_hidden=field_hidden
                             )
                             annotated_items.append(Annotated[item_type, item_info])
-                        field_type = list[Union[*annotated_items]] if annotated_items else list
+                        if annotated_items:
+                            union_type: Any = reduce(or_, annotated_items)
+                            field_type = list[union_type]
+                        else:
+                            field_type = list
                 else:
                     # No actual values or non-dict items - fallback to existing behavior
                     # Process items without old values (immutability not supported in lists)
@@ -403,7 +430,8 @@ def process_schema_field(
                             field_hidden=field_hidden
                         )
                         annotated_items.append(Annotated[item_type, item_info])
-                    field_type = list[Union[*annotated_items]]
+                    union_type_2: Any = reduce(or_, annotated_items)
+                    field_type = list[union_type_2]
             else:
                 # We have a generic list type without specific items
                 field_type = list
@@ -432,11 +460,11 @@ def process_schema_field(
     return field_type, field_info, nested_model
 
 
-def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) -> FieldInfo:
+def create_field_info_from_schema(schema_def: dict[str, Any], field_hidden: bool = False) -> FieldInfo:
     """
     Create Pydantic Field info from schema definition.
     """
-    field_kwargs = {}
+    field_kwargs: dict[str, Any] = {}
 
     if 'description' in schema_def:
         field_kwargs['description'] = schema_def['description']
@@ -483,4 +511,4 @@ def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) 
         if 'max' in schema_def:
             field_kwargs['le'] = schema_def['max']
 
-    return Field(**field_kwargs)
+    return cast(FieldInfo, Field(**field_kwargs))

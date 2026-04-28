@@ -1,11 +1,7 @@
 import os
 
-from middlewared.utils.directoryservices import (
-    krb5, krb5_constants
-)
-from middlewared.utils.directoryservices.health import (
-    KRB5HealthCheckFailReason, KRB5HealthError
-)
+from middlewared.utils.directoryservices import krb5, krb5_constants
+from middlewared.utils.directoryservices.health import KRB5HealthCheckFailReason, KRB5HealthError
 
 
 class KerberosHealthMixin:

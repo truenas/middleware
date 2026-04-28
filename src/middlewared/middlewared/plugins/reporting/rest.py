@@ -11,8 +11,7 @@ from middlewared.utils.disk_stats import get_disk_stats
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .netdata import ClientConnectError, Netdata
-from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, TIER_0_POINT_SIZE, TIER_1_POINT_SIZE
-
+from .utils import TIER_0_POINT_SIZE, TIER_1_POINT_SIZE, calculate_disk_space_for_netdata, get_metrics_approximation
 
 logger = logging.getLogger('netdata_api')
 

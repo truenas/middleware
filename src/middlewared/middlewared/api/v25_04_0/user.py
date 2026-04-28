@@ -7,15 +7,15 @@ from middlewared.api.base import (
     BaseModel,
     ContainerXID,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
-    LocalUsername,
-    RemoteUsername,
     LocalUID,
+    LocalUsername,
     LongString,
     NonEmptyString,
+    RemoteUsername,
+    excluded_field,
     single_argument_args,
-    single_argument_result
+    single_argument_result,
 )
 
 __all__ = ["UserEntry",

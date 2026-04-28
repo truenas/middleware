@@ -4,21 +4,24 @@ import errno
 import itertools
 import os
 import re
+from typing import TYPE_CHECKING, Any, TypeVar
 import uuid
-from typing import Any, TypeVar, TYPE_CHECKING
 
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
-    ContainerEntry, ContainerCreate,
-    ContainerCreateResult, ContainerUpdate, QueryOptions,
+    ContainerCreate,
+    ContainerCreateResult,
+    ContainerEntry,
+    ContainerUpdate,
+    QueryOptions,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 from .bridge import container_bridge_name
 from .dataset import ensure_datasets
@@ -26,7 +29,6 @@ from .info import license_active, pool_choices
 from .lifecycle import pylibvirt_container
 from .nsenter import CAPABILITIES
 from .utils import container_dataset
-
 
 if TYPE_CHECKING:
     from middlewared.job import Job

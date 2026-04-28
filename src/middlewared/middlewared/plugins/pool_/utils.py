@@ -3,17 +3,15 @@ import enum
 import itertools
 import json
 import os
+from pathlib import Path
 import re
 import typing
-
-from pathlib import Path
 from typing import TypedDict
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
-from middlewared.utils.size import MB
 from middlewared.utils.filesystem.directory import directory_is_empty
-
+from middlewared.utils.size import MB
 
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')

@@ -1,7 +1,8 @@
 from socket import sethostname
 
-from middlewared.service import CallError
 from truenas_os_pyutils.io import atomic_write
+
+from middlewared.service import CallError
 
 
 def render(service, middleware):

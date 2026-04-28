@@ -5,17 +5,17 @@ import tempfile
 from typing import Literal
 
 from pydantic import Field
+from truenas_os_pyutils.io import atomic_write
+from truenas_pynetif.address.netlink import get_links, netlink_route
 
 from middlewared.api import api_method
-from middlewared.plugins.interface.dhcp import dhcp_leases
-from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IPv4Nameserver, IPv6Nameserver
+from middlewared.api.base import BaseModel, IPv4Nameserver, IPv6Nameserver, UniqueList, single_argument_args
 from middlewared.api.current import DNSQueryItem
+from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import Service, filterable_api_method, private
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
-from truenas_os_pyutils.io import atomic_write
-from middlewared.service_exception import CallError, ValidationErrors
-from truenas_pynetif.address.netlink import get_links, netlink_route
 
 
 class DNSNsUpdateOpA(BaseModel):

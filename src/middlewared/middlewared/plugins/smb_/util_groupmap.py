@@ -48,24 +48,22 @@
 # data(15) = "\82J]\05\04\00\00\00Users\00\00"
 # }
 
-import enum
-
 from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
+import enum
 from socket import htonl, ntohl
+
 from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.sid import (
-    lsa_sidtype
-)
+from middlewared.utils.sid import lsa_sidtype
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBBatchAction,
     TDBBatchOperation,
     TDBDataType,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
 
 UNIX_GROUP_KEY_PREFIX = 'UNIXGROUP/'

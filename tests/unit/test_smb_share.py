@@ -1,6 +1,7 @@
 import os
 import pytest
-import libzfs
+import truenas_pylibzfs
+from truenas_os_pyutils.mount import statmount
 
 from middlewared.plugins.smb_.util_smbconf import (
     __parse_share_fs_acl,
@@ -93,44 +94,45 @@ EXTERNAL_SHARE = BASE_SHARE | {'path': 'EXTERNAL', 'purpose': SMBSharePurpose.EX
 @pytest.fixture(scope='module')
 def create_dataset():
     """
-    Create a dataset under /root for testing path-realated functions
-    Yields ZFS dataset handle
+    Create a dataset under /root for testing path-related functions.
+    Yields ZFS dataset handle.
     """
-    with libzfs.ZFS() as lz:
-        root_zh = lz.get_dataset_by_path('/root')
-        ds_name = os.path.join(root_zh.name, 'smb_share_test')
-        root_zh.pool.create(ds_name, {})
-        zhdl = lz.get_dataset(ds_name)
-        zhdl.mount()
-        try:
-            yield zhdl
-        finally:
-            zhdl.umount()
-            zhdl.delete()
+    sm = statmount(path='/root', as_dict=False)
+    ds_name = f'{sm.sb_source}/smb_share_test'
+
+    lz = truenas_pylibzfs.open_handle()
+    lz.create_resource(name=ds_name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
+    rsrc = lz.open_resource(name=ds_name)
+    rsrc.mount()
+    try:
+        yield rsrc
+    finally:
+        rsrc.unmount()
+        lz.destroy_resource(name=ds_name)
 
 
 @pytest.fixture(scope='function')
 def posixacl_dataset(create_dataset):
-    create_dataset.update_properties({'acltype': {'parsed': 'posix'}})
+    create_dataset.set_properties(properties={'acltype': 'posix'})
     vfs_objects = set()
-    __parse_share_fs_acl(create_dataset.mountpoint, vfs_objects)
+    __parse_share_fs_acl(create_dataset.get_mountpoint(), vfs_objects)
     assert not vfs_objects
-    yield create_dataset.mountpoint
+    yield create_dataset.get_mountpoint()
 
 
 @pytest.fixture(scope='function')
 def nfsacl_dataset(create_dataset):
-    create_dataset.update_properties({'acltype': {'parsed': 'nfsv4'}})
+    create_dataset.set_properties(properties={'acltype': 'nfsv4'})
     vfs_objects = set()
-    __parse_share_fs_acl(create_dataset.mountpoint, vfs_objects)
+    __parse_share_fs_acl(create_dataset.get_mountpoint(), vfs_objects)
     assert vfs_objects == {TrueNASVfsObjects.IXNAS}
-    yield create_dataset.mountpoint
+    yield create_dataset.get_mountpoint()
 
 
 @pytest.fixture(scope='function')
 def noacl_dataset(create_dataset):
-    create_dataset.update_properties({'acltype': {'parsed': 'off'}})
-    yield create_dataset.mountpoint
+    create_dataset.set_properties(properties={'acltype': 'off'})
+    yield create_dataset.get_mountpoint()
 
 
 @pytest.fixture(scope='function')

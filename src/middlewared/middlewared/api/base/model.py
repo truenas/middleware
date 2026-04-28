@@ -2,7 +2,8 @@ import inspect
 from types import NoneType
 from typing import Annotated, Any, Self, get_args, get_origin
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Secret, create_model, Field, model_serializer
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import ConfigDict, Field, Secret, create_model, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.json_schema import SkipJsonSchema
@@ -13,7 +14,6 @@ from pydantic_core import SchemaSerializer, core_schema
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
-
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",

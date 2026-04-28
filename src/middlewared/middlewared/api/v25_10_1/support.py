@@ -3,9 +3,14 @@ from typing import Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, NotRequired, single_argument_args, LongString, EmailString, single_argument_result
+    BaseModel,
+    EmailString,
+    ForUpdateMetaclass,
+    LongString,
+    NotRequired,
+    single_argument_args,
+    single_argument_result,
 )
-
 
 __all__ = [
     "SupportEntry", "SupportAttachTicketArgs", "SupportAttachTicketResult", "SupportAttachTicketMaxSizeArgs",

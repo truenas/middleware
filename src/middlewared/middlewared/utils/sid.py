@@ -4,7 +4,6 @@ import struct
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID, IDType
 from middlewared.utils.secrets import randbits
 
-
 DOM_SID_PREFIX = 'S-1-5-21-'
 DOM_SID_SUBAUTHS = 3
 MAX_VALUE_SUBAUTH = 2 ** 32

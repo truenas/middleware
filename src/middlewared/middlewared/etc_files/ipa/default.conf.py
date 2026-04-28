@@ -1,7 +1,7 @@
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.directoryservices.ipa import generate_ipa_default_config
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.ipa import generate_ipa_default_config
 
 
 def render(service, middleware, render_ctx):

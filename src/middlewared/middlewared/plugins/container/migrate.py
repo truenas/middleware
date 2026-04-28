@@ -3,17 +3,17 @@ from __future__ import annotations
 import ipaddress
 import os
 import typing
+
 import yaml
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import ContainerEntry, ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext
+import middlewared.sqlalchemy as sa
 
 from .crud import ContainerCreateWithDataset
 from .dataset import ensure_datasets
 from .utils import container_dataset
-
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
@@ -247,7 +247,11 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
 
             context.middleware.call_sync(
                 'pool.dataset.update_impl',
-                UpdateImplArgs(name=dataset['name'], iprops={'mountpoint'})
+                UpdateImplArgs(
+                    name=dataset['name'],
+                    zprops={'canmount': 'on'},
+                    iprops={'mountpoint'},
+                )
             )
             context.call_sync2(context.s.zfs.resource.mount, dataset['name'])
 

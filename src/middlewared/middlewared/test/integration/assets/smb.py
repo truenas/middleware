@@ -1,14 +1,13 @@
 # -*- coding=utf-8 -*-
+from base64 import b64decode, b64encode
 import contextlib
 import logging
 import os
 import shlex
 
-from base64 import b64encode, b64decode
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-
 
 logger = logging.getLogger(__name__)
 

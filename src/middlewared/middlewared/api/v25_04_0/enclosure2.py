@@ -2,7 +2,6 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel, single_argument_args
 
-
 __all__ = ["Enclosure2Entry", "Enclosure2SetSlotStatusArgs", "Enclosure2SetSlotStatusResult"]
 
 

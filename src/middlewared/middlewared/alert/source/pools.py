@@ -1,5 +1,9 @@
 from middlewared.alert.base import (
-    AlertCategory, AlertClassConfig, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
+    AlertCategory,
+    AlertClassConfig,
+    AlertLevel,
+    NonDataclassAlertClass,
+    OneShotAlertClass,
 )
 
 

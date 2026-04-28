@@ -1,25 +1,28 @@
 from __future__ import annotations
+
 import time
-from typing import Callable, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Literal
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types
 
 from middlewared.plugins.zfs_.zfs_events import ScrubNotStartedAlert, ScrubStartedAlert
+
 from .exceptions import (
     ZpoolErrorScrubAlreadyRunningException,
     ZpoolErrorScrubPausedException,
     ZpoolNotFoundException,
     ZpoolNotMasterNodeException,
-    ZpoolScrubNotDueException,
+    ZpoolPoolUnhealthyException,
     ZpoolResiliverInProgressException,
     ZpoolScanInvalidActionException,
     ZpoolScanInvalidTypeException,
     ZpoolScrubAlreadyRunningException,
+    ZpoolScrubNotDueException,
     ZpoolScrubPausedException,
     ZpoolScrubPausedToCancelException,
     ZpoolTooManyScrubsException,
-    ZpoolPoolUnhealthyException,
 )
+
 if TYPE_CHECKING:
     from middlewared.api.current import ZpoolScrubRun
     from middlewared.main import Middleware

@@ -1,12 +1,12 @@
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from ctypes import c_bool
-from datetime import time as _time, timedelta
+from datetime import time as _time
+from datetime import timedelta
 import errno
 import logging
 import multiprocessing
 import os
-import pytz
 import queue
 import re
 import signal
@@ -16,29 +16,41 @@ import time
 import types
 
 import paramiko.ssh_exception
-
+import pytz
 from truenas_api_client import Client, ClientException
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import (
-    DefinitionErrors, PeriodicSnapshotTaskDefinitionError, ReplicationTaskDefinitionError, Definition
+    Definition,
+    DefinitionErrors,
+    PeriodicSnapshotTaskDefinitionError,
+    ReplicationTaskDefinitionError,
 )
 from zettarepl.observer import (
-    PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
-    ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotStart, ReplicationTaskSnapshotProgress,
+    PeriodicSnapshotTaskError,
+    PeriodicSnapshotTaskStart,
+    PeriodicSnapshotTaskSuccess,
+    ReplicationTaskDataProgress,
+    ReplicationTaskError,
+    ReplicationTaskScheduled,
+    ReplicationTaskSnapshotProgress,
+    ReplicationTaskSnapshotStart,
     ReplicationTaskSnapshotSuccess,
-    ReplicationTaskDataProgress, ReplicationTaskSuccess, ReplicationTaskError,
+    ReplicationTaskStart,
+    ReplicationTaskSuccess,
 )
 from zettarepl.replication.task.dataset import get_target_dataset
 from zettarepl.replication.task.name_pattern import compile_name_regex
-from zettarepl.snapshot.list import multilist_snapshots, group_snapshots_by_datasets
+from zettarepl.snapshot.list import group_snapshots_by_datasets, multilist_snapshots
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.interface import ExecException
 from zettarepl.transport.local import LocalShell
 from zettarepl.transport.zfscli import get_properties_recursive
 from zettarepl.utils.logging import (
-    LongStringsFilter, ReplicationTaskLoggingLevelFilter, logging_record_replication_task
+    LongStringsFilter,
+    ReplicationTaskLoggingLevelFilter,
+    logging_record_replication_task,
 )
 from zettarepl.zettarepl import create_zettarepl
 
@@ -52,7 +64,6 @@ from middlewared.utils.size import format_size
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.time_utils import utc_now
-
 
 INVALID_DATASETS = (
     re.compile(r"boot-pool($|/)"),

@@ -1,17 +1,19 @@
+from base64 import b64decode
 import struct
 
-from base64 import b64decode
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
-    DirectoryServicesCacheRefreshArgs, DirectoryServicesCacheRefreshResult,
+    DirectoryServicesCacheRefreshArgs,
+    DirectoryServicesCacheRefreshResult,
+    DirectoryServicesStatusArgs,
     DirectoryServicesStatusChangedEvent,
+    DirectoryServicesStatusResult,
 )
 from middlewared.plugins.directoryservices_.util_cache import check_cache_version
-from middlewared.service import Service, private, job
+from middlewared.service import Service, job, private
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
+from middlewared.utils.directoryservices.health import DSHealthObj
 
 PREREQUISITE_SERVICES = ('auth-rpcgss-module',)
 DEPENDENT_SERVICES = ('cifs', 'nfs', 'ssh', 'ftp')

@@ -4,14 +4,26 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PeriodicSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult,
-    PeriodicSnapshotTaskUpdateArgs, PeriodicSnapshotTaskUpdateResult,
-    PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
-    PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, PeriodicSnapshotTaskMaxTotalCountArgs,
-    PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult,
-    PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
-    PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
-    PoolSnapshotTaskCreate, PoolSnapshotTaskUpdate, PoolSnapshotTaskDeleteOptions,
+    PeriodicSnapshotTaskCreateArgs,
+    PeriodicSnapshotTaskCreateResult,
+    PeriodicSnapshotTaskDeleteArgs,
+    PeriodicSnapshotTaskDeleteResult,
+    PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs,
+    PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
+    PeriodicSnapshotTaskEntry,
+    PeriodicSnapshotTaskMaxCountArgs,
+    PeriodicSnapshotTaskMaxCountResult,
+    PeriodicSnapshotTaskMaxTotalCountArgs,
+    PeriodicSnapshotTaskMaxTotalCountResult,
+    PeriodicSnapshotTaskRunArgs,
+    PeriodicSnapshotTaskRunResult,
+    PeriodicSnapshotTaskUpdateArgs,
+    PeriodicSnapshotTaskUpdateResult,
+    PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs,
+    PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
+    PoolSnapshotTaskCreate,
+    PoolSnapshotTaskDeleteOptions,
+    PoolSnapshotTaskUpdate,
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.job import Job
@@ -21,10 +33,14 @@ from middlewared.utils.types import AuditCallback
 from .attachment import register as register_attachment
 from .crud import PeriodicSnapshotTaskServicePart
 from .retention import (
-    delete_will_change_retention_for, fixate_removal_date,
-    removal_date_property, update_will_change_retention_for,
+    delete_will_change_retention_for,
+    fixate_removal_date,
+    removal_date_property,
+    update_will_change_retention_for,
 )
-from .task import max_count as _max_count, max_total_count as _max_total_count, run as _run
+from .task import max_count as _max_count
+from .task import max_total_count as _max_total_count
+from .task import run as _run
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware

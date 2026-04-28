@@ -4,7 +4,7 @@ from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.service import job, Service
+from middlewared.service import Service, job
 
 
 class TestArgs(BaseModel):

@@ -7,10 +7,11 @@
 
 from datetime import datetime
 
-from middlewared.api.base import BaseModel, NonEmptyString
-from middlewared.service import filterable_api_method, Service
-from middlewared.utils.filter_list import filter_list
 from truenas_pam_session import iterate_sessions
+
+from middlewared.api.base import BaseModel, NonEmptyString
+from middlewared.service import Service, filterable_api_method
+from middlewared.utils.filter_list import filter_list
 
 # Currently session info is private and consumed for STIG purposes but we can
 # expose in future by moving APIs here to formal external definitions

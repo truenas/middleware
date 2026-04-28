@@ -1,17 +1,20 @@
 import pathlib
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetGlobalEntry,
-                                     NVMetGlobalUpdateArgs,
-                                     NVMetGlobalUpdateResult,
-                                     NVMetGlobalSessionsItem)
+from middlewared.api.current import (
+    NVMetGlobalEntry,
+    NVMetGlobalSessionsItem,
+    NVMetGlobalUpdateArgs,
+    NVMetGlobalUpdateResult,
+)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-from .constants import NVMET_SERVICE_NAME
 from middlewared.utils.nvmet.kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
 from middlewared.utils.nvmet.spdk import make_client, nvmf_subsystem_get_qpairs
+
+from .constants import NVMET_SERVICE_NAME
 from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 
@@ -158,7 +161,8 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         """
         # For example
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2
-        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/host_traddr
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/...
+        #     .../host_traddr
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/state
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/kato
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/hostnqn

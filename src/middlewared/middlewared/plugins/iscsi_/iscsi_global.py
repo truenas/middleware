@@ -3,17 +3,22 @@ import ipaddress
 import re
 import socket
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAluaEnabledResult, ISCSIGlobalEntry,
-                                     ISCSIGlobalIserEnabledArgs, ISCSIGlobalIserEnabledResult, ISCSIGlobalUpdateArgs,
-                                     ISCSIGlobalUpdateResult)
+from middlewared.api.current import (
+    ISCSIGlobalAluaEnabledArgs,
+    ISCSIGlobalAluaEnabledResult,
+    ISCSIGlobalEntry,
+    ISCSIGlobalIserEnabledArgs,
+    ISCSIGlobalIserEnabledResult,
+    ISCSIGlobalUpdateArgs,
+    ISCSIGlobalUpdateResult,
+)
 from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.iscsi.constants import ISCSIMODE
-
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 DEFAULT_DIRECT_CONFIG = True
@@ -210,6 +215,10 @@ class ISCSIGlobalService(SystemServiceService):
                 await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
 
         await self._update_service(old, new, options={'ha_propagate': False})
+
+        if old['mode'] != new['mode']:
+            # Re-evaluate scst.service enabled/disabled state for the new mode
+            await self.middleware.call('etc.generate', 'rc')
 
         if old['direct_config'] != new['direct_config']:
             await self.middleware.call('etc.generate', 'scst_direct')

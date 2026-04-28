@@ -1,8 +1,7 @@
-import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import SystemGlobalIDIdArgs, SystemGlobalIDIdResult
 from middlewared.service import Service
+import middlewared.sqlalchemy as sa
 
 
 class SystemGlobalID(sa.Model):

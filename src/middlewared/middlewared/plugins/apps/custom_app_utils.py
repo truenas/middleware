@@ -1,3 +1,5 @@
+from typing import Any
+
 import yaml
 
 from middlewared.service import ValidationErrors
@@ -6,7 +8,7 @@ from middlewared.utils.yaml import safe_yaml_load
 from .compose_utils import validate_compose_config
 
 
-def validate_payload(data: dict, schema: str) -> dict:
+def validate_payload(data: dict[str, Any], schema: str) -> dict[str, Any]:
     verrors = ValidationErrors()
     compose_keys = ('custom_compose_config', 'custom_compose_config_string')
     if all(not data.get(k) for k in compose_keys):
@@ -39,4 +41,5 @@ def validate_payload(data: dict, schema: str) -> dict:
 
     verrors.check()
 
+    assert isinstance(compose_config, dict)
     return compose_config

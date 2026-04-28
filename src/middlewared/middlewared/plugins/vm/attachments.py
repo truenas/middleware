@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import os.path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import (
-    VMCDROMDevice, VMDiskDevice, VMDisplayDevice, VMRAWDevice, VMStartOptions, VMStopOptions,
+    VMCDROMDevice,
+    VMDiskDevice,
+    VMDisplayDevice,
+    VMRAWDevice,
+    VMStartOptions,
+    VMStopOptions,
 )
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate, PortDetail

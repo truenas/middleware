@@ -1,12 +1,11 @@
 import errno
-
 from itertools import batched
 
 import wbclient
 
-from .idmap_constants import IDType, MAX_REQUEST_LENGTH
 from middlewared.service_exception import MatchNotFound
 
+from .idmap_constants import MAX_REQUEST_LENGTH, IDType
 
 WBCErr = {
     wbclient.WBC_ERR_SUCCESS: None,

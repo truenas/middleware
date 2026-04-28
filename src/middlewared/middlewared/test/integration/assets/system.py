@@ -1,13 +1,15 @@
 import contextlib
 import os
 import sys
-from middlewared.test.integration.utils import ssh, truenas_server, restart_systemd_svc
+
 from functions import send_file
+
+from middlewared.test.integration.utils import restart_systemd_svc, ssh, truenas_server
 
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import ha, user, password
+    from auto_config import ha, password, user
 except ImportError:
     ha = False
 

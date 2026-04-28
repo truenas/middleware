@@ -4,11 +4,15 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, CloudBackupListSnapshotDirectoryArgs,
-    CloudBackupListSnapshotDirectoryResult, CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult
+    CloudBackupDeleteSnapshotArgs,
+    CloudBackupDeleteSnapshotResult,
+    CloudBackupListSnapshotDirectoryArgs,
+    CloudBackupListSnapshotDirectoryResult,
+    CloudBackupListSnapshotsArgs,
+    CloudBackupListSnapshotsResult,
 )
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.service import CallError, job, Service
+from middlewared.service import CallError, Service, job
 
 
 class CloudBackupService(Service):

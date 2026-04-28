@@ -1,5 +1,6 @@
 import inspect
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
     from middlewared.api.base.handler.model_provider import ModelFactory
@@ -40,6 +41,8 @@ def service_config(klass, config):
         # Set this to `true` if you inherit from `CRUDService[EntryModel]` so that `query` and `get_instance` return
         # model classes. FIXME: eventually this will be true for all classes, and this setting must be removed.
         'generic': False,
+        # This is only valid for CRUD service
+        'pass_app_to_query': False,
     }
     config_attrs.update({
         k: v

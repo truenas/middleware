@@ -14,7 +14,7 @@ from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
-UBUNTU_IMAGE_NAME = "ubuntu:plucky:amd64:default"
+UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
 VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {

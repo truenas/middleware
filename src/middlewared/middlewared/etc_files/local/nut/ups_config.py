@@ -1,7 +1,6 @@
 import os
 import shutil
 
-
 UPS_CONFPATH = '/etc/nut'
 UPS_USER = 'nut'
 UPS_VARPATH = '/var/run/nut'

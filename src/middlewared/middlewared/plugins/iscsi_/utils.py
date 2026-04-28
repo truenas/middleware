@@ -1,6 +1,6 @@
+from enum import StrEnum
 import pathlib
 import re
-from enum import StrEnum
 from time import sleep
 
 HBTL = re.compile(r'^\d:\d:\d:\d$')

@@ -3,10 +3,10 @@ from typing import Any
 
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBDataType,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
 
 GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'

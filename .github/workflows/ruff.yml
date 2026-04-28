@@ -1,0 +1,45 @@
+name: ruff
+
+on:
+  pull_request:
+    types:
+      - 'synchronize'
+      - 'opened'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/ruff-action@v3
+      with:
+        src: src/middlewared
+    - name: Find new Python files
+      id: new-files
+      run: |
+        git fetch origin "$GITHUB_BASE_REF" --depth=1
+        mapfile -t NEW_PY_FILES < <(git diff --name-only --diff-filter=A FETCH_HEAD HEAD -- '*.py')
+        if [ ${#NEW_PY_FILES[@]} -eq 0 ]; then
+          echo "✅ No new Python files to check"
+          echo "found=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "files=${NEW_PY_FILES[*]}" >> "$GITHUB_OUTPUT"
+          echo "New Python files found:"
+          printf '  %s\n' "${NEW_PY_FILES[@]}"
+        fi
+    - uses: astral-sh/ruff-action@v3
+      id: ruff-check
+      if: steps.new-files.outputs.found == 'true'
+      with:
+        args: "format --diff"
+        src: "${{ steps.new-files.outputs.files }}"
+    - name: Show formatting instructions
+      if: failure() && steps.ruff-check.outcome == 'failure'
+      run: |
+        echo "'ruff format' failed because some new files are incorrectly formatted.'
+        echo 'Open the spoiler in the step above to see which ones."
+        echo "Please run 'pip install ruff' and then 'ruff format' on all newly added files."
+        echo "If 'ruff format' causes flake8 errors, add '# fmt: skip' to the lines you don't want formatted."
+        exit 1

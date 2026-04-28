@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from middlewared.plugins.disk_.sync import DiskService
 

@@ -14,45 +14,14 @@ import subprocess
 import sys
 import textwrap
 
-import libzfs
-import pyudev
-
-
 logger = logging.getLogger(__name__)
 
 
 def update_zfs_default(root, readonly_rootfs):
-    with libzfs.ZFS() as zfs:
-        existing_pools = [p.name for p in zfs.pools]
-
-    for i in ['freenas-boot', 'boot-pool']:
-        if i in existing_pools:
-            boot_pool = i
-            break
-    else:
-        raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(existing_pools)}')
-
-    with libzfs.ZFS() as zfs:
-        disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
-
-    mapping = {}
-    for dev in filter(
-        lambda d: not d.sys_name.startswith("sr") and d.get("DEVTYPE") in ("disk", "partition"),
-        pyudev.Context().list_devices(subsystem="block")
-    ):
-        if dev.get("DEVTYPE") == "disk":
-            mapping[dev.sys_name] = dev.get("ID_BUS")
-        elif dev.get("ID_PART_ENTRY_UUID"):
-            parent = dev.find_parent("block")
-            mapping[dev.sys_name] = parent.get("ID_BUS")
-            mapping[os.path.join("disk/by-partuuid", dev.get("ID_PART_ENTRY_UUID"))] = parent.get("ID_BUS")
-
-    has_usb = False
-    for dev in disks:
-        if mapping.get(dev) == "usb":
-            has_usb = True
-            break
-
+    # Older versions wrote ZFS_INITRD_POST_MODPROBE_SLEEP=15 here when the boot pool was on
+    # USB, to let USB enumeration finish before zpool import. USB boot is no longer supported,
+    # so this function only strips the line from upgraded installs; can be removed once
+    # versions that wrote it are past EOL.
     zfs_config_path = os.path.join(root, "etc/default/zfs")
     with open(zfs_config_path) as f:
         original_config = f.read()
@@ -60,8 +29,6 @@ def update_zfs_default(root, readonly_rootfs):
 
     zfs_var_name = "ZFS_INITRD_POST_MODPROBE_SLEEP"
     lines = [line for line in lines if not line.startswith(f"{zfs_var_name}=")]
-    if has_usb:
-        lines.append(f"{zfs_var_name}=15")
 
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
@@ -222,7 +189,6 @@ if __name__ == "__main__":
     from truenas_pylibvirt.utils.gpu import get_gpus
     from truenas_os_pyutils.io import atomic_write
 
-    from middlewared.service_exception import CallError
     from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
     from middlewared.utils.rootfs import ReadonlyRootfsManager
     # ------------------

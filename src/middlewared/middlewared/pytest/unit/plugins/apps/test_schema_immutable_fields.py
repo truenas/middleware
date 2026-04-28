@@ -1,10 +1,7 @@
-import pytest
 from pydantic import ValidationError
+import pytest
 
-from middlewared.plugins.apps.schema_construction_utils import (
-    construct_schema, generate_pydantic_model, NOT_PROVIDED
-)
-
+from middlewared.plugins.apps.schema_construction_utils import NOT_PROVIDED, construct_schema, generate_pydantic_model
 
 # ========== Non-List Immutable Field Tests ==========
 

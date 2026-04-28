@@ -1,4 +1,5 @@
 import re
+from typing import Any, overload
 
 
 def change_case(value: str) -> str:
@@ -6,11 +7,20 @@ def change_case(value: str) -> str:
     return re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
-def convert_case_for_dict_or_list(data: dict | list) -> dict | list:
+@overload
+def convert_case_for_dict_or_list(data: dict[str, Any]) -> dict[str, Any]: ...
+
+
+@overload
+def convert_case_for_dict_or_list(data: list[Any]) -> list[Any]: ...
+
+
+def convert_case_for_dict_or_list(data: dict[str, Any] | list[Any]) -> dict[str, Any] | list[Any]:
     if isinstance(data, dict):
-        new_data = {}
+        new_data: dict[str, Any] = {}
         for key, value in data.items():
             new_key = change_case(key)
+            new_value: Any
             if isinstance(value, dict):
                 new_value = convert_case_for_dict_or_list(value)
             elif isinstance(value, list):

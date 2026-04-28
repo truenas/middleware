@@ -5,6 +5,7 @@ import os
 import stat
 
 from catalog_reader.train_utils import get_train_path
+
 from middlewared.api.current import CatalogAppDetails, CatalogApps, CatalogAppVersionDetails
 from middlewared.service import CallError, ServiceContext
 

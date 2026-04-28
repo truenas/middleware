@@ -6,9 +6,8 @@ import sys
 import types
 import typing
 
-from .handler.accept import accept_params
 from ..base.model import BaseModel
-
+from .handler.accept import accept_params
 
 __all__ = ["api_method"]
 

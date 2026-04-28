@@ -7,7 +7,7 @@ from middlewared.service import CallError, ServiceContext
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds
 from .service_utils import license_active
 from .state_setup import validate_fs as docker_validate_fs
-from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
+from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, STATUS_DESCRIPTIONS, Status
 
 # Docker can take a long time to start on systems with HDDs (2-3+ minutes)
 # We set a 16 minute timeout to accommodate slow disk initialization

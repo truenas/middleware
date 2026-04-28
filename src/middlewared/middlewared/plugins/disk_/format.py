@@ -2,7 +2,7 @@ import math
 import pathlib
 import subprocess
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 
 
 def sgdisk_explicit_alignment(

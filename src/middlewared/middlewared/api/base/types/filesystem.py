@@ -1,8 +1,8 @@
 import os
-
 from typing import Annotated
 
 from pydantic.functional_validators import AfterValidator
+
 from .string import NonEmptyString
 
 __all__ = ["UnixPerm", "NormalPath"]

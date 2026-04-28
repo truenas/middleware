@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NTPServerEntry,
     NTPServerCreate,
-    NTPServerCreateArgs, NTPServerCreateResult,
+    NTPServerCreateArgs,
+    NTPServerCreateResult,
+    NTPServerDeleteArgs,
+    NTPServerDeleteResult,
+    NTPServerEntry,
     NTPServerUpdate,
-    NTPServerUpdateArgs, NTPServerUpdateResult,
-    NTPServerDeleteArgs, NTPServerDeleteResult,
+    NTPServerUpdateArgs,
+    NTPServerUpdateResult,
 )
 from middlewared.service import GenericCRUDService, filterable_api_method
 from middlewared.utils.filter_list import filter_list

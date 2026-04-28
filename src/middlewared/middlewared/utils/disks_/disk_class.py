@@ -15,8 +15,8 @@ import uuid
 
 import truenas_pylibsed as sed
 
-from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
-from .gpt_parts import GptPartEntry, PART_TYPES
+from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
+from .gpt_parts import PART_TYPES, GptPartEntry
 
 logger = logging.getLogger(__name__)
 

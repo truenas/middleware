@@ -1,6 +1,6 @@
 from truenas_pynetif.utils import INTERNAL_INTERFACES
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 
 class InterfaceService(Service):

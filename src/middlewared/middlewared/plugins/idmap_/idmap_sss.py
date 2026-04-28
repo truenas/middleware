@@ -1,7 +1,8 @@
 import pysss_nss_idmap as sssclient
 
-from .idmap_constants import IDType
 from middlewared.service_exception import MatchNotFound
+
+from .idmap_constants import IDType
 
 
 class SSSClient:

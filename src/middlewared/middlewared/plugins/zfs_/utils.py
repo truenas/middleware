@@ -1,10 +1,11 @@
 import enum
 import os
 
+from truenas_os_pyutils.mount import statmount
+
 from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from truenas_os_pyutils.mount import statmount
 from middlewared.utils.path import is_child
 
 __all__ = [
@@ -64,7 +65,7 @@ def zvol_path_to_name(path):
 
 def paths_to_datasets_impl(
     paths: list[str],
-) -> dict | dict[str, str | None]:
+) -> dict[str, str | None]:
     """
     Convert `paths` to a dictionary of ZFS dataset names. This
     performs lookup through mountinfo.

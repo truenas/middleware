@@ -2,7 +2,6 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel, NonEmptyString
 
-
 __all__ = (
     "SystemFeatureEnabledArgs",
     "SystemFeatureEnabledResult",
@@ -20,7 +19,7 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["DEDUP", "FIBRECHANNEL", "VM", "SED"]
+    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VM", "ZFSTIER"]
     """Feature to check for availability on this system."""
 
 

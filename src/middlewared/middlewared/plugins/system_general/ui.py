@@ -2,20 +2,20 @@ import asyncio
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    SystemGeneralLocalUrlArgs,
+    SystemGeneralLocalUrlResult,
     SystemGeneralUiAddressChoicesArgs,
     SystemGeneralUiAddressChoicesResult,
     SystemGeneralUiCertificateChoicesArgs,
     SystemGeneralUiCertificateChoicesResult,
     SystemGeneralUiHttpsprotocolsChoicesArgs,
     SystemGeneralUiHttpsprotocolsChoicesResult,
-    SystemGeneralLocalUrlArgs,
-    SystemGeneralLocalUrlResult,
     SystemGeneralUiRestartArgs,
     SystemGeneralUiRestartResult,
     SystemGeneralUiV6addressChoicesArgs,
     SystemGeneralUiV6addressChoicesResult,
 )
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 
 from .utils import HTTPS_PROTOCOLS
 

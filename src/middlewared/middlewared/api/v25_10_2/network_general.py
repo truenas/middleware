@@ -1,5 +1,4 @@
-from middlewared.api.base import BaseModel, single_argument_result, IPvAnyAddress, NotRequired
-
+from middlewared.api.base import BaseModel, IPvAnyAddress, NotRequired, single_argument_result
 
 __all__ = ["NetworkGeneralSummaryArgs", "NetworkGeneralSummaryResult",]
 

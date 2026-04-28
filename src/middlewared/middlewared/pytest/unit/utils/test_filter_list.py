@@ -1,7 +1,8 @@
-import pytest
 import datetime
-from middlewared.utils.filter_list import filter_list
 
+import pytest
+
+from middlewared.utils.filter_list import filter_list
 
 DATA = [
     {

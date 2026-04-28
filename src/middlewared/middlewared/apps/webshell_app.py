@@ -10,7 +10,10 @@ import termios
 import threading
 import time
 
+from truenas_api_client import json
+
 from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
+from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 from middlewared.service_exception import (
     CallError,
     ErrnoMixin,
@@ -19,8 +22,6 @@ from middlewared.service_exception import (
 from middlewared.utils.crypto import ssl_uuid4
 from middlewared.utils.os import close_fds, terminate_pid
 from middlewared.utils.threading import run_coro_threadsafe
-from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
-from truenas_api_client import json
 
 __all__ = ("ShellApplication",)
 
@@ -336,9 +337,10 @@ class ShellApplication:
                 if options.get("app_name"):
                     if not options.get("container_id"):
                         raise CallError("Container id must be specified")
-                    if options["container_id"] not in await self.middleware.call(
-                        "app.container_console_choices", options["app_name"]
-                    ):
+                    choices = await self.middleware.call2(
+                        self.middleware.services.app.container_console_choices, options["app_name"]
+                    )
+                    if options["container_id"] not in choices.root:
                         raise CallError("Provided container id is not valid")
                 elif options.get("container_id"):
                     options["nsenter"] = await self.middleware.call2(

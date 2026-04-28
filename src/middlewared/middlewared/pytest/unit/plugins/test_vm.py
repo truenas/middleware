@@ -10,7 +10,6 @@ from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 
-
 VMService = load_compound_service('vm')
 
 VM_PAYLOAD = {
@@ -44,16 +43,16 @@ VM_PAYLOAD = {
 VM_FLAGS = VMFlags(intel_vmx=True, unrestricted_guest=True, amd_rvi=False, amd_asids=False)
 
 
-@pytest.mark.parametrize('ha_capable,license_features,should_work', [
-    (True, [], False),
-    (True, ['VM'], True),
-    (False, [], True),
+@pytest.mark.parametrize('ha_capable,feature_enabled,should_work', [
+    (True, False, False),
+    (True, True, True),
+    (False, False, True),
 ])
 @pytest.mark.asyncio
-async def test_vm_license_active_response(ha_capable, license_features, should_work):
+async def test_vm_license_active_response(ha_capable, feature_enabled, should_work):
     m = Middleware()
     m['system.is_ha_capable'] = lambda *args: ha_capable
-    m['system.license'] = lambda *args: {'features': license_features}
+    m['system.feature_enabled'] = lambda *args: feature_enabled
 
     context = ServiceContext(m, logging.getLogger('test'))
     assert await license_active(context) is should_work
@@ -66,7 +65,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(is_licensed):
     vm_svc = VMService(m)
 
     m['system.is_ha_capable'] = lambda *args: True
-    m['system.license'] = lambda *args: {'features': ['VM'] if is_licensed else []}
+    m['system.feature_enabled'] = lambda *args: is_licensed
     m['datastore.query'] = lambda *args, **kwargs: []
 
     with patch('middlewared.plugins.vm.crud.vm_flags', new=AsyncMock(return_value=VM_FLAGS)):

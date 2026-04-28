@@ -1,11 +1,12 @@
 from pydantic import Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    'AppRegistryEntry', 'AppRegistryCreateArgs', 'AppRegistryCreateResult', 'AppRegistryUpdateArgs',
-    'AppRegistryUpdateResult', 'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
+    'AppRegistryEntry', 'AppRegistryCreate', 'AppRegistryUpdate',
+    'AppRegistryCreateArgs', 'AppRegistryCreateResult',
+    'AppRegistryUpdateArgs', 'AppRegistryUpdateResult',
+    'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
 ]
 
 

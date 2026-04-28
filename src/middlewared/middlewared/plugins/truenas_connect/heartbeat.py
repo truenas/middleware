@@ -8,7 +8,8 @@ from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
 from middlewared.alert.source.truenas_connect import (
-    TNCDisabledAutoUnconfiguredAlert, TNCHeartbeatConnectionFailureAlert,
+    TNCDisabledAutoUnconfiguredAlert,
+    TNCHeartbeatConnectionFailureAlert,
 )
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
@@ -16,9 +17,12 @@ from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
 from .utils import (
-    calculate_sleep, CONFIGURED_TNC_STATES, decode_and_validate_token, get_unset_payload, HEARTBEAT_INTERVAL,
+    CONFIGURED_TNC_STATES,
+    HEARTBEAT_INTERVAL,
+    calculate_sleep,
+    decode_and_validate_token,
+    get_unset_payload,
 )
-
 
 logger = logging.getLogger('truenas_connect')
 
@@ -145,12 +149,12 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
     async def payload(self, disk_mapping=None):
         stats = await self.middleware.call('reporting.realtime.stats', disk_mapping)
         # We would like to add app/vm stats here as well now
-        apps = await self.middleware.call('app.query')
+        apps = await self.call2(self.s.app.query)
         vms = await self.call2(self.s.vm.query)
         stats.update({
             'apps': {
                 'total': len(apps),
-                'running': len([app for app in apps if app['state'] == 'RUNNING']),
+                'running': len([app for app in apps if app.state == 'RUNNING']),
             },
             'vms': {
                 'total': len(vms),

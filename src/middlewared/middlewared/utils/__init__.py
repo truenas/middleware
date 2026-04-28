@@ -1,5 +1,4 @@
 import asyncio
-import typing
 from dataclasses import dataclass
 import errno
 import functools
@@ -7,6 +6,7 @@ import json
 import logging
 import subprocess
 import time
+import typing
 from typing import Any, Callable, Iterable, Sequence, TypeVar
 
 from .prctl import die_with_parent

@@ -1,8 +1,10 @@
+from typing import Any
+
 from .casing import convert_case_for_dict_or_list
 from .utils import get_docker_client
 
 
-def list_networks() -> list[dict]:
+def list_networks() -> list[dict[str, Any]]:
     networks = []
     with get_docker_client() as client:
         for network in client.networks.list(greedy=False):

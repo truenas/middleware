@@ -7,7 +7,7 @@ from middlewared.api.current import (
     DiskGetUsedArgs,
     DiskGetUsedResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.disks import dev_to_ident
 

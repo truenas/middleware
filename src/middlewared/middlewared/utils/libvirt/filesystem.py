@@ -3,7 +3,7 @@ from typing import Any
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
-from .utils import disk_uniqueness_integrity_check
+from .utils import device_uniqueness_check
 
 
 class FilesystemDelegate(DeviceDelegate):
@@ -18,7 +18,9 @@ class FilesystemDelegate(DeviceDelegate):
     ) -> None:
         path = device['attributes']['source']
         self.middleware.call_sync('container.device.validate_path_field', verrors, 'attributes.path', path)
-        if instance is not None and not disk_uniqueness_integrity_check(device, instance):
+        if instance is not None and not device_uniqueness_check(
+            device, instance, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+        ):
             verrors.add(
                 'attributes.target',
                 f'{instance["name"]} has {device["attributes"]["target"]!r} target already configured'

@@ -3,7 +3,7 @@ import struct
 import uuid
 import zlib
 
-from .gpt_parts import GptPartEntry, PART_TYPES
+from .gpt_parts import PART_TYPES, GptPartEntry
 
 __all__ = ("read_gpt", "wipe_disk_quick", "create_gpt_partition")
 

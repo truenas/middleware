@@ -1,7 +1,7 @@
 import contextlib
 
-from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
 

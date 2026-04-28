@@ -1,10 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from middlewared.plugins.system.reboot import SystemRebootService, CACHE_KEY
+import pytest
+
+from middlewared.plugins.system.reboot import CACHE_KEY, SystemRebootService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
-
 
 BOOT_ID = 'test-boot-id-aaa'
 

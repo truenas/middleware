@@ -1,29 +1,61 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SupportNewTicket,
-    TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult,
-    TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
-    TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult,
-    TrueNASGetEulaArgs, TrueNASGetEulaResult,
-    TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult,
-    TrueNASAcceptEulaArgs, TrueNASAcceptEulaResult,
-    TrueNASIsProductionArgs, TrueNASIsProductionResult,
-    TrueNASSetProductionArgs, TrueNASSetProductionResult,
+    TrueNASAcceptEulaArgs,
+    TrueNASAcceptEulaResult,
+    TrueNASGetChassisHardwareArgs,
+    TrueNASGetChassisHardwareResult,
+    TrueNASGetEulaArgs,
+    TrueNASGetEulaResult,
+    TrueNASIsEulaAcceptedArgs,
+    TrueNASIsEulaAcceptedResult,
+    TrueNASIsIxHardwareArgs,
+    TrueNASIsIxHardwareResult,
+    TrueNASIsProductionArgs,
+    TrueNASIsProductionResult,
+    TrueNASManagedByTruecommandArgs,
+    TrueNASManagedByTruecommandResult,
+    TrueNASSetProductionArgs,
+    TrueNASSetProductionResult,
 )
 from middlewared.job import Job
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 
+from .license import TrueNASLicenseService
+from .tn import (
+    accept_eula as tn_accept_eula,
+)
+from .tn import (
+    get_chassis_hardware as tn_get_chassis_hardware,
+)
+from .tn import (
+    get_eula as tn_get_eula,
+)
+from .tn import (
+    is_eula_accepted as tn_is_eula_accepted,
+)
+from .tn import (
+    is_ix_hardware as tn_is_ix_hardware,
+)
+from .tn import (
+    is_production as tn_is_production,
+)
 from .tn import (
     managed_by_truecommand as tn_managed_by_truecommand,
-    get_chassis_hardware as tn_get_chassis_hardware,
-    is_ix_hardware as tn_is_ix_hardware,
-    get_eula as tn_get_eula,
-    is_eula_accepted as tn_is_eula_accepted,
-    accept_eula as tn_accept_eula,
-    unaccept_eula as tn_unaccept_eula,
-    is_production as tn_is_production,
+)
+from .tn import (
     set_production as tn_set_production,
 )
+from .tn import (
+    unaccept_eula as tn_unaccept_eula,
+)
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 __all__ = ('TrueNASService',)
@@ -33,6 +65,10 @@ class TrueNASService(Service):
 
     class Config:
         cli_namespace = 'system.truenas'
+
+    def __init__(self, middleware: Middleware):
+        super().__init__(middleware)
+        self.license = TrueNASLicenseService(middleware)
 
     @api_method(
         TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult,

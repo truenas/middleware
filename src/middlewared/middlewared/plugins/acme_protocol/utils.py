@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from truenas_acme_utils.client_utils import ACMEClientAndKeyData, get_acme_client_and_key as _get_client_and_key
+from truenas_acme_utils.client_utils import ACMEClientAndKeyData
+from truenas_acme_utils.client_utils import get_acme_client_and_key as _get_client_and_key
 
 from middlewared.plugins.acme_registration.models import ACMERegistrationCreate
 from middlewared.service import ServiceContext

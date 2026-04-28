@@ -5,7 +5,6 @@ import pytest
 
 from middlewared.plugins.apps.ix_apps.query import list_apps
 
-
 AVAILABLE_MAPPING = {
     'community': {
         'whoogle': {

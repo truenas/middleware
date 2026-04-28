@@ -11,8 +11,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.pytest.unit.middleware import Middleware
 from middlewared.plugins.enclosure_.enclosure2 import Enclosure2Service
+from middlewared.pytest.unit.middleware import Middleware
 
 test_case_dir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))) / 'test-cases'
 test_case_paths = [i for i in test_case_dir.iterdir() if i.is_dir()]

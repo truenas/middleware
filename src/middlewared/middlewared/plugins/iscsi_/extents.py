@@ -1,13 +1,13 @@
+from collections import defaultdict
 import hashlib
 import os
 import pathlib
 import subprocess
 import uuid
-from collections import defaultdict
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceQuery,
     iSCSITargetExtentCreateArgs,
     iSCSITargetExtentCreateResult,
     iSCSITargetExtentDeleteArgs,
@@ -17,7 +17,6 @@ from middlewared.api.current import (
     iSCSITargetExtentEntry,
     iSCSITargetExtentUpdateArgs,
     iSCSITargetExtentUpdateResult,
-    ZFSResourceQuery
 )
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.pool_.utils import UpdateImplArgs
@@ -25,9 +24,11 @@ from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
+import middlewared.sqlalchemy as sa
 from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.size import format_size
+
 from .utils import sanitize_extent
 
 EXTENT_DEFAULT_VENDOR = 'TrueNAS'
@@ -714,8 +715,8 @@ class iSCSITargetExtentService(SharingService):
             target_id = target_to_id[target_name]
             for ctl in iqns[iqn]:
                 lun = int(ctl.split(':')[-1])
-                for (l, extent_name) in target_luns[target_id]:
-                    if l == lun:
+                for (target_lun, extent_name) in target_luns[target_id]:
+                    if target_lun == lun:
                         result[extent_name] = ctl
                         break
         return result

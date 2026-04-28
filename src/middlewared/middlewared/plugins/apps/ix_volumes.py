@@ -1,60 +1,83 @@
-import collections
+from __future__ import annotations
+
+import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppsIxVolumeEntry, AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult,
-    ZFSResourceQuery,
+    AppsIxVolumeEntry,
+    AppsIxVolumeExistsArgs,
+    AppsIxVolumeExistsResult,
+    QueryOptions,
 )
-from middlewared.service import filterable_api_method, Service
-from middlewared.utils.filter_list import filter_list
+from middlewared.service import CallError, GenericCRUDService
 
-from .ix_apps.path import get_app_mounts_ds
+from .ix_volumes_crud import query_ix_volumes
+
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
+    class _QueryGetOptions(QueryOptions):
+        get: typing.Literal[True]
+        count: typing.Literal[False]
+
+    class _QueryCountOptions(QueryOptions):
+        count: typing.Literal[True]
+        get: typing.Literal[False]
 
 
-class AppsIxVolumeService(Service):
+__all__ = ('AppsIxVolumeService',)
+
+
+class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
 
     class Config:
         namespace = 'app.ix_volume'
-        event_send = False
         cli_namespace = 'app.ix_volume'
+        event_send = False
+        event_register = False
+        role_prefix = 'APPS'
         entry = AppsIxVolumeEntry
+        generic = True
+        datastore_primary_key = 'name'
 
-    @filterable_api_method(item=AppsIxVolumeEntry, roles=['APPS_READ'])
-    async def query(self, filters, options):
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+
+    @typing.overload  # type: ignore[override]
+    def query(  # type: ignore[overload-overlap]
+        self, filters: list[typing.Any], options: _QueryCountOptions,
+    ) -> int: ...
+
+    @typing.overload
+    def query(  # type: ignore[overload-overlap]
+        self, filters: list[typing.Any], options: _QueryGetOptions,
+    ) -> AppsIxVolumeEntry: ...
+
+    @typing.overload
+    def query(
+        self, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[AppsIxVolumeEntry]: ...
+
+    def query(
+        self, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
+    ) -> list[AppsIxVolumeEntry] | AppsIxVolumeEntry | int:
         """
         Query ix-volumes with `filters` and `options`.
         """
-        if not await self.middleware.call('docker.validate_state', False):
-            return filter_list([], filters, options)
+        return query_ix_volumes(self.context, filters or [], options or QueryOptions())
 
-        docker_ds = (await self.middleware.call('docker.config')).dataset
-        datasets = await self.call2(
-            self.s.zfs.resource.query_impl,
-            ZFSResourceQuery(
-                paths=[get_app_mounts_ds(docker_ds)],
-                get_children=True,
-                get_source=False,
-                properties=None
-            )
-        )
-        apps = collections.defaultdict(list)
-        for ds in filter(lambda x: x['name'].count('/') > 3, datasets):
-            name_split = ds['name'].split('/', 4)
-            apps[name_split[3]].append(name_split[-1])
+    async def get_instance(
+        self, id_: str, options: QueryOptions | None = None,
+    ) -> AppsIxVolumeEntry:
+        raise CallError('app.ix_volume has no stable primary key; use query() instead')
 
-        volumes = []
-        for app, app_volumes in apps.items():
-            for volume in app_volumes:
-                volumes.append({
-                    'name': volume,
-                    'app_name': app,
-                })
-
-        return filter_list(volumes, filters, options)
-
-    @api_method(AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult, roles=['APPS_READ'])
-    async def exists(self, app_name):
+    @api_method(
+        AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult,
+        roles=['APPS_READ'],
+        check_annotations=True,
+    )
+    def exists(self, name: str) -> bool:
         """
-        Check if ix-volumes exist for `app_name`.
+        Check if ix-volumes exist for `name` application.
         """
-        return bool(await self.query([['app_name', '=', app_name]]))
+        return bool(self.query([['app_name', '=', name]]))

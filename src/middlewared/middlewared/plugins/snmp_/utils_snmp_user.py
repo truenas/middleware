@@ -1,8 +1,9 @@
+from logging import getLogger
 import os
 import subprocess
 
 from cryptography.fernet import Fernet
-from logging import getLogger
+
 from middlewared.service import CallError
 from middlewared.utils.crypto import generate_string
 
@@ -46,7 +47,7 @@ def _set_authuser_secret(secret):
     Internal helper function for use by this module.
     INPUT: ascii string (not encoded)
     """
-    SNMPSystem.PRIV_KEY = Fernet(SNMPSystem.SYSTEM_USER['key']).encrypt(secret.encode())  # noqa: (F841, assigned but not used)
+    SNMPSystem.PRIV_KEY = Fernet(SNMPSystem.SYSTEM_USER['key']).encrypt(secret.encode())
 
     return
 

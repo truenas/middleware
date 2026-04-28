@@ -25,7 +25,7 @@ def upgrade():
     op.execute(
         "DELETE FROM system_alert WHERE klass IN "
         "('ReplicationSuccess', 'ReplicationFailed', 'SnapshotFailed', "
-        "'IPMISEL', 'QuotaWarning', 'QuotaCritical')"
+        "'IPMISEL', 'QuotaWarning', 'QuotaCritical', 'SSHLoginFailures', 'AppUpdate')"
     )
     # ### end Alembic commands ###
 

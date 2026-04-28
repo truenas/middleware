@@ -1,5 +1,5 @@
-from datetime import datetime
 import contextlib
+from datetime import datetime
 import glob
 import os
 import pathlib
@@ -12,12 +12,17 @@ import tempfile
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ConfigSaveArgs, ConfigSaveResult, ConfigUploadArgs, ConfigUploadResult, ConfigResetArgs, ConfigResetResult
+    ConfigResetArgs,
+    ConfigResetResult,
+    ConfigSaveArgs,
+    ConfigSaveResult,
+    ConfigUploadArgs,
+    ConfigUploadResult,
 )
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.utils.pwenc import pwenc_generate_secret, pwenc_rename, PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
+from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, pwenc_generate_secret, pwenc_rename
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,

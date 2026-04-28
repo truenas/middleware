@@ -2,7 +2,7 @@ import json
 import os
 
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.webshare import WEBSHARE_PATH, WEBSHARE_BULK_DOWNLOAD_PATH
+from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_PATH
 
 
 def render(service, middleware):

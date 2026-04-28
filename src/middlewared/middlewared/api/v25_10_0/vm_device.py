@@ -1,12 +1,16 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import ConfigDict, Field, model_validator, RootModel, Secret
+from pydantic import ConfigDict, Field, RootModel, Secret, model_validator
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
     single_argument_result,
 )
-
 
 __all__ = [
     'VMCDROMDevice', 'VMDisplayDevice', 'VMNICDevice', 'VMPCIDevice', 'VMRAWDevice', 'VMDiskDevice', 'VMUSBDevice',

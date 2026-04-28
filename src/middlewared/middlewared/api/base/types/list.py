@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
-from pydantic_core import PydanticCustomError
 from pydantic import AfterValidator, Field
+from pydantic_core import PydanticCustomError
 
 __all__ = ['UniqueList']
 

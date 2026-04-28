@@ -1,6 +1,5 @@
 from middlewared.api.base import BaseModel, NonEmptyString
 
-
 __all__ = ["DockerNetworkEntry"]
 
 

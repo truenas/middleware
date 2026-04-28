@@ -5,9 +5,10 @@ import enum
 import logging
 import os
 from pathlib import Path
-from typing import Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 
 from middlewared.utils.filesystem.constants import ZFSCTL
+
 if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 

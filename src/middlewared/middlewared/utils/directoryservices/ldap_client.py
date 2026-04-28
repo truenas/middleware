@@ -1,9 +1,10 @@
 import copy
 import threading
+
 import ldap as pyldap
+from ldap.controls import SimplePagedResultsControl
 
 from .constants import DSCredType
-from ldap.controls import SimplePagedResultsControl
 
 client_lock = threading.RLock()
 

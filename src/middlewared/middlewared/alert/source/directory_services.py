@@ -1,15 +1,19 @@
-import errno
 from dataclasses import dataclass
 from datetime import timedelta
+import errno
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus
 from middlewared.utils.directoryservices.health import (
-    DSHealthObj, ADHealthError, IPAHealthError, KRB5HealthError, LDAPHealthError,
+    ADHealthError,
+    DSHealthObj,
+    IPAHealthError,
+    KRB5HealthError,
+    LDAPHealthError,
 )
-from middlewared.service_exception import CallError
 
 
 @dataclass(kw_only=True)

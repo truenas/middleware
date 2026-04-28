@@ -1,7 +1,6 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
     'TwoFactorAuthEntry', 'TwoFactorAuthUpdateArgs', 'TwoFactorAuthUpdateResult'

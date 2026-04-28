@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NQN, excluded_field, single_argument_args
+from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
     "NVMetGlobalEntry",

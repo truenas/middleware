@@ -9,8 +9,7 @@ from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_us
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
-from .utils import disk_uniqueness_integrity_check
-
+from .utils import device_uniqueness_check
 
 IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
@@ -26,7 +25,9 @@ class StorageDelegate(DeviceDelegate):
         update: bool = True,
     ) -> None:
         identity = device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name'])
-        if instance and not disk_uniqueness_integrity_check(device, instance):
+        if instance and not device_uniqueness_check(
+            device, instance, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+        ):
             verrors.add(
                 'attributes.path',
                 f'{instance["name"]} has "{identity}" already configured'

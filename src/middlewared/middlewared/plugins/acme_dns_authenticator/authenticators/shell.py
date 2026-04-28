@@ -11,7 +11,7 @@ It is up to script implementation to handle both calls and perform the record cr
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ShellSchemaArgs
 from middlewared.async_validators import check_path_resides_within_volume

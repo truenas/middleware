@@ -1,28 +1,30 @@
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_result
 
 from .catalog import CatalogAppInfo
 
-
 __all__ = [
     'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
+    'AppEntry', 'AppCreate', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
-    'AppContainerConsoleChoicesResult', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
+    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult',
+    'AppPullImages', 'AppPullImagesArgs', 'AppPullImagesResult',
+    'AppCertificate', 'AppCertificateChoices', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
+    'AppContainerIDOptions', 'AppContainerIdsArgs', 'AppContainerIdsResult',
+    'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult', 'AppContainerResponse',
+    'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
+    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppRollbackOptions',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppIpChoices', 'AppCertificateChoices',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
-    'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
+    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
+    'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult',
+    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult', 'AppUpgradeOptions', 'AppUpgradeSummaryOptions',
 ]
 
 
@@ -128,6 +130,8 @@ class AppEntry(BaseModel):
     """Information about the running containers, ports, and resources used by this application."""
     notes: LongString | None
     """User-provided notes or comments about this application instance."""
+    action_required: bool
+    """Whether this application requires user action (e.g., configuration migration or deprecation handling)."""
     portals: dict
     """Web portals and access points provided by the application (URLs, ports, etc.)."""
     version_details: dict | None = None
@@ -136,15 +140,14 @@ class AppEntry(BaseModel):
     """Current configuration values for the application. `null` if configuration is not requested."""
 
 
-@single_argument_args('app_create')
-class AppCreateArgs(BaseModel):
+class AppCreate(BaseModel):
     custom_app: bool = False
     """Whether to create a custom application (`true`) or install from catalog (`false`)."""
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Configuration values for the application installation."""
-    custom_compose_config: Secret[dict] = Field(default_factory=dict)
+    custom_compose_config: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Docker Compose configuration as a structured object for custom applications."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = Field(default='', validate_default=True)
     """Docker Compose configuration as a YAML string for custom applications."""
     catalog_app: str | None = None
     """Name of the catalog application to install. Required when `custom_app` is `false`."""
@@ -164,17 +167,22 @@ class AppCreateArgs(BaseModel):
     """The version of the application to install."""
 
 
+class AppCreateArgs(BaseModel):
+    app_create: AppCreate
+    """AppCreate parameters."""
+
+
 class AppCreateResult(BaseModel):
     result: AppEntry
     """The newly created application entry with all configuration details."""
 
 
 class AppUpdate(BaseModel):
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Updated configuration values for the application."""
-    custom_compose_config: Secret[dict] = Field(default_factory=dict)
+    custom_compose_config: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Updated Docker Compose configuration as a structured object."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = Field(default='', validate_default=True)
     """Updated Docker Compose configuration as a YAML string."""
 
 
@@ -219,7 +227,7 @@ class AppConfigArgs(BaseModel):
 
 
 class AppConfigResult(BaseModel):
-    result: dict
+    result: dict[str, Any]
     """The current configuration object for the application."""
 
 
@@ -448,10 +456,10 @@ class AppRollbackVersionsResult(BaseModel):
     """Array of version strings available for rollback."""
 
 
-class UpgradeOptions(BaseModel):
+class AppUpgradeOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     """Target version to upgrade to. Use 'latest' for the newest available version."""
-    values: Secret[dict] = Field(default_factory=dict)
+    values: Secret[dict] = Field(default_factory=dict, validate_default=True)
     """Configuration values to apply during the upgrade."""
     snapshot_hostpaths: bool = False
     """Whether to create snapshots of host path volumes before upgrade."""
@@ -460,7 +468,7 @@ class UpgradeOptions(BaseModel):
 class AppUpgradeArgs(BaseModel):
     app_name: NonEmptyString
     """Name of the application to upgrade."""
-    options: UpgradeOptions = UpgradeOptions()
+    options: AppUpgradeOptions = AppUpgradeOptions()
     """Options controlling the upgrade process including target version and snapshot behavior."""
 
 
@@ -472,7 +480,7 @@ class AppUpgradeResult(BaseModel):
 class AppUpgradeBulkEntry(BaseModel):
     app_name: NonEmptyString
     """Name of the application to upgrade."""
-    options: UpgradeOptions = UpgradeOptions()
+    options: AppUpgradeOptions = AppUpgradeOptions()
     """Upgrade options for this specific application."""
 
 
@@ -495,7 +503,7 @@ class AppUpgradeBulkResult(BaseModel):
     """Per-app upgrade results in the same order as the input list."""
 
 
-class UpgradeSummaryOptions(BaseModel):
+class AppUpgradeSummaryOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     """Target version to generate upgrade summary for. Use 'latest' for the newest available version."""
 
@@ -503,7 +511,7 @@ class UpgradeSummaryOptions(BaseModel):
 class AppUpgradeSummaryArgs(BaseModel):
     app_name: NonEmptyString
     """Name of the application to get upgrade summary for."""
-    options: UpgradeSummaryOptions = UpgradeSummaryOptions()
+    options: AppUpgradeSummaryOptions = AppUpgradeSummaryOptions()
     """Options specifying the target version for the summary."""
 
 
@@ -514,8 +522,7 @@ class AppVersionInfo(BaseModel):
     """Human-readable version of the app."""
 
 
-@single_argument_result
-class AppUpgradeSummaryResult(BaseModel):
+class AppUpgradeSummary(BaseModel):
     latest_version: str
     """Latest version available for the app."""
     latest_human_version: str
@@ -528,6 +535,11 @@ class AppUpgradeSummaryResult(BaseModel):
     """List of available versions for upgrade."""
     changelog: LongString | None
     """Changelog or release notes for the upgrade version. `null` if not available."""
+
+
+class AppUpgradeSummaryResult(BaseModel):
+    result: AppUpgradeSummary
+    """App upgrade summary."""
 
 
 class AppAvailableItem(CatalogAppInfo):

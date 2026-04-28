@@ -4,8 +4,9 @@ import os
 
 import pytest
 
-from functions import if_key_listed, SSH_TEST
+from functions import SSH_TEST
 from auto_config import sshKey, user, password
+from middlewared.test.integration.runner.ssh import if_key_listed
 from middlewared.test.integration.utils import fail, ssh
 from middlewared.test.integration.utils.client import client, truenas_server
 

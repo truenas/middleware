@@ -1,6 +1,5 @@
 from middlewared.api.base import BaseModel, LongString
 
-
 __all__ = [
     'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
     'TrueNASIsProductionArgs', 'TrueNASIsProductionResult',

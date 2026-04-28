@@ -1,6 +1,6 @@
 from codecs import decode
 from dataclasses import dataclass
-from socket import inet_ntop, AF_INET, AF_INET6
+from socket import AF_INET, AF_INET6, inet_ntop
 from struct import pack, unpack
 
 __all__ = ('read_proc_net',)

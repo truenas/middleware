@@ -4,10 +4,9 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDGlobalPasswordSyncFailureAlert
-from middlewared.service import job, private, Service
+from middlewared.service import Service, job, private
 
 from .connection import KMIPServerMixin
-
 
 """
 SED keys are stored in 2 places:

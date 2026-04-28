@@ -3,17 +3,22 @@ import errno
 import os
 import subprocess
 
+from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult,
-    PoolReimportArgs, PoolReimportResult,
+    PoolImportFindArgs,
+    PoolImportFindResult,
+    PoolImportPoolArgs,
+    PoolImportPoolResult,
+    PoolReimportArgs,
+    PoolReimportResult,
     ZFSResourceQuery,
 )
-from middlewared.alert.source.pools import PoolUpgradedAlert
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.service import CallError, InstanceNotFound, job, private, Service, ValidationError
+from middlewared.service import CallError, InstanceNotFound, Service, ValidationError, job, private
 from middlewared.utils.zfs import query_imported_fast_impl
+
 from .utils import ZPOOL_CACHE_FILE
 
 

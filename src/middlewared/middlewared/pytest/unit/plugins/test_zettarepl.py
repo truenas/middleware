@@ -2,7 +2,6 @@ import pytest
 
 import middlewared.plugins.zettarepl  # noqa
 import middlewared.plugins.zettarepl_.util  # noqa
-
 from middlewared.pytest.unit.helpers import load_compound_service
 
 ZettareplService = load_compound_service("zettarepl")

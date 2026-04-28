@@ -1,7 +1,6 @@
-import libzfs
-
 from collections import defaultdict
 
+import libzfs
 
 SEARCH_PATHS = ['/dev/disk/by-partuuid', '/dev']
 

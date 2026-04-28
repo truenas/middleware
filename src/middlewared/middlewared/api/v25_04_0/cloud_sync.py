@@ -2,8 +2,18 @@ from typing import Literal
 
 from pydantic import Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  LongString, NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongNonEmptyString,
+    LongString,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
+)
+
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CredentialsEntry",

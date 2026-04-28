@@ -16,7 +16,6 @@ from .state_management import start_service
 from .state_setup import create_update_docker_datasets
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
-
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
 
@@ -68,7 +67,7 @@ def restore_backup(context: ServiceContext, job: Job, backup_name: str) -> None:
         if app_info.state == AppState.RUNNING.name:
             apps_to_start.append(app_info.id)
 
-    metadata_job = context.middleware.call_sync('app.metadata.generate')
+    metadata_job = context.call_sync2(context.s.app.metadata_generate)
     metadata_job.wait_sync()
     if metadata_job.error:
         raise CallError(f'Failed to generate app metadata: {metadata_job.error}')

@@ -1,5 +1,6 @@
-from .base import SimpleService
 from middlewared.utils import run
+
+from .base import SimpleService
 
 
 class CIFSService(SimpleService):
@@ -15,16 +16,16 @@ class CIFSService(SimpleService):
         await self._systemd_unit("smbd", "start")
 
     async def after_start(self):
-        # We reconfigure mdns (add SMB service, possibly also ADISK)
-        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
+        # We reconfigure discovery (add SMB service, possibly also ADISK)
+        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
         await self.call2(self.s.truesearch.configure)
 
     async def stop(self):
         await self._systemd_unit("smbd", "stop")
 
     async def after_stop(self):
-        # reconfigure mdns (remove SMB service, possibly also ADISK)
-        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
+        # reconfigure discovery (remove SMB service, possibly also ADISK)
+        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
         await self.call2(self.s.truesearch.configure)
 
     async def reload(self):

@@ -3,13 +3,18 @@ from __future__ import annotations
 import asyncio
 import errno
 import sys
-from typing import Annotated, Any, TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Annotated, Any, overload
 
-from pydantic import create_model, Field
+from pydantic import Field, create_model
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base.model import (
-    BaseModel, query_result, query_result_item, added_event_model, changed_event_model, removed_event_model,
+    BaseModel,
+    added_event_model,
+    changed_event_model,
+    query_result,
+    query_result_item,
+    removed_event_model,
 )
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.utils.filter_list import filter_list
@@ -19,7 +24,6 @@ from .base import ServiceBase
 from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
-
 
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
@@ -106,7 +110,7 @@ class CRUDServiceMetabase(ServiceBase):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
                     QueryArgs, query_result_model, private=private, cli_private=cli_private,
-                    check_annotations=use_check_annotations,
+                    check_annotations=use_check_annotations, pass_app=config.pass_app_to_query,
                 )(klass.query)
 
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)

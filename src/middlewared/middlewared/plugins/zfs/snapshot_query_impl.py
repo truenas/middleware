@@ -4,7 +4,7 @@ from typing import Any
 from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 
 from .exceptions import ZFSPathNotFoundException
-from .property_management import build_set_of_zfs_snapshot_props, DeterminedProperties
+from .property_management import DeterminedProperties, build_set_of_zfs_snapshot_props
 from .utils import has_internal_path
 
 __all__ = ("query_snapshots_impl",)

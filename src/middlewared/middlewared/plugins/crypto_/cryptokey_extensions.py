@@ -1,5 +1,4 @@
 from cryptography import x509
-
 from truenas_crypto_utils.extensions import get_extension_params
 
 from middlewared.service import Service, ValidationErrors

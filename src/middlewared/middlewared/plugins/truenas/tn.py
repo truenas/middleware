@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import errno
 import os
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware as _get_chassis_hardware
+from ixhardware import TRUENAS_UNKNOWN
+from ixhardware import get_chassis_hardware as _get_chassis_hardware
 
 from middlewared.api.current import SupportNewTicket, TruecommandStatus
 from middlewared.service import ServiceContext

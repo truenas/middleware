@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolAttachArgs, PoolAttachResult
-from middlewared.service import job, Service, ValidationErrors
+from middlewared.service import Service, ValidationErrors, job
 
 
 class PoolService(Service):

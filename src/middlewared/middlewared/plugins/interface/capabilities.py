@@ -1,9 +1,9 @@
-from typing import get_args, Literal, TypedDict
+from typing import Literal, TypedDict, get_args
 
 from truenas_pynetif.ethernet_settings import EthernetHardwareSettings
 
-from middlewared.service_exception import ValidationError
 from middlewared.service import Service
+from middlewared.service_exception import ValidationError
 
 
 class GetCapabilities(TypedDict):

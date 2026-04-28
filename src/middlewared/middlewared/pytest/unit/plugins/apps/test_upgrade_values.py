@@ -1,13 +1,12 @@
 import textwrap
+from types import SimpleNamespace
 import unittest.mock
 
 import pytest
 
-from middlewared.plugins.apps.upgrade import AppService
-from middlewared.pytest.unit.middleware import Middleware
+from middlewared.plugins.apps.upgrade import get_data_for_upgrade_values, upgrade_values
 from middlewared.service import CallError
 from middlewared.utils.yaml import safe_yaml_load
-
 
 APP_CONFIG = textwrap.dedent(
     '''
@@ -45,9 +44,9 @@ APP_CONFIG = textwrap.dedent(
     ]
 ])
 @unittest.mock.patch('middlewared.plugins.apps.upgrade.subprocess.Popen')
-@unittest.mock.patch('tempfile.NamedTemporaryFile')
+@unittest.mock.patch('middlewared.plugins.apps.upgrade.tempfile.NamedTemporaryFile')
 @unittest.mock.patch('middlewared.plugins.apps.upgrade.get_current_app_config')
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.AppService.get_data_for_upgrade_values')
+@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_data_for_upgrade_values')
 def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, mock_tempfile, mock_popen, file_paths):
     mock_temp_file_instance = unittest.mock.MagicMock()
     mock_temp_file_instance.name = '/mocked/tempfile/path'
@@ -60,17 +59,12 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
     mock_popen.return_value = mock_process
     mock_get_data_for_upgrade_values.return_value = file_paths, APP_CONFIG
 
-    middleware = Middleware()
-    app_upgrade = AppService(middleware)
-    app = {
-        'name': 'plex',
-        'metadata': {'version': '1.1.12'}
-    }
+    app = SimpleNamespace(name='plex', version='1.1.12')
     upgrade_version = {
         'version': '1.1.13'
     }
 
-    result = app_upgrade.upgrade_values(app, upgrade_version)
+    result = upgrade_values(app, upgrade_version)
     expected_dict = safe_yaml_load(APP_CONFIG)
     assert result is not None
     assert mock_popen.call_count == len(file_paths)
@@ -173,20 +167,15 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
 @unittest.mock.patch('middlewared.plugins.apps.upgrade.get_migration_scripts')
 @unittest.mock.patch('middlewared.plugins.apps.upgrade.get_current_app_config')
 def test_get_data_for_upgrade_values(mock_current_config, mock_migration_scripts, migration_files, expected):
-    middleware = Middleware()
-    upgrade_app = AppService(middleware)
     mock_migration_scripts.return_value = migration_files
     mock_current_config.return_value = APP_CONFIG
-    app = {
-        'name': 'plex',
-        'version': '1.1.12'
-    }
+    app = SimpleNamespace(name='plex', version='1.1.12')
     upgrade_version = {
         'version': '1.1.13'
     }
     if isinstance(expected, list):
-        files, new_config = upgrade_app.get_data_for_upgrade_values(app, upgrade_version)
+        files, new_config = get_data_for_upgrade_values(app, upgrade_version)
         assert files == expected
     else:
         with pytest.raises(CallError):
-            upgrade_app.get_data_for_upgrade_values(app, upgrade_version)
+            get_data_for_upgrade_values(app, upgrade_version)

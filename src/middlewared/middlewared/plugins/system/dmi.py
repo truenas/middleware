@@ -1,6 +1,6 @@
 from ixhardware import parse_dmi
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 
 class SystemService(Service):

@@ -2,14 +2,15 @@ import ipaddress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NetworkConfigurationEntry, NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
+    NetworkConfigurationEntry,
+    NetworkConfigurationUpdateArgs,
+    NetworkConfigurationUpdateResult,
 )
-import middlewared.sqlalchemy as sa
-from middlewared.service import ConfigService, ValidationErrors, private
-from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.utils import are_indices_in_consecutive_order
 from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
-
+from middlewared.service import ConfigService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils import are_indices_in_consecutive_order
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
 
@@ -168,21 +169,8 @@ class NetworkConfigurationService(ConfigService):
         return verrors
 
     @private
-    async def toggle_announcement(self, data):
-        announce_srv = {'mdns': 'mdns', 'netbios': 'nmbd', 'wsd': 'wsdd'}
-        for srv, enabled in data.items():
-            service_name = announce_srv[srv]
-            started = await self.middleware.call('service.started', service_name)
-
-            if enabled:
-                verb = 'RESTART' if started else 'START'
-            else:
-                verb = 'STOP' if started else None
-
-            if not verb:
-                continue
-
-            await (await self.middleware.call('service.control', verb, service_name)).wait(raise_error=True)
+    async def toggle_announcement(self, data, prev=None):
+        await (await self.middleware.call('service.control', 'RESTART', 'discovery')).wait(raise_error=True)
 
     @api_method(
         NetworkConfigurationUpdateArgs,
@@ -353,30 +341,20 @@ class NetworkConfigurationService(ConfigService):
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
 
-        # handle the various service announcement daemons
-        announce_changed = new_config['service_announcement'] != config['service_announcement']
-        announce_srv = {'mdns': 'mdns', 'netbios': 'nmbd', 'wsd': 'wsdd'}
-        if any((lhost_changed, vhost_changed)) or announce_changed:
-            # lhost_changed is the local hostname and vhost_changed is the virtual hostname
-            # and if either of these change then we need to toggle the service announcement
-            # daemons regardless whether these were toggled on their own
-            for srv, enabled in new_config['service_announcement'].items():
-                service_name = announce_srv[srv]
-                started = await self.middleware.call('service.started', service_name)
-
-                if enabled:
-                    verb = 'RESTART' if started else 'START'
-                else:
-                    verb = 'STOP' if started else None
-
-                if not verb:
-                    continue
-
-                service_actions.add((service_name, verb))
-
         for service, verb in service_actions:
             await (await self.middleware.call('service.control', verb, service)).wait(raise_error=True)
 
-        await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
+        # The unified truenas-discoveryd daemon advertises mDNS, NetBIOS NS
+        # and WSD from a single config file; toggle_announcement regenerates
+        # it and reloads/starts/stops/restarts the daemon based on which
+        # announcements are enabled. Pass the previous service_announcement
+        # so toggle_announcement can pick RESTART when the enabled subsystem
+        # set changes (SIGHUP can't add or remove children in the daemon).
+        # Runs unconditionally so the daemon picks up hostname changes.
+        await self.middleware.call(
+            'network.configuration.toggle_announcement',
+            new_config['service_announcement'],
+            config['service_announcement'],
+        )
 
         return await self.config()

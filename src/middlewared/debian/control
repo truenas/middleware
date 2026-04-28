@@ -81,7 +81,6 @@ Homepage: https://github.com/truenas/middleware
 Package: middlewared
 Architecture: all
 Depends: alembic,
-         avahi-daemon,
          bsd-mailx,
          chrony,
          cryptsetup,
@@ -153,6 +152,7 @@ Depends: alembic,
          python3-truenas-connect-utils,
          python3-truenas-crypto-utils,
          python3-truenas-pam-utils,
+         python3-truenas-pydiscovery,
          python3-truenas-pylibsed,
          python3-truenas-pylibvirt,
          python3-truenas-pylicensed,

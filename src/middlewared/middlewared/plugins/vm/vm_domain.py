@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
-from typing import Any, Generator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Generator
 
-from truenas_pylibvirt import VmDomain as BaseVMDomain, VmDomainConfiguration as BaseVmDomainConfiguration
-
+from truenas_pylibvirt import VmDomain as BaseVMDomain
+from truenas_pylibvirt import VmDomainConfiguration as BaseVmDomainConfiguration
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

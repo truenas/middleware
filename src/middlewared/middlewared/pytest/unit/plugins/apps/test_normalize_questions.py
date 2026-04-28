@@ -1,10 +1,14 @@
+import logging
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService, REF_MAPPING
+from middlewared.plugins.apps.schema_normalization import normalize_question
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('attr_schema, ref, value, update', [
+@pytest.mark.parametrize('attr_schema, value, update', [
     (
         {
             'variable': 'cert_id',
@@ -13,7 +17,6 @@ from middlewared.pytest.unit.middleware import Middleware
                 '$ref': ['definitions/certificate']
             }
         },
-        'definitions/certificate',
         1234,
         False
     ),
@@ -26,7 +29,6 @@ from middlewared.pytest.unit.middleware import Middleware
                 'attrs': []
             }
         },
-        'normalize/acl',
         {'entries': [], 'path': '/mnt/data'},
         False
     ),
@@ -39,7 +41,6 @@ from middlewared.pytest.unit.middleware import Middleware
                 'attrs': []
             }
         },
-        'normalize/acl',
         {'entries': [], 'path': '/mnt/data'},
         True
     ),
@@ -52,21 +53,24 @@ from middlewared.pytest.unit.middleware import Middleware
                 '$ref': ['definitions/certificate']
             }
         },
-        'definitions/certificate',
         None,
         False
     )
 ])
+@patch('middlewared.plugins.apps.schema_normalization.normalize_certificate', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_acl', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_ix_volume', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_gpu_configuration', new_callable=AsyncMock)
 @pytest.mark.asyncio
-async def test_normalize_question(attr_schema, ref, value, update):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    middleware[f'app.schema.normalize_{REF_MAPPING[ref]}'] = lambda *args: value
-    result = await app_schema_obj.normalize_question(attr_schema, value, update, {}, {})
+async def test_normalize_question(mock_gpu, mock_vol, mock_acl, mock_cert, attr_schema, value, update):
+    for mock in (mock_gpu, mock_vol, mock_acl, mock_cert):
+        mock.return_value = value
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_question(ctx, attr_schema, value, update, {}, {})
     assert result == value
 
 
-@pytest.mark.parametrize('attr_schema, ref, value, update', [
+@pytest.mark.parametrize('attr_schema, value, update', [
     (
         {
             'variable': 'cert_list',
@@ -84,19 +88,22 @@ async def test_normalize_question(attr_schema, ref, value, update):
                 ]
             }
         },
-        'definitions/certificate',
         [1, 2, 3],
         False
     ),
 ])
+@patch('middlewared.plugins.apps.schema_normalization.normalize_certificate', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_acl', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_ix_volume', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_gpu_configuration', new_callable=AsyncMock)
 @pytest.mark.asyncio
-async def test_normalize_question_List(attr_schema, ref, value, update):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    # Mock the normalize functions to return the value as-is
-    middleware[f'app.schema.normalize_{REF_MAPPING[ref]}'] = lambda *args: args[1]  # Return the value parameter
+async def test_normalize_question_List(mock_gpu, mock_vol, mock_acl, mock_cert, attr_schema, value, update):
+    # Mock the normalize functions to return the value parameter as-is
+    for mock in (mock_gpu, mock_vol, mock_acl, mock_cert):
+        mock.side_effect = lambda ctx, attr, val, config, norm_ctx: val
 
-    result = await app_schema_obj.normalize_question(attr_schema, value, update, {}, {})
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_question(ctx, attr_schema, value, update, {}, {})
     assert result == value
 
 
@@ -131,32 +138,31 @@ async def test_normalize_question_List(attr_schema, ref, value, update):
         False
     ),
 ])
+@patch('middlewared.plugins.apps.schema_normalization.normalize_certificate', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_acl', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_ix_volume', new_callable=AsyncMock)
+@patch('middlewared.plugins.apps.schema_normalization.normalize_gpu_configuration', new_callable=AsyncMock)
 @pytest.mark.asyncio
-async def test_normalize_nested_dict_with_refs(attr_schema, value, update):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-
-    # Mock the normalize functions
-    async def mock_normalize_ix_volume(attr, val, config, context):
-        # Simulate adding volume to config
+async def test_normalize_nested_dict_with_refs(mock_gpu, mock_vol, mock_acl, mock_cert, attr_schema, value, update):
+    async def mock_normalize_ix_volume(ctx, attr, val, config, norm_ctx):
         config['ix_volumes'][val['dataset_name']] = {'path': f'/mnt/ix-apps/{val["dataset_name"]}'}
         return val
 
-    async def mock_normalize_certificate(attr, val, config, context):
-        # Simulate adding certificate to config
+    async def mock_normalize_certificate(ctx, attr, val, config, norm_ctx):
         config['ix_certificates'][val] = {'name': f'cert-{val}'}
         return val
 
-    middleware['app.schema.normalize_ix_volume'] = mock_normalize_ix_volume
-    middleware['app.schema.normalize_certificate'] = mock_normalize_certificate
+    mock_vol.side_effect = mock_normalize_ix_volume
+    mock_cert.side_effect = mock_normalize_certificate
 
     complete_config = {
         'ix_volumes': {},
         'ix_certificates': {}
     }
-    context = {'actions': []}
+    normalization_context = {'actions': []}
 
-    result = await app_schema_obj.normalize_question(attr_schema, value, update, complete_config, context)
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_question(ctx, attr_schema, value, update, complete_config, normalization_context)
 
     # Check that the normalization was applied
     assert result == value

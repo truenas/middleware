@@ -6,28 +6,28 @@
 import logging
 from typing import Literal, TypeAlias, TypedDict
 
+from ixhardware import parse_dmi
+
 from middlewared.utils.scsi_generic import inquiry
 
-from ixhardware import parse_dmi
 from .constants import (
-    MINI_MODEL_BASE,
-    MINIR_MODEL_BASE,
-    SYSFS_SLOT_KEY,
-    MAPPED_SLOT_KEY,
-    SUPPORTS_IDENTIFY_KEY,
-    SUPPORTS_IDENTIFY_STATUS_KEY,
     DISK_FRONT_KEY,
+    DISK_INTERNAL_KEY,
     DISK_REAR_KEY,
     DISK_TOP_KEY,
-    DISK_INTERNAL_KEY,
     DRIVE_BAY_LIGHT_STATUS,
+    MAPPED_SLOT_KEY,
+    MINI_MODEL_BASE,
+    MINIR_MODEL_BASE,
+    SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY,
+    SYSFS_SLOT_KEY,
 )
-from .element_types import ELEMENT_TYPES, ELEMENT_DESC
+from .element_types import ELEMENT_DESC, ELEMENT_TYPES
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
-from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info
+from .sysfs_disks import map_disks_to_enclosure_slots
 from .utils import parse_model
-
 
 logger = logging.getLogger(__name__)
 
@@ -172,8 +172,14 @@ class Enclosure:
                 # M series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'ECStream_4IXGA-NTBp' | 'ECStream_4IXGA-NTBs':
-                # V series
+            case (
+                'ECStream_4IXGA-NTBp'
+                | 'ECStream_4IXGA-NTBs'
+                | 'ECStream_4IXGA-NTGp'
+                | 'ECStream_4IXGA-NTGs'
+            ):
+                # V series — NTB on the original board, NTG on the new
+                # 4IXGA_PEX89032 (X710) board. Same -p/-s convention.
                 self.model = dmi_model.value
                 self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':

@@ -1,10 +1,11 @@
 import asyncio
 
 from truenas_connect_utils.status import Status
+
 from middlewared.plugins.service_.services.base import SimpleService
-from middlewared.plugins.service_.services.dbus_router import system_dbus
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
+from middlewared.plugins.service_.services.dbus_router import system_dbus
 
 
 class PseudoServiceBase(ServiceInterface):
@@ -53,7 +54,7 @@ class HostnameService(PseudoServiceBase):
 
     async def reload(self):
         await self.middleware.call("etc.generate", "hostname")
-        await (await self.middleware.call("service.control", "RESTART", "mdns")).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RESTART", "discovery")).wait(raise_error=True)
 
 
 class HttpService(PseudoServiceBase):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable
-from typing import Any, Literal, TYPE_CHECKING, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound

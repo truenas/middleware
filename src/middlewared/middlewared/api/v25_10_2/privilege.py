@@ -1,5 +1,6 @@
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, SID
+from middlewared.api.base import SID, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 from middlewared.utils.security import STIGType
+
 from .group import GroupEntry
 
 __all__ = ["PrivilegeEntry", "PrivilegeRolesEntry",

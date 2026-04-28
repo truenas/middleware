@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import SystemAdvancedSerialPortChoicesArgs, SystemAdvancedSerialPortChoicesResult
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils import run
 
 

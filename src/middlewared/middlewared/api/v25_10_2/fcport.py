@@ -3,8 +3,8 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, excluded_field
-from .common import QueryArgs
 
+from .common import QueryArgs
 
 __all__ = [
     "FCPortEntry", "FCPortCreateArgs", "FCPortCreateResult", "FCPortUpdateArgs", "FCPortUpdateResult",

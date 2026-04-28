@@ -6,8 +6,8 @@
 from pathlib import Path
 from typing import Literal
 
-from middlewared.service import Service
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
+from middlewared.service import Service
 
 ZPOOL_CACHE_FILE_SAVED = f'{ZPOOL_CACHE_FILE}.saved'
 ZPOOL_CACHE_FILE_OVERWRITE = f'{ZPOOL_CACHE_FILE}.overwrite'

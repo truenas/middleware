@@ -1,11 +1,12 @@
 import errno
+from typing import Any
 
 from packaging.version import Version
 
 from middlewared.service import CallError
 
 
-def get_latest_version_from_app_versions(app_versions: dict) -> str:
+def get_latest_version_from_app_versions(app_versions: dict[str, dict[str, Any]]) -> str:
     if not app_versions:
         raise CallError('No versions found', errno=errno.ENOENT)
     elif all(not app_version['healthy'] for app_version in app_versions.values()):

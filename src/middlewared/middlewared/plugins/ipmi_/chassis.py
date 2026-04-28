@@ -1,4 +1,4 @@
-from subprocess import run, DEVNULL
+from subprocess import DEVNULL, run
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -7,7 +7,7 @@ from middlewared.api.current import (
     IpmiChassisInfoArgs,
     IpmiChassisInfoResult,
 )
-from middlewared.service import private, Service, ValidationError
+from middlewared.service import Service, ValidationError, private
 
 
 class IpmiChassisService(Service):

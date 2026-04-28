@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 import importlib
 import inspect
 import itertools
@@ -5,7 +6,6 @@ import logging
 import os
 import sys
 import types
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class LoadPluginsMixin:
         whitelist: list[str] | None = None,
         service_container: Any = None,
     ) -> None:
-        from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
+        from middlewared.service import ABSTRACT_SERVICES, CompoundService, Service
 
         services = []
         plugins_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'plugins'))

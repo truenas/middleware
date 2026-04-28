@@ -1,9 +1,17 @@
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (ISCSIPortalCreateArgs, ISCSIPortalCreateResult, ISCSIPortalDeleteArgs,
-                                     ISCSIPortalDeleteResult, ISCSIPortalEntry, ISCSIPortalListenIpChoicesArgs,
-                                     ISCSIPortalListenIpChoicesResult, ISCSIPortalUpdateArgs, ISCSIPortalUpdateResult)
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.api.current import (
+    ISCSIPortalCreateArgs,
+    ISCSIPortalCreateResult,
+    ISCSIPortalDeleteArgs,
+    ISCSIPortalDeleteResult,
+    ISCSIPortalEntry,
+    ISCSIPortalListenIpChoicesArgs,
+    ISCSIPortalListenIpChoicesResult,
+    ISCSIPortalUpdateArgs,
+    ISCSIPortalUpdateResult,
+)
+from middlewared.service import CRUDService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 def portal_summary(data):

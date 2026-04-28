@@ -7,7 +7,6 @@ from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
 from .netdata.graph_base import GraphBase
 
-
 # https://learn.netdata.cloud/docs/netdata-agent/configuration/optimizing-metrics-database/
 # change-how-long-netdata-stores-metrics
 TIER_0_POINT_SIZE = 1

@@ -1,4 +1,5 @@
 import typing
+from typing import Any
 
 import docker.errors
 
@@ -8,7 +9,7 @@ from .casing import convert_case_for_dict_or_list
 from .utils import get_docker_client
 
 
-def list_images() -> list[dict]:
+def list_images() -> list[dict[str, Any]]:
     with get_docker_client() as client:
         return [
             image for image in map(
@@ -18,9 +19,10 @@ def list_images() -> list[dict]:
 
 
 def pull_image(
-    image_tag: str, callback: typing.Callable = None, username: str | None = None, password: str | None = None,
+    image_tag: str, callback: typing.Callable[..., typing.Any] | None = None,
+    username: str | None = None, password: str | None = None,
     registry_uri: str | None = None,
-):
+) -> None:
     if username and not password:
         raise CallError('Password is required when username is provided')
 
@@ -43,7 +45,7 @@ def pull_image(
             raise CallError(f'Failed to pull {image_tag!r} image: {e!s}')
 
 
-def delete_image(image_id: str, force: bool = False):
+def delete_image(image_id: str, force: bool = False) -> None:
     with get_docker_client() as client:
         try:
             client.images.remove(image=image_id, force=force)

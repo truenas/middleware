@@ -5,7 +5,6 @@ from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args
 
-
 __all__ = [
     'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
     'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',

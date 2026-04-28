@@ -1,7 +1,7 @@
-import humanfriendly
 import re
 import types
 
+import humanfriendly
 
 DECIMAL_UNITS = types.MappingProxyType(
     {

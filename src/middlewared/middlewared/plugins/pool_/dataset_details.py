@@ -1,14 +1,15 @@
 import pathlib
 
+from truenas_os_pyutils.mount import statmount
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResult,
 )
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
-from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
+from middlewared.plugins.zfs_.utils import TNUserProp, zvol_path_to_name
 from middlewared.service import Service, private
-from truenas_os_pyutils.mount import statmount
 
 
 class PoolDatasetService(Service):
@@ -205,15 +206,15 @@ class PoolDatasetService(Service):
                 }
             )
 
-        for app in self.middleware.call_sync('app.query'):
+        for app in self.call_sync2(self.s.app.query):
             for path_config in filter(
-                lambda p: p.get('source', '').startswith('/mnt/') and not p['source'].startswith('/mnt/.ix-'),
-                app['active_workloads']['volumes']
+                lambda p: p.source.startswith('/mnt/') and not p.source.startswith('/mnt/.ix-'),
+                app.active_workloads.volumes
             ):
                 results['app'].append({
-                    'name': app['name'],
-                    'path': path_config['source'],
-                    'mount_info': self.get_mount_info(path_config['source']),
+                    'name': app.name,
+                    'path': path_config.source,
+                    'mount_info': self.get_mount_info(path_config.source),
                 })
 
         return results

@@ -1,14 +1,15 @@
 import contextlib
 import errno
-import os
 import logging
+import os
 import socket
 
 import requests
+from truenas_api_client import Client as TNClient
+from truenas_api_client import ClientException
+from truenas_api_client.utils import undefined
 
 from middlewared.service_exception import CallError
-from truenas_api_client import Client as TNClient, ClientException
-from truenas_api_client.utils import undefined
 
 from .pytest import fail
 

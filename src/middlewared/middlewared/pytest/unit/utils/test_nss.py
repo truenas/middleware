@@ -2,6 +2,7 @@ import grp as py_grp
 import pwd as py_pwd
 
 import pytest
+
 from middlewared.utils.nss import grp, pwd
 
 BAD_UIDS = [987654, -1]

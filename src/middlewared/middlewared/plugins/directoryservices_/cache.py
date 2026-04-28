@@ -1,29 +1,28 @@
-from middlewared.api import api_method
-from middlewared.api.base import BaseModel
-from middlewared.api.current import GroupEntry, UserEntry
-from pydantic import Field, model_validator
-from middlewared.service import Service, job
-from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils.directoryservices.constants import (
-    DSStatus, DSType
-)
-from middlewared.utils.nss.pwd import iterpw
-from middlewared.utils.nss.grp import itergrp
-from middlewared.utils.nss.nss_common import NssModule, NssError, NssReturnCode
-from middlewared.plugins.idmap_.idmap_constants import IDType
-from middlewared.plugins.idmap_.idmap_winbind import WBClient
-from .util_cache import (
-    DSCacheFill,
-    insert_cache_entry,
-    query_cache_entries,
-    retrieve_cache_entry,
-    check_cache_expired,
-    check_cache_version
-)
-
 from time import sleep
 from typing import Literal, Self
 
+from pydantic import Field, model_validator
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import GroupEntry, UserEntry
+from middlewared.plugins.idmap_.idmap_constants import IDType
+from middlewared.plugins.idmap_.idmap_winbind import WBClient
+from middlewared.service import Service, job
+from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.nss.grp import itergrp
+from middlewared.utils.nss.nss_common import NssError, NssModule, NssReturnCode
+from middlewared.utils.nss.pwd import iterpw
+
+from .util_cache import (
+    DSCacheFill,
+    check_cache_expired,
+    check_cache_version,
+    insert_cache_entry,
+    query_cache_entries,
+    retrieve_cache_entry,
+)
 
 dscache_idtype = Literal['USER', 'GROUP']
 

@@ -1,12 +1,16 @@
-from pydantic import ConfigDict, Field
 from typing import Annotated, Literal, TypeAlias
 
+from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
     single_argument_result,
 )
-
 
 __all__ = [
     'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',

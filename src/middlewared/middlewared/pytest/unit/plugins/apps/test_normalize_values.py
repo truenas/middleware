@@ -1,10 +1,13 @@
+import logging
+
 import pytest
 
-from middlewared.plugins.apps.schema_normalization import AppSchemaService
+from middlewared.plugins.apps.schema_normalization import normalize_values
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('dict_attrs, values, update, context, expected', [
+@pytest.mark.parametrize('dict_attrs, values, update, normalization_context, expected', [
     (
         # Empty questions list - just reserved names
         [],
@@ -61,13 +64,13 @@ from middlewared.pytest.unit.middleware import Middleware
     ),
 ])
 @pytest.mark.asyncio
-async def test_normalize_values(dict_attrs, values, update, context, expected):
-    middleware = Middleware()
-    app_schema_obj = AppSchemaService(middleware)
-    result = await app_schema_obj.normalize_values(
+async def test_normalize_values(dict_attrs, values, update, normalization_context, expected):
+    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    result = await normalize_values(
+        ctx,
         dict_attrs,
         values,
         update,
-        context
+        normalization_context
     )
     assert result == expected

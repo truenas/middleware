@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.service import ServiceChangeMixin
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class CertificateAttachmentDelegate:
@@ -6,7 +13,7 @@ class CertificateAttachmentDelegate:
     HUMAN_NAME: str
     NAMESPACE: str
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
 
     async def state(self, cert_id):

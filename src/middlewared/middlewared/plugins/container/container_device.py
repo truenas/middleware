@@ -4,20 +4,31 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerDeviceEntry, ContainerDeviceCreate, ContainerDeviceUpdate, ContainerDeviceDeleteOptions,
-    ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
-    ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
-    ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
-    ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoices, ContainerDeviceNicAttachChoicesResult,
-    ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult, USBPassthroughDevice,
-    ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
+    ContainerDeviceCreate,
+    ContainerDeviceCreateArgs,
+    ContainerDeviceCreateResult,
+    ContainerDeviceDeleteArgs,
+    ContainerDeviceDeleteOptions,
+    ContainerDeviceDeleteResult,
+    ContainerDeviceEntry,
+    ContainerDeviceGpuChoicesArgs,
+    ContainerDeviceGpuChoicesResult,
+    ContainerDeviceNicAttachChoices,
+    ContainerDeviceNicAttachChoicesArgs,
+    ContainerDeviceNicAttachChoicesResult,
+    ContainerDeviceUpdate,
+    ContainerDeviceUpdateArgs,
+    ContainerDeviceUpdateResult,
+    ContainerDeviceUsbChoicesArgs,
+    ContainerDeviceUsbChoicesResult,
+    USBPassthroughDevice,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.service import GenericCRUDService, private, ValidationErrors
+from middlewared.service import GenericCRUDService, ValidationErrors, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.types import AuditCallback
 
-from .container_device_choices import nic_attach_choices, usb_choices, gpu_choices
+from .container_device_choices import gpu_choices, nic_attach_choices, usb_choices
 from .container_device_crud import ContainerDeviceServicePart
 
 if TYPE_CHECKING:

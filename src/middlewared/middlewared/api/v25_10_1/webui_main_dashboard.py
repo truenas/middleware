@@ -4,7 +4,6 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, NonEmptyString
 
-
 __all__ = ["WebUIMainDashboardSysInfoArgs", "WebUIMainDashboardSysInfoResult",]
 
 

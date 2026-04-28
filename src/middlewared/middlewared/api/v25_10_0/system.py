@@ -4,7 +4,6 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, single_argument_result
 
-
 __all__ = [
     "SystemDebugArgs",
     "SystemDebugResult",

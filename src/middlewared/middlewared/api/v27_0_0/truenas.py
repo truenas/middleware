@@ -1,7 +1,8 @@
-from middlewared.api.base import BaseModel, LongString
+from typing import Any
+
+from middlewared.api.base import BaseModel, LongNonEmptyString, LongString
 
 from .support import SupportNewTicket
-
 
 __all__ = [
     'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
@@ -11,7 +12,9 @@ __all__ = [
     'TrueNASGetEulaArgs', 'TrueNASGetEulaResult',
     'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
     'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
-    'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult'
+    'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult',
+    'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
+    'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
 ]
 
 
@@ -88,3 +91,29 @@ class TrueNASSetProductionArgs(BaseModel):
 class TrueNASSetProductionResult(BaseModel):
     result: SupportNewTicket | None
     """Support ticket details if system was newly marked as production. `null` otherwise."""
+
+
+class TrueNASLicenseUploadOptions(BaseModel):
+    ha_propagate: bool = True
+    """Propagate to another HA system."""
+
+
+class TrueNASLicenseUploadArgs(BaseModel):
+    license: LongNonEmptyString
+    """PEM-wrapped license to apply to the system."""
+    options: TrueNASLicenseUploadOptions = TrueNASLicenseUploadOptions()
+    """Options."""
+
+
+class TrueNASLicenseUploadResult(BaseModel):
+    result: None
+    """Returns `null` on successful license upload."""
+
+
+class TrueNASLicenseInfoArgs(BaseModel):
+    pass
+
+
+class TrueNASLicenseInfoResult(BaseModel):
+    result: dict[str, Any] | None
+    """Parsed license JSON object, or `null` if no license file exists."""

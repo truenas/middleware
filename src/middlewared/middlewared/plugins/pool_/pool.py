@@ -1,24 +1,28 @@
+from datetime import datetime, timezone
 import errno
 import os
-from datetime import datetime, timezone
-
-import middlewared.sqlalchemy as sa
 
 from fenced.fence import ExitCode as FencedExitCodes
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
-    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
-    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+    PoolCreateArgs,
+    PoolCreateResult,
+    PoolEntry,
+    PoolUpdateArgs,
+    PoolUpdateResult,
+    PoolValidateNameArgs,
+    PoolValidateNameResult,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
-from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE
 
 
 class PoolPoolNormalizeInfo(PoolEntry):

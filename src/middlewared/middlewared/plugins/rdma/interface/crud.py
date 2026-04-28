@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Literal
 
 from truenas_pynetif.address.address import add_address, remove_address
-from truenas_pynetif.address.link import set_link_up, set_link_down, set_link_mtu
+from truenas_pynetif.address.link import set_link_down, set_link_mtu, set_link_up
 from truenas_pynetif.address.netlink import IFOperState, get_link, get_link_addresses
 from truenas_pynetif.netlink import AddressAlreadyExists, AddressDoesNotExist, DeviceNotFound, netlink_route
 
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPvAnyAddress
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, IPvAnyAddress, excluded_field
 from middlewared.service import CallError, CRUDService
 import middlewared.sqlalchemy as sa
 

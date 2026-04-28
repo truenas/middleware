@@ -4,15 +4,17 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    LXCConfigBridgeChoicesArgs,
+    LXCConfigBridgeChoicesResult,
     LXCConfigEntry,
-    LXCConfigUpdateArgs, LXCConfigUpdateResult, LXCConfigUpdate,
-    LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult,
+    LXCConfigUpdate,
+    LXCConfigUpdateArgs,
+    LXCConfigUpdateResult,
 )
 from middlewared.service import GenericConfigService
 
 from .bridge import bridge_choices
 from .lxc_config import LXCConfigServicePart
-
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

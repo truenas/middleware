@@ -1,5 +1,5 @@
-from middlewared.service import private, Service
 from middlewared.plugins.nfs import NFSProtocol
+from middlewared.service import Service, private
 
 
 class NFSService(Service):

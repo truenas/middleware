@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import subprocess
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.service_exception import CallError
 from middlewared.utils import run

@@ -8,7 +8,7 @@ from truenas_pynetif.address.address import add_address, remove_address, replace
 from truenas_pynetif.address.constants import AddressFamily, IFFlags
 from truenas_pynetif.address.get_ipaddresses import get_link_addresses
 from truenas_pynetif.address.link import set_link_alias, set_link_mtu, set_link_up
-from truenas_pynetif.ethtool import DeviceNotFound, get_ethtool, OperationNotSupported
+from truenas_pynetif.ethtool import DeviceNotFound, OperationNotSupported, get_ethtool
 from truenas_pynetif.netlink import AddressDoesNotExist, AddressInfo, LinkInfo
 
 from middlewared.plugins.interface.dhcp import dhcp_leases, dhcp_status, dhcp_stop
@@ -71,7 +71,12 @@ def configure_addresses_impl(
         for addr in get_link_addresses(sock, index=link_index)
         if addr.family != AddressFamily.LINK
     }
-    addrs_database = set()
+    # Order matters: when multiple IPv4s share a subnet, the kernel marks the
+    # FIRST added as primary and pins the subnet's connected-route src to it
+    # (which drives default-gateway source selection). Use a dict (insertion-
+    # ordered) as an ordered set so the add path below is deterministic --
+    # iterating a regular set does not guarantee order.
+    addrs_database: dict[AddressInfo, None] = {}
 
     # Check DHCP status
     status = dhcp_status(name)
@@ -81,7 +86,7 @@ def configure_addresses_impl(
     elif status.running and data["int_dhcp"]:
         lease = dhcp_leases(name)
         if lease and lease.ip_address and lease.subnet_mask:
-            addrs_database.add(
+            addrs_database.setdefault(
                 _alias_to_addr(
                     {
                         "address": lease.ip_address,
@@ -94,7 +99,7 @@ def configure_addresses_impl(
 
     # Add primary address from database
     if data[addr_key] and not data["int_dhcp"]:
-        addrs_database.add(
+        addrs_database.setdefault(
             _alias_to_addr(
                 {
                     "address": data[addr_key],
@@ -107,12 +112,12 @@ def configure_addresses_impl(
     vip = data.get("int_vip", "")
     if vip:
         netmask = "32" if data["int_version"] == 4 else "128"
-        addrs_database.add(_alias_to_addr({"address": vip, "netmask": netmask}))
+        addrs_database.setdefault(_alias_to_addr({"address": vip, "netmask": netmask}))
 
     # Add alias addresses
     alias_vips = []
     for alias in aliases:
-        addrs_database.add(
+        addrs_database.setdefault(
             _alias_to_addr(
                 {
                     "address": alias[alias_key],
@@ -124,7 +129,7 @@ def configure_addresses_impl(
             alias_vip = alias["alias_vip"]
             alias_vips.append(alias_vip)
             netmask = "32" if alias["alias_version"] == 4 else "128"
-            addrs_database.add(
+            addrs_database.setdefault(
                 _alias_to_addr({"address": alias_vip, "netmask": netmask})
             )
 
@@ -171,8 +176,12 @@ def configure_addresses_impl(
     autoconf = "1" if has_ipv6 else "0"
     ctx.call_sync2(ctx.s.tunable.set_sysctl, f"net.ipv6.conf.{name}.autoconf", autoconf)
 
-    # Add addresses in database but not configured
-    for addr in addrs_database - addrs_configured:
+    # Add addresses in database but not configured. Iterate the dict in
+    # insertion order so int_address is added first and becomes the kernel
+    # primary for its subnet (see comment at the addrs_database declaration).
+    for addr in addrs_database:
+        if addr in addrs_configured:
+            continue
         address = addr.address
         if address == vip or address in alias_vips:
             continue

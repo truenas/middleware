@@ -4,22 +4,25 @@ import functools
 import os
 import re
 import shutil
+from socket import AF_INET6
 import typing
 
 from truenas_pylibvirt.utils import kvm_supported
 from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
 
-from socket import AF_INET6
-
 from middlewared.api.current import (
-    VMDisplayDevice, VMDisplayWebURIOptions, VMDisplayDeviceInfo, VMGetDisplayWebUri,
-    VMVirtualizationDetails, VMFlags, VMPortWizard,
+    VMDisplayDevice,
+    VMDisplayDeviceInfo,
+    VMDisplayWebURIOptions,
+    VMFlags,
+    VMGetDisplayWebUri,
+    VMPortWizard,
+    VMVirtualizationDetails,
 )
 from middlewared.service import ServiceContext
 from middlewared.utils import run
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
-
 
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -89,8 +92,7 @@ def supports_virtualization() -> bool:
 async def license_active(context: ServiceContext) -> bool:
     can_run_vms = True
     if await context.middleware.call('system.is_ha_capable'):
-        license_ = await context.middleware.call('system.license')
-        can_run_vms = license_ is not None and 'VM' in license_['features']
+        can_run_vms = await context.middleware.call('system.feature_enabled', 'VM')
 
     return can_run_vms
 

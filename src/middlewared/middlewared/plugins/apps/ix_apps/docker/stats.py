@@ -1,11 +1,12 @@
 from collections import defaultdict
+from typing import Any
 
 import requests
 
-from .utils import get_docker_client, PROJECT_KEY
+from .utils import PROJECT_KEY, get_docker_client
 
 
-def get_default_stats():
+def get_default_stats() -> defaultdict[str, dict[str, Any]]:
     return defaultdict(lambda: {
         'cpu_usage': 0,
         'memory': 0,
@@ -14,7 +15,7 @@ def get_default_stats():
     })
 
 
-def list_resources_stats_by_project(project_name: str | None = None) -> dict:
+def list_resources_stats_by_project(project_name: str | None = None) -> dict[str, dict[str, Any]]:
     retries = 2
     while retries > 0:
         # We do this because when an app is being stopped, we can run into a race condition
@@ -27,9 +28,10 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict:
             retries -= 1
             if retries == 0:
                 raise
+    raise RuntimeError("unreachable")
 
 
-def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict:
+def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict[str, dict[str, Any]]:
     projects = get_default_stats()
     with get_docker_client() as client:
         label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}

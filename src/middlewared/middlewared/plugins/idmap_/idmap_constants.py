@@ -1,4 +1,5 @@
 import enum
+
 import wbclient
 
 # Base datastore `id` value for entries that are returned as user.query and

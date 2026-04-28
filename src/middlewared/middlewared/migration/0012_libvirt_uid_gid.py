@@ -3,8 +3,7 @@ from __future__ import annotations
 import os
 import typing
 
-from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
-
+from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware

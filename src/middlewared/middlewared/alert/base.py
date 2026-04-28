@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-from typing import Any, Self, TypeAlias, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Self, TypeAlias
 
 import html2text
 

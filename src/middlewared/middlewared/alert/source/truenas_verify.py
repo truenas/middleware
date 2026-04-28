@@ -3,7 +3,7 @@ from datetime import timedelta
 import subprocess
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.security import system_security_config_to_stig_type
 

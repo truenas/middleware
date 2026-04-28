@@ -1,39 +1,36 @@
-import enum
-import os
-
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+import enum
 from itertools import batched
-
-from middlewared.utils.directoryservices.constants import (
-    DSType
-)
-from middlewared.job import Job
-from middlewared.utils.filter_list import filter_list
-from middlewared.utils.nss import pwd, grp
-from middlewared.utils.nss.nss_common import NssModule
-from middlewared.utils.time_utils import utc_now
-from middlewared.plugins.idmap_ import idmap_winbind, idmap_sss
-from middlewared.plugins.idmap_.idmap_constants import (
-    BASE_SYNTHETIC_DATASTORE_ID,
-    IDType,
-    MAX_REQUEST_LENGTH,
-    SID_BUILTIN_PREFIX,
-    SID_LOCAL_USER_PREFIX,
-    SID_LOCAL_GROUP_PREFIX,
-)
-from middlewared.utils.tdb import (
-    get_tdb_handle,
-    TDBBatchAction,
-    TDBBatchOperation,
-    TDBPathType,
-    TDBDataType,
-    TDBHandle,
-    TDBOptions
-)
+import os
 from threading import Lock
 from uuid import uuid4
+
+from middlewared.job import Job
+from middlewared.plugins.idmap_ import idmap_sss, idmap_winbind
+from middlewared.plugins.idmap_.idmap_constants import (
+    BASE_SYNTHETIC_DATASTORE_ID,
+    MAX_REQUEST_LENGTH,
+    SID_BUILTIN_PREFIX,
+    SID_LOCAL_GROUP_PREFIX,
+    SID_LOCAL_USER_PREFIX,
+    IDType,
+)
+from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.filter_list import filter_list
+from middlewared.utils.nss import grp, pwd
+from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.tdb import (
+    TDBBatchAction,
+    TDBBatchOperation,
+    TDBDataType,
+    TDBHandle,
+    TDBOptions,
+    TDBPathType,
+    get_tdb_handle,
+)
+from middlewared.utils.time_utils import utc_now
 
 # Update progress of job every nth user / group, we expect possibly hundreds to
 # a few thousand users and groups, but some edge cases where they number in

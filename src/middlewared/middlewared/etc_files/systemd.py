@@ -1,7 +1,8 @@
 import json
 
-from middlewared.plugins.service_.services.dbus_router import system_dbus
 from truenas_os_pyutils.io import atomic_write
+
+from middlewared.plugins.service_.services.dbus_router import system_dbus
 
 
 async def render(service, middleware):
@@ -11,6 +12,7 @@ async def render(service, middleware):
             services_enabled[unit] = service["enable"]
 
     licensed = await middleware.call('failover.licensed')
+    lio_enabled = await middleware.call('iscsi.global.lio_enabled')
 
     for unit, enable in services_enabled.items():
         state = await system_dbus.get_unit_file_state(unit)
@@ -21,7 +23,7 @@ async def render(service, middleware):
             continue
 
         is_enabled = state == "enabled"
-        if unit == "scst" and licensed:
+        if unit == "scst" and (licensed or lio_enabled):
             enable = False
 
         if enable != is_enabled:

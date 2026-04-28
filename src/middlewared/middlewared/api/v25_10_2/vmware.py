@@ -3,7 +3,12 @@ from typing import Literal
 from pydantic import Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args, single_argument_result,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
 __all__ = [
