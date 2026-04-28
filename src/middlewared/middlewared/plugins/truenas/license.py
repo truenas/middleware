@@ -40,7 +40,7 @@ class TrueNASLicenseService(Service):
         """Upload a PEM-wrapped license file."""
         had_license = self.info_private() is not None
 
-        with upload_license(license_) as lic:
+        with upload_license(str(license_)) as lic:
             if not lic.valid:
                 raise ValidationError("license", f"Invalid license: {lic.error}")
 
