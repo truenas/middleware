@@ -211,6 +211,10 @@ class ISCSIGlobalService(SystemServiceService):
 
         await self._update_service(old, new, options={'ha_propagate': False})
 
+        if old['mode'] != new['mode']:
+            # Re-evaluate scst.service enabled/disabled state for the new mode
+            await self.middleware.call('etc.generate', 'rc')
+
         if old['direct_config'] != new['direct_config']:
             await self.middleware.call('etc.generate', 'scst_direct')
             if licensed:
