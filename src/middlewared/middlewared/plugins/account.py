@@ -255,11 +255,11 @@ class UserService(CRUDService):
         groups = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'name', 'roles']})
 
         user_api_keys = defaultdict(list)
-        for key in await self.middleware.call('api_key.query'):
-            if not key['local']:
+        for key in await self.call2(self.s.api_key.query):
+            if not key.local:
                 continue
 
-            user_api_keys[key['username']].append(key['id'])
+            user_api_keys[key.username].append(key.id)
 
         sec = await self.middleware.call('system.security.config')
         if sec['enable_gpos_stig']:

@@ -32,7 +32,7 @@ def convert_keys(username, keys) -> UserKeyringEntry:
 
 
 def render(service, middleware, render_ctx):
-    api_keys = render_ctx['api_key.query']
+    api_keys = [k.model_dump(context={'expose_secrets': True}) for k in render_ctx['api_key.query']]
     entries = {}
     keyring_entries = []
     for key in api_keys:

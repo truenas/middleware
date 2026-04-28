@@ -5,9 +5,11 @@
 
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
     truenas_admin_string = ''
-    legacy_users = filter_list(render_ctx['api_key.query'], [
-        ['user_identifier', '=', LEGACY_API_KEY_USERNAME]
-    ], {'select': ['username']})
+    legacy_users = filter_list(
+        [k.model_dump(context={'expose_secrets': True}) for k in render_ctx['api_key.query']],
+        [['user_identifier', '=', LEGACY_API_KEY_USERNAME]],
+        {'select': ['username']},
+    )
 
     if legacy_users:
         truenas_admin_string = f'truenas_admin={legacy_users[0]["username"]}'
