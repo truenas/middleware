@@ -2,13 +2,13 @@ import collections
 import contextlib
 import errno
 import random
-import pytest
 import string
+
+import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
-
 
 USER_FIXTURE_TUPLE = collections.namedtuple('UserFixture', 'username password group_name')
 

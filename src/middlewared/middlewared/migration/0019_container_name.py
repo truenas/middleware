@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import typing
 
-
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 

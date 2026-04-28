@@ -5,7 +5,6 @@ from middlewared.service_exception import ValidationErrors
 from .delegate import DeviceDelegate
 from .utils import _extract_identity, device_uniqueness_check
 
-
 USB_CONTROLLER_CHOICES = [
     'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1',
     'vt82c686b-uhci', 'pci-ohci', 'nec-xhci', 'qemu-xhci',

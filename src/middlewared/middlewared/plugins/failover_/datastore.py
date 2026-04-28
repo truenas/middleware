@@ -8,11 +8,11 @@ import os
 import time
 
 from middlewared.alert.source.failover_sync import FailoverSyncFailedAlert
-from middlewared.service import Service
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import thread_pool
-from middlewared.utils.threading import start_daemon_thread, set_thread_name
+from middlewared.service import Service
 from middlewared.utils import db as db_utils
+from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
 FREENAS_DATABASE_REPLICATED = f'{FREENAS_DATABASE}.replicated'
 RAISE_ALERT_SYNC_RETRY_TIME = 1200  # 20mins (some platforms take 15-20mins to reboot)

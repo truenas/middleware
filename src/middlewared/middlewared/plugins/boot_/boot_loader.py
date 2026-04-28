@@ -2,9 +2,10 @@ import os
 import shutil
 import tempfile
 
+from truenas_os_pyutils.mount import umount
+
 from middlewared.service import Service, private
 from middlewared.utils import run
-from truenas_os_pyutils.mount import umount
 
 
 class BootService(Service):

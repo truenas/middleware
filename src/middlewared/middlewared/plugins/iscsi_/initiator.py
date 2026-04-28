@@ -1,4 +1,3 @@
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     iSCSITargetAuthorizedInitiatorCreateArgs,
@@ -10,6 +9,7 @@ from middlewared.api.current import (
     iSCSITargetAuthorizedInitiatorUpdateResult,
 )
 from middlewared.service import CRUDService, private
+import middlewared.sqlalchemy as sa
 
 
 def initiator_summary(data):

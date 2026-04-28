@@ -4,44 +4,95 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppAvailableSpaceArgs, AppAvailableSpaceResult,
-    AppCertificateChoices, AppCertificateChoicesArgs, AppCertificateChoicesResult,
-    AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult, AppContainerIDOptions,
-    AppContainerIdsArgs, AppContainerIdsResult, AppContainerResponse,
-    AppCreate, AppDelete, AppUpdate,
-    AppEntry, AppGPUResponse, AppGpuChoicesArgs, AppGpuChoicesResult,
-    AppIpChoices, AppIpChoicesArgs, AppIpChoicesResult,
-    AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult,
-    AppPullImages, AppPullImagesArgs, AppPullImagesResult,
-    AppRedeployArgs, AppRedeployResult,
-    AppStartArgs, AppStartResult,
-    AppStopArgs, AppStopResult,
-    AppUsedHostIpsArgs, AppUsedHostIpsResult, AppUsedPortsArgs, AppUsedPortsResult,
-    AppConvertToCustomArgs, AppConvertToCustomResult,
-    AppConfigArgs, AppConfigResult,
-    AppCreateArgs, AppCreateResult,
-    AppUpdateArgs, AppUpdateResult,
-    AppDeleteArgs, AppDeleteResult,
+    AppAvailableItem,
+    AppAvailableSpaceArgs,
+    AppAvailableSpaceResult,
+    AppBulkUpgradeJobResult,
+    AppCategoriesArgs,
+    AppCategoriesResult,
+    AppCertificateChoices,
+    AppCertificateChoicesArgs,
+    AppCertificateChoicesResult,
+    AppConfigArgs,
+    AppConfigResult,
+    AppContainerConsoleChoicesArgs,
+    AppContainerConsoleChoicesResult,
+    AppContainerIDOptions,
+    AppContainerIdsArgs,
+    AppContainerIdsResult,
+    AppContainerResponse,
+    AppConvertToCustomArgs,
+    AppConvertToCustomResult,
+    AppCreate,
+    AppCreateArgs,
+    AppCreateResult,
+    AppDelete,
+    AppDeleteArgs,
+    AppDeleteResult,
+    AppEntry,
+    AppGpuChoicesArgs,
+    AppGpuChoicesResult,
+    AppGPUResponse,
+    AppIpChoices,
+    AppIpChoicesArgs,
+    AppIpChoicesResult,
+    AppLatestItem,
+    AppOutdatedDockerImagesArgs,
+    AppOutdatedDockerImagesResult,
+    AppPullImages,
+    AppPullImagesArgs,
+    AppPullImagesResult,
+    AppRedeployArgs,
+    AppRedeployResult,
+    AppRollbackArgs,
+    AppRollbackOptions,
+    AppRollbackResult,
+    AppRollbackVersionsArgs,
+    AppRollbackVersionsResult,
+    AppSimilarArgs,
+    AppSimilarResult,
+    AppStartArgs,
+    AppStartResult,
+    AppStopArgs,
+    AppStopResult,
+    AppUpdate,
+    AppUpdateArgs,
+    AppUpdateResult,
+    AppUpgradeArgs,
+    AppUpgradeBulkArgs,
+    AppUpgradeBulkEntry,
+    AppUpgradeBulkResult,
+    AppUpgradeOptions,
+    AppUpgradeResult,
+    AppUpgradeSummary,
+    AppUpgradeSummaryArgs,
+    AppUpgradeSummaryOptions,
+    AppUpgradeSummaryResult,
+    AppUsedHostIpsArgs,
+    AppUsedHostIpsResult,
+    AppUsedPortsArgs,
+    AppUsedPortsResult,
     QueryOptions,
-    AppUpgradeOptions, AppUpgradeArgs, AppUpgradeResult,
-    AppUpgradeBulkArgs, AppUpgradeBulkResult, AppUpgradeBulkEntry, AppBulkUpgradeJobResult,
-    AppUpgradeSummaryArgs, AppUpgradeSummaryResult, AppUpgradeSummaryOptions, AppUpgradeSummary,
-    AppRollbackArgs, AppRollbackResult, AppRollbackOptions,
-    AppRollbackVersionsArgs, AppRollbackVersionsResult,
-    AppCategoriesArgs, AppCategoriesResult,
-    AppLatestItem, AppAvailableItem,
-    AppSimilarArgs, AppSimilarResult,
 )
 from middlewared.plugins.app_registry import AppRegistryService
 from middlewared.service import GenericCRUDService, filterable_api_method, job, private
 
 from .app_scale import redeploy_app, start_app, stop_app
 from .available_apps_info import (
-    available, categories, similar, latest,
+    available,
+    categories,
+    latest,
+    similar,
 )
 from .crud import (
-    get_instance as get_app_instance, query_apps, get_app_config,
-    create_app, update_app, delete_app,
+    create_app,
+    delete_app,
+    get_app_config,
+    query_apps,
+    update_app,
+)
+from .crud import (
+    get_instance as get_app_instance,
 )
 from .custom_app_ops import convert_to_custom_app
 from .events import process_event
@@ -51,15 +102,27 @@ from .logs import AppContainerLogsFollowTailEventSource
 from .metadata import app_metadata_generate
 from .pull_images import outdated_docker_images_for_app, pull_images_for_app
 from .resources import (
-    container_ids, container_console_choices, certificate_choices, used_ports, used_host_ips, ip_choices,
-    available_space, gpu_choices, gpu_choices_internal, get_app_volume_ds,
+    available_space,
+    certificate_choices,
+    container_console_choices,
+    container_ids,
+    get_app_volume_ds,
+    gpu_choices,
+    gpu_choices_internal,
+    ip_choices,
+    used_host_ips,
+    used_ports,
 )
-from .rollback import rollback_versions, rollback
+from .rollback import rollback, rollback_versions
 from .stats import AppStatsEventSource
 from .upgrade import (
-    upgrade_impl, upgrade_app, upgrade_bulk, upgrade_summary, clear_upgrade_alerts_for_all, update_app_upgrade_alert
+    clear_upgrade_alerts_for_all,
+    update_app_upgrade_alert,
+    upgrade_app,
+    upgrade_bulk,
+    upgrade_impl,
+    upgrade_summary,
 )
-
 
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App

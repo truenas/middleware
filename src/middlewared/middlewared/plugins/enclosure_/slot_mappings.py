@@ -5,13 +5,13 @@
 
 from .constants import (
     DISK_FRONT_KEY,
-    DISK_TOP_KEY,
-    DISK_REAR_KEY,
     DISK_INTERNAL_KEY,
-    SYSFS_SLOT_KEY,
+    DISK_REAR_KEY,
+    DISK_TOP_KEY,
     MAPPED_SLOT_KEY,
     SUPPORTS_IDENTIFY_KEY,
-    SUPPORTS_IDENTIFY_STATUS_KEY
+    SUPPORTS_IDENTIFY_STATUS_KEY,
+    SYSFS_SLOT_KEY,
 )
 from .enums import ControllerModels, JbodModels, JbofModels
 

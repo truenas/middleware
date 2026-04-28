@@ -7,7 +7,6 @@ from middlewared.utils import run
 
 from .utils import alerts_mapping
 
-
 LOGGED_ERRORS: list[str] = []
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')

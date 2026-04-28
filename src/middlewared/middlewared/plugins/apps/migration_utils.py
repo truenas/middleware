@@ -1,11 +1,10 @@
 import os
 from typing import Any
 
-import yaml
-
 from apps_validation.json_schema_utils import APP_CONFIG_MIGRATIONS_SCHEMA
-from jsonschema import validate, ValidationError
+from jsonschema import ValidationError, validate
 from packaging.version import Version
+import yaml
 
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
 from middlewared.utils.yaml import safe_yaml_load

@@ -5,12 +5,15 @@
 from truenas_pynetif.address.constants import IFOperState
 from truenas_pynetif.address.netlink import get_links, netlink_route
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    FailoverDisabledReasonsArgs, FailoverDisabledReasonsResult, FailoverDisabledReasonsChangedEvent,
+    FailoverDisabledReasonsArgs,
+    FailoverDisabledReasonsChangedEvent,
+    FailoverDisabledReasonsResult,
 )
 from middlewared.service import Service, private
 from middlewared.utils.zfs import query_imported_fast_impl
+
 from .enums import DisabledReasonsEnum
 
 

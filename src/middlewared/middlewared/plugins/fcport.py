@@ -1,22 +1,29 @@
-import os
-import subprocess
 from collections import defaultdict
+import os
 from pathlib import Path
+import subprocess
 from typing import Literal
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    FCPortPortChoicesArgs, FCPortPortChoicesResult,
-    FCPortCreateArgs, FCPortCreateResult,
-    FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry,
-    FCPortStatusArgs, FCPortStatusResult,
-    FCPortUpdateArgs, FCPortUpdateResult,
+    FCPortCreateArgs,
+    FCPortCreateResult,
+    FCPortDeleteArgs,
+    FCPortDeleteResult,
+    FCPortEntry,
+    FCPortPortChoicesArgs,
+    FCPortPortChoicesResult,
+    FCPortStatusArgs,
+    FCPortStatusResult,
+    FCPortUpdateArgs,
+    FCPortUpdateResult,
 )
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
+import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+
 from .fc.utils import naa_to_int, str_to_naa, wwn_as_colon_hex, wwpn_to_vport_naa
 
 VPORT_SEP_CHAR = '/'

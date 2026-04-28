@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import IPvAnyAddress, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
     "RDMAInterfaceEntry",

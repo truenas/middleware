@@ -3,9 +3,9 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field
-from .common import QueryFilters, QueryOptions
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
+from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "AuditEntry", "AuditDownloadReportArgs", "AuditDownloadReportResult", "AuditQueryArgs", "AuditQueryResult",

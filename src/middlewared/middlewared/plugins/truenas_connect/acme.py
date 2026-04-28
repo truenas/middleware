@@ -1,6 +1,6 @@
+from datetime import datetime, timezone
 import logging
 import uuid
-from datetime import datetime, timezone
 
 from truenas_acme_utils.ari import fetch_renewal_info
 from truenas_connect_utils.acme import acme_config, create_cert
@@ -9,10 +9,9 @@ from truenas_connect_utils.status import Status
 from truenas_crypto_utils.read import get_cert_id
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
-from middlewared.service import CallError, job, Service
+from middlewared.service import CallError, Service, job
 
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
-
 
 logger = logging.getLogger('truenas_connect')
 

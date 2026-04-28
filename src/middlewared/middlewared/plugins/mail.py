@@ -17,13 +17,26 @@ from threading import Lock
 import html2text
 
 from middlewared.api import api_method
-from middlewared.api.current import (MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult,
-                                     MailLocalAdministratorEmailArgs, MailLocalAdministratorEmailResult)
+from middlewared.api.current import (
+    MailEntry,
+    MailLocalAdministratorEmailArgs,
+    MailLocalAdministratorEmailResult,
+    MailSendArgs,
+    MailSendResult,
+    MailUpdateArgs,
+    MailUpdateResult,
+)
 from middlewared.service import (
-    CallError, ConfigService, NetworkActivityDisabled, ValidationErrors, job, periodic, private,
+    CallError,
+    ConfigService,
+    NetworkActivityDisabled,
+    ValidationErrors,
+    job,
+    periodic,
+    private,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import ProductName, BRAND
+from middlewared.utils import BRAND, ProductName
 from middlewared.utils.mako import get_template
 
 

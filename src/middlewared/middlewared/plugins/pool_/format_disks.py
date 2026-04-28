@@ -1,4 +1,4 @@
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.asyncio_ import asyncio_map
 

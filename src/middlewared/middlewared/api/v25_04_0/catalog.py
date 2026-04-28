@@ -2,8 +2,7 @@ from datetime import datetime
 
 from pydantic import ConfigDict, Field, RootModel
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args, LongString
-
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString, single_argument_args
 
 __all__ = [
     'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',

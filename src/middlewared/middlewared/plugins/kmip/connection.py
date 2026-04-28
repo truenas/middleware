@@ -11,8 +11,8 @@ from kmip.pie.client import ProxyKmipClient
 from kmip.pie.exceptions import ClientConnectionFailure, ClientConnectionNotOpen, KmipOperationFailure
 from kmip.pie.objects import SecretData
 
-from middlewared.utils.crypto import ssl_uuid4
 from middlewared.service import CallError
+from middlewared.utils.crypto import ssl_uuid4
 
 
 class KMIPServerMixin:

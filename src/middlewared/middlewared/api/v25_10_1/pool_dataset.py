@@ -3,14 +3,19 @@ from typing import Annotated, Any, Literal, Union
 from pydantic import BeforeValidator, ConfigDict, Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result, ForUpdateMetaclass, Excluded,
-    excluded_field
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    NotRequired,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 
 from .common import QueryFilters, QueryOptions
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
-
 
 __all__ = [
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",

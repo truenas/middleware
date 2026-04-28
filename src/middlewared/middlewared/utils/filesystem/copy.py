@@ -1,15 +1,20 @@
 # Various utilities related to copying / cloning files and file tree
 # test coverage provided by pytest/unit/utils/test_copytree.py
 
-import enum
-import os
-
 from collections.abc import Callable
 from dataclasses import dataclass
+import enum
 from errno import EXDEV
-from middlewared.job import Job
-from os import open as posix_open
+import os
 from os import (
+    O_CREAT,
+    O_DIRECTORY,
+    O_EXCL,
+    O_NOFOLLOW,
+    O_RDONLY,
+    O_RDWR,
+    O_TRUNC,
+    SEEK_CUR,
     close,
     copy_file_range,
     fchmod,
@@ -27,22 +32,18 @@ from os import (
     stat_result,
     symlink,
     utime,
-    O_CREAT,
-    O_DIRECTORY,
-    O_EXCL,
-    O_NOFOLLOW,
-    O_RDONLY,
-    O_RDWR,
-    O_TRUNC,
-    SEEK_CUR,
 )
+from os import open as posix_open
 from shutil import copyfileobj
 from stat import S_IMODE
+
+from middlewared.job import Job
+
 from .acl import ACCESS_ACL_XATTRS, ACL_XATTRS
 from .directory import (
-    dirent_struct,
     DirectoryIterator,
     DirectoryRequestMask,
+    dirent_struct,
 )
 from .stat_x import StatxEtype
 from .utils import path_in_ctldir

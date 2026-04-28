@@ -6,7 +6,6 @@ from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_a
 
 from .catalog import CatalogAppInfo
 
-
 __all__ = [
     'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
     'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',

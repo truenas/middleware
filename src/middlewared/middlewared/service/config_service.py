@@ -1,7 +1,7 @@
 import asyncio
 from typing import Annotated
 
-from pydantic import create_model, Field
+from pydantic import Field, create_model
 
 from middlewared.api import api_method
 from middlewared.api.base.model import BaseModel
@@ -10,7 +10,6 @@ from .base import ServiceBase
 from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
-
 
 get_or_insert_lock = asyncio.Lock()
 

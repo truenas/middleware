@@ -4,7 +4,6 @@ import subprocess
 
 from middlewared.service import ServiceContext
 
-
 RE_MACHINE_TYPE_CHOICES = re.compile(r'^\s*(?!none\s)(\S+)(?=\s{2,})', flags=re.M)
 
 

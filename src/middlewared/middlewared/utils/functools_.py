@@ -5,7 +5,7 @@ import functools
 import threading
 from typing import Any, Callable, overload
 
-from middlewared.utils.lang import undefined, Undefined
+from middlewared.utils.lang import Undefined, undefined
 
 
 @overload

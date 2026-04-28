@@ -6,6 +6,7 @@ import typing
 from middlewared.api.current import UpdateProfileChoice
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
+
 from .trains import get_manifest_file, get_train_releases
 
 if typing.TYPE_CHECKING:

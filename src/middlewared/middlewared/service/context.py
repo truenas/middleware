@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger
-from typing import Any, Callable, Coroutine, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
 from middlewared.utils.service.call_mixin import CallMixin
 

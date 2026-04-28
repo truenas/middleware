@@ -1,25 +1,30 @@
-import errno
-import os
-import uuid
-
 from collections import defaultdict
 from datetime import datetime
+import errno
+import os
 from pathlib import Path
+import uuid
 
 from truenas_pylibzfs import ZFSError, ZFSException
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
+    PoolDatasetLockArgs,
+    PoolDatasetLockResult,
+    PoolDatasetUnlockArgs,
+    PoolDatasetUnlockResult,
 )
 from middlewared.plugins.zfs.encryption import load_key
-from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.service import CallError, Service, ValidationErrors, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filesystem.directory import directory_is_empty
 
 from .utils import (
-    dataset_mountpoint, dataset_can_be_mounted, encryption_root_children, retrieve_keys_from_file,
     ZFSKeyFormat,
+    dataset_can_be_mounted,
+    dataset_mountpoint,
+    encryption_root_children,
+    retrieve_keys_from_file,
 )
 
 

@@ -3,7 +3,6 @@ from truenas_pymdns.server.config import ServiceConfig, generate_service_config
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils.mdns import ip_addresses_to_interface_names
 
-
 # Time Machine (adisk) TXT records:
 #   sys=adVF=0x100   -- required when _adisk._tcp is advertised; without it
 #                       the macOS client only sees the Time Machine share.

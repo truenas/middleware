@@ -6,6 +6,7 @@ import os
 import typing
 
 from apps_schema.features import FEATURES
+
 from middlewared.service import CallError, ServiceContext
 
 from .apps_util import min_max_scale_version_check_update_impl

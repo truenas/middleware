@@ -7,7 +7,6 @@ from truenas_pynetif.address.netlink import get_default_route, netlink_route
 
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
-
 IFACE_LINK_STATE_MAX_WAIT: int = 60
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 

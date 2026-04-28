@@ -1,6 +1,5 @@
 from truenas_crypto_utils.key import export_private_key
 
-
 # Cert locations
 CERT_ROOT_PATH = '/etc/certificates'
 DEFAULT_CERT_NAME = 'truenas_default'

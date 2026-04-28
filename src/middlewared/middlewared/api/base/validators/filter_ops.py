@@ -1,6 +1,6 @@
+from collections.abc import Container
 import operator
 import re
-from collections.abc import Container
 from types import MappingProxyType
 
 

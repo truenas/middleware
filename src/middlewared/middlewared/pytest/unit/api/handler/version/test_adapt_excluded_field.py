@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, NotRequired
+from middlewared.api.base import BaseModel, Excluded, NotRequired, excluded_field
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 
 from .utils import TestModelProvider

@@ -4,10 +4,11 @@ import errno
 import os
 from typing import Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import TunableCreate, TunableEntry, TunableUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
+
 from .utils import (
     generate_sysctl,
     get_sysctl,

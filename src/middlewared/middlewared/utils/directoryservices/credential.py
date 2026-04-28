@@ -1,26 +1,32 @@
 import errno
+import subprocess
+from time import sleep
+
 import gssapi
 import ldap
-import subprocess
 
-from time import sleep
 from middlewared.service_exception import CallError, ValidationErrors
+
 from .ad import get_domain_info
 from .constants import DSCredType, DSType
 from .krb5 import (
-    gss_get_current_cred,
     gss_acquire_cred_principal,
     gss_acquire_cred_user,
     gss_dump_cred,
-    ktutil_list_impl,
+    gss_get_current_cred,
     kdc_saf_cache_set,
+    ktutil_list_impl,
 )
 from .krb5_conf import KRB5Conf
 from .krb5_constants import (
-    krb5ccache, KRB_Keytab, MAX_TIME_OFFSET, PERSISTENT_KEYRING_PREFIX, KRB_LibDefaults,
     KRB_TKT_CHECK_INTERVAL,
+    MAX_TIME_OFFSET,
+    PERSISTENT_KEYRING_PREFIX,
+    KRB_Keytab,
+    KRB_LibDefaults,
+    krb5ccache,
 )
-from .krb5_error import KRB5Error, KRB5ErrCode
+from .krb5_error import KRB5ErrCode, KRB5Error
 from .ldap_client import LdapClient
 
 

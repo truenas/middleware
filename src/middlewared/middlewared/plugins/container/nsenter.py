@@ -1,6 +1,5 @@
 from middlewared.service import CallError, ServiceContext
 
-
 # Extracted from man capabilities(7)
 CAPABILITIES = frozenset([
     'chown', 'dac_override', 'dac_read_search', 'fowner', 'fsetid', 'kill', 'setgid', 'setuid', 'setpcap',

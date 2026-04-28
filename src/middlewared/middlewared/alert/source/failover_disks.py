@@ -4,10 +4,9 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
-
 from typing import Any
 
-from middlewared.alert.base import AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.utils import ProductType
 
 TITLE = 'Disks Missing On '

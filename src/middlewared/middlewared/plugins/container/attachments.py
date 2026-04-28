@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os.path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ContainerStopOptions
 from middlewared.common.attachment import FSAttachmentDelegate

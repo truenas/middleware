@@ -1,5 +1,6 @@
-import pytest
 from typing import Literal
+
+import pytest
 
 from middlewared.api.current import UserCreateArgs, UserEntry
 from middlewared.plugins.account import UserService

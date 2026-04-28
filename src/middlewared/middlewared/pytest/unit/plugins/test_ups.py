@@ -1,9 +1,8 @@
+from unittest.mock import mock_open, patch
+
 import pytest
 
-from unittest.mock import patch, mock_open
-
 from middlewared.plugins.ups.utils import driver_choices, normalize_driver_string
-
 
 ALL_TEST_DRIVERS = {'victronups', 'genericups', 'blazer_usb', 'tripplite_usb'}
 

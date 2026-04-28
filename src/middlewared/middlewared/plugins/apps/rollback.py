@@ -13,7 +13,6 @@ from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
 from .resources import get_app_volume_ds
 from .schema_normalization import normalize_and_validate_values
 
-
 if TYPE_CHECKING:
     from middlewared.job import Job
 

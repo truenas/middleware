@@ -4,7 +4,13 @@ import logging
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, Alert, AlertLevel, AlertSource, OneShotAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    OneShotAlertClass,
 )
 from middlewared.alert.schedule import IntervalSchedule
 

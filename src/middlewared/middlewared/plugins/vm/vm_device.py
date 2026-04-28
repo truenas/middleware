@@ -4,46 +4,84 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    USBPassthroughDevice, USBPassthroughInfo,
-    VMDeviceCreate, VMDeviceConvert, VMDeviceDeleteOptions, VMDeviceEntry, VMDeviceUpdate,
-    VMDevicePassthroughDevice, VMDevicePassthroughInfo, VMDeviceVirtualSize,
-    VMDeviceCreateArgs, VMDeviceCreateResult,
-    VMDeviceUpdateArgs, VMDeviceUpdateResult,
-    VMDeviceDeleteArgs, VMDeviceDeleteResult,
-    VMDeviceConvertArgs, VMDeviceConvertResult,
-    VMDeviceVirtualSizeArgs, VMDeviceVirtualSizeResult,
-    VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
-    VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult,
-    VMDeviceIommuEnabledArgs, VMDeviceIommuEnabledResult,
-    VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, VMDeviceIotypeChoices,
-    VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult, VMDeviceNicAttachChoices,
-    VMDevicePassthroughDeviceArgs, VMDevicePassthroughDeviceResult,
-    VMDevicePassthroughDeviceChoicesArgs, VMDevicePassthroughDeviceChoicesResult,
-    VMDeviceUsbControllerChoicesArgs, VMDeviceUsbControllerChoicesResult,
-    VMDeviceUsbPassthroughDeviceArgs, VMDeviceUsbPassthroughDeviceResult,
-    VMDeviceUsbPassthroughChoicesArgs, VMDeviceUsbPassthroughChoicesResult,
+    USBPassthroughDevice,
+    USBPassthroughInfo,
+    VMDeviceBindChoicesArgs,
+    VMDeviceBindChoicesResult,
+    VMDeviceConvert,
+    VMDeviceConvertArgs,
+    VMDeviceConvertResult,
+    VMDeviceCreate,
+    VMDeviceCreateArgs,
+    VMDeviceCreateResult,
+    VMDeviceDeleteArgs,
+    VMDeviceDeleteOptions,
+    VMDeviceDeleteResult,
+    VMDeviceDiskChoicesArgs,
+    VMDeviceDiskChoicesResult,
+    VMDeviceEntry,
+    VMDeviceIommuEnabledArgs,
+    VMDeviceIommuEnabledResult,
+    VMDeviceIotypeChoices,
+    VMDeviceIotypeChoicesArgs,
+    VMDeviceIotypeChoicesResult,
+    VMDeviceNicAttachChoices,
+    VMDeviceNicAttachChoicesArgs,
+    VMDeviceNicAttachChoicesResult,
+    VMDevicePassthroughDevice,
+    VMDevicePassthroughDeviceArgs,
+    VMDevicePassthroughDeviceChoicesArgs,
+    VMDevicePassthroughDeviceChoicesResult,
+    VMDevicePassthroughDeviceResult,
+    VMDevicePassthroughInfo,
+    VMDeviceUpdate,
+    VMDeviceUpdateArgs,
+    VMDeviceUpdateResult,
+    VMDeviceUsbControllerChoicesArgs,
+    VMDeviceUsbControllerChoicesResult,
+    VMDeviceUsbPassthroughChoicesArgs,
+    VMDeviceUsbPassthroughChoicesResult,
+    VMDeviceUsbPassthroughDeviceArgs,
+    VMDeviceUsbPassthroughDeviceResult,
+    VMDeviceVirtualSize,
+    VMDeviceVirtualSizeArgs,
+    VMDeviceVirtualSizeResult,
 )
 from middlewared.job import Job
-from middlewared.service import GenericCRUDService, job, private, ValidationErrors
+from middlewared.service import GenericCRUDService, ValidationErrors, job, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 
 from .vm_device_convert import convert_disk, virtual_size_impl
-from .vm_device_pci import (
-    iommu_enabled as _iommu_enabled,
-    passthrough_device as _passthrough_device,
-    passthrough_device_choices as _passthrough_device_choices,
-)
 from .vm_device_crud import VMDeviceServicePart, validate_display_devices
-from .vm_device_usb import (
-    usb_controller_choices as _usb_controller_choices,
-    usb_passthrough_device as _usb_passthrough_device,
-    usb_passthrough_choices as _usb_passthrough_choices,
+from .vm_device_info import (
+    bind_choices as _bind_choices,
 )
 from .vm_device_info import (
     disk_choices as _disk_choices,
+)
+from .vm_device_info import (
     iotype_choices as _iotype_choices,
+)
+from .vm_device_info import (
     nic_attach_choices as _nic_attach_choices,
-    bind_choices as _bind_choices,
+)
+from .vm_device_pci import (
+    iommu_enabled as _iommu_enabled,
+)
+from .vm_device_pci import (
+    passthrough_device as _passthrough_device,
+)
+from .vm_device_pci import (
+    passthrough_device_choices as _passthrough_device_choices,
+)
+from .vm_device_usb import (
+    usb_controller_choices as _usb_controller_choices,
+)
+from .vm_device_usb import (
+    usb_passthrough_choices as _usb_passthrough_choices,
+)
+from .vm_device_usb import (
+    usb_passthrough_device as _usb_passthrough_device,
 )
 from .vm_device_utils import validate_path_field
 

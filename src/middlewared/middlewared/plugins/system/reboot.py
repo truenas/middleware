@@ -1,9 +1,8 @@
 import enum
 
-from middlewared.api import api_method, Event
-from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoResult, SystemRebootInfoChangedEvent
-from middlewared.service import private, Service
-
+from middlewared.api import Event, api_method
+from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoChangedEvent, SystemRebootInfoResult
+from middlewared.service import Service, private
 
 CACHE_KEY = 'reboot_reasons'
 

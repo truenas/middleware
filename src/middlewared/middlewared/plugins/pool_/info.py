@@ -1,15 +1,23 @@
 import errno
 
+from truenas_pylibzfs import ZFSError, ZFSException
+
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
-    PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult,
+    PoolAttachmentsArgs,
+    PoolAttachmentsResult,
+    PoolFilesystemChoicesArgs,
+    PoolFilesystemChoicesResult,
+    PoolGetDisksArgs,
+    PoolGetDisksResult,
+    PoolIsUpgradedArgs,
+    PoolIsUpgradedResult,
+    PoolProcessesArgs,
+    PoolProcessesResult,
     ZFSResourceQuery,
 )
-from middlewared.service import private, Service, ValidationError
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
-
-from truenas_pylibzfs import ZFSException, ZFSError
+from middlewared.service import Service, ValidationError, private
 
 
 class PoolService(Service):

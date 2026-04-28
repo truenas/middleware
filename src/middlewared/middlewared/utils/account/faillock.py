@@ -35,7 +35,6 @@
 
 from truenas_pam_faillog import PamFaillog
 
-
 try:
     pam_log = PamFaillog()
 except Exception:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import Any, Literal, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from middlewared.api.current import AppsIxVolumeEntry, QueryOptions, ZFSResourceQuery
 from middlewared.service import ServiceContext
@@ -9,7 +9,6 @@ from middlewared.utils.filter_list import filter_list
 
 from .ix_apps.path import get_app_mounts_ds
 from .utils import to_entries
-
 
 if TYPE_CHECKING:
     class _QueryGetOptions(QueryOptions):

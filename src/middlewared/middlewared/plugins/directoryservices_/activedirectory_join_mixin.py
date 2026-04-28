@@ -1,37 +1,33 @@
 import os
 import subprocess
+from time import sleep, time
+
 import wbclient
 
 from middlewared.job import Job
 from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils.directoryservices.ad import (
-    get_domain_info,
-    lookup_dc
-)
-from middlewared.utils.directoryservices.ad_constants import (
-    MAX_KERBEROS_START_TRIES
-)
+from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
+from middlewared.utils.directoryservices.ad_constants import MAX_KERBEROS_START_TRIES
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
-from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DSCredType, DSType
 from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.krb5 import (
     gss_dump_cred,
     gss_get_current_cred,
-    kerberos_ticket,
     kdc_saf_cache_get,
+    kerberos_ticket,
 )
 from middlewared.utils.directoryservices.krb5_constants import (
-    krb5ccache,
-    KRB_Keytab,
     SAMBA_KEYTAB_DIR,
+    KRB_Keytab,
+    krb5ccache,
 )
 from middlewared.utils.directoryservices.krb5_error import (
-    KRB5Error,
     KRB5ErrCode,
+    KRB5Error,
 )
-from middlewared.utils.netbios import validate_netbios_name, NETBIOSNAME_MAX_LEN
-from time import sleep, time
+from middlewared.utils.netbios import NETBIOSNAME_MAX_LEN, validate_netbios_name
 
 
 class ADJoinMixin:

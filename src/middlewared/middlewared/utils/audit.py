@@ -1,7 +1,4 @@
-from middlewared.auth import (
-    SessionManagerCredentials,
-    TruenasNodeSessionManagerCredentials
-)
+from middlewared.auth import SessionManagerCredentials, TruenasNodeSessionManagerCredentials
 
 # Special values start with dot to ensure they cannot collide with local usernames
 # created via APIs

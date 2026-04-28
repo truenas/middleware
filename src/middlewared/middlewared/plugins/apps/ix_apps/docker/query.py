@@ -1,10 +1,10 @@
-import docker.errors
-
 from collections import defaultdict
 from itertools import chain, repeat
 from typing import Any
 
-from .utils import get_docker_client, PROJECT_KEY
+import docker.errors
+
+from .utils import PROJECT_KEY, get_docker_client
 
 
 def list_resources_by_project(project_name: str | None = None) -> dict[str, dict[str, list[Any]]]:

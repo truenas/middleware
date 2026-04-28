@@ -1,23 +1,24 @@
 # Utilities for generating the smb.conf file based on various TrueNAS settings
 
-import os
 import enum
-
 from logging import getLogger
+import os
+
 import truenas_pyfilter as _tf
+
+from middlewared.plugins.account import DEFAULT_HOME_PATH
+from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE, SMBEncryption, SMBPath
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
+from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
+from middlewared.plugins.smb_.utils import get_share_name
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.smb import SMBSharePurpose, SearchProtocol, TRUESEARCH_ES_PATH
-from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
-from middlewared.plugins.smb_.constants import SMBShareField as share_field
-from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
-from middlewared.plugins.smb_.utils import get_share_name
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.utils.smb import TRUESEARCH_ES_PATH, SearchProtocol, SMBSharePurpose
 
 _GUESTOK_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]])
 _FSRVP_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]])

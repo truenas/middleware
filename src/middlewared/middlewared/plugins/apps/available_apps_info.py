@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Literal, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from middlewared.api.current import (
-    AppLatestItem, AppAvailableItem, CatalogApps, QueryOptions,
+    AppAvailableItem,
+    AppLatestItem,
+    CatalogApps,
+    QueryOptions,
 )
 from middlewared.plugins.catalog.apps_details import CATEGORIES_SET
 from middlewared.plugins.catalog.sync import sync_state
@@ -12,7 +15,6 @@ from middlewared.service import InstanceNotFound, ServiceContext
 from middlewared.utils.filter_list import filter_list
 
 from .utils import to_entries
-
 
 if TYPE_CHECKING:
     class _QueryGetOptions(QueryOptions):

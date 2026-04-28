@@ -4,13 +4,14 @@ from typing import IO, Any, TypeVar, cast
 
 from middlewared.api.base import BaseModel
 from middlewared.api.current import AppEntry, AppUpgradeSummary
+from middlewared.plugins.docker.state_utils import (
+    IX_APPS_MOUNT_PATH as IX_APPS_MOUNT_PATH,
+)
 from middlewared.plugins.docker.state_utils import (  # noqa: F401,I250
     DatasetDefaults as DatasetDefaults,
-    IX_APPS_MOUNT_PATH as IX_APPS_MOUNT_PATH,
 )
 
 from .ix_apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: F401,I250
-
 
 T = TypeVar('T', bound=BaseModel)
 UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'

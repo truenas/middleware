@@ -1,4 +1,5 @@
 from middlewared.utils.cpu import cpu_info
+
 from .utils import safely_retrieve_dimension
 
 

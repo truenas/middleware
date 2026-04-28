@@ -7,7 +7,8 @@ from typing import Any
 import uuid
 
 from pydantic import Secret
-from pyVim import connect, task as VimTask
+from pyVim import connect
+from pyVim import task as VimTask
 from pyVmomi import vim, vmodl
 
 from middlewared.alert.source.vmware_login import VMWareLoginFailedAlert
@@ -15,16 +16,22 @@ from middlewared.alert.source.vmware_snapshot import VMWareSnapshotCreateFailedA
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
+    VMWareCreateArgs,
+    VMWareCreateResult,
+    VMWareDatasetHasVmsArgs,
+    VMWareDatasetHasVmsResult,
+    VMWareDeleteArgs,
+    VMWareDeleteResult,
     VMWareEntry,
-    VMWareCreateArgs, VMWareCreateResult,
-    VMWareUpdateArgs, VMWareUpdateResult,
-    VMWareDeleteArgs, VMWareDeleteResult,
-    VMWareGetDatastoresArgs, VMWareGetDatastoresResult,
-    VMWareMatchDatastoresWithDatasetsArgs, VMWareMatchDatastoresWithDatasetsResult,
-    VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult,
+    VMWareGetDatastoresArgs,
+    VMWareGetDatastoresResult,
+    VMWareMatchDatastoresWithDatasetsArgs,
+    VMWareMatchDatastoresWithDatasetsResult,
+    VMWareUpdateArgs,
+    VMWareUpdateResult,
 )
 from middlewared.async_validators import resolve_hostname
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.time_utils import utc_now
 from middlewared.utils.zfs import query_imported_fast_impl

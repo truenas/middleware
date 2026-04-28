@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import aiohttp
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import aiohttp
 
 from middlewared.alert.source.catalogs import CatalogSyncFailedAlert
 from middlewared.api.current import CatalogApps
@@ -12,7 +13,7 @@ from middlewared.utils.network import check_internet_connectivity
 from .apps_details import retrieve_recommended_apps
 from .features import get_feature_map
 from .git_utils import pull_clone_repository
-from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
+from .utils import OFFICIAL_CATALOG_BRANCH, OFFICIAL_CATALOG_REPO, OFFICIAL_LABEL
 
 if TYPE_CHECKING:
     from middlewared.job import Job

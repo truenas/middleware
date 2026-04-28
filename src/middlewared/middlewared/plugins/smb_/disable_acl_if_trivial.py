@@ -1,4 +1,4 @@
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 
 class SMBService(Service):

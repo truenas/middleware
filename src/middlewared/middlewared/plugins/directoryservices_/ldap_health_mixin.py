@@ -1,13 +1,10 @@
 import ldap
 
+from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DSType
 from middlewared.utils.directoryservices.credential import dsconfig_to_ldap_client_config
-from middlewared.utils.directoryservices.health import (
-    LDAPHealthCheckFailReason,
-    LDAPHealthError
-)
+from middlewared.utils.directoryservices.health import LDAPHealthCheckFailReason, LDAPHealthError
 from middlewared.utils.directoryservices.ldap_client import LdapClient
-from middlewared.service_exception import CallError
 
 
 class LDAPHealthMixin:

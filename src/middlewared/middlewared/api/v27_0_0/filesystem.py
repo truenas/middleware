@@ -1,19 +1,22 @@
+from typing import Any, Literal, Self
+
+from pydantic import Field, model_validator
+
 from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     UnixPerm,
+    query_result,
     single_argument_args,
     single_argument_result,
-    query_result
 )
-from pydantic import Field, model_validator
-from typing import Any, Literal, Self
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
 )
 from middlewared.utils.filesystem.stat_x import (
     StatxEtype,
 )
+
 from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
 

@@ -1,13 +1,13 @@
 import base64
 import contextlib
-import pyotp
 
-import middlewared.sqlalchemy as sa
+import pyotp
 
 from middlewared.api import api_method
 from middlewared.api.current import TwoFactorAuthEntry, TwoFactorAuthUpdateArgs, TwoFactorAuthUpdateResult
 from middlewared.service import CallError, ConfigService, periodic, private
 from middlewared.service_exception import ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 
 

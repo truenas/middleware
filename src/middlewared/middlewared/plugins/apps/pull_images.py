@@ -9,7 +9,6 @@ from middlewared.service import ServiceContext
 from .compose_utils import compose_action
 from .crud import get_instance
 
-
 if TYPE_CHECKING:
     from middlewared.job import Job
 

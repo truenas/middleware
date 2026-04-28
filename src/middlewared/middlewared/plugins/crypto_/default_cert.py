@@ -1,6 +1,6 @@
 from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
 

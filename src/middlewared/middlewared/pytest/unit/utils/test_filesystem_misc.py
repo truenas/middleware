@@ -1,7 +1,6 @@
 import pytest
 
-from middlewared.utils.filesystem import acl
-from middlewared.utils.filesystem import attrs
+from middlewared.utils.filesystem import acl, attrs
 
 
 @pytest.mark.parametrize('xattr_list,expected', [

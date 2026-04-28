@@ -6,14 +6,24 @@ from pydantic import Field
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
-    BootGetDisksArgs, BootGetDisksResult, BootAttachArgs, BootAttachResult, BootDetachArgs,
-    BootDetachResult, BootReplaceArgs, BootReplaceResult, BootScrubArgs, BootScrubResult,
-    BootSetScrubIntervalArgs, BootSetScrubIntervalResult, BootGetStateArgs, BootGetStateResult
+    BootAttachArgs,
+    BootAttachResult,
+    BootDetachArgs,
+    BootDetachResult,
+    BootGetDisksArgs,
+    BootGetDisksResult,
+    BootGetStateArgs,
+    BootGetStateResult,
+    BootReplaceArgs,
+    BootReplaceResult,
+    BootScrubArgs,
+    BootScrubResult,
+    BootSetScrubIntervalArgs,
+    BootSetScrubIntervalResult,
 )
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import run, BOOT_POOL_NAME_VALID
+from middlewared.utils import BOOT_POOL_NAME_VALID, run
 from middlewared.utils.disks import valid_zfs_partition_uuids
-
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = BOOT_POOL_DISKS = None

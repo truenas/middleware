@@ -1,10 +1,14 @@
 from unittest.mock import patch
 
 from middlewared.plugins.reporting.realtime_reporting import (
-    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats
+    get_arc_stats,
+    get_cpu_stats,
+    get_disk_stats,
+    get_interface_stats,
+    get_memory_info,
+    get_pool_stats,
 )
 from middlewared.plugins.reporting.realtime_reporting.utils import normalize_value, safely_retrieve_dimension
-
 
 NETDATA_ALL_METRICS = {
     'cputemp.temperatures': {

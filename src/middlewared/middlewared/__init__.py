@@ -7,8 +7,8 @@
 # alone does the job)
 
 import os
-from .fake_env import setup_fake_middleware_env
 
+from .fake_env import setup_fake_middleware_env
 
 if os.environ.get("FAKE_ENV"):
     setup_fake_middleware_env()

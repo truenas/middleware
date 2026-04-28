@@ -1,9 +1,11 @@
 from middlewared.alert.source.smb import SMBUserMissingHashAlert
 from middlewared.api.current import UserEntry
-from middlewared.service import filterable_api_method, Service, job, private
+from middlewared.service import Service, filterable_api_method, job, private
 from middlewared.utils.sid import get_domain_rid
+
 from .util_account_policy import sync_account_policy
 from .util_passdb import (
+    PassdbMustReinit,
     add_version_info,
     delete_passdb_entry,
     insert_passdb_entries,
@@ -11,7 +13,6 @@ from .util_passdb import (
     reinit_passdb,
     update_passdb_entry,
     user_entry_to_passdb_entry,
-    PassdbMustReinit
 )
 
 

@@ -1,7 +1,11 @@
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClassConfig, AlertCategory, AlertLevel, NonDataclassAlertClass, OneShotAlertClass,
+    AlertCategory,
+    AlertClassConfig,
+    AlertLevel,
+    NonDataclassAlertClass,
+    OneShotAlertClass,
 )
 
 

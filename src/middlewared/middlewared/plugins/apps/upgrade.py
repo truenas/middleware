@@ -5,16 +5,25 @@ import logging
 import os
 import subprocess
 import tempfile
-import yaml
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 from packaging.version import InvalidVersion, Version
+import yaml
 
 from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api.current import (
-    AppEntry, AppPullImages, QueryOptions,
-    AppUpgradeSummary, AppVersionInfo,
-    ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery, CatalogAppVersionDetails,
-    AppBulkUpgradeJobResult, AppUpgradeOptions, AppUpgradeSummaryOptions, AppUpgradeBulkEntry,
+    AppBulkUpgradeJobResult,
+    AppEntry,
+    AppPullImages,
+    AppUpgradeBulkEntry,
+    AppUpgradeOptions,
+    AppUpgradeSummary,
+    AppUpgradeSummaryOptions,
+    AppVersionInfo,
+    CatalogAppVersionDetails,
+    QueryOptions,
+    ZFSResourceSnapshotCreateQuery,
+    ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, ServiceContext, ValidationErrors
@@ -28,11 +37,10 @@ from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .pull_images import pull_images_internal
-from .resources import get_hostpaths_datasets, get_app_volume_ds
+from .resources import get_app_volume_ds, get_hostpaths_datasets
 from .schema_normalization import normalize_and_validate_values
-from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name, upgrade_summary_info
-
+from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
     from middlewared.job import Job

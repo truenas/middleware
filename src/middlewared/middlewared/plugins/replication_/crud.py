@@ -1,6 +1,5 @@
 from middlewared.api import api_method
 from middlewared.api.current import ReplicationRestoreArgs, ReplicationRestoreResult
-
 from middlewared.service import Service
 
 

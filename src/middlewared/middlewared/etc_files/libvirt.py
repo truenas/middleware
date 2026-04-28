@@ -2,7 +2,6 @@ import os
 
 from middlewared.utils.io import write_if_changed
 
-
 LIBVIRTD_CONF_PATH = '/etc/libvirt/libvirtd.conf'
 
 

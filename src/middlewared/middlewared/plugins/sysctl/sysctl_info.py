@@ -3,7 +3,7 @@ import os
 from truenas_pylibzfs import kstat
 
 from middlewared.service import CallError, Service
-from middlewared.utils import run, MIDDLEWARE_RUN_DIR
+from middlewared.utils import MIDDLEWARE_RUN_DIR, run
 
 ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
 DEFAULT_ARC_MAX_FILE = f'{MIDDLEWARE_RUN_DIR}/default_arc_max'

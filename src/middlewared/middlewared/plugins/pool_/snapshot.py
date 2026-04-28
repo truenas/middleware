@@ -3,33 +3,33 @@ from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotEntry,
     PoolSnapshotCloneArgs,
     PoolSnapshotCloneResult,
     PoolSnapshotCreateArgs,
     PoolSnapshotCreateResult,
     PoolSnapshotDeleteArgs,
     PoolSnapshotDeleteResult,
+    PoolSnapshotEntry,
     PoolSnapshotHoldArgs,
     PoolSnapshotHoldResult,
     PoolSnapshotReleaseArgs,
     PoolSnapshotReleaseResult,
+    PoolSnapshotRenameArgs,
+    PoolSnapshotRenameResult,
     PoolSnapshotRollbackArgs,
     PoolSnapshotRollbackResult,
     PoolSnapshotUpdateArgs,
     PoolSnapshotUpdateResult,
-    PoolSnapshotRenameArgs,
-    PoolSnapshotRenameResult,
     ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotDestroyQuery,
     ZFSResourceSnapshotHoldQuery,
+    ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotRollbackQuery,
-    ZFSResourceSnapshotQuery,
 )
-from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
 from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from middlewared.service import CRUDService, InstanceNotFound, ValidationError, filterable_api_method
 from middlewared.utils.filter_list import filter_list
 
 

@@ -1,7 +1,7 @@
 import jsonschema
 import pytest
 
-from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec, SYSTEM_DATASET_JSON_SCHEMA
+from middlewared.plugins.system_dataset.hierarchy import SYSTEM_DATASET_JSON_SCHEMA, get_system_dataset_spec
 
 
 @pytest.mark.parametrize('pool_name,uuid', [

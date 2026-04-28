@@ -1,6 +1,5 @@
 from middlewared.api import api_method
 from middlewared.api.current import ReplicationConfigEntry, ReplicationConfigUpdateArgs, ReplicationConfigUpdateResult
-
 from middlewared.service import ConfigService
 import middlewared.sqlalchemy as sa
 

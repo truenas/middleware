@@ -2,7 +2,7 @@ import datetime
 
 from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
 
-from middlewared.service import job, periodic, private, Service
+from middlewared.service import Service, job, periodic, private
 from middlewared.utils.time_utils import utc_now
 
 

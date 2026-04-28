@@ -1,17 +1,18 @@
 import ipaddress
 import typing
 
-from middlewared.api import api_method
-from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
-from middlewared.plugins.network_.route_sync import sync_impl as route_sync_impl
-from middlewared.service import ValidationError, Service, filterable_api_method, private
-from middlewared.utils.filter_list import filter_list
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import (
     get_addresses,
     get_routes,
     netlink_route,
 )
+
+from middlewared.api import api_method
+from middlewared.api.current import RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult, RouteSystemRoutesItem
+from middlewared.plugins.network_.route_sync import sync_impl as route_sync_impl
+from middlewared.service import Service, ValidationError, filterable_api_method, private
+from middlewared.utils.filter_list import filter_list
 
 
 class RouteService(Service):

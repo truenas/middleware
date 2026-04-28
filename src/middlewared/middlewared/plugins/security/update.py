@@ -1,21 +1,19 @@
 import subprocess
 
 from middlewared.api import api_method
-from middlewared.api.current import (
-    SystemSecurityEntry, SystemSecurityUpdateArgs, SystemSecurityUpdateResult
-)
+from middlewared.api.current import SystemSecurityEntry, SystemSecurityUpdateArgs, SystemSecurityUpdateResult
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import ConfigService, ValidationError, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.io import set_io_uring_enabled
 from middlewared.utils.security import (
-    GPOS_STIG_MIN_PASSWORD_AGE,
-    GPOS_STIG_MAX_PASSWORD_AGE,
-    GPOS_STIG_PASSWORD_COMPLEXITY,
-    GPOS_STIG_PASSWORD_REUSE_LIMIT,
-    GPOS_STIG_PASSWORD_LENGTH,
     ENTERPRISE_OPTIONS,
+    GPOS_STIG_MAX_PASSWORD_AGE,
+    GPOS_STIG_MIN_PASSWORD_AGE,
+    GPOS_STIG_PASSWORD_COMPLEXITY,
+    GPOS_STIG_PASSWORD_LENGTH,
+    GPOS_STIG_PASSWORD_REUSE_LIMIT,
 )
 
 

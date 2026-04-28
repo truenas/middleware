@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Self, TypeAlias
 
-from truenas_pylibzfs import property_sets, ZFSProperty, ZFSType
+from truenas_pylibzfs import ZFSProperty, ZFSType, property_sets
 
 __all__ = ("build_set_of_zfs_props", "build_set_of_zfs_snapshot_props", "DeterminedProperties")
 

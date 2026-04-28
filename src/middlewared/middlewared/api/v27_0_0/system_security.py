@@ -1,16 +1,9 @@
 from typing import Annotated, Literal
 
-from pydantic import PositiveInt, Field
+from pydantic import Field, PositiveInt
 
-from middlewared.api.base import (
-    BaseModel,
-    Excluded,
-    excluded_field,
-    ForUpdateMetaclass,
-    single_argument_args
-)
-from middlewared.utils.security import PasswordComplexity, MAX_PASSWORD_HISTORY
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.utils.security import MAX_PASSWORD_HISTORY, PasswordComplexity
 
 __all__ = [
     'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',

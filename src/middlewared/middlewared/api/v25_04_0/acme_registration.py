@@ -2,7 +2,6 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, LongString, single_argument_args
 
-
 __all__ = [
     'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'ACMERegistrationEntry',
 ]

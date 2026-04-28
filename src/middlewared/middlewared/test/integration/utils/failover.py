@@ -7,7 +7,7 @@ try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
     from auto_config import ha as ha_enabled
-    from functions import async_SSH_start, async_SSH_done
+    from functions import async_SSH_done, async_SSH_start
 except ImportError:
     ha_enabled = False
 

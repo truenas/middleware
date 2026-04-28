@@ -4,7 +4,6 @@ from truenas_pylibvirt.utils.usb import find_usb_device_by_ids
 
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 
-
 ACTIVE_STATES = ('RUNNING', 'SUSPENDED')
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'

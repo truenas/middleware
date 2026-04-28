@@ -3,8 +3,14 @@ from typing import Annotated, Literal
 from pydantic import Field, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize,
-    IscsiExtentRPM, IscsiExtentType, NonEmptyString, excluded_field
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IscsiExtentBlockSize,
+    IscsiExtentRPM,
+    IscsiExtentType,
+    NonEmptyString,
+    excluded_field,
 )
 
 __all__ = [

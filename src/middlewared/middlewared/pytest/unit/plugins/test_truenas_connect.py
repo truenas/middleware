@@ -1,10 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from middlewared.service import ValidationErrors
-from middlewared.plugins.truenas_connect.update import TrueNASConnectService
+import pytest
+
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
+from middlewared.plugins.truenas_connect.update import TrueNASConnectService
 from middlewared.plugins.truenas_connect.utils import TNC_IPS_CACHE_KEY
+from middlewared.service import ValidationErrors
 
 
 @pytest.fixture

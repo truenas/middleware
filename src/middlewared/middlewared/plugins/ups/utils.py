@@ -1,7 +1,7 @@
 import csv
 import functools
-import io
 import glob
+import io
 import os
 import re
 
@@ -14,7 +14,6 @@ from middlewared.alert.source.ups import (
     UPSReplbattAlert,
 )
 from middlewared.utils.serial import serial_port_choices
-
 
 RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
 UPS_POWERDOWN_FLAG_FILE = '/etc/killpower'

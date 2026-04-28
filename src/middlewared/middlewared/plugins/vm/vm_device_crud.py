@@ -1,19 +1,24 @@
 from __future__ import annotations
 
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
-    QueryOptions, VMDeviceCreate, VMDeviceDeleteOptions, VMDeviceEntry, VMDeviceUpdate,
-    VMDiskDevice, VMRAWDevice, ZFSResourceQuery,
+    QueryOptions,
+    VMDeviceCreate,
+    VMDeviceDeleteOptions,
+    VMDeviceEntry,
+    VMDeviceUpdate,
+    VMDiskDevice,
+    VMRAWDevice,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
-
 
 if TYPE_CHECKING:
     from middlewared.utils.libvirt.device_factory import DeviceFactory

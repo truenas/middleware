@@ -1,4 +1,5 @@
 from typing import Any
+
 from . import ldap_constants
 
 

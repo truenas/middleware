@@ -1,21 +1,23 @@
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    InitShutdownScriptEntry,
     InitShutdownScriptCreate,
-    InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult,
+    InitShutdownScriptCreateArgs,
+    InitShutdownScriptCreateResult,
+    InitShutdownScriptDeleteArgs,
+    InitShutdownScriptDeleteResult,
+    InitShutdownScriptEntry,
     InitShutdownScriptUpdate,
-    InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult,
-    InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult,
+    InitShutdownScriptUpdateArgs,
+    InitShutdownScriptUpdateResult,
 )
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import InitShutdownScriptServicePart
-from .task import execute_init_tasks, WHEN_ARG
-
+from .task import WHEN_ARG, execute_init_tasks
 
 if TYPE_CHECKING:
     from middlewared.job import Job

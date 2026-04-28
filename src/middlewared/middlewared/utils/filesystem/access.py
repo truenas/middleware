@@ -4,7 +4,7 @@ import pathlib
 from typing import Any
 
 from middlewared.service_exception import CallError
-from middlewared.utils.nss import pwd, grp
+from middlewared.utils.nss import grp, pwd
 from middlewared.utils.user_context import set_user_context
 
 # This should be a sufficiently high UID to never be used explicitly

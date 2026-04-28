@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.reporting.utils import get_metrics_approximation, calculate_disk_space_for_netdata
+from middlewared.plugins.reporting.utils import calculate_disk_space_for_netdata, get_metrics_approximation
 
 
 @pytest.mark.parametrize('disk_count,core_count,interface_count,pool_count,services_count,vms_count,expected_output', [

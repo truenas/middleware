@@ -1,6 +1,7 @@
 import base64
 import collections
 import configparser
+from contextlib import contextmanager
 from dataclasses import dataclass
 import enum
 import itertools
@@ -12,7 +13,6 @@ import shlex
 import subprocess
 import tempfile
 import threading
-from contextlib import contextmanager
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -22,39 +22,60 @@ from middlewared.alert.base import (
     AlertLevel,
     OneShotAlertClass,
 )
-from middlewared.job import JobCancelledException
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CredentialsEntry,
-    CredentialsCreateArgs, CredentialsCreateResult,
-    CredentialsUpdateArgs, CredentialsUpdateResult,
-    CredentialsDeleteArgs, CredentialsDeleteResult,
-    CredentialsVerifyArgs, CredentialsVerifyResult,
-    CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult,
+    CloudSyncAbortArgs,
+    CloudSyncAbortResult,
+    CloudSyncCreateArgs,
+    CloudSyncCreateBucketArgs,
+    CloudSyncCreateBucketResult,
+    CloudSyncCreateResult,
+    CloudSyncDeleteArgs,
+    CloudSyncDeleteResult,
     CloudSyncEntry,
-    CloudSyncCreateArgs, CloudSyncCreateResult,
-    CloudSyncUpdateArgs, CloudSyncUpdateResult,
-    CloudSyncDeleteArgs, CloudSyncDeleteResult,
-    CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult,
-    CloudSyncListBucketsArgs, CloudSyncListBucketsResult,
-    CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult,
-    CloudSyncSyncArgs, CloudSyncSyncResult,
-    CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult,
-    CloudSyncAbortArgs, CloudSyncAbortResult,
-    CloudSyncProvidersArgs, CloudSyncProvidersResult,
+    CloudSyncListBucketsArgs,
+    CloudSyncListBucketsResult,
+    CloudSyncListDirectoryArgs,
+    CloudSyncListDirectoryResult,
+    CloudSyncProvidersArgs,
+    CloudSyncProvidersResult,
+    CloudSyncSyncArgs,
+    CloudSyncSyncOnetimeArgs,
+    CloudSyncSyncOnetimeResult,
+    CloudSyncSyncResult,
+    CloudSyncUpdateArgs,
+    CloudSyncUpdateResult,
+    CredentialsCreateArgs,
+    CredentialsCreateResult,
+    CredentialsDeleteArgs,
+    CredentialsDeleteResult,
+    CredentialsEntry,
+    CredentialsS3ProviderChoicesArgs,
+    CredentialsS3ProviderChoicesResult,
+    CredentialsUpdateArgs,
+    CredentialsUpdateResult,
+    CredentialsVerifyArgs,
+    CredentialsVerifyResult,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.job import JobCancelledException
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
-from middlewared.plugins.cloud.path import get_remote_path, check_local_path
+from middlewared.plugins.cloud.path import check_local_path, get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, job, private, TaskPathService,
+    CallError,
+    CRUDService,
+    TaskPathService,
+    ValidationError,
+    ValidationErrors,
+    job,
+    private,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format

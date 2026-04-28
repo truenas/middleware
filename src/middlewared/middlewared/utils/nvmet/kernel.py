@@ -1,9 +1,9 @@
+from collections import defaultdict
+from contextlib import contextmanager
 import os
 import pathlib
 import subprocess
 import time
-from collections import defaultdict
-from contextlib import contextmanager
 
 from middlewared.plugins.nvmet.constants import (
     DHCHAP_DHGROUP,
@@ -14,6 +14,7 @@ from middlewared.plugins.nvmet.constants import (
     PORT_TRTYPE,
 )
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
+
 from .render_common import (
     ANA_PORT_INDEX_OFFSET,
     NVMET_DEFAULT_ANA_GRPID,

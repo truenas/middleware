@@ -8,19 +8,20 @@
 
 from __future__ import annotations
 
+from collections import namedtuple
+from collections.abc import Callable
 import enum
 import errno
 import os
 import pathlib
-
-from collections import namedtuple
-from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
-from truenas_os import AT_EMPTY_PATH, AT_FDCWD, openat2, RESOLVE_NO_SYMLINKS, statx, StatxResult
+
+from truenas_os import AT_EMPTY_PATH, AT_FDCWD, RESOLVE_NO_SYMLINKS, StatxResult, openat2, statx
+
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import statx_entry_impl, StatxEntryResult, STATX_DEFAULT_MASK
+from .stat_x import STATX_DEFAULT_MASK, StatxEntryResult, statx_entry_impl
 from .utils import path_in_ctldir
 
 

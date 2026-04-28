@@ -1,15 +1,14 @@
 import logging
 from unittest.mock import patch
 
-import pytest
 from pydantic import ValidationError as PydanticValidationError
+import pytest
 
-from middlewared.api.current import DockerEntry, DockerUpdate
-from middlewared.api.current import DockerRegistryMirror
-from middlewared.service.context import ServiceContext
-from middlewared.service_exception import ValidationErrors
+from middlewared.api.current import DockerEntry, DockerRegistryMirror, DockerUpdate
 from middlewared.plugins.docker.config import DockerConfigServicePart
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service.context import ServiceContext
+from middlewared.service_exception import ValidationErrors
 
 
 def make_svc_part(m):

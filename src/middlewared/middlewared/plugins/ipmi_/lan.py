@@ -1,22 +1,22 @@
-from subprocess import run, DEVNULL
 from functools import cache
+from subprocess import DEVNULL, run
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    IPMILanEntry,
     IPMILanChannelsArgs,
     IPMILanChannelsResult,
-    IPMILanUpdateArgs,
-    IPMILanUpdateResult,
+    IPMILanEntry,
     IPMILanQueryArgs,
     IPMILanQueryResult,
+    IPMILanUpdateArgs,
+    IPMILanUpdateResult,
 )
 from middlewared.service import (
-    private,
     CallError,
     Service,
     ValidationError,
     ValidationErrors,
+    private,
 )
 from middlewared.utils.filter_list import filter_list
 

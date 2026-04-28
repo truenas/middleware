@@ -2,7 +2,8 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+
 from .common import CronModel
 from .keychain import KeychainCredentialEntry
 

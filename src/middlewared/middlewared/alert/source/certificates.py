@@ -3,7 +3,13 @@ from datetime import datetime
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    OneShotAlertClass,
 )
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.time_utils import utc_now

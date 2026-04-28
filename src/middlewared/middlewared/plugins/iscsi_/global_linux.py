@@ -1,6 +1,6 @@
 from middlewared.api.current import ISCSIGlobalSessionsItem
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
-from middlewared.service import private, Service, filterable_api_method
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filter_list import filter_list
 

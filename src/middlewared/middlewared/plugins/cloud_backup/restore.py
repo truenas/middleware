@@ -2,7 +2,7 @@ from middlewared.api import api_method
 from middlewared.api.current import CloudBackupRestoreArgs, CloudBackupRestoreResult
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
-from middlewared.service import job, Service, ValidationErrors
+from middlewared.service import Service, ValidationErrors, job
 
 
 class CloudBackupService(Service):

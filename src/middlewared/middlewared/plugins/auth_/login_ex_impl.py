@@ -1,23 +1,34 @@
 from __future__ import annotations
+
 from enum import StrEnum
 import os
 from time import sleep
 from typing import TYPE_CHECKING
 
+from truenas_pypam import PAMCode
+
 from middlewared.api.base.server.app import App
 from middlewared.auth import (
-    AuthenticationContext, ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
-    LoginTwofactorSessionManagerCredentials, TokenSessionManagerCredentials,
-    LoginOnetimePasswordSessionManagerCredentials, UserSessionManagerCredentials
+    ApiKeySessionManagerCredentials,
+    AuthenticationContext,
+    LoginOnetimePasswordSessionManagerCredentials,
+    LoginPasswordSessionManagerCredentials,
+    LoginTwofactorSessionManagerCredentials,
+    TokenSessionManagerCredentials,
+    UserSessionManagerCredentials,
 )
 from middlewared.service import CallError
 from middlewared.utils.account.authenticator import (
-    ApiKeyPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag,
-    ScramPamAuthenticator, TrueNASAuthenticatorResponse, TrueNASAuthenticatorStage,
+    AccountFlag,
+    ApiKeyPamAuthenticator,
+    ScramPamAuthenticator,
+    TokenPamAuthenticator,
+    TrueNASAuthenticatorResponse,
+    TrueNASAuthenticatorStage,
+    UserPamAuthenticator,
 )
 from middlewared.utils.account.oath import OATH_FILE
-from middlewared.utils.auth import AuthMech, CURRENT_AAL
-from truenas_pypam import PAMCode
+from middlewared.utils.auth import CURRENT_AAL, AuthMech
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

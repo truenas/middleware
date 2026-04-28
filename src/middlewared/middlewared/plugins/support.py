@@ -10,15 +10,27 @@ import requests
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SupportEntry, SupportAttachTicketArgs, SupportAttachTicketResult, SupportAttachTicketMaxSizeArgs,
-    SupportAttachTicketMaxSizeResult, SupportFieldsArgs, SupportFieldsResult, SupportIsAvailableArgs,
-    SupportIsAvailableResult, SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult,
-    SupportNewTicketArgs, SupportNewTicketResult, SupportSimilarIssuesArgs, SupportSimilarIssuesResult,
-    SupportUpdateArgs, SupportUpdateResult,
+    SupportAttachTicketArgs,
+    SupportAttachTicketMaxSizeArgs,
+    SupportAttachTicketMaxSizeResult,
+    SupportAttachTicketResult,
+    SupportEntry,
+    SupportFieldsArgs,
+    SupportFieldsResult,
+    SupportIsAvailableAndEnabledArgs,
+    SupportIsAvailableAndEnabledResult,
+    SupportIsAvailableArgs,
+    SupportIsAvailableResult,
+    SupportNewTicketArgs,
+    SupportNewTicketResult,
+    SupportSimilarIssuesArgs,
+    SupportSimilarIssuesResult,
+    SupportUpdateArgs,
+    SupportUpdateResult,
 )
-from middlewared.pipe import Pipes, InputPipes
+from middlewared.pipe import InputPipes, Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
-from middlewared.service import CallError, ConfigService, job, ValidationErrors
+from middlewared.service import CallError, ConfigService, ValidationErrors, job
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
 from middlewared.utils.network import INTERNET_TIMEOUT

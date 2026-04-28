@@ -1,12 +1,12 @@
 # -*- coding=utf-8 -*-
 import contextlib
+from dataclasses import dataclass
 import logging
 import os
 import secrets
 import string
 import sys
 
-from dataclasses import dataclass
 from middlewared.test.integration.utils import call, fail
 
 __all__ = [
@@ -24,9 +24,15 @@ except ImportError:
 
 try:
     from config import (
-        AD_DOM2_DOMAIN, AD_DOM2_WORKGROUP, AD_DOM2_DC1, AD_DOM2_DC2,
-        AD_DOM2_USERNAME, AD_DOM2_PASSWORD, AD_DOM2_COMPUTER_OU,
-        AD_DOM2_LIMITED_USER, AD_DOM2_LIMITED_USER_PASSWORD
+        AD_DOM2_COMPUTER_OU,
+        AD_DOM2_DC1,
+        AD_DOM2_DC2,
+        AD_DOM2_DOMAIN,
+        AD_DOM2_LIMITED_USER,
+        AD_DOM2_LIMITED_USER_PASSWORD,
+        AD_DOM2_PASSWORD,
+        AD_DOM2_USERNAME,
+        AD_DOM2_WORKGROUP,
     )
 except ImportError:
     AD_DOM2_DOMAIN = None
@@ -40,15 +46,7 @@ except ImportError:
     AD_DOM2_COMPUTER_OU = None
 
 try:
-    from config import (
-        LDAPBASEDN,
-        LDAPBINDDN,
-        LDAPBINDPASSWORD,
-        LDAPHOSTNAME,
-        LDAPUSER,
-        LDAPADMIN,
-        LDAPPASSWORD
-    )
+    from config import LDAPADMIN, LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME, LDAPPASSWORD, LDAPUSER
 except ImportError:
     LDAPBASEDN = None
     LDAPBINDDN = None
@@ -60,16 +58,16 @@ except ImportError:
 
 try:
     from config import (
-        FREEIPA_IP,
-        FREEIPA_BASEDN,
-        FREEIPA_USERNAME,
-        FREEIPA_BINDDN,
-        FREEIPA_BINDPW,
-        FREEIPA_REALM,
-        FREEIPA_ADMIN_USERNAME,
         FREEIPA_ADMIN_BINDDN,
         FREEIPA_ADMIN_BINDPW,
+        FREEIPA_ADMIN_USERNAME,
+        FREEIPA_BASEDN,
+        FREEIPA_BINDDN,
+        FREEIPA_BINDPW,
         FREEIPA_HOSTNAME,
+        FREEIPA_IP,
+        FREEIPA_REALM,
+        FREEIPA_USERNAME,
     )
 except ImportError:
     FREEIPA_IP = None

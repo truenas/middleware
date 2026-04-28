@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
+from middlewared.plugins.docker.state_utils import CATALOG_DATASET_NAME, catalog_ds_path
 from middlewared.service import ServiceContext
 
 

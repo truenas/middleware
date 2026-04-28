@@ -1,21 +1,27 @@
+from dataclasses import dataclass
+from datetime import UTC, datetime
 import re
+from time import monotonic
 from typing import TYPE_CHECKING
 
-from dataclasses import dataclass
-from datetime import datetime, UTC
-from middlewared.utils.allowlist import Allowlist
-from middlewared.utils.account.authenticator import (
-    DEFAULT_LOGIN_FAIL, DEFAULT_LOGIN_SUCCESS,
-    DEFAULT_LOGOUT_FAIL, DEFAULT_LOGOUT_SUCCESS,
-    UserPamAuthenticator, ApiKeyPamAuthenticator, UnixPamAuthenticator,
-    TokenPamAuthenticator, TrueNASAuthenticatorResponse,
-)
-from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
-from time import monotonic
 from truenas_pypam import PAMCode
 
+from middlewared.utils.account.authenticator import (
+    DEFAULT_LOGIN_FAIL,
+    DEFAULT_LOGIN_SUCCESS,
+    DEFAULT_LOGOUT_FAIL,
+    DEFAULT_LOGOUT_SUCCESS,
+    ApiKeyPamAuthenticator,
+    TokenPamAuthenticator,
+    TrueNASAuthenticatorResponse,
+    UnixPamAuthenticator,
+    UserPamAuthenticator,
+)
+from middlewared.utils.allowlist import Allowlist
+from middlewared.utils.auth import AuthenticatorAssuranceLevel, AuthMech
+
 if TYPE_CHECKING:
-    from middlewared.plugins.auth import TokenManager, Token
+    from middlewared.plugins.auth import Token, TokenManager
 
 
 class SessionManagerCredentials:

@@ -1,7 +1,9 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemAdvancedSyslogCertificateChoicesArgs, SystemAdvancedSyslogCertificateChoicesResult,
-    SystemAdvancedSyslogCertificateAuthorityChoicesArgs, SystemAdvancedSyslogCertificateAuthorityChoicesResult
+    SystemAdvancedSyslogCertificateAuthorityChoicesArgs,
+    SystemAdvancedSyslogCertificateAuthorityChoicesResult,
+    SystemAdvancedSyslogCertificateChoicesArgs,
+    SystemAdvancedSyslogCertificateChoicesResult,
 )
 from middlewared.service import Service
 

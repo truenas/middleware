@@ -1,9 +1,10 @@
-import copy
 import contextlib
+import copy
 import logging
 import pathlib
 import tempfile
 import typing
+
 import yaml
 
 from middlewared.plugins.apps.schema_construction_utils import CONTEXT_KEY_NAME
@@ -14,7 +15,9 @@ from middlewared.utils.io import write_if_changed
 from middlewared.utils.yaml import safe_yaml_load
 
 from .path import (
-    get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
+    get_installed_app_config_path,
+    get_installed_app_rendered_dir_path,
+    get_installed_app_version_path,
     get_installed_custom_app_compose_file,
 )
 from .utils import dump_yaml

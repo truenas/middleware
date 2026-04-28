@@ -1,10 +1,9 @@
 import base64
+from contextlib import suppress
 import os
 import re
-import stat
 import shutil
-
-from contextlib import suppress
+import stat
 
 SSH_CONFIG_PATH = '/etc/ssh'
 

@@ -1,6 +1,6 @@
 import errno
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 
 
 class UserService(Service):

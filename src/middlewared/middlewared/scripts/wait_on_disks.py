@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 from collections import deque
-from time import time, sleep
 import sys
+from time import sleep, time
 
 from pyudev import Context, Monitor, MonitorObserver
 

@@ -7,7 +7,6 @@ from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
 
-
 SYSTEM_IPS = [
     {'type': 'INET', 'address': '192.168.1.50', 'netmask': 24, 'broadcast': '192.168.1.255'},
     {'type': 'INET6', 'address': 'fe80::1', 'netmask': 64, 'broadcast': 'fe80::ffff:ffff:ffff:ffff'},

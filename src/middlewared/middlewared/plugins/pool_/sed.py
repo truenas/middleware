@@ -1,8 +1,7 @@
 import asyncio
 
-from middlewared.service import private, Service
-from middlewared.utils.zfs.event import ZfsEvent, ZfsConfigSyncEvent
-
+from middlewared.service import Service, private
+from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
 
 SED_UPDATE_LOCK = asyncio.Lock()
 

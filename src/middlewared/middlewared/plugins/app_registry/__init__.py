@@ -4,15 +4,19 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppRegistryCreate, AppRegistryEntry, AppRegistryUpdate,
-    AppRegistryCreateArgs, AppRegistryCreateResult,
-    AppRegistryUpdateArgs, AppRegistryUpdateResult,
-    AppRegistryDeleteArgs, AppRegistryDeleteResult,
+    AppRegistryCreate,
+    AppRegistryCreateArgs,
+    AppRegistryCreateResult,
+    AppRegistryDeleteArgs,
+    AppRegistryDeleteResult,
+    AppRegistryEntry,
+    AppRegistryUpdate,
+    AppRegistryUpdateArgs,
+    AppRegistryUpdateResult,
 )
 from middlewared.service import GenericCRUDService
 
 from .crud import AppRegistryServicePart
-
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

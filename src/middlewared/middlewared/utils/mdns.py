@@ -2,8 +2,8 @@
 # Any updates to this file should have corresponding updates to tests
 
 import enum
-
 from typing import Any
+
 from .filter_list import filter_list
 
 

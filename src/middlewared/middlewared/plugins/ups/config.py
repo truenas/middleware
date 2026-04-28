@@ -4,9 +4,9 @@ import os
 import re
 import typing
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import UPSEntry, UPSUpdate
 from middlewared.service import SystemServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 
 class UPSModel(sa.Model):

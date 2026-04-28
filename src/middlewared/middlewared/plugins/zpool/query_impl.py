@@ -1,9 +1,9 @@
 import time
 import typing
 
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types, property_sets
 
-from truenas_pylibzfs import libzfs_types, property_sets, ZFSException, ZFSError, ZPOOLProperty
+from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl

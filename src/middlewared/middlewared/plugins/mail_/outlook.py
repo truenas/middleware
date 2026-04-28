@@ -3,7 +3,7 @@ import dataclasses
 import smtplib
 import time
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 from middlewared.utils.microsoft import get_microsoft_access_token
 
 

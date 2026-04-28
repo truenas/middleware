@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from truenas_pylibvirt.device.delegate import DeviceDelegate as BaseDeviceDelegate
 
 from middlewared.service_exception import ValidationErrors
-
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

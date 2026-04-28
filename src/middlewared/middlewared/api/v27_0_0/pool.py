@@ -3,11 +3,16 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args,
-    LongString, ForUpdateMetaclass,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
 )
-from .pool_scrub import PoolScan
 
+from .pool_scrub import PoolScan
 
 __all__ = [
     "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult",

@@ -5,8 +5,7 @@ import time
 
 from sqlalchemy import create_engine, text
 
-from middlewared.service import private, Service
-
+from middlewared.service import Service, private
 from middlewared.utils.db import FREENAS_DATABASE
 
 thread_pool = ThreadPoolExecutor(1)

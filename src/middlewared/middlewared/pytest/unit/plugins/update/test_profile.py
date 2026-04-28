@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from middlewared.plugins.update_ import UpdateService
 from middlewared.pytest.unit.middleware import Middleware

@@ -13,20 +13,26 @@ from middlewared.alert.base import (
     AlertClass,
     AlertClassConfig,
     AlertLevel,
+)
+from middlewared.alert.base import (
     AlertService as _AlertService,
 )
+import middlewared.alert.service  # noqa: F401
 from middlewared.api import api_method
 from middlewared.api.current import (
     AlertServiceCreate,
-    AlertServiceCreateArgs, AlertServiceCreateResult,
-    AlertServiceDeleteArgs, AlertServiceDeleteResult,
+    AlertServiceCreateArgs,
+    AlertServiceCreateResult,
+    AlertServiceDeleteArgs,
+    AlertServiceDeleteResult,
     AlertServiceEntry,
-    AlertServiceTestArgs, AlertServiceTestResult,
-    AlertServiceUpdateArgs, AlertServiceUpdateResult,
+    AlertServiceTestArgs,
+    AlertServiceTestResult,
+    AlertServiceUpdateArgs,
+    AlertServiceUpdateResult,
 )
 from middlewared.service import CRUDServicePart, GenericCRUDService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
-import middlewared.alert.service  # noqa: F401
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:

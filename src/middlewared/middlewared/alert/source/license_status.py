@@ -11,7 +11,13 @@ from typing import Any
 from truenas_pylicensed import LicenseType
 
 from middlewared.alert.base import (
-    AlertClass, AlertClassConfig, AlertCategory, AlertLevel, Alert, NonDataclassAlertClass, ThreadedAlertSource,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    NonDataclassAlertClass,
+    ThreadedAlertSource,
 )
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType

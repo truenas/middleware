@@ -4,7 +4,6 @@ import shutil
 
 import truenas_os
 
-
 SYSTEM_TPM_FOLDER_PATH = '/var/db/system/vm/tpm'
 SYSTEM_NVRAM_FOLDER_PATH = '/var/db/system/vm/nvram'
 LIBVIRT_QEMU_UID = 986

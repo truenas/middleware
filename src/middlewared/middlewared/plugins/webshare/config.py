@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import WebshareEntry, WebshareUpdate
 from middlewared.service import ConfigServicePart, ValidationError
+import middlewared.sqlalchemy as sa
 
 from .utils import bindip_choices as get_bindip_choices
 

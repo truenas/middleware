@@ -1,10 +1,4 @@
-from middlewared.api.base import (
-    BaseModel,
-    Excluded,
-    excluded_field,
-    ForUpdateMetaclass,
-    single_argument_args
-)
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
     'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',

@@ -3,42 +3,42 @@ from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ZFSResourceSnapshotEntry,
-    ZFSResourceSnapshotCountQuery,
-    ZFSResourceSnapshotCountArgs,
-    ZFSResourceSnapshotCountResult,
-    ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotCloneArgs,
+    ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotCloneResult,
-    ZFSResourceSnapshotCreateQuery,
+    ZFSResourceSnapshotCountArgs,
+    ZFSResourceSnapshotCountQuery,
+    ZFSResourceSnapshotCountResult,
     ZFSResourceSnapshotCreateArgs,
+    ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotCreateResult,
-    ZFSResourceSnapshotDestroyQuery,
     ZFSResourceSnapshotDestroyArgs,
+    ZFSResourceSnapshotDestroyQuery,
     ZFSResourceSnapshotDestroyResult,
-    ZFSResourceSnapshotHoldQuery,
+    ZFSResourceSnapshotEntry,
     ZFSResourceSnapshotHoldArgs,
+    ZFSResourceSnapshotHoldQuery,
     ZFSResourceSnapshotHoldResult,
-    ZFSResourceSnapshotHoldsQuery,
     ZFSResourceSnapshotHoldsArgs,
+    ZFSResourceSnapshotHoldsQuery,
     ZFSResourceSnapshotHoldsResult,
-    ZFSResourceSnapshotQueryBase,
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotQueryArgs,
+    ZFSResourceSnapshotQueryBase,
     ZFSResourceSnapshotQueryResult,
-    ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotReleaseArgs,
+    ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotReleaseResult,
-    ZFSResourceSnapshotRenameQuery,
     ZFSResourceSnapshotRenameArgs,
+    ZFSResourceSnapshotRenameQuery,
     ZFSResourceSnapshotRenameResult,
-    ZFSResourceSnapshotRollbackQuery,
     ZFSResourceSnapshotRollbackArgs,
+    ZFSResourceSnapshotRollbackQuery,
     ZFSResourceSnapshotRollbackResult,
 )
 from middlewared.service import Service, private
-from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.service_exception import ValidationError
 
 from .destroy_impl import destroy_impl
 from .exceptions import (
@@ -52,8 +52,8 @@ from .rename_promote_clone_impl import clone_impl, rename_impl
 from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_create_impl import create_snapshots_impl
 from .snapshot_hold_release_impl import hold_impl, release_impl
-from .snapshot_rollback_impl import rollback_impl
 from .snapshot_query_impl import query_snapshots_impl
+from .snapshot_rollback_impl import rollback_impl
 from .utils import group_paths_by_parents, has_internal_path, open_resource
 
 

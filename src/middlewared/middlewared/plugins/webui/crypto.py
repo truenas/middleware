@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    WebUICryptoCsrProfilesArgs,
     CSRProfilesModel,
+    WebUICryptoCsrProfilesArgs,
     WebUICryptoCsrProfilesResult,
     WebUICryptoGetCertificateDomainNamesArgs,
     WebUICryptoGetCertificateDomainNamesResult,

@@ -1,7 +1,9 @@
 import errno
+
 import libzfs
 
-from middlewared.service import CallError, CRUDService, job, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, job
+
 from .pool_utils import convert_topology, find_vdev
 
 

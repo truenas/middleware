@@ -3,17 +3,16 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from functools import cache
 import logging
 import pathlib
 import subprocess
-from functools import cache
 
-from ixhardware import parse_dmi, PLATFORM_PREFIXES
+from ixhardware import PLATFORM_PREFIXES, parse_dmi
 from pyudev import Context
 
 from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures
 from middlewared.utils.version import parse_major_minor_version
-
 
 logger = logging.getLogger(__name__)
 

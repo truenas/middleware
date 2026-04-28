@@ -13,7 +13,6 @@ from .schema_action_context import apply_acls, update_volumes
 from .schema_construction_utils import RESERVED_NAMES
 from .schema_validation import validate_values
 
-
 REF_MAPPING = {
     'definitions/certificate',
     'definitions/gpu_configuration',

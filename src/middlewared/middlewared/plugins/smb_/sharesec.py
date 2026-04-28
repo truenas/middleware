@@ -1,21 +1,22 @@
+from base64 import b64decode, b64encode
 import os
+from struct import pack
 
-from base64 import b64encode, b64decode
-from middlewared.service import filterable_api_method, periodic, Service
+from middlewared.service import Service, filterable_api_method, periodic
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.security_descriptor import (
     legacy_share_acl_string_to_sd_bytes,
-    share_acl_to_sd_bytes,
     sd_bytes_to_share_acl,
+    share_acl_to_sd_bytes,
 )
 from middlewared.utils.tdb import (
-    get_tdb_handle,
     TDBDataType,
     TDBOptions,
     TDBPathType,
+    get_tdb_handle,
 )
-from struct import pack
+
 from .constants import SAMBA_BOOTENV_DIR
 
 LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')

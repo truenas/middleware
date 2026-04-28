@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from middlewared.role import RoleManager
 from middlewared.utils.pydantic_ import model_json_schema
+
 from ..jsonschema import replace_refs
 from .api import API
 from .event import Event

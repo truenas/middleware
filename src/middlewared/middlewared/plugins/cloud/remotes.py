@@ -1,7 +1,7 @@
 import os
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.utils.plugins import load_modules, load_classes
+from middlewared.utils.plugins import load_classes, load_modules
 from middlewared.utils.python import get_middlewared_dir
 
 REMOTES = {}

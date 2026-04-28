@@ -1,6 +1,6 @@
 from enum import Enum
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 
 class InterfaceType(Enum):

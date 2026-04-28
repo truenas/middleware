@@ -1,8 +1,8 @@
 from pydantic import Field, PositiveInt
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field
-from .pool import PoolEntry
 
+from .pool import PoolEntry
 
 __all__ = [
     "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachResult", "BootDetachArgs",

@@ -7,8 +7,7 @@ from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext, ValidationError
 
-from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
-
+from .state_utils import IX_APPS_MOUNT_PATH, Status, docker_dataset_custom_props
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job

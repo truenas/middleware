@@ -5,13 +5,14 @@ from functools import cache
 import time
 from typing import Any
 
-from aiohttp import ClientError, ClientConnectorError, ClientSession, ClientTimeout
+from aiohttp import ClientConnectorError, ClientError, ClientSession, ClientTimeout
 from pydantic import BaseModel
 
+from middlewared.plugins.update_ import profile_
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils import MANIFEST_FILE, UPDATE_TRAINS_FILE_NAME
 from middlewared.utils.network import INTERNET_TIMEOUT
-from middlewared.plugins.update_ import profile_
+
 from .utils import scale_update_server
 
 

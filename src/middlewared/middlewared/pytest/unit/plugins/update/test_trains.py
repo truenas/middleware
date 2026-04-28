@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
 
-from middlewared.plugins.update_.trains import Trains, get_trains, get_next_trains_names
+import pytest
+
+from middlewared.plugins.update_.trains import Trains, get_next_trains_names, get_trains
 from middlewared.pytest.unit.middleware import Middleware
 
 

@@ -3,7 +3,7 @@ from itertools import groupby
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 from .utils import dataset_mountpoint
 

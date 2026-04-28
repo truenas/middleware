@@ -3,7 +3,6 @@ import pathlib
 
 from middlewared.plugins.ups.utils import UPS_POWERDOWN_FLAG_FILE
 
-
 UPS_CONFPATH = '/etc/nut'
 UPS_VARPATH = '/var/run/nut'
 UPS_CONFIG = f'{UPS_CONFPATH}/ups.conf'

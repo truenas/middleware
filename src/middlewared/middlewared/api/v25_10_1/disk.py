@@ -3,7 +3,8 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, NotRequired, excluded_field
+
 from .alert import Alert
 
 __all__ = (

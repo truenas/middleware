@@ -7,7 +7,8 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AlertClassesEntry,
     AlertClassesUpdate,
-    AlertClassesUpdateArgs, AlertClassesUpdateResult,
+    AlertClassesUpdateArgs,
+    AlertClassesUpdateResult,
 )
 from middlewared.service import ConfigServicePart, GenericConfigService, ValidationErrors
 import middlewared.sqlalchemy as sa

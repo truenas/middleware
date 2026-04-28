@@ -1,6 +1,5 @@
 from typing import Any
-
-from urllib.parse import urlencode, quote_plus
+from urllib.parse import quote_plus, urlencode
 
 from truenas_pylibvirt.device import Device, DisplayDevice
 

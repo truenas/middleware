@@ -1,13 +1,19 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, ConfigDict
+from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field, query_result, UUID
+    UUID,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    excluded_field,
+    query_result,
+    single_argument_args,
 )
-from .common import QueryFilters, QueryOptions
 
+from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "AuditEntry", "AuditDownloadReportArgs", "AuditDownloadReportResult", "AuditQueryArgs", "AuditQueryResult",

@@ -1,19 +1,19 @@
 import contextlib
 import io
 import os
-import requests
 import shutil
 import tarfile
 import time
 
-from middlewared.api import api_method
-from middlewared.api.current import SystemDebugArgs, SystemDebugResult
-from middlewared.service import CallError, job, private, Service
-from middlewared.utils.privilege import credential_has_full_admin
-
 from ixdiagnose.config import conf
 from ixdiagnose.event import event_callbacks
 from ixdiagnose.run import generate_debug
+import requests
+
+from middlewared.api import api_method
+from middlewared.api.current import SystemDebugArgs, SystemDebugResult
+from middlewared.service import CallError, Service, job, private
+from middlewared.utils.privilege import credential_has_full_admin
 
 from .utils import DEBUG_MAX_SIZE, get_debug_execution_dir
 

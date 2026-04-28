@@ -1,10 +1,8 @@
 import os
 
-from middlewared.utils.jsonpath import (
-    query_filters_json_path_parse,
-    query_select_json_path_parse
-)
 from truenas_verify import mtree_verify
+
+from middlewared.utils.jsonpath import query_filters_json_path_parse, query_select_json_path_parse
 
 AUDIT_DATASET_PATH = '/audit'
 AUDIT_LIFETIME = 7

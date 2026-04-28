@@ -1,6 +1,6 @@
 import enum
-
 from subprocess import run
+
 from .constants import SMBCmd
 
 

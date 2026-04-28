@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import IPvAnyAddress, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
     "ISCSIPortalEntry",

@@ -2,7 +2,6 @@
 import contextlib
 import os
 
-
 CGROUP_ROOT_PATH = '/sys/fs/cgroup'
 CGROUP_AVAILABLE_CONTROLLERS_PATH = os.path.join(CGROUP_ROOT_PATH, 'cgroup.subtree_control')
 

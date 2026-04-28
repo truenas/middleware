@@ -100,6 +100,7 @@ from .system import *
 from .system_advanced import *
 from .system_general import *
 from .system_general_keymap import *
+from .system_general_timezone import *
 from .system_general_ui import *
 from .system_global import *
 from .system_lifecycle import *
@@ -107,7 +108,6 @@ from .system_ntpserver import *
 from .system_product import *
 from .system_reboot import *
 from .system_security import *
-from .system_general_timezone import *
 from .systemdataset import *
 from .tn_connect import *
 from .truecommand import *

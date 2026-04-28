@@ -4,14 +4,8 @@
 from sqlalchemy import Table
 from sqlalchemy.orm import declarative_base
 
-from middlewared.sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Integer,
-    NativeJSON,
-    String
-)
+from middlewared.sqlalchemy import Boolean, Column, DateTime, Integer, NativeJSON, String
+
 from .utils import AUDITED_SERVICES
 
 TABLE_PREFIX = "audit_"

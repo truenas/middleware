@@ -49,16 +49,15 @@ Configfs tree
                         +-- default  symlink -> ../../lun/lun_{id}/
 """
 
+from collections import defaultdict
+from contextlib import contextmanager
 import os
 import pathlib
 import subprocess
 import time
-from collections import defaultdict
-from contextlib import contextmanager
 
 from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.utils.iscsi.constants import ALUA_STATE
-
 
 LIO_CONFIG_DIR = pathlib.Path("/sys/kernel/config/target")
 

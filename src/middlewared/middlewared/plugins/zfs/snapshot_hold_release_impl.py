@@ -5,7 +5,7 @@ from typing import Any
 
 import truenas_pylibzfs
 
-from .exceptions import ZFSPathNotFoundException, ZFSPathNotASnapshotException
+from .exceptions import ZFSPathNotASnapshotException, ZFSPathNotFoundException
 
 __all__ = ("hold_impl", "release_impl",)
 

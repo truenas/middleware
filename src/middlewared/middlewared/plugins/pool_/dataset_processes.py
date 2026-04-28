@@ -6,7 +6,7 @@ import re
 from middlewared.api import api_method
 from middlewared.api.current import PoolDatasetProcessesArgs, PoolDatasetProcessesResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 
 from .utils import dataset_mountpoint
 

@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 
-from middlewared.alert.base import AlertClassConfig, OneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.utils import ProductType
 
 

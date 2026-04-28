@@ -1,15 +1,14 @@
+from datetime import datetime, timedelta, timezone
 import hashlib
 import os
 import socket
 import time
 
-from datetime import datetime, timedelta, timezone
-
 from middlewared.api import api_method
 from middlewared.api.current import SystemHostIdArgs, SystemHostIdResult, SystemInfoArgs, SystemInfoResult
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.utils import sw_buildtime
-from middlewared.utils.cpu import cpu_info, cpu_flags
+from middlewared.utils.cpu import cpu_flags, cpu_info
 
 
 class SystemService(Service):

@@ -3,9 +3,7 @@ import math
 import typing
 
 import jwt
-
 from truenas_connect_utils.status import Status
-
 
 CERT_RENEW_DAYS = 5
 CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'

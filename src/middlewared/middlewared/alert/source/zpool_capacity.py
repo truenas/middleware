@@ -3,11 +3,11 @@ from datetime import timedelta
 from typing import Any
 
 from middlewared.alert.base import (
-    AlertClass,
+    Alert,
     AlertCategory,
+    AlertClass,
     AlertClassConfig,
     AlertLevel,
-    Alert,
     AlertSource,
     UnavailableException,
 )

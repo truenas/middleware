@@ -3,9 +3,9 @@ from __future__ import annotations
 import contextlib
 from typing import Any, TypeVar
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import CronJobCreate, CronJobEntry, CronJobUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 
 CronJobCreateT = TypeVar('CronJobCreateT', bound=CronJobCreate)

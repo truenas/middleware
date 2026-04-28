@@ -1,14 +1,15 @@
+from functools import cache
 import os.path
+from pathlib import Path
 import re
 import subprocess
-from functools import cache
-from pathlib import Path
 
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
+
 from .utils import dmi_pci_slot_info
 
 FIBRE_CHANNEL_SEARCH_STRING = 'Fibre Channel'

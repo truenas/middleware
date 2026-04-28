@@ -4,7 +4,6 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 
-
 __all__ = [
     "InitShutdownScriptEntry", "InitShutdownScriptCreateArgs", "InitShutdownScriptCreateResult",
     "InitShutdownScriptUpdateArgs", "InitShutdownScriptUpdateResult", "InitShutdownScriptDeleteArgs",

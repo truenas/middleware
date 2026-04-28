@@ -2,7 +2,6 @@ import pytest
 
 from middlewared.plugins.container.utils import build_etc_hosts_content
 
-
 STANDARD_HOSTS = [
     '127.0.0.1\tlocalhost\n',
     '127.0.1.1\tLXC_NAME\n',

@@ -6,14 +6,14 @@
 import pathlib
 import re
 
-from pyudev import Context, Devices, DeviceNotFoundAtPathError
-
 from ixhardware import parse_dmi
+from pyudev import Context, DeviceNotFoundAtPathError, Devices
+
 from .constants import (
     DISK_FRONT_KEY,
+    DISK_INTERNAL_KEY,
     DISK_REAR_KEY,
     DISK_TOP_KEY,
-    DISK_INTERNAL_KEY,
     DRIVE_BAY_LIGHT_STATUS,
     SUPPORTS_IDENTIFY_KEY,
     SUPPORTS_IDENTIFY_STATUS_KEY,

@@ -2,7 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolReplaceArgs, PoolReplaceResult
-from middlewared.service import job, Service, ValidationErrors
+from middlewared.service import Service, ValidationErrors, job
 from middlewared.service_exception import MatchNotFound
 
 

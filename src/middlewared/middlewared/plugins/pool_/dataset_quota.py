@@ -7,14 +7,14 @@ from middlewared.api.current import (
     PoolDatasetGetQuotaArgs,
     PoolDatasetGetQuotaResult,
     PoolDatasetSetQuotaArgs,
-    PoolDatasetSetQuotaResult
+    PoolDatasetSetQuotaResult,
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.nss import pwd, grp
+from middlewared.utils.nss import grp, pwd
 
 
 def quota_cb(quota, state):

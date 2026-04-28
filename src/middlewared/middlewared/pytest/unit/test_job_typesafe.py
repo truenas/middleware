@@ -4,9 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from middlewared.job import Job
-from middlewared.service import job, private, Service, ServicePartBase
+from middlewared.service import Service, ServicePartBase, job, private
 from middlewared.service_exception import CallError
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -1,15 +1,17 @@
 import asyncio
+from contextlib import suppress
 import glob
 import itertools
 import os
 import pathlib
 import signal
-from contextlib import suppress
 
-from middlewared.service import private, Service
-from middlewared.utils import run
-from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 from scstadmin import SCSTAdmin
+
+from middlewared.service import Service, private
+from middlewared.utils import run
+
+from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 ISCSI_SCSTD_PIDFILE = '/run/iscsi-scstd.pid'

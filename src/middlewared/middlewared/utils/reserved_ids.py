@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from time import monotonic
 
-
 LOCKED_XID_TTL = 3600
 
 

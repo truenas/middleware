@@ -2,10 +2,9 @@ import enum
 import errno
 import os
 from types import MappingProxyType
+from typing import Any
 
 import truenas_os
-
-from typing import Any
 
 ACL_UNDEFINED_ID = -1
 

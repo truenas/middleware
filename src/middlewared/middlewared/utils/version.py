@@ -1,6 +1,5 @@
 import re
 
-
 _MAJOR_MINOR_RE = re.compile(r'[1-9][0-9]*\.[0-9]+')
 
 

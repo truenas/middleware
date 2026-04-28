@@ -1,6 +1,6 @@
 from middlewared.api.current import VMStartOptions, VMStopOptions
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 from .utils import dataset_mountpoint
 

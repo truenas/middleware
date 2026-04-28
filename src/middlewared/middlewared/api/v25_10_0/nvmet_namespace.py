@@ -2,7 +2,8 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NormalPath, NonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, NormalPath, excluded_field
+
 from .nvmet_subsys import NVMetSubsysEntry
 
 __all__ = [

@@ -6,7 +6,13 @@
 from typing import Any
 
 from middlewared.alert.base import (
-    Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource, NonDataclassAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertClassConfig,
+    AlertLevel,
+    AlertSource,
+    NonDataclassAlertClass,
 )
 from middlewared.utils import ProductType
 

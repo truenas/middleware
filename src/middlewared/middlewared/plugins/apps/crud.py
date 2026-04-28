@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import errno
-from typing import Any, Literal, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from catalog_reader.custom_app import get_version_details
 
 from middlewared.api.current import (
-    AppCreate, AppDelete, AppEntry, AppUpdate, CatalogAppVersionDetails, QueryOptions,
+    AppCreate,
+    AppDelete,
+    AppEntry,
+    AppUpdate,
+    CatalogAppVersionDetails,
+    QueryOptions,
 )
 from middlewared.service import CallError, InstanceNotFound, ServiceContext, ValidationErrors
 from middlewared.utils.filter_list import filter_list
@@ -19,11 +24,10 @@ from .ix_apps.metadata import get_collective_metadata, update_app_metadata, upda
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
-from .resources import remove_failed_resources, get_app_volume_ds, delete_internal_resources
+from .resources import delete_internal_resources, get_app_volume_ds, remove_failed_resources
 from .schema_normalization import normalize_and_validate_values
 from .utils import to_entries
 from .version_utils import get_latest_version_from_app_versions
-
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App

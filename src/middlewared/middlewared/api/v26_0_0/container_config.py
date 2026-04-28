@@ -1,5 +1,11 @@
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPv4Network, IPv6Network, single_argument_args,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IPv4Network,
+    IPv6Network,
+    excluded_field,
+    single_argument_args,
 )
 
 __all__ = [

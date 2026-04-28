@@ -4,58 +4,69 @@ import errno
 import os
 from pathlib import Path
 import uuid
-import middlewared.sqlalchemy as sa
+
+from truenas_os_pyutils.mount import iter_mountinfo, statmount
 
 from middlewared.alert.source.smb_audit import SMBAuditShareDisabledAlert
 from middlewared.alert.source.smb_recordsize import SMBVeeamFastCloneAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SharingSMBGetaclArgs, SharingSMBGetaclResult,
-    SharingSMBSetaclArgs, SharingSMBSetaclResult,
-    SMBEntry, SMBUpdateArgs, SMBUpdateResult,
-    SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult,
-    SMBBindipChoicesArgs, SMBBindipChoicesResult,
-    SharingSMBPresetsArgs, SharingSMBPresetsResult,
-    SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult,
-    SharingSMBEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
-    SharingSMBUpdateArgs, SharingSMBUpdateResult,
-    SharingSMBDeleteArgs, SharingSMBDeleteResult,
+    SharingSMBCreateArgs,
+    SharingSMBCreateResult,
+    SharingSMBDeleteArgs,
+    SharingSMBDeleteResult,
+    SharingSMBEntry,
+    SharingSMBGetaclArgs,
+    SharingSMBGetaclResult,
+    SharingSMBPresetsArgs,
+    SharingSMBPresetsResult,
+    SharingSMBSetaclArgs,
+    SharingSMBSetaclResult,
+    SharingSMBSharePrecheckArgs,
+    SharingSMBSharePrecheckResult,
+    SharingSMBUpdateArgs,
+    SharingSMBUpdateResult,
+    SMBBindipChoicesArgs,
+    SMBBindipChoicesResult,
+    SMBEntry,
+    SMBUnixcharsetChoicesArgs,
+    SMBUnixcharsetChoicesResult,
+    SMBUpdateArgs,
+    SMBUpdateResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.service import job, private, SharingService
-from middlewared.service import ConfigService, ValidationError, ValidationErrors
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX
 from middlewared.plugins.smb_.constants import (
     CONFIGURED_SENTINEL,
     SMB_AUDIT_DEFAULTS,
+    VEEAM_REPO_BLOCKSIZE,
     SMBCmd,
     SMBPath,
 )
-from middlewared.utils.interface import NETIF_COMPLETE_SENTINEL
-from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.sharesec import remove_share_acl
 from middlewared.plugins.smb_.util_param import (
     AUX_PARAM_BLACKLIST,
+    lpctx_validate_parm,
     smbconf_getparm,
     smbconf_list_shares,
     smbconf_sanity_check,
-    lpctx_validate_parm
 )
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share, smb_strip_comments
-from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
+from middlewared.service import ConfigService, SharingService, ValidationError, ValidationErrors, job, private
+from middlewared.service_exception import CallError, MatchNotFound
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
-from truenas_os_pyutils.mount import iter_mountinfo, statmount
+from middlewared.utils.interface import NETIF_COMPLETE_SENTINEL
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
-from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, SMBUnixCharset
 from middlewared.utils.tdb import TDBError
-
 
 BASE_SHARE_PARAMS = frozenset([
     'id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit', 'path', 'dataset', 'relative_path'

@@ -1,27 +1,27 @@
 from typing import Annotated, Any, Literal, Self, Union
 
-from pydantic import AfterValidator, Field, field_validator, IPvAnyInterface, model_validator
+from pydantic import AfterValidator, Field, IPvAnyInterface, field_validator, model_validator
 
 from middlewared.api.base import (
+    SID,
     BaseModel,
-    excluded_field,
     Excluded,
     ForUpdateMetaclass,
     LongString,
-    NetbiosName,
     NetbiosDomain,
+    NetbiosName,
     NonEmptyString,
-    single_argument_args,
-    SID,
     SmbShareName,
     UnixPerm,
+    excluded_field,
+    single_argument_args,
 )
-from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.constants import LEGACY_SHARE_FIELDS
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.utils.lang import undefined
-from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, SearchProtocol, validate_smb_path_suffix
-from .common import QueryFilters, QueryOptions
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, SMBUnixCharset, validate_smb_path_suffix
 
+from .common import QueryFilters, QueryOptions
 
 __all__ = [
     'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',

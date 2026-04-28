@@ -16,7 +16,6 @@ from .state_management import start_service
 from .state_setup import create_update_docker_datasets
 from .state_utils import datasets_to_skip_for_snapshot_on_backup, docker_datasets
 
-
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
 

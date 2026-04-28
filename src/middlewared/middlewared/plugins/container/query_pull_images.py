@@ -14,7 +14,6 @@ from middlewared.utils.network import INTERNET_TIMEOUT
 from .dataset import ensure_datasets
 from .utils import container_dataset, container_dataset_mountpoint
 
-
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
 

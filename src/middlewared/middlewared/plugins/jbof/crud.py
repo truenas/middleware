@@ -9,18 +9,34 @@ from pydantic import Field, field_validator
 
 from middlewared.alert.source.jbof import JBOFTearDownFailureAlert
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel, NotRequired, IPvAnyAddress, IPv4Address, IPv6Address
+from middlewared.api.base import BaseModel, IPv4Address, IPv6Address, IPvAnyAddress, NotRequired
 from middlewared.api.current import (
-    JBOFEntry, JBOFCreateArgs, JBOFCreateResult, JBOFDeleteArgs, JBOFDeleteResult, JBOFLicensedArgs,
-    JBOFLicensedResult, JBOFReapplyConfigArgs, JBOFReapplyConfigResult, JBOFUpdateArgs, JBOFUpdateResult
+    JBOFCreateArgs,
+    JBOFCreateResult,
+    JBOFDeleteArgs,
+    JBOFDeleteResult,
+    JBOFEntry,
+    JBOFLicensedArgs,
+    JBOFLicensedResult,
+    JBOFReapplyConfigArgs,
+    JBOFReapplyConfigResult,
+    JBOFUpdateArgs,
+    JBOFUpdateResult,
 )
 from middlewared.plugins.jbof.redfish import InvalidCredentialsError, RedfishClient
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 
 from .functions import (
-    decode_static_ip, get_sys_class_nvme, initiator_ip_from_jbof_static_ip, initiator_static_ip, jbof_static_ip,
-    jbof_static_ip_from_initiator_ip, static_ip_netmask_int, static_ip_netmask_str, static_mtu
+    decode_static_ip,
+    get_sys_class_nvme,
+    initiator_ip_from_jbof_static_ip,
+    initiator_static_ip,
+    jbof_static_ip,
+    jbof_static_ip_from_initiator_ip,
+    static_ip_netmask_int,
+    static_ip_netmask_str,
+    static_mtu,
 )
 
 

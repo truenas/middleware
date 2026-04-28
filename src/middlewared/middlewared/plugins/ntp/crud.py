@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import NTPServerCreate, NTPServerEntry, NTPServerUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 from .peers import test_ntp_server
 

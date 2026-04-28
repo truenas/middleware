@@ -1,11 +1,15 @@
+import copy
 from unittest.mock import Mock
 
 import pytest
-import copy
 
 from middlewared.alert.base import Alert
 from middlewared.alert.source.jbof import (
-    JBOFInvalidDataAlert, JBOFRedfishCommAlert, JBOFAlertSource, JBOFElementWarningAlert, JBOFElementCriticalAlert,
+    JBOFAlertSource,
+    JBOFElementCriticalAlert,
+    JBOFElementWarningAlert,
+    JBOFInvalidDataAlert,
+    JBOFRedfishCommAlert,
 )
 from middlewared.pytest.unit.middleware import Middleware
 

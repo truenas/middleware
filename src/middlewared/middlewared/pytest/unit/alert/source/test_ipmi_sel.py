@@ -1,9 +1,9 @@
+import pytest
+
 from middlewared.alert.source.ipmi_sel import (
     remove_deasserted_records,
     remove_orphaned_assertions,
 )
-
-import pytest
 
 
 @pytest.mark.parametrize("records,result", [

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import middlewared.sqlalchemy as sa
 from middlewared.api.current import AppRegistryCreate, AppRegistryEntry, AppRegistryUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 from .validate_registry import validate_registry_credentials
 

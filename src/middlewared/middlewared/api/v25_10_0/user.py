@@ -1,21 +1,21 @@
+from datetime import datetime
 from typing import Literal
 
-from datetime import datetime
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
     ContainerXID,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
-    LocalUsername,
-    RemoteUsername,
     LocalUID,
+    LocalUsername,
     LongString,
     NonEmptyString,
+    RemoteUsername,
+    excluded_field,
     single_argument_args,
-    single_argument_result
+    single_argument_result,
 )
 from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 

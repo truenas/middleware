@@ -8,9 +8,9 @@ from typing import Any
 
 from middlewared.alert.base import (
     Alert,
+    AlertCategory,
     AlertClass,
     AlertClassConfig,
-    AlertCategory,
     AlertLevel,
     AlertSource,
 )

@@ -10,7 +10,6 @@ from .crud import get_instance, update_internal
 from .ix_apps.query import get_default_workload_values
 from .utils import get_app_stop_cache_key
 
-
 if TYPE_CHECKING:
     from middlewared.job import Job
 

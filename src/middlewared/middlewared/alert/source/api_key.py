@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from middlewared.alert.base import Alert, AlertClass, AlertClassConfig, AlertCategory, AlertLevel, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 

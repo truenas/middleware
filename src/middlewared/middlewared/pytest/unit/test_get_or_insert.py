@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy as sa
 
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.pytest.unit.plugins.test_datastore import datastore_test, Model
+from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
 from middlewared.service.config_service import ConfigService
 
 

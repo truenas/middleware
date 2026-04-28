@@ -2,10 +2,8 @@ import asyncio
 from logging import getLogger
 
 from middlewared.plugins.enclosure_.enums import JbofModels
-from middlewared.plugins.enclosure_.jbof.es24n import (is_this_an_es24n,
-                                                       map_es24n)
-from middlewared.plugins.jbof.redfish import (AsyncRedfishClient,
-                                              InvalidCredentialsError)
+from middlewared.plugins.enclosure_.jbof.es24n import is_this_an_es24n, map_es24n
+from middlewared.plugins.jbof.redfish import AsyncRedfishClient, InvalidCredentialsError
 
 LOGGER = getLogger(__name__)
 

@@ -10,7 +10,6 @@ from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 
-
 VMService = load_compound_service('vm')
 
 VM_PAYLOAD = {

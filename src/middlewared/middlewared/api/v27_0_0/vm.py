@@ -3,12 +3,15 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
     UUIDv4String,
+    excluded_field,
 )
 
-from .vm_device import VMDisplayDevice, VMDeviceEntry
-
+from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',

@@ -1,17 +1,17 @@
 import asyncio
 import base64
 import errno
-import json
+from functools import partial
 import itertools
+import json
 import logging
 import os
 import shutil
 import stat
 import time
-from functools import partial
 
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     FailoverBecomePassiveArgs,
     FailoverBecomePassiveResult,
@@ -23,6 +23,7 @@ from middlewared.api.current import (
     FailoverNodeArgs,
     FailoverNodeResult,
     FailoverStatusArgs,
+    FailoverStatusChangedEvent,
     FailoverStatusResult,
     FailoverSyncFromPeerArgs,
     FailoverSyncFromPeerResult,
@@ -32,35 +33,26 @@ from middlewared.api.current import (
     FailoverUpdateResult,
     FailoverUpgradeArgs,
     FailoverUpgradeResult,
-    FailoverStatusChangedEvent,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.service import (
-    job,
-    private,
-    CallError,
-    ConfigService,
-    ValidationError,
-    ValidationErrors
-)
-import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.failover_.event import BACKUP_STOP_SERVICES
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
 from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
+from middlewared.plugins.truenas.license_utils import LICENSE_FILE
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
+from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
-
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 

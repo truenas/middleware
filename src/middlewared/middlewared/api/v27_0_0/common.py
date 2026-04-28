@@ -1,7 +1,7 @@
 from datetime import datetime, time
 from typing import Annotated, Any, Self
 
-from pydantic import AfterValidator, model_validator, Field
+from pydantic import AfterValidator, Field, model_validator
 
 from middlewared.api.base import BaseModel, TimeString, croniter_for_schedule, validate_filters, validate_options
 

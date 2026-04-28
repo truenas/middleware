@@ -1,4 +1,4 @@
-from datetime import datetime, UTC, timedelta
+from datetime import UTC, datetime, timedelta
 
 UTC_EPOCH = datetime.fromtimestamp(0, UTC)
 

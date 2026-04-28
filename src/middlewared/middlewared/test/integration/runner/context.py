@@ -11,7 +11,7 @@ import sys
 from middlewared.test.integration.utils.client import client
 
 from .args import RunArgs
-from .ssh import setup_ssh_agent, create_key, add_ssh_key
+from .ssh import add_ssh_key, create_key, setup_ssh_agent
 
 
 @dataclasses.dataclass

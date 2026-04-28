@@ -1,13 +1,12 @@
 import contextlib
 import errno
-import pytest
-
 from unittest.mock import patch
 
-from middlewared.plugins.ports import PortService
-from middlewared.service import ValidationErrors
-from middlewared.pytest.unit.middleware import Middleware
+import pytest
 
+from middlewared.plugins.ports import PortService
+from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service import ValidationErrors
 
 PORTS_IN_USE = [
     {

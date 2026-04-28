@@ -1,6 +1,6 @@
+from collections.abc import Iterator
 import contextlib
 import shutil
-from collections.abc import Iterator
 from typing import Any
 
 from .metadata import update_app_metadata, update_app_yaml_for_last_update

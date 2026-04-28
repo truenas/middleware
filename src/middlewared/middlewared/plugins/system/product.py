@@ -14,21 +14,20 @@ from middlewared.api.current import (
     SystemFeatureEnabledResult,
     SystemLicenseUpdateArgs,
     SystemLicenseUpdateResult,
-    SystemReleaseNotesUrlArgs,
-    SystemReleaseNotesUrlResult,
     SystemProductTypeArgs,
     SystemProductTypeResult,
+    SystemReleaseNotesUrlArgs,
+    SystemReleaseNotesUrlResult,
     SystemVersionArgs,
     SystemVersionResult,
     SystemVersionShortArgs,
     SystemVersionShortResult,
 )
-from middlewared.service import CallError, private, Service, ValidationError
+from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
+from middlewared.plugins.truenas.license_utils import LICENSE_FILE
+from middlewared.service import CallError, Service, ValidationError, private
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string
-
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
 
 PRODUCT_NAME = "TrueNAS"
 LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW_MAPPING.items()})

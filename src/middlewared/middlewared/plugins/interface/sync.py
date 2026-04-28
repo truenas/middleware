@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from middlewared.plugins.interface.dhcp import dhcp_start
-from middlewared.service import ServiceContext
 from truenas_pynetif.address.get_links import get_link, get_links
 from truenas_pynetif.address.netlink import netlink_route
 from truenas_pynetif.netlink import DeviceNotFound, LinkInfo
+
+from middlewared.plugins.interface.dhcp import dhcp_start
+from middlewared.service import ServiceContext
 
 from .addresses import configure_addresses_impl
 from .bond import configure_bonds_impl

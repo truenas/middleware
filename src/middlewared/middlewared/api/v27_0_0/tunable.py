@@ -1,7 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, excluded_field
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
     "TunableCreate", "TunableEntry", "TunableUpdate",

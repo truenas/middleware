@@ -5,8 +5,8 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ZFSResourceDestroyArgsData,
     ZFSResourceDestroyArgs,
+    ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
     ZFSResourceQuery,
@@ -16,12 +16,11 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
 from middlewared.service import Service, private
-from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
 
 from .destroy_impl import destroy_impl
-from .object_count_impl import estimate_object_count_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
@@ -36,6 +35,7 @@ from .mount_unmount_impl import (
     mount_impl,
     unmount_impl,
 )
+from .object_count_impl import estimate_object_count_impl
 from .query_impl import query_impl
 from .rename_promote_clone_impl import (
     promote_impl,

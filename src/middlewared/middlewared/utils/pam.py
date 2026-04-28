@@ -1,5 +1,5 @@
-import enum
 from dataclasses import dataclass
+import enum
 
 
 class PAMModule(enum.StrEnum):

@@ -5,7 +5,10 @@ from typing import TYPE_CHECKING
 from truenas_pylibvirt.device import FilesystemDevice, GPUDevice, NICDevice, USBDevice
 
 from middlewared.api.current import (
-    ContainerFilesystemDevice, ContainerGPUDevice, ContainerNICDevice, ContainerUSBDevice,
+    ContainerFilesystemDevice,
+    ContainerGPUDevice,
+    ContainerNICDevice,
+    ContainerUSBDevice,
 )
 from middlewared.utils.libvirt.filesystem import FilesystemDelegate
 from middlewared.utils.libvirt.gpu import GPUDelegate

@@ -8,7 +8,6 @@ import sys
 
 from middlewared.utils.db import query_config_table
 
-
 FIPS_MODULE_FILE = '/usr/lib/ssl/fipsmodule.cnf'
 OPENSSL_CONFIG_FILE = '/etc/ssl/openssl.cnf'
 BASE_OPENSSL_CONFIG_FILE = '/conf/base/etc/ssl/openssl.cnf'

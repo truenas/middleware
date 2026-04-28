@@ -2,7 +2,7 @@ import os
 import re
 import shlex
 
-from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException, ssh
+from middlewared.test.integration.utils import RunOnRunnerException, call, run_on_runner, ssh
 
 try:
     from config import KVM_HOST, KVM_PASSWORD, KVM_USERNAME

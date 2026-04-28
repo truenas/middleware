@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
+from middlewared.api.base import UUID, BaseModel, IPvAnyAddress
 
 
 class AuditEventVersion(BaseModel):

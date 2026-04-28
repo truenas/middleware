@@ -3,10 +3,10 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+
 from .cloud import BaseCloudEntry
 from .common import CronModel
-
 
 __all__ = [
     "CloudBackupEntry", "CloudBackupTransferSettingChoicesArgs", "CloudBackupTransferSettingChoicesResult",

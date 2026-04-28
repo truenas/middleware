@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
+
 import pytest
 
 from middlewared.plugins.network import InterfaceService

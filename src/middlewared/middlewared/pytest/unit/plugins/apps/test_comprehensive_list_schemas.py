@@ -9,6 +9,7 @@ Comprehensive test coverage for list schemas covering all scenarios:
 - Lists with string discriminators
 """
 from unittest.mock import patch
+
 from middlewared.plugins.apps.schema_construction_utils import construct_schema
 
 

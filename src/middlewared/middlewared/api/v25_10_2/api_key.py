@@ -1,13 +1,18 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Secret, Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-    LocalUsername, RemoteUsername, HttpVerb,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    HttpVerb,
+    LocalUsername,
+    NonEmptyString,
+    RemoteUsername,
+    excluded_field,
 )
-
 
 __all__ = [
     "ApiKeyEntry", "ApiKeyCreateArgs", "ApiKeyCreateResult", "ApiKeyUpdateArgs", "ApiKeyUpdateResult",

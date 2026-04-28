@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 import json
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import josepy as jose
-import requests
 from acme import client, messages
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
+import josepy as jose
+import requests
 
-import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDServicePart, ValidationErrors
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 
 from .models import ACMERegistrationCreate, ACMERegistrationEntry
 

@@ -1,10 +1,13 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolDdtPruneArgs, PoolDdtPruneResult, PoolDdtPrefetchArgs, PoolDdtPrefetchResult, PoolPrefetchArgs,
-    PoolPrefetchResult
+    PoolDdtPrefetchArgs,
+    PoolDdtPrefetchResult,
+    PoolDdtPruneArgs,
+    PoolDdtPruneResult,
+    PoolPrefetchArgs,
+    PoolPrefetchResult,
 )
-
-from middlewared.service import job, Service
+from middlewared.service import Service, job
 
 
 class PoolService(Service):

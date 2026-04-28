@@ -1,20 +1,20 @@
 import errno
 from typing import Any, Generator
-
-import docker.errors
 from zoneinfo import ZoneInfo
 
-from dateutil.parser import parse, ParserError
+from dateutil.parser import ParserError, parse
 from docker.api.client import APIClient
+import docker.errors
 
 from middlewared.api.current import (
-    AppContainerLogsFollowTailEventSourceArgs, AppContainerLogsFollowTailEventSourceEvent,
+    AppContainerLogsFollowTailEventSourceArgs,
+    AppContainerLogsFollowTailEventSourceEvent,
 )
 from middlewared.event import TypedEventSource
 from middlewared.service import CallError
 
-from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
+from .ix_apps.utils import AppState
 
 
 def _fixed_stream_raw_result(

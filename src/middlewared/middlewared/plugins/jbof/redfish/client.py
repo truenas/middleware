@@ -8,11 +8,12 @@ from urllib.parse import urlencode
 
 import aiohttp
 import requests
+from truenas_api_client import Client
+from urllib3.exceptions import InsecureRequestWarning
+
 from middlewared.service import CallError
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.filter_list import filter_list
-from truenas_api_client import Client
-from urllib3.exceptions import InsecureRequestWarning
 
 DEFAULT_REDFISH_TIMEOUT_SECS = 10
 HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}

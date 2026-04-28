@@ -1,5 +1,13 @@
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString,
-                                  single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    LongString,
+    NonEmptyString,
+    excluded_field,
+    single_argument_result,
+)
+
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CredentialsEntry",

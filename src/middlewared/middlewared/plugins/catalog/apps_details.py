@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+from datetime import datetime
 import json
 import os
 import typing
@@ -9,22 +10,26 @@ from apps_ci.names import CACHED_CATALOG_FILE_NAME
 from apps_validation.json_schema_utils import CATALOG_JSON_SCHEMA
 from catalog_reader.app_utils import get_app_details_base
 from catalog_reader.catalog import retrieve_train_names
-from catalog_reader.train_utils import get_train_path
 from catalog_reader.recommended_apps import retrieve_recommended_apps as retrieve_recommended_apps_from_catalog_reader
-from datetime import datetime
-from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
+from catalog_reader.train_utils import get_train_path
+from jsonschema import ValidationError as JsonValidationError
+from jsonschema import validate as json_schema_validate
 from pydantic import BaseModel, ConfigDict, Field
 
 from middlewared.alert.source.catalogs import CatalogNotHealthyAlert
 from middlewared.api.current import (
-    AppCertificateChoices, AppIpChoices, CatalogApps, CatalogAppsResponse, CatalogEntry,
-    SystemGeneralEntry, SystemGeneralTimezoneChoices,
+    AppCertificateChoices,
+    AppIpChoices,
+    CatalogApps,
+    CatalogAppsResponse,
+    CatalogEntry,
+    SystemGeneralEntry,
+    SystemGeneralTimezoneChoices,
 )
 from middlewared.service import ServiceContext
 
 from .apps_util import get_app_version_details
-from .utils import get_cache_key, OFFICIAL_LABEL
-
+from .utils import OFFICIAL_LABEL, get_cache_key
 
 CATEGORIES_SET: set[str] = set()
 

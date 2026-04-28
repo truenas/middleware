@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from acme import messages
 from truenas_acme_utils.client_utils import ACMEClientAndKeyData

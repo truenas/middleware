@@ -1,12 +1,13 @@
+from base64 import b64decode
 import os
+from tempfile import NamedTemporaryFile
+
 import truenas_pypwenc
 
-from base64 import b64decode
-from tempfile import NamedTemporaryFile
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.utils.pwenc import encrypt, decrypt, pwenc_generate_secret, pwenc_rename, PWENC_FILE_SECRET
-from middlewared.service import pass_app, Service
+from middlewared.service import Service, pass_app
 from middlewared.service_exception import CallError
+from middlewared.utils.pwenc import PWENC_FILE_SECRET, decrypt, encrypt, pwenc_generate_secret, pwenc_rename
 
 PWENC_CHECK = 'Donuts!'
 

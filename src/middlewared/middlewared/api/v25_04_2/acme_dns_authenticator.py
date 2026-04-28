@@ -4,9 +4,12 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, NonEmptyString, OVHEndpoint,
+    BaseModel,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    OVHEndpoint,
+    single_argument_args,
 )
-
 
 __all__ = [
     'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',

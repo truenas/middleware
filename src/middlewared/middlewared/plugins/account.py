@@ -1,91 +1,96 @@
+from asyncio import Lock as AsyncioLock
+from collections import defaultdict
+from contextlib import suppress
+from dataclasses import asdict
+from datetime import datetime
 import errno
 import glob
 import json
 import os
+from pathlib import Path
 import shlex
 import shutil
 import stat
-import wbclient
-from pathlib import Path
-from collections import defaultdict
-from contextlib import suppress
+from threading import Lock
 
 from sqlalchemy.orm import relationship
+from truenas_os_pyutils.io import atomic_write
+from truenas_pypam import PAMCode
+import wbclient
 
-from asyncio import Lock as AsyncioLock
-from dataclasses import asdict
-from datetime import datetime
 from middlewared.api import api_method
 from middlewared.api.current import (
-    GroupEntry,
     GroupCreateArgs,
     GroupCreateResult,
     GroupDeleteArgs,
     GroupDeleteResult,
+    GroupEntry,
     GroupGetGroupObjArgs,
     GroupGetGroupObjResult,
     GroupGetNextGidArgs,
     GroupGetNextGidResult,
     GroupUpdateArgs,
     GroupUpdateResult,
-    UserEntry,
     UserCreateArgs,
     UserCreateResult,
     UserDeleteArgs,
     UserDeleteResult,
+    UserEntry,
     UserGetNextUidArgs,
     UserGetNextUidResult,
     UserGetUserObjArgs,
     UserGetUserObjResult,
     UserHasLocalAdministratorSetUpArgs,
     UserHasLocalAdministratorSetUpResult,
-    UserSetupLocalAdministratorArgs,
-    UserSetupLocalAdministratorResult,
     UserSetPasswordArgs,
     UserSetPasswordResult,
+    UserSetupLocalAdministratorArgs,
+    UserSetupLocalAdministratorResult,
     UserShellChoicesArgs,
     UserShellChoicesResult,
     UserUpdateArgs,
     UserUpdateResult,
 )
-from middlewared.service import CallError, CRUDService, ValidationErrors, private, job
-from middlewared.service_exception import MatchNotFound
-import middlewared.sqlalchemy as sa
-from middlewared.utils import run
-from middlewared.utils.account.authenticator import UserPamAuthenticator, AccountFlag
-from middlewared.utils.account.faillock import tally_locked_users, reset_tally
-from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string, check_unixhash
-from middlewared.utils.directoryservices.constants import DSType, DSStatus
-from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
-from middlewared.utils.filter_list import filter_list
-from truenas_os_pyutils.io import atomic_write
-from middlewared.utils.nss import pwd, grp
-from middlewared.utils.nss.nss_common import NssModule
-from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.utils.reserved_ids import ReservedXid
-from middlewared.utils.security import (
-    check_password_complexity,
-    MAX_PASSWORD_HISTORY,
-    PASSWORD_PROMPT_AGE,
-)
-from middlewared.utils.sid import db_id_to_rid, DomainRid
-from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
-    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH,
-    USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL, MIN_AUTO_XID
+    ADMIN_GID,
+    ADMIN_UID,
+    ALLOWED_BUILTIN_GIDS,
+    DEFAULT_HOME_PATH,
+    MIN_AUTO_XID,
+    NO_LOGIN_SHELL,
+    SKEL_PATH,
+    SYNTHETIC_CONTAINER_ROOT,
+    USERNS_IDMAP_DIRECT,
+    USERNS_IDMAP_NONE,
 )
-from middlewared.plugins.smb_.constants import SMBBuiltin
+from middlewared.plugins.idmap_ import idmap_sss, idmap_winbind
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
     IDType,
 )
-from middlewared.plugins.idmap_ import idmap_winbind
-from middlewared.plugins.idmap_ import idmap_sss
-from threading import Lock
-from truenas_pypam import PAMCode
-
+from middlewared.plugins.smb_.constants import SMBBuiltin
+from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
+from middlewared.service_exception import MatchNotFound
+import middlewared.sqlalchemy as sa
+from middlewared.utils import run
+from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenticator
+from middlewared.utils.account.faillock import reset_tally, tally_locked_users
+from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.filesystem.copy import CopyTreeConfig, copytree
+from middlewared.utils.filter_list import filter_list
+from middlewared.utils.nss import grp, pwd
+from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
+from middlewared.utils.reserved_ids import ReservedXid
+from middlewared.utils.security import (
+    MAX_PASSWORD_HISTORY,
+    PASSWORD_PROMPT_AGE,
+    check_password_complexity,
+)
+from middlewared.utils.sid import DomainRid, db_id_to_rid
+from middlewared.utils.time_utils import UTC, utc_now
 
 SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()

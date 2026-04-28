@@ -1,7 +1,7 @@
 from collections import defaultdict
 import itertools
 
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 
 # accounts that should have their userns_idmap field set to DIRECT.
 #

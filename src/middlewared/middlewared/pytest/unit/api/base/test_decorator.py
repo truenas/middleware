@@ -1,5 +1,6 @@
-import pytest
 from typing import Annotated, Any
+
+import pytest
 
 from middlewared.api.base import BaseModel, LongString
 from middlewared.api.base.decorator import check_method_annotations

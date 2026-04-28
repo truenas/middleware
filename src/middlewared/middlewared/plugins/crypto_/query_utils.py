@@ -6,8 +6,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from truenas_crypto_utils.read import load_certificate, load_certificate_request, load_private_key
 from truenas_crypto_utils.utils import RE_CERTIFICATE
 
-from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH
-
+from .utils import CERT_ROOT_PATH, CERT_TYPE_CSR, CERT_TYPE_EXISTING
 
 logger = logging.getLogger(__name__)
 CERT_REPORT_ERRORS = set()

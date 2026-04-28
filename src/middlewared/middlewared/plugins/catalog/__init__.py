@@ -1,29 +1,51 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CatalogApps, CatalogAppsArgs, CatalogAppsResponse, CatalogAppsResult, CatalogEntry,
-    CatalogTrainsArgs, CatalogTrainsResult, CatalogTrainsResponse, CatalogUpdate,
-    CatalogUpdateArgs, CatalogUpdateResult, CatalogSyncArgs, CatalogSyncResult,
-    CatalogSyncedArgs, CatalogSyncedResult,
-    CatalogAppDetails, CatalogAppVersionDetails, CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
+    CatalogAppDetails,
+    CatalogApps,
+    CatalogAppsArgs,
+    CatalogAppsResponse,
+    CatalogAppsResult,
+    CatalogAppVersionDetails,
+    CatalogEntry,
+    CatalogGetAppDetailsArgs,
+    CatalogGetAppDetailsResult,
+    CatalogSyncArgs,
+    CatalogSyncedArgs,
+    CatalogSyncedResult,
+    CatalogSyncResult,
+    CatalogTrainsArgs,
+    CatalogTrainsResponse,
+    CatalogTrainsResult,
+    CatalogUpdate,
+    CatalogUpdateArgs,
+    CatalogUpdateResult,
 )
 from middlewared.service import GenericConfigService, job, private
 
-from .config import CatalogConfigPart
+from .app_version import get_app_details
 from .apps_details import (
-    apps as apps_impl,
-    app_version_details as app_version_details_impl,
-    get_normalized_questions_context as get_nqc_impl,
-    train_to_apps_version_mapping as train_to_apps_version_mapping_impl,
     NormalizedQuestions,
 )
-from .app_version import get_app_details
+from .apps_details import (
+    app_version_details as app_version_details_impl,
+)
+from .apps_details import (
+    apps as apps_impl,
+)
+from .apps_details import (
+    get_normalized_questions_context as get_nqc_impl,
+)
+from .apps_details import (
+    train_to_apps_version_mapping as train_to_apps_version_mapping_impl,
+)
+from .config import CatalogConfigPart
 from .features import version_supported_error_check as version_supported_error_check_impl
-from .sync import get_synced_state, sync as sync_impl
-
+from .sync import get_synced_state
+from .sync import sync as sync_impl
 
 __all__ = ('CatalogService',)
 

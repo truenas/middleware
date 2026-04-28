@@ -2,8 +2,17 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import (BaseModel, ContainerXID, Excluded, excluded_field, ForUpdateMetaclass, LocalUID,
-                                  NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    ContainerXID,
+    Excluded,
+    ForUpdateMetaclass,
+    LocalUID,
+    NonEmptyString,
+    excluded_field,
+    single_argument_args,
+    single_argument_result,
+)
 
 __all__ = ["GroupEntry",
            "GroupCreateArgs", "GroupCreateResult",

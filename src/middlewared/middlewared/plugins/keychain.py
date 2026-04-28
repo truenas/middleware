@@ -15,19 +15,27 @@ from truenas_api_client import Client, ClientException
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 from middlewared.api.current import (
+    KeychainCredentialCreateArgs,
+    KeychainCredentialCreateResult,
+    KeychainCredentialDeleteArgs,
+    KeychainCredentialDeleteResult,
     KeychainCredentialEntry,
-    SSHKeyPairEntry, SSHCredentialsEntry,
-    KeychainCredentialCreateArgs, KeychainCredentialCreateResult,
-    KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult,
-    KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult,
-    KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult,
-    KeychainCredentialGenerateSshKeyPairArgs, KeychainCredentialGenerateSshKeyPairResult,
-    KeychainCredentialRemoteSshHostKeyScanArgs, KeychainCredentialRemoteSshHostKeyScanResult,
-    KeychainCredentialRemoteSshSemiautomaticSetupArgs, KeychainCredentialRemoteSshSemiautomaticSetupResult,
+    KeychainCredentialGenerateSshKeyPairArgs,
+    KeychainCredentialGenerateSshKeyPairResult,
+    KeychainCredentialRemoteSshHostKeyScanArgs,
+    KeychainCredentialRemoteSshHostKeyScanResult,
+    KeychainCredentialRemoteSshSemiautomaticSetupArgs,
+    KeychainCredentialRemoteSshSemiautomaticSetupResult,
+    KeychainCredentialUpdateArgs,
+    KeychainCredentialUpdateResult,
+    KeychainCredentialUsedByArgs,
+    KeychainCredentialUsedByResult,
+    SSHCredentialsEntry,
+    SSHKeyPairEntry,
 )
 from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
-from middlewared.service_exception import CallError, MatchNotFound, ValidationError, ValidationErrors
 from middlewared.service import CRUDService, private
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 

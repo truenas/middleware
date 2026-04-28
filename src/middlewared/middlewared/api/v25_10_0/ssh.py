@@ -1,7 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, LongString, Excluded, excluded_field, ForUpdateMetaclass, TcpPort
-
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, TcpPort, excluded_field
 
 __all__ = ['SSHEntry', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
 

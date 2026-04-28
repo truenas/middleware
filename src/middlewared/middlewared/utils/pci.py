@@ -2,7 +2,7 @@ import os
 from typing import Any
 
 import pyudev
-from truenas_pylibvirt.utils.iommu import get_iommu_groups_info, get_pci_device_class, SENSITIVE_PCI_DEVICE_TYPES
+from truenas_pylibvirt.utils.iommu import SENSITIVE_PCI_DEVICE_TYPES, get_iommu_groups_info, get_pci_device_class
 
 
 def get_pci_device_default_data() -> dict[str, Any]:

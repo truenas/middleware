@@ -1,4 +1,4 @@
-from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Protocol, Sequence
 
 from middlewared.alert.base import OneShotAlertClass
 from middlewared.alert.source.sharing_tasks import ShareLockedAlert, TaskLockedAlert
@@ -12,6 +12,7 @@ from .decorators import pass_app, private
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+
     from . import ValidationErrors
 
 

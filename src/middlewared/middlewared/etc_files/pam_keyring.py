@@ -1,8 +1,4 @@
-from middlewared.utils.user_api_key import (
-    UserApiKey,
-    UserKeyringEntry,
-    flush_user_api_keys
-)
+from middlewared.utils.user_api_key import UserApiKey, UserKeyringEntry, flush_user_api_keys
 
 
 def convert_keys(username, keys) -> UserKeyringEntry:

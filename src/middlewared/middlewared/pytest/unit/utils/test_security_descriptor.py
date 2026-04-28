@@ -1,9 +1,8 @@
 import pytest
-
-from middlewared.utils import security_descriptor
 from samba.dcerpc import security
 from samba.ndr import ndr_pack
 
+from middlewared.utils import security_descriptor
 
 SAMPLE_DOM_SID = 'S-1-5-21-3510196835-1033636670-2319939847-200108'
 SAMPLE_BUILTIN_SID = 'S-1-5-32-544'

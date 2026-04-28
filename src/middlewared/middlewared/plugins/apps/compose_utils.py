@@ -11,7 +11,6 @@ from .ix_apps.lifecycle import get_rendered_templates_of_app
 from .ix_apps.path import get_installed_app_rendered_dir_path
 from .utils import PROJECT_PREFIX, run
 
-
 logger = logging.getLogger('app_lifecycle')
 
 

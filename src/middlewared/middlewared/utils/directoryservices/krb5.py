@@ -7,23 +7,25 @@
 # Tests that require access to a KDC are provided as part of API
 # test suite.
 
-import errno
-import gssapi
-import os
-import subprocess
-import time
-
 from contextlib import contextmanager
 from datetime import timedelta
+import errno
 from functools import wraps
-from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
+import os
+import subprocess
+from tempfile import NamedTemporaryFile
+from threading import Lock
+import time
+from typing import Optional
+
+import gssapi
+
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.time_utils import utc_now
-from tempfile import NamedTemporaryFile
-from threading import Lock
-from typing import Optional
+
+from .krb5_constants import KRB_ETYPE, KRB_Keytab, krb5ccache, krb_tkt_flag
 
 # See lib/krb5/keytab/kt_file.c in MIT kerberos source
 KRB5_KT_VNO = b'\x05\x02'  # KRB v5 keytab version 2, (last changed in 2009)

@@ -1,8 +1,7 @@
-import dataclasses
 import collections
+import dataclasses
 import enum
 import os
-
 
 APPS_STATUS = collections.namedtuple('APPS_STATUS', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'

@@ -1,25 +1,33 @@
 import datetime
 
 from truenas_crypto_utils.csr import generate_certificate_signing_request
-from truenas_crypto_utils.read import load_certificate, load_certificate_request, RE_CERTIFICATE
+from truenas_crypto_utils.read import RE_CERTIFICATE, load_certificate, load_certificate_request
 from truenas_crypto_utils.validation import validate_certificate_with_key, validate_private_key
 
-import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CertificateEntry, CertificateCreateArgs, CertificateCreateResult, CertificateUpdateArgs,
-    CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult,
+    CertificateCreateArgs,
+    CertificateCreateResult,
+    CertificateDeleteArgs,
+    CertificateDeleteResult,
+    CertificateEntry,
+    CertificateUpdateArgs,
+    CertificateUpdateResult,
 )
 from middlewared.async_validators import validate_country
 from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 
-from .query_utils import normalize_cert_attrs
 from .private_models import (
-    CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
-    CertificateCreateImportedCertificateArgs, CertificateCreateInternalResult,
+    CertificateCreateACMEArgs,
+    CertificateCreateCSRArgs,
+    CertificateCreateImportedCertificateArgs,
+    CertificateCreateImportedCSRArgs,
+    CertificateCreateInternalResult,
 )
-from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, get_cert_info_from_data, get_private_key
+from .query_utils import normalize_cert_attrs
+from .utils import CERT_TYPE_CSR, CERT_TYPE_EXISTING, get_cert_info_from_data, get_private_key
 
 
 class CertificateModel(sa.Model):
