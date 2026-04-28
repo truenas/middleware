@@ -228,6 +228,7 @@ class BootService(Service):
         if options['force']:
             args.extend(['-f'])
 
+        # NOTE: truenas-initrd.py is provided by truenas/upgrade_pyutils repository
         cp = await run(
             '/usr/local/bin/truenas-initrd.py', *args,
             encoding='utf8', errors='ignore', check=False
