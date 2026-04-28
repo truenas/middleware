@@ -376,7 +376,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                         event_source.event.__name__,
                         __base__=(BaseModel,),
                         __module__=event_source.__module__,
-                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],
+                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],  # noqa: F821
                     ),
                 },
                 'roles': self.role_manager.roles_for_event(name),

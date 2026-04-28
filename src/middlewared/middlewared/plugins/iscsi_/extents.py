@@ -714,8 +714,8 @@ class iSCSITargetExtentService(SharingService):
             target_id = target_to_id[target_name]
             for ctl in iqns[iqn]:
                 lun = int(ctl.split(':')[-1])
-                for (l, extent_name) in target_luns[target_id]:
-                    if l == lun:
+                for (target_lun, extent_name) in target_luns[target_id]:
+                    if target_lun == lun:
                         result[extent_name] = ctl
                         break
         return result

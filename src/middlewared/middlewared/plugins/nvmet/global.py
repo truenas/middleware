@@ -158,7 +158,8 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         """
         # For example
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2
-        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/host_traddr
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/...
+        #     .../host_traddr
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/state
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/kato
         # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/hostnqn
