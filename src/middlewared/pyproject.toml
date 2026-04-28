@@ -39,6 +39,36 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120
+target-version = "py313"
+exclude = ["middlewared/alembic/*"]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # flake8-tidy-imports
+    "TID",
+]
+ignore = [
+    # Prefer absolute imports over relative imports from parent modules
+    "TID252",
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"pydantic.SecretStr".msg = "Use pydantic.Secret[str]"
+"secrets".msg = "Use middlewared.utils.secrets"
+
+[tool.ruff.lint.per-file-ignores]
+"middlewared/api/**/__init__.py" = ["F401", "F403", "F405"]
+"middlewared/test/**" = [
+    # `secrets` is banned: Use middlewared.utils.secrets
+    "TID251",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
