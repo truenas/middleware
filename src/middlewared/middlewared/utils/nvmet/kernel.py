@@ -1,5 +1,6 @@
 from collections import defaultdict
 from contextlib import contextmanager
+import logging
 import os
 import pathlib
 import subprocess
@@ -28,6 +29,8 @@ from .render_common import (
     port_subsys_index,
     subsys_ana,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class NvmetConfig:
@@ -111,7 +114,11 @@ class NvmetConfig:
             p = pathlib.Path(path, k)
             curval = p.read_text().strip()
             if not self.values_match(curval, v):
-                p.write_text(f'{v}\n')
+                try:
+                    p.write_text(f'{v}\n')
+                except OSError:
+                    logger.exception('Failed to update %s: current=%r new=%r', p, curval, v)
+                    raise
 
 
 class NvmetHostConfig(NvmetConfig):
