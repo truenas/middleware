@@ -46,7 +46,7 @@ def _set_authuser_secret(secret):
     Internal helper function for use by this module.
     INPUT: ascii string (not encoded)
     """
-    SNMPSystem.PRIV_KEY = Fernet(SNMPSystem.SYSTEM_USER['key']).encrypt(secret.encode())  # noqa: (F841, assigned but not used)
+    SNMPSystem.PRIV_KEY = Fernet(SNMPSystem.SYSTEM_USER['key']).encrypt(secret.encode())
 
     return
 
