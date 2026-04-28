@@ -49,6 +49,7 @@ class DirectoryServiceHealthError(Exception):
     def __init__(self, fail_reason, errmsg):
         self.reason = self.reasons(fail_reason)
         self.errmsg = errmsg
+        super().__init__(fail_reason, errmsg)
 
     def __str__(self):
         return self.errmsg

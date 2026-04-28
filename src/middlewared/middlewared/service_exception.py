@@ -17,6 +17,7 @@ class CallError(CallException):
         self.errmsg = errmsg
         self.errno = errno
         self.extra = extra
+        super().__init__(errmsg, errno, extra)
 
     def __str__(self):
         errname = get_errname(self.errno)
@@ -33,6 +34,7 @@ class ValidationError(CallException):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
+        super().__init__(attribute, errmsg, errno)
 
     def __str__(self):
         errname = get_errname(self.errno)
@@ -118,6 +120,9 @@ class InstanceNotFound(ValidationError):
     """Raised when `get_instance` failed to locate specific object"""
     def __init__(self, errmsg: str) -> None:
         super().__init__(None, errmsg, errno.ENOENT)
+
+    def __reduce__(self):
+        return (type(self), (self.errmsg,))
 
 
 class MatchNotFound(IndexError):

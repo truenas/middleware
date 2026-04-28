@@ -24,7 +24,10 @@ class ServiceActionError(Exception):
         self.unit = unit
         self.action = action
         self.detail = detail
-        super().__init__(f"{unit} {action}: {detail}")
+        super().__init__(unit, action, detail)
+
+    def __str__(self):
+        return f"{self.unit} {self.action}: {self.detail}"
 
 
 logger = logging.getLogger(__name__)

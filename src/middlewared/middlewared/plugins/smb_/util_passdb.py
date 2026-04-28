@@ -76,6 +76,7 @@ PASSDB_CTDB_CONFIG = ('passdb.tdb', PASSDB_CTDB_OPTIONS)
 class PassdbMustReinit(Exception):
     def __init__(self, reason):
         self.errmsg = reason
+        super().__init__(reason)
 
 
 class UserAccountControl(enum.IntFlag):

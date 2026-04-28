@@ -18,14 +18,20 @@ class Direction(enum.StrEnum):
 class APIVersionDoesNotExistException(Exception):
     def __init__(self, version: str):
         self.version = version
-        super().__init__(f"API Version {self.version!r} does not exist")
+        super().__init__(version)
+
+    def __str__(self):
+        return f"API Version {self.version!r} does not exist"
 
 
 class APIVersionDoesNotContainModelException(Exception):
     def __init__(self, version: str, model_name: str):
         self.version = version
         self.model_name = model_name
-        super().__init__(f"API version {version!r} does not contain model {model_name!r}")
+        super().__init__(version, model_name)
+
+    def __str__(self):
+        return f"API version {self.version!r} does not contain model {self.model_name!r}"
 
 
 class APIVersion:

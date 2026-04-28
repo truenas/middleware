@@ -33,6 +33,7 @@ class UnexpectedFileChange(Exception):
         self.changes = changes
         self.path = path
         self.changes_str = ', '.join(FileChanges.dump(self.changes))
+        super().__init__(path, changes)
 
     def __str__(self) -> str:
         return f'{self.path}: unexpected change in the following file attributes: {self.changes_str}'

@@ -28,6 +28,7 @@ class MsgSizeError(Exception):
         self.datalen = datalen
         self.errmsg = f'Message length [{self.datalen}] exceeded maximum size of {self.limit}'
         self.method_name = method_name or ''
+        super().__init__(limit, datalen, method_name)
         if limit is MsgSizeLimit.UNAUTHENTICATED:
             # This preserves legacy server behavior
             self.ws_close_code = WSCloseCode.INVALID_TEXT
