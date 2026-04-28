@@ -28,10 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 flake8-builtins flake8-tidy-imports flake8-literal import-linter
+        pip install import-linter
     - name: Lint imports
       run: |
         cd src/middlewared/ && lint-imports
-    - name: Lint with flake8
-      run: |
-        flake8 --config=src/middlewared/setup.cfg src/

@@ -2,7 +2,7 @@
 
 from base64 import urlsafe_b64encode
 from random import Random, RECIP_BPF  # type: ignore[attr-defined]
-from secrets import DEFAULT_ENTROPY  # type: ignore[attr-defined]
+from secrets import DEFAULT_ENTROPY  # type: ignore[attr-defined]  # noqa: TID251
 from ssl import RAND_bytes
 from typing import Any
 
