@@ -3,12 +3,13 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING, Any
 
+from truenas_pypam import PAMCode
+
 from middlewared.api.current import ApiKeyEntry
 from middlewared.plugins.auth_.login_ex_impl import login_ex_api_key_plain
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.time_utils import utc_now
-from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App

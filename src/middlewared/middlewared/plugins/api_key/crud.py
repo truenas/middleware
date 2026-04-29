@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-import errno
 from base64 import b64decode
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+import errno
 from typing import TYPE_CHECKING, Any
 
-import middlewared.sqlalchemy as sa
 import truenas_pyfilter as _tf
+
 from middlewared.api.current import (
-    ApiKeyCreate, ApiKeyEntry, ApiKeyEntryWithKey, ApiKeyScramData, ApiKeyUpdate,
+    ApiKeyCreate,
+    ApiKeyEntry,
+    ApiKeyEntryWithKey,
+    ApiKeyScramData,
+    ApiKeyUpdate,
 )
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
 from middlewared.utils.filter_list import compile_filters, compile_options
@@ -18,7 +23,9 @@ from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
 
 from .internal import (
-    api_key_privilege_check, check_status, validate_api_key_data,
+    api_key_privilege_check,
+    check_status,
+    validate_api_key_data,
 )
 
 if TYPE_CHECKING:

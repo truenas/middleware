@@ -1,18 +1,26 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import Secret
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ApiKeyConvertRawKeyArgs, ApiKeyConvertRawKeyResult,
-    ApiKeyCreate, ApiKeyCreateArgs, ApiKeyCreateResult,
-    ApiKeyDeleteArgs, ApiKeyDeleteResult,
-    ApiKeyEntry, ApiKeyEntryWithKey,
-    ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
+    ApiKeyConvertRawKeyArgs,
+    ApiKeyConvertRawKeyResult,
+    ApiKeyCreate,
+    ApiKeyCreateArgs,
+    ApiKeyCreateResult,
+    ApiKeyDeleteArgs,
+    ApiKeyDeleteResult,
+    ApiKeyEntry,
+    ApiKeyEntryWithKey,
+    ApiKeyMyKeysArgs,
+    ApiKeyMyKeysResult,
     ApiKeyScramData,
-    ApiKeyUpdate, ApiKeyUpdateArgs, ApiKeyUpdateResult,
+    ApiKeyUpdate,
+    ApiKeyUpdateArgs,
+    ApiKeyUpdateResult,
 )
 from middlewared.service import CallError, GenericCRUDService, pass_app, private
 from middlewared.utils.types import AuditCallback
