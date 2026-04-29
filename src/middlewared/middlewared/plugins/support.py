@@ -35,7 +35,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
 from middlewared.utils.network import INTERNET_TIMEOUT
 
-ADDRESS = 'support-proxy.truenas.com'
+ADDRESS = "support-proxy.truenas.com"
 
 
 async def post(url, data, timeout=INTERNET_TIMEOUT):
@@ -46,18 +46,18 @@ async def post(url, data, timeout=INTERNET_TIMEOUT):
             ) as session:
                 req = await session.post(url, headers={"Content-Type": "application/json"}, data=data)
     except asyncio.TimeoutError:
-        raise CallError('Connection timed out', errno.ETIMEDOUT)
+        raise CallError("Connection timed out", errno.ETIMEDOUT)
     except aiohttp.ClientResponseError as e:
-        raise CallError(f'Invalid server response: {e}', errno.EBADMSG)
+        raise CallError(f"Invalid server response: {e}", errno.EBADMSG)
 
     try:
         return await req.json()
     except aiohttp.client_exceptions.ContentTypeError:
-        raise CallError(f'Invalid server response: {req.status}', errno.EBADMSG)
+        raise CallError(f"Invalid server response: {req.status}", errno.EBADMSG)
 
 
 class SupportModel(sa.Model):
-    __tablename__ = 'system_support'
+    __tablename__ = "system_support"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean(), nullable=True, default=True)
@@ -74,9 +74,9 @@ class SupportModel(sa.Model):
 class SupportService(ConfigService):
 
     class Config:
-        datastore = 'system.support'
-        cli_namespace = 'system.support'
-        role_prefix = 'SUPPORT'
+        datastore = "system.support"
+        cli_namespace = "system.support"
+        role_prefix = "SUPPORT"
         entry = SupportEntry
 
     @api_method(SupportUpdateArgs, SupportUpdateResult)
@@ -89,78 +89,78 @@ class SupportService(ConfigService):
         config_data.update(data)
 
         verrors = ValidationErrors()
-        if config_data['enabled']:
-            for key in ['name', 'title', 'email', 'phone']:
-                for prefix in ['', 'secondary_']:
+        if config_data["enabled"]:
+            for key in ["name", "title", "email", "phone"]:
+                for prefix in ["", "secondary_"]:
                     field = prefix + key
                     if not config_data[field]:
-                        verrors.add(f'support_update.{field}', 'This field is required')
+                        verrors.add(f"support_update.{field}", "This field is required")
         verrors.check()
 
         await self.middleware.call(
-            'datastore.update',
+            "datastore.update",
             self._config.datastore,
-            config_data['id'],
+            config_data["id"],
             config_data,
         )
 
         return await self.config()
 
-    @api_method(SupportIsAvailableArgs, SupportIsAvailableResult, roles=['SUPPORT_READ'])
+    @api_method(SupportIsAvailableArgs, SupportIsAvailableResult, roles=["SUPPORT_READ"])
     async def is_available(self):
         """
         Returns whether Proactive Support is available for this product type and current license.
         """
 
-        if await self.middleware.call('system.vendor.name'):
+        if await self.middleware.call("system.vendor.name"):
             return False
 
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call("system.is_enterprise"):
             return False
 
-        return await self.middleware.call('system.feature_enabled', 'SUPPORT')
+        return await self.middleware.call("system.feature_enabled", "SUPPORT")
 
-    @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
+    @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=["SUPPORT_READ"])
     async def is_available_and_enabled(self):
         """
         Returns whether Proactive Support is available and enabled.
         """
 
-        return await self.is_available() and bool((await self.config())['enabled'])
+        return await self.is_available() and bool((await self.config())["enabled"])
 
-    @api_method(SupportFieldsArgs, SupportFieldsResult, roles=['SUPPORT_READ'])
+    @api_method(SupportFieldsArgs, SupportFieldsResult, roles=["SUPPORT_READ"])
     async def fields(self):
         """
         Returns list of pairs of field names and field titles for Proactive Support.
         """
         return [
-            ['name', 'Contact Name'],
-            ['title', 'Contact Title'],
-            ['email', 'Contact E-mail'],
-            ['phone', 'Contact Phone'],
-            ['secondary_name', 'Secondary Contact Name'],
-            ['secondary_title', 'Secondary Contact Title'],
-            ['secondary_email', 'Secondary Contact E-mail'],
-            ['secondary_phone', 'Secondary Contact Phone'],
+            ["name", "Contact Name"],
+            ["title", "Contact Title"],
+            ["email", "Contact E-mail"],
+            ["phone", "Contact Phone"],
+            ["secondary_name", "Secondary Contact Name"],
+            ["secondary_title", "Secondary Contact Title"],
+            ["secondary_email", "Secondary Contact E-mail"],
+            ["secondary_phone", "Secondary Contact Phone"],
         ]
 
-    @api_method(SupportSimilarIssuesArgs, SupportSimilarIssuesResult, roles=['SUPPORT_READ'])
+    @api_method(SupportSimilarIssuesArgs, SupportSimilarIssuesResult, roles=["SUPPORT_READ"])
     async def similar_issues(self, query):
-        await self.middleware.call('network.general.will_perform_activity', 'support')
+        await self.middleware.call("network.general.will_perform_activity", "support")
 
         data = await post(
-            f'https://{ADDRESS}/freenas/api/v1.0/similar_issues',
+            f"https://{ADDRESS}/freenas/api/v1.0/similar_issues",
             data=json.dumps({
-                'query': query,
+                "query": query,
             }),
         )
 
-        if 'error' in data:
-            raise CallError(data['message'], errno.EINVAL)
+        if "error" in data:
+            raise CallError(data["message"], errno.EINVAL)
 
         return data
 
-    @api_method(SupportNewTicketArgs, SupportNewTicketResult, roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
+    @api_method(SupportNewTicketArgs, SupportNewTicketResult, roles=["SUPPORT_WRITE", "READONLY_ADMIN"])
     @job()
     async def new_ticket(self, job, data):
         """
@@ -171,66 +171,66 @@ class SupportService(ConfigService):
         For Community Edition, `criticality`, `environment`, `phone`, `name`, and `email` attributes are not required.
         For Enterprise, `token` and `type` attributes are not required.
         """
-        vendor = await self.middleware.call('system.vendor.name')
+        vendor = await self.middleware.call("system.vendor.name")
         if vendor:
-            raise CallError(f'Support is not available for this product ({vendor})', errno.EINVAL)
+            raise CallError(f"Support is not available for this product ({vendor})", errno.EINVAL)
 
-        await self.middleware.call('network.general.will_perform_activity', 'support')
+        await self.middleware.call("network.general.will_perform_activity", "support")
 
-        job.set_progress(1, 'Gathering data')
+        job.set_progress(1, "Gathering data")
 
-        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        sw_name = "freenas" if not await self.middleware.call("system.is_enterprise") else "truenas"
 
-        if sw_name == 'freenas':
-            required_attrs = ('type', 'token')
+        if sw_name == "freenas":
+            required_attrs = ("type", "token")
         else:
-            required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
-            data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
+            required_attrs = ("category", "phone", "name", "email", "criticality", "environment")
+            data["serial"] = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
             license_ = (await self.call2(self.s.truenas.license.info_private))
             if license_:
-                data['license_id'] = license_.id
+                data["license_id"] = license_.id
 
         for i in required_attrs:
             if i not in data:
-                raise CallError(f'{i} is required', errno.EINVAL)
+                raise CallError(f"{i} is required", errno.EINVAL)
 
-        data['version'] = sw_version()
-        debug = data.pop('attach_debug')
+        data["version"] = sw_version()
+        debug = data.pop("attach_debug")
 
-        type_ = data.get('type')
+        type_ = data.get("type")
         if type_:
-            data['type'] = type_.lower()
+            data["type"] = type_.lower()
 
-        job.set_progress(20, 'Submitting ticket')
+        job.set_progress(20, "Submitting ticket")
 
         result = await post(
-            f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
+            f"https://{ADDRESS}/{sw_name}/api/v1.0/ticket",
             data=json.dumps(data),
         )
-        if result['error']:
-            raise CallError(result['message'], errno.EINVAL)
+        if result["error"]:
+            raise CallError(result["message"], errno.EINVAL)
 
-        ticket = result.get('ticketnum')
-        url = result.get('message')
+        ticket = result.get("ticketnum")
+        url = result.get("message")
         if not ticket:
-            raise CallError('New ticket number was not informed', errno.EINVAL)
-        job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
+            raise CallError("New ticket number was not informed", errno.EINVAL)
+        job.set_progress(50, f"Ticket created: {ticket}", extra={"ticket": ticket})
 
         has_debug = False
         debug_attach_error = None
         if debug:
-            job.set_progress(60, 'Generating debug file')
+            job.set_progress(60, "Generating debug file")
 
             debug_job = await self.middleware.call(
-                'system.debug', pipes=Pipes(output=self.middleware.pipe()),
+                "system.debug", pipes=Pipes(output=self.middleware.pipe()),
             )
 
-            if await self.middleware.call('failover.licensed'):
-                debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
+            if await self.middleware.call("failover.licensed"):
+                debug_name = "debug-{}.tar".format(time.strftime("%Y%m%d%H%M%S"))
             else:
-                debug_name = 'debug-{}-{}.txz'.format(
-                    (await self.middleware.call('system.hostname')).split('.')[0],
-                    time.strftime('%Y%m%d%H%M%S'),
+                debug_name = "debug-{}-{}.txz".format(
+                    (await self.middleware.call("system.hostname")).split(".")[0],
+                    time.strftime("%Y%m%d%H%M%S"),
                 )
 
             with tempfile.NamedTemporaryFile("w+b") as f:
@@ -240,7 +240,7 @@ class SupportService(ConfigService):
                         rbytes = 0
                         while True:
                             r = debug_job.pipes.output.r.read(1048576)
-                            if r == b'':
+                            if r == b"":
                                 break
 
                             rbytes += len(r)
@@ -258,16 +258,16 @@ class SupportService(ConfigService):
                 await debug_job.wait()
 
                 if has_debug:
-                    job.set_progress(80, 'Attaching debug file')
+                    job.set_progress(80, "Attaching debug file")
 
                     t = {
-                        'ticket': ticket,
-                        'filename': debug_name,
+                        "ticket": ticket,
+                        "filename": debug_name,
                     }
-                    if 'token' in data:
-                        t['token'] = data['token']
+                    if "token" in data:
+                        t["token"] = data["token"]
                     tjob = await self.middleware.call(
-                        'support.attach_ticket', t, pipes=Pipes(inputs=InputPipes(self.middleware.pipe())),
+                        "support.attach_ticket", t, pipes=Pipes(inputs=InputPipes(self.middleware.pipe())),
                     )
 
                     def copy2():
@@ -285,51 +285,51 @@ class SupportService(ConfigService):
             job.set_progress(100)
 
         return {
-            'ticket': ticket,
-            'url': url,
-            'has_debug': has_debug,
-            'debug_attach_error': debug_attach_error,
+            "ticket": ticket,
+            "url": url,
+            "has_debug": has_debug,
+            "debug_attach_error": debug_attach_error,
         }
 
-    @api_method(SupportAttachTicketArgs, SupportAttachTicketResult, roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
+    @api_method(SupportAttachTicketArgs, SupportAttachTicketResult, roles=["SUPPORT_WRITE", "READONLY_ADMIN"])
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
         """
         Method to attach a file to an existing ticket.
         """
 
-        self.middleware.call_sync('network.general.will_perform_activity', 'support')
+        self.middleware.call_sync("network.general.will_perform_activity", "support")
 
-        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
+        sw_name = "freenas" if not self.middleware.call_sync("system.is_enterprise") else "truenas"
 
-        data['ticketnum'] = data.pop('ticket')
-        filename = data.pop('filename')
+        data["ticketnum"] = data.pop("ticket")
+        filename = data.pop("filename")
 
         try:
             r = requests.post(
-                f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
+                f"https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment",
                 data=data,
                 timeout=300,
-                files={'file': (filename, job.pipes.input.r)},
+                files={"file": (filename, job.pipes.input.r)},
             )
         except requests.ConnectionError as e:
-            raise CallError(f'Connection error {e}', errno.EBADF)
+            raise CallError(f"Connection error {e}", errno.EBADF)
         except requests.Timeout:
-            raise CallError('Connection time out', errno.ETIMEDOUT)
+            raise CallError("Connection time out", errno.ETIMEDOUT)
 
         if r.status_code == 413:
-            raise CallError('Uploaded file is too large', errno.EFBIG)
+            raise CallError("Uploaded file is too large", errno.EFBIG)
 
         try:
             data = r.json()
         except ValueError:
-            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
-            raise CallError(f'Invalid server response: {r.status_code}', errno.EBADMSG)
+            self.logger.debug(f"Failed to decode ticket attachment response: {r.text}")
+            raise CallError(f"Invalid server response: {r.status_code}", errno.EBADMSG)
 
-        if data['error']:
-            raise CallError(data['message'], errno.EINVAL)
+        if data["error"]:
+            raise CallError(data["message"], errno.EINVAL)
 
-    @api_method(SupportAttachTicketMaxSizeArgs, SupportAttachTicketMaxSizeResult, roles=['SUPPORT_READ'])
+    @api_method(SupportAttachTicketMaxSizeArgs, SupportAttachTicketMaxSizeResult, roles=["SUPPORT_READ"])
     async def attach_ticket_max_size(self):
         """
         Returns maximum uploaded file size for `support.attach_ticket`
@@ -338,4 +338,4 @@ class SupportService(ConfigService):
 
 
 async def setup(middleware):
-    await middleware.call('network.general.register_activity', 'support', 'Support')
+    await middleware.call("network.general.register_activity", "support", "Support")

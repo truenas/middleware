@@ -7,9 +7,9 @@ def copy_function_metadata(f: Callable[..., Any], nf: Callable[..., Any]) -> Non
     # Copy private attrs to new function so decorators can work on top of it
     # e.g. _pass_app
     for i in dir(f):
-        if i.startswith('__'):
+        if i.startswith("__"):
             continue
-        if i.startswith('_'):
+        if i.startswith("_"):
             setattr(nf, i, getattr(f, i))
     for i in ("audit", "audit_callback", "audit_extended", "roles", "new_style_accepts", "new_style_returns"):
         if hasattr(f, i):

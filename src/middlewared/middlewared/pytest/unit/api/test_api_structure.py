@@ -19,7 +19,7 @@ def current_api_package():
     with os.scandir(api_dir) as sdir:
         version_dirs = [
             d.name for d in sdir
-            if d.is_dir() and d.name.startswith('v')
+            if d.is_dir() and d.name.startswith("v")
         ]
 
     # Sort to get the latest version

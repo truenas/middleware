@@ -14,24 +14,24 @@ from middlewared.api.base import (
 from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
-    'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult', 'VMBootloaderOptionsArgs',
-    'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
-    'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
-    'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
-    'VMSupportsVirtualizationArgs', 'VMDisplayDeviceInfo', 'VMGetDisplayWebUri', 'VMDisplayWebURIOptions',
-    'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
-    'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
-    'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
-    'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
-    'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMGetDisplayWebUriArgs',
-    'VMGetDisplayWebUriResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
-    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
-    'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
-    'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
-    'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
-    'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
-    'VMBootloaderOptions',
+    "VMEntry", "VMCreateArgs", "VMCreateResult", "VMUpdateArgs", "VMUpdateResult", "VMDeleteArgs", "VMDeleteResult",
+    "VMBootloaderOvmfChoicesArgs", "VMBootloaderOvmfChoicesResult", "VMBootloaderOptionsArgs",
+    "VMBootloaderOptionsResult", "VMStatusArgs", "VMStatusResult", "VMLogFilePathArgs", "VMLogFilePathResult",
+    "VMLogFileDownloadArgs", "VMLogFileDownloadResult", "VMGuestArchitectureAndMachineChoicesArgs",
+    "VMGuestArchitectureAndMachineChoicesResult", "VMCloneArgs", "VMCloneResult",
+    "VMSupportsVirtualizationArgs", "VMDisplayDeviceInfo", "VMGetDisplayWebUri", "VMDisplayWebURIOptions",
+    "VMSupportsVirtualizationResult", "VMVirtualizationDetailsArgs", "VMVirtualizationDetailsResult",
+    "VMMaximumSupportedVcpusArgs", "VMMaximumSupportedVcpusResult", "VMFlagsArgs", "VMFlagsResult", "VMGetConsoleArgs",
+    "VMGetConsoleResult", "VMCpuModelChoicesArgs", "VMCpuModelChoicesResult", "VMGetMemoryUsageArgs",
+    "VMGetMemoryUsageResult", "VMPortWizardArgs", "VMPortWizardResult", "VMResolutionChoicesArgs",
+    "VMResolutionChoicesResult", "VMGetDisplayDevicesArgs", "VMGetDisplayDevicesResult", "VMGetDisplayWebUriArgs",
+    "VMGetDisplayWebUriResult", "VMStartArgs", "VMStartResult", "VMStopArgs", "VMStopResult", "VMRestartArgs",
+    "VMRestartResult", "VMResumeArgs", "VMResumeResult", "VMPoweroffArgs", "VMPoweroffResult", "VMSuspendArgs",
+    "VMSuspendResult", "VMGetVmemoryInUseArgs", "VMGetVmemoryInUseResult", "VMGetAvailableMemoryArgs",
+    "VMGetAvailableMemoryResult", "VMGetVmMemoryInfoArgs", "VMGetVmMemoryInfoResult", "VMRandomMacArgs",
+    "VMRandomMacResult", "VMCreate", "VMUpdate", "VMDeleteOptions", "VMVirtualizationDetails", "VMFlags",
+    "VMGetVmemoryInUse", "VMStatus", "VMGetVmMemoryInfo", "VMStartOptions", "VMStopOptions", "VMPortWizard",
+    "VMBootloaderOptions",
 ]
 
 
@@ -45,9 +45,9 @@ class VMStatus(BaseModel):
 
 
 class VMEntry(BaseModel):
-    command_line_args: str = ''
+    command_line_args: str = ""
     """Additional command line arguments passed to the VM hypervisor."""
-    cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = 'CUSTOM'
+    cpu_mode: Literal["CUSTOM", "HOST-MODEL", "HOST-PASSTHROUGH"] = "CUSTOM"
     """CPU virtualization mode.
 
     * `CUSTOM`: Use specified model.
@@ -59,7 +59,7 @@ class VMEntry(BaseModel):
     """Specific CPU model to emulate. `null` to use hypervisor default."""
     name: NonEmptyString
     """Display name of the virtual machine."""
-    description: str = ''
+    description: str = ""
     """Optional description or notes about the virtual machine."""
     vcpus: int = Field(ge=1, default=1)
     """Number of virtual CPUs allocated to the VM."""
@@ -86,9 +86,9 @@ class VMEntry(BaseModel):
     during low usage but guarantees this minimum. `null` to disable ballooning."""
     hyperv_enlightenments: bool = False
     """Whether to enable Hyper-V enlightenments for improved Windows guest performance."""
-    bootloader: Literal['UEFI_CSM', 'UEFI'] = 'UEFI'
+    bootloader: Literal["UEFI_CSM", "UEFI"] = "UEFI"
     """Boot firmware type. `UEFI` for modern UEFI, `UEFI_CSM` for legacy BIOS compatibility."""
-    bootloader_ovmf: str = Field(default='OVMF_CODE.fd', examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
+    bootloader_ovmf: str = Field(default="OVMF_CODE.fd", examples=["OVMF_CODE.fd", "OVMF_CODE.secboot.fd"])
     """OVMF firmware file to use for UEFI boot."""
     autostart: bool = True
     """Whether to automatically start the VM when the host system boots."""
@@ -96,7 +96,7 @@ class VMEntry(BaseModel):
     """Whether to hide hypervisor signatures from guest OS MSR access."""
     ensure_display_device: bool = True
     """Whether to ensure at least one display device is configured for the VM."""
-    time: Literal['LOCAL', 'UTC'] = 'LOCAL'
+    time: Literal["LOCAL", "UTC"] = "LOCAL"
     """Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time."""
     shutdown_timeout: int = Field(ge=5, le=300, default=90)
     """Maximum time in seconds to wait for graceful shutdown before forcing power off. Default 90s balances \
@@ -126,7 +126,7 @@ class VMCreate(VMEntry):
     devices: Excluded = excluded_field()
     uuid: UUIDv4String | None = None
     """Unique UUID for the VM. `null` to auto-generate."""
-    bootloader_ovmf: str | None = Field(default=None, examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
+    bootloader_ovmf: str | None = Field(default=None, examples=["OVMF_CODE.fd", "OVMF_CODE.secboot.fd"])
     """OVMF firmware file to use for UEFI boot."""
 
 
@@ -189,9 +189,9 @@ class VMBootloaderOptionsArgs(BaseModel):
 
 
 class VMBootloaderOptions(BaseModel):
-    UEFI: Literal['UEFI'] = 'UEFI'
+    UEFI: Literal["UEFI"] = "UEFI"
     """Modern UEFI firmware with secure boot support."""
-    UEFI_CSM: Literal['Legacy BIOS'] = 'Legacy BIOS'
+    UEFI_CSM: Literal["Legacy BIOS"] = "Legacy BIOS"
     """UEFI with Compatibility Support Module for legacy BIOS compatibility."""
 
 
@@ -379,14 +379,14 @@ class VMGetDisplayDevicesResult(BaseModel):
 
 
 class VMDisplayWebURIOptions(BaseModel):
-    protocol: Literal['HTTP', 'HTTPS'] = 'HTTP'
+    protocol: Literal["HTTP", "HTTPS"] = "HTTP"
     """Protocol to use for the web display URI (HTTP or HTTPS)."""
 
 
 class VMGetDisplayWebUriArgs(BaseModel):
     id: int
     """ID of the virtual machine to get display web URI for."""
-    host: str = ''
+    host: str = ""
     """Hostname or IP address to use in the URI. Empty string for automatic detection."""
     options: VMDisplayWebURIOptions = VMDisplayWebURIOptions()
     """Options for generating the web display URI."""

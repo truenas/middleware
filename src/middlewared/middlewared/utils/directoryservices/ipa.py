@@ -35,14 +35,14 @@ def generate_ipa_default_config(
     ```
     """
     config = RawConfigParser()
-    config.add_section('global')
-    config.set('global', 'host', host)
-    config.set('global', 'basedn', basedn)
-    config.set('global', 'realm', realm)
-    config.set('global', 'domain', domain)
-    config.set('global', 'server', server)
-    config.set('global', 'xmlrpc_uri', f'https://{server}/ipa/xml')
-    config.set('global', 'enable_ra', 'False')
+    config.add_section("global")
+    config.set("global", "host", host)
+    config.set("global", "basedn", basedn)
+    config.set("global", "realm", realm)
+    config.set("global", "domain", domain)
+    config.set("global", "server", server)
+    config.set("global", "xmlrpc_uri", f"https://{server}/ipa/xml")
+    config.set("global", "enable_ra", "False")
 
     with StringIO() as buf:
         config.write(buf)
@@ -58,7 +58,7 @@ def _write_ipa_file(ipa_path: IPAPath, data: bytes) -> str:
         os.rename(f.name, ipa_path.path)
         os.fchmod(f.fileno(), ipa_path.perm)
         if not os.path.exists(ipa_path.path):
-            raise RuntimeError(f'{ipa_path.path}: failed to create file')
+            raise RuntimeError(f"{ipa_path.path}: failed to create file")
 
         return ipa_path.path
 
@@ -82,10 +82,10 @@ def write_ipa_cacert(cacert_bytes: bytes) -> str:
 def ldap_dn_to_realm(ldap_dn: str) -> str:
     """ Extract a hypothetical kerberos realm from DC components of LDAP DN. """
     realm_parts = []
-    for component in ldap_dn.split(','):
-        if not (parts := component.split('dc=')):
+    for component in ldap_dn.split(","):
+        if not (parts := component.split("dc=")):
             continue
 
         realm_parts.append(parts[1].strip())
 
-    return '.'.join(realm_parts)
+    return ".".join(realm_parts)

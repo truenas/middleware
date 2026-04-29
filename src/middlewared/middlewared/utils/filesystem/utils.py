@@ -19,11 +19,11 @@ def path_in_ctldir(path_in: str | Path) -> bool:
     """
     path = Path(path_in)
     if not path.is_absolute():
-        raise ValueError(f'{path_in}: not an absolute path')
+        raise ValueError(f"{path_in}: not an absolute path")
 
     is_in_ctldir = False
-    while path.as_posix() != '/':
-        if not path.name == '.zfs':
+    while path.as_posix() != "/":
+        if not path.name == ".zfs":
             path = path.parent
             continue
 

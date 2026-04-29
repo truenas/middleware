@@ -24,20 +24,20 @@ class Events:
         name: str,
         description: str,
         private: bool,
-        models: dict['EventType', type['BaseModel']] | None,
+        models: dict["EventType", type["BaseModel"]] | None,
         no_auth_required: bool,
         no_authz_required: bool,
         roles: typing.Iterable[str],
     ):
         if name in self._events:
-            raise ValueError(f'Event {name!r} already registered.')
+            raise ValueError(f"Event {name!r} already registered.")
         self.role_manager.register_event(name, roles)
         self._events[name] = {
-            'description': description,
-            'models': models,
-            'no_auth_required': no_auth_required,
-            'no_authz_required': no_authz_required,
-            'roles': self.role_manager.roles_for_event(name),
+            "description": description,
+            "models": models,
+            "no_auth_required": no_auth_required,
+            "no_authz_required": no_authz_required,
+            "roles": self.role_manager.roles_for_event(name),
         }
         if private:
             self.__events_private.add(name)
@@ -48,8 +48,8 @@ class Events:
             return None
 
         return {
-            'private': name in self.__events_private,
-            'wildcard_subscription': True,
+            "private": name in self.__events_private,
+            "wildcard_subscription": True,
             **event,
         }
 
@@ -69,13 +69,13 @@ UnsubscribeProcedure: typing.TypeAlias = typing.Callable[[Exception | None], typ
 
 
 class EventSource:
-    args: type['BaseModel'] | None = None
-    event: type['BaseModel'] | None = None
+    args: type["BaseModel"] | None = None
+    event: type["BaseModel"] | None = None
     roles: list[str] = []
 
     def __init__(
         self,
-        middleware: 'Middleware',
+        middleware: "Middleware",
         name: str,
         arg: str | None,
         send_event: SendEventProcedure,
@@ -113,12 +113,12 @@ class EventSource:
             await self.run()
         except Exception as e:
             error = e
-            self.middleware.logger.error('EventSource %r run() failed', self.name, exc_info=True)
+            self.middleware.logger.error("EventSource %r run() failed", self.name, exc_info=True)
 
         try:
             await self.on_finish()
         except Exception:
-            self.middleware.logger.error('EventSource %r on_finish() failed', self.name, exc_info=True)
+            self.middleware.logger.error("EventSource %r on_finish() failed", self.name, exc_info=True)
 
         # The event source is explicitly cancelled if and only if all subscribers are gone.
         # There is no need to run `unsubscribe_all` in that case.
@@ -131,7 +131,7 @@ class EventSource:
         await self.middleware.run_in_thread(self.run_sync)
 
     def run_sync(self) -> None:
-        raise NotImplementedError('run_sync() method not implemented')
+        raise NotImplementedError("run_sync() method not implemented")
 
     async def cancel(self) -> None:
         self._canceled = True
@@ -145,7 +145,7 @@ class EventSource:
         pass
 
 
-class TypedEventSource[A: 'BaseModel'](EventSource):
+class TypedEventSource[A: "BaseModel"](EventSource):
     """EventSource subclass that provides validated args as a typed pydantic model."""
     args: type[A]
     typed_arg: A

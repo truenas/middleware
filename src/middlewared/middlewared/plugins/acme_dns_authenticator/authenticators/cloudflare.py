@@ -19,42 +19,42 @@ logger = logging.getLogger(__name__)
 
 class CloudFlareAuthenticator(Authenticator):
 
-    NAME = 'cloudflare'
+    NAME = "cloudflare"
     PROPAGATION_DELAY = 60
     SCHEMA_MODEL = CloudFlareSchemaArgs
 
     def initialize_credentials(self) -> None:
-        self.cloudflare_email: str | None = self.attributes.get('cloudflare_email')
-        self.api_key: str | None = self.attributes.get('api_key')
-        self.api_token: str | None = self.attributes.get('api_token')
+        self.cloudflare_email: str | None = self.attributes.get("cloudflare_email")
+        self.api_key: str | None = self.attributes.get("api_key")
+        self.api_token: str | None = self.attributes.get("api_token")
 
     @staticmethod
     async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:
         verrors = ValidationErrors()
-        if data.get('api_token'):
-            if data.get('cloudflare_email'):
+        if data.get("api_token"):
+            if data.get("cloudflare_email"):
                 verrors.add(
-                    'cloudflare_email',
+                    "cloudflare_email",
                     'The Cloudflare email should not be specified when using an "api_token."'
                     ' It is only required when using an "api_key."'
                 )
-            if data.get('api_key'):
+            if data.get("api_key"):
                 verrors.add(
-                    'api_key',
+                    "api_key",
                     'You can use either an "api_token" or the combination of'
                     ' "Cloudflare email + api_key" (old way) for verification, but not both.'
                 )
 
-        elif data.get('cloudflare_email') or data.get('api_key'):
-            if not data.get('cloudflare_email'):
+        elif data.get("cloudflare_email") or data.get("api_key"):
+            if not data.get("cloudflare_email"):
                 verrors.add(
-                    'cloudflare_email',
-                    'Attribute is required when using a Global API Key (should be associated with Cloudflare account).'
+                    "cloudflare_email",
+                    "Attribute is required when using a Global API Key (should be associated with Cloudflare account)."
                 )
-            if not data.get('api_key'):
-                verrors.add('api_key', 'Attribute is required when using a Global API Key.')
+            if not data.get("api_key"):
+                verrors.add("api_key", "Attribute is required when using a Global API Key.")
         else:
-            verrors.add('api_token', 'Attribute must be specified when Global API Key is not specified.')
+            verrors.add("api_token", "Attribute must be specified when Global API Key is not specified.")
 
         verrors.check()
         return data

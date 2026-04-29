@@ -20,7 +20,7 @@ def passthrough_device(device: str) -> VMDevicePassthroughDevice:
     if device_details := get_single_pci_device_details(device):
         data = device_details[device]
     else:
-        data = {**get_pci_device_default_data(), 'error': 'Device not found'}
+        data = {**get_pci_device_default_data(), "error": "Device not found"}
     return VMDevicePassthroughDevice.model_validate(data)
 
 

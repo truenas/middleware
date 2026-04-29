@@ -32,7 +32,7 @@ class KmipService(PseudoServiceBase):
 
     async def get_state(self):
         return ServiceState(
-            (await self.middleware.call('kmip.config'))['enabled'],
+            (await self.middleware.call("kmip.config"))["enabled"],
             [],
         )
 
@@ -74,7 +74,7 @@ class HttpService(PseudoServiceBase):
         """Register port with TNC with retry logic."""
         for attempt in range(3):
             try:
-                await self.middleware.call('tn_connect.hostname.register_system_config', new_port)
+                await self.middleware.call("tn_connect.hostname.register_system_config", new_port)
                 return
             except Exception as e:
                 if attempt == 2:  # Last attempt
@@ -231,35 +231,35 @@ class NVMETargetService(PseudoServiceBase):
     systemd_unit: str
 
     async def start(self):
-        await self.middleware.call('nvmet.global.start')
+        await self.middleware.call("nvmet.global.start")
 
     async def stop(self):
-        await self.middleware.call('nvmet.global.stop')
+        await self.middleware.call("nvmet.global.stop")
 
     async def reload(self):
         # etc.generate is called before we get here
         pass
 
     async def become_active(self):
-        if await self.middleware.call('nvmet.global.running'):
+        if await self.middleware.call("nvmet.global.running"):
             # If necessary we can optimize to *just* poke the
             # 1. port ANA group state
             # 2. namespace enabled
-            await self.middleware.call('etc.generate', self.name)
+            await self.middleware.call("etc.generate", self.name)
         else:
             await self.start()
 
     async def get_state(self):
         return ServiceState(
-            (await self.middleware.call('nvmet.global.running')),
+            (await self.middleware.call("nvmet.global.running")),
             [],
         )
 
     async def failure_logs(self):
-        if (await self.middleware.call('nvmet.global.config'))['kernel']:
+        if (await self.middleware.call("nvmet.global.config"))["kernel"]:
             return None
         else:
-            service_object = await self.middleware.call('service.object', "nvmf")
+            service_object = await self.middleware.call("service.object", "nvmf")
             return await service_object.failure_logs()
 
 

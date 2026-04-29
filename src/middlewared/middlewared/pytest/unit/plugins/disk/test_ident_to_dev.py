@@ -58,6 +58,6 @@ BY_SERIAL = (
 )
 
 
-@pytest.mark.parametrize('ident, sys_disks, result', [BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL])
+@pytest.mark.parametrize("ident, sys_disks, result", [BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL])
 def test_ident_to_dev(ident, sys_disks, result):
     assert result == OBJ.ident_to_dev(ident, sys_disks)

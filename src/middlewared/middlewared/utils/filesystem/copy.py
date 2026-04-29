@@ -101,7 +101,7 @@ class CopyTreeConfig:
     flags: bitmask of metadata to preserve as part of copy
     """
     job: Job | None = None
-    job_msg_prefix: str = ''
+    job_msg_prefix: str = ""
     job_msg_inc: int = 1000
     raise_error: bool = True
     exist_ok: bool = True
@@ -182,7 +182,7 @@ def copy_xattrs(src_fd: int, dst_fd: int, xattr_list: list[str]) -> None:
         OSError: various errnos for reasons specified in xattr syscall manpages
     """
     for xat_name in set(xattr_list) - ACL_XATTRS:
-        if xat_name.startswith('system'):
+        if xat_name.startswith("system"):
             # system xattrs typically denote filesystem-specific xattr handlers that
             # may not be applicable to file copies. For now we will skip them silently.
             continue
@@ -206,8 +206,8 @@ def copy_file_userspace(src_fd: int, dst_fd: int) -> int:
         OSError: errno will be set to one of the values specified in
             the manpage for ile_range()
     """
-    src = open(src_fd, 'rb', closefd=False)
-    dst = open(dst_fd, 'wb', closefd=False)
+    src = open(src_fd, "rb", closefd=False)
+    dst = open(dst_fd, "wb", closefd=False)
     copyfileobj(src, dst)
 
     # TODO: have better method of getting bytes written than fstat on destination.
@@ -444,7 +444,7 @@ def _copytree_impl(
         case CopyTreeOp.USERSPACE:
             c_fn = copy_file_userspace
         case _:
-            raise ValueError(f'{config.op}: unexpected copy operation')
+            raise ValueError(f"{config.op}: unexpected copy operation")
 
     for entry in d_iter:
         # We match on `etype` key because our statx wrapper will initially lstat a file
@@ -458,7 +458,7 @@ def _copytree_impl(
                         # continue here prevents entering the directory / filesystem
                         continue
 
-                if entry.name == '.zfs':
+                if entry.name == ".zfs":
                     # User may have visible snapdir. We definitely don't want to try to copy this
                     # path_in_ctldir checks inode number to verify it's not reserved number for
                     # these special paths (definitive indication it's ctldir as opposed to random
@@ -548,8 +548,8 @@ def _copytree_impl(
 
         if config.job and ((stats.dirs + stats.files) % config.job_msg_inc) == 0:
             config.job.set_progress(100, (
-                f'{config.job_msg_prefix}'
-                f'Copied {entry.path} -> {os.path.join(dst_str, entry.name)}.'
+                f"{config.job_msg_prefix}"
+                f"Copied {entry.path} -> {os.path.join(dst_str, entry.name)}."
             ))
 
 
@@ -585,7 +585,7 @@ def copytree(
     """
     for p in (src, dst):
         if not path.isabs(p):
-            raise ValueError(f'{p}: absolute path is required')
+            raise ValueError(f"{p}: absolute path is required")
 
     dir_request_mask = _copytree_conf_to_dir_request_mask(config)
     try:
@@ -628,9 +628,9 @@ def copytree(
 
     if config.job:
         config.job.set_progress(100, (
-            f'{config.job_msg_prefix}'
-            f'Successfully copied {stats.dirs} directories, {stats.files} files, '
-            f'{stats.symlinks} symlinks for a total of {stats.bytes} bytes of data.'
+            f"{config.job_msg_prefix}"
+            f"Successfully copied {stats.dirs} directories, {stats.files} files, "
+            f"{stats.symlinks} symlinks for a total of {stats.bytes} bytes of data."
         ))
 
     return stats

@@ -12,14 +12,14 @@ from middlewared.api.base import (
 from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
 
 __all__ = [
-    'KerberosEntry', 'KerberosRealmEntry', 'KerberosKeytabEntry',
-    'KerberosUpdateArgs', 'KerberosUpdateResult',
-    'KerberosRealmCreateArgs', 'KerberosRealmCreateResult',
-    'KerberosRealmUpdateArgs', 'KerberosRealmUpdateResult',
-    'KerberosRealmDeleteArgs', 'KerberosRealmDeleteResult',
-    'KerberosKeytabCreateArgs', 'KerberosKeytabCreateResult',
-    'KerberosKeytabUpdateArgs', 'KerberosKeytabUpdateResult',
-    'KerberosKeytabDeleteArgs', 'KerberosKeytabDeleteResult',
+    "KerberosEntry", "KerberosRealmEntry", "KerberosKeytabEntry",
+    "KerberosUpdateArgs", "KerberosUpdateResult",
+    "KerberosRealmCreateArgs", "KerberosRealmCreateResult",
+    "KerberosRealmUpdateArgs", "KerberosRealmUpdateResult",
+    "KerberosRealmDeleteArgs", "KerberosRealmDeleteResult",
+    "KerberosKeytabCreateArgs", "KerberosKeytabCreateResult",
+    "KerberosKeytabUpdateArgs", "KerberosKeytabUpdateResult",
+    "KerberosKeytabDeleteArgs", "KerberosKeytabDeleteResult",
 ]
 
 
@@ -41,13 +41,13 @@ class KerberosEntry(BaseModel):
     for the environment. See manpage for MIT krb5.conf.
     """
 
-    @field_validator('appdefaults_aux')
+    @field_validator("appdefaults_aux")
     @classmethod
     def validate_appdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.APPDEFAULTS, {}, v)
         return v
 
-    @field_validator('libdefaults_aux')
+    @field_validator("libdefaults_aux")
     @classmethod
     def validate_libdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.LIBDEFAULTS, {}, v)
@@ -98,7 +98,7 @@ class KerberosKeytabEntry(BaseModel):
     """ Base64 encoded kerberos keytab entries to append to the system keytab. """
 
 
-@single_argument_args('kerberos_update')
+@single_argument_args("kerberos_update")
 class KerberosUpdateArgs(KerberosEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

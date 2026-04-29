@@ -16,7 +16,7 @@ __all__ = [
 class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
     id: int
     initiators: list[str] = []
-    comment: str = ''
+    comment: str = ""
 
 
 class IscsiInitiatorCreate(iSCSITargetAuthorizedInitiatorEntry):

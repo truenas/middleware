@@ -9,11 +9,11 @@ from middlewared.service import Service
 
 
 # Mock check_model_module to allow models in test file
-@patch('middlewared.api.base.decorator.check_model_module')
+@patch("middlewared.api.base.decorator.check_model_module")
 def test_valid_service_method_names(mock_check_model):
     """Test that valid service method names pass validation during class creation"""
     class TestGetDataArgs(BaseModel):
-        filter: str = ''
+        filter: str = ""
 
     class TestGetDataResult(BaseModel):
         result: dict
@@ -32,38 +32,38 @@ def test_valid_service_method_names(mock_check_model):
 
     class TestService(Service):
         class Config:
-            namespace = 'test'
+            namespace = "test"
 
         @api_method(
             TestGetDataArgs,
             TestGetDataResult,
-            roles=['READONLY_ADMIN']
+            roles=["READONLY_ADMIN"]
         )
         def get_data(self):
-            return {'data': 'test'}
+            return {"data": "test"}
 
         @api_method(
             TestUpdateDataArgs,
             TestUpdateDataResult,
-            roles=['FULL_ADMIN']
+            roles=["FULL_ADMIN"]
         )
         def update_data(self):
-            return {'status': 'updated'}
+            return {"status": "updated"}
 
         @api_method(
             TestCreateArgs,
             TestCreateResult,
-            roles=['FULL_ADMIN']
+            roles=["FULL_ADMIN"]
         )
         def do_create(self):
-            return {'status': 'created'}
+            return {"status": "created"}
 
 
-@patch('middlewared.api.base.decorator.check_model_module')
+@patch("middlewared.api.base.decorator.check_model_module")
 def test_invalid_service_method_names(mock_check_model):
     """Test that invalid service method names raise RuntimeError during class creation"""
     class WrongNameArgs(BaseModel):
-        filter: str = ''
+        filter: str = ""
 
     class WrongNameResult(BaseModel):
         result: dict
@@ -71,18 +71,18 @@ def test_invalid_service_method_names(mock_check_model):
     with pytest.raises(RuntimeError, match="has incorrect accepts class name"):
         class InvalidService(Service):
             class Config:
-                namespace = 'invalid'
+                namespace = "invalid"
 
             @api_method(
                 WrongNameArgs,
                 WrongNameResult,
-                roles=['READONLY_ADMIN']
+                roles=["READONLY_ADMIN"]
             )
             def get_data(self):
-                return {'data': 'test'}
+                return {"data": "test"}
 
 
-@patch('middlewared.api.base.decorator.check_model_module')
+@patch("middlewared.api.base.decorator.check_model_module")
 def test_service_with_query_args(mock_check_model):
     """Test that services using QueryArgs pass validation during class creation"""
     class TestServiceWithQueryArgsGetDataResult(BaseModel):
@@ -90,29 +90,29 @@ def test_service_with_query_args(mock_check_model):
 
     class TestServiceWithQueryArgs(Service):
         class Config:
-            namespace = 'test_query'
+            namespace = "test_query"
 
         @api_method(
             QueryArgs,
             TestServiceWithQueryArgsGetDataResult,
-            roles=['READONLY_ADMIN']
+            roles=["READONLY_ADMIN"]
         )
         def get_data(self):
-            return {'data': 'test'}
+            return {"data": "test"}
 
 
-@patch('middlewared.api.base.decorator.check_model_module')
+@patch("middlewared.api.base.decorator.check_model_module")
 def test_service_with_private_method(mock_check_model):
     """Test that private methods are skipped during validation on class creation"""
     class TestServiceWithPrivateMethodGetDataArgs(BaseModel):
-        filter: str = ''
+        filter: str = ""
 
     class TestServiceWithPrivateMethodGetDataResult(BaseModel):
         result: dict
 
     class TestServiceWithPrivateMethod(Service):
         class Config:
-            namespace = 'test_private'
+            namespace = "test_private"
 
         @api_method(
             TestServiceWithPrivateMethodGetDataArgs,
@@ -120,4 +120,4 @@ def test_service_with_private_method(mock_check_model):
             private=True
         )
         def _get_data(self):
-            return {'data': 'test'}
+            return {"data": "test"}

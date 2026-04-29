@@ -45,25 +45,25 @@ class SecuritySessionEntry(BaseModel):
 def truenas_session_iterator():
     for session in iterate_sessions():
         yield {
-            'session_uuid': str(session.session_id),
-            'creation': session.creation,
-            'pid': session.pid,
-            'sid': session.sid,
-            'username': session.username,
-            'uid': session.uid,
-            'gid': session.gid,
-            'service': session.service,
-            'ruser': session.ruser,
-            'rhost': session.rhost,
-            'tty': session.tty,
+            "session_uuid": str(session.session_id),
+            "creation": session.creation,
+            "pid": session.pid,
+            "sid": session.sid,
+            "username": session.username,
+            "uid": session.uid,
+            "gid": session.gid,
+            "service": session.service,
+            "ruser": session.ruser,
+            "rhost": session.rhost,
+            "tty": session.tty,
         }
 
 
 class SystemSecurityInfoService(Service):
 
     class Config:
-        namespace = 'system.security.sessions'
-        cli_namespace = 'system.security.sessions'
+        namespace = "system.security.sessions"
+        cli_namespace = "system.security.sessions"
 
     @filterable_api_method(item=SecuritySessionEntry, private=True)
     def query(self, filters, options):

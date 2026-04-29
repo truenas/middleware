@@ -84,14 +84,14 @@ async def test_update_available_versions(trains_releases, result):
 
     service = UpdateService(middleware)
 
-    with patch('middlewared.plugins.update_.version.get_trains', AsyncMock()), \
-         patch('middlewared.plugins.update_.version.get_next_trains_names',
+    with patch("middlewared.plugins.update_.version.get_trains", AsyncMock()), \
+         patch("middlewared.plugins.update_.version.get_next_trains_names",
                AsyncMock(return_value=list(reversed(trains_releases.keys())))), \
-         patch('middlewared.plugins.update_.version.get_train_releases',
+         patch("middlewared.plugins.update_.version.get_train_releases",
                AsyncMock(side_effect=lambda ctx, train: {
                    k: Release(**release_manifest, **v) for k, v in trains_releases[train].items()
                })), \
-         patch('middlewared.plugins.update_.version.release_notes', AsyncMock(
+         patch("middlewared.plugins.update_.version.release_notes", AsyncMock(
              side_effect=lambda ctx, train, filename: f"Release notes for {train}/{filename}"
          )):
         assert await service.available_versions() == result

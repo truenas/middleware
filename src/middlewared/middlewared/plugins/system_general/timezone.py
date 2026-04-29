@@ -10,8 +10,8 @@ from middlewared.utils.timezone_choices import tz_choices
 class SystemGeneralService(Service):
 
     class Config:
-        namespace = 'system.general'
-        cli_namespace = 'system.general'
+        namespace = "system.general"
+        cli_namespace = "system.general"
 
     @api_method(
         SystemGeneralTimezoneChoicesArgs,

@@ -13,7 +13,7 @@ from truenas_pynetif.netlink import DeviceNotFound
 from middlewared.service import ServiceContext
 from middlewared.utils.cgroups import move_to_root_cgroups
 
-BRIDGE_AUTO = '[AUTO]'
+BRIDGE_AUTO = "[AUTO]"
 BRIDGE_NAME = "truenasbr0"
 # This is intentionally kept on the boot drive because placing
 # it on the system dataset prevents unmounting during system

@@ -20,9 +20,9 @@ class iSCSITargetAuthCredentialEntry(BaseModel):
     tag: int
     user: str
     secret: Secret[str]
-    peeruser: str = ''
-    peersecret: Secret[str] = ''
-    discovery_auth: IscsiAuthType = 'NONE'
+    peeruser: str = ""
+    peersecret: Secret[str] = ""
+    discovery_auth: IscsiAuthType = "NONE"
 
 
 class IscsiAuthCreate(iSCSITargetAuthCredentialEntry):

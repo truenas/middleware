@@ -19,8 +19,8 @@ from .krb5_constants import KRB_ETYPE, KRB_AppDefaults, KRB_LibDefaults, KRB_Rea
 
 logger = logging.getLogger(__name__)
 
-KRB5_VALUE_BEGIN = '{'
-KRB5_VALUE_END = '}'
+KRB5_VALUE_BEGIN = "{"
+KRB5_VALUE_END = "}"
 
 APPDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_AppDefaults)
 LIBDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_LibDefaults)
@@ -38,7 +38,7 @@ def format_server(address: str | None) -> str | None:
     address = address.strip()
     try:
         ipaddress.IPv6Address(address)
-        return f'[{address}]'
+        return f"[{address}]"
     except ValueError:
         return address
 
@@ -72,37 +72,37 @@ def validate_krb5_parameter(section, param, value):
         case KRB5ConfSection.LIBDEFAULTS:
             section_enum = KRB_LibDefaults
         case _:
-            raise ValueError(f'{section}: unexpected section type')
+            raise ValueError(f"{section}: unexpected section type")
 
     try:
         param_enum = section_enum[param.upper()]
     except KeyError:
         raise ValueError(
-            f'{param}: unsupported option for [{section.name.lower()}] section'
+            f"{param}: unsupported option for [{section.name.lower()}] section"
         ) from None
 
     match param_enum.value[1]:
-        case 'boolean':
-            if value not in ('true', 'false'):
-                raise ValueError(f'{value}: not a boolean value for parameter {param}')
-        case 'string':
+        case "boolean":
+            if value not in ("true", "false"):
+                raise ValueError(f"{value}: not a boolean value for parameter {param}")
+        case "string":
             if not isinstance(value, str):
-                raise ValueError(f'{value}: not a string for parameter {param}')
-        case 'etypes':
-            if ',' in value:
-                raise ValueError('enctypes should be space-delimited list')
+                raise ValueError(f"{value}: not a string for parameter {param}")
+        case "etypes":
+            if "," in value:
+                raise ValueError("enctypes should be space-delimited list")
 
             for enctype in value.split():
                 if enctype.strip() not in SUPPORTED_ETYPES:
-                    raise ValueError(f'{enctype}: unsupported enctype specified for parameter {param}')
-        case 'time':
+                    raise ValueError(f"{enctype}: unsupported enctype specified for parameter {param}")
+        case "time":
             if isinstance(value, str):
                 if not value.isdigit():
                     # Technically krb5.conf allows multiple time formats
                     # but for simplicity we only allow seconds
-                    raise ValueError(f'{value}: time must be expressed in seconds for parameter {param}')
+                    raise ValueError(f"{value}: time must be expressed in seconds for parameter {param}")
             elif not isinstance(value, int):
-                raise ValueError(f'{value}: time must be expressed in seconds for parameter {param}')
+                raise ValueError(f"{value}: time must be expressed in seconds for parameter {param}")
         case _:
             pass
 
@@ -142,7 +142,7 @@ def parse_krb_aux_params(
         if not line.strip():
             continue
 
-        if len((entry := line.split('='))) < 1:
+        if len((entry := line.split("="))) < 1:
             # invalid line, keep legacy truenas behavior and silently skip
             continue
 
@@ -152,7 +152,7 @@ def parse_krb_aux_params(
             # `fubar = {` line, set `fubar` as target so that we properly
             # consolidate values if our defaults are overridden
             if is_subsection:
-                raise ValueError('Invalid nesting of parameters')
+                raise ValueError("Invalid nesting of parameters")
 
             section_conf[param] = {}
             target = section_conf[param]
@@ -191,7 +191,7 @@ class KRB5Conf():
             case KRB5ConfSection.LIBDEFAULTS:
                 self.libdefaults = data
             case _:
-                raise ValueError(f'{section}: unexpected section type')
+                raise ValueError(f"{section}: unexpected section type")
 
     def add_libdefaults(
         self,
@@ -264,8 +264,8 @@ class KRB5Conf():
         )
 
     def __parse_realm(self, realm_info: dict) -> dict:
-        if 'realm' not in realm_info:
-            raise ValueError('Realm information does not specify realm')
+        if "realm" not in realm_info:
+            raise ValueError("Realm information does not specify realm")
 
         for prop in (
             KRB_RealmProperty.ADMIN_SERVER.value[0],
@@ -273,14 +273,14 @@ class KRB5Conf():
             KRB_RealmProperty.KPASSWD_SERVER.value[0]
         ):
             if prop in realm_info and not isinstance(realm_info[prop], list):
-                raise ValueError(f'{prop}: property must be list')
+                raise ValueError(f"{prop}: property must be list")
 
-        return {realm_info['realm']: {
-            'realm': realm_info['realm'],
-            'primary_kdc': format_server(realm_info[KRB_RealmProperty.PRIMARY_KDC.parm]),
-            'admin_server': [format_server(s) for s in realm_info[KRB_RealmProperty.ADMIN_SERVER.parm]],
-            'kdc': [format_server(s) for s in realm_info[KRB_RealmProperty.KDC.parm]],
-            'kpasswd_server': [format_server(s) for s in realm_info[KRB_RealmProperty.KPASSWD_SERVER.parm]],
+        return {realm_info["realm"]: {
+            "realm": realm_info["realm"],
+            "primary_kdc": format_server(realm_info[KRB_RealmProperty.PRIMARY_KDC.parm]),
+            "admin_server": [format_server(s) for s in realm_info[KRB_RealmProperty.ADMIN_SERVER.parm]],
+            "kdc": [format_server(s) for s in realm_info[KRB_RealmProperty.KDC.parm]],
+            "kpasswd_server": [format_server(s) for s in realm_info[KRB_RealmProperty.KPASSWD_SERVER.parm]],
         }}
 
     def add_realms(self, realms: list) -> None:
@@ -312,70 +312,70 @@ class KRB5Conf():
             return
 
         if isinstance(value, dict):
-            out = f'\t{parm} = {KRB5_VALUE_BEGIN}\n'
+            out = f"\t{parm} = {KRB5_VALUE_BEGIN}\n"
             for k, v in value.items():
                 if (val := self.__dump_a_parameter(k, v)) is None:
                     continue
 
-                out += f'\t{val}'
+                out += f"\t{val}"
 
-            out += f'\t{KRB5_VALUE_END}\n'
+            out += f"\t{KRB5_VALUE_END}\n"
             return out
         elif isinstance(value, list):
             if len(value) == 0:
                 return None
 
             match parm:
-                case 'kdc' | 'admin_server' | 'kpasswd_server':
+                case "kdc" | "admin_server" | "kpasswd_server":
                     # some krb5.conf parameters may be specified multiple times
                     # (MIT kerberos). Heimdal requires these to be placed on
                     # single line.
-                    out = ''
+                    out = ""
                     for srv in value:
-                        out += f'\t{parm} = {srv}\n'
+                        out += f"\t{parm} = {srv}\n"
 
                     return out
                 case _:
                     # most parameters take a space-delimited list
                     return f'\t{parm} = {" ".join(value)}\n'
         else:
-            return f'\t{parm} = {value}\n'
+            return f"\t{parm} = {value}\n"
 
     def __generate_libdefaults(self):
         kconf = "[libdefaults]\n"
         for parm, value in self.libdefaults.items():
             kconf += self.__dump_a_parameter(parm, value)
 
-        return kconf + '\n'
+        return kconf + "\n"
 
     def __generate_appdefaults(self):
         kconf = "[appdefaults]\n"
         for parm, value in self.appdefaults.items():
             kconf += self.__dump_a_parameter(parm, value)
 
-        return kconf + '\n'
+        return kconf + "\n"
 
     def __generate_realms(self):
-        kconf = '[realms]\n'
+        kconf = "[realms]\n"
         for realm in list(self.realms.keys()):
             this_realm = self.realms[realm].copy()
-            this_realm.pop('realm')
+            this_realm.pop("realm")
 
             kconf += self.__dump_a_parameter(
-                realm, {'default_domain': realm} | this_realm
+                realm, {"default_domain": realm} | this_realm
             )
 
-        return kconf + '\n'
+        return kconf + "\n"
 
     def __generate_domain_realms(self):
-        kconf = '[domain_realms]\n'
+        kconf = "[domain_realms]\n"
         for realm in self.realms.keys():
-            kconf += f'\t{realm.lower()} = {realm}\n'
-            kconf += f'\t.{realm.lower()} = {realm}\n'
-            kconf += f'\t{realm.upper()} = {realm}\n'
-            kconf += f'\t.{realm.upper()} = {realm}\n'
+            kconf += f"\t{realm.lower()} = {realm}\n"
+            kconf += f"\t.{realm.lower()} = {realm}\n"
+            kconf += f"\t{realm.upper()} = {realm}\n"
+            kconf += f"\t.{realm.upper()} = {realm}\n"
 
-        return kconf + '\n'
+        return kconf + "\n"
 
     def generate(self):
         """
@@ -387,7 +387,7 @@ class KRB5Conf():
         kconf += self.__generate_domain_realms()
         return kconf
 
-    def write(self, path: Optional[str] = '/etc/krb5.conf'):
+    def write(self, path: Optional[str] = "/etc/krb5.conf"):
         """
         Write the stored krb5.conf file to the specified `path`
         """

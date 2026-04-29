@@ -34,8 +34,8 @@ def generate_string(string_size: int = 8, punctuation_chars: bool = False, extra
         initial_string += extra_chars
 
     # remove any duplicates since extra_chars is user-provided
-    initial_string = ''.join(set(initial_string))
-    return ''.join(choice(initial_string) for i in range(string_size))
+    initial_string = "".join(set(initial_string))
+    return "".join(choice(initial_string) for i in range(string_size))
 
 
 def generate_token(size: int, url_safe: bool = False) -> str:
@@ -55,11 +55,11 @@ def sha512_crypt(word: str) -> str:
     using SHA512 algorithm with rounds set to 656,000 with a
     16-char pseudo-random cryptographically secure salt.
     """
-    sha512_prefix = '$6'
+    sha512_prefix = "$6"
     rounds = 656_000
     salt_length = 16
-    salt = generate_string(string_size=salt_length, extra_chars='./')
-    settings = f'{sha512_prefix}$rounds={rounds}${salt}'
+    salt = generate_string(string_size=salt_length, extra_chars="./")
+    settings = f"{sha512_prefix}$rounds={rounds}${salt}"
     # note this is thread-safe and releases GIL
     return cryptit(word, settings)
 
@@ -82,7 +82,7 @@ def generate_nt_hash(passwd: str) -> str:
     WARNING: This is a weak algorithm and must be treated as
     plain-text equivalent.
     """
-    md4_hash_bytes: bytes = md4_hash_blob(passwd.encode('utf-16le'))
+    md4_hash_bytes: bytes = md4_hash_blob(passwd.encode("utf-16le"))
     return md4_hash_bytes.hex().upper()
 
 
@@ -121,24 +121,24 @@ def generate_api_key_auth_data(
     salt_length = 16
     if salt_in:
         if len(salt_in) != salt_length:
-            raise ValueError(f'{len(salt_in)}: unexpected salt length')
+            raise ValueError(f"{len(salt_in)}: unexpected salt length")
 
         salt = CryptoDatum(salt_in)
     else:
-        salt = CryptoDatum(generate_string(string_size=salt_length, extra_chars='./').encode())
+        salt = CryptoDatum(generate_string(string_size=salt_length, extra_chars="./").encode())
 
     if not isinstance(rounds, int):
-        raise TypeError(f'Expected int for rounds, got {type(rounds)}')
+        raise TypeError(f"Expected int for rounds, got {type(rounds)}")
 
-    thehash = CryptoDatum(pbkdf2_hmac('sha512', passwd.encode(), salt, rounds))
+    thehash = CryptoDatum(pbkdf2_hmac("sha512", passwd.encode(), salt, rounds))
     scram_auth = generate_scram_auth_data(salted_password=thehash, salt=salt, iterations=rounds)
 
     return {
-        'iterations': rounds,
-        'salt': b64encode(bytes(scram_auth.salt)).decode(),
-        'client_key': b64encode(bytes(scram_auth.client_key)).decode(),
-        'stored_key': b64encode(bytes(scram_auth.stored_key)).decode(),
-        'server_key': b64encode(bytes(scram_auth.server_key)).decode(),
+        "iterations": rounds,
+        "salt": b64encode(bytes(scram_auth.salt)).decode(),
+        "client_key": b64encode(bytes(scram_auth.client_key)).decode(),
+        "stored_key": b64encode(bytes(scram_auth.stored_key)).decode(),
+        "server_key": b64encode(bytes(scram_auth.server_key)).decode(),
     }
 
 

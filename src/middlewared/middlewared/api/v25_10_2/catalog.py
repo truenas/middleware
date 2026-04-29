@@ -5,16 +5,16 @@ from pydantic import ConfigDict, Field, RootModel
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString, single_argument_args
 
 __all__ = [
-    'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',
-    'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult',
-    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    "CatalogEntry", "CatalogUpdateArgs", "CatalogUpdateResult", "CatalogTrainsArgs", "CatalogTrainsResult",
+    "CatalogSyncArgs", "CatalogSyncResult", "CatalogAppInfo", "CatalogAppsArgs", "CatalogAppsResult",
+    "CatalogGetAppDetailsArgs", "CatalogGetAppDetailsResult",
 ]
 
 
 class CatalogEntry(BaseModel):
     id: NonEmptyString
     """Unique identifier for the catalog."""
-    label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
+    label: NonEmptyString = Field(pattern=r"^\w+[\w.-]*$")
     """Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens."""
     preferred_trains: list[NonEmptyString]
     """Array of preferred train names for this catalog."""
@@ -22,7 +22,7 @@ class CatalogEntry(BaseModel):
     """Git repository URL or local path to the catalog."""
 
 
-@single_argument_args('catalog_update')
+@single_argument_args("catalog_update")
 class CatalogUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
     """Updated array of preferred train names for the catalog."""
@@ -102,10 +102,10 @@ class CatalogAppInfo(BaseModel):
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
-@single_argument_args('catalog_apps_options')
+@single_argument_args("catalog_apps_options")
 class CatalogAppsArgs(BaseModel):
     cache: bool = True
     """Whether to use cached catalog data if available."""

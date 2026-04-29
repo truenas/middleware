@@ -9,4 +9,4 @@ def uuid_nqn():
     # However, since this will be shared between nodes HA nodes,
     # there is an argument that it should not be the hostnqn of
     # either node.
-    return f'{NVMET_NQN_UUID}:{uuid.uuid4()}'
+    return f"{NVMET_NQN_UUID}:{uuid.uuid4()}"

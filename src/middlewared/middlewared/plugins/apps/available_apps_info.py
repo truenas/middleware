@@ -34,10 +34,10 @@ async def latest(
     context: ServiceContext, filters: list[Any], options: QueryOptions
 ) -> list[AppLatestItem] | AppLatestItem | int:
     filters.extend([
-        ['last_update', '!=', None],
-        ['name', '!=', IX_APP_NAME],
+        ["last_update", "!=", None],
+        ["name", "!=", IX_APP_NAME],
     ])
-    options.order_by.extend(['-last_update'])
+    options.order_by.extend(["-last_update"])
 
     def _run() -> list[AppLatestItem] | AppLatestItem | int:
         return to_entries(
@@ -79,7 +79,7 @@ def _available_raw(context: ServiceContext) -> list[dict[str, Any]]:
 
     results = []
     installed_apps = [
-        (app.metadata['name'], app.metadata['train'])
+        (app.metadata["name"], app.metadata["train"])
         for app in context.call_sync2(context.s.app.query)
     ]
 
@@ -90,10 +90,10 @@ def _available_raw(context: ServiceContext) -> list[dict[str, Any]]:
 
         for app_data in train_data.root.values():
             results.append({
-                'catalog': catalog.label,
-                'installed': (app_data.name, train) in installed_apps,
-                'train': train,
-                'popularity_rank': sync_state.popularity_info.get(train, {}).get(app_data.name),
+                "catalog": catalog.label,
+                "installed": (app_data.name, train) in installed_apps,
+                "train": train,
+                "popularity_rank": sync_state.popularity_info.get(train, {}).get(app_data.name),
                 **app_data.model_dump(),
             })
 
@@ -109,7 +109,7 @@ def similar(context: ServiceContext, app_name: str, train: str) -> list[AppAvail
             break
 
     if app is None:
-        raise InstanceNotFound(f'App {app_name!r} not found')
+        raise InstanceNotFound(f"App {app_name!r} not found")
 
     similar_apps: dict[str, AppAvailableItem] = {}
 
@@ -119,7 +119,7 @@ def similar(context: ServiceContext, app_name: str, train: str) -> list[AppAvail
     app_similarity: dict[str, int] = {}
 
     for to_check_app in available_apps:
-        if all(getattr(to_check_app, k) == getattr(app, k) for k in ('name', 'catalog', 'train')):
+        if all(getattr(to_check_app, k) == getattr(app, k) for k in ("name", "catalog", "train")):
             continue
 
         common_categories = set(to_check_app.categories).intersection(app_categories)

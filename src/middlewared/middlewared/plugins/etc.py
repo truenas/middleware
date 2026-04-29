@@ -27,11 +27,11 @@ class Checkpoint(StrEnum):
     An EtcEntry with checkpoint=None is skipped during checkpoint-triggered generation;
     it only renders when generate() is called directly without a checkpoint argument.
     """
-    INITIAL = 'initial'
-    INTERFACE_SYNC = 'interface_sync'
-    POST_INIT = 'post_init'
-    POOL_IMPORT = 'pool_import'
-    PRE_INTERFACE_SYNC = 'pre_interface_sync'
+    INITIAL = "initial"
+    INTERFACE_SYNC = "interface_sync"
+    POST_INIT = "post_init"
+    POOL_IMPORT = "pool_import"
+    PRE_INTERFACE_SYNC = "pre_interface_sync"
 
 
 class RendererType(StrEnum):
@@ -41,8 +41,8 @@ class RendererType(StrEnum):
     render() function returns the file contents as bytes or str, or None if the script writes the
     file itself (in which case change detection via write_if_changed is unavailable).
     """
-    MAKO = 'mako'
-    PY = 'py'
+    MAKO = "mako"
+    PY = "py"
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -113,7 +113,7 @@ class MakoRenderer:
                     continue
 
                 self._templates[path] = get_template(
-                    os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + '.mako'
+                    os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + ".mako"
                 )
 
     async def render(self, path, ctx):
@@ -131,7 +131,7 @@ class MakoRenderer:
         except FileShouldNotExist:
             raise
         except Exception:
-            self.service.logger.debug('Failed to render mako template: %s',
+            self.service.logger.debug("Failed to render mako template: %s",
                                       exceptions.text_error_template().render())
             raise
 
@@ -152,11 +152,11 @@ class PyRenderer:
                 if path in self._modules:
                     continue
 
-                filepath = f'{path}.py'
+                filepath = f"{path}.py"
                 name = os.path.basename(path)
                 spec = importlib.util.spec_from_file_location(name, filepath)
                 if spec is None or spec.loader is None:
-                    raise RuntimeError(f'Cannot load spec for {name!r} from {filepath!r}')
+                    raise RuntimeError(f"Cannot load spec for {name!r} from {filepath!r}")
 
                 mod = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mod)
@@ -177,412 +177,412 @@ class PyRenderer:
 class EtcService(Service):
 
     GROUPS: MappingProxyType[str, EtcGroup] = MappingProxyType({
-        'audit': EtcGroup(
-            ctx=(CtxMethod(method='system.security.config'),),
+        "audit": EtcGroup(
+            ctx=(CtxMethod(method="system.security.config"),),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='audit_setup'),
+                EtcEntry(renderer_type=RendererType.PY, path="audit_setup"),
             ),
         ),
-        'app_registry': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='docker/config.json'),
+        "app_registry": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="docker/config.json"),
         )),
-        'ctdb': EtcGroup(
+        "ctdb": EtcGroup(
             ctx=(
-                CtxMethod(method='failover.licensed'),
+                CtxMethod(method="failover.licensed"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/nodes'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/ctdb.conf'),
+                EtcEntry(renderer_type=RendererType.MAKO, path="ctdb/nodes"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="ctdb/ctdb.conf"),
             ),
         ),
-        'docker': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='docker/daemon.json'),
+        "docker": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="docker/daemon.json"),
         )),
-        'truesearch': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='truesearch/config.json'),
+        "truesearch": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="truesearch/config.json"),
         )),
-        'webshare': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='webshare/config.json'),
-            EtcEntry(renderer_type=RendererType.PY, path='webshare-auth/config.json'),
-            EtcEntry(renderer_type=RendererType.PY, path='webshare-link/config.json'),
+        "webshare": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="webshare/config.json"),
+            EtcEntry(renderer_type=RendererType.PY, path="webshare-auth/config.json"),
+            EtcEntry(renderer_type=RendererType.PY, path="webshare-link/config.json"),
         )),
-        'truenas_nvdimm': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='truenas_nvdimm', checkpoint=Checkpoint.POST_INIT),
+        "truenas_nvdimm": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="truenas_nvdimm", checkpoint=Checkpoint.POST_INIT),
         )),
-        'shadow': EtcGroup(
+        "shadow": EtcGroup(
             ctx=(
-                CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
-                CtxMethod(method='system.security.config'),
+                CtxMethod(method="user.query", args=[[["local", "=", True], ["uid", "!=", CONTAINER_ROOT_UID]]]),
+                CtxMethod(method="system.security.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='shadow', group='shadow', mode=0o0640),
+                EtcEntry(renderer_type=RendererType.MAKO, path="shadow", group="shadow", mode=0o0640),
             ),
         ),
-        'user': EtcGroup(
+        "user": EtcGroup(
             ctx=(
-                CtxMethod(method='system.security.config'),
-                CtxMethod(method='system.is_enterprise'),
-                CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
-                CtxMethod(method='group.query', args=[[['local', '=', True]]]),
-                CtxMethod(method='auth.twofactor.config'),
+                CtxMethod(method="system.security.config"),
+                CtxMethod(method="system.is_enterprise"),
+                CtxMethod(method="user.query", args=[[["local", "=", True], ["uid", "!=", CONTAINER_ROOT_UID]]]),
+                CtxMethod(method="group.query", args=[[["local", "=", True]]]),
+                CtxMethod(method="auth.twofactor.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='group'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='passwd', local_path='master.passwd'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='shadow', group='shadow', mode=0o0640),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/sudoers', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='aliases', local_path='mail/aliases'),
-                EtcEntry(renderer_type=RendererType.PY, path='web_ui_root_login_alert'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='subuid'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='subgid'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/users.oath',
+                EtcEntry(renderer_type=RendererType.MAKO, path="group"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="passwd", local_path="master.passwd"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="shadow", group="shadow", mode=0o0640),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/sudoers", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="aliases", local_path="mail/aliases"),
+                EtcEntry(renderer_type=RendererType.PY, path="web_ui_root_login_alert"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="subuid"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="subgid"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/users.oath",
                          mode=0o0600, checkpoint=Checkpoint.POOL_IMPORT),
             ),
         ),
-        'netdata': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='netdata/netdata.conf', checkpoint=Checkpoint.POOL_IMPORT),
+        "netdata": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="netdata/netdata.conf", checkpoint=Checkpoint.POOL_IMPORT),
             EtcEntry(renderer_type=RendererType.MAKO,
-                     path='netdata/charts.d/exclude_netdata.conf', checkpoint=Checkpoint.POOL_IMPORT),
-            EtcEntry(renderer_type=RendererType.MAKO, path='netdata/go.d/upsd.conf'),
-            EtcEntry(renderer_type=RendererType.MAKO, path='netdata/exporting.conf'),
+                     path="netdata/charts.d/exclude_netdata.conf", checkpoint=Checkpoint.POOL_IMPORT),
+            EtcEntry(renderer_type=RendererType.MAKO, path="netdata/go.d/upsd.conf"),
+            EtcEntry(renderer_type=RendererType.MAKO, path="netdata/exporting.conf"),
         )),
-        'fstab': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='fstab'),
-            EtcEntry(renderer_type=RendererType.PY, path='fstab_configure', checkpoint=Checkpoint.POST_INIT),
+        "fstab": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="fstab"),
+            EtcEntry(renderer_type=RendererType.PY, path="fstab_configure", checkpoint=Checkpoint.POST_INIT),
         )),
-        'ipa': EtcGroup(
+        "ipa": EtcGroup(
             ctx=(
-                CtxMethod(method='directoryservices.config'),
+                CtxMethod(method="directoryservices.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='ipa/default.conf'),
-                EtcEntry(renderer_type=RendererType.PY, path='ipa/ca.crt'),
-                EtcEntry(renderer_type=RendererType.PY, path='ipa/smb.keytab', mode=0o600),
+                EtcEntry(renderer_type=RendererType.PY, path="ipa/default.conf"),
+                EtcEntry(renderer_type=RendererType.PY, path="ipa/ca.crt"),
+                EtcEntry(renderer_type=RendererType.PY, path="ipa/smb.keytab", mode=0o600),
             ),
         ),
-        'kerberos': EtcGroup(
+        "kerberos": EtcGroup(
             ctx=(
-                CtxMethod(method='directoryservices.status'),
-                CtxMethod(method='kerberos.config'),
-                CtxMethod(method='kerberos.realm.query'),
+                CtxMethod(method="directoryservices.status"),
+                CtxMethod(method="kerberos.config"),
+                CtxMethod(method="kerberos.realm.query"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='krb5.conf', mode=0o644),
-                EtcEntry(renderer_type=RendererType.PY, path='krb5.keytab', mode=0o600),
+                EtcEntry(renderer_type=RendererType.PY, path="krb5.conf", mode=0o644),
+                EtcEntry(renderer_type=RendererType.PY, path="krb5.keytab", mode=0o600),
             ),
         ),
-        'cron': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='cron.d/middlewared', checkpoint=Checkpoint.POOL_IMPORT),
+        "cron": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="cron.d/middlewared", checkpoint=Checkpoint.POOL_IMPORT),
         )),
-        'grub': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='grub', checkpoint=Checkpoint.POST_INIT),
+        "grub": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="grub", checkpoint=Checkpoint.POST_INIT),
         )),
-        'fips': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='fips', checkpoint=None),
+        "fips": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="fips", checkpoint=None),
         )),
-        'keyboard': EtcGroup(
+        "keyboard": EtcGroup(
             ctx=(
-                CtxMethod(method='system.general.config'),
+                CtxMethod(method="system.general.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='default/keyboard'),
+                EtcEntry(renderer_type=RendererType.MAKO, path="default/keyboard"),
             ),
         ),
-        'ldap': EtcGroup(
+        "ldap": EtcGroup(
             ctx=(
-                CtxMethod(method='directoryservices.config'),
+                CtxMethod(method="directoryservices.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/openldap/ldap.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='sssd/sssd.conf', mode=0o0600),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/openldap/ldap.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="sssd/sssd.conf", mode=0o0600),
             ),
         ),
-        'dhcpcd': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='dhcpcd.conf'),
+        "dhcpcd": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="dhcpcd.conf"),
         )),
-        'nfsd': EtcGroup(
+        "nfsd": EtcGroup(
             ctx=(
-                CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True)]]),
-                CtxMethod(method='nfs.config'),
+                CtxMethod(method="sharing.nfs.query", args=[[("enabled", "=", True)]]),
+                CtxMethod(method="nfs.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='nfs.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='default/rpcbind'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='idmapd.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='exports', checkpoint=Checkpoint.INTERFACE_SYNC),
+                EtcEntry(renderer_type=RendererType.MAKO, path="nfs.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="default/rpcbind"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="idmapd.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="exports", checkpoint=Checkpoint.INTERFACE_SYNC),
             ),
         ),
-        'nvmet': EtcGroup(
+        "nvmet": EtcGroup(
             ctx=(
-                CtxMethod(method='failover.licensed'),
-                CtxMethod(method='failover.node'),
-                CtxMethod(method='failover.status'),
-                CtxMethod(method='nvmet.global.ana_active'),
-                CtxMethod(method='nvmet.global.ana_enabled'),
-                CtxMethod(method='nvmet.global.config'),
-                CtxMethod(method='nvmet.global.rdma_enabled'),
-                CtxMethod(method='nvmet.host.query'),
-                CtxMethod(method='nvmet.namespace.query'),
-                CtxMethod(method='nvmet.port.query'),
-                CtxMethod(method='nvmet.port.usage'),
-                CtxMethod(method='nvmet.subsys.firmware'),
-                CtxMethod(method='nvmet.subsys.model'),
-                CtxMethod(method='nvmet.subsys.query'),
-                CtxMethod(method='nvmet.host_subsys.query'),
-                CtxMethod(method='nvmet.port_subsys.query'),
-                CtxMethod(method='nvmet.port.transport_address_choices', args=['TCP', True], ctx_prefix='tcp'),
-                CtxMethod(method='nvmet.port.transport_address_choices', args=['RDMA', True], ctx_prefix='rdma'),
+                CtxMethod(method="failover.licensed"),
+                CtxMethod(method="failover.node"),
+                CtxMethod(method="failover.status"),
+                CtxMethod(method="nvmet.global.ana_active"),
+                CtxMethod(method="nvmet.global.ana_enabled"),
+                CtxMethod(method="nvmet.global.config"),
+                CtxMethod(method="nvmet.global.rdma_enabled"),
+                CtxMethod(method="nvmet.host.query"),
+                CtxMethod(method="nvmet.namespace.query"),
+                CtxMethod(method="nvmet.port.query"),
+                CtxMethod(method="nvmet.port.usage"),
+                CtxMethod(method="nvmet.subsys.firmware"),
+                CtxMethod(method="nvmet.subsys.model"),
+                CtxMethod(method="nvmet.subsys.query"),
+                CtxMethod(method="nvmet.host_subsys.query"),
+                CtxMethod(method="nvmet.port_subsys.query"),
+                CtxMethod(method="nvmet.port.transport_address_choices", args=["TCP", True], ctx_prefix="tcp"),
+                CtxMethod(method="nvmet.port.transport_address_choices", args=["RDMA", True], ctx_prefix="rdma"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='nvmet_kernel'),
-                EtcEntry(renderer_type=RendererType.PY, path='nvmet_spdk'),
+                EtcEntry(renderer_type=RendererType.PY, path="nvmet_kernel"),
+                EtcEntry(renderer_type=RendererType.PY, path="nvmet_spdk"),
             ),
         ),
-        'pam': EtcGroup(
+        "pam": EtcGroup(
             ctx=(
-                CtxMethod(method='datastore.config', args=['system.settings']),
-                CtxMethod(method='directoryservices.status'),
-                CtxMethod(method='system.security.config'),
-                CtxMethod(method='auth.twofactor.config'),
-                CtxMethod(method='api_key.query', args=[[['revoked', '=', False]]]),
+                CtxMethod(method="datastore.config", args=["system.settings"]),
+                CtxMethod(method="directoryservices.status"),
+                CtxMethod(method="system.security.config"),
+                CtxMethod(method="auth.twofactor.config"),
+                CtxMethod(method="api_key.query", args=[[["revoked", "=", False]]]),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-account'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-auth'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-auth-unix'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-password'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-session-noninteractive'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/common-session'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='security/pam_winbind.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='security/limits.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-api-key'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-session'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-unix'),
-                EtcEntry(renderer_type=RendererType.PY, path='pam_keyring'),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-account"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-auth"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-auth-unix"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-password"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-session-noninteractive"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/common-session"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="security/pam_winbind.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="security/limits.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/truenas"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/truenas-api-key"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/truenas-session"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/truenas-unix"),
+                EtcEntry(renderer_type=RendererType.PY, path="pam_keyring"),
             ),
         ),
-        'ftp': EtcGroup(
+        "ftp": EtcGroup(
             ctx=(
-                CtxMethod(method='ftp.config'),
-                CtxMethod(method='user.query', args=[[['builtin', '=', True], ['username', '!=', 'ftp']]]),
-                CtxMethod(method='network.configuration.config'),
-                CtxMethod(method='directoryservices.config'),
+                CtxMethod(method="ftp.config"),
+                CtxMethod(method="user.query", args=[[["builtin", "=", True], ["username", "!=", "ftp"]]]),
+                CtxMethod(method="network.configuration.config"),
+                CtxMethod(method="directoryservices.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='proftpd/proftpd.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='proftpd/proftpd.motd'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='proftpd/tls.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='ftpusers'),
+                EtcEntry(renderer_type=RendererType.MAKO, path="proftpd/proftpd.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="proftpd/proftpd.motd"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="proftpd/tls.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="ftpusers"),
             ),
         ),
-        'kdump': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='default/kdump-tools'),
+        "kdump": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="default/kdump-tools"),
         )),
-        'rc': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='systemd'),
+        "rc": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="systemd"),
         )),
-        'sysctl': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='sysctl.d/tunables.conf'),
+        "sysctl": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="sysctl.d/tunables.conf"),
         )),
-        'ssl': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='generate_ssl_certs'),
+        "ssl": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="generate_ssl_certs"),
         )),
-        'scst': EtcGroup(
+        "scst": EtcGroup(
             ctx=(
-                CtxMethod(method='failover.licensed'),
-                CtxMethod(method='failover.node'),
-                CtxMethod(method='failover.status'),
-                CtxMethod(method='fc.capable'),
-                CtxMethod(method='fcport.query'),
-                CtxMethod(method='iscsi.auth.query'),
-                CtxMethod(method='iscsi.extent.query', args=[[['enabled', '=', True]]]),
-                CtxMethod(method='iscsi.global.alua_enabled'),
-                CtxMethod(method='iscsi.global.config'),
-                CtxMethod(method='iscsi.initiator.query'),
-                CtxMethod(method='iscsi.portal.query'),
-                CtxMethod(method='iscsi.target.query'),
-                CtxMethod(method='iscsi.targetextent.query'),
+                CtxMethod(method="failover.licensed"),
+                CtxMethod(method="failover.node"),
+                CtxMethod(method="failover.status"),
+                CtxMethod(method="fc.capable"),
+                CtxMethod(method="fcport.query"),
+                CtxMethod(method="iscsi.auth.query"),
+                CtxMethod(method="iscsi.extent.query", args=[[["enabled", "=", True]]]),
+                CtxMethod(method="iscsi.global.alua_enabled"),
+                CtxMethod(method="iscsi.global.config"),
+                CtxMethod(method="iscsi.initiator.query"),
+                CtxMethod(method="iscsi.portal.query"),
+                CtxMethod(method="iscsi.target.query"),
+                CtxMethod(method="iscsi.targetextent.query"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='scst.conf',
+                EtcEntry(renderer_type=RendererType.MAKO, path="scst.conf",
                          checkpoint=Checkpoint.POOL_IMPORT, mode=0o600),
-                EtcEntry(renderer_type=RendererType.MAKO, path='scst.env',
+                EtcEntry(renderer_type=RendererType.MAKO, path="scst.env",
                          checkpoint=Checkpoint.POOL_IMPORT, mode=0o744),
             ),
         ),
-        'lio': EtcGroup(
+        "lio": EtcGroup(
             ctx=(
-                CtxMethod(method='failover.licensed'),
-                CtxMethod(method='failover.node'),
-                CtxMethod(method='failover.status'),
-                CtxMethod(method='fc.capable'),
-                CtxMethod(method='fcport.query'),
-                CtxMethod(method='iscsi.auth.query'),
-                CtxMethod(method='iscsi.extent.query', args=[[['enabled', '=', True]]]),
-                CtxMethod(method='iscsi.global.config'),
-                CtxMethod(method='iscsi.initiator.query'),
-                CtxMethod(method='iscsi.portal.query'),
-                CtxMethod(method='iscsi.target.query'),
-                CtxMethod(method='iscsi.targetextent.query'),
+                CtxMethod(method="failover.licensed"),
+                CtxMethod(method="failover.node"),
+                CtxMethod(method="failover.status"),
+                CtxMethod(method="fc.capable"),
+                CtxMethod(method="fcport.query"),
+                CtxMethod(method="iscsi.auth.query"),
+                CtxMethod(method="iscsi.extent.query", args=[[["enabled", "=", True]]]),
+                CtxMethod(method="iscsi.global.config"),
+                CtxMethod(method="iscsi.initiator.query"),
+                CtxMethod(method="iscsi.portal.query"),
+                CtxMethod(method="iscsi.target.query"),
+                CtxMethod(method="iscsi.targetextent.query"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='lio',
+                EtcEntry(renderer_type=RendererType.PY, path="lio",
                          checkpoint=Checkpoint.POOL_IMPORT),
             ),
         ),
-        'scst_direct': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='scst.direct',
+        "scst_direct": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="scst.direct",
                      checkpoint=Checkpoint.POOL_IMPORT, mode=0o600),
         )),
-        'scst_targets': EtcGroup(
+        "scst_targets": EtcGroup(
             ctx=(
-                CtxMethod(method='iscsi.global.config'),
-                CtxMethod(method='iscsi.target.query', args=[[['auth_networks', '!=', []]]]),
+                CtxMethod(method="iscsi.global.config"),
+                CtxMethod(method="iscsi.target.query", args=[[["auth_networks", "!=", []]]]),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='initiators.allow', checkpoint=Checkpoint.POOL_IMPORT),
-                EtcEntry(renderer_type=RendererType.MAKO, path='initiators.deny', checkpoint=Checkpoint.POOL_IMPORT),
+                EtcEntry(renderer_type=RendererType.MAKO, path="initiators.allow", checkpoint=Checkpoint.POOL_IMPORT),
+                EtcEntry(renderer_type=RendererType.MAKO, path="initiators.deny", checkpoint=Checkpoint.POOL_IMPORT),
             ),
         ),
-        'udev': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='udev'),
+        "udev": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="udev"),
         )),
-        'nginx': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='local/nginx/nginx.conf',
+        "nginx": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="local/nginx/nginx.conf",
                      checkpoint=Checkpoint.INTERFACE_SYNC),
         )),
-        'keepalived': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='keepalived/keepalived.conf',
-                     group='root', mode=0o644, local_path='keepalived.conf'),
+        "keepalived": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="keepalived/keepalived.conf",
+                     group="root", mode=0o644, local_path="keepalived.conf"),
         )),
-        'motd': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='motd'),
+        "motd": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="motd"),
         )),
-        'discovery': EtcGroup(
+        "discovery": EtcGroup(
             ctx=(
-                CtxMethod(method='directoryservices.config'),
-                CtxMethod(method='failover.status'),
-                CtxMethod(method='interface.query'),
-                CtxMethod(method='smb.config'),
-                CtxMethod(method='ups.config'),
-                CtxMethod(method='system.general.config'),
-                CtxMethod(method='network.configuration.config'),
-                CtxMethod(method='service.started_or_enabled', args=['cifs']),
-                CtxMethod(method='service.started_or_enabled', args=['ups'], ctx_prefix='ups'),
+                CtxMethod(method="directoryservices.config"),
+                CtxMethod(method="failover.status"),
+                CtxMethod(method="interface.query"),
+                CtxMethod(method="smb.config"),
+                CtxMethod(method="ups.config"),
+                CtxMethod(method="system.general.config"),
+                CtxMethod(method="network.configuration.config"),
+                CtxMethod(method="service.started_or_enabled", args=["cifs"]),
+                CtxMethod(method="service.started_or_enabled", args=["ups"], ctx_prefix="ups"),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/truenas-discoveryd.conf',
+                         path="local/truenas-discovery/truenas-discoveryd.conf",
                          checkpoint=Checkpoint.POST_INIT),
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/services.d/ADISK.conf', checkpoint=None),
+                         path="local/truenas-discovery/services.d/ADISK.conf", checkpoint=None),
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/services.d/DEV_INFO.conf', checkpoint=None),
+                         path="local/truenas-discovery/services.d/DEV_INFO.conf", checkpoint=None),
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/services.d/HTTP.conf', checkpoint=None),
+                         path="local/truenas-discovery/services.d/HTTP.conf", checkpoint=None),
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/services.d/SMB.conf', checkpoint=None),
+                         path="local/truenas-discovery/services.d/SMB.conf", checkpoint=None),
                 EtcEntry(renderer_type=RendererType.PY,
-                         path='local/truenas-discovery/services.d/NUT.conf', checkpoint=None),
+                         path="local/truenas-discovery/services.d/NUT.conf", checkpoint=None),
             ),
         ),
-        'nscd': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='nscd.conf'),
+        "nscd": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="nscd.conf"),
         )),
-        'nss': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='nsswitch.conf'),
+        "nss": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="nsswitch.conf"),
         )),
-        'ups': EtcGroup(
+        "ups": EtcGroup(
             ctx=(
-                CtxMethod(method='ups.config'),
+                CtxMethod(method="ups.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_config'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/ups.conf',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.conf',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsd.users',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upsmon.conf',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/upssched.conf',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/nut/nut.conf',
-                         owner='root', group='nut', mode=0o440),
-                EtcEntry(renderer_type=RendererType.PY, path='local/nut/ups_perms'),
+                EtcEntry(renderer_type=RendererType.PY, path="local/nut/ups_config"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/ups.conf",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/upsd.conf",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/upsd.users",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/upsmon.conf",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/upssched.conf",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/nut/nut.conf",
+                         owner="root", group="nut", mode=0o440),
+                EtcEntry(renderer_type=RendererType.PY, path="local/nut/ups_perms"),
             ),
         ),
-        'smb': EtcGroup(
+        "smb": EtcGroup(
             ctx=(
-                CtxMethod(method='smb.generate_smb_configuration'),
+                CtxMethod(method="smb.generate_smb_configuration"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/smb4.conf'),
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/smb4.conf"),
             ),
         ),
-        'snmpd': EtcGroup(entries=(
+        "snmpd": EtcGroup(entries=(
             EtcEntry(
-                renderer_type=RendererType.MAKO, path='snmp/snmpd.conf',
-                local_path='local/snmpd.conf', owner='root', group='Debian-snmp', mode=0o640,
+                renderer_type=RendererType.MAKO, path="snmp/snmpd.conf",
+                local_path="local/snmpd.conf", owner="root", group="Debian-snmp", mode=0o640,
             ),
         )),
-        'syslogd': EtcGroup(
+        "syslogd": EtcGroup(
             ctx=(
-                CtxMethod(method='system.advanced.config'),
-                CtxMethod(method='nfs.config'),
+                CtxMethod(method="system.advanced.config"),
+                CtxMethod(method="nfs.config"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='syslog-ng/syslog-ng.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='syslog-ng/conf.d/tndestinations.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='syslog-ng/conf.d/tnfilters.conf'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='syslog-ng/conf.d/tnaudit.conf', mode=0o600),
+                EtcEntry(renderer_type=RendererType.MAKO, path="syslog-ng/syslog-ng.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="syslog-ng/conf.d/tndestinations.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="syslog-ng/conf.d/tnfilters.conf"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="syslog-ng/conf.d/tnaudit.conf", mode=0o600),
             ),
         ),
-        'hosts': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='hosts',
+        "hosts": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="hosts",
                      mode=0o644, checkpoint=Checkpoint.PRE_INTERFACE_SYNC),
         )),
-        'hostname': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='hostname', checkpoint=Checkpoint.PRE_INTERFACE_SYNC),
+        "hostname": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="hostname", checkpoint=Checkpoint.PRE_INTERFACE_SYNC),
         )),
-        'ssh': EtcGroup(
+        "ssh": EtcGroup(
             ctx=(
-                CtxMethod(method='ssh.config'),
-                CtxMethod(method='auth.twofactor.config'),
-                CtxMethod(method='interface.query'),
-                CtxMethod(method='system.advanced.login_banner'),
+                CtxMethod(method="ssh.config"),
+                CtxMethod(method="auth.twofactor.config"),
+                CtxMethod(method="interface.query"),
+                CtxMethod(method="system.advanced.login_banner"),
             ),
             entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='local/ssh/sshd_config',
+                EtcEntry(renderer_type=RendererType.MAKO, path="local/ssh/sshd_config",
                          checkpoint=Checkpoint.INTERFACE_SYNC),
-                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/sshd', local_path='pam.d/sshd_linux'),
-                EtcEntry(renderer_type=RendererType.PY, path='local/ssh/config'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='login_banner', mode=0o600),
+                EtcEntry(renderer_type=RendererType.MAKO, path="pam.d/sshd", local_path="pam.d/sshd_linux"),
+                EtcEntry(renderer_type=RendererType.PY, path="local/ssh/config"),
+                EtcEntry(renderer_type=RendererType.MAKO, path="login_banner", mode=0o600),
             ),
         ),
-        'ntpd': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='chrony/chrony.conf'),
+        "ntpd": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="chrony/chrony.conf"),
         )),
-        'localtime': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='localtime_config'),
+        "localtime": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="localtime_config"),
         )),
-        'kmip': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='pykmip/pykmip.conf'),
+        "kmip": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="pykmip/pykmip.conf"),
         )),
-        'truecommand': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='wireguard/ix-truecommand.conf'),
+        "truecommand": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="wireguard/ix-truecommand.conf"),
         )),
-        'libvirt': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='libvirt', checkpoint=None),
+        "libvirt": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.PY, path="libvirt", checkpoint=None),
         )),
-        'libvirt_guests': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='default/libvirt-guests', checkpoint=None),
+        "libvirt_guests": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="default/libvirt-guests", checkpoint=None),
         )),
-        'subids': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='subuid', checkpoint=None),
-            EtcEntry(renderer_type=RendererType.MAKO, path='subgid', checkpoint=None),
+        "subids": EtcGroup(entries=(
+            EtcEntry(renderer_type=RendererType.MAKO, path="subuid", checkpoint=None),
+            EtcEntry(renderer_type=RendererType.MAKO, path="subgid", checkpoint=None),
         )),
     })
 
@@ -592,7 +592,7 @@ class EtcService(Service):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.files_dir = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), '..', 'etc_files')
+            os.path.join(os.path.dirname(__file__), "..", "etc_files")
         )
         self._renderers = MappingProxyType({
             RendererType.MAKO: MakoRenderer(self),
@@ -603,34 +603,34 @@ class EtcService(Service):
     async def gather_ctx(self, methods: tuple[CtxMethod, ...]) -> dict:
         rv = {}
         for m in methods:
-            key = f'{m.ctx_prefix}.{m.method}' if m.ctx_prefix else m.method
+            key = f"{m.ctx_prefix}.{m.method}" if m.ctx_prefix else m.method
             rv[key] = await self.middleware.call(m.method, *m.args)
 
         return rv
 
     def get_perms_and_ownership(self, entry: EtcEntry) -> dict:
-        uid = self.middleware.call_sync('user.get_builtin_user_id', entry.owner) if entry.owner else DEFAULT_ETC_XID
-        gid = self.middleware.call_sync('group.get_builtin_group_id', entry.group) if entry.group else DEFAULT_ETC_XID
+        uid = self.middleware.call_sync("user.get_builtin_user_id", entry.owner) if entry.owner else DEFAULT_ETC_XID
+        gid = self.middleware.call_sync("group.get_builtin_group_id", entry.group) if entry.group else DEFAULT_ETC_XID
 
-        return {'uid': uid, 'gid': gid, 'perms': entry.mode}
+        return {"uid": uid, "gid": gid, "perms": entry.mode}
 
     def make_changes(self, full_path, entry: EtcEntry, rendered):
         outfile_dirname = os.path.dirname(full_path)
-        if outfile_dirname != '/etc':
+        if outfile_dirname != "/etc":
             os.makedirs(outfile_dirname, exist_ok=True)
 
         payload = self.get_perms_and_ownership(entry)
         try:
-            changes = write_if_changed(full_path, rendered, tmpdir='/etc', **payload)
+            changes = write_if_changed(full_path, rendered, tmpdir="/etc", **payload)
         except Exception:
             changes = 0
-            self.logger.warning('%s: failed to write changes to configuration file', full_path, exc_info=True)
+            self.logger.warning("%s: failed to write changes to configuration file", full_path, exc_info=True)
 
         if (unexpected_changes := changes & ~FileChanges.CONTENTS):
             self.logger.error(
-                '%s: unexpected changes [%s] were made to configuration file that may '
-                'allow unauthorized user to alter service behavior', full_path,
-                ', '.join(FileChanges.dump(unexpected_changes))
+                "%s: unexpected changes [%s] were made to configuration file that may "
+                "allow unauthorized user to alter service behavior", full_path,
+                ", ".join(FileChanges.dump(unexpected_changes))
             )
 
         return changes
@@ -638,7 +638,7 @@ class EtcService(Service):
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
-            raise ValueError(f'{name!r} group not found')
+            raise ValueError(f"{name!r} group not found")
 
         output = []
         async with group.lock:
@@ -650,18 +650,18 @@ class EtcService(Service):
                     continue
 
                 path = os.path.join(self.files_dir, entry.local_path or entry.path)
-                outfile = '/etc/' + entry.path.removeprefix('local/')
+                outfile = "/etc/" + entry.path.removeprefix("local/")
 
                 try:
                     rendered = await renderer.render(path, ctx)
                 except FileShouldNotExist:
                     try:
                         await self.middleware.run_in_thread(os.unlink, outfile)
-                        self.logger.debug('%s:%s file removed.', entry.renderer_type, entry.path)
+                        self.logger.debug("%s:%s file removed.", entry.renderer_type, entry.path)
                         output.append({
-                            'path': outfile,
-                            'status': 'REMOVED',
-                            'changes': FileChanges.dump(FileChanges.CONTENTS)
+                            "path": outfile,
+                            "status": "REMOVED",
+                            "changes": FileChanges.dump(FileChanges.CONTENTS)
                         })
                     except FileNotFoundError:
                         # Nothing to log
@@ -669,7 +669,7 @@ class EtcService(Service):
 
                     continue
                 except Exception:
-                    self.logger.exception('Failed to render %s: %s', entry.renderer_type, entry.path)
+                    self.logger.exception("Failed to render %s: %s", entry.renderer_type, entry.path)
                     continue
 
                 if rendered is None:
@@ -680,13 +680,13 @@ class EtcService(Service):
                 changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
-                    self.logger.trace('No new changes for %s', outfile)
+                    self.logger.trace("No new changes for %s", outfile)
 
                 else:
                     output.append({
-                        'path': outfile,
-                        'status': 'CHANGED',
-                        'changes': FileChanges.dump(changes)
+                        "path": outfile,
+                        "status": "CHANGED",
+                        "changes": FileChanges.dump(changes)
                     })
 
         return output
@@ -701,7 +701,7 @@ class EtcService(Service):
             try:
                 await self.generate(name, checkpoint)
             except Exception:
-                self.logger.exception('Failed to generate %s group', name)
+                self.logger.exception("Failed to generate %s group", name)
 
     def initialize_renderers(self):
         for renderer in self._renderers.values():
@@ -709,17 +709,17 @@ class EtcService(Service):
 
 
 async def __event_system_ready(middleware, event_type, args):
-    middleware.create_task(middleware.call('etc.generate_checkpoint', Checkpoint.POST_INIT))
+    middleware.create_task(middleware.call("etc.generate_checkpoint", Checkpoint.POST_INIT))
 
 
 async def pool_post_import(middleware, pool):
     if pool is None:
-        await middleware.call('etc.generate_checkpoint', Checkpoint.POOL_IMPORT)
+        await middleware.call("etc.generate_checkpoint", Checkpoint.POOL_IMPORT)
 
 
 async def setup(middleware):
-    middleware.event_subscribe('system.ready', __event_system_ready)
+    middleware.event_subscribe("system.ready", __event_system_ready)
     # Generate `etc` files before executing other post-boot-time-pool-import actions.
     # There are no explicit requirements for that, we are just preserving execution order
     # when moving checkpoint generation to pool.post_import hook.
-    middleware.register_hook('pool.post_import', pool_post_import, order=-1000)
+    middleware.register_hook("pool.post_import", pool_post_import, order=-1000)

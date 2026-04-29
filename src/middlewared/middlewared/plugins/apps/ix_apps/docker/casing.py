@@ -3,8 +3,8 @@ from typing import Any, overload
 
 
 def change_case(value: str) -> str:
-    s1 = re.sub(r'(.)([A-Z][a-z]+)', r'\1_\2', value)
-    return re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", value)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 @overload

@@ -229,7 +229,7 @@ class DiskWipeResult(BaseModel):
     """Returns `null` when the disk wipe operation is successfully started."""
 
 
-@single_argument_args('disk_sed_unlock')
+@single_argument_args("disk_sed_unlock")
 class DiskUnlockSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to unlock."""
@@ -242,7 +242,7 @@ class DiskUnlockSedResult(BaseModel):
     """Returns true if the disk unlock was successful."""
 
 
-@single_argument_args('disk_sed_setup')
+@single_argument_args("disk_sed_setup")
 class DiskSetupSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to setup."""
@@ -258,7 +258,7 @@ class DiskSetupSedResult(BaseModel):
     """Returns true if the disk setup was successful."""
 
 
-@single_argument_args('disk_sed_reset')
+@single_argument_args("disk_sed_reset")
 class DiskResetSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to reset."""

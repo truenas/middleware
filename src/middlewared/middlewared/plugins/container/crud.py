@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
 
-ContainerDataT = TypeVar('ContainerDataT', bound=ContainerEntry)
+ContainerDataT = TypeVar("ContainerDataT", bound=ContainerEntry)
 
 
 # Based on RFC 1123 hostname rules but with a tighter total-length cap of 100
@@ -70,7 +70,7 @@ class ContainerCreateWithDatasetResult(ContainerCreateResult):
 
 
 class ContainerModel(sa.Model):
-    __tablename__ = 'container_container'
+    __tablename__ = "container_container"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     uuid = sa.Column(sa.Text())
@@ -92,32 +92,32 @@ class ContainerModel(sa.Model):
 
 
 class ContainerServicePart(CRUDServicePart[ContainerEntry]):
-    _datastore = 'container.container'
+    _datastore = "container.container"
     _entry = ContainerEntry
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {
-            'states': gather_pylibvirt_domains_states(
+            "states": gather_pylibvirt_domains_states(
                 self.middleware,
                 rows,
                 self.middleware.libvirt_domains_manager.containers_connection,
                 lambda container: pylibvirt_container(self, self.extend_container(container)),
             ),
-            'bridge_name': container_bridge_name(self),
+            "bridge_name": container_bridge_name(self),
         }
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         devices = await self.call2(
             self.s.container.device.query,
-            [('container', '=', data['id'])],
+            [("container", "=", data["id"])],
             QueryOptions(force_sql_filters=True),
         )
-        has_nic = any(d.attributes.dtype == 'NIC' for d in devices)
+        has_nic = any(d.attributes.dtype == "NIC" for d in devices)
 
         data.update({
-            'status': get_pylibvirt_domain_state(context['states'], data),
-            'devices': devices,
-            'default_network': None if has_nic else context['bridge_name'],
+            "status": get_pylibvirt_domain_state(context["states"], data),
+            "devices": devices,
+            "default_network": None if has_nic else context["bridge_name"],
         })
 
         self.extend_container(data)
@@ -125,38 +125,38 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         return data
 
     async def compress(self, data: dict[str, Any]) -> dict[str, Any]:
-        data.pop('default_network', None)
-        idmap = data.pop('idmap')
+        data.pop("default_network", None)
+        idmap = data.pop("idmap")
         if idmap is None:
-            data['idmap_slice'] = None
-        elif idmap['type'] == 'DEFAULT':
-            data['idmap_slice'] = 0
-        elif idmap['type'] == 'ISOLATED':
-            data['idmap_slice'] = idmap['slice']
+            data["idmap_slice"] = None
+        elif idmap["type"] == "DEFAULT":
+            data["idmap_slice"] = 0
+        elif idmap["type"] == "ISOLATED":
+            data["idmap_slice"] = idmap["slice"]
 
         return data
 
     def extend_container(self, container: dict[str, Any]) -> dict[str, Any]:
-        idmap_slice = container.pop('idmap_slice')
+        idmap_slice = container.pop("idmap_slice")
         if idmap_slice is None:
-            container['idmap'] = None
+            container["idmap"] = None
         elif idmap_slice == 0:
-            container['idmap'] = {'type': 'DEFAULT'}
+            container["idmap"] = {"type": "DEFAULT"}
         else:
-            container['idmap'] = {
-                'type': 'ISOLATED',
-                'slice': idmap_slice,
+            container["idmap"] = {
+                "type": "ISOLATED",
+                "slice": idmap_slice,
             }
 
         return container
 
     async def create_with_dataset(self, data: ContainerCreateWithDataset) -> ContainerEntry:
         verrors = ValidationErrors()
-        data = await self.validate(verrors, 'container_create', data)
+        data = await self.validate(verrors, "container_create", data)
         verrors.check()
 
         entry = await self._create(data.model_dump())
-        await self.middleware.call('etc.generate', 'libvirt_guests')
+        await self.middleware.call("etc.generate", "libvirt_guests")
         return entry
 
     async def do_create(self, job: Job, data: ContainerCreate) -> ContainerEntry:
@@ -164,15 +164,15 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         pool = data.pool or (await self.call2(self.s.lxc.config)).preferred_pool
         if not pool:
             verrors.add(
-                'container_create.pool',
-                'Either configure a preferred pool in lxc settings or provide a pool name.'
+                "container_create.pool",
+                "Either configure a preferred pool in lxc settings or provide a pool name."
             )
         elif pool not in await pool_choices(self):
             verrors.add(
-                'container_create.pool',
-                'Pool not found.'
+                "container_create.pool",
+                "Pool not found."
             )
-        data = await self.validate(verrors, 'container_create', data)
+        data = await self.validate(verrors, "container_create", data)
         verrors.check()
         assert pool is not None
 
@@ -182,11 +182,11 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
                 self.s.container.image.pull, pool, image,
             ))
         except ValidationErrors as image_verrors:
-            verrors.add_child('container_create.image', image_verrors)
+            verrors.add_child("container_create.image", image_verrors)
             verrors.check()
 
         await ensure_datasets(self, pool)
-        dataset = os.path.join(container_dataset(pool), f'containers/{data.name}')
+        dataset = os.path.join(container_dataset(pool), f"containers/{data.name}")
 
         # Populate dataset
         if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
@@ -199,25 +199,25 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             # The container is on the different pool. Let's replicate the image.
             source_dataset, source_snapshot = image_snapshot.split('@', 1)  # noqa
             await job.wrap(await self.middleware.call(
-                'replication.run_onetime', {
-                    'direction': 'PUSH',
-                    'transport': 'LOCAL',
-                    'source_datasets': [source_dataset],
-                    'target_dataset': dataset,
-                    'recursive': True,
-                    'name_regex': source_snapshot,
-                    'retention_policy': 'SOURCE',
-                    'replicate': True,
-                    'readonly': 'IGNORE',
+                "replication.run_onetime", {
+                    "direction": "PUSH",
+                    "transport": "LOCAL",
+                    "source_datasets": [source_dataset],
+                    "target_dataset": dataset,
+                    "recursive": True,
+                    "name_regex": source_snapshot,
+                    "retention_policy": "SOURCE",
+                    "replicate": True,
+                    "readonly": "IGNORE",
                 }
             ))
             await self.call2(
                 self.s.zfs.resource.snapshot.destroy_impl,
-                ZFSResourceSnapshotDestroyQuery(path=f'{dataset}@{source_snapshot}'),
+                ZFSResourceSnapshotDestroyQuery(path=f"{dataset}@{source_snapshot}"),
             )
 
-        entry = await self._create(data.model_dump(exclude={'pool', 'image'}) | {'dataset': dataset})
-        await self.middleware.call('etc.generate', 'libvirt_guests')
+        entry = await self._create(data.model_dump(exclude={"pool", "image"}) | {"dataset": dataset})
+        await self.middleware.call("etc.generate", "libvirt_guests")
         return entry
 
     async def do_update(
@@ -228,23 +228,23 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         audit_callback(new.name)
 
         verrors = ValidationErrors()
-        new = await self.validate(verrors, 'container_update', new, old=old)
+        new = await self.validate(verrors, "container_update", new, old=old)
         verrors.check()
 
         name_changed = old.name != new.name
         if name_changed:
-            if old.status.state == 'RUNNING':
-                raise CallError('Container must be stopped before renaming.')
+            if old.status.state == "RUNNING":
+                raise CallError("Container must be stopped before renaming.")
 
             old_dataset = old.dataset
-            new_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new.name
+            new_dataset = old_dataset[:old_dataset.rfind("/") + 1] + new.name
             await self.call2(self.s.zfs.resource.rename, old_dataset, new_dataset)
-            new = new.model_copy(update={'dataset': new_dataset})
+            new = new.model_copy(update={"dataset": new_dataset})
 
-        entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'status'}))
+        entry = await self._update(id_, new.model_dump(exclude={"id", "devices", "status"}))
 
         if old.shutdown_timeout != new.shutdown_timeout:
-            await self.middleware.call('etc.generate', 'libvirt_guests')
+            await self.middleware.call("etc.generate", "libvirt_guests")
 
         return entry
 
@@ -254,7 +254,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
         self.delete_container_from_db_and_libvirt(container)
         self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)
-        self.middleware.call_sync('etc.generate', 'libvirt_guests')
+        self.middleware.call_sync("etc.generate", "libvirt_guests")
 
     def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
         pylibvirt_container_obj = pylibvirt_container(self, container.model_dump(by_alias=True))
@@ -264,7 +264,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             pass
 
         for device in container.devices:
-            self.middleware.call_sync('datastore.delete', 'container.device', device.id)
+            self.middleware.call_sync("datastore.delete", "container.device", device.id)
 
         self.run_coroutine(self._delete(container.id))
 
@@ -273,61 +273,61 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     ) -> ContainerDataT:
         if not await license_active(self):
             verrors.add(
-                f'{schema_name}.name',
-                'System is not licensed to use containers.'
+                f"{schema_name}.name",
+                "System is not licensed to use containers."
             )
 
         if data.uuid is None:
-            data = data.model_copy(update={'uuid': str(uuid.uuid4())})
+            data = data.model_copy(update={"uuid": str(uuid.uuid4())})
 
         if data.idmap is not None:
-            if data.idmap.type == 'ISOLATED':
+            if data.idmap.type == "ISOLATED":
                 if data.idmap.slice is None:
                     used_slices = {
                         container.idmap.slice
                         for container in await self.query([], QueryOptions())
-                        if container.idmap is not None and container.idmap.type == 'ISOLATED'
+                        if container.idmap is not None and container.idmap.type == "ISOLATED"
                     }
                     idmap_slice = next(
                         s for s in itertools.count(1) if s not in used_slices
                     )
                     data = data.model_copy(update={
-                        'idmap': data.idmap.model_copy(update={'slice': idmap_slice}),
+                        "idmap": data.idmap.model_copy(update={"slice": idmap_slice}),
                     })
 
         if invalid_caps := set(data.capabilities_state) - CAPABILITIES:
             verrors.add(
-                f'{schema_name}.capabilities_state',
+                f"{schema_name}.capabilities_state",
                 f'Invalid capabilities: {", ".join(sorted(invalid_caps))}'
             )
 
         if data.cpuset:
-            if '_' in data.cpuset:
-                verrors.add(f'{schema_name}.cpuset', 'Underscores are not allowed in CPU set values')
+            if "_" in data.cpuset:
+                verrors.add(f"{schema_name}.cpuset", "Underscores are not allowed in CPU set values")
             else:
                 try:
                     parse_numeric_set(data.cpuset)
                 except ValueError as e:
                     verrors.add(
-                        f'{schema_name}.cpuset',
-                        f'Invalid cpuset format: {e}'
+                        f"{schema_name}.cpuset",
+                        f"Invalid cpuset format: {e}"
                     )
 
-        filters: list[tuple[str, str, Any]] = [('name', '=', data.name)]
+        filters: list[tuple[str, str, Any]] = [("name", "=", data.name)]
         if old:
-            filters.append(('id', '!=', old.id))
+            filters.append(("id", "!=", old.id))
 
         if await self.query(filters, QueryOptions()):
             verrors.add(
-                f'{schema_name}.name',
-                'A container with this name already exists.', errno.EEXIST
+                f"{schema_name}.name",
+                "A container with this name already exists.", errno.EEXIST
             )
         elif not RE_NAME.match(data.name):
             verrors.add(
-                f'{schema_name}.name',
-                'Name must be a valid hostname (up to 100 characters total): 1-63 characters per label, '
-                'only letters, digits, and hyphens within each label, labels separated by dots, '
-                'and must not be an IPv4 address.'
+                f"{schema_name}.name",
+                "Name must be a valid hostname (up to 100 characters total): 1-63 characters per label, "
+                "only letters, digits, and hyphens within each label, labels separated by dots, "
+                "and must not be an IPv4 address."
             )
 
         return data

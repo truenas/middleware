@@ -3,9 +3,9 @@ from pydantic import IPvAnyAddress
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult', 'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult', 'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
+    "TrueNASConnectEntry", "TrueNASConnectGetRegistrationUriArgs", "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdateArgs", "TrueNASConnectUpdateResult", "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult", "TrueNASConnectIpChoicesArgs", "TrueNASConnectIpChoicesResult",
 ]
 
 
@@ -23,7 +23,7 @@ class TrueNASConnectEntry(BaseModel):
     heartbeat_url: HttpsOnlyURL
 
 
-@single_argument_args('tn_connect_update')
+@single_argument_args("tn_connect_update")
 class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]

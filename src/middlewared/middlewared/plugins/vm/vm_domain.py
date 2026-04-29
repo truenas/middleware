@@ -30,7 +30,7 @@ class VmDomain(BaseVMDomain):
     def run(self) -> Generator[None]:
         self.middleware.call_sync2(
             self.middleware.services.vm.init_guest_vmemory,
-            self.configuration.id, self.start_config.get('overcommit', False),
+            self.configuration.id, self.start_config.get("overcommit", False),
         )
         try:
             yield

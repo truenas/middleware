@@ -23,10 +23,10 @@ class PathModel(Protocol):
 
 class SharingTaskService[E](CRUDService[E]):
 
-    path_field = 'path'
+    path_field = "path"
     allowed_path_types = [FSLocation.LOCAL]
-    enabled_field = 'enabled'
-    locked_field = 'locked'
+    enabled_field = "enabled"
+    locked_field = "locked"
     locked_alert_class: type[OneShotAlertClass]
     share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
@@ -34,15 +34,15 @@ class SharingTaskService[E](CRUDService[E]):
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
     table (including `datastore_prefix`)."""
 
-    def __init__(self, middleware: 'Middleware'):
+    def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         # Register path resolution hooks for all SharingTaskService subclasses
-        middleware.register_hook('dataset.post_unlock', self.resolve_paths, sync=True)
-        middleware.register_hook('pool.post_import', self.resolve_paths, sync=True)
+        middleware.register_hook("dataset.post_unlock", self.resolve_paths, sync=True)
+        middleware.register_hook("pool.post_import", self.resolve_paths, sync=True)
 
     @classmethod
     @private
-    async def resolve_paths(cls, middleware: 'Middleware', *_args, **_kwargs) -> None:
+    async def resolve_paths(cls, middleware: "Middleware", *_args, **_kwargs) -> None:
         """
         Attempt resolution of NULL dataset paths.
 
@@ -59,10 +59,10 @@ class SharingTaskService[E](CRUDService[E]):
 
         # Query entries with unresolved dataset paths
         unresolved = await middleware.call(
-            'datastore.query',
+            "datastore.query",
             datastore,
             [
-                [prefix + 'dataset', '=', None],
+                [prefix + "dataset", "=", None],
                 *(cls.path_resolution_filters or [])
             ]
         )
@@ -71,19 +71,19 @@ class SharingTaskService[E](CRUDService[E]):
 
         for entry in unresolved:
             try:
-                entry_id = entry['id']
+                entry_id = entry["id"]
                 path = entry[prefix + cls.path_field]
 
                 dataset, relative_path = await middleware.run_in_thread(resolve_dataset_path, path, middleware)
                 if dataset:
                     # Successfully resolved - update database
                     await middleware.call(
-                        'datastore.update',
+                        "datastore.update",
                         datastore,
                         entry_id,
                         {
-                            prefix + 'dataset': dataset,
-                            prefix + 'relative_path': relative_path
+                            prefix + "dataset": dataset,
+                            prefix + "relative_path": relative_path
                         }
                     )
                     middleware.logger.info(f"Resolved {namespace} id={entry_id}: {dataset}@'{relative_path}'")
@@ -106,9 +106,9 @@ class SharingTaskService[E](CRUDService[E]):
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
-        if extra.get('select'):
+        if extra.get("select"):
             select_fields = []
-            for entry in extra['select']:
+            for entry in extra["select"]:
                 if isinstance(entry, list) and entry:
                     select_fields.append(entry[0])
                 elif isinstance(entry, str):
@@ -116,15 +116,15 @@ class SharingTaskService[E](CRUDService[E]):
                     select_fields.append(entry)
 
             if self.locked_field not in select_fields:
-                extra['retrieve_locked_info'] = False
+                extra["retrieve_locked_info"] = False
 
         se = None
         if self._config.datastore_extend_context:
             se = await self.middleware.call(self._config.datastore_extend_context, rows, extra)
 
         return {
-            'service_extend': se,
-            'retrieve_locked_info': extra.get('retrieve_locked_info', True)
+            "service_extend": se,
+            "retrieve_locked_info": extra.get("retrieve_locked_info", True)
         }
 
     @private
@@ -136,7 +136,7 @@ class SharingTaskService[E](CRUDService[E]):
     @private
     async def validate_zvol_path(self, verrors, name, path):
         if check_zvol_in_boot_pool_using_path(path):
-            verrors.add(name, 'Disk residing in boot pool cannot be consumed and is not supported')
+            verrors.add(name, "Disk residing in boot pool cannot be consumed and is not supported")
 
     @private
     async def validate_local_path(self, verrors, name, path):
@@ -144,19 +144,19 @@ class SharingTaskService[E](CRUDService[E]):
 
     @private
     async def validate_path_field(
-        self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
-    ) -> 'ValidationErrors':
+        self, data: PathModel | dict, schema: str, verrors: "ValidationErrors", *, split_path: bool = False
+    ) -> "ValidationErrors":
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
         resolves the path to its ZFS dataset components."""
-        name = f'{schema}.{self.path_field}'
+        name = f"{schema}.{self.path_field}"
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
         loc = path_location(path)
 
         if loc not in self.allowed_path_types:
-            verrors.add(name, f'{loc.name}: path type is not allowed.')
+            verrors.add(name, f"{loc.name}: path type is not allowed.")
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, path)
@@ -181,7 +181,7 @@ class SharingTaskService[E](CRUDService[E]):
                     data.relative_path = rel_path
 
         else:
-            self.logger.error('%s: unknown location type', loc.name)
+            self.logger.error("%s: unknown location type", loc.name)
             raise NotImplementedError
 
         return verrors
@@ -197,19 +197,19 @@ class SharingTaskService[E](CRUDService[E]):
         # produce spurious EZFS_NOENT lookups. path_in_locked_datasets accepts bare
         # dataset names (e.g. docker and KMIP already call it this way).
         return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data.get('dataset') or path
+            "pool.dataset.path_in_locked_datasets", data.get("dataset") or path
         )
 
     @private
     async def sharing_task_extend(self, data, context):
-        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
+        args = [data] + ([context["service_extend"]] if self._config.datastore_extend_context else [])
 
         if self._config.datastore_extend:
             data = await self.middleware.call(self._config.datastore_extend, *args)
 
-        if context['retrieve_locked_info']:
+        if context["retrieve_locked_info"]:
             data[self.locked_field] = await self.middleware.call(
-                f'{self._config.namespace}.sharing_task_determine_locked', data
+                f"{self._config.namespace}.sharing_task_determine_locked", data
             )
         else:
             data[self.locked_field] = None
@@ -220,8 +220,8 @@ class SharingTaskService[E](CRUDService[E]):
     async def get_options(self, options):
         return {
             **(await super().get_options(options)),
-            'extend': f'{self._config.namespace}.sharing_task_extend',
-            'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
+            "extend": f"{self._config.namespace}.sharing_task_extend",
+            "extend_context": f"{self._config.namespace}.sharing_task_extend_context",
         }
 
     @private
@@ -235,14 +235,14 @@ class SharingTaskService[E](CRUDService[E]):
             self.s.alert.oneshot_create, self.locked_alert_class(
                 type=self.share_task_type,
                 identifier=await self.human_identifier(share_task),
-                id=share_task['id'],
+                id=share_task["id"],
             )
         )
 
     @private
     async def remove_locked_alert(self, share_task_id):
         await self.call2(
-            self.s.alert.oneshot_delete, self.locked_alert_class.config.name, f'{self.share_task_type}_{share_task_id}'
+            self.s.alert.oneshot_delete, self.locked_alert_class.config.name, f"{self.share_task_type}_{share_task_id}"
         )
 
     @pass_app(message_id=True)
@@ -277,7 +277,7 @@ class SharingService[E](SharingTaskService[E]):
     async def human_identifier(self, share_task):
         if isinstance(share_task, dict):
             # FIXME: Remove all the cases where this is dict
-            return share_task['name']
+            return share_task["name"]
         else:
             return share_task.name
 

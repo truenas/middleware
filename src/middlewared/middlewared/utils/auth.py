@@ -7,27 +7,27 @@ from typing import Any
 
 from .crypto import check_unixhash, generate_string, sha512_crypt
 
-LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
+LEGACY_API_KEY_USERNAME = "LEGACY_API_KEY"
 AUID_UNSET = 2 ** 32 - 1
 AUID_FAULTED = 2 ** 32 - 2
 
 
 class AuthMech(enum.StrEnum):
-    API_KEY_PLAIN = 'API_KEY_PLAIN'
-    PASSWORD_PLAIN = 'PASSWORD_PLAIN'
-    TOKEN_PLAIN = 'TOKEN_PLAIN'
-    OTP_TOKEN = 'OTP_TOKEN'
-    SCRAM = 'SCRAM'
+    API_KEY_PLAIN = "API_KEY_PLAIN"
+    PASSWORD_PLAIN = "PASSWORD_PLAIN"
+    TOKEN_PLAIN = "TOKEN_PLAIN"
+    OTP_TOKEN = "OTP_TOKEN"
+    SCRAM = "SCRAM"
 
 
 class AuthResp(enum.StrEnum):
-    SUCCESS = 'SUCCESS'
-    AUTH_ERR = 'AUTH_ERR'
-    EXPIRED = 'EXPIRED'
-    OTP_REQUIRED = 'OTP_REQUIRED'
-    REDIRECT = 'REDIRECT'
-    SCRAM_RESPONSE = 'SCRAM_RESPONSE'
-    DENIED = 'DENIED'
+    SUCCESS = "SUCCESS"
+    AUTH_ERR = "AUTH_ERR"
+    EXPIRED = "EXPIRED"
+    OTP_REQUIRED = "OTP_REQUIRED"
+    REDIRECT = "REDIRECT"
+    SCRAM_RESPONSE = "SCRAM_RESPONSE"
+    DENIED = "DENIED"
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)
@@ -119,12 +119,12 @@ CURRENT_AAL = ServerAAL(AA_LEVEL1)
 
 
 class OTPWResponseCode(enum.StrEnum):
-    SUCCESS = 'SUCCESS'
-    EXPIRED = 'EXPIRED'
-    NO_KEY = 'NO_KEY'
-    ALREADY_USED = 'ALREADY_USED'
-    WRONG_USER = 'WRONG_USER'
-    BAD_PASSKEY = 'BAD_PASSKEY'
+    SUCCESS = "SUCCESS"
+    EXPIRED = "EXPIRED"
+    NO_KEY = "NO_KEY"
+    ALREADY_USED = "ALREADY_USED"
+    WRONG_USER = "WRONG_USER"
+    BAD_PASSKEY = "BAD_PASSKEY"
 
 
 @dataclass(slots=True)
@@ -162,7 +162,7 @@ class OnetimePasswordManager:
         """
         with self.lock:
             p = generate_string(string_size=24)
-            human_friendly = '-'.join([p[0:6], p[6:12], p[12:18], p[18:24]])
+            human_friendly = "-".join([p[0:6], p[6:12], p[12:18], p[18:24]])
             keyhash = sha512_crypt(human_friendly)
             expires = monotonic() + 86400
 
@@ -174,12 +174,12 @@ class OnetimePasswordManager:
             )
             self.cnt += 1
             self.otpasswd[str(self.cnt)] = entry
-            return f'{self.cnt}_{human_friendly}'
+            return f"{self.cnt}_{human_friendly}"
 
     def authenticate(self, uid: int, plaintext: str) -> OTPWResponse:
         """ Check passkey matches plaintext string.  """
         try:
-            idx, passwd = plaintext.split('_')
+            idx, passwd = plaintext.split("_")
         except Exception:
             return OTPWResponse(OTPWResponseCode.NO_KEY)
 
@@ -216,7 +216,7 @@ def get_login_uid(pid: int, raise_error: bool = False) -> int:
     value AUID_FAULTED (UINT32_MAX -2) will be returned (which is the default).
     """
     try:
-        with open(f'/proc/{pid}/loginuid', 'r') as f:
+        with open(f"/proc/{pid}/loginuid", "r") as f:
             return int(f.read().strip())
     except Exception:
         if not raise_error:

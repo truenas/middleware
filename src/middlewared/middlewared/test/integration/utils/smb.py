@@ -19,7 +19,7 @@ __all__ = ["smb_connection"]
 def smb_connection(
     host=None,
     share=None,
-    encryption='DEFAULT',
+    encryption="DEFAULT",
     username=None,
     domain=None,
     password=None,

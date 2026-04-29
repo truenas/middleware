@@ -20,7 +20,7 @@ class FileChanges(enum.IntFlag):
     @staticmethod
     def dump(mask: int) -> list[str]:
         if unmapped := mask & ~int(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
-            raise ValueError(f'{unmapped}: unsupported flags in mask')
+            raise ValueError(f"{unmapped}: unsupported flags in mask")
 
         return [
             change.name for change in FileChanges if mask & change and change.name is not None
@@ -31,23 +31,23 @@ class UnexpectedFileChange(Exception):
     def __init__(self, path: str, changes: int) -> None:
         self.changes = changes
         self.path = path
-        self.changes_str = ', '.join(FileChanges.dump(self.changes))
+        self.changes_str = ", ".join(FileChanges.dump(self.changes))
         super().__init__(path, changes)
 
     def __str__(self) -> str:
-        return f'{self.path}: unexpected change in the following file attributes: {self.changes_str}'
+        return f"{self.path}: unexpected change in the following file attributes: {self.changes_str}"
 
 
 def get_io_uring_enabled() -> bool:
-    with open('/proc/sys/kernel/io_uring_disabled', 'r') as f:
+    with open("/proc/sys/kernel/io_uring_disabled", "r") as f:
         disabled_val = int(f.read().strip())
 
     return disabled_val == 0
 
 
 def set_io_uring_enabled(enabled_val: bool) -> bool:
-    with open('/proc/sys/kernel/io_uring_disabled', 'w') as f:
-        f.write('0' if enabled_val else '2')
+    with open("/proc/sys/kernel/io_uring_disabled", "w") as f:
+        f.write("0" if enabled_val else "2")
         f.flush()
 
     return get_io_uring_enabled()
@@ -78,28 +78,28 @@ def write_if_changed(path: str, data: str | bytes, uid: int = 0, gid: int = 0, p
         data = data.encode()
 
     if not isinstance(perms, int):
-        raise ValueError('perms must be an integer')
+        raise ValueError("perms must be an integer")
 
     if perms & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO):
-        raise ValueError(f'{perms}: invalid mode. Supported bits are RWX for UGO.')
+        raise ValueError(f"{perms}: invalid mode. Supported bits are RWX for UGO.")
 
-    for xid in ((uid, 'uid'), (gid, 'gid')):
+    for xid in ((uid, "uid"), (gid, "gid")):
         value, name = xid
         if not isinstance(value, int):
-            raise ValueError(f'{name} must be an integer')
+            raise ValueError(f"{name} must be an integer")
 
         if value < 0 or value > ID_MAX:
-            raise ValueError(f'{name} must be between 0 and {ID_MAX}')
+            raise ValueError(f"{name} must be between 0 and {ID_MAX}")
 
     if not os.path.isabs(path):
-        raise ValueError(f'{path}: path must be absolute')
+        raise ValueError(f"{path}: path must be absolute")
 
     temp_path = tmpdir if tmpdir is not None else os.path.dirname(path)
 
     changes = 0
 
     try:
-        with open(truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS), 'rb+') as f:
+        with open(truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS), "rb+") as f:
             current = f.read()
             if current != data:
                 changes |= FileChanges.CONTENTS

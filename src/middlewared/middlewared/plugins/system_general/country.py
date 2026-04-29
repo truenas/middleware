@@ -10,13 +10,13 @@ from middlewared.utils.country_codes import get_country_codes
 class SystemGeneralService(Service):
 
     class Config:
-        namespace = 'system.general'
-        cli_namespace = 'system.general'
+        namespace = "system.general"
+        cli_namespace = "system.general"
 
     @api_method(
         SystemGeneralCountryChoicesArgs,
         SystemGeneralCountryChoicesResult,
-        roles=['SYSTEM_GENERAL_READ']
+        roles=["SYSTEM_GENERAL_READ"]
     )
     def country_choices(self):
         """Return a dictionary whose keys represent the

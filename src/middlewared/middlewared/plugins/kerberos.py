@@ -49,7 +49,7 @@ from middlewared.utils.io import write_if_changed
 
 
 class KerberosModel(sa.Model):
-    __tablename__ = 'directoryservice_kerberossettings'
+    __tablename__ = "directoryservice_kerberossettings"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     ks_appdefaults_aux = sa.Column(sa.Text())
@@ -60,13 +60,13 @@ class KerberosService(ConfigService):
 
     class Config:
         service = "kerberos"
-        datastore = 'directoryservice.kerberossettings'
+        datastore = "directoryservice.kerberossettings"
         datastore_prefix = "ks_"
         cli_namespace = "directory_service.kerberos.settings"
-        role_prefix = 'DIRECTORY_SERVICE'
+        role_prefix = "DIRECTORY_SERVICE"
         entry = KerberosEntry
 
-    @api_method(KerberosUpdateArgs, KerberosUpdateResult, audit='Kerberos configuration update')
+    @api_method(KerberosUpdateArgs, KerberosUpdateResult, audit="Kerberos configuration update")
     async def do_update(self, data):
         """
         `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
@@ -78,11 +78,11 @@ class KerberosService(ConfigService):
         new.update(data)
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, old['id'], new,
-            {'prefix': self._config.datastore_prefix}
+            "datastore.update", self._config.datastore, old["id"], new,
+            {"prefix": self._config.datastore_prefix}
         )
 
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("etc.generate", "kerberos")
         return await self.config()
 
     @private
@@ -100,7 +100,7 @@ class KerberosService(ConfigService):
         ccache_path = middleware_ccache_path(data or {})
 
         if not isinstance(raise_error, bool):
-            raise ValueError(f'{type(raise_error)}: expected bool for raise_error')
+            raise ValueError(f"{type(raise_error)}: expected bool for raise_error")
 
         if (cred := gss_get_current_cred(ccache_path, False)) is not None:
             return gss_dump_cred(cred)
@@ -112,24 +112,24 @@ class KerberosService(ConfigService):
 
     @private
     async def kinit(self):
-        ds_config = await self.middleware.call('directoryservices.config')
-        if not ds_config['enable']:
-            raise CallError('Directory services are disabled')
+        ds_config = await self.middleware.call("directoryservices.config")
+        if not ds_config["enable"]:
+            raise CallError("Directory services are disabled")
 
-        if not ds_config['credential']['credential_type'].startswith('KERBEROS_'):
+        if not ds_config["credential"]["credential_type"].startswith("KERBEROS_"):
             raise CallError(
-                'Directory services are not configured to use kerberos credentials'
+                "Directory services are not configured to use kerberos credentials"
             )
 
         # Generate our kerberos configuration prior to kinit
-        await self.middleware.call('etc.generate', 'kerberos')
-        await self.middleware.run_in_thread(kinit_with_cred, ds_config['credential'])
+        await self.middleware.call("etc.generate", "kerberos")
+        await self.middleware.run_in_thread(kinit_with_cred, ds_config["credential"])
 
     @private
     async def klist(self, data=None):
         ccache = middleware_ccache_path(data or {})
         if data:
-            timeout = data.get('timeout', 10)
+            timeout = data.get("timeout", 10)
         else:
             timeout = 10
 
@@ -145,20 +145,20 @@ class KerberosService(ConfigService):
     async def kdestroy(self, data=None):
         ccache = middleware_ccache_path(data or {})
 
-        kdestroy = await run(['kdestroy', '-c', ccache], check=False)
+        kdestroy = await run(["kdestroy", "-c", ccache], check=False)
         if kdestroy.returncode != 0:
-            raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
+            raise CallError(f"kdestroy failed with error: {kdestroy.stderr.decode()}")
 
         return
 
     @private
     async def stop(self):
         renewal_job = await self.middleware.call(
-            'core.get_jobs',
-            [['method', '=', 'kerberos.wait_for_renewal'], ['state', '=', 'RUNNING']]
+            "core.get_jobs",
+            [["method", "=", "kerberos.wait_for_renewal"], ["state", "=", "RUNNING"]]
         )
         if renewal_job:
-            await self.middleware.call('core.job_abort', renewal_job[0]['id'])
+            await self.middleware.call("core.job_abort", renewal_job[0]["id"])
 
         await self.kdestroy()
         return
@@ -169,13 +169,13 @@ class KerberosService(ConfigService):
         kinit can hang because it depends on DNS. If it has not returned within
         30 seconds, it is safe to say that it has failed.
         """
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("etc.generate", "kerberos")
         try:
             cred = await asyncio.wait_for(self.middleware.create_task(self.kinit()), timeout=kinit_timeout)
         except asyncio.TimeoutError:
-            raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
+            raise CallError(f"Timed out hung kinit after [{kinit_timeout}] seconds")
 
-        await self.middleware.call('kerberos.wait_for_renewal')
+        await self.middleware.call("kerberos.wait_for_renewal")
         return cred
 
     @private
@@ -185,25 +185,25 @@ class KerberosService(ConfigService):
             if (cred := gss_get_current_cred(krb5ccache.SYSTEM.value, raise_error=False)) is None:
                 # We don't have kerberos ticket or it has already expired
                 # We can redo our kinit
-                ds = self.middleware.call_sync('directoryservices.status')
-                if ds['type'] is None:
+                ds = self.middleware.call_sync("directoryservices.status")
+                if ds["type"] is None:
                     self.logger.debug(
-                        'Directory services are disabled. Exiting job to wait '
-                        'for renewal of kerberos ticket.'
+                        "Directory services are disabled. Exiting job to wait "
+                        "for renewal of kerberos ticket."
                     )
                     break
 
-                self.logger.debug('Kerberos ticket check failed, getting new ticket')
-                self.middleware.call_sync('kerberos.start')
+                self.logger.debug("Kerberos ticket check failed, getting new ticket")
+                self.middleware.call_sync("kerberos.start")
 
             elif cred.lifetime <= KRB_TKT_CHECK_INTERVAL:
-                self.middleware.call_sync('kerberos.start')
+                self.middleware.call_sync("kerberos.start")
 
             time.sleep(KRB_TKT_CHECK_INTERVAL)
 
 
 class KerberosRealmModel(sa.Model):
-    __tablename__ = 'directoryservice_kerberosrealm'
+    __tablename__ = "directoryservice_kerberosrealm"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     krb_realm = sa.Column(sa.String(120))
@@ -219,32 +219,32 @@ class KerberosRealmModel(sa.Model):
 
 class KerberosRealmService(CRUDService):
     class Config:
-        datastore = 'directoryservice.kerberosrealm'
-        datastore_prefix = 'krb_'
-        datastore_extend = 'kerberos.realm.kerberos_extend'
-        namespace = 'kerberos.realm'
-        cli_namespace = 'directory_service.kerberos.realm'
-        role_prefix = 'DIRECTORY_SERVICE'
+        datastore = "directoryservice.kerberosrealm"
+        datastore_prefix = "krb_"
+        datastore_extend = "kerberos.realm.kerberos_extend"
+        namespace = "kerberos.realm"
+        cli_namespace = "directory_service.kerberos.realm"
+        role_prefix = "DIRECTORY_SERVICE"
         entry = KerberosRealmEntry
 
     @private
     async def kerberos_extend(self, data):
-        for param in ['kdc', 'admin_server', 'kpasswd_server']:
-            data[param] = data[param].split(' ') if data[param] else []
+        for param in ["kdc", "admin_server", "kpasswd_server"]:
+            data[param] = data[param].split(" ") if data[param] else []
 
         return data
 
     @private
     async def kerberos_compress(self, data):
-        for param in ['kdc', 'admin_server', 'kpasswd_server']:
-            data[param] = ' '.join(data[param])
+        for param in ["kdc", "admin_server", "kpasswd_server"]:
+            data[param] = " ".join(data[param])
 
         return data
 
     @api_method(
         KerberosRealmCreateArgs, KerberosRealmCreateResult,
-        audit='Kerberos realm create:',
-        audit_extended=lambda data: data['realm']
+        audit="Kerberos realm create:",
+        audit_extended=lambda data: data["realm"]
     )
     async def do_create(self, data):
         """
@@ -261,22 +261,22 @@ class KerberosRealmService(CRUDService):
         """
         verrors = ValidationErrors()
 
-        verrors.add_child('kerberos_realm_create', await self._validate(data))
+        verrors.add_child("kerberos_realm_create", await self._validate(data))
 
         verrors.check()
 
         data = await self.kerberos_compress(data)
         id_ = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix}
+            "datastore.insert", self._config.datastore, data,
+            {"prefix": self._config.datastore_prefix}
         )
-        await self.middleware.call('etc.generate', 'kerberos')
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await self.middleware.call("etc.generate", "kerberos")
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return await self.get_instance(id_)
 
     @api_method(
         KerberosRealmUpdateArgs, KerberosRealmUpdateResult,
-        audit='Kerberos realm update:',
+        audit="Kerberos realm update:",
         audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -286,50 +286,50 @@ class KerberosRealmService(CRUDService):
         are case-sensitive, but convention is to only use upper-case.
         """
         old = await self.get_instance(id_)
-        audit_callback(old['realm'])
+        audit_callback(old["realm"])
         new = old.copy()
         new.update(data)
 
         data = await self.kerberos_compress(new)
         id_ = await self.middleware.call(
-            'datastore.update', self._config.datastore, id_, new,
-            {'prefix': self._config.datastore_prefix}
+            "datastore.update", self._config.datastore, id_, new,
+            {"prefix": self._config.datastore_prefix}
         )
 
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("etc.generate", "kerberos")
         return await self.get_instance(id_)
 
     @api_method(
         KerberosRealmDeleteArgs, KerberosRealmDeleteResult,
-        audit='Kerberos realm delete:',
+        audit="Kerberos realm delete:",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):
         """
         Delete a kerberos realm by ID.
         """
-        realm_name = (await self.get_instance(id_))['realm']
+        realm_name = (await self.get_instance(id_))["realm"]
         audit_callback(realm_name)
 
-        ds_realm = (await self.middleware.call('directoryservices.config'))['kerberos_realm']
+        ds_realm = (await self.middleware.call("directoryservices.config"))["kerberos_realm"]
         if realm_name == ds_realm:
-            raise CallError(f'{realm_name}: kerberos realm is used by directory services configuration')
+            raise CallError(f"{realm_name}: kerberos realm is used by directory services configuration")
 
-        await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        await self.middleware.call("etc.generate", "kerberos")
 
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
         realms = await self.query()
         for realm in realms:
-            if realm['realm'].upper() == data['realm'].upper():
-                verrors.add('kerberos_realm', f'kerberos realm with name {realm["realm"]} already exists.')
+            if realm["realm"].upper() == data["realm"].upper():
+                verrors.add("kerberos_realm", f'kerberos realm with name {realm["realm"]} already exists.')
         return verrors
 
 
 class KerberosKeytabModel(sa.Model):
-    __tablename__ = 'directoryservice_kerberoskeytab'
+    __tablename__ = "directoryservice_kerberoskeytab"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     keytab_file = sa.Column(sa.EncryptedText())
@@ -338,17 +338,17 @@ class KerberosKeytabModel(sa.Model):
 
 class KerberosKeytabService(CRUDService):
     class Config:
-        datastore = 'directoryservice.kerberoskeytab'
-        datastore_prefix = 'keytab_'
-        namespace = 'kerberos.keytab'
-        cli_namespace = 'directory_service.kerberos.keytab'
-        role_prefix = 'DIRECTORY_SERVICE'
+        datastore = "directoryservice.kerberoskeytab"
+        datastore_prefix = "keytab_"
+        namespace = "kerberos.keytab"
+        cli_namespace = "directory_service.kerberos.keytab"
+        role_prefix = "DIRECTORY_SERVICE"
         entry = KerberosKeytabEntry
 
     @api_method(
         KerberosKeytabCreateArgs, KerberosKeytabCreateResult,
-        audit='Kerberos keytab create:',
-        audit_extended=lambda data: data['name']
+        audit="Kerberos keytab create:",
+        audit_extended=lambda data: data["name"]
     )
     async def do_create(self, data):
         """
@@ -360,21 +360,21 @@ class KerberosKeytabService(CRUDService):
         """
         verrors = ValidationErrors()
 
-        await self.validate('kerberos_keytab_create', data, verrors)
+        await self.validate("kerberos_keytab_create", data, verrors)
 
         verrors.check()
 
         id_ = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix}
+            "datastore.insert", self._config.datastore, data,
+            {"prefix": self._config.datastore_prefix}
         )
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("etc.generate", "kerberos")
 
         return await self.get_instance(id_)
 
     @api_method(
         KerberosKeytabUpdateArgs, KerberosKeytabUpdateResult,
-        audit='Kerberos keytab update:',
+        audit="Kerberos keytab update:",
         audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -382,27 +382,27 @@ class KerberosKeytabService(CRUDService):
         Update kerberos keytab by id.
         """
         old = await self.get_instance(id_)
-        audit_callback(old['name'])
+        audit_callback(old["name"])
         new = old.copy()
         new.update(data)
 
         verrors = ValidationErrors()
 
-        await self.validate('kerberos_keytab_update', new, verrors, new['id'])
+        await self.validate("kerberos_keytab_update", new, verrors, new["id"])
 
         verrors.check()
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id_, new,
-            {'prefix': self._config.datastore_prefix}
+            "datastore.update", self._config.datastore, id_, new,
+            {"prefix": self._config.datastore_prefix}
         )
-        await self.middleware.call('etc.generate', 'kerberos')
+        await self.middleware.call("etc.generate", "kerberos")
 
         return await self.get_instance(id_)
 
     @api_method(
         KerberosKeytabDeleteArgs, KerberosKeytabDeleteResult,
-        audit='Kerberos keytab delete:',
+        audit="Kerberos keytab delete:",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):
@@ -411,45 +411,45 @@ class KerberosKeytabService(CRUDService):
         system keytab.
         """
         kt = await self.get_instance(id_)
-        audit_callback(kt['name'])
-        ds_config = await self.middleware.call('directoryservices.config')
-        if kt['name'] == 'AD_MACHINE_ACCOUNT':
-            if ds_config['enable'] and ds_config['service_type'] == 'ACTIVEDIRECTORY':
+        audit_callback(kt["name"])
+        ds_config = await self.middleware.call("directoryservices.config")
+        if kt["name"] == "AD_MACHINE_ACCOUNT":
+            if ds_config["enable"] and ds_config["service_type"] == "ACTIVEDIRECTORY":
                 raise CallError(
-                    'Active Directory machine account keytab may not be deleted while '
-                    'the Active Directory service is enabled.'
+                    "Active Directory machine account keytab may not be deleted while "
+                    "the Active Directory service is enabled."
                 )
 
-            if ds_config['service_type'] == 'ACTIVEDIRECTORY':
-                if ds_config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
+            if ds_config["service_type"] == "ACTIVEDIRECTORY":
+                if ds_config["credential"]["credential_type"] == "KERBEROS_PRINCIPAL":
                     # remove credential reference
-                    await self.middleware.call('datastore.update', 'directoryservices', ds_config['id'], {
-                        'cred_type': None, 'cred_krb5': None
+                    await self.middleware.call("datastore.update", "directoryservices", ds_config["id"], {
+                        "cred_type": None, "cred_krb5": None
                     })
 
-        if kt['name'] == 'IPA_MACHINE_ACCOUNT':
-            if ds_config['enable'] and ds_config['service_type'] == 'IPA':
+        if kt["name"] == "IPA_MACHINE_ACCOUNT":
+            if ds_config["enable"] and ds_config["service_type"] == "IPA":
                 raise CallError(
-                    'IPA machine account keytab may not be deleted while '
-                    'the IPA directory service is enabled.'
+                    "IPA machine account keytab may not be deleted while "
+                    "the IPA directory service is enabled."
                 )
 
-            if ds_config['service_type'] == 'IPA':
-                if ds_config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
+            if ds_config["service_type"] == "IPA":
+                if ds_config["credential"]["credential_type"] == "KERBEROS_PRINCIPAL":
                     # remove credential reference
-                    await self.middleware.call('datastore.update', 'directoryservices', ds_config['id'], {
-                        'cred_type': None, 'cred_krb5': None
+                    await self.middleware.call("datastore.update", "directoryservices", ds_config["id"], {
+                        "cred_type": None, "cred_krb5": None
                     })
 
-        await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        await self.middleware.call('etc.generate', 'kerberos')
-        await self.middleware.call('kerberos.stop')
-        if ds_config['enable']:
+        await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        await self.middleware.call("etc.generate", "kerberos")
+        await self.middleware.call("kerberos.stop")
+        if ds_config["enable"]:
             try:
-                await self.middleware.call('kerberos.start')
+                await self.middleware.call("kerberos.start")
             except Exception as e:
                 self.logger.debug(
-                    'Failed to start kerberos service after deleting keytab entry: %s' % e
+                    "Failed to start kerberos service after deleting keytab entry: %s" % e
                 )
 
     @private
@@ -461,7 +461,7 @@ class KerberosKeytabService(CRUDService):
         by DNS, and if the realm can be resolved by DNS.
         """
         try:
-            decoded = base64.b64decode(data['file'])
+            decoded = base64.b64decode(data["file"])
         except Exception as e:
             verrors.add(f"{schema}.file", f"Keytab is a not a properly base64-encoded string: [{e}]")
             return
@@ -481,14 +481,14 @@ class KerberosKeytabService(CRUDService):
         """
         async wrapper for validate
         """
-        await self._ensure_unique(verrors, schema, 'name', data['name'], id_)
-        if not data['file']:
-            verrors.add(f'{schema}.file', 'base64-encoded keytab file is required')
+        await self._ensure_unique(verrors, schema, "name", data["name"], id_)
+        if not data["file"]:
+            verrors.add(f"{schema}.file", "base64-encoded keytab file is required")
 
         return await self.middleware.run_in_thread(self._validate_impl, schema, data, verrors)
 
     @private
-    async def ktutil_list(self, keytab_file=KRB_Keytab['SYSTEM'].value):
+    async def ktutil_list(self, keytab_file=KRB_Keytab["SYSTEM"].value):
         try:
             return await self.middleware.run_in_thread(ktutil_list_impl, keytab_file)
         except Exception as e:
@@ -505,14 +505,14 @@ class KerberosKeytabService(CRUDService):
 
         Return empty list if system keytab doesn't exist.
         """
-        if not await self.middleware.run_in_thread(os.path.exists, KRB_Keytab['SYSTEM'].value):
+        if not await self.middleware.run_in_thread(os.path.exists, KRB_Keytab["SYSTEM"].value):
             return []
 
         kerberos_principals = []
 
         for entry in await self.ktutil_list():
-            if entry['principal'] not in kerberos_principals:
-                kerberos_principals.append(entry['principal'])
+            if entry["principal"] not in kerberos_principals:
+                kerberos_principals.append(entry["principal"])
 
         return sorted(kerberos_principals)
 
@@ -522,7 +522,7 @@ class KerberosKeytabService(CRUDService):
         This method checks whether the kerberos keytab contains an nfs service principal
         """
         try:
-            return 'nfs' in keytab_services(KRB_Keytab.SYSTEM.value)
+            return "nfs" in keytab_services(KRB_Keytab.SYSTEM.value)
         except FileNotFoundError:
             return False
 
@@ -539,36 +539,36 @@ class KerberosKeytabService(CRUDService):
         if not samba_keytabs:
             return
 
-        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_config = self.middleware.call_sync("directoryservices.config")
         keytab_file = concatenate_keytab_data(samba_keytabs)
         keytab_file_encoded = base64.b64encode(keytab_file).decode()
 
-        entry = self.middleware.call_sync('kerberos.keytab.query', [('name', '=', 'AD_MACHINE_ACCOUNT')])
+        entry = self.middleware.call_sync("kerberos.keytab.query", [("name", "=", "AD_MACHINE_ACCOUNT")])
         if not entry:
             self.middleware.call_sync(
-                'datastore.insert', self._config.datastore,
-                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file_encoded},
-                {'prefix': self._config.datastore_prefix}
+                "datastore.insert", self._config.datastore,
+                {"name": "AD_MACHINE_ACCOUNT", "file": keytab_file_encoded},
+                {"prefix": self._config.datastore_prefix}
             )
         else:
             self.middleware.call_sync(
-                'datastore.update', self._config.datastore, entry[0]['id'],
-                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file_encoded},
-                {'prefix': self._config.datastore_prefix}
+                "datastore.update", self._config.datastore, entry[0]["id"],
+                {"name": "AD_MACHINE_ACCOUNT", "file": keytab_file_encoded},
+                {"prefix": self._config.datastore_prefix}
             )
 
-        netbiosname = self.middleware.call_sync('smb.config')['netbiosname'].upper()
+        netbiosname = self.middleware.call_sync("smb.config")["netbiosname"].upper()
         machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}'
 
-        ds_cred = ds_config['credential']
-        if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct:
+        ds_cred = ds_config["credential"]
+        if ds_cred["credential_type"] != "KERBEROS_PRINCIPAL" or ds_cred["principal"] != machine_acct:
             krb_cred = {
-                'credential_type': 'KERBEROS_PRINCIPAL',
-                'principal': machine_acct
+                "credential_type": "KERBEROS_PRINCIPAL",
+                "principal": machine_acct
             }
-            self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {
-                'cred_type': 'KERBEROS_PRINCIPAL',
-                'cred_krb5': krb_cred
+            self.middleware.call_sync("datastore.update", "directoryservices", ds_config["id"], {
+                "cred_type": "KERBEROS_PRINCIPAL",
+                "cred_krb5": krb_cred
             })
 
         write_if_changed(KRB_Keytab.SYSTEM.value, keytab_file, perms=0o600)
@@ -585,23 +585,23 @@ class KerberosKeytabService(CRUDService):
         secrets.tdb and so we can base whether to update that keytab entry
         based on the timestamp rather than trying to evaluate the keytab itself.
         """
-        if not await self.middleware.call('system.ready'):
+        if not await self.middleware.call("system.ready"):
             return
 
-        if not await self.middleware.call('failover.is_single_master_node'):
+        if not await self.middleware.call("failover.is_single_master_node"):
             return
 
-        ds_config = await self.middleware.call('directoryservices.config')
-        if not ds_config['enable'] or ds_config['service_type'] != 'ACTIVEDIRECTORY':
+        ds_config = await self.middleware.call("directoryservices.config")
+        if not ds_config["enable"] or ds_config["service_type"] != "ACTIVEDIRECTORY":
             return
 
-        ts = await self.middleware.call('directoryservices.get_last_password_change')
-        if ts['dbconfig'] == ts['secrets']:
+        ts = await self.middleware.call("directoryservices.get_last_password_change")
+        if ts["dbconfig"] == ts["secrets"]:
             return
 
         self.logger.debug("Machine account password has changed. Stored copies of "
                           "kerberos keytab and directory services secrets will now "
                           "be updated.")
 
-        await self.middleware.call('directoryservices.secrets.backup')
-        await self.middleware.call('kerberos.keytab.store_ad_keytab')
+        await self.middleware.call("directoryservices.secrets.backup")
+        await self.middleware.call("kerberos.keytab.store_ad_keytab")

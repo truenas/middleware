@@ -72,11 +72,11 @@ class AuditEntry(BaseModel):
 
 
 class AuditQuery(BaseModel):
-    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE']
+    services: list[Literal["MIDDLEWARE", "SMB", "SUDO", "SYSTEM"]] = ["MIDDLEWARE"]
     """Array of services to include in the audit query."""
-    query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    query_filters: QueryFilters = Field(alias="query-filters", default=[])
     """Array of filters to apply to the audit query results."""
-    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
+    query_options: QueryOptions = Field(alias="query-options", default=QueryOptions())
     """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form \
     for better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
     remote_controller: bool = False
@@ -91,13 +91,13 @@ class AuditExportQueryOptions(QueryOptions):
 
 
 class AuditExport(AuditQuery):
-    query_options: AuditExportQueryOptions = Field(alias='query-options', default=AuditExportQueryOptions())
-    export_format: Literal['CSV', 'JSON', 'YAML'] = 'JSON'
+    query_options: AuditExportQueryOptions = Field(alias="query-options", default=AuditExportQueryOptions())
+    export_format: Literal["CSV", "JSON", "YAML"] = "JSON"
     """Format for exporting audit data."""
 
 
 class AuditQueryResultItem(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     audit_id: UUID | None
     """GUID uniquely identifying this specific audit event."""
@@ -111,7 +111,7 @@ class AuditQueryResultItem(BaseModel):
     """Username used by client performing action."""
     session: UUID | None
     """GUID uniquely identifying the client session."""
-    service: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']
+    service: Literal["MIDDLEWARE", "SMB", "SUDO", "SYSTEM"]
     """Name of the service that generated the message. This will be one of the names specified in `services`."""
     service_data: dict | None
     """JSON object containing variable data depending on the particular service. See TrueNAS auditing documentation \
@@ -132,7 +132,7 @@ class AuditUpdate(AuditEntry, metaclass=ForUpdateMetaclass):
     enabled_services: Excluded = excluded_field()
 
 
-@single_argument_args('data')
+@single_argument_args("data")
 class AuditDownloadReportArgs(BaseModel):
     report_name: str
     """Name of the audit report to download."""

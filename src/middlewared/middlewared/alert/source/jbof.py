@@ -36,7 +36,7 @@ class JBOFRedfishCommAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
-        title='Failed to Communicate with JBOF',
+        title="Failed to Communicate with JBOF",
         text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.',
         products=(ProductType.ENTERPRISE,),
     )
@@ -51,7 +51,7 @@ class JBOFInvalidDataAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
-        title='JBOF has invalid data',
+        title="JBOF has invalid data",
         text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s',
         products=(ProductType.ENTERPRISE,),
     )
@@ -67,7 +67,7 @@ class JBOFElementWarningAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
-        title='JBOF element non-critical',
+        title="JBOF element non-critical",
         text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s',
         products=(ProductType.ENTERPRISE,),
     )
@@ -85,7 +85,7 @@ class JBOFElementCriticalAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
-        title='JBOF element critical',
+        title="JBOF element critical",
         text='JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s',
         products=(ProductType.ENTERPRISE,),
     )
@@ -107,12 +107,12 @@ class JBOFAlertSource(AlertSource):
         self, jbof_config: list[dict[str, Any]], jbof_data: list[dict[str, Any]], alerts: list[Alert[Any]],
     ) -> None:
         for jbof in jbof_config:
-            jbof_id_dict = {'desc': jbof['description'], 'ip1': jbof['mgmt_ip1'], 'ip2': jbof['mgmt_ip2']}
+            jbof_id_dict = {"desc": jbof["description"], "ip1": jbof["mgmt_ip1"], "ip2": jbof["mgmt_ip2"]}
             data = None
 
             # First check that each configured JBOF has enclosure data returned.
             for _data in jbof_data:
-                if jbof['uuid'] == _data['id']:
+                if jbof["uuid"] == _data["id"]:
                     # Matched UUID
                     data = _data
                     break
@@ -122,9 +122,9 @@ class JBOFAlertSource(AlertSource):
                 continue
 
             # Make sure the data seems to have the correct shape
-            elements = data.get('elements')
+            elements = data.get("elements")
             if not elements or not isinstance(elements, dict):
-                alerts.append(Alert(JBOFInvalidDataAlert(keys='elements', **jbof_id_dict)))
+                alerts.append(Alert(JBOFInvalidDataAlert(keys="elements", **jbof_id_dict)))
                 continue
 
             bad_keys = []
@@ -134,32 +134,32 @@ class JBOFAlertSource(AlertSource):
                         bad_keys.append(etype.value)
                         continue
                     for key, v in edata.items():
-                        match v['status']:
+                        match v["status"]:
                             case ElementStatus.NONCRITICAL.value:
                                 alerts.append(Alert(JBOFElementWarningAlert(
                                     etype=etype.value,
                                     key=key,
-                                    value=v.get('value', ''),
+                                    value=v.get("value", ""),
                                     **jbof_id_dict,
                                 )))
                             case ElementStatus.CRITICAL.value:
                                 alerts.append(Alert(JBOFElementCriticalAlert(
                                     etype=etype.value,
                                     key=key,
-                                    value=v.get('value', ''),
+                                    value=v.get("value", ""),
                                     **jbof_id_dict,
                                 )))
                             case _:
                                 pass
             if bad_keys:
-                alerts.append(Alert(JBOFInvalidDataAlert(keys=','.join(bad_keys), **jbof_id_dict)))
+                alerts.append(Alert(JBOFInvalidDataAlert(keys=",".join(bad_keys), **jbof_id_dict)))
 
     async def check(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
-        jbof_config = await self.middleware.call('jbof.query')
+        jbof_config = await self.middleware.call("jbof.query")
 
         if jbof_config:
-            jbof_data = await self.middleware.call('enclosure2.map_jbof')
+            jbof_data = await self.middleware.call("enclosure2.map_jbof")
             self.produce_alerts(jbof_config, jbof_data, alerts)
 
         return alerts

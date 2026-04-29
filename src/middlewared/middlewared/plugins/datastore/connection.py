@@ -36,7 +36,7 @@ class DatastoreService(Service):
         self.logger.warning("Deleting row %d from table %s.", row.rowid, row.table)
         op = f"DELETE FROM {row.table} WHERE rowid = {row.rowid}"
         self.connection.execute(text(op))
-        journal.write(f'{op}\n')
+        journal.write(f"{op}\n")
 
     @private
     def setup(self):
@@ -48,7 +48,7 @@ class DatastoreService(Service):
         if self.engine is not None:
             self.engine.dispose()
 
-        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}')
+        self.engine = create_engine(f"sqlite:///{FREENAS_DATABASE}")
         self.connection = self.engine.connect()
         self.connection = self.connection.execution_options(isolation_level="AUTOCOMMIT")
         self.connection.connection.create_function("REGEXP", 2, regexp)
@@ -56,9 +56,9 @@ class DatastoreService(Service):
 
         if constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall():
             ts = int(time.time())
-            shutil.copy(FREENAS_DATABASE, f'{FREENAS_DATABASE}_{ts}.bak')
+            shutil.copy(FREENAS_DATABASE, f"{FREENAS_DATABASE}_{ts}.bak")
 
-            with open(f'{FREENAS_DATABASE}_{ts}_journal.txt', 'w') as f:
+            with open(f"{FREENAS_DATABASE}_{ts}_journal.txt", "w") as f:
                 for row in constraint_violations:
                     self.handle_constraint_violation(row, f)
 
@@ -74,8 +74,8 @@ class DatastoreService(Service):
     @private
     def execute_write(self, stmt, options=None):
         options = options or {}
-        options.setdefault('ha_sync', True)
-        options.setdefault('return_last_insert_rowid', False)
+        options.setdefault("ha_sync", True)
+        options.setdefault("return_last_insert_rowid", False)
 
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
 
@@ -105,7 +105,7 @@ class DatastoreService(Service):
 
         self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds, options)
 
-        if options['return_last_insert_rowid']:
+        if options["return_last_insert_rowid"]:
             return self.connection.execute(text("SELECT last_insert_rowid() as rowid")).scalar_one()
 
         return result

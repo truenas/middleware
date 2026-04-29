@@ -47,7 +47,7 @@ def retaste_disks_impl(disk_serials: set = None):
             p.starmap(taste_it, [(disk, errors) for disk in disks])
 
         for disk, errors in filter(lambda x: len(x[1]) > 0, errors.items()):
-            logger.error('Failed to retaste %r with error(s): %s', disk, ', '.join(errors))
+            logger.error("Failed to retaste %r with error(s): %s", disk, ", ".join(errors))
 
     del errors
 
@@ -65,13 +65,13 @@ class DiskService(Service):
         return errors
 
     @private
-    @job(lock='disk_retaste', lock_queue_size=1)
+    @job(lock="disk_retaste", lock_queue_size=1)
     def retaste(self, job, disks_serials: list[str] | None = None):
-        job.set_progress(85, 'Retasting disks')
+        job.set_progress(85, "Retasting disks")
         retaste_disks_impl(disks_serials)
 
-        job.set_progress(95, 'Waiting for disk events to settle')
-        self.middleware.call_sync('device.settle_udev_events')
+        job.set_progress(95, "Waiting for disk events to settle")
+        self.middleware.call_sync("device.settle_udev_events")
 
-        job.set_progress(100, 'Retasting disks done')
-        return 'SUCCESS'
+        job.set_progress(100, "Retasting disks done")
+        return "SUCCESS"

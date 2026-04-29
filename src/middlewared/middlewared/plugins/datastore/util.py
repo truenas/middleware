@@ -24,17 +24,17 @@ class DatastoreService(Service, SchemaMixin):
                     if foreign_key.column.table == table:
                         if foreign_key.ondelete is None:
                             result.append((
-                                other_table.name.replace('_', '.', 1),
-                                column.name[:-3] if column.name.endswith('_id') else column.name,
+                                other_table.name.replace("_", ".", 1),
+                                column.name[:-3] if column.name.endswith("_id") else column.name,
                             ))
 
         return result
 
     async def sql(self, query, *args):
         try:
-            if query.strip().split()[0].upper() == 'SELECT':
-                return [dict(row) for row in await self.middleware.call('datastore.fetchall', query, *args)]
+            if query.strip().split()[0].upper() == "SELECT":
+                return [dict(row) for row in await self.middleware.call("datastore.fetchall", query, *args)]
             else:
-                await self.middleware.call('datastore.execute', query, *args)
+                await self.middleware.call("datastore.execute", query, *args)
         except Exception as e:
             raise CallError(e)

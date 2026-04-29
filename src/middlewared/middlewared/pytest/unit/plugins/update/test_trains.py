@@ -35,8 +35,8 @@ async def test_update_get_trains(manifest, trains, result):
     middleware = Middleware()
     middleware["network.general.will_perform_activity"] = AsyncMock()
 
-    with patch('middlewared.plugins.update_.trains.fetch', new=AsyncMock(return_value=trains)), \
-         patch('middlewared.plugins.update_.trains.get_manifest_file', return_value=manifest):
+    with patch("middlewared.plugins.update_.trains.fetch", new=AsyncMock(return_value=trains)), \
+         patch("middlewared.plugins.update_.trains.get_manifest_file", return_value=manifest):
         assert await get_trains(middleware) == result
 
 

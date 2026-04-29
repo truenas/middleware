@@ -26,37 +26,37 @@ from .delegate import DeviceDelegate
 
 def is_bridge_device(name: str) -> bool:
     """Check if a network interface is a bridge by looking at sysfs."""
-    return os.path.isdir(f'/sys/class/net/{name}/bridge')
+    return os.path.isdir(f"/sys/class/net/{name}/bridge")
 
 
 def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
-    match device['attributes']['dtype']:
-        case 'DISK':
+    match device["attributes"]["dtype"]:
+        case "DISK":
             return DiskStorageDevice(
-                type_=StorageDeviceType(device['attributes']['type']),
-                logical_sectorsize=device['attributes'].get('logical_sectorsize'),
-                physical_sectorsize=device['attributes'].get('physical_sectorsize'),
+                type_=StorageDeviceType(device["attributes"]["type"]),
+                logical_sectorsize=device["attributes"].get("logical_sectorsize"),
+                physical_sectorsize=device["attributes"].get("physical_sectorsize"),
                 iotype=StorageDeviceIoType(
-                    device['attributes']['iotype']
-                ) if device['attributes'].get('iotype') else None,
-                serial=device['attributes'].get('serial'),
-                path=device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name']),
+                    device["attributes"]["iotype"]
+                ) if device["attributes"].get("iotype") else None,
+                serial=device["attributes"].get("serial"),
+                path=device["attributes"].get("path") or zvol_name_to_path(device["attributes"]["zvol_name"]),
                 device_delegate=delegate,
             )
-        case 'RAW':
+        case "RAW":
             return RawStorageDevice(
-                type_=StorageDeviceType(device['attributes']['type']),
-                logical_sectorsize=device['attributes'].get('logical_sectorsize'),
-                physical_sectorsize=device['attributes'].get('physical_sectorsize'),
+                type_=StorageDeviceType(device["attributes"]["type"]),
+                logical_sectorsize=device["attributes"].get("logical_sectorsize"),
+                physical_sectorsize=device["attributes"].get("physical_sectorsize"),
                 iotype=StorageDeviceIoType(
-                    device['attributes']['iotype']
-                ) if device['attributes'].get('iotype') else None,
-                serial=device['attributes'].get('serial'),
-                path=device['attributes'].get('path'),
+                    device["attributes"]["iotype"]
+                ) if device["attributes"].get("iotype") else None,
+                serial=device["attributes"].get("serial"),
+                path=device["attributes"].get("path"),
                 device_delegate=delegate,
             )
-        case 'NIC':
-            nic_attach = device['attributes']['nic_attach']
+        case "NIC":
+            nic_attach = device["attributes"]["nic_attach"]
             if nic_attach and is_bridge_device(nic_attach):
                 type_ = NICDeviceType.BRIDGE
             else:
@@ -64,57 +64,57 @@ def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
 
             return NICDevice(
                 type_=type_,
-                source=device['attributes']['nic_attach'],
-                model=NICDeviceModel(device['attributes']['type']),
-                mac=device['attributes']['mac'],
-                trust_guest_rx_filters=device['attributes']['trust_guest_rx_filters'],
+                source=device["attributes"]["nic_attach"],
+                model=NICDeviceModel(device["attributes"]["type"]),
+                mac=device["attributes"]["mac"],
+                trust_guest_rx_filters=device["attributes"]["trust_guest_rx_filters"],
                 device_delegate=delegate,
             )
-        case 'PCI':
-            domain, bus, slot, function = device['attributes']['pptdev'].split('_')[1:]
+        case "PCI":
+            domain, bus, slot, function = device["attributes"]["pptdev"].split("_")[1:]
             return PCIDevice(
                 domain=domain,
                 bus=bus,
                 slot=slot,
                 function=function,
-                pci_device=device['attributes']['pptdev'],
+                pci_device=device["attributes"]["pptdev"],
                 device_delegate=delegate,
             )
-        case 'USB':
+        case "USB":
             return USBDevice(
-                vendor_id=device['attributes']['usb']['vendor_id'] if device['attributes']['usb'] else None,
-                product_id=device['attributes']['usb']['product_id'] if device['attributes']['usb'] else None,
-                device=device['attributes']['device'],
-                controller_type=device['attributes'].get('controller_type'),
+                vendor_id=device["attributes"]["usb"]["vendor_id"] if device["attributes"]["usb"] else None,
+                product_id=device["attributes"]["usb"]["product_id"] if device["attributes"]["usb"] else None,
+                device=device["attributes"]["device"],
+                controller_type=device["attributes"].get("controller_type"),
                 device_delegate=delegate,
             )
-        case 'DISPLAY':
+        case "DISPLAY":
             return DisplayDevice(
-                type_=DisplayDeviceType(device['attributes']['type']),
-                resolution=device['attributes']['resolution'],
-                port=device['attributes']['port'],
-                web_port=device['attributes']['web_port'],
-                bind=device['attributes']['bind'],
-                wait=device['attributes']['wait'],
-                password=device['attributes']['password'],
-                web=device['attributes']['web'],
+                type_=DisplayDeviceType(device["attributes"]["type"]),
+                resolution=device["attributes"]["resolution"],
+                port=device["attributes"]["port"],
+                web_port=device["attributes"]["web_port"],
+                bind=device["attributes"]["bind"],
+                wait=device["attributes"]["wait"],
+                password=device["attributes"]["password"],
+                web=device["attributes"]["web"],
                 device_delegate=delegate,
             )
-        case 'CDROM':
+        case "CDROM":
             return CDROMDevice(
-                path=device['attributes']['path'],
+                path=device["attributes"]["path"],
                 device_delegate=delegate,
             )
-        case 'FILESYSTEM':
+        case "FILESYSTEM":
             return FilesystemDevice(
-                target=device['attributes']['target'],
-                source=device['attributes']['source'],
+                target=device["attributes"]["target"],
+                source=device["attributes"]["source"],
                 device_delegate=delegate,
             )
-        case 'GPU':
+        case "GPU":
             return GPUDevice(
-                gpu_type=device['attributes']['gpu_type'],
-                pci_address=device['attributes']['pci_address'],
+                gpu_type=device["attributes"]["gpu_type"],
+                pci_address=device["attributes"]["pci_address"],
                 device_delegate=delegate,
             )
         case _:

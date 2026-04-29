@@ -38,7 +38,7 @@ class NVMetGlobalEntry(BaseModel):
     """
 
 
-@single_argument_args('nvmet_update')
+@single_argument_args("nvmet_update")
 class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     basenqn: NQN

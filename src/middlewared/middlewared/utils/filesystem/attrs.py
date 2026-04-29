@@ -94,10 +94,10 @@ def dict_to_zfs_attributes_mask(attr_dict: dict[str, bool]) -> int:
     for attr, value in attr_dict.items():
         zfs_attr = ZFSAttr[attr.upper()]
         if SUPPORTED_ATTRS & zfs_attr == 0:
-            raise ValueError(f'{attr}: invalid ZFS file attribute')
+            raise ValueError(f"{attr}: invalid ZFS file attribute")
 
         if not isinstance(value, bool):
-            raise TypeError(f'{attr}: value [{value}] must be boolean')
+            raise TypeError(f"{attr}: value [{value}] must be boolean")
 
         if value is not True:
             continue
@@ -116,7 +116,7 @@ def zfs_attributes_to_mask(attr_list: list[str]) -> int:
     for attr in attr_list:
         zfs_attr = ZFSAttr[attr]
         if SUPPORTED_ATTRS & zfs_attr == 0:
-            raise ValueError(f'{attr}: invalid ZFS file attribute')
+            raise ValueError(f"{attr}: invalid ZFS file attribute")
 
         attr_mask |= ZFSAttr[attr]
 
@@ -129,10 +129,10 @@ def fget_zfs_file_attributes(fd: int) -> int:
 
     Note: `fd` may not be an O_PATH open (READ access will be checked).
     """
-    fl = struct.unpack('L', fcntl.ioctl(fd, ZFS_IOC_GETATTRS, struct.pack('L', 0)))
+    fl = struct.unpack("L", fcntl.ioctl(fd, ZFS_IOC_GETATTRS, struct.pack("L", 0)))
 
     if not fl:
-        raise RuntimeError('Unable to retrieve zfs file attributes')
+        raise RuntimeError("Unable to retrieve zfs file attributes")
 
     return int(fl[0])
 
@@ -146,7 +146,7 @@ def fset_zfs_file_attributes(fd: int, attr_mask: int) -> int:
     If desire is to simply toggle one attribute it is simpler to use
     `set_zfs_file_attributes` below.
     """
-    fcntl.ioctl(fd, ZFS_IOC_SETATTRS, struct.pack('L', attr_mask))
+    fcntl.ioctl(fd, ZFS_IOC_SETATTRS, struct.pack("L", attr_mask))
     return fget_zfs_file_attributes(fd)
 
 

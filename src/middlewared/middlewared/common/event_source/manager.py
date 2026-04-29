@@ -103,8 +103,8 @@ class EventSourceManager:
         self.subscriptions: defaultdict[str, _SubscriptionsDict] = defaultdict(lambda: defaultdict(set))
 
     def short_name_arg(self, name: str) -> tuple[str, str | None]:
-        if ':' in name:
-            shortname, arg = name.split(':', 1)
+        if ":" in name:
+            shortname, arg = name.split(":", 1)
         else:
             shortname = name
             arg = None
@@ -114,7 +114,7 @@ class EventSourceManager:
         if arg is None:
             return name
         else:
-            return f'{name}:{arg}'
+            return f"{name}:{arg}"
 
     def register(self, name: str, event_source: type[EventSource]):
         if not issubclass(event_source, EventSource):

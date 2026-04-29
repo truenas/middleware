@@ -12,12 +12,12 @@ class ConfigServicePart[E](ServicePart):
     __slots__ = ()
 
     _datastore: str
-    _datastore_prefix: str = ''
+    _datastore_prefix: str = ""
     _entry: type[E]
 
     async def config(self) -> E:
         return await self._get_or_insert(
-            self._datastore, {'prefix': self._datastore_prefix},
+            self._datastore, {"prefix": self._datastore_prefix},
         )
 
     def extend(self, data: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
@@ -27,7 +27,7 @@ class ConfigServicePart[E](ServicePart):
         return data
 
     async def _get_or_insert(self, datastore: str, options: dict[str, Any]) -> E:
-        rows = await self.middleware.call('datastore.query', datastore, [], options)
+        rows = await self.middleware.call("datastore.query", datastore, [], options)
         if not rows:
             async with get_or_insert_lock:
                 # We do this again here to avoid TOCTOU as we don't want multiple calls inserting records
@@ -38,10 +38,10 @@ class ConfigServicePart[E](ServicePart):
                 # we don't have a row available whereas the row was there but the service's extend
                 # had errored out with that exception and we would misleadingly insert another duplicate
                 # record
-                rows = await self.middleware.call('datastore.query', datastore, [], options)
+                rows = await self.middleware.call("datastore.query", datastore, [], options)
                 if not rows:
-                    await self.middleware.call('datastore.insert', datastore, {})
-                    rows = [await self.middleware.call('datastore.config', datastore, options)]
+                    await self.middleware.call("datastore.insert", datastore, {})
+                    rows = [await self.middleware.call("datastore.config", datastore, options)]
 
         if asyncio.iscoroutinefunction(self.extend):
             data = await self.extend(rows[0])

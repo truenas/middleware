@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 class AppPortDelegate(PortDelegate):
 
-    name = 'applications'
-    namespace = 'app'
-    title = 'Applications'
+    name = "applications"
+    namespace = "app"
+    title = "Applications"
 
     async def get_ports(self) -> list[PortDetail]:
         ports: list[PortDetail] = []
@@ -26,12 +26,12 @@ class AppPortDelegate(PortDelegate):
                     app_ports.append((host_port.host_ip, host_port.host_port))
 
             ports.append({
-                'description': f'{app.id!r} application',
-                'ports': app_ports,
+                "description": f"{app.id!r} application",
+                "ports": app_ports,
             })
 
         return ports
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('port.register_attachment_delegate', AppPortDelegate(middleware))
+    await middleware.call("port.register_attachment_delegate", AppPortDelegate(middleware))

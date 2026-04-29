@@ -21,15 +21,15 @@ from middlewared.service import CallError, Service, ValidationErrors, job
 class PoolService(Service):
 
     class Config:
-        cli_namespace = 'storage.pool'
+        cli_namespace = "storage.pool"
         event_send = False
 
     @api_method(
         PoolDetachArgs,
         PoolDetachResult,
-        audit='Disk detach',
+        audit="Disk detach",
         audit_callback=True,
-        roles=['POOL_WRITE']
+        roles=["POOL_WRITE"]
     )
     async def detach(self, audit_callback, oid, options):
         """
@@ -49,40 +49,40 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
+        pool = await self.middleware.call("pool.get_instance", oid)
 
         verrors = ValidationErrors()
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
+        found = await self.middleware.call("pool.find_disk_from_topology", options["label"], pool)
         if not found:
-            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+            verrors.add("options.label", f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
         disk = await self.middleware.call(
-            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+            "disk.label_to_disk", found[1]["path"].replace("/dev/", "")
         )
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
+        if found[1]["type"] != "DISK":
+            disk_paths = [d["path"] for d in found[1]["children"]]
         else:
-            disk_paths = [found[1]['path']]
+            disk_paths = [found[1]["path"]]
         audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
 
-        await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
+        await self.middleware.call("zfs.pool.detach", pool["name"], found[1]["guid"])
 
-        if disk and options['wipe']:
-            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+        if disk and options["wipe"]:
+            wipe_job = await self.middleware.call("disk.wipe", disk, "QUICK")
             await wipe_job.wait()
             if wipe_job.error:
-                raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                raise CallError(f"Failed to wipe disk {disk}: {wipe_job.error}")
 
         return True
 
     @api_method(
         PoolOfflineArgs,
         PoolOfflineResult,
-        audit='Disk offline',
+        audit="Disk offline",
         audit_callback=True,
-        roles=['POOL_WRITE']
+        roles=["POOL_WRITE"]
     )
     async def offline(self, audit_callback, oid, options):
         """
@@ -102,30 +102,30 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
+        pool = await self.middleware.call("pool.get_instance", oid)
 
         verrors = ValidationErrors()
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
+        found = await self.middleware.call("pool.find_disk_from_topology", options["label"], pool)
         if not found:
-            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+            verrors.add("options.label", f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
+        if found[1]["type"] != "DISK":
+            disk_paths = [d["path"] for d in found[1]["children"]]
         else:
-            disk_paths = [found[1]['path']]
+            disk_paths = [found[1]["path"]]
         audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
 
-        await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
+        await self.middleware.call("zfs.pool.offline", pool["name"], found[1]["guid"])
 
         return True
 
     @api_method(
         PoolOnlineArgs,
         PoolOnlineResult,
-        audit='Disk online',
+        audit="Disk online",
         audit_callback=True,
-        roles=['POOL_WRITE']
+        roles=["POOL_WRITE"]
     )
     async def online(self, audit_callback, oid, options):
         """
@@ -145,33 +145,33 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
+        pool = await self.middleware.call("pool.get_instance", oid)
 
         verrors = ValidationErrors()
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
+        found = await self.middleware.call("pool.find_disk_from_topology", options["label"], pool)
         if not found:
-            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+            verrors.add("options.label", f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
+        if found[1]["type"] != "DISK":
+            disk_paths = [d["path"] for d in found[1]["children"]]
         else:
-            disk_paths = [found[1]['path']]
+            disk_paths = [found[1]["path"]]
         audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
 
-        await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
+        await self.middleware.call("zfs.pool.online", pool["name"], found[1]["guid"])
 
         return True
 
     @api_method(
         PoolRemoveArgs,
         PoolRemoveResult,
-        audit='Disk remove',
+        audit="Disk remove",
         audit_callback=True,
-        roles=['POOL_WRITE']
+        roles=["POOL_WRITE"]
     )
-    @job(lock=lambda args: f'{args[0]}_remove')
+    @job(lock=lambda args: f"{args[0]}_remove")
     async def remove(self, job, audit_callback, oid, options):
         """
         Remove a disk from pool of id `id`.
@@ -198,39 +198,39 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
+        pool = await self.middleware.call("pool.get_instance", oid)
 
         verrors = ValidationErrors()
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, {
-            'include_top_level_vdev': True,
+        found = await self.middleware.call("pool.find_disk_from_topology", options["label"], pool, {
+            "include_top_level_vdev": True,
         })
         if not found:
-            verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
+            verrors.add("options.label", f'Label {options["label"]} not found on this pool.')
 
         verrors.check()
 
         job.set_progress(20, f'Initiating removal of {options["label"]!r} ZFS device')
-        await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
-        job.set_progress(40, 'Waiting for removal of ZFS device to complete')
+        await self.middleware.call("zfs.pool.remove", pool["name"], found[1]["guid"])
+        job.set_progress(40, "Waiting for removal of ZFS device to complete")
         # Wait until the removal operation has fully completed. Some removals may not be
         # synchronous (e.g., removing top-level vdevs), except for SLOG and L2ARC devices.
         await self.middleware.run_in_thread(
-            truenas_pylibzfs.lzc.wait, pool_name=pool['name'], activity=truenas_pylibzfs.lzc.ZpoolWaitActivity.REMOVE
+            truenas_pylibzfs.lzc.wait, pool_name=pool["name"], activity=truenas_pylibzfs.lzc.ZpoolWaitActivity.REMOVE
         )
-        job.set_progress(60, 'Removal of ZFS device complete')
+        job.set_progress(60, "Removal of ZFS device complete")
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
+        if found[1]["type"] != "DISK":
+            disk_paths = [d["path"] for d in found[1]["children"]]
         else:
-            disk_paths = [found[1]['path']]
+            disk_paths = [found[1]["path"]]
         audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
 
-        job.set_progress(70, 'Wiping disks')
+        job.set_progress(70, "Wiping disks")
         disks_to_wipe = set()
         for disk_path in disk_paths:
             disk = await self.middleware.call(
-                'disk.label_to_disk', disk_path.replace('/dev/', '')
+                "disk.label_to_disk", disk_path.replace("/dev/", "")
             )
             if disk:
                 disks_to_wipe.add(disk)
@@ -240,7 +240,7 @@ class PoolService(Service):
         for retry in itertools.count(1):
             wipe_jobs = []
             for disk in disks_to_wipe:
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, job_silent=True)
+                wipe_job = await self.middleware.call("disk.wipe", disk, "QUICK", False, job_silent=True)
                 wipe_jobs.append((disk, wipe_job))
 
             disks_errors = {}
@@ -263,7 +263,7 @@ class PoolService(Service):
             await asyncio.sleep(1)
 
         if disks_errors:
-            disks_errors = '\n'.join(sorted({f'{disk}: {error}' for disk, error in disks_errors.items()}))
-            raise CallError(f'Failed to wipe disks:\n{disks_errors}')
+            disks_errors = "\n".join(sorted({f"{disk}: {error}" for disk, error in disks_errors.items()}))
+            raise CallError(f"Failed to wipe disks:\n{disks_errors}")
 
-        job.set_progress(100, 'Successfully completed wiping disks')
+        job.set_progress(100, "Successfully completed wiping disks")

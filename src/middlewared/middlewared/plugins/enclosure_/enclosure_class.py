@@ -38,7 +38,7 @@ class EnclosureElementDict(TypedDict):
     status: list[int]
 
 
-EnclosureStatus: TypeAlias = Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 'UNRECOV']
+EnclosureStatus: TypeAlias = Literal["OK", "INVOP", "INFO", "NON-CRIT", "CRIT", "UNRECOV"]
 ElementsDict: TypeAlias = dict[int, EnclosureElementDict]
 
 
@@ -52,8 +52,8 @@ class EnclosureStatusDict(TypedDict):
 class Enclosure:
     def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
         self.dmi = parse_dmi()
-        self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
-        self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
+        self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix("/dev/bsg/")
+        self.encid, self.status = enc_stat["id"], list(enc_stat["status"])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self._get_model_and_controller()
         self._should_ignore_enclosure()
@@ -69,27 +69,27 @@ class Enclosure:
     def asdict(self):
         """This method is what is returned in enclosure2.query"""
         return {
-            'should_ignore': self.should_ignore,  # enclosure device we dont need or expect
-            'name': self.encname,  # vendor, product and revision joined by whitespace
-            'model': self.model,  # M60, F100, MINI-R, etc
-            'controller': self.controller,  # if True, represents the "head-unit"
-            'dmi': self.dmi.system_product_name,
-            'status': self.status,  # the overall status reported by the enclosure
-            'id': self.encid,
-            'vendor': self.vendor,  # t10 vendor from INQUIRY
-            'product': self.product,  # product from INQUIRY
-            'revision': self.revision,  # revision from INQUIRY
-            'bsg': self.bsg,  # the path for which this maps to a bsg device (/dev/bsg/0:0:0:0)
-            'sg': self.sg,  # the scsi generic device (/dev/sg0)
-            'pci': self.pci,  # the pci info (0:0:0:0)
-            'rackmount': self.rackmount,  # requested by UI team
-            'top_loaded': self.top_loaded,  # requested by UI team
-            'top_slots': self.top_slots,  # requested by UI team
-            'front_loaded': self.front_loaded,  # requested by UI team
-            'front_slots': self.front_slots,  # requested by UI team
-            'rear_slots': self.rear_slots,  # requested by UI team
-            'internal_slots': self.internal_slots,  # requested by UI team
-            'elements': self.elements  # dictionary with all element types and their relevant information
+            "should_ignore": self.should_ignore,  # enclosure device we dont need or expect
+            "name": self.encname,  # vendor, product and revision joined by whitespace
+            "model": self.model,  # M60, F100, MINI-R, etc
+            "controller": self.controller,  # if True, represents the "head-unit"
+            "dmi": self.dmi.system_product_name,
+            "status": self.status,  # the overall status reported by the enclosure
+            "id": self.encid,
+            "vendor": self.vendor,  # t10 vendor from INQUIRY
+            "product": self.product,  # product from INQUIRY
+            "revision": self.revision,  # revision from INQUIRY
+            "bsg": self.bsg,  # the path for which this maps to a bsg device (/dev/bsg/0:0:0:0)
+            "sg": self.sg,  # the scsi generic device (/dev/sg0)
+            "pci": self.pci,  # the pci info (0:0:0:0)
+            "rackmount": self.rackmount,  # requested by UI team
+            "top_loaded": self.top_loaded,  # requested by UI team
+            "top_slots": self.top_slots,  # requested by UI team
+            "front_loaded": self.front_loaded,  # requested by UI team
+            "front_slots": self.front_slots,  # requested by UI team
+            "rear_slots": self.rear_slots,  # requested by UI team
+            "internal_slots": self.internal_slots,  # requested by UI team
+            "elements": self.elements  # dictionary with all element types and their relevant information
         }
 
     def _should_ignore_enclosure(self):
@@ -98,13 +98,13 @@ class Enclosure:
             self.should_ignore = True
         elif all((
             (not any((self.is_r20_series, self.is_mini))),
-            self.vendor == 'AHCI',
-            self.product == 'SGPIOEnclosure',
+            self.vendor == "AHCI",
+            self.product == "SGPIOEnclosure",
         )):
             # if this isn't an R20 or MINI platform and this is the Virtual AHCI
             # enclosure, then we can ignore them
             self.should_ignore = True
-        elif self.encid == '3000000000000002' and any((
+        elif self.encid == "3000000000000002" and any((
             self.is_r20_series,
             (self.model in (
                 ControllerModels.MINI3XP.value,
@@ -117,7 +117,7 @@ class Enclosure:
             # the one whose enclosure id is "3000000000000001"). So we ignore the
             # other enclosure device otherwise.
             self.should_ignore = True
-        elif self.is_vseries and self.vendor == 'ECStream':
+        elif self.is_vseries and self.vendor == "ECStream":
             self.should_ignore = True
         else:
             self.should_ignore = False
@@ -131,8 +131,8 @@ class Enclosure:
         for the enclosure
         """
         inq = inquiry(self.sg)
-        data = [inq['vendor'], inq['product'], inq['revision']]
-        data.append(' '.join(data))
+        data = [inq["vendor"], inq["product"], inq["revision"]]
+        data.append(" ".join(data))
         return data
 
     def _get_model_and_controller(self):
@@ -161,85 +161,85 @@ class Enclosure:
             except ValueError:
                 # this shouldn't ever happen because the instantiator of this class
                 # checks DMI before we even get here but better safe than sorry
-                logger.warning('Unexpected model: %r from dmi: %r', model, spn)
-                self.model = ''
+                logger.warning("Unexpected model: %r from dmi: %r", model, spn)
+                self.model = ""
                 self.controller = False
                 return
 
-        t10vendor_product = f'{self.vendor}_{self.product}'
+        t10vendor_product = f"{self.vendor}_{self.product}"
         match t10vendor_product:
-            case 'ECStream_4024Sp' | 'ECStream_4024Ss' | 'iX_4024Sp' | 'iX_4024Ss':
+            case "ECStream_4024Sp" | "ECStream_4024Ss" | "iX_4024Sp" | "iX_4024Ss":
                 # M series
                 self.model = dmi_model.value
                 self.controller = True
             case (
-                'ECStream_4IXGA-NTBp'
-                | 'ECStream_4IXGA-NTBs'
-                | 'ECStream_4IXGA-NTGp'
-                | 'ECStream_4IXGA-NTGs'
+                "ECStream_4IXGA-NTBp"
+                | "ECStream_4IXGA-NTBs"
+                | "ECStream_4IXGA-NTGp"
+                | "ECStream_4IXGA-NTGs"
             ):
                 # V series — NTB on the original board, NTG on the new
                 # 4IXGA_PEX89032 (X710) board. Same -p/-s convention.
                 self.model = dmi_model.value
                 self.controller = True
-            case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
+            case "CELESTIC_P3215-O" | "CELESTIC_P3217-B":
                 # X series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'BROADCOM_VirtualSES':
+            case "BROADCOM_VirtualSES":
                 # H series, V series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
+            case "ECStream_FS1" | "ECStream_FS2" | "ECStream_DSS212Sp" | "ECStream_DSS212Ss":
                 # R series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'iX_FS1L' | 'iX_FS2' | 'iX_DSS212Sp' | 'iX_DSS212Ss':
+            case "iX_FS1L" | "iX_FS2" | "iX_DSS212Sp" | "iX_DSS212Ss":
                 # more R series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'iX_TrueNASR20p' | 'SMC_SC826-P' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
+            case "iX_TrueNASR20p" | "SMC_SC826-P" | "iX_2012Sp" | "iX_TrueNASSMCSC826-P":
                 # R20 series
                 self.model = dmi_model.value
                 self.controller = True
-            case 'AHCI_SGPIOEnclosure':
+            case "AHCI_SGPIOEnclosure":
                 # R20 variants or MINIs
                 self.model = dmi_model.value
                 self.controller = True
-            case 'iX_eDrawer4048S1' | 'iX_eDrawer4048S2':
+            case "iX_eDrawer4048S1" | "iX_eDrawer4048S2":
                 # R50
                 self.model = dmi_model.value
                 self.controller = True
-            case 'CELESTIC_X2012' | 'CELESTIC_X2012-MT':
+            case "CELESTIC_X2012" | "CELESTIC_X2012-MT":
                 self.model = JbodModels.ES12.value
                 self.controller = False
-            case x if x.startswith(('ECStream_4024J', 'iX_4024J')):
+            case x if x.startswith(("ECStream_4024J", "iX_4024J")):
                 self.model = JbodModels.ES24.value
                 self.controller = False
-            case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':
+            case "ECStream_2024Jp" | "ECStream_2024Js" | "iX_2024Jp" | "iX_2024Js":
                 self.model = JbodModels.ES24F.value
                 self.controller = False
-            case 'CELESTIC_R0904-F0001-01' | 'CELESTIC_R0904-F1001-01':
+            case "CELESTIC_R0904-F0001-01" | "CELESTIC_R0904-F1001-01":
                 self.model = JbodModels.ES60.value
                 self.controller = False
-            case 'HGST_H4060-J':
+            case "HGST_H4060-J":
                 self.model = JbodModels.ES60G2.value
                 self.controller = False
-            case 'WDC_UData60':
+            case "WDC_UData60":
                 self.model = JbodModels.ES60G3.value
                 self.controller = False
-            case 'HGST_H4102-J':
+            case "HGST_H4102-J":
                 self.model = JbodModels.ES102.value
                 self.controller = False
-            case 'VikingES_NDS-41022-BB' | 'VikingES_VDS-41022-BB':
+            case "VikingES_NDS-41022-BB" | "VikingES_VDS-41022-BB":
                 self.model = JbodModels.ES102G2.value
                 self.controller = False
             case _:
                 logger.warning(
-                    'Unexpected t10 vendor: %r and product: %r combination',
+                    "Unexpected t10 vendor: %r and product: %r combination",
                     self.vendor, self.product
                 )
-                self.model = ''
+                self.model = ""
                 self.controller = False
 
     def _ignore_element(self, parsed_element_status, element):
@@ -248,7 +248,7 @@ class Enclosure:
         for elements that report "bad" statuses and these elements need to be
         ignored. NOTE: every hardware platform is different for knowing which
         elements are to be ignored"""
-        desc = element['descriptor'].lower()
+        desc = element["descriptor"].lower()
         return any((
             (parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value),
             (self.is_xseries and desc == ElementDescriptorsToIgnore.ADISE0.value),
@@ -256,7 +256,7 @@ class Enclosure:
             (
                 not self.is_hseries
                 # Array Device Slot elements' descriptors on V-series are "<empty>"
-                and not (self.is_vseries and element['type'] == 23)
+                and not (self.is_vseries and element["type"] == 23)
                 and desc in (
                     ElementDescriptorsToIgnore.EMPTY.value,
                     ElementDescriptorsToIgnore.AD.value,
@@ -273,9 +273,9 @@ class Enclosure:
         # we've gotten the disk mapping information based on the
         # enclosure but we need to check if this enclosure has
         # different revisions
-        vers_key = 'DEFAULT'
-        if not mapped_info['any_version']:
-            for vers in mapped_info['versions']:
+        vers_key = "DEFAULT"
+        if not mapped_info["any_version"]:
+            for vers in mapped_info["versions"]:
                 if self.dmi.system_version == vers:
                     vers_key = vers
                     break
@@ -283,21 +283,21 @@ class Enclosure:
         # Now we need to check this specific enclosure's disk slot
         # mapping information
         if slot_designation:
-            idkey, idvalue = 'id', slot_designation
+            idkey, idvalue = "id", slot_designation
         elif (
-            self.vendor == 'AHCI'
-            and self.product == 'SGPIOEnclosure'
+            self.vendor == "AHCI"
+            and self.product == "SGPIOEnclosure"
             and (self.is_mini or self.is_r20_series)
         ):
-            idkey, idvalue = 'id', self.encid
+            idkey, idvalue = "id", self.encid
         elif self.is_r50_series:
-            idkey, idvalue = 'product', self.product
+            idkey, idvalue = "product", self.product
         else:
-            idkey, idvalue = 'model', self.model
+            idkey, idvalue = "model", self.model
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
-        for mapkey, mapslots in mapped_info['versions'][vers_key].items():
+        for mapkey, mapslots in mapped_info["versions"][vers_key].items():
             if mapkey == idkey and (found := mapslots.get(idvalue)):
                 return found
 
@@ -306,20 +306,20 @@ class Enclosure:
         disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():
             try:
-                element_type = ELEMENT_TYPES[element['type']]
+                element_type = ELEMENT_TYPES[element["type"]]
             except KeyError:
                 # means the element type that's being
                 # reported to us is unknown so log it
                 # and continue on
-                logger.warning('Unknown element type: %r for %r', element['type'], self.devname)
+                logger.warning("Unknown element type: %r for %r", element["type"], self.devname)
                 continue
 
             try:
-                element_status = ELEMENT_DESC[element['status'][0]]
+                element_status = ELEMENT_DESC[element["status"][0]]
             except KeyError:
                 # means the elements status reported by the enclosure
                 # is not mapped so just report unknown
-                element_status = 'UNKNOWN'
+                element_status = "UNKNOWN"
 
             if self._ignore_element(element_status, element):
                 continue
@@ -332,21 +332,21 @@ class Enclosure:
             # raw status to an integer so it can be converted
             # appropriately based on the element type
             value_raw = 0
-            for val in element['status']:
+            for val in element["status"]:
                 value_raw = (value_raw << 8) + val
 
             mapped_slot = slot
             parsed = {
-                'descriptor': element['descriptor'].strip(),
-                'status': element_status,
-                'value': element_type[1](value_raw),
-                'value_raw': value_raw,
+                "descriptor": element["descriptor"].strip(),
+                "status": element_status,
+                "value": element_type[1](value_raw),
+                "value_raw": value_raw,
             }
-            if element_type[0] == 'Array Device Slot' and self.disks_map:
+            if element_type[0] == "Array Device Slot" and self.disks_map:
                 try:
                     dinfo = self.disks_map[slot]
                     sysfs_slot = dinfo[SYSFS_SLOT_KEY]
-                    parsed['dev'] = self.sysfs_map[sysfs_slot].name
+                    parsed["dev"] = self.sysfs_map[sysfs_slot].name
                 except KeyError:
                     # this happens on some of the MINI platforms, for example,
                     # the MINI-3.0-XL+ because we map the 1st drive and only
@@ -369,12 +369,12 @@ class Enclosure:
                 # is this a front, rear or internal slot?
                 parsed.update(disk_position_mapping.get(mapped_slot, dict()))
 
-                parsed['original'] = {
-                    'enclosure_id': self.encid,
-                    'enclosure_sg': self.sg,
-                    'enclosure_bsg': self.bsg,
-                    'descriptor': f'slot{sysfs_slot}',
-                    'slot': sysfs_slot,
+                parsed["original"] = {
+                    "enclosure_id": self.encid,
+                    "enclosure_sg": self.sg,
+                    "enclosure_bsg": self.bsg,
+                    "descriptor": f"slot{sysfs_slot}",
+                    "slot": sysfs_slot,
                 }
 
             final[element_type[0]].update({mapped_slot: parsed})
@@ -428,7 +428,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model and self.model[0] == 'R'))
+        return all((self.controller, self.model and self.model[0] == "R"))
 
     @property
     def is_r10(self):
@@ -517,7 +517,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model and self.model[0] == 'F'))
+        return all((self.controller, self.model and self.model[0] == "F"))
 
     @property
     def is_hseries(self):
@@ -526,7 +526,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model and self.model[0] == 'H'))
+        return all((self.controller, self.model and self.model[0] == "H"))
 
     @property
     def is_mseries(self):
@@ -536,12 +536,12 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.controller, not self.is_mini, self.model and self.model[0] == 'M'
+            self.controller, not self.is_mini, self.model and self.model[0] == "M"
         ))
 
     @property
     def is_vseries(self):
-        return self.controller and self.model and self.model[0] == 'V'
+        return self.controller and self.model and self.model[0] == "V"
 
     @property
     def is_xseries(self):
@@ -551,7 +551,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.controller, self.model and self.model[0] == 'X'
+            self.controller, self.model and self.model[0] == "X"
         ))
 
     @property

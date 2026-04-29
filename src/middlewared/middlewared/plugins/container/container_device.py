@@ -35,15 +35,15 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('ContainerDeviceService',)
+__all__ = ("ContainerDeviceService",)
 
 
 class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     class Config:
-        namespace = 'container.device'
-        cli_namespace = 'service.container.device'
-        role_prefix = 'CONTAINER_DEVICE'
+        namespace = "container.device"
+        cli_namespace = "service.container.device"
+        role_prefix = "CONTAINER_DEVICE"
         entry = ContainerDeviceEntry
         generic = True
 
@@ -54,7 +54,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
-        audit='Container device create',
+        audit="Container device create",
         audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
         check_annotations=True,
     )
@@ -64,7 +64,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
-        audit='Container device update', audit_callback=True,
+        audit="Container device update", audit_callback=True,
         check_annotations=True,
     )
     async def do_update(
@@ -75,7 +75,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
-        audit='Container device delete', audit_callback=True,
+        audit="Container device delete", audit_callback=True,
         check_annotations=True,
     )
     async def do_delete(
@@ -86,7 +86,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult,
-        roles=['CONTAINER_DEVICE_READ'], check_annotations=True,
+        roles=["CONTAINER_DEVICE_READ"], check_annotations=True,
     )
     def nic_attach_choices(self) -> ContainerDeviceNicAttachChoices:
         """Available choices for NIC Attach attribute."""
@@ -94,7 +94,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
-        roles=['CONTAINER_DEVICE_READ'], check_annotations=True,
+        roles=["CONTAINER_DEVICE_READ"], check_annotations=True,
     )
     def usb_choices(self) -> dict[str, USBPassthroughDevice]:
         """Available choices for USB passthrough devices."""
@@ -102,7 +102,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
 
     @api_method(
         ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
-        roles=['CONTAINER_DEVICE_READ'], check_annotations=True,
+        roles=["CONTAINER_DEVICE_READ"], check_annotations=True,
     )
     async def gpu_choices(self) -> dict[str, str]:
         """Available choices for GPU devices."""

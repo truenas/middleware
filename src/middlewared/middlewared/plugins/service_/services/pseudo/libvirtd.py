@@ -18,8 +18,8 @@ class LibvirtdService(SimpleService):
         await job.wait(raise_error=True)
 
     async def after_stop(self):
-        for service in ('virtlogd.service', 'virtlogd.socket'):
-            await self._systemd_unit(service, 'stop')
+        for service in ("virtlogd.service", "virtlogd.socket"):
+            await self._systemd_unit(service, "stop")
 
 
 class LibvirtGuestService(SimpleService):

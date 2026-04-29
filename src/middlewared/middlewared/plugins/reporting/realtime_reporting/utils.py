@@ -11,12 +11,12 @@ def safely_retrieve_dimension(
     """
     with contextlib.suppress(KeyError):
         if dimension:
-            value = all_metrics[chart]['dimensions'][dimension]['value']
+            value = all_metrics[chart]["dimensions"][dimension]["value"]
             return value if value is not None else default
         else:
             return {
-                dimension_name: value['value']
-                for dimension_name, value in all_metrics[chart]['dimensions'].items()
+                dimension_name: value["value"]
+                for dimension_name, value in all_metrics[chart]["dimensions"].items()
             }
 
     return default

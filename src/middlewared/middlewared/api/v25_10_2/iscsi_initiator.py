@@ -18,7 +18,7 @@ class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
     """Unique identifier for the authorized initiator group."""
     initiators: list[str] = []
     """Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators."""
-    comment: str = ''
+    comment: str = ""
     """Optional comment describing the authorized initiator group."""
 
 

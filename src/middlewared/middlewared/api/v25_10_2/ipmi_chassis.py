@@ -62,7 +62,7 @@ class IpmiChassisIdentifyResult(BaseModel):
 
 
 class IpmiChassisInfoRequest(BaseModel):
-    query_remote: bool = Field(alias='query-remote', default=False)
+    query_remote: bool = Field(alias="query-remote", default=False)
     """Whether to query remote IPMI chassis information on HA systems."""
 
 

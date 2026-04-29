@@ -6,18 +6,18 @@ from pydantic import Field, Secret
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args
 
 __all__ = [
-    'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
-    'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',
+    "TRUECOMMAND_CONNECTING_STATUS_REASON", "TruecommandStatus", "TruecommandStatusReason",
+    "TruecommandEntry", "TruecommandUpdateArgs", "TruecommandUpdateResult",
 ]
 
-TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
+TRUECOMMAND_CONNECTING_STATUS_REASON = "Waiting for connection from Truecommand."
 
 
 class TruecommandStatus(enum.Enum):
-    CONNECTED = 'CONNECTED'
-    CONNECTING = 'CONNECTING'
-    DISABLED = 'DISABLED'
-    FAILED = 'FAILED'
+    CONNECTED = "CONNECTED"
+    CONNECTING = "CONNECTING"
+    DISABLED = "DISABLED"
+    FAILED = "FAILED"
 
 # In the database we save 3 states, CONNECTED/DISABLED/FAILED
 # Connected is saved when portal has approved an api key
@@ -33,10 +33,10 @@ class TruecommandStatus(enum.Enum):
 
 
 class TruecommandStatusReason(enum.Enum):
-    CONNECTED = 'Truecommand service is connected.'
-    CONNECTING = 'Pending Confirmation From iX Portal for Truecommand API Key.'
-    DISABLED = 'Truecommand service is disabled.'
-    FAILED = 'Truecommand API Key Disabled by iX Portal.'
+    CONNECTED = "Truecommand service is connected."
+    CONNECTING = "Pending Confirmation From iX Portal for Truecommand API Key."
+    DISABLED = "Truecommand service is disabled."
+    FAILED = "Truecommand API Key Disabled by iX Portal."
 
 
 class TruecommandEntry(BaseModel):
@@ -58,7 +58,7 @@ class TruecommandEntry(BaseModel):
     """Whether TrueCommand integration is enabled."""
 
 
-@single_argument_args('truecommand_update')
+@single_argument_args("truecommand_update")
 class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     """Whether to enable TrueCommand integration."""

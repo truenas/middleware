@@ -3,8 +3,8 @@ import subprocess
 
 from middlewared.utils import run
 
-GRUB_CFG = '/boot/grub/grub.cfg'
-GRUB_CFG_TMP = '/boot/grub/grub.cfg.tmp'
+GRUB_CFG = "/boot/grub/grub.cfg"
+GRUB_CFG_TMP = "/boot/grub/grub.cfg.tmp"
 
 
 async def render(service, middleware):
@@ -20,7 +20,7 @@ async def render(service, middleware):
         middleware.logger.error("grub-mkconfig error:\n%s", e.stderr)
         raise
 
-    with open(GRUB_CFG_TMP, 'r') as f:
+    with open(GRUB_CFG_TMP, "r") as f:
         os.fsync(f.fileno())
 
     os.replace(GRUB_CFG_TMP, GRUB_CFG)

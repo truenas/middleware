@@ -24,11 +24,11 @@ def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:
 
     Returns True if privilege grants webui access and False if it does not.
     """
-    return any(ROLES[role].builtin is False for role in privilege['roles'])
+    return any(ROLES[role].builtin is False for role in privilege["roles"])
 
 
 def credential_has_full_admin(credential: SessionManagerCredentials) -> bool:
-    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:  # type: ignore
+    if credential.is_user_session and "FULL_ADMIN" in credential.user["privilege"]["roles"]:  # type: ignore
         return True
 
     if isinstance(credential, TruenasNodeSessionManagerCredentials):
@@ -50,7 +50,7 @@ def credential_full_admin_or_user(
     if credential_has_full_admin(credential):
         return True
 
-    return credential.user['username'] == username  # type: ignore[attr-defined, no-any-return]
+    return credential.user["username"] == username  # type: ignore[attr-defined, no-any-return]
 
 
 def app_credential_full_admin_or_user(
@@ -86,12 +86,12 @@ def privileges_group_mapping(
     group_ids_ = set(group_ids)
     for privilege in privileges:
         if set(privilege[groups_key]) & group_ids_:
-            roles |= set(privilege['roles'])
+            roles |= set(privilege["roles"])
             privileges_out.append(privilege)
 
     return {
-        'roles': list(roles),
-        'privileges': privileges_out
+        "roles": list(roles),
+        "privileges": privileges_out
     }
 
 
@@ -107,4 +107,4 @@ def credential_is_root_or_equivalent(credential: SessionManagerCredentials | Non
         return False
 
     # SYS_ADMIN is set when user UID is 0 (root) or 950 (truenas_admin).
-    return 'SYS_ADMIN' in credential.user['account_attributes']  # type: ignore[attr-defined]
+    return "SYS_ADMIN" in credential.user["account_attributes"]  # type: ignore[attr-defined]

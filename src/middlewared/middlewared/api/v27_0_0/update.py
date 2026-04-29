@@ -120,7 +120,7 @@ class UpdateDownloadProgress(BaseModel):
 
 
 class UpdateStatus(BaseModel):
-    code: Literal['NORMAL', 'ERROR']
+    code: Literal["NORMAL", "ERROR"]
     """
     Status code:
     * NORMAL - normal status, see `status` dictionary for details.

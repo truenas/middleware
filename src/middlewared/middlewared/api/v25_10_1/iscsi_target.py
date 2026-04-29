@@ -14,7 +14,7 @@ from middlewared.api.base import (
     match_validator,
 )
 
-RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+RE_TARGET_NAME = re.compile(r"^[-a-z0-9\.:]+$")
 
 __all__ = [
     "iSCSITargetEntry",
@@ -34,7 +34,7 @@ class IscsiGroup(BaseModel):
     """ID of the iSCSI portal to use for this target group."""
     initiator: int | None = None
     """ID of the authorized initiator group or `null` to allow any initiator."""
-    authmethod: IscsiAuthType = 'NONE'
+    authmethod: IscsiAuthType = "NONE"
     """Authentication method for this target group."""
     auth: int | None = None
     """ID of the authentication credential or `null` if no authentication."""
@@ -64,7 +64,7 @@ class iSCSITargetEntry(BaseModel):
     """Name of the iSCSI target (maximum 120 characters)."""
     alias: str | None = None
     """Optional alias name for the iSCSI target."""
-    mode: Literal['ISCSI', 'FC', 'BOTH'] = 'ISCSI'
+    mode: Literal["ISCSI", "FC", "BOTH"] = "ISCSI"
     """Protocol mode for the target.
 
     * `ISCSI`: iSCSI protocol only

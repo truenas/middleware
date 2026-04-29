@@ -33,8 +33,8 @@ from middlewared.utils.zfs.event import (
     ZfsVdevClearEvent,
 )
 
-CACHE_POOLS_STATUSES = 'system.system_health_pools'
-VOLUME_STATUS_ALERTS = 'VolumeStatusAlerts'
+CACHE_POOLS_STATUSES = "system.system_health_pools"
+VOLUME_STATUS_ALERTS = "VolumeStatusAlerts"
 
 SCAN_THREADS = {}
 
@@ -50,9 +50,9 @@ class ScanWatch:
         while not self._cancel.wait(2):
             with libzfs.ZFS() as zfs:
                 scan = zfs.get(self.pool).scrub.asdict()
-            if scan['state'] == 'SCANNING':
+            if scan["state"] == "SCANNING":
                 self.send_scan(scan)
-            elif scan['state'] == 'FINISHED':
+            elif scan["state"] == "FINISHED":
                 # Since this thread finishes on scrub/resilver end the event is sent
                 # on devd event arrival
                 break
@@ -62,9 +62,9 @@ class ScanWatch:
             with libzfs.ZFS() as zfs:
                 scan = zfs.get(self.pool).scrub.asdict()
 
-        self.middleware.send_event('pool.scan', 'CHANGED', fields={
-            'scan': scan,
-            'name': self.pool,
+        self.middleware.send_event("pool.scan", "CHANGED", fields={
+            "scan": scan,
+            "name": self.pool,
         })
 
     def cancel(self):
@@ -121,11 +121,11 @@ async def resilver_scrub_stop_abort(middleware, pool_name):
 
 
 async def scrub_finished(middleware, pool_name):
-    await middleware.call2(middleware.services.alert.oneshot_delete, 'ScrubStarted', pool_name)
+    await middleware.call2(middleware.services.alert.oneshot_delete, "ScrubStarted", pool_name)
 
 
 async def retrieve_pool_from_db(middleware, pool_name):
-    pool = await middleware.call('pool.query', [['name', '=', pool_name]])
+    pool = await middleware.call("pool.query", [["name", "=", pool_name]])
     if not pool:
         # If we have no record of the pool, let's skip sending any event please
         return
@@ -137,16 +137,16 @@ POOL_ALERTS_LOCKS = defaultdict(asyncio.Lock)
 
 async def create_pool_upgraded_alert(middleware, pool_name):
     """Create a PoolUpgraded alert if the pool exists and has available feature flag upgrades."""
-    if pool_name == await middleware.call('boot.pool_name'):
+    if pool_name == await middleware.call("boot.pool_name"):
         # We don't want this alert for the boot pool as it has certain features disabled by design
         return
 
-    found = await middleware.call('datastore.query', 'storage.volume', [['vol_name', '=', pool_name]])
+    found = await middleware.call("datastore.query", "storage.volume", [["vol_name", "=", pool_name]])
     if not found:
         return
 
     try:
-        if not await middleware.call('pool.is_upgraded', found[0]['id']):
+        if not await middleware.call("pool.is_upgraded", found[0]["id"]):
             await middleware.call2(middleware.services.alert.oneshot_create, PoolUpgradedAlert(pool_name))
     except Exception:
         pass
@@ -161,33 +161,33 @@ async def zfs_events(middleware, event: ZfsEvent):
     if isinstance(event, ZfsScrubFinishEvent):
         await scrub_finished(middleware, event.pool)
     elif isinstance(event, ZfsStateChangeEvent):
-        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
+        await middleware.call("cache.pop", CACHE_POOLS_STATUSES)
         pool = await retrieve_pool_from_db(middleware, event.pool)
         if not pool:
             return
     elif isinstance(event, (ZfsChecksumErrorEvent, ZfsDataErrorEvent, ZfsIoErrorEvent, ZfsVdevClearEvent)):
-        await middleware.call('cache.pop', VOLUME_STATUS_ALERTS)
+        await middleware.call("cache.pop", VOLUME_STATUS_ALERTS)
     elif isinstance(event, (ZfsConfigSyncEvent, ZfsPoolImportEvent, ZfsPoolDestroyEvent)):
         pool_name = event.pool
         pool_guid = event.guid
 
         if pool_name:
-            await middleware.call('cache.pop', VOLUME_STATUS_ALERTS)
+            await middleware.call("cache.pop", VOLUME_STATUS_ALERTS)
 
-            if pool_name == await middleware.call('boot.pool_name'):
+            if pool_name == await middleware.call("boot.pool_name"):
                 # a change was made to the boot drive, so let's clear
                 # the disk mapping for this pool
-                await middleware.call('boot.clear_disks_cache')
+                await middleware.call("boot.clear_disks_cache")
 
             async with POOL_ALERTS_LOCKS[pool_name]:
                 # The hook is registered with `sync=False` so this code might get executed concurrently for the same
                 # `pool_name` if many ZFS events arrive at the same time. This will lead to deletions being scheduled
                 # out of order with re-creations.
                 if isinstance(event, ZfsPoolImportEvent):
-                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
+                    await middleware.call2(middleware.services.alert.oneshot_delete, "PoolUpgraded", pool_name)
                     await create_pool_upgraded_alert(middleware, pool_name)
                 elif isinstance(event, ZfsPoolDestroyEvent):
-                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
+                    await middleware.call2(middleware.services.alert.oneshot_delete, "PoolUpgraded", pool_name)
                 elif isinstance(event, ZfsConfigSyncEvent):
                     if pool_guid and (pool := await retrieve_pool_from_db(middleware, pool_name)):
                         # This event is issued whenever a vdev change is done to a pool
@@ -195,52 +195,52 @@ async def zfs_events(middleware, event: ZfsEvent):
                         # of pool as we expect the relevant event to be handled from the service
                         # endpoints because there are other operations related to create/delete
                         # which when done, we consider the create/delete operation as complete
-                        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+                        middleware.send_event("pool.query", "CHANGED", id=pool["id"], fields=pool)
 
-                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
+                    await middleware.call2(middleware.services.alert.oneshot_delete, "PoolUpgraded", pool_name)
                     await create_pool_upgraded_alert(middleware, pool_name)
     elif isinstance(event, ZfsHistoryEvent):
         # we need to send events for dataset creation/updating/deletion in case it's done via cli
         event_type = event.history_internal_name
         ds_id = event.history_dsname
-        if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
+        if await middleware.call("pool.dataset.is_internal_dataset", ds_id):
             # We should not raise any event for system internal datasets
             return
 
         # We are not handling create/changed events because it takes a toll on middleware when we are replicating
         # datasets. We are now handling create/changed events whenever changes are made via our API
-        if event_type == 'destroy':
-            if ds_id.split('/')[-1].startswith('%'):
+        if event_type == "destroy":
+            if ds_id.split("/")[-1].startswith("%"):
                 # Ignore deletion of hidden clones such as `%recv` dataset created by replication
                 return
 
-            middleware.send_event('pool.dataset.query', 'REMOVED', id=ds_id)
+            middleware.send_event("pool.dataset.query", "REMOVED", id=ds_id)
 
             await middleware.call(
-                'pool.dataset.delete_encrypted_datasets_from_db', [
-                    ['OR', [['name', '=', event.history_dsname], ['name', '^', f'{event.history_dsname}/']]]
+                "pool.dataset.delete_encrypted_datasets_from_db", [
+                    ["OR", [["name", "=", event.history_dsname], ["name", "^", f"{event.history_dsname}/"]]]
                 ]
             )
-            await middleware.call_hook('dataset.post_delete', event.history_dsname)
+            await middleware.call_hook("dataset.post_delete", event.history_dsname)
 
 
 async def remove_outdated_alerts_on_boot(middleware, data):
     if data is None:  # Called by `pool.import_on_boot`
-        pools = {pool['name'] for pool in (await middleware.run_in_thread(query_imported_fast_impl)).values()}
+        pools = {pool["name"] for pool in (await middleware.run_in_thread(query_imported_fast_impl)).values()}
 
         for alert in await middleware.call2(middleware.services.alert.list):
-            if alert['klass'] == 'PoolUpgraded':
-                if alert['args'] not in pools:
-                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', alert['args'])
+            if alert["klass"] == "PoolUpgraded":
+                if alert["args"] not in pools:
+                    await middleware.call2(middleware.services.alert.oneshot_delete, "PoolUpgraded", alert["args"])
 
 
 async def setup(middleware):
-    middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
+    middleware.register_hook("zfs.pool.events", zfs_events, sync=False)
 
     # middleware does not receive `sysevent.fs.zfs.pool_import` or `sysevent.fs.zfs.config_sync` events on the boot pool
     # import because it happens before middleware is started. We have to manually process these alerts for the boot pool
-    pool_name = await middleware.call('boot.pool_name')
-    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
+    pool_name = await middleware.call("boot.pool_name")
+    await middleware.call2(middleware.services.alert.oneshot_delete, "PoolUpgraded", pool_name)
     await create_pool_upgraded_alert(middleware, pool_name)
 
-    middleware.register_hook('pool.post_import', remove_outdated_alerts_on_boot)
+    middleware.register_hook("pool.post_import", remove_outdated_alerts_on_boot)

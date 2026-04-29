@@ -24,16 +24,16 @@ IDMAP_COUNT = 65536
 
 def start_on_boot(context: ServiceContext) -> None:
     for container in context.call_sync2(
-        context.s.container.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)
+        context.s.container.query, [("autostart", "=", True)], QueryOptions(force_sql_filters=True)
     ):
         try:
             start(context, container.id)
         except Exception as e:
-            context.logger.error(f'Failed to start {container.name!r} container: {e}')
+            context.logger.error(f"Failed to start {container.name!r} container: {e}")
 
 
 def handle_shutdown(context: ServiceContext) -> None:
-    for container in context.call_sync2(context.s.container.query, [('status.state', '=', 'RUNNING')]):
+    for container in context.call_sync2(context.s.container.query, [("status.state", "=", "RUNNING")]):
         stop(context, container.id, ContainerStopOptions(force_after_timeout=True))
 
 
@@ -48,7 +48,7 @@ def start(context: ServiceContext, id_: int) -> None:
         write_etc_hostname(pylibvirt_obj.configuration.root, container.name)
         update_etc_hosts(pylibvirt_obj.configuration.root, container.name)
     except Exception:
-        context.logger.warning('Failed to configure hostname for container %r', container.name, exc_info=True)
+        context.logger.warning("Failed to configure hostname for container %r", container.name, exc_info=True)
 
     context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
 
@@ -63,7 +63,7 @@ def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> No
     context.middleware.libvirt_domains_manager.containers.shutdown(pylibvirt_container_obj)
     if options.force_after_timeout and context.run_coroutine(
         context.call2(context.s.container.get_instance, id_)
-    ).status.state == 'RUNNING':
+    ).status.state == "RUNNING":
         context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
 
 
@@ -71,28 +71,28 @@ def pylibvirt_container(
     context: ServiceContext, container: dict[str, typing.Any], check_ds: bool = False
 ) -> ContainerDomain:
     container = container.copy()
-    container.pop('id', None)
-    container.pop('status', None)
-    container.pop('autostart', None)
-    container.pop('default_network', None)
+    container.pop("id", None)
+    container.pop("status", None)
+    container.pop("autostart", None)
+    container.pop("default_network", None)
 
-    dataset = container.pop('dataset')
-    pool = dataset.split('/')[0]
-    container['root'] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
+    dataset = container.pop("dataset")
+    pool = dataset.split("/")[0]
+    container["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
     if check_ds:
         datasets = context.call_sync2(
             context.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=[dataset], properties=None),
         )
         if not datasets:
-            raise CallError(f'Dataset {dataset!r} not found', errno.ENOTDIR)
+            raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 
-    container['time'] = Time(container['time'])
+    container["time"] = Time(container["time"])
     device_factory = context.middleware.services.container.device.device_factory
     devices = []
     has_nic_device = False
-    for device in container.get('devices', []):
-        if device['attributes']['dtype'] == 'NIC':
+    for device in container.get("devices", []):
+        if device["attributes"]["dtype"] == "NIC":
             has_nic_device = True
 
         devices.append(device_factory.get_device(device))
@@ -110,37 +110,37 @@ def pylibvirt_container(
             )
         )
 
-    container['devices'] = devices
+    container["devices"] = devices
 
-    if container['idmap']:
+    if container["idmap"]:
         item = None
-        match container['idmap']['type']:
-            case 'DEFAULT':
+        match container["idmap"]["type"]:
+            case "DEFAULT":
                 item = ContainerIdmapConfigurationItem(
                     target=CONTAINER_ROOT_UID,
                     count=IDMAP_COUNT,
                 )
-            case 'ISOLATED':
+            case "ISOLATED":
                 item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT,
+                    target=CONTAINER_ROOT_UID + container["idmap"]["slice"] * IDMAP_COUNT,
                     count=IDMAP_COUNT,
                 )
             case _:
                 raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
-        container['idmap'] = ContainerIdmapConfiguration(uid=item, gid=item)
+        container["idmap"] = ContainerIdmapConfiguration(uid=item, gid=item)
 
-    if container['capabilities_policy']:
-        container['capabilities_policy'] = ContainerCapabilitiesPolicy[container['capabilities_policy']]
+    if container["capabilities_policy"]:
+        container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
 
     # We add this to configuration because for cpu related attrs, we need them if cpuset on
     # container is actually set
     # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
     container.update({
-        'vcpus': None,
-        'cores': None,
-        'threads': None,
-        'memory': None,
+        "vcpus": None,
+        "cores": None,
+        "threads": None,
+        "memory": None,
     })
 
     return ContainerDomain(ContainerDomainConfiguration(**container))

@@ -6,37 +6,37 @@ import jwt
 from truenas_connect_utils.status import Status
 
 CERT_RENEW_DAYS = 5
-CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'
+CLAIM_TOKEN_CACHE_KEY = "truenas_connect_claim_token"
 CONFIGURED_TNC_STATES = (
     Status.CONFIGURED.name,
     Status.CERT_RENEWAL_IN_PROGRESS.name,
     Status.CERT_RENEWAL_SUCCESS.name,
 )
 HEARTBEAT_INTERVAL = 120
-TNC_CERT_PREFIX = 'truenas_connect_'
-TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
+TNC_CERT_PREFIX = "truenas_connect_"
+TNC_IPS_CACHE_KEY = "truenas_connect_sync_ips"
 
 
 def decode_and_validate_token(token: str) -> dict[str, typing.Any]:
     """Decode a TNC JWT token and verify it contains required fields."""
     try:
-        decoded_token = jwt.decode(token, options={'verify_signature': False})
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
     except jwt.exceptions.DecodeError as e:
-        raise ValueError(f'Invalid JWT token: {e}')
+        raise ValueError(f"Invalid JWT token: {e}")
 
-    if diff := {'account_id', 'system_id'} - set(decoded_token):
-        raise ValueError(f'JWT token does not contain required fields: {diff}')
+    if diff := {"account_id", "system_id"} - set(decoded_token):
+        raise ValueError(f"JWT token does not contain required fields: {diff}")
 
     return decoded_token
 
 
 def get_unset_payload() -> dict:
     return {
-        'registration_details': {},
-        'jwt_token': None,
-        'status': Status.DISABLED.name,
-        'certificate': None,
-        'last_heartbeat_failure_datetime': None,
+        "registration_details": {},
+        "jwt_token": None,
+        "status": Status.DISABLED.name,
+        "certificate": None,
+        "last_heartbeat_failure_datetime": None,
     }
 
 
@@ -75,7 +75,7 @@ def calculate_sleep(failure_dt_str: str | None, base_sleep: int = 60) -> int | N
         # Parse the failure datetime (expects ISO format).
         first_failure = datetime.datetime.fromisoformat(failure_dt_str)
     except Exception as e:
-        raise ValueError(f'Invalid datetime string: {failure_dt_str}') from e
+        raise ValueError(f"Invalid datetime string: {failure_dt_str}") from e
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
 

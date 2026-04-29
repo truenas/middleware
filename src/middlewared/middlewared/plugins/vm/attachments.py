@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate):
-    name = 'vm'
-    title = 'VM'
+    name = "vm"
+    title = "VM"
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         vms_attached: list[dict[str, Any]] = []
@@ -37,11 +37,11 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             if not disk:
                 continue
 
-            if disk.startswith('/dev/zvol'):
-                disk = os.path.join('/mnt', zvol_path_to_name(disk))
+            if disk.startswith("/dev/zvol"):
+                disk = os.path.join("/mnt", zvol_path_to_name(disk))
 
-            if await self.middleware.call('filesystem.is_child', disk, path):
-                vm_entry = {'id': device.vm, 'name': vm_names[device.vm]}
+            if await self.middleware.call("filesystem.is_child", disk, path):
+                vm_entry = {"id": device.vm, "name": vm_names[device.vm]}
                 if vm_entry not in vms_attached:
                     vms_attached.append(vm_entry)
 
@@ -50,22 +50,22 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments: list[dict[str, Any]]) -> None:
         for attachment in attachments:
             try:
-                job = await self.call2(self.s.vm.stop, attachment['id'], VMStopOptions())
+                job = await self.call2(self.s.vm.stop, attachment["id"], VMStopOptions())
                 await job.wait()
             except Exception:
-                self.middleware.logger.warning('Unable to vm.stop %r', attachment['id'])
+                self.middleware.logger.warning("Unable to vm.stop %r", attachment["id"])
 
     async def toggle(self, attachments: list[dict[str, Any]], enabled: bool) -> None:
         for attachment in attachments:
             try:
                 if enabled:
-                    await self.call2(self.s.vm.start, attachment['id'], VMStartOptions())
+                    await self.call2(self.s.vm.start, attachment["id"], VMStartOptions())
                 else:
-                    job = await self.call2(self.s.vm.stop, attachment['id'], VMStopOptions())
+                    job = await self.call2(self.s.vm.stop, attachment["id"], VMStopOptions())
                     await job.wait()
             except Exception:
-                action = 'vm.start' if enabled else 'vm.stop'
-                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
+                action = "vm.start" if enabled else "vm.stop"
+                self.middleware.logger.warning("Unable to %s %r", action, attachment["id"])
 
     async def stop(self, attachments: list[dict[str, Any]]) -> None:
         await self.toggle(attachments, False)
@@ -76,15 +76,15 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 class VMPortDelegate(PortDelegate):
 
-    name = 'vm devices'
-    namespace = 'vm.device'
-    title = 'VM Device Service'
+    name = "vm devices"
+    namespace = "vm.device"
+    title = "VM Device Service"
 
     async def get_ports(self) -> list[PortDetail]:
         ports: list[PortDetail] = []
         vms = {vm.id: vm.name for vm in await self.call2(self.s.vm.query)}
         for device in await self.call2(
-            self.s.vm.device.query, [['attributes.dtype', '=', 'DISPLAY']]
+            self.s.vm.device.query, [["attributes.dtype", "=", "DISPLAY"]]
         ):
             if not isinstance(device.attributes, VMDisplayDevice):
                 continue
@@ -95,8 +95,8 @@ class VMPortDelegate(PortDelegate):
                 device_ports.append((device.attributes.bind, device.attributes.web_port))
             if device_ports:
                 ports.append({
-                    'description': f'{vms[device.vm]!r} VM',
-                    'ports': device_ports,
+                    "description": f"{vms[device.vm]!r} VM",
+                    "ports": device_ports,
                 })
 
         return ports
@@ -104,6 +104,6 @@ class VMPortDelegate(PortDelegate):
 
 async def setup(middleware: Middleware) -> None:
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
+        middleware.call("pool.dataset.register_attachment_delegate", VMFSAttachmentDelegate(middleware))
     )
-    await middleware.call('port.register_attachment_delegate', VMPortDelegate(middleware))
+    await middleware.call("port.register_attachment_delegate", VMPortDelegate(middleware))

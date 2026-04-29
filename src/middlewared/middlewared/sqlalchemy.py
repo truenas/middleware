@@ -52,7 +52,7 @@ class EncryptedText(UserDefinedType[str]):
         if value is None:
             return None
 
-        return encrypt(value) if value else ''
+        return encrypt(value) if value else ""
 
     def bind_processor(self, dialect: Any) -> Any:
         return self._bind_processor
@@ -61,7 +61,7 @@ class EncryptedText(UserDefinedType[str]):
         if value is None:
             return None
 
-        return decrypt(value) if value else ''
+        return decrypt(value) if value else ""
 
     def result_processor(self, dialect: Any, coltype: Any) -> Any:
         return self._result_processor

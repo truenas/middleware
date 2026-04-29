@@ -50,7 +50,7 @@ Secret.__pydantic_serializer__ = SchemaSerializer(
         serialization=core_schema.plain_serializer_function_ser_schema(
             _serialize_secret,
             info_arg=True,
-            when_used='always',
+            when_used="always",
         )
     )
 )

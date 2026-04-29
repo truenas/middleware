@@ -8,14 +8,14 @@ from middlewared.api.base import BaseModel, single_argument_args, single_argumen
 from .user import UserGetUserObj
 
 __all__ = [
-    'AuthSessionsEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',
-    'AuthGenerateTokenArgs', 'AuthGenerateTokenResult', 'AuthLoginArgs', 'AuthLoginResult', 'AuthLoginExArgs',
-    'AuthLoginExResult', 'AuthLoginExContinueArgs', 'AuthLoginExContinueResult', 'AuthLoginWithApiKeyArgs',
-    'AuthLoginWithApiKeyResult', 'AuthLoginWithTokenArgs', 'AuthLoginWithTokenResult', 'AuthMeArgs', 'AuthMeResult',
-    'AuthMechanismChoicesArgs', 'AuthMechanismChoicesResult', 'AuthLogoutArgs', 'AuthLogoutResult',
-    'AuthSetAttributeArgs', 'AuthSetAttributeResult', 'AuthTerminateOtherSessionsArgs',
-    'AuthTerminateOtherSessionsResult', 'AuthTerminateSessionArgs', 'AuthTerminateSessionResult',
-    'AuthSessionsAddedEvent', 'AuthSessionsRemovedEvent',
+    "AuthSessionsEntry", "AuthGenerateOnetimePasswordArgs", "AuthGenerateOnetimePasswordResult",
+    "AuthGenerateTokenArgs", "AuthGenerateTokenResult", "AuthLoginArgs", "AuthLoginResult", "AuthLoginExArgs",
+    "AuthLoginExResult", "AuthLoginExContinueArgs", "AuthLoginExContinueResult", "AuthLoginWithApiKeyArgs",
+    "AuthLoginWithApiKeyResult", "AuthLoginWithTokenArgs", "AuthLoginWithTokenResult", "AuthMeArgs", "AuthMeResult",
+    "AuthMechanismChoicesArgs", "AuthMechanismChoicesResult", "AuthLogoutArgs", "AuthLogoutResult",
+    "AuthSetAttributeArgs", "AuthSetAttributeResult", "AuthTerminateOtherSessionsArgs",
+    "AuthTerminateOtherSessionsResult", "AuthTerminateSessionArgs", "AuthTerminateSessionResult",
+    "AuthSessionsAddedEvent", "AuthSessionsRemovedEvent",
 ]
 
 
@@ -45,7 +45,7 @@ class APIKeyCredentialData(UserCredentialData):
 
 
 class TokenCredentialData(BaseCredentialData):
-    parent: 'TokenParentCredentialsData'
+    parent: "TokenParentCredentialsData"
     """Parent credential information that generated this token."""
     login_id: str
     """ Unique identifier for the login. """
@@ -63,13 +63,13 @@ class AuthSessionsEntry(BaseModel):
     origin: str
     """Origin information for the session (IP address, hostname, etc.)."""
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'LOGIN_ONETIME_PASSWORD',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "LOGIN_ONETIME_PASSWORD",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ]
     """Authentication method used for this session.
 
@@ -224,7 +224,7 @@ class AuthRespSuccess(BaseModel):
     """Authentication response type indicating successful login."""
     user_info: AuthUserInfo | None
     """Authenticated user information or `null` if not available."""
-    authenticator: Literal['LEVEL_1', 'LEVEL_2']
+    authenticator: Literal["LEVEL_1", "LEVEL_2"]
     """Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor)."""
     reconnect_token: str | None
     """Single-use token that can be used to reauthenticate to the truenas server in case websocket session is \
@@ -262,19 +262,19 @@ class AuthTokenPlain(BaseModel):
 
 class TokenParentCredentialsData(BaseModel):
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ]
     """Type of credentials used to generate this token."""
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData
     """Credential data used to authenticate the token request."""
 
 
-@single_argument_args('generate_single_use_password')
+@single_argument_args("generate_single_use_password")
 class AuthGenerateOnetimePasswordArgs(BaseModel):
     username: str
     """Username to generate a one-time password for."""
@@ -314,7 +314,7 @@ class AuthLoginResult(BaseModel):
 class AuthLoginExArgs(BaseModel):
     login_data: Union[
         AuthApiKeyPlain, AuthPasswordPlain, AuthTokenPlain, AuthOTPToken, AuthSCRAM
-    ] = Field(discriminator='mechanism')
+    ] = Field(discriminator="mechanism")
     """Authentication data specifying mechanism and credentials."""
 
 
@@ -322,7 +322,7 @@ class AuthLoginExResult(BaseModel):
     result: Union[
         AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
         AuthRespScram, AuthRespDenied
-    ] = Field(discriminator='response_type')
+    ] = Field(discriminator="response_type")
     """Authentication response indicating success, failure, or additional steps required."""
 
 
@@ -335,7 +335,7 @@ class AuthLoginExContinueResult(BaseModel):
     result: Union[
         AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
         AuthRespDenied,
-    ] = Field(discriminator='response_type')
+    ] = Field(discriminator="response_type")
     """Authentication response after continuing with OTP token."""
 
 

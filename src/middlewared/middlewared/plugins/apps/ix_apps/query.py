@@ -14,7 +14,7 @@ from .metadata import get_collective_config, get_collective_metadata
 from .path import get_app_parent_config_path
 from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_project_name
 
-COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
+COMPOSE_SERVICE_KEY: str = "com.docker.compose.service"
 
 
 @dataclass(frozen=True, eq=True)
@@ -35,40 +35,40 @@ def upgrade_available_for_app(
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
-    catalog_app_metadata = app_metadata['metadata']
-    catalog_app = catalog_app_metadata['name']
+    catalog_app_metadata = app_metadata["metadata"]
+    catalog_app = catalog_app_metadata["name"]
     if (
-        app_metadata['custom_app'] is False
+        app_metadata["custom_app"] is False
         and (
             latest_version_info := version_mapping.get(
-                catalog_app_metadata['train'], {}
+                catalog_app_metadata["train"], {}
             ).get(
-                catalog_app_metadata['name']
+                catalog_app_metadata["name"]
             )
         )
-        and latest_version_info['version']
+        and latest_version_info["version"]
     ):
         return (
-            Version(catalog_app_metadata['version']) < Version(latest_version_info['version']),
-            latest_version_info['version'],
-            latest_version_info['app_version']
+            Version(catalog_app_metadata["version"]) < Version(latest_version_info["version"]),
+            latest_version_info["version"],
+            latest_version_info["app_version"]
         )
-    elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
+    elif (app_metadata["custom_app"] or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None, None
     else:
         return False, None, None
 
 
 def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
-    if not host_ip or '0.0.0.0' not in portal_uri:
+    if not host_ip or "0.0.0.0" not in portal_uri:
         return portal_uri
 
-    if ':' in host_ip and '[' not in host_ip:
+    if ":" in host_ip and "[" not in host_ip:
         # We already have ipv6 normalized but users who are using older apps before we had ipv6 support,
         # will have this not normalized and can run into this so we should fix this here to be safe
-        host_ip = f'[{host_ip}]'
+        host_ip = f"[{host_ip}]"
 
-    return portal_uri.replace('0.0.0.0', host_ip)
+    return portal_uri.replace("0.0.0.0", host_ip)
 
 
 def get_config_of_app(
@@ -76,12 +76,12 @@ def get_config_of_app(
 ) -> dict[str, Any]:
     if retrieve_config:
         return {
-            'config': collective_config.get(app_data['name']) or (
-                get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
+            "config": collective_config.get(app_data["name"]) or (
+                get_current_app_config(app_data["name"], app_data["version"]) if app_data["version"] else {}
             )
         }
     else:
-        return {'config': None}
+        return {"config": None}
 
 
 def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
@@ -102,7 +102,7 @@ def list_apps(
     collective_config = get_collective_config() if retrieve_config else {}
     # This will only give us apps which are running or in deploying state
     for app_name, app_resources in list_resources_by_project(
-        project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
+        project_name=f"{PROJECT_PREFIX}{specific_app}" if specific_app else None,
     ).items():
         app_name = get_app_name_from_project_name(app_name)
         app_names.add(app_name)
@@ -115,9 +115,9 @@ def list_apps(
         # state which means we need to account for this.
         state = AppState.STOPPED
         workload_stats: defaultdict[str, int] = defaultdict(int)
-        workloads_len = len(workloads['container_details'])
-        for container in workloads['container_details']:
-            workload_stats[container['state']] += 1
+        workloads_len = len(workloads["container_details"])
+        for container in workloads["container_details"]:
+            workload_stats[container["state"]] += 1
 
         if workload_stats[ContainerState.CRASHED.value]:
             state = AppState.CRASHED
@@ -131,31 +131,31 @@ def list_apps(
         state_value: str = state.value
 
         app_metadata = metadata[app_name]
-        active_workloads = get_default_workload_values() if state_value == 'STOPPED' else workloads
+        active_workloads = get_default_workload_values() if state_value == "STOPPED" else workloads
         image_updates_available = any(
-            image_update_cache.get(normalize_reference(k)['complete_tag']) for k in active_workloads['images']
+            image_update_cache.get(normalize_reference(k)["complete_tag"]) for k in active_workloads["images"]
         )
         upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
             train_to_apps_version_mapping, app_metadata
         )
         app_data = {
-            'name': app_name,
-            'id': app_name,
-            'active_workloads': active_workloads,
-            'state': state_value,
-            'upgrade_available': upgrade_available,
-            'latest_version': latest_version,
-            'action_required': False,
-            'latest_app_version': latest_app_version,
-            'image_updates_available': image_updates_available,
-            'version_details': None,
-            **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+            "name": app_name,
+            "id": app_name,
+            "active_workloads": active_workloads,
+            "state": state_value,
+            "upgrade_available": upgrade_available,
+            "latest_version": latest_version,
+            "action_required": False,
+            "latest_app_version": latest_app_version,
+            "image_updates_available": image_updates_available,
+            "version_details": None,
+            **app_metadata | {"portals": normalize_portal_uris(app_metadata["portals"], host_ip)}
         }
-        if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
+        if (app_data["custom_app"] or app_metadata["metadata"]["name"] == IX_APP_NAME) and image_updates_available:
             # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
             # against the same docker tag
-            app_data['upgrade_available'] = True
+            app_data["upgrade_available"] = True
 
         apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
 
@@ -178,17 +178,17 @@ def list_apps(
                     train_to_apps_version_mapping, app_metadata
                 )
                 app_data = {
-                    'name': entry.name,
-                    'id': entry.name,
-                    'active_workloads': get_default_workload_values(),
-                    'state': AppState.STOPPED.value,
-                    'upgrade_available': upgrade_available,
-                    'latest_version': latest_version,
-                    'action_required': False,
-                    'latest_app_version': latest_app_version,
-                    'image_updates_available': False,
-                    'version_details': None,
-                    **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+                    "name": entry.name,
+                    "id": entry.name,
+                    "active_workloads": get_default_workload_values(),
+                    "state": AppState.STOPPED.value,
+                    "upgrade_available": upgrade_available,
+                    "latest_version": latest_version,
+                    "action_required": False,
+                    "latest_app_version": latest_app_version,
+                    "image_updates_available": False,
+                    "version_details": None,
+                    **app_metadata | {"portals": normalize_portal_uris(app_metadata["portals"], host_ip)}
                 }
                 apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
     except FileNotFoundError:
@@ -201,13 +201,13 @@ def list_apps(
 
 def get_default_workload_values() -> dict[str, Any]:
     return {
-        'containers': 0,
-        'used_ports': [],
-        'used_host_ips': [],
-        'container_details': [],  # This would contain service name and image in use
-        'volumes': [],  # This would be docker volumes
-        'images': [],
-        'networks': [],
+        "containers": 0,
+        "used_ports": [],
+        "used_host_ips": [],
+        "container_details": [],  # This would contain service name and image in use
+        "volumes": [],  # This would be docker volumes
+        "images": [],
+        "networks": [],
     }
 
 
@@ -222,12 +222,12 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
     volumes = set()
     images = set()
     host_ips = set()
-    workloads['containers'] = len(app_resources['containers'])
-    for container in app_resources['containers']:
-        service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
+    workloads["containers"] = len(app_resources["containers"])
+    for container in app_resources["containers"]:
+        service_name = container["Config"]["Labels"][COMPOSE_SERVICE_KEY]
         container_ports_config = []
-        images.add(container['Config']['Image'])
-        for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
+        images.add(container["Config"]["Image"])
+        for container_port, host_config in container.get("NetworkSettings", {}).get("Ports", {}).items():
             if not host_config:
                 # This will happen for ports which are not exposed on the host side
                 continue
@@ -235,59 +235,59 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
             for host_port in host_config:
                 try:
                     # We have seen that docker can report host port as an empty string or null
-                    host_ip = host_port['HostIp']
-                    host_ports.append({'host_port': int(host_port['HostPort']), 'host_ip': host_ip})
+                    host_ip = host_port["HostIp"]
+                    host_ports.append({"host_port": int(host_port["HostPort"]), "host_ip": host_ip})
                     if host_ip:
                         host_ips.add(host_ip)
                 except (TypeError, ValueError):
                     continue
 
             port_config = {
-                'container_port': int(container_port.split('/')[0]),
-                'protocol': container_port.split('/')[1],
-                'host_ports': host_ports,
+                "container_port": int(container_port.split("/")[0]),
+                "protocol": container_port.split("/")[1],
+                "host_ports": host_ports,
             }
             container_ports_config.append(port_config)
 
         volume_mounts = []
-        for volume_mount in container.get('Mounts', []):
+        for volume_mount in container.get("Mounts", []):
             volume_mounts.append(VolumeMount(
-                source=volume_mount['Source'],
-                destination=volume_mount['Destination'],
-                mode=volume_mount['Mode'],
-                type='bind' if volume_mount['Type'] == 'bind' else 'volume',
+                source=volume_mount["Source"],
+                destination=volume_mount["Destination"],
+                mode=volume_mount["Mode"],
+                type="bind" if volume_mount["Type"] == "bind" else "volume",
             ))
 
-        if container['State']['Status'].lower() == 'running':
-            if health_config := container['State'].get('Health'):
-                if health_config['Status'] == 'healthy':
+        if container["State"]["Status"].lower() == "running":
+            if health_config := container["State"].get("Health"):
+                if health_config["Status"] == "healthy":
                     state = ContainerState.RUNNING.value
                 else:
                     state = ContainerState.STARTING.value
             else:
                 state = ContainerState.RUNNING.value
-        elif container['State']['Status'].lower() == 'created':
+        elif container["State"]["Status"].lower() == "created":
             state = ContainerState.CREATED.value
-        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] != 0:
+        elif container["State"]["Status"] == "exited" and container["State"]["ExitCode"] != 0:
             state = ContainerState.CRASHED.value
         else:
-            state = 'exited'
+            state = "exited"
 
-        workloads['container_details'].append({
-            'service_name': service_name,
-            'image': container['Config']['Image'],
-            'port_config': container_ports_config,
-            'state': state,
-            'volume_mounts': [v.__dict__ for v in volume_mounts],
-            'id': container['Id'],
+        workloads["container_details"].append({
+            "service_name": service_name,
+            "image": container["Config"]["Image"],
+            "port_config": container_ports_config,
+            "state": state,
+            "volume_mounts": [v.__dict__ for v in volume_mounts],
+            "id": container["Id"],
         })
-        workloads['used_ports'].extend(container_ports_config)
+        workloads["used_ports"].extend(container_ports_config)
         volumes.update(volume_mounts)
 
     workloads.update({
-        'images': list(images),
-        'volumes': [v.__dict__ for v in volumes],
-        'networks': app_resources['networks'],
-        'used_host_ips': list(host_ips),
+        "images": list(images),
+        "volumes": [v.__dict__ for v in volumes],
+        "networks": app_resources["networks"],
+        "used_host_ips": list(host_ips),
     })
     return workloads

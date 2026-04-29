@@ -4,10 +4,10 @@ import enum
 import os
 from typing import Any
 
-NSS_MODULES_DIR = '/usr/lib/x86_64-linux-gnu'
-FILES_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_files.so.2')
-SSS_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_sss.so.2')
-WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_winbind.so.2')
+NSS_MODULES_DIR = "/usr/lib/x86_64-linux-gnu"
+FILES_NSS_PATH = os.path.join(NSS_MODULES_DIR, "libnss_files.so.2")
+SSS_NSS_PATH = os.path.join(NSS_MODULES_DIR, "libnss_sss.so.2")
+WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, "libnss_winbind.so.2")
 
 
 class NSSModuleFN(defaultdict[str, Any]):
@@ -18,7 +18,7 @@ class NSSModuleFN(defaultdict[str, Any]):
 
     def __missing__(self, key: str) -> Any:
         assert self.cdll is not None
-        fn = getattr(self.cdll, f'_nss_{self.module_name}_{key}')
+        fn = getattr(self.cdll, f"_nss_{self.module_name}_{key}")
         self[key] = fn
         return fn
 
@@ -28,7 +28,7 @@ class NSSModuleCDLL(defaultdict[str, NSSModuleFN]):
     For example, '/usr/lib/x86_64-linux-gnu/libnss_files.so.2'. The returned value is an NSSModuleFN
     that will hold references to lazy-initialized C function pointers."""
     def __missing__(self, key: str) -> NSSModuleFN:
-        mod, path = key.split('.', 1)
+        mod, path = key.split(".", 1)
         cdll = ctypes.CDLL(path, use_errno=True)
         self[key] = NSSModuleFN()
         self[key].cdll = cdll
@@ -58,16 +58,16 @@ class NssModule(enum.Enum):
 
 class NssOperation(enum.Enum):
     """ Currently supported NSS operations """
-    GETGRNAM = 'getgrnam_r'
-    GETGRGID = 'getgrgid_r'
-    SETGRENT = 'setgrent'
-    ENDGRENT = 'endgrent'
-    GETGRENT = 'getgrent_r'
-    GETPWNAM = 'getpwnam_r'
-    GETPWUID = 'getpwuid_r'
-    GETPWENT = 'getpwent_r'
-    SETPWENT = 'setpwent'
-    ENDPWENT = 'endpwent'
+    GETGRNAM = "getgrnam_r"
+    GETGRGID = "getgrgid_r"
+    SETGRENT = "setgrent"
+    ENDGRENT = "endgrent"
+    GETGRENT = "getgrent_r"
+    GETPWNAM = "getpwnam_r"
+    GETPWUID = "getpwuid_r"
+    GETPWENT = "getpwent_r"
+    SETPWENT = "setpwent"
+    ENDPWENT = "endpwent"
 
 
 class NssError(Exception):
@@ -79,9 +79,9 @@ class NssError(Exception):
         super().__init__(errno, nssop, return_code, module)
 
     def __str__(self) -> str:
-        errmsg = f'NSS operation {self.nssop} failed with errno {self.errno}: {self.return_code}'
-        if self.mod_name != 'ALL':
-            errmsg += f' on module [{self.mod_name.lower()}].'
+        errmsg = f"NSS operation {self.nssop} failed with errno {self.errno}: {self.return_code}"
+        if self.mod_name != "ALL":
+            errmsg += f" on module [{self.mod_name.lower()}]."
 
         return errmsg
 
@@ -91,7 +91,7 @@ def get_nss_func(nss_op: NssOperation, nss_module: NssModule) -> Any:
     is lazy-initialized as different modules are used. Standalone servers will only ever use the
     files module. """
     if nss_module == NssModule.ALL:
-        raise ValueError('ALL module may not be explicitly used')
+        raise ValueError("ALL module may not be explicitly used")
 
-    mod_ptr = NSSDICT[f'{nss_module.name}.{nss_module.value}']
+    mod_ptr = NSSDICT[f"{nss_module.name}.{nss_module.value}"]
     return mod_ptr[nss_op.value]

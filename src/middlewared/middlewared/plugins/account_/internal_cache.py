@@ -11,14 +11,14 @@ class UserService(Service):
     async def get_builtin_user_id(self, username):
         if not self.SYS_USERS:
             UserService.SYS_USERS = {
-                u['username']: u['uid'] for u in await self.middleware.call(
-                    'user.query', [['builtin', '=', True]], {'force_sql_filters': True}
+                u["username"]: u["uid"] for u in await self.middleware.call(
+                    "user.query", [["builtin", "=", True]], {"force_sql_filters": True}
                 )
             }
         try:
             return self.SYS_USERS[username]
         except KeyError:
-            raise CallError(f'{username!r} user not found', errno.ENOENT)
+            raise CallError(f"{username!r} user not found", errno.ENOENT)
 
 
 class GroupService(Service):
@@ -29,11 +29,11 @@ class GroupService(Service):
     async def get_builtin_group_id(self, group_name):
         if not self.SYS_GROUPS:
             GroupService.SYS_GROUPS = {
-                g['group']: g['gid'] for g in await self.middleware.call(
-                    'group.query', [['builtin', '=', True]], {'force_sql_filters': True}
+                g["group"]: g["gid"] for g in await self.middleware.call(
+                    "group.query", [["builtin", "=", True]], {"force_sql_filters": True}
                 )
             }
         try:
             return self.SYS_GROUPS[group_name]
         except KeyError:
-            raise CallError(f'{group_name!r} group not found', errno.ENOENT)
+            raise CallError(f"{group_name!r} group not found", errno.ENOENT)

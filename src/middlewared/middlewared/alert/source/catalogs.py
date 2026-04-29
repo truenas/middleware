@@ -9,8 +9,8 @@ class CatalogNotHealthyAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.WARNING,
-        title='Catalog Not Healthy',
-        text='%(apps)s Applications in %(catalog)s Catalog are not healthy.',
+        title="Catalog Not Healthy",
+        text="%(apps)s Applications in %(catalog)s Catalog are not healthy.",
         deleted_automatically=False,
     )
 
@@ -19,7 +19,7 @@ class CatalogNotHealthyAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['catalog']
+        return args["catalog"]
 
 
 @dataclass(kw_only=True)
@@ -27,8 +27,8 @@ class CatalogSyncFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,
         level=AlertLevel.CRITICAL,
-        title='Unable to Sync Catalog',
-        text='Failed to sync %(catalog)s catalog: %(error)s',
+        title="Unable to Sync Catalog",
+        text="Failed to sync %(catalog)s catalog: %(error)s",
         deleted_automatically=False,
     )
 
@@ -37,4 +37,4 @@ class CatalogSyncFailedAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['catalog']
+        return args["catalog"]

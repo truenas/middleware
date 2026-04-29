@@ -16,10 +16,10 @@ from .utils import path_in_ctldir
 
 
 class StatxEtype(StrEnum):
-    DIRECTORY = 'DIRECTORY'
-    FILE = 'FILE'
-    SYMLINK = 'SYMLINK'
-    OTHER = 'OTHER'
+    DIRECTORY = "DIRECTORY"
+    FILE = "FILE"
+    SYMLINK = "SYMLINK"
+    OTHER = "OTHER"
 
 
 class StatxAttr(IntFlag):
@@ -81,27 +81,27 @@ def statx_entry_impl(entry: Path, dir_fd: int = truenas_os.AT_FDCWD) -> StatxEnt
     out = StatxEntryResult(st=st, etype=None, attributes=[])
 
     for attr in StatxAttr:
-        if out['st'].stx_attributes & attr.value:
+        if out["st"].stx_attributes & attr.value:
             if attr.name is not None:
-                out['attributes'].append(attr.name)
+                out["attributes"].append(attr.name)
 
-    if statlib.S_ISDIR(out['st'].stx_mode):
-        out['etype'] = StatxEtype.DIRECTORY.name
+    if statlib.S_ISDIR(out["st"].stx_mode):
+        out["etype"] = StatxEtype.DIRECTORY.name
 
-    elif statlib.S_ISLNK(out['st'].stx_mode):
-        out['etype'] = StatxEtype.SYMLINK.name
+    elif statlib.S_ISLNK(out["st"].stx_mode):
+        out["etype"] = StatxEtype.SYMLINK.name
         try:
-            out['st'] = truenas_os.statx(path, dir_fd=dir_fd, mask=STATX_DEFAULT_MASK)
+            out["st"] = truenas_os.statx(path, dir_fd=dir_fd, mask=STATX_DEFAULT_MASK)
         except FileNotFoundError:
             return None
 
-    elif statlib.S_ISREG(out['st'].stx_mode):
-        out['etype'] = StatxEtype.FILE.name
+    elif statlib.S_ISREG(out["st"].stx_mode):
+        out["etype"] = StatxEtype.FILE.name
 
     else:
-        out['etype'] = StatxEtype.OTHER.name
+        out["etype"] = StatxEtype.OTHER.name
 
     if entry.is_absolute():
-        out['is_ctldir'] = path_in_ctldir(entry)
+        out["is_ctldir"] = path_in_ctldir(entry)
 
     return out

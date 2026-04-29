@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
 
 
 def zfs_events_thread(middleware: Middleware) -> None:
-    set_thread_name('retrieve_zfs_events_thread')
+    set_thread_name("retrieve_zfs_events_thread")
     while True:
         try:
             z = truenas_pylibzfs.open_handle()
@@ -21,12 +21,12 @@ def zfs_events_thread(middleware: Middleware) -> None:
                 try:
                     event = parse_zfs_event(data["event"])
                 except Exception as e:
-                    middleware.logger.error('Unhandled exception while parsing ZFS event: %s\n%r', str(e), data)
+                    middleware.logger.error("Unhandled exception while parsing ZFS event: %s\n%r", str(e), data)
                 else:
                     if event:
-                        middleware.call_hook_sync('zfs.pool.events', event)
+                        middleware.call_hook_sync("zfs.pool.events", event)
         except Exception as e:
-            middleware.logger.error('Failed to retrieve ZFS events: %s', str(e))
+            middleware.logger.error("Failed to retrieve ZFS events: %s", str(e))
             time.sleep(1)
             continue
 

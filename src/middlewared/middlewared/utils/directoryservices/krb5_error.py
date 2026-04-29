@@ -192,4 +192,4 @@ class KRB5Error(Exception):
         super().__init__(gss_major, gss_minor, errmsg)
 
     def __str__(self) -> str:
-        return f'[{self.krb5_code.name}] {self.errmsg}'
+        return f"[{self.krb5_code.name}] {self.errmsg}"

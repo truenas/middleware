@@ -16,11 +16,11 @@ class AppStatsEventSource(TypedEventSource[AppStatsEventSourceArgs]):
 
     args = AppStatsEventSourceArgs
     event = AppStatsEventSourceEvent
-    roles = ['APPS_READ']
+    roles = ["APPS_READ"]
 
     def run_sync(self) -> None:
         if not self.middleware.call_sync2(self.middleware.services.docker.validate_state, False):
-            raise CallError('Apps are not available')
+            raise CallError("Apps are not available")
 
         old_projects_stats = list_resources_stats_by_project()
         interval = self.typed_arg.interval
@@ -30,7 +30,7 @@ class AppStatsEventSource(TypedEventSource[AppStatsEventSourceArgs]):
             try:
                 project_stats = list_resources_stats_by_project()
                 self.send_event(
-                    'ADDED', fields=normalize_projects_stats(project_stats, old_projects_stats, interval)
+                    "ADDED", fields=normalize_projects_stats(project_stats, old_projects_stats, interval)
                 )
                 old_projects_stats = project_stats
                 time.sleep(interval)

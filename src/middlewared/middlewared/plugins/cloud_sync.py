@@ -430,7 +430,7 @@ def rclone_check_progress(job, proc):
 
             progresses = list(filter(lambda v: v is not None, [progress1, progress2, progress3]))
             if progresses:
-                job.set_progress(min(progresses), ', '.join(filter(None, [transferred1, transferred2, checks])))
+                job.set_progress(min(progresses), ", ".join(filter(None, [transferred1, transferred2, checks])))
     finally:
         result = cutter.flush()
         if result:
@@ -557,7 +557,7 @@ class CloudSyncTaskFailedAlert(OneShotAlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,
         title="Cloud Sync Task Failed",
-        text="Cloud sync task \"%(name)s\" failed.",
+        text='Cloud sync task "%(name)s" failed.',
     )
 
     id: int
@@ -589,13 +589,13 @@ class CloudProviderRemovedAlert(OneShotAlertClass):
 def lsjson_error_excerpt(error):
     excerpt = error.split("\n")[0]
     excerpt = re.sub(r"^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} ", "", excerpt)
-    excerpt = excerpt.replace("Failed to create file system for \"remote:\": ", "")
+    excerpt = excerpt.replace('Failed to create file system for "remote:": ', "")
     excerpt = excerpt.replace("ERROR : : error listing: ", "")
     return excerpt
 
 
 class CloudCredentialModel(sa.Model):
-    __tablename__ = 'system_cloudcredentials'
+    __tablename__ = "system_cloudcredentials"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(100))
@@ -609,7 +609,7 @@ class CredentialsService(CRUDService):
         namespace = "cloudsync.credentials"
 
         datastore = "system.cloudcredentials"
-        datastore_extend = 'cloudsync.credentials.extend'
+        datastore_extend = "cloudsync.credentials.extend"
 
         cli_namespace = "task.cloud_sync.credential"
 
@@ -731,7 +731,7 @@ class CredentialsService(CRUDService):
 
 
 class CloudSyncModel(CloudTaskModelMixin, sa.Model):
-    __tablename__ = 'tasks_cloudsync'
+    __tablename__ = "tasks_cloudsync"
 
     direction = sa.Column(sa.String(10))
     transfer_mode = sa.Column(sa.String(20))
@@ -751,9 +751,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
-    share_task_type = 'CloudSync'
+    share_task_type = "CloudSync"
     allowed_path_types = [FSLocation.LOCAL]
-    task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
+    task_state_methods = ["cloudsync.sync", "cloudsync.restore"]
 
     class Config:
         datastore = "tasks.cloudsync"
@@ -788,7 +788,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         convert_schedule_to_db_format(cloud_sync)
 
-        cloud_sync.pop('job', None)
+        cloud_sync.pop("job", None)
         cloud_sync.pop(self.locked_field, None)
 
         return cloud_sync
@@ -1168,16 +1168,16 @@ for cls in remote_classes:
 
 
 class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
-    name = 'cloudsync'
-    title = 'CloudSync Task'
+    name = "cloudsync"
+    title = "CloudSync Task"
     service_class = CloudSyncService
-    resource_name = 'path'
+    resource_name = "path"
 
     async def restart_reload_services(self, attachments):
         await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
 
 
 async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))
-    await middleware.call('network.general.register_activity', 'cloud_sync', 'Cloud sync')
-    await middleware.call('cloudsync.persist_task_state_on_job_complete')
+    await middleware.call("pool.dataset.register_attachment_delegate", CloudSyncFSAttachmentDelegate(middleware))
+    await middleware.call("network.general.register_activity", "cloud_sync", "Cloud sync")
+    await middleware.call("cloudsync.persist_task_state_on_job_complete")

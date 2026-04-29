@@ -21,20 +21,20 @@ if typing.TYPE_CHECKING:
 class ContainerImageService(Service):
 
     class Config:
-        cli_namespace = 'service.container.image'
-        namespace = 'container.image'
-        role_prefix = 'CONTAINER_IMAGE'
+        cli_namespace = "service.container.image"
+        namespace = "container.image"
+        role_prefix = "CONTAINER_IMAGE"
         generic = True
 
     @api_method(
-        ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, roles=['CONTAINER_IMAGE_READ'],
+        ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, roles=["CONTAINER_IMAGE_READ"],
         check_annotations=True,
     )
     def query_registry(self) -> list[ContainerImageQueryRegistryResultImage]:
         """
         Query images available in the images registry.
         """
-        products = query_registry_images(self.context)['products']
+        products = query_registry_images(self.context)["products"]
 
         result = []
         for name, product in products.items():
@@ -60,4 +60,4 @@ class ContainerImageService(Service):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('network.general.register_activity', 'container', 'Container images registry')
+    await middleware.call("network.general.register_activity", "container", "Container images registry")

@@ -8,7 +8,7 @@ class NFSService(Service):
         service = "nfs"
         service_verb = "restart"
         datastore_prefix = "nfs_srv_"
-        datastore_extend = 'nfs.nfs_extend'
+        datastore_extend = "nfs.nfs_extend"
 
     @private
     async def sec(self, config, has_nfs_principal):

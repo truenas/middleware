@@ -261,14 +261,14 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                         origin = app.origin.repr if app.origin else None
 
                         self.middleware.logger.error(
-                            'Client using credentials [%s] at [%s] sent message with payload size [%d bytes] '
-                            'exceeding limit of %d for method %s',
+                            "Client using credentials [%s] at [%s] sent message with payload size [%d bytes] "
+                            "exceeding limit of %d for method %s",
                             creds, origin, err.datalen, err.limit, err.method_name
                         )
 
                     await ws.close(
                         code=err.ws_close_code,
-                        message=err.ws_errmsg.encode('utf-8'),
+                        message=err.ws_errmsg.encode("utf-8"),
                     )
                     break
                 except ValueError as e:

@@ -58,13 +58,13 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('TrueNASService',)
+__all__ = ("TrueNASService",)
 
 
 class TrueNASService(Service):
 
     class Config:
-        cli_namespace = 'system.truenas'
+        cli_namespace = "system.truenas"
 
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
@@ -80,7 +80,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
-        cli_private=True, roles=['READONLY_ADMIN'], check_annotations=True,
+        cli_private=True, roles=["READONLY_ADMIN"], check_annotations=True,
     )
     def get_chassis_hardware(self) -> str:
         """Returns what type of hardware this is, detected from dmidecode."""
@@ -88,7 +88,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult,
-        roles=['READONLY_ADMIN'], check_annotations=True,
+        roles=["READONLY_ADMIN"], check_annotations=True,
     )
     async def is_ix_hardware(self) -> bool:
         """Return a boolean value on whether this is hardware that iXsystems sells."""
@@ -96,7 +96,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASGetEulaArgs, TrueNASGetEulaResult,
-        cli_private=True, roles=['READONLY_ADMIN'], check_annotations=True,
+        cli_private=True, roles=["READONLY_ADMIN"], check_annotations=True,
     )
     def get_eula(self) -> str | None:
         """Returns the TrueNAS End-User License Agreement (EULA)."""
@@ -104,7 +104,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult,
-        cli_private=True, roles=['READONLY_ADMIN'], check_annotations=True,
+        cli_private=True, roles=["READONLY_ADMIN"], check_annotations=True,
     )
     def is_eula_accepted(self) -> bool:
         """Returns whether the EULA is accepted or not."""
@@ -112,7 +112,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASAcceptEulaArgs, TrueNASAcceptEulaResult,
-        roles=['FULL_ADMIN'], check_annotations=True,
+        roles=["FULL_ADMIN"], check_annotations=True,
     )
     def accept_eula(self) -> None:
         """Accept TrueNAS EULA."""
@@ -120,7 +120,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASIsProductionArgs, TrueNASIsProductionResult,
-        roles=['READONLY_ADMIN'], check_annotations=True,
+        roles=["READONLY_ADMIN"], check_annotations=True,
     )
     async def is_production(self) -> bool:
         """Returns if system is marked as production."""
@@ -128,7 +128,7 @@ class TrueNASService(Service):
 
     @api_method(
         TrueNASSetProductionArgs, TrueNASSetProductionResult,
-        roles=['FULL_ADMIN'], check_annotations=True,
+        roles=["FULL_ADMIN"], check_annotations=True,
     )
     @job()
     async def set_production(self, job: Job, production: bool, attach_debug: bool = False) -> SupportNewTicket | None:

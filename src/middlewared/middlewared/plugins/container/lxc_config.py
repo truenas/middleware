@@ -14,8 +14,8 @@ from .info import pool_choices
 # Chosen to avoid overlap with:
 #   - Docker address pools: 172.17.0.0/12 (v4), fdd0::/48 (v6)
 #   - Incus auto-generated ranges: 10.x.x.0/24 (v4), fd42:random::/64 (v6)
-DEFAULT_V4_NETWORK = '172.200.0.0/24'
-DEFAULT_V6_NETWORK = 'fd42:4c58:43ae::/64'
+DEFAULT_V4_NETWORK = "172.200.0.0/24"
+DEFAULT_V6_NETWORK = "fd42:4c58:43ae::/64"
 
 
 class ContainerConfigModel(sa.Model):
@@ -29,7 +29,7 @@ class ContainerConfigModel(sa.Model):
 
 
 class LXCConfigServicePart(ConfigServicePart[LXCConfigEntry]):
-    _datastore = 'container.config'
+    _datastore = "container.config"
     _entry = LXCConfigEntry
 
     async def do_update(self, data: LXCConfigUpdate) -> LXCConfigEntry:

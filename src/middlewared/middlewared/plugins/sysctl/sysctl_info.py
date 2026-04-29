@@ -5,8 +5,8 @@ from truenas_pylibzfs import kstat
 from middlewared.service import CallError, Service
 from middlewared.utils import MIDDLEWARE_RUN_DIR, run
 
-ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
-DEFAULT_ARC_MAX_FILE = f'{MIDDLEWARE_RUN_DIR}/default_arc_max'
+ZFS_MODULE_PARAMS_PATH = "/sys/module/zfs/parameters"
+DEFAULT_ARC_MAX_FILE = f"{MIDDLEWARE_RUN_DIR}/default_arc_max"
 
 
 class SysctlService(Service):
@@ -15,10 +15,10 @@ class SysctlService(Service):
         private = True
 
     async def get_value(self, sysctl_name):
-        cp = await run(['sysctl', sysctl_name], check=False)
+        cp = await run(["sysctl", sysctl_name], check=False)
         if cp.returncode:
             raise CallError(f'Unable to retrieve value of "{sysctl_name}" sysctl : {cp.stderr.decode()}')
-        return cp.stdout.decode().split('=')[-1].strip()
+        return cp.stdout.decode().split("=")[-1].strip()
 
     def store_default_arc_max(self):
         """This method should be called _BEFORE_ we initialize any VMs
@@ -26,7 +26,7 @@ class SysctlService(Service):
         changing the various ARC sysctls based on VM memory configurations"""
         val = kstat.get_arcstats().c_max
         try:
-            with open(DEFAULT_ARC_MAX_FILE, 'x') as f:
+            with open(DEFAULT_ARC_MAX_FILE, "x") as f:
                 f.write(str(val))
                 f.flush()
         except FileExistsError:
@@ -48,9 +48,9 @@ class SysctlService(Service):
         return kstat.get_arcstats().c_min
 
     async def get_pagesize(self):
-        cp = await run(['getconf', 'PAGESIZE'], check=False)
+        cp = await run(["getconf", "PAGESIZE"], check=False)
         if cp.returncode:
-            raise CallError(f'Unable to retrieve pagesize value: {cp.stderr.decode()}')
+            raise CallError(f"Unable to retrieve pagesize value: {cp.stderr.decode()}")
         return int(cp.stdout.decode().strip())
 
     def get_arcstats(self):
@@ -61,14 +61,14 @@ class SysctlService(Service):
         return kstat.get_arcstats().size
 
     async def set_value(self, key, value):
-        await run(['sysctl', f'{key}={value}'])
+        await run(["sysctl", f"{key}={value}"])
 
     def write_to_file(self, path, value):
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(str(value))
 
     def set_arc_max(self, value):
-        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zfs_arc_max'), value)
+        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, "zfs_arc_max"), value)
 
     def set_zvol_volmode(self, value):
-        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zvol_volmode'), value)
+        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, "zvol_volmode"), value)

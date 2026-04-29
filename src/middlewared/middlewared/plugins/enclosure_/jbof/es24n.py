@@ -10,16 +10,16 @@ from middlewared.plugins.enclosure_.jbof.utils import (
 )
 from middlewared.plugins.jbof.functions import get_sys_class_nvme
 
-ES24N_EXPECTED_URI = '/redfish/v1/Chassis/2U24'
+ES24N_EXPECTED_URI = "/redfish/v1/Chassis/2U24"
 LOGGER = getLogger(__name__)
 
 
 async def map_es24n(model, rclient, uri):
     data = {}
-    urls = {'Drives': f'{uri}/Drives?$expand=*',
-            'PowerSubsystem': f'{uri}/PowerSubsystem?$expand=*($levels=2)',
-            'Sensors': f'{uri}/Sensors?$expand=*',
-            'ThermalSubsystem': f'{uri}/ThermalSubsystem?$expand=*($levels=2)'
+    urls = {"Drives": f"{uri}/Drives?$expand=*",
+            "PowerSubsystem": f"{uri}/PowerSubsystem?$expand=*($levels=2)",
+            "Sensors": f"{uri}/Sensors?$expand=*",
+            "ThermalSubsystem": f"{uri}/ThermalSubsystem?$expand=*($levels=2)"
             }
     try:
         # Unfortunately the ES24n response doesn't lend itself it issuing a single query.
@@ -30,11 +30,11 @@ async def map_es24n(model, rclient, uri):
         for key, uri2 in urls.items():
             info = await rclient.get(uri2)
             if not info:
-                LOGGER.error('Unexpected failure fetching %r info', key)
+                LOGGER.error("Unexpected failure fetching %r info", key)
                 return
             data[key] = info
     except Exception:
-        LOGGER.error('Unexpected failure enumerating all enclosure info', exc_info=True)
+        LOGGER.error("Unexpected failure enumerating all enclosure info", exc_info=True)
         return
     return do_map_es24n(model, rclient.uuid, data)
 
@@ -44,27 +44,27 @@ def do_map_es24n(model, uuid, data):
     # Drives
     #
     try:
-        all_disks = data['Drives']
+        all_disks = data["Drives"]
     except KeyError:
-        LOGGER.error('Unexpected failure extracting all disk info', exc_info=True)
+        LOGGER.error("Unexpected failure extracting all disk info", exc_info=True)
         return
 
-    num_of_slots = len(all_disks['Members'])
+    num_of_slots = len(all_disks["Members"])
     ui_info = {
-        'rackmount': True,
-        'top_loaded': False,
-        'front_slots': num_of_slots,
-        'rear_slots': 0,
-        'internal_slots': 0
+        "rackmount": True,
+        "top_loaded": False,
+        "front_slots": num_of_slots,
+        "rear_slots": 0,
+        "internal_slots": 0
     }
     mounted_disks = {
-        v['serial']: (k, v) for k, v in get_sys_class_nvme().items()
-        if v['serial'] and v['transport_protocol'] == 'rdma'
+        v["serial"]: (k, v) for k, v in get_sys_class_nvme().items()
+        if v["serial"] and v["transport_protocol"] == "rdma"
     }
     mapped = dict()
     drive_bay_light_status = dict()
-    for disk in all_disks['Members']:
-        slot = disk.get('Id', '')
+    for disk in all_disks["Members"]:
+        slot = disk.get("Id", "")
         if not slot or not slot.isdigit():
             # shouldn't happen but need to catch edge-case
             continue
@@ -73,23 +73,23 @@ def do_map_es24n(model, uuid, data):
 
         # Check the LocationIndicatorActive before other items as we want the value
         # even if no disk is present.
-        match disk.get('LocationIndicatorActive'):
+        match disk.get("LocationIndicatorActive"):
             case True:
-                drive_bay_light_status[slot] = 'ON'
+                drive_bay_light_status[slot] = "ON"
             case False:
-                drive_bay_light_status[slot] = 'OFF'
+                drive_bay_light_status[slot] = "OFF"
             case None:
                 drive_bay_light_status[slot] = None
             case _:
-                LOGGER.error('Unexpected drive bay light status')
+                LOGGER.error("Unexpected drive bay light status")
                 drive_bay_light_status[slot] = None
 
-        state = disk.get('Status', {}).get('State')
-        if not state or state == 'Absent':
+        state = disk.get("Status", {}).get("State")
+        if not state or state == "Absent":
             mapped[slot] = None
             continue
 
-        sn = disk.get('SerialNumber')
+        sn = disk.get("SerialNumber")
         if not sn:
             mapped[slot] = None
             continue
@@ -97,8 +97,8 @@ def do_map_es24n(model, uuid, data):
         if found := mounted_disks.get(sn):
             try:
                 # we expect namespace 1 for the device (i.e. nvme1n1)
-                idx = found[1]['namespaces'].index(f'{found[0]}n1')
-                mapped[slot] = found[1]['namespaces'][idx]
+                idx = found[1]["namespaces"].index(f"{found[0]}n1")
+                mapped[slot] = found[1]["namespaces"][idx]
             except ValueError:
                 mapped[slot] = None
         else:
@@ -135,7 +135,7 @@ async def is_this_an_es24n(rclient):
     try:
         info = await rclient.get(expected_uri)
         if info:
-            found_model = info.get('Model', '').lower()
+            found_model = info.get("Model", "").lower()
             eml = expected_model.lower()
             if any((
                 eml in found_model,
@@ -152,6 +152,6 @@ async def is_this_an_es24n(rclient):
                 #   going to be extra lenient and ignore it)
                 return JbofModels.ES24N.name, expected_uri
     except Exception:
-        LOGGER.error('Unexpected failure determining if this is an ES24N', exc_info=True)
+        LOGGER.error("Unexpected failure determining if this is an ES24N", exc_info=True)
 
     return None, None

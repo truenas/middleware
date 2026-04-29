@@ -13,7 +13,7 @@ def get_acme_client_and_key_payload(
     context: ServiceContext, acme_directory_uri: str, tos: bool = False,
 ) -> ACMEClientAndKeyData:
     data = context.call_sync2(
-        context.s.acme.registration.query, [['directory', '=', acme_directory_uri]]
+        context.s.acme.registration.query, [["directory", "=", acme_directory_uri]]
     )
     if not data:
         entry = context.call_sync2(

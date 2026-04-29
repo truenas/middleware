@@ -70,7 +70,7 @@ def uuidv4_validator(value):
     try:
         uuid.UUID(value, version=4)
     except ValueError:
-        raise ValueError('UUID is not valid version 4')
+        raise ValueError("UUID is not valid version 4")
 
     return value
 

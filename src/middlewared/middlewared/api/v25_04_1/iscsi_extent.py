@@ -30,19 +30,19 @@ __all__ = [
 class iSCSITargetExtentEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
-    type: IscsiExtentType = 'DISK'
+    type: IscsiExtentType = "DISK"
     disk: str | None = None
     serial: str | None = None
     path: str | None = None
-    filesize: str | int = '0'
+    filesize: str | int = "0"
     blocksize: IscsiExtentBlockSize = 512
     pblocksize: bool = False
     avail_threshold: Annotated[int, Ge(1), Le(99)] | None = None
-    comment: str = ''
+    comment: str = ""
     naa: str = Field(max_length=34)
     insecure_tpc: bool = True
     xen: bool = False
-    rpm: IscsiExtentRPM = 'SSD'
+    rpm: IscsiExtentRPM = "SSD"
     ro: bool = False
     enabled: bool = True
     vendor: str

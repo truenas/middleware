@@ -3,21 +3,21 @@ import os
 import stat
 import subprocess
 
-AUDIT_DIR = '/etc/audit'
-AUDIT_RULES_DIR = os.path.join(AUDIT_DIR, 'rules.d')
-AUDIT_PLUGINS_DIR = os.path.join(AUDIT_DIR, 'plugins.d')
-CONF_AUDIT_RULES_DIR = '/conf/audit_rules'
+AUDIT_DIR = "/etc/audit"
+AUDIT_RULES_DIR = os.path.join(AUDIT_DIR, "rules.d")
+AUDIT_PLUGINS_DIR = os.path.join(AUDIT_DIR, "plugins.d")
+CONF_AUDIT_RULES_DIR = "/conf/audit_rules"
 
 
 class AUDITRules(enum.StrEnum):
-    BASE = '10-base-config.rules'
-    STIG = '30-stig.rules'
-    PRIVILEGED = '31-privileged.rules'
-    MODULE = '43-module-load.rules'
-    FINALIZE = '99-finalize.rules'
-    COMMUNITY = 'truenas-community-edition.rules'
-    TRUENAS_STIG = 'truenas-stig.rules'
-    TRUENAS = 'truenas.rules'  # Rules for all versions of TrueNAS
+    BASE = "10-base-config.rules"
+    STIG = "30-stig.rules"
+    PRIVILEGED = "31-privileged.rules"
+    MODULE = "43-module-load.rules"
+    FINALIZE = "99-finalize.rules"
+    COMMUNITY = "truenas-community-edition.rules"
+    TRUENAS_STIG = "truenas-stig.rules"
+    TRUENAS = "truenas.rules"  # Rules for all versions of TrueNAS
 
 
 # Set of rules applied for STIG mode
@@ -58,4 +58,4 @@ def set_audit_rules(gpos_stig_enabled: bool) -> None:
 
         os.symlink(conf_path, audit_path)
 
-    subprocess.run(['augenrules', '--load'])
+    subprocess.run(["augenrules", "--load"])

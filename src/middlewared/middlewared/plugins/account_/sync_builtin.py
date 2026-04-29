@@ -22,9 +22,9 @@ class UserService(Service):
     @private
     def sync_builtin(self):
         smb_builtins = [
-            'builtin_administrators',
-            'builtin_users',
-            'builtin_guests',
+            "builtin_administrators",
+            "builtin_users",
+            "builtin_guests",
         ]
         remove_groups = {
             group["group"]: group
@@ -266,8 +266,8 @@ class UserService(Service):
                 )
                 self.middleware.call_sync(
                     "datastore.insert", "account.twofactor_user_auth", {
-                        'secret': None,
-                        'user': existing_user["id"],
+                        "secret": None,
+                        "user": existing_user["id"],
                     }
                 )
 

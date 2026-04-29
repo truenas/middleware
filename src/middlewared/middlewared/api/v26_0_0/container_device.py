@@ -13,56 +13,56 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
-    'ContainerFilesystemDevice', 'ContainerGPUDevice',
-    'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
-    'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
-    'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult',
-    'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
+    "ContainerNICDevice", "ContainerUSBDevice", "ContainerDeviceType",
+    "ContainerFilesystemDevice", "ContainerGPUDevice",
+    "ContainerDeviceEntry", "ContainerDeviceCreateArgs", "ContainerDeviceCreateResult", "ContainerDeviceUpdateArgs",
+    "ContainerDeviceUpdateResult", "ContainerDeviceDeleteArgs", "ContainerDeviceDeleteResult",
+    "ContainerDeviceDiskChoicesArgs", "ContainerDeviceDiskChoicesResult", "ContainerDeviceNicAttachChoicesArgs",
+    "ContainerDeviceNicAttachChoicesResult", "ContainerDeviceUsbChoicesArgs", "ContainerDeviceUsbChoicesResult",
+    "ContainerDeviceGpuChoicesArgs", "ContainerDeviceGpuChoicesResult",
 ]
 
 
 class ContainerFilesystemDevice(BaseModel):
-    dtype: Literal['FILESYSTEM']
+    dtype: Literal["FILESYSTEM"]
     """Device type identifier for FILESYSTEM devices."""
-    target: NonEmptyString = Field(pattern=r'^[^{}]*$')
+    target: NonEmptyString = Field(pattern=r"^[^{}]*$")
     """Target must not contain braces."""
-    source: NonEmptyString = Field(pattern=r'^[^{}]*$')
+    source: NonEmptyString = Field(pattern=r"^[^{}]*$")
     """Source must not contain braces, and not start with /mnt/."""
 
 
 class ContainerGPUDevice(BaseModel):
-    dtype: Literal['GPU']
+    dtype: Literal["GPU"]
     """Device type identifier for GPU devices."""
-    gpu_type: Literal['AMD', 'INTEL', 'NVIDIA']
+    gpu_type: Literal["AMD", "INTEL", "NVIDIA"]
     """GPU device type."""
     pci_address: NonEmptyString
     """PCI address of the GPU device on the host system."""
 
 
 class ContainerNICDevice(BaseModel):
-    dtype: Literal['NIC']
+    dtype: Literal["NIC"]
     """Device type identifier for network interface cards."""
     trust_guest_rx_filters: bool = False
     """Whether to trust guest OS receive filter settings for better performance."""
-    type_: Literal['E1000', 'VIRTIO'] = Field(alias='type', default='E1000')
+    type_: Literal["E1000", "VIRTIO"] = Field(alias="type", default="E1000")
     """Network interface controller type. `E1000` for Intel compatibility, `VIRTIO` for performance."""
     nic_attach: str | None = None
     """Host network interface or bridge to attach to. `null` for no attachment."""
-    mac: str | None = Field(default=None, pattern='^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$')
+    mac: str | None = Field(default=None, pattern="^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
     """MAC address for the virtual network interface. `null` for auto-generation."""
 
 
 class USBAttributes(BaseModel):
-    vendor_id: NonEmptyString = Field(pattern='^0x.*')
+    vendor_id: NonEmptyString = Field(pattern="^0x.*")
     """USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation)."""
-    product_id: NonEmptyString = Field(pattern='^0x.*')
+    product_id: NonEmptyString = Field(pattern="^0x.*")
     """USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub)."""
 
 
 class ContainerUSBDevice(BaseModel):
-    dtype: Literal['USB']
+    dtype: Literal["USB"]
     """Device type identifier for USB devices."""
     usb: USBAttributes | None = None
     """USB device attributes for identification. `null` for USB host controller only."""
@@ -72,7 +72,7 @@ class ContainerUSBDevice(BaseModel):
 
 ContainerDeviceType: TypeAlias = Annotated[
     ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice,
-    Field(discriminator='dtype')
+    Field(discriminator="dtype")
 ]
 
 
@@ -89,7 +89,7 @@ class ContainerDeviceCreate(ContainerDeviceEntry):
     id: Excluded = excluded_field()
 
 
-@single_argument_args('container_device_create')
+@single_argument_args("container_device_create")
 class ContainerDeviceCreateArgs(ContainerDeviceCreate):
     pass
 
@@ -143,7 +143,7 @@ class ContainerDeviceDiskChoicesArgs(BaseModel):
 
 
 class ContainerDeviceDiskChoices(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class ContainerDeviceDiskChoicesResult(BaseModel):

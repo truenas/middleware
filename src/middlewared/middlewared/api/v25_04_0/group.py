@@ -32,7 +32,7 @@ class GroupEntry(BaseModel):
     sudo_commands_nopasswd: list[NonEmptyString] = []
     smb: bool = True
     """Specifies whether the group should be mapped into an NT group."""
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
+    userns_idmap: Literal["DIRECT"] | ContainerXID | None = None
     """
     Specifies the subgid mapping for this group. If DIRECT then the GID will be
     directly mapped to all containers. Alternatively, the target GID may be
@@ -123,7 +123,7 @@ class GroupGetGroupObjResult(BaseModel):
     """list of group names that are members of the group"""
     sid: str | None = None
     """optional SID value for the account that is present if `sid_info` is specified in payload."""
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
+    source: Literal["LOCAL", "ACTIVEDIRECTORY", "LDAP"]
     """
     the name server switch module that provided the user. Options are:
         FILES - local user in passwd file of server,

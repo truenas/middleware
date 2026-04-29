@@ -12,13 +12,13 @@ from middlewared.service import Service
 class WebUICryptoService(Service):
 
     class Config:
-        namespace = 'webui.crypto'
+        namespace = "webui.crypto"
         cli_private = True
 
     @api_method(
         WebUICryptoGetCertificateDomainNamesArgs,
         WebUICryptoGetCertificateDomainNamesResult,
-        roles=['READONLY_ADMIN']
+        roles=["READONLY_ADMIN"]
     )
     async def get_certificate_domain_names(self, cert_id):
         """Return the domain names associated with a certificate.
@@ -26,12 +26,12 @@ class WebUICryptoService(Service):
         This includes the Common Name (if set) followed by any Subject Alternative
         Names (SANs).
         """
-        return await self.middleware.call('certificate.get_domain_names', cert_id)
+        return await self.middleware.call("certificate.get_domain_names", cert_id)
 
     @api_method(
         WebUICryptoCsrProfilesArgs,
         WebUICryptoCsrProfilesResult,
-        roles=['CERTIFICATE_READ']
+        roles=["CERTIFICATE_READ"]
     )
     async def csr_profiles(self):
         """Return predefined CSR profiles for common certificate types.

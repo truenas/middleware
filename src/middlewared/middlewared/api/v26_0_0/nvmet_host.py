@@ -20,8 +20,8 @@ __all__ = [
     "NVMetHostDhchapHashChoicesResult",
 ]
 
-DHChapHashType: TypeAlias = Literal['SHA-256', 'SHA-384', 'SHA-512']
-DHChapDHGroupType: TypeAlias = Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
+DHChapHashType: TypeAlias = Literal["SHA-256", "SHA-384", "SHA-512"]
+DHChapDHGroupType: TypeAlias = Literal["2048-BIT", "3072-BIT", "4096-BIT", "6144-BIT", "8192-BIT"]
 
 
 class NVMetHostEntry(BaseModel):
@@ -29,7 +29,7 @@ class NVMetHostEntry(BaseModel):
     """Unique identifier for the NVMe-oF host."""
     hostnqn: NonEmptyString
     """ NQN of the host that will connect to this TrueNAS. """
-    description: str = ''
+    description: str = ""
     """Description of the NVMet host."""
     dhchap_key: Secret[NonEmptyString | None] = None
     """
@@ -46,7 +46,7 @@ class NVMetHostEntry(BaseModel):
     """
     dhchap_dhgroup: DHChapDHGroupType | None = None
     """If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication."""
-    dhchap_hash: DHChapHashType = 'SHA-256'
+    dhchap_hash: DHChapHashType = "SHA-256"
     """HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected."""
 
 
@@ -54,10 +54,10 @@ class NVMetHostCreate(NVMetHostEntry):
     id: Excluded = excluded_field()
     hostnqn: NQN
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_attrs(self):
         if self.dhchap_ctrl_key and not self.dhchap_key:
-            raise ValueError('Cannot configure bi-directional authentication without setting dhchap_key')
+            raise ValueError("Cannot configure bi-directional authentication without setting dhchap_key")
 
         return self
 
@@ -106,7 +106,7 @@ class NVMetHostDeleteResult(BaseModel):
 
 
 class NVMetHostGenerateKeyArgs(BaseModel):
-    dhchap_hash: DHChapHashType = 'SHA-256'
+    dhchap_hash: DHChapHashType = "SHA-256"
     """ Hash to be used with the generated key.  """
     nqn: str | None = None
     """ NQN to be used for the transformation. """

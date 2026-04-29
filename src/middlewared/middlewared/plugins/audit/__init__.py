@@ -1,5 +1,5 @@
 async def init_audit(middleware, event_type, args):
-    if await middleware.call('system.boot_env_first_boot'):
+    if await middleware.call("system.boot_env_first_boot"):
         try:
             await middleware.call("audit.setup")
         except Exception:
@@ -7,7 +7,7 @@ async def init_audit(middleware, event_type, args):
 
 
 async def setup(middleware):
-    middleware.event_subscribe('system.ready', init_audit)
+    middleware.event_subscribe("system.ready", init_audit)
 
     try:
         # Set up connections to the auditing databases

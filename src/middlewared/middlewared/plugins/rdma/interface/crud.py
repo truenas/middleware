@@ -15,7 +15,7 @@ import middlewared.sqlalchemy as sa
 
 class RDMAInterfaceEntry(BaseModel):
     id: int
-    node: str = ''
+    node: str = ""
     ifname: str
     address: IPvAnyAddress
     prefixlen: int
@@ -63,8 +63,8 @@ class RdmaInterfaceDeleteResult(BaseModel):
 
 
 class RDMAInterfaceModel(sa.Model):
-    __tablename__ = 'rdma_interface'
-    __table_args__ = (sa.UniqueConstraint('rdmaif_node', 'rdmaif_ifname'),)
+    __tablename__ = "rdma_interface"
+    __table_args__ = (sa.UniqueConstraint("rdmaif_node", "rdmaif_ifname"),)
 
     id = sa.Column(sa.Integer(), primary_key=True, autoincrement=True)
 
@@ -78,29 +78,29 @@ class RDMAInterfaceModel(sa.Model):
 class RDMAInterfaceService(CRUDService):
 
     class Config:
-        namespace = 'rdma.interface'
+        namespace = "rdma.interface"
         private = True
         cli_private = True
-        datastore = 'rdma.interface'
+        datastore = "rdma.interface"
         datastore_prefix = "rdmaif_"
-        role_prefix = 'NETWORK_INTERFACE'
+        role_prefix = "NETWORK_INTERFACE"
         entry = RDMAInterfaceEntry
 
     async def compress(self, data):
-        if 'check' in data:
-            del data['check']
+        if "check" in data:
+            del data["check"]
 
     @api_method(RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult, private=True)
     async def do_create(self, data):
-        result = await self.middleware.call('rdma.interface.configure_interface',
-                                            data['node'], data['ifname'], data['address'],
-                                            data['prefixlen'], data['mtu'], data.get('check'))
+        result = await self.middleware.call("rdma.interface.configure_interface",
+                                            data["node"], data["ifname"], data["address"],
+                                            data["prefixlen"], data["mtu"], data.get("check"))
         if result:
             await self.compress(data)
-            data['id'] = await self.middleware.call(
-                'datastore.insert', self._config.datastore, data,
-                {'prefix': self._config.datastore_prefix})
-            return await self.get_instance(data['id'])
+            data["id"] = await self.middleware.call(
+                "datastore.insert", self._config.datastore, data,
+                {"prefix": self._config.datastore_prefix})
+            return await self.get_instance(data["id"])
         else:
             return None
 
@@ -113,17 +113,17 @@ class RDMAInterfaceService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        if old['node'] != new['node'] or old['ifname'] != new['ifname']:
-            await self.middleware.call('rdma.interface.configure_interface', data['node'], data['ifname'], None)
+        if old["node"] != new["node"] or old["ifname"] != new["ifname"]:
+            await self.middleware.call("rdma.interface.configure_interface", data["node"], data["ifname"], None)
 
-        result = await self.middleware.call('rdma.interface.configure_interface',
-                                            new['node'], new['ifname'], new['address'],
-                                            new['prefixlen'], new['mtu'], new.get('check'))
+        result = await self.middleware.call("rdma.interface.configure_interface",
+                                            new["node"], new["ifname"], new["address"],
+                                            new["prefixlen"], new["mtu"], new.get("check"))
         if result:
             await self.compress(new)
             await self.middleware.call(
-                'datastore.update', self._config.datastore, id_, new,
-                {'prefix': self._config.datastore_prefix})
+                "datastore.update", self._config.datastore, id_, new,
+                {"prefix": self._config.datastore_prefix})
             return await self.get_instance(id_)
         else:
             raise CallError("Failed to update active RDMA interface configuration")
@@ -138,30 +138,30 @@ class RDMAInterfaceService(CRUDService):
         # Attempt to remove the live configuration
         try:
             result = await self.middleware.call(
-                'rdma.interface.configure_interface', data['node'], data['ifname'], None
+                "rdma.interface.configure_interface", data["node"], data["ifname"], None
             )
             if not result:
                 self.logger.warning("Failed to delete active RDMA interface configuration")
         except Exception:
-            self.logger.exception('Failed to remove live RDMA configuration')
+            self.logger.exception("Failed to remove live RDMA configuration")
 
         # Now delete the entry
-        return await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        return await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
     async def configure_interface(self, node, ifname, address, prefixlen=None, mtu=None, check=None):
-        if not node or node == await self.middleware.call('failover.node'):
+        if not node or node == await self.middleware.call("failover.node"):
             # Local
-            return await self.middleware.call('rdma.interface.local_configure_interface',
+            return await self.middleware.call("rdma.interface.local_configure_interface",
                                               ifname, address, prefixlen, mtu, check)
         else:
             # Remote
             try:
-                return await self.middleware.call('failover.call_remote', 'rdma.interface.local_configure_interface',
+                return await self.middleware.call("failover.call_remote", "rdma.interface.local_configure_interface",
                                                   [ifname, address, prefixlen, mtu, check])
             except CallError as e:
                 if e.errno != CallError.ENOMETHOD:
                     raise
-                self.logger.warning('Failed to configure remote RDMA interface')
+                self.logger.warning("Failed to configure remote RDMA interface")
                 return False
 
     def _apply_config(self, sock, idx, address, prefixlen, mtu, current_addresses):
@@ -226,7 +226,7 @@ class RDMAInterfaceService(CRUDService):
             else:
                 set_link_down(sock, index=idx)
         except Exception:
-            self.logger.error('Rollback of RDMA interface configuration failed', exc_info=True)
+            self.logger.error("Rollback of RDMA interface configuration failed", exc_info=True)
 
     def local_configure_interface(self, ifname, address, prefixlen=None, mtu=None, check=None):
         """Configure an RDMA-capable network interface.
@@ -237,9 +237,9 @@ class RDMAInterfaceService(CRUDService):
 
         On failure the interface is rolled back to its previous state.
         """
-        netdev = self.middleware.call_sync('rdma.interface.ifname_to_netdev', ifname)
+        netdev = self.middleware.call_sync("rdma.interface.ifname_to_netdev", ifname)
         if not netdev:
-            self.logger.error('Could not find netdev associated with %s', ifname)
+            self.logger.error("Could not find netdev associated with %s", ifname)
             return False
 
         try:
@@ -247,7 +247,7 @@ class RDMAInterfaceService(CRUDService):
                 try:
                     link = get_link(sock, netdev)
                 except DeviceNotFound:
-                    self.logger.error('Network device %s does not exist', netdev)
+                    self.logger.error("Network device %s does not exist", netdev)
                     return False
 
                 idx = link.index
@@ -261,80 +261,80 @@ class RDMAInterfaceService(CRUDService):
                     else:
                         self._deconfigure(sock, idx, prev_addresses)
                 except Exception:
-                    self.logger.error('Failed to configure RDMA interface, attempting rollback', exc_info=True)
+                    self.logger.error("Failed to configure RDMA interface, attempting rollback", exc_info=True)
                     self._rollback(sock, idx, prev_addresses, prev_mtu, was_up)
                     return False
 
                 if check:
                     msg = f'communication of {netdev} with IP {check["ping_ip"]}'
                     if not self.middleware.call_sync(
-                        'rdma.interface.local_ping',
+                        "rdma.interface.local_ping",
                         ifname,
-                        check['ping_ip'],
-                        check.get('ping_mac')
+                        check["ping_ip"],
+                        check.get("ping_mac")
                     ):
-                        self.logger.warning('Failed to validate %s, attempting rollback', msg)
+                        self.logger.warning("Failed to validate %s, attempting rollback", msg)
                         self._rollback(sock, idx, prev_addresses, prev_mtu, was_up)
                         return False
-                    self.logger.info('Validated %s', msg)
+                    self.logger.info("Validated %s", msg)
 
             return True
         except Exception:
-            self.logger.error('Failed to configure RDMA interface', exc_info=True)
+            self.logger.error("Failed to configure RDMA interface", exc_info=True)
 
         return False
 
     async def ping(self, node, ifname, ip, mac=None):
-        if not node or node == await self.middleware.call('failover.node'):
+        if not node or node == await self.middleware.call("failover.node"):
             # Local
-            result = await self.middleware.call('rdma.interface.local_ping', ifname, ip, mac)
+            result = await self.middleware.call("rdma.interface.local_ping", ifname, ip, mac)
         else:
             # Remote
             try:
-                result = await self.middleware.call('failover.call_remote',
-                                                    'rdma.interface.local_ping', [ifname, ip, mac])
+                result = await self.middleware.call("failover.call_remote",
+                                                    "rdma.interface.local_ping", [ifname, ip, mac])
             except CallError as e:
                 if e.errno != CallError.ENOMETHOD:
                     raise
-                self.logger.warning('Failed to ping from remote RDMA interface')
+                self.logger.warning("Failed to ping from remote RDMA interface")
                 return False
 
         return result
 
     async def ifname_to_netdev(self, ifname):
-        links = await self.middleware.call('rdma.get_link_choices')
+        links = await self.middleware.call("rdma.get_link_choices")
         for link in links:
-            if link['rdma'] == ifname:
-                return link['netdev']
+            if link["rdma"] == ifname:
+                return link["netdev"]
 
     async def local_ping(self, ifname, ip, mac=None):
-        netdev = await self.middleware.call('rdma.interface.ifname_to_netdev', ifname)
-        if not await self.middleware.call('core.ping_remote', {'hostname': ip,
-                                                               'timeout': 1,
-                                                               'count': 4,
-                                                               'interface': netdev,
-                                                               'interval': '0.1'}):
+        netdev = await self.middleware.call("rdma.interface.ifname_to_netdev", ifname)
+        if not await self.middleware.call("core.ping_remote", {"hostname": ip,
+                                                               "timeout": 1,
+                                                               "count": 4,
+                                                               "interface": netdev,
+                                                               "interval": "0.1"}):
             # Common case no logging needed
             return False
         if mac:
-            macs = await self.middleware.call('core.arp', {'ip': ip, 'interface': netdev})
+            macs = await self.middleware.call("core.arp", {"ip": ip, "interface": netdev})
             if ip not in macs:
                 # If we can ping it, we should be able to get the MAC address
-                self.middleware.logger.debug('Could not obtain arp info for IP: %s', ip)
+                self.middleware.logger.debug("Could not obtain arp info for IP: %s", ip)
                 return False
             if macs[ip] != mac:
                 # MAC address mismatch
-                self.middleware.logger.debug('MAC address mismatch for IP %s', ip)
+                self.middleware.logger.debug("MAC address mismatch for IP %s", ip)
                 return False
         return True
 
     async def internal_interfaces(self, get_all=False):
         # We must fetch all link choices.  If we did not there would
         # be a circular call chain between interface and rdma
-        links = await self.middleware.call('rdma._get_link_choices')
+        links = await self.middleware.call("rdma._get_link_choices")
         ifname_to_netdev = {}
         for link in links:
-            ifname_to_netdev[link['rdma']] = link['netdev']
+            ifname_to_netdev[link["rdma"]] = link["netdev"]
 
         if get_all:
             # Treat all RDMA interfaces as internal
@@ -344,19 +344,19 @@ class RDMAInterfaceService(CRUDService):
             result = set()
             interfaces = await self.query()
             for interface in interfaces:
-                result.add(ifname_to_netdev[interface['ifname']])
+                result.add(ifname_to_netdev[interface["ifname"]])
             return list(result)
 
     async def configure(self):
-        if await self.middleware.call('failover.licensed'):
-            node = await self.middleware.call('failover.node')
+        if await self.middleware.call("failover.licensed"):
+            node = await self.middleware.call("failover.node")
         else:
-            node = ''
-        interfaces = await self.middleware.call('rdma.interface.query', [['node', '=', node]])
+            node = ""
+        interfaces = await self.middleware.call("rdma.interface.query", [["node", "=", node]])
         for interface in interfaces:
-            await self.middleware.call('rdma.interface.local_configure_interface',
-                                       interface['ifname'],
-                                       interface['address'],
-                                       interface['prefixlen'],
-                                       interface['mtu'])
+            await self.middleware.call("rdma.interface.local_configure_interface",
+                                       interface["ifname"],
+                                       interface["address"],
+                                       interface["prefixlen"],
+                                       interface["mtu"])
         return interfaces

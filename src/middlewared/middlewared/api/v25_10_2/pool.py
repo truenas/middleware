@@ -71,32 +71,32 @@ class PoolEntry(BaseModel):
     scan: Annotated[
         dict,
         Field(examples=[{
-            'function': None,
-            'state': None,
-            'start_time': None,
-            'end_time': None,
-            'percentage': None,
-            'bytes_to_process': None,
-            'bytes_processed': None,
-            'bytes_issued': None,
-            'pause': None,
-            'errors': None,
-            'total_secs_left': None,
+            "function": None,
+            "state": None,
+            "start_time": None,
+            "end_time": None,
+            "percentage": None,
+            "bytes_to_process": None,
+            "bytes_processed": None,
+            "bytes_issued": None,
+            "pause": None,
+            "errors": None,
+            "total_secs_left": None,
         }])
     ] | None
     """Information about any active scrub or resilver operation. `null` if no operation is running."""
     expand: Annotated[
         dict,
         Field(examples=[{
-            'state': 'FINISHED',
-            'expanding_vdev': 0,
-            'start_time': None,
-            'end_time': None,
-            'bytes_to_reflow': 835584,
-            'bytes_reflowed': 978944,
-            'waiting_for_resilver': 0,
-            'total_secs_left': None,
-            'percentage': 85.35564853556485,
+            "state": "FINISHED",
+            "expanding_vdev": 0,
+            "start_time": None,
+            "end_time": None,
+            "bytes_to_reflow": 835584,
+            "bytes_reflowed": 978944,
+            "waiting_for_resilver": 0,
+            "total_secs_left": None,
+            "percentage": 85.35564853556485,
         }])
     ] | None
     """Information about any active pool expansion operation. `null` if no expansion is running."""
@@ -133,10 +133,10 @@ class PoolEntry(BaseModel):
     freeing_str: str | None
     """Human-readable string representation of space being freed. `null` if not available."""
     autotrim: dict = Field(examples=[{
-        'parsed': 'off',
-        'rawvalue': 'off',
-        'source': 'DEFAULT',
-        'value': 'off',
+        "parsed": "off",
+        "rawvalue": "off",
+        "source": "DEFAULT",
+        "value": "off",
     }])
     """Auto-trim configuration for the pool indicating whether automatic TRIM operations are enabled."""
     topology: PoolTopology | None

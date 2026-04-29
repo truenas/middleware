@@ -66,58 +66,58 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             return Alert(LicenseAlert("Your TrueNAS has no license, contact support."))
 
         # check if this node's system serial matches the serial in the license
-        local_serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
+        local_serial = self.middleware.call_sync("system.dmidecode_info")["system-serial-number"]
         if local_serial not in local_license.serials:
-            alerts.append(Alert(LicenseAlert('System serial does not match license.')))
+            alerts.append(Alert(LicenseAlert("System serial does not match license.")))
 
         standby_license = standby_serial = None
         try:
             if local_license.type == LicenseType.ENTERPRISE_HA:
-                standby_license = self.middleware.call_sync('failover.call_remote', 'truenas.license.info')
+                standby_license = self.middleware.call_sync("failover.call_remote", "truenas.license.info")
                 standby_serial = self.middleware.call_sync(
-                    'failover.call_remote', 'system.dmidecode_info')['system-serial-number']
+                    "failover.call_remote", "system.dmidecode_info")["system-serial-number"]
         except Exception:
             pass
 
         if standby_license and standby_serial is not None:
             # check if the remote node's system serial matches the serial in the license
-            if standby_serial not in standby_license['serials']:
-                alerts.append(Alert(LicenseAlert('System serial of standby node does not match license.')))
+            if standby_serial not in standby_license["serials"]:
+                alerts.append(Alert(LicenseAlert("System serial of standby node does not match license.")))
 
-        model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
-        if model == 'UNKNOWN':
-            alerts.append(Alert(LicenseAlert('TrueNAS is running on unsupported hardware.')))
+        model = self.middleware.call_sync("truenas.get_chassis_hardware").removeprefix("TRUENAS-").split("-")[0]
+        if model == "UNKNOWN":
+            alerts.append(Alert(LicenseAlert("TrueNAS is running on unsupported hardware.")))
         elif model != local_license.model:
             alerts.append(Alert(
                 LicenseAlert(
-                    f'Your license was issued for model {local_license.model!r} '
-                    f'but the system was detected as model {model!r}'
+                    f"Your license was issued for model {local_license.model!r} "
+                    f"but the system was detected as model {model!r}"
                 )
             ))
 
         enc_nums: defaultdict[str, int] = defaultdict(lambda: 0)
-        for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
-            enc_nums[enc['model']] += 1
+        for enc in filter(lambda x: not x["controller"], self.middleware.call_sync("enclosure2.query")):
+            enc_nums[enc["model"]] += 1
 
         if local_license.enclosures:
             for name, quantity in local_license.enclosures.items():
-                if name == 'ES60':
+                if name == "ES60":
                     continue
 
                 if enc_nums[name] != quantity:
                     alerts.append(Alert(
                         LicenseAlert(
-                            'License expects %(license)s units of %(name)s Expansion shelf but found %(found)s.' % {
-                                'license': quantity,
-                                'name': name,
-                                'found': enc_nums[name]
+                            "License expects %(license)s units of %(name)s Expansion shelf but found %(found)s." % {
+                                "license": quantity,
+                                "name": name,
+                                "found": enc_nums[name]
                             }
                         )
                     ))
         elif enc_nums:
             alerts.append(Alert(
                 LicenseAlert(
-                    'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
+                    "Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves."
                 )
             ))
 

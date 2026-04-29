@@ -8,20 +8,20 @@ from middlewared.plugins.jbof.redfish import AsyncRedfishClient, InvalidCredenti
 LOGGER = getLogger(__name__)
 
 
-JBOF_MODEL_ATTR = 'model'
-JBOF_URI_ATTR = 'uri'
+JBOF_MODEL_ATTR = "model"
+JBOF_URI_ATTR = "uri"
 
 
 async def get_redfish_clients(jbofs):
     clients = dict()
     for jbof in jbofs:
         try:
-            rclient = await AsyncRedfishClient.cache_get(jbof['uuid'], jbofs)
-            clients[jbof['uuid']] = rclient
+            rclient = await AsyncRedfishClient.cache_get(jbof["uuid"], jbofs)
+            clients[jbof["uuid"]] = rclient
         except InvalidCredentialsError:
-            LOGGER.error('Failed to login to redfish ip %r %r', jbof['mgmt_ip1'], jbof['mgmt_ip2'])
+            LOGGER.error("Failed to login to redfish ip %r %r", jbof["mgmt_ip1"], jbof["mgmt_ip2"])
         except Exception:
-            LOGGER.error('Unexpected failure creating redfish client object', exc_info=True)
+            LOGGER.error("Unexpected failure creating redfish client object", exc_info=True)
 
     return clients
 
@@ -31,7 +31,7 @@ async def get_enclosure_model(rclient):
     try:
         chassis = await rclient.chassis()
     except Exception:
-        LOGGER.error('Unexpected failure enumerating chassis info', exc_info=True)
+        LOGGER.error("Unexpected failure enumerating chassis info", exc_info=True)
         return model, uri
 
     model, uri = await is_this_an_es24n(rclient)
@@ -43,7 +43,7 @@ async def get_enclosure_model(rclient):
             info = await rclient.get(uri)
             if info.ok:
                 try:
-                    model = JbofModels(info.json().get('Model', '')).name
+                    model = JbofModels(info.json().get("Model", "")).name
                     return model, uri
                 except ValueError:
                     # Using parenthesis on the enum checks the string BY VALUE
@@ -51,7 +51,7 @@ async def get_enclosure_model(rclient):
                     # then a KeyError will be raised.
                     continue
     except Exception:
-        LOGGER.error('Unexpected failure determing enclosure model', exc_info=True)
+        LOGGER.error("Unexpected failure determing enclosure model", exc_info=True)
 
     return model, uri
 
@@ -88,11 +88,11 @@ async def set_slot_status(ident, slot, status):
     uri = rclient.get_attribute(JBOF_URI_ATTR)
     if not uri:
         _, uri = await get_enclosure_model(rclient)
-    fulluri = f'{uri}/Drives/{slot}'
+    fulluri = f"{uri}/Drives/{slot}"
 
-    if status in ('CLEAR', 'OFF'):
-        await rclient.post(fulluri, data={'LocationIndicatorActive': False})
-    elif status in ('ON', 'IDENT', 'IDENTIFY'):
-        await rclient.post(fulluri, data={'LocationIndicatorActive': True})
+    if status in ("CLEAR", "OFF"):
+        await rclient.post(fulluri, data={"LocationIndicatorActive": False})
+    elif status in ("ON", "IDENT", "IDENTIFY"):
+        await rclient.post(fulluri, data={"LocationIndicatorActive": True})
     else:
-        raise ValueError('Unsupported slot status', status)
+        raise ValueError("Unsupported slot status", status)

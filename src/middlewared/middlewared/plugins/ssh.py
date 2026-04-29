@@ -17,7 +17,7 @@ import middlewared.sqlalchemy as sa
 
 
 class SSHModel(sa.Model):
-    __tablename__ = 'services_ssh'
+    __tablename__ = "services_ssh"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     ssh_bindiface = sa.Column(sa.MultiSelectField(), default=[])
@@ -54,18 +54,18 @@ class SSHService(SystemServiceService):
         datastore = "services.ssh"
         service = "ssh"
         datastore_prefix = "ssh_"
-        cli_namespace = 'service.ssh'
-        role_prefix = 'SSH'
+        cli_namespace = "service.ssh"
+        role_prefix = "SSH"
         entry = SSHEntry
 
-    @api_method(SSHBindifaceChoicesArgs, SSHBindifaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(SSHBindifaceChoicesArgs, SSHBindifaceChoicesResult, roles=["NETWORK_INTERFACE_READ"])
     def bindiface_choices(self):
         """
         Available choices for the bindiface attribute of SSH service.
         """
-        return self.middleware.call_sync('interface.choices')
+        return self.middleware.call_sync("interface.choices")
 
-    @api_method(SSHUpdateArgs, SSHUpdateResult, audit='Update SSH configuration')
+    @api_method(SSHUpdateArgs, SSHUpdateResult, audit="Update SSH configuration")
     async def do_update(self, data):
         """
         Update settings of SSH daemon service.
@@ -93,16 +93,16 @@ class SSHService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if new['bindiface']:
-            iface_choices = await self.middleware.call('ssh.bindiface_choices')
-            invalid_ifaces = list(filter(lambda x: x not in iface_choices, new['bindiface']))
+        if new["bindiface"]:
+            iface_choices = await self.middleware.call("ssh.bindiface_choices")
+            invalid_ifaces = list(filter(lambda x: x not in iface_choices, new["bindiface"]))
             if invalid_ifaces:
                 verrors.add(
-                    'ssh_update.bindiface',
+                    "ssh_update.bindiface",
                     f'The following interfaces are not valid: {", ".join(invalid_ifaces)}',
                 )
 
-        verrors.extend(await validate_port(self.middleware, 'ssh_update.tcpport', new['tcpport'], 'ssh'))
+        verrors.extend(await validate_port(self.middleware, "ssh_update.tcpport", new["tcpport"], "ssh"))
         verrors.check()
 
         await self._update_service(old, new)
@@ -159,7 +159,7 @@ class SSHService(SystemServiceService):
     @private
     def save_keys(self):
         update = {}
-        old = self.middleware.call_sync('datastore.query', 'services_ssh', [], {'get': True})
+        old = self.middleware.call_sync("datastore.query", "services_ssh", [], {"get": True})
         for path, column in self.keys:
             if os.path.exists(path):
                 with open(path, "rb") as f:
@@ -168,19 +168,19 @@ class SSHService(SystemServiceService):
                         update[column] = data
 
         if update:
-            self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update, {'ha_sync': False})
+            self.middleware.call_sync("datastore.update", "services.ssh", old["id"], update, {"ha_sync": False})
 
 
 class SSHServicePortDelegate(ServicePortDelegate):
 
-    name = 'ssh'
-    namespace = 'ssh'
-    port_fields = ['tcpport']
-    title = 'SSH Service'
+    name = "ssh"
+    namespace = "ssh"
+    port_fields = ["tcpport"]
+    title = "SSH Service"
 
 
 async def setup(middleware):
-    await middleware.call('port.register_attachment_delegate', SSHServicePortDelegate(middleware))
-    if await middleware.call('core.is_starting_during_boot'):
-        await middleware.call('ssh.cleanup_keys')
-        await middleware.call('ssh.generate_keys')
+    await middleware.call("port.register_attachment_delegate", SSHServicePortDelegate(middleware))
+    if await middleware.call("core.is_starting_during_boot"):
+        await middleware.call("ssh.cleanup_keys")
+        await middleware.call("ssh.generate_keys")

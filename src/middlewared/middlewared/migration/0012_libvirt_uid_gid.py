@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:
 
 def migrate(middleware: Middleware) -> None:
     for device in middleware.call_sync2(
-        middleware.services.vm.device.query, [['attributes.dtype', 'in', ['CDROM', 'RAW']]]
+        middleware.services.vm.device.query, [["attributes.dtype", "in", ["CDROM", "RAW"]]]
     ):
         path = device.attributes.path
         try:

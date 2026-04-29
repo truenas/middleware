@@ -8,7 +8,7 @@ class MseriesBiosService(Service):
 
     class Config:
         private = True
-        namespace = 'mseries.bios'
+        namespace = "mseries.bios"
 
     @cache
     def is_old_version(self):

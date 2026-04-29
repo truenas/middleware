@@ -6,7 +6,7 @@ from .utils import open_resource
 
 
 class EncryptionProperties(TypedDict, total=False):
-    keyformat: Literal['hex', 'passphrase', 'raw']
+    keyformat: Literal["hex", "passphrase", "raw"]
     keylocation: str
     pbkdf2iters: int | None
 
@@ -25,7 +25,7 @@ def load_key(tls: threading.local, dataset: str, **kwargs: str | bytes) -> None:
             Mutually exclusive with ``key``.
     """
     if len(kwargs) > 1:
-        raise ValueError('Cannot specify both key and key location')
+        raise ValueError("Cannot specify both key and key location")
     rsrc = open_resource(tls, dataset)
     if (crypto := rsrc.crypto()) is None:
         raise ZFSNotEncryptedException(dataset)
@@ -52,7 +52,7 @@ def check_key(tls: threading.local, dataset: str, **kwargs: str | bytes) -> bool
             Mutually exclusive with ``key``.
     """
     if len(kwargs) > 1:
-        raise ValueError('Cannot specify both key and key location')
+        raise ValueError("Cannot specify both key and key location")
     rsrc = open_resource(tls, dataset)
     if (crypto := rsrc.crypto()) is None:
         raise ZFSNotEncryptedException(dataset)
@@ -78,10 +78,10 @@ def change_key(
     """
     props = {} if properties is None else cast(dict[str, str | int | None], properties.copy())
     if key:
-        props.pop('keylocation', None)
-        props['key'] = key
-    elif 'keylocation' not in props:
-        raise ValueError('Must specify either key or key location')
+        props.pop("keylocation", None)
+        props["key"] = key
+    elif "keylocation" not in props:
+        raise ValueError("Must specify either key or key location")
 
     rsrc = open_resource(tls, dataset)
     if (crypto := rsrc.crypto()) is None:

@@ -3,7 +3,7 @@ import contextlib
 
 import docker
 
-PROJECT_KEY: str = 'com.docker.compose.project'
+PROJECT_KEY: str = "com.docker.compose.project"
 
 
 @contextlib.contextmanager

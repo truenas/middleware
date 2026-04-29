@@ -16,26 +16,26 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
-    'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
-    'ECCurves', 'EKU_OID',
+    "CertificateEntry", "CertificateCreateArgs", "CertificateCreateResult",
+    "CertificateUpdateArgs", "CertificateUpdateResult", "CertificateDeleteArgs", "CertificateDeleteResult",
+    "ECCurves", "EKU_OID",
 ]
 
 
-RE_CERTIFICATE_NAME = re.compile(r'^[a-z0-9_\-]+$', re.I)
+RE_CERTIFICATE_NAME = re.compile(r"^[a-z0-9_\-]+$", re.I)
 CERT_NAME = Annotated[NonEmptyString, AfterValidator(
     match_validator(
         RE_CERTIFICATE_NAME,
-        'Name can only contain alphanumeric characters plus dash (-), and underscore (_)',
+        "Name can only contain alphanumeric characters plus dash (-), and underscore (_)",
     )
 ), StringConstraints(max_length=120)]
 
 
 class ECCurves(str, Enum):
-    SECP256R1 = 'SECP256R1'
-    SECP384R1 = 'SECP384R1'
-    SECP521R1 = 'SECP521R1'
-    ED25519 = 'ed25519'
+    SECP256R1 = "SECP256R1"
+    SECP384R1 = "SECP384R1"
+    SECP521R1 = "SECP521R1"
+    ED25519 = "ed25519"
 
 
 class CertificateEntry(BaseModel):
@@ -119,7 +119,7 @@ class CertificateEntry(BaseModel):
     """Cryptographic hash algorithm used for certificate signing (e.g., 'SHA256'). `null` if unavailable."""
     lifetime: int | None
     """Certificate validity period in seconds. `null` if certificate parsing failed."""
-    from_: str | None = Field(alias='from')
+    from_: str | None = Field(alias="from")
     """Certificate validity start date in ISO 8601 format. `null` if certificate parsing failed."""
     until: str | None
     """Certificate validity end date in ISO 8601 format. `null` if certificate parsing failed."""
@@ -195,15 +195,15 @@ class CertificateExtensions(BaseModel):
     """Key Usage extension configuration defining permitted cryptographic operations."""
 
 
-@single_argument_args('certificate_create')
+@single_argument_args("certificate_create")
 class CertificateCreateArgs(BaseModel):
     name: CERT_NAME
     """Certificate name."""
     create_type: Literal[
-        'CERTIFICATE_CREATE_IMPORTED',
-        'CERTIFICATE_CREATE_CSR',
-        'CERTIFICATE_CREATE_IMPORTED_CSR',
-        'CERTIFICATE_CREATE_ACME',
+        "CERTIFICATE_CREATE_IMPORTED",
+        "CERTIFICATE_CREATE_CSR",
+        "CERTIFICATE_CREATE_IMPORTED_CSR",
+        "CERTIFICATE_CREATE_ACME",
     ]
     """Type of certificate creation operation."""
     add_to_trusted_store: bool = False
@@ -218,9 +218,9 @@ class CertificateCreateArgs(BaseModel):
     # Fields used for controlling what type of key is created
     key_length: Literal[2048, 4096] | None = None
     """RSA key length in bits or `null`."""
-    key_type: Literal['RSA', 'EC'] = 'RSA'
+    key_type: Literal["RSA", "EC"] = "RSA"
     """Type of cryptographic key to generate."""
-    ec_curve: Literal[tuple(s.value for s in ECCurves)] = 'SECP384R1'
+    ec_curve: Literal[tuple(s.value for s in ECCurves)] = "SECP384R1"
     """Elliptic curve to use for EC keys."""
     passphrase: NonEmptyString | None = None
     """Passphrase to protect the private key or `null`."""
@@ -239,7 +239,7 @@ class CertificateCreateArgs(BaseModel):
     """Organizational unit for certificate subject or `null`."""
     state: NonEmptyString | None = None
     """State or province name for certificate subject or `null`."""
-    digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512'] = 'SHA256'
+    digest_algorithm: Literal["SHA224", "SHA256", "SHA384", "SHA512"] = "SHA256"
     """Hash algorithm for certificate signing."""
     san: list[NonEmptyString] = Field(default_factory=list)
     """Subject alternative names for the certificate."""

@@ -80,7 +80,7 @@ class IPMISELAlert(DismissableAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> list[str]:
-        return [args['name'], args['event_direction'], args['event'], args['dt_iso']]
+        return [args["name"], args["event_direction"], args["event"], args["dt_iso"]]
 
     @classmethod
     async def dismiss(cls, middleware: Any, alerts: list[Alert[Any]], alert: Alert[Any]) -> list[Alert[Any]]:
@@ -248,14 +248,14 @@ class IPMISELAlertSource(AlertSource):
         alerts = []
         alerts.extend(await self.produce_sel_elist_alerts())
 
-        platform = await self.middleware.call('truenas.get_chassis_hardware')
+        platform = await self.middleware.call("truenas.get_chassis_hardware")
         if platform.startswith(
             (
-                'TRUENAS-F',
-                'TRUENAS-H',
-                'TRUENAS-R30',
-                'TRUENAS-R60',
-                'TRUENAS-V'
+                "TRUENAS-F",
+                "TRUENAS-H",
+                "TRUENAS-R30",
+                "TRUENAS-R60",
+                "TRUENAS-V"
             )
         ):
             # the f, h r30/60, and v platforms use a FIFO for sel so it will

@@ -8,14 +8,14 @@ from middlewared.service_exception import MatchNotFound
 
 def find_disk_from_identifier(disks, ident):
     for v in disks.values():
-        for info in filter(lambda x: x['identifier'] == ident, v):
+        for info in filter(lambda x: x["identifier"] == ident, v):
             return info
 
 
 class PoolService(Service):
 
-    @api_method(PoolReplaceArgs, PoolReplaceResult, roles=['POOL_WRITE'])
-    @job(lock='pool_replace')
+    @api_method(PoolReplaceArgs, PoolReplaceResult, roles=["POOL_WRITE"])
+    @job(lock="pool_replace")
     async def replace(self, job, oid, options):
         """
         Replace a disk on a pool.
@@ -40,48 +40,48 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
+        pool = await self.middleware.call("pool.get_instance", oid)
         verrors = ValidationErrors()
-        disk = find_disk_from_identifier(await self.middleware.call('disk.details'), options['disk'])
+        disk = find_disk_from_identifier(await self.middleware.call("disk.details"), options["disk"])
         if disk is None:
-            verrors.add('options.disk', f'Disk {options["disk"]!r} not found.', errno.ENOENT)
+            verrors.add("options.disk", f'Disk {options["disk"]!r} not found.', errno.ENOENT)
         verrors.check()
 
-        if disk['imported_zpool'] is not None:
+        if disk["imported_zpool"] is not None:
             verrors.add(
-                'options.disk',
+                "options.disk",
                 f'Disk {options["disk"]!r} is in use by zpool {disk["imported_zpool"]!r}.',
                 errno.EBUSY
             )
-        elif not options['force']:
-            msg = ' Force must be specified.'
-            if disk['exported_zpool'] is not None:
+        elif not options["force"]:
+            msg = " Force must be specified."
+            if disk["exported_zpool"] is not None:
                 verrors.add(
-                    'options.force',
+                    "options.force",
                     f'Disk {options["disk"]!r} is associated to exported zpool {disk["exported_zpool"]!r}.{msg}'
                 )
-            elif not await self.middleware.call('disk.check_clean', disk['devname']):
+            elif not await self.middleware.call("disk.check_clean", disk["devname"]):
                 verrors.add(
-                    'options.force',
+                    "options.force",
                     f'Disk {options["disk"]!r} is not clean, partitions were found.{msg}'
                 )
 
         if not (found := await self.middleware.call(
-            'pool.find_disk_from_topology', options['label'], pool, {'include_siblings': True}
+            "pool.find_disk_from_topology", options["label"], pool, {"include_siblings": True}
         )):
-            verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
+            verrors.add("options.label", f'Label {options["label"]} not found.', errno.ENOENT)
 
-        if pool['all_sed'] and disk['sed'] is False:
+        if pool["all_sed"] and disk["sed"] is False:
             verrors.add(
-                'options.disk',
-                'Replacement should be a SED disk in a SED pool.'
+                "options.disk",
+                "Replacement should be a SED disk in a SED pool."
             )
 
         verrors.check()
 
-        if pool['all_sed']:
+        if pool["all_sed"]:
             # Let's run some magic to ensure that if a SED disk is being added, it gets handled appropriately
-            await self.middleware.call('disk.setup_sed_disks_for_pool', [disk['devname']], 'options.disk')
+            await self.middleware.call("disk.setup_sed_disks_for_pool", [disk["devname"]], "options.disk")
 
         sibling_sizes = []
         for vdev in found[2]:
@@ -89,39 +89,39 @@ class PoolService(Service):
             # For example, a vdev might be `UNAVAIL` when its path is `/dev/sdb2`, but the current system’s `sdb` disk
             # may have been replaced with an unrelated one (with a different partition GUID). We should not include this
             # disk partition’s size when calculating the new disk partition size.
-            if vdev.get('status') != 'ONLINE':
+            if vdev.get("status") != "ONLINE":
                 continue
 
-            if vdev.get('device'):
-                size = await self.middleware.call('disk.get_dev_size', vdev['device'])
+            if vdev.get("device"):
+                size = await self.middleware.call("disk.get_dev_size", vdev["device"])
                 if size is not None:
                     sibling_sizes.append(size)
 
         vdev = []
-        await self.middleware.call('pool.format_disks', job, {
-            disk['devname']: {
-                'vdev': vdev,
-                'size': min(sibling_sizes) if sibling_sizes else None,
+        await self.middleware.call("pool.format_disks", job, {
+            disk["devname"]: {
+                "vdev": vdev,
+                "size": min(sibling_sizes) if sibling_sizes else None,
             },
         }, 0, 25)
 
         try:
-            job.set_progress(30, 'Replacing disk')
-            new_devname = vdev[0].replace('/dev/', '')
-            await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
+            job.set_progress(30, "Replacing disk")
+            new_devname = vdev[0].replace("/dev/", "")
+            await self.middleware.call("zfs.pool.replace", pool["name"], options["label"], new_devname)
         except Exception:
             raise
 
-        if options['preserve_settings']:
+        if options["preserve_settings"]:
             try:
                 old_disk = await self.middleware.call(
-                    'disk.query',
-                    [['zfs_guid', '=', options['label']]],
-                    {'extra': {'include_expired': True}, 'get': True},
+                    "disk.query",
+                    [["zfs_guid", "=", options["label"]]],
+                    {"extra": {"include_expired": True}, "get": True},
                 )
-                job.set_progress(98, 'Copying old disk settings to new')
-                await self.middleware.call('disk.copy_settings', old_disk, disk, options['preserve_settings'],
-                                           options['preserve_description'])
+                job.set_progress(98, "Copying old disk settings to new")
+                await self.middleware.call("disk.copy_settings", old_disk, disk, options["preserve_settings"],
+                                           options["preserve_description"])
             except MatchNotFound:
                 pass
 

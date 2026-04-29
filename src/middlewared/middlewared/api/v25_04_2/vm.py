@@ -16,22 +16,22 @@ from middlewared.api.base import (
 from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
-    'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOVMFChoicesArgs', 'VMBootloaderOVMFChoicesResult', 'VMBootloaderOptionsArgs',
-    'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
-    'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureMachineChoicesArgs',
-    'VMGuestArchitectureMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult', 'VMImportDiskImageArgs',
-    'VMImportDiskImageResult', 'VMExportDiskImageArgs', 'VMExportDiskImageResult', 'VMSupportsVirtualizationArgs',
-    'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
-    'VMMaximumSupportedVCPUsArgs', 'VMMaximumSupportedVCPUsResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
-    'VMGetConsoleResult', 'VMCPUModelChoicesArgs', 'VMCPUModelChoicesResult', 'VMGetMemoryUsageArgs',
-    'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
-    'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMDisplayWebURIArgs',
-    'VMDisplayWebURIResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
-    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
-    'VMSuspendResult', 'VMGetVMemoryInUseArgs', 'VMGetVMemoryInUseResult', 'VMGetAvailableMemoryArgs',
-    'VMGetAvailableMemoryResult', 'VMGetVMMemoryInfoArgs', 'VMGetVMMemoryInfoResult', 'VMRandomMacArgs',
-    'VMRandomMacResult',
+    "VMEntry", "VMCreateArgs", "VMCreateResult", "VMUpdateArgs", "VMUpdateResult", "VMDeleteArgs", "VMDeleteResult",
+    "VMBootloaderOVMFChoicesArgs", "VMBootloaderOVMFChoicesResult", "VMBootloaderOptionsArgs",
+    "VMBootloaderOptionsResult", "VMStatusArgs", "VMStatusResult", "VMLogFilePathArgs", "VMLogFilePathResult",
+    "VMLogFileDownloadArgs", "VMLogFileDownloadResult", "VMGuestArchitectureMachineChoicesArgs",
+    "VMGuestArchitectureMachineChoicesResult", "VMCloneArgs", "VMCloneResult", "VMImportDiskImageArgs",
+    "VMImportDiskImageResult", "VMExportDiskImageArgs", "VMExportDiskImageResult", "VMSupportsVirtualizationArgs",
+    "VMSupportsVirtualizationResult", "VMVirtualizationDetailsArgs", "VMVirtualizationDetailsResult",
+    "VMMaximumSupportedVCPUsArgs", "VMMaximumSupportedVCPUsResult", "VMFlagsArgs", "VMFlagsResult", "VMGetConsoleArgs",
+    "VMGetConsoleResult", "VMCPUModelChoicesArgs", "VMCPUModelChoicesResult", "VMGetMemoryUsageArgs",
+    "VMGetMemoryUsageResult", "VMPortWizardArgs", "VMPortWizardResult", "VMResolutionChoicesArgs",
+    "VMResolutionChoicesResult", "VMGetDisplayDevicesArgs", "VMGetDisplayDevicesResult", "VMDisplayWebURIArgs",
+    "VMDisplayWebURIResult", "VMStartArgs", "VMStartResult", "VMStopArgs", "VMStopResult", "VMRestartArgs",
+    "VMRestartResult", "VMResumeArgs", "VMResumeResult", "VMPoweroffArgs", "VMPoweroffResult", "VMSuspendArgs",
+    "VMSuspendResult", "VMGetVMemoryInUseArgs", "VMGetVMemoryInUseResult", "VMGetAvailableMemoryArgs",
+    "VMGetAvailableMemoryResult", "VMGetVMMemoryInfoArgs", "VMGetVMMemoryInfoResult", "VMRandomMacArgs",
+    "VMRandomMacResult",
 ]
 
 
@@ -42,11 +42,11 @@ class VMStatus(BaseModel):
 
 
 class VMEntry(BaseModel):
-    command_line_args: str = ''
-    cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = 'CUSTOM'
+    command_line_args: str = ""
+    cpu_mode: Literal["CUSTOM", "HOST-MODEL", "HOST-PASSTHROUGH"] = "CUSTOM"
     cpu_model: str | None = None
     name: NonEmptyString
-    description: str = ''
+    description: str = ""
     vcpus: int = Field(ge=1, default=1)
     cores: int = Field(ge=1, default=1)
     threads: int = Field(ge=1, default=1)
@@ -59,12 +59,12 @@ class VMEntry(BaseModel):
     memory: int = Field(ge=20)
     min_memory: int | None = Field(ge=20, default=None)
     hyperv_enlightenments: bool = False
-    bootloader: Literal['UEFI_CSM', 'UEFI'] = 'UEFI'
-    bootloader_ovmf: str = 'OVMF_CODE.fd'
+    bootloader: Literal["UEFI_CSM", "UEFI"] = "UEFI"
+    bootloader_ovmf: str = "OVMF_CODE.fd"
     autostart: bool = True
     hide_from_msr: bool = False
     ensure_display_device: bool = True
-    time: Literal['LOCAL', 'UTC'] = 'LOCAL'
+    time: Literal["LOCAL", "UTC"] = "LOCAL"
     shutdown_timeout: int = Field(ge=5, le=300, default=90)
     arch_type: str | None = None
     machine_type: str | None = None
@@ -82,17 +82,17 @@ class VMCreate(VMEntry):
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
 
-    @field_validator('uuid')
+    @field_validator("uuid")
     def validate_uuid(cls, value):
         if value is not None:
             try:
                 uuid.UUID(value, version=4)
             except ValueError:
-                raise ValueError('UUID is not valid version 4')
+                raise ValueError("UUID is not valid version 4")
         return value
 
 
-@single_argument_args('vm_create')
+@single_argument_args("vm_create")
 class VMCreateArgs(VMCreate):
     pass
 
@@ -134,7 +134,7 @@ class VMBootloaderOVMFChoicesArgs(BaseModel):
 
 @single_argument_result
 class VMBootloaderOVMFChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class VMBootloaderOptionsArgs(BaseModel):
@@ -143,8 +143,8 @@ class VMBootloaderOptionsArgs(BaseModel):
 
 @single_argument_result
 class VMBootloaderOptionsResult(BaseModel):
-    UEFI: Literal['UEFI'] = 'UEFI'
-    UEFI_CSM: Literal['Legacy BIOS'] = 'Legacy BIOS'
+    UEFI: Literal["UEFI"] = "UEFI"
+    UEFI_CSM: Literal["Legacy BIOS"] = "Legacy BIOS"
 
 
 class VMStatusArgs(BaseModel):
@@ -177,7 +177,7 @@ class VMGuestArchitectureMachineChoicesArgs(BaseModel):
 
 @single_argument_result
 class VMGuestArchitectureMachineChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class VMCloneArgs(BaseModel):
@@ -189,7 +189,7 @@ class VMCloneResult(BaseModel):
     result: bool
 
 
-@single_argument_args('vm_import_disk_image')
+@single_argument_args("vm_import_disk_image")
 class VMImportDiskImageArgs(BaseModel):
     diskimg: NonEmptyString
     zvol: NonEmptyString
@@ -199,7 +199,7 @@ class VMImportDiskImageResult(BaseModel):
     result: bool
 
 
-@single_argument_args('vm_export_disk_image')
+@single_argument_args("vm_export_disk_image")
 class VMExportDiskImageArgs(BaseModel):
     format: NonEmptyString
     directory: NonEmptyString
@@ -262,7 +262,7 @@ class VMCPUModelChoicesArgs(BaseModel):
 
 @single_argument_result
 class VMCPUModelChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class VMGetMemoryUsageArgs(BaseModel):
@@ -310,12 +310,12 @@ class VMGetDisplayDevicesResult(BaseModel):
 
 
 class DisplayWebURIOptions(BaseModel):
-    protocol: Literal['HTTP', 'HTTPS'] = 'HTTP'
+    protocol: Literal["HTTP", "HTTPS"] = "HTTP"
 
 
 class VMDisplayWebURIArgs(BaseModel):
     id: int
-    host: str = ''
+    host: str = ""
     options: DisplayWebURIOptions = DisplayWebURIOptions()
 
 

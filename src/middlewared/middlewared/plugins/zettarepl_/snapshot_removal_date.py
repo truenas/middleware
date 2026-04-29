@@ -63,7 +63,7 @@ class ZettareplService(Service):
         try:
             snapshots = list_snapshots(LocalShell(), task.dataset, task.recursive)
         except ExecException:
-            raise CallError(f'Dataset {task.dataset!r} does not exist', errno.ENOENT)
+            raise CallError(f"Dataset {task.dataset!r} does not exist", errno.ENOENT)
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))

@@ -1,6 +1,6 @@
 import re
 
-_MAJOR_MINOR_RE = re.compile(r'[1-9][0-9]*\.[0-9]+')
+_MAJOR_MINOR_RE = re.compile(r"[1-9][0-9]*\.[0-9]+")
 
 
 def parse_version_string(version_string: str) -> str | None:
@@ -10,11 +10,11 @@ def parse_version_string(version_string: str) -> str | None:
 
     It is being used for determining release notes url for docs team and in TNC service for heartbeat.
     """
-    to_format = version_string.split('-')[0].split('.')  # looks like ['23', '10', '0', '1']
+    to_format = version_string.split("-")[0].split(".")  # looks like ['23', '10', '0', '1']
     if len(to_format) < 2:
         return None
 
-    return '.'.join(to_format)
+    return ".".join(to_format)
 
 
 def parse_major_minor_version(raw: str | None) -> tuple[int, int] | None:
@@ -30,5 +30,5 @@ def parse_major_minor_version(raw: str | None) -> tuple[int, int] | None:
     head = raw.strip()
     if not _MAJOR_MINOR_RE.fullmatch(head):
         return None
-    major, minor = head.split('.')
+    major, minor = head.split(".")
     return (int(major), int(minor))

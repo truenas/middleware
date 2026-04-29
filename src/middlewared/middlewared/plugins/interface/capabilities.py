@@ -20,7 +20,7 @@ class SetCapabilties(TypedDict):
     """Name of the ethernet device"""
     capabilities: list[str]
     """List of capabilities (features) to perform `action` upon"""
-    action: Literal['ENABLE', 'DISABLE']
+    action: Literal["ENABLE", "DISABLE"]
     """ENABLE or DISABLE `capabilities` on ethernet device"""
 
 
@@ -28,21 +28,21 @@ class InterfaceCapabilitiesService(Service):
 
     class Config:
         private = True
-        namespace = 'interface.capabilities'
-        namespace_alias = 'interface.features'
+        namespace = "interface.capabilities"
+        namespace_alias = "interface.features"
 
     async def validate(self, data, dev):
-        action = data.get('action')
-        if not action or action not in get_args(SetCapabilties.__annotations__['action']):
+        action = data.get("action")
+        if not action or action not in get_args(SetCapabilties.__annotations__["action"]):
             raise ValidationError(
-                f'{self._config.namespace}.action',
+                f"{self._config.namespace}.action",
                 '"action" needs to be "ENABLE" or "DISABLE'
             )
 
-        caps = data.get('capabilities')
+        caps = data.get("capabilities")
         if not caps:
             raise ValidationError(
-                f'{self._config.namespace}.capabilities',
+                f"{self._config.namespace}.capabilities",
                 '"capabilities" is required'
             )
 
@@ -50,12 +50,12 @@ class InterfaceCapabilitiesService(Service):
         for cap in caps:
             if not isinstance(cap, str):
                 raise ValidationError(
-                    f'{self._config.namespace}.capabilities',
+                    f"{self._config.namespace}.capabilities",
                     '"capabilities" should be a list of strings'
                 )
             elif cap not in supported_caps:
                 raise ValidationError(
-                    f'{self._config.namespace}.capabilities',
+                    f"{self._config.namespace}.capabilities",
                     f'{cap} is not supported on {data["name"]}'
                 )
 
@@ -78,17 +78,17 @@ class InterfaceCapabilitiesService(Service):
         `action` String when set to `ENABLE` will enable `capabilities` else if set
                     to `DISABLE` will disable `capabilities`.
         """
-        if not data.get('name'):
+        if not data.get("name"):
             raise ValidationError(
-                f'{self._config.namespace}.name',
+                f"{self._config.namespace}.name",
                 '"name" is required'
             )
 
-        with EthernetHardwareSettings(data['name']) as dev:
+        with EthernetHardwareSettings(data["name"]) as dev:
             self.validate(data, dev)
-            if data['action'] == 'ENABLE':
-                dev.enabled_capabilities = data['capabilities']
+            if data["action"] == "ENABLE":
+                dev.enabled_capabilities = data["capabilities"]
             else:
-                dev.disabled_capabilities = data['capabilities']
-        caps = self.get(data['name'])
-        return caps['enabled'] if data['action'] == 'ENABLE' else caps['disabled']
+                dev.disabled_capabilities = data["capabilities"]
+        caps = self.get(data["name"])
+        return caps["enabled"] if data["action"] == "ENABLE" else caps["disabled"]

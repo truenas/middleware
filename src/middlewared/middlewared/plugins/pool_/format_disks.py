@@ -18,20 +18,20 @@ class PoolService(Service):
         async def unlock_and_format_disk(arg):
             nonlocal formatted, current_percentage
             disk, config = arg
-            if await self.middleware.call('disk.sed_unlock_impl', disk, True) is False:
+            if await self.middleware.call("disk.sed_unlock_impl", disk, True) is False:
                 # returns None or boolean, None we can safely ignore
                 raise CallError(f"Failed to unlock {disk!r}. Check /var/log/middlewared.log")
-            await self.middleware.call('disk.format', disk, config.get('size'))
+            await self.middleware.call("disk.format", disk, config.get("size"))
             formatted += 1
             current_percentage += single_disk_percentage
-            job.set_progress(current_percentage, f'Formatting disks ({formatted}/{len_disks})')
+            job.set_progress(current_percentage, f"Formatting disks ({formatted}/{len_disks})")
 
         await asyncio_map(unlock_and_format_disk, disks.items(), limit=16)
 
-        disk_sync_job = await self.middleware.call('disk.sync_all')
+        disk_sync_job = await self.middleware.call("disk.sync_all")
         await disk_sync_job.wait(raise_error=True)
 
-        zfs_part_type = await self.middleware.call('disk.get_zfs_part_type')
+        zfs_part_type = await self.middleware.call("disk.get_zfs_part_type")
         for disk, config in disks.items():
-            devname = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part_type)
-            config['vdev'].append(f'/dev/{devname}')
+            devname = await self.middleware.call("disk.gptid_from_part_type", disk, zfs_part_type)
+            config["vdev"].append(f"/dev/{devname}")

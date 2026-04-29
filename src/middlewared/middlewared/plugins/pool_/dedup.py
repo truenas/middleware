@@ -13,9 +13,9 @@ from middlewared.service import Service, job
 class PoolService(Service):
 
     class Config:
-        cli_namespace = 'storage.pool'
+        cli_namespace = "storage.pool"
 
-    @api_method(PoolDdtPruneArgs, PoolDdtPruneResult, roles=['POOL_WRITE'])
+    @api_method(PoolDdtPruneArgs, PoolDdtPruneResult, roles=["POOL_WRITE"])
     @job(lock=lambda args: f'ddt_prune_{args[0].get("pool_name")}')
     async def ddt_prune(self, job, options):
         """
@@ -25,10 +25,10 @@ class PoolService(Service):
 
         `days` is the number of days to prune DDT entries.
         """
-        return await self.middleware.call('zfs.pool.ddt_prune', options)
+        return await self.middleware.call("zfs.pool.ddt_prune", options)
 
-    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=['POOL_WRITE'], removed_in='v26')
-    @job(lock=lambda args: f'ddt_prefetch_{args[0]}')
+    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=["POOL_WRITE"], removed_in="v26")
+    @job(lock=lambda args: f"ddt_prefetch_{args[0]}")
     async def ddt_prefetch(self, job, pool_name):
         """
         Prefetch DDT entries in pool ``pool_name``.
@@ -36,10 +36,10 @@ class PoolService(Service):
         .. versionremoved:: 26
             Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
         """
-        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
+        return await self.middleware.call("zfs.resource.pool.prefetch", pool_name)
 
-    @api_method(PoolPrefetchArgs, PoolPrefetchResult, roles=['POOL_WRITE'])
-    @job(lock=lambda args: f'pool_prefetch_{args[0]}')
+    @api_method(PoolPrefetchArgs, PoolPrefetchResult, roles=["POOL_WRITE"])
+    @job(lock=lambda args: f"pool_prefetch_{args[0]}")
     async def prefetch(self, job, pool_name):
         """
         Prefetch pool metadata (DDT and BRT) into ARC.
@@ -52,4 +52,4 @@ class PoolService(Service):
         The DDT tracks deduplication metadata, while the BRT tracks block cloning
         metadata used for efficient copy-on-write operations.
         """
-        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
+        return await self.middleware.call("zfs.resource.pool.prefetch", pool_name)

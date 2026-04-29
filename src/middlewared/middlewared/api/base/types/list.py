@@ -3,10 +3,10 @@ from typing import Annotated, TypeVar
 from pydantic import AfterValidator, Field
 from pydantic_core import PydanticCustomError
 
-__all__ = ['UniqueList']
+__all__ = ["UniqueList"]
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def _validate_unique_list(v: list[T]) -> list[T]:
@@ -15,8 +15,8 @@ def _validate_unique_list(v: list[T]) -> list[T]:
     for i in range(len(v)):
         for j in range(i + 1, len(v)):
             if v[i] == v[j]:
-                raise PydanticCustomError('unique_list', 'List must be unique')
+                raise PydanticCustomError("unique_list", "List must be unique")
     return v
 
 
-UniqueList = Annotated[list[T], AfterValidator(_validate_unique_list), Field(json_schema_extra={'uniqueItems': True})]
+UniqueList = Annotated[list[T], AfterValidator(_validate_unique_list), Field(json_schema_extra={"uniqueItems": True})]

@@ -24,4 +24,4 @@ class DeprecatedServiceAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['service']
+        return args["service"]

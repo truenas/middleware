@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class SharingWebshareModel(sa.Model):
-    __tablename__ = 'sharing_webshare_share'
+    __tablename__ = "sharing_webshare_share"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
@@ -39,33 +39,33 @@ class SharingWebshareModel(sa.Model):
 
 class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
-    share_task_type = 'Webshare'
+    share_task_type = "Webshare"
     allowed_path_types = [FSLocation.LOCAL]
 
     class Config:
-        namespace = 'sharing.webshare'
-        datastore = 'sharing.webshare_share'
-        cli_namespace = 'sharing.webshare'
-        role_prefix = 'SHARING_WEBSHARE'
+        namespace = "sharing.webshare"
+        datastore = "sharing.webshare_share"
+        cli_namespace = "sharing.webshare"
+        role_prefix = "SHARING_WEBSHARE"
         generic = True
         entry = SharingWebshareEntry
 
     @api_method(
         SharingWebshareCreateArgs, SharingWebshareCreateResult,
-        audit='Webshare share create',
-        audit_extended=lambda data: data['name'],
+        audit="Webshare share create",
+        audit_extended=lambda data: data["name"],
         check_annotations=True,
     )
     async def do_create(self, data: SharingWebshareCreate) -> SharingWebshareEntry:
         verrors = ValidationErrors()
 
-        await self.validate(data, 'sharing_webshare_create', verrors)
+        await self.validate(data, "sharing_webshare_create", verrors)
 
         verrors.check()
 
-        id_ = await self.middleware.call('datastore.insert', self._config.datastore, self.compress(data))
+        id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data))
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RELOAD", "webshare")).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -73,7 +73,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
     @api_method(
         SharingWebshareUpdateArgs, SharingWebshareUpdateResult,
-        audit='Webshare share update',
+        audit="Webshare share update",
         audit_callback=True,
         check_annotations=True,
     )
@@ -90,13 +90,13 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
         new = old.updated(data)
 
-        await self.validate(new, 'sharing_webshare_update', verrors, old)
+        await self.validate(new, "sharing_webshare_update", verrors, old)
 
         verrors.check()
 
-        await self.middleware.call('datastore.update', self._config.datastore, id_, self.compress(new))
+        await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new))
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RELOAD", "webshare")).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -104,7 +104,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
     @api_method(
         SharingWebshareDeleteArgs, SharingWebshareDeleteResult,
-        audit='Webshare share delete',
+        audit="Webshare share delete",
         audit_callback=True,
         check_annotations=True,
     )
@@ -116,9 +116,9 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         share = await self.get_instance(id_)
         audit_callback(share.name)
 
-        await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RELOAD", "webshare")).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -130,13 +130,13 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         verrors: ValidationErrors,
         old: SharingWebshareEntry | None = None,
     ) -> None:
-        filters: list[list[int | str]] = [['name', 'C=', name]]
+        filters: list[list[int | str]] = [["name", "C=", name]]
         if old:
-            filters.append(['id', '!=', old.id])
+            filters.append(["id", "!=", old.id])
 
-        if await self.query(filters, {'select': ['name']}):
+        if await self.query(filters, {"select": ["name"]}):
             verrors.add(
-                f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
+                f"{schema_name}.name", "Share with this name already exists.", errno.EEXIST
             )
 
     @private
@@ -152,14 +152,14 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
 
         if data.is_home_base:
-            filters = [['is_home_base', '=', True]]
+            filters = [["is_home_base", "=", True]]
             if old:
-                filters.append(['id', '!=', old.id])
+                filters.append(["id", "!=", old.id])
 
-            if await self.query(filters, {'select': ['id']}):
+            if await self.query(filters, {"select": ["id"]}):
                 verrors.add(
-                    f'{schema_name}.is_home_base',
-                    'Only one share can be configured as home directory base.',
+                    f"{schema_name}.is_home_base",
+                    "Only one share can be configured as home directory base.",
                     errno.EEXIST
                 )
 
@@ -171,19 +171,19 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
 
 class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareEntry]):
-    name = 'webshare'
-    title = 'Webshare Share'
-    service = 'webshare'
+    name = "webshare"
+    title = "Webshare Share"
+    service = "webshare"
     service_class = SharingWebshareService
 
     async def restart_reload_services(self, attachments: list[SharingWebshareEntry]) -> None:
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RELOAD", "webshare")).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call(
-        'pool.dataset.register_attachment_delegate',
+        "pool.dataset.register_attachment_delegate",
         WebshareFSAttachmentDelegate(middleware),  # type: ignore[no-untyped-call]
     )

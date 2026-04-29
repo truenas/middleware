@@ -38,7 +38,7 @@ class NormalizedQuestions(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     timezones: SystemGeneralTimezoneChoices
-    general_config: SystemGeneralEntry = Field(alias='system.general.config')
+    general_config: SystemGeneralEntry = Field(alias="system.general.config")
     certificates: AppCertificateChoices
     ip_choices: AppIpChoices
     gpu_choices: list[dict[str, typing.Any]]
@@ -53,8 +53,8 @@ def train_to_apps_version_mapping(context: ServiceContext) -> dict[str, dict[str
         mapping[train] = {}
         for app_data in train_data.root.values():
             mapping[train][app_data.name] = {
-                'version': app_data.latest_version,
-                'app_version': app_data.latest_app_version,
+                "version": app_data.latest_version,
+                "app_version": app_data.latest_app_version,
             }
 
     return mapping
@@ -68,7 +68,7 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     if options.cache:
         cache_key = get_cache_key(catalog.label)
         try:
-            orig_cached_data = context.middleware.call_sync('cache.get', cache_key)
+            orig_cached_data = context.middleware.call_sync("cache.get", cache_key)
         except KeyError:
             orig_cached_data = None
 
@@ -96,7 +96,7 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     if all_trains:
         # We can only safely say that the catalog is healthy if we retrieve data for all trains
         context.middleware.call_sync2(
-            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
+            context.middleware.services.alert.oneshot_delete, "CatalogNotHealthy", catalog.label
         )
 
     trains = get_trains(context, catalog, options)
@@ -108,7 +108,7 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
         # happens after 24h - which means that for a small amount of time it's possible that user
         # come with a case where system is trying to access cached data but it has expired and it's
         # reading again from disk hence the extra 1 hour.
-        context.middleware.call_sync('cache.put', get_cache_key(catalog.label), trains, 90000)
+        context.middleware.call_sync("cache.put", get_cache_key(catalog.label), trains, 90000)
 
     return CatalogAppsResponse.model_validate(trains)
 
@@ -121,7 +121,7 @@ def get_trains(
         try:
             return retrieve_trains_data_from_json(context, catalog, options)
         except (json.JSONDecodeError, JsonValidationError):
-            context.logger.error('Invalid catalog json file specified for %r catalog', catalog.id)
+            context.logger.error("Invalid catalog json file specified for %r catalog", catalog.id)
 
     return {}
 
@@ -132,7 +132,7 @@ def retrieve_trains_data_from_json(
     trains_to_traverse = retrieve_train_names(
         get_train_path(catalog.location), options.retrieve_all_trains, options.trains
     )
-    with open(os.path.join(catalog.location, CACHED_CATALOG_FILE_NAME), 'r') as f:
+    with open(os.path.join(catalog.location, CACHED_CATALOG_FILE_NAME), "r") as f:
         catalog_data = json.loads(f.read())
         json_schema_validate(catalog_data, CATALOG_JSON_SCHEMA)
 
@@ -152,24 +152,24 @@ def retrieve_trains_data_from_json(
             # from our consumers perspective.
             data[train][app].update({
                 **{k: v for k, v in get_app_details_base(False).items() if k not in data[train][app]},
-                'location': os.path.join(get_train_path(catalog.location), train, app),
+                "location": os.path.join(get_train_path(catalog.location), train, app),
             })
-            if data[train][app]['last_update']:
-                data[train][app]['last_update'] = datetime.strptime(
-                    data[train][app]['last_update'], '%Y-%m-%d %H:%M:%S'
+            if data[train][app]["last_update"]:
+                data[train][app]["last_update"] = datetime.strptime(
+                    data[train][app]["last_update"], "%Y-%m-%d %H:%M:%S"
                 )
 
-            if data[train][app]['healthy'] is False:
-                unhealthy_apps.add(f'{app} ({train} train)')
+            if data[train][app]["healthy"] is False:
+                unhealthy_apps.add(f"{app} ({train} train)")
             if train in recommended_apps and app in recommended_apps[train]:
-                data[train][app]['recommended'] = True
+                data[train][app]["recommended"] = True
 
-            CATEGORIES_SET.update(data[train][app].get('categories') or [])
+            CATEGORIES_SET.update(data[train][app].get("categories") or [])
 
     if unhealthy_apps:
         context.middleware.call_sync2(
             context.middleware.services.alert.oneshot_create, CatalogNotHealthyAlert(
-                catalog=catalog.id, apps=', '.join(unhealthy_apps)
+                catalog=catalog.id, apps=", ".join(unhealthy_apps)
             )
         )
 
@@ -178,24 +178,24 @@ def retrieve_trains_data_from_json(
 
 async def get_normalized_questions_context(context: ServiceContext) -> NormalizedQuestions:
     return NormalizedQuestions.model_validate({
-        'timezones': await context.middleware.call('system.general.timezone_choices'),
-        'system.general.config': await context.middleware.call('system.general.config'),
-        'certificates': await context.call2(context.s.app.certificate_choices),
-        'ip_choices': await context.call2(context.s.app.ip_choices),
-        'gpu_choices': await context.call2(context.s.app.gpu_choices_internal),
+        "timezones": await context.middleware.call("system.general.timezone_choices"),
+        "system.general.config": await context.middleware.call("system.general.config"),
+        "certificates": await context.call2(context.s.app.certificate_choices),
+        "ip_choices": await context.call2(context.s.app.ip_choices),
+        "gpu_choices": await context.call2(context.s.app.gpu_choices_internal),
     })
 
 
 async def retrieve_recommended_apps(context: ServiceContext, cache: bool = True) -> dict[str, list[str]]:
-    cache_key = 'recommended_apps'
+    cache_key = "recommended_apps"
     if cache:
         with contextlib.suppress(KeyError):
-            cached: dict[str, list[str]] = await context.middleware.call('cache.get', cache_key)
+            cached: dict[str, list[str]] = await context.middleware.call("cache.get", cache_key)
             return cached
     data: dict[str, list[str]] = retrieve_recommended_apps_from_catalog_reader(
         (await context.call2(context.s.catalog.config)).location
     )
-    await context.middleware.call('cache.put', cache_key, data)
+    await context.middleware.call("cache.put", cache_key, data)
     return data
 
 

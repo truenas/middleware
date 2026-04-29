@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 def to_ignore(enclosure):
-    if not enclosure['controller']:
+    if not enclosure["controller"]:
         # this is a JBOD and doesn't need to
         # be "combined" into any other object
         return True
-    elif enclosure['model'].startswith((
+    elif enclosure["model"].startswith((
         ControllerModels.F60.value,
         ControllerModels.F100.value,
         ControllerModels.F130.value,
@@ -27,7 +27,7 @@ def to_ignore(enclosure):
         # these are all nvme flash systems and
         # are treated as-is
         return True
-    elif enclosure['model'] in (i.name for i in JbofModels):
+    elif enclosure["model"] in (i.name for i in JbofModels):
         # these are all nvme flash enclosures and
         # are treated as-is
         return True
@@ -56,25 +56,25 @@ def combine_enclosures(enclosures):
     for idx, enclosure in enumerate(enclosures):
         if to_ignore(enclosure):
             continue
-        elif enclosure['model'] == ControllerModels.R40.value:
-            r40_sas_ids.append((int(f'0x{enclosure["id"]}', 16), idx, enclosure['pci']))
+        elif enclosure["model"] == ControllerModels.R40.value:
+            r40_sas_ids.append((int(f'0x{enclosure["id"]}', 16), idx, enclosure["pci"]))
             if len(r40_sas_ids) == 2:
                 # We need to check if the R40 is wired using the "legacy" method.
                 # (i.e. 2x expanders 1x HBA) or the current MPI method
                 # (i.e. 2x expanders 2x HBAs).
                 try:
                     bus_addr1 = os.path.realpath(
-                        f'/sys/class/enclosure/{r40_sas_ids[0][2]}'
-                    ).split('/')[5].strip()
+                        f"/sys/class/enclosure/{r40_sas_ids[0][2]}"
+                    ).split("/")[5].strip()
                     bus_addr2 = os.path.realpath(
-                        f'/sys/class/enclosure/{r40_sas_ids[1][2]}'
-                    ).split('/')[5].strip()
+                        f"/sys/class/enclosure/{r40_sas_ids[1][2]}"
+                    ).split("/")[5].strip()
                 except Exception:
                     # dont crash, just fall back to legacy
                     bus_addr1 = bus_addr2 = 1
 
                 if bus_addr1 != bus_addr2:  # current MPI wiring
-                    if bus_addr1 == '0000:19:00.0' and bus_addr2 == '0000:68:00.0':
+                    if bus_addr1 == "0000:19:00.0" and bus_addr2 == "0000:68:00.0":
                         # platform team confirms that the expander whose bus address of 0000:19:00.0
                         # is mapped to drives 1-24, and bus address of 0000:68:00.0 is 25-48
                         head_unit_idx = r40_sas_ids[0][1]
@@ -104,23 +104,23 @@ def combine_enclosures(enclosures):
                 # we know which enclosure has the larger sas address so we'll update
                 # the array device slots so that they're 25-48.
                 for origslot, newslot in zip(range(1, 25), range(25, 49)):
-                    orig_info = enclosures[_update_idx]['elements']['Array Device Slot'].pop(origslot)
-                    enclosures[_update_idx]['elements']['Array Device Slot'][newslot] = orig_info
+                    orig_info = enclosures[_update_idx]["elements"]["Array Device Slot"].pop(origslot)
+                    enclosures[_update_idx]["elements"]["Array Device Slot"][newslot] = orig_info
 
-                to_combine.update(enclosures[_update_idx]['elements'].pop('Array Device Slot'))
+                to_combine.update(enclosures[_update_idx]["elements"].pop("Array Device Slot"))
                 to_remove.append(_update_idx)
-        elif enclosure['elements']['Array Device Slot'].get(HEAD_UNIT_DISK_SLOT_START_NUMBER):
+        elif enclosure["elements"]["Array Device Slot"].get(HEAD_UNIT_DISK_SLOT_START_NUMBER):
             # the enclosure object whose disk slot has number 1
             # will always be the head-unit
             head_unit_idx = idx
         else:
-            to_combine.update(enclosure['elements'].pop('Array Device Slot', dict()))
+            to_combine.update(enclosure["elements"].pop("Array Device Slot", dict()))
             to_remove.append(idx)
 
     if head_unit_idx is not None:
-        enclosures[head_unit_idx]['elements']['Array Device Slot'].update(to_combine)
-        enclosures[head_unit_idx]['elements']['Array Device Slot'] = {
-            k: v for k, v in sorted(enclosures[head_unit_idx]['elements']['Array Device Slot'].items())
+        enclosures[head_unit_idx]["elements"]["Array Device Slot"].update(to_combine)
+        enclosures[head_unit_idx]["elements"]["Array Device Slot"] = {
+            k: v for k, v in sorted(enclosures[head_unit_idx]["elements"]["Array Device Slot"].items())
         }
         for idx in reversed(to_remove):
             # we've combined the enclosures into the

@@ -38,7 +38,7 @@ class ISCSIGlobalEntry(BaseModel):
     systems and requires the system and network environment have Remote Direct Memory Access (RDMA)-capable hardware."""
 
 
-@single_argument_args('iscsi_update')
+@single_argument_args("iscsi_update")
 class ISCSIGlobalUpdateArgs(ISCSIGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

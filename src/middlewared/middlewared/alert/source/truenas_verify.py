@@ -39,7 +39,7 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
         # Run only if in stig mode
         if self.stig_enabled():
             # Capture the results in syslog
-            res = subprocess.run(['truenas_verify', 'syslog'], capture_output=True, text=True)
+            res = subprocess.run(["truenas_verify", "syslog"], capture_output=True, text=True)
             if res.returncode:
                 return Alert(
                     TrueNASVerifyServiceChangeDetectionAlert(verrs=res.stdout.strip()),
@@ -48,6 +48,6 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
         return None
 
     def stig_enabled(self) -> Any:
-        security_config = self.middleware.call_sync('system.security.config')
+        security_config = self.middleware.call_sync("system.security.config")
         enabled_stig = system_security_config_to_stig_type(security_config)
         return enabled_stig

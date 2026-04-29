@@ -28,14 +28,14 @@ from middlewared.utils.filesystem.acl import (
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'ACLTemplateEntry',
-    'ACLTemplateByPathArgs', 'ACLTemplateByPathResult',
-    'ACLTemplateCreateArgs', 'ACLTemplateCreateResult',
-    'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
-    'ACLTemplateDeleteArgs', 'ACLTemplateDeleteResult',
-    'FilesystemGetaclArgs', 'FilesystemGetaclResult',
-    'FilesystemSetaclArgs', 'FilesystemSetaclResult',
-    'NFS4ACE', 'POSIXACE',
+    "ACLTemplateEntry",
+    "ACLTemplateByPathArgs", "ACLTemplateByPathResult",
+    "ACLTemplateCreateArgs", "ACLTemplateCreateResult",
+    "ACLTemplateUpdateArgs", "ACLTemplateUpdateResult",
+    "ACLTemplateDeleteArgs", "ACLTemplateDeleteResult",
+    "FilesystemGetaclArgs", "FilesystemGetaclResult",
+    "FilesystemSetaclArgs", "FilesystemSetaclResult",
+    "NFS4ACE", "POSIXACE",
 ]
 
 ACL_MAX_ID = 2 ** 32 // 2 - 1
@@ -96,15 +96,15 @@ class NFS4ACE_AdvancedFlags(BaseModel):
     INHERIT_ONLY: bool = False
     INHERITED: bool = False
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_inherit_only(self) -> Self:
         if not self.INHERIT_ONLY:
             return self
 
         if not self.FILE_INHERIT and not self.DIRECTORY_INHERIT:
             raise ValueError(
-                'At least one of FILE_INHERIT or DIRECTORY_INHERIT must '
-                'be set if INHERIT_ONLY is present in the ACE flags'
+                "At least one of FILE_INHERIT or DIRECTORY_INHERIT must "
+                "be set if INHERIT_ONLY is present in the ACE flags"
             )
 
         return self
@@ -122,7 +122,7 @@ class NFS4ACE(BaseModel):
     id: AceWhoId | None = None
     who: LocalUsername | RemoteUsername | None = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ace_valid(self) -> Self:
         if self.tag in NFS4_SPECIAL_ENTRIES:
             if self.id not in (-1, None):
@@ -168,7 +168,7 @@ class POSIXACE(BaseModel):
     id: AceWhoId | None = None
     who: LocalUsername | RemoteUsername | None = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ace_valid(self) -> Self:
         if self.tag in POSIX_SPECIAL_ENTRIES:
             if self.id not in (-1, None):
@@ -246,7 +246,7 @@ class FilesystemSetAclOptions(BaseModel):
     validate_effective_acl: bool = True
 
 
-@single_argument_args('filesystem_acl')
+@single_argument_args("filesystem_acl")
 class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString
     dacl: list[NFS4ACE] | list[POSIXACE]
@@ -260,11 +260,11 @@ class FilesystemSetaclArgs(BaseModel):
     # acltype is explicitly added to preserve compatibility with older setacl API
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_setacl_valid(self) -> Self:
         if len(self.dacl) != 0 and self.options.stripacl:
             raise ValueError(
-                'Simultaneosuly setting and removing ACL from path is not supported'
+                "Simultaneosuly setting and removing ACL from path is not supported"
             )
 
         return self
@@ -280,7 +280,7 @@ class ACLTemplateEntry(BaseModel):
     name: str
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E]
     acl: list[NFS4ACE] | list[POSIXACE]
-    comment: str = ''
+    comment: str = ""
 
 
 class AclTemplateCreate(ACLTemplateEntry):
@@ -323,12 +323,12 @@ class AclTemplateFormatOptions(BaseModel):
     resolve_names: bool = False
 
 
-@single_argument_args('filesystem_acl')
+@single_argument_args("filesystem_acl")
 class ACLTemplateByPathArgs(BaseModel):
     path: str = ""
-    query_filters: QueryFilters = Field(alias='query-filters', default=[])
-    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
-    format_options: AclTemplateFormatOptions = Field(alias='format-options', default=AclTemplateFormatOptions())
+    query_filters: QueryFilters = Field(alias="query-filters", default=[])
+    query_options: QueryOptions = Field(alias="query-options", default=QueryOptions())
+    format_options: AclTemplateFormatOptions = Field(alias="format-options", default=AclTemplateFormatOptions())
 
 
 class ACLTemplateByPathResult(BaseModel):

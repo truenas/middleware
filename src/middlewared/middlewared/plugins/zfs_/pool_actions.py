@@ -11,16 +11,16 @@ from .pool_utils import SEARCH_PATHS, find_vdev
 class ZFSPoolService(Service):
 
     class Config:
-        namespace = 'zfs.pool'
+        namespace = "zfs.pool"
         private = True
 
     @functools.cache
     def get_search_paths(self):
-        if self.middleware.call_sync('system.is_ha_capable'):
+        if self.middleware.call_sync("system.is_ha_capable"):
             # HA capable hardware which means we _ALWAYS_ expect
             # the zpool to have been created with disks that have
             # been formatted with gpt type labels on them
-            return ['/dev/disk/by-partuuid']
+            return ["/dev/disk/by-partuuid"]
         return SEARCH_PATHS
 
     def export(self, name: str, options: dict | None = None):
@@ -35,7 +35,7 @@ class ZFSPoolService(Service):
     def get_devices(self, name: str):
         try:
             with libzfs.ZFS() as zfs:
-                return [i.replace('/dev/', '') for i in zfs.get(name).disks]
+                return [i.replace("/dev/", "") for i in zfs.get(name).disks]
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
@@ -45,7 +45,7 @@ class ZFSPoolService(Service):
                 pool = zfs.get(name)
                 target = find_vdev(pool, label)
                 if target is None:
-                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+                    raise CallError(f"Failed to find vdev for {label}", errno.EINVAL)
                 op(target, *args)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
@@ -54,13 +54,13 @@ class ZFSPoolService(Service):
         """Detach device `label` from the pool `pool`."""
         if options is None:
             options = dict()
-        options.setdefault('clear_label', False)
-        self.detach_remove_impl('detach', name, label, options)
+        options.setdefault("clear_label", False)
+        self.detach_remove_impl("detach", name, label, options)
 
     def detach_remove_impl(self, op, name, label, options):
         def impl(target):
             getattr(target, op)()
-            if options['clear_label']:
+            if options["clear_label"]:
                 self.clear_label(target.path)
         self.__zfs_vdev_operation(name, label, impl)
 
@@ -89,8 +89,8 @@ class ZFSPoolService(Service):
         """
         if options is None:
             options = dict()
-        options.setdefault('clear_label', False)
-        self.detach_remove_impl('remove', name, label, options)
+        options.setdefault("clear_label", False)
+        self.detach_remove_impl("remove", name, label, options)
 
     def replace(self, name: str, label: str, dev: str):
         """
@@ -101,10 +101,10 @@ class ZFSPoolService(Service):
                 pool = zfs.get(name)
                 target = find_vdev(pool, label)
                 if target is None:
-                    raise CallError(f'Failed to find vdev for {label!r}', errno.EINVAL)
+                    raise CallError(f"Failed to find vdev for {label!r}", errno.EINVAL)
 
-                newvdev = libzfs.ZFSVdev(zfs, 'disk')
-                newvdev.path = f'/dev/{dev}'
+                newvdev = libzfs.ZFSVdev(zfs, "disk")
+                newvdev.path = f"/dev/{dev}"
                 # FIXME: Replace using old path is not working for some reason
                 # Lets use guid for now.
                 target.path = str(target.guid)
@@ -132,7 +132,7 @@ class ZFSPoolService(Service):
     ):
         if import_options is None:
             import_options = dict()
-        import_options.setdefault('missing_log', False)
+        import_options.setdefault("missing_log", False)
 
         with libzfs.ZFS() as zfs:
             found = None
@@ -143,35 +143,35 @@ class ZFSPoolService(Service):
                         found = pool
                         break
             except libzfs.ZFSInvalidCachefileException:
-                raise CallError('Invalid or missing cachefile', errno.ENOENT)
+                raise CallError("Invalid or missing cachefile", errno.ENOENT)
             except libzfs.ZFSException as e:
                 code = errno.ENOENT if e.code == libzfs.Error.NOENT.value else e.code
                 raise CallError(str(e), code)
             else:
                 if found is None:
-                    raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
+                    raise CallError(f"Pool {name_or_guid} not found.", errno.ENOENT)
 
-            missing_log = import_options['missing_log']
+            missing_log = import_options["missing_log"]
             pool_name = new_name or found.name
             try:
                 zfs.import_pool(found, pool_name, properties, missing_log=missing_log, any_host=any_host)
             except libzfs.ZFSException as e:
                 # We only log if some datasets failed to mount after pool import
                 if e.code != libzfs.Error.MOUNTFAILED:
-                    raise CallError(f'Failed to import {pool_name!r} pool: {e}', e.code)
+                    raise CallError(f"Failed to import {pool_name!r} pool: {e}", e.code)
                 else:
                     self.logger.error(
                         'Failed to mount datasets after importing "%s" pool: %s', name_or_guid, str(e), exc_info=True
                     )
 
     def ddt_prune(self, options):
-        if options['percentage'] and options['days']:
-            raise CallError('Percentage or days must be provided, not both')
-        if options['percentage'] is None and options['days'] is None:
-            raise CallError('Percentage or days must be provided')
+        if options["percentage"] and options["days"]:
+            raise CallError("Percentage or days must be provided, not both")
+        if options["percentage"] is None and options["days"] is None:
+            raise CallError("Percentage or days must be provided")
 
         try:
             with libzfs.ZFS() as zfs:
-                zfs.get(options['pool_name']).ddt_prune(percentage=options['percentage'], days=options['days'])
+                zfs.get(options["pool_name"]).ddt_prune(percentage=options["percentage"], days=options["days"])
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)

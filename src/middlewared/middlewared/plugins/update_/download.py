@@ -43,10 +43,10 @@ def download_update(
     progress_proportion: float,
 ) -> bool:
     if not _download_update_lock.acquire(False):
-        raise CallError('Another update download is currently being performed.')
+        raise CallError("Another update download is currently being performed.")
 
     try:
-        context.middleware.call_sync('network.general.will_perform_activity', 'update')
+        context.middleware.call_sync("network.general.will_perform_activity", "update")
 
         job.set_progress(0, "Retrieving update manifest")
 
@@ -64,14 +64,14 @@ def download_update(
                 return False
         elif train is not None and version is not None:
             if not context.run_coroutine(can_update_to(context, version)):
-                raise CallError('Cannot update to specified version')
+                raise CallError("Cannot update to specified version")
 
             if probe_manifest := context.run_coroutine(get_train_releases(context, train)).get(version):
                 manifest = probe_manifest
             else:
-                raise CallError('Specified version does not exist')
+                raise CallError("Specified version does not exist")
         else:
-            raise CallError('`train` and `version` must either both be `null` or both be non-`null`')
+            raise CallError("`train` and `version` must either both be `null` or both be non-`null`")
 
         try:
             def set_progress(progress: float, description: str) -> None:
@@ -127,15 +127,15 @@ def download_update(
 
                                 set_progress(
                                     progress / total,
-                                    f'Downloading update: {format_size(total)} at '
-                                    f'{format_size(int(progress / (time.monotonic() - download_start)))}/s'
+                                    f"Downloading update: {format_size(total)} at "
+                                    f"{format_size(int(progress / (time.monotonic() - download_start)))}/s"
                                 )
 
                                 f.write(chunk)
 
                             size = os.path.getsize(dst)
                             if size != total:
-                                raise CallError(f'Downloaded update file size mismatch ({size} != {total})',
+                                raise CallError(f"Downloaded update file size mismatch ({size} != {total})",
                                                 errno.ECONNRESET)
 
                             break
@@ -151,12 +151,12 @@ def download_update(
                         if isinstance(e, CallError):
                             raise
                         else:
-                            raise CallError(f'Error downloading update: {e}', errno.ECONNRESET)
+                            raise CallError(f"Error downloading update: {e}", errno.ECONNRESET)
 
             size = os.path.getsize(dst)
             if size != total:
                 os.unlink(dst)
-                raise CallError(f'Downloaded update file size mismatch ({size} != {total})', errno.ECONNRESET)
+                raise CallError(f"Downloaded update file size mismatch ({size} != {total})", errno.ECONNRESET)
 
             set_progress(1, "Update downloaded.")
             return True
@@ -188,9 +188,9 @@ def verify_existing_update(context: ServiceContext) -> None:
 
 
 def get_update_location(context: ServiceContext) -> str:
-    syspath = context.middleware.call_sync('systemdataset.config')['path']
+    syspath = context.middleware.call_sync("systemdataset.config")["path"]
     if syspath:
-        path = f'{syspath}/update'
+        path = f"{syspath}/update"
     else:
         path = UPLOAD_LOCATION
     os.makedirs(path, exist_ok=True)
@@ -205,4 +205,4 @@ async def verify_existing_update_hook(middleware: Middleware, event_type: str, a
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.event_subscribe('system.ready', verify_existing_update_hook)
+    middleware.event_subscribe("system.ready", verify_existing_update_hook)

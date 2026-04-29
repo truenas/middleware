@@ -12,8 +12,8 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'UPSEntry', 'UPSPortChoicesArgs', 'UPSPortChoicesResult', 'UPSDriverChoicesArgs',
-    'UPSDriverChoicesResult', 'UPSUpdateArgs', 'UPSUpdateResult', 'UPSUpdate',
+    "UPSEntry", "UPSPortChoicesArgs", "UPSPortChoicesResult", "UPSDriverChoicesArgs",
+    "UPSDriverChoicesResult", "UPSUpdateArgs", "UPSUpdateResult", "UPSUpdate",
 ]
 
 
@@ -40,7 +40,7 @@ class UPSEntry(BaseModel):
     """Additional user configurations for UPS monitoring access."""
     identifier: NonEmptyString
     """Unique identifier name for this UPS device within the monitoring system."""
-    mode: Literal['MASTER', 'SLAVE']
+    mode: Literal["MASTER", "SLAVE"]
     """Operating mode.
     * `MASTER` controls the UPS directly
     * `SLAVE` monitors remotely"""
@@ -56,7 +56,7 @@ class UPSEntry(BaseModel):
     """Serial port or device path for UPS communication."""
     remotehost: str
     """Hostname or IP address of remote UPS server when operating in SLAVE mode."""
-    shutdown: Literal['LOWBATT', 'BATT']
+    shutdown: Literal["LOWBATT", "BATT"]
     """Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power."""
     shutdowncmd: str | None
     """Custom command to execute during UPS shutdown sequence. `null` for default."""

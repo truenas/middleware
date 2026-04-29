@@ -22,21 +22,21 @@ from .gpt_utils import read_gpt_partitions
 BYTES_512 = 512
 PART_INFO_FIELDS = (
     # queue/logical_block_size (reported as a multiple of BYTES_512)
-    'lbs',
+    "lbs",
     # starting offset of partition in sectors
-    'start_sector',
+    "start_sector",
     # ending offset of partition in sectors
-    'end_sector',
+    "end_sector",
     # total partition size in sectors
-    'total_sectors',
+    "total_sectors",
     # starting offset of partition in bytes
-    'start_byte',
+    "start_byte",
     # ending offset of partition in bytes
-    'end_byte',
+    "end_byte",
     # total size of partition in bytes
-    'total_bytes',
+    "total_bytes",
 )
-PART_INFO = collections.namedtuple('part_info', PART_INFO_FIELDS, defaults=(0,) * len(PART_INFO_FIELDS))
+PART_INFO = collections.namedtuple("part_info", PART_INFO_FIELDS, defaults=(0,) * len(PART_INFO_FIELDS))
 
 
 def get_partition_size_info(disk_name, s_offset, s_size):
@@ -48,7 +48,7 @@ def get_partition_size_info(disk_name, s_offset, s_size):
     positions to be in sectors."""
     lbs = 0
     with contextlib.suppress(FileNotFoundError, ValueError):
-        with open(f'/sys/block/{disk_name}/queue/logical_block_size') as f:
+        with open(f"/sys/block/{disk_name}/queue/logical_block_size") as f:
             lbs = int(f.read().strip())
 
     if not lbs:
@@ -97,62 +97,62 @@ class DiskService(Service):
     @private
     def get_dev_size(self, device):
         try:
-            dev = pyudev.Devices.from_name(pyudev.Context(), 'block', device)
+            dev = pyudev.Devices.from_name(pyudev.Context(), "block", device)
         except pyudev.DeviceNotFoundByNameError:
             return
         else:
-            if dev.get('DEVTYPE') not in ('disk', 'partition'):
+            if dev.get("DEVTYPE") not in ("disk", "partition"):
                 return
 
-        return dev.attributes.asint('size') * BYTES_512
+        return dev.attributes.asint("size") * BYTES_512
 
     @private
     def list_partitions(self, disk):
         parts = []
         try:
-            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            bd = pyudev.Devices.from_name(pyudev.Context(), "block", disk)
         except pyudev.DeviceNotFoundByNameError:
             return parts
 
         if not bd.children:
             return parts
 
-        req_keys = ('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
+        req_keys = ("ID_PART_ENTRY_" + i for i in ("TYPE", "UUID", "NUMBER", "SIZE"))
         for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
-            part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
-            pinfo = get_partition_size_info(disk, int(p['ID_PART_ENTRY_OFFSET']), int(p['ID_PART_ENTRY_SIZE']))
+            part_name = self.get_partition_for_disk(disk, p["ID_PART_ENTRY_NUMBER"])
+            pinfo = get_partition_size_info(disk, int(p["ID_PART_ENTRY_OFFSET"]), int(p["ID_PART_ENTRY_SIZE"]))
             part = {
-                'name': part_name,
-                'partition_type': p['ID_PART_ENTRY_TYPE'],
-                'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
-                'partition_uuid': p['ID_PART_ENTRY_UUID'],
-                'disk': disk,
-                'start_sector': pinfo.start_sector,
-                'start': pinfo.start_byte,
-                'end_sector': pinfo.end_sector,
-                'end': pinfo.end_byte,
-                'size': pinfo.total_bytes,
-                'id': part_name,
-                'path': os.path.join('/dev', part_name),
-                'encrypted_provider': None,
+                "name": part_name,
+                "partition_type": p["ID_PART_ENTRY_TYPE"],
+                "partition_number": int(p["ID_PART_ENTRY_NUMBER"]),
+                "partition_uuid": p["ID_PART_ENTRY_UUID"],
+                "disk": disk,
+                "start_sector": pinfo.start_sector,
+                "start": pinfo.start_byte,
+                "end_sector": pinfo.end_sector,
+                "end": pinfo.end_byte,
+                "size": pinfo.total_bytes,
+                "id": part_name,
+                "path": os.path.join("/dev", part_name),
+                "encrypted_provider": None,
             }
 
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
             if encrypted_provider:
-                part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
+                part["encrypted_provider"] = os.path.join("/dev", encrypted_provider[0].split("/")[3])
             parts.append(part)
         return parts
 
     @private
     def get_part_uuid_from_udev(self, disk, part_type):
         try:
-            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            bd = pyudev.Devices.from_name(pyudev.Context(), "block", disk)
             for i in bd.children:
-                if (pguid := i.get('ID_PART_ENTRY_UUID')) and (tguid := i.get('ID_PART_ENTRY_TYPE')):
+                if (pguid := i.get("ID_PART_ENTRY_UUID")) and (tguid := i.get("ID_PART_ENTRY_TYPE")):
                     if tguid == part_type:
                         return pguid
         except pyudev.DeviceNotFoundByNameError:
-            raise CallError(f'Disk {disk!r} not found!')
+            raise CallError(f"Disk {disk!r} not found!")
 
     @private
     def gptid_from_part_type(self, disk, part_type, retries=10, sleep_time=0.5):
@@ -193,39 +193,39 @@ class DiskService(Service):
                 do_retry = True
             else:
                 # maybe someone called this on a drive with no GPT partitions
-                raise CallError(f'Partition type {part_type} not found on {disk}')
+                raise CallError(f"Partition type {part_type} not found on {disk}")
 
         if do_retry:
             for i in range(retries):
                 if part := self.get_part_uuid_from_udev(disk, part_type):
-                    return f'disk/by-partuuid/{part}'
+                    return f"disk/by-partuuid/{part}"
                 else:
                     time.sleep(sleep_time)
 
             if part_entry_guid_on_disk:
-                return f'disk/by-partuuid/{part_entry_guid_on_disk}'
+                return f"disk/by-partuuid/{part_entry_guid_on_disk}"
 
             total_wait = retries * sleep_time
-            raise CallError(f'Partition type {part_type} not found on {disk} after waiting {total_wait} seconds')
+            raise CallError(f"Partition type {part_type} not found on {disk} after waiting {total_wait} seconds")
 
-        return f'disk/by-partuuid/{part}'
+        return f"disk/by-partuuid/{part}"
 
     @private
     async def get_efi_part_type(self):
-        return 'c12a7328-f81f-11d2-ba4b-00a0c93ec93b'
+        return "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
 
     @private
     async def get_zfs_part_type(self):
-        return '6a898cc3-1dd2-11b2-99a6-080020736631'
+        return "6a898cc3-1dd2-11b2-99a6-080020736631"
 
     @private
     def label_to_dev(self, label):
-        label_path = os.path.join('/dev', label)
+        label_path = os.path.join("/dev", label)
         if not os.path.exists(label_path):
             return None
 
         dev = os.path.basename(os.path.realpath(label_path))
-        if not pathlib.Path(os.path.join('/dev/', dev)).is_block_device():
+        if not pathlib.Path(os.path.join("/dev/", dev)).is_block_device():
             return None
 
         return dev
@@ -236,31 +236,31 @@ class DiskService(Service):
         if partition_or_disk is None:
             return None
 
-        if os.path.exists(os.path.join('/sys/class/block', partition_or_disk, 'partition')):
+        if os.path.exists(os.path.join("/sys/class/block", partition_or_disk, "partition")):
             return self.get_disk_from_partition(partition_or_disk)
         else:
             return partition_or_disk
 
     @private
     def get_disk_from_partition(self, part_name):
-        if not os.path.exists(os.path.join('/dev', part_name)):
+        if not os.path.exists(os.path.join("/dev", part_name)):
             return None
         try:
-            with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
+            with open(os.path.join("/sys/class/block", part_name, "partition"), "r") as f:
                 part_num = f.read().strip()
         except FileNotFoundError:
             return part_name
         else:
-            if part_name.startswith(('nvme', 'pmem')):
+            if part_name.startswith(("nvme", "pmem")):
                 # nvme/pmem partitions would be like nvmen1p1 where disk is nvmen1
-                part_num = f'p{part_num}'
+                part_num = f"p{part_num}"
         return part_name.rsplit(part_num, 1)[0].strip()
 
     @private
     def get_partition_for_disk(self, disk, partition):
-        if disk.startswith(('nvme', 'pmem')):
+        if disk.startswith(("nvme", "pmem")):
             # FIXME: This is a hack for nvme/pmem disks, however let's please come up with a better way
             # to link disks with their partitions
-            return f'{disk}p{partition}'
+            return f"{disk}p{partition}"
         else:
-            return f'{disk}{partition}'
+            return f"{disk}{partition}"

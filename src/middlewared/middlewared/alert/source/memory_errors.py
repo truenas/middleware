@@ -17,8 +17,8 @@ class MemoryErrorsAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
-        title='Uncorrected Memory Errors Detected',
-        text='%(count)d total uncorrected errors detected for %(loc)s.',
+        title="Uncorrected Memory Errors Detected",
+        text="%(count)d total uncorrected errors detected for %(loc)s.",
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
     )
@@ -32,7 +32,7 @@ class MemorySizeMismatchAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.WARNING,
-        title='Memory Size Mismatch Detected',
+        title="Memory Size Mismatch Detected",
         text="Memory size on this controller %(r1)s doesn't match other controller %(r2)s",
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
@@ -47,22 +47,22 @@ class MemoryErrorsAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
-        for mem_ctrl, info in (await self.middleware.call('hardware.memory.error_info')).items():
-            location = f'memory controller {mem_ctrl}'
-            if (val := info['uncorrected_errors_with_no_dimm_info']) is not None and val > 0:
+        for mem_ctrl, info in (await self.middleware.call("hardware.memory.error_info")).items():
+            location = f"memory controller {mem_ctrl}"
+            if (val := info["uncorrected_errors_with_no_dimm_info"]) is not None and val > 0:
                 # this means that there were uncorrected errors where no additional information
                 # is available. These errors occur when the system detects an uncorrectable memory
                 # error, but specific details about the error are not provided or accessible.
                 # Because of this fact, we'll just report the error count without the DIMM information.
                 alerts.append(Alert(MemoryErrorsAlert(count=val, loc=location)))
-            elif (val := info['uncorrected_errors']) is not None and val > 0:
+            elif (val := info["uncorrected_errors"]) is not None and val > 0:
                 # this means that there were uncorrected errors where the dimm information was able
                 # to be obtained.
-                for dimm_key in filter(lambda x: x.startswith(('dimm', 'rank')), info):
-                    if (val2 := info[dimm_key]['uncorrected_errors']) is not None and val2 > 0:
+                for dimm_key in filter(lambda x: x.startswith(("dimm", "rank")), info):
+                    if (val2 := info[dimm_key]["uncorrected_errors"]) is not None and val2 > 0:
                         # the specific dimm
                         alerts.append(Alert(
-                            MemoryErrorsAlert(count=val2, loc=location + f' on dimm {dimm_key}')
+                            MemoryErrorsAlert(count=val2, loc=location + f" on dimm {dimm_key}")
                         ))
 
         return alerts
@@ -74,17 +74,17 @@ class MemorySizeMismatchAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
-        if not await self.middleware.call('failover.licensed'):
+        if not await self.middleware.call("failover.licensed"):
             return alerts
 
-        r1 = (await self.middleware.call('system.mem_info'))['physmem_size']
+        r1 = (await self.middleware.call("system.mem_info"))["physmem_size"]
         if r1 is None:
             return alerts
 
         try:
             r2 = (await self.middleware.call(
-                'failover.call_remote', 'system.mem_info', [], {'raise_connect_error': False}
-            ))['physmem_size']
+                "failover.call_remote", "system.mem_info", [], {"raise_connect_error": False}
+            ))["physmem_size"]
             if r2 is None:
                 return alerts
         except Exception:

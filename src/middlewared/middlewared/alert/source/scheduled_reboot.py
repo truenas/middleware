@@ -28,9 +28,9 @@ class FencedRebootAlert(OneShotAlertClass):
         level=AlertLevel.WARNING,
         title="Fenced Caused System Reboot",
         text=(
-            '%(fqdn)s had a failover event. The system was rebooted because persistent '
-            'SCSI reservations were lost and/or cleared. The operating system successfully '
-            'came back online at %(now)s.'
+            "%(fqdn)s had a failover event. The system was rebooted because persistent "
+            "SCSI reservations were lost and/or cleared. The operating system successfully "
+            "came back online at %(now)s."
         ),
         keys=[],
     )

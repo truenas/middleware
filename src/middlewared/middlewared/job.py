@@ -42,7 +42,7 @@ class _Progress(typing.TypedDict):
 
 logger = logging.getLogger(__name__)
 
-LOGS_DIR = '/var/log/jobs'
+LOGS_DIR = "/var/log/jobs"
 
 
 class JobCancelledException(Exception):
@@ -53,11 +53,11 @@ class JobCancelledException(Exception):
 def send_job_event(
     middleware: Middleware, event_type: EventType, job: Job, fields: dict[str, typing.Any]
 ) -> None:
-    if job.options['transient']:
+    if job.options["transient"]:
         return
 
     middleware.send_event(
-        'core.get_jobs',
+        "core.get_jobs",
         event_type,
         id=job.id,
         fields=fields,
@@ -172,8 +172,8 @@ class JobsQueue:
                                 job_creds is not None and job_creds.is_user_session
                                 and queued_creds is not None and queued_creds.is_user_session
                                 and (
-                                    job_creds.user['username']  # type: ignore[attr-defined]
-                                    == queued_creds.user['username']  # type: ignore[attr-defined]
+                                    job_creds.user["username"]  # type: ignore[attr-defined]
+                                    == queued_creds.user["username"]  # type: ignore[attr-defined]
                                 )
                             )
                         ):
@@ -183,11 +183,11 @@ class JobsQueue:
 
                             return queued_job
 
-                    raise CallError('This job is already being performed by another user', errno.EBUSY)
+                    raise CallError("This job is already being performed by another user", errno.EBUSY)
 
         self.deque.add(job)
         self.queue.append(job)
-        send_job_event(self.middleware, 'ADDED', job, job.__encode__())
+        send_job_event(self.middleware, "ADDED", job, job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -304,13 +304,13 @@ class JobsDeque:
             del self.__dict[job_id]
 
     async def receive(self, middleware: Middleware, job_dict: dict[str, typing.Any], logs: bytes | None) -> None:
-        job_dict['id'] = self._get_next_id()
+        job_dict["id"] = self._get_next_id()
         job = await Job.receive(middleware, job_dict, logs)
         assert job.id is not None
         self.__dict[job.id] = job
 
 
-OnFinishCallback: typing.TypeAlias = typing.Callable[['Job[typing.Any]'], typing.Awaitable[None]] | None
+OnFinishCallback: typing.TypeAlias = typing.Callable[["Job[typing.Any]"], typing.Awaitable[None]] | None
 
 
 class Job[T = typing.Any]:
@@ -366,9 +366,9 @@ class Job[T = typing.Any]:
         self.state: State = State.WAITING
         self.description: str | None = None
         self.progress: _Progress = {
-            'percent': 0,
-            'description': '',
-            'extra': None,
+            "percent": 0,
+            "description": "",
+            "extra": None,
         }
         self.internal_data: dict[str, typing.Any] = {}
         self.time_started = utc_now()
@@ -409,7 +409,7 @@ class Job[T = typing.Any]:
 
         if access == JobAccess.READ:
             if credential.is_user_session and any(
-                credential.has_role(role) for role in self.options['read_roles']  # type: ignore[no-untyped-call]
+                credential.has_role(role) for role in self.options["read_roles"]  # type: ignore[no-untyped-call]
             ):
                 return None
 
@@ -417,12 +417,12 @@ class Job[T = typing.Any]:
             return None
 
         if self.credentials is None or not self.credentials.is_user_session:
-            return 'Only users with full administrative privileges can access internally ran jobs'
+            return "Only users with full administrative privileges can access internally ran jobs"
 
-        if self.credentials.user['username'] == credential.user['username']:  # type: ignore[attr-defined]
+        if self.credentials.user["username"] == credential.user["username"]:  # type: ignore[attr-defined]
             return None
 
-        return 'Job is not owned by current session'
+        return "Job is not owned by current session"
 
     def check_pipe(self, pipe: str) -> None:
         """
@@ -434,7 +434,7 @@ class Job[T = typing.Any]:
             raise ValueError("Pipe %r is not open" % pipe)
 
     def get_lock_name(self) -> str | None:
-        lock_name = self.options.get('lock')
+        lock_name = self.options.get("lock")
         if callable(lock_name):
             try:
                 lock_name = lock_name(self.args)
@@ -449,21 +449,21 @@ class Job[T = typing.Any]:
 
     def set_exception(self, exc_info: ExcInfo) -> None:
         self.error = str(exc_info[1])
-        self.exception = ''.join(traceback.format_exception(*exc_info))
+        self.exception = "".join(traceback.format_exception(*exc_info))
         self.exc_info = exc_info
 
-    def set_state(self, state: typing.Literal['WAITING', 'RUNNING', 'SUCCESS', 'FAILED', 'ABORTED']) -> None:
+    def set_state(self, state: typing.Literal["WAITING", "RUNNING", "SUCCESS", "FAILED", "ABORTED"]) -> None:
         if self.state == State.WAITING:
-            assert state not in ('WAITING', 'SUCCESS')
+            assert state not in ("WAITING", "SUCCESS")
         if self.state == State.RUNNING:
-            assert state not in ('WAITING', 'RUNNING')
+            assert state not in ("WAITING", "RUNNING")
         assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = utc_now()
 
     def send_changed_event(self) -> None:
-        send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+        send_job_event(self.middleware, "CHANGED", self, self.__encode__())
 
     def set_description(self, description: str | None) -> None:
         """
@@ -499,16 +499,16 @@ class Job[T = typing.Any]:
         if percent is not None:
             assert isinstance(percent, (int, float))
             percent = int(percent)
-            if self.progress['percent'] != percent:
-                self.progress['percent'] = percent
+            if self.progress["percent"] != percent:
+                self.progress["percent"] = percent
                 changed = True
         if description:
-            if self.progress['description'] != description:
-                self.progress['description'] = description
+            if self.progress["description"] != description:
+                self.progress["description"] = description
                 changed = True
         if extra:
-            if self.progress['extra'] != extra:
-                self.progress['extra'] = extra
+            if self.progress["extra"] != extra:
+                self.progress["extra"] = extra
                 changed = True
 
         encoded = self.__encode__()
@@ -516,16 +516,16 @@ class Job[T = typing.Any]:
             try:
                 self.on_progress_cb(encoded)
             except Exception:
-                logger.warning('Failed to run on progress callback', exc_info=True)
+                logger.warning("Failed to run on progress callback", exc_info=True)
 
         if changed:
-            send_job_event(self.middleware, 'CHANGED', self, encoded)
+            send_job_event(self.middleware, "CHANGED", self, encoded)
 
         for wrapped in self.wrapped:
             wrapped.set_progress(
-                percent=self.progress['percent'],
-                description=self.progress['description'],
-                extra=self.progress['extra'],
+                percent=self.progress["percent"],
+                description=self.progress["description"],
+                extra=self.progress["extra"],
             )
 
     async def wait(
@@ -601,7 +601,7 @@ class Job[T = typing.Any]:
             if self.aborted:
                 raise asyncio.CancelledError()
             else:
-                self.set_state('RUNNING')
+                self.set_state("RUNNING")
                 self.send_changed_event()
 
             self.future = asyncio.ensure_future(self.__run_body())
@@ -614,9 +614,9 @@ class Job[T = typing.Any]:
                 else:
                     raise
         except (asyncio.CancelledError, JobCancelledException):
-            self.set_state('ABORTED')
+            self.set_state("ABORTED")
         except Exception as e:
-            self.set_state('FAILED')
+            self.set_state("FAILED")
             ei = sys.exc_info()
             assert ei[0] is not None
             self.set_exception(ei)
@@ -632,8 +632,8 @@ class Job[T = typing.Any]:
             queue.release_lock(self)
             self._finished.set()
             await self.call_on_finish_cb()
-            send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
-            if self.options['transient']:
+            send_job_event(self.middleware, "CHANGED", self, self.__encode__())
+            if self.options["transient"]:
                 assert self.id is not None
                 queue.remove(self.id)
 
@@ -643,12 +643,12 @@ class Job[T = typing.Any]:
         any necessary arguments like app and tls.
         """
         prepend: list[typing.Any] = []
-        if hasattr(self.method, '_pass_app'):
+        if hasattr(self.method, "_pass_app"):
             prepend.append(self.app)
         prepend.append(self)
-        if getattr(self.method, 'audit_callback', None):
+        if getattr(self.method, "audit_callback", None):
             prepend.append(self.audit_callback)
-        if hasattr(self.method, '_pass_thread_local_storage'):
+        if hasattr(self.method, "_pass_thread_local_storage"):
             prepend.append(thread_local_storage)
         # Make sure args are not altered during job run
         args = prepend + copy.deepcopy(self.args)
@@ -659,9 +659,9 @@ class Job[T = typing.Any]:
             rv = await self.middleware.run_in_thread(self.method, *args)
 
         self.set_result(rv)
-        self.set_state('SUCCESS')
-        if self.progress['percent'] != 100:
-            self.set_progress(100, '')
+        self.set_state("SUCCESS")
+        if self.progress["percent"] != 100:
+            self.set_progress(100, "")
 
     def _logs_path(self) -> str:
         return os.path.join(LOGS_DIR, f"{self.id}.log")
@@ -721,11 +721,11 @@ class Job[T = typing.Any]:
             if isinstance(evalue, ValidationError):
                 extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
                 errno: int | None = evalue.errno
-                etype_name = 'VALIDATION'
+                etype_name = "VALIDATION"
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
                 errno = None
-                etype_name = 'VALIDATION'
+                etype_name = "VALIDATION"
             elif isinstance(evalue, CallError):
                 etype_name = etype_cls.__name__
                 errno = evalue.errno
@@ -735,10 +735,10 @@ class Job[T = typing.Any]:
                 errno = None
                 extra = None
             exc_info = {
-                'repr': repr(evalue),
-                'type': etype_name,
-                'errno': errno,
-                'extra': extra,
+                "repr": repr(evalue),
+                "type": etype_name,
+                "errno": errno,
+                "extra": extra,
             }
 
         result_encoding_error = None
@@ -771,28 +771,28 @@ class Job[T = typing.Any]:
             result = None
 
         return {
-            'id': self.id,
-            'message_ids': self.message_ids,
-            'method': self.method_name,
-            'arguments': self.middleware.dump_args(self.args, method=self.method),  # type: ignore[no-untyped-call]
-            'transient': self.options['transient'],
-            'description': self.description,
-            'abortable': self.options['abortable'],
-            'logs_path': self.logs_path,
-            'logs_excerpt': self.logs_excerpt,
-            'progress': self.progress,
-            'result': result,
-            'result_encoding_error': result_encoding_error,
-            'error': self.error,
-            'exception': self.exception,
-            'exc_info': exc_info,
-            'state': self.state.name,
-            'time_started': self.time_started,
-            'time_finished': self.time_finished,
-            'credentials': (
+            "id": self.id,
+            "message_ids": self.message_ids,
+            "method": self.method_name,
+            "arguments": self.middleware.dump_args(self.args, method=self.method),  # type: ignore[no-untyped-call]
+            "transient": self.options["transient"],
+            "description": self.description,
+            "abortable": self.options["abortable"],
+            "logs_path": self.logs_path,
+            "logs_excerpt": self.logs_excerpt,
+            "progress": self.progress,
+            "result": result,
+            "result_encoding_error": result_encoding_error,
+            "error": self.error,
+            "exception": self.exception,
+            "exc_info": exc_info,
+            "state": self.state.name,
+            "time_started": self.time_started,
+            "time_finished": self.time_finished,
+            "credentials": (
                 {
-                    'type': self.credentials.class_name(),  # type: ignore[no-untyped-call]
-                    'data': self.credentials.dump(),  # type: ignore[no-untyped-call]
+                    "type": self.credentials.class_name(),  # type: ignore[no-untyped-call]
+                    "data": self.credentials.dump(),  # type: ignore[no-untyped-call]
                 } if self.credentials is not None
                 else None
             )
@@ -800,23 +800,23 @@ class Job[T = typing.Any]:
 
     @staticmethod
     async def receive(middleware: Middleware, job_dict: dict[str, typing.Any], logs: bytes | None) -> Job[typing.Any]:
-        service_name, method_name = job_dict['method'].rsplit(".", 1)
+        service_name, method_name = job_dict["method"].rsplit(".", 1)
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
-        job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
+        job = Job(middleware, job_dict["method"], serviceobj, methodobj, job_dict["arguments"], methodobj._job, None,
                   None, False, None, None, None)
-        job.id = job_dict['id']
-        job.description = job_dict['description']
+        job.id = job_dict["id"]
+        job.description = job_dict["description"]
         if logs is not None:
             job.logs_path = job._logs_path()
-        job.logs_excerpt = job_dict['logs_excerpt']
-        job.progress = job_dict['progress']
-        job.result = job_dict['result']
-        job.error = job_dict['error']
-        job.exception = job_dict['exception']
-        job.state = State.__members__[job_dict['state']]
-        job.time_started = job_dict['time_started']
-        job.time_finished = job_dict['time_finished']
+        job.logs_excerpt = job_dict["logs_excerpt"]
+        job.progress = job_dict["progress"]
+        job.result = job_dict["result"]
+        job.error = job_dict["error"]
+        job.exception = job_dict["exception"]
+        job.state = State.__members__[job_dict["state"]]
+        job.time_started = job_dict["time_started"]
+        job.time_finished = job_dict["time_finished"]
 
         if logs is not None:
             def write_logs() -> None:
@@ -844,9 +844,9 @@ class Job[T = typing.Any]:
             the job result. If the exception type does not match, then a CallError will be raised
         """
         self.set_progress(
-            percent=subjob.progress['percent'],
-            description=subjob.progress['description'],
-            extra=subjob.progress['extra'],
+            percent=subjob.progress["percent"],
+            description=subjob.progress["description"],
+            extra=subjob.progress["extra"],
         )
         subjob.wrapped.append(self)
 
@@ -866,9 +866,9 @@ class Job[T = typing.Any]:
         the job result. If the exception type does not match, then a CallError will be raised
         """
         self.set_progress(
-            percent=subjob.progress['percent'],
-            description=subjob.progress['description'],
-            extra=subjob.progress['extra'],
+            percent=subjob.progress["percent"],
+            description=subjob.progress["description"],
+            extra=subjob.progress["extra"],
         )
         subjob.wrapped.append(self)
 
@@ -882,7 +882,7 @@ class Job[T = typing.Any]:
     def start_logging(self) -> None:
         if self.logs_path is not None:
             os.makedirs(LOGS_DIR, mode=0o700, exist_ok=True)
-            self.logs_fd = open(self.logs_path, 'ab', buffering=0)
+            self.logs_fd = open(self.logs_path, "ab", buffering=0)
 
     async def logs_fd_write(self, data: bytes) -> None:
         assert self.logs_fd is not None
@@ -898,7 +898,7 @@ class Job[T = typing.Any]:
             try:
                 await self.on_finish_cb(self)
             except Exception:
-                logger.warning('Failed to run on finish callback', exc_info=True)
+                logger.warning("Failed to run on finish callback", exc_info=True)
 
         self.on_finish_cb_called = True
 

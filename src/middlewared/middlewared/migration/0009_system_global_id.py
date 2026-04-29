@@ -3,9 +3,9 @@ import uuid
 
 async def migrate(middleware):
     await middleware.call(
-        'datastore.insert',
-        'system.globalid', {
-            'system_uuid': str(uuid.uuid4())
+        "datastore.insert",
+        "system.globalid", {
+            "system_uuid": str(uuid.uuid4())
         }
     )
 
@@ -14,4 +14,4 @@ async def migrate(middleware):
     # which prevents the rpc-pipefs-generator from mounting rpc_pipefs
     # (needed by nfs-idmapd). Writing nfs.conf here ensures it exists
     # before the POST_INIT daemon-reload re-runs the generator.
-    await middleware.call('etc.generate', 'nfsd')
+    await middleware.call("etc.generate", "nfsd")

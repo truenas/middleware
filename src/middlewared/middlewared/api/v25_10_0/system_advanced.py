@@ -34,7 +34,7 @@ class SyslogServer(BaseModel):
     Port 514 is used by default for TCP and UDP transports as per RFC3164; port 6514 is used by default for TLS \
     transport as per RFC5425.
     """
-    transport: Literal['UDP', 'TCP', 'TLS'] = 'UDP'
+    transport: Literal["UDP", "TCP", "TLS"] = "UDP"
     """Transport Protocol for the remote system log server connection."""
     tls_certificate: int | None = None
     """Applies only if `transport` is "TLS".
@@ -75,7 +75,7 @@ class SystemAdvancedEntry(BaseModel):
     """Serial port device for console access."""
     anonstats_token: str
     """Token used for anonymous statistics reporting."""
-    serialspeed: Literal['9600', '19200', '38400', '57600', '115200']
+    serialspeed: Literal["9600", "19200", "38400", "57600", "115200"]
     """Baud rate for serial console communication."""
     overprovision: NonNegativeInt | None
     """Percentage of SSD overprovisioning to reserve for wear leveling."""
@@ -85,9 +85,9 @@ class SystemAdvancedEntry(BaseModel):
     """Automatically upload crash reports to iXsystems for analysis."""
     anonstats: bool
     """Enable anonymous usage statistics reporting to help improve TrueNAS."""
-    sed_user: Literal['USER', 'MASTER']
+    sed_user: Literal["USER", "MASTER"]
     """SED (Self-Encrypting Drive) user type for drive encryption."""
-    sysloglevel: Literal['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG']
+    sysloglevel: Literal["F_EMERG", "F_ALERT", "F_CRIT", "F_ERR", "F_WARNING", "F_NOTICE", "F_INFO", "F_DEBUG"]
     """Minimum log level for syslog messages. F_EMERG is most critical, F_DEBUG is least critical."""
     syslogservers: list[SyslogServer] = Field(default=[], max_length=2)
     """Configurations for up to two remote syslog servers."""

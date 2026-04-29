@@ -8,13 +8,13 @@ from .filter_list import filter_list
 
 
 class DevType(enum.Enum):
-    AIRPORT = 'AirPort'
-    APPLETV = 'AppleTv1,1'
-    MACPRO = 'MacPro'
-    MACPRORACK = 'MacPro7,1@ECOLOR=226,226,224'
-    RACKMAC = 'RackMac'
-    TIMECAPSULE = 'TimeCapsule6,106'
-    XSERVE = 'Xserve'
+    AIRPORT = "AirPort"
+    APPLETV = "AppleTv1,1"
+    MACPRO = "MacPro"
+    MACPRORACK = "MacPro7,1@ECOLOR=226,226,224"
+    RACKMAC = "RackMac"
+    TIMECAPSULE = "TimeCapsule6,106"
+    XSERVE = "Xserve"
 
     def __str__(self) -> str:
         return self.value
@@ -35,8 +35,8 @@ def ip_addresses_to_interface_names(
     the set of interface names (`iface['id']`) whose address list matches
     any of `ip_addresses`, in a stable (sorted) order.
     """
-    iface_filter: list[list[Any]] = [['OR', [
-        ['state.aliases.*.address', 'in', ip_addresses],
-        ['state.failover_virtual_aliases.*.address', 'in', ip_addresses],
+    iface_filter: list[list[Any]] = [["OR", [
+        ["state.aliases.*.address", "in", ip_addresses],
+        ["state.failover_virtual_aliases.*.address", "in", ip_addresses],
     ]]]
-    return sorted({iface['id'] for iface in filter_list(ifaces, iface_filter)})
+    return sorted({iface["id"] for iface in filter_list(ifaces, iface_filter)})

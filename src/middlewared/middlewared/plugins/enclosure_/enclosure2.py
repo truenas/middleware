@@ -49,7 +49,7 @@ class Enclosure2Service(Service):
         which includes the head-unit and all other attached JBO{D/F}s.
         """
         if jbof_qry is None:
-            jbof_qry = await self.middleware.call('jbof.query')
+            jbof_qry = await self.middleware.call("jbof.query")
         return await map_jbof(jbof_qry)
 
     @private
@@ -70,68 +70,68 @@ class Enclosure2Service(Service):
         (i.e. the ES102G2 is a prime example of this (enumerates drives at 1 instead of 0))
         """
         origslot, supports_identify = None, False
-        for encslot, devinfo in filter(lambda x: x[0] == slot, enc_info['elements']['Array Device Slot'].items()):
-            origslot = devinfo['original']['slot']
+        for encslot, devinfo in filter(lambda x: x[0] == slot, enc_info["elements"]["Array Device Slot"].items()):
+            origslot = devinfo["original"]["slot"]
             supports_identify = devinfo[SUPPORTS_IDENTIFY_KEY]
 
         return origslot, supports_identify
 
-    @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
+    @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=["ENCLOSURE_WRITE"])
     def set_slot_status(self, data):
         """Set enclosure bay number ``slot`` to ``status`` for ``enclosure_id``."""
         try:
             enc_info = self.middleware.call_sync(
-                'enclosure2.query', [['id', '=', data['enclosure_id']]], {'get': True}
+                "enclosure2.query", [["id", "=", data["enclosure_id"]]], {"get": True}
             )
         except MatchNotFound:
-            raise ValidationError('enclosure2.set_slot_status', f'Enclosure with id: {data["enclosure_id"]} not found')
+            raise ValidationError("enclosure2.set_slot_status", f'Enclosure with id: {data["enclosure_id"]} not found')
 
-        if enc_info['id'].endswith('_nvme_enclosure'):
-            if enc_info['id'].startswith('r30'):
+        if enc_info["id"].endswith("_nvme_enclosure"):
+            if enc_info["id"].startswith("r30"):
                 # an all nvme flash system so drive identification is handled
                 # in a completely different way than sata/scsi
-                return r30_set_slot_status(data['slot'], data['status'])
-            elif enc_info['id'].startswith('r60'):
+                return r30_set_slot_status(data["slot"], data["status"])
+            elif enc_info["id"].startswith("r60"):
                 # R60 nvme flash system with different LED control mechanism
-                return r60_set_slot_status(data['slot'], data['status'])
-            elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
+                return r60_set_slot_status(data["slot"], data["status"])
+            elif enc_info["id"].startswith(("f60", "f100", "f130")):
                 try:
-                    return fseries_set_slot_status(data['slot'], data['status'])
+                    return fseries_set_slot_status(data["slot"], data["status"])
                 except InsufficientPrivilege:
-                    if self.middleware.call_sync('failover.licensed'):
-                        opts = {'raise_connect_error': False}
+                    if self.middleware.call_sync("failover.licensed"):
+                        opts = {"raise_connect_error": False}
                         return self.middleware.call_sync(
-                            'failover.call_remote', 'enclosure2.set_slot_status', [data], opts
+                            "failover.call_remote", "enclosure2.set_slot_status", [data], opts
                         )
             else:
                 # mseries, and some rseries have mapped nvme enclosures but they
                 # don't support drive LED identification
                 return
-        elif enc_info['model'] == JbofModels.ES24N.name:
+        elif enc_info["model"] == JbofModels.ES24N.name:
             return self.middleware.call_sync(
-                'enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], data['status']
+                "enclosure2.jbof_set_slot_status", data["enclosure_id"], data["slot"], data["status"]
             )
 
-        if enc_info['pci'] is None:
-            raise ValidationError('enclosure2.set_slot_status', 'Unable to determine PCI address for enclosure')
+        if enc_info["pci"] is None:
+            raise ValidationError("enclosure2.set_slot_status", "Unable to determine PCI address for enclosure")
         else:
-            origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
+            origslot, supported = self.get_original_disk_slot(data["slot"], enc_info)
             if origslot is None:
-                raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} not found in enclosure')
+                raise ValidationError("enclosure2.set_slot_status", f'Slot {data["slot"]} not found in enclosure')
             elif not supported:
                 raise ValidationError(
-                    'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
+                    "enclosure2.set_slot_status", f'Slot {data["slot"]} does not support identification'
                 )
             else:
-                if enc_info['model'].startswith(('V', 'R50')):
-                    bsg = enc_info['elements']['Array Device Slot'][data['slot']]['original']['enclosure_bsg']
-                    pci = bsg.rsplit('/', 1)[-1]
+                if enc_info["model"].startswith(("V", "R50")):
+                    bsg = enc_info["elements"]["Array Device Slot"][data["slot"]]["original"]["enclosure_bsg"]
+                    pci = bsg.rsplit("/", 1)[-1]
                 else:
-                    pci = enc_info['pci']
+                    pci = enc_info["pci"]
 
                 try:
                     toggle_enclosure_slot_identifier(
-                        f'/sys/class/enclosure/{pci}', origslot, data['status'], False, enc_info['model']
+                        f"/sys/class/enclosure/{pci}", origslot, data["status"], False, enc_info["model"]
                     )
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
@@ -140,7 +140,7 @@ class Enclosure2Service(Service):
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 
-    @filterable_api_method(roles=['ENCLOSURE_READ'], item=Enclosure2Entry)
+    @filterable_api_method(roles=["ENCLOSURE_READ"], item=Enclosure2Entry)
     def query(self, filters, options):
         """Query detected enclosures on TrueNAS hardware.
 
@@ -175,13 +175,13 @@ class Enclosure2Service(Service):
             ]
         """
         enclosures = []
-        if not self.middleware.call_sync('truenas.is_ix_hardware'):
+        if not self.middleware.call_sync("truenas.is_ix_hardware"):
             # this feature is only available on hardware that ix sells
             return enclosures
 
-        labels = self.middleware.call_sync('enclosure.label.get_all')
-        for i in self.get_ses_enclosures() + self.map_nvme() + self.middleware.call_sync('enclosure2.map_jbof'):
-            if i.pop('should_ignore'):
+        labels = self.middleware.call_sync("enclosure.label.get_all")
+        for i in self.get_ses_enclosures() + self.map_nvme() + self.middleware.call_sync("enclosure2.map_jbof"):
+            if i.pop("should_ignore"):
                 continue
 
             # this is a user-provided string to label the enclosures so we'll add it at as a
@@ -189,11 +189,11 @@ class Enclosure2Service(Service):
             # fill in the info with whatever is in the "name" key. The "name" key is the
             # t10 vendor, product and revision information combined as a single space separated
             # string reported by the enclosure itself via a standard inquiry command
-            i['label'] = labels.get(i['id']) or i['name']
+            i["label"] = labels.get(i["id"]) or i["name"]
             enclosures.append(i)
 
         combine_enclosures(enclosures)
 
-        enclosures = sorted(enclosures, key=lambda enclosure: (0 if enclosure["controller"] else 1, enclosure['id']))
+        enclosures = sorted(enclosures, key=lambda enclosure: (0 if enclosure["controller"] else 1, enclosure["id"]))
 
         return filter_list(enclosures, filters, options)

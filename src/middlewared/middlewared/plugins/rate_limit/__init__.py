@@ -7,7 +7,7 @@ CLEAR_CACHE_INTERVAL = 600
 class RateLimitService(Service):
 
     class Config:
-        namespace = 'rate.limit'
+        namespace = "rate.limit"
         private = True
         cli_private = True
 

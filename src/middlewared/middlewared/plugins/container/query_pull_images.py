@@ -22,7 +22,7 @@ REGISTRY_URL = "https://images.sys.truenas.net/streams"
 
 
 def query_registry_images(context: ServiceContext) -> dict[str, typing.Any]:
-    context.middleware.call_sync('network.general.will_perform_activity', 'container')
+    context.middleware.call_sync("network.general.will_perform_activity", "container")
 
     r = requests.get(f"{REGISTRY_URL}/v1/images.json", timeout=INTERNET_TIMEOUT)
     r.raise_for_status()
@@ -35,7 +35,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
     """
     suffix = f'images/{image["name"]}:{image["version"]}'
     dataset_name = os.path.join(container_dataset(pool), suffix)
-    snapshot_name = f'{dataset_name}@image'
+    snapshot_name = f"{dataset_name}@image"
     if context.call_sync2(
         context.s.zfs.resource.query_impl,
         ZFSResourceQuery(paths=[dataset_name], properties=None)
@@ -52,11 +52,11 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
 
     context.run_coroutine(ensure_datasets(context, pool))
     context.middleware.call_sync(
-        'pool.dataset.create_impl',
+        "pool.dataset.create_impl",
         CreateImplArgs(
             name=dataset_name,
             create_ancestors=True,
-            ztype='FILESYSTEM',
+            ztype="FILESYSTEM",
         ),
     )
     try:
@@ -72,21 +72,21 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
         # Download tarball from URL
         url = product_version['items']['root.tar.xz']['path']  # noqa
         try:
-            job.set_progress(0, 'Connecting to image repository...')
+            job.set_progress(0, "Connecting to image repository...")
             response = requests.get(url, stream=True)
             response.raise_for_status()
 
             # Get total file size for progress calculation
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             total_size_mb = total_size / (1024 * 1024)
 
             downloaded_size = 0
 
-            mountpoint = f'/mnt{container_dataset_mountpoint(pool)}/{suffix}'
+            mountpoint = f"/mnt{container_dataset_mountpoint(pool)}/{suffix}"
             # Save tarball to mountpoint
-            tarball_path = os.path.join(mountpoint, 'image.tar')
+            tarball_path = os.path.join(mountpoint, "image.tar")
             try:
-                with open(tarball_path, 'wb') as f:
+                with open(tarball_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=1024 * 1024):
                         f.write(chunk)
                         downloaded_size += len(chunk)
@@ -97,36 +97,36 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
                             download_progress = min(80, int((downloaded_size / total_size) * 80))
                             job.set_progress(
                                 download_progress,
-                                f'Downloading image: {downloaded_size_mb:.1f}MB / {total_size_mb:.1f}MB'
+                                f"Downloading image: {downloaded_size_mb:.1f}MB / {total_size_mb:.1f}MB"
                             )
                         else:
-                            job.set_progress(40, f'Downloading image: {downloaded_size_mb:.1f}MB')
+                            job.set_progress(40, f"Downloading image: {downloaded_size_mb:.1f}MB")
 
                 # Extract tarball to mountpoint
-                job.set_progress(80, 'Extracting image files...')
-                with tarfile.open(tarball_path, 'r:*') as tar:
+                job.set_progress(80, "Extracting image files...")
+                with tarfile.open(tarball_path, "r:*") as tar:
                     members = tar.getmembers()
 
                     for i, member in enumerate(members):
                         tar.extract(member, path=mountpoint)
             finally:
                 # Clean up the tarball file
-                job.set_progress(95, 'Cleaning up temporary files...')
+                job.set_progress(95, "Cleaning up temporary files...")
                 os.remove(tarball_path)
 
             # Create ZFS snapshot
-            job.set_progress(98, 'Creating ZFS snapshot...')
+            job.set_progress(98, "Creating ZFS snapshot...")
             context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
                 dataset=dataset_name,
-                name='image'
+                name="image"
             ))
 
-            job.set_progress(100, 'Image pull completed successfully')
+            job.set_progress(100, "Image pull completed successfully")
             return snapshot_name
         except requests.RequestException as e:
-            raise CallError(f'Failed to download image from {url}: {str(e)}')
+            raise CallError(f"Failed to download image from {url}: {str(e)}")
         except (tarfile.TarError, OSError) as e:
-            raise CallError(f'Failed to extract image tarball: {str(e)}')
+            raise CallError(f"Failed to extract image tarball: {str(e)}")
     except Exception:
         context.call_sync2(context.s.zfs.resource.destroy_impl, dataset_name)
         raise

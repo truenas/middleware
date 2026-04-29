@@ -10,49 +10,49 @@ from middlewared.plugins.etc import FileShouldNotExist
 
 
 def render(service, middleware):
-    config = middleware.call_sync('docker.config')
-    http_proxy = middleware.call_sync('network.configuration.config')['httpproxy']
+    config = middleware.call_sync("docker.config")
+    http_proxy = middleware.call_sync("network.configuration.config")["httpproxy"]
     if not config.pool:
         raise FileShouldNotExist()
 
     # We need to do this so that proxy changes are respected by systemd on docker daemon start
-    subprocess.run(['systemctl', 'daemon-reload'], capture_output=True, check=True)
+    subprocess.run(["systemctl", "daemon-reload"], capture_output=True, check=True)
 
-    os.makedirs('/etc/docker', exist_ok=True)
-    data_root = os.path.join(IX_APPS_MOUNT_PATH, 'docker')
+    os.makedirs("/etc/docker", exist_ok=True)
+    data_root = os.path.join(IX_APPS_MOUNT_PATH, "docker")
     base = {
-        'data-root': data_root,
-        'exec-opts': ['native.cgroupdriver=cgroupfs'],
-        'iptables': True,
-        'ipv6': True,
-        'default-network-opts': {'bridge': {'com.docker.network.enable_ipv6': 'true'}},
-        'storage-driver': 'overlay2',
-        'fixed-cidr-v6': config.cidr_v6,
-        'default-address-pools': [pool.model_dump(mode='json') for pool in config.address_pools],
-        'registry-mirrors': [registry.url for registry in config.registry_mirrors],
-        'insecure-registries': [
+        "data-root": data_root,
+        "exec-opts": ["native.cgroupdriver=cgroupfs"],
+        "iptables": True,
+        "ipv6": True,
+        "default-network-opts": {"bridge": {"com.docker.network.enable_ipv6": "true"}},
+        "storage-driver": "overlay2",
+        "fixed-cidr-v6": config.cidr_v6,
+        "default-address-pools": [pool.model_dump(mode="json") for pool in config.address_pools],
+        "registry-mirrors": [registry.url for registry in config.registry_mirrors],
+        "insecure-registries": [
             urlparse(registry.url).netloc for registry in config.registry_mirrors if registry.insecure
         ],
         **(
             {
-                'proxies': {
-                    'http-proxy': http_proxy,
-                    'https-proxy': http_proxy,
+                "proxies": {
+                    "http-proxy": http_proxy,
+                    "https-proxy": http_proxy,
                 }
             } if http_proxy else {}
         )
     }
 
-    isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
+    isolated = middleware.call_sync("system.advanced.config")["isolated_gpu_pci_ids"]
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
         base.update({
-            'runtimes': {
-                'nvidia': {
-                    'path': '/usr/bin/nvidia-container-runtime',
-                    'runtimeArgs': []
+            "runtimes": {
+                "nvidia": {
+                    "path": "/usr/bin/nvidia-container-runtime",
+                    "runtimeArgs": []
                 }
             },
-            'default-runtime': 'nvidia',
+            "default-runtime": "nvidia",
         })
         break
 

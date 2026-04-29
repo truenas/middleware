@@ -175,11 +175,11 @@ def validate_pool(
         ZpoolScrubNotDueException: A recent scrub or pool event is within
             the threshold window.
     """
-    if pool_name != middleware.call_sync('boot.pool_name'):
-        if not middleware.call_sync('failover.is_single_master_node'):
+    if pool_name != middleware.call_sync("boot.pool_name"):
+        if not middleware.call_sync("failover.is_single_master_node"):
             raise ZpoolNotMasterNodeException(pool_name)
 
-        if not middleware.call_sync('datastore.query', 'storage.volume', [['vol_name', '=', pool_name]]):
+        if not middleware.call_sync("datastore.query", "storage.volume", [["vol_name", "=", pool_name]]):
             raise ZpoolNotFoundException(pool_name)
 
     # Open pool
@@ -208,19 +208,19 @@ def validate_pool(
         and scan.state == libzfs_types.ScanState.FINISHED
     ):
         if scan.end_time >= cutoff:
-            middleware.logger.trace('Pool %r last scrub ended %r', pool_name, scan.end_time)
+            middleware.logger.trace("Pool %r last scrub ended %r", pool_name, scan.end_time)
             raise ZpoolScrubNotDueException(pool_name)
         start_scrub = True
 
     # Slow path: check pool history for recent create/scrub/import
     if not start_scrub:
         for entry in zpool.iter_history(since=cutoff):
-            cmd = entry.get('history command', '')
-            if any(zpool_cmd in cmd for zpool_cmd in ('zpool create', 'zpool import', 'zpool scrub')):
-                middleware.logger.trace('Pool %r recent create/scrub within threshold window', pool_name)
+            cmd = entry.get("history command", "")
+            if any(zpool_cmd in cmd for zpool_cmd in ("zpool create", "zpool import", "zpool scrub")):
+                middleware.logger.trace("Pool %r recent create/scrub within threshold window", pool_name)
                 break
         else:
-            middleware.logger.warning('Could not find last scrub of pool %r', pool_name)
+            middleware.logger.warning("Could not find last scrub of pool %r", pool_name)
             start_scrub = True
 
     if not start_scrub:
@@ -261,10 +261,10 @@ def wait_for_scrub(
 ) -> None:
     """Poll until a running scan finishes, is canceled, or is paused."""
     expected_func = _get_scan_function(scan_type)
-    if scan_type.upper() == 'ERRORSCRUB':
-        prog_scan_type = 'Error scrub'
+    if scan_type.upper() == "ERRORSCRUB":
+        prog_scan_type = "Error scrub"
     else:
-        prog_scan_type = 'Scrub'
+        prog_scan_type = "Scrub"
 
     while True:
         scrub = zpool.scrub_info()
@@ -277,7 +277,7 @@ def wait_for_scrub(
         match scrub.state:
             case libzfs_types.ScanState.FINISHED:
                 if progress_callback:
-                    progress_callback(100, f'{prog_scan_type} finished')
+                    progress_callback(100, f"{prog_scan_type} finished")
                 break
 
             case libzfs_types.ScanState.CANCELED:
@@ -286,10 +286,10 @@ def wait_for_scrub(
             case libzfs_types.ScanState.SCANNING:
                 if scrub.pass_scrub_pause:
                     if progress_callback:
-                        progress_callback(100, f'{prog_scan_type} paused')
+                        progress_callback(100, f"{prog_scan_type} paused")
                     break
                 if progress_callback and scrub.percentage is not None:
-                    progress_callback(scrub.percentage, f'{prog_scan_type} in progress')
+                    progress_callback(scrub.percentage, f"{prog_scan_type} in progress")
 
         time.sleep(1)
 
@@ -339,7 +339,7 @@ def run_impl(
         scrub_pool(lzh, zpool, data.scan_type, data.action)
         return
 
-    for alert in ('ScrubNotStarted', 'ScrubStarted'):
+    for alert in ("ScrubNotStarted", "ScrubStarted"):
         ctx.call_sync2(ctx.s.alert.oneshot_delete, alert, data.pool_name)
 
     try:

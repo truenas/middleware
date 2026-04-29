@@ -17,7 +17,7 @@ def user(data):
     data.setdefault("home_create", True)  # create user homedir by default
 
     user = call("user.create", data)
-    pk = user['id']
+    pk = user["id"]
 
     try:
         yield user

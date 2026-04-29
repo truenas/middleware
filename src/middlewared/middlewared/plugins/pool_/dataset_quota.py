@@ -22,41 +22,41 @@ def quota_cb(quota, state):
         truenas_pylibzfs.ZFSUserQuota.USER_USED,
         truenas_pylibzfs.ZFSUserQuota.GROUP_USED,
     ):
-        value_key = 'used_bytes'
+        value_key = "used_bytes"
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USER_QUOTA,
         truenas_pylibzfs.ZFSUserQuota.GROUP_QUOTA,
     ):
-        value_key = 'quota'
+        value_key = "quota"
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USEROBJ_USED,
         truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_USED,
     ):
-        value_key = 'obj_used'
+        value_key = "obj_used"
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USEROBJ_QUOTA,
         truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_QUOTA,
     ):
-        value_key = 'obj_quota'
+        value_key = "obj_quota"
     else:
         # shouldn't be reachable but return early
         # to be safe
         return True
 
-    entry = {'quota_type': state['qt'], 'id': quota.xid, 'name': None, value_key: quota.value}
-    if quota.xid not in state['quotas']:
+    entry = {"quota_type": state["qt"], "id": quota.xid, "name": None, value_key: quota.value}
+    if quota.xid not in state["quotas"]:
         # only resolve the xid once
         try:
-            if state['qt'] == 'USER':
-                entry['name'] = pwd.getpwuid(quota.xid, as_dict=True)['pw_name']
+            if state["qt"] == "USER":
+                entry["name"] = pwd.getpwuid(quota.xid, as_dict=True)["pw_name"]
             else:
-                entry['name'] = grp.getgrgid(quota.xid, as_dict=True)['gr_name']
+                entry["name"] = grp.getgrgid(quota.xid, as_dict=True)["gr_name"]
         except Exception:
             pass
     else:
-        entry.update({'name': state['quotas'][quota.xid]['name']})
+        entry.update({"name": state["quotas"][quota.xid]["name"]})
 
-    state['quotas'][quota.xid].update(entry)
+    state["quotas"][quota.xid].update(entry)
     return True
 
 
@@ -77,18 +77,18 @@ def quota_alert_cb(hdl, state):
         get_user_properties=True,
     )
     for propstring, default in TNUserProp.quotas():
-        info['user_properties'].setdefault(propstring, default)
+        info["user_properties"].setdefault(propstring, default)
         try:
-            info['user_propertites'] = int(info['user_properties'][propstring])
+            info["user_propertites"] = int(info["user_properties"][propstring])
         except Exception:
             # if we can't parse this (i.e. someone changed something by hand)
             # we'll play it safe and just default to 0
-            info['user_propertites'] = 0
+            info["user_propertites"] = 0
 
     if hdl.name == hdl.pool_name:
-        state['pools'][hdl.name] = info['properties']['used']['value'] + info['properties']['available']['value']
+        state["pools"][hdl.name] = info["properties"]["used"]["value"] + info["properties"]["available"]["value"]
 
-    state['datasets'][hdl.name] = info
+    state["datasets"][hdl.name] = info
     hdl.iter_filesystems(callback=quota_alert_cb, state=state, fast=True)
     return True
 
@@ -96,7 +96,7 @@ def quota_alert_cb(hdl, state):
 class PoolDatasetService(Service):
 
     class Config:
-        namespace = 'pool.dataset'
+        namespace = "pool.dataset"
 
     @private
     @pass_thread_local_storage
@@ -114,7 +114,7 @@ class PoolDatasetService(Service):
         rsrc = tls.lzh.open_resource(name=ds)
         quota_type = quota_type.upper()
         match quota_type:
-            case 'DATASET':
+            case "DATASET":
                 info = rsrc.asdict(
                     properties={
                         truenas_pylibzfs.ZFSProperty.QUOTA,
@@ -123,32 +123,32 @@ class PoolDatasetService(Service):
                     }
                 )
                 return [{
-                    'quota_type': quota_type,
-                    'id': rsrc.name,
-                    'name': rsrc.name,
-                    'quota': info['properties']['quota']['value'],
-                    'refquota': info['properties']['refquota']['value'],
-                    'used_bytes': info['properties']['used']['value'],
+                    "quota_type": quota_type,
+                    "id": rsrc.name,
+                    "name": rsrc.name,
+                    "quota": info["properties"]["quota"]["value"],
+                    "refquota": info["properties"]["refquota"]["value"],
+                    "used_bytes": info["properties"]["used"]["value"],
                 }]
-            case 'USER' | 'GROUP':
-                state = {'qt': quota_type, 'quotas': defaultdict(dict)}
+            case "USER" | "GROUP":
+                state = {"qt": quota_type, "quotas": defaultdict(dict)}
                 for qt in (
-                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}_USED'),
-                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}_QUOTA'),
-                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}OBJ_USED'),
-                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}OBJ_QUOTA'),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f"{quota_type}_USED"),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f"{quota_type}_QUOTA"),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f"{quota_type}OBJ_USED"),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f"{quota_type}OBJ_QUOTA"),
                 ):
                     rsrc.iter_userspace(callback=quota_cb, quota_type=qt, state=state)
-                return list(state['quotas'].values())
+                return list(state["quotas"].values())
             case _:
                 raise ValidationError(
-                    'pool.dataset.get_quota', f'Invalid quota type: {quota_type!r}'
+                    "pool.dataset.get_quota", f"Invalid quota type: {quota_type!r}"
                 )
 
     @api_method(
         PoolDatasetGetQuotaArgs,
         PoolDatasetGetQuotaResult,
-        roles=['DATASET_READ']
+        roles=["DATASET_READ"]
     )
     async def get_quota(self, ds, quota_type, filters, options):
         """
@@ -159,7 +159,7 @@ class PoolDatasetService(Service):
         in an on-disk quota of 1 KiB.
         """
         quota_list = await self.middleware.call(
-            'pool.dataset.get_quota_impl', ds, quota_type
+            "pool.dataset.get_quota_impl", ds, quota_type
         )
         return filter_list(quota_list, filters, options)
 
@@ -168,15 +168,15 @@ class PoolDatasetService(Service):
     def set_quota_impl(self, tls, ds, inquotas):
         ds_quotas, quotas = dict(), list()
         for i in inquotas:
-            if i['quota_type'] == 'DATASET':
-                ds_quotas[truenas_pylibzfs.ZFSProperty[i['id']]] = i['quota_value']
+            if i["quota_type"] == "DATASET":
+                ds_quotas[truenas_pylibzfs.ZFSProperty[i["id"]]] = i["quota_value"]
             else:
                 qt = truenas_pylibzfs.ZFSUserQuota[f'{i["quota_type"]}_QUOTA']
                 quotas.append(
                     {
-                        'xid': i['id'],
-                        'quota_type': qt,
-                        'value': i['quota_value']
+                        "xid": i["id"],
+                        "quota_type": qt,
+                        "value": i["quota_value"]
                     }
                 )
 
@@ -189,7 +189,7 @@ class PoolDatasetService(Service):
     @api_method(
         PoolDatasetSetQuotaArgs,
         PoolDatasetSetQuotaResult,
-        roles=['DATASET_WRITE']
+        roles=["DATASET_WRITE"]
     )
     async def set_quota(self, ds, data):
         """
@@ -197,45 +197,45 @@ class PoolDatasetService(Service):
         """
         quotas = []
         for i, q in enumerate(data):
-            quota_type = q['quota_type'].lower()
-            if q['quota_type'] == 'DATASET':
-                if q['id'] not in ('QUOTA', 'REFQUOTA'):
+            quota_type = q["quota_type"].lower()
+            if q["quota_type"] == "DATASET":
+                if q["id"] not in ("QUOTA", "REFQUOTA"):
                     raise ValidationError(
-                        f'quotas.{i}.id',
+                        f"quotas.{i}.id",
                         'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
                     )
                 else:
-                    xid = q['id'].lower()
+                    xid = q["id"].lower()
                     if any((i.get(xid, False) for i in quotas)):
                         raise ValidationError(
-                            f'quotas.{i}.id',
-                            f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
+                            f"quotas.{i}.id",
+                            f"Setting multiple values for {xid} for quota_type DATASET is not permitted"
                         )
             else:
-                if q['quota_value'] == 0:
+                if q["quota_value"] == 0:
                     # value of 0 means remove
-                    q['quota_value'] = None
+                    q["quota_value"] = None
 
                 xid = None
-                id_type = 'user' if quota_type.startswith('user') else 'group'
-                if not q['id'].isdigit():
+                id_type = "user" if quota_type.startswith("user") else "group"
+                if not q["id"].isdigit():
                     try:
                         xid = (await self.middleware.call(
-                            f'{id_type}.get_{id_type}_obj',
-                            {f'{id_type}name': q['id']}
-                        ))['pw_uid' if id_type == 'user' else 'gr_gid']
+                            f"{id_type}.get_{id_type}_obj",
+                            {f"{id_type}name": q["id"]}
+                        ))["pw_uid" if id_type == "user" else "gr_gid"]
                     except Exception:
-                        self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
-                        raise ValidationError(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
+                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q["id"], exc_info=True)
+                        raise ValidationError(f"quotas.{i}.id", f'{quota_type} {q["id"]} is not valid.')
                 else:
-                    xid = int(q['id'])
+                    xid = int(q["id"])
 
                 if xid == 0:
                     raise ValidationError(
-                        f'quotas.{i}.id',
-                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
+                        f"quotas.{i}.id",
+                        f"Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted"
                     )
-                q['id'] = xid
+                q["id"] = xid
             quotas.append(q)
         if quotas:
-            await self.middleware.call('pool.dataset.set_quota_impl', ds, quotas)
+            await self.middleware.call("pool.dataset.set_quota_impl", ds, quotas)

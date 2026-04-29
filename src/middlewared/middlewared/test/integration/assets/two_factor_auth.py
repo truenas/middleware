@@ -11,17 +11,17 @@ from middlewared.test.integration.utils import call
 @contextlib.contextmanager
 def enabled_twofactor_auth(ssh=False):
     try:
-        yield call('auth.twofactor.update', {'enabled': True, 'window': 3, 'services': {'ssh': ssh}})
+        yield call("auth.twofactor.update", {"enabled": True, "window": 3, "services": {"ssh": ssh}})
     finally:
-        call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
+        call("auth.twofactor.update", {"enabled": False, "window": 0, "services": {"ssh": False}})
 
 
 def get_user_secret(user_id: int, get: typing.Optional[bool] = True) -> typing.Union[dict, list]:
-    return call('datastore.query', 'account.twofactor_user_auth', [['user_id', '=', user_id]], {'get': get})
+    return call("datastore.query", "account.twofactor_user_auth", [["user_id", "=", user_id]], {"get": get})
 
 
 def get_user_secret_sid(user_sid: str, get: typing.Optional[bool] = True) -> typing.Union[dict, list]:
-    return call('datastore.query', 'account.twofactor_user_auth', [['user_sid', '=', user_sid]], {'get': get})
+    return call("datastore.query", "account.twofactor_user_auth", [["user_sid", "=", user_sid]], {"get": get})
 
 
 def get_2fa_totp_token(users_config: dict) -> str:
@@ -32,7 +32,7 @@ def get_2fa_totp_token(users_config: dict) -> str:
         time.sleep(10)
 
     return pyotp.TOTP(
-        users_config['secret'],
-        interval=users_config['interval'],
-        digits=users_config['otp_digits'],
+        users_config["secret"],
+        interval=users_config["interval"],
+        digits=users_config["otp_digits"],
     ).now()

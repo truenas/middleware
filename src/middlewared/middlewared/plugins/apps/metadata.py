@@ -25,12 +25,12 @@ def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -
                 continue
 
             metadata[entry.name] = app_metadata
-            config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
+            config[entry.name] = get_current_app_config(entry.name, app_metadata["version"])
 
-    with atomic_write(get_collective_metadata_path(), 'w') as f:
+    with atomic_write(get_collective_metadata_path(), "w") as f:
         f.write(dump_yaml(metadata))
 
-    with atomic_write(get_collective_config_path(), 'w', perms=0o600) as f:
+    with atomic_write(get_collective_config_path(), "w", perms=0o600) as f:
         f.write(dump_yaml(config))
 
-    job.set_progress(100, 'Updated metadata configuration for apps')
+    job.set_progress(100, "Updated metadata configuration for apps")

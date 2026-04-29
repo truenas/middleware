@@ -49,7 +49,7 @@ class TestAlert(AlertClass):
 
 
 class AlertServiceModel(sa.Model):
-    __tablename__ = 'system_alertservice'
+    __tablename__ = "system_alertservice"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(120))
@@ -60,7 +60,7 @@ class AlertServiceModel(sa.Model):
 
 
 class AlertServiceServicePart(CRUDServicePart[AlertServiceEntry]):
-    _datastore = 'system.alertservice'
+    _datastore = "system.alertservice"
     _entry = AlertServiceEntry
 
     def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
@@ -113,17 +113,17 @@ class AlertServiceServicePart(CRUDServicePart[AlertServiceEntry]):
         verrors.check()
 
 
-__all__ = ('AlertServiceService',)
+__all__ = ("AlertServiceService",)
 
 
 class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
 
     class Config:
-        datastore = 'system.alertservice'
-        datastore_order_by = ['name']
-        cli_namespace = 'system.alert.service'
+        datastore = "system.alertservice"
+        datastore_order_by = ["name"]
+        cli_namespace = "system.alert.service"
         entry = AlertServiceEntry
-        role_prefix = 'ALERT'
+        role_prefix = "ALERT"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:
@@ -153,7 +153,7 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         """
         return await self._svc_part.do_delete(id_)
 
-    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=['ALERT_WRITE'], check_annotations=True)
+    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=["ALERT_WRITE"], check_annotations=True)
     async def test(self, data: AlertServiceCreate) -> bool:
         """
         Send a test alert using `type` of Alert Service.

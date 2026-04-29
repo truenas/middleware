@@ -20,23 +20,23 @@ class MethodNotFoundError(CallError):
     def __init__(self, method_name: str, service: str):
         self.method_name = method_name
         self.service = service
-        super().__init__(f'Method {method_name!r} not found in {service!r}', CallError.ENOMETHOD)
+        super().__init__(f"Method {method_name!r} not found in {service!r}", CallError.ENOMETHOD)
 
     def __reduce__(self):
         return (type(self), (self.method_name, self.service))
 
 
 class ServiceCallMixin:
-    def get_method(self, name: str) -> tuple['Service', 'MethodType']:
-        if '.' not in name:
-            raise CallError('Invalid method name', errno.EBADMSG)
+    def get_method(self, name: str) -> tuple["Service", "MethodType"]:
+        if "." not in name:
+            raise CallError("Invalid method name", errno.EBADMSG)
 
-        service, method_name = name.rsplit('.', 1)
+        service, method_name = name.rsplit(".", 1)
 
         try:
             serviceobj = self.get_service(service)  # type: ignore[attr-defined]
         except KeyError:
-            raise CallError(f'Service {service!r} not found', CallError.ENOMETHOD)
+            raise CallError(f"Service {service!r} not found", CallError.ENOMETHOD)
 
         try:
             methodobj = getattr(serviceobj, method_name)

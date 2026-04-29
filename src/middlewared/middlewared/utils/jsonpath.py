@@ -12,11 +12,11 @@ will need to be validated against what is supported by the library: https://sqli
 from json import dumps
 from typing import Any
 
-JSON_PATH_ROOT_NODE_ID = '$'
-JSON_PATH_DOT_SEGMENT = '.'
+JSON_PATH_ROOT_NODE_ID = "$"
+JSON_PATH_DOT_SEGMENT = "."
 JSON_PATH_PREFIX = JSON_PATH_ROOT_NODE_ID + JSON_PATH_DOT_SEGMENT
-JSON_PATH_DESCENDENT_SEGMENT = '..'
-JSON_PATH_WILDCARD_SELECTOR = '*'
+JSON_PATH_DESCENDENT_SEGMENT = ".."
+JSON_PATH_WILDCARD_SELECTOR = "*"
 
 FL_LEN_OR = 2
 FL_LEN_DEF = 3
@@ -24,7 +24,7 @@ FL_OFFSET_OR_DATA = 1
 FL_OFFSET_L = 0
 FL_OFFSET_OP = 1
 FL_OFFSET_R = 2
-FL_ESCAPE_CHAR = '\\'
+FL_ESCAPE_CHAR = "\\"
 
 FL_SELECT_AS_SRC_OFF = 0
 FL_SELECT_AS_DST_OFF = 1
@@ -34,7 +34,7 @@ def __escape_field_name(str_in: str) -> str:
     # use json.dumps to escape the quotes / backslashes
     s = dumps(str_in)[1:-1]
     # manually escape brackets
-    s = s.replace('[', f'{FL_ESCAPE_CHAR}[').replace(']', f'{FL_ESCAPE_CHAR}]')
+    s = s.replace("[", f"{FL_ESCAPE_CHAR}[").replace("]", f"{FL_ESCAPE_CHAR}]")
 
     return s
 
@@ -43,7 +43,7 @@ def dot_notation_to_json_path(str_in: str) -> str:
     """ Convert middleware filter dot-notation to a JSONPath string.
     For example: 'foo.bar' -> '$.foo.bar' """
     if not isinstance(str_in, str):
-        raise TypeError(f'{str_in}: not a string')
+        raise TypeError(f"{str_in}: not a string")
 
     if JSON_PATH_DOT_SEGMENT not in str_in:
         # No dot notation and so short-circuit
@@ -73,11 +73,11 @@ def query_filters_json_path_parse(filters_in: list[Any]) -> list[Any]:
                 new_filter = query_filters_json_path_parse([branch])
                 or_filter.append(new_filter[0])
 
-            out.append(['OR', or_filter])
+            out.append(["OR", or_filter])
             continue
 
         elif len(f) != FL_LEN_DEF:
-            raise ValueError(f'{f}: invalid filter format')
+            raise ValueError(f"{f}: invalid filter format")
 
         # format: [<left field>, <operator>, <right field>]
         try:
@@ -85,7 +85,7 @@ def query_filters_json_path_parse(filters_in: list[Any]) -> list[Any]:
             op = f[FL_OFFSET_OP]
             # Handle reverse operators (those starting with r except rin)
             # rin is "reverse in" but used as contains, so treat it as normal operator
-            field_offset = FL_OFFSET_R if (op.startswith('r') and op != 'rin') else FL_OFFSET_L
+            field_offset = FL_OFFSET_R if (op.startswith("r") and op != "rin") else FL_OFFSET_L
             to_convert = f[field_offset]
         except (ValueError, AttributeError):
             raise ValueError(f"{f}: invalid filter format")
@@ -109,13 +109,13 @@ def json_path_parse(str_in: str) -> tuple[str, str]:
         '$.roles' -> ('roles', '$')
     """
     if not str_in.startswith(JSON_PATH_PREFIX):
-        raise ValueError(f'{str_in}: not a JSONPath')
+        raise ValueError(f"{str_in}: not a JSONPath")
 
     remainder = str_in[len(JSON_PATH_PREFIX):]  # Remove "$."
 
     # Find the first delimiter (either '.' or '[')
     dot_pos = remainder.find(JSON_PATH_DOT_SEGMENT)
-    bracket_pos = remainder.find('[')
+    bracket_pos = remainder.find("[")
 
     if dot_pos == -1 and bracket_pos == -1:
         # Just a column name like "$.roles" -> ('roles', '$')
@@ -154,12 +154,12 @@ def query_select_json_path_parse(select_in: list[Any]) -> list[Any]:
     for sel in select_in:
         if isinstance(sel, (list, tuple)):
             if len(sel) != 2:
-                raise ValueError(f'{sel}: unexpected select option')
+                raise ValueError(f"{sel}: unexpected select option")
 
             parsed_src = dot_notation_to_json_path(sel[FL_SELECT_AS_SRC_OFF])
             parsed_dst = dot_notation_to_json_path(sel[FL_SELECT_AS_DST_OFF])
             if parsed_dst.startswith(JSON_PATH_PREFIX):
-                raise ValueError(f'{parsed_dst}: SELECT AS label cannot be a JSONPath')
+                raise ValueError(f"{parsed_dst}: SELECT AS label cannot be a JSONPath")
 
             out.append([parsed_src, parsed_dst])
 

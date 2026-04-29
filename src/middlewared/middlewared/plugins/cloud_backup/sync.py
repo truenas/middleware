@@ -139,7 +139,7 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=['CLOUD_BACKUP_WRITE'])
+    @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=["CLOUD_BACKUP_WRITE"])
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     def sync(self, job, id_, options):
         """
@@ -179,7 +179,7 @@ class CloudBackupService(Service):
                 ))
             raise
 
-    @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
+    @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=["CLOUD_BACKUP_WRITE"])
     def abort(self, id_):
         """
         Abort a running cloud backup task.

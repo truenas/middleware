@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
 
-RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f\x22\x5c]')
+RE_SERIAL_STRIP = re.compile(r"[\x00-\x1f\x7f\x22\x5c]")
 # sedutil-cli PBKDF2 parameters for legacy password compatibility
 SEDUTIL_ITERATIONS = 75000
 SEDUTIL_HASH_LEN = 32
@@ -186,7 +186,7 @@ class DiskEntry:
                     page_len = min(raw[3], len(raw) - 4)
 
                     # Extract only the serial number data, skipping the 4-byte header
-                    serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
+                    serial_txt = raw[4:4 + page_len].decode("ascii", errors="ignore")
                     # Strip characters that are either invalid per SCSI spec or break
                     # downstream JSON serialization (netdata embeds these in chart names
                     # without escaping):
@@ -195,7 +195,7 @@ class DiskEntry:
                     #   appears as UTF-16LE descriptor type byte from buggy USB firmware
                     # - 0x5C (\): valid per SPC-4 but never used in real serials;
                     #   would break JSON string escaping
-                    serial = RE_SERIAL_STRIP.sub('', serial_txt).strip()
+                    serial = RE_SERIAL_STRIP.sub("", serial_txt).strip()
                 else:
                     serial = ""
 

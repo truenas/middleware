@@ -6,7 +6,7 @@ from pstats import SortKey
 from typing import Any, Callable, Coroutine, ParamSpec, overload
 
 # Preserve order of args and kwargs with ParamSpec
-P = ParamSpec('P')
+P = ParamSpec("P")
 
 
 # First matching overload is chosen
@@ -27,7 +27,7 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, st
             pr.disable()
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats(SortKey.CUMULATIVE).print_stats()
-            return s.getvalue() + '\n' + str(rv)
+            return s.getvalue() + "\n" + str(rv)
         return async_wrapper
     else:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> str:
@@ -37,5 +37,5 @@ def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, st
             pr.disable()
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats(SortKey.CUMULATIVE).print_stats()
-            return s.getvalue() + '\n' + str(rv)
+            return s.getvalue() + "\n" + str(rv)
         return wrapper

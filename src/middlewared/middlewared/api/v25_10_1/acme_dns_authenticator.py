@@ -12,11 +12,11 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
-    'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
-    'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs',
-    'DNSAuthenticatorAuthenticatorSchemasResult', 'Route53SchemaArgs', 'ACMECustomDNSAuthenticatorReturns',
-    'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs', 'TrueNASConnectSchemaArgs',
+    "DNSAuthenticatorEntry", "DNSAuthenticatorCreateArgs", "DNSAuthenticatorCreateResult",
+    "DNSAuthenticatorUpdateArgs", "DNSAuthenticatorUpdateResult", "DNSAuthenticatorDeleteArgs",
+    "DNSAuthenticatorDeleteResult", "DNSAuthenticatorAuthenticatorSchemasArgs",
+    "DNSAuthenticatorAuthenticatorSchemasResult", "Route53SchemaArgs", "ACMECustomDNSAuthenticatorReturns",
+    "CloudFlareSchemaArgs", "DigitalOceanSchemaArgs", "OVHSchemaArgs", "ShellSchemaArgs", "TrueNASConnectSchemaArgs",
 ]
 
 
@@ -39,13 +39,13 @@ class TrueNASConnectSchema(BaseModel):
     pass
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class TrueNASConnectSchemaArgs(TrueNASConnectSchema):
     pass
 
 
 class CloudFlareSchema(BaseModel):
-    authenticator: Literal['cloudflare']
+    authenticator: Literal["cloudflare"]
     """DNS authenticator type identifier for Cloudflare."""
     cloudflare_email: NonEmptyString | None = None
     """Cloudflare Email."""
@@ -55,25 +55,25 @@ class CloudFlareSchema(BaseModel):
     """API Token."""
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class CloudFlareSchemaArgs(CloudFlareSchema):
     pass
 
 
 class DigitalOceanSchema(BaseModel):
-    authenticator: Literal['digitalocean']
+    authenticator: Literal["digitalocean"]
     """DNS authenticator type identifier for DigitalOcean."""
     digitalocean_token: Secret[NonEmptyString]
     """DigitalOcean Token."""
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class DigitalOceanSchemaArgs(DigitalOceanSchema):
     pass
 
 
 class OVHSchema(BaseModel):
-    authenticator: Literal['OVH']
+    authenticator: Literal["OVH"]
     """DNS authenticator type identifier for OVH."""
     application_key: NonEmptyString
     """OVH Application Key."""
@@ -85,13 +85,13 @@ class OVHSchema(BaseModel):
     """OVH Endpoint."""
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class OVHSchemaArgs(OVHSchema):
     pass
 
 
 class Route53Schema(BaseModel):
-    authenticator: Literal['route53']
+    authenticator: Literal["route53"]
     """DNS authenticator type identifier for AWS Route 53."""
     access_key_id: NonEmptyString
     """AWS Access Key ID."""
@@ -99,17 +99,17 @@ class Route53Schema(BaseModel):
     """AWS Secret Access Key."""
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class Route53SchemaArgs(Route53Schema):
     pass
 
 
 class ShellSchema(BaseModel):
-    authenticator: Literal['shell']
+    authenticator: Literal["shell"]
     """DNS authenticator type identifier for custom shell scripts."""
     script: FilePathStr
     """Authentication Script."""
-    user: NonEmptyString = 'nobody'
+    user: NonEmptyString = "nobody"
     """Running user."""
     timeout: int = Field(ge=5, default=60)
     """Script Timeout."""
@@ -117,14 +117,14 @@ class ShellSchema(BaseModel):
     """Propagation delay."""
 
 
-@single_argument_args('attributes')
+@single_argument_args("attributes")
 class ShellSchemaArgs(ShellSchema):
     pass
 
 
 AuthType: TypeAlias = Annotated[
     CloudFlareSchema | DigitalOceanSchema | OVHSchema | Route53Schema | ShellSchema,
-    Field(discriminator='authenticator')
+    Field(discriminator="authenticator")
 ]
 
 
@@ -147,7 +147,7 @@ class ACMEDNSAuthenticatorCreate(BaseModel):
     """Human-readable name for the DNS authenticator."""
 
 
-@single_argument_args('dns_authenticator_create')
+@single_argument_args("dns_authenticator_create")
 class DNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
     pass
 
@@ -184,20 +184,20 @@ class DNSAuthenticatorDeleteResult(BaseModel):
 
 
 class ACMEDNSAuthenticatorAttributeSchema(BaseModel):
-    name: str = Field(alias='_name_')
+    name: str = Field(alias="_name_")
     """Internal name of the schema attribute."""
     title: str
     """Human-readable title for the schema attribute."""
-    required: bool = Field(alias='_required_')
+    required: bool = Field(alias="_required_")
     """Whether this attribute is required for the authenticator."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class ACMEDNSAuthenticatorSchema(BaseModel):
     key: str
     """Unique identifier for the DNS authenticator type."""
-    schema_: ACMEDNSAuthenticatorAttributeSchema = Field(alias='schema')
+    schema_: ACMEDNSAuthenticatorAttributeSchema = Field(alias="schema")
     """Schema definition for the authenticator's required attributes."""
 
 

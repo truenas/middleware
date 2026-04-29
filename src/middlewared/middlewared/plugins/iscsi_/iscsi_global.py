@@ -20,12 +20,12 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.iscsi.constants import ISCSIMODE
 
-RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
+RE_IP_PORT = re.compile(r"^(.+?)(:[0-9]+)?$")
 DEFAULT_DIRECT_CONFIG = True
 
 
 class ISCSIGlobalModel(sa.Model):
-    __tablename__ = 'services_iscsitargetglobalconfiguration'
+    __tablename__ = "services_iscsitargetglobalconfiguration"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_basename = sa.Column(sa.String(120))
@@ -41,13 +41,13 @@ class ISCSIGlobalModel(sa.Model):
 class ISCSIGlobalService(SystemServiceService):
 
     class Config:
-        datastore = 'services.iscsitargetglobalconfiguration'
-        datastore_extend = 'iscsi.global.config_extend'
-        datastore_prefix = 'iscsi_'
-        service = 'iscsitarget'
-        namespace = 'iscsi.global'
-        cli_namespace = 'sharing.iscsi.global'
-        role_prefix = 'SHARING_ISCSI_GLOBAL'
+        datastore = "services.iscsitargetglobalconfiguration"
+        datastore_extend = "iscsi.global.config_extend"
+        datastore_prefix = "iscsi_"
+        service = "iscsitarget"
+        namespace = "iscsi.global"
+        cli_namespace = "sharing.iscsi.global"
+        role_prefix = "SHARING_ISCSI_GLOBAL"
         entry = ISCSIGlobalEntry
 
     @private
@@ -80,22 +80,22 @@ class ISCSIGlobalService(SystemServiceService):
 
         reg = RE_IP_PORT.search(server)
         if not reg:
-            verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+            verrors.add("iscsiglobal_update.isns_servers", invalid_ip_port_tuple)
             return None
 
         ip = reg.group(1)
-        if ip and ip[0] == '[' and ip[-1] == ']':
+        if ip and ip[0] == "[" and ip[-1] == "]":
             ip = ip[1:-1]
 
         # First check that a valid IP was supplied
         try:
             ipaddress.ip_address(ip)
         except ValueError:
-            verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+            verrors.add("iscsiglobal_update.isns_servers", invalid_ip_port_tuple)
             return None
 
         # Next check the port number (if supplied)
-        parts = server.split(':')
+        parts = server.split(":")
         if len(parts) == 2:
             try:
                 port = int(parts[1])
@@ -105,7 +105,7 @@ class ISCSIGlobalService(SystemServiceService):
                 valid = 1 <= port <= 65535
 
             if not valid:
-                verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+                verrors.add("iscsiglobal_update.isns_servers", invalid_ip_port_tuple)
                 return None
         else:
             port = 3205
@@ -114,16 +114,16 @@ class ISCSIGlobalService(SystemServiceService):
 
     @private
     def config_extend(self, data):
-        data['isns_servers'] = data['isns_servers'].split()
+        data["isns_servers"] = data["isns_servers"].split()
         return data
 
     @private
     async def _validate_mode(self, schema_name, mode, old, verrors):
-        old_mode = old['mode']
+        old_mode = old["mode"]
 
         # Basic sanity: reject unknown mode values before any further checks.
         if mode not in ISCSIMODE:
-            verrors.add(schema_name, f'Invalid mode ({mode})')
+            verrors.add(schema_name, f"Invalid mode ({mode})")
             return
 
         # Switching from SCST to LIO requires additional compatibility checks
@@ -132,18 +132,18 @@ class ISCSIGlobalService(SystemServiceService):
         # and can reconfigure while the service is still running.
         if mode >= ISCSIMODE.LIO and old_mode < ISCSIMODE.LIO:
             verrors.extend(
-                await self.middleware.call('iscsi.lio.validate_scst_compat', schema_name)
+                await self.middleware.call("iscsi.lio.validate_scst_compat", schema_name)
             )
 
         # Mode switches require the service to be stopped so the old stack can
         # be torn down cleanly before the new one is brought up.
-        if await self.middleware.call('service.started', 'iscsitarget'):
-            verrors.add(schema_name, 'Cannot switch iSCSI mode while the service is running.')
+        if await self.middleware.call("service.started", "iscsitarget"):
+            verrors.add(schema_name, "Cannot switch iSCSI mode while the service is running.")
 
     @api_method(
         ISCSIGlobalUpdateArgs,
         ISCSIGlobalUpdateResult,
-        audit='Update iSCSI'
+        audit="Update iSCSI"
     )
     async def do_update(self, data):
         """
@@ -156,11 +156,11 @@ class ISCSIGlobalService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if (mode := data.get('mode')) is not None:
-            if mode != old['mode']:
-                await self._validate_mode('iscsiglobal_update.mode', mode, old, verrors)
+        if (mode := data.get("mode")) is not None:
+            if mode != old["mode"]:
+                await self._validate_mode("iscsiglobal_update.mode", mode, old, verrors)
 
-        servers = data.get('isns_servers') or []
+        servers = data.get("isns_servers") or []
         server_addresses = []
         for server in servers:
             if result := self.validate_isns_server(server, verrors):
@@ -169,20 +169,20 @@ class ISCSIGlobalService(SystemServiceService):
             # For the valid addresses, we will check connectivity in parallel
             coroutines = [
                 self.middleware.call(
-                    'iscsi.global.port_is_listening', ip, port
+                    "iscsi.global.port_is_listening", ip, port
                 ) for (server, ip, port) in server_addresses
             ]
             results = await asyncio.gather(*coroutines)
             for (server, ip, port), result in zip(server_addresses, results):
                 if not result:
-                    verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" could not be contacted.')
+                    verrors.add("iscsiglobal_update.isns_servers", f'Server "{server}" could not be contacted.')
 
         verrors.extend(await validate_port(
-            self.middleware, 'iscsiglobal_update.listen_port', new['listen_port'], 'iscsi.global'
+            self.middleware, "iscsiglobal_update.listen_port", new["listen_port"], "iscsi.global"
         ))
 
-        if new['iser'] and old['iser'] != new['iser']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
+        if new["iser"] and old["iser"] != new["iser"]:
+            available_rdma_protocols = await self.middleware.call("rdma.capable_protocols")
             if RDMAprotocols.ISER.value not in available_rdma_protocols:
                 verrors.add(
                     "iscsiglobal_update.iser",
@@ -191,67 +191,67 @@ class ISCSIGlobalService(SystemServiceService):
 
         verrors.check()
 
-        new['isns_servers'] = '\n'.join(servers)
+        new["isns_servers"] = "\n".join(servers)
 
-        licensed = await self.middleware.call('failover.licensed')
-        if licensed and old['alua'] != new['alua']:
-            if not new['alua']:
+        licensed = await self.middleware.call("failover.licensed")
+        if licensed and old["alua"] != new["alua"]:
+            if not new["alua"]:
                 await self.middleware.call(
-                    'failover.call_remote', 'service.control', ['STOP', 'iscsitarget'], {'job': True}
+                    "failover.call_remote", "service.control", ["STOP", "iscsitarget"], {"job": True}
                 )
                 # Ensure we have actually fully unloaded before we proceed
                 for retry in range(0, 20):
                     loaded = await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.scst.is_kernel_module_loaded'
+                        "failover.call_remote",
+                        "iscsi.scst.is_kernel_module_loaded"
                     )
                     if not loaded:
                         if retry > 5:
-                            self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
+                            self.logger.debug("Delayed %r seconds when turning off ALUA", retry)
                         break
                     await asyncio.sleep(1)
                 if loaded:
-                    self.logger.warning('Insufficent unload delay when turning off ALUA')
-                await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                    self.logger.warning("Insufficent unload delay when turning off ALUA")
+                await self.middleware.call("failover.call_remote", "iscsi.target.logout_ha_targets")
 
-        await self._update_service(old, new, options={'ha_propagate': False})
+        await self._update_service(old, new, options={"ha_propagate": False})
 
-        if old['mode'] != new['mode']:
+        if old["mode"] != new["mode"]:
             # Re-evaluate scst.service enabled/disabled state for the new mode
-            await self.middleware.call('etc.generate', 'rc')
+            await self.middleware.call("etc.generate", "rc")
 
-        if old['direct_config'] != new['direct_config']:
-            await self.middleware.call('etc.generate', 'scst_direct')
+        if old["direct_config"] != new["direct_config"]:
+            await self.middleware.call("etc.generate", "scst_direct")
             if licensed:
                 await self.middleware.call(
-                    'failover.call_remote', 'etc.generate', ['scst_direct']
+                    "failover.call_remote", "etc.generate", ["scst_direct"]
                 )
 
-        if licensed and old['alua'] != new['alua']:
-            if new['alua']:
+        if licensed and old["alua"] != new["alua"]:
+            if new["alua"]:
                 await self.middleware.call(
-                    'failover.call_remote', 'service.control', ['START', 'iscsitarget'], {'job': True},
+                    "failover.call_remote", "service.control", ["START", "iscsitarget"], {"job": True},
                 )
 
         # If we have just turned off iSNS then work around a short-coming in scstadmin reload
-        if old['isns_servers'] != new['isns_servers'] and not servers:
-            await self.middleware.call('iscsi.global.stop_active_isns')
+        if old["isns_servers"] != new["isns_servers"] and not servers:
+            await self.middleware.call("iscsi.global.stop_active_isns")
             if licensed:
                 try:
-                    await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
+                    await self.middleware.call("failover.call_remote", "iscsi.global.stop_active_isns")
                 except Exception:
-                    self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
+                    self.logger.error("Unhandled exception in stop_active_isns on remote controller", exc_info=True)
 
         # If we have changed the iSER setting and the service is running then restart it
-        if old['iser'] != new['iser']:
-            if await self.middleware.call('service.started', 'iscsitarget'):
+        if old["iser"] != new["iser"]:
+            if await self.middleware.call("service.started", "iscsitarget"):
                 await (
-                    await self.middleware.call('service.control', 'RESTART', 'iscsitarget', {'ha_propagate': False})
+                    await self.middleware.call("service.control", "RESTART", "iscsitarget", {"ha_propagate": False})
                 ).wait(raise_error=True)
-                if licensed and new['alua'] and old['alua']:
+                if licensed and new["alua"] and old["alua"]:
                     # Only need to restart the remote service if it was already running
                     await self.middleware.call(
-                        'failover.call_remote', 'service.control', ['RESTART', 'iscsitarget'], {'job': True},
+                        "failover.call_remote", "service.control", ["RESTART", "iscsitarget"], {"job": True},
                     )
 
         return await self.config()
@@ -263,45 +263,45 @@ class ISCSIGlobalService(SystemServiceService):
         need to be able to perform an explicit action.
         """
         cp = await run([
-            'scstadmin', '-force', '-noprompt', '-set_drv_attr', 'iscsi',
-            '-attributes', 'iSNSServer=""'
+            "scstadmin", "-force", "-noprompt", "-set_drv_attr", "iscsi",
+            "-attributes", 'iSNSServer=""'
         ], check=False)
         if cp.returncode:
-            self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
+            self.logger.warning("Failed to stop active iSNS: %s", cp.stderr.decode())
 
     @api_method(
         ISCSIGlobalAluaEnabledArgs,
         ISCSIGlobalAluaEnabledResult,
-        roles=['SHARING_ISCSI_GLOBAL_READ']
+        roles=["SHARING_ISCSI_GLOBAL_READ"]
     )
     async def alua_enabled(self):
         """
         Returns whether iSCSI ALUA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call("system.is_enterprise"):
             return False
-        if not await self.middleware.call('failover.licensed'):
+        if not await self.middleware.call("failover.licensed"):
             return False
 
         # If FIBRECHANNEL is licensed then allow ALUA
         # if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
         #     return True
 
-        return (await self.middleware.call('iscsi.global.config'))['alua']
+        return (await self.middleware.call("iscsi.global.config"))["alua"]
 
     @api_method(
         ISCSIGlobalIserEnabledArgs,
         ISCSIGlobalIserEnabledResult,
-        roles=['SHARING_ISCSI_GLOBAL_READ']
+        roles=["SHARING_ISCSI_GLOBAL_READ"]
     )
     async def iser_enabled(self):
         """
         Returns whether iSER is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call("system.is_enterprise"):
             return False
 
-        return (await self.middleware.call('iscsi.global.config'))['iser']
+        return (await self.middleware.call("iscsi.global.config"))["iser"]
 
     @private
     async def direct_config_enabled(self):
@@ -310,7 +310,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         If False then scstadmin will be used.
         """
-        direct_config = (await self.middleware.call('iscsi.global.config'))['direct_config']
+        direct_config = (await self.middleware.call("iscsi.global.config"))["direct_config"]
         if direct_config is None:
             return DEFAULT_DIRECT_CONFIG
         return direct_config
@@ -318,7 +318,7 @@ class ISCSIGlobalService(SystemServiceService):
     @private
     async def lio_enabled(self):
         """Returns True when the iSCSI target stack is set to LIO."""
-        return (await self.config()).get('mode') == ISCSIMODE.LIO
+        return (await self.config()).get("mode") == ISCSIMODE.LIO
 
     @private
     async def using_dlm(self):
@@ -326,7 +326,7 @@ class ISCSIGlobalService(SystemServiceService):
         Returns whether iSCSI is configured to use DLM.
         """
         if await self.alua_enabled():
-            if (await self.config()).get('mode') in (
+            if (await self.config()).get("mode") in (
                 ISCSIMODE.SCST_DLM_PRSTATE_SAVE,
                 ISCSIMODE.SCST_DLM_PRSTATE_NOSAVE,
             ):

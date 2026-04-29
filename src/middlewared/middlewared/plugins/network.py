@@ -69,36 +69,36 @@ from .interface.sync_data import SyncData
 
 
 class NetworkAliasModel(sa.Model):
-    __tablename__ = 'network_alias'
+    __tablename__ = "network_alias"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
-    alias_address = sa.Column(sa.String(45), default='')
+    alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey("network_interfaces.id", ondelete="CASCADE"), index=True)
+    alias_address = sa.Column(sa.String(45), default="")
     alias_version = sa.Column(sa.Integer())
     alias_netmask = sa.Column(sa.Integer())
-    alias_address_b = sa.Column(sa.String(45), default='')
-    alias_vip = sa.Column(sa.String(45), default='')
+    alias_address_b = sa.Column(sa.String(45), default="")
+    alias_vip = sa.Column(sa.String(45), default="")
 
 
 class NetworkBridgeModel(sa.Model):
-    __tablename__ = 'network_bridge'
+    __tablename__ = "network_bridge"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     members = sa.Column(sa.JSON(list), default=[])
-    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
+    interface_id = sa.Column(sa.ForeignKey("network_interfaces.id", ondelete="CASCADE"))
     stp = sa.Column(sa.Boolean())
     enable_learning = sa.Column(sa.Boolean(), default=True)
 
 
 class NetworkInterfaceModel(sa.Model):
-    __tablename__ = 'network_interfaces'
+    __tablename__ = "network_interfaces"
 
     id = sa.Column(sa.Integer, primary_key=True)
     int_interface = sa.Column(sa.String(300), unique=True)
     int_name = sa.Column(sa.String(120))
     int_dhcp = sa.Column(sa.Boolean(), default=False)
-    int_address = sa.Column(sa.String(45), default='')
-    int_address_b = sa.Column(sa.String(45), default='')
+    int_address = sa.Column(sa.String(45), default="")
+    int_address_b = sa.Column(sa.String(45), default="")
     int_version = sa.Column(sa.Integer())
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
@@ -111,7 +111,7 @@ class NetworkInterfaceModel(sa.Model):
 
 
 class NetworkInterfaceLinkAddressModel(sa.Model):
-    __tablename__ = 'network_interface_link_address'
+    __tablename__ = "network_interface_link_address"
 
     id = sa.Column(sa.Integer, primary_key=True)
     interface = sa.Column(sa.String(300))
@@ -120,26 +120,26 @@ class NetworkInterfaceLinkAddressModel(sa.Model):
 
 
 class NetworkLaggInterfaceModel(sa.Model):
-    __tablename__ = 'network_lagginterface'
+    __tablename__ = "network_lagginterface"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
+    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey("network_interfaces.id", ondelete="CASCADE"))
     lagg_protocol = sa.Column(sa.String(120))
     lagg_xmit_hash_policy = sa.Column(sa.String(8), nullable=True)
     lagg_lacpdu_rate = sa.Column(sa.String(4), nullable=True)
 
 
 class NetworkLaggInterfaceMemberModel(sa.Model):
-    __tablename__ = 'network_lagginterfacemembers'
+    __tablename__ = "network_lagginterfacemembers"
 
     id = sa.Column(sa.Integer, primary_key=True)
     lagg_ordernum = sa.Column(sa.Integer())
     lagg_physnic = sa.Column(sa.String(120), unique=True)
-    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
+    lagg_interfacegroup_id = sa.Column(sa.ForeignKey("network_lagginterface.id", ondelete="CASCADE"), index=True)
 
 
 class NetworkVlanModel(sa.Model):
-    __tablename__ = 'network_vlan'
+    __tablename__ = "network_vlan"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     vlan_vint = sa.Column(sa.String(120))
@@ -152,10 +152,10 @@ class NetworkVlanModel(sa.Model):
 class InterfaceService(CRUDService):
 
     class Config:
-        datastore_primary_key_type = 'string'
-        namespace_alias = 'interfaces'
-        cli_namespace = 'network.interface'
-        role_prefix = 'NETWORK_INTERFACE'
+        datastore_primary_key_type = "string"
+        namespace_alias = "interfaces"
+        cli_namespace = "network.interface"
+        role_prefix = "NETWORK_INTERFACE"
         entry = InterfaceEntry
 
     def __init__(self, *args, **kwargs):
@@ -165,14 +165,14 @@ class InterfaceService(CRUDService):
 
     @private
     async def query_names_only(self):
-        return [i['int_interface'] for i in await self.middleware.call('datastore.query', 'network.interfaces')]
+        return [i["int_interface"] for i in await self.middleware.call("datastore.query", "network.interfaces")]
 
     @private
     def ignore_usb_nics(self, ha_hardware=None):
         """Currently, there is 0 reason to expose USB based NICs
         using our API on most of the platforms we sell."""
         if ha_hardware is None:
-            ha_hardware = self.middleware.call_sync('system.is_ha_capable')
+            ha_hardware = self.middleware.call_sync("system.is_ha_capable")
 
         if ha_hardware:
             # if it's HA capable, 0 reason to show a USB NIC
@@ -180,8 +180,8 @@ class InterfaceService(CRUDService):
             # 100% _not_ qualified by our platform team
             return True
 
-        platform = self.middleware.call_sync('truenas.get_chassis_hardware')
-        if platform == 'TRUENAS-UNKNOWN' or 'MINI' in platform:
+        platform = self.middleware.call_sync("truenas.get_chassis_hardware")
+        if platform == "TRUENAS-UNKNOWN" or "MINI" in platform:
             return False
 
         return True
@@ -194,219 +194,219 @@ class InterfaceService(CRUDService):
         `options.extra.retrieve_names_only` (bool): Only return interface names.
 
         """
-        retrieve_names_only = options['extra'].get('retrieve_names_only')
+        retrieve_names_only = options["extra"].get("retrieve_names_only")
         data = {}
         configs = {
-            i['int_interface']: i
-            for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
+            i["int_interface"]: i
+            for i in self.middleware.call_sync("datastore.query", "network.interfaces")
         }
-        ha_hardware = self.middleware.call_sync('system.is_ha_capable')
-        ignore = self.middleware.call_sync('interface.internal_interfaces')
+        ha_hardware = self.middleware.call_sync("system.is_ha_capable")
+        ignore = self.middleware.call_sync("interface.internal_interfaces")
         ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
         for name, iface in list_interface_states().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
-            elif ignore_usb_nics and iface.bus == 'usb':
+            elif ignore_usb_nics and iface.bus == "usb":
                 continue
 
             if retrieve_names_only:
-                data[name] = {'name': name}
+                data[name] = {"name": name}
                 continue
 
             try:
                 data[name] = self.iface_extend(iface.asdict(), configs, ha_hardware)
             except OSError:
-                self.logger.warning('Failed to get interface state for %s', name, exc_info=True)
+                self.logger.warning("Failed to get interface state for %s", name, exc_info=True)
 
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             if retrieve_names_only:
-                data[name] = {'name': name}
+                data[name] = {"name": name}
             else:
                 data[name] = self.iface_extend({
-                    'name': config['int_interface'],
-                    'orig_name': config['int_interface'],
-                    'description': config['int_name'],
-                    'aliases': [],
-                    'link_address': '',
-                    'permanent_link_address': None,
-                    'hardware_link_address': '',
-                    'cloned': True,
-                    'mtu': 1500,
-                    'flags': [],
-                    'nd6_flags': [],
-                    'capabilities': [],
-                    'link_state': '',
-                    'media_type': '',
-                    'media_subtype': '',
-                    'active_media_type': '',
-                    'active_media_subtype': '',
-                    'supported_media': [],
-                    'media_options': [],
-                    'vrrp_config': [],
+                    "name": config["int_interface"],
+                    "orig_name": config["int_interface"],
+                    "description": config["int_name"],
+                    "aliases": [],
+                    "link_address": "",
+                    "permanent_link_address": None,
+                    "hardware_link_address": "",
+                    "cloned": True,
+                    "mtu": 1500,
+                    "flags": [],
+                    "nd6_flags": [],
+                    "capabilities": [],
+                    "link_state": "",
+                    "media_type": "",
+                    "media_subtype": "",
+                    "active_media_type": "",
+                    "active_media_subtype": "",
+                    "supported_media": [],
+                    "media_options": [],
+                    "vrrp_config": [],
                 }, configs, ha_hardware, fake=True)
         return filter_list(list(data.values()), filters, options)
 
     @private
     def iface_extend(self, iface_state, configs, ha_hardware, fake=False):
-        itype = self.middleware.call_sync('interface.type', iface_state)
+        itype = self.middleware.call_sync("interface.type", iface_state)
         iface = {
-            'id': iface_state['name'],
-            'name': iface_state['name'],
-            'fake': fake,
-            'type': itype.value,
-            'state': iface_state,
-            'aliases': [],
-            'ipv4_dhcp': not configs,
-            'ipv6_auto': not configs,
-            'description': '',
-            'mtu': None,
+            "id": iface_state["name"],
+            "name": iface_state["name"],
+            "fake": fake,
+            "type": itype.value,
+            "state": iface_state,
+            "aliases": [],
+            "ipv4_dhcp": not configs,
+            "ipv6_auto": not configs,
+            "description": "",
+            "mtu": None,
         }
         if ha_hardware:
             iface.update({
-                'failover_critical': False,
-                'failover_vhid': None,
-                'failover_group': None,
-                'failover_aliases': [],
-                'failover_virtual_aliases': [],
+                "failover_critical": False,
+                "failover_vhid": None,
+                "failover_group": None,
+                "failover_aliases": [],
+                "failover_virtual_aliases": [],
             })
-            iface['state']['vrrp_config'] = []
+            iface["state"]["vrrp_config"] = []
 
-        config = configs.get(iface['name'])
+        config = configs.get(iface["name"])
         if not config:
             return iface
 
         iface.update({
-            'ipv4_dhcp': config['int_dhcp'],
-            'ipv6_auto': config['int_ipv6auto'],
-            'description': config['int_name'],
-            'mtu': config['int_mtu'],
+            "ipv4_dhcp": config["int_dhcp"],
+            "ipv6_auto": config["int_ipv6auto"],
+            "description": config["int_name"],
+            "mtu": config["int_mtu"],
         })
         if itype == InterfaceType.PHYSICAL:
-            if fec_mode := config.get('int_fec_mode'):
-                iface['fec_mode'] = fec_mode
+            if fec_mode := config.get("int_fec_mode"):
+                iface["fec_mode"] = fec_mode
 
         if ha_hardware:
-            info = ('INET', 32) if config['int_version'] == 4 else ('INET6', 128)
+            info = ("INET", 32) if config["int_version"] == 4 else ("INET6", 128)
             iface.update({
-                'failover_critical': config['int_critical'],
-                'failover_vhid': config['int_vhid'],
-                'failover_group': config['int_group'],
+                "failover_critical": config["int_critical"],
+                "failover_vhid": config["int_vhid"],
+                "failover_group": config["int_group"],
             })
-            if config['int_address_b']:
-                iface['failover_aliases'].append({
-                    'type': info[0],
-                    'address': config['int_address_b'],
-                    'netmask': config['int_netmask'],
+            if config["int_address_b"]:
+                iface["failover_aliases"].append({
+                    "type": info[0],
+                    "address": config["int_address_b"],
+                    "netmask": config["int_netmask"],
                 })
-            if config['int_vip']:
-                iface['failover_virtual_aliases'].append({
-                    'type': info[0],
-                    'address': config['int_vip'],
-                    'netmask': info[1]
+            if config["int_vip"]:
+                iface["failover_virtual_aliases"].append({
+                    "type": info[0],
+                    "address": config["int_vip"],
+                    "netmask": info[1]
                 })
-                for i in filter(lambda x: x['type'] != 'LINK', iface['state']['aliases']):
-                    if i['address'] == config['int_vip']:
-                        iface['state']['vrrp_config'].append({'address': config['int_vip'], 'state': 'MASTER'})
+                for i in filter(lambda x: x["type"] != "LINK", iface["state"]["aliases"]):
+                    if i["address"] == config["int_vip"]:
+                        iface["state"]["vrrp_config"].append({"address": config["int_vip"], "state": "MASTER"})
                         break
                 else:
-                    iface['state']['vrrp_config'].append({'state': 'BACKUP'})
+                    iface["state"]["vrrp_config"].append({"state": "BACKUP"})
 
         if itype == InterfaceType.BRIDGE:
-            filters = [('interface', '=', config['id'])]
-            if br := self.middleware.call_sync('datastore.query', 'network.bridge', filters):
+            filters = [("interface", "=", config["id"])]
+            if br := self.middleware.call_sync("datastore.query", "network.bridge", filters):
                 iface.update({
-                    'bridge_members': br[0]['members'], 'stp': br[0]['stp'], 'enable_learning': br[0]['enable_learning']
+                    "bridge_members": br[0]["members"], "stp": br[0]["stp"], "enable_learning": br[0]["enable_learning"]
                 })
             else:
-                iface.update({'bridge_members': [], 'stp': True, 'enable_learning': True})
+                iface.update({"bridge_members": [], "stp": True, "enable_learning": True})
 
         elif itype == InterfaceType.LINK_AGGREGATION:
             lag = self.middleware.call_sync(
-                'datastore.query',
-                'network.lagginterface',
-                [('interface', '=', config['id'])],
-                {'prefix': 'lagg_'}
+                "datastore.query",
+                "network.lagginterface",
+                [("interface", "=", config["id"])],
+                {"prefix": "lagg_"}
             )
             if lag:
                 lag = lag[0]
-                if lag['protocol'] in ('lacp', 'loadbalance'):
-                    iface.update({'xmit_hash_policy': (lag.get('xmit_hash_policy') or 'layer2+3').upper()})
-                    if lag['protocol'] == 'lacp':
-                        iface.update({'lacpdu_rate': (lag.get('lacpdu_rate') or 'slow').upper()})
+                if lag["protocol"] in ("lacp", "loadbalance"):
+                    iface.update({"xmit_hash_policy": (lag.get("xmit_hash_policy") or "layer2+3").upper()})
+                    if lag["protocol"] == "lacp":
+                        iface.update({"lacpdu_rate": (lag.get("lacpdu_rate") or "slow").upper()})
 
-                iface.update({'lag_protocol': lag['protocol'].upper(), 'lag_ports': []})
+                iface.update({"lag_protocol": lag["protocol"].upper(), "lag_ports": []})
                 for port in self.middleware.call_sync(
-                    'datastore.query',
-                    'network.lagginterfacemembers',
-                    [('interfacegroup', '=', lag['id'])],
-                    {'prefix': 'lagg_'}
+                    "datastore.query",
+                    "network.lagginterfacemembers",
+                    [("interfacegroup", "=", lag["id"])],
+                    {"prefix": "lagg_"}
                 ):
-                    iface['lag_ports'].append(port['physnic'])
+                    iface["lag_ports"].append(port["physnic"])
             else:
-                iface['lag_ports'] = []
+                iface["lag_ports"] = []
         elif itype == InterfaceType.VLAN:
             vlan = self.middleware.call_sync(
-                'datastore.query',
-                'network.vlan',
-                [('vint', '=', iface['name'])],
-                {'prefix': 'vlan_'}
+                "datastore.query",
+                "network.vlan",
+                [("vint", "=", iface["name"])],
+                {"prefix": "vlan_"}
             )
             if vlan:
                 vlan = vlan[0]
                 iface.update({
-                    'vlan_parent_interface': vlan['pint'],
-                    'vlan_tag': vlan['tag'],
-                    'vlan_pcp': vlan['pcp'],
+                    "vlan_parent_interface": vlan["pint"],
+                    "vlan_tag": vlan["tag"],
+                    "vlan_pcp": vlan["pcp"],
                 })
             else:
                 iface.update({
-                    'vlan_parent_interface': None,
-                    'vlan_tag': None,
-                    'vlan_pcp': None,
+                    "vlan_parent_interface": None,
+                    "vlan_tag": None,
+                    "vlan_pcp": None,
                 })
 
-        if (not config['int_dhcp'] or not config['int_ipv6auto']) and config['int_address']:
-            iface['aliases'].append({
-                'type': 'INET' if config['int_version'] == 4 else 'INET6',
-                'address': config['int_address'],
-                'netmask': config['int_netmask'],
+        if (not config["int_dhcp"] or not config["int_ipv6auto"]) and config["int_address"]:
+            iface["aliases"].append({
+                "type": "INET" if config["int_version"] == 4 else "INET6",
+                "address": config["int_address"],
+                "netmask": config["int_netmask"],
             })
 
-        filters = [('alias_interface', '=', config['id'])]
-        for alias in self.middleware.call_sync('datastore.query', 'network.alias', filters):
-            _type = 'INET' if alias['alias_version'] == 4 else 'INET6'
-            if alias['alias_address']:
-                iface['aliases'].append({
-                    'type': _type,
-                    'address': alias['alias_address'],
-                    'netmask': alias['alias_netmask'],
+        filters = [("alias_interface", "=", config["id"])]
+        for alias in self.middleware.call_sync("datastore.query", "network.alias", filters):
+            _type = "INET" if alias["alias_version"] == 4 else "INET6"
+            if alias["alias_address"]:
+                iface["aliases"].append({
+                    "type": _type,
+                    "address": alias["alias_address"],
+                    "netmask": alias["alias_netmask"],
                 })
             if ha_hardware:
-                if alias['alias_address_b']:
-                    iface['failover_aliases'].append({
-                        'type': _type,
-                        'address': alias['alias_address_b'],
-                        'netmask': alias['alias_netmask'],
+                if alias["alias_address_b"]:
+                    iface["failover_aliases"].append({
+                        "type": _type,
+                        "address": alias["alias_address_b"],
+                        "netmask": alias["alias_netmask"],
                     })
-                if alias['alias_vip']:
-                    iface['failover_virtual_aliases'].append({
-                        'type': _type,
-                        'address': alias['alias_vip'],
-                        'netmask': 32 if _type == 'INET' else 128,
+                if alias["alias_vip"]:
+                    iface["failover_virtual_aliases"].append({
+                        "type": _type,
+                        "address": alias["alias_vip"],
+                        "netmask": 32 if _type == "INET" else 128,
                     })
-                for i in filter(lambda x: x['type'] != 'LINK', iface['state']['aliases']):
-                    if i['address'] == alias['alias_vip']:
-                        iface['state']['vrrp_config'].append({'address': alias['alias_vip'], 'state': 'MASTER'})
+                for i in filter(lambda x: x["type"] != "LINK", iface["state"]["aliases"]):
+                    if i["address"] == alias["alias_vip"]:
+                        iface["state"]["vrrp_config"].append({"address": alias["alias_vip"], "state": "MASTER"})
                         break
                 else:
-                    iface['state']['vrrp_config'].append({'state': 'BACKUP'})
+                    iface["state"]["vrrp_config"].append({"state": "BACKUP"})
 
         return iface
 
     @api_method(
         InterfaceNetworkConfigToBeRemovedArgs,
         InterfaceNetworkConfigToBeRemovedResult,
-        roles=['NETWORK_INTERFACE_READ']
+        roles=["NETWORK_INTERFACE_READ"]
     )
     def network_config_to_be_removed(self):
         """Determines which network configuration items will be removed during interface setup.
@@ -428,26 +428,26 @@ class InterfaceService(CRUDService):
             if default_route := get_default_route(sock):
                 rtgw = default_route.gateway
 
-        netconfig = self.middleware.call_sync('network.configuration.config')
+        netconfig = self.middleware.call_sync("network.configuration.config")
         will_be_removed = []
 
         if rtgw:
             # default route in kernel
-            if not self.middleware.call_sync('datastore.query', 'network.interfaces'):
+            if not self.middleware.call_sync("datastore.query", "network.interfaces"):
                 # no interfaces in database
-                will_be_removed.append('ipv4gateway')
-            elif netconfig['ipv4gateway'] != rtgw:
+                will_be_removed.append("ipv4gateway")
+            elif netconfig["ipv4gateway"] != rtgw:
                 # route specified in the database does not match the default route in the kernel
-                will_be_removed.append('ipv4gateway')
+                will_be_removed.append("ipv4gateway")
 
-        for ns in ('nameserver1', 'nameserver2', 'nameserver3'):
-            if bool(netconfig['state'][ns]) and not netconfig[ns]:
+        for ns in ("nameserver1", "nameserver2", "nameserver3"):
+            if bool(netconfig["state"][ns]) and not netconfig[ns]:
                 # nameserver is set at the OS level (via DHCP) but is not set in the database
                 will_be_removed.append(ns)
 
         return will_be_removed
 
-    @api_method(InterfaceSaveNetworkConfigArgs, InterfaceSaveNetworkConfigResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(InterfaceSaveNetworkConfigArgs, InterfaceSaveNetworkConfigResult, roles=["NETWORK_INTERFACE_WRITE"])
     async def save_network_config(self, config):
         """Saves network configuration settings to prevent network isolation during interface changes.
 
@@ -501,14 +501,14 @@ class InterfaceService(CRUDService):
 
         """
         if not self._original_datastores:
-            raise CallError('There are no pending interface changes.')
+            raise CallError("There are no pending interface changes.")
 
-        gw = ip_address(config.pop('ipv4gateway'))
+        gw = ip_address(config.pop("ipv4gateway"))
         new_config = {
-            'gc_ipv4gateway': gw.exploded,
-            **{'gc_' + k: v for k, v in config.items()},
+            "gc_ipv4gateway": gw.exploded,
+            **{"gc_" + k: v for k, v in config.items()},
         }
-        for iface in await self.middleware.call('datastore.query', 'network.interfaces'):
+        for iface in await self.middleware.call("datastore.query", "network.interfaces"):
             gw_reachable = False
             try:
                 gw_reachable = gw in ip_interface(f'{iface["int_address"]}/{iface["int_netmask"]}').network
@@ -518,50 +518,50 @@ class InterfaceService(CRUDService):
                 continue
             else:
                 if gw_reachable:
-                    await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, new_config)
+                    await self.middleware.call("datastore.update", "network.globalconfiguration", 1, new_config)
                     return
 
-        for iface in await self.middleware.call('datastore.query', 'network.alias'):
+        for iface in await self.middleware.call("datastore.query", "network.alias"):
             if gw in ip_interface(f'{iface["alias_address"]}/{iface["alias_netmask"]}').network:
-                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, new_config)
+                await self.middleware.call("datastore.update", "network.globalconfiguration", 1, new_config)
                 return
 
-        raise CallError(f'{str(gw)!r} is not reachable from any interface on the system.')
+        raise CallError(f"{str(gw)!r} is not reachable from any interface on the system.")
 
     @private
     async def get_datastores(self):
         datastores = {}
-        datastores['interfaces'] = await self.middleware.call(
-            'datastore.query', 'network.interfaces'
+        datastores["interfaces"] = await self.middleware.call(
+            "datastore.query", "network.interfaces"
         )
-        datastores['alias'] = []
-        for i in await self.middleware.call('datastore.query', 'network.alias'):
-            i['alias_interface'] = i['alias_interface']['id']
-            datastores['alias'].append(i)
+        datastores["alias"] = []
+        for i in await self.middleware.call("datastore.query", "network.alias"):
+            i["alias_interface"] = i["alias_interface"]["id"]
+            datastores["alias"].append(i)
 
-        datastores['bridge'] = []
-        for i in await self.middleware.call('datastore.query', 'network.bridge'):
-            i['interface'] = i['interface']['id'] if i['interface'] else None
-            datastores['bridge'].append(i)
+        datastores["bridge"] = []
+        for i in await self.middleware.call("datastore.query", "network.bridge"):
+            i["interface"] = i["interface"]["id"] if i["interface"] else None
+            datastores["bridge"].append(i)
 
-        datastores['vlan'] = await self.middleware.call(
-            'datastore.query', 'network.vlan'
+        datastores["vlan"] = await self.middleware.call(
+            "datastore.query", "network.vlan"
         )
 
-        datastores['lagg'] = []
-        for i in await self.middleware.call('datastore.query', 'network.lagginterface'):
-            i['lagg_interface'] = i['lagg_interface']['id']
-            datastores['lagg'].append(i)
+        datastores["lagg"] = []
+        for i in await self.middleware.call("datastore.query", "network.lagginterface"):
+            i["lagg_interface"] = i["lagg_interface"]["id"]
+            datastores["lagg"].append(i)
 
-        datastores['laggmembers'] = []
-        for i in await self.middleware.call('datastore.query', 'network.lagginterfacemembers'):
-            i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
-            datastores['laggmembers'].append(i)
+        datastores["laggmembers"] = []
+        for i in await self.middleware.call("datastore.query", "network.lagginterfacemembers"):
+            i["lagg_interfacegroup"] = i["lagg_interfacegroup"]["id"]
+            datastores["laggmembers"].append(i)
 
-        datastores['ipv4gateway'] = {
-            'gc_ipv4gateway': (
-                await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
-            )['gc_ipv4gateway']
+        datastores["ipv4gateway"] = {
+            "gc_ipv4gateway": (
+                await self.middleware.call("datastore.query", "network.globalconfiguration", [], {"get": True})
+            )["gc_ipv4gateway"]
         }
 
         return datastores
@@ -583,32 +583,32 @@ class InterfaceService(CRUDService):
 
         # Deleting network.lagginterface because deleting network.interfaces won't cascade
         # (but network.lagginterface will cascade to network.lagginterfacemembers)
-        await self.middleware.call('datastore.delete', 'network.lagginterface', [])
+        await self.middleware.call("datastore.delete", "network.lagginterface", [])
         # Deleting interfaces should cascade to network.alias and network.bridge
-        await self.middleware.call('datastore.delete', 'network.interfaces', [])
-        await self.middleware.call('datastore.delete', 'network.vlan', [])
-        await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, {'gc_ipv4gateway': ''})
+        await self.middleware.call("datastore.delete", "network.interfaces", [])
+        await self.middleware.call("datastore.delete", "network.vlan", [])
+        await self.middleware.call("datastore.update", "network.globalconfiguration", 1, {"gc_ipv4gateway": ""})
 
-        for i in self._original_datastores['interfaces']:
-            await self.middleware.call('datastore.insert', 'network.interfaces', i)
+        for i in self._original_datastores["interfaces"]:
+            await self.middleware.call("datastore.insert", "network.interfaces", i)
 
-        for i in self._original_datastores['alias']:
-            await self.middleware.call('datastore.insert', 'network.alias', i)
+        for i in self._original_datastores["alias"]:
+            await self.middleware.call("datastore.insert", "network.alias", i)
 
-        for i in self._original_datastores['bridge']:
-            await self.middleware.call('datastore.insert', 'network.bridge', i)
+        for i in self._original_datastores["bridge"]:
+            await self.middleware.call("datastore.insert", "network.bridge", i)
 
-        for i in self._original_datastores['vlan']:
-            await self.middleware.call('datastore.insert', 'network.vlan', i)
+        for i in self._original_datastores["vlan"]:
+            await self.middleware.call("datastore.insert", "network.vlan", i)
 
-        for i in self._original_datastores['lagg']:
-            await self.middleware.call('datastore.insert', 'network.lagginterface', i)
+        for i in self._original_datastores["lagg"]:
+            await self.middleware.call("datastore.insert", "network.lagginterface", i)
 
-        for i in self._original_datastores['laggmembers']:
-            await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
+        for i in self._original_datastores["laggmembers"]:
+            await self.middleware.call("datastore.insert", "network.lagginterfacemembers", i)
 
-        gw = self._original_datastores['ipv4gateway']
-        await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, gw)
+        gw = self._original_datastores["ipv4gateway"]
+        await self.middleware.call("datastore.update", "network.globalconfiguration", 1, gw)
 
         self._original_datastores.clear()
 
@@ -616,7 +616,7 @@ class InterfaceService(CRUDService):
     async def get_original_datastores(self):
         return self._original_datastores
 
-    @api_method(InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult, roles=["NETWORK_INTERFACE_WRITE"])
     async def has_pending_changes(self):
         """
         Return whether there are pending interfaces changes to be applied or not.
@@ -626,8 +626,8 @@ class InterfaceService(CRUDService):
     @api_method(
         InterfaceRollbackArgs,
         InterfaceRollbackResult,
-        audit='Network interface rollback pending changes',
-        roles=['NETWORK_INTERFACE_WRITE']
+        audit="Network interface rollback pending changes",
+        roles=["NETWORK_INTERFACE_WRITE"]
     )
     async def rollback(self):
         """
@@ -644,7 +644,7 @@ class InterfaceService(CRUDService):
         # This breaks `failover.status` on TrueNAS HA systems.
         # Because of this, we need to manually sync the database to the standby
         # controller.
-        await self.middleware.call_hook('interface.post_rollback')
+        await self.middleware.call_hook("interface.post_rollback")
 
         await self.sync()
 
@@ -657,7 +657,7 @@ class InterfaceService(CRUDService):
         if clear_cache:
             self._original_datastores = {}
 
-    @api_method(InterfaceCheckinArgs, InterfaceCheckinResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(InterfaceCheckinArgs, InterfaceCheckinResult, roles=["NETWORK_INTERFACE_WRITE"])
     async def checkin(self):
         """
         If this method is called after interface changes have been committed and within the checkin timeout,
@@ -667,7 +667,7 @@ class InterfaceService(CRUDService):
         """
         return await self.checkin_impl(clear_cache=True)
 
-    @api_method(InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, roles=["NETWORK_INTERFACE_WRITE"])
     async def cancel_rollback(self):
         """
         If this method is called after interface changes have been committed and within the checkin timeout,
@@ -676,7 +676,7 @@ class InterfaceService(CRUDService):
         """
         return await self.checkin_impl(clear_cache=False)
 
-    @api_method(InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, roles=['NETWORK_INTERFACE_WRITE'])
+    @api_method(InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, roles=["NETWORK_INTERFACE_WRITE"])
     async def checkin_waiting(self):
         """
         Returns whether we are waiting for the user to check in the applied network changes
@@ -690,30 +690,30 @@ class InterfaceService(CRUDService):
     @api_method(
         InterfaceCommitArgs,
         InterfaceCommitResult,
-        audit='Network interface commit pending changes',
-        roles=['NETWORK_INTERFACE_WRITE']
+        audit="Network interface commit pending changes",
+        roles=["NETWORK_INTERFACE_WRITE"]
     )
     async def commit(self, options):
         """
         Commit/apply pending interfaces changes.
         """
         verrors = ValidationErrors()
-        schema = 'interface.commit'
-        await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
-        await self.middleware.call('network.common.check_dhcp_or_aliases', schema, verrors)
+        schema = "interface.commit"
+        await self.middleware.call("network.common.check_failover_disabled", schema, verrors)
+        await self.middleware.call("network.common.check_dhcp_or_aliases", schema, verrors)
         verrors.check()
 
         try:
             await self.sync()
         except Exception:
-            if options['rollback']:
+            if options["rollback"]:
                 await self.rollback()
             raise
 
-        if options['rollback'] and options['checkin_timeout']:
+        if options["rollback"] and options["checkin_timeout"]:
             loop = asyncio.get_event_loop()
             self._rollback_timer = loop.call_later(
-                options['checkin_timeout'], lambda: self.middleware.create_task(self.rollback())
+                options["checkin_timeout"], lambda: self.middleware.create_task(self.rollback())
             )
         else:
             self._original_datastores = {}
@@ -721,7 +721,7 @@ class InterfaceService(CRUDService):
     @api_method(
         InterfaceCreateArgs,
         InterfaceCreateResult,
-        audit='Network interface create', audit_extended=lambda data: data["name"]
+        audit="Network interface create", audit_extended=lambda data: data["name"]
     )
     async def do_create(self, data):
         """
@@ -746,71 +746,71 @@ class InterfaceService(CRUDService):
 
         """
         verrors = ValidationErrors()
-        await self.middleware.call('network.common.check_failover_disabled', 'interface.create', verrors)
+        await self.middleware.call("network.common.check_failover_disabled", "interface.create", verrors)
 
-        if data['type'] == 'BRIDGE':
-            required_attrs = ('bridge_members', )
-        elif data['type'] == 'LINK_AGGREGATION':
-            required_attrs = ('lag_protocol', 'lag_ports')
-        elif data['type'] == 'VLAN':
-            required_attrs = ('vlan_parent_interface', 'vlan_tag')
+        if data["type"] == "BRIDGE":
+            required_attrs = ("bridge_members", )
+        elif data["type"] == "LINK_AGGREGATION":
+            required_attrs = ("lag_protocol", "lag_ports")
+        elif data["type"] == "VLAN":
+            required_attrs = ("vlan_parent_interface", "vlan_tag")
         for i in filter(lambda x: x not in data, required_attrs):
-            verrors.add(f'interface_create.{i}', 'This field is required')
+            verrors.add(f"interface_create.{i}", "This field is required")
         verrors.check()
 
-        type_ = data['type']
-        await self._common_validation(verrors, 'interface_create', data, type_)
+        type_ = data["type"]
+        await self._common_validation(verrors, "interface_create", data, type_)
         verrors.check()
 
         await self.__save_datastores()
 
-        name = data.get('name')
+        name = data.get("name")
         if name is None:
-            prefix = {'BRIDGE': 'br', 'LINK_AGGREGATION': 'bond', 'VLAN': 'vlan'}[type_]
+            prefix = {"BRIDGE": "br", "LINK_AGGREGATION": "bond", "VLAN": "vlan"}[type_]
             name = await self.get_next(prefix)
 
         interface_id = lag_id = None
         try:
-            async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
-                if type_ == 'BRIDGE':
-                    await self.middleware.call('datastore.insert', 'network.bridge', {
-                        'interface': interface_id, 'members': data['bridge_members'], 'stp': data['stp'],
-                        'enable_learning': data['enable_learning']
+            async for interface_id in self.__create_interface_datastore(data, {"interface": name}):
+                if type_ == "BRIDGE":
+                    await self.middleware.call("datastore.insert", "network.bridge", {
+                        "interface": interface_id, "members": data["bridge_members"], "stp": data["stp"],
+                        "enable_learning": data["enable_learning"]
                     })
-                elif type_ == 'LINK_AGGREGATION':
+                elif type_ == "LINK_AGGREGATION":
                     lagports_ids = []
-                    lag_proto = data['lag_protocol'].lower()
+                    lag_proto = data["lag_protocol"].lower()
                     xmit = lacpdu_rate = None
-                    if lag_proto in ('lacp', 'loadbalance'):
+                    if lag_proto in ("lacp", "loadbalance"):
                         # Based on stress testing done by the performance team, we default to layer2+3
                         # because the system default is layer2 and with the system default outbound
                         # traffic did not use the other ports in the lagg. Using layer2+3 fixed it.
-                        xmit = data['xmit_hash_policy'].lower() if data['xmit_hash_policy'] is not None else 'layer2+3'
+                        xmit = data["xmit_hash_policy"].lower() if data["xmit_hash_policy"] is not None else "layer2+3"
 
-                        if lag_proto == 'lacp':
+                        if lag_proto == "lacp":
                             # obviously, lacpdu_rate does not apply to any lagg mode except for lacp
-                            lacpdu_rate = data['lacpdu_rate'].lower() if data['lacpdu_rate'] else 'slow'
+                            lacpdu_rate = data["lacpdu_rate"].lower() if data["lacpdu_rate"] else "slow"
 
-                    lag_id = await self.middleware.call('datastore.insert', 'network.lagginterface', {
-                        'lagg_interface': interface_id,
-                        'lagg_protocol': lag_proto,
-                        'lagg_xmit_hash_policy': xmit,
-                        'lagg_lacpdu_rate': lacpdu_rate,
+                    lag_id = await self.middleware.call("datastore.insert", "network.lagginterface", {
+                        "lagg_interface": interface_id,
+                        "lagg_protocol": lag_proto,
+                        "lagg_xmit_hash_policy": xmit,
+                        "lagg_lacpdu_rate": lacpdu_rate,
                     })
-                    lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
-                elif type_ == 'VLAN':
-                    await self.middleware.call('datastore.insert', 'network.vlan', {
-                        'vlan_vint': name,
-                        'vlan_pint': data['vlan_parent_interface'],
-                        'vlan_tag': data['vlan_tag'],
-                        'vlan_pcp': data.get('vlan_pcp'),
+                    lagports_ids += await self.__set_lag_ports(lag_id, data["lag_ports"])
+                elif type_ == "VLAN":
+                    await self.middleware.call("datastore.insert", "network.vlan", {
+                        "vlan_vint": name,
+                        "vlan_pint": data["vlan_parent_interface"],
+                        "vlan_tag": data["vlan_tag"],
+                        "vlan_pcp": data.get("vlan_pcp"),
                     })
         except Exception:
             if lag_id:
                 with contextlib.suppress(Exception):
-                    await self.middleware.call('datastore.delete', 'network.lagginterface', lag_id)
+                    await self.middleware.call("datastore.delete", "network.lagginterface", lag_id)
             if interface_id:
-                await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
+                await self.middleware.call("datastore.delete", "network.interfaces", interface_id)
             raise
 
         return await self.get_instance(name)
@@ -819,50 +819,50 @@ class InterfaceService(CRUDService):
     async def get_next(self, prefix, start=0):
         number = start
         ifaces = [
-            i['int_interface']
+            i["int_interface"]
             for i in await self.middleware.call(
-                'datastore.query',
-                'network.interfaces',
-                [('int_interface', '^', prefix)],
+                "datastore.query",
+                "network.interfaces",
+                [("int_interface", "^", prefix)],
             )
         ]
-        while f'{prefix}{number}' in ifaces:
+        while f"{prefix}{number}" in ifaces:
             number += 1
-        return f'{prefix}{number}'
+        return f"{prefix}{number}"
 
     async def _common_validation(self, verrors, schema_name, data, itype, update=None):
         def _get_filters(key):
-            return [[key, '!=', update['id']]] if update else []
+            return [[key, "!=", update["id"]]] if update else []
 
-        cant = ' cannot be changed.'
-        required = ' is required when configuring HA.'
+        cant = " cannot be changed."
+        required = " is required when configuring HA."
         validation_attrs = {
-            'aliases': ['Active node IP address', cant, required],
-            'failover_aliases': ['Standby node IP address', cant, required],
-            'failover_virtual_aliases': ['Virtual IP address', cant, required],
-            'failover_group': ['Failover group number', cant, required],
-            'mtu': ['MTU', cant],
-            'ipv4_dhcp': ['DHCP', cant],
-            'ipv6_auto': ['Autoconfig for IPv6', cant],
+            "aliases": ["Active node IP address", cant, required],
+            "failover_aliases": ["Standby node IP address", cant, required],
+            "failover_virtual_aliases": ["Virtual IP address", cant, required],
+            "failover_group": ["Failover group number", cant, required],
+            "mtu": ["MTU", cant],
+            "ipv4_dhcp": ["DHCP", cant],
+            "ipv6_auto": ["Autoconfig for IPv6", cant],
         }
 
-        ifaces = {i['name']: i for i in await self.middleware.call('interface.query', _get_filters('id'))}
-        ds_ifaces = await self.middleware.call('datastore.query', 'network.interfaces', _get_filters('int_interface'))
+        ifaces = {i["name"]: i for i in await self.middleware.call("interface.query", _get_filters("id"))}
+        ds_ifaces = await self.middleware.call("datastore.query", "network.interfaces", _get_filters("int_interface"))
 
-        if 'name' in data and data['name'] in ifaces:
-            verrors.add(f'{schema_name}.name', 'Interface name is already in use.')
+        if "name" in data and data["name"] in ifaces:
+            verrors.add(f"{schema_name}.name", "Interface name is already in use.")
 
-        if data.get('ipv4_dhcp') and any(
-            filter(lambda x: x['int_dhcp'] and not ifaces[x['int_interface']]['fake'], ds_ifaces)
+        if data.get("ipv4_dhcp") and any(
+            filter(lambda x: x["int_dhcp"] and not ifaces[x["int_interface"]]["fake"], ds_ifaces)
         ):
-            verrors.add(f'{schema_name}.ipv4_dhcp', 'Only one interface can be used for DHCP.')
+            verrors.add(f"{schema_name}.ipv4_dhcp", "Only one interface can be used for DHCP.")
 
-        if data.get('ipv6_auto') and any(
-            filter(lambda x: x['int_ipv6auto'] and not ifaces[x['int_interface']]['fake'], ds_ifaces)
+        if data.get("ipv6_auto") and any(
+            filter(lambda x: x["int_ipv6auto"] and not ifaces[x["int_interface"]]["fake"], ds_ifaces)
         ):
             verrors.add(
-                f'{schema_name}.ipv6_auto',
-                'Only one interface can have IPv6 autoconfiguration enabled.'
+                f"{schema_name}.ipv6_auto",
+                "Only one interface can have IPv6 autoconfiguration enabled."
             )
 
         await self.middleware.run_in_thread(self.__validate_aliases, verrors, schema_name, data, ifaces)
@@ -871,155 +871,155 @@ class InterfaceService(CRUDService):
         vlan_used = {}
         lag_used = {}
         for k, v in ifaces.items():
-            if k.startswith('br'):
-                for port in (v.get('bridge_members') or []):
+            if k.startswith("br"):
+                for port in (v.get("bridge_members") or []):
                     bridge_used[port] = k
-            elif k.startswith('vlan'):
-                vlan_used[k] = v['vlan_parent_interface']
-            elif k.startswith('bond'):
-                for port in (v.get('lag_ports') or []):
+            elif k.startswith("vlan"):
+                vlan_used[k] = v["vlan_parent_interface"]
+            elif k.startswith("bond"):
+                for port in (v.get("lag_ports") or []):
                     lag_used[port] = k
 
-        if itype == 'PHYSICAL':
-            if data['name'] in lag_used:
-                lag_name = lag_used.get(data['name'])
+        if itype == "PHYSICAL":
+            if data["name"] in lag_used:
+                lag_name = lag_used.get(data["name"])
                 for k, v in validation_attrs.items():
                     if data.get(k):
                         verrors.add(
-                            f'{schema_name}.{k}',
-                            f'Interface in use by {lag_name}. {str(v[0]) + str(v[1])}'
+                            f"{schema_name}.{k}",
+                            f"Interface in use by {lag_name}. {str(v[0]) + str(v[1])}"
                         )
-        elif itype == 'BRIDGE':
-            if 'name' in data:
+        elif itype == "BRIDGE":
+            if "name" in data:
                 try:
-                    await self.middleware.call('interface.validate_name', InterfaceType.BRIDGE, data['name'])
+                    await self.middleware.call("interface.validate_name", InterfaceType.BRIDGE, data["name"])
                 except ValueError as e:
-                    verrors.add(f'{schema_name}.name', str(e))
-            for i, member in enumerate(data.get('bridge_members') or []):
+                    verrors.add(f"{schema_name}.name", str(e))
+            for i, member in enumerate(data.get("bridge_members") or []):
                 if member not in ifaces:
-                    verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
+                    verrors.add(f"{schema_name}.bridge_members.{i}", "Not a valid interface.")
                     continue
                 if member in bridge_used:
                     verrors.add(
-                        f'{schema_name}.bridge_members.{i}',
-                        f'Interface {member} is currently in use by {bridge_used[member]}.',
+                        f"{schema_name}.bridge_members.{i}",
+                        f"Interface {member} is currently in use by {bridge_used[member]}.",
                     )
                 elif member in lag_used:
                     verrors.add(
-                        f'{schema_name}.bridge_members.{i}',
-                        f'Interface {member} is currently in use by {lag_used[member]}.',
+                        f"{schema_name}.bridge_members.{i}",
+                        f"Interface {member} is currently in use by {lag_used[member]}.",
                     )
-        elif itype == 'LINK_AGGREGATION':
-            if 'name' in data:
+        elif itype == "LINK_AGGREGATION":
+            if "name" in data:
                 try:
-                    await self.middleware.call('interface.validate_name', InterfaceType.LINK_AGGREGATION, data['name'])
+                    await self.middleware.call("interface.validate_name", InterfaceType.LINK_AGGREGATION, data["name"])
                 except ValueError as e:
-                    verrors.add(f'{schema_name}.name', str(e))
-            if data['lag_protocol'] not in await self.middleware.call('interface.lag_supported_protocols'):
+                    verrors.add(f"{schema_name}.name", str(e))
+            if data["lag_protocol"] not in await self.middleware.call("interface.lag_supported_protocols"):
                 verrors.add(
-                    f'{schema_name}.lag_protocol',
+                    f"{schema_name}.lag_protocol",
                     f'TrueNAS SCALE does not support LAG protocol {data["lag_protocol"]}',
                 )
-            lag_ports = data.get('lag_ports')
+            lag_ports = data.get("lag_ports")
             if not lag_ports:
-                verrors.add(f'{schema_name}.lag_ports', 'This field cannot be empty.')
-            ds_ifaces_set = {i['int_interface'] for i in ds_ifaces}
+                verrors.add(f"{schema_name}.lag_ports", "This field cannot be empty.")
+            ds_ifaces_set = {i["int_interface"] for i in ds_ifaces}
             for i, member in enumerate(lag_ports):
-                _schema = f'{schema_name}.lag_ports.{i}'
+                _schema = f"{schema_name}.lag_ports.{i}"
                 if member not in ifaces:
                     verrors.add(_schema, f'"{member}" is not a valid interface.')
                 elif member in lag_used:
-                    verrors.add(_schema, f'Interface {member} is currently in use by {lag_used[member]}.')
+                    verrors.add(_schema, f"Interface {member} is currently in use by {lag_used[member]}.")
                 elif member in bridge_used:
-                    verrors.add(_schema, f'Interface {member} is currently in use by {bridge_used[member]}.')
+                    verrors.add(_schema, f"Interface {member} is currently in use by {bridge_used[member]}.")
                 elif member in vlan_used:
-                    verrors.add(_schema, f'Interface {member} is currently in use by {vlan_used[member]}.')
+                    verrors.add(_schema, f"Interface {member} is currently in use by {vlan_used[member]}.")
                 elif member in ds_ifaces_set:
-                    verrors.add(_schema, f'Interface {member} is currently in use')
-        elif itype == 'VLAN':
-            if 'name' in data:
+                    verrors.add(_schema, f"Interface {member} is currently in use")
+        elif itype == "VLAN":
+            if "name" in data:
                 try:
-                    await self.middleware.call('interface.validate_name', InterfaceType.VLAN, data['name'])
+                    await self.middleware.call("interface.validate_name", InterfaceType.VLAN, data["name"])
                 except ValueError as e:
-                    verrors.add(f'{schema_name}.name', str(e))
-            parent = data.get('vlan_parent_interface')
+                    verrors.add(f"{schema_name}.name", str(e))
+            parent = data.get("vlan_parent_interface")
             if parent not in ifaces:
-                verrors.add(f'{schema_name}.vlan_parent_interface', 'Not a valid interface.')
+                verrors.add(f"{schema_name}.vlan_parent_interface", "Not a valid interface.")
             elif parent in lag_used:
                 verrors.add(
-                    f'{schema_name}.vlan_parent_interface',
-                    f'Interface {parent} is currently in use by {lag_used[parent]}.',
+                    f"{schema_name}.vlan_parent_interface",
+                    f"Interface {parent} is currently in use by {lag_used[parent]}.",
                 )
-            elif parent.startswith('br'):
+            elif parent.startswith("br"):
                 verrors.add(
-                    f'{schema_name}.vlan_parent_interface',
-                    'Bridge interfaces are not allowed.',
+                    f"{schema_name}.vlan_parent_interface",
+                    "Bridge interfaces are not allowed.",
                 )
             else:
                 parent_iface = ifaces[parent]
-                mtu = data.get('mtu')
-                if mtu and mtu > (parent_iface.get('mtu') or 1500):
+                mtu = data.get("mtu")
+                if mtu and mtu > (parent_iface.get("mtu") or 1500):
                     verrors.add(
-                        f'{schema_name}.mtu',
-                        'VLAN MTU cannot be bigger than parent interface.',
+                        f"{schema_name}.mtu",
+                        "VLAN MTU cannot be bigger than parent interface.",
                     )
 
-        aliases = data.get('aliases', []).copy()
-        aliases.extend(data.get('failover_aliases', []).copy())
-        aliases.extend(data.get('failover_virtual_aliases', []).copy())
-        mtu = data.get('mtu')
-        if mtu and mtu < 1280 and any(i['type'] == 'INET6' for i in aliases):
+        aliases = data.get("aliases", []).copy()
+        aliases.extend(data.get("failover_aliases", []).copy())
+        aliases.extend(data.get("failover_virtual_aliases", []).copy())
+        mtu = data.get("mtu")
+        if mtu and mtu < 1280 and any(i["type"] == "INET6" for i in aliases):
             # we set the minimum MTU to 68 for IPv4 (per https://tools.ietf.org/html/rfc791)
             # however, the minimum MTU for IPv6 is 1280 (per https://tools.ietf.org/html/rfc2460)
             # so we need to make sure that if a IPv6 address is provided the minimum isn't
             # smaller than 1280.
             verrors.add(
-                f'{schema_name}.mtu',
-                'When specifying an IPv6 address, the MTU cannot be smaller than 1280'
+                f"{schema_name}.mtu",
+                "When specifying an IPv6 address, the MTU cannot be smaller than 1280"
             )
 
-        if not await self.middleware.call('failover.licensed'):
-            data.pop('failover_critical', None)
-            data.pop('failover_group', None)
-            data.pop('failover_aliases', None)
-            data.pop('failover_vhid', None)
-            data.pop('failover_virtual_aliases', None)
+        if not await self.middleware.call("failover.licensed"):
+            data.pop("failover_critical", None)
+            data.pop("failover_group", None)
+            data.pop("failover_aliases", None)
+            data.pop("failover_vhid", None)
+            data.pop("failover_virtual_aliases", None)
         else:
-            failover = await self.middleware.call('failover.config')
-            ha_configured = await self.middleware.call('failover.status') != 'SINGLE'
-            if ha_configured and not failover['disabled']:
+            failover = await self.middleware.call("failover.config")
+            ha_configured = await self.middleware.call("failover.status") != "SINGLE"
+            if ha_configured and not failover["disabled"]:
                 raise CallError(
-                    'Failover needs to be disabled to perform network configuration changes.'
+                    "Failover needs to be disabled to perform network configuration changes."
                 )
 
             # have to make sure that active, standby and virtual ip addresses are equal
-            active_node_ips = len(data.get('aliases', []))
-            standby_node_ips = len(data.get('failover_aliases', []))
-            virtual_node_ips = len(data.get('failover_virtual_aliases', []))
+            active_node_ips = len(data.get("aliases", []))
+            standby_node_ips = len(data.get("failover_aliases", []))
+            virtual_node_ips = len(data.get("failover_virtual_aliases", []))
             are_equal = active_node_ips == standby_node_ips == virtual_node_ips
             if not are_equal:
                 verrors.add(
-                    f'{schema_name}.failover_aliases',
-                    'The number of active, standby and virtual IP addresses must be the same.'
+                    f"{schema_name}.failover_aliases",
+                    "The number of active, standby and virtual IP addresses must be the same."
                 )
 
             if not update:
                 failover_attrs = set(
-                    [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
+                    [k for k, v in validation_attrs.items() if k not in ("mtu", "ipv4_dhcp", "ipv6_auto")]
                 )
                 configured_attrs = set([i for i in failover_attrs if data.get(i)])
 
                 if configured_attrs:
                     for i in failover_attrs - configured_attrs:
                         verrors.add(
-                            f'{schema_name}.{i}',
-                            f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
+                            f"{schema_name}.{i}",
+                            f"{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}",
                         )
             else:
-                if data.get('failover_critical') and data.get('failover_group') is None:
+                if data.get("failover_critical") and data.get("failover_group") is None:
                     verrors.add(
-                        f'{schema_name}.failover_group',
-                        'A failover group is required when configuring a critical failover interface.'
+                        f"{schema_name}.failover_group",
+                        "A failover group is required when configuring a critical failover interface."
                     )
 
             # creating a "failover" lagg interface on HA systems and trying
@@ -1027,17 +1027,17 @@ class InterfaceService(CRUDService):
             # delays in the failover process. (Sometimes failure entirely.)
             # However, using this type of lagg interface for "non-critical"
             # workloads (i.e. webUI management) is acceptable.
-            if itype == 'LINK_AGGREGATION':
+            if itype == "LINK_AGGREGATION":
                 # there is a chance that we have failover lagg ints marked critical
                 # for failover in the db so to prevent the webUI from disallowing
                 # the user to update those interfaces, we'll only enforce this on
                 # newly created laggs.
                 if not update:
-                    if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
+                    if data.get("failover_critical") and data.get("lag_protocol") == "FAILOVER":
                         msg = 'A bond interface using the "Failover" protocol '
-                        msg += 'is not allowed to be marked critical for failover.'
-                        verrors.add(f'{schema_name}.failover_critical', msg)
-                    elif virtual_node_ips == 0 and data.get('failover_critical'):
+                        msg += "is not allowed to be marked critical for failover."
+                        verrors.add(f"{schema_name}.failover_critical", msg)
+                    elif virtual_node_ips == 0 and data.get("failover_critical"):
                         # We allow "empty" bond configurations because, most often times,
                         # the user will put vlans on top of it. However, some users
                         # will mark the bond interface as critical for failover and
@@ -1048,22 +1048,22 @@ class InterfaceService(CRUDService):
                         # the bond has no IP address, then it will not generate a failover
                         # event and because the child interface isn't marked critical for
                         # failover, a failover will not take place.
-                        msg = 'A bond interface that is marked critical for failover must'
-                        msg += ' have ip addresses configured.'
-                        verrors.add(f'{schema_name}.failover_critical', msg)
+                        msg = "A bond interface that is marked critical for failover must"
+                        msg += " have ip addresses configured."
+                        verrors.add(f"{schema_name}.failover_critical", msg)
 
         # Check if any IPs being removed are used by apps
         if update:
             try:
                 # Get current aliases
                 current_aliases = set()
-                for alias in update.get('aliases', []):
-                    current_aliases.add(alias['address'])
+                for alias in update.get("aliases", []):
+                    current_aliases.add(alias["address"])
 
                 # Get new aliases
                 new_aliases = set()
-                for alias in data.get('aliases', []):
-                    new_aliases.add(alias['address'])
+                for alias in data.get("aliases", []):
+                    new_aliases.add(alias["address"])
 
                 # Find removed aliases
                 removed_aliases = current_aliases - new_aliases
@@ -1073,52 +1073,52 @@ class InterfaceService(CRUDService):
                     apps_using_ips = await self.call2(self.s.app.used_host_ips)
                     for removed_ip in removed_aliases:
                         if removed_ip in apps_using_ips:
-                            apps_list = ', '.join(apps_using_ips[removed_ip])
+                            apps_list = ", ".join(apps_using_ips[removed_ip])
                             verrors.add(
-                                f'{schema_name}.aliases',
-                                f'IP address {removed_ip} cannot be removed as it is being used by apps: {apps_list}'
+                                f"{schema_name}.aliases",
+                                f"IP address {removed_ip} cannot be removed as it is being used by apps: {apps_list}"
                             )
             except Exception:
                 # If app check fails, log but don't block interface update
-                self.logger.exception('Failed to check apps using IPs during interface validation')
+                self.logger.exception("Failed to check apps using IPs during interface validation")
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         used_networks_ipv4 = []
         used_networks_ipv6 = []
         for iface in ifaces.values():
-            for iface_alias in filter(lambda x: x['type'] in ('INET', 'INET6'), iface['aliases']):
+            for iface_alias in filter(lambda x: x["type"] in ("INET", "INET6"), iface["aliases"]):
                 network = ipaddress.ip_network(f'{iface_alias["address"]}/{iface_alias["netmask"]}', strict=False)
-                if iface_alias['type'] == 'INET':
+                if iface_alias["type"] == "INET":
                     used_networks_ipv4.append(network)
                 else:
                     used_networks_ipv6.append(network)
 
-        for i, alias in enumerate(data.get('aliases') or []):
+        for i, alias in enumerate(data.get("aliases") or []):
             alias_network = ipaddress.ip_network(f'{alias["address"]}/{alias["netmask"]}', strict=False)
             if alias_network.version == 4:
-                used_networks = ((used_networks_ipv4, 'another interface'),)
+                used_networks = ((used_networks_ipv4, "another interface"),)
             else:
-                used_networks = ((used_networks_ipv6, 'another interface'),)
+                used_networks = ((used_networks_ipv6, "another interface"),)
 
             for network_cidrs, message in used_networks:
                 for used_network in network_cidrs:
                     if used_network.overlaps(alias_network):
                         verrors.add(
-                            f'{schema_name}.aliases.{i}',
-                            f'The network {alias_network} is already in use by {message}.'
+                            f"{schema_name}.aliases.{i}",
+                            f"The network {alias_network} is already in use by {message}."
                         )
                         break
 
     async def __convert_interface_datastore(self, data):
         return {
-            'name': data['description'],
-            'dhcp': data['ipv4_dhcp'],
-            'ipv6auto': data['ipv6_auto'],
-            'vhid': data.get('failover_vhid'),
-            'critical': data.get('failover_critical') or False,
-            'group': data.get('failover_group'),
-            'mtu': data.get('mtu') or None,
-            'fec_mode': data.get('fec_mode'),
+            "name": data["description"],
+            "dhcp": data["ipv4_dhcp"],
+            "ipv6auto": data["ipv6_auto"],
+            "vhid": data.get("failover_vhid"),
+            "critical": data.get("failover_critical") or False,
+            "group": data.get("failover_group"),
+            "mtu": data.get("mtu") or None,
+            "fec_mode": data.get("fec_mode"),
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1126,50 +1126,50 @@ class InterfaceService(CRUDService):
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
-            'datastore.insert',
-            'network.interfaces',
+            "datastore.insert",
+            "network.interfaces",
             dict(**(await self.__convert_interface_datastore(data)), **interface_attrs),
-            {'prefix': 'int_'},
+            {"prefix": "int_"},
         )
         yield interface_id
 
         for alias in aliases:
-            alias['interface'] = interface_id
+            alias["interface"] = interface_id
             await self.middleware.call(
-                'datastore.insert', 'network.alias', dict(**alias), {'prefix': 'alias_'}
+                "datastore.insert", "network.alias", dict(**alias), {"prefix": "alias_"}
             )
 
     @private
     def convert_aliases_to_datastore(self, data):
-        da = data['aliases']
-        dfa = data.get('failover_aliases', [])
-        dfva = data.get('failover_virtual_aliases', [])
+        da = data["aliases"]
+        dfa = data.get("failover_aliases", [])
+        dfva = data.get("failover_virtual_aliases", [])
 
         aliases = []
-        iface = {'address': '', 'address_b': '', 'netmask': '', 'version': '', 'vip': ''}
+        iface = {"address": "", "address_b": "", "netmask": "", "version": "", "vip": ""}
         for idx, (a, fa, fva) in enumerate(zip_longest(da, dfa, dfva, fillvalue={})):
-            netmask = a['netmask']
-            ipa = a['address']
-            ipb = fa.get('address', '')
-            ipv = fva.get('address', '')
+            netmask = a["netmask"]
+            ipa = a["address"]
+            ipb = fa.get("address", "")
+            ipv = fva.get("address", "")
             version = ipaddress.ip_interface(ipa).version
             if idx == 0:
                 # first IP address is always written to `network_interface` table
-                iface['address'] = ipa
-                iface['address_b'] = ipb
-                iface['netmask'] = netmask
-                iface['version'] = version
-                iface['vip'] = ipv
+                iface["address"] = ipa
+                iface["address_b"] = ipb
+                iface["netmask"] = netmask
+                iface["version"] = version
+                iface["vip"] = ipv
             else:
                 # this means it's the 2nd (or more) ip address
                 # on a singular interface so we need to write
                 # this entry to the alias table
                 aliases.append({
-                    'address': ipa,
-                    'address_b': ipb,
-                    'netmask': netmask,
-                    'version': version,
-                    'vip': ipv,
+                    "address": ipa,
+                    "address_b": ipb,
+                    "netmask": netmask,
+                    "version": version,
+                    "vip": ipv,
                 })
 
         return iface, aliases
@@ -1179,53 +1179,53 @@ class InterfaceService(CRUDService):
         for idx, i in enumerate(lag_ports):
             lagports_ids.append(
                 await self.middleware.call(
-                    'datastore.insert',
-                    'network.lagginterfacemembers',
-                    {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
-                    {'prefix': 'lagg_'},
+                    "datastore.insert",
+                    "network.lagginterfacemembers",
+                    {"interfacegroup": lag_id, "ordernum": idx, "physnic": i},
+                    {"prefix": "lagg_"},
                 )
             )
 
             # If the link aggregation member was configured we need to reset it,
             # including removing all its IP addresses.
             portinterface = await self.middleware.call(
-                'datastore.query',
-                'network.interfaces',
-                [('interface', '=', i)],
-                {'prefix': 'int_'},
+                "datastore.query",
+                "network.interfaces",
+                [("interface", "=", i)],
+                {"prefix": "int_"},
             )
             if portinterface:
                 portinterface = portinterface[0]
                 portinterface.update({
-                    'dhcp': False,
-                    'address': '',
-                    'address_b': '',
-                    'netmask': 0,
-                    'ipv6auto': False,
-                    'vip': '',
-                    'vhid': None,
-                    'critical': False,
-                    'group': None,
-                    'mtu': None,
+                    "dhcp": False,
+                    "address": "",
+                    "address_b": "",
+                    "netmask": 0,
+                    "ipv6auto": False,
+                    "vip": "",
+                    "vhid": None,
+                    "critical": False,
+                    "group": None,
+                    "mtu": None,
                 })
                 await self.middleware.call(
-                    'datastore.update',
-                    'network.interfaces',
-                    portinterface['id'],
+                    "datastore.update",
+                    "network.interfaces",
+                    portinterface["id"],
                     portinterface,
-                    {'prefix': 'int_'},
+                    {"prefix": "int_"},
                 )
                 await self.middleware.call(
-                    'datastore.delete',
-                    'network.alias',
-                    [('alias_interface', '=', portinterface['id'])],
+                    "datastore.delete",
+                    "network.alias",
+                    [("alias_interface", "=", portinterface["id"])],
                 )
         return lagports_ids
 
     @api_method(
         InterfaceUpdateArgs,
         InterfaceUpdateResult,
-        audit='Network interface update',
+        audit="Network interface update",
         audit_callback=True
     )
     async def do_update(self, audit_callback, oid, data):
@@ -1239,38 +1239,38 @@ class InterfaceService(CRUDService):
         > network interface update enp0s3 aliases="192.168.0.10"
         """
         verrors = ValidationErrors()
-        await self.middleware.call('network.common.check_failover_disabled', 'interface.update', verrors)
+        await self.middleware.call("network.common.check_failover_disabled", "interface.update", verrors)
 
         iface = await self.get_instance(oid)
-        audit_callback(iface['name'])
+        audit_callback(iface["name"])
 
         new = iface.copy()
         new.update(data)
 
         await self._common_validation(
-            verrors, 'interface_update', new, iface['type'], update=iface
+            verrors, "interface_update", new, iface["type"], update=iface
         )
-        if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
-            verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+        if await self.middleware.call("failover.licensed") and (new.get("ipv4_dhcp") or new.get("ipv6_auto")):
+            verrors.add("interface_update.dhcp", "Enabling DHCPv4/v6 on HA systems is unsupported.")
 
         # Validate fec_mode field
-        if 'fec_mode' in data:
-            if await self.middleware.call('system.is_enterprise'):
-                if new['type'] == 'PHYSICAL':
+        if "fec_mode" in data:
+            if await self.middleware.call("system.is_enterprise"):
+                if new["type"] == "PHYSICAL":
                     if available := self.available_fec_modes(oid):
-                        if data['fec_mode'] not in available:
+                        if data["fec_mode"] not in available:
                             verrors.add(
-                                'interface_update.fec_mode',
+                                "interface_update.fec_mode",
                                 f'Unsupported FEC mode. Available: {", ".join(available)}'
                             )
                     else:
                         verrors.add(
-                            'interface_update.fec_mode', 'This interface does not support FEC mode configuration.'
+                            "interface_update.fec_mode", "This interface does not support FEC mode configuration."
                         )
                 else:
-                    verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+                    verrors.add("interface_update.fec_mode", "FEC mode can only be set on physical interfaces.")
             else:
-                verrors.add('interface_update.fec_mode', 'Configuring FEC mode is an enterprise feature.')
+                verrors.add("interface_update.fec_mode", "Configuring FEC mode is an enterprise feature.")
 
         verrors.check()
 
@@ -1280,118 +1280,118 @@ class InterfaceService(CRUDService):
         try:
 
             config = await self.middleware.call(
-                'datastore.query', 'network.interfaces', [('int_interface', '=', oid)]
+                "datastore.query", "network.interfaces", [("int_interface", "=", oid)]
             )
             if not config:
                 async for i in self.__create_interface_datastore(new, {
-                    'interface': iface['name'],
+                    "interface": iface["name"],
                 }):
                     interface_id = i
                 config = (await self.middleware.call(
-                    'datastore.query', 'network.interfaces', [('id', '=', interface_id)]
+                    "datastore.query", "network.interfaces", [("id", "=", interface_id)]
                 ))[0]
             else:
                 config = config[0]
-                if config['int_interface'] != new['name']:
+                if config["int_interface"] != new["name"]:
                     await self.middleware.call(
-                        'datastore.update',
-                        'network.interfaces',
-                        config['id'],
-                        {'int_interface': new['name']},
+                        "datastore.update",
+                        "network.interfaces",
+                        config["id"],
+                        {"int_interface": new["name"]},
                     )
 
-            if iface['type'] == 'PHYSICAL':
-                link_address_update = {'link_address': iface['state']['hardware_link_address']}
-                if await self.middleware.call('truenas.is_ix_hardware'):
-                    if await self.middleware.call('failover.node') == 'B':
-                        link_address_update = {'link_address_b': iface['state']['hardware_link_address']}
+            if iface["type"] == "PHYSICAL":
+                link_address_update = {"link_address": iface["state"]["hardware_link_address"]}
+                if await self.middleware.call("truenas.is_ix_hardware"):
+                    if await self.middleware.call("failover.node") == "B":
+                        link_address_update = {"link_address_b": iface["state"]["hardware_link_address"]}
                 link_address_row = await self.middleware.call(
-                    'datastore.query', 'network.interface_link_address', [['interface', '=', new['name']]],
+                    "datastore.query", "network.interface_link_address", [["interface", "=", new["name"]]],
                 )
                 if link_address_row:
                     await self.middleware.call(
-                        'datastore.update', 'network.interface_link_address', link_address_row[0]['id'],
+                        "datastore.update", "network.interface_link_address", link_address_row[0]["id"],
                         link_address_update,
                     )
                 else:
                     await self.middleware.call(
-                        'datastore.insert', 'network.interface_link_address', {
-                            'interface': new['name'],
-                            'link_address': None,
-                            'link_address_b': None,
+                        "datastore.insert", "network.interface_link_address", {
+                            "interface": new["name"],
+                            "link_address": None,
+                            "link_address_b": None,
                             **link_address_update,
                         },
                     )
 
-            if iface['type'] == 'BRIDGE':
+            if iface["type"] == "BRIDGE":
                 options = {}
-                if 'bridge_members' in data:
-                    options['members'] = data['bridge_members']
-                for key in filter(lambda k: k in data, ('stp', 'enable_learning')):
+                if "bridge_members" in data:
+                    options["members"] = data["bridge_members"]
+                for key in filter(lambda k: k in data, ("stp", "enable_learning")):
                     options[key] = data[key]
                 if options:
-                    filters = [('interface', '=', config['id'])]
-                    await self.middleware.call('datastore.update', 'network.bridge', filters, options)
-            elif iface['type'] == 'LINK_AGGREGATION':
+                    filters = [("interface", "=", config["id"])]
+                    await self.middleware.call("datastore.update", "network.bridge", filters, options)
+            elif iface["type"] == "LINK_AGGREGATION":
                 xmit = lacpdu = None
-                if new['lag_protocol'] in ('LACP', 'LOADBALANCE'):
-                    xmit = new.get('xmit_hash_policy', 'layer2+3')
-                    if new['lag_protocol'] == 'LACP':
-                        lacpdu = new.get('lacpdu_rate', 'slow')
+                if new["lag_protocol"] in ("LACP", "LOADBALANCE"):
+                    xmit = new.get("xmit_hash_policy", "layer2+3")
+                    if new["lag_protocol"] == "LACP":
+                        lacpdu = new.get("lacpdu_rate", "slow")
 
                 lag_id = await self.middleware.call(
-                    'datastore.update',
-                    'network.lagginterface',
-                    [('lagg_interface', '=', config['id'])],
+                    "datastore.update",
+                    "network.lagginterface",
+                    [("lagg_interface", "=", config["id"])],
                     {
-                        'lagg_protocol': new['lag_protocol'].lower(),
-                        'lagg_xmit_hash_policy': xmit,
-                        'lagg_lacpdu_rate': lacpdu,
+                        "lagg_protocol": new["lag_protocol"].lower(),
+                        "lagg_xmit_hash_policy": xmit,
+                        "lagg_lacpdu_rate": lacpdu,
                     },
                 )
-                if 'lag_ports' in data:
+                if "lag_ports" in data:
                     await self.middleware.call(
-                        'datastore.delete',
-                        'network.lagginterfacemembers',
-                        [('lagg_interfacegroup', '=', lag_id)],
+                        "datastore.delete",
+                        "network.lagginterfacemembers",
+                        [("lagg_interfacegroup", "=", lag_id)],
                     )
-                    await self.__set_lag_ports(lag_id, data['lag_ports'])
-            elif iface['type'] == 'VLAN':
+                    await self.__set_lag_ports(lag_id, data["lag_ports"])
+            elif iface["type"] == "VLAN":
                 await self.middleware.call(
-                    'datastore.update',
-                    'network.vlan',
-                    [('vlan_vint', '=', iface['name'])],
+                    "datastore.update",
+                    "network.vlan",
+                    [("vlan_vint", "=", iface["name"])],
                     {
-                        'vint': new['name'],
-                        'pint': new['vlan_parent_interface'],
-                        'tag': new['vlan_tag'],
-                        'pcp': new['vlan_pcp'],
+                        "vint": new["name"],
+                        "pint": new["vlan_parent_interface"],
+                        "tag": new["vlan_tag"],
+                        "pcp": new["vlan_pcp"],
                     },
-                    {'prefix': 'vlan_'},
+                    {"prefix": "vlan_"},
                 )
 
             if not interface_id:
                 interface_attrs, new_aliases = self.convert_aliases_to_datastore(new)
                 await self.middleware.call(
-                    'datastore.update', 'network.interfaces', config['id'],
+                    "datastore.update", "network.interfaces", config["id"],
                     dict(**(await self.__convert_interface_datastore(new)), **interface_attrs),
-                    {'prefix': 'int_'}
+                    {"prefix": "int_"}
                 )
 
-                filters = [('interface', '=', config['id'])]
-                prefix = {'prefix': 'alias_'}
-                for curr in await self.middleware.call('datastore.query', 'network.alias', filters, prefix):
-                    if curr['address'] not in [i['address'] for i in new_aliases]:
+                filters = [("interface", "=", config["id"])]
+                prefix = {"prefix": "alias_"}
+                for curr in await self.middleware.call("datastore.query", "network.alias", filters, prefix):
+                    if curr["address"] not in [i["address"] for i in new_aliases]:
                         # being deleted
-                        await self.middleware.call('datastore.delete', 'network.alias', curr['id'])
+                        await self.middleware.call("datastore.delete", "network.alias", curr["id"])
                     else:
                         for idx, new_alias in enumerate(new_aliases[:]):
-                            if curr['address'] == new_alias['address']:
+                            if curr["address"] == new_alias["address"]:
                                 for i in new_alias.keys():
                                     if curr[i] != new_alias[i]:
                                         # it's being updated
                                         await self.middleware.call(
-                                            'datastore.update', 'network.alias', curr['id'], new_alias, prefix
+                                            "datastore.update", "network.alias", curr["id"], new_alias, prefix
                                         )
                                         new_aliases.pop(idx)
                                         break
@@ -1404,25 +1404,25 @@ class InterfaceService(CRUDService):
                 # new aliases being added
                 for new_alias in new_aliases:
                     await self.middleware.call(
-                        'datastore.insert',
-                        'network.alias',
-                        dict(interface=config['id'], **new_alias),
-                        {'prefix': 'alias_'}
+                        "datastore.insert",
+                        "network.alias",
+                        dict(interface=config["id"], **new_alias),
+                        {"prefix": "alias_"}
                     )
         except Exception:
             if interface_id:
                 with contextlib.suppress(Exception):
                     await self.middleware.call(
-                        'datastore.delete', 'network.interfaces', interface_id
+                        "datastore.delete", "network.interfaces", interface_id
                     )
             raise
 
-        return await self.get_instance(new['name'])
+        return await self.get_instance(new["name"])
 
     @api_method(
         InterfaceDeleteArgs,
         InterfaceDeleteResult,
-        audit='Network interface delete',
+        audit="Network interface delete",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, oid):
@@ -1430,16 +1430,16 @@ class InterfaceService(CRUDService):
         Delete Interface of `id`.
         """
         verrors = ValidationErrors()
-        schema = 'interface.delete'
-        await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
+        schema = "interface.delete"
+        await self.middleware.call("network.common.check_failover_disabled", schema, verrors)
 
         if iface := await self.get_instance(oid):
-            filters = [('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])]
-            if vlans := ', '.join([i['name'] for i in await self.middleware.call('interface.query', filters)]):
-                verrors.add(schema, f'The following VLANs depend on this interface: {vlans}')
+            filters = [("type", "=", "VLAN"), ("vlan_parent_interface", "=", iface["id"])]
+            if vlans := ", ".join([i["name"] for i in await self.middleware.call("interface.query", filters)]):
+                verrors.add(schema, f"The following VLANs depend on this interface: {vlans}")
 
         verrors.check()
-        audit_callback(iface['name'])
+        audit_callback(iface["name"])
 
         await self.__save_datastores()
 
@@ -1452,32 +1452,32 @@ class InterfaceService(CRUDService):
         parents = (parents or set()) | {oid}
 
         for lagg in await self.middleware.call(
-            'datastore.query', 'network.lagginterface', [('lagg_interface__int_interface', '=', oid)]
+            "datastore.query", "network.lagginterface", [("lagg_interface__int_interface", "=", oid)]
         ):
             for lagg_member in await self.middleware.call(
-                'datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup', '=', lagg['id'])]
+                "datastore.query", "network.lagginterfacemembers", [("lagg_interfacegroup", "=", lagg["id"])]
             ):
-                if lagg_member['lagg_physnic'] in parents:
+                if lagg_member["lagg_physnic"] in parents:
                     continue
 
-                await self.delete_network_interface(lagg_member['lagg_physnic'], parents=parents)
+                await self.delete_network_interface(lagg_member["lagg_physnic"], parents=parents)
 
-            await self.middleware.call('datastore.delete', 'network.lagginterface', lagg['id'])
+            await self.middleware.call("datastore.delete", "network.lagginterface", lagg["id"])
 
         await self.middleware.call(
-            'datastore.delete', 'network.vlan', [('vlan_pint', '=', oid)]
+            "datastore.delete", "network.vlan", [("vlan_pint", "=", oid)]
         )
         await self.middleware.call(
-            'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
+            "datastore.delete", "network.vlan", [("vlan_vint", "=", oid)]
         )
 
         await self.middleware.call(
-            'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
+            "datastore.delete", "network.interfaces", [("int_interface", "=", oid)]
         )
 
         return oid
 
-    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'],
+    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=["NETWORK_INTERFACE_READ"],
                 pass_app=True)
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
@@ -1486,7 +1486,7 @@ class InterfaceService(CRUDService):
         except AttributeError:
             pass
 
-    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=['NETWORK_INTERFACE_READ'],
+    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=["NETWORK_INTERFACE_READ"],
                 pass_app=True)
     async def websocket_interface(self, app):
         """
@@ -1496,8 +1496,8 @@ class InterfaceService(CRUDService):
         if local_ip is None:
             return
 
-        for iface in await self.middleware.call('interface.query'):
-            for _ in filter(lambda x: x['address'] == local_ip, iface['aliases'] + iface['state']['aliases']):
+        for iface in await self.middleware.call("interface.query"):
+            for _ in filter(lambda x: x["address"] == local_ip, iface["aliases"] + iface["state"]["aliases"]):
                 return iface
 
     @api_method(InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult, authorization_required=False)
@@ -1515,7 +1515,7 @@ class InterfaceService(CRUDService):
         """
         return {i.value: i.value for i in LacpduRateChoices}
 
-    @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=["NETWORK_INTERFACE_READ"])
     def available_fec_modes(self, id_):
         """
         Returns FEC modes supported by interface `id`.
@@ -1525,126 +1525,126 @@ class InterfaceService(CRUDService):
         try:
             return get_ethtool().get_fec_modes(id_)
         except NetlinkError as e:
-            self.logger.error(f'Failed to retrieve available FEC modes for {id_}', exc_info=e)
+            self.logger.error(f"Failed to retrieve available FEC modes for {id_}", exc_info=e)
             return []
 
-    @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceChoicesArgs, InterfaceChoicesResult, roles=["NETWORK_INTERFACE_READ"])
     async def choices(self, options):
         """
         Choices of available network interfaces.
         """
-        interfaces = await self.middleware.call('interface.query')
-        choices = {i['name']: i['description'] or i['name'] for i in interfaces}
+        interfaces = await self.middleware.call("interface.query")
+        choices = {i["name"]: i["description"] or i["name"] for i in interfaces}
         for interface in interfaces:
-            if interface['description'] and interface['description'] != interface['name']:
-                choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
+            if interface["description"] and interface["description"] != interface["name"]:
+                choices[interface["name"]] = f'{interface["name"]}: {interface["description"]}'
 
-            if any(interface['name'].startswith(exclude) for exclude in options['exclude']):
-                choices.pop(interface['name'], None)
-            if interface['type'] in options['exclude_types']:
-                choices.pop(interface['name'], None)
-            if not options['lag_ports']:
-                if interface['type'] == 'LINK_AGGREGATION':
-                    for port in interface['lag_ports']:
-                        if port not in options['include']:
+            if any(interface["name"].startswith(exclude) for exclude in options["exclude"]):
+                choices.pop(interface["name"], None)
+            if interface["type"] in options["exclude_types"]:
+                choices.pop(interface["name"], None)
+            if not options["lag_ports"]:
+                if interface["type"] == "LINK_AGGREGATION":
+                    for port in interface["lag_ports"]:
+                        if port not in options["include"]:
                             choices.pop(port, None)
-            if not options['bridge_members']:
-                if interface['type'] == 'BRIDGE':
-                    for member in interface['bridge_members']:
-                        if member not in options['include']:
+            if not options["bridge_members"]:
+                if interface["type"] == "BRIDGE":
+                    for member in interface["bridge_members"]:
+                        if member not in options["include"]:
                             choices.pop(member, None)
-            if not options['vlan_parent']:
-                if interface['type'] == 'VLAN':
-                    choices.pop(interface['vlan_parent_interface'], None)
+            if not options["vlan_parent"]:
+                if interface["type"] == "VLAN":
+                    choices.pop(interface["vlan_parent_interface"], None)
         return choices
 
     @api_method(
         InterfaceBridgeMembersChoicesArgs,
         InterfaceBridgeMembersChoicesResult,
-        roles=['NETWORK_INTERFACE_READ']
+        roles=["NETWORK_INTERFACE_READ"]
     )
     async def bridge_members_choices(self, id_):
         """Return available interface choices that can be added to a `br` (bridge) interface."""
         exclude = {}
         include = {}
-        for interface in await self.middleware.call('interface.query'):
-            if interface['type'] == 'BRIDGE':
-                if id_ and id_ == interface['id']:
+        for interface in await self.middleware.call("interface.query"):
+            if interface["type"] == "BRIDGE":
+                if id_ and id_ == interface["id"]:
                     # means this is an existing br interface that is being updated so we need to
                     # make sure and return the interfaces members
-                    include.update({i: i for i in interface['bridge_members']})
-                    exclude.update({interface['id']: interface['id']})
+                    include.update({i: i for i in interface["bridge_members"]})
+                    exclude.update({interface["id"]: interface["id"]})
                 else:
                     # exclude interfaces that are already part of another bridge
-                    exclude.update({i: i for i in interface['bridge_members']})
+                    exclude.update({i: i for i in interface["bridge_members"]})
                     # adding a bridge as a member to another bridge is not allowed
-                    exclude.update({interface['id']: interface['id']})
-            elif interface['type'] == 'LINK_AGGREGATION':
+                    exclude.update({interface["id"]: interface["id"]})
+            elif interface["type"] == "LINK_AGGREGATION":
                 # exclude interfaces that are already part of a bond interface
-                exclude.update({i: i for i in interface['lag_ports']})
+                exclude.update({i: i for i in interface["lag_ports"]})
 
             # add the interface to inclusion list and it will be discarded
             # if it was also added to the exclusion list
-            include.update({interface['id']: interface['id']})
+            include.update({interface["id"]: interface["id"]})
 
         return {k: v for k, v in include.items() if k not in exclude}
 
-    @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=["NETWORK_INTERFACE_READ"])
     async def lag_ports_choices(self, id_):
         """
         Return available interface choices that can be added to a `bond` (lag) interface.
         """
         exclude = {}
         include = {}
-        configured_ifaces = await self.middleware.call('interface.query_names_only')
-        for interface in await self.middleware.call('interface.query'):
-            if interface['type'] == 'LINK_AGGREGATION':
-                if id_ and id_ == interface['id']:
+        configured_ifaces = await self.middleware.call("interface.query_names_only")
+        for interface in await self.middleware.call("interface.query"):
+            if interface["type"] == "LINK_AGGREGATION":
+                if id_ and id_ == interface["id"]:
                     # means this is an existing bond interface that is being updated so we need to
                     # make sure and return the interfaces members
-                    include.update({i: i for i in interface['lag_ports']})
-                    exclude.update({interface['id']: interface['id']})
+                    include.update({i: i for i in interface["lag_ports"]})
+                    exclude.update({interface["id"]: interface["id"]})
                 else:
                     # exclude interfaces that are already part of another bond
-                    exclude.update({i: i for i in interface['lag_ports']})
+                    exclude.update({i: i for i in interface["lag_ports"]})
                     # it's perfectly normal to add a bond as a member interface to another bond
-                    include.update({interface['id']: interface['id']})
-            elif interface['type'] == 'VLAN':
+                    include.update({interface["id"]: interface["id"]})
+            elif interface["type"] == "VLAN":
                 # adding a vlan or the vlan's parent interface to a bond is not allowed
-                exclude.update({interface['id']: interface['id']})
-                exclude.update({interface['vlan_parent_interface']: interface['vlan_parent_interface']})
-            elif interface['type'] == 'BRIDGE':
+                exclude.update({interface["id"]: interface["id"]})
+                exclude.update({interface["vlan_parent_interface"]: interface["vlan_parent_interface"]})
+            elif interface["type"] == "BRIDGE":
                 # adding a br interface to a bond is not allowed
-                exclude.update({interface['id']: interface['id']})
+                exclude.update({interface["id"]: interface["id"]})
                 # exclude interfaces that are already part of a bridge interface
-                exclude.update({i: i for i in interface['bridge_members']})
-            elif interface['id'] in configured_ifaces:
+                exclude.update({i: i for i in interface["bridge_members"]})
+            elif interface["id"] in configured_ifaces:
                 # only remaining type of interface is PHYSICAL but if this is
                 # an interface that has already been configured then we obviously
                 # don't want to allow it to be added to a bond (user will need
                 # to wipe the config of said interface before it can be added)
-                exclude.update({interface['id']: interface['id']})
+                exclude.update({interface["id"]: interface["id"]})
 
             # add the interface to inclusion list and it will be discarded
             # if it was also added to the exclusion list
-            include.update({interface['id']: interface['id']})
+            include.update({interface["id"]: interface["id"]})
 
         return {k: v for k, v in include.items() if k not in exclude}
 
     @api_method(
         InterfaceVlanParentInterfaceChoicesArgs,
         InterfaceVlanParentInterfaceChoicesResult,
-        roles=['NETWORK_INTERFACE_READ']
+        roles=["NETWORK_INTERFACE_READ"]
     )
     async def vlan_parent_interface_choices(self):
         """
         Return available interface choices for `vlan_parent_interface` attribute.
         """
-        return await self.middleware.call('interface.choices', {
-            'bridge_members': True,
-            'lag_ports': False,
-            'vlan_parent': True,
-            'exclude_types': [InterfaceType.BRIDGE.value, InterfaceType.VLAN.value],
+        return await self.middleware.call("interface.choices", {
+            "bridge_members": True,
+            "lag_ports": False,
+            "vlan_parent": True,
+            "exclude_types": [InterfaceType.BRIDGE.value, InterfaceType.VLAN.value],
         })
 
     @private
@@ -1652,29 +1652,29 @@ class InterfaceService(CRUDService):
         """
         Sync interfaces configured in database to the OS.
         """
-        await self.middleware.call_hook('interface.pre_sync')
+        await self.middleware.call_hook("interface.pre_sync")
         # The VRRP event thread just reads directly from the database
         # so there is no reason to actually configure the interfaces
         # on the OS first. We can update the thread since the db has
         # already been updated by the time this is called.
-        await self.middleware.call('vrrpthread.set_non_crit_ifaces')
+        await self.middleware.call("vrrpthread.set_non_crit_ifaces")
 
         # Query all database data once
-        interfaces_db = await self.middleware.call('datastore.query', 'network.interfaces')
-        aliases_db = await self.middleware.call('datastore.query', 'network.alias')
-        bonds_db = await self.middleware.call('datastore.query', 'network.lagginterface')
-        bond_members_db = await self.middleware.call('datastore.query', 'network.lagginterfacemembers')
-        vlans_db = await self.middleware.call('datastore.query', 'network.vlan')
-        bridges_db = await self.middleware.call('datastore.query', 'network.bridge')
-        node = await self.middleware.call('failover.node')
+        interfaces_db = await self.middleware.call("datastore.query", "network.interfaces")
+        aliases_db = await self.middleware.call("datastore.query", "network.alias")
+        bonds_db = await self.middleware.call("datastore.query", "network.lagginterface")
+        bond_members_db = await self.middleware.call("datastore.query", "network.lagginterfacemembers")
+        vlans_db = await self.middleware.call("datastore.query", "network.vlan")
+        bridges_db = await self.middleware.call("datastore.query", "network.bridge")
+        node = await self.middleware.call("failover.node")
 
         # Build combined interface configs
         iface_configs = {}
         for iface in interfaces_db:
-            name = iface['int_interface']
+            name = iface["int_interface"]
             iface_configs[name] = {
                 "interface": iface,
-                "aliases": [a for a in aliases_db if a['alias_interface']['id'] == iface['id']],
+                "aliases": [a for a in aliases_db if a["alias_interface"]["id"] == iface["id"]],
             }
 
         sync_data = SyncData(
@@ -1686,7 +1686,7 @@ class InterfaceService(CRUDService):
             node=node,
         )
 
-        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
+        internal_interfaces = tuple(await self.middleware.call("interface.internal_interfaces"))
 
         # Configure all interfaces and unconfigure those not in database
         cloned_interfaces, run_dhcp, autoconfigure = await self.middleware.run_in_thread(
@@ -1701,12 +1701,12 @@ class InterfaceService(CRUDService):
         if run_dhcp:
             # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
             # and/or the static routers config options are set properly
-            await self.middleware.call('etc.generate', 'dhcpcd')
+            await self.middleware.call("etc.generate", "dhcpcd")
             await asyncio.wait([
                 self.middleware.create_task(self.run_dhcp(interface, wait_dhcp)) for interface in run_dhcp
             ])
 
-        self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
+        self.logger.info("Interfaces in database: {}".format(", ".join(interfaces) or "NONE"))
 
         # Autoconfigure interfaces (start DHCP on physical interfaces with no database config)
         if autoconfigure:
@@ -1729,74 +1729,74 @@ class InterfaceService(CRUDService):
         # for all the interfaces that have dhcpcd running. There is, currently,
         # no better solution unless we redesigned significant portions of our network
         # API to account for this...
-        await self.middleware.call('dns.sync')
+        await self.middleware.call("dns.sync")
 
         try:
             # static routes explicitly defined by the user need to be setup
-            await self.middleware.call('staticroute.sync')
+            await self.middleware.call("staticroute.sync")
         except Exception:
-            self.logger.info('Failed to sync static routes', exc_info=True)
+            self.logger.info("Failed to sync static routes", exc_info=True)
 
         try:
             # We may need to set up routes again as they may have been removed while changing IPs
-            await self.middleware.call('route.sync')
+            await self.middleware.call("route.sync")
         except Exception:
-            self.logger.info('Failed to sync routes', exc_info=True)
+            self.logger.info("Failed to sync routes", exc_info=True)
 
-        await self.middleware.call_hook('interface.post_sync')
+        await self.middleware.call_hook("interface.post_sync")
 
     @private
     async def run_dhcp(self, name, wait_dhcp: int | None = None):
-        self.logger.debug('Starting DHCP for {}'.format(name))
+        self.logger.debug("Starting DHCP for {}".format(name))
         try:
             await dhcp_start(name, wait=wait_dhcp)
         except Exception:
-            self.logger.error('Failed to run DHCP for {}'.format(name), exc_info=True)
+            self.logger.error("Failed to run DHCP for {}".format(name), exc_info=True)
 
-    @api_method(InterfaceIpInUseArgs, InterfaceIpInUseResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceIpInUseArgs, InterfaceIpInUseResult, roles=["NETWORK_INTERFACE_READ"])
     def ip_in_use(self, choices):
         """Get all IPv4 / IPv6 from all valid interfaces"""
         list_of_ip = []
         static_ips = {}
         # Filter by specified interfaces if provided
-        specified_interfaces = choices.get('interfaces', [])
-        if choices['static']:
-            licensed = self.middleware.call_sync('failover.licensed')
-            for i in self.middleware.call_sync('interface.query'):
-                if specified_interfaces and i['name'] not in specified_interfaces:
+        specified_interfaces = choices.get("interfaces", [])
+        if choices["static"]:
+            licensed = self.middleware.call_sync("failover.licensed")
+            for i in self.middleware.call_sync("interface.query"):
+                if specified_interfaces and i["name"] not in specified_interfaces:
                     continue
 
                 if licensed:
-                    for alias in i.get('failover_virtual_aliases') or []:
-                        static_ips[alias['address']] = alias['address']
+                    for alias in i.get("failover_virtual_aliases") or []:
+                        static_ips[alias["address"]] = alias["address"]
                 else:
-                    for alias in i['aliases']:
-                        static_ips[alias['address']] = alias['address']
+                    for alias in i["aliases"]:
+                        static_ips[alias["address"]] = alias["address"]
 
-        if choices['any']:
-            if choices['ipv4']:
+        if choices["any"]:
+            if choices["ipv4"]:
                 list_of_ip.append({
-                    'type': 'INET',
-                    'address': '0.0.0.0',
-                    'netmask': 0,
-                    'broadcast': '255.255.255.255',
+                    "type": "INET",
+                    "address": "0.0.0.0",
+                    "netmask": 0,
+                    "broadcast": "255.255.255.255",
                 })
-            if choices['ipv6']:
+            if choices["ipv6"]:
                 list_of_ip.append({
-                    'type': 'INET6',
-                    'address': '::',
-                    'netmask': 0,
-                    'broadcast': 'ff02::1',
+                    "type": "INET6",
+                    "address": "::",
+                    "netmask": 0,
+                    "broadcast": "ff02::1",
                 })
 
-        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
-        if choices['loopback']:
-            ignore_nics.remove('lo')
-            static_ips['127.0.0.1'] = '127.0.0.1'
-            static_ips['::1'] = '::1'
+        ignore_nics = self.middleware.call_sync("interface.internal_interfaces")
+        if choices["loopback"]:
+            ignore_nics.remove("lo")
+            static_ips["127.0.0.1"] = "127.0.0.1"
+            static_ips["::1"] = "::1"
 
         ignore_nics = tuple(ignore_nics)
-        link_local_net = ipaddress.ip_network('fe80::/64')
+        link_local_net = ipaddress.ip_network("fe80::/64")
         with netlink_route() as sock:
             for addr in get_addresses(sock):
                 # Skip if interface name couldn't be resolved
@@ -1813,31 +1813,31 @@ class InterfaceService(CRUDService):
 
                 # Determine address type
                 if addr.family == AddressFamily.INET:
-                    if not choices['ipv4']:
+                    if not choices["ipv4"]:
                         continue
-                    addr_type = 'INET'
+                    addr_type = "INET"
                 elif addr.family == AddressFamily.INET6:
-                    if not choices['ipv6']:
+                    if not choices["ipv6"]:
                         continue
                     # Skip link-local addresses if not requested
-                    if not choices['ipv6_link_local']:
+                    if not choices["ipv6_link_local"]:
                         if ipaddress.ip_address(addr.address) in link_local_net:
                             continue
-                    addr_type = 'INET6'
+                    addr_type = "INET6"
                 else:
                     continue
 
                 # Skip non-static addresses if static filter is enabled
-                if choices['static'] and addr.address not in static_ips:
+                if choices["static"] and addr.address not in static_ips:
                     continue
 
                 entry = {
-                    'type': addr_type,
-                    'address': addr.address,
-                    'netmask': addr.prefixlen,
+                    "type": addr_type,
+                    "address": addr.address,
+                    "netmask": addr.prefixlen,
                 }
                 if addr.broadcast:
-                    entry['broadcast'] = addr.broadcast
+                    entry["broadcast"] = addr.broadcast
                 list_of_ip.append(entry)
 
         return list_of_ip
@@ -1848,13 +1848,13 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     Configure the `http_proxy` and `https_proxy` environment vars
     from the database.
     """
-    gc = await middleware.call('datastore.config', 'network.globalconfiguration')
-    http_proxy = gc['gc_httpproxy']
+    gc = await middleware.call("datastore.config", "network.globalconfiguration")
+    http_proxy = gc["gc_httpproxy"]
     update = {
-        'http_proxy': http_proxy,
-        'https_proxy': http_proxy,
+        "http_proxy": http_proxy,
+        "https_proxy": http_proxy,
     }
-    await middleware.call('core.environ_update', update)
+    await middleware.call("core.environ_update", update)
 
 
 def udevd_ifnet_hook(middleware, data):
@@ -1868,10 +1868,10 @@ def udevd_ifnet_hook(middleware, data):
         3. OR add any IPs on said interface if they exist
             in the db
     """
-    if data.get('SUBSYSTEM') != 'net' and data.get('ACTION') != 'add':
+    if data.get("SUBSYSTEM") != "net" and data.get("ACTION") != "add":
         return
 
-    iface = data.get('INTERFACE')
+    iface = data.get("INTERFACE")
     ignore = CLONED_PREFIXES + INTERNAL_INTERFACES
     if iface is None or iface.startswith(ignore):
         # if the udevd event for the interface doesn't have a name
@@ -1880,18 +1880,18 @@ def udevd_ifnet_hook(middleware, data):
         # are hot-plugged into the system.
         return
 
-    platform, node_position = middleware.call_sync('failover.ha_mode')
-    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
+    platform, node_position = middleware.call_sync("failover.ha_mode")
+    if iface == "ntb0" and platform == "LAJOLLA2" and node_position == "B":
         # The f-series platform is an AMD system. This means it's using a different
         # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
         # operates subtly differently than the Intel driver. If the A controller
         # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
         # When the A controller comes back online, the ntb0 interface is hot-plugged
         # (i.e. added). For this platform we need to re-add the ip address.
-        middleware.call_sync('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
+        middleware.call_sync("failover.internal_interface.sync", "ntb0", "169.254.10.2")
         return
 
-    ignore = middleware.call_sync('interface.internal_interfaces')
+    ignore = middleware.call_sync("interface.internal_interfaces")
     if any((i.startswith(iface) for i in ignore)):
         return
 
@@ -1908,18 +1908,18 @@ async def __activate_service_announcements(middleware, event_type, args):
 
 
 async def setup(middleware):
-    middleware.event_register('network.config', 'Sent on network configuration changes.')
+    middleware.event_register("network.config", "Sent on network configuration changes.")
 
     # Configure http proxy on startup and on network.config events
     middleware.create_task(configure_http_proxy(middleware))
-    middleware.event_subscribe('network.config', configure_http_proxy)
-    middleware.event_subscribe('system.ready', __activate_service_announcements)
-    middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
+    middleware.event_subscribe("network.config", configure_http_proxy)
+    middleware.event_subscribe("system.ready", __activate_service_announcements)
+    middleware.register_hook("udev.net", udevd_ifnet_hook, inline=True)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.
-    if not await middleware.call('system.ready'):
+    if not await middleware.call("system.ready"):
         try:
-            await middleware.call('dns.sync')
+            await middleware.call("dns.sync")
         except Exception:
-            middleware.logger.error('Failed to setup DNS', exc_info=True)
+            middleware.logger.error("Failed to setup DNS", exc_info=True)

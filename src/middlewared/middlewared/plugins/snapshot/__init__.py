@@ -49,10 +49,10 @@ if typing.TYPE_CHECKING:
 class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry]):
 
     class Config:
-        namespace = 'pool.snapshottask'
-        cli_namespace = 'task.snapshot'
+        namespace = "pool.snapshottask"
+        cli_namespace = "task.snapshot"
         entry = PeriodicSnapshotTaskEntry
-        role_prefix = 'SNAPSHOT_TASK'
+        role_prefix = "SNAPSHOT_TASK"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:
@@ -62,8 +62,8 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskCreateArgs,
         PeriodicSnapshotTaskCreateResult,
-        audit='Snapshot task create:',
-        audit_extended=lambda data: data['dataset'],
+        audit="Snapshot task create:",
+        audit_extended=lambda data: data["dataset"],
         check_annotations=True,
     )
     async def do_create(self, data: PoolSnapshotTaskCreate) -> PeriodicSnapshotTaskEntry:
@@ -88,7 +88,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskUpdateArgs,
         PeriodicSnapshotTaskUpdateResult,
-        audit='Snapshot task update:',
+        audit="Snapshot task update:",
         audit_callback=True,
         check_annotations=True,
     )
@@ -106,7 +106,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskDeleteArgs,
         PeriodicSnapshotTaskDeleteResult,
-        audit='Snapshot task delete:',
+        audit="Snapshot task delete:",
         audit_callback=True,
         check_annotations=True,
     )
@@ -125,7 +125,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskMaxCountArgs,
         PeriodicSnapshotTaskMaxCountResult,
-        roles=['SNAPSHOT_TASK_READ'],
+        roles=["SNAPSHOT_TASK_READ"],
         check_annotations=True,
     )
     def max_count(self) -> int:
@@ -137,7 +137,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskMaxTotalCountArgs,
         PeriodicSnapshotTaskMaxTotalCountResult,
-        roles=['SNAPSHOT_TASK_READ'],
+        roles=["SNAPSHOT_TASK_READ"],
         check_annotations=True,
     )
     def max_total_count(self) -> int:
@@ -149,7 +149,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskRunArgs,
         PeriodicSnapshotTaskRunResult,
-        roles=['SNAPSHOT_TASK_WRITE'],
+        roles=["SNAPSHOT_TASK_WRITE"],
         check_annotations=True,
     )
     @job()
@@ -165,7 +165,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
 
     @private
     @job(
-        lock=lambda args: "pool.snapshottask.fixate_removal_date:" + (list(args[0].keys()) + ['-'])[0].split('/')[0],
+        lock=lambda args: "pool.snapshottask.fixate_removal_date:" + (list(args[0].keys()) + ["-"])[0].split("/")[0],
     )
     async def fixate_removal_date(
         self, job: typing.Any, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry,
@@ -175,7 +175,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs,
         PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
-        roles=['SNAPSHOT_TASK_READ'],
+        roles=["SNAPSHOT_TASK_READ"],
         check_annotations=True,
     )
     async def update_will_change_retention_for(
@@ -192,7 +192,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @api_method(
         PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs,
         PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
-        roles=['SNAPSHOT_TASK_READ'],
+        roles=["SNAPSHOT_TASK_READ"],
         check_annotations=True,
     )
     async def delete_will_change_retention_for(self, id_: int) -> dict[str, list[str]]:
@@ -203,11 +203,11 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
 
 
 async def on_zettarepl_state_changed(middleware: Middleware, id_: str, fields: dict[str, typing.Any]) -> None:
-    if id_.startswith('periodic_snapshot_task_'):
-        task_id = int(id_.split('_')[-1])
-        middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
+    if id_.startswith("periodic_snapshot_task_"):
+        task_id = int(id_.split("_")[-1])
+        middleware.send_event("pool.snapshottask.query", "CHANGED", id=task_id, fields={"state": fields})
 
 
 async def setup(middleware: Middleware) -> None:
     await register_attachment(middleware)
-    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)
+    middleware.register_hook("zettarepl.state_change", on_zettarepl_state_changed)

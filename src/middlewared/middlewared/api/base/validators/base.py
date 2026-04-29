@@ -17,7 +17,7 @@ def match_validator(pattern: re.Pattern, explanation: str | None = None):
 def time_validator(value: str):
     """Always return in the format HH:MM."""
     try:
-        hours, minutes = value.split(':')
+        hours, minutes = value.split(":")
     except ValueError:
         raise ValueError('Time should be in 24 hour format like "18:00"')
 
@@ -28,12 +28,12 @@ def time_validator(value: str):
 
     # pad hours and minutes with zeros (e.g. "1:00" -> "01:00")
     # allows for easier time comparison since "9" > "10" but "09" < "10"
-    return ':'.join(digits.rjust(2, '0') for digits in (hours, minutes))
+    return ":".join(digits.rjust(2, "0") for digits in (hours, minutes))
 
 
 def https_only_check(url: HttpUrl) -> str:
-    if url.scheme != 'https':
-        raise ValueError('URL scheme must be https')
+    if url.scheme != "https":
+        raise ValueError("URL scheme must be https")
     return str(url)
 
 
@@ -70,7 +70,7 @@ def email_validator(value: str):
         raise ValueError("Missing local part of email string (part before the '@').")
 
     domain_part = value[right_most_atsign:]
-    if domain_part == '@':
+    if domain_part == "@":
         raise ValueError("Missing domain part of email string (part after the '@').")
 
     return value

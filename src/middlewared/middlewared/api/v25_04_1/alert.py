@@ -6,10 +6,10 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, excluded_field
 
 __all__ = [
-    'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
-    'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
-    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
-    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
+    "AlertDismissArgs", "AlertListArgs", "AlertDismissResult", "AlertListResult", "AlertListCategoriesArgs",
+    "AlertListCategoriesResult", "AlertListPoliciesArgs", "AlertListPoliciesResult", "AlertRestoreArgs",
+    "AlertRestoreResult", "AlertClassesEntry", "AlertClassesUpdateArgs", "AlertClassesUpdateResult", "Alert",
+    "AlertListAddedEvent", "AlertListChangedEvent", "AlertListRemovedEvent",
 ]
 
 
@@ -20,7 +20,7 @@ class Alert(BaseModel):
     args: Any
     node: str
     key: LongString
-    datetime_: datetime = Field(alias='datetime')
+    datetime_: datetime = Field(alias="datetime")
     last_occurrence: datetime
     dismissed: bool
     mail: Any

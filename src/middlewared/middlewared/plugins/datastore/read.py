@@ -83,28 +83,28 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         validate_filters(filters)
         validate_options(options)
 
-        prefix = options['prefix']
-        extend_fk = options.get('extend_fk')
+        prefix = options["prefix"]
+        extend_fk = options.get("extend_fk")
         fk_attrs = {}
         aliases = {}
-        if options['count'] and not self._filters_contains_foreign_key(filters):
+        if options["count"] and not self._filters_contains_foreign_key(filters):
             qs = select(func.count(self._get_pk(table)))
         else:
             columns = list(table.c)
             from_ = table
-            if options['relationships']:
+            if options["relationships"]:
                 aliases = self._get_queryset_joins(table)
                 for foreign_key, alias in aliases.items():
-                    if extend_fk and foreign_key.parent.name.endswith('_id'):
+                    if extend_fk and foreign_key.parent.name.endswith("_id"):
                         fk = foreign_key.parent.name.removeprefix(prefix).removesuffix("_id")
                         if fk in extend_fk:
-                            if _attrs := await self.middleware.call('datastore.get_service_config_attrs',
+                            if _attrs := await self.middleware.call("datastore.get_service_config_attrs",
                                                                     foreign_key.column.table.name):
                                 fk_attrs[fk] = _attrs
                     columns.extend(list(alias.c))
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
-            if options['count']:
+            if options["count"]:
                 qs = select(func.count(self._get_pk(table))).select_from(from_)
             else:
                 qs = select(*columns).select_from(from_)
@@ -112,7 +112,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
 
-        if options['count']:
+        if options["count"]:
             result = await self.middleware.call("datastore.fetchall", qs)
             # The count result will be a dict with a generated key for the count column
             # We need to get the first value from the first row
@@ -121,21 +121,21 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 return list(result[0].values())[0]
             return 0
 
-        order_by = options['order_by']
+        order_by = options["order_by"]
         if order_by:
             # Do not change original order_by
             order_by = order_by[:]
             for i, order in enumerate(order_by):
-                if order.startswith('nulls_first:'):
+                if order.startswith("nulls_first:"):
                     wrapper = nullsfirst
-                    order = order[len('nulls_first:'):]
-                elif order.startswith('nulls_last:'):
+                    order = order[len("nulls_first:"):]
+                elif order.startswith("nulls_last:"):
                     wrapper = nullslast
-                    order = order[len('nulls_last:'):]
+                    order = order[len("nulls_last:"):]
                 else:
                     wrapper = lambda x: x  # noqa
 
-                if order.startswith('-'):
+                if order.startswith("-"):
                     order_by[i] = self._get_col(table, order[1:], prefix).desc()
                 else:
                     order_by[i] = self._get_col(table, order, prefix)
@@ -144,26 +144,26 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
             qs = qs.order_by(*order_by)
 
-        if options['offset']:
-            qs = qs.offset(options['offset'])
+        if options["offset"]:
+            qs = qs.offset(options["offset"])
 
-        if options['limit']:
-            qs = qs.limit(options['limit'])
+        if options["limit"]:
+            qs = qs.limit(options["limit"])
 
         result = await self.middleware.call("datastore.fetchall", qs)
 
         relationships = [{} for row in result]
-        if options['relationships']:
+        if options["relationships"]:
             # This will only fetch many-to-many relationships for primary table, not for joins, but that's enough
             relationships = await self._fetch_many_to_many(table, result)
 
         result = await self._queryset_serialize(
             result,
-            table, aliases, relationships, options['extend'], options['extend_context'], options['prefix'],
-            options['select'], options['extra'], fk_attrs,
+            table, aliases, relationships, options["extend"], options["extend_context"], options["prefix"],
+            options["select"], options["extra"], fk_attrs,
         )
 
-        if options['get']:
+        if options["get"]:
             try:
                 return result[0]
             except IndexError:
@@ -180,7 +180,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if options is None:
             options = dict()
 
-        options.setdefault('get', True)
+        options.setdefault("get", True)
         validate_options(options)
 
         return await self.query(name, [], options)
@@ -190,7 +190,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         for column in table.c:
             if column.foreign_keys:
                 if len(column.foreign_keys) > 1:
-                    raise RuntimeError('Multiple foreign keys are not supported')
+                    raise RuntimeError("Multiple foreign keys are not supported")
 
                 foreign_key = list(column.foreign_keys)[0]
                 alias = foreign_key.column.table.alias(foreign_key.name)
@@ -221,17 +221,17 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         ]
 
         for fk, attrs in fk_attrs.items():
-            if not attrs['extend']:
+            if not attrs["extend"]:
                 continue
-            if attrs['extend_context']:
-                extend_context_value = await self.middleware.call(attrs['extend_context'], rows, extra_options)
+            if attrs["extend_context"]:
+                extend_context_value = await self.middleware.call(attrs["extend_context"], rows, extra_options)
             else:
                 extend_context_value = None
             for row in result:
                 if fk in row:
                     row[fk] = await self._extend(row[fk],
-                                                 attrs['extend'],
-                                                 attrs['extend_context'],
+                                                 attrs["extend"],
+                                                 attrs["extend_context"],
                                                  extend_context_value,
                                                  CO_EMPTY)
         return result
@@ -243,10 +243,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         result = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
         # Check for nested data as a result of foreign keys
         for fk, attrs in fk_attrs.items():
-            if not attrs['prefix']:
+            if not attrs["prefix"]:
                 continue
             if fk in result and isinstance(result[fk], dict):
-                result[fk] = {self._strip_prefix(k, attrs['prefix']): v for k, v in result[fk].items()}
+                result[fk] = {self._strip_prefix(k, attrs["prefix"]): v for k, v in result[fk].items()}
         return result
 
     async def _extend(self, data, extend, extend_context, extend_context_value, query_options):
@@ -277,8 +277,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if column.table != table:
                 continue
 
-            if not column.name.endswith('_id'):
-                raise RuntimeError('Foreign key column must end with _id')
+            if not column.name.endswith("_id"):
+                raise RuntimeError("Foreign key column must end with _id")
 
             data[column.name[:-3]] = (
                 self._serialize_row(obj, alias, aliases)
@@ -307,9 +307,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 all_children_ids = set()
                 pk_to_children_ids = defaultdict(set)
                 for connection in await self.query(
-                    relationship.secondary.name.replace('_', '.', 1),
-                    [[relationship_local_pk.name, 'in', pk_values]],
-                    {'relationships': False},
+                    relationship.secondary.name.replace("_", ".", 1),
+                    [[relationship_local_pk.name, "in", pk_values]],
+                    {"relationships": False},
                 ):
                     child_id = connection[relationship_remote_pk.name]
 
@@ -319,9 +319,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 all_children = {}
                 if all_children_ids:
                     for child in await self.query(
-                        relationship.target.name.replace('_', '.', 1),
-                        [[remote_pk.name, 'in', all_children_ids]],
-                        {'relationships': False},
+                        relationship.target.name.replace("_", ".", 1),
+                        [[remote_pk.name, "in", all_children_ids]],
+                        {"relationships": False},
                     ):
                         all_children[child[remote_pk.name]] = child
 
@@ -338,12 +338,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     def get_service_config_attrs(self, flat_table_name: str) -> dict:
         result = {}
         for service_name, service_obj in self.middleware.get_services().items():
-            if service_obj._config and hasattr(service_obj._config, 'datastore'):
+            if service_obj._config and hasattr(service_obj._config, "datastore"):
                 if service_obj._config.datastore:
-                    ds = service_obj._config.datastore.replace('.', '_').lower()
+                    ds = service_obj._config.datastore.replace(".", "_").lower()
                     if ds == flat_table_name:
-                        for attr in ['prefix', 'extend', 'extend_context']:
-                            key = f'datastore_{attr}'
+                        for attr in ["prefix", "extend", "extend_context"]:
+                            key = f"datastore_{attr}"
                             result[attr] = getattr(service_obj._config, key, None)
                         return result
         return result

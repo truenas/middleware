@@ -42,13 +42,13 @@ from middlewared.utils.mount import resolve_dataset_path
 
 class NFSServicePathInfo(enum.Enum):
     # nfs conf sections that use STATEDIR: exportd, mountd, statd
-    STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
-    CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
-    CLDTRKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
+    STATEDIR = (os.path.join(SYSDATASET_PATH, "nfs"), 0o755, True, {"uid": 0, "gid": 0})
+    CLDDIR = (os.path.join(SYSDATASET_PATH, "nfs", "nfsdcld"), 0o700, True, {"uid": 0, "gid": 0})
+    CLDTRKDIR = (os.path.join(SYSDATASET_PATH, "nfs", "nfsdcltrack"), 0o700, True, {"uid": 0, "gid": 0})
     # Fix up the uid and gid in setup_directories
-    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
-    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
-    V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
+    SMDIR = (os.path.join(SYSDATASET_PATH, "nfs", "sm"), 0o755, True, {"uid": "statd", "gid": "nogroup"})
+    SMBAKDIR = (os.path.join(SYSDATASET_PATH, "nfs", "sm.bak"), 0o755, True, {"uid": "statd", "gid": "nogroup"})
+    V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, "nfs", "v4recovery"), 0o755, True, {"uid": 0, "gid": 0})
 
     def path(self):
         return self.value[0]
@@ -64,15 +64,15 @@ class NFSServicePathInfo(enum.Enum):
 
 
 class NFSProtocol(str, enum.Enum):
-    NFSv3 = 'NFSV3'
-    NFSv4 = 'NFSV4'
+    NFSv3 = "NFSV3"
+    NFSv4 = "NFSV4"
 
     def choices():
         return [x.value for x in NFSProtocol]
 
 
 class NFSModel(sa.Model):
-    __tablename__ = 'services_nfs'
+    __tablename__ = "services_nfs"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
@@ -97,34 +97,34 @@ class NFSService(SystemServiceService):
         service_verb = "restart"
         datastore = "services.nfs"
         datastore_prefix = "nfs_srv_"
-        datastore_extend = 'nfs.nfs_extend'
+        datastore_extend = "nfs.nfs_extend"
         cli_namespace = "service.nfs"
         role_prefix = "SHARING_NFS"
 
         entry = NFSEntry
 
     @private
-    def name_to_id_conversion(self, name, name_type='user'):
+    def name_to_id_conversion(self, name, name_type="user"):
         """ Convert built-in user or group name to associated UID or GID """
         if any((not isinstance(name, str), isinstance(name, int))):
             # it's not a string (NoneType, float, w/e) or it's an int
             # so there is nothing to do
             return name
 
-        if name_type == 'user':
-            method = 'user.get_builtin_user_id'
-        elif name_type == 'group':
-            method = 'group.get_builtin_group_id'
+        if name_type == "user":
+            method = "user.get_builtin_user_id"
+        elif name_type == "group":
+            method = "group.get_builtin_group_id"
         else:
-            self.logger.error('Unexpected name_type (%r)', name_type)
+            self.logger.error("Unexpected name_type (%r)", name_type)
             return name
         try:
             return self.middleware.call_sync(method, name)
         except Exception as e:
-            if hasattr(e, 'errno') and e.errno == errno.ENOENT:
-                self.logger.error('Failed to resolve builtin %s %r', name_type, name)
+            if hasattr(e, "errno") and e.errno == errno.ENOENT:
+                self.logger.error("Failed to resolve builtin %s %r", name_type, name)
             else:
-                self.logger.error('Unexpected error resolving builtin %s %r', name_type, name, exc_info=True)
+                self.logger.error("Unexpected error resolving builtin %s %r", name_type, name, exc_info=True)
             return name
 
     @private
@@ -143,17 +143,17 @@ class NFSService(SystemServiceService):
         # Initialize the system dataset NFS state directory
         state_dir = NFSServicePathInfo.STATEDIR.path()
         try:
-            shutil.copytree('/var/lib/nfs', state_dir)
+            shutil.copytree("/var/lib/nfs", state_dir)
         except FileExistsError:
             # destination file/dir already exists so ignore error
             pass
         except Exception:
-            self.logger.error('Unexpected error initializing %r', state_dir, exc_info=True)
+            self.logger.error("Unexpected error initializing %r", state_dir, exc_info=True)
 
         # Make sure we have the necessary directories
         for i in NFSServicePathInfo:
-            uid = self.name_to_id_conversion(i.owner()['uid'], name_type='user')
-            gid = self.name_to_id_conversion(i.owner()['gid'], name_type='group')
+            uid = self.name_to_id_conversion(i.owner()["uid"], name_type="user")
+            gid = self.name_to_id_conversion(i.owner()["gid"], name_type="group")
             path = i.path()
             if i.is_dir():
                 os.makedirs(path, exist_ok=True)
@@ -162,13 +162,13 @@ class NFSService(SystemServiceService):
                 os.chmod(path, i.mode())
                 os.chown(path, uid, gid)
             except Exception:
-                self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
+                self.logger.error("Unexpected failure initializing %r", path, exc_info=True)
 
         # Clear rmtab on boot.
         # We call this here because /var/db/system/nfs is not yet available
         # in a middleware 'setup' hook.  See NAS-131762
-        if not self.middleware.call_sync('system.ready'):
-            self.middleware.call_sync('nfs.clear_nfs3_rmtab')
+        if not self.middleware.call_sync("system.ready"):
+            self.middleware.call_sync("nfs.clear_nfs3_rmtab")
 
     @private
     async def nfs_extend(self, nfs):
@@ -178,30 +178,30 @@ class NFSService(SystemServiceService):
         nfs["keytab_has_nfs_spn"] = keytab_has_nfs
 
         # 'None' indicates we are to dynamically manage the number of nfsd
-        if nfs['servers'] is None:
-            nfs['managed_nfsd'] = True
+        if nfs["servers"] is None:
+            nfs["managed_nfsd"] = True
             cpu_info = await self.middleware.call("system.cpu_info")
 
             # Default calculation:
             #     Number of nfsd == number of cores, but not zero or greater than 32
-            nfs['servers'] = min(max(cpu_info['core_count'], 1), 32)
+            nfs["servers"] = min(max(cpu_info["core_count"], 1), 32)
         else:
-            nfs['managed_nfsd'] = False
+            nfs["managed_nfsd"] = False
 
         # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
+        nfs["rdma"] = nfs["rdma"] and await self.middleware.call("system.is_enterprise")
 
         return nfs
 
     @private
     async def nfs_compress(self, nfs):
-        nfs.pop('managed_nfsd')
+        nfs.pop("managed_nfsd")
         nfs.pop("v4_krb_enabled")
         nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
 
         # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
+        nfs["rdma"] = nfs["rdma"] and await self.middleware.call("system.is_enterprise")
 
         return nfs
 
@@ -211,21 +211,21 @@ class NFSService(SystemServiceService):
         Returns ip choices for NFS service to use
         """
         return {
-            d['address']: d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True}
+            d["address"]: d["address"] for d in await self.middleware.call(
+                "interface.ip_in_use", {"static": True}
             )
         }
 
     @private
     async def bindip(self, config):
-        validate_bind_ip(config['bindip'])
-        bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
+        validate_bind_ip(config["bindip"])
+        bindip = [addr for addr in config["bindip"] if addr not in ["0.0.0.0", "::"]]
 
         if bindip:
             found = False
-            for iface in await self.middleware.call('interface.query'):
-                for alias in iface['state']['aliases']:
-                    if alias['address'] in bindip:
+            for iface in await self.middleware.call("interface.query"):
+                for alias in iface["state"]["aliases"]:
+                    if alias["address"] in bindip:
                         found = True
                         break
                 if found:
@@ -234,16 +234,16 @@ class NFSService(SystemServiceService):
             found = True
 
         if found:
-            await self.call2(self.s.alert.oneshot_delete, 'NFSBindAddress', None)
+            await self.call2(self.s.alert.oneshot_delete, "NFSBindAddress", None)
 
             return bindip
         else:
-            if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
+            if await self.middleware.call("cache.has_key", "interfaces_are_set_up"):
                 await self.call2(self.s.alert.oneshot_create, NFSBindAddressAlert())
 
             return []
 
-    @api_method(NFSUpdateArgs, NFSUpdateResult, audit='Update NFS configuration')
+    @api_method(NFSUpdateArgs, NFSUpdateResult, audit="Update NFS configuration")
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -320,18 +320,18 @@ class NFSService(SystemServiceService):
                     INPUT: Enable/Disable
                     Default: Disable
         """
-        if 'protocols' in data:
-            if not data['protocols']:
+        if "protocols" in data:
+            if not data["protocols"]:
                 raise ValidationError(
-                    'nfs_update.protocols',
+                    "nfs_update.protocols",
                     'Must specify at least one value ("NFSV3", "NFSV4") in the "protocols" list.'
                 )
 
         old = await self.config()
 
         # Fixup old 'servers' entry before processing changes
-        if old['managed_nfsd']:
-            old['servers'] = None
+        if old["managed_nfsd"]:
+            old["servers"] = None
 
         new = old.copy()
         new.update(data)
@@ -341,9 +341,9 @@ class NFSService(SystemServiceService):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         new_v4_krb_enabled = new["v4_krb"] or keytab_has_nfs
 
-        for k in ['mountd_port', 'rpcstatd_port', 'rpclockd_port']:
-            for bindip in (new['bindip'] or ['0.0.0.0']):
-                verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs', bindip))
+        for k in ["mountd_port", "rpcstatd_port", "rpclockd_port"]:
+            for bindip in (new["bindip"] or ["0.0.0.0"]):
+                verrors.extend(await validate_port(self.middleware, f"nfs_update.{k}", new[k], "nfs", bindip))
 
         if (
             await self.middleware.call("failover.licensed") and
@@ -358,7 +358,7 @@ class NFSService(SystemServiceService):
                 )
 
         bindip_choices = await self.bindip_choices()
-        for i, bindip in enumerate(new['bindip']):
+        for i, bindip in enumerate(new["bindip"]):
             if bindip not in bindip_choices:
                 verrors.add(
                     f"nfs_update.bindip.{i}",
@@ -368,7 +368,7 @@ class NFSService(SystemServiceService):
         if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
             # If we're using KRB5 + NFS then we need a v4_domain defined
             # We can get this from the configured `kerberos_realm`.
-            ds_config = await self.middleware.call('directoryservices.config')
+            ds_config = await self.middleware.call("directoryservices.config")
             if ds_config["enable"] and ds_config["kerberos_realm"] and not new["v4_domain"]:
                 new["v4_domain"] = ds_config["kerberos_realm"]
 
@@ -376,8 +376,8 @@ class NFSService(SystemServiceService):
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if new["rdma"]:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if 'NFS' not in available_rdma_protocols:
+            available_rdma_protocols = await self.middleware.call("rdma.capable_protocols")
+            if "NFS" not in available_rdma_protocols:
                 verrors.add(
                     "nfs_update.rdma",
                     "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."
@@ -389,14 +389,14 @@ class NFSService(SystemServiceService):
 
         await self._update_service(old, new, "restart")
 
-        if old['mountd_log'] != new['mountd_log']:
-            await (await self.middleware.call('service.control', 'RELOAD', 'syslogd')).wait(raise_error=True)
+        if old["mountd_log"] != new["mountd_log"]:
+            await (await self.middleware.call("service.control", "RELOAD", "syslogd")).wait(raise_error=True)
 
         return await self.config()
 
 
 class NFSShareModel(sa.Model):
-    __tablename__ = 'sharing_nfs_share'
+    __tablename__ = "sharing_nfs_share"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_path = sa.Column(sa.Text())
@@ -407,10 +407,10 @@ class NFSShareModel(sa.Model):
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
     nfs_ro = sa.Column(sa.Boolean(), default=False)
-    nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default='')
-    nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default='')
-    nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
-    nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default="")
+    nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default="")
+    nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default="")
+    nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default="")
     nfs_security = sa.Column(sa.MultiSelectField())
     nfs_expose_snapshots = sa.Column(sa.Boolean(), default=False)
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
@@ -418,7 +418,7 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
-    share_task_type = 'NFS'
+    share_task_type = "NFS"
 
     @private
     async def human_identifier(self, share_task):
@@ -436,7 +436,7 @@ class SharingNFSService(SharingService):
 
     @api_method(
         SharingNFSCreateArgs, SharingNFSCreateResult,
-        audit='NFS share create', audit_extended=lambda data: data["path"]
+        audit="NFS share create", audit_extended=lambda data: data["path"]
     )
     async def do_create(self, data):
         """
@@ -477,7 +477,7 @@ class SharingNFSService(SharingService):
 
     @api_method(
         SharingNFSUpdateArgs, SharingNFSUpdateResult,
-        audit='NFS share update', audit_callback=True
+        audit="NFS share update", audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -485,7 +485,7 @@ class SharingNFSService(SharingService):
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
-        audit_callback(old['path'])
+        audit_callback(old["path"])
 
         new = old.copy()
         new.update(data)
@@ -508,21 +508,21 @@ class SharingNFSService(SharingService):
 
     @api_method(
         SharingNFSDeleteArgs, SharingNFSDeleteResult,
-        audit='NFS share delete', audit_callback=True
+        audit="NFS share delete", audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):
         """
         Delete NFS Share of `id`.
         """
         nfs_share = await self.get_instance(id_)
-        audit_callback(nfs_share['path'])
+        audit_callback(nfs_share["path"])
         res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
         # Remove alerts that might be associated with this share
         await self.call2(
-            self.s.alert.oneshot_delete, 'NFSNetworkListExcessive', {'sharePath': nfs_share['path']}
+            self.s.alert.oneshot_delete, "NFSNetworkListExcessive", {"sharePath": nfs_share["path"]}
         )
         await self.call2(
-            self.s.alert.oneshot_delete, 'NFSHostListExcessive', {'sharePath': nfs_share['path']}
+            self.s.alert.oneshot_delete, "NFSHostListExcessive", {"sharePath": nfs_share["path"]}
         )
         await self._service_change("nfs", "reload")
         return res
@@ -548,7 +548,7 @@ class SharingNFSService(SharingService):
             - Networks cannot overlap on the same share.
         """
         if len(data["aliases"]):
-            data['aliases'] = []
+            data["aliases"] = []
             # This feature was originally intended to be provided by nfs-ganesha
             # since we no longer have ganesha, planning will need to be made about
             # how to implement for kernel NFS server. One candidate is using bind mounts,
@@ -568,12 +568,12 @@ class SharingNFSService(SharingService):
 
         # need to make sure that the nfs share is within the zpool mountpoint
         await check_path_resides_within_volume(
-            verrors, self.middleware, f'{schema_name}.path', data['path'],
+            verrors, self.middleware, f"{schema_name}.path", data["path"],
         )
 
         # Split path into dataset and relative_path components
-        data['dataset'], data['relative_path'] = await self.middleware.run_in_thread(
-            resolve_dataset_path, data['path'], self.middleware
+        data["dataset"], data["relative_path"] = await self.middleware.run_in_thread(
+            resolve_dataset_path, data["path"], self.middleware
         )
 
         filters = []
@@ -585,10 +585,10 @@ class SharingNFSService(SharingService):
         )
 
         dns_cache = await self.resolve_hostnames(
-            sum([share["hosts"] for share in other_shares], []) + data['hosts']
+            sum([share["hosts"] for share in other_shares], []) + data["hosts"]
         )
 
-        self.validate_share_networks(data['networks'], dns_cache, schema_name, verrors)
+        self.validate_share_networks(data["networks"], dns_cache, schema_name, verrors)
         # Stop here if the input generated errors for the user to fix
         verrors.check()
 
@@ -612,13 +612,13 @@ class SharingNFSService(SharingService):
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
             else:
                 try:
-                    await self.middleware.call('user.get_user_obj', {'username': map_user})
+                    await self.middleware.call("user.get_user_obj", {"username": map_user})
                 except KeyError:
                     verrors.add(f"{schema_name}.{k}_user", f"User not found: {map_user}")
 
                 if map_group:
                     try:
-                        await self.middleware.call('group.get_group_obj', {'groupname': map_group})
+                        await self.middleware.call("group.get_group_obj", {"groupname": map_group})
                     except KeyError:
                         verrors.add(f"{schema_name}.{k}_group", f"Group not found: {map_group}")
 
@@ -669,35 +669,35 @@ class SharingNFSService(SharingService):
         NFS_HOSTS_WARNING_THRESHOLD = 100
 
         # Flag non-unique items in hosts and networks
-        confirm_unique(schema_name, 'networks', data, verrors)
-        confirm_unique(schema_name, 'hosts', data, verrors)
+        confirm_unique(schema_name, "networks", data, verrors)
+        confirm_unique(schema_name, "hosts", data, verrors)
 
         # Validate networks and sanitize: Convert IP addresses CIDR format
-        data['networks'] = sanitize_networks(
-            schema_name, data['networks'], verrors, strict_test=False, convert=True
+        data["networks"] = sanitize_networks(
+            schema_name, data["networks"], verrors, strict_test=False, convert=True
         )
 
         # Register a warning level alert for excessively long list of network entries
-        if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:
+        if (netlen := len(data["networks"])) >= NFS_NETWORKS_WARNING_THRESHOLD:
             await self.call2(
-                self.s.alert.oneshot_create, NFSNetworkListExcessiveAlert(sharePath=data['path'], numEntries=netlen)
+                self.s.alert.oneshot_create, NFSNetworkListExcessiveAlert(sharePath=data["path"], numEntries=netlen)
             )
         else:
             await self.call2(
-                self.s.alert.oneshot_delete, 'NFSNetworkListExcessive', {'sharePath': data['path']}
+                self.s.alert.oneshot_delete, "NFSNetworkListExcessive", {"sharePath": data["path"]}
             )
 
         # Validate hosts: no spaces or quotes
-        sanitize_hosts(schema_name, data['hosts'], verrors)
+        sanitize_hosts(schema_name, data["hosts"], verrors)
 
         # Register a warning level alert for excessively long list of host entries
-        if (hostlen := len(data['hosts'])) >= NFS_HOSTS_WARNING_THRESHOLD:
+        if (hostlen := len(data["hosts"])) >= NFS_HOSTS_WARNING_THRESHOLD:
             await self.call2(
-                self.s.alert.oneshot_create, NFSHostListExcessiveAlert(sharePath=data['path'], numEntries=hostlen)
+                self.s.alert.oneshot_create, NFSHostListExcessiveAlert(sharePath=data["path"], numEntries=hostlen)
             )
         else:
             await self.call2(
-                self.s.alert.oneshot_delete, 'NFSHostListExcessive', {'sharePath': data['path']}
+                self.s.alert.oneshot_delete, "NFSHostListExcessive", {"sharePath": data["path"]}
             )
 
     @private
@@ -775,8 +775,8 @@ class SharingNFSService(SharingService):
                     else:
                         try:
                             dns_addresses = [
-                                x['address'] for x in await self.middleware.call(
-                                    'dnsclient.forward_lookup', {'names': [hostname]},
+                                x["address"] for x in await self.middleware.call(
+                                    "dnsclient.forward_lookup", {"names": [hostname]},
                                 )
                             ]
                             # We might get both IPv4 and IPv6 addresses, the caller expects a single response
@@ -800,18 +800,18 @@ class SharingNFSService(SharingService):
         This module does checks that encompass both hosts and networks.
         """
 
-        tgt_realpath = (await self.middleware.call('filesystem.stat', data['path']))['realpath']
+        tgt_realpath = (await self.middleware.call("filesystem.stat", data["path"]))["realpath"]
 
         used_networks = set()
         used_hosts = set()  # host names without an entry in the cache
         for share in other_shares:
             try:
-                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+                shr_realpath = (await self.middleware.call("filesystem.stat", share["path"]))["realpath"]
             except CallError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 # Allow for locked filesystems
-                shr_realpath = share['path']
+                shr_realpath = share["path"]
 
             if tgt_realpath == shr_realpath:
                 for host in share["hosts"]:
@@ -820,7 +820,7 @@ class SharingNFSService(SharingService):
                         used_hosts.add(host)
                         continue
 
-                    if host.startswith('@'):
+                    if host.startswith("@"):
                         continue
 
                     try:
@@ -878,7 +878,7 @@ class SharingNFSService(SharingService):
                 )
                 continue
 
-            if host.startswith('@'):
+            if host.startswith("@"):
                 continue
 
             # wildcarded names without a 'domain' are valid
@@ -905,25 +905,25 @@ class SharingNFSService(SharingService):
         This function checks for common conditions.
         """
         # We test other shares that are sharing the same path
-        tgt_stat = await self.middleware.call('filesystem.stat', data["path"])
+        tgt_stat = await self.middleware.call("filesystem.stat", data["path"])
 
         # Sanity check: no symlinks
-        if tgt_stat['type'] == "SYMLINK":
+        if tgt_stat["type"] == "SYMLINK":
             verrors.add(
                 f"{schema_name}.path",
                 f"Symbolic links are not allowed: {data['path']}."
             )
 
-        tgt_realpath = tgt_stat['realpath']
+        tgt_realpath = tgt_stat["realpath"]
 
         for share in other_shares:
             try:
-                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+                shr_realpath = (await self.middleware.call("filesystem.stat", share["path"]))["realpath"]
             except CallError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 # Allow for locked filesystems
-                shr_realpath = share['path']
+                shr_realpath = share["path"]
 
             if tgt_realpath == shr_realpath:
                 # Test hosts
@@ -971,20 +971,20 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        middleware.create_task(middleware.call('etc.generate', 'nfsd'))
+        middleware.create_task(middleware.call("etc.generate", "nfsd"))
         return
 
     path = f'/mnt/{pool["name"]}'
-    for share in await middleware.call('sharing.nfs.query', [], {'select': ['path']}):
-        if share['path'].startswith(path):
-            await middleware.call('service.control', 'RELOAD', 'nfs')  # No need to wait for this to complete
+    for share in await middleware.call("sharing.nfs.query", [], {"select": ["path"]}):
+        if share["path"].startswith(path):
+            await middleware.call("service.control", "RELOAD", "nfs")  # No need to wait for this to complete
             break
 
 
 async def setup(middleware):
     await middleware.call(
-        'interface.register_listen_delegate',
-        SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
+        "interface.register_listen_delegate",
+        SystemServiceListenMultipleDelegate(middleware, "nfs", "bindip"),
     )
 
-    middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    middleware.register_hook("pool.post_import", pool_post_import, sync=True)

@@ -8,7 +8,7 @@ def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
 
 def check_zvol_in_boot_pool_using_path(zvol_path: str) -> bool:
     from middlewared.plugins.boot import BOOT_POOL_NAME
-    return zvol_path.startswith(f'/dev/zvol/{BOOT_POOL_NAME}/')
+    return zvol_path.startswith(f"/dev/zvol/{BOOT_POOL_NAME}/")
 
 
 def validate_pool_name(name: str) -> bool:

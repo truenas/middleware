@@ -9,7 +9,7 @@ class RsyncSuccessAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,
-        title='Rsync Task Succeeded',
+        title="Rsync Task Succeeded",
         text='Rsync "%(direction)s" task for "%(path)s" succeeded.',
         deleted_automatically=False,
     )
@@ -20,7 +20,7 @@ class RsyncSuccessAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['id']
+        return args["id"]
 
 
 @dataclass(kw_only=True)
@@ -28,7 +28,7 @@ class RsyncFailedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,
-        title='Rsync Task Failed',
+        title="Rsync Task Failed",
         text='Rsync "%(direction)s" task for "%(path)s" failed.',
         deleted_automatically=False,
     )
@@ -39,4 +39,4 @@ class RsyncFailedAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['id']
+        return args["id"]

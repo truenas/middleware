@@ -68,17 +68,17 @@ class MailQueue:
 
 
 class MailModel(sa.Model):
-    __tablename__ = 'system_email'
+    __tablename__ = "system_email"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    em_fromemail = sa.Column(sa.String(120), default='')
+    em_fromemail = sa.Column(sa.String(120), default="")
     em_outgoingserver = sa.Column(sa.String(120))
     em_port = sa.Column(sa.Integer(), default=25)
     em_security = sa.Column(sa.String(120), default="plain")
     em_smtp = sa.Column(sa.Boolean())
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.EncryptedText(), nullable=True)
-    em_fromname = sa.Column(sa.String(120), default='')
+    em_fromname = sa.Column(sa.String(120), default="")
     em_oauth = sa.Column(sa.JSON(dict, encrypted=True), nullable=True)
 
 
@@ -86,17 +86,17 @@ class MailService(ConfigService):
     mail_queue = MailQueue()
 
     class Config:
-        datastore = 'system.email'
-        datastore_prefix = 'em_'
-        datastore_extend = 'mail.mail_extend'
-        cli_namespace = 'system.mail'
-        role_prefix = 'ALERT'
+        datastore = "system.email"
+        datastore_prefix = "em_"
+        datastore_extend = "mail.mail_extend"
+        cli_namespace = "system.mail"
+        role_prefix = "ALERT"
         entry = MailEntry
 
     @private
     async def mail_extend(self, cfg):
-        if cfg['security']:
-            cfg['security'] = cfg['security'].upper()
+        if cfg["security"]:
+            cfg["security"] = cfg["security"].upper()
 
         return cfg
 
@@ -107,28 +107,28 @@ class MailService(ConfigService):
 
         new = config.copy()
         new.update(data)
-        new['security'] = new['security'].lower()  # Django Model compatibility
+        new["security"] = new["security"].lower()  # Django Model compatibility
 
         verrors = ValidationErrors()
 
-        if new['smtp'] and new['user'] == '':
+        if new["smtp"] and new["user"] == "":
             verrors.add(
-                'mail_update.user',
-                'This field is required when SMTP authentication is enabled',
+                "mail_update.user",
+                "This field is required when SMTP authentication is enabled",
             )
 
-        if not new['oauth'] or new['oauth']['provider'] == 'outlook':
-            if not new['fromemail']:
-                verrors.add('mail_update.fromemail', 'This field is required')
+        if not new["oauth"] or new["oauth"]["provider"] == "outlook":
+            if not new["fromemail"]:
+                verrors.add("mail_update.fromemail", "This field is required")
 
-        self.__password_verify(new['pass'], 'mail_update.pass', verrors)
+        self.__password_verify(new["pass"], "mail_update.pass", verrors)
 
         verrors.check()
 
-        await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
+        await self.middleware.call("datastore.update", "system.email", config["id"], new, {"prefix": "em_"})
 
-        await self.middleware.call('mail.gmail_initialize')
-        await self.call2(self.s.alert.oneshot_delete, 'GMailConfigurationDiscarded', None)
+        await self.middleware.call("mail.gmail_initialize")
+        await self.call2(self.s.alert.oneshot_delete, "GMailConfigurationDiscarded", None)
 
         return await self.config()
 
@@ -140,54 +140,54 @@ class MailService(ConfigService):
         # FIXME: smtplib does not support non-ascii password yet
         # https://github.com/python/cpython/pull/8938
         try:
-            password.encode('ascii')
+            password.encode("ascii")
         except UnicodeEncodeError:
             verrors.add(
                 schema,
-                'Only plain text characters (7-bit ASCII) are allowed in passwords. '
-                'UTF or composed characters are not allowed.'
+                "Only plain text characters (7-bit ASCII) are allowed in passwords. "
+                "UTF or composed characters are not allowed."
             )
         return verrors
 
-    @api_method(MailSendArgs, MailSendResult, roles=['MAIL_WRITE'])
-    @job(pipes=['input'], check_pipes=False)
+    @api_method(MailSendArgs, MailSendResult, roles=["MAIL_WRITE"])
+    @job(pipes=["input"], check_pipes=False)
     def send(self, job, message, config):
         """Sends mail using configured mail settings."""
 
-        gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
+        gc = self.middleware.call_sync("datastore.config", "network.globalconfiguration")
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
-        message['subject'] = f'{ProductName.PRODUCT_NAME} {hostname}: {message["subject"]}'
+        message["subject"] = f'{ProductName.PRODUCT_NAME} {hostname}: {message["subject"]}'
         add_html = True
-        if 'html' in message and message['html'] is None:
-            message.pop('html')
+        if "html" in message and message["html"] is None:
+            message.pop("html")
             add_html = False
 
-        if 'text' not in message:
-            if 'html' not in message:
+        if "text" not in message:
+            if "html" not in message:
                 verrors = ValidationErrors()
-                verrors.add('mail_message.text', 'Text is required when HTML is not set')
+                verrors.add("mail_message.text", "Text is required when HTML is not set")
                 verrors.check()
 
-            message['text'] = html2text.html2text(message['html'])
+            message["text"] = html2text.html2text(message["html"])
 
-        if add_html and 'html' not in message:
-            template = get_template('assets/templates/mail.html')
-            message['html'] = template.render(body=(
+        if add_html and "html" not in message:
+            template = get_template("assets/templates/mail.html")
+            message["html"] = template.render(body=(
                     '<div style="font-family: monospace; white-space: pre-wrap;">' +
-                    html.escape(message['text']) +
-                    '</div>'
+                    html.escape(message["text"]) +
+                    "</div>"
             ))
 
         self.send_raw(job, message, config)
 
-    @job(pipes=['input'], check_pipes=False)
+    @job(pipes=["input"], check_pipes=False)
     @private
     def send_raw(self, job, message, config):
-        config = dict(self.middleware.call_sync('mail.config'), **config)
+        config = dict(self.middleware.call_sync("mail.config"), **config)
 
         from_addr = self._from_addr(config)
 
-        interval = message.get('interval')
+        interval = message.get("interval")
         if interval is None:
             interval = timedelta()
         else:
@@ -204,35 +204,35 @@ class MailService(ConfigService):
             if (timediff >= interval) or (timediff < timedelta()):
                 # Make sure mtime is modified
                 # We could use os.utime but this is simpler!
-                with open(channelfile, 'w') as f:
-                    f.write('!')
+                with open(channelfile, "w") as f:
+                    f.write("!")
             else:
-                raise CallError('This message was already sent in the given interval')
+                raise CallError("This message was already sent in the given interval")
 
-        verrors = self.__password_verify(config['pass'], 'mail_update.pass')
+        verrors = self.__password_verify(config["pass"], "mail_update.pass")
         verrors.check()
-        to = message.get('to')
+        to = message.get("to")
         if not to:
-            to = self.middleware.call_sync('mail.local_administrators_emails')
+            to = self.middleware.call_sync("mail.local_administrators_emails")
             if not to:
-                raise CallError('None of the local administrators has an e-mail address configured')
+                raise CallError("None of the local administrators has an e-mail address configured")
 
-        if message.get('attachments'):
+        if message.get("attachments"):
             job.check_pipe("input")
 
             def read_json():
                 f = job.pipes.input.r
-                data = b''
+                data = b""
                 i = 0
                 while True:
                     read = f.read(1048576)  # 1MiB
-                    if read == b'':
+                    if read == b"":
                         break
                     data += read
                     i += 1
                     if i > 50:
-                        raise ValueError('Attachments bigger than 50MB not allowed yet')
-                if data == b'':
+                        raise ValueError("Attachments bigger than 50MB not allowed yet")
+                if data == b"":
                     return None
                 return json.loads(data)
 
@@ -240,37 +240,37 @@ class MailService(ConfigService):
         else:
             attachments = None
 
-        if 'html' in message or attachments:
+        if "html" in message or attachments:
             msg = MIMEMultipart()
-            msg.preamble = 'This is a multi-part message in MIME format.'
-            if 'html' in message:
-                msg2 = MIMEMultipart('alternative')
-                msg2.attach(MIMEText(message['text'], 'plain', _charset='utf-8'))
-                msg2.attach(MIMEText(message['html'], 'html', _charset='utf-8'))
+            msg.preamble = "This is a multi-part message in MIME format."
+            if "html" in message:
+                msg2 = MIMEMultipart("alternative")
+                msg2.attach(MIMEText(message["text"], "plain", _charset="utf-8"))
+                msg2.attach(MIMEText(message["html"], "html", _charset="utf-8"))
                 msg.attach(msg2)
             if attachments:
                 for attachment in attachments:
                     m = Message()
-                    m.set_payload(attachment['content'])
-                    for header in attachment.get('headers'):
-                        m.add_header(header['name'], header['value'], **(header.get('params') or {}))
+                    m.set_payload(attachment["content"])
+                    for header in attachment.get("headers"):
+                        m.add_header(header["name"], header["value"], **(header.get("params") or {}))
                     msg.attach(m)
         else:
-            msg = MIMEText(message['text'], _charset='utf-8')
+            msg = MIMEText(message["text"], _charset="utf-8")
 
-        msg['Subject'] = message['subject']
+        msg["Subject"] = message["subject"]
 
-        msg['From'] = from_addr
-        msg['To'] = ', '.join(to)
-        if message.get('cc'):
-            msg['Cc'] = ', '.join(message.get('cc'))
-        msg['Date'] = formatdate()
+        msg["From"] = from_addr
+        msg["To"] = ", ".join(to)
+        if message.get("cc"):
+            msg["Cc"] = ", ".join(message.get("cc"))
+        msg["Date"] = formatdate()
 
-        local_hostname = self.middleware.call_sync('system.hostname')
+        local_hostname = self.middleware.call_sync("system.hostname")
 
-        msg['Message-ID'] = make_msgid(base64.urlsafe_b64encode(os.urandom(3)).decode("ascii"))
+        msg["Message-ID"] = make_msgid(base64.urlsafe_b64encode(os.urandom(3)).decode("ascii"))
 
-        extra_headers = message.get('extra_headers') or {}
+        extra_headers = message.get("extra_headers") or {}
         for key, val in list(extra_headers.items()):
             # We already have "Content-Type: multipart/mixed" and setting "Content-Type: text/plain" like some scripts
             # do will break python e-mail module.
@@ -283,10 +283,10 @@ class MailService(ConfigService):
                 msg[key] = val
 
         try:
-            if config['oauth'] and config['oauth']['provider'] == 'gmail':
-                self.middleware.call_sync('mail.gmail_send', msg, config)
+            if config["oauth"] and config["oauth"]["provider"] == "gmail":
+                self.middleware.call_sync("mail.gmail_send", msg, config)
             else:
-                with self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname) as server:
+                with self._get_smtp_server(config, message["timeout"], local_hostname=local_hostname) as server:
                     # NOTE: Don't do this.
                     #
                     # If smtplib.SMTP* tells you to run connect() first, it's because the
@@ -307,7 +307,7 @@ class MailService(ConfigService):
                         msg.as_string(),
                     )
         except NetworkActivityDisabled:
-            self.logger.warning('Sending email denied')
+            self.logger.warning("Sending email denied")
             raise
         except Exception as e:
             # We are only interested in ValueError, not subclasses.
@@ -315,51 +315,51 @@ class MailService(ConfigService):
                 raise CallError(str(e))
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(
-                    f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EPERM
+                    f"Authentication error ({e.smtp_code}): {e.smtp_error}", errno.EPERM
                 )
             # NAS-137666: Email addresses are considered Personally Identifiable
             # Information (PII) under GDPR. Prevent displaying them in logs.
             if isinstance(e, smtplib.SMTPSenderRefused):
-                e.sender = '[sender redacted]'
+                e.sender = "[sender redacted]"
                 e.args = (e.smtp_code, e.smtp_error, e.sender)
             elif isinstance(e, smtplib.SMTPRecipientsRefused):
-                e.recipients = '[recipient info redacted]'
+                e.recipients = "[recipient info redacted]"
                 e.args = (e.recipients,)
 
-            self.logger.warning('Failed to send email', exc_info=e)
-            if message['queue']:
+            self.logger.warning("Failed to send email", exc_info=e)
+            if message["queue"]:
                 with self.mail_queue as mq:
                     mq.append(msg)
-            raise CallError(f'Failed to send email: {e}')
+            raise CallError(f"Failed to send email: {e}")
 
     @contextlib.contextmanager
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
-        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+        self.middleware.call_sync("network.general.will_perform_activity", "mail")
 
         if local_hostname is None:
-            local_hostname = self.middleware.call_sync('system.hostname')
+            local_hostname = self.middleware.call_sync("system.hostname")
 
-        if not config['outgoingserver'] or not config['port']:
-            raise ValueError('You must provide an outgoing mailserver and mail server port when sending mail')
+        if not config["outgoingserver"] or not config["port"]:
+            raise ValueError("You must provide an outgoing mailserver and mail server port when sending mail")
 
-        if config['security'] == 'SSL':
+        if config["security"] == "SSL":
             factory = smtplib.SMTP_SSL
         else:
             factory = smtplib.SMTP
 
         with factory(
-            config['outgoingserver'],
-            config['port'],
+            config["outgoingserver"],
+            config["port"],
             timeout=timeout,
             local_hostname=local_hostname,
         ) as server:
-            if config['security'] == 'TLS':
+            if config["security"] == "TLS":
                 server.starttls()
 
-            if config['oauth'] and config['oauth']['provider'] == 'outlook':
-                self.middleware.call_sync('mail.outlook_xoauth2', server, config)
-            elif config['smtp']:
-                server.login(config['user'], config['pass'])
+            if config["oauth"] and config["oauth"]["provider"] == "outlook":
+                self.middleware.call_sync("mail.outlook_xoauth2", server, config)
+            elif config["smtp"]:
+                server.login(config["user"], config["pass"])
 
             yield server
 
@@ -369,24 +369,24 @@ class MailService(ConfigService):
         with self.mail_queue as mq:
             for queue in list(mq.queue):
                 try:
-                    config = self.middleware.call_sync('mail.config')
-                    if config['oauth'] and config['oauth']['provider'] == 'gmail':
-                        self.middleware.call_sync('mail.gmail_send', queue.message, config)
+                    config = self.middleware.call_sync("mail.config")
+                    if config["oauth"] and config["oauth"]["provider"] == "gmail":
+                        self.middleware.call_sync("mail.gmail_send", queue.message, config)
                     else:
                         with self._get_smtp_server(config) as server:
                             # Update `From` address from currently used config because if the SMTP user changes,
                             # already queued messages might not be sent due to (553, b'Relaying disallowed as xxx')
                             # error
-                            queue.message['From'] = self._from_addr(config)
-                            server.sendmail(queue.message['From'].encode(),
-                                            queue.message['To'].split(', '),
+                            queue.message["From"] = self._from_addr(config)
+                            server.sendmail(queue.message["From"].encode(),
+                                            queue.message["To"].split(", "),
                                             queue.message.as_string())
                 except NetworkActivityDisabled:
                     # no reason to queue up email since network activity was
                     # explicitly denied by end-user
                     mq.queue.remove(queue)
                 except Exception:
-                    self.logger.debug('Sending message from queue failed', exc_info=True)
+                    self.logger.debug("Sending message from queue failed", exc_info=True)
                     queue.attempts += 1
                     if queue.attempts >= mq.MAX_ATTEMPTS:
                         mq.queue.remove(queue)
@@ -394,19 +394,19 @@ class MailService(ConfigService):
                     mq.queue.remove(queue)
 
     def _from_addr(self, config):
-        if config['fromname']:
-            pair = (config['fromname'], config['fromemail'])
+        if config["fromname"]:
+            pair = (config["fromname"], config["fromemail"])
             try:
-                return formataddr(pair, 'ascii')
+                return formataddr(pair, "ascii")
             except UnicodeEncodeError:
-                return formataddr(pair, 'utf-8')
+                return formataddr(pair, "utf-8")
         else:
             try:
-                config['fromemail'].encode('ascii')
+                config["fromemail"].encode("ascii")
             except UnicodeEncodeError:
-                from_addr = Header(config['fromemail'], 'utf-8')
+                from_addr = Header(config["fromemail"], "utf-8")
             else:
-                from_addr = Header(config['fromemail'], 'ascii')
+                from_addr = Header(config["fromemail"], "ascii")
 
             return from_addr
 
@@ -432,4 +432,4 @@ class MailService(ConfigService):
 
 
 async def setup(middleware):
-    await middleware.call('network.general.register_activity', 'mail', 'Mail')
+    await middleware.call("network.general.register_activity", "mail", "Mail")

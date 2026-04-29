@@ -18,14 +18,14 @@ if typing.TYPE_CHECKING:
 
 
 class AlertClassesModel(sa.Model):
-    __tablename__ = 'system_alertclasses'
+    __tablename__ = "system_alertclasses"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     classes = sa.Column(sa.JSON(dict))
 
 
 class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
-    _datastore = 'system.alertclasses'
+    _datastore = "system.alertclasses"
     _entry = AlertClassesEntry
 
     async def do_update(self, data: AlertClassesUpdate) -> AlertClassesEntry:
@@ -54,16 +54,16 @@ class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
         return await self.config()
 
 
-__all__ = ('AlertClassesService',)
+__all__ = ("AlertClassesService",)
 
 
 class AlertClassesService(GenericConfigService[AlertClassesEntry]):
 
     class Config:
-        datastore = 'system.alertclasses'
-        cli_namespace = 'system.alert.class'
+        datastore = "system.alertclasses"
+        cli_namespace = "system.alert.class"
         entry = AlertClassesEntry
-        role_prefix = 'ALERT'
+        role_prefix = "ALERT"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:

@@ -128,35 +128,35 @@ class SystemService(Service):
             return None
 
         result = {
-            'model': info.model,
-            'system_serial': info.serials[0] if info.serials else None,
-            'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
-            'contract_type': info.contract_type,
-            'contract_start': None,
-            'contract_end': info.expires_at,
-            'legacy_contract_hardware': None,
-            'legacy_contract_software': None,
-            'customer_name': None,
-            'expired': info.expires_at is not None and info.expires_at < date.today(),
-            'features': [f.name for f in info.features],
-            'addhw': [],
-            'addhw_detail': [],
+            "model": info.model,
+            "system_serial": info.serials[0] if info.serials else None,
+            "system_serial_ha": info.serials[1] if len(info.serials) > 1 else None,
+            "contract_type": info.contract_type,
+            "contract_start": None,
+            "contract_end": info.expires_at,
+            "legacy_contract_hardware": None,
+            "legacy_contract_software": None,
+            "customer_name": None,
+            "expired": info.expires_at is not None and info.expires_at < date.today(),
+            "features": [f.name for f in info.features],
+            "addhw": [],
+            "addhw_detail": [],
         }
 
         for name, quantity in info.enclosures.items():
-            result['addhw'].append([quantity, LICENSE_ADDHW_REVERSE_MAPPING.get(name, 0)])
-            result['addhw_detail'].append(f'{quantity} x {name} Expansion shelf')
+            result["addhw"].append([quantity, LICENSE_ADDHW_REVERSE_MAPPING.get(name, 0)])
+            result["addhw_detail"].append(f"{quantity} x {name} Expansion shelf")
 
         if include_raw_license:
             for f in [LICENSE_FILE, LEGACY_LICENSE_FILE]:
                 try:
                     with open(f) as f:
-                        result['raw_license'] = f.read().strip()
+                        result["raw_license"] = f.read().strip()
                         break
                 except FileNotFoundError:
                     pass
             else:
-                result['raw_license'] = None
+                result["raw_license"] = None
 
         return result
 

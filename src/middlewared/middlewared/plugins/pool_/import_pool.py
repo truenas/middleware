@@ -25,7 +25,7 @@ from .utils import ZPOOL_CACHE_FILE
 class PoolService(Service):
 
     class Config:
-        cli_namespace = 'storage.pool'
+        cli_namespace = "storage.pool"
         event_send = False
 
     @private
@@ -41,14 +41,14 @@ class PoolService(Service):
         container_ds = container_dataset(pool_name)
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1, get_source=True)
+            ZFSResourceQuery(paths=[pool_name], properties=["mountpoint"], max_depth=1, get_source=True)
         ):
-            if i['type'] != 'FILESYSTEM':
+            if i["type"] != "FILESYSTEM":
                 continue
-            mntpnt = i['properties']['mountpoint']['value']
-            mntpnt_source = (i['properties']['mountpoint']['source'] or {}).get('type')
+            mntpnt = i["properties"]["mountpoint"]["value"]
+            mntpnt_source = (i["properties"]["mountpoint"]["source"] or {}).get("type")
             if i["name"] == pool_name:
-                if mntpnt != f'/mnt/{pool_name}' or mntpnt_source != 'DEFAULT':
+                if mntpnt != f"/mnt/{pool_name}" or mntpnt_source != "DEFAULT":
                     # yikes, someone messed with mountpoint of root dataset
                     # or this is a zpool from a non-truenas system. we have
                     # to iterate over everything and reset mountpoint before
@@ -56,20 +56,20 @@ class PoolService(Service):
                     # there is no reason to continue the iteration since
                     # we'll need iterate all children no matter what.
                     await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
+                        "pool.dataset.update_impl",
+                        UpdateImplArgs(name=i["name"], iprops={"mountpoint"})
                     )
                     to_inherit.append(pool_name)
                     break
                 else:
                     continue
-            elif i['name'] == f'{pool_name}/ix-applications':
+            elif i["name"] == f"{pool_name}/ix-applications":
                 # We exclude `ix-applications` dataset since resetting it will
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
                 continue
 
-            if i['name'] == container_ds:
-                if container_mnt != mntpnt.removeprefix('/mnt'):
+            if i["name"] == container_ds:
+                if container_mnt != mntpnt.removeprefix("/mnt"):
                     # TODO: fix the "removeprefix('/mnt')" logic. /mnt is altroot
                     # set at the zpool but the container_dataset_mountpoint function
                     # returns the mountpoint without it. Makes using it confusing
@@ -77,8 +77,8 @@ class PoolService(Service):
                     # This dataset gets a custom mountpoint so user cannot
                     # unintentionally share it via SMB, NFS, etc.
                     await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], zprops={'mountpoint': container_mnt})
+                        "pool.dataset.update_impl",
+                        UpdateImplArgs(name=i["name"], zprops={"mountpoint": container_mnt})
                     )
 
                 # We do not do anything if the mountpoint is already correct
@@ -93,17 +93,17 @@ class PoolService(Service):
                 self.s.zfs.resource.query,
                 ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
-                if i.type != 'FILESYSTEM':
+                if i.type != "FILESYSTEM":
                     continue
                 try:
                     await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i.name, iprops={'mountpoint'})
+                        "pool.dataset.update_impl",
+                        UpdateImplArgs(name=i.name, iprops={"mountpoint"})
                     )
                 except Exception:
-                    self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
+                    self.logger.exception("Failed inheriting mountpoint property for %r", i.name)
 
-    @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
+    @api_method(PoolImportFindArgs, PoolImportFindResult, roles=["POOL_READ"])
     @job()
     async def import_find(self, job):
         """
@@ -112,25 +112,25 @@ class PoolService(Service):
         name, guid, status, hostname.
         """
 
-        existing_guids = [i['guid'] for i in await self.middleware.call('pool.query')]
+        existing_guids = [i["guid"] for i in await self.middleware.call("pool.query")]
 
         result = []
-        for pool in await self.middleware.call('zfs.pool.find_import'):
-            if pool['status'] == 'UNAVAIL':
+        for pool in await self.middleware.call("zfs.pool.find_import"):
+            if pool["status"] == "UNAVAIL":
                 continue
             # Exclude pools with same guid as existing pools (in database)
             # It could be the pool is in the database but was exported/detached for some reason
             # See #6808
-            if pool['guid'] in existing_guids:
+            if pool["guid"] in existing_guids:
                 continue
             entry = {}
-            for i in ('name', 'guid', 'status', 'hostname'):
+            for i in ("name", "guid", "status", "hostname"):
                 entry[i] = pool[i]
             result.append(entry)
         return result
 
-    @api_method(PoolImportPoolArgs, PoolImportPoolResult, roles=['POOL_WRITE'])
-    @job(lock='import_pool')
+    @api_method(PoolImportPoolArgs, PoolImportPoolResult, roles=["POOL_WRITE"])
+    @job(lock="import_pool")
     async def import_pool(self, job, data):
         """
         Import a pool found with `pool.import_find`.
@@ -152,8 +152,8 @@ class PoolService(Service):
                 }]
             }
         """
-        guid = data['guid']
-        new_name = data.get('name')
+        guid = data["guid"]
+        new_name = data.get("name")
 
         # validate
         imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
@@ -164,15 +164,15 @@ class PoolService(Service):
             raise CallError(err, errno.EEXIST)
 
         # import zpool
-        opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
+        opts = {"altroot": "/mnt", "cachefile": ZPOOL_CACHE_FILE}
         any_host = True
         use_cachefile = None
-        await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
+        await self.middleware.call("zfs.pool.import_pool", guid, opts, any_host, use_cachefile, new_name)
 
         # get the zpool name
         if not new_name:
             pool_name = await self.middleware.run_in_thread(query_imported_fast_impl)
-            pool_name = pool_name[guid]['name']
+            pool_name = pool_name[guid]["name"]
         else:
             pool_name = new_name
 
@@ -182,188 +182,188 @@ class PoolService(Service):
         await self.handle_unencrypted_datasets_on_import(pool_name)
 
         # set acl properties correctly for given top-level dataset's acltype
-        await self.middleware.call('pool.normalize_root_dataset_properties', pool_name, guid)
+        await self.middleware.call("pool.normalize_root_dataset_properties", pool_name, guid)
 
         # reset (recursively) the mountpoint property (if required)
         await self.reset_mountpoint_recursively(pool_name)
 
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(
-            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+            "pool.dataset.query_encrypted_datasets", pool_name, {"key_loaded": False}
         ):
-            encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
+            encrypted_mountpoint = os.path.join("/mnt", encrypted_ds)
             if os.path.exists(encrypted_mountpoint):
                 try:
-                    await self.middleware.call('filesystem.set_zfs_attributes', {
-                        'path': encrypted_mountpoint,
-                        'zfs_file_attributes': {'immutable': True}
+                    await self.middleware.call("filesystem.set_zfs_attributes", {
+                        "path": encrypted_mountpoint,
+                        "zfs_file_attributes": {"immutable": True}
                     })
                 except Exception as e:
-                    self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
+                    self.logger.warning("Failed to set immutable flag at %r: %r", encrypted_mountpoint, e)
 
         # update db
-        for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_name', '=', pool_name]]):
-            await self.middleware.call('datastore.delete', 'storage.volume', pool['id'])
+        for pool in await self.middleware.call("datastore.query", "storage.volume", [["vol_name", "=", pool_name]]):
+            await self.middleware.call("datastore.delete", "storage.volume", pool["id"])
 
-        sed_enabled_system = await self.middleware.call('system.sed_enabled')
-        pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
-            'vol_name': pool_name,
-            'vol_guid': guid,
-            'vol_all_sed': None if sed_enabled_system else False,
+        sed_enabled_system = await self.middleware.call("system.sed_enabled")
+        pool_id = await self.middleware.call("datastore.insert", "storage.volume", {
+            "vol_name": pool_name,
+            "vol_guid": guid,
+            "vol_all_sed": None if sed_enabled_system else False,
         })
         if sed_enabled_system:
-            self.middleware.create_task(self.middleware.call('pool.update_all_sed_attr'))
+            self.middleware.create_task(self.middleware.call("pool.update_all_sed_attr"))
 
-        await self.middleware.call('pool.scrub.create', {'pool': pool_id})
+        await self.middleware.call("pool.scrub.create", {"pool": pool_id})
 
         # re-enable/restart any services dependent on this pool
-        pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
+        pool = await self.middleware.call("pool.query", [("id", "=", pool_id)], {"get": True})
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.call2(self.s.keyvalue.has_key, key):
             for name, ids in (await self.call2(self.s.keyvalue.get, key)).items():
-                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+                for delegate in await self.middleware.call("pool.dataset.get_attachment_delegates_for_start"):
                     if delegate.name == name:
-                        attachments = await delegate.query(pool['path'], False)
-                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        attachments = await delegate.query(pool["path"], False)
+                        attachments = [attachment for attachment in attachments if attachment["id"] in ids]
                         if attachments:
                             await delegate.toggle(attachments, True)
             await self.call2(self.s.keyvalue.delete, key)
 
-        await self._post_import_actions(pool, 'ADDED')
+        await self._post_import_actions(pool, "ADDED")
 
         return True
 
-    @api_method(PoolReimportArgs, PoolReimportResult, roles=['POOL_WRITE'])
-    @job(lock='pool_reimport')
+    @api_method(PoolReimportArgs, PoolReimportResult, roles=["POOL_WRITE"])
+    @job(lock="pool_reimport")
     async def reimport(self, job, oid):
         """
         Attempt to import a pool that exists in database but is currently OFFLINE.
 
         This is useful after SED disks have been unlocked and the pool can now be imported.
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
-        vol_name = pool['name']
-        vol_guid = pool['guid']
+        pool = await self.middleware.call("pool.get_instance", oid)
+        vol_name = pool["name"]
+        vol_guid = pool["guid"]
 
-        if pool['status'] != 'OFFLINE':
+        if pool["status"] != "OFFLINE":
             raise ValidationError(
-                'pool_reimport.id',
+                "pool_reimport.id",
                 f'Pool {vol_name!r} is not offline (current status: {pool["status"]}). '
                 'Only offline pools can be reimported.',
                 errno.EINVAL
             )
 
-        job.set_progress(5, 'Scanning for available pools')
+        job.set_progress(5, "Scanning for available pools")
 
-        available_pools = {p['guid']: p for p in await self.middleware.call('zfs.pool.find_import')}
+        available_pools = {p["guid"]: p for p in await self.middleware.call("zfs.pool.find_import")}
         pool_found = available_pools.get(vol_guid)
 
         if pool_found is None:
             raise ValidationError(
-                'pool_reimport.id',
-                f'Pool {vol_name!r} (GUID: {vol_guid}) is not available for import. '
-                'If this is an all-SED pool, ensure SED disks have been unlocked first.',
+                "pool_reimport.id",
+                f"Pool {vol_name!r} (GUID: {vol_guid}) is not available for import. "
+                "If this is an all-SED pool, ensure SED disks have been unlocked first.",
                 errno.ENOENT
             )
 
-        if pool_found['status'] == 'UNAVAIL':
+        if pool_found["status"] == "UNAVAIL":
             raise ValidationError(
-                'pool_reimport.id',
-                f'Pool {vol_name!r} is in UNAVAIL state and cannot be imported. '
-                'Some disks may be missing or still locked.',
+                "pool_reimport.id",
+                f"Pool {vol_name!r} is in UNAVAIL state and cannot be imported. "
+                "Some disks may be missing or still locked.",
                 errno.ENXIO
             )
 
-        job.set_progress(10, 'Importing pool')
+        job.set_progress(10, "Importing pool")
 
         # Import the pool using existing boot import logic
         # This handles: import with proper flags, normalize root dataset properties
-        if not await self.middleware.call('pool.import_on_boot_impl', vol_name, vol_guid, True):
-            raise CallError(f'Failed to import pool {vol_name}', errno.EFAULT)
+        if not await self.middleware.call("pool.import_on_boot_impl", vol_name, vol_guid, True):
+            raise CallError(f"Failed to import pool {vol_name}", errno.EFAULT)
 
-        job.set_progress(30, 'Mounting datasets')
+        job.set_progress(30, "Mounting datasets")
 
         # Handle encryption - mount or unlock as needed
-        if not await self.middleware.call('pool.encryption_is_active', vol_name):
+        if not await self.middleware.call("pool.encryption_is_active", vol_name):
             # Not encrypted - just mount recursively
-            await self.middleware.call('pool.recursive_mount', vol_name)
+            await self.middleware.call("pool.recursive_mount", vol_name)
 
-        job.set_progress(50, 'Unlocking encrypted datasets')
+        job.set_progress(50, "Unlocking encrypted datasets")
 
         # Run unlock logic (similar to unlock_on_boot_impl but for single pool)
-        await self.middleware.call('pool.unlock_on_boot_impl', vol_name)
+        await self.middleware.call("pool.unlock_on_boot_impl", vol_name)
 
-        job.set_progress(70, 'Resetting mountpoints')
+        job.set_progress(70, "Resetting mountpoints")
         await self.reset_mountpoint_recursively(vol_name)
 
-        if await self.middleware.call('failover.licensed'):
-            job.set_progress(75, 'Scheduling disk cache update on standby controller')
+        if await self.middleware.call("failover.licensed"):
+            job.set_progress(75, "Scheduling disk cache update on standby controller")
             try:
                 await self.middleware.call(
-                    'failover.call_remote',
-                    'disk.retaste',
+                    "failover.call_remote",
+                    "disk.retaste",
                     [],
-                    {'raise_connect_error': False}
+                    {"raise_connect_error": False}
                 )
             except Exception:
-                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+                self.logger.warning("Failed to retaste disks on standby controller", exc_info=True)
 
-        job.set_progress(80, 'Re-enabling services')
+        job.set_progress(80, "Re-enabling services")
 
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
-            if attachments := await delegate.query(pool['path'], False):
+        for delegate in await self.middleware.call("pool.dataset.get_attachment_delegates"):
+            if attachments := await delegate.query(pool["path"], False):
                 await delegate.start(attachments)
 
-        job.set_progress(90, 'Running post-import tasks')
+        job.set_progress(90, "Running post-import tasks")
 
         # Post-import hooks and sync encryption keys
-        pool = await self.middleware.call('pool.get_instance', oid)
-        await self._post_import_actions(pool, 'CHANGED')
+        pool = await self.middleware.call("pool.get_instance", oid)
+        await self._post_import_actions(pool, "CHANGED")
 
-        job.set_progress(100, 'Pool reimported successfully')
+        job.set_progress(100, "Pool reimported successfully")
 
         return True
 
     @private
     async def _post_import_actions(self, pool, event_type):
-        await self.middleware.call_hook('pool.post_import', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+        await self.middleware.call_hook("pool.post_import", pool)
+        await self.middleware.call("pool.dataset.sync_db_keys", pool["name"])
 
         # ZFS import events fire before the DB entry exists so the
         # PoolUpgraded alert cannot be created at that time. Check
         # here where the pool is guaranteed to be in the database.
-        if pool['name'] != await self.middleware.call('boot.pool_name'):
+        if pool["name"] != await self.middleware.call("boot.pool_name"):
             try:
-                if not await self.middleware.call('pool.is_upgraded', pool['id']):
+                if not await self.middleware.call("pool.is_upgraded", pool["id"]):
                     await self.middleware.call2(
                         self.middleware.services.alert.oneshot_create,
-                        PoolUpgradedAlert(pool['name'])
+                        PoolUpgradedAlert(pool["name"])
                     )
             except Exception:
                 pass
 
-        self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
+        self.middleware.send_event("pool.query", event_type, id=pool["id"], fields=pool)
 
     @private
     def recursive_mount(self, name):
         cmd = [
-            'zfs', 'mount',
-            '-R',  # recursive flag
+            "zfs", "mount",
+            "-R",  # recursive flag
             name,  # name of the zpool / root dataset
         ]
         try:
-            self.logger.debug('Going to mount root dataset recursively: %r', name)
+            self.logger.debug("Going to mount root dataset recursively: %r", name)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
-                    'Failed to mount datasets for pool: %r with error: %r',
+                    "Failed to mount datasets for pool: %r with error: %r",
                     name, cp.stdout.decode()
                 )
                 return False
             return True
         except Exception:
             self.logger.error(
-                'Unhandled exception while mounting datasets for pool: %r',
+                "Unhandled exception while mounting datasets for pool: %r",
                 name, exc_info=True
             )
             return False
@@ -371,28 +371,28 @@ class PoolService(Service):
     @private
     def encryption_is_active(self, name):
         cmd = [
-            'zfs', 'get',
-            '-H',                  # use in script
-            '-o', 'value',         # retrieve the value
-            'encryption',          # property to retrieve
+            "zfs", "get",
+            "-H",                  # use in script
+            "-o", "value",         # retrieve the value
+            "encryption",          # property to retrieve
             name,                  # name of the zpool
         ]
         try:
-            self.logger.debug('Checking if root dataset is encrypted: %r', name)
+            self.logger.debug("Checking if root dataset is encrypted: %r", name)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
-                    'Failed to see if root dataset is encrypted for pool: %r with error: %r',
+                    "Failed to see if root dataset is encrypted for pool: %r with error: %r",
                     name, cp.stdout.decode()
                 )
                 return False
-            if cp.stdout.decode().strip() == 'off':
+            if cp.stdout.decode().strip() == "off":
                 return False
             else:
                 return True
         except Exception:
             self.logger.error(
-                'Unhandled exception while checking on feature@encryption for pool: %r',
+                "Unhandled exception while checking on feature@encryption for pool: %r",
                 name, exc_info=True
             )
             return False
@@ -400,63 +400,63 @@ class PoolService(Service):
     @private
     def normalize_root_dataset_properties(self, vol_name, vol_guid):
         try:
-            self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug("Calling zfs.resource.query_impl on %r with guid %r", vol_name, vol_guid)
             ds = self.call_sync2(
                 self.s.zfs.resource.query_impl,
-                ZFSResourceQuery(paths=[vol_name], properties=['acltype', 'aclinherit', 'aclmode'])
-            )[0]['properties']
+                ZFSResourceQuery(paths=[vol_name], properties=["acltype", "aclinherit", "aclmode"])
+            )[0]["properties"]
         except Exception:
-            self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
+            self.logger.warning("Unexpected failure querying root-level properties for %r", vol_name, exc_info=True)
             return True
         else:
-            self.logger.debug('Done calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug("Done calling zfs.resource.query_impl on %r with guid %r", vol_name, vol_guid)
 
         opts = dict()
-        if ds['acltype']['value'] == 'nfsv4':
-            if ds['aclinherit']['value'] != 'passthrough':
-                opts['aclinherit'] = 'passthrough'
-            if ds['aclmode']['value'] != 'passthrough':
-                opts['aclmode'] = 'passthrough'
+        if ds["acltype"]["value"] == "nfsv4":
+            if ds["aclinherit"]["value"] != "passthrough":
+                opts["aclinherit"] = "passthrough"
+            if ds["aclmode"]["value"] != "passthrough":
+                opts["aclmode"] = "passthrough"
         else:
-            if ds['aclinherit']['value'] != 'discard':
-                opts['aclinherit'] = 'discard'
-            if ds['aclmode']['value'] != 'discard':
-                opts['aclmode'] = 'discard'
+            if ds["aclinherit"]["value"] != "discard":
+                opts["aclinherit"] = "discard"
+            if ds["aclmode"]["value"] != "discard":
+                opts["aclmode"] = "discard"
 
         if opts:
             try:
-                self.logger.debug('Calling pool.dateset.update_impl on %r with opts %r', vol_name, opts)
-                self.middleware.call_sync('pool.dataset.update_impl', UpdateImplArgs(name=vol_name, zprops=opts))
+                self.logger.debug("Calling pool.dateset.update_impl on %r with opts %r", vol_name, opts)
+                self.middleware.call_sync("pool.dataset.update_impl", UpdateImplArgs(name=vol_name, zprops=opts))
             except Exception:
-                self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
+                self.logger.warning("%r: failed to normalize properties of root-level dataset", vol_name, exc_info=True)
             else:
-                self.logger.debug('Done calling pool.dataset.update_impl on %r', vol_name)
+                self.logger.debug("Done calling pool.dataset.update_impl on %r", vol_name)
 
     @private
     def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):
         cmd = [
-            'zpool', 'import',
+            "zpool", "import",
             vol_guid,  # the GUID of the zpool
-            '-R', '/mnt',  # altroot
-            '-m',  # import pool with missing log device(s)
-            '-N',  # do not mount the datasets
-            '-f',  # force import since hostid can change (upgrade from CORE to SCALE changes it, for example)
-            '-o', f'cachefile={ZPOOL_CACHE_FILE}' if set_cachefile else 'cachefile=none',
+            "-R", "/mnt",  # altroot
+            "-m",  # import pool with missing log device(s)
+            "-N",  # do not mount the datasets
+            "-f",  # force import since hostid can change (upgrade from CORE to SCALE changes it, for example)
+            "-o", f"cachefile={ZPOOL_CACHE_FILE}" if set_cachefile else "cachefile=none",
         ]
         try:
-            self.logger.debug('Importing %r with guid: %r', vol_name, vol_guid)
+            self.logger.debug("Importing %r with guid: %r", vol_name, vol_guid)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
-                    'Failed to import %r with guid: %r with error: %r',
+                    "Failed to import %r with guid: %r with error: %r",
                     vol_name, vol_guid, cp.stdout.decode()
                 )
                 return False
         except Exception:
-            self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
+            self.logger.error("Unhandled exception importing %r", vol_name, exc_info=True)
             return False
         else:
-            self.logger.debug('Done importing %r with guid %r', vol_name, vol_guid)
+            self.logger.debug("Done importing %r with guid %r", vol_name, vol_guid)
 
         # normalize ZFS dataset properties on boot. Pool may be foreign to SCALE
         # (including those created on CORE)
@@ -466,16 +466,16 @@ class PoolService(Service):
 
     @private
     def unlock_on_boot_impl(self, vol_name):
-        zpool_info = self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
+        zpool_info = self.middleware.call_sync("pool.handle_unencrypted_datasets_on_import", vol_name)
         if not zpool_info:
             self.logger.error(
-                'Unable to retrieve %r root dataset information required for unlocking any relevant encrypted datasets',
+                "Unable to retrieve %r root dataset information required for unlocking any relevant encrypted datasets",
                 vol_name
             )
             return
 
         umount_root_short_circuit = False
-        if zpool_info['key_format']['parsed'] == 'passphrase':
+        if zpool_info["key_format"]["parsed"] == "passphrase":
             # passphrase encrypted zpools will _always_ fail to be unlocked at
             # boot time because we don't store the users passphrase on disk
             # anywhere.
@@ -486,7 +486,7 @@ class PoolService(Service):
             # root dataset encryption from key based to passphrase based. Again, an edge-case but
             # documenting it here for posterity sake.
             self.logger.debug(
-                'Passphrase encrypted zpool detected %r, passphrase required before unlock', vol_name
+                "Passphrase encrypted zpool detected %r, passphrase required before unlock", vol_name
             )
             umount_root_short_circuit = True
 
@@ -496,24 +496,24 @@ class PoolService(Service):
             # those datasets (including the parent if necessary).
             # If we fail to unlock the parent, then the method short-circuits and exits
             # early.
-            opts = {'recursive': True, 'toggle_attachments': False}
-            uj = self.middleware.call_sync('pool.dataset.unlock', vol_name, opts)
+            opts = {"recursive": True, "toggle_attachments": False}
+            uj = self.middleware.call_sync("pool.dataset.unlock", vol_name, opts)
             uj.wait_sync()
             if uj.error:
-                self.logger.error('FAILED unlocking encrypted dataset(s) for %r with error %r', vol_name, uj.error)
-            elif uj.result['failed']:
+                self.logger.error("FAILED unlocking encrypted dataset(s) for %r with error %r", vol_name, uj.error)
+            elif uj.result["failed"]:
                 self.logger.error(
-                    'FAILED unlocking the following datasets: %r for pool %r',
-                    ', '.join(uj.result['failed']), vol_name
+                    "FAILED unlocking the following datasets: %r for pool %r",
+                    ", ".join(uj.result["failed"]), vol_name
                 )
             else:
-                self.logger.debug('SUCCESS unlocking encrypted dataset(s) (if any) for %r', vol_name)
+                self.logger.debug("SUCCESS unlocking encrypted dataset(s) (if any) for %r", vol_name)
 
         if any((
             umount_root_short_circuit,
             self.middleware.call_sync(
-                'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
-            )['locked']
+                "pool.dataset.get_instance_quick", vol_name, {"encryption": True}
+            )["locked"]
         )):
             # We umount the zpool in the following scenarios:
             # 1. we came across a passphrase encrypted root dataset (i.e. /mnt/tank)
@@ -545,78 +545,78 @@ class PoolService(Service):
             # into this scenario.
             if not umount_root_short_circuit:
                 with contextlib.suppress(CallError):
-                    self.logger.debug('Forcefully umounting %r', vol_name)
+                    self.logger.debug("Forcefully umounting %r", vol_name)
                     self.call_sync2(self.s.zfs.resource.unmount, vol_name, recursive=True, force=True)
-                    self.logger.debug('Successfully umounted %r', vol_name)
+                    self.logger.debug("Successfully umounted %r", vol_name)
 
-            pool_mount = f'/mnt/{vol_name}'
+            pool_mount = f"/mnt/{vol_name}"
             if os.path.exists(pool_mount):
                 try:
                     # setting the root path as immutable, in a perfect world, will prevent
                     # the scenario that is describe above
-                    self.logger.debug('Setting immutable flag at %r', pool_mount)
-                    self.middleware.call_sync('filesystem.set_zfs_attributes', {
-                        'path': pool_mount,
-                        'zfs_file_attributes': {'immutable': True}
+                    self.logger.debug("Setting immutable flag at %r", pool_mount)
+                    self.middleware.call_sync("filesystem.set_zfs_attributes", {
+                        "path": pool_mount,
+                        "zfs_file_attributes": {"immutable": True}
                     })
                 except CallError as e:
-                    self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
+                    self.logger.error("Unable to set immutable flag at %r: %s", pool_mount, e)
 
     @private
     @job()
     def import_on_boot(self, job):
-        if self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync("failover.licensed"):
             # HA systems pools are imported using the failover
             # event logic
             return
 
-        if self.middleware.call_sync('truenas.is_ix_hardware'):
+        if self.middleware.call_sync("truenas.is_ix_hardware"):
             # Attach NVMe/RoCE - wait up to 10 seconds
-            self.logger.info('Start bring up of NVMe/RoCE')
+            self.logger.info("Start bring up of NVMe/RoCE")
             try:
-                jbof_job = self.middleware.call_sync('jbof.configure_job')
+                jbof_job = self.middleware.call_sync("jbof.configure_job")
                 jbof_job.wait_sync(timeout=60)
                 if jbof_job.error:
-                    self.logger.error(f'Error attaching JBOFs: {jbof_job.error}')
-                elif jbof_job.result['failed']:
+                    self.logger.error(f"Error attaching JBOFs: {jbof_job.error}")
+                elif jbof_job.result["failed"]:
                     self.logger.error(f'Failed to attach JBOFs:{jbof_job.result["message"]}')
                 else:
-                    self.logger.info(jbof_job.result['message'])
+                    self.logger.info(jbof_job.result["message"])
             except TimeoutError:
-                self.logger.error('Timed out attaching JBOFs.  Waiting again.')
+                self.logger.error("Timed out attaching JBOFs.  Waiting again.")
                 try:
                     jbof_job.wait_sync(timeout=60)
                     if jbof_job.error:
-                        self.logger.error(f'Error attaching JBOFs: {jbof_job.error}')
-                    elif jbof_job.result['failed']:
+                        self.logger.error(f"Error attaching JBOFs: {jbof_job.error}")
+                    elif jbof_job.result["failed"]:
                         self.logger.error(f'Failed to attach JBOFs:{jbof_job.result["message"]}')
                     else:
-                        self.logger.info(jbof_job.result['message'])
+                        self.logger.info(jbof_job.result["message"])
                 except TimeoutError:
-                    self.logger.error('Timed out attaching JBOFs - will continue in background.')
+                    self.logger.error("Timed out attaching JBOFs - will continue in background.")
                 else:
-                    self.logger.info('Done bring up of NVMe/RoCE')
+                    self.logger.info("Done bring up of NVMe/RoCE")
             except Exception:
-                self.logger.error('Unexpected error', exc_info=True)
+                self.logger.error("Unexpected error", exc_info=True)
 
         set_cachefile_property = True
         dir_name = os.path.dirname(ZPOOL_CACHE_FILE)
         try:
-            self.logger.debug('Creating %r (if it doesnt already exist)', dir_name)
+            self.logger.debug("Creating %r (if it doesnt already exist)", dir_name)
             os.makedirs(dir_name, exist_ok=True)
         except Exception:
-            self.logger.warning('FAILED unhandled exception creating %r', dir_name, exc_info=True)
+            self.logger.warning("FAILED unhandled exception creating %r", dir_name, exc_info=True)
             set_cachefile_property = False
         else:
             try:
-                self.logger.debug('Creating %r (if it doesnt already exist)', ZPOOL_CACHE_FILE)
-                with open(ZPOOL_CACHE_FILE, 'x'):
+                self.logger.debug("Creating %r (if it doesnt already exist)", ZPOOL_CACHE_FILE)
+                with open(ZPOOL_CACHE_FILE, "x"):
                     pass
             except FileExistsError:
                 # cachefile already exists on disk which is fine
                 pass
             except Exception:
-                self.logger.warning('FAILED unhandled exception creating %r', ZPOOL_CACHE_FILE, exc_info=True)
+                self.logger.warning("FAILED unhandled exception creating %r", ZPOOL_CACHE_FILE, exc_info=True)
                 set_cachefile_property = False
 
         # We need to do as little zfs I/O as possible since this method
@@ -625,8 +625,8 @@ class PoolService(Service):
         # database. Handle each error accordingly instead of trying to be
         # fancy and determine which ones are "offline" since...in theory...
         # all zpools should be offline at this point.
-        for i in self.middleware.call_sync('datastore.query', 'storage.volume'):
-            name, guid = i['vol_name'], i['vol_guid']
+        for i in self.middleware.call_sync("datastore.query", "storage.volume"):
+            name, guid = i["vol_name"], i["vol_guid"]
             if not self.import_on_boot_impl(name, guid, set_cachefile_property):
                 continue
 
@@ -637,21 +637,21 @@ class PoolService(Service):
 
         # TODO: we need to fix this. There is 0 reason to do all this stuff
         # and block the entire boot-up process.
-        self.logger.debug('Calling pool.post_import')
-        self.middleware.call_hook_sync('pool.post_import', None)
-        self.logger.debug('Finished calling pool.post_import')
+        self.logger.debug("Calling pool.post_import")
+        self.middleware.call_hook_sync("pool.post_import", None)
+        self.logger.debug("Finished calling pool.post_import")
 
     @private
     async def handle_unencrypted_datasets_on_import(self, pool_name):
         try:
-            root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
-                'encryption': True,
+            root_ds = await self.middleware.call("pool.dataset.get_instance_quick", pool_name, {
+                "encryption": True,
             })
         except InstanceNotFound:
             # We don't really care about this case, it means that pool did not get imported for some reason
             return
 
-        if not root_ds['encrypted']:
+        if not root_ds["encrypted"]:
             return root_ds
 
         # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
@@ -663,8 +663,8 @@ class PoolService(Service):
                 recursive=True,
                 force=True,
             )
-            self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
+            self.logger.debug("Successfully umounted any unencrypted datasets under %r dataset", pool_name)
         except Exception:
-            self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)
+            self.logger.error("Failed to umount any unencrypted datasets under %r dataset", pool_name, exc_info=True)
 
         return root_ds

@@ -11,7 +11,7 @@ from .detect_utils import detect_platform
 class EnclosureDetectionService(Service):
 
     class Config:
-        namespace = 'failover.enclosure'
+        namespace = "failover.enclosure"
         private = True
 
     def detect(self):

@@ -56,9 +56,9 @@ async def container_console_choices(context: ServiceContext, app_name: str) -> A
 async def certificate_choices(context: ServiceContext) -> AppCertificateChoices:
     return [
         AppCertificate(**cert) for cert in await context.middleware.call(
-            'certificate.query',
-            [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False], ['parsed', '=', True]],
-            {'select': ['name', 'id']},
+            "certificate.query",
+            [["cert_type_CSR", "=", False], ["cert_type_CA", "=", False], ["parsed", "=", True]],
+            {"select": ["name", "id"]},
         )
     ]
 
@@ -83,34 +83,34 @@ async def used_host_ips(context: ServiceContext) -> dict[str, list[str]]:
 
 async def ip_choices(context: ServiceContext) -> AppIpChoices:
     return {
-        ip['address']: ip['address']
-        for ip in await context.middleware.call('interface.ip_in_use', {'static': True, 'any': True})
+        ip["address"]: ip["address"]
+        for ip in await context.middleware.call("interface.ip_in_use", {"static": True, "any": True})
     }
 
 
 async def available_space(context: ServiceContext) -> int:
     await context.call2(context.s.docker.validate_state)
-    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes'])
+    return cast(int, (await context.middleware.call("filesystem.statfs", IX_APPS_MOUNT_PATH))["avail_bytes"])
 
 
 async def gpu_choices(context: ServiceContext) -> AppGPUResponse:
     return AppGPUResponse(root={
-        gpu['pci_slot']: GPU(
-            vendor=gpu['vendor'],
-            description=gpu['description'],
-            vendor_specific_config=gpu['vendor_specific_config'],
-            pci_slot=gpu['pci_slot'],
-            error=gpu['error'],
-            gpu_details=gpu['gpu_details'],
+        gpu["pci_slot"]: GPU(
+            vendor=gpu["vendor"],
+            description=gpu["description"],
+            vendor_specific_config=gpu["vendor_specific_config"],
+            pci_slot=gpu["pci_slot"],
+            error=gpu["error"],
+            gpu_details=gpu["gpu_details"],
         )
         for gpu in await gpu_choices_internal(context)
-        if not gpu['error']
+        if not gpu["error"]
     })
 
 
 async def gpu_choices_internal(context: ServiceContext) -> list[dict[str, Any]]:
     return get_normalized_gpu_choices(
-        await context.middleware.call('device.get_gpus'),
+        await context.middleware.call("device.get_gpus"),
         await context.middleware.run_in_thread(get_nvidia_gpus),
     )
 
@@ -119,7 +119,7 @@ async def get_hostpaths_datasets(context: ServiceContext, app_name: str) -> dict
     app_info = await context.call2(context.s.app.get_instance, app_name)
     host_paths = [
         volume.source for volume in app_info.active_workloads.volumes
-        if volume.source.startswith(f'{IX_APPS_MOUNT_PATH}/') is False
+        if volume.source.startswith(f"{IX_APPS_MOUNT_PATH}/") is False
     ]
 
     return await context.to_thread(paths_to_datasets_impl, host_paths)
@@ -129,14 +129,14 @@ def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:
     # This will return volume dataset of app if it exists, otherwise null
     docker_ds = context.call_sync2(context.s.docker.config).dataset
     if docker_ds is None:
-        raise CallError('Docker dataset must not be null')
+        raise CallError("Docker dataset must not be null")
 
     apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
     rv = context.call_sync2(
         context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
     )
     if rv:
-        return cast(str, rv[0]['name'])
+        return cast(str, rv[0]["name"])
     return None
 
 
@@ -144,7 +144,7 @@ def remove_failed_resources(context: ServiceContext, app_name: str, version: str
     apps_volume_ds = get_app_volume_ds(context, app_name) if remove_ds else None
 
     with contextlib.suppress(Exception):
-        compose_action(app_name, version, 'down', remove_orphans=True)
+        compose_action(app_name, version, "down", remove_orphans=True)
 
     shutil.rmtree(get_installed_app_path(app_name), ignore_errors=True)
 
@@ -152,10 +152,10 @@ def remove_failed_resources(context: ServiceContext, app_name: str, version: str
         try:
             context.call_sync2(context.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
         except Exception:
-            context.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
+            context.logger.error("Failed to remove %r app volume dataset", apps_volume_ds, exc_info=True)
 
     context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
-    context.middleware.send_event('app.query', 'REMOVED', id=app_name)
+    context.middleware.send_event("app.query", "REMOVED", id=app_name)
 
 
 def delete_internal_resources(
@@ -163,10 +163,10 @@ def delete_internal_resources(
     send_event: bool = True,
 ) -> Literal[True]:
     if job is not None:
-        job.set_progress(20, f'Deleting {app_name!r} app')
+        job.set_progress(20, f"Deleting {app_name!r} app")
     try:
         compose_action(
-            app_name, app_config.version, 'down', remove_orphans=True,
+            app_name, app_config.version, "down", remove_orphans=True,
             remove_volumes=True, remove_images=options.remove_images,
         )
     except Exception:
@@ -176,7 +176,7 @@ def delete_internal_resources(
         if not (
             app_config.custom_app and options.force_remove_custom_app and all(
                 not getattr(app_config.active_workloads, k, [])
-                for k in ('container_details', 'volumes', 'networks')
+                for k in ("container_details", "volumes", "networks")
             )
         ):
             raise
@@ -185,7 +185,7 @@ def delete_internal_resources(
     # where the app resources have been nuked from filesystem, it will error out
     context.call_sync2(context.s.app.metadata_generate, [app_name]).wait_sync(raise_error=True)
     if job is not None:
-        job.set_progress(80, 'Cleaning up resources')
+        job.set_progress(80, "Cleaning up resources")
 
     shutil.rmtree(get_installed_app_path(app_name))
 
@@ -193,10 +193,10 @@ def delete_internal_resources(
         context.call_sync2(context.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)
 
     if send_event:
-        context.middleware.send_event('app.query', 'REMOVED', id=app_name)
+        context.middleware.send_event("app.query", "REMOVED", id=app_name)
 
     context.call_sync2(context.s.app.check_upgrade_alerts)
     if job is not None:
-        job.set_progress(100, f'Deleted {app_name!r} app')
+        job.set_progress(100, f"Deleted {app_name!r} app")
 
     return True

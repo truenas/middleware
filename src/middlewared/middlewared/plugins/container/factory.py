@@ -23,7 +23,7 @@ class ContainerNICDelegate(NICDelegate):
 
     @property
     def nic_choices_endpoint(self) -> str:
-        return 'container.device.nic_attach_choices'
+        return "container.device.nic_attach_choices"
 
     @property
     def schema_model(self) -> type[ContainerNICDevice]:
@@ -54,9 +54,9 @@ class ContainerGPUDelegate(GPUDelegate):
 async def setup(middleware: Middleware) -> None:
     device_factory = middleware.services.container.device.device_factory
     for device_key, device_klass, delegate_klass in (
-        ('FILESYSTEM', FilesystemDevice, ContainerFilesystemDelegate),
-        ('GPU', GPUDevice, ContainerGPUDelegate),
-        ('NIC', NICDevice, ContainerNICDelegate),
-        ('USB', USBDevice, ContainerUSBDelegate),
+        ("FILESYSTEM", FilesystemDevice, ContainerFilesystemDelegate),
+        ("GPU", GPUDevice, ContainerGPUDelegate),
+        ("NIC", NICDevice, ContainerNICDelegate),
+        ("USB", USBDevice, ContainerUSBDelegate),
     ):
         device_factory.register(device_key, device_klass, delegate_klass)

@@ -66,8 +66,8 @@ from middlewared.utils.tdb import (
     get_tdb_handle,
 )
 
-UNIX_GROUP_KEY_PREFIX = 'UNIXGROUP/'
-MEMBEROF_PREFIX = 'MEMBEROF/'
+UNIX_GROUP_KEY_PREFIX = "UNIXGROUP/"
+MEMBEROF_PREFIX = "MEMBEROF/"
 
 GROUP_MAPPING_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 GROUP_MAPPING_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, clustered=True)
@@ -79,9 +79,9 @@ class GroupmapEntryType(enum.Enum):
 
 
 class GroupmapFile(enum.Enum):
-    DEFAULT = f'{SMBPath.STATEDIR.path}/group_mapping.tdb'
-    REJECT = f'{SMBPath.STATEDIR.path}/group_mapping_rejects.tdb'
-    CLUSTERED = 'group_mapping.tdb'
+    DEFAULT = f"{SMBPath.STATEDIR.path}/group_mapping.tdb"
+    REJECT = f"{SMBPath.STATEDIR.path}/group_mapping_rejects.tdb"
+    CLUSTERED = "group_mapping.tdb"
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,7 @@ def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
     sid_type = lsa_sidtype(htonl(int.from_bytes(data[4:8])))
 
     # remaining bytes are two null-terminated strings
-    bname, bcomment = data[8:-1].split(b'\x00')
+    bname, bcomment = data[8:-1].split(b"\x00")
     return SMBGroupMap(sid, gid, sid_type, bname.decode(), bcomment.decode())
 
 
@@ -161,20 +161,20 @@ def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
 
 def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
     """ convert a SMBGroupMap object to TDB key-value pair for insertion into TDB file """
-    tdb_key = f'{UNIX_GROUP_KEY_PREFIX}{group_map.sid}'
+    tdb_key = f"{UNIX_GROUP_KEY_PREFIX}{group_map.sid}"
     gid = ntohl(group_map.gid).to_bytes(4)
     sid_type = ntohl(group_map.sid_type).to_bytes(4)
     name = group_map.name.encode()
     comment = group_map.comment.encode()
 
-    data = gid + sid_type + name + b'\x00' + comment + b'\x00'
+    data = gid + sid_type + name + b"\x00" + comment + b"\x00"
     return (tdb_key, b64encode(data))
 
 
 def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, str]:
     """ convert a SMBGroupMembership object to TDB key-value pair for insertion into TDB file """
-    tdb_key = f'{MEMBEROF_PREFIX}{group_mem.sid}'
-    data = ' '.join(set(group_mem.groups)).encode() + b'\x00'
+    tdb_key = f"{MEMBEROF_PREFIX}{group_mem.sid}"
+    data = " ".join(set(group_mem.groups)).encode() + b"\x00"
     return (tdb_key, b64encode(data))
 
 
@@ -195,23 +195,23 @@ def groupmap_entries(
        FileNotFoundError
     """
     if not isinstance(groupmap_file, GroupmapFile):
-        raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
+        raise TypeError(f"{type(groupmap_file)}: expected GroupmapFile type.")
 
     with get_tdb_handle(groupmap_file.value, _groupmap_file_to_options(groupmap_file)) as hdl:
         for entry in hdl.entries():
-            if entry['key'].startswith(UNIX_GROUP_KEY_PREFIX):
+            if entry["key"].startswith(UNIX_GROUP_KEY_PREFIX):
                 parser_fn = _parse_unixgroup
                 entry_type = GroupmapEntryType.GROUP_MAPPING.name
-            elif entry['key'].startswith(MEMBEROF_PREFIX):
+            elif entry["key"].startswith(MEMBEROF_PREFIX):
                 parser_fn = _parse_memberof
                 entry_type = GroupmapEntryType.MEMBERSHIP.name
             else:
                 continue
 
             if as_dict:
-                yield {'entry_type': entry_type} | asdict(parser_fn(entry['key'], entry['value']))
+                yield {"entry_type": entry_type} | asdict(parser_fn(entry["key"], entry["value"]))
             else:
-                yield parser_fn(entry['key'], entry['value'])
+                yield parser_fn(entry["key"], entry["value"])
 
 
 def query_groupmap_entries(groupmap_file: GroupmapFile, filters: list, options: dict) -> list[dict]:
@@ -235,7 +235,7 @@ def insert_groupmap_entries(
         elif isinstance(entry, SMBGroupMembership):
             tdb_key, tdb_val = _groupmem_to_tdb_key_val(entry)
         else:
-            raise TypeError(f'{type(entry)}: unexpected group_mapping.tdb entry type')
+            raise TypeError(f"{type(entry)}: unexpected group_mapping.tdb entry type")
 
         batch_ops.append(TDBBatchOperation(action=TDBBatchAction.SET, key=tdb_key, value=tdb_val))
 
@@ -253,18 +253,18 @@ def delete_groupmap_entry(
     entry_sid: str
 ):
     if not isinstance(groupmap_file, GroupmapFile):
-        raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
+        raise TypeError(f"{type(groupmap_file)}: expected GroupmapFile type.")
 
     if not isinstance(entry_type, GroupmapEntryType):
-        raise TypeError(f'{type(entry_type)}: expected GroumapEntryType.')
+        raise TypeError(f"{type(entry_type)}: expected GroumapEntryType.")
 
     match entry_type:
         case GroupmapEntryType.GROUP_MAPPING:
-            tdb_key = f'{UNIX_GROUP_KEY_PREFIX}{entry_sid}'
+            tdb_key = f"{UNIX_GROUP_KEY_PREFIX}{entry_sid}"
         case GroupmapEntryType.MEMBERSHIP:
-            tdb_key = f'{MEMBEROF_PREFIX}{entry_sid}'
+            tdb_key = f"{MEMBEROF_PREFIX}{entry_sid}"
         case _:
-            raise TypeError(f'{entry_type}: unexpected GroumapEntryType.')
+            raise TypeError(f"{entry_type}: unexpected GroumapEntryType.")
 
     with get_tdb_handle(groupmap_file.value, _groupmap_file_to_options(groupmap_file)) as hdl:
         hdl.delete(tdb_key)
@@ -281,11 +281,11 @@ def list_foreign_group_memberships(
     SIDs.
     """
     if not isinstance(groupmap_file, GroupmapFile):
-        raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
+        raise TypeError(f"{type(groupmap_file)}: expected GroupmapFile type.")
 
     return [
-        entry['sid'] for entry in query_groupmap_entries(groupmap_file, [
-            ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-            ['groups', 'rin', alias_sid]
+        entry["sid"] for entry in query_groupmap_entries(groupmap_file, [
+            ["entry_type", "=", GroupmapEntryType.MEMBERSHIP.name],
+            ["groups", "rin", alias_sid]
         ], {})
     ]

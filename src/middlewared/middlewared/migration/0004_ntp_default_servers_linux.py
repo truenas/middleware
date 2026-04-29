@@ -1,15 +1,15 @@
 async def migrate(middleware):
     servers = await middleware.call(
-        'datastore.query', 'system.ntpserver', [['ntp_address', 'in', [f'{i}.freebsd.pool.ntp.org' for i in range(3)]]]
+        "datastore.query", "system.ntpserver", [["ntp_address", "in", [f"{i}.freebsd.pool.ntp.org" for i in range(3)]]]
     )
     for server in servers:
         await middleware.call(
-            'datastore.update',
-            'system.ntpserver',
-            server['id'], {
-                'ntp_address': server['ntp_address'].replace('freebsd', 'debian')
+            "datastore.update",
+            "system.ntpserver",
+            server["id"], {
+                "ntp_address": server["ntp_address"].replace("freebsd", "debian")
             }
         )
 
     if servers:
-        await (await middleware.call('service.control', 'RESTART', 'ntpd')).wait(raise_error=True)
+        await (await middleware.call("service.control", "RESTART", "ntpd")).wait(raise_error=True)

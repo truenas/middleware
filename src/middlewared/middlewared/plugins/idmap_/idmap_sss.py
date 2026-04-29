@@ -28,17 +28,17 @@ class SSSClient:
         if not (sid_entry := sssclient.getsidbyusername(username)):
             return None
 
-        sid = sid_entry[username]['sid']
-        id_type = sid_entry[username]['type']
+        sid = sid_entry[username]["sid"]
+        id_type = sid_entry[username]["type"]
 
         if not (id_entry := sssclient.getidbysid(sid)):
             return None
 
         return {
-            'id_type': IDType(id_type).name,
-            'id': id_entry[sid]['id'],
-            'name': username,
-            'sid': sid
+            "id_type": IDType(id_type).name,
+            "id": id_entry[sid]["id"],
+            "name": username,
+            "sid": sid
         }
 
     def _groupname_to_entry(self, groupname):
@@ -62,17 +62,17 @@ class SSSClient:
         if not (sid_entry := sssclient.getsidbygroupname(groupname)):
             return None
 
-        sid = sid_entry[groupname]['sid']
-        id_type = sid_entry[groupname]['type']
+        sid = sid_entry[groupname]["sid"]
+        id_type = sid_entry[groupname]["type"]
 
         if not (id_entry := sssclient.getidbysid(sid)):
             return None
 
         return {
-            'id_type': IDType(id_type).name,
-            'id': id_entry[sid]['id'],
-            'name': groupname,
-            'sid': sid
+            "id_type": IDType(id_type).name,
+            "id": id_entry[sid]["id"],
+            "name": groupname,
+            "sid": sid
         }
 
     def _gid_to_entry(self, gid):
@@ -80,17 +80,17 @@ class SSSClient:
         if not (sid_entry := sssclient.getsidbygid(gid)):
             return None
 
-        sid = sid_entry[gid]['sid']
-        id_type = sid_entry[gid]['type']
+        sid = sid_entry[gid]["sid"]
+        id_type = sid_entry[gid]["type"]
 
         if not (name_entry := sssclient.getnamebysid(sid)):
             return None
 
         return {
-            'id_type': IDType(id_type).name,
-            'id': gid,
-            'name': name_entry[sid]['name'],
-            'sid': sid
+            "id_type": IDType(id_type).name,
+            "id": gid,
+            "name": name_entry[sid]["name"],
+            "sid": sid
         }
 
     def _uid_to_entry(self, uid):
@@ -98,17 +98,17 @@ class SSSClient:
         if not (sid_entry := sssclient.getsidbyuid(uid)):
             return None
 
-        sid = sid_entry[uid]['sid']
-        id_type = sid_entry[uid]['type']
+        sid = sid_entry[uid]["sid"]
+        id_type = sid_entry[uid]["type"]
 
         if not (name_entry := sssclient.getnamebysid(sid)):
             return None
 
         return {
-            'id_type': IDType(id_type).name,
-            'id': uid,
-            'name': name_entry[sid]['name'],
-            'sid': sid
+            "id_type": IDType(id_type).name,
+            "id": uid,
+            "name": name_entry[sid]["name"],
+            "sid": sid
         }
 
     def _sid_to_entry(self, sid):
@@ -120,10 +120,10 @@ class SSSClient:
             return None
 
         return {
-            'id_type': IDType(id_entry[sid]['type']).name,
-            'id': id_entry[sid]['id'],
-            'name': name_entry[sid]['name'],
-            'sid': sid
+            "id_type": IDType(id_entry[sid]["type"]).name,
+            "id": id_entry[sid]["id"],
+            "name": name_entry[sid]["name"],
+            "sid": sid
         }
 
     def sids_to_idmap_entries(self, sidlist):
@@ -145,13 +145,13 @@ class SSSClient:
           }
         }
         """
-        out = {'mapped': {}, 'unmapped': {}}
+        out = {"mapped": {}, "unmapped": {}}
         for sid in sidlist:
             if not (entry := self._sid_to_entry(sid)):
-                out['unmapped'][sid] = sid
+                out["unmapped"][sid] = sid
                 continue
 
-            out['mapped'][sid] = entry
+            out["mapped"][sid] = entry
 
         return out
 
@@ -174,26 +174,26 @@ class SSSClient:
           }
         }
         """
-        out = {'mapped': {}, 'unmapped': {}}
+        out = {"mapped": {}, "unmapped": {}}
 
         for uidgid in uidgids:
-            match uidgid['id_type']:
-                case 'GROUP':
-                    entry = self._gid_to_entry(uidgid['id'])
-                case 'USER':
-                    entry = self._uid_to_entry(uidgid['id'])
-                case 'BOTH':
-                    if not (entry := self._gid_to_entry(uidgid['id'])):
-                        entry = self._uid_to_entry(uidgid['id'])
+            match uidgid["id_type"]:
+                case "GROUP":
+                    entry = self._gid_to_entry(uidgid["id"])
+                case "USER":
+                    entry = self._uid_to_entry(uidgid["id"])
+                case "BOTH":
+                    if not (entry := self._gid_to_entry(uidgid["id"])):
+                        entry = self._uid_to_entry(uidgid["id"])
                 case _:
                     raise ValueError(f'{uidgid["id_type"]}: Unknown id_type')
 
             key = f'{IDType[uidgid["id_type"]].wbc_str()}:{uidgid["id"]}'
             if not entry:
-                out['unmapped'][key] = entry
+                out["unmapped"][key] = entry
                 continue
 
-            out['mapped'][key] = entry
+            out["mapped"][key] = entry
 
         return out
 
@@ -216,7 +216,7 @@ class SSSClient:
 
     def uidgid_to_idmap_entry(self, data):
         """ convert a single name (user or group) to an idmap entry dict """
-        mapped = self.users_and_groups_to_idmap_entries([data])['mapped']
+        mapped = self.users_and_groups_to_idmap_entries([data])["mapped"]
         if not mapped:
             raise MatchNotFound(str(data))
 

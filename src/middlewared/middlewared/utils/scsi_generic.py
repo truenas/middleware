@@ -64,7 +64,7 @@ def get_sgio_hdr_structure(
     results_buffer = (ctypes.c_ubyte * dxfer_len)()
 
     hdr = sg_io_hdr_v3()
-    hdr.interface_id = ord('S')
+    hdr.interface_id = ord("S")
     hdr.cmd_len = len(cdb)
     hdr.cmdp = ctypes.cast(cdb, ctypes.c_void_p)
     hdr.dxfer_direction = SG_DXFER_FROM_DEV
@@ -97,29 +97,29 @@ def inquiry(device: str) -> InquiryResult:
     do_io(device, hdr)
 
     # Table 148 in SPC-5
-    t10_vendor_start, t10_vendor_end, t10_final = 8, (15 + 1), ''
-    product_ident_start, product_ident_end, product_ident_final = t10_vendor_end, (31 + 1), ''
-    product_rev_start, product_rev_end, product_rev_final = product_ident_end, (35 + 1), ''
-    serial_start, serial_end, serial_final = product_rev_end, (55 + 1), ''
+    t10_vendor_start, t10_vendor_end, t10_final = 8, (15 + 1), ""
+    product_ident_start, product_ident_end, product_ident_final = t10_vendor_end, (31 + 1), ""
+    product_rev_start, product_rev_end, product_rev_final = product_ident_end, (35 + 1), ""
+    serial_start, serial_end, serial_final = product_rev_end, (55 + 1), ""
 
     for char in results_buffer[t10_vendor_start:t10_vendor_end]:
-        if (_ascii := chr(char)) in (' ', '\x00'):
+        if (_ascii := chr(char)) in (" ", "\x00"):
             continue
         t10_final += _ascii
 
     for char in results_buffer[product_ident_start:product_ident_end]:
-        if (_ascii := chr(char)) in (' ', '\x00'):
+        if (_ascii := chr(char)) in (" ", "\x00"):
             continue
         product_ident_final += _ascii
 
     for char in results_buffer[product_rev_start:product_rev_end]:
-        if (_ascii := chr(char)) in (' ', '\x00'):
+        if (_ascii := chr(char)) in (" ", "\x00"):
             continue
         product_rev_final += _ascii
 
     for char in results_buffer[serial_start:serial_end]:
-        if (_ascii := chr(char)) in (' ', '\x00'):
+        if (_ascii := chr(char)) in (" ", "\x00"):
             continue
         serial_final += _ascii
 
-    return {'vendor': t10_final, 'product': product_ident_final, 'revision': product_rev_final, 'serial': serial_final}
+    return {"vendor": t10_final, "product": product_ident_final, "revision": product_rev_final, "serial": serial_final}

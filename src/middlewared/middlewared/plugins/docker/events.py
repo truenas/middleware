@@ -9,18 +9,18 @@ from .state_management import validate_state
 def process_internal(context: ServiceContext, client: docker.DockerClient) -> None:
     for container_event in client.events(  # type: ignore[no-untyped-call]
             decode=True, filters={
-                'type': ['container'],
-                'event': [
-                    'create', 'destroy', 'detach', 'die', 'health_status', 'kill', 'unpause',
-                    'oom', 'pause', 'rename', 'resize', 'restart', 'start', 'stop', 'update',
+                "type": ["container"],
+                "event": [
+                    "create", "destroy", "detach", "die", "health_status", "kill", "unpause",
+                    "oom", "pause", "rename", "resize", "restart", "start", "stop", "update",
                 ]
             }
     ):
         if not isinstance(container_event, dict):
             continue
 
-        if project := container_event.get('Actor', {}).get('Attributes', {}).get(PROJECT_KEY):
-            context.middleware.send_event('docker.events', 'ADDED', id=project, fields=container_event)
+        if project := container_event.get("Actor", {}).get("Attributes", {}).get(PROJECT_KEY):
+            context.middleware.send_event("docker.events", "ADDED", id=project, fields=container_event)
 
 
 def process(context: ServiceContext) -> None:
@@ -35,7 +35,7 @@ def setup_docker_events(context: ServiceContext) -> None:
     try:
         process(context)
     except Exception:
-        if not context.middleware.call_sync('service.started', 'docker'):
+        if not context.middleware.call_sync("service.started", "docker"):
             # This is okay and can happen when docker is stopped
             return
         raise

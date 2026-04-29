@@ -19,28 +19,28 @@ def get_memory_usage_internal(context: ServiceContext, vm_uuid: str) -> int | No
 def get_memory_usage(context: ServiceContext, vm_id: int) -> int:
     return get_memory_usage_internal(
         context,
-        context.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', vm_id]], {'get': True})['uuid']
+        context.middleware.call_sync("datastore.query", "vm.vm", [["id", "=", vm_id]], {"get": True})["uuid"]
     ) or 0
 
 
 async def get_vmemory_in_use(context: ServiceContext) -> VMGetVmemoryInUse:
-    memory_allocation = {'RNP': 0, 'PRD': 0, 'RPRD': 0}
+    memory_allocation = {"RNP": 0, "PRD": 0, "RPRD": 0}
     for guest in await context.call2(context.s.vm.query):
         if guest.status.state in ACTIVE_STATES:
-            memory_allocation['RPRD' if guest.autostart else 'RNP'] += guest.memory * 1024 * 1024
+            memory_allocation["RPRD" if guest.autostart else "RNP"] += guest.memory * 1024 * 1024
         elif guest.autostart:
-            memory_allocation['PRD'] += guest.memory * 1024 * 1024
+            memory_allocation["PRD"] += guest.memory * 1024 * 1024
 
     return VMGetVmemoryInUse(**memory_allocation)
 
 
 async def get_available_memory(context: ServiceContext, overcommit: bool) -> int:
     # Use 90% of available memory to play safe
-    free = int((await context.to_thread(get_memory_info))['available'] * 0.9)
+    free = int((await context.to_thread(get_memory_info))["available"] * 0.9)
 
     # Difference between current ARC total size and the minimum allowed
-    arc_total = await context.middleware.call('sysctl.get_arcstats_size')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_total = await context.middleware.call("sysctl.get_arcstats_size")
+    arc_min = await context.middleware.call("sysctl.get_arc_min")
     arc_shrink = max(0, arc_total - arc_min)
     total_free = free + arc_shrink
 
@@ -58,7 +58,7 @@ async def get_available_memory(context: ServiceContext, overcommit: bool) -> int
                     # We only account for running VMs
                     continue
             except Exception:
-                context.logger.error('Unable to retrieve %r vm memory usage', vm.name, exc_info=True)
+                context.logger.error("Unable to retrieve %r vm memory usage", vm.name, exc_info=True)
                 continue
             else:
                 vm_max_mem = vm.memory * 1024 * 1024
@@ -74,10 +74,10 @@ async def get_vm_memory_info(context: ServiceContext, vm_id: int) -> VMGetVmMemo
     if vm.status.state in ACTIVE_STATES:
         # TODO: Let's add this later as we have a use case in the UI - could be useful to
         #  show separate info of each VM in the UI moving on
-        raise CallError(f'Unable to retrieve {vm.name!r} VM information as it is already running.')
+        raise CallError(f"Unable to retrieve {vm.name!r} VM information as it is already running.")
 
-    arc_max = await context.middleware.call('sysctl.get_arc_max')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_max = await context.middleware.call("sysctl.get_arc_max")
+    arc_min = await context.middleware.call("sysctl.get_arc_min")
     shrinkable_arc_max = max(0, arc_max - arc_min)
 
     available_memory = await get_available_memory(context, False)
@@ -112,13 +112,13 @@ async def _set_guest_vmemory(context: ServiceContext, vm_id: int, overcommit: bo
         return
 
     if not overcommit:
-        raise CallError(f'Cannot guarantee memory for guest {vm.name}', errno.ENOMEM)
+        raise CallError(f"Cannot guarantee memory for guest {vm.name}", errno.ENOMEM)
 
     if memory_details.current_arc_max != memory_details.arc_max_after_shrink:
         context.logger.debug(
-            'Setting ARC from %s to %s', memory_details.current_arc_max, memory_details.arc_max_after_shrink
+            "Setting ARC from %s to %s", memory_details.current_arc_max, memory_details.arc_max_after_shrink
         )
-        await context.middleware.call('sysctl.set_arc_max', memory_details.arc_max_after_shrink)
+        await context.middleware.call("sysctl.set_arc_max", memory_details.arc_max_after_shrink)
 
 
 async def init_guest_vmemory(context: ServiceContext, vm_id: int, overcommit: bool) -> None:
@@ -126,26 +126,26 @@ async def init_guest_vmemory(context: ServiceContext, vm_id: int, overcommit: bo
     if guest.status.state not in ACTIVE_STATES:
         await _set_guest_vmemory(context, vm_id, overcommit)
     else:
-        raise CallError('VM process is already running, memory will not be allocated')
+        raise CallError("VM process is already running, memory will not be allocated")
 
 
 async def teardown_guest_vmemory(context: ServiceContext, vm_id: int) -> None:
     vm = await context.call2(context.s.vm.get_instance, vm_id)
-    if vm.status.state != 'STOPPED':
+    if vm.status.state != "STOPPED":
         return
 
     guest_memory = vm.memory * 1024 * 1024
-    arc_max = await context.middleware.call('sysctl.get_arc_max')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_max = await context.middleware.call("sysctl.get_arc_max")
+    arc_min = await context.middleware.call("sysctl.get_arc_min")
     new_arc_max = min(
-        await context.middleware.call('sysctl.get_default_arc_max'),
+        await context.middleware.call("sysctl.get_default_arc_max"),
         arc_max + guest_memory
     )
     if arc_max != new_arc_max:
         if new_arc_max > arc_min:
-            context.logger.debug(f'Giving back guest memory to ARC: {new_arc_max}')
-            await context.middleware.call('sysctl.set_arc_max', new_arc_max)
+            context.logger.debug(f"Giving back guest memory to ARC: {new_arc_max}")
+            await context.middleware.call("sysctl.set_arc_max", new_arc_max)
         else:
             context.logger.warn(
-                f'Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
+                f"Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})"
             )

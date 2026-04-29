@@ -27,7 +27,7 @@ def count_opens():
     counter = Counter()
     real_open = builtins.open
 
-    def _counting_open(path, mode='r', *a, **kw):
+    def _counting_open(path, mode="r", *a, **kw):
         if "/sys/block/" in str(path):
             counter[str(path)] += 1
         return real_open(path, mode, *a, **kw)
@@ -66,7 +66,7 @@ def mock_sysfs(tmp_path):
         # Patch builtins.open to redirect /sys/block reads to our temp dir
         original_open = builtins.open
 
-        def mock_open(path, mode='r', *args, **kwargs):
+        def mock_open(path, mode="r", *args, **kwargs):
             if "/sys/block/" in str(path):
                 # Extract relative path after /sys/block/
                 rel_path = str(path).split("/sys/block/", 1)[1]
@@ -77,7 +77,7 @@ def mock_sysfs(tmp_path):
         # Expose original handle for count_opens to use
         mock_open.__wrapped__ = original_open
 
-        with patch('builtins.open', side_effect=mock_open):
+        with patch("builtins.open", side_effect=mock_open):
             yield
 
     return _mock

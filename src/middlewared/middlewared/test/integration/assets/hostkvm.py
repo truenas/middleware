@@ -10,16 +10,16 @@ try:
 except ImportError:
     have_kvm_host_cfg = False
 
-TM_NODE_RE = re.compile('^tm[0-9]{3}$')
-HA_NODE_RE = re.compile('^ha[0-9]{3}_c[1|2]$')
-WHOLE_HA_NODE_RE = re.compile('^ha[0-9]{3}$')
+TM_NODE_RE = re.compile("^tm[0-9]{3}$")
+HA_NODE_RE = re.compile("^ha[0-9]{3}_c[1|2]$")
+WHOLE_HA_NODE_RE = re.compile("^ha[0-9]{3}$")
 
 
 def get_kvm_domain():
     """Fetch the name of the KVM domain."""
     # By convention we have written it into DMI system serial number
-    info = call('system.dmidecode_info')
-    if serial := info.get('system-serial-number'):
+    info = call("system.dmidecode_info")
+    if serial := info.get("system-serial-number"):
         # Verify that the string looks reasonable
         if TM_NODE_RE.match(serial) or HA_NODE_RE.match(serial):
             return serial
@@ -30,16 +30,16 @@ def _virsh(command):
     Execute the virsh command sequence.
     """
     if have_kvm_host_cfg:
-        virsh = ['sudo', 'virsh']
+        virsh = ["sudo", "virsh"]
         ssh_command = shlex.join(virsh + command)
         return ssh(ssh_command, user=KVM_USERNAME, password=KVM_PASSWORD, ip=KVM_HOST)
     else:
         try:
             if os.geteuid():
                 # Non-root requires sudo
-                virsh = ['sudo', 'virsh']
+                virsh = ["sudo", "virsh"]
             else:
-                virsh = ['virsh']
+                virsh = ["virsh"]
             cp = run_on_runner(virsh + command)
         except RunOnRunnerException:
             raise
@@ -54,22 +54,22 @@ def poweroff_vm(vmname, graceful=True):
     Issue a virsh destroy <domain>.  This is similar to pulling the power
     cable.  The VM can be restarted later.
     """
-    command = ['destroy', vmname]
+    command = ["destroy", vmname]
     if graceful:
-        command.append('--graceful')
+        command.append("--graceful")
     return _virsh(command)
 
 
 def reset_vm(vmname):
-    return _virsh(['reset', vmname])
+    return _virsh(["reset", vmname])
 
 
-def shutdown_vm(vmname, mode='acpi'):
-    return _virsh(['shutdown', vmname, '--mode', mode])
+def shutdown_vm(vmname, mode="acpi"):
+    return _virsh(["shutdown", vmname, "--mode", mode])
 
 
 def start_vm(vmname, force_boot=False):
-    command = ['start', vmname]
+    command = ["start", vmname]
     if force_boot:
-        command.append('--force-boot')
+        command.append("--force-boot")
     return _virsh(command)

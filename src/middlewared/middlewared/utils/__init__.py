@@ -16,30 +16,30 @@ from .threading import io_thread_pool_executor
 # Define Product Strings
 @dataclass(slots=True, frozen=True)
 class ProductTypes:
-    COMMUNITY_EDITION: str = 'COMMUNITY_EDITION'
-    ENTERPRISE: str = 'ENTERPRISE'
+    COMMUNITY_EDITION: str = "COMMUNITY_EDITION"
+    ENTERPRISE: str = "ENTERPRISE"
 
 
 @dataclass(slots=True, frozen=True)
 class ProductNames:
-    PRODUCT_NAME: str = 'TrueNAS'
+    PRODUCT_NAME: str = "TrueNAS"
 
 
 ProductType = ProductTypes()
 ProductName = ProductNames()
 
-MIDDLEWARE_RUN_DIR = '/run/middleware'
-MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
-MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
-BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
-BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
-MANIFEST_FILE = '/data/manifest.json'
-UPDATE_TRAINS_FILE_NAME = 'trains_v2.json'
+MIDDLEWARE_RUN_DIR = "/run/middleware"
+MIDDLEWARE_BOOT_ENV_STATE_DIR = "/var/lib/truenas-middleware"
+MIDDLEWARE_STARTED_SENTINEL_PATH = f"{MIDDLEWARE_RUN_DIR}/middlewared-started"
+BOOTREADY = f"{MIDDLEWARE_RUN_DIR}/.bootready"
+BOOT_POOL_NAME_VALID = ["freenas-boot", "boot-pool"]
+MANIFEST_FILE = "/data/manifest.json"
+UPDATE_TRAINS_FILE_NAME = "trains_v2.json"
 BRAND = ProductName.PRODUCT_NAME
 
 logger = logging.getLogger(__name__)
 
-_V = TypeVar('_V')
+_V = TypeVar("_V")
 
 
 class UnexpectedFailure(Exception):
@@ -73,13 +73,13 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
     if isinstance(args[0], list):
         args = tuple(args[0])
 
-    kwargs.setdefault('stdout', subprocess.PIPE)
-    kwargs.setdefault('stderr', subprocess.PIPE)
-    kwargs.setdefault('check', True)
-    if 'encoding' in kwargs:
-        kwargs.setdefault('errors', 'strict')
-    kwargs.setdefault('close_fds', True)
-    kwargs['preexec_fn'] = die_with_parent
+    kwargs.setdefault("stdout", subprocess.PIPE)
+    kwargs.setdefault("stderr", subprocess.PIPE)
+    kwargs.setdefault("check", True)
+    if "encoding" in kwargs:
+        kwargs.setdefault("errors", "strict")
+    kwargs.setdefault("close_fds", True)
+    kwargs["preexec_fn"] = die_with_parent
 
     loop = asyncio.get_event_loop()
     subprocess_identifier = f"{time.monotonic()}: {args!r}"
@@ -112,12 +112,12 @@ def sw_info() -> SwInfo:
     """Returns the various software information from the manifest file."""
     with open(MANIFEST_FILE) as f:
         manifest = json.load(f)
-        version = manifest['version']
+        version = manifest["version"]
         return SwInfo(
-            stable='MASTER' not in manifest['version'],
+            stable="MASTER" not in manifest["version"],
             version=version,
-            fullname=f'{BRAND}-{version}',
-            buildtime=manifest['buildtime'],
+            fullname=f"{BRAND}-{version}",
+            buildtime=manifest["buildtime"],
         )
 
 

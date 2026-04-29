@@ -65,7 +65,7 @@ class FilesystemAddToAclOptions(BaseModel):
     force: bool = False
 
 
-@single_argument_args('add_to_acl')
+@single_argument_args("add_to_acl")
 class FilesystemAddToAclArgs(BaseModel):
     path: NonEmptyString
     entries: list[SimplifiedAclEntry]
@@ -80,7 +80,7 @@ class FSGetInheritedAclOptions(BaseModel):
     directory: bool = True
 
 
-@single_argument_args('calculate_inherited_acl')
+@single_argument_args("calculate_inherited_acl")
 class FilesystemGetInheritedAclArgs(BaseModel):
     path: NonEmptyString
     options: FSGetInheritedAclOptions = Field(default=FSGetInheritedAclOptions())
@@ -96,66 +96,66 @@ class FilesystemService(Service):
         cli_private = True
 
     def _common_perm_path_validate(self, schema, data, verrors, pool_mp_ok=False):
-        loc = path_location(data['path'])
+        loc = path_location(data["path"])
         if loc is FSLocation.EXTERNAL:
-            verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
+            verrors.add(f"{schema}.path", "ACL operations on remote server paths are not possible")
             return loc
 
-        path = data['path']
+        path = data["path"]
 
         try:
-            st = self.middleware.call_sync('filesystem.stat', path)
+            st = self.middleware.call_sync("filesystem.stat", path)
         except CallError as e:
             if e.errno == errno.EINVAL:
-                verrors.add('f{schema}.path', 'Must be an absolute path')
+                verrors.add("f{schema}.path", "Must be an absolute path")
                 return loc
 
             raise e
 
-        if st['type'] == 'FILE' and data['options']['recursive']:
-            verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
+        if st["type"] == "FILE" and data["options"]["recursive"]:
+            verrors.add(f"{schema}.path", "Recursive operations on a file are invalid.")
             return loc
 
-        if data['options'].get('traverse') and not data['options'].get('recursive'):
+        if data["options"].get("traverse") and not data["options"].get("recursive"):
             verrors.add(
-                f'{schema}.options.traverse',
-                'Traverse requires recursive to be enabled.'
+                f"{schema}.options.traverse",
+                "Traverse requires recursive to be enabled."
             )
 
-        if st['is_ctldir']:
-            verrors.add(f'{schema}.path',
-                        'Permissions changes in ZFS control directory (.zfs) are not permitted')
+        if st["is_ctldir"]:
+            verrors.add(f"{schema}.path",
+                        "Permissions changes in ZFS control directory (.zfs) are not permitted")
             return loc
 
-        if any(st['realpath'].startswith(prefix)
-               for prefix in ('/home/admin/.ssh', '/home/truenas_admin/.ssh', '/root/.ssh')):
+        if any(st["realpath"].startswith(prefix)
+               for prefix in ("/home/admin/.ssh", "/home/truenas_admin/.ssh", "/root/.ssh")):
             return loc
 
-        if not st['realpath'].startswith('/mnt/'):
+        if not st["realpath"].startswith("/mnt/"):
             verrors.add(
-                f'{schema}.path',
+                f"{schema}.path",
                 "Changes to permissions on paths that are not beneath "
                 f"the directory /mnt are not permitted: {path}"
             )
 
-        elif len(Path(st['realpath']).resolve().parents) == 2:
+        elif len(Path(st["realpath"]).resolve().parents) == 2:
             if not pool_mp_ok:
                 verrors.add(
-                    f'{schema}.path',
+                    f"{schema}.path",
                     f'The specified path is a ZFS pool mountpoint "({path})" '
                 )
 
-        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st['realpath']):
+        elif self.middleware.call_sync("pool.dataset.path_in_locked_datasets", st["realpath"]):
             verrors.add(
-                f'{schema}.path',
-                'Path component is currently encrypted and locked'
+                f"{schema}.path",
+                "Path component is currently encrypted and locked"
             )
         else:
-            statfs_flags = self.middleware.call_sync('filesystem.statfs', path)['flags']
-            if 'RO' in statfs_flags:
+            statfs_flags = self.middleware.call_sync("filesystem.statfs", path)["flags"]
+            if "RO" in statfs_flags:
                 verrors.add(
-                    f'{schema}.path',
-                    f'{path}: dataset underlying path has the readonly property enabled.'
+                    f"{schema}.path",
+                    f"{path}: dataset underlying path has the readonly property enabled."
                 )
 
         return loc
@@ -176,8 +176,8 @@ class FilesystemService(Service):
 
     @api_method(
         FilesystemChownArgs, FilesystemChownResult,
-        roles=['FILESYSTEM_ATTRS_WRITE'],
-        audit='Filesystem change owner', audit_extended=lambda data: data['path']
+        roles=["FILESYSTEM_ATTRS_WRITE"],
+        audit="Filesystem change owner", audit_extended=lambda data: data["path"]
     )
     @pass_thread_local_storage
     @job(lock="perm_change")
@@ -198,46 +198,46 @@ class FilesystemService(Service):
         If `traverse` and `recursive` are specified, then the chown
         operation will traverse filesystem mount points.
         """
-        job.set_progress(0, 'Preparing to change owner.')
+        job.set_progress(0, "Preparing to change owner.")
         verrors = ValidationErrors()
 
-        uid = -1 if data['uid'] is None else data.get('uid', -1)
-        gid = -1 if data['gid'] is None else data.get('gid', -1)
-        options = data['options']
+        uid = -1 if data["uid"] is None else data.get("uid", -1)
+        gid = -1 if data["gid"] is None else data.get("gid", -1)
+        options = data["options"]
 
-        if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+        if data["user"]:
+            user = self.middleware.call_sync("user.query", [["username", "=", data["user"]]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0]["uid"]
             else:
-                verrors.add('filesystem.chown.user', f'{data["user"]}: user does not exist')
+                verrors.add("filesystem.chown.user", f'{data["user"]}: user does not exist')
 
-        if data['group']:
-            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+        if data["group"]:
+            group = self.middleware.call_sync("group.query", [["group", "=", data["group"]]])
             if group:
-                gid = group[0]['gid']
+                gid = group[0]["gid"]
             else:
-                verrors.add('filesystem.chown.group', f'{data["group"]}: group does not exist')
+                verrors.add("filesystem.chown.group", f'{data["group"]}: group does not exist')
 
         self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
         fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            data["path"], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
             os.fchown(fd, uid, gid)
-            if options['recursive']:
+            if options["recursive"]:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
-                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job, tls).run()
+                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options["traverse"]), job, tls).run()
         finally:
             os.close(fd)
-        job.set_progress(100, 'Finished changing owner.')
+        job.set_progress(100, "Finished changing owner.")
 
     @api_method(
         FilesystemSetpermArgs, FilesystemSetpermResult,
-        roles=['FILESYSTEM_ATTRS_WRITE'],
-        audit='Filesystem set permission', audit_extended=lambda data: data['path']
+        roles=["FILESYSTEM_ATTRS_WRITE"],
+        audit="Filesystem set permission", audit_extended=lambda data: data["path"]
     )
     @pass_thread_local_storage
     @job(lock="perm_change")
@@ -272,43 +272,43 @@ class FilesystemService(Service):
         expressed as a file mode without losing any access rules.
 
         """
-        job.set_progress(0, 'Preparing to set permissions.')
-        options = data['options']
-        mode = data.get('mode', None)
+        job.set_progress(0, "Preparing to set permissions.")
+        options = data["options"]
+        mode = data.get("mode", None)
         verrors = ValidationErrors()
 
-        uid = -1 if data['uid'] is None else data.get('uid', -1)
-        gid = -1 if data['gid'] is None else data.get('gid', -1)
+        uid = -1 if data["uid"] is None else data.get("uid", -1)
+        gid = -1 if data["gid"] is None else data.get("gid", -1)
 
-        if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+        if data["user"]:
+            user = self.middleware.call_sync("user.query", [["username", "=", data["user"]]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0]["uid"]
             else:
-                verrors.add('filesystem.setperm.user', f'{data["user"]}: user does not exist')
+                verrors.add("filesystem.setperm.user", f'{data["user"]}: user does not exist')
 
-        if data['group']:
-            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+        if data["group"]:
+            group = self.middleware.call_sync("group.query", [["group", "=", data["group"]]])
             if group:
-                gid = group[0]['gid']
+                gid = group[0]["gid"]
             else:
-                verrors.add('filesystem.setperm.group', f'{data["group"]}: group does not exist')
+                verrors.add("filesystem.setperm.group", f'{data["group"]}: group does not exist')
 
         self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
-        current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
-        acl_is_trivial = current_acl['trivial']
-        if not acl_is_trivial and not options['stripacl']:
+        current_acl = self.middleware.call_sync("filesystem.getacl", data["path"])
+        acl_is_trivial = current_acl["trivial"]
+        if not acl_is_trivial and not options["stripacl"]:
             verrors.add(
-                'filesystem.setperm.mode',
+                "filesystem.setperm.mode",
                 f'Non-trivial ACL present on [{data["path"]}]. '
                 'Option "stripacl" required to change permission.',
             )
 
         if mode is not None and int(mode, 8) == 0:
             verrors.add(
-                'filesystem.setperm.mode',
-                'Empty permissions are not permitted.'
+                "filesystem.setperm.mode",
+                "Empty permissions are not permitted."
             )
 
         verrors.check()
@@ -316,10 +316,10 @@ class FilesystemService(Service):
         if mode is not None:
             mode = int(mode, 8)
 
-        strip_acl_path(data['path'])
+        strip_acl_path(data["path"])
 
         fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            data["path"], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
             if mode:
@@ -327,13 +327,13 @@ class FilesystemService(Service):
 
             os.fchown(fd, uid, gid)
 
-            if options['recursive']:
+            if options["recursive"]:
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 AclTool(fd, AclToolAction.STRIP, uid, gid,
-                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job, tls).run()
+                        ATPermOptions(traverse=options["traverse"], target_mode=mode), job, tls).run()
         finally:
             os.close(fd)
-        job.set_progress(100, 'Finished setting permissions.')
+        job.set_progress(100, "Finished setting permissions.")
 
     @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
@@ -345,18 +345,18 @@ class FilesystemService(Service):
             os.close(fd)
 
         output = nfs4acl_obj_to_dict(acl_obj, st.st_uid, st.st_gid, simplified)
-        output['path'] = path
-        output['acltype'] = 'NFS4'
+        output["path"] = path
+        output["acltype"] = "NFS4"
 
-        for ace in output['acl']:
-            if resolve_ids and ace['id'] != -1:
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', ace['id'], ace['tag'])
-            elif resolve_ids and ace['tag'] == 'group@':
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_gid, 'GROUP')
-            elif resolve_ids and ace['tag'] == 'owner@':
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_uid, 'USER')
+        for ace in output["acl"]:
+            if resolve_ids and ace["id"] != -1:
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", ace["id"], ace["tag"])
+            elif resolve_ids and ace["tag"] == "group@":
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", st.st_gid, "GROUP")
+            elif resolve_ids and ace["tag"] == "owner@":
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", st.st_uid, "USER")
             elif resolve_ids:
-                ace['who'] = None
+                ace["who"] = None
 
         return output
 
@@ -370,18 +370,18 @@ class FilesystemService(Service):
             os.close(fd)
 
         ret = posixacl_obj_to_dict(acl_obj, st.st_uid, st.st_gid)
-        ret['acltype'] = FS_ACL_Type.POSIX1E
-        ret['path'] = path
+        ret["acltype"] = FS_ACL_Type.POSIX1E
+        ret["path"] = path
 
-        for ace in ret['acl']:
-            if resolve_ids and ace['id'] != -1:
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', ace['id'], ace['tag'])
-            elif resolve_ids and ace['tag'] == 'GROUP_OBJ':
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_gid, 'GROUP')
-            elif resolve_ids and ace['tag'] == 'USER_OBJ':
-                ace['who'] = self.middleware.call_sync('idmap.id_to_name', st.st_uid, 'USER')
+        for ace in ret["acl"]:
+            if resolve_ids and ace["id"] != -1:
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", ace["id"], ace["tag"])
+            elif resolve_ids and ace["tag"] == "GROUP_OBJ":
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", st.st_gid, "GROUP")
+            elif resolve_ids and ace["tag"] == "USER_OBJ":
+                ace["who"] = self.middleware.call_sync("idmap.id_to_name", st.st_uid, "USER")
             elif resolve_ids:
-                ace['who'] = None
+                ace["who"] = None
 
         return ret
 
@@ -389,18 +389,18 @@ class FilesystemService(Service):
     def getacl_disabled(self, path):
         st = os.stat(path)
         return {
-            'path': path,
-            'uid': st.st_uid,
-            'gid': st.st_gid,
-            'acl': None,
-            'acltype': FS_ACL_Type.DISABLED,
-            'trivial': True,
+            "path": path,
+            "uid": st.st_uid,
+            "gid": st.st_gid,
+            "acl": None,
+            "acltype": FS_ACL_Type.DISABLED,
+            "trivial": True,
         }
 
     @api_method(
         FilesystemGetaclArgs,
         FilesystemGetaclResult,
-        roles=['FILESYSTEM_ATTRS_READ'],
+        roles=["FILESYSTEM_ATTRS_READ"],
     )
     def getacl(self, path, simplified, resolve_ids):
         """
@@ -436,10 +436,10 @@ class FilesystemService(Service):
         the full ACL entry will be returned.
         """
         if path_location(path) is FSLocation.EXTERNAL:
-            raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
+            raise CallError(f"{path} is external to TrueNAS", errno.EXDEV)
 
         if not os.path.exists(path):
-            raise CallError('Path not found.', errno.ENOENT)
+            raise CallError("Path not found.", errno.ENOENT)
 
         acltype = path_get_acltype(path)
 
@@ -450,14 +450,14 @@ class FilesystemService(Service):
         else:
             ret = self.getacl_disabled(path)
 
-        ret.update({'user': None, 'group': None})
+        ret.update({"user": None, "group": None})
 
         if resolve_ids:
-            if user := self.middleware.call_sync('user.query', [['uid', '=', ret['uid']]]):
-                ret['user'] = user[0]['username']
+            if user := self.middleware.call_sync("user.query", [["uid", "=", ret["uid"]]]):
+                ret["user"] = user[0]["username"]
 
-            if group := self.middleware.call_sync('group.query', [['gid', '=', ret['gid']]]):
-                ret['group'] = group[0]['group']
+            if group := self.middleware.call_sync("group.query", [["gid", "=", ret["gid"]]]):
+                ret["group"] = group[0]["group"]
 
         return ret
 
@@ -468,19 +468,19 @@ class FilesystemService(Service):
         filesystems under `path` share the same ACL type. Mixing NFS4 and POSIX1E
         across dataset boundaries would silently apply the wrong ACL model.
         """
-        root_mnt_id = statmount(path=path, as_dict=True)['mount_id']
+        root_mnt_id = statmount(path=path, as_dict=True)["mount_id"]
         real_path = os.path.realpath(path)
         mismatched = []
 
         for entry in iter_mountinfo(target_mnt_id=root_mnt_id, as_dict=True):
-            child_mnt = entry['mountpoint']
-            if not child_mnt.startswith(real_path + '/'):
+            child_mnt = entry["mountpoint"]
+            if not child_mnt.startswith(real_path + "/"):
                 continue
 
-            super_opts = entry['super_opts']
-            if 'NFS4ACL' in super_opts:
+            super_opts = entry["super_opts"]
+            if "NFS4ACL" in super_opts:
                 child_acltype = FS_ACL_Type.NFS4
-            elif 'POSIXACL' in super_opts:
+            elif "POSIXACL" in super_opts:
                 child_acltype = FS_ACL_Type.POSIX1E
             else:
                 child_acltype = FS_ACL_Type.DISABLED
@@ -490,7 +490,7 @@ class FilesystemService(Service):
 
         if mismatched:
             raise ValidationError(
-                'filesystem.setacl.options.traverse',
+                "filesystem.setacl.options.traverse",
                 f'Child filesystems have a different ACL type than {real_path!r} '
                 f'({current_acltype}). All child filesystems must share the same '
                 f'ACL configuration for traverse operations: '
@@ -499,98 +499,98 @@ class FilesystemService(Service):
 
     @private
     def setacl_nfs4(self, job, tls, current_acl, data):
-        job.set_progress(0, 'Preparing to set acl.')
-        recursive = data['options'].get('recursive', False)
-        do_strip = data['options'].get('stripacl', False)
+        job.set_progress(0, "Preparing to set acl.")
+        recursive = data["options"].get("recursive", False)
+        do_strip = data["options"].get("stripacl", False)
         action = AclToolAction.CLONE
 
         verrors = ValidationErrors()
-        job.set_progress(10, 'Setting NFSv4 ACL.')
+        job.set_progress(10, "Setting NFSv4 ACL.")
 
         if do_strip:
             action = AclToolAction.STRIP
-            strip_acl_path(data['path'])
-        elif data['options']['validate_effective_acl']:
-            uid_to_check = current_acl['uid'] if data['uid'] == ACL_UNDEFINED_ID else data['uid']
-            gid_to_check = current_acl['gid'] if data['gid'] == ACL_UNDEFINED_ID else data['gid']
+            strip_acl_path(data["path"])
+        elif data["options"]["validate_effective_acl"]:
+            uid_to_check = current_acl["uid"] if data["uid"] == ACL_UNDEFINED_ID else data["uid"]
+            gid_to_check = current_acl["gid"] if data["gid"] == ACL_UNDEFINED_ID else data["gid"]
             self.middleware.call_sync(
-                'filesystem.check_acl_execute',
-                data['path'], data['dacl'], uid_to_check, gid_to_check, True
+                "filesystem.check_acl_execute",
+                data["path"], data["dacl"], uid_to_check, gid_to_check, True
             )
 
         fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            data["path"], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
             if not do_strip:
                 try:
-                    acl_obj = nfs4acl_dict_to_obj(data['dacl'], aclflags=None)
+                    acl_obj = nfs4acl_dict_to_obj(data["dacl"], aclflags=None)
                 except (ValueError, KeyError) as e:
-                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.add("filesystem_acl.dacl", str(e))
                     verrors.check()
                 try:
                     truenas_os.validate_acl(fd, acl_obj)
                 except ValueError as e:
-                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.add("filesystem_acl.dacl", str(e))
                     verrors.check()
                 try:
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:
                     raise CallError(str(e))
-                acl_opts = ATAclOptions(traverse=data['options']['traverse'], target_acl=acl_obj)
+                acl_opts = ATAclOptions(traverse=data["options"]["traverse"], target_acl=acl_obj)
             else:
                 # target_mode=None: no explicit chmod; the resulting mode is the
                 # POSIX representation of the ACL that the kernel derives on strip.
-                acl_opts = ATPermOptions(traverse=data['options']['traverse'])
+                acl_opts = ATPermOptions(traverse=data["options"]["traverse"])
 
-            os.fchown(fd, data['uid'], data['gid'])
+            os.fchown(fd, data["uid"], data["gid"])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data["uid"], data["gid"], acl_opts, job, tls).run()
         finally:
             os.close(fd)
 
-        job.set_progress(100, 'Finished setting NFSv4 ACL.')
+        job.set_progress(100, "Finished setting NFSv4 ACL.")
 
     @private
     def setacl_posix1e(self, job, tls, current_acl, data):
-        job.set_progress(0, 'Preparing to set acl.')
-        options = data['options']
-        recursive = options.get('recursive', False)
-        do_strip = options.get('stripacl', False)
-        dacl = data.get('dacl', [])
+        job.set_progress(0, "Preparing to set acl.")
+        options = data["options"]
+        recursive = options.get("recursive", False)
+        do_strip = options.get("stripacl", False)
+        dacl = data.get("dacl", [])
         verrors = ValidationErrors()
         action = AclToolAction.STRIP if do_strip else AclToolAction.CLONE
 
         if do_strip and dacl:
             verrors.add(
-                'filesystem_acl.dacl',
-                'Simulatenously setting and removing ACL from path is invalid.'
+                "filesystem_acl.dacl",
+                "Simulatenously setting and removing ACL from path is invalid."
             )
 
         if not do_strip:
-            if options['validate_effective_acl']:
+            if options["validate_effective_acl"]:
                 try:
                     # check execute on parent paths
-                    uid_to_check = current_acl['uid'] if data['uid'] == ACL_UNDEFINED_ID else data['uid']
-                    gid_to_check = current_acl['gid'] if data['gid'] == ACL_UNDEFINED_ID else data['gid']
+                    uid_to_check = current_acl["uid"] if data["uid"] == ACL_UNDEFINED_ID else data["uid"]
+                    gid_to_check = current_acl["gid"] if data["gid"] == ACL_UNDEFINED_ID else data["gid"]
 
                     self.middleware.call_sync(
-                        'filesystem.check_acl_execute',
-                        data['path'], dacl, uid_to_check, gid_to_check, True
+                        "filesystem.check_acl_execute",
+                        data["path"], dacl, uid_to_check, gid_to_check, True
                     )
                 except CallError as e:
                     if e.errno != errno.EPERM:
                         raise
 
                     verrors.add(
-                        'filesystem_acl.path',
+                        "filesystem_acl.path",
                         e.errmsg
                     )
 
-        if recursive and not do_strip and not any(entry.get('default') for entry in dacl):
+        if recursive and not do_strip and not any(entry.get("default") for entry in dacl):
             verrors.add(
-                'filesystem_acl.dacl',
-                'Default ACL entries are required in order to apply ACL recursively.'
+                "filesystem_acl.dacl",
+                "Default ACL entries are required in order to apply ACL recursively."
             )
 
         acl_obj = None
@@ -598,49 +598,49 @@ class FilesystemService(Service):
             try:
                 acl_obj = posixacl_dict_to_obj(dacl)
             except (ValueError, KeyError) as e:
-                verrors.add('filesystem_acl.dacl', str(e))
+                verrors.add("filesystem_acl.dacl", str(e))
 
         verrors.check()
 
-        job.set_progress(10, 'Setting POSIX1e ACL.')
+        job.set_progress(10, "Setting POSIX1e ACL.")
 
         if do_strip:
-            strip_acl_path(data['path'])
+            strip_acl_path(data["path"])
 
         fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+            data["path"], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
             if acl_obj is not None:
                 try:
                     truenas_os.validate_acl(fd, acl_obj)
                 except ValueError as e:
-                    verrors.add('filesystem_acl.dacl', str(e))
+                    verrors.add("filesystem_acl.dacl", str(e))
                     verrors.check()
                 try:
                     truenas_os.fsetacl(fd, acl_obj)
                 except (OSError, ValueError) as e:
                     raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
-                acl_opts = ATAclOptions(traverse=options['traverse'], target_acl=acl_obj)
+                acl_opts = ATAclOptions(traverse=options["traverse"], target_acl=acl_obj)
             else:
                 # target_mode=None: no explicit chmod; the resulting mode is the
                 # POSIX representation of the ACL that the kernel derives on strip.
-                acl_opts = ATPermOptions(traverse=options['traverse'])
+                acl_opts = ATPermOptions(traverse=options["traverse"])
 
-            os.fchown(fd, data['uid'], data['gid'])
+            os.fchown(fd, data["uid"], data["gid"])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data["uid"], data["gid"], acl_opts, job, tls).run()
         finally:
             os.close(fd)
 
-        job.set_progress(100, 'Finished setting POSIX1e ACL.')
+        job.set_progress(100, "Finished setting POSIX1e ACL.")
 
     @api_method(
         FilesystemSetaclArgs,
         FilesystemSetaclResult,
-        roles=['FILESYSTEM_ATTRS_WRITE'],
-        audit='Filesystem set ACL',
-        audit_extended=lambda data: data['path']
+        roles=["FILESYSTEM_ATTRS_WRITE"],
+        audit="Filesystem set ACL",
+        audit_extended=lambda data: data["path"]
     )
     @pass_thread_local_storage
     @job(lock="perm_change")
@@ -724,71 +724,71 @@ class FilesystemService(Service):
         `perms` - object containing posix permissions.
         """
         verrors = ValidationErrors()
-        data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
+        data["loc"] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
         normalize_acl_ids(data)
-        if data['uid'] != ACL_UNDEFINED_ID and data['user']:
+        if data["uid"] != ACL_UNDEFINED_ID and data["user"]:
             verrors.add(
-                'filesystem.setacl.user',
-                'User and uid may not be specified simultaneously.'
+                "filesystem.setacl.user",
+                "User and uid may not be specified simultaneously."
             )
 
-        if data['gid'] != ACL_UNDEFINED_ID and data['group']:
+        if data["gid"] != ACL_UNDEFINED_ID and data["group"]:
             verrors.add(
-                'filesystem.setacl.group',
-                'group and gid may not be specified simultaneously.'
+                "filesystem.setacl.group",
+                "group and gid may not be specified simultaneously."
             )
 
-        if data['user']:
-            if user := self.middleware.call_sync('user.query', [['username', '=', data['user']]]):
-                data['uid'] = user[0]['uid']
+        if data["user"]:
+            if user := self.middleware.call_sync("user.query", [["username", "=", data["user"]]]):
+                data["uid"] = user[0]["uid"]
             else:
                 verrors.add(
-                    'filesystem.setacl.user',
+                    "filesystem.setacl.user",
                     f'{data["user"]}: user does not exist.'
                 )
 
-        if data['group']:
-            if group := self.middleware.call_sync('group.query', [['group', '=', data['group']]]):
-                data['gid'] = group[0]['gid']
+        if data["group"]:
+            if group := self.middleware.call_sync("group.query", [["group", "=", data["group"]]]):
+                data["gid"] = group[0]["gid"]
             else:
                 verrors.add(
-                    'filesystem.setacl.group',
+                    "filesystem.setacl.group",
                     f'{data["group"]}: group does not exist.'
                 )
 
         verrors.check()
 
-        current_acl = self.getacl(data['path'])
-        if data['acltype'] and data['acltype'] != current_acl['acltype']:
+        current_acl = self.getacl(data["path"])
+        if data["acltype"] and data["acltype"] != current_acl["acltype"]:
             raise ValidationError(
-                'filesystem.setacl.dacl.acltype',
-                'ACL type is invalid for selected path'
+                "filesystem.setacl.dacl.acltype",
+                "ACL type is invalid for selected path"
             )
 
-        if data['options'].get('traverse') and not data['options'].get('stripacl'):
-            self._validate_child_acltypes(data['path'], current_acl['acltype'])
+        if data["options"].get("traverse") and not data["options"].get("stripacl"):
+            self._validate_child_acltypes(data["path"], current_acl["acltype"])
 
-        for idx, entry in enumerate(data['dacl']):
+        for idx, entry in enumerate(data["dacl"]):
             # Convert any names to ids (because ultimately uid/gid is written to disk)
             # Earlier validation checks whether someone is trying to set both id and name.
-            if entry.get('who') in (None, ''):
+            if entry.get("who") in (None, ""):
                 # entry does not specify a name and so we don't need to normalize
                 continue
 
-            if entry.get('id') != ACL_UNDEFINED_ID:
+            if entry.get("id") != ACL_UNDEFINED_ID:
                 # entry already has a uid / gid
                 continue
 
             # We're using user.query and group.query to intialize cache entries if required
-            match entry['tag']:
-                case 'USER':
-                    method = 'user.query'
-                    filters = [['username', '=', entry['who']]]
-                    key = 'uid'
-                case 'GROUP':
-                    method = 'group.query'
-                    filters = [['group', '=', entry['who']]]
-                    key = 'gid'
+            match entry["tag"]:
+                case "USER":
+                    method = "user.query"
+                    filters = [["username", "=", entry["who"]]]
+                    key = "uid"
+                case "GROUP":
+                    method = "group.query"
+                    filters = [["group", "=", entry["who"]]]
+                    key = "gid"
                 case POSIXACE_Tag.USER_OBJ | POSIXACE_Tag.GROUP_OBJ:
                     # We currently allow these because we're populating in getacl response
                     # This may need to be re-evaluated. These tags don't require an explicit uid/gid
@@ -801,16 +801,16 @@ class FilesystemService(Service):
                     continue
                 case _:
                     raise ValidationError(
-                        f'filesystem.setacl.{idx}.who',
-                        'Name may only be specified for USER and GROUP entries'
+                        f"filesystem.setacl.{idx}.who",
+                        "Name may only be specified for USER and GROUP entries"
                     )
             try:
-                entry['id'] = self.middleware.call_sync(method, filters, {'get': True})[key]
-                entry['who'] = None
+                entry["id"] = self.middleware.call_sync(method, filters, {"get": True})[key]
+                entry["who"] = None
             except MatchNotFound:
-                raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')
+                raise ValidationError(f"filesystem.setacl.{idx}.who", f'{entry["who"]}: account does not exist')
 
-        match current_acl['acltype']:
+        match current_acl["acltype"]:
             case FS_ACL_Type.NFS4:
                 self.setacl_nfs4(job, tls, current_acl, data)
             case FS_ACL_Type.POSIX1E:
@@ -820,28 +820,28 @@ class FilesystemService(Service):
             case _:
                 raise TypeError(f'{current_acl["acltype"]}: unexpected ACL type')
 
-        return self.getacl(data['path'])
+        return self.getacl(data["path"])
 
     @private
     def add_to_acl_posix(self, acl, entries):
         def convert_perm(perm):
-            if perm == 'MODIFY' or perm == 'FULL_CONTROL':
-                return {'READ': True, 'WRITE': True, 'EXECUTE': True}
+            if perm == "MODIFY" or perm == "FULL_CONTROL":
+                return {"READ": True, "WRITE": True, "EXECUTE": True}
 
-            if perm == 'READ':
-                return {'READ': True, 'WRITE': False, 'EXECUTE': True}
+            if perm == "READ":
+                return {"READ": True, "WRITE": False, "EXECUTE": True}
 
-            raise CallError(f'{perm}: unsupported permissions type for POSIX1E acltype')
+            raise CallError(f"{perm}: unsupported permissions type for POSIX1E acltype")
 
         def check_acl_for_entry(entry):
-            id_type = entry['id_type']
-            xid = entry['id']
-            perm = entry['access']
+            id_type = entry["id_type"]
+            xid = entry["id"]
+            perm = entry["access"]
 
             canonical_entries = {
-                'USER_OBJ': {'has_default': False, 'entry': None},
-                'GROUP_OBJ': {'has_default': False, 'entry': None},
-                'OTHER': {'has_default': False, 'entry': None},
+                "USER_OBJ": {"has_default": False, "entry": None},
+                "GROUP_OBJ": {"has_default": False, "entry": None},
+                "OTHER": {"has_default": False, "entry": None},
             }
 
             has_default = False
@@ -850,60 +850,60 @@ class FilesystemService(Service):
             has_default_mask = False
 
             for ace in acl:
-                if (centry := canonical_entries.get(ace['tag'])) is not None:
-                    if ace['default']:
-                        centry['has_default'] = True
+                if (centry := canonical_entries.get(ace["tag"])) is not None:
+                    if ace["default"]:
+                        centry["has_default"] = True
                     else:
-                        centry['entry'] = ace
+                        centry["entry"] = ace
 
                     continue
 
-                if ace['tag'] == 'MASK':
-                    if ace['default']:
+                if ace["tag"] == "MASK":
+                    if ace["default"]:
                         has_default_mask = True
                     else:
                         has_access_mask = True
 
                     continue
 
-                if ace['tag'] != id_type or ace['id'] != xid:
+                if ace["tag"] != id_type or ace["id"] != xid:
                     continue
 
-                if ace['perms'] != convert_perm(perm):
+                if ace["perms"] != convert_perm(perm):
                     continue
 
-                if ace['default']:
+                if ace["default"]:
                     has_default = True
                 else:
                     has_access = True
 
             for key, val in canonical_entries.items():
-                if val['has_default']:
+                if val["has_default"]:
                     continue
 
                 acl.append({
-                    'tag': key,
-                    'id': val['entry']['id'],
-                    'perms': val['entry']['perms'],
-                    'default': True
+                    "tag": key,
+                    "id": val["entry"]["id"],
+                    "perms": val["entry"]["perms"],
+                    "default": True
                 })
 
             return (has_default, has_access, has_access_mask, has_default_mask)
 
         def add_entry(entry, default):
             acl.append({
-                'tag': entry['id_type'],
-                'id': entry['id'],
-                'perms': convert_perm(entry['access']),
-                'default': default
+                "tag": entry["id_type"],
+                "id": entry["id"],
+                "perms": convert_perm(entry["access"]),
+                "default": default
             })
 
         def add_mask(default):
             acl.append({
-                'tag': 'MASK',
-                'id': -1,
-                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-                'default': default
+                "tag": "MASK",
+                "id": -1,
+                "perms": {"READ": True, "WRITE": True, "EXECUTE": True},
+                "default": default
             })
 
         changed = False
@@ -932,27 +932,27 @@ class FilesystemService(Service):
     @private
     def add_to_acl_nfs4(self, acl, entries):
         def convert_perm(perm):
-            if perm == 'MODIFY':
-                return {'BASIC': 'MODIFY'}
+            if perm == "MODIFY":
+                return {"BASIC": "MODIFY"}
 
-            if perm == 'READ':
-                return {'BASIC': 'READ'}
+            if perm == "READ":
+                return {"BASIC": "READ"}
 
-            if perm == 'FULL_CONTROL':
-                return {'BASIC': 'FULL_CONTROL'}
+            if perm == "FULL_CONTROL":
+                return {"BASIC": "FULL_CONTROL"}
 
-            raise CallError(f'{perm}: unsupported permissions type for NFSv4 acltype')
+            raise CallError(f"{perm}: unsupported permissions type for NFSv4 acltype")
 
         def check_acl_for_entry(entry):
-            id_type = entry['id_type']
-            xid = entry['id']
-            perm = entry['access']
+            id_type = entry["id_type"]
+            xid = entry["id"]
+            perm = entry["access"]
 
             for ace in acl:
-                if ace['tag'] != id_type or ace['id'] != xid or ace['type'] != 'ALLOW':
+                if ace["tag"] != id_type or ace["id"] != xid or ace["type"] != "ALLOW":
                     continue
 
-                if ace['perms'].get('BASIC', {}) == perm:
+                if ace["perms"].get("BASIC", {}) == perm:
                     return True
 
             return False
@@ -964,11 +964,11 @@ class FilesystemService(Service):
                 continue
 
             acl.append({
-                'tag': entry['id_type'],
-                'id': entry['id'],
-                'perms': convert_perm(entry['access']),
-                'flags': {'BASIC': 'INHERIT'},
-                'type': 'ALLOW'
+                "tag": entry["id_type"],
+                "id": entry["id"],
+                "perms": convert_perm(entry["access"]),
+                "flags": {"BASIC": "INHERIT"},
+                "type": "ALLOW"
             })
             changed = True
 
@@ -977,8 +977,8 @@ class FilesystemService(Service):
     @api_method(
         FilesystemAddToAclArgs,
         FilesystemAddToAclResult,
-        audit='Filesystem add to ACL',
-        audit_extended=lambda data: data['path'],
+        audit="Filesystem add to ACL",
+        audit_extended=lambda data: data["path"],
         private=True
     )
     @job()
@@ -996,37 +996,37 @@ class FilesystemService(Service):
         set. For POSIX1E `READ` means read and execute, `MODIFY` means read, write,
         execute.
         """
-        init_path = data['path']
+        init_path = data["path"]
         verrors = ValidationErrors()
-        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
+        self._common_perm_path_validate("filesystem.add_to_acl", data, verrors)
         verrors.check()
 
-        data['path'] = init_path
-        current_acl = self.getacl(data['path'])
-        acltype = FS_ACL_Type(current_acl['acltype'])
+        data["path"] = init_path
+        current_acl = self.getacl(data["path"])
+        acltype = FS_ACL_Type(current_acl["acltype"])
 
         if acltype == FS_ACL_Type.NFS4:
-            changed = self.add_to_acl_nfs4(current_acl['acl'], data['entries'])
+            changed = self.add_to_acl_nfs4(current_acl["acl"], data["entries"])
         elif acltype == FS_ACL_Type.POSIX1E:
-            changed = self.add_to_acl_posix(current_acl['acl'], data['entries'])
+            changed = self.add_to_acl_posix(current_acl["acl"], data["entries"])
         else:
             raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
 
         if not changed:
-            job.set_progress(100, 'ACL already contains all requested entries.')
+            job.set_progress(100, "ACL already contains all requested entries.")
             return changed
 
-        if not directory_is_empty(data['path']) and not data['options']['force']:
+        if not directory_is_empty(data["path"]) and not data["options"]["force"]:
             raise CallError(
                 f'{data["path"]}: path contains existing data '
                 'and `force` was not specified', errno.EPERM
             )
 
-        setacl_job = self.middleware.call_sync('filesystem.setacl', {
-            'path': data['path'],
-            'dacl': current_acl['acl'],
-            'acltype': current_acl['acltype'],
-            'options': {'recursive': True, 'validate_effective_acl': False}
+        setacl_job = self.middleware.call_sync("filesystem.setacl", {
+            "path": data["path"],
+            "dacl": current_acl["acl"],
+            "acltype": current_acl["acltype"],
+            "options": {"recursive": True, "validate_effective_acl": False}
         })
 
         job.wrap_sync(setacl_job)
@@ -1040,8 +1040,8 @@ class FilesystemService(Service):
         ACL is for a file or a directory.
         """
         verrors = ValidationErrors()
-        self._common_perm_path_validate('filesystem.get_inherited_acl', data, verrors, True)
+        self._common_perm_path_validate("filesystem.get_inherited_acl", data, verrors, True)
         verrors.check()
 
-        current_acl = self.getacl(data['path'], False)
-        return calculate_inherited_acl(current_acl, data['options']['directory'])
+        current_acl = self.getacl(data["path"], False)
+        return calculate_inherited_acl(current_acl, data["options"]["directory"])

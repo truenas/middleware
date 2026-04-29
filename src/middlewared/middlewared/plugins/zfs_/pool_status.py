@@ -8,7 +8,7 @@ from .status_util import get_normalized_disk_info, get_zfs_vdev_disks, get_zpool
 class ZPoolService(Service):
 
     class Config:
-        namespace = 'zpool'
+        namespace = "zpool"
         cli_private = True
 
     @private
@@ -18,8 +18,8 @@ class ZPoolService(Service):
 
         try:
             dev = Path(path).resolve().name
-            resolved = Path(f'/sys/class/block/{dev}').resolve().parent.name
-            if resolved == 'block':
+            resolved = Path(f"/sys/class/block/{dev}").resolve().parent.name
+            if resolved == "block":
                 # example zpool status
                 # NAME                                          STATE     READ WRITE CKSUM
                 # tank                                          DEGRADED     0     0     0
@@ -41,30 +41,30 @@ class ZPoolService(Service):
 
     @private
     def status_impl(self, pool_name, vdev_type, members, **kwargs):
-        real_paths = kwargs.setdefault('real_paths', False)
+        real_paths = kwargs.setdefault("real_paths", False)
         final = dict()
-        for member in filter(lambda x: x.get('vdev_type') != 'file', members.values()):
+        for member in filter(lambda x: x.get("vdev_type") != "file", members.values()):
             vdev_disks = self.resolve_block_paths(get_zfs_vdev_disks(member), real_paths)
-            if member.get('vdev_type') in ('disk', 'dspare'):
-                disk = self.resolve_block_path(member['path'], real_paths)
-                final[disk] = get_normalized_disk_info(pool_name, member, 'stripe', vdev_type, vdev_disks)
+            if member.get("vdev_type") in ("disk", "dspare"):
+                disk = self.resolve_block_path(member["path"], real_paths)
+                final[disk] = get_normalized_disk_info(pool_name, member, "stripe", vdev_type, vdev_disks)
             else:
-                for i in member['vdevs'].values():
-                    if i['vdev_type'] == 'spare':
-                        i_vdevs = list(i['vdevs'].values())
+                for i in member["vdevs"].values():
+                    if i["vdev_type"] == "spare":
+                        i_vdevs = list(i["vdevs"].values())
                         if not i_vdevs:
                             # An edge case but just covering to be safe
                             continue
 
-                        i = next((e for e in i_vdevs if e['class'] == 'spare'), i_vdevs[0])
-                    elif i['vdev_type'] == 'replacing':
-                        for j in filter(lambda entry: entry.get('path'), list(i['vdevs'].values())):
-                            disk = self.resolve_block_path(j['path'], real_paths)
-                            final[disk] = get_normalized_disk_info(pool_name, j, member['name'], vdev_type, vdev_disks)
+                        i = next((e for e in i_vdevs if e["class"] == "spare"), i_vdevs[0])
+                    elif i["vdev_type"] == "replacing":
+                        for j in filter(lambda entry: entry.get("path"), list(i["vdevs"].values())):
+                            disk = self.resolve_block_path(j["path"], real_paths)
+                            final[disk] = get_normalized_disk_info(pool_name, j, member["name"], vdev_type, vdev_disks)
                         continue
 
-                    disk = self.resolve_block_path(i['path'], real_paths)
-                    final[disk] = get_normalized_disk_info(pool_name, i, member['name'], vdev_type, vdev_disks)
+                    disk = self.resolve_block_path(i["path"], real_paths)
+                    final[disk] = get_normalized_disk_info(pool_name, i, member["name"], vdev_type, vdev_disks)
 
         return final
 
@@ -120,25 +120,25 @@ class ZPoolService(Service):
         """
         if data is None:
             data = dict()
-        data.setdefault('name', None)
-        data.setdefault('real_paths', False)
+        data.setdefault("name", None)
+        data.setdefault("real_paths", False)
 
-        final = {'disks': dict(), 'pools': dict()}
-        for pool_name, pool_info in get_zpool_status(data.get('name')).items():
-            final['pools'][pool_name] = dict()
+        final = {"disks": dict(), "pools": dict()}
+        for pool_name, pool_info in get_zpool_status(data.get("name")).items():
+            final["pools"][pool_name] = dict()
             # We need some normalization for data vdev here
-            pool_info['data'] = pool_info.get('vdevs', {}).get(pool_name, {}).get('vdevs', {})
-            for vdev_type in ('spares', 'logs', 'dedup', 'special', 'l2cache', 'data'):
+            pool_info["data"] = pool_info.get("vdevs", {}).get(pool_name, {}).get("vdevs", {})
+            for vdev_type in ("spares", "logs", "dedup", "special", "l2cache", "data"):
                 vdev_members = pool_info.get(vdev_type, {})
                 if not vdev_members:
-                    final['pools'][pool_name][vdev_type] = dict()
+                    final["pools"][pool_name][vdev_type] = dict()
                     continue
 
                 info = self.status_impl(pool_name, vdev_type, vdev_members, **data)
                 # we key on pool name and disk id because
                 # this was designed, primarily, for the
                 # `webui.enclosure.dashboard` endpoint
-                final['pools'][pool_name][vdev_type] = info
-                final['disks'].update(info)
+                final["pools"][pool_name][vdev_type] = info
+                final["disks"].update(info)
 
         return final

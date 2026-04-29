@@ -58,14 +58,14 @@ class TestService(Service):
 
         This allows testing RBAC against mocked endpoint
         """
-        if 'MOCK' in self.middleware.role_manager.roles:
+        if "MOCK" in self.middleware.role_manager.roles:
             return
 
         # There are no STIG requirements specified for MOCK role here because
         # we need to be able to mock methods in CI testing while under STIG restrictions
-        self.middleware.role_manager.roles['MOCK'] = Role()
-        self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
-        self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
+        self.middleware.role_manager.roles["MOCK"] = Role()
+        self.middleware.role_manager.register_method(method_name="test.test1", roles=["MOCK"])
+        self.middleware.role_manager.register_method(method_name="test.test2", roles=["MOCK"])
 
         await self.call2(self.s.alert.oneshot_create, SystemTestingAlert())
 

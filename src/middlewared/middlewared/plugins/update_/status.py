@@ -27,23 +27,23 @@ async def status(context: ServiceContext) -> UpdateStatus:
 async def status_internal(context: ServiceContext, propagate_exception: bool = False) -> UpdateStatus:
     try:
         try:
-            applied = await context.middleware.call('cache.get', 'update.applied')
+            applied = await context.middleware.call("cache.get", "update.applied")
         except KeyError:
             applied = False
         if applied:
             raise CallError(
-                'System update was already applied, system reboot is required.',
+                "System update was already applied, system reboot is required.",
                 ErrnoMixin.EREBOOTREQUIRED,
             )
 
-        if await context.middleware.call('failover.licensed'):
-            if await context.middleware.call('failover.disabled.reasons'):
+        if await context.middleware.call("failover.licensed"):
+            if await context.middleware.call("failover.disabled.reasons"):
                 raise CallError(
-                    'HA is configured but currently unavailable.',
+                    "HA is configured but currently unavailable.",
                     ErrnoMixin.EHAUNAVAILABLE,
                 )
 
-        current_version = await context.middleware.call('system.version_short')
+        current_version = await context.middleware.call("system.version_short")
         config = await context.call2(context.s.update.config)
         trains = await get_trains(context)
 
@@ -63,7 +63,7 @@ async def status_internal(context: ServiceContext, propagate_exception: bool = F
             if new_version is not None:
                 break
         else:
-            raise CallError('No releases match specified update profile.', errno.ENOPKG)
+            raise CallError("No releases match specified update profile.", errno.ENOPKG)
 
         if new_version.version == current_version:
             status_new_version = None
@@ -71,8 +71,8 @@ async def status_internal(context: ServiceContext, propagate_exception: bool = F
             if not await can_update_to(context, new_version.version):
                 raise CallError(
                     (
-                        f'Currently installed version {current_version} is newer than the newest version '
-                        f'{new_version.version} provided by train {next_train}.'
+                        f"Currently installed version {current_version} is newer than the newest version "
+                        f"{new_version.version} provided by train {next_train}."
                     ),
                     errno.ENOPKG,
                 )
@@ -81,7 +81,7 @@ async def status_internal(context: ServiceContext, propagate_exception: bool = F
 
         return _result(
             context,
-            'NORMAL',
+            "NORMAL",
             status=UpdateStatusStatus(
                 current_version=UpdateStatusCurrentVersion(
                     train=current_train_name,
@@ -98,7 +98,7 @@ async def status_internal(context: ServiceContext, propagate_exception: bool = F
         if isinstance(e, CallError):
             return _error(context, e.errno, e.errmsg)
         else:
-            context.logger.exception('Failed to get update status')
+            context.logger.exception("Failed to get update status")
             return _error(context, errno.EFAULT, repr(e))
 
 
@@ -122,7 +122,7 @@ def _result(
 
 
 def _error(context: ServiceContext, code: int, reason: str) -> UpdateStatus:
-    return _result(context, 'ERROR', error=UpdateStatusError(errname=get_errname(code), reason=reason))
+    return _result(context, "ERROR", error=UpdateStatusError(errname=get_errname(code), reason=reason))
 
 
 async def set_update_download_progress(
@@ -132,7 +132,7 @@ async def set_update_download_progress(
 ) -> None:
     global _update_download_progress
     _update_download_progress = progress
-    context.middleware.send_event('update.status', 'CHANGED', status={
+    context.middleware.send_event("update.status", "CHANGED", status={
         **update_status.model_dump(),
-        'update_download_progress': progress,
+        "update_download_progress": progress,
     })

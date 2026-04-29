@@ -17,13 +17,13 @@ __all__ = [
 
 class RDMAInterfaceEntry(BaseModel):
     id: str
-    node: str = ''
+    node: str = ""
     ifname: str
     address: IPvAnyAddress
     prefixlen: int
     mtu: int = 5000
 
-    @field_validator('address')
+    @field_validator("address")
     @classmethod
     def normalize_address(cls, value: IPvAnyAddress) -> str:
         return str(value)

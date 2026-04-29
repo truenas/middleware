@@ -32,17 +32,17 @@ class ProactiveSupportAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
-        webui_page = 'System Settings->General->Support page'
-        support = await self.middleware.call('support.config')
-        available = await self.middleware.call('support.is_available')
-        if available and support['enabled'] is None:
-            return Alert(ProactiveSupportAlert(f'Proactive support is not configured. Review the {webui_page}.'))
+        webui_page = "System Settings->General->Support page"
+        support = await self.middleware.call("support.config")
+        available = await self.middleware.call("support.is_available")
+        if available and support["enabled"] is None:
+            return Alert(ProactiveSupportAlert(f"Proactive support is not configured. Review the {webui_page}."))
 
-        if support['enabled']:
+        if support["enabled"]:
             # This is for people who had ix alert enabled before Proactive Support
             # feature and have not filled all the new fields.
             unfilled = []
-            for name, verbose_name in await self.middleware.call('support.fields'):
+            for name, verbose_name in await self.middleware.call("support.fields"):
                 if not support[name]:
                     unfilled.append(verbose_name)
 

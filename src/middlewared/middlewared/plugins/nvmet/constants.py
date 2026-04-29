@@ -1,9 +1,9 @@
 import enum
 
-NVMET_KERNEL_CONFIG_DIR = '/sys/kernel/config/nvmet'
-NVMET_DISCOVERY_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
-NVMET_NQN_UUID = 'nqn.2011-06.com.truenas:uuid'
-NVMET_SERVICE_NAME = 'nvmet'
+NVMET_KERNEL_CONFIG_DIR = "/sys/kernel/config/nvmet"
+NVMET_DISCOVERY_NQN = "nqn.2014-08.org.nvmexpress.discovery"
+NVMET_NQN_UUID = "nqn.2011-06.com.truenas:uuid"
+NVMET_SERVICE_NAME = "nvmet"
 
 NVMET_MAX_NSID = 0xFFFFFFFE
 
@@ -33,7 +33,7 @@ class ApiMapper(enum.Enum):
                 return x
 
         if raise_exception:
-            raise ValueError(f'Invalid db supplied: {needle}')
+            raise ValueError(f"Invalid db supplied: {needle}")
         else:
             return None
 
@@ -43,37 +43,37 @@ class ApiMapper(enum.Enum):
             if x.api == needle:
                 return x
         if raise_exception:
-            raise ValueError(f'Invalid api supplied: {needle}')
+            raise ValueError(f"Invalid api supplied: {needle}")
         else:
             return None
 
 
 class DHCHAP_DHGROUP(ApiMapper):
-    NULL = (0, None, 'null')
-    B2048 = (1, '2048-BIT', 'ffdhe2048')
-    B3072 = (2, '3072-BIT', 'ffdhe3072')
-    B4096 = (3, '4096-BIT', 'ffdhe4096')
-    B6144 = (4, '6144-BIT', 'ffdhe6144')
-    B8192 = (5, '8192-BIT', 'ffdhe8192')
+    NULL = (0, None, "null")
+    B2048 = (1, "2048-BIT", "ffdhe2048")
+    B3072 = (2, "3072-BIT", "ffdhe3072")
+    B4096 = (3, "4096-BIT", "ffdhe4096")
+    B6144 = (4, "6144-BIT", "ffdhe6144")
+    B8192 = (5, "8192-BIT", "ffdhe8192")
 
 
 class DHCHAP_HASH(ApiMapper):
-    SHA_256 = (1, 'SHA-256', 'hmac(sha256)')
-    SHA_384 = (2, 'SHA-384', 'hmac(sha384)')
-    SHA_512 = (3, 'SHA-512', 'hmac(sha512)')
+    SHA_256 = (1, "SHA-256", "hmac(sha256)")
+    SHA_384 = (2, "SHA-384", "hmac(sha384)")
+    SHA_512 = (3, "SHA-512", "hmac(sha512)")
 
 
 class PORT_TRTYPE(ApiMapper):
-    RDMA = (1, 'RDMA', 'rdma')
-    FC = (2, 'FC', 'fc')
-    TCP = (3, 'TCP', 'tcp')
+    RDMA = (1, "RDMA", "rdma")
+    FC = (2, "FC", "fc")
+    TCP = (3, "TCP", "tcp")
 
 
 class PORT_ADDR_FAMILY(ApiMapper):
-    IPV4 = (1, 'IPV4', 'ipv4', 'IPv4')
-    IPV6 = (2, 'IPV6', 'ipv6', 'IPv6')
-    IB = (3, 'IB', 'ib', 'IB')
-    FC = (4, 'FC', 'fc', 'FC')
+    IPV4 = (1, "IPV4", "ipv4", "IPv4")
+    IPV6 = (2, "IPV6", "ipv6", "IPv6")
+    IB = (3, "IB", "ib", "IB")
+    FC = (4, "FC", "fc", "FC")
 
 
 def port_transport_family_generator():
@@ -91,12 +91,12 @@ def similar_ports(ports: dict):
         yield dict(
             filter(
                 lambda item: all(
-                    [item[1]['addr_trtype'] == transport, item[1]['addr_adrfam'] == family]),
+                    [item[1]["addr_trtype"] == transport, item[1]["addr_adrfam"] == family]),
                 ports.items()
             )
         )
 
 
 class NAMESPACE_DEVICE_TYPE(ApiMapper):
-    ZVOL = (1, 'ZVOL', '0')
-    FILE = (2, 'FILE', '1')
+    ZVOL = (1, "ZVOL", "0")
+    FILE = (2, "FILE", "1")

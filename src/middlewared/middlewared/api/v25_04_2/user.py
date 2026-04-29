@@ -49,7 +49,7 @@ class UserEntry(BaseModel):
     full_name: str
     builtin: bool
     smb: bool = True
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
+    userns_idmap: Literal["DIRECT"] | ContainerXID | None = None
     """
     Species the subuid mapping for this user. If DIRECT then the UID will be
     directly mapped to all containers. Alternatively, the target UID may be
@@ -177,13 +177,13 @@ class UserShellChoicesArgs(BaseModel):
 class UserShellChoicesResult(BaseModel):
     result: dict = Field(examples=[
         {
-            '/usr/bin/bash': 'bash',
-            '/usr/bin/rbash': 'rbash',
-            '/usr/bin/dash': 'dash',
-            '/usr/bin/sh': 'sh',
-            '/usr/bin/zsh': 'zsh',
-            '/usr/bin/tmux': 'tmux',
-            '/usr/sbin/nologin': 'nologin'
+            "/usr/bin/bash": "bash",
+            "/usr/bin/rbash": "rbash",
+            "/usr/bin/dash": "dash",
+            "/usr/bin/sh": "sh",
+            "/usr/bin/zsh": "zsh",
+            "/usr/bin/tmux": "tmux",
+            "/usr/sbin/nologin": "nologin"
         },
     ])
 
@@ -219,7 +219,7 @@ class UserGetUserObjResult(BaseModel):
     """
     sid: str | None
     """optional SID value for the account that is present if `sid_info` is specified in payload."""
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
+    source: Literal["LOCAL", "ACTIVEDIRECTORY", "LDAP"]
     """the source for the user account."""
     local: bool
     """boolean value indicating whether the account is local to TrueNAS or provided by a directory service."""
@@ -250,7 +250,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 
 
 class UserSetupLocalAdministratorArgs(BaseModel):
-    username: Literal['root', 'truenas_admin']
+    username: Literal["root", "truenas_admin"]
     password: Secret[str]
     options: UserSetupLocalAdministratorOptions = Field(default=UserSetupLocalAdministratorOptions())
 

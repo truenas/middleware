@@ -10,7 +10,7 @@ from .pool_utils import convert_topology, find_vdev
 class ZFSPoolService(CRUDService):
 
     class Config:
-        namespace = 'zfs.pool'
+        namespace = "zfs.pool"
         private = True
 
     def query(self, filters=None, options=None):
@@ -21,11 +21,11 @@ class ZFSPoolService(CRUDService):
         Create a zpool.
             Cf. `pool.create` public endpoint for schema documentation'
         """
-        data.setdefault('options', dict())
-        data.setdefault('fsoptions', dict())
+        data.setdefault("options", dict())
+        data.setdefault("fsoptions", dict())
         with libzfs.ZFS() as zfs:
-            topology = convert_topology(zfs, data['vdevs'])
-            zfs.create(data['name'], topology, data['options'], data['fsoptions'])
+            topology = convert_topology(zfs, data["vdevs"])
+            zfs.create(data["name"], topology, data["options"], data["fsoptions"])
 
     def update(self, name: str, options: dict | None = None):
         """
@@ -35,16 +35,16 @@ class ZFSPoolService(CRUDService):
         if options is None:
             options = dict()
 
-        options.setdefault('properties', dict())
+        options.setdefault("properties", dict())
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
-                for k, v in options['properties'].items():
+                for k, v in options["properties"].items():
                     prop = pool.properties[k]
-                    if 'value' in v:
-                        prop.value = v['value']
-                    elif 'parsed' in v:
-                        prop.parsed = v['parsed']
+                    if "value" in v:
+                        prop.value = v["value"]
+                    elif "parsed" in v:
+                        prop.parsed = v["parsed"]
         except libzfs.ZFSException as e:
             raise CallError(str(e))
         else:
@@ -57,10 +57,10 @@ class ZFSPoolService(CRUDService):
         """
         if options is None:
             options = dict()
-        options.setdefault('force', False)
+        options.setdefault("force", False)
         try:
             with libzfs.ZFS() as zfs:
-                zfs.destroy(name, force=options['force'])
+                zfs.destroy(name, force=options["force"])
         except libzfs.ZFSException as e:
             errno_ = errno.EFAULT
             if e.code == libzfs.Error.UMOUNTFAILED:
@@ -82,7 +82,7 @@ class ZFSPoolService(CRUDService):
             Cf. `pool.extend` public endpoint for schema documentation'
         """
         if new is None and existing is None:
-            raise CallError('New or existing vdevs must be provided', errno.EINVAL)
+            raise CallError("New or existing vdevs must be provided", errno.EINVAL)
 
         try:
             with libzfs.ZFS() as zfs:
@@ -94,15 +94,15 @@ class ZFSPoolService(CRUDService):
 
                 # Make sure we can find all target vdev
                 for i in (existing or []):
-                    target = find_vdev(pool, i['target'])
+                    target = find_vdev(pool, i["target"])
                     if target is None:
                         raise CallError(f"Failed to find vdev for {i['target']}", errno.EINVAL)
-                    i['target'] = target
+                    i["target"] = target
 
                 for i in (existing or []):
-                    newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
-                    newvdev.path = i['path']
-                    i['target'].attach(newvdev)
+                    newvdev = libzfs.ZFSVdev(zfs, i["type"].lower())
+                    newvdev.path = i["path"]
+                    i["target"].attach(newvdev)
 
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
@@ -111,11 +111,11 @@ class ZFSPoolService(CRUDService):
         verrors = ValidationErrors()
         try:
             libzfs.validate_draid_configuration(
-                numdisks, nparity, vdev['draid_spare_disks'], vdev['draid_data_disks'],
+                numdisks, nparity, vdev["draid_spare_disks"], vdev["draid_data_disks"],
             )
         except libzfs.ZFSException as e:
             verrors.add(
-                f'topology.{topology_type}.type',
+                f"topology.{topology_type}.type",
                 str(e),
             )
 

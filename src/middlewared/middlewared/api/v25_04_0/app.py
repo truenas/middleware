@@ -7,22 +7,22 @@ from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_a
 from .catalog import CatalogAppInfo
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
-    'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
-    'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIdsArgs', 'AppContainerIdsResult',
-    'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult',
-    'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppCertificateAuthorityArgs',
-    'AppCertificateAuthorityResult', 'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppIpChoicesArgs', 'AppIpChoicesResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
-    'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult',
+    "AppCategoriesArgs", "AppCategoriesResult", "AppSimilarArgs", "AppSimilarResult", "AppAvailableItem",
+    "AppEntry", "AppCreateArgs", "AppCreateResult", "AppUpdateArgs", "AppUpdateResult", "AppDeleteArgs",
+    "AppDeleteResult", "AppConfigArgs", "AppConfigResult", "AppConvertToCustomArgs", "AppConvertToCustomResult",
+    "AppStopArgs", "AppStopResult", "AppStartArgs", "AppStartResult", "AppRedeployArgs", "AppRedeployResult",
+    "AppOutdatedDockerImagesArgs", "AppOutdatedDockerImagesResult", "AppPullImagesArgs", "AppPullImagesResult",
+    "AppContainerIdsArgs", "AppContainerIdsResult",
+    "AppContainerConsoleChoicesArgs", "AppContainerConsoleChoicesResult",
+    "AppCertificateChoicesArgs", "AppCertificateChoicesResult", "AppCertificateAuthorityArgs",
+    "AppCertificateAuthorityResult", "AppUsedPortsArgs", "AppUsedPortsResult", "AppIpChoicesArgs", "AppIpChoicesResult",
+    "AppAvailableSpaceArgs", "AppAvailableSpaceResult", "AppGpuChoicesArgs", "AppGpuChoicesResult", "AppRollbackArgs",
+    "AppRollbackResult", "AppRollbackVersionsArgs", "AppRollbackVersionsResult", "AppUpgradeArgs", "AppUpgradeResult",
+    "AppUpgradeSummaryArgs", "AppUpgradeSummaryResult",
 ]
 
 
-CONTAINER_STATES: TypeAlias = Literal['crashed', 'created', 'exited', 'running', 'starting']
+CONTAINER_STATES: TypeAlias = Literal["crashed", "created", "exited", "running", "starting"]
 
 
 class HostPorts(BaseModel):
@@ -40,7 +40,7 @@ class AppVolumes(BaseModel):
     source: str
     destination: str
     mode: str
-    type_: str = Field(alias='type')
+    type_: str = Field(alias="type")
 
 
 class AppContainerDetails(BaseModel):
@@ -57,7 +57,7 @@ class AppNetworks(BaseModel):
     Id: str
     Labels: dict
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class AppActiveWorkloads(BaseModel):
@@ -72,7 +72,7 @@ class AppActiveWorkloads(BaseModel):
 class AppEntry(BaseModel):
     name: NonEmptyString
     id: NonEmptyString
-    state: Literal['CRASHED', 'DEPLOYING', 'RUNNING', 'STOPPED', 'STOPPING']
+    state: Literal["CRASHED", "DEPLOYING", "RUNNING", "STOPPED", "STOPPING"]
     upgrade_available: bool
     latest_version: NonEmptyString | None
     image_updates_available: bool
@@ -88,14 +88,14 @@ class AppEntry(BaseModel):
     config: dict | None = None
 
 
-@single_argument_args('app_create')
+@single_argument_args("app_create")
 class AppCreateArgs(BaseModel):
     custom_app: bool = False
     values: Secret[dict] = Field(default_factory=dict)
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = ""
     catalog_app: str | None = None
-    app_name: str = Field(pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
+    app_name: str = Field(pattern=r"^[a-z]([-a-z0-9]*[a-z0-9])?$", min_length=1, max_length=40)
     """
     Application name must have the following:
     1) Lowercase alphanumeric characters can be specified
@@ -103,8 +103,8 @@ class AppCreateArgs(BaseModel):
     3) Hyphen '-' is allowed but not as the first or last character
     e.g abc123, abc, abcd-1232
     """
-    train: NonEmptyString = 'stable'
-    version: NonEmptyString = 'latest'
+    train: NonEmptyString = "stable"
+    version: NonEmptyString = "latest"
 
 
 class AppCreateResult(BaseModel):
@@ -114,7 +114,7 @@ class AppCreateResult(BaseModel):
 class AppUpdate(BaseModel):
     values: Secret[dict] = Field(default_factory=dict)
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = ""
 
 
 class AppUpdateArgs(BaseModel):
@@ -324,7 +324,7 @@ class AppRollbackVersionsResult(BaseModel):
 
 
 class UpgradeOptions(BaseModel):
-    app_version: NonEmptyString = 'latest'
+    app_version: NonEmptyString = "latest"
     values: Secret[dict] = Field(default_factory=dict)
     snapshot_hostpaths: bool = False
 
@@ -339,7 +339,7 @@ class AppUpgradeResult(BaseModel):
 
 
 class UpgradeSummaryOptions(BaseModel):
-    app_version: NonEmptyString = 'latest'
+    app_version: NonEmptyString = "latest"
 
 
 class AppUpgradeSummaryArgs(BaseModel):

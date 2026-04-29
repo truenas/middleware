@@ -40,7 +40,7 @@ if TYPE_CHECKING:
         get: Literal[False]
 
 
-PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
+PAGINATION_OPTS = ("count", "get", "limit", "offset", "select")
 
 
 def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[BaseModel]:
@@ -68,11 +68,11 @@ class CRUDServiceMetabase(ServiceBase):
         if any(
             name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
-                ('CRUDService', ('ServiceChangeMixin', 'Service', 'Generic')),
-                ('GenericCRUDService', ('CRUDService', 'Generic')),
-                ('SharingTaskService', ('CRUDService', 'Generic')),
-                ('SharingService', ('SharingTaskService', 'Generic')),
-                ('TaskPathService', ('SharingTaskService', 'Generic')),
+                ("CRUDService", ("ServiceChangeMixin", "Service", "Generic")),
+                ("GenericCRUDService", ("CRUDService", "Generic")),
+                ("SharingTaskService", ("CRUDService", "Generic")),
+                ("SharingService", ("SharingTaskService", "Generic")),
+                ("TaskPathService", ("SharingTaskService", "Generic")),
             )
         ):
             return klass
@@ -84,14 +84,14 @@ class CRUDServiceMetabase(ServiceBase):
 
         if not private:
             if not config.role_prefix:
-                raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
+                raise ValueError(f"{config.namespace}: public CRUDService must have role_prefix defined")
             if not config.entry:
-                raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
+                raise ValueError(f"{config.namespace}: public CRUDService must have entry defined")
 
         if entry is not None:
             query_result_model = query_result(entry)
             is_generic_crud = any(
-                base.__name__ == 'GenericCRUDService' for base in klass.__mro__[1:]
+                base.__name__ == "GenericCRUDService" for base in klass.__mro__[1:]
             )
             use_check_annotations = is_generic_crud
 
@@ -100,12 +100,12 @@ class CRUDServiceMetabase(ServiceBase):
             # that check_method_annotations can eval() them
             if is_generic_crud:
                 mod = sys.modules[klass.query.__module__].__dict__
-                mod['E'] = entry
-                mod['PK'] = entry.model_fields[config.datastore_primary_key].annotation
+                mod["E"] = entry
+                mod["PK"] = entry.model_fields[config.datastore_primary_key].annotation
 
             if (
-                any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
-                not hasattr(klass.query, 'new_style_accepts')
+                any(klass.query == getattr(parent, "query", None) for parent in klass.__mro__[1:]) or
+                not hasattr(klass.query, "new_style_accepts")
             ):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
@@ -149,18 +149,18 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         super().__init__(middleware)
         if self._config.event_register and self._config.entry:
             if self._config.role_prefix:
-                roles = [f'{self._config.role_prefix}_READ']
+                roles = [f"{self._config.role_prefix}_READ"]
             else:
-                roles = ['READONLY_ADMIN']
+                roles = ["READONLY_ADMIN"]
 
             self.middleware.event_register(
-                f'{self._config.namespace}.query',
-                f'Sent on {self._config.namespace} changes.',
+                f"{self._config.namespace}.query",
+                f"Sent on {self._config.namespace} changes.",
                 private=self._config.private,
                 models={
-                    'ADDED': added_event_model(self._config.entry),
-                    'CHANGED': changed_event_model(self._config.entry),
-                    'REMOVED': removed_event_model(self._config.entry),
+                    "ADDED": added_event_model(self._config.entry),
+                    "CHANGED": changed_event_model(self._config.entry),
+                    "REMOVED": removed_event_model(self._config.entry),
                 },
                 roles=roles,
             )
@@ -168,20 +168,20 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
     @private
     async def get_options(self, options):
         options = options or {}
-        options['extend'] = self._config.datastore_extend
-        options['extend_context'] = self._config.datastore_extend_context
-        options['extend_fk'] = self._config.datastore_extend_fk
-        options['prefix'] = self._config.datastore_prefix
-        options.setdefault('force_sql_filters', False)
-        options.setdefault('count', False)
-        options.setdefault('get', False)
+        options["extend"] = self._config.datastore_extend
+        options["extend_context"] = self._config.datastore_extend_context
+        options["extend_fk"] = self._config.datastore_extend_fk
+        options["prefix"] = self._config.datastore_prefix
+        options.setdefault("force_sql_filters", False)
+        options.setdefault("count", False)
+        options.setdefault("get", False)
         return options
 
     async def query(self, filters=None, options=None) -> list[E] | E | int:
         if not self._config.datastore:
             raise NotImplementedError(
-                f'{self._config.namespace}.query must be implemented or a '
-                '`datastore` Config attribute provided.'
+                f"{self._config.namespace}.query must be implemented or a "
+                "`datastore` Config attribute provided."
             )
 
         if not filters:
@@ -192,24 +192,24 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result. Exception is when forced to use sql
         # for filters for performance reasons.
-        if not options['force_sql_filters'] and options['extend']:
+        if not options["force_sql_filters"] and options["extend"]:
             datastore_options = options.copy()
             for option in PAGINATION_OPTS:
                 datastore_options.pop(option, None)
             result = await self.middleware.call(
-                'datastore.query', self._config.datastore, [], datastore_options
+                "datastore.query", self._config.datastore, [], datastore_options
             )
             result = await self.middleware.run_in_thread(
                 filter_list, result, filters, options
             )
         else:
             result = await self.middleware.call(
-                'datastore.query', self._config.datastore, filters, options,
+                "datastore.query", self._config.datastore, filters, options,
             )
 
         if self._config.generic:
-            if not options['count']:
-                if options['get']:
+            if not options["count"]:
+                if options["get"]:
                     return self._config.entry.__query_result_item__(**result)
                 else:
                     return [self._config.entry.__query_result_item__(**item) for item in result]
@@ -219,8 +219,8 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
     @pass_app(message_id=True)
     async def create(self, app, audit_callback, message_id, data):
         return await self.middleware._call(
-            f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
-                self.do_create, 'create', 'ADDED',
+            f"{self._config.namespace}.create", self, await self._get_crud_wrapper_func(
+                self.do_create, "create", "ADDED",
             ), [data], app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
@@ -229,8 +229,8 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
     @pass_app(message_id=True)
     async def update(self, app, audit_callback, message_id, id_, data):
         return await self.middleware._call(
-            f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
-                self.do_update, 'update', 'CHANGED', id_,
+            f"{self._config.namespace}.update", self, await self._get_crud_wrapper_func(
+                self.do_update, "update", "CHANGED", id_,
             ), [id_, data], app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
@@ -239,8 +239,8 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
     @pass_app(message_id=True)
     async def delete(self, app, audit_callback, message_id, id_, *args):
         return await self.middleware._call(
-            f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(
-                self.do_delete, 'delete', 'REMOVED', id_,
+            f"{self._config.namespace}.delete", self, await self._get_crud_wrapper_func(
+                self.do_delete, "delete", "REMOVED", id_,
             ), [id_] + list(args), app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
@@ -250,22 +250,22 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         def send_event(rv):
             if isinstance(rv, BaseModel):
                 rv = rv.model_dump()
-            if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                kwargs = {'id': oid or rv['id']}
+            if self._config.event_send and (action == "delete" or isinstance(rv, dict) and "id" in rv):
+                kwargs = {"id": oid or rv["id"]}
                 if isinstance(rv, dict):
-                    kwargs['fields'] = rv
-                self.middleware.send_event(f'{self._config.namespace}.query', event_type, **kwargs)
+                    kwargs["fields"] = rv
+                self.middleware.send_event(f"{self._config.namespace}.query", event_type, **kwargs)
 
         if asyncio.iscoroutinefunction(func):
             async def nf(*args, **kwargs):
                 rv = await func(*args, **kwargs)
-                await self.middleware.call_hook(f'{self._config.namespace}.post_{action}', rv)
+                await self.middleware.call_hook(f"{self._config.namespace}.post_{action}", rv)
                 send_event(rv)
                 return rv
         else:
             def nf(*args, **kwargs):
                 rv = func(*args, **kwargs)
-                self.middleware.call_hook_sync(f'{self._config.namespace}.post_{action}', rv)
+                self.middleware.call_hook_sync(f"{self._config.namespace}.post_{action}", rv)
                 send_event(rv)
                 return rv
 
@@ -281,12 +281,12 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options = options or {}
 
         instance = await self.middleware.call(
-            f'{self._config.namespace}.query',
-            [[self._config.datastore_primary_key, '=', id_]],
+            f"{self._config.namespace}.query",
+            [[self._config.datastore_primary_key, "=", id_]],
             options
         )
         if not instance:
-            raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
+            raise InstanceNotFound(f"{self._config.verbose_name} {id_} does not exist")
 
         return instance[0]
 
@@ -298,26 +298,26 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         options = options or {}
 
         instance = self.middleware.call_sync(
-            f'{self._config.namespace}.query',
-            [[self._config.datastore_primary_key, '=', id_]],
+            f"{self._config.namespace}.query",
+            [[self._config.datastore_primary_key, "=", id_]],
             options,
         )
         if not instance:
-            raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
+            raise InstanceNotFound(f"{self._config.verbose_name} {id_} does not exist")
 
         return instance[0]
 
     async def _ensure_unique(self, verrors, schema_name, field_name, value, id_=None, query_field_name=None):
         if query_field_name is None:
             query_field_name = field_name
-        f = [(query_field_name, '=', value)]
+        f = [(query_field_name, "=", value)]
         if id_ is not None:
-            f.append(('id', '!=', id_))
-        instance = await self.middleware.call(f'{self._config.namespace}.query', f)
+            f.append(("id", "!=", id_))
+        instance = await self.middleware.call(f"{self._config.namespace}.query", f)
         if instance:
             verrors.add(
-                '.'.join(filter(None, [schema_name, field_name])),
-                f'Object with this {field_name} already exists'
+                ".".join(filter(None, [schema_name, field_name])),
+                f"Object with this {field_name} already exists"
             )
 
     @private
@@ -327,66 +327,66 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         """
         dependencies = await self.get_dependencies(id_, ignored)
         if dependencies:
-            dep_err = 'This object is being used by following service(s):\n'
+            dep_err = "This object is being used by following service(s):\n"
             for index, dependency in enumerate(dependencies.values()):
-                key = 'service' if dependency['service'] else 'datastore'
-                dep_err += f'{index + 1}) {dependency[key]!r} {key.capitalize()}\n'
+                key = "service" if dependency["service"] else "datastore"
+                dep_err += f"{index + 1}) {dependency[key]!r} {key.capitalize()}\n"
 
-            raise CallError(dep_err, errno.EBUSY, {'dependencies': list(dependencies.values())})
+            raise CallError(dep_err, errno.EBUSY, {"dependencies": list(dependencies.values())})
 
     @private
     async def get_dependencies(self, id_, ignored=None):
         ignored = ignored or set()
 
         services = {
-            service['config'].get('datastore'): (name, service)
-            for name, service in (await self.middleware.call('core.get_services')).items()
-            if service['config'].get('datastore')
+            service["config"].get("datastore"): (name, service)
+            for name, service in (await self.middleware.call("core.get_services")).items()
+            if service["config"].get("datastore")
         }
 
         dependencies = {}
-        for datastore, fk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
+        for datastore, fk in await self.middleware.call("datastore.get_backrefs", self._config.datastore):
             if datastore in ignored:
                 continue
 
             if datastore in services:
                 service = {
-                    'name': services[datastore][0],
-                    'type': services[datastore][1]['type'],
+                    "name": services[datastore][0],
+                    "type": services[datastore][1]["type"],
                 }
 
-                if service['name'] in ignored:
+                if service["name"] in ignored:
                     continue
             else:
                 service = None
 
-            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id_)])
+            objects = await self.middleware.call("datastore.query", datastore, [(fk, "=", id_)])
             if objects:
                 data = {
-                    'objects': objects,
+                    "objects": objects,
                 }
                 if service is not None:
                     query_col = fk
-                    prefix = services[datastore][1]['config'].get('datastore_prefix')
+                    prefix = services[datastore][1]["config"].get("datastore_prefix")
                     if prefix:
                         if query_col.startswith(prefix):
                             query_col = query_col[len(prefix):]
 
-                    if service['type'] == 'config':
+                    if service["type"] == "config":
                         data = {
-                            'key': query_col,
+                            "key": query_col,
                         }
 
-                    if service['type'] == 'crud':
+                    if service["type"] == "crud":
                         data = {
-                            'objects': await self.middleware.call(
-                                f'{service["name"]}.query', [('id', 'in', [object_['id'] for object_ in objects])],
+                            "objects": await self.middleware.call(
+                                f'{service["name"]}.query', [("id", "in", [object_["id"] for object_ in objects])],
                             ),
                         }
 
                 dependencies[datastore] = dict({
-                    'datastore': datastore,
-                    'service': service['name'] if service else None,
+                    "datastore": datastore,
+                    "service": service["name"] if service else None,
                 }, **data)
 
         return dependencies

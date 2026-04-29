@@ -18,23 +18,23 @@ if TYPE_CHECKING:
 
 class Route53Authenticator(Authenticator):
 
-    NAME = 'route53'
+    NAME = "route53"
     SCHEMA_MODEL = Route53SchemaArgs
 
     def initialize_credentials(self) -> None:
-        self.access_key_id: str = self.attributes['access_key_id']
-        self.secret_access_key: str = self.attributes['secret_access_key']
+        self.access_key_id: str = self.attributes["access_key_id"]
+        self.secret_access_key: str = self.attributes["secret_access_key"]
         self.client: Any = boto3.Session(
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
-        ).client('route53')
+        ).client("route53")
 
     @staticmethod
     async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:
         return data
 
     def _perform(self, domain: str, validation_name: str, validation_content: str) -> Any:
-        return self._change_txt_record('UPSERT', validation_name, validation_content)
+        return self._change_txt_record("UPSERT", validation_name, validation_content)
 
     def wait_for_records_to_propagate(self, resp_change_info: Any) -> None:
         """
@@ -43,8 +43,8 @@ class Route53Authenticator(Authenticator):
         """
         r = resp_change_info
         for unused_n in range(0, 120):
-            r = self.client.get_change(Id=resp_change_info['Id'])
-            if r['ChangeInfo']['Status'] == 'INSYNC':
+            r = self.client.get_change(Id=resp_change_info["Id"])
+            if r["ChangeInfo"]["Status"] == "INSYNC":
                 return
             time.sleep(5)
 
@@ -52,22 +52,22 @@ class Route53Authenticator(Authenticator):
 
     def _find_zone_id_for_domain(self, domain: str) -> Any:
         # Finding zone id for the given domain
-        paginator = self.client.get_paginator('list_hosted_zones')
-        target_labels = domain.rstrip('.').split('.')
+        paginator = self.client.get_paginator("list_hosted_zones")
+        target_labels = domain.rstrip(".").split(".")
         zones: list[tuple[str, Any]] = []
         try:
             for page in paginator.paginate():
-                for zone in page['HostedZones']:
-                    if zone['Config']['PrivateZone']:
+                for zone in page["HostedZones"]:
+                    if zone["Config"]["PrivateZone"]:
                         continue
 
-                    candidate_labels = zone['Name'].rstrip('.').split('.')
+                    candidate_labels = zone["Name"].rstrip(".").split(".")
                     if candidate_labels == target_labels[-len(candidate_labels):]:
-                        zones.append((zone['Name'], zone['Id']))
+                        zones.append((zone["Name"], zone["Id"]))
             if not zones:
-                raise CallError(f'Unable to find a Route53 hosted zone for {domain}', errno=errno.ENOENT)
+                raise CallError(f"Unable to find a Route53 hosted zone for {domain}", errno=errno.ENOENT)
         except boto_exceptions.ClientError as e:
-            raise CallError(f'Failed to get Hosted zones with provided credentials :{e}')
+            raise CallError(f"Failed to get Hosted zones with provided credentials :{e}")
 
         # Order the zones that are suffixes for our desired to domain by
         # length, this puts them in an order like:
@@ -77,31 +77,31 @@ class Route53Authenticator(Authenticator):
         return zones[0][1]
 
     def _change_txt_record(self, action: str, validation_domain_name: str, validation: str) -> Any:
-        if action not in ('UPSERT', 'DELETE'):
-            raise CallError('Please specify a valid action for changing TXT record for Route53')
+        if action not in ("UPSERT", "DELETE"):
+            raise CallError("Please specify a valid action for changing TXT record for Route53")
 
         zone_id = self._find_zone_id_for_domain(validation_domain_name)
         try:
             response = self.client.change_resource_record_sets(
                 HostedZoneId=zone_id,
                 ChangeBatch={
-                    'Comment': 'TrueNAS-dns-route53 certificate validation ' + action,
-                    'Changes': [
+                    "Comment": "TrueNAS-dns-route53 certificate validation " + action,
+                    "Changes": [
                         {
-                            'Action': action,
-                            'ResourceRecordSet': {
-                                'Name': validation_domain_name,
-                                'Type': 'TXT',
-                                'TTL': 10,
-                                'ResourceRecords': [{'Value': f'"{validation}"'}],
+                            "Action": action,
+                            "ResourceRecordSet": {
+                                "Name": validation_domain_name,
+                                "Type": "TXT",
+                                "TTL": 10,
+                                "ResourceRecords": [{"Value": f'"{validation}"'}],
                             }
                         }
                     ]
                 }
             )
-            return response['ChangeInfo']
+            return response["ChangeInfo"]
         except Exception as e:
-            raise CallError(f'Failed to {action} Route53 record sets: {e}')
+            raise CallError(f"Failed to {action} Route53 record sets: {e}")
 
     def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
-        self._change_txt_record('DELETE', validation_name, validation_content)
+        self._change_txt_record("DELETE", validation_name, validation_content)

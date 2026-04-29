@@ -84,8 +84,8 @@ def resolve_dataset_path(path: str, middleware: Middleware | None = None) -> tup
             if mntinfo.sb_source and mntinfo.mnt_point:
                 dataset = mntinfo.sb_source
                 relative_path = os.path.relpath(path, mntinfo.mnt_point)
-                if relative_path == '.':
-                    relative_path = ''
+                if relative_path == ".":
+                    relative_path = ""
 
                 return dataset, relative_path
         except Exception as e:
@@ -99,10 +99,10 @@ def resolve_dataset_path(path: str, middleware: Middleware | None = None) -> tup
 
         try:
             # Use libzfs via middleware to look up dataset by mountpoint
-            datasets = middleware.call_sync('pool.dataset.query', [['mountpoint', '=', path]])
+            datasets = middleware.call_sync("pool.dataset.query", [["mountpoint", "=", path]])
             if datasets:
-                dataset_name = datasets[0]['id']
-                return dataset_name, ''
+                dataset_name = datasets[0]["id"]
+                return dataset_name, ""
         except Exception as e:
             logger.debug(f"libzfs lookup failed for {path}: {e}")
 

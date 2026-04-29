@@ -46,7 +46,7 @@ except Exception:
 def is_tally_locked(username) -> bool:
     """ This function checks for whether the pam_truenas user keyring has a tally_lock key set on it. """
     if pam_log is None:
-        raise RuntimeError('No keyring access')
+        raise RuntimeError("No keyring access")
 
     return pam_log.is_tally_locked(username)
 
@@ -54,7 +54,7 @@ def is_tally_locked(username) -> bool:
 def reset_tally(username) -> None:
     """ Reset FAILLOG for the specified username and remove its tally-lock """
     if pam_log is None:
-        raise RuntimeError('No keyring access')
+        raise RuntimeError("No keyring access")
 
     return pam_log.reset_tally(username)
 
@@ -63,6 +63,6 @@ def tally_locked_users() -> set[str]:
     """ Create a set of usernames of all users who are currently tally locked. The
     TRUENAS_PAM_KEYRING key descriptions contain the affected user's name. """
     if pam_log is None:
-        raise RuntimeError('No keyring access')
+        raise RuntimeError("No keyring access")
 
     return pam_log.tally_locked_users()

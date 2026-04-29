@@ -14,7 +14,7 @@ from middlewared.utils.tdb import (
     get_tdb_handle,
 )
 
-CACHE_FILE_NAME = 'middleware_cache'
+CACHE_FILE_NAME = "middleware_cache"
 CACHE_LOCAL_VOLATILE_OPTS = TDBOptions(TDBPathType.VOLATILE, TDBDataType.JSON)
 CACHE_CLUSTER_OPTS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON, True)
 
@@ -61,11 +61,11 @@ class KVCache:
             except (FileNotFoundError, MatchNotFound):
                 raise KeyError(key)
 
-            if data['timeout'] and self.time_fn() > data['timeout']:
+            if data["timeout"] and self.time_fn() > data["timeout"]:
                 hdl.delete(key)
                 raise KeyError(f"{key} has expired")
 
-            return data['value']
+            return data["value"]
 
     def put(self, key: str, value: Any, timeout: int = 0) -> None:
         """
@@ -80,7 +80,7 @@ class KVCache:
             if timeout != 0:
                 timeout = self.time_fn() + timeout
 
-            hdl.store(key, {'timeout': timeout, 'value': value})
+            hdl.store(key, {"timeout": timeout, "value": value})
 
     def pop(self, key: str) -> Any:
         """
@@ -108,7 +108,7 @@ class KVCache:
             except Exception:
                 return None
 
-            return result[key]['value']
+            return result[key]["value"]
 
     def get_timeout(self, key: str) -> None:
         """
@@ -137,14 +137,14 @@ class KVCache:
             except (FileNotFoundError, MatchNotFound):
                 call_method = True
             else:
-                if data['timeout'] and self.time_fn() > data['timeout']:
+                if data["timeout"] and self.time_fn() > data["timeout"]:
                     call_method = True
 
             if call_method:
                 value = method()
-                hdl.store(key, {'timeout': self.time_fn() + timeout, 'value': value})
+                hdl.store(key, {"timeout": self.time_fn() + timeout, "value": value})
             else:
-                value = data['value']
+                value = data["value"]
 
         return value
 
@@ -154,8 +154,8 @@ class KVCache:
 
         with get_tdb_handle(self.path, self.tdb_options) as hdl:
             for entry in hdl.entries():
-                if entry['value']['timeout'] and now > entry['value']['timeout']:
-                    to_del.append(entry['key'])
+                if entry["value"]["timeout"] and now > entry["value"]["timeout"]:
+                    to_del.append(entry["key"])
 
             for key in to_del:
                 hdl.delete(key)
@@ -179,7 +179,7 @@ class CacheService(Service):
             case CacheType.CLUSTERED:
                 return self.cluster
             case _:
-                raise ValueError(f'{cache_type}: unexpected cache type')
+                raise ValueError(f"{cache_type}: unexpected cache type")
 
     def has_key(self, key: str, cache_type: CacheType = CacheType.VOLATILE):
         """Check if given `key` is in cache."""
@@ -218,7 +218,7 @@ class CacheService(Service):
     @periodic(86400, run_on_start=False)
     def cleanup_expired(self):
         """Internal method to clear out any expired keys from caches to prevent unbounded growth."""
-        failover_licensed = self.middleware.call_sync('failover.licensed')
+        failover_licensed = self.middleware.call_sync("failover.licensed")
 
         for cache in CacheType:
             if not failover_licensed and cache is CacheType.CLUSTERED:
@@ -228,4 +228,4 @@ class CacheService(Service):
             try:
                 hdl.cleanup_expired()
             except Exception:
-                self.logger.exception('%s: failed to cleanup expired cache entries', cache)
+                self.logger.exception("%s: failed to cleanup expired cache entries", cache)

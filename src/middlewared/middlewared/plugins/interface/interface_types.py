@@ -4,27 +4,27 @@ from middlewared.service import Service, private
 
 
 class InterfaceType(Enum):
-    BRIDGE = 'BRIDGE'
-    LINK_AGGREGATION = 'LINK_AGGREGATION'
-    PHYSICAL = 'PHYSICAL'
-    UNKNOWN = 'UNKNOWN'
-    VLAN = 'VLAN'
+    BRIDGE = "BRIDGE"
+    LINK_AGGREGATION = "LINK_AGGREGATION"
+    PHYSICAL = "PHYSICAL"
+    UNKNOWN = "UNKNOWN"
+    VLAN = "VLAN"
 
 
 class InterfaceService(Service):
 
     class Config:
-        namespace_alias = 'interfaces'
+        namespace_alias = "interfaces"
 
     @private
     async def type(self, iface_state):
-        if iface_state['name'].startswith(('br',)):
+        if iface_state["name"].startswith(("br",)):
             return InterfaceType.BRIDGE
-        elif iface_state['name'].startswith('bond'):
+        elif iface_state["name"].startswith("bond"):
             return InterfaceType.LINK_AGGREGATION
-        elif iface_state['name'].startswith('vlan'):
+        elif iface_state["name"].startswith("vlan"):
             return InterfaceType.VLAN
-        elif not iface_state['cloned']:
+        elif not iface_state["cloned"]:
             return InterfaceType.PHYSICAL
         else:
             return InterfaceType.UNKNOWN
@@ -32,13 +32,13 @@ class InterfaceService(Service):
     @private
     async def validate_name(self, type_, name):
         if type_ == InterfaceType.BRIDGE:
-            if not (name.startswith('br') and name[2:].isdigit()):
+            if not (name.startswith("br") and name[2:].isdigit()):
                 raise ValueError('Bridge interface must start with "br" followed by an unique number.')
 
         if type_ == InterfaceType.LINK_AGGREGATION:
-            if not (name.startswith('bond') and name[4:].isdigit()):
+            if not (name.startswith("bond") and name[4:].isdigit()):
                 raise ValueError('Link aggregation interface must start with "bond" followed by an unique number.')
 
         if type_ == InterfaceType.VLAN:
-            if not (name.startswith('vlan') and name[4:].isdigit()):
+            if not (name.startswith("vlan") and name[4:].isdigit()):
                 raise ValueError('VLAN interface must start with "vlan" followed by an unique number.')

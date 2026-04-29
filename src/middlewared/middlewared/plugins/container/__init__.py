@@ -51,14 +51,14 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('ContainerService',)
+__all__ = ("ContainerService",)
 
 
 class ContainerService(GenericCRUDService[ContainerEntry]):
 
     class Config:
-        cli_namespace = 'service.container'
-        role_prefix = 'CONTAINER'
+        cli_namespace = "service.container"
+        role_prefix = "CONTAINER"
         entry = ContainerEntry
         generic = True
 
@@ -71,8 +71,8 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @api_method(
         ContainerCreateArgs,
         ContainerCreateResult,
-        audit='Container create',
-        audit_extended=lambda data: data['name'],
+        audit="Container create",
+        audit_extended=lambda data: data["name"],
         check_annotations=True
     )
     @job(lock=lambda args: f'container_create:{args[0].get("name")}')
@@ -85,7 +85,7 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @api_method(
         ContainerUpdateArgs,
         ContainerUpdateResult,
-        audit='Container update',
+        audit="Container update",
         audit_callback=True,
         check_annotations=True,
     )
@@ -98,7 +98,7 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @api_method(
         ContainerDeleteArgs,
         ContainerDeleteResult,
-        audit='Container delete',
+        audit="Container delete",
         audit_callback=True,
         check_annotations=True,
     )
@@ -108,24 +108,24 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         """
         return self._svc_part.do_delete(id_, audit_callback=audit_callback)
 
-    @api_method(ContainerStartArgs, ContainerStartResult, roles=['CONTAINER_WRITE'], check_annotations=True)
+    @api_method(ContainerStartArgs, ContainerStartResult, roles=["CONTAINER_WRITE"], check_annotations=True)
     def start(self, id_: int) -> None:
         """Start container."""
         return start_container(self.context, id_)
 
-    @api_method(ContainerStopArgs, ContainerStopResult, roles=['CONTAINER_WRITE'], check_annotations=True)
-    @job(lock=lambda args: f'container_stop_{args[0]}')
+    @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"], check_annotations=True)
+    @job(lock=lambda args: f"container_stop_{args[0]}")
     def stop(self, job: Job, id_: int, options: ContainerStopOptions) -> None:
         """Stop `id` container."""
         return stop_container(self.context, id_, options)
 
-    @api_method(ContainerMigrateArgs, ContainerMigrateResult, roles=['CONTAINER_WRITE'], check_annotations=True)
-    @job(lock='container.migrate', logs=True)
+    @api_method(ContainerMigrateArgs, ContainerMigrateResult, roles=["CONTAINER_WRITE"], check_annotations=True)
+    @job(lock="container.migrate", logs=True)
     async def migrate(self, job: Job) -> None:
         """Migrate incus containers to new API."""
         return await migrate_containers(self.context, job)
 
-    @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['CONTAINER_READ'], check_annotations=True)
+    @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=["CONTAINER_READ"], check_annotations=True)
     async def pool_choices(self) -> dict[str, str]:
         """
         Pool choices for container creation.
@@ -166,7 +166,7 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: An
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service, however, the containers still need to be
     # initialized (which is what the above callers are doing)
-    if await middleware.call('failover.licensed'):
+    if await middleware.call("failover.licensed"):
         return
 
     middleware.create_task(__migrate_and_start(middleware))
@@ -178,16 +178,16 @@ async def __event_system_shutdown(middleware: Middleware, event_type: str, args:
 
 def domain_event_callback(middleware: Middleware, event: DomainEvent) -> None:
     containers = middleware.call_sync2(
-        middleware.services.container.query, [['uuid', '=', event.uuid]], QueryOptions(force_sql_filters=True)
+        middleware.services.container.query, [["uuid", "=", event.uuid]], QueryOptions(force_sql_filters=True)
     )
     if containers:
         container = containers[0]
-        middleware.send_event('container.query', 'CHANGED', id=container.id, fields=container.model_dump(by_alias=True))
+        middleware.send_event("container.query", "CHANGED", id=container.id, fields=container.model_dump(by_alias=True))
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.event_subscribe('system.ready', __event_system_ready)
-    middleware.event_subscribe('system.shutdown', __event_system_shutdown)
+    middleware.event_subscribe("system.ready", __event_system_ready)
+    middleware.event_subscribe("system.shutdown", __event_system_shutdown)
     middleware.libvirt_domains_manager.containers.connection.register_domain_event_callback(
         functools.partial(domain_event_callback, middleware)
     )

@@ -140,7 +140,7 @@ class TestIndexValidatorRevalidation:
         assert len(errors) >= 1
 
         # Check error locations include the list index for first item
-        error_locs = [tuple(err['loc']) for err in errors]
+        error_locs = [tuple(err["loc"]) for err in errors]
         assert any(loc[0] == 0 for loc in error_locs)  # First item errors
 
     def test_validator_with_too_many_items(self):
@@ -165,35 +165,35 @@ class TestIndexValidatorRevalidation:
         """Test construct_schema with list fields that use _make_index_validator"""
         # Simulate an app schema with ports list
         app_version_details = {
-            'schema': {
-                'questions': [
+            "schema": {
+                "questions": [
                     {
-                        'variable': 'ports',
-                        'schema': {
-                            'type': 'list',
-                            'default': [],
-                            'items': [{
-                                'variable': 'port_item',
-                                'schema': {
-                                    'type': 'dict',
-                                    'attrs': [
+                        "variable": "ports",
+                        "schema": {
+                            "type": "list",
+                            "default": [],
+                            "items": [{
+                                "variable": "port_item",
+                                "schema": {
+                                    "type": "dict",
+                                    "attrs": [
                                         {
-                                            'variable': 'port',
-                                            'schema': {
-                                                'type': 'int',
-                                                'min': 1,
-                                                'max': 65535,
-                                                'required': True
+                                            "variable": "port",
+                                            "schema": {
+                                                "type": "int",
+                                                "min": 1,
+                                                "max": 65535,
+                                                "required": True
                                             }
                                         },
                                         {
-                                            'variable': 'protocol',
-                                            'schema': {
-                                                'type': 'string',
-                                                'default': 'TCP',
-                                                'enum': [
-                                                    {'value': 'TCP', 'description': 'TCP'},
-                                                    {'value': 'UDP', 'description': 'UDP'}
+                                            "variable": "protocol",
+                                            "schema": {
+                                                "type": "string",
+                                                "default": "TCP",
+                                                "enum": [
+                                                    {"value": "TCP", "description": "TCP"},
+                                                    {"value": "UDP", "description": "UDP"}
                                                 ]
                                             }
                                         }
@@ -208,9 +208,9 @@ class TestIndexValidatorRevalidation:
 
         # Initial values
         new_values = {
-            'ports': [
-                {'port': 8080, 'protocol': 'TCP'},
-                {'port': 9090, 'protocol': 'UDP'}
+            "ports": [
+                {"port": 8080, "protocol": "TCP"},
+                {"port": 9090, "protocol": "UDP"}
             ]
         }
 
@@ -222,63 +222,63 @@ class TestIndexValidatorRevalidation:
             old_values=NOT_PROVIDED
         )
 
-        assert not result1['verrors'].errors
-        assert 'ports' in result1['new_values']
-        assert len(result1['new_values']['ports']) == 2
+        assert not result1["verrors"].errors
+        assert "ports" in result1["new_values"]
+        assert len(result1["new_values"]["ports"]) == 2
 
         # Second validation with the result (simulates update scenario)
         # This should also work without errors
         result2 = construct_schema(
             app_version_details,
-            result1['new_values'],
+            result1["new_values"],
             update=True,
             old_values=NOT_PROVIDED
         )
 
-        assert not result2['verrors'].errors
-        assert result2['new_values']['ports'] == result1['new_values']['ports']
+        assert not result2["verrors"].errors
+        assert result2["new_values"]["ports"] == result1["new_values"]["ports"]
 
     def test_complex_nested_list_validation(self):
         """Test validation with complex nested structures"""
         app_version_details = {
-            'schema': {
-                'questions': [
+            "schema": {
+                "questions": [
                     {
-                        'variable': 'storage',
-                        'schema': {
-                            'type': 'list',
-                            'default': [],
-                            'items': [{
-                                'variable': 'storage_item',
-                                'schema': {
-                                    'type': 'dict',
-                                    'attrs': [
+                        "variable": "storage",
+                        "schema": {
+                            "type": "list",
+                            "default": [],
+                            "items": [{
+                                "variable": "storage_item",
+                                "schema": {
+                                    "type": "dict",
+                                    "attrs": [
                                         {
-                                            'variable': 'type',
-                                            'schema': {
-                                                'type': 'string',
-                                                'default': 'hostPath',
-                                                'enum': [
-                                                    {'value': 'hostPath', 'description': 'Host Path'},
-                                                    {'value': 'emptyDir', 'description': 'Empty Directory'}
+                                            "variable": "type",
+                                            "schema": {
+                                                "type": "string",
+                                                "default": "hostPath",
+                                                "enum": [
+                                                    {"value": "hostPath", "description": "Host Path"},
+                                                    {"value": "emptyDir", "description": "Empty Directory"}
                                                 ]
                                             }
                                         },
                                         {
-                                            'variable': 'hostPath',
-                                            'schema': {
-                                                'type': 'string',
-                                                'show_if': [['type', '=', 'hostPath']],
-                                                'default': '/mnt/data'
+                                            "variable": "hostPath",
+                                            "schema": {
+                                                "type": "string",
+                                                "show_if": [["type", "=", "hostPath"]],
+                                                "default": "/mnt/data"
                                             }
                                         },
                                         {
-                                            'variable': 'size',
-                                            'schema': {
-                                                'type': 'int',
-                                                'show_if': [['type', '=', 'emptyDir']],
-                                                'default': 1024,
-                                                'min': 1
+                                            "variable": "size",
+                                            "schema": {
+                                                "type": "int",
+                                                "show_if": [["type", "=", "emptyDir"]],
+                                                "default": 1024,
+                                                "min": 1
                                             }
                                         }
                                     ]
@@ -292,9 +292,9 @@ class TestIndexValidatorRevalidation:
 
         # Test with mixed storage types
         values = {
-            'storage': [
-                {'type': 'hostPath', 'hostPath': '/custom/path'},
-                {'type': 'emptyDir', 'size': 2048}
+            "storage": [
+                {"type": "hostPath", "hostPath": "/custom/path"},
+                {"type": "emptyDir", "size": 2048}
             ]
         }
 
@@ -306,17 +306,17 @@ class TestIndexValidatorRevalidation:
             old_values=NOT_PROVIDED
         )
 
-        assert not result1['verrors'].errors
+        assert not result1["verrors"].errors
 
         # Re-validation should also work
         result2 = construct_schema(
             app_version_details,
-            result1['new_values'],
+            result1["new_values"],
             update=True,
             old_values=NOT_PROVIDED
         )
 
-        assert not result2['verrors'].errors
+        assert not result2["verrors"].errors
 
     def test_validator_returns_dict_not_model(self):
         """Explicitly test that validator always returns dicts, never model instances"""

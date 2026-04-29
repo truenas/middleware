@@ -18,10 +18,10 @@ def vm_domain_event_callback(middleware: Middleware, event: DomainEvent) -> None
     VM CRUD events (create/update/delete) are handled automatically by CRUDService.
     """
     vms = middleware.call_sync2(
-        middleware.services.vm.query, [['uuid', '=', event.uuid]], QueryOptions(force_sql_filters=True)
+        middleware.services.vm.query, [["uuid", "=", event.uuid]], QueryOptions(force_sql_filters=True)
     )
     if not vms:
         return
 
     vm = vms[0]
-    middleware.send_event('vm.query', 'CHANGED', id=vm.id, fields=vm.model_dump(by_alias=True))
+    middleware.send_event("vm.query", "CHANGED", id=vm.id, fields=vm.model_dump(by_alias=True))

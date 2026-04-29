@@ -13,7 +13,7 @@ class TrueNASMiniBMCAlert(AlertClass):
         title="Critical IPMI Firmware Update Available",
         text=(
             "A critical IPMI firmware update is available for this system. Please see "
-            f"<a href=\"{URL}\" target=\"_blank\">"
+            f'<a href="{URL}" target="_blank">'
             "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
         ),
         products=(ProductType.COMMUNITY_EDITION,),

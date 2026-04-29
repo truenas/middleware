@@ -11,18 +11,18 @@ class Netdata(ClientMixin):
     @classmethod
     async def get_info(cls):
         """Get information about the running netdata instance"""
-        return await cls.api_call('info', version='v1')
+        return await cls.api_call("info", version="v1")
 
     @classmethod
     async def get_all_metrics(cls):
-        return await cls.api_call('allmetrics?format=json', version='v1')
+        return await cls.api_call("allmetrics?format=json", version="v1")
 
     @classmethod
     async def get_charts(cls):
         """
         Get available charts/metrics. Each chart/metric points out information about 1 type of data.
         """
-        return (await cls.api_call('charts', version='v1'))['charts']
+        return (await cls.api_call("charts", version="v1"))["charts"]
 
     @classmethod
     async def get_chart_details(cls, metric):
@@ -30,14 +30,14 @@ class Netdata(ClientMixin):
         try:
             return (await cls.get_charts())[metric]
         except KeyError:
-            raise ApiException(f'Metric {metric!r} does not exist', errno=errno.ENOENT)
+            raise ApiException(f"Metric {metric!r} does not exist", errno=errno.ENOENT)
 
     @classmethod
     async def get_chart_metrics(cls, chart, query_params=None):
         """Get metrics for `chart`"""
         return await cls.api_call(
-            f'data?chart={chart}&options=null2zero{get_query_parameters(query_params)}',
-            version='v1',
+            f"data?chart={chart}&options=null2zero{get_query_parameters(query_params)}",
+            version="v1",
         )
 
     @classmethod
@@ -47,6 +47,6 @@ class Netdata(ClientMixin):
         """Get metrics for multiple charts"""
         query_params = get_query_parameters(parameters)
         return await cls.api_calls([
-            (identifier, f'data?chart={chart_name}&options=null2zero{query_params}')
+            (identifier, f"data?chart={chart_name}&options=null2zero{query_params}")
             for identifier, chart_name in charts.items()
         ])

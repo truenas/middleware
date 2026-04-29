@@ -16,7 +16,7 @@ class ExportFactory:
     def exporter(self, name):
         name = name.upper()
         if name not in self._creators:
-            raise CallError(f'Unable to locate {name!r} exporter', errno=errno.ENOENT)
+            raise CallError(f"Unable to locate {name!r} exporter", errno=errno.ENOENT)
         return self._creators[name]
 
     def get_exporters(self):

@@ -5,8 +5,8 @@ from pydantic import Secret
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, IPvAnyAddress, NotRequired, excluded_field
 
 __all__ = [
-    'JBOFEntry', 'JBOFCreateArgs', 'JBOFCreateResult', 'JBOFDeleteArgs', 'JBOFDeleteResult', 'JBOFLicensedArgs',
-    'JBOFLicensedResult', 'JBOFReapplyConfigArgs', 'JBOFReapplyConfigResult', 'JBOFUpdateArgs', 'JBOFUpdateResult',
+    "JBOFEntry", "JBOFCreateArgs", "JBOFCreateResult", "JBOFDeleteArgs", "JBOFDeleteResult", "JBOFLicensedArgs",
+    "JBOFLicensedResult", "JBOFReapplyConfigArgs", "JBOFReapplyConfigResult", "JBOFUpdateArgs", "JBOFUpdateResult",
 ]
 
 

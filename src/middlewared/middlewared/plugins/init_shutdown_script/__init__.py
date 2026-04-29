@@ -24,16 +24,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('InitShutdownScriptService',)
+__all__ = ("InitShutdownScriptService",)
 
 
 class InitShutdownScriptService(GenericCRUDService[InitShutdownScriptEntry]):
 
     class Config:
-        cli_namespace = 'system.init_shutdown_script'
+        cli_namespace = "system.init_shutdown_script"
         entry = InitShutdownScriptEntry
         generic = True
-        role_prefix = 'SYSTEM_CRON'
+        role_prefix = "SYSTEM_CRON"
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)

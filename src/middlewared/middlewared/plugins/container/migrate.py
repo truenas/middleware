@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
 
 class VirtGlobalModel(sa.Model):
     """Legacy virt_global table model for migration purposes."""
-    __tablename__ = 'virt_global'
+    __tablename__ = "virt_global"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(120), nullable=True)
@@ -39,30 +39,30 @@ async def maybe_migrate_legacy(context: ServiceContext) -> None:
     exist and need migration. On success, sets preferred_pool and clears
     virt_global.pool so migration does not re-trigger on next boot.
     """
-    legacy_config = await context.middleware.call('datastore.query', 'virt.global')
-    if not legacy_config or legacy_config[0]['pool'] is None:
+    legacy_config = await context.middleware.call("datastore.query", "virt.global")
+    if not legacy_config or legacy_config[0]["pool"] is None:
         return
 
     legacy_config = legacy_config[0]
-    context.logger.info('Legacy incus container configuration found, starting migration')
+    context.logger.info("Legacy incus container configuration found, starting migration")
     try:
         migration_job = await context.call2(context.s.container.migrate)
         await migration_job.wait(raise_error=True)
     except Exception:
-        context.logger.error('Legacy container migration failed', exc_info=True)
+        context.logger.error("Legacy container migration failed", exc_info=True)
         return
 
     container_config = await context.call2(context.s.lxc.config)
     updates = {}
     if container_config.preferred_pool is None:
-        updates['preferred_pool'] = legacy_config['pool']
+        updates["preferred_pool"] = legacy_config["pool"]
 
-    for col in ('bridge', 'v4_network', 'v6_network'):
+    for col in ("bridge", "v4_network", "v6_network"):
         if not legacy_config.get(col):
             continue
 
         value = legacy_config[col]
-        if col in ('v4_network', 'v6_network'):
+        if col in ("v4_network", "v6_network"):
             try:
                 value = str(ipaddress.ip_network(value, strict=False))
             except (ValueError, TypeError):
@@ -72,24 +72,24 @@ async def maybe_migrate_legacy(context: ServiceContext) -> None:
 
     if updates:
         await context.middleware.call(
-            'datastore.update', 'container.config', container_config.id, updates,
+            "datastore.update", "container.config", container_config.id, updates,
         )
 
     await context.middleware.call(
-        'datastore.update', 'virt.global', legacy_config['id'],
-        {'pool': None},
+        "datastore.update", "virt.global", legacy_config["id"],
+        {"pool": None},
     )
-    context.logger.info('Legacy container migration completed')
+    context.logger.info("Legacy container migration completed")
 
 
 async def migrate(context: ServiceContext, job: Job) -> None:
-    legacy_configuration = await context.middleware.call('datastore.query', 'virt.global')
-    if not legacy_configuration or legacy_configuration[0]['pool'] is None:
-        raise CallError('Legacy containers configuration pool is not set.')
+    legacy_configuration = await context.middleware.call("datastore.query", "virt.global")
+    if not legacy_configuration or legacy_configuration[0]["pool"] is None:
+        raise CallError("Legacy containers configuration pool is not set.")
 
-    pool = legacy_configuration[0]['pool']
+    pool = legacy_configuration[0]["pool"]
 
-    storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]['storage_pools'] or '').split()))
+    storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]["storage_pools"] or "").split()))
     existing_containers = [container.name for container in await context.call2(context.s.container.query)]
     for storage_pool in storage_pools:
         await context.to_thread(migrate_specific_pool, context, job, storage_pool, existing_containers)
@@ -98,7 +98,7 @@ async def migrate(context: ServiceContext, job: Job) -> None:
 async def migrate_devices(
     context: ServiceContext, job: Job, manifest: dict[str, typing.Any], container_instance: ContainerEntry
 ) -> None:
-    devices = manifest['devices']
+    devices = manifest["devices"]
     container_name = container_instance.name
     nic_choices = await context.call2(context.s.container.device.nic_attach_choices)
     all_nic_choices = set(nic_choices.BRIDGE) | set(nic_choices.MACVLAN)
@@ -107,94 +107,94 @@ async def migrate_devices(
         dtype = None
         try:
             device_payload = None
-            dtype = device_data.get('type')
-            if dtype == 'disk':
-                src = device_data.get('source', "")
-                if src.startswith('/mnt') is False:
+            dtype = device_data.get("type")
+            if dtype == "disk":
+                src = device_data.get("source", "")
+                if src.startswith("/mnt") is False:
                     await job.logs_fd_write((
-                        f'Skipping migrating {device_name!r} disk device for {container_name!r} because '
-                        f'source does not start with /mnt/ (is {src!r} instead)\n'
+                        f"Skipping migrating {device_name!r} disk device for {container_name!r} because "
+                        f"source does not start with /mnt/ (is {src!r} instead)\n"
                     ).encode())
                     continue
 
                 device_payload = {
-                    'dtype': 'FILESYSTEM',
-                    'source': src,
-                    'target': device_data['path'],
+                    "dtype": "FILESYSTEM",
+                    "source": src,
+                    "target": device_data["path"],
                 }
-            elif dtype == 'nic':
-                if device_data.get('parent') not in all_nic_choices:
+            elif dtype == "nic":
+                if device_data.get("parent") not in all_nic_choices:
                     await job.logs_fd_write((
-                        f'Skipping migrating {device_name!r} NIC device for {container_name!r} because '
-                        f'{device_data.get('parent')!r} is not a valid NIC\n'
+                        f"Skipping migrating {device_name!r} NIC device for {container_name!r} because "
+                        f"{device_data.get('parent')!r} is not a valid NIC\n"
                     ).encode())
                     continue
 
                 device_payload = {
-                    'dtype': 'NIC',
-                    'nic_attach': device_data['parent'],
-                    'type': 'VIRTIO',
-                    'trust_guest_rx_filters': False,
-                    'mac': manifest['config'].get(f'volatile.{device_name}.hwaddr')
+                    "dtype": "NIC",
+                    "nic_attach": device_data["parent"],
+                    "type": "VIRTIO",
+                    "trust_guest_rx_filters": False,
+                    "mac": manifest["config"].get(f"volatile.{device_name}.hwaddr")
                 }
-            elif dtype == 'usb':
-                if (bus_num := device_data.get('busnum')) and (devnum := device_data.get('devnum')):
+            elif dtype == "usb":
+                if (bus_num := device_data.get("busnum")) and (devnum := device_data.get("devnum")):
                     device_payload = {
-                        'dtype': 'USB',
-                        'device': f'usb_{bus_num}_{devnum}',
-                        'usb': None,
+                        "dtype": "USB",
+                        "device": f"usb_{bus_num}_{devnum}",
+                        "usb": None,
                     }
-                elif (vendor_id := device_data.get('vendorid')) and (product_id := device_data.get('productid')):
+                elif (vendor_id := device_data.get("vendorid")) and (product_id := device_data.get("productid")):
                     device_payload = {
-                        'dtype': 'USB',
-                        'usb': {'vendor_id': f'0x{vendor_id}', 'product_id': f'0x{product_id}'},
-                        'device': None
+                        "dtype": "USB",
+                        "usb": {"vendor_id": f"0x{vendor_id}", "product_id": f"0x{product_id}"},
+                        "device": None
                     }
                 else:
                     await job.logs_fd_write((
-                        f'Skipping migration of USB device {device_name!r} for container {container_name!r} '
-                        'because the USB data is invalid or incomplete\n'
+                        f"Skipping migration of USB device {device_name!r} for container {container_name!r} "
+                        "because the USB data is invalid or incomplete\n"
                     ).encode())
                     continue
 
-            elif dtype == 'gpu':
-                pci_address = device_data.get('pci')
+            elif dtype == "gpu":
+                pci_address = device_data.get("pci")
                 if pci_address not in gpu_choices:
                     await job.logs_fd_write((
-                        f'Skipping migrating {device_name!r} GPU device for {container_name!r} because '
-                        f'{pci_address!r} is not a valid PCI address for a GPU device\n'
+                        f"Skipping migrating {device_name!r} GPU device for {container_name!r} because "
+                        f"{pci_address!r} is not a valid PCI address for a GPU device\n"
                     ).encode())
                     continue
 
                 device_payload = {
-                    'dtype': 'GPU',
-                    'gpu_type': gpu_choices[pci_address],
-                    'pci_address': pci_address,
+                    "dtype": "GPU",
+                    "gpu_type": gpu_choices[pci_address],
+                    "pci_address": pci_address,
                 }
             else:
                 await job.logs_fd_write((
-                    f'Skipping migrating {device_name!r} device for {container_name!r} because '
-                    f'unhandled device type {dtype!r} found\n'
+                    f"Skipping migrating {device_name!r} device for {container_name!r} because "
+                    f"unhandled device type {dtype!r} found\n"
                 ).encode())
         except Exception as e:
             await job.logs_fd_write(
-                f'Unable to migrate {device_name!r} {dtype} device for {container_name!r}: {e!r}.\n'.encode()
+                f"Unable to migrate {device_name!r} {dtype} device for {container_name!r}: {e!r}.\n".encode()
             )
             continue
         else:
             if device_payload:
                 try:
                     await context.middleware.call(
-                        'datastore.insert', 'container.device', {
-                            'attributes': device_payload,
-                            'container_id': container_instance.id,
+                        "datastore.insert", "container.device", {
+                            "attributes": device_payload,
+                            "container_id": container_instance.id,
                         }
                     )
                 except Exception as e:
                     # Should not happen but better safe than sorry
                     await job.logs_fd_write(
-                        f'Unable to create container device for {device_name!r} {dtype} incus '
-                        f'device: {e!r}.\n'.encode()
+                        f"Unable to create container device for {device_name!r} {dtype} incus "
+                        f"device: {e!r}.\n".encode()
                     )
 
 
@@ -204,7 +204,7 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
     datasets = context.call_sync2(
         context.s.zfs.resource.query_impl,
         ZFSResourceQuery(
-            paths=[f'{pool}/.ix-virt/containers'],
+            paths=[f"{pool}/.ix-virt/containers"],
             get_children=True,
             properties=None
         )
@@ -213,62 +213,62 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
         context.run_coroutine(ensure_datasets(context, pool))
 
     for dataset in datasets:
-        if dataset['type'] != 'FILESYSTEM':
+        if dataset["type"] != "FILESYSTEM":
             continue
 
-        split = dataset['name'].split('/')
+        split = dataset["name"].split("/")
         if len(split) != 4:
             job.logs_fd.write(
-                f'Skipping dataset {dataset['name']} during migration (not a container dataset)'.encode(),
+                f"Skipping dataset {dataset['name']} during migration (not a container dataset)".encode(),
             )
             continue
 
         name = split[-1]
         if name in existing_containers:
             job.logs_fd.write((
-                f'Migration skipped for container {name!r} because a container with the same name '
-                f'already exists\n'
+                f"Migration skipped for container {name!r} because a container with the same name "
+                f"already exists\n"
             ).encode())
             continue
 
-        dst_dataset = os.path.join(container_dataset(pool), f'containers/{name}')
+        dst_dataset = os.path.join(container_dataset(pool), f"containers/{name}")
         try:
             if not processed_parents_mountpoints:
-                for ds in (f'{pool}/.ix-virt', f'{pool}/.ix-virt/containers'):
+                for ds in (f"{pool}/.ix-virt", f"{pool}/.ix-virt/containers"):
                     context.middleware.call_sync(
-                        'pool.dataset.update_impl',
+                        "pool.dataset.update_impl",
                         UpdateImplArgs(
                             name=ds,
-                            zprops={'readonly': 'off'},
-                            iprops={'mountpoint'}
+                            zprops={"readonly": "off"},
+                            iprops={"mountpoint"}
                         )
                     )
                 processed_parents_mountpoints = True
 
             context.middleware.call_sync(
-                'pool.dataset.update_impl',
+                "pool.dataset.update_impl",
                 UpdateImplArgs(
-                    name=dataset['name'],
-                    zprops={'canmount': 'on'},
-                    iprops={'mountpoint'},
+                    name=dataset["name"],
+                    zprops={"canmount": "on"},
+                    iprops={"mountpoint"},
                 )
             )
-            context.call_sync2(context.s.zfs.resource.mount, dataset['name'])
+            context.call_sync2(context.s.zfs.resource.mount, dataset["name"])
 
             try:
-                with open(f'/mnt/{dataset['name']}/backup.yaml') as f:
+                with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
                     manifest = yaml.safe_load(f.read())
             except Exception:
                 job.logs_fd.write(
-                    f'Failed to read backup.yaml for container {name!r}, skipping.\n'.encode()
+                    f"Failed to read backup.yaml for container {name!r}, skipping.\n".encode()
                 )
                 continue
 
-            config = manifest['container']['config']
+            config = manifest["container"]["config"]
 
             # Move rootfs contents to parent dataset for compatibility with current implementation
-            rootfs_path = f'/mnt/{dataset['name']}/rootfs'
-            parent_path = f'/mnt/{dataset['name']}'
+            rootfs_path = f"/mnt/{dataset['name']}/rootfs"
+            parent_path = f"/mnt/{dataset['name']}"
             with os.scandir(rootfs_path) as entries:
                 for entry in entries:
                     os.rename(entry.path, os.path.join(parent_path, entry.name))
@@ -278,20 +278,20 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
             os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
             os.rmdir(rootfs_path)
 
-            context.call_sync2(context.s.zfs.resource.rename, dataset['name'], dst_dataset)
+            context.call_sync2(context.s.zfs.resource.rename, dataset["name"], dst_dataset)
 
             container_instance = context.call_sync2(
                 context.s.container.create_with_dataset, ContainerCreateWithDataset(
                     name=name,
-                    autostart=config.get('user.autostart') == 'true',
+                    autostart=config.get("user.autostart") == "true",
                     dataset=dst_dataset,
-                    init='/sbin/init',
-                    cpuset=config.get('limits.cpu', None),
+                    init="/sbin/init",
+                    cpuset=config.get("limits.cpu", None),
                 )
             )
-            context.run_coroutine(migrate_devices(context, job, manifest['container'], container_instance))
+            context.run_coroutine(migrate_devices(context, job, manifest["container"], container_instance))
         except Exception as e:
-            context.logger.error('Unable to migrate container %r', name, exc_info=True)
-            job.logs_fd.write(f'Unable to migrate container {name!r}: {e!r}.\n'.encode())
+            context.logger.error("Unable to migrate container %r", name, exc_info=True)
+            job.logs_fd.write(f"Unable to migrate container {name!r}: {e!r}.\n".encode())
         else:
-            job.logs_fd.write(f'Successfully migrated container {name!r}.\n'.encode())
+            job.logs_fd.write(f"Successfully migrated container {name!r}.\n".encode())

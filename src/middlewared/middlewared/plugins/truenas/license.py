@@ -70,7 +70,7 @@ class TrueNASLicenseService(Service):
                     os.fchmod(f.fileno(), 0o600)
 
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
+            self.middleware.call_hook("system.post_license_update", had_license=had_license), wait=False,
         )
 
     @private

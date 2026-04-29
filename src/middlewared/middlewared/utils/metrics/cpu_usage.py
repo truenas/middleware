@@ -33,14 +33,14 @@ def get_cpu_usage(old_stats: dict[str, list[int]] | None = None) -> tuple[dict[s
     old_stats = old_stats or {}
     cpu_usage_data = {}
     cached_values = {}
-    with open('/proc/stat') as f:
+    with open("/proc/stat") as f:
         # Process only CPU-related lines
-        for line in filter(lambda x: x.startswith('cpu'), f):
+        for line in filter(lambda x: x.startswith("cpu"), f):
             # core == 'cpu' | 'cpu0', 'cpu1' etc, with the
             # former representing the aggregate numbers of
             # all cpu cores and the later representing the
             # cpu core specific values
-            core, values = line.split(' ', 1)
+            core, values = line.split(" ", 1)
             cpu_stats = list(map(int, values.strip().split()))
             cpu_usage_data[core] = calculate_cpu_usage(
                 cpu_stats, old_stats.get(core, [0] * len(values))

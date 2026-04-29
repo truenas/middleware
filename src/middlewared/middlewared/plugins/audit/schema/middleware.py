@@ -34,33 +34,33 @@ class AuditEventMiddlewareRebootShutdownEventData(BaseModel):
 class AuditEventMiddlewareServiceData(BaseModel):
     vers: AuditEventVersion
     origin: str | None
-    protocol: Literal['REST', 'WEBSOCKET']
+    protocol: Literal["REST", "WEBSOCKET"]
     credentials: dict | None
 
 
 class AuditEventMiddleware(AuditEvent):
-    event: Literal['AUTHENTICATION', 'METHOD_CALL', 'REBOOT', 'SHUTDOWN']
+    event: Literal["AUTHENTICATION", "METHOD_CALL", "REBOOT", "SHUTDOWN"]
     event_data: (
         AuditEventMiddlewareAuthenticationEventData |
         AuditEventMiddlewareMethodCallEventData |
         AuditEventMiddlewareRebootShutdownEventData
     )
-    service: Literal['MIDDLEWARE']
+    service: Literal["MIDDLEWARE"]
     service_data: AuditEventMiddlewareServiceData
 
 
 class AuditEventMiddlewareAuthentication(AuditEventMiddleware):
-    event: Literal['AUTHENTICATION']
+    event: Literal["AUTHENTICATION"]
     event_data: AuditEventMiddlewareAuthenticationEventData
 
 
 class AuditEventMiddlewareMethodCall(AuditEventMiddleware):
-    event: Literal['METHOD_CALL']
+    event: Literal["METHOD_CALL"]
     event_data: AuditEventMiddlewareMethodCallEventData
 
 
 class AuditEventMiddlewareRebootShutdownCall(AuditEventMiddleware):
-    event: Literal['REBOOT', 'SHUTDOWN']
+    event: Literal["REBOOT", "SHUTDOWN"]
     event_data: AuditEventMiddlewareRebootShutdownEventData
 
 

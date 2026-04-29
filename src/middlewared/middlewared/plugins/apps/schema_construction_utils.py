@@ -19,11 +19,11 @@ class NotProvided:
     pass
 
 
-CONTEXT_KEY_NAME = 'ix_context'
+CONTEXT_KEY_NAME = "ix_context"
 RESERVED_NAMES = [
-    ('ix_certificates', dict),
-    ('ix_certificate_authorities', dict),
-    ('ix_volumes', dict),
+    ("ix_certificates", dict),
+    ("ix_certificate_authorities", dict),
+    ("ix_volumes", dict),
     (CONTEXT_KEY_NAME, dict),
 ]
 NOT_PROVIDED = NotProvided()
@@ -38,11 +38,11 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
     """
     def _validate(value: Any) -> list[Any]:
         if not isinstance(value, list):
-            raise TypeError(f'{model_name}: expected a list')
+            raise TypeError(f"{model_name}: expected a list")
 
         if len(value) > len(item_models):
             raise ValueError(
-                f'{model_name}: got {len(value)} items but only {len(item_models)} item models were generated'
+                f"{model_name}: got {len(value)} items but only {len(item_models)} item models were generated"
             )
 
         out = []
@@ -65,12 +65,12 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                 for err in e.errors():
                     err_copy: dict[str, Any] = dict(err)
                     # Prepend the index to the location tuple
-                    loc = (idx,) + err_copy.get('loc', ())
-                    err_copy['loc'] = loc
-                    if 'ctx' not in err_copy:
-                        err_copy['ctx'] = {'error': err_copy.get('msg', 'validation error')}
-                    elif 'error' not in err_copy.get('ctx', {}):
-                        err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
+                    loc = (idx,) + err_copy.get("loc", ())
+                    err_copy["loc"] = loc
+                    if "ctx" not in err_copy:
+                        err_copy["ctx"] = {"error": err_copy.get("msg", "validation error")}
+                    elif "error" not in err_copy.get("ctx", {}):
+                        err_copy["ctx"]["error"] = err_copy.get("msg", "validation error")
                     errors.append(err_copy)
                 raise ValidationError.from_exception_data(e.title, errors)  # type: ignore[arg-type]
             except ValidationErrors as e:
@@ -78,39 +78,39 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                 ve_errors: list[dict[str, Any]] = []
                 for error in e.errors:
                     # Create Pydantic-compatible error dict
-                    loc = tuple(error.attribute.split('.')) if error.attribute else ()
+                    loc = tuple(error.attribute.split(".")) if error.attribute else ()
                     loc = (idx,) + loc
                     ve_errors.append({
-                        'loc': loc,
-                        'msg': error.errmsg,
-                        'type': 'value_error',
-                        'ctx': {'error': error.errmsg},
+                        "loc": loc,
+                        "msg": error.errmsg,
+                        "type": "value_error",
+                        "ctx": {"error": error.errmsg},
                     })
-                raise ValidationError.from_exception_data('ValidationError', ve_errors)  # type: ignore[arg-type]
+                raise ValidationError.from_exception_data("ValidationError", ve_errors)  # type: ignore[arg-type]
             except Exception as e:
                 # For other exceptions, create a Pydantic ValidationError
-                if hasattr(e, 'errors'):
+                if hasattr(e, "errors"):
                     exc_errors: list[dict[str, Any]] = []
                     for err in e.errors():
                         err_copy = dict(err)
-                        loc = (idx,) + err_copy.get('loc', ())
-                        err_copy['loc'] = loc
-                        if 'ctx' not in err_copy:
-                            err_copy['ctx'] = {'error': err_copy.get('msg', 'validation error')}
-                        elif 'error' not in err_copy.get('ctx', {}):
-                            err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
+                        loc = (idx,) + err_copy.get("loc", ())
+                        err_copy["loc"] = loc
+                        if "ctx" not in err_copy:
+                            err_copy["ctx"] = {"error": err_copy.get("msg", "validation error")}
+                        elif "error" not in err_copy.get("ctx", {}):
+                            err_copy["ctx"]["error"] = err_copy.get("msg", "validation error")
                         exc_errors.append(err_copy)
                     raise ValidationError.from_exception_data(
-                        'ValidationError', exc_errors,  # type: ignore[arg-type]
+                        "ValidationError", exc_errors,  # type: ignore[arg-type]
                     )
                 else:
                     # Generic error at this index
                     generic_error: dict[str, Any] = {
-                        'loc': (idx,), 'msg': str(e), 'type': 'value_error',
-                        'ctx': {'error': str(e)},
+                        "loc": (idx,), "msg": str(e), "type": "value_error",
+                        "ctx": {"error": str(e)},
                     }
                     raise ValidationError.from_exception_data(
-                        'ValidationError', [generic_error],  # type: ignore[list-item]
+                        "ValidationError", [generic_error],  # type: ignore[list-item]
                     )
         return out
     return _validate
@@ -137,10 +137,10 @@ def remove_not_required(data: Any) -> Any:
         result = {}
         for k, v in data.items():
             # Check if the value is the NotRequired sentinel
-            if v is NotRequired or (hasattr(v, '__class__') and v.__class__.__name__ == '_NotRequired'):
+            if v is NotRequired or (hasattr(v, "__class__") and v.__class__.__name__ == "_NotRequired"):
                 continue  # Skip this field
             # Also check for string representations of NotRequired objects
-            if isinstance(v, str) and v.startswith('<middlewared.api.base.model._NotRequired object at'):
+            if isinstance(v, str) and v.startswith("<middlewared.api.base.model._NotRequired object at"):
                 continue  # Skip this field
             result[k] = remove_not_required(v)
         return result
@@ -192,10 +192,10 @@ def clean_single_error_path(path: str) -> str:
     # Pattern matches: .digit.anything_ix_list_item_anything
     # Captures only the .digit part and removes the model name
     # This handles all occurrences including nested lists in a single pass
-    pattern = r'(\.\d+)\.[^.]*_ix_list_item_[^.]*'
+    pattern = r"(\.\d+)\.[^.]*_ix_list_item_[^.]*"
 
     # Replace all occurrences at once - no loop needed
-    cleaned_path = re.sub(pattern, r'\1', path)
+    cleaned_path = re.sub(pattern, r"\1", path)
 
     return cleaned_path
 
@@ -211,7 +211,7 @@ def construct_schema(
     old_values: USER_VALUES = NOT_PROVIDED,
 ) -> ConstructSchemaResult:
     schema_name = f'app_{"update" if update else "create"}'
-    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values, old_values)
+    model = generate_pydantic_model(item_version_details["schema"]["questions"], schema_name, new_values, old_values)
     verrors = ValidationErrors()
     try:
         # Validate the new values against the generated model
@@ -227,9 +227,9 @@ def construct_schema(
         verrors.extend(cleaned_errors)
 
     return {
-        'verrors': verrors,
-        'new_values': new_values,
-        'schema_name': schema_name,
+        "verrors": verrors,
+        "new_values": new_values,
+        "schema_name": schema_name,
     }
 
 
@@ -250,31 +250,31 @@ def generate_pydantic_model(
 
     # Add defaults for fields that aren't in new_values
     for attr in dict_attrs:
-        var_name = attr['variable']
-        if var_name not in eval_context and 'default' in attr['schema']:
-            eval_context[var_name] = attr['schema']['default']
+        var_name = attr["variable"]
+        if var_name not in eval_context and "default" in attr["schema"]:
+            eval_context[var_name] = attr["schema"]["default"]
 
     for attr in dict_attrs:
-        var_name = attr['variable']
-        schema_def = attr['schema']
+        var_name = attr["variable"]
+        schema_def = attr["schema"]
         attr_value = new_values.get(var_name, NOT_PROVIDED) if isinstance(new_values, dict) else NOT_PROVIDED
         old_attr_value = old_values.get(var_name, NOT_PROVIDED) if isinstance(old_values, dict) else NOT_PROVIDED
 
         # Check if this field should be visible based on its show_if
         field_hidden = parent_hidden
-        if not parent_hidden and schema_def.get('show_if'):
+        if not parent_hidden and schema_def.get("show_if"):
             # Evaluate show_if condition against sibling values with defaults
-            if eval_context and not filter_list([eval_context], schema_def['show_if']):
+            if eval_context and not filter_list([eval_context], schema_def["show_if"]):
                 field_hidden = True
 
         field_type, field_info, nested_model = process_schema_field(
-            schema_def, f'{model_name}_{var_name}', attr_value, old_attr_value,
+            schema_def, f"{model_name}_{var_name}", attr_value, old_attr_value,
             field_hidden=field_hidden,
         )
         if nested_model:
             nested_models[var_name] = nested_model
-        if schema_def.get('show_if'):
-            show_if_attrs[var_name] = schema_def['show_if']
+        if schema_def.get("show_if"):
+            show_if_attrs[var_name] = schema_def["show_if"]
         fields[var_name] = (field_type, field_info)
 
     # Create the model dynamically
@@ -326,42 +326,42 @@ def process_schema_field(
     """
     Process a schema field type / field information and any nested model if applicable which was generated.
     """
-    schema_type = schema_def['type']
+    schema_type = schema_def["type"]
     field_type: Any = None
     nested_model: type[BaseModel] | None = None
     field_info = create_field_info_from_schema(schema_def, field_hidden=field_hidden)
     match schema_type:
-        case 'int':
+        case "int":
             field_type = int
-        case 'string' | 'text':
-            field_type = str if schema_type == 'string' else LongString
+        case "string" | "text":
+            field_type = str if schema_type == "string" else LongString
             # We can probably have more complex logic here for string types
-        case 'boolean':
+        case "boolean":
             field_type = bool
-        case 'ipaddr':
+        case "ipaddr":
             field_type = IPvAnyAddress
-        case 'uri':
+        case "uri":
             field_type = URI
-        case 'hostpath':
-            if 'min_length' in schema_def or 'max_length' in schema_def:
+        case "hostpath":
+            if "min_length" in schema_def or "max_length" in schema_def:
                 field_type = create_length_validated_type(
                     HostPath,
-                    min_length=schema_def.get('min_length'),
-                    max_length=schema_def.get('max_length'),
+                    min_length=schema_def.get("min_length"),
+                    max_length=schema_def.get("max_length"),
                 )
             else:
                 field_type = HostPath
-        case 'path':
-            if 'min_length' in schema_def or 'max_length' in schema_def:
+        case "path":
+            if "min_length" in schema_def or "max_length" in schema_def:
                 field_type = create_length_validated_type(
                     AbsolutePath,
-                    min_length=schema_def.get('min_length'),
-                    max_length=schema_def.get('max_length'),
+                    min_length=schema_def.get("min_length"),
+                    max_length=schema_def.get("max_length"),
                 )
             else:
                 field_type = AbsolutePath
-        case 'dict':
-            if dict_attrs := schema_def.get('attrs', []):
+        case "dict":
+            if dict_attrs := schema_def.get("attrs", []):
                 # Pass field_hidden to nested model generation
                 field_type = nested_model = generate_pydantic_model(
                     dict_attrs, model_name, new_values, old_values, parent_hidden=field_hidden
@@ -371,21 +371,21 @@ def process_schema_field(
             else:
                 # We have a generic dict type without specific attributes
                 field_type = dict
-        case 'list':
+        case "list":
             annotated_items = []
-            if list_items := schema_def.get('items', []):
+            if list_items := schema_def.get("items", []):
                 # Get the single item schema (we assume only 1 or 0 items)
-                item_schema = list_items[0]['schema']
+                item_schema = list_items[0]["schema"]
 
                 # Get actual list values for model generation
                 actual_list_values: list[Any] = []
                 if isinstance(new_values, list):
                     actual_list_values = new_values
-                elif 'default' in schema_def and isinstance(schema_def['default'], list):
-                    actual_list_values = schema_def['default']
+                elif "default" in schema_def and isinstance(schema_def["default"], list):
+                    actual_list_values = schema_def["default"]
 
                 # Generate models based on actual values if we have them and it's a dict type
-                if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
+                if actual_list_values and item_schema["type"] == "dict" and "attrs" in item_schema:
                     item_models = []
 
                     # Generate one model per list item
@@ -395,7 +395,7 @@ def process_schema_field(
                         # Generate model with actual values for proper show_if evaluation
                         # This ensures nested show_if conditions work correctly
                         item_model = generate_pydantic_model(
-                            item_schema['attrs'],
+                            item_schema["attrs"],
                             f"{model_name}_ix_list_item_{idx}",
                             item_value if isinstance(item_value, dict) else {},
                             NOT_PROVIDED,  # No old values for list items
@@ -412,7 +412,7 @@ def process_schema_field(
                         # No models generated, fall back to regular processing
                         for item in list_items:
                             item_type, item_info, _ = process_schema_field(
-                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                                item["schema"], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
                                 field_hidden=field_hidden
                             )
                             annotated_items.append(Annotated[item_type, item_info])
@@ -426,7 +426,7 @@ def process_schema_field(
                     # Process items without old values (immutability not supported in lists)
                     for item in list_items:
                         item_type, item_info, _ = process_schema_field(
-                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                            item["schema"], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
                             field_hidden=field_hidden
                         )
                         annotated_items.append(Annotated[item_type, item_info])
@@ -436,26 +436,26 @@ def process_schema_field(
                 # We have a generic list type without specific items
                 field_type = list
         case _:
-            raise ValueError(f'Unsupported schema type: {schema_type!r}')
+            raise ValueError(f"Unsupported schema type: {schema_type!r}")
 
     assert field_type is not None
 
-    if schema_def.get('null', False):
+    if schema_def.get("null", False):
         field_type = Union[field_type, None]
 
-    if schema_def.get('immutable') and schema_type in (
-        'string', 'int', 'boolean', 'path'
+    if schema_def.get("immutable") and schema_type in (
+        "string", "int", "boolean", "path"
     ) and old_values is not NOT_PROVIDED:
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
-    elif schema_def.get('enum') and schema_type in ('boolean', 'string'):
-        enum_values = [v['value'] for v in schema_def['enum']]
+    elif schema_def.get("enum") and schema_type in ("boolean", "string"):
+        enum_values = [v["value"] for v in schema_def["enum"]]
         if enum_values:  # Only create Literal if there are actual enum values
             field_type = Literal[*enum_values]
 
-    if schema_def.get('valid_chars'):
+    if schema_def.get("valid_chars"):
         # If valid_chars is specified, we can use a match_validator to ensure the value matches the regex
-        field_type = Annotated[field_type, AfterValidator(match_validator(re.compile(schema_def['valid_chars'])))]
+        field_type = Annotated[field_type, AfterValidator(match_validator(re.compile(schema_def["valid_chars"])))]
 
     return field_type, field_info, nested_model
 
@@ -466,49 +466,49 @@ def create_field_info_from_schema(schema_def: dict[str, Any], field_hidden: bool
     """
     field_kwargs: dict[str, Any] = {}
 
-    if 'description' in schema_def:
-        field_kwargs['description'] = schema_def['description']
+    if "description" in schema_def:
+        field_kwargs["description"] = schema_def["description"]
 
-    if 'title' in schema_def:
-        field_kwargs['title'] = schema_def['title']
+    if "title" in schema_def:
+        field_kwargs["title"] = schema_def["title"]
 
     # If field is hidden by parent's show_if, make it NotRequired
     if field_hidden:
-        field_kwargs['default'] = NotRequired
-    elif 'default' in schema_def:
-        field_kwargs['default'] = schema_def['default']
-    elif not schema_def.get('required', False):
+        field_kwargs["default"] = NotRequired
+    elif "default" in schema_def:
+        field_kwargs["default"] = schema_def["default"]
+    elif not schema_def.get("required", False):
         # If a field is not marked as required, we set default to NotRequired
         # which means that it is fine if this field is not set/specified and will
         # not be added to normalized data
         # lists/dicts are special in our old implementation as they always have their
         # defaults populated if none are set
-        if schema_def['type'] == 'list':
-            field_kwargs['default_factory'] = list
-        elif schema_def['type'] == 'dict':
-            field_kwargs['default_factory'] = dict
+        if schema_def["type"] == "list":
+            field_kwargs["default_factory"] = list
+        elif schema_def["type"] == "dict":
+            field_kwargs["default_factory"] = dict
         else:
-            field_kwargs['default'] = NotRequired
+            field_kwargs["default"] = NotRequired
 
     # Add validation constraints
-    if schema_def['type'] == 'list':
+    if schema_def["type"] == "list":
         # For lists, min/max refer to the number of items
-        if 'min' in schema_def:
-            field_kwargs['min_length'] = schema_def['min']
-        if 'max' in schema_def:
-            field_kwargs['max_length'] = schema_def['max']
-    elif schema_def['type'] in ('string', 'text', 'path'):
+        if "min" in schema_def:
+            field_kwargs["min_length"] = schema_def["min"]
+        if "max" in schema_def:
+            field_kwargs["max_length"] = schema_def["max"]
+    elif schema_def["type"] in ("string", "text", "path"):
         # For string types, use min_length/max_length
         # Skip hostpath if it has length constraints (handled in type)
-        if 'min_length' in schema_def:
-            field_kwargs['min_length'] = schema_def['min_length']
-        if 'max_length' in schema_def:
-            field_kwargs['max_length'] = schema_def['max_length']
+        if "min_length" in schema_def:
+            field_kwargs["min_length"] = schema_def["min_length"]
+        if "max_length" in schema_def:
+            field_kwargs["max_length"] = schema_def["max_length"]
     else:
         # For numeric types (int), min/max are bounds
-        if 'min' in schema_def:
-            field_kwargs['ge'] = schema_def['min']
-        if 'max' in schema_def:
-            field_kwargs['le'] = schema_def['max']
+        if "min" in schema_def:
+            field_kwargs["ge"] = schema_def["min"]
+        if "max" in schema_def:
+            field_kwargs["le"] = schema_def["max"]
 
     return cast(FieldInfo, Field(**field_kwargs))

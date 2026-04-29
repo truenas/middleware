@@ -6,18 +6,18 @@ from pydantic import ConfigDict, Field, RootModel
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
 
 __all__ = [
-    'CatalogEntry', 'CatalogUpdate', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs',
-    'CatalogTrainsResult', 'CatalogTrainsResponse', 'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogSyncedArgs',
-    'CatalogSyncedResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult', 'CatalogAppsResponse',
-    'CatalogAppDetails', 'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult', 'CatalogApps',
-    'CatalogAppVersionDetails',
+    "CatalogEntry", "CatalogUpdate", "CatalogUpdateArgs", "CatalogUpdateResult", "CatalogTrainsArgs",
+    "CatalogTrainsResult", "CatalogTrainsResponse", "CatalogSyncArgs", "CatalogSyncResult", "CatalogSyncedArgs",
+    "CatalogSyncedResult", "CatalogAppInfo", "CatalogAppsArgs", "CatalogAppsResult", "CatalogAppsResponse",
+    "CatalogAppDetails", "CatalogGetAppDetailsArgs", "CatalogGetAppDetailsResult", "CatalogApps",
+    "CatalogAppVersionDetails",
 ]
 
 
 class CatalogEntry(BaseModel):
     id: NonEmptyString
     """Unique identifier for the catalog."""
-    label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
+    label: NonEmptyString = Field(pattern=r"^\w+[\w.-]*$")
     """Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens."""
     preferred_trains: list[NonEmptyString]
     """Array of preferred train names for this catalog."""
@@ -122,7 +122,7 @@ class CatalogAppInfo(BaseModel):
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class CatalogAppDetails(CatalogAppInfo):

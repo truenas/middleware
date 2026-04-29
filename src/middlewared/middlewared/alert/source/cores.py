@@ -59,5 +59,5 @@ class CoreFilesArePresentAlertSource(AlertSource):
                 corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
-            return Alert(CoreFilesArePresentAlert(corefiles=', '.join(corefiles)))
+            return Alert(CoreFilesArePresentAlert(corefiles=", ".join(corefiles)))
         return None

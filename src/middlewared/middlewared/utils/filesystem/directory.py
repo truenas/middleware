@@ -60,11 +60,11 @@ ALL_ATTRS = (
     DirectoryRequestMask.ZFS_ATTRS
 )
 
-dirent_struct = namedtuple('dirent_struct', [
-    'name', 'path', 'realpath', 'stat', 'etype', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
+dirent_struct = namedtuple("dirent_struct", [
+    "name", "path", "realpath", "stat", "etype", "acl", "xattrs", "zfs_attrs", "is_in_ctldir"
 ])
 
-T_DirEntry = TypeVar('T_DirEntry', dict[str, Any], dirent_struct)
+T_DirEntry = TypeVar("T_DirEntry", dict[str, Any], dirent_struct)
 
 
 class DirectoryFd():
@@ -175,7 +175,7 @@ class DirectoryIterator(Generic[T_DirEntry]):
         dir_fd_num = self.__dir_fd.fileno
         assert dir_fd_num is not None
         self.__path_iter = os.scandir(dir_fd_num)
-        self.__stat = statx('', dir_fd=dir_fd_num, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
+        self.__stat = statx("", dir_fd=dir_fd_num, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
@@ -214,7 +214,7 @@ class DirectoryIterator(Generic[T_DirEntry]):
             # path doesn't exist anymore
             return None
 
-        if self.__file_type and stat_info['etype'] != self.__file_type:
+        if self.__file_type and stat_info["etype"] != self.__file_type:
             # pre-filtering optimization to only select single type of
             # file. This is used by webui to only return directories
             # and reduces cost of any subsequent filtering.
@@ -237,8 +237,8 @@ class DirectoryIterator(Generic[T_DirEntry]):
             dirent.name,
             os.path.join(self.__path, dirent.name),
             realpath,
-            st['st'],
-            st['etype'],
+            st["st"],
+            st["etype"],
             acl,
             xattrs,
             zfs_attrs,
@@ -255,24 +255,24 @@ class DirectoryIterator(Generic[T_DirEntry]):
             zfs_attrs: list[str] | None,
             is_in_ctldir: bool | None,
     ) -> dict[str, Any]:
-        stat = st['st']
+        stat = st["st"]
         return {
-            'name': dirent.name,
-            'path': os.path.join(self.__path, dirent.name),
-            'realpath': realpath,
-            'type': st['etype'],
-            'size': stat.stx_size,
-            'allocation_size': stat.stx_blocks * 512,
-            'mode': stat.stx_mode,
-            'acl': acl,
-            'uid': stat.stx_uid,
-            'gid': stat.stx_gid,
-            'mount_id': stat.stx_mnt_id,
-            'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
-            'is_ctldir': is_in_ctldir,
-            'attributes': st['attributes'],
-            'xattrs': xattrs,
-            'zfs_attrs': zfs_attrs
+            "name": dirent.name,
+            "path": os.path.join(self.__path, dirent.name),
+            "realpath": realpath,
+            "type": st["etype"],
+            "size": stat.stx_size,
+            "allocation_size": stat.stx_blocks * 512,
+            "mode": stat.stx_mode,
+            "acl": acl,
+            "uid": stat.stx_uid,
+            "gid": stat.stx_gid,
+            "mount_id": stat.stx_mnt_id,
+            "is_mountpoint": "MOUNT_ROOT" in st["attributes"],
+            "is_ctldir": is_in_ctldir,
+            "attributes": st["attributes"],
+            "xattrs": xattrs,
+            "zfs_attrs": zfs_attrs
         }
 
     def __next__(self) -> T_DirEntry:
@@ -301,7 +301,7 @@ class DirectoryIterator(Generic[T_DirEntry]):
 
         try:
             if self.__request_mask & int(DirectoryRequestMask.REALPATH):
-                realpath = os.path.realpath(f'/proc/self/fd/{fd}')
+                realpath = os.path.realpath(f"/proc/self/fd/{fd}")
             else:
                 realpath = None
 

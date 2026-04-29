@@ -12,11 +12,11 @@ XID_MAX = 2 ** 32 - 2  # uid_t -1 can have special meaning depending on context
 # TRUENAS_IDMAP_MAX + 1
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
-DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '.'
-DEFAULT_VALID_START = string.ascii_letters + '_'
+DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + "_" + "-" + "."
+DEFAULT_VALID_START = string.ascii_letters + "_"
 DEFAULT_MAX_LENGTH = 32  # WARNING UT_NAMESIZE = 32. If we go above this then utmp accounting may break
 
-GROUP_VALID_START = string.ascii_letters + string.digits + '_' + '.'
+GROUP_VALID_START = string.ascii_letters + string.digits + "_" + "."
 
 
 def validate_name(
@@ -27,9 +27,9 @@ def validate_name(
 ) -> str:
     val_len = len(val)
     if val_len == 0:
-        raise ValueError('Must be at least 1 character in length')
+        raise ValueError("Must be at least 1 character in length")
     if max_length is not None and val_len > max_length:
-        raise ValueError(f'Cannot exceed {max_length} charaters in length')
+        raise ValueError(f"Cannot exceed {max_length} charaters in length")
 
     if valid_start_chars is not None:
         if val[0] not in valid_start_chars:
@@ -53,9 +53,9 @@ def validate_sid(value: str) -> str:
     value = value.strip()
     value = value.upper()
 
-    assert sid_is_valid(value), ('SID is malformed. See MS-DTYP Section 2.4 for SID type specifications. Typically '
-                                 'SIDs refer to existing objects on the local or remote server and so an appropriate '
-                                 'value should be queried prior to submitting to API endpoints.')
+    assert sid_is_valid(value), ("SID is malformed. See MS-DTYP Section 2.4 for SID type specifications. Typically "
+                                 "SIDs refer to existing objects on the local or remote server and so an appropriate "
+                                 "value should be queried prior to submitting to API endpoints.")
 
     return value
 

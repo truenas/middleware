@@ -22,15 +22,15 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('AppRegistryService',)
+__all__ = ("AppRegistryService",)
 
 
 class AppRegistryService(GenericCRUDService[AppRegistryEntry]):
 
     class Config:
-        namespace = 'app.registry'
-        cli_namespace = 'app.registry'
-        role_prefix = 'APPS'
+        namespace = "app.registry"
+        cli_namespace = "app.registry"
+        role_prefix = "APPS"
         entry = AppRegistryEntry
         generic = True
         event_send = False

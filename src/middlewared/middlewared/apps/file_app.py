@@ -45,17 +45,17 @@ class APIKeyDict(TypedDict):
 
 
 class TokenCredentialsDict(TypedDict):
-    credentials: Literal['TOKEN']
+    credentials: Literal["TOKEN"]
     credentials_data: TokenDict
 
 
 class LoginCredentialsDict(TypedDict):
-    credentials: Literal['LOGIN_PASSWORD']
+    credentials: Literal["LOGIN_PASSWORD"]
     credentials_data: LoginDict
 
 
 class KeyCredentialsDict(TypedDict):
-    credentials: Literal['API_KEY']
+    credentials: Literal["API_KEY"]
     credentials_data: APIKeyDict
 
 
@@ -71,67 +71,67 @@ MAX_UPLOADED_FILES = 5
 
 
 def parse_credentials(request: web.Request) -> CredentialsDict | None:
-    auth = request.headers.get('Authorization')
+    auth = request.headers.get("Authorization")
     if auth is None:
         qs = urllib.parse.parse_qs(request.query_string)
-        if 'auth_token' in qs:
+        if "auth_token" in qs:
             return {
-                'credentials': 'TOKEN',
-                'credentials_data': {
-                    'token': qs['auth_token'][0],
+                "credentials": "TOKEN",
+                "credentials_data": {
+                    "token": qs["auth_token"][0],
                 },
             }
         else:
             return None
 
-    if auth.startswith('Token '):
-        token = auth.split(' ', 1)[1]
+    if auth.startswith("Token "):
+        token = auth.split(" ", 1)[1]
         return {
-            'credentials': 'TOKEN',
-            'credentials_data': {
-                'token': token,
+            "credentials": "TOKEN",
+            "credentials_data": {
+                "token": token,
             },
         }
 
-    if auth.startswith('Basic '):
+    if auth.startswith("Basic "):
         try:
-            username, password = base64.b64decode(auth[6:]).decode('utf-8').split(':', 1)
+            username, password = base64.b64decode(auth[6:]).decode("utf-8").split(":", 1)
         except UnicodeDecodeError:
             raise web.HTTPBadRequest()
         except binascii.Error:
             raise web.HTTPBadRequest()
 
         return {
-            'credentials': 'LOGIN_PASSWORD',
-            'credentials_data': {
-                'username': username,
-                'password': password,
+            "credentials": "LOGIN_PASSWORD",
+            "credentials_data": {
+                "username": username,
+                "password": password,
             },
         }
 
-    if auth.startswith('Bearer '):
-        key = auth.split(' ', 1)[1]
+    if auth.startswith("Bearer "):
+        key = auth.split(" ", 1)[1]
 
         return {
-            'credentials': 'API_KEY',
-            'credentials_data': {
-                'api_key': key,
+            "credentials": "API_KEY",
+            "credentials_data": {
+                "api_key": key,
             }
         }
 
 
 async def authenticate(
     app: App,
-    middleware: 'Middleware',
+    middleware: "Middleware",
     request: web.Request,
     credentials: CredentialsDict,
-    method: 'HttpVerb',
+    method: "HttpVerb",
     resource: str
 ) -> SessionManagerCredentials:
     origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
 
-    match credentials['credentials']:
-        case 'TOKEN':
+    match credentials["credentials"]:
+        case "TOKEN":
             # User is authenticating to file app using a token. This is the typical
             # workflow for file uploads / downloads. We basically allow re-authenticating
             # using the token (gets pam handle for the user using our truenas-unix
@@ -139,8 +139,8 @@ async def authenticate(
             # single-use tokens.
             try:
                 token = await middleware.call(
-                    'auth.get_token_for_action',
-                    credentials['credentials_data']['token'],
+                    "auth.get_token_for_action",
+                    credentials["credentials_data"]["token"],
                     origin,
                     method,
                     resource,
@@ -150,14 +150,14 @@ async def authenticate(
                 raise web.HTTPForbidden(text=ce.errmsg)
 
             if token is None:
-                raise web.HTTPForbidden(text='Invalid token')
+                raise web.HTTPForbidden(text="Invalid token")
 
             return token
 
-        case 'LOGIN_PASSWORD':
-            twofactor_auth = await middleware.call('auth.twofactor.config')
-            if twofactor_auth['enabled']:
-                raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
+        case "LOGIN_PASSWORD":
+            twofactor_auth = await middleware.call("auth.twofactor.config")
+            if twofactor_auth["enabled"]:
+                raise web.HTTPUnauthorized(text="HTTP Basic Auth is unavailable when OTP is enabled")
 
             # Initialize authentication context if needed
             if app.authentication_context is None:
@@ -170,30 +170,30 @@ async def authenticate(
                 app=app,
                 auth_ctx=app.authentication_context,
                 auth_data={
-                    'username': credentials['credentials_data']['username'],
-                    'password': credentials['credentials_data']['password']
+                    "username": credentials["credentials_data"]["username"],
+                    "password": credentials["credentials_data"]["password"]
                 }
             )
 
             if pam_resp.code != PAMCode.PAM_SUCCESS:
-                raise web.HTTPUnauthorized(text='Bad username or password')
+                raise web.HTTPUnauthorized(text="Bad username or password")
 
             if cred is None:
-                raise web.HTTPUnauthorized(text='Authentication failed')
+                raise web.HTTPUnauthorized(text="Authentication failed")
 
             return cred
 
-        case 'API_KEY':
+        case "API_KEY":
             if CURRENT_AAL.level is not AA_LEVEL1:
                 raise web.HTTPForbidden(
-                    text='API key authentication is not permitted by server authentication security level'
+                    text="API key authentication is not permitted by server authentication security level"
                 )
 
             api_key = await middleware.call(
-                'api_key.authenticate', credentials['credentials_data']['api_key'], origin, app=app
+                "api_key.authenticate", credentials["credentials_data"]["api_key"], origin, app=app
             )
             if api_key is None:
-                raise web.HTTPUnauthorized(text='Invalid API key')
+                raise web.HTTPUnauthorized(text="Invalid API key")
 
             return ApiKeySessionManagerCredentials(
                 *api_key,
@@ -224,7 +224,7 @@ async def create_application(
     return await asyncio.to_thread(create_application_impl, request, credentials)
 
 
-def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: 'BodyPartReader', pipe: 'Pipe') -> None:
+def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: "BodyPartReader", pipe: "Pipe") -> None:
     try:
         try:
             while True:
@@ -232,7 +232,7 @@ def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: 'BodyPartR
                     filepart.read_chunk(filepart.chunk_size),
                     loop=loop,
                 ).result()
-                if read == b'':
+                if read == b"":
                     break
                 pipe.w.write(read)
         finally:
@@ -440,7 +440,7 @@ class FileApplication:
                         break
 
                     if filepart.name != "file":
-                        resp = web.Response(status=405, body=f'Unknown payload part {filepart.name!r}')
+                        resp = web.Response(status=405, body=f"Unknown payload part {filepart.name!r}")
                         return resp
 
                     next_pipe = self.middleware.pipe()
@@ -448,7 +448,7 @@ class FileApplication:
                     await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, next_pipe)
 
                 if await reader.next():
-                    resp = web.Response(status=405, body='Too many uploaded files')
+                    resp = web.Response(status=405, body="Too many uploaded files")
                     return resp
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:

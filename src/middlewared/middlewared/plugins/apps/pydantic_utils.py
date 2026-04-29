@@ -19,30 +19,30 @@ class BaseModel(PydanticBaseModel):
     with existing implementation we have where the schema was loose enough to be catered to.
     """
     model_config = ConfigDict(
-        extra='allow',
+        extra="allow",
         strict=False,
     )
 
 
 def _validate_absolute_path(value: str) -> str:
-    if value == '':
+    if value == "":
         return value
 
     if not os.path.isabs(value):
-        raise ValueError('Path must be absolute')
+        raise ValueError("Path must be absolute")
 
-    return os.path.normpath(value.rstrip('/'))
+    return os.path.normpath(value.rstrip("/"))
 
 
 def _validate_host_path(value: str) -> str:
     """
     Validate that a host path exists
     """
-    if value == '':
+    if value == "":
         return value
 
     if not os.path.exists(value):
-        raise ValueError('Path does not exist')
+        raise ValueError("Path does not exist")
 
     return str(value)
 
@@ -55,9 +55,9 @@ def create_length_validated_type(
     def validate_length(v: Any) -> Any:
         if isinstance(v, str):
             if min_length is not None and len(v) < min_length:
-                raise ValueError(f'Value should have at least {min_length} items')
+                raise ValueError(f"Value should have at least {min_length} items")
             if max_length is not None and len(v) > max_length:
-                raise ValueError(f'Value should have at most {max_length} items')
+                raise ValueError(f"Value should have at most {max_length} items")
         return v
 
     return Annotated[
@@ -75,6 +75,6 @@ HostPath = Annotated[
     AfterValidator(_validate_host_path),
 ]
 URI = Annotated[
-    Literal[''] | AnyUrl,
+    Literal[""] | AnyUrl,
     PlainSerializer(lambda x: str(x), return_type=str),
 ]

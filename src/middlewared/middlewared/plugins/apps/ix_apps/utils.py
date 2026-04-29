@@ -3,23 +3,23 @@ from typing import Any
 
 import yaml
 
-PROJECT_PREFIX = 'ix-'
+PROJECT_PREFIX = "ix-"
 
 
 class AppState(enum.Enum):
-    CRASHED = 'CRASHED'
-    DEPLOYING = 'DEPLOYING'
-    RUNNING = 'RUNNING'
-    STOPPED = 'STOPPED'
-    STOPPING = 'STOPPING'
+    CRASHED = "CRASHED"
+    DEPLOYING = "DEPLOYING"
+    RUNNING = "RUNNING"
+    STOPPED = "STOPPED"
+    STOPPING = "STOPPING"
 
 
 class ContainerState(enum.Enum):
-    CRASHED = 'crashed'
-    CREATED = 'created'
-    EXITED = 'exited'
-    RUNNING = 'running'
-    STARTING = 'starting'
+    CRASHED = "crashed"
+    CREATED = "created"
+    EXITED = "exited"
+    RUNNING = "running"
+    STARTING = "starting"
 
 
 class QuotedStrDumper(yaml.SafeDumper):
@@ -27,9 +27,9 @@ class QuotedStrDumper(yaml.SafeDumper):
 
 
 def _repr_str(dumper: QuotedStrDumper, data: str) -> yaml.ScalarNode:
-    if '\n' in data:
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style='"')
 
 
 QuotedStrDumper.add_representer(str, _repr_str)
@@ -50,7 +50,7 @@ def dump_yaml(data: Any, **kwargs: Any) -> str:
     Returns:
         The YAML string representation of the data
     """
-    kwargs['Dumper'] = QuotedStrDumper
+    kwargs["Dumper"] = QuotedStrDumper
     return yaml.dump(data, **kwargs)  # type: ignore[no-any-return]
 
 

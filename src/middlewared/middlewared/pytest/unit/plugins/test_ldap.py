@@ -52,11 +52,11 @@ def test__freeipa_schema_conversion():
     for key, entry in FREEIPA_SAMPLE_SEARCH_BASE.items():
         match key:
             case "base_user":
-                assert f'ldap_user_search_base = {entry}' in search_bases
+                assert f"ldap_user_search_base = {entry}" in search_bases
             case "base_group":
-                assert f'ldap_group_search_base = {entry}' in search_bases
+                assert f"ldap_group_search_base = {entry}" in search_bases
             case "base_netgroup":
-                assert f'ldap_netgroup_search_base = {entry}' in search_bases
+                assert f"ldap_netgroup_search_base = {entry}" in search_bases
 
 
 def test__default_search_base():

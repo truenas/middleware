@@ -28,16 +28,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('CronJobService',)
+__all__ = ("CronJobService",)
 
 
 class CronJobService(GenericCRUDService[CronJobEntry]):
 
     class Config:
-        cli_namespace = 'task.cron_job'
+        cli_namespace = "task.cron_job"
         entry = CronJobEntry
         generic = True
-        role_prefix = 'SYSTEM_CRON'
+        role_prefix = "SYSTEM_CRON"
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -68,8 +68,8 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
         await self._svc_part.do_delete(id_)
         return True
 
-    @api_method(CronJobRunArgs, CronJobRunResult, roles=['SYSTEM_CRON_WRITE'], check_annotations=True)
-    @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
+    @api_method(CronJobRunArgs, CronJobRunResult, roles=["SYSTEM_CRON_WRITE"], check_annotations=True)
+    @job(lock=lambda args: f"cron_job_run_{args[0]}", logs=True, lock_queue_size=1)
     def run(self, job: Job, id_: int, skip_disabled: bool) -> None:
         """
         Job to run cronjob task of `id`.

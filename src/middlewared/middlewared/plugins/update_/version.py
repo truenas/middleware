@@ -33,7 +33,7 @@ async def available_versions(context: ServiceContext) -> list[UpdateAvailableVer
 
 
 async def can_update_to(context: ServiceContext, version: str) -> bool:
-    return can_update(await context.middleware.call('system.version_short'), version)
+    return can_update(await context.middleware.call("system.version_short"), version)
 
 
 async def version_from_manifest(context: ServiceContext, manifest: ReleaseManifest) -> UpdateStatusNewVersion:

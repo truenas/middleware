@@ -24,16 +24,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('NTPServerService',)
+__all__ = ("NTPServerService",)
 
 
 class NTPServerService(GenericCRUDService[NTPServerEntry]):
 
     class Config:
-        namespace = 'system.ntpserver'
-        cli_namespace = 'system.ntp_server'
+        namespace = "system.ntpserver"
+        cli_namespace = "system.ntp_server"
         entry = NTPServerEntry
-        role_prefix = 'NETWORK_GENERAL'
+        role_prefix = "NETWORK_GENERAL"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:

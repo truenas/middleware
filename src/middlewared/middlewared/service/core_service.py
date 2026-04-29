@@ -68,7 +68,7 @@ from .crud_service import CRUDService
 from .decorators import filterable_api_method, job, no_authz_required, private
 from .service import Service
 
-METHODS_CACHE_PATH = '/usr/share/middlewared/methods.json'
+METHODS_CACHE_PATH = "/usr/share/middlewared/methods.json"
 
 
 def is_service_class(service, klass):
@@ -84,10 +84,10 @@ class CoreService(Service):
         cli_private = True
         events = [
             Event(
-                name='core.get_jobs',
-                description='Updates on job changes.',
+                name="core.get_jobs",
+                description="Updates on job changes.",
                 roles=None,
-                models={'ADDED': CoreGetJobsAddedEvent, 'CHANGED': CoreGetJobsChangedEvent},
+                models={"ADDED": CoreGetJobsAddedEvent, "CHANGED": CoreGetJobsChangedEvent},
                 authorization_required=False,
             )
         ]
@@ -99,7 +99,7 @@ class CoreService(Service):
         """
         shell = middlewared.main.ShellApplication.shells.get(id_)
         if shell is None:
-            raise CallError('Shell does not exist', errno.ENOENT)
+            raise CallError("Shell does not exist", errno.ENOENT)
 
         shell.resize(cols, rows)
 
@@ -120,8 +120,8 @@ class CoreService(Service):
             if frame:
                 formatted = traceback.format_stack(frame)
             yield {
-                'stack': formatted,
-                'frames': frames,
+                "stack": formatted,
+                "frames": frames,
             }
 
     def _job_by_app_and_id(self, app, job_id, access):
@@ -168,7 +168,7 @@ class CoreService(Service):
         else:
             jobs = list(self.middleware.jobs.all().values())
 
-        raw_result = options['extra'].get('raw_result', raw_result_default)
+        raw_result = options["extra"].get("raw_result", raw_result_default)
         jobs = filter_list([
             i.__encode__(raw_result) for i in jobs
         ], filters, options)
@@ -185,9 +185,9 @@ class CoreService(Service):
         job = self._job_by_app_and_id(app, id_, JobAccess.READ)
 
         if job.logs_path is None:
-            raise CallError('This job has no logs')
+            raise CallError("This job has no logs")
 
-        return (await self._download(app, 'filesystem.get', [job.logs_path], filename, buffered))[1]
+        return (await self._download(app, "filesystem.get", [job.logs_path], filename, buffered))[1]
 
     @api_method(CoreJobWaitArgs, CoreJobWaitResult, authorization_required=False)
     @job()
@@ -199,12 +199,12 @@ class CoreService(Service):
     @private
     def job_update(self, id_, data):
         job = self.middleware.jobs[id_]
-        progress = data.get('progress')
+        progress = data.get("progress")
         if progress:
             job.set_progress(
-                progress['percent'],
-                description=progress.get('description'),
-                extra=progress.get('extra'),
+                progress["percent"],
+                description=progress.get("description"),
+                extra=progress.get("extra"),
             )
 
     @private
@@ -214,14 +214,14 @@ class CoreService(Service):
 
     @private
     def notify_postinit(self):
-        self.middleware.call_sync('migration.run')
+        self.middleware.call_sync("migration.run")
 
         # Sentinel file to tell we have gone far enough in the boot process.
         # See #17508
-        open(BOOTREADY, 'w').close()
+        open(BOOTREADY, "w").close()
 
         # Send event to middlewared saying we are late enough in the process to call it ready
-        self.middleware.call_sync('core.event_send', 'system.ready', 'ADDED')
+        self.middleware.call_sync("core.event_send", "system.ready", "ADDED")
 
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
@@ -235,7 +235,7 @@ class CoreService(Service):
         if service._config.private is True:
             return False
 
-        if target == 'CLI' and service._config.cli_private:
+        if target == "CLI" and service._config.cli_private:
             return False
 
         return True
@@ -249,23 +249,23 @@ class CoreService(Service):
                 continue
 
             if is_service_class(v, CRUDService):
-                _typ = 'crud'
+                _typ = "crud"
             elif is_service_class(v, ConfigService):
-                _typ = 'config'
+                _typ = "config"
             else:
-                _typ = 'service'
+                _typ = "service"
 
             config = {
                 k: v for k, v in list(v._config.__dict__.items())
-                if not (k in ['entry', 'events', 'event_sources', 'thread_pool'] or k.startswith('_'))
+                if not (k in ["entry", "events", "event_sources", "thread_pool"] or k.startswith("_"))
             }
-            if config['cli_description'] is None:
+            if config["cli_description"] is None:
                 if v.__doc__:
-                    config['cli_description'] = inspect.getdoc(v).split("\n")[0].strip()
+                    config["cli_description"] = inspect.getdoc(v).split("\n")[0].strip()
 
             services[k] = {
-                'config': config,
-                'type': _typ,
+                "config": config,
+                "type": _typ,
             }
 
         return services
@@ -278,7 +278,7 @@ class CoreService(Service):
         data = {}
         for name, svc in list(self.middleware.get_services().items()):
             for attr in dir(svc):
-                if attr.startswith('_') or attr in {'call2', 'call_sync2', 's'}:
+                if attr.startswith("_") or attr in {"call2", "call_sync2", "s"}:
                     continue
 
                 method = None
@@ -288,11 +288,11 @@ class CoreService(Service):
                     The real implementation happens in do_create/do_update/do_delete
                     so thats where we actually extract pertinent information.
                     """
-                    if attr in ('create', 'update', 'delete'):
-                        method = getattr(svc, 'do_{}'.format(attr), None)
+                    if attr in ("create", "update", "delete"):
+                        method = getattr(svc, "do_{}".format(attr), None)
                         if method is None:
                             continue
-                    elif attr in ('do_create', 'do_update', 'do_delete'):
+                    elif attr in ("do_create", "do_update", "do_delete"):
                         continue
                 elif is_service_class(svc, ConfigService):
                     """
@@ -300,15 +300,15 @@ class CoreService(Service):
                     The real implementation happens in do_update
                     so thats where we actually extract pertinent information.
                     """
-                    if attr == 'update':
-                        original_name = 'do_{}'.format(attr)
+                    if attr == "update":
+                        original_name = "do_{}".format(attr)
                         if hasattr(svc, original_name):
                             method = getattr(svc, original_name, None)
                         else:
                             method = getattr(svc, attr)
                         if method is None:
                             continue
-                    elif attr in ('do_update',):
+                    elif attr in ("do_update",):
                         continue
 
                 if method is None:
@@ -318,24 +318,24 @@ class CoreService(Service):
                     continue
 
                 # Skip methods that don't have new_style_accepts/returns (not decorated with @api_method)
-                if not hasattr(method, 'new_style_accepts') or not hasattr(method, 'new_style_returns'):
+                if not hasattr(method, "new_style_accepts") or not hasattr(method, "new_style_returns"):
                     continue
 
                 # Skip private methods
-                if hasattr(method, '_private') and method._private is True:
+                if hasattr(method, "_private") and method._private is True:
                     continue
 
                 if svc._config.private:
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
-                if attr == 'terminate':
+                if attr == "terminate":
                     continue
 
-                method_name = f'{name}.{attr}'
-                no_auth_required = hasattr(method, '_no_auth_required')
-                no_authz_required = hasattr(method, '_no_authz_required')
-                cli_private = getattr(method, '_cli_private', False)
+                method_name = f"{name}.{attr}"
+                no_auth_required = hasattr(method, "_no_auth_required")
+                no_authz_required = hasattr(method, "_no_authz_required")
+                cli_private = getattr(method, "_cli_private", False)
 
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
@@ -352,42 +352,42 @@ class CoreService(Service):
                       .. examples(rest):: - goes into `rest` list in examples
                       .. examples(websocket):: - goes into `websocket` list in examples
                     """
-                    sections = re.split(r'^.. (.+?)::$', doc, flags=re.M)
+                    sections = re.split(r"^.. (.+?)::$", doc, flags=re.M)
                     doc = sections[0]
                     for i in range((len(sections) - 1) // 2):
                         idx = (i + 1) * 2 - 1
-                        reg = re.search(r'examples(?:\((.+)\))?', sections[idx])
+                        reg = re.search(r"examples(?:\((.+)\))?", sections[idx])
                         if reg is None:
                             continue
                         exname = reg.groups()[0]
                         if exname is None:
-                            exname = '__all__'
+                            exname = "__all__"
                         examples[exname].append(sections[idx + 1])
 
                 try:
                     method_schemas = {
-                        'accepts': get_json_schema(method.new_style_accepts),
-                        'returns': get_json_schema(method.new_style_returns),
+                        "accepts": get_json_schema(method.new_style_accepts),
+                        "returns": get_json_schema(method.new_style_returns),
                     }
                 except Exception:
                     self.logger.error("Error getting schemas for method %r", method)
                     raise
 
                 data[method_name] = {
-                    'description': doc,
-                    'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
-                    'examples': examples,
-                    'no_auth_required': no_auth_required,
-                    'no_authz_required': no_authz_required,
-                    'cli_private': cli_private,
-                    'filterable': issubclass(method.new_style_accepts, QueryArgs),
-                    'filterable_schema': None,
-                    'pass_application': hasattr(method, '_pass_app'),
-                    'job': hasattr(method, '_job'),
-                    'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
-                    'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
-                    'check_pipes': hasattr(method, '_job') and method._job['pipes'] and method._job['check_pipes'],
-                    'roles': self.middleware.role_manager.roles_for_method(method_name),
+                    "description": doc,
+                    "cli_description": (doc or "").split("\n\n")[0].split(".")[0].replace("\n", " "),
+                    "examples": examples,
+                    "no_auth_required": no_auth_required,
+                    "no_authz_required": no_authz_required,
+                    "cli_private": cli_private,
+                    "filterable": issubclass(method.new_style_accepts, QueryArgs),
+                    "filterable_schema": None,
+                    "pass_application": hasattr(method, "_pass_app"),
+                    "job": hasattr(method, "_job"),
+                    "downloadable": hasattr(method, "_job") and "output" in method._job["pipes"],
+                    "uploadable": hasattr(method, "_job") and "input" in method._job["pipes"],
+                    "check_pipes": hasattr(method, "_job") and method._job["pipes"] and method._job["check_pipes"],
+                    "roles": self.middleware.role_manager.roles_for_method(method_name),
                     **method_schemas,
                 }
 
@@ -402,10 +402,10 @@ class CoreService(Service):
         all_methods = None
         if os.path.exists(METHODS_CACHE_PATH):
             try:
-                with open(METHODS_CACHE_PATH, 'r') as f:
+                with open(METHODS_CACHE_PATH, "r") as f:
                     all_methods = json.load(f)
             except Exception as e:
-                self.logger.warning('Failed to load methods cache from %s: %s', METHODS_CACHE_PATH, e)
+                self.logger.warning("Failed to load methods cache from %s: %s", METHODS_CACHE_PATH, e)
 
         # If cache doesn't exist or failed to load, generate at runtime
         if all_methods is None:
@@ -416,7 +416,7 @@ class CoreService(Service):
         # Now filter the methods based on the parameters
         data = {}
         for method_name, method_info in all_methods.items():
-            svc_name = method_name.rsplit('.', 1)[0]
+            svc_name = method_name.rsplit(".", 1)[0]
 
             if service is not None and svc_name != service:
                 continue
@@ -424,17 +424,17 @@ class CoreService(Service):
             if not self._should_list_service(svc_name, services[svc_name], target):
                 continue
 
-            if target == 'CLI' and method_info['cli_private']:
+            if target == "CLI" and method_info["cli_private"]:
                 continue
 
             if app is not None:
-                no_auth_required = method_info['no_auth_required']
+                no_auth_required = method_info["no_auth_required"]
                 if not no_auth_required:
                     if not app.authenticated_credentials:
                         continue
 
-                    no_authz_required = method_info['no_authz_required']
-                    if not no_authz_required and not app.authenticated_credentials.authorize('CALL', method_name):
+                    no_authz_required = method_info["no_authz_required"]
+                    if not no_authz_required and not app.authenticated_credentials.authorize("CALL", method_name):
                         continue
 
             data[method_name] = method_info
@@ -465,71 +465,71 @@ class CoreService(Service):
         """
         # NOTE: The UI uses this endpoint to maintain the WebSocket
         # connection on the login page.
-        return 'pong'
+        return "pong"
 
     def _ping_host(self, version, host, timeout, count=None, interface=None, interval=None):
         if version == 4:
-            command = ['ping', '-4', '-w', f'{timeout}']
+            command = ["ping", "-4", "-w", f"{timeout}"]
         elif version == 6:
-            command = ['ping6', '-w', f'{timeout}']
+            command = ["ping6", "-w", f"{timeout}"]
         if count:
-            command.extend(['-c', str(count)])
+            command.extend(["-c", str(count)])
         if interface:
-            command.extend(['-I', interface])
+            command.extend(["-I", interface])
         if interval:
-            command.extend(['-i', interval])
+            command.extend(["-i", interval])
         command.append(host)
         return run(command).returncode == 0
 
-    @api_method(CorePingRemoteArgs, CorePingRemoteResult, roles=['FULL_ADMIN'])
+    @api_method(CorePingRemoteArgs, CorePingRemoteResult, roles=["FULL_ADMIN"])
     def ping_remote(self, options):
         """
         Method that will send an ICMP echo request to "hostname"
         and will wait up to "timeout" for a reply.
         """
         verrors = ValidationErrors()
-        hostname = options['hostname']
-        protocol = options['type']
+        hostname = options["hostname"]
+        protocol = options["type"]
 
         try:
             ipaddress.ip_address(hostname)
         except ValueError:
-            family = {'ICMP': socket.AF_UNSPEC, 'ICMPV4': socket.AF_INET, 'ICMPV6': socket.AF_INET6}
+            family = {"ICMP": socket.AF_UNSPEC, "ICMPV4": socket.AF_INET, "ICMPV6": socket.AF_INET6}
             try:
                 ip = socket.getaddrinfo(hostname, None, family[protocol])[0][4][0]
             except socket.gaierror:
                 verrors.add(
-                    'options.hostname',
-                    f'{hostname} cannot be resolved to an IP address.'
+                    "options.hostname",
+                    f"{hostname} cannot be resolved to an IP address."
                 )
                 raise verrors
         else:
             ip = hostname
 
         addr = ipaddress.ip_address(ip)
-        if addr.version == 6 and protocol != 'ICMPV6':
+        if addr.version == 6 and protocol != "ICMPV6":
             verrors.add(
-                'options.type',
+                "options.type",
                 f'Requested ICMPv4 protocol, but the address provided "{addr}" is not a valid IPv4 address.'
             )
-        elif addr.version == 4 and protocol == 'ICMPV6':
+        elif addr.version == 4 and protocol == "ICMPV6":
             verrors.add(
-                'options.type',
+                "options.type",
                 f'Requested ICMPv6 protocol, but the address provided "{addr}" is not a valid IPv6 address.'
             )
         verrors.check()
 
         return self._ping_host(
-            addr.version, ip, options['timeout'], options['count'], options['interface'], options['interval']
+            addr.version, ip, options["timeout"], options["count"], options["interface"], options["interval"]
         )
 
-    @api_method(CoreArpArgs, CoreArpResult, roles=['FULL_ADMIN'])
+    @api_method(CoreArpArgs, CoreArpResult, roles=["FULL_ADMIN"])
     def arp(self, options):
-        arp_command = ['arp', '-n']
-        if interface := options.get('interface'):
-            arp_command.extend(['-i', interface])
+        arp_command = ["arp", "-n"]
+        if interface := options.get("interface"):
+            arp_command.extend(["-i", interface])
         rv = run(arp_command, capture_output=True)
-        search_ip = options.get('ip')
+        search_ip = options.get("ip")
         result = {}
         for line in rv.stdout.decode().strip().splitlines():
             sline = line.split()
@@ -537,7 +537,7 @@ class CoreService(Service):
                 line_ip = str(ipaddress.ip_address(sline[0]))
             except ValueError:
                 continue
-            if sline[1] != 'ether':
+            if sline[1] != "ether":
                 continue
             if search_ip:
                 if line_ip == search_ip:
@@ -563,8 +563,8 @@ class CoreService(Service):
         4. The download URL expires after a timeout and can only be used once
         """
         if app is not None:
-            if not app.authenticated_credentials.authorize('CALL', method):
-                raise CallError('Not authorized', errno.EACCES)
+            if not app.authenticated_credentials.authorize("CALL", method):
+                raise CallError("Not authorized", errno.EACCES)
 
         return await self._download(app, method, args, filename, buffered)
 
@@ -582,15 +582,15 @@ class CoreService(Service):
             match_origin = True
 
         token = await self.middleware.call(
-            'auth.generate_token',
+            "auth.generate_token",
             300,  # ttl
-            {'filename': filename, 'job': job.id},  # attrs
+            {"filename": filename, "job": job.id},  # attrs
             match_origin,
             True,  # single-use token
             app=app
         )
         self.middleware.fileapp.register_job(job.id, buffered)
-        return job.id, f'/_download/{job.id}?auth_token={token}'
+        return job.id, f"/_download/{job.id}?auth_token={token}"
 
     @private
     @no_authz_required
@@ -600,7 +600,7 @@ class CoreService(Service):
         Private no-op method to test a job, simply returning `true`.
         """
         data = data or {}
-        sleep = data.get('sleep')
+        sleep = data.get("sleep")
         if sleep is not None:
             def sleep_fn():
                 i = 0
@@ -615,7 +615,7 @@ class CoreService(Service):
             t.join()
         return True
 
-    @api_method(CoreDebugArgs, CoreDebugResult, roles=['FULL_ADMIN'])
+    @api_method(CoreDebugArgs, CoreDebugResult, roles=["FULL_ADMIN"])
     async def debug(self, data):
         """
         Setup middlewared for remote debugging.
@@ -628,14 +628,14 @@ class CoreService(Service):
             - bind_port: local port to listen on
             - threaded: run debugger in a new thread instead of the main event loop
         """
-        if data['threaded']:
+        if data["threaded"]:
             self.middleware.create_task(
                 self.middleware.run_in_thread(
-                    RemotePdb, data['bind_address'], data['bind_port']
+                    RemotePdb, data["bind_address"], data["bind_port"]
                 )
             )
         else:
-            RemotePdb(data['bind_address'], data['bind_port']).set_trace()
+            RemotePdb(data["bind_address"], data["bind_port"]).set_trace()
 
     @private
     async def profile(self, method, params=None):
@@ -652,7 +652,7 @@ class CoreService(Service):
     @private
     def get_oom_score_adj(self, pid):
         try:
-            with open(f'/proc/{pid}/oom_score_adj', 'r') as f:
+            with open(f"/proc/{pid}/oom_score_adj", "r") as f:
                 return int(f.read().strip())
         except ValueError:
             self.logger.error("Value inside of /proc/%r/oom_score_adj is NOT a number.", pid)
@@ -756,7 +756,7 @@ class CoreService(Service):
             else:
                 self._environ[k] = v
 
-        self.middleware.send_event('core.environ', 'CHANGED', fields=update)
+        self.middleware.send_event("core.environ", "CHANGED", fields=update)
 
     @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False,
                 pass_app=True)
@@ -777,7 +777,7 @@ class CoreService(Service):
     @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False, pass_app=True)
     async def subscribe(self, app, event):
         if not self.middleware.can_subscribe(app, event):
-            raise CallError('Not authorized', errno.EACCES)
+            raise CallError("Not authorized", errno.EACCES)
 
         ident = str(uuid.uuid4())
         await app.subscribe(ident, event)

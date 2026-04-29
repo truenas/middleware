@@ -20,8 +20,8 @@ __all__ = [
     "SystemGeneralEntry", "SystemGeneralUpdateArgs", "SystemGeneralUpdateResult",
     "SystemGeneralCheckinWaitingArgs", "SystemGeneralCheckinWaitingResult",
     "SystemGeneralCheckinArgs", "SystemGeneralCheckinResult",
-    'SystemGeneralCountryChoicesArgs',
-    'SystemGeneralCountryChoicesResult',
+    "SystemGeneralCountryChoicesArgs",
+    "SystemGeneralCountryChoicesResult",
 ]
 
 
@@ -35,7 +35,7 @@ class SystemGeneralEntry(BaseModel):
     """HTTPS port for the web UI."""
     ui_httpsredirect: bool
     """When set, makes sure that all HTTP requests are converted to HTTPS requests to better enhance security."""
-    ui_httpsprotocols: UniqueList[Literal['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']]
+    ui_httpsprotocols: UniqueList[Literal["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]]
     """Array of TLS protocol versions enabled for HTTPS connections."""
     ui_port: TcpPort
     """HTTP port for the web UI."""

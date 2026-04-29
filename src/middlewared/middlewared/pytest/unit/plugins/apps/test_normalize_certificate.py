@@ -8,10 +8,10 @@ from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('cert, value, should_work', [
+@pytest.mark.parametrize("cert, value, should_work", [
     (
         textwrap.dedent(
-            '''
+            """
             -----BEGIN CERTIFICATE-----
             MIIFmzCCA4OgAwIBAgICMoMwDQYJKoZIhvcNAQELBQAwcjEMMAoGA1UEAwwDZGV2
             MQswCQYDVQQGEwJVUzELMAkGA1UECAwCVE4xEjAQBgNVBAcMCUtub3h2aWxsZTEL
@@ -44,14 +44,14 @@ from middlewared.service import ServiceContext
             GQ9FXeQSqWo7hUIXdbej+aJ7DusYeuE/CwQFNUnz1khvIFJ5B7YP+gYCyUW7V2Hr
             Mv+cZ473U8hYQ1Ij7pXi7DxsOWqWCDhyK0Yp6MZsw0rNaAIPHnTTxYdMfmIYHT0=
             -----END CERTIFICATE-----
-            '''
+            """
         ),
         12,
         True
     ),
     (
         textwrap.dedent(
-            '''
+            """
             -----BEGIN CERTIFICATE-----
             MIIFmzCCA4OgAwIBAgICMoMwDQYJKoZIhvcNAQELBQAwcjEMMAoGA1UEAwwDZGV2
             MQswCQYDVQQGEwJVUzELMAkGA1UECAwCVE4xEjAQBgNVBAcMCUtub3h2aWxsZTEL
@@ -84,20 +84,20 @@ from middlewared.service import ServiceContext
             GQ9FXeQSqWo7hUIXdbej+aJ7DusYeuE/CwQFNUnz1khvIFJ5B7YP+gYCyUW7V2Hr
             Mv+cZ473U8hYQ1Ij7pXi7DxsOWqWCDhyK0Yp6MZsw0rNaAIPHnTTxYdMfmIYHT0=
             -----END CERTIFICATE-----
-            '''
+            """
         ),
         None,
         False
     ),
 
-], ids=['valid_cert', 'invalid_cert'])
+], ids=["valid_cert", "invalid_cert"])
 @pytest.mark.asyncio
 async def test_normalize_certificate(cert, value, should_work):
     middleware = Middleware()
-    middleware['certificate.get_instance'] = lambda *args: cert
-    ctx = ServiceContext(middleware, logging.getLogger('test'))
-    complete_config = {'ix_certificates': {value: cert}}
-    result = await normalize_certificate(ctx, {'schema': {'type': 'int'}}, value, complete_config, {})
+    middleware["certificate.get_instance"] = lambda *args: cert
+    ctx = ServiceContext(middleware, logging.getLogger("test"))
+    complete_config = {"ix_certificates": {value: cert}}
+    result = await normalize_certificate(ctx, {"schema": {"type": "int"}}, value, complete_config, {})
     if should_work:
         assert result is not None
     else:

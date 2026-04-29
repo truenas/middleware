@@ -35,27 +35,27 @@ class AuditEventSystemEscalationEventData(AuditEventSystemPrivilegedEventData):
 
 
 class AuditEventSystem(AuditEvent):
-    event: Literal['LOGIN', 'PRIVILEGED', 'ESCALATION']
+    event: Literal["LOGIN", "PRIVILEGED", "ESCALATION"]
     event_data: (
         AuditEventSystemLoginEventData |
         AuditEventSystemPrivilegedEventData |
         AuditEventSystemEscalationEventData
     )
-    service: Literal['SYSTEM']
+    service: Literal["SYSTEM"]
 
 
 class AuditEventSystemLogin(AuditEventSystem):
-    event: Literal['LOGIN']
+    event: Literal["LOGIN"]
     event_data: AuditEventSystemLoginEventData
 
 
 class AuditEventSystemPrivileged(AuditEventSystem):
-    event: Literal['PRIVILEGED']
+    event: Literal["PRIVILEGED"]
     event_data: AuditEventSystemPrivilegedEventData
 
 
 class AuditEventSystemEscalation(AuditEventSystem):
-    event: Literal['ESCALATION']
+    event: Literal["ESCALATION"]
     event_data: AuditEventSystemEscalationEventData
 
 

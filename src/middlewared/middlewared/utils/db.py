@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Any
 
-FREENAS_DATABASE = '/data/freenas-v1.db'
+FREENAS_DATABASE = "/data/freenas-v1.db"
 FREENAS_DATABASE_MODE = 0o600
 
 

@@ -21,7 +21,7 @@ class DiskService(Service):
     @api_method(
         DiskTemperaturesArgs,
         DiskTemperaturesResult,
-        roles=['REPORTING_READ']
+        roles=["REPORTING_READ"]
     )
     def temperatures(self, names, include_thresholds):
         """Returns disk temperatures for disks in degrees celsius.
@@ -55,7 +55,7 @@ class DiskService(Service):
     @api_method(
         DiskTemperatureAggArgs,
         DiskTemperatureAggResult,
-        roles=['REPORTING_READ']
+        roles=["REPORTING_READ"]
     )
     def temperature_agg(self, names, days):
         """Returns min/max/avg temperature for `names` disks for the last `days` days"""
@@ -64,29 +64,29 @@ class DiskService(Service):
         # system
         end = datetime.now()
         start = end - timedelta(days=min(days, 7))
-        opts = {'start': round(start.timestamp()), 'end': round(end.timestamp())}
+        opts = {"start": round(start.timestamp()), "end": round(end.timestamp())}
         final = dict()
-        for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):
+        for disk in self.middleware.call_sync("reporting.netdata_graph", "disktemp", opts):
             # identifier looks like "sda | Type: HDD | Model: HUH721212AL4200 | Serial: aaa"
             # so we need to normalize it before checking if caller has specified it
-            name = disk['identifier'].split(' | ')[0].strip()
+            name = disk["identifier"].split(" | ")[0].strip()
             if name in names:
                 final[name] = {
-                    'min': disk['aggregations']['min'].get('temperature_value', None),
-                    'max': disk['aggregations']['max'].get('temperature_value', None),
-                    'avg': disk['aggregations']['mean'].get('temperature_value', None),
+                    "min": disk["aggregations"]["min"].get("temperature_value", None),
+                    "max": disk["aggregations"]["max"].get("temperature_value", None),
+                    "avg": disk["aggregations"]["mean"].get("temperature_value", None),
                 }
         return final
 
     @api_method(
         DiskTemperatureAlertsArgs,
         DiskTemperatureAlertsResult,
-        roles=['REPORTING_READ']
+        roles=["REPORTING_READ"]
     )
     async def temperature_alerts(self, names):
         """Returns existing temperature alerts for specified disks."""
         alerts = list()
-        names = {f'/dev/{i}' for i in names}
+        names = {f"/dev/{i}" for i in names}
         for i in await self.call2(self.s.alert.list):
             if i["klass"] == "DiskTemperatureTooHot" and i["args"]["device"] in names:
                 alerts.append(i)

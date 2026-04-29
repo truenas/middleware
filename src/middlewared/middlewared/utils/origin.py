@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
 
 
-__all__ = ('ConnectionOrigin', 'is_external_call')
+__all__ = ("ConnectionOrigin", "is_external_call")
 
-HA_HEARTBEAT_IPS = ('169.254.10.1', '169.254.10.2')
+HA_HEARTBEAT_IPS = ("169.254.10.1", "169.254.10.2")
 UIDS_TO_CHECK = (33, 0)
 
 

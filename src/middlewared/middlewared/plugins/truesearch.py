@@ -24,13 +24,13 @@ class TrueSearchService(Service):
         reasons = []
 
         # Boot pool is usually too small to fit the search index
-        if await self.middleware.call('systemdataset.is_boot_pool'):
-            reasons.append('The system dataset must not reside on the boot pool.')
+        if await self.middleware.call("systemdataset.is_boot_pool"):
+            reasons.append("The system dataset must not reside on the boot pool.")
 
         if await self.call2(self.s.truenas.license.info_private) is None:
-            if (await self.middleware.call('tn_connect.config'))['status'] != 'CONFIGURED':
+            if (await self.middleware.call("tn_connect.config"))["status"] != "CONFIGURED":
                 reasons.append(
-                    'The system must be connected to TrueNAS Connect, or have an Enterprise License key installed.'
+                    "The system must be connected to TrueNAS Connect, or have an Enterprise License key installed."
                 )
 
         return reasons
@@ -62,20 +62,20 @@ class TrueSearchService(Service):
         So if a share directory includes a nested dataset, it must be explicitly included in the directories list.
         Encrypted datasets are excluded from the index to prevent sensitive data being stored in index unencrypted.
         """
-        pools = {directory.removeprefix('/mnt/').split('/')[0] for directory in directories}
+        pools = {directory.removeprefix("/mnt/").split("/")[0] for directory in directories}
 
         mountpoints = {}
         for dataset in await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(
             paths=pools,
-            properties=['encryption', 'mountpoint'],
+            properties=["encryption", "mountpoint"],
             get_children=True,
         )):
-            if dataset['type'] != 'FILESYSTEM':
+            if dataset["type"] != "FILESYSTEM":
                 continue
 
-            mountpoint = dataset['properties']['mountpoint']['value']
-            if mountpoint and mountpoint != 'legacy':
-                encrypted = dataset['properties']['encryption']['value'] != 'off'
+            mountpoint = dataset["properties"]["mountpoint"]["value"]
+            if mountpoint and mountpoint != "legacy":
+                encrypted = dataset["properties"]["encryption"]["value"] != "off"
                 mountpoints[mountpoint] = encrypted
 
         result = set()
@@ -125,26 +125,26 @@ class TrueSearchService(Service):
         """
         What Samba shares directories should it index.
         """
-        if not await self.middleware.call('service.started_or_enabled', 'cifs'):
+        if not await self.middleware.call("service.started_or_enabled", "cifs"):
             return set()
 
-        smb_config = await self.middleware.call('smb.config')
-        if SearchProtocol.SPOTLIGHT not in smb_config['search_protocols']:
+        smb_config = await self.middleware.call("smb.config")
+        if SearchProtocol.SPOTLIGHT not in smb_config["search_protocols"]:
             return set()
 
         shares = await self.middleware.call(
-            'sharing.smb.query',
-            [['enabled', '=', True], ['locked', '=', False], ['path', '!=', 'EXTERNAL'],
-             ['purpose', '!=', 'TIMEMACHINE_SHARE']],
+            "sharing.smb.query",
+            [["enabled", "=", True], ["locked", "=", False], ["path", "!=", "EXTERNAL"],
+             ["purpose", "!=", "TIMEMACHINE_SHARE"]],
         )
 
-        return {share['path'] for share in shares}
+        return {share["path"] for share in shares}
 
     async def webshare_directories(self) -> set[str]:
         """
         What WebShare shares directories should it index.
         """
-        if not await self.middleware.call('service.started_or_enabled', 'webshare'):
+        if not await self.middleware.call("service.started_or_enabled", "webshare"):
             return set()
 
         webshare_config = await self.call2(self.s.webshare.config)
@@ -153,7 +153,7 @@ class TrueSearchService(Service):
 
         shares = await self.call2(
             self.s.sharing.webshare.query,
-            [['enabled', '=', True], ['locked', '=', False]],
+            [["enabled", "=", True], ["locked", "=", False]],
         )
         assert isinstance(shares, list)
 
@@ -169,14 +169,14 @@ class TrueSearchService(Service):
             self.RECONFIGURE_TIMER.cancel()
 
         enabled = await self.enabled()
-        running = await self.middleware.call('service.started', 'truesearch')
+        running = await self.middleware.call("service.started", "truesearch")
 
         if enabled and running:
-            await (await self.middleware.call('service.control', 'RELOAD', 'truesearch')).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "RELOAD", "truesearch")).wait(raise_error=True)
         elif enabled and not running:
-            await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "START", "truesearch")).wait(raise_error=True)
         elif not enabled and running:
-            await (await self.middleware.call('service.control', 'STOP', 'truesearch')).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "STOP", "truesearch")).wait(raise_error=True)
 
     async def schedule_reconfigure(self) -> None:
         """
@@ -199,7 +199,7 @@ class TrueSearchService(Service):
         resume = False
         try:
             if mountpoint is not None:
-                running = await self.middleware.call('service.started', 'truesearch')
+                running = await self.middleware.call("service.started", "truesearch")
                 if running:
                     stop = False
                     for directory in await self.raw_directories():
@@ -213,7 +213,7 @@ class TrueSearchService(Service):
 
                     if stop:
                         await (
-                            await self.middleware.call('service.control', 'STOP', 'truesearch')
+                            await self.middleware.call("service.control", "STOP", "truesearch")
                         ).wait(raise_error=True)
                         resume = True
 
@@ -221,7 +221,7 @@ class TrueSearchService(Service):
         finally:
             if resume:
                 self.logger.info("Resuming TrueSearch service.")
-                await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
+                await (await self.middleware.call("service.control", "START", "truesearch")).wait(raise_error=True)
 
 
 async def post_license_update(middleware: Middleware, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:
@@ -232,7 +232,7 @@ async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> No
     mount = data
 
     for directory in await middleware.call2(middleware.services.truesearch.raw_directories):
-        paths = {directory, mount['mountpoint']}
+        paths = {directory, mount["mountpoint"]}
         # If the mounted path is a child of the share, or the share is a child of the mounted path, reconfigure TS
         if os.path.commonpath(list(paths)) in paths:
             middleware.logger.info(
@@ -244,7 +244,7 @@ async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> No
 
 
 async def on_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:
-    if await middleware.call('failover.licensed'):
+    if await middleware.call("failover.licensed"):
         return
 
     await middleware.call2(middleware.services.truesearch.configure)

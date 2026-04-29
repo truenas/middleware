@@ -21,13 +21,13 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 
-__all__ = ('ACMEProtocolService',)
+__all__ = ("ACMEProtocolService",)
 
 
 class ACMEProtocolService(Service):
 
     class Config:
-        namespace = 'acme.protocol'
+        namespace = "acme.protocol"
         private = True
 
     def get_acme_client_and_key_payload(

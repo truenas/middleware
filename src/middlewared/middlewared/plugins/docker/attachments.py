@@ -10,9 +10,9 @@ if typing.TYPE_CHECKING:
 
 
 class DockerFSAttachmentDelegate(FSAttachmentDelegate):
-    name = 'docker'
-    title = 'Docker'
-    service = 'docker'
+    name = "docker"
+    title = "Docker"
+    service = "docker"
     # Docker must start before apps, and stop after apps
     priority = 10
 
@@ -23,34 +23,34 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         if not docker_config.pool:
             return results
 
-        query_dataset = os.path.relpath(path, '/mnt')
+        query_dataset = os.path.relpath(path, "/mnt")
         if query_dataset in (docker_config.dataset, docker_config.pool) or query_dataset.startswith(
-            f'{docker_config.dataset}/'
+            f"{docker_config.dataset}/"
         ):
-            results.append({'id': docker_config.pool})
+            results.append({"id": docker_config.pool})
 
         return results
 
     async def get_attachment_name(self, attachment: dict[str, str]) -> str:
-        return attachment['id']
+        return attachment["id"]
 
     async def delete(self, attachments: list[dict[str, str]]) -> None:
         if attachments:
-            await (await self.call2(self.s.docker.update, {'pool': None})).wait(raise_error=True)
+            await (await self.call2(self.s.docker.update, {"pool": None})).wait(raise_error=True)
 
     async def toggle(self, attachments: list[dict[str, str]], enabled: bool) -> None:
-        await getattr(self, 'start' if enabled else 'stop')(attachments)
+        await getattr(self, "start" if enabled else "stop")(attachments)
 
     async def stop(self, attachments: list[dict[str, str]]) -> None:
         if not attachments:
             return
         try:
-            await (await self.middleware.call('service.control', 'STOP', self.service)).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "STOP", self.service)).wait(raise_error=True)
             umount_job = await self.call2(self.s.docker.umount_docker_ds)
             if umount_job:
                 await umount_job.wait(raise_error=True)
         except Exception as e:
-            self.middleware.logger.error('Failed to stop docker: %s', e)
+            self.middleware.logger.error("Failed to stop docker: %s", e)
 
     async def start(self, attachments: list[dict[str, str]]) -> None:
         if not attachments:
@@ -58,11 +58,11 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         try:
             await self.call2(self.s.docker.start_service, True)
         except Exception:
-            self.middleware.logger.error('Failed to start docker')
+            self.middleware.logger.error("Failed to start docker")
 
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call(
-        'pool.dataset.register_attachment_delegate',
+        "pool.dataset.register_attachment_delegate",
         DockerFSAttachmentDelegate(middleware)
     )

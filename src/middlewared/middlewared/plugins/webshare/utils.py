@@ -14,8 +14,8 @@ HOSTNAMES_KEY = "webshare_hostnames"
 
 async def bindip_choices(context: ServiceContext) -> dict[str, str]:
     return {
-        d['address']: d['address']
-        for d in await context.middleware.call('interface.ip_in_use', {'static': True})
+        d["address"]: d["address"]
+        for d in await context.middleware.call("interface.ip_in_use", {"static": True})
     }
 
 

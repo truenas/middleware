@@ -16,26 +16,26 @@ from .utils.time_utils import utc_now
 # Set logging levels
 for level, names in {
     logging.INFO: (
-        'charset_normalizer',  # "Encoding detection: ascii is most likely the one."
-        'MARKDOWN',  # markdown debug is also considered useless
-        'paramiko',  # It's too verbose (when used to list remote datasets/snapshots)
+        "charset_normalizer",  # "Encoding detection: ascii is most likely the one."
+        "MARKDOWN",  # markdown debug is also considered useless
+        "paramiko",  # It's too verbose (when used to list remote datasets/snapshots)
     ),
     logging.WARNING: (
-        'acme.client',  # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the
+        "acme.client",  # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the
                         # logs with that much information and raise the log level in this case
-        'aiohttp.internal',  # We dont need internal aiohttp debug logging
-        'asyncio',  # asyncio runs in debug mode but we do not need INFO/DEBUG
-        'botocore',  # We dont need internal botocore debug logging
-        'certbot_dns_cloudflare._internal.dns_cloudflare',
-        'urllib3',
-        'websocket',  # we dont need websocket debug messages
+        "aiohttp.internal",  # We dont need internal aiohttp debug logging
+        "asyncio",  # asyncio runs in debug mode but we do not need INFO/DEBUG
+        "botocore",  # We dont need internal botocore debug logging
+        "certbot_dns_cloudflare._internal.dns_cloudflare",
+        "urllib3",
+        "websocket",  # we dont need websocket debug messages
     ),
     logging.ERROR: (
-        'docker.auth',
-        'docker.utils.config',  # Prevent debug docker logs
-        'googleapiclient',  # issues garbage warnings
-        'httpx._client',  # Prevent httpx debug spam
-        'kmip.services.kmip_client',  # Prevent kmip client spam
+        "docker.auth",
+        "docker.utils.config",  # Prevent debug docker logs
+        "googleapiclient",  # issues garbage warnings
+        "httpx._client",  # Prevent httpx debug spam
+        "kmip.services.kmip_client",  # Prevent kmip client spam
     ),
 }.items():
     for name in names:
@@ -60,23 +60,23 @@ warnings.filterwarnings("ignore", category=UserWarning, module="middlewared.api.
 
 logging.TRACE = 6
 
-APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
-APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
-AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
-DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
-FAILOVER_LOGFILE = '/var/log/failover.log'
-LOGFILE = '/var/log/middlewared.log'
-DEFAULT_LOGFORMAT = '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
-FALLBACK_LOGFILE = '/var/log/fallback-middlewared.log'
-NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
-NGINX_LOG_PATH = '/var/log/nginx'
-TRUENAS_CONNECT_LOGFILE = '/var/log/truenas_connect.log'
-ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
-ZETTAREPL_LOGFORMAT = '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'
+APP_LIFECYCLE_LOGFILE = "/var/log/app_lifecycle.log"
+APP_MIGRATION_LOGFILE = "/var/log/app_migrations.log"
+AUDIT_HANDLER_LOGFILE = "/var/log/audit/audit_handler.log"
+DOCKER_IMAGE_LOGFILE = "/var/log/docker_image.log"
+FAILOVER_LOGFILE = "/var/log/failover.log"
+LOGFILE = "/var/log/middlewared.log"
+DEFAULT_LOGFORMAT = "[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s"
+FALLBACK_LOGFILE = "/var/log/fallback-middlewared.log"
+NETDATA_API_LOGFILE = "/var/log/netdata_api.log"
+NGINX_LOG_PATH = "/var/log/nginx"
+TRUENAS_CONNECT_LOGFILE = "/var/log/truenas_connect.log"
+ZETTAREPL_LOGFILE = "/var/log/zettarepl.log"
+ZETTAREPL_LOGFORMAT = "[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s"
 
-DEFAULT_IDENT = 'MIDDLEWARE: '
-MIDDLEWARE_AUDIT_IDENT = 'TNAUDIT_MIDDLEWARE: '
-DEFAULT_SYSLOG_PATH = '/var/run/syslog-ng/middleware.sock'
+DEFAULT_IDENT = "MIDDLEWARE: "
+MIDDLEWARE_AUDIT_IDENT = "TNAUDIT_MIDDLEWARE: "
+DEFAULT_SYSLOG_PATH = "/var/run/syslog-ng/middleware.sock"
 DEFAULT_PENDING_QUEUE_LEN = 4096
 
 
@@ -100,7 +100,7 @@ class TNLog:
         if self.name is None:
             return DEFAULT_IDENT
 
-        return f'{self.name.upper()}: '
+        return f"{self.name.upper()}: "
 
 
 # NOTE if new separate log file needs to be added, create a new TNLog
@@ -110,24 +110,24 @@ class TNLog:
 # the auto-generated syslog-ng rules place messages in the correct log files.
 ALL_LOG_FILES = (
     TNLog(None, LOGFILE),
-    TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE),
-    TNLog('app_migration', APP_MIGRATION_LOGFILE),
-    TNLog('audit_handler', AUDIT_HANDLER_LOGFILE),
-    TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
-    TNLog('failover', FAILOVER_LOGFILE),
-    TNLog('netdata_api', NETDATA_API_LOGFILE),
-    TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
-    TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
+    TNLog("app_lifecycle", APP_LIFECYCLE_LOGFILE),
+    TNLog("app_migration", APP_MIGRATION_LOGFILE),
+    TNLog("audit_handler", AUDIT_HANDLER_LOGFILE),
+    TNLog("docker_image", DOCKER_IMAGE_LOGFILE),
+    TNLog("failover", FAILOVER_LOGFILE),
+    TNLog("netdata_api", NETDATA_API_LOGFILE),
+    TNLog("truenas_connect", TRUENAS_CONNECT_LOGFILE),
+    TNLog("zettarepl", ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
 )
 # Audit entries are inserted into audit databases in /audit rather than
 # written to files in /var/log and so they are not members of ALL_LOG_FILES
-MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
+MIDDLEWARE_TNAUDIT = TNLog("TNAUDIT_MIDDLEWARE", "", "", None)
 
 
 class TNLogFormatter(logging.Formatter):
     """ logging formatter to convert python exception into structured data """
 
-    BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': r'\n'})
+    BASIC_SYSLOG_TRANSLATION = str.maketrans({"\n": r"\n"})
 
     def _escape_rfc_generic(self, msg: str) -> str:
         return msg.translate(self.BASIC_SYSLOG_TRANSLATION)
@@ -146,16 +146,16 @@ class TNLogFormatter(logging.Formatter):
         # Then collapse to single line for sending to syslog.
         msg = self._escape_rfc_generic(super().format(record))
         if exc_info:
-            structured_data['exception'] = self.formatException(exc_info)
+            structured_data["exception"] = self.formatException(exc_info)
 
         if stack_info:
-            structured_data['stack'] = self.formatStack(stack_info)
+            structured_data["stack"] = self.formatStack(stack_info)
 
         if structured_data:
-            structured_data['type'] = 'PYTHON_EXCEPTION'
-            structured_data['time'] = utc_now().strftime('%Y-%m-%d %H:%M:%S.%f')
-            json_data = dumps({'TNLOG': structured_data})
-            msg += f' @cee:{json_data}'
+            structured_data["type"] = "PYTHON_EXCEPTION"
+            structured_data["time"] = utc_now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            json_data = dumps({"TNLOG": structured_data})
+            msg += f" @cee:{json_data}"
 
         record.exc_info = exc_info
         record.exc_text = exc_text
@@ -167,11 +167,11 @@ class ConsoleLogFormatter(logging.Formatter):
     """Format the console log messages"""
 
     class ConsoleColor(StrEnum):
-        YELLOW = '\033[1;33m'  # (warning)
-        GREEN = '\033[1;32m'  # (info)
-        RED = '\033[1;31m'  # (error)
-        HIGHRED = '\033[1;41m'  # (critical)
-        RESET = '\033[1;m'  # Reset
+        YELLOW = "\033[1;33m"  # (warning)
+        GREEN = "\033[1;32m"  # (info)
+        RED = "\033[1;31m"  # (error)
+        HIGHRED = "\033[1;41m"  # (critical)
+        RESET = "\033[1;m"  # Reset
 
     color_mapping = {
         logging.CRITICAL: ConsoleColor.HIGHRED,
@@ -297,7 +297,7 @@ class TNSyslogHandler(logging.handlers.SysLogHandler):
     def set_fallback_handler(self, fallback: logging.Handler) -> None:
         """ Set a fallback handler (for example to file) that will be used if syslog socket logging fails """
         if not isinstance(fallback, logging.Handler):
-            raise TypeError(f'{fallback}: not a logging.Handler')
+            raise TypeError(f"{fallback}: not a logging.Handler")
 
         self.fallback_handler = fallback
 
@@ -326,7 +326,7 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
     syslog_handler.setLevel(logging.DEBUG)
 
     if tnlog.logformat:
-        syslog_handler.setFormatter(logging.Formatter(tnlog.logformat, '%Y/%m/%d %H:%M:%S'))
+        syslog_handler.setFormatter(logging.Formatter(tnlog.logformat, "%Y/%m/%d %H:%M:%S"))
 
     # Set ident for the logger. This becomes program name in syslog-ng and allows
     # more precise filtering rules
@@ -349,7 +349,7 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
 
 class Logger:
     """Pseudo-Class for Logger - Wrapper for logging module"""
-    def __init__(self, application_name: str, debug_level: str | int = 'DEBUG', log_format: str = DEFAULT_LOGFORMAT):
+    def __init__(self, application_name: str, debug_level: str | int = "DEBUG", log_format: str = DEFAULT_LOGFORMAT):
         self.application_name = application_name
         self.debug_level = debug_level
         self.log_format = log_format
@@ -362,7 +362,7 @@ class Logger:
         Configure the log output to file or console.
             `output_option` str: Default is `file`, can be set to `console`.
         """
-        if output_option.lower() == 'console':
+        if output_option.lower() == "console":
             console_handler = logging.StreamHandler()
             logging.root.setLevel(self.debug_level)
             time_format = "%Y/%m/%d %H:%M:%S"
@@ -373,9 +373,9 @@ class Logger:
             # We internally queue writes to regular log files while waiting for syslog to recover
             # while simultaneously writing to the fallback file so that there is less potential to
             # lose relevant logs.
-            fallback_handler = logging.handlers.RotatingFileHandler(FALLBACK_LOGFILE, 'a', 10485760, 5, 'utf-8')
+            fallback_handler = logging.handlers.RotatingFileHandler(FALLBACK_LOGFILE, "a", 10485760, 5, "utf-8")
             fallback_handler.setLevel(logging.DEBUG)
-            fallback_handler.setFormatter(logging.Formatter(DEFAULT_LOGFORMAT, '%Y/%m/%d %H:%M:%S'))
+            fallback_handler.setFormatter(logging.Formatter(DEFAULT_LOGFORMAT, "%Y/%m/%d %H:%M:%S"))
 
             for tnlog in ALL_LOG_FILES:
                 setup_syslog_handler(tnlog, fallback_handler)
@@ -391,7 +391,7 @@ def setup_logging(name: str, debug_level: str | int, log_handler: typing.Optiona
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
-    if log_handler == 'console':
-        _logger.configure_logging('console')
+    if log_handler == "console":
+        _logger.configure_logging("console")
     else:
-        _logger.configure_logging('file')
+        _logger.configure_logging("file")

@@ -6,29 +6,29 @@ from middlewared.service import Service
 class HardwareMemoryService(Service):
 
     class Config:
-        namespace = 'hardware.memory'
+        namespace = "hardware.memory"
         private = True
 
     def error_info(self):
         results = {}
-        mc_path = Path('/sys/devices/system/edac/mc')
+        mc_path = Path("/sys/devices/system/edac/mc")
         if not mc_path.exists():
             return results
 
-        dimm_or_rank = 'dimm'
+        dimm_or_rank = "dimm"
         mc_idx = 0
-        for mc in filter(lambda x: x.is_dir() and x.name.startswith('mc'), mc_path.iterdir()):
+        for mc in filter(lambda x: x.is_dir() and x.name.startswith("mc"), mc_path.iterdir()):
             mc_info = {mc.name: {}}
-            if mc_idx == 0 and not (mc / f'{dimm_or_rank}{mc_idx}').exists():
+            if mc_idx == 0 and not (mc / f"{dimm_or_rank}{mc_idx}").exists():
                 # AMD systems use "rank" as top-level dir while Intel uses dimm
-                dimm_or_rank = 'rank'
+                dimm_or_rank = "rank"
 
             # top-level memory controller information
             for key, _file in (
-                ('corrected_errors', 'ce_count'),
-                ('uncorrected_errors', 'ue_count'),
-                ('corrected_errors_with_no_dimm_info', 'ce_noinfo_count'),
-                ('uncorrected_errors_with_no_dimm_info', 'ue_noinfo_count'),
+                ("corrected_errors", "ce_count"),
+                ("uncorrected_errors", "ue_count"),
+                ("corrected_errors_with_no_dimm_info", "ce_noinfo_count"),
+                ("uncorrected_errors_with_no_dimm_info", "ue_noinfo_count"),
             ):
                 try:
                     value = int((mc / _file).read_text().strip())
@@ -42,8 +42,8 @@ class HardwareMemoryService(Service):
                 # looks like /sys/devices/edac/mc0/dimm(or rank){0/1/2}
                 mc_info[mc.name][dimm.name] = {}
                 for key, _file in (
-                    ('corrected_errors', 'dimm_ce_count'),
-                    ('uncorrected_errors', 'dimm_ue_count'),
+                    ("corrected_errors", "dimm_ce_count"),
+                    ("uncorrected_errors", "dimm_ue_count"),
                 ):
                     try:
                         value = int((dimm / _file).read_text().strip())

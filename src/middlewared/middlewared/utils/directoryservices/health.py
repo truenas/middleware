@@ -4,7 +4,7 @@ from threading import Lock
 from .constants import DSStatus, DSType
 
 MAX_RECOVER_ATTEMPTS = 5
-HEALTH_EVENT_NAME = 'directoryservices.status'
+HEALTH_EVENT_NAME = "directoryservices.status"
 
 
 class KRB5HealthCheckFailReason(enum.IntEnum):
@@ -72,7 +72,7 @@ class LDAPHealthError(DirectoryServiceHealthError):
 
 
 class DirectoryServiceHealth:
-    __slots__ = ('_dstype', '_status', '_status_msg', '_initialized', '_lock')
+    __slots__ = ("_dstype", "_status", "_status_msg", "_initialized", "_lock")
 
     def __init__(self):
         self._dstype = None
@@ -101,7 +101,7 @@ class DirectoryServiceHealth:
         dstype = DSType(dstype_in) if dstype_in is not None else None
         status = DSStatus(status_in) if status_in is not None else None
         if status_msg is not None and not isinstance(status_msg, str):
-            raise ValueError(f'{type(status_msg)}: status_msg must be string or None type')
+            raise ValueError(f"{type(status_msg)}: status_msg must be string or None type")
 
         with self._lock:
             self._initialized = True
@@ -112,9 +112,9 @@ class DirectoryServiceHealth:
     def dump(self) -> dict:
         with self._lock:
             return {
-                'type': self.dstype.value if self.dstype else None,
-                'status': self.status.name if self.status else None,
-                'status_msg': self.status_msg
+                "type": self.dstype.value if self.dstype else None,
+                "status": self.status.name if self.status else None,
+                "status_msg": self.status_msg
             }
 
 

@@ -2,10 +2,10 @@ from middlewared.auth import SessionManagerCredentials, TruenasNodeSessionManage
 
 # Special values start with dot to ensure they cannot collide with local usernames
 # created via APIs
-API_KEY_PREFIX = '.API_KEY:'
-NODE_SESSION = '.TRUENAS_NODE'
-UNAUTHENTICATED = '.UNAUTHENTICATED'
-UNKNOWN_SESSION = '.UNKNOWN'
+API_KEY_PREFIX = ".API_KEY:"
+NODE_SESSION = ".TRUENAS_NODE"
+UNAUTHENTICATED = ".UNAUTHENTICATED"
+UNKNOWN_SESSION = ".UNKNOWN"
 
 
 def audit_username_from_session(cred: SessionManagerCredentials | None) -> str:
@@ -14,7 +14,7 @@ def audit_username_from_session(cred: SessionManagerCredentials | None) -> str:
 
     # This works for regular user session and tokens formed on them
     if cred.is_user_session:
-        return cred.user['username']  # type: ignore[no-any-return, attr-defined]
+        return cred.user["username"]  # type: ignore[no-any-return, attr-defined]
 
     if isinstance(cred, TruenasNodeSessionManagerCredentials):
         return NODE_SESSION

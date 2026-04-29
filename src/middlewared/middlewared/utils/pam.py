@@ -3,26 +3,26 @@ import enum
 
 
 class PAMModule(enum.StrEnum):
-    DENY = 'pam_deny.so'
-    ENV = 'pam_env.so'
-    KEYINIT = 'pam_keyinit.so'
-    MKHOMEDIR = 'pam_mkhomedir.so'
-    LOGINUID = 'pam_loginuid.so'
-    MOTD = 'pam_motd.so'
-    PERMIT = 'pam_permit.so'
-    OATH = 'pam_oath.so'
-    UNIX = 'pam_unix.so'
-    SSS = 'pam_sss.so'
-    TRUENAS = 'pam_truenas.so'
-    TTY_AUDIT = 'pam_tty_audit.so'
-    WINBIND = 'pam_winbind.so'
+    DENY = "pam_deny.so"
+    ENV = "pam_env.so"
+    KEYINIT = "pam_keyinit.so"
+    MKHOMEDIR = "pam_mkhomedir.so"
+    LOGINUID = "pam_loginuid.so"
+    MOTD = "pam_motd.so"
+    PERMIT = "pam_permit.so"
+    OATH = "pam_oath.so"
+    UNIX = "pam_unix.so"
+    SSS = "pam_sss.so"
+    TRUENAS = "pam_truenas.so"
+    TTY_AUDIT = "pam_tty_audit.so"
+    WINBIND = "pam_winbind.so"
 
 
 class PAMService(enum.StrEnum):
-    ACCOUNT = 'account'
-    AUTH = 'auth'
-    PASSWORD = 'password'
-    SESSION = 'session'
+    ACCOUNT = "account"
+    AUTH = "auth"
+    PASSWORD = "password"
+    SESSION = "session"
 
 
 class PAMSimpleControl(enum.StrEnum):
@@ -30,32 +30,32 @@ class PAMSimpleControl(enum.StrEnum):
     # See man(5) pam.conf
 
     # Equivalent to [success=ok new_authtok_reqd=ok ignore=ignore default=bad]
-    REQUIRED = 'required'
+    REQUIRED = "required"
     # Equivalent to [success=ok new_authtok_reqd=ok ignore=ignore default=die]
-    REQUISITE = 'requisite'
+    REQUISITE = "requisite"
     # Equivalent to [success=ok new_authtok_reqd=done ignore=ignore]
-    SUFFICIENT = 'sufficient'
+    SUFFICIENT = "sufficient"
     # Equivalent to [success=ok new_authtok_reqd=ok ignore=ignore]
-    OPTIONAL = 'optional'
+    OPTIONAL = "optional"
 
 
 class PAMResponse(enum.StrEnum):
     # Subset of possible control keys for pam line
     # See man(5) pam.conf and _pam_types.h from pam development libraries
-    DEFAULT = 'default'
-    SUCCESS = 'success'
-    NEW_AUTHTOK_REQD = 'new_authtok_reqd'
-    USER_UNKNOWN = 'user_unknown'
+    DEFAULT = "default"
+    SUCCESS = "success"
+    NEW_AUTHTOK_REQD = "new_authtok_reqd"
+    USER_UNKNOWN = "user_unknown"
 
 
 class PAMAction(enum.StrEnum):
     # Subset of possible actions for control keys in pam line
-    IGNORE = 'ignore'
-    BAD = 'bad'
-    DIE = 'die'
-    OK = 'ok'
-    DONE = 'done'
-    RESET = 'reset'
+    IGNORE = "ignore"
+    BAD = "bad"
+    DIE = "die"
+    OK = "ok"
+    DONE = "done"
+    RESET = "reset"
 
 
 @dataclass(slots=True, frozen=True)
@@ -64,7 +64,7 @@ class PAMControl:
     action: PAMAction | int
 
     def as_conf(self) -> str:
-        return f'{self.response}={self.action}'
+        return f"{self.response}={self.action}"
 
 
 @dataclass(slots=True, frozen=True)
@@ -82,17 +82,17 @@ class PAMLine:
 
     def as_conf(self) -> str:
         if self.pam_module_args is None:
-            return '\t'.join([
+            return "\t".join([
                 self.pam_service,
                 self.__dump_control(),
                 self.pam_module
             ])
 
-        return '\t'.join([
+        return "\t".join([
             self.pam_service,
             self.__dump_control(),
             self.pam_module,
-            ' '.join(self.pam_module_args)
+            " ".join(self.pam_module_args)
         ])
 
 
@@ -140,7 +140,7 @@ AD_ACCOUNT = PAMConfLines(
                 PAMControl(PAMResponse.DEFAULT, PAMAction.IGNORE)
             ),
             pam_module=PAMModule.WINBIND,
-            pam_module_args=('krb5_auth', 'krb5_ccache_type=FILE')
+            pam_module_args=("krb5_auth", "krb5_ccache_type=FILE")
         )
     )
 )
@@ -204,7 +204,7 @@ AD_AUTH = PAMConfLines(
                 PAMControl(PAMResponse.DEFAULT, PAMAction.IGNORE)
             ),
             pam_module=PAMModule.WINBIND,
-            pam_module_args=('try_first_pass', 'try_authtok', 'krb5_auth')
+            pam_module_args=("try_first_pass", "try_authtok", "krb5_auth")
         )
     )
 )
@@ -227,7 +227,7 @@ SSS_AUTH = PAMConfLines(
                 PAMControl(PAMResponse.DEFAULT, PAMAction.IGNORE)
             ),
             pam_module=PAMModule.SSS,
-            pam_module_args=('ignore_unknown_user', 'use_first_pass')
+            pam_module_args=("ignore_unknown_user", "use_first_pass")
         )
     )
 )
@@ -270,7 +270,7 @@ AD_SESSION = PAMConfLines(
             # We have pam_winbind handle mkhomedir because pam_mkhomedir
             # is erratic for automatic home directory creation for AD users.
             # This is simpler than fixing pam_mkhomedir.
-            pam_module_args=('mkhomedir',)
+            pam_module_args=("mkhomedir",)
         ),
     )
 )
@@ -302,7 +302,7 @@ TTY_AUDIT_LINE = PAMLine(
     pam_service=PAMService.SESSION,
     pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.TTY_AUDIT,
-    pam_module_args=('disable=*', 'enable=root')
+    pam_module_args=("disable=*", "enable=root")
 )
 
 
@@ -316,7 +316,7 @@ TRUENAS_SESSION_LIMIT = PAMLine(
     pam_service=PAMService.SESSION,
     pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.TRUENAS,
-    pam_module_args=('max_sessions=10',)
+    pam_module_args=("max_sessions=10",)
 )
 
 
@@ -324,7 +324,7 @@ FAILLOCK_AUTH_FAIL = PAMLine(
     pam_service=PAMService.AUTH,
     pam_control=(PAMControl(PAMResponse.DEFAULT, PAMAction.DIE),),
     pam_module=PAMModule.TRUENAS,
-    pam_module_args=('authfail',)
+    pam_module_args=("authfail",)
 )
 
 
@@ -332,5 +332,5 @@ FAILLOCK_AUTH_SUCC = PAMLine(
     pam_service=PAMService.AUTH,
     pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.TRUENAS,
-    pam_module_args=('authsucc',)
+    pam_module_args=("authsucc",)
 )

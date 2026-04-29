@@ -6,9 +6,9 @@ from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, exclud
 from middlewared.utils.security import MAX_PASSWORD_HISTORY, PasswordComplexity
 
 __all__ = [
-    'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
-    'SystemSecurityInfoFipsAvailableArgs', 'SystemSecurityInfoFipsAvailableResult',
-    'SystemSecurityInfoFipsEnabledArgs', 'SystemSecurityInfoFipsEnabledResult',
+    "SystemSecurityEntry", "SystemSecurityUpdateArgs", "SystemSecurityUpdateResult",
+    "SystemSecurityInfoFipsAvailableArgs", "SystemSecurityInfoFipsAvailableResult",
+    "SystemSecurityInfoFipsEnabledArgs", "SystemSecurityInfoFipsEnabledResult",
 ]
 
 
@@ -59,7 +59,7 @@ class SystemSecurityEntry(BaseModel):
     """
 
 
-@single_argument_args('system_security_update')
+@single_argument_args("system_security_update")
 class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

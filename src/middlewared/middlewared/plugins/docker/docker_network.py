@@ -11,16 +11,16 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('DockerNetworkService',)
+__all__ = ("DockerNetworkService",)
 
 
 class DockerNetworkService(GenericCRUDService[DockerNetworkEntry, str]):
 
     class Config:
-        cli_namespace = 'docker.network'
+        cli_namespace = "docker.network"
         entry = DockerNetworkEntry
-        namespace = 'docker.network'
-        role_prefix = 'DOCKER'
+        namespace = "docker.network"
+        role_prefix = "DOCKER"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:

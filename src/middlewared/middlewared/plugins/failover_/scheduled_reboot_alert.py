@@ -26,7 +26,7 @@ def get_sentinel_files_time_and_clean_them_up(middleware):
     try:
         os.makedirs(os.path.dirname(FENCED_ALERT_FILE), exist_ok=True)
     except Exception:
-        middleware.logger.error('Unhandled exceptin creating sentinels directory', exc_info=True)
+        middleware.logger.error("Unhandled exceptin creating sentinels directory", exc_info=True)
     else:
         for idx, i in enumerate((WATCHDOG_ALERT_FILE, FENCED_ALERT_FILE)):
             try:
@@ -54,10 +54,10 @@ def setup_impl(middleware):
     watchdog_time, fenced_time = get_sentinel_files_time_and_clean_them_up(middleware)
     if watchdog_time and (not fenced_time or watchdog_time > fenced_time):
         middleware.call_sync2(middleware.services.alert.oneshot_create, FailoverRebootAlert(fqdn=fqdn, now=now))
-        middleware.logger.warning('Failover reboot occurred at %d', watchdog_time)
+        middleware.logger.warning("Failover reboot occurred at %d", watchdog_time)
     elif fenced_time:
         middleware.call_sync2(middleware.services.alert.oneshot_create, FencedRebootAlert(fqdn=fqdn, now=now))
-        middleware.logger.warning('Fenced reboot occurred at %d', fenced_time)
+        middleware.logger.warning("Fenced reboot occurred at %d", fenced_time)
     else:
         middleware.call_sync2(middleware.services.alert.oneshot_delete, "FencedReboot")
         middleware.call_sync2(middleware.services.alert.oneshot_delete, "FailoverReboot")

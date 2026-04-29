@@ -35,7 +35,7 @@ def mock_sysfs(tmp_path):
         import builtins
         original_open = builtins.open
 
-        def mock_open(path, mode='r', *args, **kwargs):
+        def mock_open(path, mode="r", *args, **kwargs):
             if "/sys/block/" in str(path):
                 # Extract relative path after /sys/block/
                 rel_path = str(path).split("/sys/block/", 1)[1]
@@ -43,7 +43,7 @@ def mock_sysfs(tmp_path):
                 return original_open(str(test_path), mode, *args, **kwargs)
             return original_open(path, mode, *args, **kwargs)
 
-        with patch('builtins.open', side_effect=mock_open):
+        with patch("builtins.open", side_effect=mock_open):
             yield
 
     return _mock
@@ -174,7 +174,7 @@ def test_lunid_cached_property(mock_sysfs):
         assert lunid1 == "60014055f10d56d8"
 
         # Second access should return cached value
-        with patch('builtins.open', return_value=None):
+        with patch("builtins.open", return_value=None):
             lunid2 = disk.lunid
             assert lunid2 == "60014055f10d56d8"
             assert lunid1 is lunid2  # Same object reference

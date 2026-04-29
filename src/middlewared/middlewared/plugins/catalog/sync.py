@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 
-STATS_URL: str = 'https://telemetry.sys.truenas.net/apps/truenas-apps-stats.json'
+STATS_URL: str = "https://telemetry.sys.truenas.net/apps/truenas-apps-stats.json"
 
 
 @dataclass
@@ -47,11 +47,11 @@ async def update_popularity_cache(context: ServiceContext) -> None:
                     # entries in the file
                 }
         except Exception as e:
-            context.logger.error('Failed to fetch popularity stats for apps: %r', e)
+            context.logger.error("Failed to fetch popularity stats for apps: %r", e)
 
 
 async def update_git_repository(context: ServiceContext, location: str, repository: str, branch: str) -> None:
-    await context.middleware.call('network.general.will_perform_activity', 'catalog')
+    await context.middleware.call("network.general.will_perform_activity", "catalog")
     try:
         await context.to_thread(pull_clone_repository, repository, location, branch)
     except Exception:
@@ -66,9 +66,9 @@ async def sync(context: ServiceContext, job: Job) -> None:
     try:
         catalog = await context.call2(context.s.catalog.config)
 
-        job.set_progress(5, 'Updating catalog repository')
+        job.set_progress(5, "Updating catalog repository")
         await update_git_repository(context, catalog.location, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH)
-        job.set_progress(15, 'Reading catalog information')
+        job.set_progress(15, "Reading catalog information")
         # Update feature map cache whenever official catalog is updated
         await context.to_thread(get_feature_map, context, False)
         await retrieve_recommended_apps(context, False)
@@ -88,8 +88,8 @@ async def sync(context: ServiceContext, job: Job) -> None:
     else:
         await context.middleware.call2(
             context.middleware.services.alert.oneshot_delete,
-            'CatalogSyncFailed', OFFICIAL_LABEL,
+            "CatalogSyncFailed", OFFICIAL_LABEL,
         )
-        job.set_progress(100, f'Synced {OFFICIAL_LABEL!r} catalog')
+        job.set_progress(100, f"Synced {OFFICIAL_LABEL!r} catalog")
         sync_state.synced = True
-        context.create_task(context.middleware.call('app.check_upgrade_alerts'))
+        context.create_task(context.middleware.call("app.check_upgrade_alerts"))

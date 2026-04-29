@@ -29,7 +29,7 @@ class ZpoolCapacityNoticeAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['volume']]
+        return [args["volume"]]
 
 
 @dataclass(kw_only=True)
@@ -47,7 +47,7 @@ class ZpoolCapacityWarningAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['volume']]
+        return [args["volume"]]
 
 
 @dataclass(kw_only=True)
@@ -65,7 +65,7 @@ class ZpoolCapacityCriticalAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['volume']]
+        return [args["volume"]]
 
 
 class ZpoolCapacityAlertSource(AlertSource):

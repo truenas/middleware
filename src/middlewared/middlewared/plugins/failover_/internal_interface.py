@@ -32,20 +32,20 @@ def _find_vseries_x710_ports() -> list[str]:
     # X710-AT2 in a normal PCIe slot will parent to a CPU root port or a
     # different bridge and therefore be ignored here.
     ports: list[tuple[str, str]] = []
-    for iface in Path('/sys/class/net/').iterdir():
+    for iface in Path("/sys/class/net/").iterdir():
         try:
-            uevent = (iface / 'device/uevent').read_text()
+            uevent = (iface / "device/uevent").read_text()
         except (FileNotFoundError, OSError):
             continue
-        if 'PCI_ID=8086:15FF' not in uevent:
+        if "PCI_ID=8086:15FF" not in uevent:
             continue
         try:
-            nic_pci = (iface / 'device').resolve()
-            parent_vendor = (nic_pci.parent / 'vendor').read_text().strip()
-            parent_device = (nic_pci.parent / 'device').read_text().strip()
+            nic_pci = (iface / "device").resolve()
+            parent_vendor = (nic_pci.parent / "vendor").read_text().strip()
+            parent_device = (nic_pci.parent / "device").read_text().strip()
         except (FileNotFoundError, OSError):
             continue
-        if (parent_vendor, parent_device) != ('0x1000', '0xc034'):
+        if (parent_vendor, parent_device) != ("0x1000", "0xc034"):
             continue
         ports.append((nic_pci.name, iface.name))
     ports.sort()
@@ -58,30 +58,30 @@ class InternalInterfaceService(Service):
 
     class Config:
         private = True
-        namespace = 'failover.internal_interface'
+        namespace = "failover.internal_interface"
 
     @cache
     def detect(self):
         found = list()
-        hardware = self.middleware.call_sync('failover.hardware')
-        if hardware == 'BHYVE':
-            found.append('enp0s6f1')
-        elif hardware == 'IXKVM':
-            found.append('enp1s0')
-        elif hardware == 'ECHOSTREAM':
+        hardware = self.middleware.call_sync("failover.hardware")
+        if hardware == "BHYVE":
+            found.append("enp0s6f1")
+        elif hardware == "IXKVM":
+            found.append("enp1s0")
+        elif hardware == "ECHOSTREAM":
             # z-series
-            for i in Path('/sys/class/net/').iterdir():
+            for i in Path("/sys/class/net/").iterdir():
                 try:
-                    data = (i / 'device/uevent').read_text()
-                    if 'PCI_ID=8086:10D3' in data and 'PCI_SUBSYS_ID=8086:A01F' in data:
+                    data = (i / "device/uevent").read_text()
+                    if "PCI_ID=8086:10D3" in data and "PCI_SUBSYS_ID=8086:A01F" in data:
                         found.append(i.name)
                         break
                 except FileNotFoundError:
                     continue
-        elif hardware in ('PUMA', 'ECHOWARP', 'LAJOLLA2', 'SUBLIGHT'):
+        elif hardware in ("PUMA", "ECHOWARP", "LAJOLLA2", "SUBLIGHT"):
             # {x/m/f/h}-series
-            found.append('ntb0')
-        elif hardware in ('LUDICROUS', 'PLAID'):
+            found.append("ntb0")
+        elif hardware in ("LUDICROUS", "PLAID"):
             # v-series. DMI Type 1 Version selects interconnect topology:
             #   < 2.0  — external 10 GbE cable renamed to `internode0` by
             #            systemd `.link` (no bond, no X710 masking).
@@ -95,11 +95,11 @@ class InternalInterfaceService(Service):
             #            AND the current kernel names so masking holds
             #            whether this method runs before or after the
             #            rename that happens in ensure_vseries_bond().
-            found.append('internode0')
+            found.append("internode0")
             if is_vseries_v2_interconnect():
                 x710_ports = _find_vseries_x710_ports()
                 if len(x710_ports) == 2:
-                    found.extend(('internode0_1', 'internode0_2'))
+                    found.extend(("internode0_1", "internode0_2"))
                     for port in x710_ports:
                         if port not in found:
                             found.append(port)
@@ -109,8 +109,8 @@ class InternalInterfaceService(Service):
         # On V-Series with DMI Version >= 2.0, `internode0` is an LACP bond
         # across the two on-board X710 cross-connect ports. Create it
         # idempotently before the HA IP is assigned.
-        hardware = self.middleware.call_sync('failover.hardware')
-        if hardware not in ('LUDICROUS', 'PLAID'):
+        hardware = self.middleware.call_sync("failover.hardware")
+        if hardware not in ("LUDICROUS", "PLAID"):
             return
         if not is_vseries_v2_interconnect():
             return
@@ -118,7 +118,7 @@ class InternalInterfaceService(Service):
         members = _find_vseries_x710_ports()
         if len(members) != 2:
             self.logger.warning(
-                'v-series >= 2.0: expected 2 internal X710 ports, found %d',
+                "v-series >= 2.0: expected 2 internal X710 ports, found %d",
                 len(members),
             )
             return
@@ -129,7 +129,7 @@ class InternalInterfaceService(Service):
         # rename it back because its .link rules only rename during
         # initial enumeration, not when an interface already has a
         # non-default name assigned by us here.
-        target_names = ('internode0_1', 'internode0_2')
+        target_names = ("internode0_1", "internode0_2")
         with netlink_route() as sock:
             links = get_links(sock)
             renamed: list[str] = []
@@ -154,8 +154,8 @@ class InternalInterfaceService(Service):
             configure_bond(
                 sock,
                 BondConfig(
-                    name='internode0',
-                    mode='LACP',
+                    name="internode0",
+                    mode="LACP",
                     members=renamed,
                     xmit_hash_policy=BondXmitHashPolicy.LAYER34,
                     lacpdu_rate=BondLacpRate.FAST,
@@ -171,7 +171,7 @@ class InternalInterfaceService(Service):
         # misnegotiate on this internal point-to-point interconnect.
         try:
             current = eth.get_priv_flags(iface)
-            desired = {'disable-fw-lldp': True}
+            desired = {"disable-fw-lldp": True}
             to_set = {
                 name: value
                 for name, value in desired.items()
@@ -181,39 +181,39 @@ class InternalInterfaceService(Service):
                 eth.set_priv_flags(iface, to_set)
         except (OSError, NetlinkError, ValueError) as e:
             self.logger.warning(
-                '%s: priv-flag tuning skipped: %s', iface, e
+                "%s: priv-flag tuning skipped: %s", iface, e
             )
 
         # 4-tuple RX flow hash (`sdfn` = src-IP + dst-IP + src-port +
         # dst-port) so inbound controller-to-controller flows spread
         # across X710 RX queues instead of collapsing to a single
         # queue / CPU.
-        for flow_type in ('tcp4', 'udp4'):
+        for flow_type in ("tcp4", "udp4"):
             try:
-                eth.set_rx_flow_hash(iface, flow_type, 'sdfn')
+                eth.set_rx_flow_hash(iface, flow_type, "sdfn")
             except (OSError, NetlinkError, ValueError) as e:
                 self.logger.warning(
-                    '%s: rx-flow-hash %s failed: %s', iface, flow_type, e,
+                    "%s: rx-flow-hash %s failed: %s", iface, flow_type, e,
                 )
 
     async def pre_sync(self):
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call("system.is_enterprise"):
             return
 
         await self.middleware.run_in_thread(self.ensure_vseries_bond)
 
-        node = await self.middleware.call('failover.node')
-        if node == 'A':
-            internal_ip = '169.254.10.1'
-        elif node == 'B':
-            internal_ip = '169.254.10.2'
+        node = await self.middleware.call("failover.node")
+        if node == "A":
+            internal_ip = "169.254.10.1"
+        elif node == "B":
+            internal_ip = "169.254.10.2"
         else:
-            self.logger.error('Node position could not be determined.')
+            self.logger.error("Node position could not be determined.")
             return
 
-        iface = await self.middleware.call('failover.internal_interfaces')
+        iface = await self.middleware.call("failover.internal_interfaces")
         if not iface:
-            self.logger.error('Internal interface not found.')
+            self.logger.error("Internal interface not found.")
             return
 
         iface = iface[0]
@@ -246,7 +246,7 @@ class InternalInterfaceService(Service):
             try:
                 add_route(
                     sock,
-                    dst='169.254.10.0',
+                    dst="169.254.10.0",
                     dst_len=23,
                     route_type=RTNType.BLACKHOLE,
                 )
@@ -254,7 +254,7 @@ class InternalInterfaceService(Service):
                 # blackhole route already exists
                 pass
 
-        self.middleware.call_sync('failover.internal_interface.post_sync', internal_ip)
+        self.middleware.call_sync("failover.internal_interface.post_sync", internal_ip)
 
     async def post_sync(self, internal_ip):
         if not self.http_site_added:
@@ -262,7 +262,7 @@ class InternalInterfaceService(Service):
 
 
 async def __event_system_ready(middleware, event_type, args):
-    await middleware.call('failover.internal_interface.pre_sync')
+    await middleware.call("failover.internal_interface.pre_sync")
 
 
 async def setup(middleware):
@@ -271,6 +271,6 @@ async def setup(middleware):
     # which will tear down the local listening socket so we need to
     # be sure and set it up everytime middleware starts. This is a
     # NO-OP otherwise.
-    middleware.event_subscribe('system.ready', __event_system_ready)
-    if await middleware.call('system.ready'):
-        await middleware.call('failover.internal_interface.pre_sync')
+    middleware.event_subscribe("system.ready", __event_system_ready)
+    if await middleware.call("system.ready"):
+        await middleware.call("failover.internal_interface.pre_sync")

@@ -26,7 +26,7 @@ def webshell_exec(command: str | bytes, token=None, username="root", timeout=10)
         str: Command output with ANSI escape codes removed
     """
     if token is None:
-        token = call('auth.generate_token', 300, {}, True)
+        token = call("auth.generate_token", 300, {}, True)
 
     if username == "root":
         prompt = b"# "

@@ -11,14 +11,14 @@ __all__ = ["SNMPEntry",
 
 class SNMPEntry(BaseModel):
     location: str
-    contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]
+    contact: EmailStr | Annotated[str, StringConstraints(pattern=r"^[-_a-zA-Z0-9\s]*$")]
     traps: bool
     v3: bool
-    community: str = Field(pattern=r'^[-_a-zA-Z0-9\s]*$', default='public')
+    community: str = Field(pattern=r"^[-_a-zA-Z0-9\s]*$", default="public")
     v3_username: str = Field(max_length=20)
-    v3_authtype: Literal['', 'MD5', 'SHA']
+    v3_authtype: Literal["", "MD5", "SHA"]
     v3_password: Secret[str]
-    v3_privproto: Literal[None, 'AES', 'DES'] | None
+    v3_privproto: Literal[None, "AES", "DES"] | None
     v3_privpassphrase: Secret[str | None] = None
     loglevel: int = Field(ge=0, le=7)
     options: str
@@ -26,7 +26,7 @@ class SNMPEntry(BaseModel):
     id: int
 
 
-@single_argument_args('snmp_update')
+@single_argument_args("snmp_update")
 class SNMPUpdateArgs(SNMPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

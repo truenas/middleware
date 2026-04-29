@@ -58,7 +58,7 @@ def get_audit_entry(service, index=-1):
     index is which entry to return.  The default (-1) is the last entry
     """
     svc = str(service).upper()
-    assert svc in ['MIDDLEWARE', 'SMB', 'SUDO']
+    assert svc in ["MIDDLEWARE", "SMB", "SUDO"]
     assert isinstance(index, int)
 
     entry = {}
@@ -73,7 +73,7 @@ def get_audit_entry(service, index=-1):
 
     assert offset > -1
     with client() as c:
-        entry_list = c.call('audit.query', {"services": [svc], "query-options": {"offset": offset, "limit": DEFLIMIT}})
+        entry_list = c.call("audit.query", {"services": [svc], "query-options": {"offset": offset, "limit": DEFLIMIT}})
 
     if len(entry_list):
         entry = entry_list[0]

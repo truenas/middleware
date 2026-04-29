@@ -42,23 +42,23 @@ def validate_storage_fields(
     update: bool = True,
 ) -> None:
     if update is False:
-        device['attributes']['serial'] = generate_string(8)
+        device["attributes"]["serial"] = generate_string(8)
     elif old is not None:
-        if not device['attributes'].get('serial'):
+        if not device["attributes"].get("serial"):
             # As this is a json field, ensure that some consumer does not remove this value, in that case
             # we preserve the original value
-            device['attributes']['serial'] = old['attributes']['serial']
-        elif device['attributes']['serial'] != old['attributes']['serial']:
-            verrors.add('attributes.serial', 'This field is read-only.')
+            device["attributes"]["serial"] = old["attributes"]["serial"]
+        elif device["attributes"]["serial"] != old["attributes"]["serial"]:
+            verrors.add("attributes.serial", "This field is read-only.")
 
-    logical_sectorsize = device['attributes'].get('logical_sectorsize')
-    physical_sectorsize = device['attributes'].get('physical_sectorsize')
+    logical_sectorsize = device["attributes"].get("logical_sectorsize")
+    physical_sectorsize = device["attributes"].get("physical_sectorsize")
     if logical_sectorsize and physical_sectorsize and logical_sectorsize > physical_sectorsize:
         # https://patchew.org/QEMU/1508343141-31835-1-git-send-email-pbonzini%40redhat.com/1508343141-31835-30
         # -git-send-email-pbonzini%40redhat.com
         verrors.add(
-            'attributes.logical_sectorsize',
-            'Logical sector size cannot be greater than physical sector size.'
+            "attributes.logical_sectorsize",
+            "Logical sector size cannot be greater than physical sector size."
         )
 
 
@@ -80,7 +80,7 @@ class VMNICDelegate(NICDelegate):
 
     @property
     def nic_choices_endpoint(self) -> str:
-        return 'vm.device.nic_attach_choices'
+        return "vm.device.nic_attach_choices"
 
     @property
     def schema_model(self) -> type[VMNICDevice]:
@@ -111,15 +111,15 @@ class VMRAWDelegate(RAWDelegate):
         super().validate_middleware(device, verrors, old, instance, update)
         validate_storage_fields(device, verrors, old, instance, update)
 
-        attrs = device['attributes']
-        if update is False and attrs.get('exists', True) is False and attrs.get('size'):
+        attrs = device["attributes"]
+        if update is False and attrs.get("exists", True) is False and attrs.get("size"):
             # We would be creating the file in this case, so let's validate that
             # size is a multiple of logical sectorsize or 512
-            logical_sectorsize = attrs.get('logical_sectorsize') or 512
-            if attrs['size'] % logical_sectorsize != 0:
+            logical_sectorsize = attrs.get("logical_sectorsize") or 512
+            if attrs["size"] % logical_sectorsize != 0:
                 verrors.add(
-                    'attributes.size',
-                    f'Size must be a multiple of logical sector size ({logical_sectorsize!r} bytes).'
+                    "attributes.size",
+                    f"Size must be a multiple of logical sector size ({logical_sectorsize!r} bytes)."
                 )
 
 
@@ -151,12 +151,12 @@ class VMUSBDelegate(USBDelegate):
 async def setup(middleware: Middleware) -> None:
     device_factory = middleware.services.vm.device.device_factory
     for device_key, device_klass, delegate_klass in (
-        ('CDROM', CDROMDevice, VMCDROMDelegate),
-        ('DISK', DiskStorageDevice, VMDiskDelegate),
-        ('RAW', RawStorageDevice, VMRAWDelegate),
-        ('NIC', NICDevice, VMNICDelegate),
-        ('USB', USBDevice, VMUSBDelegate),
-        ('PCI', PCIDevice, VMPCIDelegate),
-        ('DISPLAY', DisplayDevice, VMDisplayDelegate),
+        ("CDROM", CDROMDevice, VMCDROMDelegate),
+        ("DISK", DiskStorageDevice, VMDiskDelegate),
+        ("RAW", RawStorageDevice, VMRAWDelegate),
+        ("NIC", NICDevice, VMNICDelegate),
+        ("USB", USBDevice, VMUSBDelegate),
+        ("PCI", PCIDevice, VMPCIDelegate),
+        ("DISPLAY", DisplayDevice, VMDisplayDelegate),
     ):
         device_factory.register(device_key, device_klass, delegate_klass)

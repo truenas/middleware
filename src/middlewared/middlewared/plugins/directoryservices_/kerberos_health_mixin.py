@@ -19,11 +19,11 @@ class KerberosHealthMixin:
         # fresh kerberos ticket, and sets up a transient job to
         # renew our tickets.
         self.logger.warning(
-            'Attempting to recover kerberos service after health '
-            'check failure for the following reason: %s',
+            "Attempting to recover kerberos service after health "
+            "check failure for the following reason: %s",
             error.errmsg
         )
-        self.middleware.call_sync('kerberos.start')
+        self.middleware.call_sync("kerberos.start")
 
     def _health_check_krb5(self) -> None:
         """
@@ -32,12 +32,12 @@ class KerberosHealthMixin:
         kerberos.
         """
         try:
-            st = os.stat('/etc/krb5.conf')
+            st = os.stat("/etc/krb5.conf")
         except FileNotFoundError:
             faulted_reason = (
-                'Kerberos configuration file is missing. This may indicate '
-                'the file was accidentally deleted by a user with '
-                'admin shell access to the TrueNAS server.'
+                "Kerberos configuration file is missing. This may indicate "
+                "the file was accidentally deleted by a user with "
+                "admin shell access to the TrueNAS server."
             )
 
             raise KRB5HealthError(
@@ -47,8 +47,8 @@ class KerberosHealthMixin:
 
         if (err_str := self._perm_check(st, 0o644)) is not None:
             faulted_reason = (
-                'Unexpected permissions or ownership on the kerberos '
-                f'configuration file: {err_str}'
+                "Unexpected permissions or ownership on the kerberos "
+                f"configuration file: {err_str}"
             )
             raise KRB5HealthError(
                 KRB5HealthCheckFailReason.KRB5_CONFIG_PERM,
@@ -59,10 +59,10 @@ class KerberosHealthMixin:
             st = os.stat(krb5_constants.KRB_Keytab.SYSTEM.value)
         except FileNotFoundError:
             faulted_reason = (
-                'System keytab is missing. This may indicate that an administrative '
-                'action was taken to remove the required machine account '
-                'keytab from the TrueNAS server. Rejoining domain may be '
-                'required in order to resolve this issue.'
+                "System keytab is missing. This may indicate that an administrative "
+                "action was taken to remove the required machine account "
+                "keytab from the TrueNAS server. Rejoining domain may be "
+                "required in order to resolve this issue."
             )
             raise KRB5HealthError(
                 KRB5HealthCheckFailReason.KRB5_NO_KEYTAB,
@@ -84,10 +84,10 @@ class KerberosHealthMixin:
 
         if not krb5.gss_get_current_cred(krb5_constants.krb5ccache.SYSTEM.value, raise_error=False):
             faulted_reason = (
-                'Kerberos ticket for domain is expired. Failure to renew '
-                'kerberos ticket may indicate issues with DNS resolution or '
-                'IPA domain or realm changes that need to be accounted for '
-                'in the TrueNAS configuration.'
+                "Kerberos ticket for domain is expired. Failure to renew "
+                "kerberos ticket may indicate issues with DNS resolution or "
+                "IPA domain or realm changes that need to be accounted for "
+                "in the TrueNAS configuration."
             )
             raise KRB5HealthError(
                 KRB5HealthCheckFailReason.KRB5_TKT_EXPIRED,

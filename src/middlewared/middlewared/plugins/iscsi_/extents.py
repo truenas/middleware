@@ -31,14 +31,14 @@ from middlewared.utils.size import format_size
 
 from .utils import sanitize_extent
 
-EXTENT_DEFAULT_VENDOR = 'TrueNAS'
-EXTENT_DEFAULT_PRODUCT_ID = 'iSCSI Disk'
+EXTENT_DEFAULT_VENDOR = "TrueNAS"
+EXTENT_DEFAULT_PRODUCT_ID = "iSCSI Disk"
 
 
 def remove_extent_file(data: dict) -> str | bool:
-    if data['type'] == 'FILE':
+    if data["type"] == "FILE":
         try:
-            os.unlink(data['path'])
+            os.unlink(data["path"])
         except FileNotFoundError:
             pass
         except Exception as e:
@@ -48,7 +48,7 @@ def remove_extent_file(data: dict) -> str | bool:
 
 
 class iSCSITargetExtentModel(sa.Model):
-    __tablename__ = 'services_iscsitargetextent'
+    __tablename__ = "services_iscsitargetextent"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_extent_name = sa.Column(sa.String(120), unique=True)
@@ -65,7 +65,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_naa = sa.Column(sa.String(34), unique=True)
     iscsi_target_extent_insecure_tpc = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_xen = sa.Column(sa.Boolean(), default=False)
-    iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
+    iscsi_target_extent_rpm = sa.Column(sa.String(20), default="SSD")
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
@@ -74,28 +74,28 @@ class iSCSITargetExtentModel(sa.Model):
 
 class iSCSITargetExtentService(SharingService):
 
-    share_task_type = 'iSCSI Extent'
-    path_resolution_filters = [['iscsi_target_extent_type', '=', 'FILE']]
+    share_task_type = "iSCSI Extent"
+    path_resolution_filters = [["iscsi_target_extent_type", "=", "FILE"]]
 
     class Config:
-        namespace = 'iscsi.extent'
-        datastore = 'services.iscsitargetextent'
-        datastore_prefix = 'iscsi_target_extent_'
-        datastore_extend = 'iscsi.extent.extend'
-        cli_namespace = 'sharing.iscsi.extent'
-        role_prefix = 'SHARING_ISCSI_EXTENT'
+        namespace = "iscsi.extent"
+        datastore = "services.iscsitargetextent"
+        datastore_prefix = "iscsi_target_extent_"
+        datastore_extend = "iscsi.extent.extend"
+        cli_namespace = "sharing.iscsi.extent"
+        role_prefix = "SHARING_ISCSI_EXTENT"
         entry = iSCSITargetExtentEntry
 
     @private
     async def sharing_task_determine_locked(self, data):
         """Determine if this extent is in a locked path"""
         path = await self.get_path_field(data)
-        if data['type'] == 'FILE':
-            if dataset := data.get('dataset'):
+        if data["type"] == "FILE":
+            if dataset := data.get("dataset"):
                 return await self.middleware.call(
-                    'pool.dataset.path_in_locked_datasets', dataset
+                    "pool.dataset.path_in_locked_datasets", dataset
                 )
-            for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
+            for component in pathlib.Path(path.removeprefix("/mnt/")).parents:
                 c = component.as_posix()
                 # walk up the path starting from right to left
                 # if the component of the path isn't a valid
@@ -104,19 +104,19 @@ class iSCSITargetExtentService(SharingService):
                 # and so we move up to the next path.
                 if validate_dataset_name(c):
                     return await self.middleware.call(
-                        'pool.dataset.path_in_locked_datasets',
+                        "pool.dataset.path_in_locked_datasets",
                         c
                     )
         return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets',
+            "pool.dataset.path_in_locked_datasets",
             path
         )
 
     @api_method(
         iSCSITargetExtentCreateArgs,
         iSCSITargetExtentCreateResult,
-        audit='Create iSCSI extent',
-        audit_extended=lambda data: data['name']
+        audit="Create iSCSI extent",
+        audit_extended=lambda data: data["name"]
     )
     async def do_create(self, data):
         """
@@ -136,34 +136,34 @@ class iSCSITargetExtentService(SharingService):
         """
         await self.validate(data)
         verrors = ValidationErrors()
-        await self.clean(data, 'iscsi_extent_create', verrors)
+        await self.clean(data, "iscsi_extent_create", verrors)
         verrors.check()
 
-        await self.middleware.call('iscsi.extent.save', data, 'iscsi_extent_create', verrors)
+        await self.middleware.call("iscsi.extent.save", data, "iscsi_extent_create", verrors)
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
-        if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
-            zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            if '@' not in zvolname:  # Snapshots don't support volthreading/readonly properties
+        if data["type"] == "DISK" and data["path"].startswith("zvol/"):
+            zvolname = zvol_path_to_name(os.path.join("/dev", data["path"]))
+            if "@" not in zvolname:  # Snapshots don't support volthreading/readonly properties
                 await self.middleware.call(
-                    'pool.dataset.update_impl',
+                    "pool.dataset.update_impl",
                     UpdateImplArgs(
                         name=zvolname,
-                        zprops={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'}
+                        zprops={"volthreading": "off", "readonly": "on" if data["ro"] else "off"}
                     )
                 )
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, {**data, 'vendor': EXTENT_DEFAULT_VENDOR},
-            {'prefix': self._config.datastore_prefix}
+        data["id"] = await self.middleware.call(
+            "datastore.insert", self._config.datastore, {**data, "vendor": EXTENT_DEFAULT_VENDOR},
+            {"prefix": self._config.datastore_prefix}
         )
 
-        return await self.get_instance(data['id'])
+        return await self.get_instance(data["id"])
 
     @api_method(
         iSCSITargetExtentUpdateArgs,
         iSCSITargetExtentUpdateResult,
-        audit='Update iSCSI extent',
+        audit="Update iSCSI extent",
         audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -172,126 +172,126 @@ class iSCSITargetExtentService(SharingService):
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
-        audit_callback(old['name'])
+        audit_callback(old["name"])
 
         new = old.copy()
         new.update(data)
 
-        await self.middleware.call('iscsi.extent.validate', new)
-        await self.clean(new, 'iscsi_extent_update', verrors, old=old)
+        await self.middleware.call("iscsi.extent.validate", new)
+        await self.clean(new, "iscsi_extent_update", verrors, old=old)
         verrors.check()
 
-        await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors, old)
+        await self.middleware.call("iscsi.extent.save", new, "iscsi_extent_create", verrors, old)
         verrors.check()
         new.pop(self.locked_field)
 
-        zvolpath = new.get('path')
-        if zvolpath is not None and zvolpath.startswith('zvol/'):
-            zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
-            if '@' not in zvolname:  # Snapshots don't support readonly property
+        zvolpath = new.get("path")
+        if zvolpath is not None and zvolpath.startswith("zvol/"):
+            zvolname = zvol_path_to_name(os.path.join("/dev", zvolpath))
+            if "@" not in zvolname:  # Snapshots don't support readonly property
                 await self.middleware.call(
-                    'pool.dataset.update_impl',
+                    "pool.dataset.update_impl",
                     UpdateImplArgs(
                         name=zvolname,
-                        zprops={'readonly': 'on' if new['ro'] else 'off'}
+                        zprops={"readonly": "on" if new["ro"] else "off"}
                     )
                 )
 
         await self.middleware.call(
-            'datastore.update',
+            "datastore.update",
             self._config.datastore,
             id_,
             new,
-            {'prefix': self._config.datastore_prefix}
+            {"prefix": self._config.datastore_prefix}
         )
 
         target_name = None
         assoc = []
-        if old['enabled'] != new['enabled']:
-            if await self.middleware.call('iscsi.global.alua_enabled'):
-                if await self.middleware.call('failover.remote_connected'):
+        if old["enabled"] != new["enabled"]:
+            if await self.middleware.call("iscsi.global.alua_enabled"):
+                if await self.middleware.call("failover.remote_connected"):
                     try:
                         assoc = await self.middleware.call(
-                            'iscsi.targetextent.query',
-                            [['extent', '=', id_]],
-                            {'get': True}
+                            "iscsi.targetextent.query",
+                            [["extent", "=", id_]],
+                            {"get": True}
                         )
                         target_name = (await self.middleware.call(
-                            'iscsi.target.query',
-                            [['id', '=', assoc['target']]],
-                            {'select': ['name'], 'get': True}))['name']
+                            "iscsi.target.query",
+                            [["id", "=", assoc["target"]]],
+                            {"select": ["name"], "get": True}))["name"]
                     except MatchNotFound:
                         pass
 
         if assoc and target_name:
             # ALUA is enabled and we changed the enabled state of a mapped extent
-            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
-            if new['enabled']:
+            await self._service_change("iscsitarget", "reload", options={"ha_propagate": False})
+            if new["enabled"]:
                 # Just re-enabled the extent
                 await self.middleware.call(
-                    'iscsi.target.wait_for_ha_lun_present',
+                    "iscsi.target.wait_for_ha_lun_present",
                     target_name,
-                    assoc['lunid']
+                    assoc["lunid"]
                 )
                 try:
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.alua.added_target_extent',
+                        "failover.call_remote",
+                        "iscsi.alua.added_target_extent",
                         [target_name]
                     )
                     # Now update the remote node.  Since it is
                     # not the MASTER it will not propagate back.
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'service.control',
-                        ['RELOAD', 'iscsitarget'],
-                        {'job': True},
+                        "failover.call_remote",
+                        "service.control",
+                        ["RELOAD", "iscsitarget"],
+                        {"job": True},
                     )
                     await self.middleware.call(
-                        'iscsi.alua.wait_cluster_mode',
-                        assoc['target'],
-                        assoc['extent']
+                        "iscsi.alua.wait_cluster_mode",
+                        assoc["target"],
+                        assoc["extent"]
                     )
                 except Exception:
-                    self.logger.exception('Failed to update STANDBY node')
+                    self.logger.exception("Failed to update STANDBY node")
             else:
                 # Just disenabled the extent
                 await self.middleware.call(
-                    'iscsi.target.wait_for_ha_lun_absent',
+                    "iscsi.target.wait_for_ha_lun_absent",
                     target_name,
-                    assoc['lunid']
+                    assoc["lunid"]
                 )
                 try:
                     # iscsi.alua.removed_target_extent includes a local service reload
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.alua.removed_target_extent',
-                        [target_name, assoc['lunid'], old['name']]
+                        "failover.call_remote",
+                        "iscsi.alua.removed_target_extent",
+                        [target_name, assoc["lunid"], old["name"]]
                     )
                     # Now update the remote node.  Since it is
                     # not the MASTER it will not propagate back.
                     await self.middleware.call(
-                        'failover.call_remote',
-                        'service.control',
-                        ['RELOAD', 'iscsitarget'],
-                        {'job': True},
+                        "failover.call_remote",
+                        "service.control",
+                        ["RELOAD", "iscsitarget"],
+                        {"job": True},
                     )
                 except Exception:
-                    self.logger.exception('Failed to update STANDBY node')
+                    self.logger.exception("Failed to update STANDBY node")
             # Either way wait for ALUA settle
-            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+            await self.middleware.call("iscsi.alua.wait_for_alua_settled")
         else:
-            await self._service_change('iscsitarget', 'reload')
+            await self._service_change("iscsitarget", "reload")
 
             # scstadmin can have issues when modifying an existing extent, re-run
-            await self._service_change('iscsitarget', 'reload')
+            await self._service_change("iscsitarget", "reload")
 
         return await self.get_instance(id_)
 
     @api_method(
         iSCSITargetExtentDeleteArgs,
         iSCSITargetExtentDeleteResult,
-        audit='Delete iSCSI extent',
+        audit="Delete iSCSI extent",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, remove, force):
@@ -301,16 +301,16 @@ class iSCSITargetExtentService(SharingService):
         If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
         """
         data = await self.get_instance(id_)
-        audit_callback(data['name'])
-        target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id_]])
+        audit_callback(data["name"])
+        target_to_extents = await self.middleware.call("iscsi.targetextent.query", [["extent", "=", id_]])
         active_sessions = await self.middleware.call(
-            'iscsi.target.active_sessions_for_targets', [t['target'] for t in target_to_extents]
+            "iscsi.target.active_sessions_for_targets", [t["target"] for t in target_to_extents]
         )
         if active_sessions:
             sessions_str = f'Associated target(s) {",".join(active_sessions)} ' \
                            f'{"is" if len(active_sessions) == 1 else "are"} in use.'
             if force:
-                self.middleware.logger.warning('%s. Forcing deletion of extent.', sessions_str)
+                self.middleware.logger.warning("%s. Forcing deletion of extent.", sessions_str)
             else:
                 raise CallError(sessions_str)
 
@@ -319,76 +319,76 @@ class iSCSITargetExtentService(SharingService):
             if isinstance(delete, Exception):
                 # exception type is caught and returned in the
                 # event an unexpected error happens
-                raise CallError(f'Failed to remove extent file: {delete!r}')
+                raise CallError(f"Failed to remove extent file: {delete!r}")
 
         for target_to_extent in target_to_extents:
-            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
+            await self.middleware.call("iscsi.targetextent.delete", target_to_extent["id"], force)
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
-        if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
-            zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            if '@' not in zvolname:  # Snapshots don't support volthreading property
+        if data["type"] == "DISK" and data["path"].startswith("zvol/"):
+            zvolname = zvol_path_to_name(os.path.join("/dev", data["path"]))
+            if "@" not in zvolname:  # Snapshots don't support volthreading property
                 if zvol := await self.call2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
+                    ZFSResourceQuery(paths=[zvolname], properties=["volthreading"])
                 ):
                     if (
-                        zvol[0]['type'] == 'VOLUME'
-                        and zvol[0]['properties']['volthreading']['raw'] == 'off'
+                        zvol[0]["type"] == "VOLUME"
+                        and zvol[0]["properties"]["volthreading"]["raw"] == "off"
                     ):
                         # Only try to set volthreading if:
                         # 1. volume still exists
                         # 2. is a volume
                         # 3. volthreading is currently off
                         await self.middleware.call(
-                            'pool.dataset.update_impl',
+                            "pool.dataset.update_impl",
                             UpdateImplArgs(
                                 name=zvolname,
-                                zprops={'volthreading': 'on'}
+                                zprops={"volthreading": "on"}
                             )
                         )
 
         try:
             return await self.middleware.call(
-                'datastore.delete', self._config.datastore, id_
+                "datastore.delete", self._config.datastore, id_
             )
         finally:
-            await self._service_change('iscsitarget', 'reload')
+            await self._service_change("iscsitarget", "reload")
             if all([await self.middleware.call("iscsi.global.alua_enabled"),
-                    await self.middleware.call('failover.remote_connected')]):
-                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+                    await self.middleware.call("failover.remote_connected")]):
+                await self.middleware.call("iscsi.alua.wait_for_alua_settled")
 
     @private
     async def validate(self, data):
-        data['serial'] = await self.extent_serial(data['serial'])
-        data['naa'] = self.extent_naa(data.get('naa'))
+        data["serial"] = await self.extent_serial(data["serial"])
+        data["naa"] = self.extent_naa(data.get("naa"))
 
     @private
     async def extend(self, data):
-        if data['type'] == 'DISK':
-            data['disk'] = data['path']
-        elif data['type'] == 'FILE':
-            data['disk'] = None
-            extent_size = data['filesize']
+        if data["type"] == "DISK":
+            data["disk"] = data["path"]
+        elif data["type"] == "FILE":
+            data["disk"] = None
+            extent_size = data["filesize"]
             # Legacy Compat for having 2[KB, MB, GB, etc] in database
             if not str(extent_size).isdigit():
                 suffixes = {
-                    'PB': 1125899906842624,
-                    'TB': 1099511627776,
-                    'GB': 1073741824,
-                    'MB': 1048576,
-                    'KB': 1024,
-                    'B': 1
+                    "PB": 1125899906842624,
+                    "TB": 1099511627776,
+                    "GB": 1073741824,
+                    "MB": 1048576,
+                    "KB": 1024,
+                    "B": 1
                 }
                 for x in suffixes.keys():
                     if str(extent_size).upper().endswith(x):
                         extent_size = str(extent_size).upper().strip(x)
                         extent_size = int(extent_size) * suffixes[x]
 
-                        data['filesize'] = extent_size
+                        data["filesize"] = extent_size
 
-        if not data['product_id']:
-            data['product_id'] = EXTENT_DEFAULT_PRODUCT_ID
+        if not data["product_id"]:
+            data["product_id"] = EXTENT_DEFAULT_PRODUCT_ID
 
         return data
 
@@ -396,74 +396,74 @@ class iSCSITargetExtentService(SharingService):
     async def clean(self, data, schema_name, verrors, old=None):
         await self.clean_name(data, schema_name, verrors, old=old)
         await self.clean_serial(data, schema_name, verrors, old=old)
-        await self.middleware.call('iscsi.extent.clean_type_and_path', data, schema_name, verrors, old)
-        await self.middleware.call('iscsi.extent.clean_size', data, schema_name, verrors)
+        await self.middleware.call("iscsi.extent.clean_type_and_path", data, schema_name, verrors, old)
+        await self.middleware.call("iscsi.extent.clean_size", data, schema_name, verrors)
 
     @private
     async def clean_name(self, data, schema_name, verrors, old=None):
-        old_id = old['id'] if old else None
-        name = data['name']
-        old = old['name'] if old is not None else None
-        name_filters = [('name', '=', name)]
+        old_id = old["id"] if old else None
+        name = data["name"]
+        old = old["name"] if old is not None else None
+        name_filters = [("name", "=", name)]
 
         if '"' in name:
-            verrors.add(f'{schema_name}.name', 'Double quotes are not allowed')
+            verrors.add(f"{schema_name}.name", "Double quotes are not allowed")
 
         if name != old or old is None:
             name_result = await self.middleware.call(
-                'datastore.query',
+                "datastore.query",
                 self._config.datastore,
                 name_filters,
-                {'prefix': self._config.datastore_prefix}
+                {"prefix": self._config.datastore_prefix}
             )
             if name_result:
-                verrors.add(f'{schema_name}.name', 'Extent name must be unique')
+                verrors.add(f"{schema_name}.name", "Extent name must be unique")
             else:
                 # We can't *just* compare the names, because names get
                 # flattened using sanitize_extent.  However, we'll preserve
                 # the above check as-is so that we can be precise wrt the
                 # error message given.
                 if old_id:
-                    name_filters = [('id', '!=', old_id)]
+                    name_filters = [("id", "!=", old_id)]
                 else:
                     name_filters = []
                 extents = await self.middleware.call(
-                    'datastore.query',
+                    "datastore.query",
                     self._config.datastore,
                     name_filters,
-                    {'prefix': self._config.datastore_prefix}
+                    {"prefix": self._config.datastore_prefix}
                 )
-                name_to_fname = {sanitize_extent(ext['name']): ext['name'] for ext in extents}
+                name_to_fname = {sanitize_extent(ext["name"]): ext["name"] for ext in extents}
                 sname = sanitize_extent(name)
                 if sname in name_to_fname:
                     clash = name_to_fname[sname]
-                    verrors.add(f'{schema_name}.name', f'Extent name must be unique when flattened ({clash})')
+                    verrors.add(f"{schema_name}.name", f"Extent name must be unique when flattened ({clash})")
 
     @private
     async def clean_serial(self, data, schema_name, verrors, old=None):
-        serial = data['serial']
-        old = old['serial'] if old is not None else None
-        serial_filters = [('serial', '=', serial)]
+        serial = data["serial"]
+        old = old["serial"] if old is not None else None
+        serial_filters = [("serial", "=", serial)]
         max_serial_len = 20  # SCST max length
 
         if '"' in serial:
-            verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
+            verrors.add(f"{schema_name}.serial", "Double quotes are not allowed")
 
         if len(serial) > max_serial_len:
             verrors.add(
-                f'{schema_name}.serial',
-                f'Extent serial can not exceed {max_serial_len} characters'
+                f"{schema_name}.serial",
+                f"Extent serial can not exceed {max_serial_len} characters"
             )
 
         if serial != old or old is None:
             serial_result = await self.middleware.call(
-                'datastore.query',
+                "datastore.query",
                 self._config.datastore,
                 serial_filters,
-                {'prefix': self._config.datastore_prefix}
+                {"prefix": self._config.datastore_prefix}
             )
             if serial_result:
-                verrors.add(f'{schema_name}.serial', 'Serial number must be unique')
+                verrors.add(f"{schema_name}.serial", "Serial number must be unique")
 
     @private
     async def validate_path_resides_in_volume(self, verrors, schema, path):
@@ -471,87 +471,87 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def get_path_field(self, data):
-        if data['type'] == 'DISK' and data[self.path_field].startswith('zvol/'):
-            return os.path.join('/mnt', zvol_path_to_name(os.path.join('/dev', data[self.path_field])))
+        if data["type"] == "DISK" and data[self.path_field].startswith("zvol/"):
+            return os.path.join("/mnt", zvol_path_to_name(os.path.join("/dev", data[self.path_field])))
 
         return data[self.path_field]
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors, old=None):
-        not_old_id = ('id', '!=', old['id']) if old else None
-        if data['type'] is None:
+        not_old_id = ("id", "!=", old["id"]) if old else None
+        if data["type"] is None:
             return data
 
-        extent_type = data['type']
-        disk = data['disk']
-        path = data['path']
-        if extent_type == 'DISK':
+        extent_type = data["type"]
+        disk = data["disk"]
+        path = data["path"]
+        if extent_type == "DISK":
             if not disk:
-                verrors.add(f'{schema_name}.disk', 'This field is required')
+                verrors.add(f"{schema_name}.disk", "This field is required")
                 raise verrors
 
-            if not disk.startswith('zvol/'):
-                verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
+            if not disk.startswith("zvol/"):
+                verrors.add(f"{schema_name}.disk", 'Disk name must start with "zvol/"')
                 raise verrors
 
-            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
+            if namespaces := self.middleware.call_sync("nvmet.namespace.query", [["device_path", "=", disk]]):
                 ns = namespaces[0]
-                verrors.add(f'{schema_name}.disk',
+                verrors.add(f"{schema_name}.disk",
                             f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
-            device = os.path.join('/dev', disk)
+            device = os.path.join("/dev", disk)
 
             zvol_name = zvol_path_to_name(device)
             if not os.path.exists(device):
-                verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
+                verrors.add(f"{schema_name}.disk", f"Device {device!r} for volume {zvol_name!r} does not exist")
 
-            self.middleware.call_sync('iscsi.extent.validate_zvol_path', verrors, f'{schema_name}.disk', device)
+            self.middleware.call_sync("iscsi.extent.validate_zvol_path", verrors, f"{schema_name}.disk", device)
 
-            if '@' in zvol_name and not data['ro']:
-                verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
+            if "@" in zvol_name and not data["ro"]:
+                verrors.add(f"{schema_name}.ro", "Must be set when disk is a ZFS Snapshot")
 
-            filters = [('disk', '=', disk)]
+            filters = [("disk", "=", disk)]
             if not_old_id:
                 filters.append(not_old_id)
-            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
-                verrors.add(f'{schema_name}.disk',
+            if used := self.middleware.call_sync("iscsi.extent.query", filters, {"select": ["name"]}):
+                verrors.add(f"{schema_name}.disk",
                             f'Disk currently in use by extent {used[0]["name"]}')
 
-        elif extent_type == 'FILE':
+        elif extent_type == "FILE":
             if not path:
-                verrors.add(f'{schema_name}.path', 'This field is required')
+                verrors.add(f"{schema_name}.path", "This field is required")
                 raise verrors  # They need this for anything else
 
             if os.path.exists(path):
-                if not os.path.isfile(path) or path[-1] == '/':
+                if not os.path.isfile(path) or path[-1] == "/":
                     verrors.add(
-                        f'{schema_name}.path',
-                        'You need to specify a filepath not a directory'
+                        f"{schema_name}.path",
+                        "You need to specify a filepath not a directory"
                     )
 
             self.middleware.call_sync(
-                'iscsi.extent.validate_path_resides_in_volume',
-                verrors, f'{schema_name}.path', path
+                "iscsi.extent.validate_path_resides_in_volume",
+                verrors, f"{schema_name}.path", path
             )
 
-            if ' ' in path:
+            if " " in path:
                 verrors.add(
-                    f'{schema_name}.path',
-                    'Filepath may not contain space characters'
+                    f"{schema_name}.path",
+                    "Filepath may not contain space characters"
                 )
 
-            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', path]]):
+            if namespaces := self.middleware.call_sync("nvmet.namespace.query", [["device_path", "=", path]]):
                 ns = namespaces[0]
-                verrors.add(f'{schema_name}.path',
+                verrors.add(f"{schema_name}.path",
                             f'File currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
-            filters = [('path', '=', path)]
+            filters = [("path", "=", path)]
             if not_old_id:
                 filters.append(not_old_id)
-            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
-                verrors.add(f'{schema_name}.path',
+            if used := self.middleware.call_sync("iscsi.extent.query", filters, {"select": ["name"]}):
+                verrors.add(f"{schema_name}.path",
                             f'File currently in use by extent {used[0]["name"]}')
 
         return data
@@ -559,34 +559,34 @@ class iSCSITargetExtentService(SharingService):
     @private
     def clean_size(self, data, schema_name, verrors):
         # only applies to files
-        if data['type'] != 'FILE':
+        if data["type"] != "FILE":
             return data
 
-        path = data['path']
-        size = data['filesize']
-        blocksize = data['blocksize']
+        path = data["path"]
+        size = data["filesize"]
+        blocksize = data["blocksize"]
 
         if not path:
-            verrors.add(f'{schema_name}.path', 'This field is required')
+            verrors.add(f"{schema_name}.path", "This field is required")
         elif size == 0:
             if not os.path.exists(path) or not os.path.isfile(path):
                 verrors.add(
-                    f'{schema_name}.path',
-                    'The file must exist if the extent size is set to auto (0)'
+                    f"{schema_name}.path",
+                    "The file must exist if the extent size is set to auto (0)"
                 )
         elif float(size) % blocksize:
             verrors.add(
-                f'{schema_name}.filesize',
-                f'File size ({size}) must be a multiple of block size ({blocksize})'
+                f"{schema_name}.filesize",
+                f"File size ({size}) must be a multiple of block size ({blocksize})"
             )
 
         return data
 
     @private
     async def extent_serial(self, serial):
-        if serial in [None, '']:
-            used_serials = [i['serial'] for i in (
-                await self.middleware.call('iscsi.extent.query', [], {'select': ['serial']})
+        if serial in [None, ""]:
+            used_serials = [i["serial"] for i in (
+                await self.middleware.call("iscsi.extent.query", [], {"select": ["serial"]})
             )]
             tries = 5
             for i in range(tries):
@@ -598,7 +598,7 @@ class iSCSITargetExtentService(SharingService):
                         continue
                     else:
                         raise CallError(
-                            'Failed to generate a random extent serial'
+                            "Failed to generate a random extent serial"
                         )
 
         return serial
@@ -606,7 +606,7 @@ class iSCSITargetExtentService(SharingService):
     @private
     def extent_naa(self, naa):
         if naa is None:
-            return '0x6589cfc000000' + hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
+            return "0x6589cfc000000" + hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
         else:
             return naa
 
@@ -620,12 +620,12 @@ class iSCSITargetExtentService(SharingService):
 
         for zvol in await self.call2(
             self.middleware.services.zfs.resource.unlocked_zvols_fast,
-            [['attachment', '=', None]],
+            [["attachment", "=", None]],
             {},
-            ['SIZE', 'RO', 'ATTACHMENT']
+            ["SIZE", "RO", "ATTACHMENT"]
         ):
-            key = os.path.relpath(zvol['path'], '/dev')
-            if zvol['ro']:
+            key = os.path.relpath(zvol["path"], "/dev")
+            if zvol["ro"]:
                 description = f'{zvol["name"]} [ro]'
             else:
                 description = f'{zvol["name"]} ({format_size(zvol["size"])})'
@@ -636,43 +636,43 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     def save(self, data, schema_name, verrors, old=None):
-        if data['type'] == 'FILE':
-            path = data['path']
-            dirs = '/'.join(path.split('/')[:-1])
+        if data["type"] == "FILE":
+            path = data["path"]
+            dirs = "/".join(path.split("/")[:-1])
 
             # create extent directories
             try:
                 pathlib.Path(dirs).mkdir(parents=True, exist_ok=True)
             except Exception as e:
                 raise CallError(
-                    f'Failed to create {dirs} with error: {e}'
+                    f"Failed to create {dirs} with error: {e}"
                 )
 
             # create the extent, or perhaps extend it
             if not os.path.exists(path):
                 # create the extent
-                subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                subprocess.run(["truncate", "-s", str(data["filesize"]), path])
             else:
                 if old:
-                    old_size = int(old['filesize'])
-                    new_size = int(data['filesize'])
+                    old_size = int(old["filesize"])
+                    new_size = int(data["filesize"])
                     # Only allow expansion
                     if new_size > old_size:
-                        subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        subprocess.run(["truncate", "-s", str(data["filesize"]), path])
                         # resync so connected initiators can see the new size
-                        self.middleware.call_sync('iscsi.global.resync_lun_size_for_file', path)
+                        self.middleware.call_sync("iscsi.global.resync_lun_size_for_file", path)
                     elif old_size > new_size:
-                        verrors.add(f'{schema_name}.filesize',
-                                    'Shrinking an extent is not allowed. This can lead to data loss.')
+                        verrors.add(f"{schema_name}.filesize",
+                                    "Shrinking an extent is not allowed. This can lead to data loss.")
 
             # Split path into dataset and relative_path for FILE type extents
             # May return None if path exists but can't be authoritatively resolved yet
             # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
-            data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
-            data.pop('disk', None)
+            data["dataset"], data["relative_path"] = resolve_dataset_path(path, self.middleware)
+            data.pop("disk", None)
         else:
-            data['path'] = data.pop('disk', None)
-            data['dataset'] = data['relative_path'] = None  # in case type was updated
+            data["path"] = data.pop("disk", None)
+            data["dataset"] = data["relative_path"] = None  # in case type was updated
 
     @private
     async def logged_in_extents(self):
@@ -685,36 +685,36 @@ class iSCSITargetExtentService(SharingService):
         result = {}
 
         # First check if *anything* is logged in.
-        iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
+        iqns = await self.middleware.call("iscsi.target.logged_in_iqns")
         if not iqns:
             return result
 
-        target_to_id = {t['name']: t['id'] for t in await self.middleware.call('iscsi.target.query',
+        target_to_id = {t["name"]: t["id"] for t in await self.middleware.call("iscsi.target.query",
                                                                                [],
-                                                                               {'select': ['id', 'name']})}
-        extents = {e['id']: e for e in await self.middleware.call('iscsi.extent.query',
+                                                                               {"select": ["id", "name"]})}
+        extents = {e["id"]: e for e in await self.middleware.call("iscsi.extent.query",
                                                                   [],
-                                                                  {'select': ['id', 'name', 'locked']})}
-        assoc = await self.middleware.call('iscsi.targetextent.query')
+                                                                  {"select": ["id", "name", "locked"]})}
+        assoc = await self.middleware.call("iscsi.targetextent.query")
         # Generate a dict, keyed by target ID whose value is a set of (lunID, extent name) tuples
         target_luns = defaultdict(set)
         for a_tgt in filter(
-            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+            lambda a: a["extent"] in extents and not extents[a["extent"]]["locked"],
             assoc
         ):
-            target_id = a_tgt['target']
-            extent_name = extents[a_tgt['extent']]['name']
-            target_luns[target_id].add((a_tgt['lunid'], extent_name))
+            target_id = a_tgt["target"]
+            extent_name = extents[a_tgt["extent"]]["name"]
+            target_luns[target_id].add((a_tgt["lunid"], extent_name))
 
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-        ha_basename = f'{global_basename}:HA:'
+        global_basename = (await self.middleware.call("iscsi.global.config"))["basename"]
+        ha_basename = f"{global_basename}:HA:"
         ha_basename_len = len(ha_basename)
 
         for iqn in filter(lambda x: x.startswith(ha_basename), iqns):
             target_name = iqn[ha_basename_len:]
             target_id = target_to_id[target_name]
             for ctl in iqns[iqn]:
-                lun = int(ctl.split(':')[-1])
+                lun = int(ctl.split(":")[-1])
                 for (target_lun, extent_name) in target_luns[target_id]:
                     if target_lun == lun:
                         result[extent_name] = ctl
@@ -724,13 +724,13 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def logged_in_extent(self, iqn, lun):
         """Return the device name (e.g. 13:0:0:0) of the logged in IQN/lun"""
-        p = pathlib.Path('/sys/devices/platform')
-        for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
+        p = pathlib.Path("/sys/devices/platform")
+        for targetname in p.glob("host*/session*/iscsi_session/session*/targetname"):
             logged_in_iqn = targetname.read_text().strip()
             if logged_in_iqn == iqn:
-                for disk in targetname.parent.glob('device/target*/*/scsi_disk'):
+                for disk in targetname.parent.glob("device/target*/*/scsi_disk"):
                     device = disk.parent.name
-                    if device.split(':')[-1] == str(lun):
+                    if device.split(":")[-1] == str(lun):
                         return device
         return None
 
@@ -740,13 +740,13 @@ class iSCSITargetExtentService(SharingService):
         Returns the names of all extents who are neither disabled nor locked, and which are
         associated with a target.
         """
-        filters = [['enabled', '=', True], ['locked', '=', False]]
-        extents = await self.middleware.call('iscsi.extent.query', filters, {'select': ['id', 'name']})
-        assoc = [a_tgt['extent'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')]
+        filters = [["enabled", "=", True], ["locked", "=", False]]
+        extents = await self.middleware.call("iscsi.extent.query", filters, {"select": ["id", "name"]})
+        assoc = [a_tgt["extent"] for a_tgt in await self.middleware.call("iscsi.targetextent.query")]
         result = []
         for extent in extents:
-            if extent['id'] in assoc:
-                result.append(extent['name'])
+            if extent["id"] in assoc:
+                result.append(extent["name"])
         return result
 
     @private
@@ -755,15 +755,15 @@ class iSCSITargetExtentService(SharingService):
         On pool import we will ensure that any ZVOLs used as iSCSI extents have the
         necessary properties set (i.e. turn off volthreading).
         """
-        filters = [['type', '=', 'DISK']]
+        filters = [["type", "=", "DISK"]]
         if pool is not None:
-            filters.append(['path', '^', f'zvol/{pool["name"]}/'])
+            filters.append(["path", "^", f'zvol/{pool["name"]}/'])
 
         zvols = [
-            extent['path'][5:] for extent in await self.middleware.call(
-                'iscsi.extent.query',
+            extent["path"][5:] for extent in await self.middleware.call(
+                "iscsi.extent.query",
                 filters,
-                {'select': ['path']}
+                {"select": ["path"]}
             )
         ]
         if not zvols:
@@ -771,21 +771,21 @@ class iSCSITargetExtentService(SharingService):
 
         for zvol in await self.call2(
             self.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=zvols, properties=['volthreading']),
+            ZFSResourceQuery(paths=zvols, properties=["volthreading"]),
         ):
-            if zvol['properties']['volthreading']['raw'] == 'on':
+            if zvol["properties"]["volthreading"]["raw"] == "on":
                 await self.middleware.call(
-                    'pool.dataset.update_impl',
+                    "pool.dataset.update_impl",
                     UpdateImplArgs(
-                        name=zvol['name'],
-                        zprops={'volthreading': 'off'}
+                        name=zvol["name"],
+                        zprops={"volthreading": "off"}
                     )
                 )
 
 
 async def pool_post_import(middleware, pool):
-    await middleware.call('iscsi.extent.pool_import', pool)
+    await middleware.call("iscsi.extent.pool_import", pool)
 
 
 async def setup(middleware):
-    middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    middleware.register_hook("pool.post_import", pool_post_import, sync=True)

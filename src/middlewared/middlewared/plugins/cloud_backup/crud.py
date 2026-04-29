@@ -184,7 +184,7 @@ class CloudBackupTaskFailedAlert(OneShotAlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,
         title="Cloud Backup Task Failed",
-        text="Cloud backup task \"%(name)s\" failed.",
+        text='Cloud backup task "%(name)s" failed.',
     )
 
     id: int

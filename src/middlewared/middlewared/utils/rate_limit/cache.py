@@ -6,7 +6,7 @@ from typing import TypedDict
 
 from middlewared.utils.origin import ConnectionOrigin
 
-__all__ = ['RateLimitCache']
+__all__ = ["RateLimitCache"]
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class RateLimitConfig:
     max_cache_entries: int = 100
     """The value used to separate the unique values when generating
     a unique key to be used to store the cached information."""
-    separator: str = '_##_'
+    separator: str = "_##_"
     """The starting decimal value for the time to be slept in the event
     rate limit thresholds for a particular consumer has been met."""
     sleep_start: float = 1.0
@@ -43,7 +43,7 @@ RL_CACHE: dict[str, RateLimitObject] = dict()
 class RateLimit:
     def cache_key(self, method_name: str, ip: str) -> str:
         """Generate a unique key per endpoint/consumer"""
-        return f'{method_name}{RateLimitConfig.separator}{ip}'
+        return f"{method_name}{RateLimitConfig.separator}{ip}"
 
     def rate_limit_exceeded(self, method_name: str, ip: str) -> bool:
         """Return a boolean indicating if the total number of calls
@@ -51,14 +51,14 @@ class RateLimit:
         key = self.cache_key(method_name, ip)
         try:
             now: float = monotonic()
-            if RateLimitConfig.max_period - (now - RL_CACHE[key]['last_reset']) <= 0:
+            if RateLimitConfig.max_period - (now - RL_CACHE[key]["last_reset"]) <= 0:
                 # time window elapsed, so time to reset
-                RL_CACHE[key]['num_times_called'] = 0
-                RL_CACHE[key]['last_reset'] = now
+                RL_CACHE[key]["num_times_called"] = 0
+                RL_CACHE[key]["last_reset"] = now
 
             # always increment
-            RL_CACHE[key]['num_times_called'] += 1
-            return RL_CACHE[key]['num_times_called'] > RateLimitConfig.max_calls
+            RL_CACHE[key]["num_times_called"] += 1
+            return RL_CACHE[key]["num_times_called"] > RateLimitConfig.max_calls
         except KeyError:
             pass
 

@@ -3,7 +3,7 @@ import pytest
 from middlewared.plugins.reporting.utils import calculate_disk_space_for_netdata, get_metrics_approximation
 
 
-@pytest.mark.parametrize('disk_count,core_count,interface_count,pool_count,services_count,vms_count,expected_output', [
+@pytest.mark.parametrize("disk_count,core_count,interface_count,pool_count,services_count,vms_count,expected_output", [
     (4, 2, 1, 2, 10, 2, {1: 699, 300: 10}),
     (1600, 32, 4, 4, 10, 1, {1: 8754, 300: 1612}),
     (10, 16, 2, 2, 12, 3, {1: 838, 300: 16}),
@@ -17,8 +17,8 @@ def test_netdata_metrics_count_approximation(
 
 
 @pytest.mark.parametrize(
-    'disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,'
-    'bytes_per_point,tier_interval,expected_output', [
+    "disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,"
+    "bytes_per_point,tier_interval,expected_output", [
         (4, 2, 1, 2, 10, 2, 7, 1, 1, 403),
         (4, 2, 1, 2, 10, 1, 7, 4, 60, 25),
         (1600, 32, 4, 12, 2, 4, 4, 1, 1, 2918),
@@ -39,7 +39,7 @@ def test_netdata_disk_space_approximation(
 
 
 @pytest.mark.parametrize(
-    'disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,bytes_per_point,tier_interval',
+    "disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,bytes_per_point,tier_interval",
     [
         (4, 2, 1, 2, 10, 2, 7, 1, 1),
         (4, 2, 1, 2, 12, 2, 7, 4, 60),

@@ -13,17 +13,17 @@ DELEGATES: dict[str, PortDelegate] = {}
 
 SYSTEM_USED_PORTS: list[dict[str, Any]] = [
     {
-        'title': 'System',
-        'ports': SYSTEM_PORTS,
-        'port_details': [{'description': None, 'ports': SYSTEM_PORTS}],
-        'namespace': 'system',
+        "title": "System",
+        "ports": SYSTEM_PORTS,
+        "port_details": [{"description": None, "ports": SYSTEM_PORTS}],
+        "namespace": "system",
     },
 ]
 
 
 def register_attachment_delegate(delegate: PortDelegate) -> None:
     if delegate.namespace in DELEGATES:
-        raise ValueError(f'{delegate.namespace!r} delegate is already registered with Port Service')
+        raise ValueError(f"{delegate.namespace!r} delegate is already registered with Port Service")
     DELEGATES[delegate.namespace] = delegate
 
 
@@ -33,13 +33,13 @@ async def get_in_use() -> list[dict[str, Any]]:
         used_ports = await delegate.get_ports()
         if used_ports:
             for entry in used_ports:
-                entry['ports'] = [list(i) for i in entry['ports']]  # type: ignore[misc]
+                entry["ports"] = [list(i) for i in entry["ports"]]  # type: ignore[misc]
 
             ports.append({
-                'namespace': delegate.namespace,
-                'title': delegate.title,
-                'ports': list(itertools.chain(*[entry['ports'] for entry in used_ports])),
-                'port_details': used_ports,
+                "namespace": delegate.namespace,
+                "title": delegate.title,
+                "ports": list(itertools.chain(*[entry["ports"] for entry in used_ports])),
+                "port_details": used_ports,
             })
 
     return ports + SYSTEM_USED_PORTS
@@ -48,7 +48,7 @@ async def get_in_use() -> list[dict[str, Any]]:
 async def get_all_used_ports() -> list[int]:
     used_ports = await get_in_use()
     return [
-        port_entry[1] for entry in used_ports for port_entry in entry['ports']
+        port_entry[1] for entry in used_ports for port_entry in entry["ports"]
     ]
 
 
@@ -59,8 +59,8 @@ async def get_unused_ports(lower_port_limit: int = 1025) -> list[int]:
 
 async def ports_mapping(whitelist_namespace: str | None = None) -> defaultdict[int, dict[str, Any]]:
     ports: defaultdict[int, dict[str, Any]] = defaultdict(dict)
-    for attachment in filter(lambda entry: entry['namespace'] != whitelist_namespace, await get_in_use()):
-        for bindip, port in attachment['ports']:
+    for attachment in filter(lambda entry: entry["namespace"] != whitelist_namespace, await get_in_use()):
+        for bindip, port in attachment["ports"]:
             ports[port][bindip] = attachment
 
     return ports
@@ -78,7 +78,7 @@ def _validate_single_port(
     """
     verrors = ValidationErrors()
     bindip_version = get_ip_version(bindip)
-    wildcard_ip = '0.0.0.0' if bindip_version == 4 else '::'
+    wildcard_ip = "0.0.0.0" if bindip_version == 4 else "::"
     port_attachment = port_mapping[port]
     if not any(
         get_ip_version(ip) == bindip_version for ip in port_attachment
@@ -96,10 +96,10 @@ def _validate_single_port(
         if bindip == wildcard_ip or ip == wildcard_ip or (bindip != wildcard_ip and ip == bindip):
             try:
                 entry = next(
-                    detail for detail in port_entry['port_details']
-                    if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
+                    detail for detail in port_entry["port_details"]
+                    if [ip, port] in detail["ports"] or [bindip, port] in detail["ports"]
                 )
-                description = entry['description']
+                description = entry["description"]
             except StopIteration:
                 description = None
 
@@ -108,10 +108,10 @@ def _validate_single_port(
                 f'{f" ({description})" if description else ""}'
             )
 
-    err = '\n'.join(ip_errors)
+    err = "\n".join(ip_errors)
     verrors.add(
         schema,
-        f'The port is being used by following services:\n{err}'
+        f"The port is being used by following services:\n{err}"
     )
 
     return verrors
@@ -120,7 +120,7 @@ def _validate_single_port(
 async def validate_port(
     schema: str,
     port: int,
-    bindip: str = '0.0.0.0',
+    bindip: str = "0.0.0.0",
     whitelist_namespace: str | None = None,
     raise_error: bool = False,
 ) -> ValidationErrors | None:
@@ -158,7 +158,7 @@ async def validate_ports(
     port_mapping = await ports_mapping(whitelist_namespace)
     all_verrors = ValidationErrors()
     for entry in ports:
-        verrors = _validate_single_port(schema, entry['port'], entry.get('bindip', '0.0.0.0'), port_mapping)
+        verrors = _validate_single_port(schema, entry["port"], entry.get("bindip", "0.0.0.0"), port_mapping)
         all_verrors.extend(verrors)
 
     if raise_error:

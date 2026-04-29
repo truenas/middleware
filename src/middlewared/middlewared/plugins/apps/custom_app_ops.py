@@ -21,13 +21,13 @@ if TYPE_CHECKING:
 def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> AppEntry:
     app = context.call_sync2(context.s.app.get_instance, app_name)
     if app.custom_app is True:
-        raise CallError(f'{app_name!r} is already a custom app')
+        raise CallError(f"{app_name!r} is already a custom app")
 
     rendered_config = get_rendered_template_config_of_app(app_name, app.version)
     if not rendered_config:
-        raise CallError(f'No rendered config found for {app_name!r}')
+        raise CallError(f"No rendered config found for {app_name!r}")
 
-    job.set_progress(10, 'Completed initial validation for conversion of app to custom app')
+    job.set_progress(10, "Completed initial validation for conversion of app to custom app")
     # Merge all available compose files into one of the app and hold on to it
     # Do an uninstall of the app and create it again with the new compose file
     # Update metadata to reflect that this is a custom app
@@ -38,44 +38,44 @@ def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> A
     )
 
     return create_custom_app(context, job, {
-        'app_name': app_name,
-        'custom_compose_config': rendered_config,
-        'conversion': True,
+        "app_name": app_name,
+        "custom_compose_config": rendered_config,
+        "conversion": True,
     })
 
 
 def create_custom_app(
     context: ServiceContext, job: Job, data: dict[str, Any], progress_base: int = 0,
 ) -> AppEntry:
-    compose_config = validate_payload(data, 'app_create')
-    app_being_converted = data.get('conversion', False)
+    compose_config = validate_payload(data, "app_create")
+    app_being_converted = data.get("conversion", False)
 
     def update_progress(percentage_done: int, message: str) -> None:
         job.set_progress(int((100 - progress_base) * (percentage_done / 100)) + progress_base, message)
 
-    update_progress(25, 'Initial validation completed for custom app creation')
+    update_progress(25, "Initial validation completed for custom app creation")
 
-    app_name = data['app_name']
+    app_name = data["app_name"]
     app_version_details = get_version_details()
-    version = app_version_details['version']
+    version = app_version_details["version"]
     try:
-        update_progress(35, 'Setting up App directory')
+        update_progress(35, "Setting up App directory")
         setup_install_app_dir(app_name, app_version_details, custom_app=True)
         update_app_config(app_name, version, compose_config, custom_app=True)
         update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
         if app_being_converted:
-            msg = 'App conversion in progress, pulling images'
+            msg = "App conversion in progress, pulling images"
         else:
-            msg = 'App installation in progress, pulling images'
+            msg = "App installation in progress, pulling images"
         update_progress(60, msg)
-        compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
+        compose_action(app_name, version, "up", force_recreate=True, remove_orphans=True)
     except Exception as e:
         assert job.logs_fd is not None
         if logs := collect_logs(app_name, version):
-            job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}'.encode())
+            job.logs_fd.write(f"App installation logs for {app_name}:\n{logs}".encode())
         else:
-            job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n'.encode())
+            job.logs_fd.write(f"No logs could be retrieved for {app_name!r} installation failure\n".encode())
 
         update_progress(
             80,
@@ -92,7 +92,7 @@ def create_custom_app(
         if app_being_converted is False:
             # We only want to send this when a new custom app is being installed, not when an
             # existing app is being converted to a custom app
-            context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info.model_dump(by_alias=True))
+            context.middleware.send_event("app.query", "ADDED", id=app_name, fields=app_info.model_dump(by_alias=True))
         job.set_progress(
             100, f'{app_name!r} {"converted to custom app" if app_being_converted else "installed"} successfully'
         )

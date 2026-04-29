@@ -13,7 +13,7 @@ def load_migrations(middleware):
 
 
 class MigrationModel(sa.Model):
-    __tablename__ = 'system_migration'
+    __tablename__ = "system_migration"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255), unique=True)
@@ -57,4 +57,4 @@ def on_config_upload(middleware, path):
 
 
 async def setup(middleware):
-    middleware.register_hook('config.on_upload', on_config_upload, sync=True)
+    middleware.register_hook("config.on_upload", on_config_upload, sync=True)

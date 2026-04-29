@@ -17,8 +17,8 @@ class NFSService(SimpleService):
     def check_exportsd_dir(self):
         exports = list()
         try:
-            with os.scandir('/etc/exports.d') as scan:
-                for i in filter(lambda x: x.is_file() and not x.name.startswith('.'), scan):
+            with os.scandir("/etc/exports.d") as scan:
+                for i in filter(lambda x: x.is_file() and not x.name.startswith("."), scan):
                     exports.append(i.name)
         except (FileNotFoundError, NotADirectoryError):
             pass
@@ -29,7 +29,7 @@ class NFSService(SimpleService):
         if (exportsdList := await self.middleware.run_in_thread(self.check_exportsd_dir)):
             await self.call2(self.s.alert.oneshot_create, NFSblockedByExportsDirAlert(entries=str(exportsdList)))
         else:
-            await self.call2(self.s.alert.oneshot_delete, 'NFSblockedByExportsDir')
+            await self.call2(self.s.alert.oneshot_delete, "NFSblockedByExportsDir")
 
     async def after_start(self):
         await self._systemd_unit("rpc-statd", "start")

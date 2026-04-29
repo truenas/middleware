@@ -12,29 +12,29 @@ class KeychainCredentialService(Service):
 
         Also ensure that a key with the name `connection_name` does not exist yet.
         """
-        pkey_config_ = options['private_key']
-        schema_name = 'setup_ssh_connection'
+        pkey_config_ = options["private_key"]
+        schema_name = "setup_ssh_connection"
         verrors = ValidationErrors()
 
-        if pkey_config_['generate_key']:
-            if await self.middleware.call('keychaincredential.query', [['name', '=', pkey_config_['name']]]):
-                verrors.add(f'{schema_name}.private_key.name', 'Is already in use by another SSH Key pair')
+        if pkey_config_["generate_key"]:
+            if await self.middleware.call("keychaincredential.query", [["name", "=", pkey_config_["name"]]]):
+                verrors.add(f"{schema_name}.private_key.name", "Is already in use by another SSH Key pair")
 
         elif not await self.middleware.call(
-            'keychaincredential.query',
-            [['id', '=', pkey_config_['existing_key_id']]]
+            "keychaincredential.query",
+            [["id", "=", pkey_config_["existing_key_id"]]]
         ):
-            verrors.add(f'{schema_name}.private_key.existing_key_id', 'SSH Key Pair not found')
+            verrors.add(f"{schema_name}.private_key.existing_key_id", "SSH Key Pair not found")
 
-        if await self.middleware.call('keychaincredential.query', [['name', '=', options['connection_name']]]):
-            verrors.add(f'{schema_name}.connection_name', 'Is already in use by another Keychain Credential')
+        if await self.middleware.call("keychaincredential.query", [["name", "=", options["connection_name"]]]):
+            verrors.add(f"{schema_name}.connection_name", "Is already in use by another Keychain Credential")
 
         verrors.check()
 
     @api_method(
         KeychainCredentialSetupSshConnectionArgs,
         KeychainCredentialSetupSshConnectionResult,
-        roles=['KEYCHAIN_CREDENTIAL_WRITE'],
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
         audit="Setup SSH Connection:",
         audit_extended=lambda options: options["connection_name"]
     )
@@ -50,46 +50,46 @@ class KeychainCredentialService(Service):
         """
         await self._validate_options(options)
 
-        pkey_config_ = options['private_key']
-        gen_key_ = pkey_config_['generate_key']
+        pkey_config_ = options["private_key"]
+        gen_key_ = pkey_config_["generate_key"]
 
         # We are going to generate a SSH Key pair now if required
         if gen_key_:
-            key_config = await self.middleware.call('keychaincredential.generate_ssh_key_pair')
-            ssh_key_pair = await self.middleware.call('keychaincredential.create', {
-                'name': pkey_config_['name'],
-                'type': 'SSH_KEY_PAIR',
-                'attributes': key_config,
+            key_config = await self.middleware.call("keychaincredential.generate_ssh_key_pair")
+            ssh_key_pair = await self.middleware.call("keychaincredential.create", {
+                "name": pkey_config_["name"],
+                "type": "SSH_KEY_PAIR",
+                "attributes": key_config,
             })
         else:
             ssh_key_pair = await self.middleware.call(
-                'keychaincredential.get_instance',
-                pkey_config_['existing_key_id']
+                "keychaincredential.get_instance",
+                pkey_config_["existing_key_id"]
             )
 
         try:
-            if options['setup_type'] == 'SEMI-AUTOMATIC':
+            if options["setup_type"] == "SEMI-AUTOMATIC":
                 resp = await self.middleware.call(
-                    'keychaincredential.remote_ssh_semiautomatic_setup', {
-                        **options['semi_automatic_setup'],
-                        'private_key': ssh_key_pair['id'],
-                        'name': options['connection_name'],
+                    "keychaincredential.remote_ssh_semiautomatic_setup", {
+                        **options["semi_automatic_setup"],
+                        "private_key": ssh_key_pair["id"],
+                        "name": options["connection_name"],
                     }
                 )
             else:
                 resp = await self.middleware.call(
-                    'keychaincredential.create', {
-                        'type': 'SSH_CREDENTIALS',
-                        'name': options['connection_name'],
-                        'attributes': {
-                            **options['manual_setup'],
-                            'private_key': ssh_key_pair['id'],
+                    "keychaincredential.create", {
+                        "type": "SSH_CREDENTIALS",
+                        "name": options["connection_name"],
+                        "attributes": {
+                            **options["manual_setup"],
+                            "private_key": ssh_key_pair["id"],
                         }
                     }
                 )
         except Exception:
             if gen_key_:
-                await self.middleware.call('keychaincredential.delete', ssh_key_pair['id'])
+                await self.middleware.call("keychaincredential.delete", ssh_key_pair["id"])
             raise
         else:
             return resp

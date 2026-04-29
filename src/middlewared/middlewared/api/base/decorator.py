@@ -14,9 +14,9 @@ __all__ = ["api_method"]
 from ...utils.types import AuditCallback
 
 CONFIG_CRUD_METHODS = frozenset([
-    'do_create', 'do_update', 'do_delete',
-    'create', 'update', 'delete',
-    'query', 'get_instance', 'config'
+    "do_create", "do_update", "do_delete",
+    "create", "update", "delete",
+    "query", "get_instance", "config"
 ])
 MAJOR_VERSION = re.compile(r"^v([0-9]{2})$")
 ANNOTATION_PREFIX = re.compile(r"middlewared\.api\.[^.]+\.[^.]+\.")
@@ -68,19 +68,19 @@ def calculate_args_index(f, audit_callback, check_annotations):
     signature_args = function_arg_names(f)
     # This must match the order used in `Middleware._call_prepare`
     expected_args = []
-    if signature_args and signature_args[0] == 'self':
-        expected_args.append(('self', None))
-    if pass_app := hasattr(f, '_pass_app'):
-        expected_args.append(('app', App))
+    if signature_args and signature_args[0] == "self":
+        expected_args.append(("self", None))
+    if pass_app := hasattr(f, "_pass_app"):
+        expected_args.append(("app", App))
     # `app` comes before `job` as defined in `Job.__run_body`
-    if hasattr(f, '_job'):
-        expected_args.append(('job', Job))
+    if hasattr(f, "_job"):
+        expected_args.append(("job", Job))
     if audit_callback:
-        expected_args.append(('audit_callback', AuditCallback))
-    if hasattr(f, '_pass_thread_local_storage'):
-        expected_args.append(('tls', None))
-    if pass_app and f._pass_app['message_id']:
-        expected_args.append(('message_id', str))
+        expected_args.append(("audit_callback", AuditCallback))
+    if hasattr(f, "_pass_thread_local_storage"):
+        expected_args.append(("tls", None))
+    if pass_app and f._pass_app["message_id"]:
+        expected_args.append(("message_id", str))
 
     # FIXME: Get rid of the cases where `check_annotations` is `False`
     if check_annotations:
@@ -109,7 +109,7 @@ def calculate_args_index(f, audit_callback, check_annotations):
             )
 
     args_index = len(expected_args)
-    if hasattr(f, '_skip_arg'):
+    if hasattr(f, "_skip_arg"):
         args_index += f._skip_arg
     return args_index
 
@@ -181,8 +181,8 @@ def api_method[**P, T](
         if pass_app:
             # Pass the application instance as parameter to the method
             func._pass_app = {
-                'message_id': False,
-                'require': pass_app_require,
+                "message_id": False,
+                "require": pass_app_require,
             }
         if pass_thread_local_storage:
             func._pass_thread_local_storage = True
@@ -199,7 +199,7 @@ def api_method[**P, T](
 
         if asyncio.iscoroutinefunction(func):
             if pass_thread_local_storage:
-                raise ValueError('pass_thread_local_storage invalid for coroutines')
+                raise ValueError("pass_thread_local_storage invalid for coroutines")
 
             @functools.wraps(func)
             async def wrapped(*args):
@@ -219,26 +219,26 @@ def api_method[**P, T](
 
         if private:
             if roles or not authentication_required or not authorization_required:
-                raise ValueError('Cannot set roles, no authorization, or no authentication on private methods.')
+                raise ValueError("Cannot set roles, no authorization, or no authentication on private methods.")
 
         elif roles:
             if not authorization_required or not authentication_required:
-                raise ValueError('Authentication and authorization must be enabled in order to use roles.')
+                raise ValueError("Authentication and authorization must be enabled in order to use roles.")
 
         elif not authorization_required:
             if not authentication_required:
                 # Although this is technically valid the concern is that dev has fat-fingered something
-                raise ValueError('Either authentication or authorization may be disabled, but not both simultaneously.')
+                raise ValueError("Either authentication or authorization may be disabled, but not both simultaneously.")
             wrapped._no_authz_required = True
 
         elif not authentication_required:
             wrapped._no_auth_required = True
 
-        elif func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
+        elif func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith("choices"):
             # All public methods should have a roles definition. This is a rough check to help developers not write
             # methods that are only accesssible to full_admin. We don't bother checking CONFIG and CRUD methods
             # and choices because they may have implicit roles through the role_prefix configuration.
-            raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
+            raise ValueError(f"{func.__name__}: Role definition is required for public API endpoints")
 
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback
@@ -250,7 +250,7 @@ def api_method[**P, T](
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(
-                    f'{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX'
+                    f"{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX"
                 )
 
             wrapped._removed_in = removed_in
@@ -384,7 +384,7 @@ def normalize_annotation(annotation, parent_model=None):
                                       recursive_guard=frozenset())
 
     # Allow types to declare their annotation-check equivalent
-    if isinstance(result, type) and hasattr(result, '__normalize_as__'):
+    if isinstance(result, type) and hasattr(result, "__normalize_as__"):
         result = result.__normalize_as__
 
     if result is None or result is type(None) or result == "None":

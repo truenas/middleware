@@ -24,15 +24,15 @@ def pull_image(
     registry_uri: str | None = None,
 ) -> None:
     if username and not password:
-        raise CallError('Password is required when username is provided')
+        raise CallError("Password is required when username is provided")
 
     if password and not username:
-        raise CallError('Username is required when password is provided')
+        raise CallError("Username is required when password is provided")
 
     auth_config = {
-        'username': username,
-        'password': password,
-        'registry': registry_uri,
+        "username": username,
+        "password": password,
+        "registry": registry_uri,
     } if username else None
 
     with get_docker_client() as client:
@@ -42,7 +42,7 @@ def pull_image(
                 if callback:
                     callback(line)
         except docker.errors.APIError as e:
-            raise CallError(f'Failed to pull {image_tag!r} image: {e!s}')
+            raise CallError(f"Failed to pull {image_tag!r} image: {e!s}")
 
 
 def delete_image(image_id: str, force: bool = False) -> None:
@@ -50,6 +50,6 @@ def delete_image(image_id: str, force: bool = False) -> None:
         try:
             client.images.remove(image=image_id, force=force)
         except docker.errors.ImageNotFound:
-            raise CallError(f'{image_id!r} image not found')
+            raise CallError(f"{image_id!r} image not found")
         except docker.errors.APIError as e:
-            raise CallError(f'Failed to delete {image_id!r} image: {e!s}')
+            raise CallError(f"Failed to delete {image_id!r} image: {e!s}")

@@ -3,17 +3,17 @@ from middlewared.common.ports import ServicePortDelegate
 
 class SystemGeneralServicePortDelegate(ServicePortDelegate):
 
-    bind_address_field = 'ui_address'
-    name = 'webui'
-    namespace = 'system.general'
-    port_fields = ['ui_port', 'ui_httpsport']
-    title = 'WebUI Service'
+    bind_address_field = "ui_address"
+    name = "webui"
+    namespace = "system.general"
+    port_fields = ["ui_port", "ui_httpsport"]
+    title = "WebUI Service"
 
     def bind_address(self, config):
         addresses = []
         for wildcard_ip, address_field in (
-            ('0.0.0.0', 'ui_address'),
-            ('::', 'ui_v6address'),
+            ("0.0.0.0", "ui_address"),
+            ("::", "ui_v6address"),
         ):
             if config[address_field] and wildcard_ip not in config[address_field]:
                 addresses.extend(config[address_field])
@@ -35,4 +35,4 @@ class SystemGeneralServicePortDelegate(ServicePortDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('port.register_attachment_delegate', SystemGeneralServicePortDelegate(middleware))
+    await middleware.call("port.register_attachment_delegate", SystemGeneralServicePortDelegate(middleware))

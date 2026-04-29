@@ -108,7 +108,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
             # set UUID here is not terrible. It's used for audit
             # tracking rather. We have a separate middleware session
             # uuid.
-            self.login_id = '<ERROR: see /var/log/middlewared.log>'
+            self.login_id = "<ERROR: see /var/log/middlewared.log>"
 
         return resp
 
@@ -220,8 +220,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     initially generated the token. """
     def __init__(
         self,
-        token_manager: 'TokenManager',
-        token: 'Token',
+        token_manager: "TokenManager",
+        token: "Token",
         authenticator: TokenPamAuthenticator,
     ):
         self.root_credentials = token.root_credentials()
@@ -250,7 +250,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         This also generates utmp entry for the token-based session. """
         assert self.pam_authenticated is False
 
-        username = self.user['username'] if self.is_user_session else 'root'
+        username = self.user["username"] if self.is_user_session else "root"
         pam_resp = self.authenticator.authenticate(username)
         self.pam_authenticated = pam_resp.code == PAMCode.PAM_SUCCESS
         return pam_resp
@@ -286,7 +286,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
             # set UUID here is not terrible. It's used for audit
             # tracking rather. We have a separate middleware session
             # uuid.
-            self.login_id = '<ERROR: see /var/log/middlewared.log>'
+            self.login_id = "<ERROR: see /var/log/middlewared.log>"
 
         return resp
 

@@ -2,7 +2,7 @@ from typing import Any, TextIO, TypeVar, overload
 
 import yaml
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @overload
@@ -34,6 +34,6 @@ def safe_yaml_load(stream: str | TextIO, expected_type: type | None = None) -> A
     data = yaml.load(stream, Loader=yaml.CSafeLoader)
     if expected_type is not None and not isinstance(data, expected_type):
         raise ValueError(
-            f'Expected {expected_type.__name__} from YAML, got {type(data).__name__}'
+            f"Expected {expected_type.__name__} from YAML, got {type(data).__name__}"
         )
     return data

@@ -5,24 +5,24 @@ def convert_keys(username, keys) -> UserKeyringEntry:
     user_api_keys = []
 
     for key in keys:
-        if key['expires_at'] is None:
+        if key["expires_at"] is None:
             expiry = 0
-        elif key['revoked']:
+        elif key["revoked"]:
             # Backstop. We filter these out when we etc.generate, but we don't
             # want to have an avenue to accidentally insert revoked keys.
             continue
         else:
-            expiry = int(key['expires_at'].timestamp())
+            expiry = int(key["expires_at"].timestamp())
 
         user_api_keys.append(UserApiKey(
-            algorithm='SHA512',
+            algorithm="SHA512",
             expiry=expiry,
-            dbid=key['id'],
+            dbid=key["id"],
             username=username,
-            salt=key['salt'],
-            iterations=key['iterations'],
-            server_key=key['server_key'],
-            stored_key=key['stored_key']
+            salt=key["salt"],
+            iterations=key["iterations"],
+            server_key=key["server_key"],
+            stored_key=key["stored_key"]
         ))
 
     return UserKeyringEntry(
@@ -32,14 +32,14 @@ def convert_keys(username, keys) -> UserKeyringEntry:
 
 
 def render(service, middleware, render_ctx):
-    api_keys = render_ctx['api_key.query']
+    api_keys = render_ctx["api_key.query"]
     entries = {}
     keyring_entries = []
     for key in api_keys:
-        if key['username'] not in entries:
-            entries[key['username']] = [key]
+        if key["username"] not in entries:
+            entries[key["username"]] = [key]
         else:
-            entries[key['username']].append(key)
+            entries[key["username"]].append(key)
 
     for user, keys in entries.items():
         entry = convert_keys(user, keys)

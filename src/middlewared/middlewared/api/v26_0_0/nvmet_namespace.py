@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-DeviceType: TypeAlias = Literal['ZVOL', 'FILE']
+DeviceType: TypeAlias = Literal["ZVOL", "FILE"]
 
 
 class NVMetNamespaceEntry(BaseModel):

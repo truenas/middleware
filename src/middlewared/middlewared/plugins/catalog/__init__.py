@@ -47,7 +47,7 @@ from .features import version_supported_error_check as version_supported_error_c
 from .sync import get_synced_state
 from .sync import sync as sync_impl
 
-__all__ = ('CatalogService',)
+__all__ = ("CatalogService",)
 
 
 if TYPE_CHECKING:
@@ -57,8 +57,8 @@ if TYPE_CHECKING:
 
 class CatalogService(GenericConfigService[CatalogEntry]):
     class Config:
-        cli_namespace = 'app.catalog'
-        role_prefix = 'CATALOG'
+        cli_namespace = "app.catalog"
+        role_prefix = "CATALOG"
         entry = CatalogEntry
         generic = True
 
@@ -75,7 +75,7 @@ class CatalogService(GenericConfigService[CatalogEntry]):
 
     @api_method(
         CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult,
-        roles=['CATALOG_READ'], check_annotations=True,
+        roles=["CATALOG_READ"], check_annotations=True,
     )
     def get_app_details(self, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppDetails:
         """
@@ -83,22 +83,22 @@ class CatalogService(GenericConfigService[CatalogEntry]):
         """
         return get_app_details(self.context, app_name, options)
 
-    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'], check_annotations=True)
-    @job(lock='official_catalog_sync', lock_queue_size=0)
+    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=["CATALOG_WRITE"], check_annotations=True)
+    @job(lock="official_catalog_sync", lock_queue_size=0)
     async def sync(self, job: Job) -> None:
         """
         Sync truenas catalog to retrieve latest changes from upstream.
         """
         return await sync_impl(self.context, job)
 
-    @api_method(CatalogSyncedArgs, CatalogSyncedResult, check_annotations=True, roles=['CATALOG_READ'])
+    @api_method(CatalogSyncedArgs, CatalogSyncedResult, check_annotations=True, roles=["CATALOG_READ"])
     def synced(self) -> bool:
         """
         Return whether the catalog has been synced at least once.
         """
         return get_synced_state()
 
-    @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
+    @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=["CATALOG_READ"])
     def apps(self, options: CatalogApps) -> CatalogAppsResponse:
         """
         Retrieve apps details for `label` catalog.
@@ -118,7 +118,7 @@ class CatalogService(GenericConfigService[CatalogEntry]):
         """
         return apps_impl(self.context, options)
 
-    @api_method(CatalogTrainsArgs, CatalogTrainsResult, check_annotations=True, roles=['CATALOG_READ'])
+    @api_method(CatalogTrainsArgs, CatalogTrainsResult, check_annotations=True, roles=["CATALOG_READ"])
     def trains(self) -> CatalogTrainsResponse:
         """
         Retrieve available trains.
@@ -151,4 +151,4 @@ class CatalogService(GenericConfigService[CatalogEntry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('network.general.register_activity', 'catalog', 'Catalog(s) information')
+    await middleware.call("network.general.register_activity", "catalog", "Catalog(s) information")

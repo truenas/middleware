@@ -9,7 +9,7 @@ from middlewared.service import CallError
 from middlewared.utils.yaml import safe_yaml_load
 
 APP_CONFIG = textwrap.dedent(
-    '''
+    """
     app_version: 1.41.3.9314-a0bfb8370
     capabilities:
       - description: Plex is able to chown files.
@@ -26,42 +26,42 @@ APP_CONFIG = textwrap.dedent(
         name: KILL
     categories:
       - media
-    '''
+    """
 )
 
 
-@pytest.mark.parametrize('file_paths', [
+@pytest.mark.parametrize("file_paths", [
     [
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/always.py',
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_min_version_from.py'
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/always.py",
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_min_version_from.py"
     ],
     [],
     [
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/always.py',
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_min_version_from.py',
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_max_versoin_from.py',
-        '/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/range_from.py'
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/always.py",
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_min_version_from.py",
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/only_max_versoin_from.py",
+        "/mnt/.ix-apps/app_configs/plex/version/1.1.13/migrations/range_from.py"
     ]
 ])
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.subprocess.Popen')
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.tempfile.NamedTemporaryFile')
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_current_app_config')
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_data_for_upgrade_values')
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.subprocess.Popen")
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.tempfile.NamedTemporaryFile")
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.get_current_app_config")
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.get_data_for_upgrade_values")
 def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, mock_tempfile, mock_popen, file_paths):
     mock_temp_file_instance = unittest.mock.MagicMock()
-    mock_temp_file_instance.name = '/mocked/tempfile/path'
+    mock_temp_file_instance.name = "/mocked/tempfile/path"
     mock_tempfile.return_value.__enter__.return_value = mock_temp_file_instance
     mock_current_config.return_value = safe_yaml_load(APP_CONFIG)
 
     mock_process = unittest.mock.MagicMock()
-    mock_process.communicate.return_value = (APP_CONFIG.encode(), b'')
+    mock_process.communicate.return_value = (APP_CONFIG.encode(), b"")
     mock_process.returncode = 0  # Mock a successful return code
     mock_popen.return_value = mock_process
     mock_get_data_for_upgrade_values.return_value = file_paths, APP_CONFIG
 
-    app = SimpleNamespace(name='plex', version='1.1.12')
+    app = SimpleNamespace(name="plex", version="1.1.12")
     upgrade_version = {
-        'version': '1.1.13'
+        "version": "1.1.13"
     }
 
     result = upgrade_values(app, upgrade_version)
@@ -74,42 +74,42 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
         assert result == APP_CONFIG
 
 
-@pytest.mark.parametrize('migration_files, expected', [
+@pytest.mark.parametrize("migration_files, expected", [
     (
         {
-            'error': None, 'migration_files': [
+            "error": None, "migration_files": [
                 {
-                    'error': None,
-                    'migration_file': '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py'
+                    "error": None,
+                    "migration_file": "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py"
                 },
                 {
-                    'error': None,
-                    'migration_file': '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/range_from.py'
+                    "error": None,
+                    "migration_file": "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/range_from.py"
                 }
             ]
         },
         [
-            '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py',
-            '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/range_from.py'
+            "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py",
+            "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/range_from.py"
         ]
     ),
     (
         {
-            'error': None, 'migration_files': [
+            "error": None, "migration_files": [
                 {
-                    'error': 'Migration file is not executable',
-                    'migration_file': '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py'
+                    "error": "Migration file is not executable",
+                    "migration_file": "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py"
                 },
                 {
-                    'error': 'Migration file is not executable',
-                    'migration_file': (
-                        '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py'
+                    "error": "Migration file is not executable",
+                    "migration_file": (
+                        "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py"
                     )
                 },
                 {
-                    'error': 'Migration file is not executable',
-                    'migration_file': (
-                        '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py'
+                    "error": "Migration file is not executable",
+                    "migration_file": (
+                        "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py"
                     )
                 }
             ]
@@ -118,60 +118,60 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
     ),
     (
         {
-            'error': 'Invalid Yaml', 'migration_files': []
+            "error": "Invalid Yaml", "migration_files": []
         },
         CallError
     ),
     (
         {
-            'error': 'target version should be greater than current version',
-            'migration_file': []
+            "error": "target version should be greater than current version",
+            "migration_file": []
         },
         CallError
     ),
     (
         {
-            'error': 'No current or target version specified',
-            'migration_file': []
+            "error": "No current or target version specified",
+            "migration_file": []
         },
         CallError
     ),
     (
         {
-            'error': None, 'migration_files': [
+            "error": None, "migration_files": [
                 {
-                    'error': None,
-                    'migration_file': '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py'
+                    "error": None,
+                    "migration_file": "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py"
                 },
                 {
-                    'error': None,
-                    'migration_file': (
-                        '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py'
+                    "error": None,
+                    "migration_file": (
+                        "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py"
                     )
                 },
                 {
-                    'error': None,
-                    'migration_file': (
-                        '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py'
+                    "error": None,
+                    "migration_file": (
+                        "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py"
                     )
                 }
             ]
         },
         [
-            '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py',
-            '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py',
-            '/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py'
+            "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py",
+            "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_min_version_from.py",
+            "/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/only_max_version_from.py"
         ]
     ),
 ])
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_migration_scripts')
-@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_current_app_config')
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.get_migration_scripts")
+@unittest.mock.patch("middlewared.plugins.apps.upgrade.get_current_app_config")
 def test_get_data_for_upgrade_values(mock_current_config, mock_migration_scripts, migration_files, expected):
     mock_migration_scripts.return_value = migration_files
     mock_current_config.return_value = APP_CONFIG
-    app = SimpleNamespace(name='plex', version='1.1.12')
+    app = SimpleNamespace(name="plex", version="1.1.12")
     upgrade_version = {
-        'version': '1.1.13'
+        "version": "1.1.13"
     }
     if isinstance(expected, list):
         files, new_config = get_data_for_upgrade_values(app, upgrade_version)

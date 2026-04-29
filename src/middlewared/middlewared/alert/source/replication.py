@@ -10,7 +10,7 @@ class SnapshotFailedAlert(AlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,
         title="Snapshot Task Failed",
-        text="Snapshot Task For Dataset \"%(name)s\" failed: %(message)s.",
+        text='Snapshot Task For Dataset "%(name)s" failed: %(message)s.',
     )
 
     name: str
@@ -20,7 +20,7 @@ class SnapshotFailedAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['id'], args['datetime_iso']]
+        return [args["id"], args["datetime_iso"]]
 
 
 @dataclass(kw_only=True)
@@ -29,7 +29,7 @@ class ReplicationSuccessAlert(AlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.INFO,
         title="Replication Succeeded",
-        text="Replication \"%(name)s\" succeeded.",
+        text='Replication "%(name)s" succeeded.',
     )
 
     name: str
@@ -38,7 +38,7 @@ class ReplicationSuccessAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['id'], args['datetime_iso']]
+        return [args["id"], args["datetime_iso"]]
 
 
 @dataclass(kw_only=True)
@@ -47,7 +47,7 @@ class ReplicationFailedAlert(AlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.CRITICAL,
         title="Replication Failed",
-        text="Replication \"%(name)s\" failed: %(message)s.",
+        text='Replication "%(name)s" failed: %(message)s.',
     )
 
     name: str
@@ -57,7 +57,7 @@ class ReplicationFailedAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['id'], args['datetime_iso']]
+        return [args["id"], args["datetime_iso"]]
 
 
 class ReplicationAlertSource(AlertSource):

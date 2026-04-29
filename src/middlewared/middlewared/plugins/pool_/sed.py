@@ -9,16 +9,16 @@ SED_UPDATE_LOCK = asyncio.Lock()
 class PoolService(Service):
 
     class Config:
-        cli_namespace = 'storage.pool'
+        cli_namespace = "storage.pool"
         event_send = False
 
     @private
     async def ha_update_all_sed_attr(self):
-        if await self.middleware.call('system.sed_enabled'):
+        if await self.middleware.call("system.sed_enabled"):
             await self.update_all_sed_attr()
         else:
-            for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_all_sed', '=', None]]):
-                await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
+            for pool in await self.middleware.call("datastore.query", "storage.volume", [["vol_all_sed", "=", None]]):
+                await self.middleware.call("datastore.update", "storage.volume", pool["id"], {"vol_all_sed": False})
 
     @private
     async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
@@ -48,11 +48,11 @@ class PoolService(Service):
         # pool in question becomes healthy and vice versa
         # Why we still settle on setting this value initially is to prevent accidental mis-configuration of a pool
         # which might perhaps very well be an all sed pool
-        filters = [] if skip_all_sed_check else [['all_sed', '=', None]]
+        filters = [] if skip_all_sed_check else [["all_sed", "=", None]]
         if filter_pool:
-            filters.append(['name', '=', filter_pool])
+            filters.append(["name", "=", filter_pool])
 
-        db_pools = await self.middleware.call('pool.query', filters)
+        db_pools = await self.middleware.call("pool.query", filters)
         if not db_pools:
             # If all pools in db already have db row updated, there is nothing to be done here
             return
@@ -65,38 +65,38 @@ class PoolService(Service):
         # bus reset), not that it has lost SED capability. Excluding it would let a transient error
         # flip all_sed=False and bypass SED enforcement on replace_disk/attach_disk.
         sed_disks = {
-            disk['name'] for disk in await self.middleware.call(
-                'disk.query', [['sed', '=', True]], {'force_sql_filters': True, 'extra': {'sed_status': True}}
+            disk["name"] for disk in await self.middleware.call(
+                "disk.query", [["sed", "=", True]], {"force_sql_filters": True, "extra": {"sed_status": True}}
             )
-            if disk.get('sed_status') not in (None, 'UNINITIALIZED', 'NO_SED')
+            if disk.get("sed_status") not in (None, "UNINITIALIZED", "NO_SED")
         }
 
         for pool in db_pools:
             pool_disks = await self.get_disks_from_topology(pool)
             if not pool_disks or not pool_disks.issubset(sed_disks):
                 await self.middleware.call(
-                    'datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False}
+                    "datastore.update", "storage.volume", pool["id"], {"vol_all_sed": False}
                 )
             else:
                 await self.middleware.call(
-                    'datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': True}
+                    "datastore.update", "storage.volume", pool["id"], {"vol_all_sed": True}
                 )
 
     @private
     async def get_disks_from_topology(self, pool_id_or_pool):
         pool = await self.middleware.call(
-            'pool.get_instance', pool_id_or_pool
+            "pool.get_instance", pool_id_or_pool
         ) if isinstance(pool_id_or_pool, int) else pool_id_or_pool
         return {
-            vdev['disk'] for vdev in await self.middleware.call('pool.flatten_topology', pool['topology'] or {})
-            if vdev.get('type') == 'DISK' and vdev.get('disk')
+            vdev["disk"] for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"] or {})
+            if vdev.get("type") == "DISK" and vdev.get("disk")
         }
 
 
 async def zfs_events_hook(middleware, event: ZfsEvent):
     if isinstance(event, ZfsConfigSyncEvent):
-        if await middleware.call('system.sed_enabled') and (
-            pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
+        if await middleware.call("system.sed_enabled") and (
+            pool := await middleware.call("pool.query", [["name", "=", event.pool]], {"force_sql_filters": True})
         ):
             if pool[0]["healthy"]:
                 # Let's only trigger this if pool is healthy
@@ -106,15 +106,15 @@ async def zfs_events_hook(middleware, event: ZfsEvent):
 async def _post_license_sed_update(middleware):
     # First we sync disks to make sure disks appropriately get marked as SED/non-SED
     # Then we scan existing pools and make sure that they get marked as all_sed appropriately
-    await (await middleware.call('disk.sync_all')).wait()
-    await middleware.call('pool.update_all_sed_attr', True)
+    await (await middleware.call("disk.sync_all")).wait()
+    await middleware.call("pool.update_all_sed_attr", True)
 
 
 async def hook_license_update(middleware, *args, **kwargs):
-    if await middleware.call('system.sed_enabled'):
+    if await middleware.call("system.sed_enabled"):
         middleware.create_task(_post_license_sed_update(middleware))
 
 
 async def setup(middleware):
-    middleware.register_hook('zfs.pool.events', zfs_events_hook)
-    middleware.register_hook('system.post_license_update', hook_license_update)
+    middleware.register_hook("zfs.pool.events", zfs_events_hook)
+    middleware.register_hook("system.post_license_update", hook_license_update)

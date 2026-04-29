@@ -61,11 +61,11 @@ class DirectoryServiceDomainBindAlertSource(AlertSource):
             return None
 
         try:
-            await self.middleware.call('directoryservices.health.check')
+            await self.middleware.call("directoryservices.health.check")
         except (KRB5HealthError, ADHealthError, LDAPHealthError, IPAHealthError):
             # this is potentially recoverable
             try:
-                await self.middleware.call('directoryservices.health.recover')
+                await self.middleware.call("directoryservices.health.recover")
             except Exception as e:
                 # Recovery failed, generate an alert
                 return Alert(DirectoryServiceBindAlert(err=str(e)))
@@ -92,27 +92,27 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
 
         try:
             # checks for enabled DS and whether DNS updates are enabled occur in this method
-            await self.middleware.call('directoryservices.connection.renew_dns')
+            await self.middleware.call("directoryservices.connection.renew_dns")
         except RuntimeError as exc:
             # This most likely means somehow someone has cleared the kerberos realm without
             # disabling directory services. Most likely scenario is playing around with datastore
             # plugin or sqlite3 commands.
-            self.middleware.logger.warning('Periodic DNS update failed due to misconfiguration.', exc_info=True)
+            self.middleware.logger.warning("Periodic DNS update failed due to misconfiguration.", exc_info=True)
             return Alert(DirectoryServiceDnsUpdateAlert(err=str(exc)))
         except FileNotFoundError:
             # This happens if the system dataset is not mounted. We'll log an error but not
             # raise an alert because there are probably many other things hollering about the
             # broken sytsem dataset.
-            self.middleware.logger.warning('Periodic DNS update failed due to broken system dataset.', exc_info=True)
+            self.middleware.logger.warning("Periodic DNS update failed due to broken system dataset.", exc_info=True)
         except CallError as exc:
-            self.middleware.logger.warning('Periodic DNS update failed.', exc_info=True)
+            self.middleware.logger.warning("Periodic DNS update failed.", exc_info=True)
 
             if exc.errno == errno.ENOKEY:
                 # No kerberos ticket
                 errmsg = (
-                    'Unable to perform DNS update because no kerberos ticket is available. '
-                    'See the DirectoryServiceBindAlert for more information. This alert will clear itself during the '
-                    'next check after directory services are healthy again.'
+                    "Unable to perform DNS update because no kerberos ticket is available. "
+                    "See the DirectoryServiceBindAlert for more information. This alert will clear itself during the "
+                    "next check after directory services are healthy again."
                 )
             else:
                 errmsg = exc.errmsg
@@ -120,7 +120,7 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
             return Alert(DirectoryServiceDnsUpdateAlert(err=errmsg))
         except Exception as exc:
             # If needed we can enhance this in the future to parse CallError
-            self.middleware.logger.warning('Periodic DNS update failed.', exc_info=True)
+            self.middleware.logger.warning("Periodic DNS update failed.", exc_info=True)
             return Alert(DirectoryServiceDnsUpdateAlert(err=str(exc)))
 
         return None

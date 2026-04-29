@@ -14,7 +14,7 @@ import pytest
 from middlewared.plugins.enclosure_.enclosure2 import Enclosure2Service
 from middlewared.pytest.unit.middleware import Middleware
 
-test_case_dir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))) / 'test-cases'
+test_case_dir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))) / "test-cases"
 test_case_paths = [i for i in test_case_dir.iterdir() if i.is_dir()]
 test_case_names = [i.name for i in test_case_paths]
 
@@ -55,10 +55,10 @@ def hookit(obj):
 def enc2_data(request):
     test_dir: pathlib.Path = request.param
 
-    with open(test_dir / 'mocked.json') as f:
+    with open(test_dir / "mocked.json") as f:
         mocked_data = json.load(f, object_hook=hookit)
 
-    with open(test_dir / 'expected.json') as f:
+    with open(test_dir / "expected.json") as f:
         expected_data = json.load(f, object_hook=hookit)
 
     return Enc2Mocked(**mocked_data), Enc2Expected(expected_data)
@@ -70,12 +70,12 @@ def test_enclosure2_query(enc2_data):
 
     e = Enclosure2Service(Mock())
     e.middleware = Middleware()
-    e.middleware['truenas.get_chassis_hardware'] = Mock(return_value=enc2_mocked.chassis)
-    e.middleware['truenas.is_ix_hardware'] = Mock(return_value=True)
-    e.middleware['enclosure.label.get_all'] = Mock(return_value=enc2_mocked.labels)
-    e.middleware['system.dmidecode_info'] = Mock(return_value=enc2_mocked.dmi)
-    e.middleware['jbof.query'] = Mock(return_value=[])
-    e.middleware['enclosure2.map_jbof'] = Mock(return_value=[])
+    e.middleware["truenas.get_chassis_hardware"] = Mock(return_value=enc2_mocked.chassis)
+    e.middleware["truenas.is_ix_hardware"] = Mock(return_value=True)
+    e.middleware["enclosure.label.get_all"] = Mock(return_value=enc2_mocked.labels)
+    e.middleware["system.dmidecode_info"] = Mock(return_value=enc2_mocked.dmi)
+    e.middleware["jbof.query"] = Mock(return_value=[])
+    e.middleware["enclosure2.map_jbof"] = Mock(return_value=[])
     e.get_ses_enclosures = Mock(return_value=enc2_mocked.ses)
     e.map_nvme = Mock(return_value=enc2_mocked.nvme)
     e.map_jbof = Mock(return_value=[])

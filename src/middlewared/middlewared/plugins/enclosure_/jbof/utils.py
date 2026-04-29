@@ -34,20 +34,20 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={},
     # `plugins.enclosure_/enclosure_class.py:Enclosure` class so we
     # can get rid of duplicate logic in this module and in that class
     fake_enclosure = {
-        'id': uuid,
-        'dmi': uuid,
-        'model': model,
-        'should_ignore': False,
-        'sg': None,
-        'bsg': None,
-        'name': f'{model} JBoF Enclosure',
-        'controller': False,
-        'status': ['OK'],
-        'elements': {'Array Device Slot': {}}
+        "id": uuid,
+        "dmi": uuid,
+        "model": model,
+        "should_ignore": False,
+        "sg": None,
+        "bsg": None,
+        "name": f"{model} JBoF Enclosure",
+        "controller": False,
+        "status": ["OK"],
+        "elements": {"Array Device Slot": {}}
     }
     disks_map = get_jbof_slot_info(model)
     if not disks_map:
-        fake_enclosure['should_ignore'] = True
+        fake_enclosure["should_ignore"] = True
         return [fake_enclosure]
 
     fake_enclosure.update(ui_info)
@@ -62,50 +62,50 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={},
         # "faking" a SES device, hence the hex values.
         # The `status` variables use same logic.
         if device is not None:
-            status = 'OK'
+            status = "OK"
             value_raw = 0x1000000
         else:
-            status = 'Not installed'
+            status = "Not installed"
             value_raw = 0x5000000
 
-        mapped_slot = disks_map['versions']['DEFAULT']['model'][model][slot]['mapped_slot']
-        light = disks_map['versions']['DEFAULT']['model'][model][slot][SUPPORTS_IDENTIFY_KEY]
-        dfk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_FRONT_KEY]
-        drk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_REAR_KEY]
-        dtk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_TOP_KEY]
-        dik = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_INTERNAL_KEY]
+        mapped_slot = disks_map["versions"]["DEFAULT"]["model"][model][slot]["mapped_slot"]
+        light = disks_map["versions"]["DEFAULT"]["model"][model][slot][SUPPORTS_IDENTIFY_KEY]
+        dfk = disks_map["versions"]["DEFAULT"]["model"][model][slot][DISK_FRONT_KEY]
+        drk = disks_map["versions"]["DEFAULT"]["model"][model][slot][DISK_REAR_KEY]
+        dtk = disks_map["versions"]["DEFAULT"]["model"][model][slot][DISK_TOP_KEY]
+        dik = disks_map["versions"]["DEFAULT"]["model"][model][slot][DISK_INTERNAL_KEY]
 
         # light_status will follow light unless explicitedly overridden
-        light_status = disks_map['versions']['DEFAULT']['model'][model][slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
+        light_status = disks_map["versions"]["DEFAULT"]["model"][model][slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
         if light_status:
             led = drive_bay_light_status.get(slot, None)
         else:
             led = None
 
-        fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
-            'descriptor': f'Disk #{slot}',
-            'status': status,
-            'value': None,
-            'value_raw': value_raw,
-            'dev': device,
+        fake_enclosure["elements"]["Array Device Slot"][mapped_slot] = {
+            "descriptor": f"Disk #{slot}",
+            "status": status,
+            "value": None,
+            "value_raw": value_raw,
+            "dev": device,
             SUPPORTS_IDENTIFY_KEY: light,
             DISK_FRONT_KEY: dfk,
             DISK_REAR_KEY: drk,
             DISK_TOP_KEY: dtk,
             DISK_INTERNAL_KEY: dik,
             DRIVE_BAY_LIGHT_STATUS: led,
-            'original': {
-                'enclosure_id': uuid,
-                'enclosure_sg': None,
-                'enclosure_bsg': None,
-                'descriptor': f'slot{slot}',
-                'slot': slot,
+            "original": {
+                "enclosure_id": uuid,
+                "enclosure_sg": None,
+                "enclosure_bsg": None,
+                "descriptor": f"slot{slot}",
+                "slot": slot,
             }
         }
 
     for element_type in elements:
         if elements[element_type]:
-            fake_enclosure['elements'][element_type] = elements[element_type]
+            fake_enclosure["elements"][element_type] = elements[element_type]
 
     return [fake_enclosure]
 
@@ -113,11 +113,11 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={},
 def map_redfish_status_to_status(status):
     """Return a status string based upon the Redfish Status"""
 
-    if state := status.get('State'):
+    if state := status.get("State"):
         if state == RedfishStatusState.ABSENT.value:
             return ElementStatus.NOT_INSTALLED.value
 
-    if health := status.get('Health'):
+    if health := status.get("Health"):
         match health:
             case RedfishStatusHealth.CRITICAL.value:
                 return ElementStatus.CRITICAL.value
@@ -140,13 +140,13 @@ def map_redfish_to_value(data, keys):
     for key in keys:
         if val := data.get(key):
             values.append(val)
-    return ', '.join(values) or None
+    return ", ".join(values) or None
 
 
 def map_redfish_psu_to_value(psu):
     """Return a value string corresponding to the redfish data"""
     # Just use LineInputStatus (DSP0268_2024.1 6.103.5.2 LineInputStatus)
-    return map_redfish_to_value(psu, ['LineInputStatus'])
+    return map_redfish_to_value(psu, ["LineInputStatus"])
 
 
 def map_redfish_psu(psu):
@@ -177,13 +177,13 @@ def map_redfish_psu(psu):
     #  'SerialNumber': 'S0A00A3032029000265',
     #  'Status': {'Health': 'OK',
     #             'State': 'Enabled'}},
-    desc_fields = ['Name', 'Model', 'SerialNumber', 'FirmwareVersion', 'Manufacturer']
-    desc = [psu.get(k, '') for k in desc_fields]
-    if watt := psu.get('PowerCapacityWatts'):
-        desc.append(f'{watt}W')
+    desc_fields = ["Name", "Model", "SerialNumber", "FirmwareVersion", "Manufacturer"]
+    desc = [psu.get(k, "") for k in desc_fields]
+    if watt := psu.get("PowerCapacityWatts"):
+        desc.append(f"{watt}W")
     return {
-        'descriptor': ','.join(desc),
-        "status": map_redfish_status_to_status(psu['Status']),
+        "descriptor": ",".join(desc),
+        "status": map_redfish_status_to_status(psu["Status"]),
         "value": map_redfish_psu_to_value(psu),
         "value_raw": None
     }
@@ -191,8 +191,8 @@ def map_redfish_psu(psu):
 
 def map_power_supplies(data):
     result = {}
-    for member in data['PowerSubsystem']['PowerSupplies']['Members']:
-        ident = member.get('Id')
+    for member in data["PowerSubsystem"]["PowerSupplies"]["Members"]:
+        ident = member.get("Id")
         if ident:
             result[ident] = map_redfish_psu(member)
     return result
@@ -200,13 +200,13 @@ def map_power_supplies(data):
 
 def map_redfish_fan_to_value(data):
     values = []
-    if speedpercent := data.get('SpeedPercent'):
-        if speedrpm := speedpercent.get('SpeedRPM'):
-            values.append(f'SpeedRPM={speedrpm}')
-    if location_indicator_active := data.get('LocationIndicatorActive'):
+    if speedpercent := data.get("SpeedPercent"):
+        if speedrpm := speedpercent.get("SpeedRPM"):
+            values.append(f"SpeedRPM={speedrpm}")
+    if location_indicator_active := data.get("LocationIndicatorActive"):
         if location_indicator_active:
-            values.append('LocationIndicatorActive')
-    return ', '.join(values) or None
+            values.append("LocationIndicatorActive")
+    return ", ".join(values) or None
 
 
 def map_redfish_fan(data):
@@ -219,8 +219,8 @@ def map_redfish_fan(data):
     #  'SpeedPercent': {'DataSourceUri': '/redfish/v1/Chassis/2U24/Sensors/Fan1', 'SpeedRPM': 9920.0},
     #  'Status': {'Health': 'OK', 'State': 'Enabled'}}
     return {
-        'descriptor': data.get('Name'),
-        "status": map_redfish_status_to_status(data['Status']),
+        "descriptor": data.get("Name"),
+        "status": map_redfish_status_to_status(data["Status"]),
         "value": map_redfish_fan_to_value(data),
         "value_raw": None
     }
@@ -228,20 +228,20 @@ def map_redfish_fan(data):
 
 def map_cooling(data):
     result = {}
-    for member in data['ThermalSubsystem']['Fans']['Members']:
-        ident = member.get('Id')
+    for member in data["ThermalSubsystem"]["Fans"]["Members"]:
+        ident = member.get("Id")
         if ident:
             result[ident] = map_redfish_fan(member)
     return result
 
 
 def map_redfish_sensor_to_value(data):
-    if reading := data.get('Reading'):
-        if units := data.get('ReadingUnits'):
-            return f'{reading} {units}'
+    if reading := data.get("Reading"):
+        if units := data.get("ReadingUnits"):
+            return f"{reading} {units}"
         else:
             # Make sure it's a string
-            return f'{reading}'
+            return f"{reading}"
 
 
 def map_redfish_temperature_sensor(data):
@@ -255,8 +255,8 @@ def map_redfish_temperature_sensor(data):
     #  'ReadingUnits': 'C',
     #  'Status': {'Health': 'OK', 'State': 'Enabled'}},
     return {
-        'descriptor': data.get('Name'),
-        "status": map_redfish_status_to_status(data['Status']),
+        "descriptor": data.get("Name"),
+        "status": map_redfish_status_to_status(data["Status"]),
         "value": map_redfish_sensor_to_value(data),
         "value_raw": None
     }
@@ -264,10 +264,10 @@ def map_redfish_temperature_sensor(data):
 
 def map_temperature_sensors(data):
     result = {}
-    for member in data['Sensors']['Members']:
-        ident = member.get('Id')
-        reading_type = member.get('ReadingType')
-        if ident and reading_type == 'Temperature':
+    for member in data["Sensors"]["Members"]:
+        ident = member.get("Id")
+        reading_type = member.get("ReadingType")
+        if ident and reading_type == "Temperature":
             result[ident] = map_redfish_temperature_sensor(member)
     return result
 
@@ -282,8 +282,8 @@ def map_redfish_voltage_sensor(data):
     #  'ReadingType': 'Voltage',
     #  'Status': {'Health': 'OK', 'State': 'Enabled'}},
     return {
-        'descriptor': data.get('Name'),
-        "status": map_redfish_status_to_status(data['Status']),
+        "descriptor": data.get("Name"),
+        "status": map_redfish_status_to_status(data["Status"]),
         "value": map_redfish_sensor_to_value(data),
         "value_raw": None
     }
@@ -291,9 +291,9 @@ def map_redfish_voltage_sensor(data):
 
 def map_voltage_sensors(data):
     result = {}
-    for member in data['Sensors']['Members']:
-        ident = member.get('Id')
-        reading_type = member.get('ReadingType')
-        if ident and reading_type == 'Voltage':
+    for member in data["Sensors"]["Members"]:
+        ident = member.get("Id")
+        reading_type = member.get("ReadingType")
+        if ident and reading_type == "Voltage":
             result[ident] = map_redfish_voltage_sensor(member)
     return result

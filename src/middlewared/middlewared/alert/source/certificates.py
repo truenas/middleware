@@ -29,7 +29,7 @@ class CertificateIsExpiringAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['name']]
+        return [args["name"]]
 
 
 @dataclass(kw_only=True)
@@ -46,7 +46,7 @@ class CertificateIsExpiringSoonAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['name']]
+        return [args["name"]]
 
 
 @dataclass(kw_only=True)
@@ -62,7 +62,7 @@ class CertificateExpiredAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['name']]
+        return [args["name"]]
 
 
 @dataclass(kw_only=True)
@@ -98,28 +98,28 @@ class CertificateChecksAlertSource(AlertSource):
         alerts: list[Alert[Any]] = []
 
         # system certs
-        certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])
+        certs = await self.middleware.call("certificate.query", [["certificate", "!=", None]])
 
         for cert in certs:
             # make the sure certs have been parsed correctly
-            if not cert['parsed']:
+            if not cert["parsed"]:
                 alerts.append(Alert(
                     CertificateParsingFailedAlert(type=cert["cert_type"].capitalize(), name=cert["name"]),
                 ))
             else:
                 # check the parsed certificate(s) for expiration
-                if cert['cert_type'] == 'CERTIFICATE':
-                    diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
-                    alert_threshold = (cert.get('renew_days') or 10) - 1
+                if cert["cert_type"] == "CERTIFICATE":
+                    diff = (datetime.strptime(cert["until"], "%a %b %d %H:%M:%S %Y") - utc_now()).days
+                    alert_threshold = (cert.get("renew_days") or 10) - 1
                     if diff < alert_threshold:
                         if diff >= 0:
                             klass = CertificateIsExpiringSoonAlert if diff <= 2 else CertificateIsExpiringAlert
                             alerts.append(Alert(
-                                klass(name=cert['name'], days=diff),
+                                klass(name=cert["name"], days=diff),
                             ))
                         else:
                             alerts.append(Alert(
-                                CertificateExpiredAlert(name=cert['name']),
+                                CertificateExpiredAlert(name=cert["name"]),
                             ))
 
         return alerts

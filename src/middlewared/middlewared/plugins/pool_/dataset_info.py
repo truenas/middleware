@@ -17,16 +17,16 @@ from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_
 class PoolDatasetService(Service):
 
     class Config:
-        namespace = 'pool.dataset'
+        namespace = "pool.dataset"
 
-    @api_method(PoolDatasetChecksumChoicesArgs, PoolDatasetChecksumChoicesResult, roles=['DATASET_READ'])
+    @api_method(PoolDatasetChecksumChoicesArgs, PoolDatasetChecksumChoicesResult, roles=["DATASET_READ"])
     async def checksum_choices(self):
         """
         Retrieve checksums supported for ZFS dataset.
         """
-        return {v: v for v in ZFS_CHECKSUM_CHOICES if v != 'OFF'}
+        return {v: v for v in ZFS_CHECKSUM_CHOICES if v != "OFF"}
 
-    @api_method(PoolDatasetCompressionChoicesArgs, PoolDatasetCompressionChoicesResult, roles=['DATASET_READ'])
+    @api_method(PoolDatasetCompressionChoicesArgs, PoolDatasetCompressionChoicesResult, roles=["DATASET_READ"])
     async def compression_choices(self):
         """
         Retrieve compression algorithm supported by ZFS.
@@ -36,7 +36,7 @@ class PoolDatasetService(Service):
     @api_method(
         PoolDatasetEncryptionAlgorithmChoicesArgs,
         PoolDatasetEncryptionAlgorithmChoicesResult,
-        roles=['DATASET_READ']
+        roles=["DATASET_READ"]
     )
     async def encryption_algorithm_choices(self):
         """
@@ -47,7 +47,7 @@ class PoolDatasetService(Service):
     @api_method(
         PoolDatasetRecommendedZvolBlocksizeArgs,
         PoolDatasetRecommendedZvolBlocksizeResult,
-        roles=['DATASET_READ']
+        roles=["DATASET_READ"]
     )
     async def recommended_zvol_blocksize(self, pool):
         """
@@ -65,7 +65,7 @@ class PoolDatasetService(Service):
                 "params": ["tank"]
             }
         """
-        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
+        pool = await self.middleware.call("pool.query", [["name", "=", pool]], {"get": True})
 
         """
         Cheatsheat for blocksizes is as follows:
@@ -80,19 +80,19 @@ class PoolDatasetService(Service):
         the blocksize based on the largest vdev of the zpool.
         """
         maxdisks = 1
-        for vdev in pool['topology']['data']:
-            if vdev['type'] == 'RAIDZ1':
-                disks = len(vdev['children']) - 1
-            elif vdev['type'] == 'RAIDZ2':
-                disks = len(vdev['children']) - 2
-            elif vdev['type'] == 'RAIDZ3':
-                disks = len(vdev['children']) - 3
-            elif vdev['type'] == 'MIRROR':
+        for vdev in pool["topology"]["data"]:
+            if vdev["type"] == "RAIDZ1":
+                disks = len(vdev["children"]) - 1
+            elif vdev["type"] == "RAIDZ2":
+                disks = len(vdev["children"]) - 2
+            elif vdev["type"] == "RAIDZ3":
+                disks = len(vdev["children"]) - 3
+            elif vdev["type"] == "MIRROR":
                 disks = maxdisks
             else:
-                disks = len(vdev['children'])
+                disks = len(vdev["children"])
 
             if disks > maxdisks:
                 maxdisks = disks
 
-        return f'{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}K'
+        return f"{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}K"

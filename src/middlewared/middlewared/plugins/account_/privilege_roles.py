@@ -58,8 +58,8 @@ class PrivilegeService(Service):
         event_allowlists = deepcopy(self.middleware.role_manager.events.allowlists_for_roles)
 
         return {
-            'method_resources': method_resources,
-            'method_allowlists': method_allowlists,
-            'event_resources': event_resources,
-            'event_allowlists': event_allowlists
+            "method_resources": method_resources,
+            "method_allowlists": method_allowlists,
+            "event_resources": event_resources,
+            "event_allowlists": event_allowlists
         }
