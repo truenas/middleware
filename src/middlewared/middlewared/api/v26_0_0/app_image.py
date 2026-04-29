@@ -3,8 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
 __all__ = [
-    'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
-    'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
+    'AppImageEntry', 'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
     'AppImagePullArgs', 'AppImagePullResult', 'AppImageDeleteArgs', 'AppImageDeleteResult',
 ]
 
@@ -47,12 +46,12 @@ class AppImageEntry(BaseModel):
     """Parsed repository tag information or `null` if not available."""
 
 
-class ContainerImagesDockerhubRateLimitArgs(BaseModel):
+class AppImageDockerhubRateLimitArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class ContainerImagesDockerhubRateLimitResult(BaseModel):
+class AppImageDockerhubRateLimitResult(BaseModel):
     total_pull_limit: int | None = None
     """Total pull limit for Docker Hub registry."""
     total_time_limit_in_secs: int | None = None
@@ -102,10 +101,3 @@ class AppImageDeleteArgs(BaseModel):
 class AppImageDeleteResult(BaseModel):
     result: Literal[True]
     """Returns `true` when the container image is successfully deleted."""
-
-
-# Backcompat aliases: v27+ renamed these classes to follow the `AppImageService`
-# naming convention. Keeping aliases lets `APIVersionsAdapter` resolve the new
-# name when walking through this legacy version during cross-version adaptation.
-AppImageDockerhubRateLimitArgs = ContainerImagesDockerhubRateLimitArgs
-AppImageDockerhubRateLimitResult = ContainerImagesDockerhubRateLimitResult
