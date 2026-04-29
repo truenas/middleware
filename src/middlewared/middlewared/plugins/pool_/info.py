@@ -129,18 +129,17 @@ class PoolService(Service):
         PoolIsUpgradedArgs,
         PoolIsUpgradedResult,
         pass_thread_local_storage=True,
-        roles=['POOL_READ']
+        roles=['POOL_READ'],
+        removed_in="v26",
     )
     def is_upgraded(self, tls, oid):
         """
-        Returns whether or not the pool of `id` is on the latest version
+        Returns whether the pool of `id` is on the latest version
         and with all feature flags enabled.
 
         Queries the database for the pool matching the given `id`, then
         checks each ZFS feature flag on the pool. Returns `true` only
         when every feature flag is in the ENABLED or ACTIVE state.
-        Returns `false` if the pool is not currently imported or if
-        the feature flags cannot be read for any reason.
 
         Raises a `ValidationError` if `id` does not match any pool in
         the database.
@@ -156,10 +155,8 @@ class PoolService(Service):
             )
 
         pname = pool[0]['vol_name']
-        try:
-            for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
-                if info.state not in ('ENABLED', 'ACTIVE'):
-                    return False
-        except Exception:
-            return False
+        for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
+            if info.state not in ('ENABLED', 'ACTIVE'):
+                return False
+
         return True
