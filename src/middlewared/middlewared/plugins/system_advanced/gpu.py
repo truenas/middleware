@@ -14,7 +14,6 @@ from middlewared.api.current import (
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import Service, ValidationErrors, private
 
-
 # Flat newline-separated PCI slot list, one slot per line, sorted for stable
 # diffing. Lives under /data so it persists across BE upgrades (the installer
 # rsyncs /data into the new BE). The initramfs hook copies this file verbatim
