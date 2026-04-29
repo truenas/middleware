@@ -1,0 +1,17 @@
+#!/bin/sh
+# Copy the PCI passthrough slot list into the initrd so init-top can read it.
+# Runs at update-initramfs time. The source file is a flat newline-separated
+# list of PCI slots, written by middlewared. It lives under /data so it
+# survives BE upgrades (the installer rsyncs /data into the new BE).
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+config="/data/subsystems/initramfs/truenas_vfio_pci_ids"
+[ -r "$config" ] || exit 0
+
+copy_file config "$config" /etc/truenas_vfio_pci_ids
