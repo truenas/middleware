@@ -235,11 +235,11 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
             system_product = dmiinfo.get('system-product-name', '')
 
         if vendor:
-            return (system_product or vendor)[:MAX_MODEL_LEN]
+            return (system_product or vendor)[:MAX_MODEL_LEN].strip()
         else:
             if system_product.lower().startswith('truenas'):
-                return system_product[:MAX_MODEL_LEN]
-            return f'TrueNAS {system_product}'[:MAX_MODEL_LEN]
+                return system_product[:MAX_MODEL_LEN].strip()
+            return f'TrueNAS {system_product}'[:MAX_MODEL_LEN].strip()
 
     @private
     @cache
