@@ -18,7 +18,12 @@ __all__ = ["MethodNotFoundError", "ServiceCallMixin"]
 
 class MethodNotFoundError(CallError):
     def __init__(self, method_name: str, service: str):
+        self.method_name = method_name
+        self.service = service
         super().__init__(f'Method {method_name!r} not found in {service!r}', CallError.ENOMETHOD)
+
+    def __reduce__(self):
+        return (type(self), (self.method_name, self.service))
 
 
 class ServiceCallMixin:

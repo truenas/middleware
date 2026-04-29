@@ -76,6 +76,7 @@ class NssError(Exception):
         self.nssop = nssop.value
         self.return_code = return_code
         self.mod_name = module.name
+        super().__init__(errno, nssop, return_code, module)
 
     def __str__(self) -> str:
         errmsg = f'NSS operation {self.nssop} failed with errno {self.errno}: {self.return_code}'

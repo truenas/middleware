@@ -14,19 +14,28 @@ __all__ = (
 class ZFSKeyAlreadyLoadedException(Exception):
     def __init__(self, path: str):
         self.message = f"{path!r} key is already loaded"
-        super().__init__(self.message)
+        super().__init__(path)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSNotEncryptedException(Exception):
     def __init__(self, path: str):
         self.message = f"{path!r} is not encrypted"
-        super().__init__(self.message)
+        super().__init__(path)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathAlreadyExistsException(Exception):
     def __init__(self, path: str):
         self.message = f"{path!r} already exists"
-        super().__init__(self.message)
+        super().__init__(path)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathHasClonesException(Exception):
@@ -34,13 +43,19 @@ class ZFSPathHasClonesException(Exception):
         self.path = path
         self.clones = clones
         self.message = f"{path!r} has the following clones: {','.join(clones)}"
-        super().__init__(self.message)
+        super().__init__(path, clones)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathHasHoldsException(Exception):
     def __init__(self, path: str, holds: Iterable[str]):
         self.message = f"{path!r} has the following holds: {','.join(holds)}"
-        super().__init__(self.message)
+        super().__init__(path, holds)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathInvalidException(Exception):
@@ -50,13 +65,19 @@ class ZFSPathInvalidException(Exception):
 class ZFSPathNotASnapshotException(Exception):
     def __init__(self, path: str):
         self.message = f"{path!r} must be a snapshot path (containing '@')"
-        super().__init__(self.message)
+        super().__init__(path)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathNotFoundException(Exception):
     def __init__(self, path: str):
         self.message = f"{path!r} not found"
-        super().__init__(self.message)
+        super().__init__(path)
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSPathNotProvidedException(Exception):
