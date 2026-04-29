@@ -46,7 +46,7 @@ class VMService(Service):
         existing_snaps = await self.call2(self.s.zfs.resource.snapshot.query, ZFSResourceSnapshotQuery(
             paths=[zvol], properties=None,
         ))
-        existing_snap_names = {s['name'] for s in existing_snaps}
+        existing_snap_names = {s.name for s in existing_snaps}
 
         snapshot_name = name
         i = 0
