@@ -1,8 +1,15 @@
 import contextlib
 import os
 import shutil
+import stat
 
 import truenas_os
+
+from middlewared.utils.filesystem.copy import (
+    CopyTreeConfig,
+    clone_or_copy_file,
+    copytree,
+)
 
 
 SYSTEM_TPM_FOLDER_PATH = '/var/db/system/vm/tpm'
@@ -113,6 +120,103 @@ def delete_vm_state(id_: int, name: str) -> None:
 
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree(vm_tpm_path(id_, name))
+
+
+def _copy_nvram_file(src: str, dst: str) -> None:
+    """Symlink-safe single-file copy with O_EXCL no-clobber.
+
+    Uses clone_or_copy_file for the byte transfer (block clone on ZFS,
+    sendfile/userspace fallback). Replicates source uid/gid, mode, and
+    atime/mtime via fd-based syscalls. xattrs are NOT copied — NVRAM
+    files written by libvirt/OVMF do not carry meaningful xattrs.
+
+    Symlink protection is O_NOFOLLOW on both endpoints; O_EXCL on dst
+    refuses to clobber any pre-existing inode. If anything fails after
+    dst was created, the partial dst is unlinked before re-raising.
+
+    Raises:
+        FileNotFoundError: src does not exist.
+        FileExistsError: dst already exists (file/symlink/dir).
+        OSError: on symlink at src/dst (ELOOP), I/O failure, etc.
+    """
+    src_fd = os.open(src, os.O_RDONLY | os.O_NOFOLLOW)
+    try:
+        src_st = os.fstat(src_fd)
+        flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+        dst_fd = os.open(dst, flags, mode=0o600)
+        try:
+            try:
+                clone_or_copy_file(src_fd, dst_fd)
+                os.fchown(dst_fd, src_st.st_uid, src_st.st_gid)
+                os.fchmod(dst_fd, stat.S_IMODE(src_st.st_mode))
+                os.utime(dst_fd, ns=(src_st.st_atime_ns, src_st.st_mtime_ns))
+            except Exception:
+                # dst was created by O_CREAT|O_EXCL above; remove the
+                # partial file before propagating so callers don't see
+                # half-written state.
+                with contextlib.suppress(OSError):
+                    os.unlink(dst)
+                raise
+        finally:
+            os.close(dst_fd)
+    finally:
+        os.close(src_fd)
+
+
+def copy_vm_state(src_id: int, src_name: str, dst_id: int, dst_name: str) -> None:
+    """Copy NVRAM file and TPM state dir from one VM slot to another.
+
+    Used by clone — the destination slot must not already exist (the
+    clone just allocated a fresh DB id, so any pre-existing file/dir
+    is stale state from a deleted VM and we abort rather than clobber
+    it).
+
+    Missing sources are silently skipped — a never-booted source has
+    no on-disk state and libvirt/swtpm will initialise fresh state
+    when the clone first boots.
+
+    Cleanup discipline:
+        FileNotFoundError (src missing) -> silent skip; for TPM,
+            os.rmdir the empty dst dir copytree creates before
+            discovering src is gone.
+        FileExistsError  (dst pre-existed) -> propagate; we never
+            created dst, so do NOT touch it.
+        any other exception (mid-copy)    -> we created dst, clean up
+            the partial file/tree before re-raising.
+    """
+    src_nvram = vm_nvram_path(src_id, src_name)
+    dst_nvram = vm_nvram_path(dst_id, dst_name)
+    src_tpm = vm_tpm_path(src_id, src_name)
+    dst_tpm = vm_tpm_path(dst_id, dst_name)
+
+    nvram_copied = False
+    try:
+        try:
+            _copy_nvram_file(src_nvram, dst_nvram)
+            nvram_copied = True
+        except FileNotFoundError:
+            pass
+
+        try:
+            copytree(src_tpm, dst_tpm, CopyTreeConfig(exist_ok=False))
+        except FileNotFoundError:
+            # copytree calls os.mkdir(dst) before iterating src, so a
+            # missing src leaves an empty dst behind. Remove it.
+            with contextlib.suppress(OSError):
+                os.rmdir(dst_tpm)
+            return
+        except FileExistsError:
+            # dst_tpm pre-existed; we never wrote to it. Do NOT rmtree.
+            raise
+        except Exception:
+            with contextlib.suppress(OSError):
+                shutil.rmtree(dst_tpm)
+            raise
+    except Exception:
+        if nvram_copied:
+            with contextlib.suppress(OSError):
+                os.unlink(dst_nvram)
+        raise
 
 
 def vm_state_missing_sources(

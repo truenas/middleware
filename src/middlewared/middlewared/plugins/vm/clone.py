@@ -12,6 +12,8 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
 
+from .utils import copy_vm_state, delete_vm_state, vm_state_missing_sources
+
 
 ZVOL_CLONE_SUFFIX = '_clone'
 ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
@@ -104,7 +106,10 @@ class VMService(Service):
         vm = await self.middleware.call('vm.get_instance', id_)
         await self.validate(vm)
 
+        origin_id = vm['id']
         origin_name = vm['name']
+        origin_bootloader = vm['bootloader']
+        origin_tpm = vm['trusted_platform_module']
         for key in ('id', 'status', 'display_available'):
             vm.pop(key, None)
 
@@ -119,8 +124,39 @@ class VMService(Service):
         # In case we need to rollback
         created_snaps = []
         created_clones = []
+        state_copied = False
+        new_vm = None
         try:
             new_vm = await self.middleware.call('vm.do_create', vm)
+
+            try:
+                await self.middleware.run_in_thread(
+                    copy_vm_state, origin_id, origin_name, new_vm['id'], new_vm['name'],
+                )
+            except FileExistsError as fe:
+                raise CallError(
+                    f'Cannot clone VM {origin_name!r} -> {new_vm["name"]!r}: on-disk state '
+                    'already exists at the destination (likely stale NVRAM/TPM left '
+                    'over from a previously deleted VM). Aborting; VM configuration '
+                    'is unchanged.'
+                ) from fe
+            except OSError as oe:
+                raise CallError(
+                    f'Failed to copy VM state for {origin_name!r} -> {new_vm["name"]!r}: '
+                    f'{oe.strerror or oe} (errno={oe.errno}).'
+                ) from oe
+            state_copied = True
+
+            missing = await self.middleware.run_in_thread(
+                vm_state_missing_sources, origin_id, origin_name,
+                origin_bootloader, origin_tpm,
+            )
+            if missing:
+                self.logger.warning(
+                    '%s -> %s: clone proceeded with no source on-disk state for %s; '
+                    'libvirt/swtpm will initialise fresh state on first boot.',
+                    origin_name, new_vm['name'], ', '.join(missing),
+                )
 
             for item in devices:
                 item.pop('id', None)
@@ -165,6 +201,16 @@ class VMService(Service):
                                 )
                             except Exception:
                                 self.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
+            if state_copied and new_vm is not None:
+                try:
+                    await self.middleware.run_in_thread(
+                        delete_vm_state, new_vm['id'], new_vm['name'],
+                    )
+                except Exception:
+                    self.logger.error(
+                        '%s: failed to clean up cloned NVRAM/TPM state after clone failure',
+                        new_vm['name'], exc_info=True,
+                    )
             raise e
 
         self.logger.info('VM cloned from %r to %r', origin_name, vm['name'])
