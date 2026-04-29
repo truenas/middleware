@@ -4,9 +4,16 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppImageDeleteArgs, AppImageDeleteOptions, AppImageDeleteResult,
-    AppImageDockerhubRateLimitArgs, AppImageDockerhubRateLimitInfo, AppImageDockerhubRateLimitResult,
-    AppImageEntry, AppImagePull, AppImagePullArgs, AppImagePullResult,
+    AppImageDeleteArgs,
+    AppImageDeleteOptions,
+    AppImageDeleteResult,
+    AppImageDockerhubRateLimitArgs,
+    AppImageDockerhubRateLimitInfo,
+    AppImageDockerhubRateLimitResult,
+    AppImageEntry,
+    AppImagePull,
+    AppImagePullArgs,
+    AppImagePullResult,
     QueryOptions,
 )
 from middlewared.service import GenericCRUDService, job, private
@@ -16,9 +23,10 @@ from .dockerhub_ratelimit import get_dockerhub_rate_limit
 from .pull import pull_image_action
 from .query import get_image_instance, query_images
 from .update_alerts import (
-    check_update_impl, clear_update_flag_impl, get_update_cache_impl,
+    check_update_impl,
+    clear_update_flag_impl,
+    get_update_cache_impl,
 )
-
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job

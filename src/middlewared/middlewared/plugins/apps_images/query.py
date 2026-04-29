@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from middlewared.api.current import AppImageEntry, QueryOptions
 from middlewared.plugins.apps.ix_apps.docker.images import list_images
@@ -11,7 +11,6 @@ from middlewared.utils.filter_list import filter_list
 
 from .update_alerts import IMAGE_CACHE
 from .utils import parse_tags
-
 
 if TYPE_CHECKING:
     class _QueryGetOptions(QueryOptions):

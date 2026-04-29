@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import AppImagePull
 from middlewared.plugins.apps.ix_apps.docker.images import pull_image
 from middlewared.service import ServiceContext
 
 from .utils import get_normalized_auth_config
-
 
 if TYPE_CHECKING:
     from middlewared.job import Job

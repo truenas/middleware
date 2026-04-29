@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import urllib.parse
 from typing import Any
+import urllib.parse
 
 import aiohttp
 
