@@ -1,8 +1,8 @@
 #!/bin/sh
-# Copy the PCI passthrough slot list into the initrd so init-top can read it.
-# Runs at update-initramfs time. The source file is a flat newline-separated
-# list of PCI slots, written by middlewared. It lives under /data so it
-# survives BE upgrades (the installer rsyncs /data into the new BE).
+# Bake the vfio modules and the PCI slot list into the initrd so init-top
+# can bind isolated devices to vfio-pci before any host driver attaches.
+# The slot list is written by middlewared to /data (which survives BE
+# upgrades via the installer's /data rsync).
 PREREQ=""
 prereqs() { echo "$PREREQ"; }
 case $1 in
@@ -12,6 +12,10 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 
 config="/data/subsystems/initramfs/truenas_vfio_pci_ids"
-[ -r "$config" ] || exit 0
+# Nothing to do unless there's at least one slot to isolate.
+[ -s "$config" ] || exit 0
+
+# Pulling vfio_pci pulls vfio + vfio_iommu_type1 in via depmod-resolved deps.
+manual_add_modules vfio_pci
 
 copy_file config "$config" /etc/truenas_vfio_pci_ids

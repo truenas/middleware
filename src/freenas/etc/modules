@@ -1,7 +1,0 @@
-# Loaded unconditionally so PCI passthrough works as soon as the user
-# isolates a device — no reboot needed for the modules themselves; the
-# bind script in the initrd handles claiming the PCI slot at boot time.
-vfio
-vfio_iommu_type1
-vfio_virqfd
-vfio_pci

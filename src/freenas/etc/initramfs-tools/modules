@@ -1,6 +1,0 @@
-# Modules baked into the initrd. vfio* must be present so the init-top
-# bind script can attach isolated PCI devices before any host driver does.
-vfio
-vfio_iommu_type1
-vfio_virqfd
-vfio_pci
