@@ -25,7 +25,6 @@ from .utils import (
 
 
 class ContainerRegistryClientMixin:
-
     @staticmethod
     async def _api_call(
         url: str,
@@ -42,11 +41,7 @@ class ContainerRegistryClientMixin:
             async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as ss:
                     coro = getattr(ss, mode)
-                    req = await coro(
-                        url,
-                        headers=headers,
-                        auth=aiohttp.BasicAuth(**auth) if auth else None
-                    )
+                    req = await coro(url, headers=headers, auth=aiohttp.BasicAuth(**auth) if auth else None)
                     response['response_obj'] = req
                     if req.status != 200:
                         cnt = ''
@@ -76,10 +71,12 @@ class ContainerRegistryClientMixin:
         service: str = DOCKER_AUTH_SERVICE,
         auth: dict[str, str] | None = None,
     ) -> str:
-        query_params = urllib.parse.urlencode({
-            'service': service,
-            'scope': scope,
-        })
+        query_params = urllib.parse.urlencode(
+            {
+                'service': service,
+                'scope': scope,
+            }
+        )
         response = await self._api_call(f'{auth_url}?{query_params}', auth=auth)
         if response['error']:
             raise CallError(f'Unable to retrieve token for {scope!r}: {response["error"]}')
@@ -120,7 +117,10 @@ class ContainerRegistryClientMixin:
         return response
 
     async def get_manifest_call_headers(
-        self, registry: str, image: str, headers: dict[str, str],
+        self,
+        registry: str,
+        image: str,
+        headers: dict[str, str],
     ) -> dict[str, str]:
         if registry == DEFAULT_DOCKER_REGISTRY:
             headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
@@ -128,23 +128,31 @@ class ContainerRegistryClientMixin:
 
     async def _get_repo_digest(self, registry: str, image: str, tag: str) -> list[str]:
         response = await self._get_manifest_response(
-            registry, image, tag, await self.get_manifest_call_headers(registry, image, {
-                'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
-                           f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
-                           f'{DOCKER_MANIFEST_SCHEMA_V1}, '
-                           f'{DOCKER_MANIFEST_OCI_V1}')
-            }), 'get', True
+            registry,
+            image,
+            tag,
+            await self.get_manifest_call_headers(
+                registry,
+                image,
+                {
+                    'Accept': (
+                        f'{DOCKER_MANIFEST_SCHEMA_V2}, '
+                        f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
+                        f'{DOCKER_MANIFEST_SCHEMA_V1}, '
+                        f'{DOCKER_MANIFEST_OCI_V1}'
+                    )
+                },
+            ),
+            'get',
+            True,
         )
         digests = parse_digest_from_schema(response)
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
 
     async def get_docker_hub_rate_limit_preview(
-        self, auth: dict[str, str] | None = None,
+        self,
+        auth: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        token = (await self._get_token(scope="repository:ratelimitpreview/test:pull", auth=auth))
-        return await self._api_call(
-            url=DOCKER_RATELIMIT_URL,
-            headers={'Authorization': f'Bearer {token}'},
-            mode='head'
-        )
+        token = await self._get_token(scope="repository:ratelimitpreview/test:pull", auth=auth)
+        return await self._api_call(url=DOCKER_RATELIMIT_URL, headers={'Authorization': f'Bearer {token}'}, mode='head')

@@ -29,9 +29,7 @@ async def get_dockerhub_rate_limit(context: ServiceContext) -> AppImageDockerhub
 
     response_obj = limits_header.get('response_obj')
     if response_obj is not None and hasattr(response_obj, 'headers'):
-        return AppImageDockerhubRateLimitInfo.model_validate(
-            normalize_docker_limits_header(response_obj.headers)
-        )
+        return AppImageDockerhubRateLimitInfo.model_validate(normalize_docker_limits_header(response_obj.headers))
 
     return AppImageDockerhubRateLimitInfo(
         error='Unable to retrieve rate limit information from registry',

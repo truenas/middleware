@@ -13,6 +13,7 @@ from .update_alerts import IMAGE_CACHE
 from .utils import parse_tags
 
 if TYPE_CHECKING:
+
     class _QueryGetOptions(QueryOptions):
         get: Literal[True]
         count: Literal[False]
@@ -24,24 +25,32 @@ if TYPE_CHECKING:
 
 @overload
 def query_images(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryCountOptions,
+    context: ServiceContext,
+    filters: list[Any],
+    options: _QueryCountOptions,
 ) -> int: ...
 
 
 @overload
 def query_images(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryGetOptions,
+    context: ServiceContext,
+    filters: list[Any],
+    options: _QueryGetOptions,
 ) -> AppImageEntry: ...
 
 
 @overload
 def query_images(
-    context: ServiceContext, filters: list[Any], options: QueryOptions,
+    context: ServiceContext,
+    filters: list[Any],
+    options: QueryOptions,
 ) -> list[AppImageEntry]: ...
 
 
 def query_images(
-    context: ServiceContext, filters: list[Any], options: QueryOptions,
+    context: ServiceContext,
+    filters: list[Any],
+    options: QueryOptions,
 ) -> list[AppImageEntry] | AppImageEntry | int:
     if not context.call_sync2(context.s.docker.validate_state, False):
         return to_entries(filter_list([], filters, options.model_dump()), AppImageEntry)
@@ -69,7 +78,9 @@ def query_images(
 
 
 def get_image_instance(
-    context: ServiceContext, image_id: str, options: QueryOptions,
+    context: ServiceContext,
+    image_id: str,
+    options: QueryOptions,
 ) -> AppImageEntry:
     results = query_images(context, [['id', '=', image_id]], QueryOptions(extra=options.extra))
     if not results:

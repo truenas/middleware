@@ -80,12 +80,11 @@ def normalize_reference(reference: str) -> dict[str, Any]:
     reference = reference.removeprefix('docker.io/')
     registry_idx = reference.find('/')
     if registry_idx == -1 or (
-        not any(c in reference[:registry_idx] for c in ('.', ':'))
-        and reference[:registry_idx] != 'localhost'
+        not any(c in reference[:registry_idx] for c in ('.', ':')) and reference[:registry_idx] != 'localhost'
     ):
         registry, tagged_image = DEFAULT_DOCKER_REGISTRY, reference
     else:
-        registry, tagged_image = reference[:registry_idx], reference[registry_idx + 1:]
+        registry, tagged_image = reference[:registry_idx], reference[registry_idx + 1 :]
 
     if '/' not in tagged_image:
         tagged_image = f'{DEFAULT_DOCKER_REPO}/{tagged_image}'
@@ -104,7 +103,7 @@ def normalize_reference(reference: str) -> dict[str, Any]:
 
         tag = matches[-1]
         tag_pos = tagged_image.find(tag)
-        image = tagged_image[:tag_pos - 1].rsplit(':', 1)[0]
+        image = tagged_image[: tag_pos - 1].rsplit(':', 1)[0]
         sep = '@'
         ref_is_digest = True
     elif ':' in tagged_image:
@@ -145,7 +144,8 @@ def normalize_docker_limits_header(headers: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_normalized_auth_config(
-    registry_info: dict[str, AppRegistryEntry], image_tag: str,
+    registry_info: dict[str, AppRegistryEntry],
+    image_tag: str,
 ) -> dict[str, Any]:
     if not registry_info:
         return {}

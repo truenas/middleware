@@ -11,7 +11,9 @@ from .update_alerts import remove_from_cache
 
 
 def delete_image_action(
-    context: ServiceContext, image_id: str, options: AppImageDeleteOptions,
+    context: ServiceContext,
+    image_id: str,
+    options: AppImageDeleteOptions,
 ) -> Literal[True]:
     context.call_sync2(context.s.docker.validate_state)
     image = get_image_instance(context, image_id, QueryOptions())

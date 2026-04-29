@@ -44,7 +44,6 @@ __all__ = ('AppImageService',)
 
 
 class AppImageService(GenericCRUDService[AppImageEntry, str]):
-
     class Config:
         namespace = 'app.image'
         cli_namespace = 'app.image'
@@ -57,21 +56,29 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
-        self, filters: list[typing.Any], options: _QueryCountOptions,
+        self,
+        filters: list[typing.Any],
+        options: _QueryCountOptions,
     ) -> int: ...
 
     @typing.overload
     def query(  # type: ignore[overload-overlap]
-        self, filters: list[typing.Any], options: _QueryGetOptions,
+        self,
+        filters: list[typing.Any],
+        options: _QueryGetOptions,
     ) -> AppImageEntry: ...
 
     @typing.overload
     def query(
-        self, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
+        self,
+        filters: list[typing.Any] | None = None,
+        options: QueryOptions | None = None,
     ) -> list[AppImageEntry]: ...
 
     def query(
-        self, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
+        self,
+        filters: list[typing.Any] | None = None,
+        options: QueryOptions | None = None,
     ) -> list[AppImageEntry] | AppImageEntry | int:
         """
         Query all docker images with `query-filters` and `query-options`.
@@ -81,15 +88,23 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
         return query_images(self.context, filters or [], options or QueryOptions())
 
     async def get_instance(
-        self, id_: str, options: QueryOptions | None = None,
+        self,
+        id_: str,
+        options: QueryOptions | None = None,
     ) -> AppImageEntry:
         """Returns instance matching `id_`. Raises InstanceNotFound if missing."""
         return await self.context.to_thread(
-            get_image_instance, self.context, id_, options or QueryOptions(),
+            get_image_instance,
+            self.context,
+            id_,
+            options or QueryOptions(),
         )
 
     @api_method(
-        AppImagePullArgs, AppImagePullResult, roles=['APPS_WRITE'], check_annotations=True,
+        AppImagePullArgs,
+        AppImagePullResult,
+        roles=['APPS_WRITE'],
+        check_annotations=True,
     )
     @job()
     def pull(self, job: Job, image_pull: AppImagePull) -> None:
@@ -114,8 +129,10 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
         return delete_image_action(self.context, image_id, options)
 
     @api_method(
-        AppImageDockerhubRateLimitArgs, AppImageDockerhubRateLimitResult,
-        roles=['APPS_READ'], check_annotations=True,
+        AppImageDockerhubRateLimitArgs,
+        AppImageDockerhubRateLimitResult,
+        roles=['APPS_READ'],
+        check_annotations=True,
     )
     async def dockerhub_rate_limit(self) -> AppImageDockerhubRateLimitInfo:
         """

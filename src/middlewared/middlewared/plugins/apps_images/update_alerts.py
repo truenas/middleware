@@ -25,9 +25,7 @@ IMAGE_CACHE: defaultdict[str, bool] = defaultdict(lambda: False)
 
 async def get_update_cache_impl(normalized: bool = False) -> dict[str, bool]:
     if normalized:
-        return {
-            normalize_reference(i)['complete_tag']: v for i, v in IMAGE_CACHE.items()
-        }
+        return {normalize_reference(i)['complete_tag']: v for i, v in IMAGE_CACHE.items()}
     return dict(IMAGE_CACHE)
 
 
@@ -64,7 +62,10 @@ async def _check_update_for_image(tag: str, image: AppImageEntry) -> None:
 
 
 async def _compare_id_digests(
-    image: AppImageEntry, registry: str, image_str: str, tag_str: str,
+    image: AppImageEntry,
+    registry: str,
+    image_str: str,
+    tag_str: str,
 ) -> bool:
     """Return whether an update is available for the image."""
     if not image.repo_digests:
