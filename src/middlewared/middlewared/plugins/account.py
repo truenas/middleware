@@ -78,7 +78,7 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.utils.filesystem.copy import CopyTreeConfig, copytree
+from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, copytree
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.nss.nss_common import NssModule
@@ -1407,7 +1407,19 @@ class UserService(CRUDService):
 
         perm_job.wait_sync()
 
-        return asdict(copytree(home_old, home_new, CopyTreeConfig(exist_ok=True, job=job)))
+        def progress_cb(_dir_stack, state, j):
+            j.set_progress(100, f'Copied {state.cnt} items from {state.current_directory}.')
+
+        stats = copytree(home_old, home_new, CopyTreeConfig(
+            exist_ok=True,
+            reporting_callback=progress_cb,
+            reporting_private_data=job,
+        ))
+        job.set_progress(100, (
+            f'Successfully copied {stats.dirs} directories, {stats.files} files, '
+            f'{stats.symlinks} symlinks for a total of {stats.bytes} bytes of data.'
+        ))
+        return asdict(stats)
 
     @private
     async def password_security_validate(self, schema, verrors, password, password_history, password_field='password'):
