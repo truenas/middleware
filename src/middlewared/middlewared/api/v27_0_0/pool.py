@@ -15,7 +15,7 @@ from middlewared.api.base import (
 from .pool_scrub import PoolScan
 
 __all__ = [
-    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult",
+    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult",
     "PoolAttachArgs", "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs",
     "PoolCreateResult", "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs",
     "PoolExportResult", "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs",
@@ -347,16 +347,6 @@ class PoolDdtPruneArgs(BaseModel):
 class PoolDdtPruneResult(BaseModel):
     result: None
     """Returns `null` on successful deduplication table pruning."""
-
-
-class PoolDdtPrefetchArgs(BaseModel):
-    pool_name: NonEmptyString
-    """Name of the pool to prefetch deduplication table entries for."""
-
-
-class PoolDdtPrefetchResult(BaseModel):
-    result: None
-    """Returns `null` on successful deduplication table prefetch."""
 
 
 class PoolPrefetchArgs(BaseModel):

@@ -1,7 +1,5 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolDdtPrefetchArgs,
-    PoolDdtPrefetchResult,
     PoolDdtPruneArgs,
     PoolDdtPruneResult,
     PoolPrefetchArgs,
@@ -26,17 +24,6 @@ class PoolService(Service):
         `days` is the number of days to prune DDT entries.
         """
         return await self.middleware.call('zfs.pool.ddt_prune', options)
-
-    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=['POOL_WRITE'], removed_in='v26')
-    @job(lock=lambda args: f'ddt_prefetch_{args[0]}')
-    async def ddt_prefetch(self, job, pool_name):
-        """
-        Prefetch DDT entries in pool ``pool_name``.
-
-        .. versionremoved:: 26
-            Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
-        """
-        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
 
     @api_method(PoolPrefetchArgs, PoolPrefetchResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'pool_prefetch_{args[0]}')
