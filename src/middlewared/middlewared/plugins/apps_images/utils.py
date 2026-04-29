@@ -84,7 +84,7 @@ def normalize_reference(reference: str) -> dict[str, Any]:
     ):
         registry, tagged_image = DEFAULT_DOCKER_REGISTRY, reference
     else:
-        registry, tagged_image = reference[:registry_idx], reference[registry_idx + 1 :]
+        registry, tagged_image = reference[:registry_idx], reference[registry_idx + 1:]
 
     if "/" not in tagged_image:
         tagged_image = f"{DEFAULT_DOCKER_REPO}/{tagged_image}"

@@ -4,7 +4,7 @@ from typing import IO, Any, TypeVar, cast
 
 from middlewared.api.base import BaseModel
 from middlewared.api.current import AppEntry, AppUpgradeSummary
-from middlewared.plugins.docker.state_utils import (
+from middlewared.plugins.docker.state_utils import (  # noqa: F401,I250
     IX_APPS_MOUNT_PATH as IX_APPS_MOUNT_PATH,
 )
 from middlewared.plugins.docker.state_utils import (  # noqa: F401,I250

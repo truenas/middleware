@@ -11,6 +11,7 @@ from middlewared.service_exception import CallError
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_job(**kwargs):
     """Create a minimal Job for testing without a real Middleware instance."""
     mw = MagicMock()

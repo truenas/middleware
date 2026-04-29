@@ -6,6 +6,7 @@ from middlewared.utils import jsonpath
 # Tests for dot_notation_to_json_path()
 # =============================================================================
 
+
 @pytest.mark.parametrize("dot_notation,expected", [
     # Basic dot notation (existing behavior)
     ("foo.bar", "$.foo.bar"),  # we're getting subkey and so should be JSONPath
