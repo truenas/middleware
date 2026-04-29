@@ -9,18 +9,18 @@ from middlewared.utils.tdb import (
     get_tdb_handle,
 )
 
-GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'
+GENCACHE_FILE = "/var/run/samba-lock/gencache.tdb"
 GENCACHE_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
-SAFKEY_PREFIX = 'SAF/DOMAIN'
-SAFJOIN_PREFIX = 'SAFJOIN/DOMAIN'
+SAFKEY_PREFIX = "SAF/DOMAIN"
+SAFJOIN_PREFIX = "SAFJOIN/DOMAIN"
 
 
 class IDMAPCacheType(enum.Enum):
-    UID2SID = 'IDMAP/UID2SID'
-    GID2SID = 'IDMAP/GID2SID'
-    SID2XID = 'IDMAP/SID2XID'
-    SID2NAME = 'SID2NAME'
-    NAME2SID = 'NAME2SID'
+    UID2SID = "IDMAP/UID2SID"
+    GID2SID = "IDMAP/GID2SID"
+    SID2XID = "IDMAP/SID2XID"
+    SID2NAME = "SID2NAME"
+    NAME2SID = "NAME2SID"
 
 
 def fetch_gencache_entry(key: str) -> dict[str, Any] | str:
@@ -60,10 +60,10 @@ def flush_gencache_entries(keep_saf: bool = False) -> None:
     """
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         for entry in hdl.entries():
-            if keep_saf and entry['key'].startswith((SAFKEY_PREFIX, SAFJOIN_PREFIX)):
+            if keep_saf and entry["key"].startswith((SAFKEY_PREFIX, SAFJOIN_PREFIX)):
                 continue
 
-            hdl.delete(entry['key'])
+            hdl.delete(entry["key"])
 
 
 def query_gencache_entries(filters: list[Any], options: dict[str, Any]) -> list[dict[str, Any]] | dict[str, Any] | int:

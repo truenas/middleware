@@ -6,7 +6,7 @@ from resource import RLIM_INFINITY, RLIMIT_NOFILE, getrlimit
 from signal import SIGKILL, SIGTERM
 from time import sleep, time
 
-__all__ = ['close_fds', 'get_pids', 'terminate_pid']
+__all__ = ["close_fds", "get_pids", "terminate_pid"]
 
 ALIVE_SIGNAL = 0
 
@@ -19,11 +19,11 @@ class PidEntry:
     @cached_property
     def name(self) -> bytes:
         """The name of process as described in man 2 PR_SET_NAME"""
-        with open(f'/proc/{self.pid}/status', 'rb') as f:
+        with open(f"/proc/{self.pid}/status", "rb") as f:
             # first line in this file is name of process
             # and this is in procfs, which is considered
             # part of linux's ABI and is stable
-            return f.readline().split(b'\t', 1)[-1].strip()
+            return f.readline().split(b"\t", 1)[-1].strip()
 
     def send_signal(self, sig: int) -> None:
         kill(self.pid, sig)
@@ -99,8 +99,8 @@ def get_pids() -> Generator[PidEntry, None, None]:
     with scandir("/proc/") as sdir:
         for i in filter(lambda x: x.name.isdigit(), sdir):
             try:
-                with open(f'{i.path}/cmdline', 'rb') as f:
-                    cmdline = f.read().replace(b'\x00', b' ')
+                with open(f"{i.path}/cmdline", "rb") as f:
+                    cmdline = f.read().replace(b"\x00", b" ")
                 yield PidEntry(cmdline=cmdline, pid=int(i.name))
             except FileNotFoundError:
                 # process could have gone away

@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-__all__ = ('get_memory_info',)
+__all__ = ("get_memory_info",)
 
 
 class MemoryInfo(TypedDict):
@@ -12,16 +12,16 @@ class MemoryInfo(TypedDict):
 
 def get_memory_info() -> MemoryInfo:
     total = avail = 0
-    with open('/proc/meminfo') as f:
+    with open("/proc/meminfo") as f:
         for line in f:
             if total and avail:
                 break
 
-            if not total and 'MemTotal' in line:
+            if not total and "MemTotal" in line:
                 total = int(line.split()[1]) * 1024
                 continue
 
-            if not avail and 'MemAvailable' in line:
+            if not avail and "MemAvailable" in line:
                 avail = int(line.split()[1]) * 1024
                 continue
 

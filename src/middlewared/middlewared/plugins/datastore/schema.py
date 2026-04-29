@@ -5,7 +5,7 @@ from middlewared.sqlalchemy import Model
 
 class SchemaMixin:
     def _get_table(self, name):
-        return Model.metadata.tables[name.replace('.', '_').lower()]
+        return Model.metadata.tables[name.replace(".", "_").lower()]
 
     def _get_pk(self, table):
         return [col for col in table.c if col.primary_key][0]
@@ -26,8 +26,8 @@ class SchemaMixin:
         if name in table.c:
             return table.c[name]
 
-        if f'{name}_id' in table.c:
-            return table.c[f'{name}_id']
+        if f"{name}_id" in table.c:
+            return table.c[f"{name}_id"]
 
     def _get_relationships(self, table):
         for model in Model.registry._class_registry.values():

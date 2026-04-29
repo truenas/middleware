@@ -66,7 +66,7 @@ class FTPEntry(BaseModel):
         return field_value
 
 
-@single_argument_args('ftp_update')
+@single_argument_args("ftp_update")
 class FTPUpdateArgs(FTPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

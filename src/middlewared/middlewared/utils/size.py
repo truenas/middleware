@@ -5,44 +5,44 @@ import humanfriendly
 
 DECIMAL_UNITS = types.MappingProxyType(
     {
-        '': 1,
-        'B': 1,
-        'K': 10**3,
-        'KB': 10**3,
-        'M': 10**6,
-        'MB': 10**6,
-        'G': 10**9,
-        'GB': 10**9,
-        'T': 10**12,
-        'TB': 10**12,
-        'P': 10**15,
-        'PB': 10**15,
-        'E': 10**18,
-        'EB': 10**18,
-        'Z': 10**21,
-        'ZB': 10**21,
+        "": 1,
+        "B": 1,
+        "K": 10**3,
+        "KB": 10**3,
+        "M": 10**6,
+        "MB": 10**6,
+        "G": 10**9,
+        "GB": 10**9,
+        "T": 10**12,
+        "TB": 10**12,
+        "P": 10**15,
+        "PB": 10**15,
+        "E": 10**18,
+        "EB": 10**18,
+        "Z": 10**21,
+        "ZB": 10**21,
     }
 )
 BINARY_UNITS = types.MappingProxyType(
     {
-        'KI': 2**10,
-        'KIB': 2**10,
-        'MI': 2**20,
-        'MIB': 2**20,
-        'GI': 2**30,
-        'GIB': 2**30,
-        'TI': 2**40,
-        'TIB': 2**40,
-        'PI': 2**50,
-        'PIB': 2**50,
-        'EI': 2**60,
-        'EIB': 2**60,
-        'ZI': 2**70,
-        'ZIB': 2**70,
+        "KI": 2**10,
+        "KIB": 2**10,
+        "MI": 2**20,
+        "MIB": 2**20,
+        "GI": 2**30,
+        "GIB": 2**30,
+        "TI": 2**40,
+        "TIB": 2**40,
+        "PI": 2**50,
+        "PIB": 2**50,
+        "EI": 2**60,
+        "EIB": 2**60,
+        "ZI": 2**70,
+        "ZIB": 2**70,
     }
 )
 MB = 1048576
-RE_SIZE = re.compile(r'([\d\.]+)\s*([A-Za-z]*)')
+RE_SIZE = re.compile(r"([\d\.]+)\s*([A-Za-z]*)")
 
 
 def format_size(size: int) -> str:
@@ -67,7 +67,7 @@ def normalize_size(size: str, raise_exception: bool = True) -> int | None:
     match = RE_SIZE.match(size)
     if not match:
         if raise_exception:
-            raise ValueError(f'Invalid size format: {size}')
+            raise ValueError(f"Invalid size format: {size}")
         return None
 
     value, unit = match.groups()
@@ -84,5 +84,5 @@ def normalize_size(size: str, raise_exception: bool = True) -> int | None:
         pass
 
     if raise_exception:
-        raise ValueError(f'Invalid size format: {size}')
+        raise ValueError(f"Invalid size format: {size}")
     return None

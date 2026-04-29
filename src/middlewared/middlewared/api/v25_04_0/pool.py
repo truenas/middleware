@@ -5,7 +5,7 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 
 
-@single_argument_args('options')
+@single_argument_args("options")
 class PoolDdtPruneArgs(BaseModel):
     pool_name: NonEmptyString
     percentage: Annotated[int | None, Field(ge=1, le=100, default=None)]

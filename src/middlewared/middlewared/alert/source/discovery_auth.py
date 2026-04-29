@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
-UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
+UPGRADE_ALERTS = ["ISCSIDiscoveryAuthMixed", "ISCSIDiscoveryAuthMultipleCHAP", "ISCSIDiscoveryAuthMultipleMutualCHAP"]
 
 
 @dataclass(kw_only=True)
@@ -36,7 +36,7 @@ class ISCSIDiscoveryAuthMultipleMutualCHAPAlert(OneShotAlertClass):
         level=AlertLevel.WARNING,
         title="iSCSI Discovery Authorization Multiple Mutual CHAP",
         text=(
-            "Multiple mutual CHAP peers defined for discovery auth, but only first one (\"%(peeruser)s\") applies. "
+            'Multiple mutual CHAP peers defined for discovery auth, but only first one ("%(peeruser)s") applies. '
             " May need to update client configuration."
         ),
     )

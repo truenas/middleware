@@ -1,6 +1,6 @@
 import re
 
-RE_DOMAIN_WILDCARD = re.compile(r'\*|\?|\[|\]')
+RE_DOMAIN_WILDCARD = re.compile(r"\*|\?|\[|\]")
 
 
 def get_domain(hostname):
@@ -9,7 +9,7 @@ def get_domain(hostname):
     e.g. gruff.billy.goat will return 'billy.goat'
     and  gruffbillygoat will return None
     """
-    lst = hostname.split('.', 1)
+    lst = hostname.split(".", 1)
     if len(lst) > 1:
         return lst[1]
     return None
@@ -19,7 +19,7 @@ def leftmost_has_wildcards(hostname):
     """
     A bool that returns True if the left most level contains wildcards
     """
-    return bool(RE_DOMAIN_WILDCARD.search(hostname.split('.')[0]))
+    return bool(RE_DOMAIN_WILDCARD.search(hostname.split(".")[0]))
 
 
 def get_wildcard_domain(hostname):

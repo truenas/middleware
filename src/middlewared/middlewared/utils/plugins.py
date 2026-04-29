@@ -20,32 +20,32 @@ def load_modules(
     directory = os.path.normpath(directory)
     if base is None:
         middlewared_root = os.path.dirname(os.path.dirname(__file__))
-        if os.path.commonprefix((f'{directory}/', f'{middlewared_root}/')) == f'{middlewared_root}/':
-            base = '.'.join(
-                ['middlewared'] +
-                os.path.relpath(directory, middlewared_root).split('/')
+        if os.path.commonprefix((f"{directory}/", f"{middlewared_root}/")) == f"{middlewared_root}/":
+            base = ".".join(
+                ["middlewared"] +
+                os.path.relpath(directory, middlewared_root).split("/")
             )
         else:
             for new_module_path in sys.path:
-                if os.path.commonprefix((f'{directory}/', f'{new_module_path}/')) == f'{new_module_path}/':
+                if os.path.commonprefix((f"{directory}/", f"{new_module_path}/")) == f"{new_module_path}/":
                     break
             else:
                 new_module_path = os.path.dirname(directory)
                 logger.debug("Registering new module path %r", new_module_path)
                 sys.path.insert(0, new_module_path)
 
-            base = '.'.join(os.path.relpath(directory, new_module_path).split('/'))
+            base = ".".join(os.path.relpath(directory, new_module_path).split("/"))
 
     _, dirs, files = next(os.walk(directory))
-    for f in filter(lambda x: x[-3:] == '.py', files):
-        module_name = base if f == '__init__.py' else f'{base}.{f[:-3]}'
+    for f in filter(lambda x: x[-3:] == ".py", files):
+        module_name = base if f == "__init__.py" else f"{base}.{f[:-3]}"
         if whitelist is None or any(module_name.startswith(w) for w in whitelist):
             yield importlib.import_module(module_name)
 
     for f in dirs:
         if depth > 0:
             path = os.path.join(directory, f)
-            yield from load_modules(path, f'{base}.{f}', depth - 1, whitelist)
+            yield from load_modules(path, f"{base}.{f}", depth - 1, whitelist)
 
 
 def load_classes(module: types.ModuleType, base: type, blacklist: Any) -> list[Any]:
@@ -63,8 +63,8 @@ def load_classes(module: types.ModuleType, base: type, blacklist: Any) -> list[A
 class LoadPluginsMixin:
 
     def __init__(self) -> None:
-        self._services: dict[str, 'Service'] = {}
-        self._services_aliases: dict[str, 'Service'] = {}
+        self._services: dict[str, "Service"] = {}
+        self._services_aliases: dict[str, "Service"] = {}
         super().__init__()
 
     def _load_plugins(
@@ -78,9 +78,9 @@ class LoadPluginsMixin:
         from middlewared.service import ABSTRACT_SERVICES, CompoundService, Service
 
         services = []
-        plugins_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'plugins'))
+        plugins_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "plugins"))
         if not os.path.exists(plugins_dir):
-            raise ValueError(f'plugins dir not found: {plugins_dir}')
+            raise ValueError(f"plugins dir not found: {plugins_dir}")
 
         for mod in load_modules(plugins_dir, depth=1, whitelist=whitelist):
             if on_module_begin:
@@ -111,23 +111,23 @@ class LoadPluginsMixin:
                     service = CompoundService(self, [part(self) for part in parts])  # type: ignore[no-untyped-call]
 
             if not service._config.private and not service._config.cli_private and not service._config.cli_namespace:
-                raise RuntimeError(f'Service {service!r} does not have CLI namespace set')
+                raise RuntimeError(f"Service {service!r} does not have CLI namespace set")
 
             self.add_service(service)
 
         if on_modules_loaded:
             on_modules_loaded()
 
-    def add_service(self, service: 'Service') -> None:
+    def add_service(self, service: "Service") -> None:
         self._services[service._config.namespace] = service
         if service._config.namespace_alias:
             self._services_aliases[service._config.namespace_alias] = service
 
-    def get_service(self, name: str) -> 'Service':
+    def get_service(self, name: str) -> "Service":
         service = self._services.get(name)
         if service:
             return service
         return self._services_aliases[name]
 
-    def get_services(self) -> dict[str, 'Service']:
+    def get_services(self) -> dict[str, "Service"]:
         return self._services

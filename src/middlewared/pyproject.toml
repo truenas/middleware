@@ -52,6 +52,8 @@ select = [
     "TID",
     # isort
     "I",
+    # flake8-quotes — enforce double quotes
+    "Q",
 ]
 ignore = [
     # Prefer absolute imports over relative imports from parent modules

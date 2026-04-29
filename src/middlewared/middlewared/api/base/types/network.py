@@ -17,7 +17,7 @@ __all__ = [
 def _exclude_port_validation(value: int, *, ports: list[int]) -> int:
     if value in ports:
         raise ValueError(
-            f'{value} is a reserved for internal use. Please select another value.'
+            f"{value} is a reserved for internal use. Please select another value."
         )
     return value
 
@@ -64,9 +64,9 @@ def _validate_ipv6_network(network: str):
 def _validate_nameserver(address: pydantic.IPvAnyAddress) -> str:
     str_form = address.compressed
 
-    for address_type in ('multicast', 'loopback', 'link_local', 'reserved'):
-        if getattr(address, 'is_' + address_type):
-            raise ValueError(f'{str_form}: {address_type} addresses are not permitted.')
+    for address_type in ("multicast", "loopback", "link_local", "reserved"):
+        if getattr(address, "is_" + address_type):
+            raise ValueError(f"{str_form}: {address_type} addresses are not permitted.")
 
     return str_form
 
@@ -82,11 +82,11 @@ Domain = Annotated[str, AfterValidator(match_validator(
 ))]
 MACAddress = Annotated[str, AfterValidator(match_validator(
     re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$"),
-    'MAC address is not valid.'
+    "MAC address is not valid."
 ))]
 IPv4Address = Annotated[str, AfterValidator(_validate_ipv4_address)]
 IPv6Address = Annotated[str, AfterValidator(_validate_ipv6_address)]
-IPvAnyAddress = Literal[''] | Annotated[str, AfterValidator(_validate_ipaddr)]
+IPvAnyAddress = Literal[""] | Annotated[str, AfterValidator(_validate_ipaddr)]
 IPv4Nameserver = Annotated[str, AfterValidator(ipaddress.IPv4Address), AfterValidator(_validate_nameserver)]
 IPv6Nameserver = Annotated[str, AfterValidator(ipaddress.IPv6Address), AfterValidator(_validate_nameserver)]
 IPNetwork = Annotated[str, AfterValidator(_validate_ip_network)]

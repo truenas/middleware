@@ -22,58 +22,58 @@ def issue_certificate(
     context: ServiceContext, job: Job[Any], progress: int,
     data: dict[str, Any], csr_data: dict[str, Any],
 ) -> messages.OrderResource:
-    context.middleware.call_sync('network.general.will_perform_activity', 'acme')
+    context.middleware.call_sync("network.general.will_perform_activity", "acme")
     verrors = ValidationErrors()
 
-    domains: list[Any] = context.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
+    domains: list[Any] = context.middleware.call_sync("certificate.get_domain_names", csr_data["id"])
     dns_authenticator_ids = [
         o.id for o in context.call_sync2(context.s.acme.dns.authenticator.query)
     ]
 
-    dns_mapping_copy: dict[str, Any] = data['dns_mapping'].copy()
-    for domain in data['dns_mapping']:
-        if ':' in domain and domain.split(':', 1)[-1] not in dns_mapping_copy:
-            dns_mapping_copy[domain.split(':', 1)[-1]] = dns_mapping_copy[domain]
-        elif ':' not in domain:
-            normalised_san = ':'.join(normalize_san([domain])[0])
+    dns_mapping_copy: dict[str, Any] = data["dns_mapping"].copy()
+    for domain in data["dns_mapping"]:
+        if ":" in domain and domain.split(":", 1)[-1] not in dns_mapping_copy:
+            dns_mapping_copy[domain.split(":", 1)[-1]] = dns_mapping_copy[domain]
+        elif ":" not in domain:
+            normalised_san = ":".join(normalize_san([domain])[0])
             if normalised_san not in dns_mapping_copy:
                 dns_mapping_copy[normalised_san] = dns_mapping_copy[domain]
 
     for domain in domains:
         if domain not in dns_mapping_copy:
             verrors.add(
-                'acme_create.dns_mapping',
-                f'Please provide DNS authenticator id for {domain}',
+                "acme_create.dns_mapping",
+                f"Please provide DNS authenticator id for {domain}",
             )
         elif dns_mapping_copy[domain] not in dns_authenticator_ids:
             verrors.add(
-                'acme_create.dns_mapping',
-                f'Provided DNS Authenticator id for {domain} does not exist',
+                "acme_create.dns_mapping",
+                f"Provided DNS Authenticator id for {domain} does not exist",
             )
-        if domain.endswith('.'):
+        if domain.endswith("."):
             verrors.add(
-                'acme_create.dns_mapping',
-                f'Domain {domain} name cannot end with a period',
+                "acme_create.dns_mapping",
+                f"Domain {domain} name cannot end with a period",
             )
-        if '*' in domain and not domain.split(':', 1)[-1].startswith('*.'):
+        if "*" in domain and not domain.split(":", 1)[-1].startswith("*."):
             verrors.add(
-                'acme_create.dns_mapping',
-                'Wildcards must be at the start of domain name followed by a period',
+                "acme_create.dns_mapping",
+                "Wildcards must be at the start of domain name followed by a period",
             )
-    for domain in data['dns_mapping']:
+    for domain in data["dns_mapping"]:
         if domain not in domains:
             verrors.add(
-                'acme_create.dns_mapping',
-                f'{domain} not specified in the CSR',
+                "acme_create.dns_mapping",
+                f"{domain} not specified in the CSR",
             )
 
     verrors.check()
 
     acme_client_key_payload = get_acme_client_and_key_payload(
-        context, data['acme_directory_uri'], data['tos'],
+        context, data["acme_directory_uri"], data["tos"],
     )
     return issue_certificate_impl(
-        context, job, progress, acme_client_key_payload, csr_data['CSR'], dns_mapping_copy,
+        context, job, progress, acme_client_key_payload, csr_data["CSR"], dns_mapping_copy,
     )
 
 
@@ -85,7 +85,7 @@ def issue_certificate_impl(
     authenticators = {
         o.id: o
         for o in context.call_sync2(
-            dns_auth.query, [['id', 'in', list(dns_mapping_copy.values())]]
+            dns_auth.query, [["id", "in", list(dns_mapping_copy.values())]]
         )
     }
     for domain, authenticator_id in dns_mapping_copy.items():
@@ -95,7 +95,7 @@ def issue_certificate_impl(
             dns_auth.get_authenticator_internal, attrs.authenticator,
         )
         dns_mapping_copy[domain] = authenticator_cls(
-            context.middleware, attrs.model_dump(context={'expose_secrets': True}),
+            context.middleware, attrs.model_dump(context={"expose_secrets": True}),
         )
 
     def progress_callback(progress_int: int, description: str) -> None:

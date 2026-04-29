@@ -30,7 +30,7 @@ class EnclosureLabelService(Service):
         try:
             await self.middleware.call("enclosure2.query", [["id", "=", id_]], {"get": True})
         except MatchNotFound:
-            raise ValidationError("id", f'Enclosure with id: {id_!r} not found')
+            raise ValidationError("id", f"Enclosure with id: {id_!r} not found")
 
         await self.middleware.call(
             "datastore.delete", "enclosure.label", [["encid", "=", id_]]

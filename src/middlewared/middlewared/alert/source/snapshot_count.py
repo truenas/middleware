@@ -45,7 +45,7 @@ class SnapshotCountAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['dataset']
+        return args["dataset"]
 
 
 class SnapshotCountAlertSource(AlertSource):

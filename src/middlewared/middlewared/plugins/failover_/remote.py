@@ -22,7 +22,7 @@ from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
-logger = logging.getLogger('failover.remote')
+logger = logging.getLogger("failover.remote")
 
 NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
                   errno.EHOSTUNREACH)
@@ -88,7 +88,7 @@ class RemoteClient:
         self.refused = False
 
     def run(self):
-        set_thread_name('ha_connection')
+        set_thread_name("ha_connection")
         retry = 5
         self.refused = False
         while True:
@@ -97,17 +97,17 @@ class RemoteClient:
                 self.refused = False
             except ConnectionRefusedError:
                 if not self.refused:
-                    logger.error(f'Persistent connection refused, retrying every {retry} seconds')
+                    logger.error(f"Persistent connection refused, retrying every {retry} seconds")
                 self.refused = True
             except Exception:
-                logger.error('Remote connection failed', exc_info=True)
+                logger.error("Remote connection failed", exc_info=True)
                 self.refused = False
             time.sleep(retry)
 
     def connect_and_wait(self, *, legacy=False):
-        url = f'ws://{self.remote_ip}:6000/api/current'
+        url = f"ws://{self.remote_ip}:6000/api/current"
         if legacy:
-            url = f'ws://{self.remote_ip}:6000/websocket'
+            url = f"ws://{self.remote_ip}:6000/websocket"
 
         try:
             with Client(url, reserved_ports=True, private_methods=True) as c:
@@ -165,10 +165,10 @@ class RemoteClient:
             try:
                 cb(self.middleware)
             except Exception:
-                logger.error('Failed to run on_connect for remote client', exc_info=True)
+                logger.error("Failed to run on_connect for remote client", exc_info=True)
 
         if self.refused:
-            logger.info('Persistent connection reestablished')
+            logger.info("Persistent connection reestablished")
 
     def register_disconnect(self, cb):
         """
@@ -187,19 +187,19 @@ class RemoteClient:
             try:
                 cb(self.middleware)
             except Exception:
-                logger.error('Failed to run on_disconnect for remote client', exc_info=True)
+                logger.error("Failed to run on_disconnect for remote client", exc_info=True)
 
     def call(self, *args, **kwargs):
         try:
-            if not self.connected.wait(timeout=kwargs.pop('connect_timeout')):
+            if not self.connected.wait(timeout=kwargs.pop("connect_timeout")):
                 if self.remote_ip is None:
-                    raise CallError('Unable to determine remote node IP', errno.EHOSTUNREACH)
-                raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
+                    raise CallError("Unable to determine remote node IP", errno.EHOSTUNREACH)
+                raise CallError("Remote connection unavailable", errno.ECONNREFUSED)
             return self.client.call(*args, **kwargs)
         except AttributeError as e:
             # ws4py traceback which can happen when connection is lost
             if "'NoneType' object has no attribute 'text_message'" in str(e):
-                raise CallError('Remote connection closed.', errno.ECONNRESET)
+                raise CallError("Remote connection closed.", errno.ECONNRESET)
             else:
                 raise
         except ClientException as e:
@@ -217,49 +217,49 @@ class RemoteClient:
             try:
                 callback(self.middleware, type_, **message)
             except Exception:
-                logger.warning('Failed to run callback for %s', name, exc_info=True)
+                logger.warning("Failed to run callback for %s", name, exc_info=True)
 
     def send_file(self, token, local_path, remote_path, options=None):
         # No reason to honor proxy settings in this
         # method since we're sending across the
         # heartbeat interface which is point-to-point
-        proxies = {'http': '', 'https': ''}
+        proxies = {"http": "", "https": ""}
 
         options = options or {}
         r = requests.post(
-            f'http://{self.remote_ip}:6000/_upload/',
+            f"http://{self.remote_ip}:6000/_upload/",
             proxies=proxies,
             files=[
-                ('data', json.dumps({
-                    'method': 'filesystem.put',
-                    'params': [remote_path, options],
+                ("data", json.dumps({
+                    "method": "filesystem.put",
+                    "params": [remote_path, options],
                 })),
-                ('file', open(local_path, 'rb')),
+                ("file", open(local_path, "rb")),
             ],
             headers={
-                'Authorization': f'Token {token}',
+                "Authorization": f"Token {token}",
             },
         )
         if r.status_code != 200:
             # The POST request to remote side failed as opposed to the job being initialized
             # and then failing. In this case the best we can do is pass through the error text.
-            raise CallError(f'Failed to send {local_path} to Standby Controller: {r.text}')
+            raise CallError(f"Failed to send {local_path} to Standby Controller: {r.text}")
 
-        job_id = r.json()['job_id']
+        job_id = r.json()["job_id"]
         # TODO: use event subscription in the client instead of polling
         while True:
-            rjob = self.client.call('core.get_jobs', [('id', '=', job_id)])
+            rjob = self.client.call("core.get_jobs", [("id", "=", job_id)])
             if rjob:
                 rjob = rjob[0]
-                if rjob['state'] == 'FAILED':
+                if rjob["state"] == "FAILED":
                     raise CallError(
                         f'Failed to send {local_path} to Standby Controller: {rjob["error"]}.'
                     )
-                elif rjob['state'] == 'ABORTED':
+                elif rjob["state"] == "ABORTED":
                     raise CallError(
-                        f'Failed to send {local_path} to Standby Controller, job aborted by user.'
+                        f"Failed to send {local_path} to Standby Controller, job aborted by user."
                     )
-                elif rjob['state'] == 'SUCCESS':
+                elif rjob["state"] == "SUCCESS":
                     break
             time.sleep(0.5)
 
@@ -267,12 +267,12 @@ class RemoteClient:
 
         if self.client is not None and self._remote_os_version is None:
             try:
-                self._remote_os_version = self.client.call('system.version')
+                self._remote_os_version = self.client.call("system.version")
             except CallError:
                 # ignore CallErrors since they're being caught in self.client.call
                 pass
             except Exception:
-                logger.error('Failed to determine OS version', exc_info=True)
+                logger.error("Failed to determine OS version", exc_info=True)
 
         return self._remote_os_version
 
@@ -283,24 +283,24 @@ class FailoverService(Service):
 
     @private
     async def remote_ip(self):
-        node = await self.middleware.call('failover.node')
-        if node == 'A':
-            remote = '169.254.10.2'
-        elif node == 'B':
-            remote = '169.254.10.1'
+        node = await self.middleware.call("failover.node")
+        if node == "A":
+            remote = "169.254.10.2"
+        elif node == "B":
+            remote = "169.254.10.1"
         else:
-            raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
+            raise CallError(f"Node {node} invalid for call_remote", errno.EHOSTUNREACH)
         return remote
 
     @private
     async def local_ip(self):
-        node = await self.middleware.call('failover.node')
-        if node == 'A':
-            local = '169.254.10.1'
-        elif node == 'B':
-            local = '169.254.10.2'
+        node = await self.middleware.call("failover.node")
+        if node == "A":
+            local = "169.254.10.1"
+        elif node == "B":
+            local = "169.254.10.2"
         else:
-            raise CallError(f'Node {node} invalid', errno.EHOSTUNREACH)
+            raise CallError(f"Node {node} invalid", errno.EHOSTUNREACH)
         return local
 
     @private
@@ -318,15 +318,15 @@ class FailoverService(Service):
         else:
             opts = CallRemoteOptions.create(**options)
 
-        if opts['connect_timeout'] < 2.0 or opts['connect_timeout'] > 1800.0:
+        if opts["connect_timeout"] < 2.0 or opts["connect_timeout"] > 1800.0:
             raise ValidationError(
-                'failover.call_remote.connect_timeout',
-                'connect_timeout must be between 2.0 and 1800.0 inclusive'
+                "failover.call_remote.connect_timeout",
+                "connect_timeout must be between 2.0 and 1800.0 inclusive"
             )
 
-        if opts.pop('job_return'):
-            opts['job'] = 'RETURN'
-        raise_connect_error = opts.pop('raise_connect_error')
+        if opts.pop("job_return"):
+            opts["job"] = "RETURN"
+        raise_connect_error = opts.pop("raise_connect_error")
 
         try:
             return self.CLIENT.call(method, *args, **opts)
@@ -335,7 +335,7 @@ class FailoverService(Service):
                 if raise_connect_error:
                     raise CallError(str(e), e.errno)
                 else:
-                    self.logger.trace('Failed to call %r on remote node', method, exc_info=True)
+                    self.logger.trace("Failed to call %r on remote node", method, exc_info=True)
             else:
                 raise CallError(str(e), errno.EFAULT)
 
@@ -353,7 +353,7 @@ class FailoverService(Service):
         if self.CLIENT.remote_ip is not None:
             return
 
-        self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
+        self.CLIENT.remote_ip = await self.middleware.call("failover.remote_ip")
         self.CLIENT.middleware = self.middleware
         start_daemon_thread(name="fo_rem_client", target=self.CLIENT.run)
 
@@ -375,8 +375,8 @@ class FailoverService(Service):
 
 
 async def setup(middleware):
-    if await middleware.call('failover.licensed'):
+    if await middleware.call("failover.licensed"):
         try:
-            await middleware.call('failover.ensure_remote_client')
+            await middleware.call("failover.ensure_remote_client")
         except Exception:
             middleware.logger.error("Failed to determine remote heartbeat IP address", exc_info=True)

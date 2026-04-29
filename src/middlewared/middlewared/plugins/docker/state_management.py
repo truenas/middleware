@@ -26,15 +26,15 @@ async def set_status(context: ServiceContext, new_status: str, extra: str | None
     status = Status(new_status)
     STATUS = APPS_STATUS(
         status,
-        f'{STATUS_DESCRIPTIONS[status]}:\n{extra}' if extra else STATUS_DESCRIPTIONS[status],
+        f"{STATUS_DESCRIPTIONS[status]}:\n{extra}" if extra else STATUS_DESCRIPTIONS[status],
     )
-    context.middleware.send_event('docker.state', 'CHANGED', fields=get_status().model_dump())
+    context.middleware.send_event("docker.state", "CHANGED", fields=get_status().model_dump())
 
 
 async def before_start_check(context: ServiceContext) -> None:
     try:
         if not await license_active(context):
-            raise CallError('System is not licensed to use Applications')
+            raise CallError("System is not licensed to use Applications")
 
         await docker_validate_fs(context)
     except CallError as e:
@@ -44,21 +44,21 @@ async def before_start_check(context: ServiceContext) -> None:
                 ApplicationsConfigurationFailedAlert(error=e.errmsg),
             )
 
-        await set_status(context, Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
+        await set_status(context, Status.FAILED.value, f"Could not validate applications setup ({e.errmsg})")
         raise
 
-    await context.call2(context.s.alert.oneshot_delete, 'ApplicationsConfigurationFailed', None)
+    await context.call2(context.s.alert.oneshot_delete, "ApplicationsConfigurationFailed", None)
 
 
 async def after_start_check(context: ServiceContext) -> None:
-    if await context.middleware.call('service.started', 'docker'):
+    if await context.middleware.call("service.started", "docker"):
         await set_status(context, Status.RUNNING.value)
-        await context.call2(context.s.alert.oneshot_delete, 'ApplicationsStartFailed', None)
+        await context.call2(context.s.alert.oneshot_delete, "ApplicationsStartFailed", None)
     else:
-        await set_status(context, Status.FAILED.value, 'Failed to start docker service')
+        await set_status(context, Status.FAILED.value, "Failed to start docker service")
         await context.call2(
             context.s.alert.oneshot_create,
-            ApplicationsStartFailedAlert(error='Docker service could not be started'),
+            ApplicationsStartFailedAlert(error="Docker service could not be started"),
         )
 
 
@@ -73,29 +73,29 @@ async def start_service(context: ServiceContext, mount_datasets: bool = False) -
         config = await context.call2(context.s.docker.config)
         # Make sure correct ix-apps dataset is mounted
         if not await ix_apps_is_mounted(context, config.dataset):
-            raise CallError(f'{config.dataset!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
+            raise CallError(f"{config.dataset!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}")
         await (
-            await context.middleware.call('service.control', 'START', 'docker', {'timeout': DOCKER_START_TIMEOUT})
+            await context.middleware.call("service.control", "START", "docker", {"timeout": DOCKER_START_TIMEOUT})
         ).wait(raise_error=True)
     except Exception as e:
         await set_status(context, Status.FAILED.value, str(e))
         raise
     else:
-        await context.middleware.call('app.certificate.redeploy_apps_consuming_outdated_certs')
+        await context.middleware.call("app.certificate.redeploy_apps_consuming_outdated_certs")
     finally:
         if catalog_sync_job:
             await catalog_sync_job.wait()
 
 
 async def initialize_state(context: ServiceContext) -> None:
-    if not await context.middleware.call('system.ready'):
+    if not await context.middleware.call("system.ready"):
         # Status will be automatically updated when system is ready
         return
 
     if not (await context.call2(context.s.docker.config)).pool:
         await set_status(context, Status.UNCONFIGURED.value)
     else:
-        if await context.middleware.call('service.started', 'docker'):
+        if await context.middleware.call("service.started", "docker"):
             await set_status(context, Status.RUNNING.value)
         else:
             await set_status(context, Status.FAILED.value)
@@ -103,13 +103,13 @@ async def initialize_state(context: ServiceContext) -> None:
 
 async def validate_state(context: ServiceContext, raise_error: bool = True) -> bool:
     # When `raise_error` is unset, we return boolean true if there was no issue with the state
-    error_str = ''
+    error_str = ""
     if not (await context.call2(context.s.docker.config)).pool:
-        error_str = 'No pool configured for Docker'
-    if not error_str and not await context.middleware.call('service.started', 'docker'):
-        error_str = 'Docker service is not running'
+        error_str = "No pool configured for Docker"
+    if not error_str and not await context.middleware.call("service.started", "docker"):
+        error_str = "Docker service is not running"
     if not await license_active(context):
-        error_str = 'System is not licensed to use Applications'
+        error_str = "System is not licensed to use Applications"
 
     if error_str and raise_error:
         raise CallError(error_str)
@@ -146,11 +146,11 @@ async def terminate(context: ServiceContext) -> None:
     Only applies to single node systems (not HA).
     Waits up to DOCKER_SHUTDOWN_TIMEOUT seconds for Docker to stop gracefully.
     """
-    if not await context.middleware.call('failover.licensed') and await context.middleware.call(
-        'system.state'
-    ) == 'SHUTTING_DOWN' and await context.middleware.call('service.started', 'docker'):
+    if not await context.middleware.call("failover.licensed") and await context.middleware.call(
+        "system.state"
+    ) == "SHUTTING_DOWN" and await context.middleware.call("service.started", "docker"):
         try:
-            job_id = await context.middleware.call('service.control', 'STOP', 'docker')
+            job_id = await context.middleware.call("service.control", "STOP", "docker")
             await job_id.wait(DOCKER_SHUTDOWN_TIMEOUT)
         except Exception as e:
-            context.logger.warning('Failed to gracefully stop Docker service: %s', e)
+            context.logger.warning("Failed to gracefully stop Docker service: %s", e)

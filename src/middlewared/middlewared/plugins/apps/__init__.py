@@ -139,7 +139,7 @@ if typing.TYPE_CHECKING:
         get: typing.Literal[False]
 
 
-__all__ = ('AppService',)
+__all__ = ("AppService",)
 
 
 PROCESSING_APP_EVENT = set()
@@ -148,16 +148,16 @@ PROCESSING_APP_EVENT = set()
 class AppService(GenericCRUDService[AppEntry, str]):
 
     class Config:
-        namespace = 'app'
+        namespace = "app"
         event_send = False
-        cli_namespace = 'app'
-        role_prefix = 'APPS'
+        cli_namespace = "app"
+        role_prefix = "APPS"
         entry = AppEntry
         generic = True
         pass_app_to_query = True
         event_sources = {
-            'app.container_log_follow': AppContainerLogsFollowTailEventSource,
-            'app.stats': AppStatsEventSource,
+            "app.container_log_follow": AppContainerLogsFollowTailEventSource,
+            "app.stats": AppStatsEventSource,
         }
 
     def __init__(self, middleware: Middleware) -> None:
@@ -199,9 +199,9 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppCreateArgs, AppCreateResult,
-        audit='App: Creating',
-        audit_extended=lambda data: data['app_name'],
-        roles=['APPS_WRITE'],
+        audit="App: Creating",
+        audit_extended=lambda data: data["app_name"],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
     @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True)
@@ -211,24 +211,24 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppUpdateArgs, AppUpdateResult,
-        audit='App: Updating',
+        audit="App: Updating",
         audit_extended=lambda app_name, data: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_update_{args[0]}')
+    @job(lock=lambda args: f"app_update_{args[0]}")
     def do_update(self, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
         """Update `app_name` app with new configuration."""
         return update_app(self.context, job, app_name, data)
 
     @api_method(
         AppDeleteArgs, AppDeleteResult,
-        audit='App: Deleting',
+        audit="App: Deleting",
         audit_extended=lambda app_name, options=None: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_delete_{args[0]}')
+    @job(lock=lambda args: f"app_delete_{args[0]}")
     def do_delete(self, job: Job, app_name: str, options: AppDelete) -> typing.Literal[True]:
         """
         Delete `app_name` app.
@@ -256,7 +256,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await self.context.to_thread(get_app_instance, self.context, id_, options)
 
-    @filterable_api_method(item=AppAvailableItem, roles=['CATALOG_READ'], check_annotations=True)
+    @filterable_api_method(item=AppAvailableItem, roles=["CATALOG_READ"], check_annotations=True)
     def available(
         self, filters: list[typing.Any], options: QueryOptions
     ) -> list[AppAvailableItem] | AppAvailableItem | int:
@@ -265,28 +265,28 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return available(self.context, filters, options)
 
-    @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'], check_annotations=True)
+    @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=["CATALOG_READ"], check_annotations=True)
     async def available_space(self) -> int:
         """
         Returns space available in bytes in the configured apps pool which apps can consume.
         """
         return await available_space(self.context)
 
-    @api_method(AppCategoriesArgs, AppCategoriesResult, roles=['CATALOG_READ'], check_annotations=True)
+    @api_method(AppCategoriesArgs, AppCategoriesResult, roles=["CATALOG_READ"], check_annotations=True)
     async def categories(self) -> list[str]:
         """
         Retrieve list of valid categories which have associated applications.
         """
         return await categories()
 
-    @api_method(AppCertificateChoicesArgs, AppCertificateChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppCertificateChoicesArgs, AppCertificateChoicesResult, roles=["APPS_READ"], check_annotations=True)
     async def certificate_choices(self) -> AppCertificateChoices:
         """
         Returns certificates which can be used by applications.
         """
         return await certificate_choices(self.context)
 
-    @api_method(AppConfigArgs, AppConfigResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppConfigArgs, AppConfigResult, roles=["APPS_READ"], check_annotations=True)
     def config(self, app_name: str) -> dict[str, typing.Any]:
         """
         Retrieve user specified configuration of `app_name`.
@@ -295,7 +295,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
-        roles=['APPS_READ'], check_annotations=True,
+        roles=["APPS_READ"], check_annotations=True,
     )
     async def container_console_choices(self, app_name: str) -> AppContainerResponse:
         """
@@ -303,7 +303,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await container_console_choices(self.context, app_name)
 
-    @api_method(AppContainerIdsArgs, AppContainerIdsResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppContainerIdsArgs, AppContainerIdsResult, roles=["APPS_READ"], check_annotations=True)
     async def container_ids(self, app_name: str, options: AppContainerIDOptions) -> AppContainerResponse:
         """
         Returns container IDs for `app_name`.
@@ -312,33 +312,33 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppConvertToCustomArgs, AppConvertToCustomResult,
-        audit='App: Converting',
-        audit_extended=lambda app_name: f'{app_name} to custom app',
-        roles=['APPS_WRITE'],
+        audit="App: Converting",
+        audit_extended=lambda app_name: f"{app_name} to custom app",
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_start_{args[0]}', logs=True)
+    @job(lock=lambda args: f"app_start_{args[0]}", logs=True)
     def convert_to_custom(self, job: Job, app_name: str) -> AppEntry:
         """
         Convert `app_name` to a custom app.
         """
         return convert_to_custom_app(self.context, job, app_name)
 
-    @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=["APPS_READ"], check_annotations=True)
     async def gpu_choices(self) -> AppGPUResponse:
         """
         Returns GPU choices which can be used by applications.
         """
         return await gpu_choices(self.context)
 
-    @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=["APPS_READ"], check_annotations=True)
     async def ip_choices(self) -> AppIpChoices:
         """
         Returns IP choices which can be used by applications.
         """
         return await ip_choices(self.context)
 
-    @filterable_api_method(item=AppLatestItem, roles=['CATALOG_READ'], check_annotations=True)
+    @filterable_api_method(item=AppLatestItem, roles=["CATALOG_READ"], check_annotations=True)
     async def latest(
         self, filters: list[typing.Any], options: QueryOptions
     ) -> list[AppLatestItem] | AppLatestItem | int:
@@ -347,71 +347,71 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await latest(self.context, filters, options)
 
-    @api_method(AppSimilarArgs, AppSimilarResult, roles=['CATALOG_READ'], check_annotations=True)
+    @api_method(AppSimilarArgs, AppSimilarResult, roles=["CATALOG_READ"], check_annotations=True)
     def similar(self, app_name: str, train: str) -> list[AppAvailableItem]:
         """
         Retrieve applications which are similar to `app_name`.
         """
         return similar(self.context, app_name, train)
 
-    @api_method(AppUsedHostIpsArgs, AppUsedHostIpsResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppUsedHostIpsArgs, AppUsedHostIpsResult, roles=["APPS_READ"], check_annotations=True)
     async def used_host_ips(self) -> dict[str, list[str]]:
         """
         Returns host IPs in use by applications.
         """
         return await used_host_ips(self.context)
 
-    @api_method(AppUsedPortsArgs, AppUsedPortsResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppUsedPortsArgs, AppUsedPortsResult, roles=["APPS_READ"], check_annotations=True)
     async def used_ports(self) -> list[int]:
         """
         Returns ports in use by applications.
         """
         return await used_ports(self.context)
 
-    @api_method(AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult, roles=["APPS_READ"], check_annotations=True)
     def outdated_docker_images(self, app_name: str) -> list[str]:
         """Returns a list of outdated docker images for the specified app `name`."""
         return outdated_docker_images_for_app(self.context, app_name)
 
     @api_method(
         AppPullImagesArgs, AppPullImagesResult,
-        audit='App: Pulling Images for',
+        audit="App: Pulling Images for",
         audit_extended=lambda app_name, options=None: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'pull_images_{args[0]}')
+    @job(lock=lambda args: f"pull_images_{args[0]}")
     def pull_images(self, job: Job, app_name: str, options: AppPullImages) -> None:
         """Pulls docker images for the specified app `name`."""
         return pull_images_for_app(self.context, job, app_name, options)
 
     @api_method(
         AppRedeployArgs, AppRedeployResult,
-        audit='App: Redeploying',
+        audit="App: Redeploying",
         audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_redeploy_{args[0]}')
+    @job(lock=lambda args: f"app_redeploy_{args[0]}")
     def redeploy(self, job: Job, app_name: str) -> AppEntry:
         """Redeploy `app_name` app."""
         return redeploy_app(self.context, job, app_name)
 
     @api_method(
         AppRollbackArgs, AppRollbackResult,
-        audit='App: Rollback',
+        audit="App: Rollback",
         audit_extended=lambda app_name, options: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_rollback_{args[0]}')
+    @job(lock=lambda args: f"app_rollback_{args[0]}")
     def rollback(self, job: Job, app_name: str, options: AppRollbackOptions) -> AppEntry:
         """
         Rollback `app_name` app to previous version.
         """
         return rollback(self.context, job, app_name, options)
 
-    @api_method(AppRollbackVersionsArgs, AppRollbackVersionsResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppRollbackVersionsArgs, AppRollbackVersionsResult, roles=["APPS_READ"], check_annotations=True)
     def rollback_versions(self, app_name: str) -> list[str]:
         """
         Retrieve versions available for rollback for `app_name` app.
@@ -420,36 +420,36 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppStartArgs, AppStartResult,
-        audit='App: Starting',
+        audit="App: Starting",
         audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_start_{args[0]}')
+    @job(lock=lambda args: f"app_start_{args[0]}")
     def start(self, job: Job, app_name: str) -> None:
         """Start `app_name` app."""
         return start_app(self.context, job, app_name)
 
     @api_method(
         AppStopArgs, AppStopResult,
-        audit='App: Stopping',
+        audit="App: Stopping",
         audit_extended=lambda app_name: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_stop_{args[0]}')
+    @job(lock=lambda args: f"app_stop_{args[0]}")
     def stop(self, job: Job, app_name: str) -> None:
         """Stop `app_name` app."""
         return stop_app(self.context, job, app_name)
 
     @api_method(
         AppUpgradeArgs, AppUpgradeResult,
-        audit='App: Upgrading',
+        audit="App: Upgrading",
         audit_extended=lambda app_name, options=None: app_name,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_upgrade_{args[0]}')
+    @job(lock=lambda args: f"app_upgrade_{args[0]}")
     async def upgrade(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
         """
         Upgrade `app_name` app to `app_version`.
@@ -458,12 +458,12 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @api_method(
         AppUpgradeBulkArgs, AppUpgradeBulkResult,
-        audit='Apps: Bulk Upgrade',
-        audit_extended=lambda apps: f'{len(apps)} apps',
-        roles=['APPS_WRITE'],
+        audit="Apps: Bulk Upgrade",
+        audit_extended=lambda apps: f"{len(apps)} apps",
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
-    @job(lock='app_upgrade_bulk')
+    @job(lock="app_upgrade_bulk")
     async def upgrade_bulk(self, job: Job, apps: list[AppUpgradeBulkEntry]) -> list[AppBulkUpgradeJobResult]:
         """
         Upgrade multiple apps sequentially, each with its own options, emitting
@@ -471,7 +471,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         """
         return await upgrade_bulk(self.context, job, apps)
 
-    @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'], check_annotations=True)
+    @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=["APPS_READ"], check_annotations=True)
     async def upgrade_summary(self, app_name: str, options: AppUpgradeSummaryOptions) -> AppUpgradeSummary:
         """
         Retrieve upgrade summary for `app_name`.
@@ -495,7 +495,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         return await gpu_choices_internal(self.context)
 
     @private
-    @job(lock='app_metadata_generate', lock_queue_size=1)
+    @job(lock="app_metadata_generate", lock_queue_size=1)
     def metadata_generate(self, job: Job, blacklisted_apps: list[str] | None = None) -> None:
         return app_metadata_generate(job, blacklisted_apps)
 
@@ -504,13 +504,13 @@ class AppService(GenericCRUDService[AppEntry, str]):
         await process_event(self.context, app_name)
 
     @private
-    @job(lock=lambda args: f'app_upgrade_impl_{args[0]}', transient=True)
+    @job(lock=lambda args: f"app_upgrade_impl_{args[0]}", transient=True)
     def upgrade_impl(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
         return upgrade_impl(self.context, job, app_name, options)
 
 
 async def app_event(middleware: Middleware, event_type: str, args: typing.Any) -> None:
-    app_name = get_app_name_from_project_name(args['id'])
+    app_name = get_app_name_from_project_name(args["id"])
     if app_name in PROCESSING_APP_EVENT:
         return
 
@@ -519,10 +519,10 @@ async def app_event(middleware: Middleware, event_type: str, args: typing.Any) -
     try:
         await middleware.call2(middleware.services.app.process_event, app_name)
     except Exception as e:
-        middleware.logger.warning('Unhandled exception: %s', e)
+        middleware.logger.warning("Unhandled exception: %s", e)
     finally:
         PROCESSING_APP_EVENT.remove(app_name)
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.event_subscribe('docker.events', app_event)
+    middleware.event_subscribe("docker.events", app_event)

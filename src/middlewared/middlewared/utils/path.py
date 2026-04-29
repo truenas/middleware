@@ -17,8 +17,8 @@ __all__ = ["FSLocation", "is_child", "is_child_realpath", "path_location"]
 
 logger = logging.getLogger(__name__)
 
-EXTERNAL_PATH = 'EXTERNAL'
-EXTERNAL_PATH_PREFIX = 'EXTERNAL:'
+EXTERNAL_PATH = "EXTERNAL"
+EXTERNAL_PATH_PREFIX = "EXTERNAL:"
 
 
 class FSLocation(enum.Enum):
@@ -50,7 +50,7 @@ def check_path_resides_within_volume_sync(
     :param must_be_dir: Optional check for directory.
 
     """
-    if path_location(path).name == 'EXTERNAL':
+    if path_location(path).name == "EXTERNAL":
         # There are some fields where we allow external paths
         verrors.add(schema_name, "Path is external to TrueNAS.")
         return
@@ -110,7 +110,7 @@ def is_child(child: str, parent: str) -> bool:
     a dataset name is a child of another.
     """
     if os.path.isabs(child) or os.path.isabs(parent):
-        raise ValueError(f'Symlink-unsafe method called with absolute path(s): {child}, {parent}')
+        raise ValueError(f"Symlink-unsafe method called with absolute path(s): {child}, {parent}")
 
     rel = os.path.relpath(child, parent)
     return rel == "." or not rel.startswith("..")

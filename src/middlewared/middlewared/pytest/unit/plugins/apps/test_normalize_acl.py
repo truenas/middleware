@@ -7,32 +7,32 @@ from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ServiceContext
 
 
-@pytest.mark.parametrize('attr, value, normalization_context', [
+@pytest.mark.parametrize("attr, value, normalization_context", [
     (
-        {'schema': {'type': 'dict'}},
+        {"schema": {"type": "dict"}},
         {
-            'entries': [{'type': 'ALLOW', 'permissions': 'read'}],
-            'path': '/mnt/data'
+            "entries": [{"type": "ALLOW", "permissions": "read"}],
+            "path": "/mnt/data"
         },
-        {'actions': []},
+        {"actions": []},
     ),
     (
-        {'schema': {'type': 'dict'}},
+        {"schema": {"type": "dict"}},
         {
-            'entries': [{'type': 'ALLOW', 'permissions': 'write'}],
-            'path': '/mnt/data'
+            "entries": [{"type": "ALLOW", "permissions": "write"}],
+            "path": "/mnt/data"
         },
         {
-            'actions': [
+            "actions": [
                 {
-                    'method': 'apply_acls',
-                    'args': [
+                    "method": "apply_acls",
+                    "args": [
                         {
-                            'path': {
-                                'entries': [
+                            "path": {
+                                "entries": [
                                     {
-                                        'type': 'ALLOW',
-                                        'permissions': 'read'
+                                        "type": "ALLOW",
+                                        "permissions": "read"
                                     }
                                 ]
                             }
@@ -43,28 +43,28 @@ from middlewared.service import ServiceContext
         },
     ),
     (
-        {'schema': {'type': 'dict'}},
+        {"schema": {"type": "dict"}},
         {
-            'entries': [],
-            'path': ''
+            "entries": [],
+            "path": ""
         },
-        {'actions': []},
+        {"actions": []},
     ),
     (
-        {'schema': {'type': 'dict'}},
+        {"schema": {"type": "dict"}},
         {
-            'entries': [{'type': 'ALLOW', 'permissions': 'rw'}],
-            'path': ''
+            "entries": [{"type": "ALLOW", "permissions": "rw"}],
+            "path": ""
         },
-        {'actions': []},
+        {"actions": []},
     ),
 ])
 @pytest.mark.asyncio
 async def test_normalize_acl(attr, value, normalization_context):
-    ctx = ServiceContext(Middleware(), logging.getLogger('test'))
+    ctx = ServiceContext(Middleware(), logging.getLogger("test"))
     result = await normalize_acl(ctx, attr, value, {}, normalization_context)
-    if all(value[k] for k in ('entries', 'path')):
-        assert len(normalization_context['actions']) > 0
+    if all(value[k] for k in ("entries", "path")):
+        assert len(normalization_context["actions"]) > 0
     else:
-        assert len(normalization_context['actions']) == 0
+        assert len(normalization_context["actions"]) == 0
     assert result == value

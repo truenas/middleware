@@ -14,10 +14,10 @@ if typing.TYPE_CHECKING:
 
 
 def mount_events_process(middleware: Middleware) -> None:
-    set_thread_name('mount_events_thread')
+    set_thread_name("mount_events_thread")
     while True:
         try:
-            with open('/proc/self/mountinfo', 'r') as f:
+            with open("/proc/self/mountinfo", "r") as f:
                 # listmount() returns a list of mount ids
                 prev = set(truenas_os.listmount())
                 poller = select.poll()
@@ -40,13 +40,13 @@ def mount_events_process(middleware: Middleware) -> None:
                             cur.remove(new)
                             continue
 
-                        if sm.fs_type == 'zfs' and '@' not in (sm.sb_source or ''):
+                        if sm.fs_type == "zfs" and "@" not in (sm.sb_source or ""):
                             mount = __statmount_dict(sm)
-                            middleware.call_hook_sync('zfs.dataset.mounted', data=mount)
+                            middleware.call_hook_sync("zfs.dataset.mounted", data=mount)
 
                     prev = cur
         except Exception:
-            middleware.logger.error('Unhandled exception in mount_events_process', exc_info=True)
+            middleware.logger.error("Unhandled exception in mount_events_process", exc_info=True)
             time.sleep(5)
 
 

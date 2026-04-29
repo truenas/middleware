@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 LOCKS = defaultdict(asyncio.Lock)
-PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_on_start'])
+PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 THREADING_LOCKS = defaultdict(threading.Lock)
 
 
@@ -51,7 +51,7 @@ def filterable_api_method[**P, T](
                 register_models = [(returns, query_result, item.__name__)]
         else:
             if not private:
-                raise ValueError('Public methods may not use GenericQueryResult.')
+                raise ValueError("Public methods may not use GenericQueryResult.")
 
             returns = GenericQueryResult
 
@@ -83,15 +83,15 @@ class _JobDecorator:
         read_roles: list[str] | None,
     ) -> None:
         self._options = {
-            'lock': lock,
-            'lock_queue_size': lock_queue_size,
-            'logs': logs,
-            'pipes': pipes or [],
-            'check_pipes': check_pipes,
-            'transient': transient,
-            'description': description,
-            'abortable': abortable,
-            'read_roles': read_roles or [],
+            "lock": lock,
+            "lock_queue_size": lock_queue_size,
+            "logs": logs,
+            "pipes": pipes or [],
+            "check_pipes": check_pipes,
+            "transient": transient,
+            "description": description,
+            "abortable": abortable,
+            "read_roles": read_roles or [],
         }
 
     @overload
@@ -246,8 +246,8 @@ def pass_app(*, message_id: bool = False, require: bool = False):
     """
     def wrapper(fn):
         fn._pass_app = {
-            'message_id': message_id,
-            'require': require,
+            "message_id": message_id,
+            "require": require,
         }
         return fn
     return wrapper

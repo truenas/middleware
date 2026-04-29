@@ -13,8 +13,8 @@ class NoCriticalFailoverInterfaceFoundAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
-        title='At Least 1 Network Interface Is Required To Be Marked Critical For Failover',
-        text='At least 1 network interface is required to be marked critical for failover.',
+        title="At Least 1 Network Interface Is Required To Be Marked Critical For Failover",
+        text="At least 1 network interface is required to be marked critical for failover.",
         products=(ProductType.ENTERPRISE,),
     )
 
@@ -25,7 +25,7 @@ class FailoverCriticalAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]]:
-        if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
+        if not await self.middleware.call("interface.query", [("failover_critical", "=", True)]):
             return [Alert(NoCriticalFailoverInterfaceFoundAlert())]
         else:
             return []

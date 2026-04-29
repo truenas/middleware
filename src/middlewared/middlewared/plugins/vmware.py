@@ -36,7 +36,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.time_utils import utc_now
 from middlewared.utils.zfs import query_imported_fast_impl
 
-NFS_VOLUME_TYPES = ('NFS', 'NFS41')
+NFS_VOLUME_TYPES = ("NFS", "NFS41")
 
 
 class VMWarePeriodicSnapshotTaskProceedArgs(BaseModel):
@@ -56,7 +56,7 @@ class VMWarePeriodicSnapshotTaskEndResult(BaseModel):
 
 
 class VMWareModel(sa.Model):
-    __tablename__ = 'storage_vmwareplugin'
+    __tablename__ = "storage_vmwareplugin"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     hostname = sa.Column(sa.String(200))
@@ -70,43 +70,43 @@ class VMWareModel(sa.Model):
 class VMWareService(CRUDService):
 
     class Config:
-        datastore = 'storage.vmwareplugin'
-        cli_namespace = 'storage.vmware'
+        datastore = "storage.vmwareplugin"
+        cli_namespace = "storage.vmware"
         entry = VMWareEntry
-        role_prefix = 'SNAPSHOT_TASK'
+        role_prefix = "SNAPSHOT_TASK"
 
     @private
     async def validate_data(self, data, schema_name):
         verrors = ValidationErrors()
 
-        await resolve_hostname(self.middleware, verrors, f'{schema_name}.hostname', data['hostname'])
+        await resolve_hostname(self.middleware, verrors, f"{schema_name}.hostname", data["hostname"])
 
-        if data['filesystem'] not in (await self.middleware.call('pool.filesystem_choices')):
+        if data["filesystem"] not in (await self.middleware.call("pool.filesystem_choices")):
             verrors.add(
-                f'{schema_name}.filesystem',
-                'Invalid ZFS filesystem'
+                f"{schema_name}.filesystem",
+                "Invalid ZFS filesystem"
             )
 
-        datastore = data.get('datastore')
+        datastore = data.get("datastore")
         try:
             ds = await self.middleware.run_in_thread(
                 self.get_datastores,
                 {
-                    'hostname': data.get('hostname'),
-                    'username': data.get('username'),
-                    'password': data.get('password'),
+                    "hostname": data.get("hostname"),
+                    "username": data.get("username"),
+                    "password": data.get("password"),
                 }
             )
 
-            if data.get('datastore') not in ds:
+            if data.get("datastore") not in ds:
                 verrors.add(
-                    f'{schema_name}.datastore',
+                    f"{schema_name}.datastore",
                     f'Datastore "{datastore}" not found on the server'
                 )
         except Exception as e:
             verrors.add(
-                f'{schema_name}.datastore',
-                'Failed to connect: ' + str(e)
+                f"{schema_name}.datastore",
+                "Failed to connect: " + str(e)
             )
 
         verrors.check()
@@ -116,15 +116,15 @@ class VMWareService(CRUDService):
         """
         Create VMWare snapshot.
         """
-        await self.middleware.call('vmware.validate_data', data, 'vmware_create')
+        await self.middleware.call("vmware.validate_data", data, "vmware_create")
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert',
+        data["id"] = await self.middleware.call(
+            "datastore.insert",
             self._config.datastore,
-            {**data, 'state': {'state': 'PENDING'}},
+            {**data, "state": {"state": "PENDING"}},
         )
 
-        return await self.get_instance(data['id'])
+        return await self.get_instance(data["id"])
 
     @api_method(VMWareUpdateArgs, VMWareUpdateResult)
     async def do_update(self, id_, data):
@@ -132,18 +132,18 @@ class VMWareService(CRUDService):
         Update VMWare snapshot of `id`.
         """
         old = await self.get_instance(id_)
-        old.pop('state')
+        old.pop("state")
         new = old.copy()
 
         new.update(data)
 
-        await self.middleware.call('vmware.validate_data', new, 'vmware_update')
+        await self.middleware.call("vmware.validate_data", new, "vmware_update")
 
         await self.middleware.call(
-            'datastore.update',
+            "datastore.update",
             self._config.datastore,
             id_,
-            {**new, 'state': {'state': 'PENDING'}},
+            {**new, "state": {"state": "PENDING"}},
         )
 
         await self.call2(self.s.alert.oneshot_delete, "VMWareLoginFailed", old["hostname"])
@@ -159,7 +159,7 @@ class VMWareService(CRUDService):
         vmsnapobj = await self.get_instance(id_)
 
         response = await self.middleware.call(
-            'datastore.delete',
+            "datastore.delete",
             self._config.datastore,
             id_
         )
@@ -168,7 +168,7 @@ class VMWareService(CRUDService):
 
         return response
 
-    @api_method(VMWareGetDatastoresArgs, VMWareGetDatastoresResult, roles=['READONLY_ADMIN'])
+    @api_method(VMWareGetDatastoresArgs, VMWareGetDatastoresResult, roles=["READONLY_ADMIN"])
     def get_datastores(self, data):
         """
         Get datastores from VMWare.
@@ -178,7 +178,7 @@ class VMWareService(CRUDService):
     @api_method(
         VMWareMatchDatastoresWithDatasetsArgs,
         VMWareMatchDatastoresWithDatasetsResult,
-        roles=['READONLY_ADMIN'],
+        roles=["READONLY_ADMIN"],
     )
     def match_datastores_with_datasets(self, data):
         """
@@ -256,7 +256,7 @@ class VMWareService(CRUDService):
         }
 
     def __get_datastores(self, data):
-        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+        self.middleware.call_sync("network.general.will_perform_activity", "vmware")
 
         try:
             server_instance = self.connect(data)
@@ -283,29 +283,29 @@ class VMWareService(CRUDService):
                 continue
 
             for host_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
-                if host_mount_info.volume.type == 'VMFS':
+                if host_mount_info.volume.type == "VMFS":
                     datastores[host_mount_info.volume.name] = {
-                        'type': host_mount_info.volume.type,
-                        'uuid': host_mount_info.volume.uuid,
-                        'capacity': host_mount_info.volume.capacity,
-                        'vmfs_version': host_mount_info.volume.version,
-                        'extent': [
+                        "type": host_mount_info.volume.type,
+                        "uuid": host_mount_info.volume.uuid,
+                        "capacity": host_mount_info.volume.capacity,
+                        "vmfs_version": host_mount_info.volume.version,
+                        "extent": [
                             partition.diskName
                             for partition in host_mount_info.volume.extent
                         ],
-                        'local': host_mount_info.volume.local,
-                        'ssd': host_mount_info.volume.ssd
+                        "local": host_mount_info.volume.local,
+                        "ssd": host_mount_info.volume.ssd
                     }
                 elif host_mount_info.volume.type in NFS_VOLUME_TYPES:
                     datastores[host_mount_info.volume.name] = {
-                        'type': host_mount_info.volume.type,
-                        'capacity': host_mount_info.volume.capacity,
-                        'remote_host': host_mount_info.volume.remoteHost,
-                        'remote_path': host_mount_info.volume.remotePath,
-                        'remote_hostnames': host_mount_info.volume.remoteHostNames,
-                        'username': host_mount_info.volume.userName,
+                        "type": host_mount_info.volume.type,
+                        "capacity": host_mount_info.volume.capacity,
+                        "remote_host": host_mount_info.volume.remoteHost,
+                        "remote_path": host_mount_info.volume.remotePath,
+                        "remote_hostnames": host_mount_info.volume.remoteHostNames,
+                        "username": host_mount_info.volume.userName,
                     }
-                elif host_mount_info.volume.type in ('other', 'OTHER', 'VFFS'):
+                elif host_mount_info.volume.type in ("other", "OTHER", "VFFS"):
                     # Ignore VFFS type, it does not store VM's
                     # Ignore other type, it does not seem to be meaningful
                     pass
@@ -317,7 +317,7 @@ class VMWareService(CRUDService):
 
         return datastores
 
-    @api_method(VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult, roles=['READONLY_ADMIN'])
+    @api_method(VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult, roles=["READONLY_ADMIN"])
     def dataset_has_vms(self, dataset, recursive):
         """
         Returns "true" if `dataset` is configured with a VMWare snapshot
@@ -356,7 +356,7 @@ class VMWareService(CRUDService):
         # all the snaps we created in the first place.
         vmsnapobjs = []
         for vmsnapobj in qs:
-            if not self.middleware.call_sync('network.general.can_perform_activity', 'vmware'):
+            if not self.middleware.call_sync("network.general.can_perform_activity", "vmware"):
                 self.set_vmsnapobj_state(vmsnapobj, {
                     "state": "BLOCKED",
                 })
@@ -445,7 +445,7 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_end(self, context):
-        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+        self.middleware.call_sync("network.general.will_perform_activity", "vmware")
 
         vmsnapname = context["vmsnapname"]
 
@@ -541,13 +541,13 @@ class VMWareService(CRUDService):
             for device in vm.config.hardware.device:
                 if device.backing is None:
                     continue
-                if hasattr(device.backing, 'fileName'):
+                if hasattr(device.backing, "fileName"):
                     if device.backing.datastore is None:
                         continue
                     if device.backing.datastore.info.name == dataStore:
                         return True
         except Exception:
-            self.logger.debug('Exception in doesVMDependOnDataStore', exc_info=True)
+            self.logger.debug("Exception in doesVMDependOnDataStore", exc_info=True)
 
         return False
 
@@ -561,7 +561,7 @@ class VMWareService(CRUDService):
             # consider supporting more cases of VMs that can't be snapshoted
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1006392
         except Exception:
-            self.logger.debug('Exception in canSnapshotVM', exc_info=True)
+            self.logger.debug("Exception in canSnapshotVM", exc_info=True)
 
         return True
 
@@ -575,7 +575,7 @@ class VMWareService(CRUDService):
                 if result:
                     return result
         except Exception:
-            self.logger.debug('Exception in _findVMSnapshotByName', exc_info=True)
+            self.logger.debug("Exception in _findVMSnapshotByName", exc_info=True)
 
         return None
 
@@ -641,4 +641,4 @@ class VMWareService(CRUDService):
 
 
 async def setup(middleware):
-    await middleware.call('network.general.register_activity', 'vmware', 'VMware Snapshots')
+    await middleware.call("network.general.register_activity", "vmware", "VMware Snapshots")

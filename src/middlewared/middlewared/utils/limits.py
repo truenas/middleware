@@ -9,8 +9,8 @@ from truenas_api_client import json as ejson
 
 # WARNING: below methods must _not_ be audited. c.f. comment in parse_message() below
 MSG_SIZE_EXTENDED_METHODS = frozenset({
-    'filesystem.file_receive',
-    'failover.datastore.sql',
+    "filesystem.file_receive",
+    "failover.datastore.sql",
 })
 
 
@@ -24,16 +24,16 @@ class MsgSizeError(Exception):
     def __init__(self, limit: MsgSizeLimit, datalen: int, method_name: str | None = None) -> None:
         self.limit = limit
         self.datalen = datalen
-        self.errmsg = f'Message length [{self.datalen}] exceeded maximum size of {self.limit}'
-        self.method_name = method_name or ''
+        self.errmsg = f"Message length [{self.datalen}] exceeded maximum size of {self.limit}"
+        self.method_name = method_name or ""
         super().__init__(limit, datalen, method_name)
         if limit is MsgSizeLimit.UNAUTHENTICATED:
             # This preserves legacy server behavior
             self.ws_close_code = WSCloseCode.INVALID_TEXT
-            self.ws_errmsg = 'Anonymous connection max message length is 8 kB'
+            self.ws_errmsg = "Anonymous connection max message length is 8 kB"
         else:
             self.ws_close_code = WSCloseCode.MESSAGE_TOO_BIG
-            self.ws_errmsg = 'Max message length is 64 kB'
+            self.ws_errmsg = "Max message length is 64 kB"
 
     def __str__(self) -> str:
         return self.errmsg
@@ -74,12 +74,12 @@ def parse_message(authenticated: bool, msg_data: str) -> dict[str, Any]:
     message: dict[str, Any] = ejson.loads(msg_data)
 
     try:
-        method = message.get('method')
+        method = message.get("method")
     except Exception:
         if isinstance(message, list):
-            raise ValueError('Batch messages are not supported at this time')
+            raise ValueError("Batch messages are not supported at this time")
 
-        raise ValueError('Invalid Message Format')
+        raise ValueError("Invalid Message Format")
 
     if method in MSG_SIZE_EXTENDED_METHODS:
         return message

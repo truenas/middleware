@@ -17,12 +17,12 @@ class QueryOptions(BaseModel):
     extra: dict = {}
     """ Extra options are defined on a per-endpoint basis and are described in the documentation for the associated
     query method. """
-    order_by: list[str] = Field(default=[], examples=[['size', '-devname', 'nulls_first:-expiretime']])
+    order_by: list[str] = Field(default=[], examples=[["size", "-devname", "nulls_first:-expiretime"]])
     """ An array of field names describing the manner in which query results should be ordered. The field names may
     also have one of more of the following special prefixes: `-` (reverse sort direction), `nulls_first:` (place
     any null values at the head of the results list), `nulls_last:` (place any null values at the tail of the
     results list). """
-    select: list[str | list] = Field(default=[], examples=[['username', 'Authentication.status']])
+    select: list[str | list] = Field(default=[], examples=[["username", "Authentication.status"]])
     """ An array of field names specifying the exact fields to include in the query return. The dot character `.`
     may be used to explicitly select only subkeys of the query result. """
     count: bool = False
@@ -42,7 +42,7 @@ class QueryOptions(BaseModel):
     pagination is appropriate for a particular query API method. """
     force_sql_filters: bool = False
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_query_options(self) -> Self:
         validate_options(self.model_dump())
         return self

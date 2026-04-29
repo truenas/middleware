@@ -11,7 +11,7 @@ __all__ = ["FailoverRebootInfoArgs", "FailoverRebootInfoResult",
 
 
 class FailoverRebootOtherNodeOptions(BaseModel):
-    reason: NonEmptyString = 'System upgrade'
+    reason: NonEmptyString = "System upgrade"
     """Reason for the system reboot."""
     graceful: bool = False
     """If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` will be \

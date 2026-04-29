@@ -30,16 +30,16 @@ class DomainHealth(
 ):
 
     class Config:
-        namespace = 'directoryservices.health'
+        namespace = "directoryservices.health"
         cli_private = True
         private = True
 
     def _get_enabled_ds(self) -> DSType | None:
-        ds_config = self.middleware.call_sync('directoryservices.config')
-        if not ds_config['enable']:
+        ds_config = self.middleware.call_sync("directoryservices.config")
+        if not ds_config["enable"]:
             return None
 
-        return DSType(ds_config['service_type'])
+        return DSType(ds_config["service_type"])
 
     def _perm_check(
         self,
@@ -54,14 +54,14 @@ class DomainHealth(
         type if no errors found
         """
         if st.st_uid != 0:
-            return f'file owned by uid {st.st_uid} rather than root.'
+            return f"file owned by uid {st.st_uid} rather than root."
         if st.st_gid != 0:
-            return f'file owned by gid {st.st_gid} rather than root.'
+            return f"file owned by gid {st.st_gid} rather than root."
 
         if stat.S_IMODE(st.st_mode) != expected_mode:
             return (
-                f'file permissions {oct(stat.S_IMODE(st.st_mode))} '
-                f'instead of expected value of {oct(expected_mode)}.'
+                f"file permissions {oct(stat.S_IMODE(st.st_mode))} "
+                f"instead of expected value of {oct(expected_mode)}."
             )
 
         return None
@@ -113,22 +113,22 @@ class DomainHealth(
                 case DSType.LDAP:
                     self._health_check_ldap()
                 case _:
-                    raise ValueError(f'{enabled_ds}: Unexpected directory service.')
+                    raise ValueError(f"{enabled_ds}: Unexpected directory service.")
         except (ADHealthError, IPAHealthError, KRB5HealthError, LDAPHealthError) as e:
             # Update our stored status to reflect reason for it being faulted
             # then re-raise
             DSHealthObj.update(enabled_ds, DSStatus.FAULTED, e.errmsg)
-            self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
+            self.middleware.send_event(HEALTH_EVENT_NAME, "CHANGED", fields=DSHealthObj.dump())
             raise
         except Exception:
             # Not a health related exception and so simply log it to prevent accidentally
             # disrupting services
-            self.logger.error('Unexpected error while checking directory service health', exc_info=True)
+            self.logger.error("Unexpected error while checking directory service health", exc_info=True)
 
         DSHealthObj.update(enabled_ds, DSStatus.HEALTHY, None)
         if initial_status != DSStatus.HEALTHY:
             # We've recovered since last status check
-            self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
+            self.middleware.send_event(HEALTH_EVENT_NAME, "CHANGED", fields=DSHealthObj.dump())
 
         return True
 
@@ -181,11 +181,11 @@ class DomainHealth(
         # If we're here we've recovered. Since the users.oath file for directory services users requires that we have
         # functional SID resolution we have to regenerate the users file here. We are not calling service.control
         # for the USER service because the other node in HA is responsible for its own health checks.
-        self.middleware.call_sync('etc.generate', 'user')
+        self.middleware.call_sync("etc.generate", "user")
 
         # We may need to restart dependent services after recovering from a problematic state
-        if self.middleware.call_sync('failover.is_single_master_node'):
-            self.middleware.call_sync('directoryservices.restart_dependent_services')
+        if self.middleware.call_sync("failover.is_single_master_node"):
+            self.middleware.call_sync("directoryservices.restart_dependent_services")
 
     def set_state(self, ds_type, ds_status, status_msg=None):
         ds = DSType(ds_type)
@@ -194,14 +194,14 @@ class DomainHealth(
         match status:
             case DSStatus.HEALTHY | DSStatus.JOINING | DSStatus.LEAVING:
                 if status_msg is not None:
-                    raise CallError('status_msg may only be set when changing state to FAULTED')
+                    raise CallError("status_msg may only be set when changing state to FAULTED")
             case DSStatus.FAULTED:
                 if status_msg is None:
-                    raise CallError('status_msg is required when setting state to FAULTED')
+                    raise CallError("status_msg is required when setting state to FAULTED")
             case DSStatus.DISABLED:
                 DSHealthObj.update(None, None, None)
-                self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
+                self.middleware.send_event(HEALTH_EVENT_NAME, "CHANGED", fields=DSHealthObj.dump())
                 return
 
         DSHealthObj.update(ds, status, status_msg)
-        self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
+        self.middleware.send_event(HEALTH_EVENT_NAME, "CHANGED", fields=DSHealthObj.dump())

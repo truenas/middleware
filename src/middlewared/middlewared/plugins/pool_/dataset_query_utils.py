@@ -1057,12 +1057,12 @@ def generic_query(
 
     cf = CF_EMPTY if not filters_in else compile_filters(filters_in)
     co = _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
+        get=options.get("get", False),
+        count=options.get("count", False),
         select=list(select) if select else None,
         order_by=list(order_by) if order_by else None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
+        offset=options.get("offset", 0),
+        limit=options.get("limit", 0),
     )
 
     # set up callback state
@@ -1097,7 +1097,7 @@ def generic_query(
     rv = _tf.tnfilter(flat, filters=cf, options=co)
     if isinstance(rv, int):
         return rv
-    if options.get('get'):
+    if options.get("get"):
         if not rv:
             raise MatchNotFound()
         return rv[0]

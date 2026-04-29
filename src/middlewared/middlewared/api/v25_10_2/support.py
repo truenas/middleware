@@ -53,7 +53,7 @@ class SupportNewTicketCommunity(BaseModel):
     """Whether to attach debug information to the ticket."""
     token: Secret[str]
     """Authentication token for creating community tickets."""
-    type: Literal['BUG', 'FEATURE']
+    type: Literal["BUG", "FEATURE"]
     """Type of ticket being created."""
     cc: list[EmailString] = []
     """Array of email addresses to copy on the ticket."""
@@ -89,14 +89,14 @@ class SupportSimilarIssue(BaseModel):
     """Brief summary of the similar issue."""
 
     class Config:
-        extra = 'allow'
+        extra = "allow"
 
 
 class SupportUpdate(SupportEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
-@single_argument_args('data')
+@single_argument_args("data")
 class SupportAttachTicketArgs(BaseModel):
     ticket: int
     """Ticket number to attach the file to."""

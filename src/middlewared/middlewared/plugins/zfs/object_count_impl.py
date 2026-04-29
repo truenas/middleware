@@ -6,7 +6,7 @@ import truenas_pylibzfs
 from .exceptions import ZFSPathNotFoundException
 from .utils import open_resource
 
-__all__ = ('estimate_object_count_impl',)
+__all__ = ("estimate_object_count_impl",)
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def estimate_object_count_impl(tls: typing.Any, dataset_name: str) -> int:
     except ZFSPathNotFoundException:
         return 0
     except Exception:
-        logger.warning('%s: failed to open ZFS resource for object count estimate', dataset_name, exc_info=True)
+        logger.warning("%s: failed to open ZFS resource for object count estimate", dataset_name, exc_info=True)
         return 0
 
     if rsrc.type != truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
@@ -47,7 +47,7 @@ def estimate_object_count_impl(tls: typing.Any, dataset_name: str) -> int:
             state=None,
         )
     except Exception:
-        logger.warning('%s: failed to estimate object count', dataset_name, exc_info=True)
+        logger.warning("%s: failed to estimate object count", dataset_name, exc_info=True)
         return 0
 
     return cnt

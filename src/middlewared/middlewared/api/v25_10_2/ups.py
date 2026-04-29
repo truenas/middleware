@@ -13,8 +13,8 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'UPSEntry', 'UPSPortChoicesArgs', 'UPSPortChoicesResult', 'UPSDriverChoicesArgs',
-    'UPSDriverChoicesResult', 'UPSUpdateArgs', 'UPSUpdateResult',
+    "UPSEntry", "UPSPortChoicesArgs", "UPSPortChoicesResult", "UPSDriverChoicesArgs",
+    "UPSDriverChoicesResult", "UPSUpdateArgs", "UPSUpdateResult",
 ]
 
 
@@ -41,7 +41,7 @@ class UPSEntry(BaseModel):
     """Additional user configurations for UPS monitoring access."""
     identifier: NonEmptyString
     """Unique identifier name for this UPS device within the monitoring system."""
-    mode: Literal['MASTER', 'SLAVE']
+    mode: Literal["MASTER", "SLAVE"]
     """Operating mode.
     * `MASTER` controls the UPS directly
     * `SLAVE` monitors remotely"""
@@ -57,7 +57,7 @@ class UPSEntry(BaseModel):
     """Serial port or device path for UPS communication."""
     remotehost: str
     """Hostname or IP address of remote UPS server when operating in SLAVE mode."""
-    shutdown: Literal['LOWBATT', 'BATT']
+    shutdown: Literal["LOWBATT", "BATT"]
     """Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power."""
     shutdowncmd: str | None
     """Custom command to execute during UPS shutdown sequence. `null` for default."""
@@ -65,7 +65,7 @@ class UPSEntry(BaseModel):
     """Complete UPS identifier including hostname for network monitoring."""
 
 
-@single_argument_args('ups_update')
+@single_argument_args("ups_update")
 class UPSUpdateArgs(UPSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()

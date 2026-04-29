@@ -5,7 +5,7 @@ from truenas_api_client import ErrnoMixin
 
 
 def get_errname(code: int) -> str:
-    return errno.errorcode.get(code) or ErrnoMixin._get_errname(code) or 'EUNKNOWN'
+    return errno.errorcode.get(code) or ErrnoMixin._get_errname(code) or "EUNKNOWN"
 
 
 class CallException(ErrnoMixin, Exception):
@@ -21,7 +21,7 @@ class CallError(CallException):
 
     def __str__(self):
         errname = get_errname(self.errno)
-        return f'[{errname}] {self.errmsg}'
+        return f"[{errname}] {self.errmsg}"
 
 
 class ValidationError(CallException):
@@ -38,7 +38,7 @@ class ValidationError(CallException):
 
     def __str__(self):
         errname = get_errname(self.errno)
-        return f'[{errname}] {self.attribute}: {self.errmsg}'
+        return f"[{errname}] {self.attribute}: {self.errmsg}"
 
     def __eq__(self, other):
         return (
@@ -64,7 +64,7 @@ class ValidationErrors(CallException):
     def add_validation_error(self, validation_error: ValidationError):
         self.errors.append(validation_error)
 
-    def add_child(self, attribute, child: 'ValidationErrors'):
+    def add_child(self, attribute, child: "ValidationErrors"):
         for e in child.errors:
             self.add(f"{attribute}.{e.attribute}", e.errmsg, e.errno)
 
@@ -72,7 +72,7 @@ class ValidationErrors(CallException):
         if self:
             raise self
 
-    def extend(self, errors: 'ValidationErrors'):
+    def extend(self, errors: "ValidationErrors"):
         for e in errors.errors:
             self.add(e.attribute, e.errmsg, e.errno)
 
@@ -84,9 +84,9 @@ class ValidationErrors(CallException):
         return bool(self.errors)
 
     def __str__(self):
-        output = ''
+        output = ""
         for e in self.errors:
-            output += str(e) + '\n'
+            output += str(e) + "\n"
         return output
 
     def __contains__(self, item):
@@ -109,9 +109,9 @@ def adapt_exception(e: Exception) -> CallError | None:
         stderr = e.stderr or ""
         if isinstance(stderr, bytes):
             stderr = stderr.decode("utf-8", "ignore")
-        output = ''.join([stdout, stderr]).rstrip()
+        output = "".join([stdout, stderr]).rstrip()
 
-        return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')
+        return CallError(f"Command {cmd} failed (code {e.returncode}):\n{output}")
 
     return None
 

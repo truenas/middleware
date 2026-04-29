@@ -6,13 +6,13 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, NotRequired, excluded_field
 
 __all__ = [
-    'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
-    'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
-    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
-    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent', 'AlertLevel',
+    "AlertDismissArgs", "AlertListArgs", "AlertDismissResult", "AlertListResult", "AlertListCategoriesArgs",
+    "AlertListCategoriesResult", "AlertListPoliciesArgs", "AlertListPoliciesResult", "AlertRestoreArgs",
+    "AlertRestoreResult", "AlertClassesEntry", "AlertClassesUpdateArgs", "AlertClassesUpdateResult", "Alert",
+    "AlertListAddedEvent", "AlertListChangedEvent", "AlertListRemovedEvent", "AlertLevel",
 ]
 
-AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']
+AlertLevel: TypeAlias = Literal["INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY"]
 
 
 class Alert(BaseModel):
@@ -28,7 +28,7 @@ class Alert(BaseModel):
     """Node identifier in HA systems or hostname for single-node systems."""
     key: LongString
     """Unique key used for alert deduplication and identification."""
-    datetime_: datetime = Field(alias='datetime')
+    datetime_: datetime = Field(alias="datetime")
     """Timestamp when the alert was first created."""
     last_occurrence: datetime
     """Timestamp of the most recent occurrence of this alert."""
@@ -71,7 +71,7 @@ class AlertCategory(BaseModel):
 class AlertClassConfiguration(BaseModel):
     level: AlertLevel = NotRequired
     """Severity level for alerts of this class."""
-    policy: Literal['IMMEDIATELY', 'HOURLY', 'DAILY', 'NEVER'] = NotRequired
+    policy: Literal["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"] = NotRequired
     """Notification policy for alerts of this class.
 
     * `IMMEDIATELY`: Send notifications as soon as alerts occur

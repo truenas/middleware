@@ -49,7 +49,7 @@ class BootEnvironmentService(Service):
     @private
     def zfs_get_props(self):
         rv = list()
-        bp_name = self.middleware.call_sync('boot.pool_name')
+        bp_name = self.middleware.call_sync("boot.pool_name")
         for i in self.call_sync2(
             self.s.zfs.resource.query_impl,
             ZFSResourceQuery(
@@ -94,7 +94,7 @@ class BootEnvironmentService(Service):
                     except Exception:
                         self.logger.exception("Unexpected error promoting %r", ds)
 
-    @filterable_api_method(item=BootEnvironmentEntry, roles=['BOOT_ENV_READ'])
+    @filterable_api_method(item=BootEnvironmentEntry, roles=["BOOT_ENV_READ"])
     def query(self, filters, options):
         results = list()
         try:
@@ -102,7 +102,7 @@ class BootEnvironmentService(Service):
         except Exception:
             return results
 
-        active_be = statmount(path='/')['mount_source']
+        active_be = statmount(path="/")["mount_source"]
         activated_be = self.middleware.call_sync(
             "zpool.query_impl", {"pool_names": [bp_name], "properties": ["bootfs"]}
         )[0]["properties"]["bootfs"]["value"]
@@ -140,14 +140,14 @@ class BootEnvironmentService(Service):
             run_zectl_cmd(["activate", data["id"]])
             return self.query([["id", "=", data["id"]]], {"get": True})
 
-    @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult, roles=["BOOT_ENV_WRITE"])
     def clone(self, data):
         be = self.validate_be("boot.environment.clone", data["id"])
         self.validate_be("boot.environment.clone", data["target"], should_exist=False)
         run_zectl_cmd(["create", "-r", "-e", be["dataset"], data["target"]])
         return self.query([["id", "=", data["target"]]], {"get": True})
 
-    @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult, roles=["BOOT_ENV_WRITE"])
     def destroy(self, data):
         if self.validate_be("boot.environment.destroy", data["id"])["active"]:
             raise ValidationError(
@@ -156,7 +156,7 @@ class BootEnvironmentService(Service):
             )
         run_zectl_cmd(["destroy", data["id"]])
 
-    @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult, roles=["BOOT_ENV_WRITE"])
     def keep(self, data):
         self.middleware.call_sync(
             "pool.dataset.update_impl",

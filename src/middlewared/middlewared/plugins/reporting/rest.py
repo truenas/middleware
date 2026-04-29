@@ -13,7 +13,7 @@ from middlewared.utils.zfs import query_imported_fast_impl
 from .netdata import ClientConnectError, Netdata
 from .utils import TIER_0_POINT_SIZE, TIER_1_POINT_SIZE, calculate_disk_space_for_netdata, get_metrics_approximation
 
-logger = logging.getLogger('netdata_api')
+logger = logging.getLogger("netdata_api")
 
 
 class ChartMetricsDataArgs(BaseModel):
@@ -49,7 +49,7 @@ class NetdataService(Service):
     async def active_total_metrics(self):
         number = 0
         for chart_details in (await Netdata.get_charts()).values():
-            number += len(chart_details['dimensions'])
+            number += len(chart_details["dimensions"])
         return number
 
     @api_method(ChartDetailsArgs, ChartDetailsResult, private=True)
@@ -64,29 +64,29 @@ class NetdataService(Service):
         try:
             return await Netdata.get_all_metrics()
         except ClientConnectError:
-            logger.debug('Failed to connect to netdata when retrieving all metrics')
+            logger.debug("Failed to connect to netdata when retrieving all metrics")
             return {}
 
     def calculated_metrics_count(self):
         return get_metrics_approximation(
-            len(self.middleware.call_sync('device.get_disks', False, True)),
-            cpu_info()['core_count'],
-            self.middleware.call_sync('interface.query', [], {'count': True}),
+            len(self.middleware.call_sync("device.get_disks", False, True)),
+            cpu_info()["core_count"],
+            self.middleware.call_sync("interface.query", [], {"count": True}),
             len(query_imported_fast_impl()),
-            self.middleware.call_sync('datastore.query', 'vm.vm', [], {'count': True}),
-            len(glob.glob('/sys/fs/cgroup/**/*.service')),
+            self.middleware.call_sync("datastore.query", "vm.vm", [], {"count": True}),
+            len(glob.glob("/sys/fs/cgroup/**/*.service")),
         )
 
     def get_disk_space_for_tier0(self):
-        config = self.middleware.call_sync('reporting.config')
+        config = self.middleware.call_sync("reporting.config")
         return calculate_disk_space_for_netdata(
-            self.calculated_metrics_count(), config['tier0_days'], TIER_0_POINT_SIZE, 1,
+            self.calculated_metrics_count(), config["tier0_days"], TIER_0_POINT_SIZE, 1,
         )
 
     def get_disk_space_for_tier1(self):
-        config = self.middleware.call_sync('reporting.config')
+        config = self.middleware.call_sync("reporting.config")
         return calculate_disk_space_for_netdata(
-            self.calculated_metrics_count(), config['tier1_days'], TIER_1_POINT_SIZE, config['tier1_update_interval'],
+            self.calculated_metrics_count(), config["tier1_days"], TIER_1_POINT_SIZE, config["tier1_update_interval"],
         )
 
     def get_disk_stats(self):

@@ -4,11 +4,11 @@ from middlewared.utils.privilege import credential_has_full_admin
 
 
 class ServiceWriteRole(enum.Enum):
-    CIFS = 'SHARING_SMB_WRITE'
-    NFS = 'SHARING_NFS_WRITE'
-    ISCSITARGET = 'SHARING_ISCSI_WRITE'
-    FTP = 'SHARING_FTP_WRITE'
-    NVMET = 'SHARING_NVME_TARGET_WRITE'
+    CIFS = "SHARING_SMB_WRITE"
+    NFS = "SHARING_NFS_WRITE"
+    ISCSITARGET = "SHARING_ISCSI_WRITE"
+    FTP = "SHARING_FTP_WRITE"
+    NVMET = "SHARING_NVME_TARGET_WRITE"
 
 
 def app_has_write_privilege_for_service(
@@ -28,7 +28,7 @@ def app_has_write_privilege_for_service(
     if credential_has_full_admin(app.authenticated_credentials):
         return True
 
-    if app.authenticated_credentials.has_role('SERVICE_WRITE'):
+    if app.authenticated_credentials.has_role("SERVICE_WRITE"):
         return True
 
     try:

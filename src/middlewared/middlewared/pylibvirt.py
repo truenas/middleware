@@ -33,9 +33,9 @@ def gather_pylibvirt_domains_states(
 ):
     state = {}
     if rows:
-        shutting_down = middleware.call_sync('system.state') == 'SHUTTING_DOWN'
+        shutting_down = middleware.call_sync("system.state") == "SHUTTING_DOWN"
         if not shutting_down:
-            uuid_to_container = {row['uuid']: row for row in rows}
+            uuid_to_container = {row["uuid"]: row for row in rows}
             try:
                 for domain in connection.list_domains():
                     uuid = domain.name()
@@ -58,20 +58,20 @@ def pylibvirt_domain_state(
 ):
     domain_state = connection.domain_state(libvirt_domain).value
     if libvirt_domain.isActive():
-        state = 'SUSPENDED' if domain_state == 'PAUSED' else 'RUNNING'
+        state = "SUSPENDED" if domain_state == "PAUSED" else "RUNNING"
     else:
-        state = 'STOPPED'
+        state = "STOPPED"
 
     return {
-        'state': state,
-        'pid': domain.pid(),
-        'domain_state': domain_state,
+        "state": state,
+        "pid": domain.pid(),
+        "domain_state": domain_state,
     }
 
 
 def get_pylibvirt_domain_state(gathered_states: dict, domain: dict):
-    return gathered_states.get(domain['uuid']) or {
-        'state': 'STOPPED',
-        'pid': None,
-        'domain_state': None,
+    return gathered_states.get(domain["uuid"]) or {
+        "state": "STOPPED",
+        "pid": None,
+        "domain_state": None,
     }

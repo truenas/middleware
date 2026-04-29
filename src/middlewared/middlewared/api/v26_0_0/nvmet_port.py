@@ -18,8 +18,8 @@ __all__ = [
 ]
 
 
-FabricTransportType: TypeAlias = Literal['TCP', 'RDMA', 'FC']
-AddressFamily: TypeAlias = Literal['IPV4', 'IPV6', 'FC']
+FabricTransportType: TypeAlias = Literal["TCP", "RDMA", "FC"]
+AddressFamily: TypeAlias = Literal["IPV4", "IPV6", "FC"]
 
 
 class NVMetPortEntry(BaseModel):
@@ -61,20 +61,20 @@ class NVMetPortCreateTemplate(NVMetPortEntry, ABC):
 
 
 class NVMetPortCreateRDMATCP(NVMetPortCreateTemplate):
-    addr_trtype: Literal['TCP', 'RDMA']
+    addr_trtype: Literal["TCP", "RDMA"]
     addr_trsvcid: int = Field(ge=1024, le=65535, default=4420)
     addr_traddr: IPvAnyAddress
 
-    @field_validator('addr_traddr')
+    @field_validator("addr_traddr")
     @classmethod
     def normalize_addr_traddr(cls, value: str) -> str:
         if not value:
-            raise ValueError('addr_traddr is required')
+            raise ValueError("addr_traddr is required")
         return value
 
 
 class NVMetPortCreateFC(NVMetPortCreateTemplate):
-    addr_trtype: Literal['FC']
+    addr_trtype: Literal["FC"]
     """Fabric transport technology name."""
     addr_traddr: NonEmptyString
     """A transport-specific field identifying the NVMe host port to use for the connection to the controller."""
@@ -82,7 +82,7 @@ class NVMetPortCreateFC(NVMetPortCreateTemplate):
 
 
 class NVMetPortCreateArgs(BaseModel):
-    nvmet_port_create: NVMetPortCreateRDMATCP | NVMetPortCreateFC = Field(discriminator='addr_trtype')
+    nvmet_port_create: NVMetPortCreateRDMATCP | NVMetPortCreateFC = Field(discriminator="addr_trtype")
     """NVMe-oF port configuration data for creation (TCP/RDMA or Fibre Channel)."""
 
 

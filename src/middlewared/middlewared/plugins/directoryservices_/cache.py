@@ -24,7 +24,7 @@ from .util_cache import (
     retrieve_cache_entry,
 )
 
-dscache_idtype = Literal['USER', 'GROUP']
+dscache_idtype = Literal["USER", "GROUP"]
 
 
 class DscachePrincipalInfo(BaseModel):
@@ -32,10 +32,10 @@ class DscachePrincipalInfo(BaseModel):
     who: str | None = None
     id: int | None = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_identifier(self) -> Self:
         if self.who is None and self.id is None:
-            raise ValueError('who or id required')
+            raise ValueError("who or id required")
 
         return self
 
@@ -63,7 +63,7 @@ class DscacheRetrieveResult(BaseModel):
 
 
 class DscacheQueryArgs(BaseModel):
-    idtype: dscache_idtype = 'USER'
+    idtype: dscache_idtype = "USER"
     filters: list = []
     options: dict = {}
 
@@ -75,7 +75,7 @@ class DscacheQueryResult(BaseModel):
 class DSCache(Service):
 
     class Config:
-        namespace = 'directoryservices.cache'
+        namespace = "directoryservices.cache"
         private = True
 
     @api_method(DscacheInsertArgs, DscacheInsertResult, private=True)
@@ -89,11 +89,11 @@ class DSCache(Service):
         """
         match (id_type := IDType[idtype]):
             case IDType.GROUP:
-                insert_cache_entry(id_type, entry['gid'], entry['name'], entry)
+                insert_cache_entry(id_type, entry["gid"], entry["name"], entry)
             case IDType.USER:
-                insert_cache_entry(id_type, entry['uid'], entry['username'], entry)
+                insert_cache_entry(id_type, entry["uid"], entry["username"], entry)
             case _:
-                raise ValueError(f'{id_type}: unexpected ID type')
+                raise ValueError(f"{id_type}: unexpected ID type")
 
     @api_method(DscacheRetrieveArgs, DscacheRetrieveResult, private=True)
     def _retrieve(self, data, options):
@@ -112,7 +112,7 @@ class DSCache(Service):
             CallError (Idmap lookup failure -- unexpected)
         """
         try:
-            entry = retrieve_cache_entry(IDType[data['idtype']], data.get('who'), data.get('id'))
+            entry = retrieve_cache_entry(IDType[data["idtype"]], data.get("who"), data.get("id"))
         # MatchNotFound means TDB file exists but doesn't contain an entry
         # FileNotFoundError means TDB file has not been created yet. This may occur on standby
         # controller
@@ -125,57 +125,57 @@ class DSCache(Service):
             user.get_user_obj and group.get_group_obj will raise KeyError if NSS lookup fails.
             """
             try:
-                if data['idtype'] == 'USER':
-                    if data.get('who') is not None:
-                        who = {'username': data['who']}
+                if data["idtype"] == "USER":
+                    if data.get("who") is not None:
+                        who = {"username": data["who"]}
                     else:
-                        who = {'uid': data.get('id')}
+                        who = {"uid": data.get("id")}
 
-                    pwdobj = self.middleware.call_sync('user.get_user_obj', {
-                        'get_groups': False, 'sid_info': options['smb']
+                    pwdobj = self.middleware.call_sync("user.get_user_obj", {
+                        "get_groups": False, "sid_info": options["smb"]
                     } | who)
-                    if options['smb'] and pwdobj['sid'] is None:
+                    if options["smb"] and pwdobj["sid"] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
-                    entry = self.middleware.call_sync('idmap.synthetic_user',
-                                                      pwdobj, pwdobj['sid'])
+                    entry = self.middleware.call_sync("idmap.synthetic_user",
+                                                      pwdobj, pwdobj["sid"])
                     if entry is None:
                         return None
                 else:
-                    if data.get('who') is not None:
-                        who = {'groupname': data.get('who')}
+                    if data.get("who") is not None:
+                        who = {"groupname": data.get("who")}
                     else:
-                        who = {'gid': data.get('id')}
+                        who = {"gid": data.get("id")}
 
-                    grpobj = self.middleware.call_sync('group.get_group_obj', {'sid_info': options['smb']} | who)
-                    if options['smb'] and grpobj['sid'] is None:
+                    grpobj = self.middleware.call_sync("group.get_group_obj", {"sid_info": options["smb"]} | who)
+                    if options["smb"] and grpobj["sid"] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
-                    entry = self.middleware.call_sync('idmap.synthetic_group',
-                                                      grpobj, grpobj['sid'])
+                    entry = self.middleware.call_sync("idmap.synthetic_group",
+                                                      grpobj, grpobj["sid"])
                     if entry is None:
                         return None
 
                 try:
-                    self._insert(data['idtype'], entry)
+                    self._insert(data["idtype"], entry)
                 except Exception:
                     # Insertion into the cache file failed. This is unexpected and may indicate system dataset issues
                     # (for example, a race on moving around system dataset). It's better to just skip the insertion and
                     # let someone else handle system dataset issues.
-                    self.logger.warning('Failed to insert %s into directory services cache', entry, exc_info=True)
+                    self.logger.warning("Failed to insert %s into directory services cache", entry, exc_info=True)
             except KeyError:
                 # KeyError here means that the `user.get_user_obj` or `group.get_group_obj` call failed. In this case
                 # we return None (lookup failure)
                 entry = None
 
-        if entry and not options['smb']:
+        if entry and not options["smb"]:
             # caller has not requested SMB information and so we should strip it
-            entry['sid'] = None
+            entry["sid"] = None
 
         if entry is not None:
-            entry['roles'] = []
+            entry["roles"] = []
 
         return entry
 
@@ -189,29 +189,29 @@ class DSCache(Service):
         are not evaluated here because user.query and group.query applies pagination
         on full results.
         """
-        ds = self.middleware.call_sync('directoryservices.status')
-        if ds['type'] is None:
+        ds = self.middleware.call_sync("directoryservices.status")
+        if ds["type"] is None:
             return []
 
-        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
-        is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
+        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ["username", "name", "group"])
+        is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ["uid", "gid"])
 
-        if (is_name_check or is_id_check) and filters[0][1] == '=':
+        if (is_name_check or is_id_check) and filters[0][1] == "=":
             # Special case where explitly single user / group is being queried.
             # If it's not present in cache we will directly issue NSS request and
             # generate cache entry based on its results. This allows slowly building
             # a cache when user / group enumeration is disabled.
-            key = 'who' if is_name_check else 'id'
+            key = "who" if is_name_check else "id"
             entry = self._retrieve({
-                'idtype': id_type,
+                "idtype": id_type,
                 key: filters[0][2],
-            }, {'smb': ds['type'] in (DSType.AD.value, DSType.IPA.value)})
+            }, {"smb": ds["type"] in (DSType.AD.value, DSType.IPA.value)})
 
             return [entry] if entry else []
 
         # options must be omitted to defer pagination logic to caller
         entries = query_cache_entries(IDType[id_type], filters, {})
-        return sorted(entries, key=lambda i: i['id'])
+        return sorted(entries, key=lambda i: i["id"])
 
     def idmap_online_check_wait_wbclient(self, job):
         """
@@ -222,18 +222,18 @@ class DSCache(Service):
         waited = 0
         client = WBClient()
         while waited <= 60:
-            if client.domain_info()['online']:
+            if client.domain_info()["online"]:
                 return
 
             # only log every 10th iteration
             if waited % 10 == 0:
-                job.set_progress(10, 'Waiting for domain to come online')
-                self.logger.debug('Waiting for domain to come online')
+                job.set_progress(10, "Waiting for domain to come online")
+                self.logger.debug("Waiting for domain to come online")
 
             sleep(1)
             waited += 1
 
-        raise CallError('Timed out while waiting for domain to come online')
+        raise CallError("Timed out while waiting for domain to come online")
 
     def idmap_online_check_wait_sssd(self, job):
         """
@@ -269,7 +269,7 @@ class DSCache(Service):
                 if exc.return_code != NssReturnCode.UNAVAIL:
                     raise exc from None
 
-                self.logger.debug('nss_sss is currently unavailable.')
+                self.logger.debug("nss_sss is currently unavailable.")
                 # insert a little more delay to avoid spamming sssd
                 sleep(5)
 
@@ -280,13 +280,13 @@ class DSCache(Service):
 
             # only log every 10th iteration
             if waited % 10 == 0:
-                job.set_progress(10, 'Waiting for domain to come online')
-                self.logger.debug('Waiting for domain to come online')
+                job.set_progress(10, "Waiting for domain to come online")
+                self.logger.debug("Waiting for domain to come online")
 
             sleep(1)
             waited += 1
 
-        raise CallError('Timed out while waiting for domain to come online')
+        raise CallError("Timed out while waiting for domain to come online")
 
     @job(lock="directoryservices_cache_fill", lock_queue_size=1)
     def refresh_impl(self, job, force=False):
@@ -305,48 +305,48 @@ class DSCache(Service):
                 * cache is not expired and force was not specified
         """
 
-        ds = self.middleware.call_sync('directoryservices.status')
-        if ds['type'] is None:
-            job.set_progress(100, 'Directory services not enabled.')
+        ds = self.middleware.call_sync("directoryservices.status")
+        if ds["type"] is None:
+            job.set_progress(100, "Directory services not enabled.")
             return False
 
-        if ds['status'] not in (DSStatus.HEALTHY.name, DSStatus.JOINING.name):
+        if ds["status"] not in (DSStatus.HEALTHY.name, DSStatus.JOINING.name):
             self.logger.warning(
-                'Unable to refresh [%s] cache, state is: %s',
-                ds['type'], ds['status']
+                "Unable to refresh [%s] cache, state is: %s",
+                ds["type"], ds["status"]
             )
-            job.set_progress(100, 'Directory services not healthy.')
+            job.set_progress(100, "Directory services not healthy.")
             return False
 
-        ds_type = DSType(ds['type'])
+        ds_type = DSType(ds["type"])
         match ds_type:
             case DSType.AD:
                 self.idmap_online_check_wait_wbclient(job)
             case DSType.IPA | DSType.LDAP:
                 self.idmap_online_check_wait_sssd(job)
             case _:
-                raise ValueError(f'{ds_type}: unexpected DSType')
+                raise ValueError(f"{ds_type}: unexpected DSType")
 
-        vers = self.middleware.call_sync('system.version_short')
+        vers = self.middleware.call_sync("system.version_short")
         if not force:
             # Checking cache version will forcibly remove cache if it
             # is the wrong version, which will allow check_cache_expired()
             # to fail and trigger cache rebuild.
             check_cache_version(vers)
             if not check_cache_expired():
-                job.set_progress(100, 'Cache is not expired. Skipping refresh.')
+                job.set_progress(100, "Cache is not expired. Skipping refresh.")
                 return False
 
         with DSCacheFill() as dc:
-            job.set_progress(15, 'Filling cache')
+            job.set_progress(15, "Filling cache")
             dc.fill_cache(job, ds_type, vers)
 
         return True
 
     async def abort_refresh(self):
-        cache_job = await self.middleware.call('core.get_jobs', [
-            ['method', '=', 'directoryservices.cache.refresh_impl'],
-            ['state', '=', 'RUNNING']
+        cache_job = await self.middleware.call("core.get_jobs", [
+            ["method", "=", "directoryservices.cache.refresh_impl"],
+            ["state", "=", "RUNNING"]
         ])
         if cache_job:
-            await self.middleware.call('core.job_abort', cache_job[0]['id'])
+            await self.middleware.call("core.job_abort", cache_job[0]["id"])

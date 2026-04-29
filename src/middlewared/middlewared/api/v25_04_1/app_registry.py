@@ -3,8 +3,8 @@ from pydantic import Secret
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    'AppRegistryEntry', 'AppRegistryCreateArgs', 'AppRegistryCreateResult', 'AppRegistryUpdateArgs',
-    'AppRegistryUpdateResult', 'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
+    "AppRegistryEntry", "AppRegistryCreateArgs", "AppRegistryCreateResult", "AppRegistryUpdateArgs",
+    "AppRegistryUpdateResult", "AppRegistryDeleteArgs", "AppRegistryDeleteResult",
 ]
 
 
@@ -19,7 +19,7 @@ class AppRegistryEntry(BaseModel):
 
 class AppRegistryCreate(AppRegistryEntry):
     id: Excluded = excluded_field()
-    uri: str = 'https://index.docker.io/v1/'
+    uri: str = "https://index.docker.io/v1/"
 
 
 class AppRegistryCreateArgs(BaseModel):

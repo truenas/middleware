@@ -3,8 +3,8 @@ from typing import Literal
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
 __all__ = [
-    'AppImageEntry', 'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
-    'AppImagePullArgs', 'AppImagePullResult', 'AppImageDeleteArgs', 'AppImageDeleteResult',
+    "AppImageEntry", "AppImageDockerhubRateLimitArgs", "AppImageDockerhubRateLimitResult",
+    "AppImagePullArgs", "AppImagePullResult", "AppImageDeleteArgs", "AppImageDeleteResult",
 ]
 
 
@@ -53,7 +53,7 @@ class AppImageAuthConfig(BaseModel):
     registry_uri: str | None = None
 
 
-@single_argument_args('image_pull')
+@single_argument_args("image_pull")
 class AppImagePullArgs(BaseModel):
     auth_config: AppImageAuthConfig | None = None
     image: NonEmptyString

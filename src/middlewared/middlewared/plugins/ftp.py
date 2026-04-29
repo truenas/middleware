@@ -6,7 +6,7 @@ import middlewared.sqlalchemy as sa
 
 
 class FTPModel(sa.Model):
-    __tablename__ = 'services_ftp'
+    __tablename__ = "services_ftp"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     ftp_port = sa.Column(sa.Integer(), default=21)
@@ -46,7 +46,7 @@ class FTPModel(sa.Model):
     ftp_tls_opt_stdenvvars = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_dns_name_required = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_ip_address_required = sa.Column(sa.Boolean(), default=False)
-    ftp_ssltls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    ftp_ssltls_certificate_id = sa.Column(sa.ForeignKey("system_certificate.id"), index=True, nullable=True)
     ftp_options = sa.Column(sa.Text())
 
 
@@ -63,11 +63,11 @@ class FTPService(SystemServiceService):
 
     @private
     async def ftp_extend(self, data):
-        if data['ssltls_certificate']:
-            data['ssltls_certificate'] = data['ssltls_certificate']['id']
+        if data["ssltls_certificate"]:
+            data["ssltls_certificate"] = data["ssltls_certificate"]["id"]
         return data
 
-    @api_method(FTPUpdateArgs, FTPUpdateResult, audit='Update FTP configuration')
+    @api_method(FTPUpdateArgs, FTPUpdateResult, audit="Update FTP configuration")
     async def do_update(self, data):
         """
         Update ftp service configuration.
@@ -178,8 +178,8 @@ class FTPService(SystemServiceService):
 
         await self._update_service(old, new)
 
-        if not old['tls'] and new['tls']:
-            await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
+        if not old["tls"] and new["tls"]:
+            await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
 
         return new
 

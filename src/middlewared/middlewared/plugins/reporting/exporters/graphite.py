@@ -3,7 +3,7 @@ from middlewared.api.current import GraphiteExporter as GraphiteExporterModel
 
 class GraphiteExporter:
 
-    NAME = 'graphite'
+    NAME = "graphite"
     SCHEMA_MODEL = GraphiteExporterModel
 
     @staticmethod

@@ -40,7 +40,7 @@ __all__ = [
 
 def _validate_dataset_name(v: str) -> str:
     if not validate_dataset_name(v):
-        raise ValueError('Please provide a valid dataset name according to ZFS standards')
+        raise ValueError("Please provide a valid dataset name according to ZFS standards")
     return v
 
 
@@ -58,7 +58,7 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     """The raw string value of the ZFS property as stored in the pool. Can be null if not set."""
     value: str | None
     """The current effective value of the ZFS property as a string. Can be null if inherited or not set."""
-    source: str | None = Field(examples=['LOCAL', 'INHERITED', 'DEFAULT'])
+    source: str | None = Field(examples=["LOCAL", "INHERITED", "DEFAULT"])
     """Indicates where the property value originates from."""
     source_info: Any
     """Additional metadata about the property source, such as the parent dataset for inherited values."""
@@ -66,9 +66,9 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
 
 class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     model_config = ConfigDict(extra="allow", strict=False)
-    id: str = Field(examples=['tank/dataset/child'])
+    id: str = Field(examples=["tank/dataset/child"])
     """The full dataset path including pool name."""
-    type: str = Field(examples=['FILESYSTEM', 'VOLUME'])
+    type: str = Field(examples=["FILESYSTEM", "VOLUME"])
     """The dataset type."""
     name: str
     """The dataset name without the pool prefix."""
@@ -187,7 +187,7 @@ class PoolDatasetChangeKeyOptions(BaseModel):
 
     @classmethod
     def from_previous(cls, value):
-        value['pbkdf2iters'] = max(1300000, value['pbkdf2iters'])
+        value["pbkdf2iters"] = max(1300000, value["pbkdf2iters"])
         return value
 
 
@@ -376,7 +376,7 @@ class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
-    quota_type: Literal['USER', 'GROUP']
+    quota_type: Literal["USER", "GROUP"]
     """Type identifier for user or group quotas."""
     id: int
     """The UID or GID to which the quota applies."""
@@ -391,7 +391,7 @@ class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
 
 
 class PoolDatasetDatasetQuota(_PoolDatasetQuota):
-    quota_type: Literal['DATASET']
+    quota_type: Literal["DATASET"]
     """Type identifier for dataset quotas."""
     id: str
     """Name of the dataset."""
@@ -402,7 +402,7 @@ class PoolDatasetDatasetQuota(_PoolDatasetQuota):
 
 
 class PoolDatasetProjectQuota(_PoolDatasetQuota):
-    quota_type: Literal['PROJECT']
+    quota_type: Literal["PROJECT"]
     """Type identifier for project quotas."""
     id: int
     """The project ID."""
@@ -415,12 +415,12 @@ class PoolDatasetProjectQuota(_PoolDatasetQuota):
 
 PoolDatasetQuota = Annotated[
     PoolDatasetUserGroupQuota | PoolDatasetDatasetQuota | PoolDatasetProjectQuota,
-    Field(discriminator='quota_type')
+    Field(discriminator="quota_type")
 ]
 
 
 class PoolDatasetSetQuota(BaseModel):
-    quota_type: Literal['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ']
+    quota_type: Literal["DATASET", "USER", "USEROBJ", "GROUP", "GROUPOBJ"]
     """The type of quota to apply to the dataset. There are three over-arching types of quotas for ZFS datasets:
 
     * **Dataset quotas and refquotas.** If a `DATASET` quota type is specified in this API call, then the API acts as \
@@ -543,16 +543,16 @@ class PoolDatasetCompressionChoicesResult(BaseModel):
 
 
 class PoolDatasetCreateArgs(BaseModel):
-    data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume = Field(discriminator='type')
+    data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume = Field(discriminator="type")
     """Configuration data for creating a new ZFS dataset."""
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def set_default_type(cls, data: Any) -> Any:
         """Default to FILESYSTEM type if not specified (backward compatibility)"""
-        if isinstance(data, dict) and 'data' in data:
-            if isinstance(data['data'], dict) and 'type' not in data['data']:
-                data['data']['type'] = 'FILESYSTEM'
+        if isinstance(data, dict) and "data" in data:
+            if isinstance(data["data"], dict) and "type" not in data["data"]:
+                data["data"]["type"] = "FILESYSTEM"
         return data
 
 
@@ -643,7 +643,7 @@ class PoolDatasetExportKeysForReplicationResult(BaseModel):
 class PoolDatasetGetQuotaArgs(BaseModel):
     dataset: str
     """The dataset path to retrieve quotas for."""
-    quota_type: Literal['USER', 'GROUP', 'DATASET', 'PROJECT']
+    quota_type: Literal["USER", "GROUP", "DATASET", "PROJECT"]
     """The type of quotas to retrieve."""
     filters: QueryFilters = []
     """Query filters to limit the results returned."""
@@ -674,7 +674,7 @@ class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
     """The record ID for updates, or null for new records."""
     name: NonEmptyString
     """The dataset name for the encryption record."""
-    key_format: str | None = Field(examples=['hex', 'raw', 'passphrase'])
+    key_format: str | None = Field(examples=["hex", "raw", "passphrase"])
     """The format of the encryption key."""
 
 
@@ -740,7 +740,7 @@ class PoolDatasetSetQuotaArgs(BaseModel):
     """The name of the target ZFS dataset."""
     quotas: list[PoolDatasetSetQuota] = Field(
         max_length=100,
-        default=[PoolDatasetSetQuota(quota_type='USER', id='0', quota_value=0)]
+        default=[PoolDatasetSetQuota(quota_type="USER", id="0", quota_value=0)]
     )
     """Specify an array of quota entries to apply to dataset. The array may contain all supported quota types."""
 

@@ -1,10 +1,10 @@
 import os
 import shutil
 
-UPS_CONFPATH = '/etc/nut'
-UPS_USER = 'nut'
-UPS_VARPATH = '/var/run/nut'
-UPSSCHED_VARPATH = '/var/run/nut/private'
+UPS_CONFPATH = "/etc/nut"
+UPS_USER = "nut"
+UPS_VARPATH = "/var/run/nut"
+UPSSCHED_VARPATH = "/var/run/nut/private"
 
 
 def generate_ups_config(middleware):
@@ -15,8 +15,8 @@ def generate_ups_config(middleware):
     os.makedirs(UPS_VARPATH, exist_ok=True)
     os.makedirs(UPSSCHED_VARPATH, exist_ok=True)
 
-    ups_group = middleware.call_sync('group.query', [['group', '=', UPS_USER]], {'get': True})
-    os.chown(UPS_VARPATH, 0, ups_group['gid'])
+    ups_group = middleware.call_sync("group.query", [["group", "=", UPS_USER]], {"get": True})
+    os.chown(UPS_VARPATH, 0, ups_group["gid"])
     os.chmod(UPS_VARPATH, 0o775)
     os.chmod(UPSSCHED_VARPATH, 0o770)
 

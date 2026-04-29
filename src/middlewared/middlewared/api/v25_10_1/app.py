@@ -7,24 +7,24 @@ from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_a
 from .catalog import CatalogAppInfo
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
-    'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
-    'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
-    'AppContainerConsoleChoicesResult', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
-    'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
-    'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
-    'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
-    'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem',
+    "AppCategoriesArgs", "AppCategoriesResult", "AppSimilarArgs", "AppSimilarResult", "AppAvailableItem",
+    "AppEntry", "AppCreateArgs", "AppCreateResult", "AppUpdateArgs", "AppUpdateResult", "AppDeleteArgs",
+    "AppDeleteResult", "AppConfigArgs", "AppConfigResult", "AppConvertToCustomArgs", "AppConvertToCustomResult",
+    "AppStopArgs", "AppStopResult", "AppStartArgs", "AppStartResult", "AppRedeployArgs", "AppRedeployResult",
+    "AppOutdatedDockerImagesArgs", "AppOutdatedDockerImagesResult", "AppPullImagesArgs", "AppPullImagesResult",
+    "AppContainerIdsArgs", "AppContainerIdsResult", "AppContainerConsoleChoicesArgs",
+    "AppContainerConsoleChoicesResult", "AppCertificateChoicesArgs", "AppCertificateChoicesResult",
+    "AppUsedPortsArgs", "AppUsedPortsResult", "AppUsedHostIpsArgs", "AppUsedHostIpsResult",
+    "AppIpChoicesArgs", "AppIpChoicesResult", "AppAvailableSpaceArgs", "AppAvailableSpaceResult",
+    "AppGpuChoicesArgs", "AppGpuChoicesResult", "AppRollbackArgs",
+    "AppRollbackResult", "AppRollbackVersionsArgs", "AppRollbackVersionsResult", "AppUpgradeArgs", "AppUpgradeResult",
+    "AppUpgradeSummaryArgs", "AppUpgradeSummaryResult", "AppContainerLogsFollowTailEventSourceArgs",
+    "AppContainerLogsFollowTailEventSourceEvent", "AppStatsEventSourceArgs", "AppStatsEventSourceEvent",
+    "AppLatestItem",
 ]
 
 
-CONTAINER_STATES: TypeAlias = Literal['crashed', 'created', 'exited', 'running', 'starting']
+CONTAINER_STATES: TypeAlias = Literal["crashed", "created", "exited", "running", "starting"]
 
 
 class HostPorts(BaseModel):
@@ -37,7 +37,7 @@ class HostPorts(BaseModel):
 class UsedPorts(BaseModel):
     container_port: int
     """The port number inside the container."""
-    protocol: str = Field(examples=['tcp', 'udp'])
+    protocol: str = Field(examples=["tcp", "udp"])
     """The network protocol used."""
     host_ports: list[HostPorts]
     """Array of host port mappings for this container port."""
@@ -50,7 +50,7 @@ class AppVolumes(BaseModel):
     """The mount path inside the container."""
     mode: str
     """The mount mode (e.g., 'rw' for read-write, 'ro' for read-only)."""
-    type_: str = Field(alias='type', examples=['bind', 'volume'])
+    type_: str = Field(alias="type", examples=["bind", "volume"])
     """The volume type."""
 
 
@@ -77,7 +77,7 @@ class AppNetworks(BaseModel):
     Labels: dict
     """Key-value pairs of labels associated with the network."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class AppActiveWorkloads(BaseModel):
@@ -102,7 +102,7 @@ class AppEntry(BaseModel):
     """The display name of the application."""
     id: NonEmptyString
     """Unique identifier for the application instance."""
-    state: Literal['CRASHED', 'DEPLOYING', 'RUNNING', 'STOPPED', 'STOPPING']
+    state: Literal["CRASHED", "DEPLOYING", "RUNNING", "STOPPED", "STOPPING"]
     """Current operational state of the application."""
     upgrade_available: bool
     """Whether a newer version of the application is available for upgrade."""
@@ -132,7 +132,7 @@ class AppEntry(BaseModel):
     """Current configuration values for the application. `null` if configuration is not requested."""
 
 
-@single_argument_args('app_create')
+@single_argument_args("app_create")
 class AppCreateArgs(BaseModel):
     custom_app: bool = False
     """Whether to create a custom application (`true`) or install from catalog (`false`)."""
@@ -140,12 +140,12 @@ class AppCreateArgs(BaseModel):
     """Configuration values for the application installation."""
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
     """Docker Compose configuration as a structured object for custom applications."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = ""
     """Docker Compose configuration as a YAML string for custom applications."""
     catalog_app: str | None = None
     """Name of the catalog application to install. Required when `custom_app` is `false`."""
     app_name: str = Field(
-        examples=['abc123', 'abc', 'abcd-1232'], pattern='^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40
+        examples=["abc123", "abc", "abcd-1232"], pattern="^[a-z]([-a-z0-9]*[a-z0-9])?$", min_length=1, max_length=40
     )
     """
     Application name must have the following:
@@ -154,9 +154,9 @@ class AppCreateArgs(BaseModel):
     * Name must start with an alphabetic character and can end with alphanumeric character.
     * Hyphen '-' is allowed but not as the first or last character.
     """
-    train: NonEmptyString = Field(default='stable', examples=['stable', 'enterprise'])
+    train: NonEmptyString = Field(default="stable", examples=["stable", "enterprise"])
     """The catalog train to install from."""
-    version: NonEmptyString = Field(default='latest', examples=['latest', '1.2.3'])
+    version: NonEmptyString = Field(default="latest", examples=["latest", "1.2.3"])
     """The version of the application to install."""
 
 
@@ -170,7 +170,7 @@ class AppUpdate(BaseModel):
     """Updated configuration values for the application."""
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
     """Updated Docker Compose configuration as a structured object."""
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[LongString] = ""
     """Updated Docker Compose configuration as a YAML string."""
 
 
@@ -439,7 +439,7 @@ class AppRollbackVersionsResult(BaseModel):
 
 
 class UpgradeOptions(BaseModel):
-    app_version: NonEmptyString = 'latest'
+    app_version: NonEmptyString = "latest"
     """Target version to upgrade to. Use 'latest' for the newest available version."""
     values: Secret[dict] = Field(default_factory=dict)
     """Configuration values to apply during the upgrade."""
@@ -460,7 +460,7 @@ class AppUpgradeResult(BaseModel):
 
 
 class UpgradeSummaryOptions(BaseModel):
-    app_version: NonEmptyString = 'latest'
+    app_version: NonEmptyString = "latest"
     """Target version to generate upgrade summary for. Use 'latest' for the newest available version."""
 
 
@@ -499,7 +499,7 @@ class AppAvailableItem(CatalogAppInfo):
     """Name of the catalog this application comes from."""
     installed: bool
     """Whether this application is currently installed on the system."""
-    train: NonEmptyString = Field(examples=['stable', 'enterprise'])
+    train: NonEmptyString = Field(examples=["stable", "enterprise"])
     """The catalog train this application version belongs to."""
     popularity_rank: int | None
     """Popularity ranking of this application. Lower numbers indicate higher popularity. `null` if not ranked."""
@@ -522,7 +522,7 @@ class AppCategoriesResult(BaseModel):
 class AppSimilarArgs(BaseModel):
     app_name: NonEmptyString
     """Name of the application to find similar apps for."""
-    train: NonEmptyString = Field(examples=['stable', 'enterprise'])
+    train: NonEmptyString = Field(examples=["stable", "enterprise"])
     """The catalog train to search within."""
 
 

@@ -86,13 +86,13 @@ class FCPortPortChoicesArgs(BaseModel):
 class FCPortPortChoicesResult(BaseModel):
     result: dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
         {
-            'fc0': {
-                'wwpn': 'naa.2100001122334455',
-                'wwpn_b': 'naa.210000AABBCCDDEEFF'
+            "fc0": {
+                "wwpn": "naa.2100001122334455",
+                "wwpn_b": "naa.210000AABBCCDDEEFF"
             },
-            'fc0/1': {
-                'wwpn': 'naa.2200001122334455',
-                'wwpn_b': 'naa.220000AABBCCDDEEFF'
+            "fc0/1": {
+                "wwpn": "naa.2200001122334455",
+                "wwpn_b": "naa.220000AABBCCDDEEFF"
             },
         },
     ])

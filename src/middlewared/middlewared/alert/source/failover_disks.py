@@ -9,8 +9,8 @@ from typing import Any
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.utils import ProductType
 
-TITLE = 'Disks Missing On '
-TEXT = 'Disks with serial %(serials)s present on '
+TITLE = "Disks Missing On "
+TEXT = "Disks with serial %(serials)s present on "
 
 
 @dataclass(kw_only=True)
@@ -18,8 +18,8 @@ class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
-        title=TITLE + 'Standby Storage Controller',
-        text=TEXT + 'active storage controller but missing on standby storage controller.',
+        title=TITLE + "Standby Storage Controller",
+        text=TEXT + "active storage controller but missing on standby storage controller.",
         products=(ProductType.ENTERPRISE,),
     )
 
@@ -31,8 +31,8 @@ class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
-        title=TITLE + 'Active Storage Controller',
-        text=TEXT + 'standby storage controller but missing on active storage controller.',
+        title=TITLE + "Active Storage Controller",
+        text=TEXT + "standby storage controller but missing on active storage controller.",
         products=(ProductType.ENTERPRISE,),
     )
 
@@ -46,13 +46,13 @@ class FailoverDisksAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]]:
-        if (md := await self.middleware.call('failover.mismatch_disks')):
-            if md['missing_remote']:
+        if (md := await self.middleware.call("failover.mismatch_disks")):
+            if md["missing_remote"]:
                 return [Alert(
-                    DisksAreNotPresentOnStandbyNodeAlert(serials=', '.join(md['missing_remote']))
+                    DisksAreNotPresentOnStandbyNodeAlert(serials=", ".join(md["missing_remote"]))
                 )]
-            if md['missing_local']:
+            if md["missing_local"]:
                 return [Alert(
-                    DisksAreNotPresentOnActiveNodeAlert(serials=', '.join(md['missing_local']))
+                    DisksAreNotPresentOnActiveNodeAlert(serials=", ".join(md["missing_local"]))
                 )]
         return []

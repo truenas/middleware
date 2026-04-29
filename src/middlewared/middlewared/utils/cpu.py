@@ -10,18 +10,18 @@ from middlewared.utils.sensors import SensorsWrapper
 AMD_PREFER_TDIE = (
     # https://github.com/torvalds/linux/blob/master/drivers/hwmon/k10temp.c#L121
     # static const struct tctl_offset tctl_offset_table[] = {
-    'AMD Ryzen 5 1600X',
-    'AMD Ryzen 7 1700X',
-    'AMD Ryzen 7 1800X',
-    'AMD Ryzen 7 2700X',
-    'AMD Ryzen Threadripper 19',
-    'AMD Ryzen Threadripper 29',
+    "AMD Ryzen 5 1600X",
+    "AMD Ryzen 7 1700X",
+    "AMD Ryzen 7 1800X",
+    "AMD Ryzen 7 2700X",
+    "AMD Ryzen Threadripper 19",
+    "AMD Ryzen Threadripper 29",
 )
 AMD_PREFIXES = (
-    'k8temp',
-    'k10temp',
+    "k8temp",
+    "k10temp",
 )
-RE_CORE = re.compile(r'^Core ([0-9]+)$')
+RE_CORE = re.compile(r"^Core ([0-9]+)$")
 
 sensors = None
 
@@ -48,31 +48,31 @@ def cpu_info() -> CpuInfo:
 
 
 def cpu_info_impl() -> CpuInfo:
-    cc = os.sysconf('SC_NPROCESSORS_ONLN') or None
+    cc = os.sysconf("SC_NPROCESSORS_ONLN") or None
 
     cm = None
-    with open('/proc/cpuinfo', 'rb') as f:
-        for line in filter(lambda x: x.startswith(b'model name'), f):
-            cm = line.split(b':')[-1].strip().decode() or None
+    with open("/proc/cpuinfo", "rb") as f:
+        for line in filter(lambda x: x.startswith(b"model name"), f):
+            cm = line.split(b":")[-1].strip().decode() or None
             break
 
     pcc: set[str] = set()
     ht_map: dict[str, str] = dict()
-    with os.scandir('/sys/devices/system/cpu/') as sdir:
-        for i in filter(lambda x: x.is_dir() and x.name.startswith('cpu'), sdir):
+    with os.scandir("/sys/devices/system/cpu/") as sdir:
+        for i in filter(lambda x: x.is_dir() and x.name.startswith("cpu"), sdir):
             try:
-                with open(os.path.join(i.path, 'topology/core_cpus_list')) as f:
+                with open(os.path.join(i.path, "topology/core_cpus_list")) as f:
                     _pcc = f.read().strip()
                     pcc.add(_pcc)
-                    pcid, htid = '', ''
-                    for sep in (',', '-'):
+                    pcid, htid = "", ""
+                    for sep in (",", "-"):
                         # file is written with commas or hyphens
                         try:
                             pcid, htid = _pcc.split(sep)
                         except ValueError:
                             continue
 
-                    if i.name[len('cpu'):] == htid:
+                    if i.name[len("cpu"):] == htid:
                         # the directory we're in is named `cpu0/1/2/etc`
                         # and if the 1st number in the cores_cpus_list
                         # file is the same as the directory, then it's
@@ -89,7 +89,7 @@ def cpu_info_impl() -> CpuInfo:
                         #   This means `cpu0` is a physical core because
                         #   the `0` in `cpu0` matches the first number
                         #   in the file (0,8)
-                        ht_map[f'cpu{pcid}'] = i.name
+                        ht_map[f"cpu{pcid}"] = i.name
             except FileNotFoundError:
                 continue
 
@@ -103,7 +103,7 @@ def cpu_info_impl() -> CpuInfo:
 
 def generic_cpu_temperatures(cpu_metrics: dict[str, Any]) -> dict[int, float]:
     temperatures: dict[str, dict[int, float]] = collections.defaultdict(dict)
-    for chip_name in filter(lambda sen: sen.startswith('coretemp'), cpu_metrics):
+    for chip_name in filter(lambda sen: sen.startswith("coretemp"), cpu_metrics):
         for label, temp in cpu_metrics[chip_name].items():
             if not (m := RE_CORE.match(label)):
                 continue
@@ -119,32 +119,32 @@ def generic_cpu_temperatures(cpu_metrics: dict[str, Any]) -> dict[int, float]:
 
 
 def amd_cpu_temperatures(amd_sensors: dict[str, Any]) -> dict[int, float] | None:
-    cpu_model = cpu_info()['cpu_model']
-    core_count = cpu_info()['physical_core_count']
+    cpu_model = cpu_info()["cpu_model"]
+    core_count = cpu_info()["physical_core_count"]
 
     ccds: list[float] = []
     for k, v in amd_sensors.items():
-        if k.startswith('Tccd') and v:
+        if k.startswith("Tccd") and v:
             if isinstance(v, (int, float)):
                 ccds.append(float(v))
     has_tdie = (
-        'Tdie' in amd_sensors and amd_sensors['Tdie'] and isinstance(amd_sensors['Tdie'], (int, float))
+        "Tdie" in amd_sensors and amd_sensors["Tdie"] and isinstance(amd_sensors["Tdie"], (int, float))
     )
     if cpu_model and cpu_model.startswith(AMD_PREFER_TDIE) and has_tdie:
-        return dict(enumerate([amd_sensors['Tdie']] * core_count))
+        return dict(enumerate([amd_sensors["Tdie"]] * core_count))
     elif ccds and core_count % len(ccds) == 0:
         return dict(enumerate(sum([[t] * (core_count // len(ccds)) for t in ccds], [])))
     elif has_tdie:
-        return dict(enumerate([amd_sensors['Tdie']] * core_count))
+        return dict(enumerate([amd_sensors["Tdie"]] * core_count))
     elif (
-        'Tctl' in amd_sensors and amd_sensors['Tctl'] and isinstance(amd_sensors['Tctl'], (int, float))
+        "Tctl" in amd_sensors and amd_sensors["Tctl"] and isinstance(amd_sensors["Tctl"], (int, float))
     ):
-        return dict(enumerate([amd_sensors['Tctl']] * core_count))
-    elif 'temp1' in amd_sensors:
-        if isinstance(amd_sensors['temp1'], float):
-            return dict(enumerate([amd_sensors['temp1']] * core_count))
-        elif 'temp1_input' in amd_sensors['temp1']:
-            return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
+        return dict(enumerate([amd_sensors["Tctl"]] * core_count))
+    elif "temp1" in amd_sensors:
+        if isinstance(amd_sensors["temp1"], float):
+            return dict(enumerate([amd_sensors["temp1"]] * core_count))
+        elif "temp1_input" in amd_sensors["temp1"]:
+            return dict(enumerate([amd_sensors["temp1"]["temp1_input"]] * core_count))
 
     return None
 
@@ -189,30 +189,30 @@ def get_cpu_temperatures() -> dict[str, float]:
     total_temp = 0.0
     cinfo = cpu_info()
     for core, temp in cpu_data.items():
-        data[f'cpu{core}'] = temp
+        data[f"cpu{core}"] = temp
         total_temp += temp
         try:
             # we follow the paradigm that htop uses
             # for filling in the hyper-threaded ids
             # temperatures. (i.e. we just copy the
             # temp of the parent physical core id)
-            data[cinfo['ht_map'][f'cpu{core}']] = temp
+            data[cinfo["ht_map"][f"cpu{core}"]] = temp
             total_temp += temp
         except KeyError:
             continue
 
     if total_temp:
-        data['cpu'] = total_temp / len(data)
+        data["cpu"] = total_temp / len(data)
 
-    return data or ({f'cpu{i}': 0.0 for i in range(cinfo['core_count'] or 0)} | {'cpu': 0.0})
+    return data or ({f"cpu{i}": 0.0 for i in range(cinfo["core_count"] or 0)} | {"cpu": 0.0})
 
 
 @functools.cache
 def cpu_flags() -> CpuFlags:
-    with open('/proc/cpuinfo', 'rb') as f:
-        for line in filter(lambda x: x.startswith((b'processor', b'flags')), f):
-            parts = line.decode('utf-8').split(':', 1)
+    with open("/proc/cpuinfo", "rb") as f:
+        for line in filter(lambda x: x.startswith((b"processor", b"flags")), f):
+            parts = line.decode("utf-8").split(":", 1)
             title = parts[0].strip()
-            if title == 'flags':
+            if title == "flags":
                 return parts[1].strip().split()
     return []

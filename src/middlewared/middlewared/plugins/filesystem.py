@@ -80,7 +80,7 @@ class FileFollowTailEventSource(EventSource):
     event = FileFollowTailEventSourceEvent
 
     def run_sync(self):
-        path, lines = self.arg['path'], self.arg['tail_lines']
+        path, lines = self.arg["path"], self.arg["tail_lines"]
 
         if not os.path.exists(path):
             # FIXME: Error?
@@ -91,7 +91,7 @@ class FileFollowTailEventSource(EventSource):
         if fsize < bufsize:
             bufsize = fsize
         i = 0
-        with safe_open(path, encoding='utf-8', errors='ignore') as f:
+        with safe_open(path, encoding="utf-8", errors="ignore") as f:
             data = []
             while True:
                 i += 1
@@ -102,11 +102,11 @@ class FileFollowTailEventSource(EventSource):
                 if len(data) >= lines or f.tell() == 0:
                     break
 
-            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
+            self.send_event("ADDED", fields={"data": "".join(data[-lines:])})
             f.seek(fsize)
 
             for data in self._follow_path(path, f):
-                self.send_event('ADDED', fields={'data': data})
+                self.send_event("ADDED", fields={"data": data})
 
     def _follow_path(self, path, f):
         queue = []
@@ -146,14 +146,14 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
         event_sources = {
-            'filesystem.file_tail_follow': FileFollowTailEventSource,
+            "filesystem.file_tail_follow": FileFollowTailEventSource,
         }
 
     @api_method(
         FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
-        roles=['FILESYSTEM_ATTRS_WRITE'],
-        audit='Filesystem set ZFS attributes',
-        audit_extended=lambda data: data['path']
+        roles=["FILESYSTEM_ATTRS_WRITE"],
+        audit="Filesystem set ZFS attributes",
+        audit_extended=lambda data: data["path"]
     )
     def set_zfs_attributes(self, data):
         """
@@ -186,13 +186,13 @@ class FilesystemService(Service):
         no impact on local filesystem.
         """
         try:
-            return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+            return attrs.set_zfs_file_attributes_dict(data["path"], data["zfs_file_attributes"])
         except OSError as e:
             if e.errno == errno.ELOOP:
-                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+                raise CallError("Symlinks are not permitted.", errno.ELOOP)
             raise
 
-    @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=["FILESYSTEM_ATTRS_READ"])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
@@ -201,7 +201,7 @@ class FilesystemService(Service):
             fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
         except OSError as e:
             if e.errno == errno.ELOOP:
-                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+                raise CallError("Symlinks are not permitted.", errno.ELOOP)
             raise
         try:
             attr_mask = attrs.fget_zfs_file_attributes(fd)
@@ -223,13 +223,13 @@ class FilesystemService(Service):
 
     @private
     def is_dataset_path(self, path):
-        return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
+        return path.startswith("/mnt/") and os.stat(path).st_dev != os.stat("/mnt").st_dev
 
     @filterable_api_method(private=True)
     def mount_info(self, filters, options):
         return filter_list(iter_mountinfo(), filters, options)
 
-    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
+    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=["FILESYSTEM_DATA_WRITE"])
     def mkdir(self, data):
         """
         Create a directory at the specified path.
@@ -245,24 +245,24 @@ class FilesystemService(Service):
         indicate the current permissions on the directory and not the permissions specified
         in the mkdir payload
         """
-        path = data['path']
-        options = data['options']
-        mode = int(options['mode'], 8)
+        path = data["path"]
+        options = data["options"]
+        mode = int(options["mode"], 8)
 
         p = pathlib.Path(path)
         if not p.is_absolute():
-            raise CallError(f'{path}: not an absolute path.', errno.EINVAL)
+            raise CallError(f"{path}: not an absolute path.", errno.EINVAL)
 
         if p.exists():
-            raise CallError(f'{path}: path already exists.', errno.EEXIST)
+            raise CallError(f"{path}: path already exists.", errno.EEXIST)
 
         realpath = os.path.realpath(path)
-        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
-            raise CallError(f'{path}: path not permitted', errno.EPERM)
+        if not realpath.startswith(("/mnt/", "/root/.ssh", "/home/admin/.ssh", "/home/truenas_admin/.ssh")):
+            raise CallError(f"{path}: path not permitted", errno.EPERM)
 
         os.mkdir(path, mode=mode)
         st = stat_x.statx_entry_impl(p)
-        stat = st['st']
+        stat = st["st"]
 
         if statlib.S_IMODE(stat.stx_mode) != mode:
             # This may happen if requested mode is greater than umask
@@ -270,32 +270,32 @@ class FilesystemService(Service):
             try:
                 os.chmod(path, mode)
             except Exception:
-                if options['raise_chmod_error']:
+                if options["raise_chmod_error"]:
                     os.rmdir(path)
                     raise
 
                 self.logger.debug(
-                    '%s: failed to set mode %s on path after mkdir call',
-                    path, options['mode'], exc_info=True
+                    "%s: failed to set mode %s on path after mkdir call",
+                    path, options["mode"], exc_info=True
                 )
 
         return {
-            'name': p.parts[-1],
-            'path': path,
-            'realpath': realpath,
-            'type': 'DIRECTORY',
-            'size': stat.stx_size,
-            'allocation_size': stat.stx_blocks * 512,
-            'mode': stat.stx_mode,
-            'acl': acl_is_present(os.listxattr(path)),
-            'uid': stat.stx_uid,
-            'gid': stat.stx_gid,
-            'is_mountpoint': False,
-            'is_ctldir': False,
-            'mount_id': st['st'].stx_mnt_id,
-            'attributes': st['attributes'],
-            'xattrs': [],
-            'zfs_attrs': ['ARCHIVE']
+            "name": p.parts[-1],
+            "path": path,
+            "realpath": realpath,
+            "type": "DIRECTORY",
+            "size": stat.stx_size,
+            "allocation_size": stat.stx_blocks * 512,
+            "mode": stat.stx_mode,
+            "acl": acl_is_present(os.listxattr(path)),
+            "uid": stat.stx_uid,
+            "gid": stat.stx_gid,
+            "is_mountpoint": False,
+            "is_ctldir": False,
+            "mount_id": st["st"].stx_mnt_id,
+            "attributes": st["attributes"],
+            "xattrs": [],
+            "zfs_attrs": ["ARCHIVE"]
         }
 
     @private
@@ -312,20 +312,20 @@ class FilesystemService(Service):
             selected = i[0] if isinstance(i, list) else i
 
             match selected:
-                case 'realpath':
+                case "realpath":
                     request_mask |= DirectoryRequestMask.REALPATH
-                case 'acl':
+                case "acl":
                     request_mask |= DirectoryRequestMask.ACL
-                case 'zfs_attrs':
+                case "zfs_attrs":
                     request_mask |= DirectoryRequestMask.ZFS_ATTRS
-                case 'is_ctldir':
+                case "is_ctldir":
                     request_mask |= DirectoryRequestMask.CTLDIR
-                case 'xattrs':
+                case "xattrs":
                     request_mask |= DirectoryRequestMask.XATTRS
 
         return request_mask
 
-    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=["FILESYSTEM_ATTRS_READ"])
     def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
@@ -339,16 +339,16 @@ class FilesystemService(Service):
         """
         path = pathlib.Path(path)
         if not path.exists():
-            raise CallError(f'Directory {path} does not exist', errno.ENOENT)
+            raise CallError(f"Directory {path} does not exist", errno.ENOENT)
 
         if not path.is_dir():
-            raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
+            raise CallError(f"Path {path} is not a directory", errno.ENOTDIR)
 
-        if options.get('count') is True:
+        if options.get("count") is True:
             # We're just getting count, drop any unnecessary info
             request_mask = 0
         else:
-            request_mask = self.listdir_request_mask(options.get('select', None))
+            request_mask = self.listdir_request_mask(options.get("select", None))
 
         # None request_mask means "everything"
         if request_mask is None or (request_mask & DirectoryRequestMask.ZFS_ATTRS):
@@ -358,24 +358,24 @@ class FilesystemService(Service):
             except CallError:
                 raise
             except Exception:
-                raise CallError(f'{path}: ZFS attributes are not supported.')
+                raise CallError(f"{path}: ZFS attributes are not supported.")
 
         file_type = None
         for filter_ in filters:
-            if filter_[0] not in ['type']:
+            if filter_[0] not in ["type"]:
                 continue
 
-            if filter_[1] != '=':
+            if filter_[1] != "=":
                 continue
 
-            if filter_[2] == 'DIRECTORY':
+            if filter_[2] == "DIRECTORY":
                 file_type = FileType.DIRECTORY
-            elif filter_[2] == 'FILE':
+            elif filter_[2] == "FILE":
                 file_type = FileType.FILE
             else:
                 continue
 
-        if path.absolute() == pathlib.Path('/mnt'):
+        if path.absolute() == pathlib.Path("/mnt"):
             # sometimes (on failures) the top-level directory
             # where the zpool is mounted does not get removed
             # after the zpool is exported. WebUI calls this
@@ -384,12 +384,12 @@ class FilesystemService(Service):
             # prevent shares from being configured to point to
             # a path that doesn't exist on a zpool, we'll
             # filter these here.
-            filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
+            filters.extend([["is_mountpoint", "=", True], ["name", "!=", IX_APPS_DIR_NAME]])
 
         with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
             return filter_list(d_iter, filters, options)
 
-    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=["FILESYSTEM_ATTRS_READ"])
     def stat(self, _path):
         """
         Return filesystem information for a given path.
@@ -444,53 +444,53 @@ class FilesystemService(Service):
         file. See statx(2) manpage for more details.
         """
         if path_location(_path) is FSLocation.EXTERNAL:
-            raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
+            raise CallError(f"{_path} is external to TrueNAS", errno.EXDEV)
 
         path = pathlib.Path(_path)
         if not path.is_absolute():
-            raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
+            raise CallError(f"{_path}: path must be absolute", errno.EINVAL)
 
         st = stat_x.statx_entry_impl(path)
         if st is None:
-            raise CallError(f'Path {_path} not found', errno.ENOENT)
+            raise CallError(f"Path {_path} not found", errno.ENOENT)
 
-        realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
+        realpath = path.resolve().as_posix() if st["etype"] == "SYMLINK" else path.absolute().as_posix()
 
         stat = {
-            'realpath': realpath,
-            'type': st['etype'],
-            'size': st['st'].stx_size,
-            'allocation_size': st['st'].stx_blocks * 512,
-            'mode': st['st'].stx_mode,
-            'uid': st['st'].stx_uid,
-            'gid': st['st'].stx_gid,
-            'atime': st['st'].stx_atime,
-            'mtime': st['st'].stx_mtime,
-            'ctime': st['st'].stx_ctime,
-            'btime': st['st'].stx_btime,
-            'mount_id': st['st'].stx_mnt_id,
-            'dev': st['st'].stx_dev,
-            'inode': st['st'].stx_ino,
-            'nlink': st['st'].stx_nlink,
-            'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
-            'is_ctldir': st['is_ctldir'],
-            'attributes': st['attributes']
+            "realpath": realpath,
+            "type": st["etype"],
+            "size": st["st"].stx_size,
+            "allocation_size": st["st"].stx_blocks * 512,
+            "mode": st["st"].stx_mode,
+            "uid": st["st"].stx_uid,
+            "gid": st["st"].stx_gid,
+            "atime": st["st"].stx_atime,
+            "mtime": st["st"].stx_mtime,
+            "ctime": st["st"].stx_ctime,
+            "btime": st["st"].stx_btime,
+            "mount_id": st["st"].stx_mnt_id,
+            "dev": st["st"].stx_dev,
+            "inode": st["st"].stx_ino,
+            "nlink": st["st"].stx_nlink,
+            "is_mountpoint": "MOUNT_ROOT" in st["attributes"],
+            "is_ctldir": st["is_ctldir"],
+            "attributes": st["attributes"]
         }
 
         try:
-            stat['user'] = pwd.getpwuid(stat['uid']).pw_name
+            stat["user"] = pwd.getpwuid(stat["uid"]).pw_name
         except KeyError:
-            if stat['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
-                stat['user'] = SYNTHETIC_CONTAINER_ROOT['pw_name']
+            if stat["uid"] == SYNTHETIC_CONTAINER_ROOT["pw_uid"]:
+                stat["user"] = SYNTHETIC_CONTAINER_ROOT["pw_name"]
             else:
-                stat['user'] = None
+                stat["user"] = None
 
         try:
-            stat['group'] = grp.getgrgid(stat['gid']).gr_name
+            stat["group"] = grp.getgrgid(stat["gid"]).gr_name
         except KeyError:
-            stat['group'] = None
+            stat["group"] = None
 
-        stat['acl'] = acl_is_present(os.listxattr(path))
+        stat["acl"] = acl_is_present(os.listxattr(path))
 
         return stat
 
@@ -505,7 +505,7 @@ class FilesystemService(Service):
         """
         if path == PWENC_FILE_SECRET:
             raise CallError(
-                'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
+                "Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.",
                 errno.EINVAL
             )
 
@@ -517,18 +517,18 @@ class FilesystemService(Service):
         # would require an fd-walking mkdirat implementation.
         os.makedirs(dirname, exist_ok=True)
 
-        with safe_open(path, 'ab' if options.get('append') else 'wb+') as f:
+        with safe_open(path, "ab" if options.get("append") else "wb+") as f:
             f.write(binascii.a2b_base64(content))
-            if mode := options.get('mode'):
+            if mode := options.get("mode"):
                 os.fchmod(f.fileno(), mode)
             # -1 means don't change uid/gid if the one provided is
             # the same that is on disk already
-            os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
+            os.fchown(f.fileno(), options.get("uid", -1), options.get("gid", -1))
             f.flush()
 
         return True
 
-    @api_method(FilesystemGetArgs, FilesystemGetResult, audit='Filesystem get', roles=['FULL_ADMIN'])
+    @api_method(FilesystemGetArgs, FilesystemGetResult, audit="Filesystem get", roles=["FULL_ADMIN"])
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -536,12 +536,12 @@ class FilesystemService(Service):
         """
 
         if not os.path.isfile(path):
-            raise CallError(f'{path} is not a file')
+            raise CallError(f"{path} is not a file")
 
-        with safe_open(path, 'rb') as f:
+        with safe_open(path, "rb") as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
+    @api_method(FilesystemPutArgs, FilesystemPutResult, audit="Filesystem put", roles=["FULL_ADMIN"])
     @job(pipes=["input"])
     def put(self, job, path, options):
         """
@@ -549,7 +549,7 @@ class FilesystemService(Service):
         """
         if path == PWENC_FILE_SECRET:
             raise CallError(
-                'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
+                "Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.",
                 errno.EINVAL
             )
 
@@ -561,12 +561,12 @@ class FilesystemService(Service):
             # created directories are not rolled back. Fully safe directory creation
             # would require an fd-walking mkdirat implementation.
             os.makedirs(dirname)
-        if options.get('append'):
-            openmode = 'ab'
+        if options.get("append"):
+            openmode = "ab"
         else:
-            openmode = 'wb+'
+            openmode = "wb+"
 
-        mode = options.get('mode')
+        mode = options.get("mode")
 
         try:
             with safe_open(path, openmode) as f:
@@ -575,11 +575,11 @@ class FilesystemService(Service):
 
                 shutil.copyfileobj(job.pipes.input.r, f)
         except PermissionError:
-            raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
+            raise CallError(f"Unable to put contents at {path!r} as the path exists on a locked dataset", errno.EINVAL)
 
         return True
 
-    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=["FILESYSTEM_ATTRS_READ"])
     def statfs(self, path):
         """
         Return stats from the filesystem of a given path.
@@ -596,35 +596,35 @@ class FilesystemService(Service):
                 os.close(fd)
 
         except FileNotFoundError:
-            raise CallError('Path not found.', errno.ENOENT)
+            raise CallError("Path not found.", errno.ENOENT)
         except OSError as e:
             if e.errno == errno.ELOOP:
-                raise CallError('Symlinks are not permitted.', errno.ELOOP)
+                raise CallError("Symlinks are not permitted.", errno.ELOOP)
             raise
 
-        flags = mntinfo['mount_opts']
-        for flag in mntinfo['super_opts']:
+        flags = mntinfo["mount_opts"]
+        for flag in mntinfo["super_opts"]:
             if flag in flags:
                 continue
             flags.append(flag)
 
         result = {
-            'flags': flags,
-            'fstype': mntinfo['fs_type'].lower(),
-            'source': mntinfo['mount_source'],
-            'dest': mntinfo['mountpoint'],
-            'blocksize': st.f_frsize,
-            'total_blocks': st.f_blocks,
-            'free_blocks': st.f_bfree,
-            'avail_blocks': st.f_bavail,
-            'files': st.f_files,
-            'free_files': st.f_ffree,
-            'name_max': st.f_namemax,
-            'fsid': str(st.f_fsid),
-            'total_bytes': st.f_blocks * st.f_frsize,
-            'free_bytes': st.f_bfree * st.f_frsize,
-            'avail_bytes': st.f_bavail * st.f_frsize,
+            "flags": flags,
+            "fstype": mntinfo["fs_type"].lower(),
+            "source": mntinfo["mount_source"],
+            "dest": mntinfo["mountpoint"],
+            "blocksize": st.f_frsize,
+            "total_blocks": st.f_blocks,
+            "free_blocks": st.f_bfree,
+            "avail_blocks": st.f_bavail,
+            "files": st.f_files,
+            "free_files": st.f_ffree,
+            "name_max": st.f_namemax,
+            "fsid": str(st.f_fsid),
+            "total_bytes": st.f_blocks * st.f_frsize,
+            "free_bytes": st.f_bfree * st.f_frsize,
+            "avail_bytes": st.f_bavail * st.f_frsize,
         }
-        for k in ['total_blocks', 'free_blocks', 'avail_blocks', 'total_bytes', 'free_bytes', 'avail_bytes']:
-            result[f'{k}_str'] = str(result[k])
+        for k in ["total_blocks", "free_blocks", "avail_blocks", "total_bytes", "free_bytes", "avail_bytes"]:
+            result[f"{k}_str"] = str(result[k])
         return result

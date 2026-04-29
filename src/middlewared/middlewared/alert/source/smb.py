@@ -24,7 +24,7 @@ def generate_alert_text(auth_log: list[dict[str, Any]]) -> list[str]:
         k += x["workstation"] or x["address"]
 
         if k in alert_text:
-            alert_text[k]['cnt'] += 1
+            alert_text[k]["cnt"] += 1
             continue
 
         entry = {
@@ -90,20 +90,20 @@ class SMBLegacyProtocolAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> Alert[Any] | None:
-        if not await self.middleware.call('service.started', 'cifs'):
+        if not await self.middleware.call("service.started", "cifs"):
             return None
 
         now = time.time()
-        if not (auth_log := await self.middleware.call('audit.query', {
-            'services': ['SMB'],
-            'query-filters': [
-                ['event', '=', 'AUTHENTICATION'],
-                ['message_timestamp', '>', now - 86400],
-                ['event_data.serviceDescription', '=', 'SMB']
+        if not (auth_log := await self.middleware.call("audit.query", {
+            "services": ["SMB"],
+            "query-filters": [
+                ["event", "=", "AUTHENTICATION"],
+                ["message_timestamp", ">", now - 86400],
+                ["event_data.serviceDescription", "=", "SMB"]
             ],
-            'query-options': {
-                'select': ['event_data', 'address'],
-                'limit': AUDIT_MAX_QUERY_ENTRIES,
+            "query-options": {
+                "select": ["event_data", "address"],
+                "limit": AUDIT_MAX_QUERY_ENTRIES,
             }
         })):
             return None
@@ -111,14 +111,14 @@ class SMBLegacyProtocolAlertSource(AlertSource):
         parsed = []
         for entry in auth_log:
             parsed.append({
-                'address': entry['address'],
-                'clientAccount': entry['event_data'].get('clientAccount'),
-                'becameAccount': entry['event_data'].get('becameAccount'),
-                'workstation': entry['event_data'].get('workstation'),
+                "address": entry["address"],
+                "clientAccount": entry["event_data"].get("clientAccount"),
+                "becameAccount": entry["event_data"].get("becameAccount"),
+                "workstation": entry["event_data"].get("workstation"),
             })
 
         return Alert(SMBLegacyProtocolAlert(
-            err=', '.join(generate_alert_text(parsed)),
+            err=", ".join(generate_alert_text(parsed)),
         ))
 
 
@@ -127,25 +127,25 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> Alert[Any] | None:
-        if not await self.middleware.call('service.started', 'cifs'):
+        if not await self.middleware.call("service.started", "cifs"):
             return None
 
-        smb_conf = await self.middleware.call('smb.config')
-        if smb_conf['ntlmv1_auth']:
+        smb_conf = await self.middleware.call("smb.config")
+        if smb_conf["ntlmv1_auth"]:
             return None
 
         now = time.time()
-        if not (auth_log := await self.middleware.call('audit.query', {
-            'services': ['SMB'],
-            'query-filters': [
-                ['event', '=', 'AUTHENTICATION'],
-                ['message_timestamp', '>', now - 86400],
-                ['event_data.serviceDescription', '=', 'SMB'],
-                ['event_data.passwordType', '=', 'NTLMv1']
+        if not (auth_log := await self.middleware.call("audit.query", {
+            "services": ["SMB"],
+            "query-filters": [
+                ["event", "=", "AUTHENTICATION"],
+                ["message_timestamp", ">", now - 86400],
+                ["event_data.serviceDescription", "=", "SMB"],
+                ["event_data.passwordType", "=", "NTLMv1"]
             ],
-            'query-options': {
-                'select': ['event_data', 'address'],
-                'limit': AUDIT_MAX_QUERY_ENTRIES,
+            "query-options": {
+                "select": ["event_data", "address"],
+                "limit": AUDIT_MAX_QUERY_ENTRIES,
             }
         })):
             return None
@@ -153,14 +153,14 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
         parsed = []
         for entry in auth_log:
             parsed.append({
-                'address': entry['address'],
-                'clientAccount': entry['event_data'].get('clientAccount'),
-                'becameAccount': entry['event_data'].get('becameAccount'),
-                'workstation': entry['event_data'].get('workstation'),
+                "address": entry["address"],
+                "clientAccount": entry["event_data"].get("clientAccount"),
+                "becameAccount": entry["event_data"].get("becameAccount"),
+                "workstation": entry["event_data"].get("workstation"),
             })
 
         return Alert(NTLMv1AuthenticationAlert(
-            err=', '.join(generate_alert_text(parsed)),
+            err=", ".join(generate_alert_text(parsed)),
         ))
 
 
@@ -173,19 +173,19 @@ class SMBPathAlertSource(AlertSource):
         for e in verrors:
             errors.append(f'{e[0].split(":")[0]}: {e[1]}')
 
-        return ', '.join(errors)
+        return ", ".join(errors)
 
     async def check(self) -> Alert[Any] | None:
         verrors = ValidationErrors()
 
-        for share in await self.middleware.call('sharing.smb.query', [['enabled', '=', True], ['locked', '=', False]]):
+        for share in await self.middleware.call("sharing.smb.query", [["enabled", "=", True], ["locked", "=", False]]):
             try:
                 await self.middleware.call(
-                    'sharing.smb.validate_path_field',
+                    "sharing.smb.validate_path_field",
                     share, f'{share["name"]}:', verrors
                 )
             except Exception:
-                self.middleware.logger.error('Failed to validate path field', exc_info=True)
+                self.middleware.logger.error("Failed to validate path field", exc_info=True)
 
         if not verrors:
             return None
@@ -193,7 +193,7 @@ class SMBPathAlertSource(AlertSource):
         try:
             msg = await self.smb_path_alert_format(verrors)
         except Exception:
-            self.middleware.logger.error('Failed to format error message', exc_info=True)
+            self.middleware.logger.error("Failed to format error message", exc_info=True)
             return None
 
         return Alert(SMBPathAlert(err=msg))

@@ -72,7 +72,7 @@ def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseMo
 
     # First, check if field has metadata with a Discriminator
     discriminator = None
-    if hasattr(field, 'metadata') and field.metadata:
+    if hasattr(field, "metadata") and field.metadata:
         for meta in field.metadata:
             if isinstance(meta, Discriminator):
                 discriminator = meta

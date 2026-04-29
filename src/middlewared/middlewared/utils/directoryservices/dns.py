@@ -11,7 +11,7 @@ from middlewared.utils.time_utils import utc_now
 
 from .constants import DS_HA_STATE_DIR
 
-DS_DNS_STATE_FILE = os.path.join(DS_HA_STATE_DIR, '.nsupdate_state.json')
+DS_DNS_STATE_FILE = os.path.join(DS_HA_STATE_DIR, ".nsupdate_state.json")
 # When DNS scavenging is enabled in AD, the default refresh interval in AD DNS is 7 days.
 # Then after an additional 7 days by default (the 14 day mark) the DC will remove the record.
 DEFAULT_RECORD_EXPIRY = timedelta(days=7)
@@ -28,7 +28,7 @@ class NSUpdateState:
 
 def __get_nsupdate_state(fqdn: str) -> NSUpdateState | None:
     try:
-        with open(DS_DNS_STATE_FILE, 'r') as f:
+        with open(DS_DNS_STATE_FILE, "r") as f:
             data = NSUpdateState(**json.loads(f.read()))
     except FileNotFoundError:
         # File doesn't exist, ergo no state
@@ -68,7 +68,7 @@ def remove_dns_record_state() -> None:
 def dns_record_is_expired(fqdn: str) -> bool:
     """ Check whether our state is expired. NSUPDATE_LOCK must be held. """
     if not isinstance(fqdn, str):
-        raise ValueError(f'{type(fqdn)}: unexpected type for host when checking DNS record expiration')
+        raise ValueError(f"{type(fqdn)}: unexpected type for host when checking DNS record expiration")
 
     if (data := __get_nsupdate_state(fqdn)) is None:
         # Either no nsupdate data or invalid data
@@ -81,7 +81,7 @@ def dns_record_is_expired(fqdn: str) -> bool:
 def update_dns_record_state(fqdn: str, expiry_time_delta: timedelta = DEFAULT_RECORD_EXPIRY) -> None:
     """ Update our state. NSUPDATE_LOCK must be held. """
     if not isinstance(fqdn, str):
-        raise ValueError(f'{type(fqdn)}: unexpected type for host when updating DNS record state.')
+        raise ValueError(f"{type(fqdn)}: unexpected type for host when updating DNS record state.")
 
     expiry = utc_now(False) + expiry_time_delta
     data = NSUpdateState(fqdn=fqdn, expiry=expiry, version=NSUPDATE_STATE_VERSION)

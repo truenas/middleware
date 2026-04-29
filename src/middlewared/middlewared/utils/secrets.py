@@ -20,7 +20,7 @@ class SSLRandom(Random):
     def getrandbits(self, k: int) -> int:
         """getrandbits(k) -> x.  Generates an int with k random bits."""
         if k < 0:
-            raise ValueError('number of bits must be non-negative')
+            raise ValueError("number of bits must be non-negative")
         numbytes = (k + 7) // 8                       # bits / 8 and rounded up
         x = int.from_bytes(RAND_bytes(numbytes))
         return x >> (numbytes * 8 - k)                # trim excess bits
@@ -37,7 +37,7 @@ class SSLRandom(Random):
 
     def _notimplemented(self, *args: Any, **kwds: Any) -> None:
         """Method should not be called for a system random number generator."""
-        raise NotImplementedError('System entropy source does not have state.')
+        raise NotImplementedError("System entropy source does not have state.")
     getstate = setstate = _notimplemented  # type: ignore[assignment]
 
 
@@ -86,4 +86,4 @@ def token_urlsafe(nbytes: int | None = None) -> str:
 
     """
     tok = token_bytes(nbytes)
-    return urlsafe_b64encode(tok).rstrip(b'=').decode('ascii')
+    return urlsafe_b64encode(tok).rstrip(b"=").decode("ascii")

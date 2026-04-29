@@ -21,7 +21,7 @@ class AdminSessionAlert(AlertClass):
             "The root or default system administrator account was used to authenticate "
             "to the UI / API %(count)d times in the last 24 hours:</br>%(sessions)s.</br>"
             "To improve security, create one or more administrator accounts (see "
-            f"<a href=\"{URL}\" target=\"_blank\">documentation</a>) "
+            f'<a href="{URL}" target="_blank">documentation</a>) '
             "with unique usernames and passwords and disable password access for default "
             "administrator accounts (<b>root</b>, <b>admin</b>, or <b>truenas_admin</b>)."
         ),
@@ -70,40 +70,40 @@ class AdminSessionAlertSource(AlertSource):
     async def check(self) -> Alert[AdminSessionAlert] | None:
         now = int(time())
         qf = [
-            ['message_timestamp', '>', now - 86400],
-            ['event', '=', 'AUTHENTICATION'],
-            ['username', 'in', ['root', 'admin', 'truenas_admin']],
-            ['success', '=', True]
+            ["message_timestamp", ">", now - 86400],
+            ["event", "=", "AUTHENTICATION"],
+            ["username", "in", ["root", "admin", "truenas_admin"]],
+            ["success", "=", True]
         ]
 
-        admin_login_count = await self.middleware.call('audit.query', {
-            'services': ['MIDDLEWARE'],
-            'query-filters': qf,
-            'query-options': {'count': True}
+        admin_login_count = await self.middleware.call("audit.query", {
+            "services": ["MIDDLEWARE"],
+            "query-filters": qf,
+            "query-options": {"count": True}
         })
         if not admin_login_count:
             return None
 
-        admin_logins = await self.middleware.call('audit.query', {
-            'services': ['MIDDLEWARE'],
-            'query-filters': qf,
-            'query-options': {
-                'select': [
-                    'message_timestamp',
-                    'event',
-                    'session',
-                    'username',
-                    'address',
-                    'success'
+        admin_logins = await self.middleware.call("audit.query", {
+            "services": ["MIDDLEWARE"],
+            "query-filters": qf,
+            "query-options": {
+                "select": [
+                    "message_timestamp",
+                    "event",
+                    "session",
+                    "username",
+                    "address",
+                    "success"
                 ],
-                'order_by': [
-                    '-message_timestamp'
+                "order_by": [
+                    "-message_timestamp"
                 ],
-                'limit': MAX_LOGINS_LISTED
+                "limit": MAX_LOGINS_LISTED
             }
         })
 
-        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
+        audit_msg = ",".join([audit_entry_to_msg(entry) for entry in admin_logins])
         return Alert(
             AdminSessionAlert(count=admin_login_count, sessions=audit_msg)
         )
@@ -116,42 +116,42 @@ class APIFailedLoginAlertSource(AlertSource):
     async def check(self) -> Alert[APIFailedLoginAlert] | None:
         now = int(time())
         qf = [
-            ['message_timestamp', '>', now - 86400],
-            ['event', '=', 'AUTHENTICATION'],
-            ['username', '!=', UNAUTHENTICATED],
-            ['success', '=', False]
+            ["message_timestamp", ">", now - 86400],
+            ["event", "=", "AUTHENTICATION"],
+            ["username", "!=", UNAUTHENTICATED],
+            ["success", "=", False]
         ]
 
-        auth_failure_count = await self.middleware.call('audit.query', {
-            'services': ['MIDDLEWARE'],
-            'query-filters': qf,
-            'query-options': {'count': True}
+        auth_failure_count = await self.middleware.call("audit.query", {
+            "services": ["MIDDLEWARE"],
+            "query-filters": qf,
+            "query-options": {"count": True}
         })
         if not auth_failure_count:
             return None
 
-        auth_failures = await self.middleware.call('audit.query', {
-            'services': ['MIDDLEWARE'],
-            'query-filters': qf,
-            'query-options': {
-                'select': [
-                    'message_timestamp',
-                    'event',
-                    'session',
-                    'username',
-                    'address',
-                    'success'
+        auth_failures = await self.middleware.call("audit.query", {
+            "services": ["MIDDLEWARE"],
+            "query-filters": qf,
+            "query-options": {
+                "select": [
+                    "message_timestamp",
+                    "event",
+                    "session",
+                    "username",
+                    "address",
+                    "success"
                 ],
-                'order_by': [
-                    '-message_timestamp'
+                "order_by": [
+                    "-message_timestamp"
                 ],
-                'limit': MAX_LOGINS_LISTED
+                "limit": MAX_LOGINS_LISTED
             }
         })
         if not auth_failures:
             return None
 
-        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in auth_failures])
+        audit_msg = ",".join([audit_entry_to_msg(entry) for entry in auth_failures])
         return Alert(
             APIFailedLoginAlert(count=auth_failure_count, sessions=audit_msg)
         )

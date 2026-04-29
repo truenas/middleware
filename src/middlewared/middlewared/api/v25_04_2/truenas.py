@@ -1,14 +1,14 @@
 from middlewared.api.base import BaseModel, LongString
 
 __all__ = [
-    'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
-    'TrueNASIsProductionArgs', 'TrueNASIsProductionResult',
-    'TrueNASAcceptEulaArgs', 'TrueNASAcceptEulaResult',
-    'TrueNASIsEulaAcceptedArgs', 'TrueNASIsEulaAcceptedResult',
-    'TrueNASGetEulaArgs', 'TrueNASGetEulaResult',
-    'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
-    'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
-    'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult'
+    "TrueNASSetProductionArgs", "TrueNASSetProductionResult",
+    "TrueNASIsProductionArgs", "TrueNASIsProductionResult",
+    "TrueNASAcceptEulaArgs", "TrueNASAcceptEulaResult",
+    "TrueNASIsEulaAcceptedArgs", "TrueNASIsEulaAcceptedResult",
+    "TrueNASGetEulaArgs", "TrueNASGetEulaResult",
+    "TrueNASIsIxHardwareArgs", "TrueNASIsIxHardwareResult",
+    "TrueNASGetChassisHardwareArgs", "TrueNASGetChassisHardwareResult",
+    "TrueNASManagedByTruecommandArgs", "TrueNASManagedByTruecommandResult"
 ]
 
 

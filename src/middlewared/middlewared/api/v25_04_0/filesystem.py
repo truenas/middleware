@@ -14,16 +14,16 @@ from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'FilesystemChownArgs', 'FilesystemChownResult',
-    'FilesystemSetpermArgs', 'FilesystemSetpermResult',
-    'FilesystemListdirArgs', 'FilesystemListdirResult',
-    'FilesystemMkdirArgs', 'FilesystemMkdirResult',
-    'FilesystemStatArgs', 'FilesystemStatResult',
-    'FilesystemStatfsArgs', 'FilesystemStatfsResult',
-    'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
-    'FilesystemGetZfsAttributesArgs', 'FilesystemGetZfsAttributesResult',
-    'FilesystemGetArgs', 'FilesystemGetResult',
-    'FilesystemPutArgs', 'FilesystemPutResult',
+    "FilesystemChownArgs", "FilesystemChownResult",
+    "FilesystemSetpermArgs", "FilesystemSetpermResult",
+    "FilesystemListdirArgs", "FilesystemListdirResult",
+    "FilesystemMkdirArgs", "FilesystemMkdirResult",
+    "FilesystemStatArgs", "FilesystemStatResult",
+    "FilesystemStatfsArgs", "FilesystemStatfsResult",
+    "FilesystemSetZfsAttributesArgs", "FilesystemSetZfsAttributesResult",
+    "FilesystemGetZfsAttributesArgs", "FilesystemGetZfsAttributesResult",
+    "FilesystemGetArgs", "FilesystemGetResult",
+    "FilesystemPutArgs", "FilesystemPutResult",
 ]
 
 
@@ -52,15 +52,15 @@ class FilesystemPermChownBase(BaseModel):
     group: NonEmptyString | None = None
 
 
-@single_argument_args('filesystem_chown')
+@single_argument_args("filesystem_chown")
 class FilesystemChownArgs(FilesystemPermChownBase):
     options: FilesystemChownOptions = Field(default=FilesystemChownOptions())
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def user_group_present(self) -> Self:
         if all(field in UNSET_ENTRY for field in (self.uid, self.user, self.gid, self.group)):
             raise ValueError(
-                'At least one of uid, gid, user, and group must be set in chown payload'
+                "At least one of uid, gid, user, and group must be set in chown payload"
             )
 
         return self
@@ -70,18 +70,18 @@ class FilesystemChownResult(BaseModel):
     result: None
 
 
-@single_argument_args('filesystem_setperm')
+@single_argument_args("filesystem_setperm")
 class FilesystemSetpermArgs(FilesystemPermChownBase):
     mode: UnixPerm | None = None
     options: FilesystemSetpermOptions = Field(default=FilesystemSetpermOptions())
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def payload_is_actionable(self) -> Self:
         """ User should be changing something. Either stripping ACL or setting mode """
         if self.mode is None and self.options.stripacl is False:
             raise ValueError(
-                'Payload must either explicitly specify permissions or '
-                'contain the stripacl option.'
+                "Payload must either explicitly specify permissions or "
+                "contain the stripacl option."
             )
 
         return self
@@ -92,32 +92,32 @@ class FilesystemSetpermResult(BaseModel):
 
 
 FILESYSTEM_STATX_ATTRS = Literal[
-    'COMPRESSED',
-    'APPEND',
-    'NODUMP',
-    'IMMUTABLE',
-    'AUTOMOUNT',
-    'MOUNT_ROOT',
-    'VERIFY',
-    'DAX'
+    "COMPRESSED",
+    "APPEND",
+    "NODUMP",
+    "IMMUTABLE",
+    "AUTOMOUNT",
+    "MOUNT_ROOT",
+    "VERIFY",
+    "DAX"
 ]
 
 
 FILESYSTEM_ZFS_ATTRS = Literal[
-    'READONLY',
-    'HIDDEN',
-    'SYSTEM',
-    'ARCHIVE',
-    'IMMUTABLE',
-    'NOUNLINK',
-    'APPENDONLY',
-    'NODUMP',
-    'OPAQUE',
-    'AV_QUARANTINED',
-    'AV_MODIFIED',
-    'REPARSE',
-    'OFFLINE',
-    'SPARSE'
+    "READONLY",
+    "HIDDEN",
+    "SYSTEM",
+    "ARCHIVE",
+    "IMMUTABLE",
+    "NOUNLINK",
+    "APPENDONLY",
+    "NODUMP",
+    "OPAQUE",
+    "AV_QUARANTINED",
+    "AV_MODIFIED",
+    "REPARSE",
+    "OFFLINE",
+    "SPARSE"
 ]
 
 
@@ -175,11 +175,11 @@ FilesystemListdirResult = query_result(FilesystemDirEntry)
 
 
 class FilesystemMkdirOptions(BaseModel):
-    mode: UnixPerm = '755'
+    mode: UnixPerm = "755"
     raise_chmod_error: bool = True
 
 
-@single_argument_args('filesystem_mkdir')
+@single_argument_args("filesystem_mkdir")
 class FilesystemMkdirArgs(BaseModel):
     path: NonEmptyString
     options: FilesystemMkdirOptions = Field(default=FilesystemMkdirOptions())
@@ -245,16 +245,16 @@ class FilesystemStatResult(BaseModel):
 
 
 StatfsFlags = Literal[
-    'RW', 'RO',
-    'XATTR',
-    'NOACL', 'NFS4ACL', 'POSIXACL',
-    'CASESENSITIVE', 'CASEINSENSITIVE',
-    'NOATIME', 'RELATIME',
-    'NOSUID', 'NODEV', 'NOEXEC',
+    "RW", "RO",
+    "XATTR",
+    "NOACL", "NFS4ACL", "POSIXACL",
+    "CASESENSITIVE", "CASEINSENSITIVE",
+    "NOATIME", "RELATIME",
+    "NOSUID", "NODEV", "NOEXEC",
 ]
 
 
-StatfsFstype = Literal['zfs', 'tmpfs']
+StatfsFstype = Literal["zfs", "tmpfs"]
 
 
 class FilesystemStatfsData(BaseModel):
@@ -326,7 +326,7 @@ class ZFSFileAttrsData(BaseModel):
     """ SPARSE MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
 
 
-@single_argument_args('set_zfs_file_attributes')
+@single_argument_args("set_zfs_file_attributes")
 class FilesystemSetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
     zfs_file_attributes: ZFSFileAttrsData

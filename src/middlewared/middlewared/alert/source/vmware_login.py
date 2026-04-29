@@ -18,4 +18,4 @@ class VMWareLoginFailedAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args['hostname']
+        return args["hostname"]

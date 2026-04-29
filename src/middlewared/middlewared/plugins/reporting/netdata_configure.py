@@ -10,8 +10,8 @@ class ReportingService(Service):
 
     @private
     def netdata_storage_location(self):
-        systemdataset_config = self.middleware.call_sync('systemdataset.config')
-        if not systemdataset_config['path']:
+        systemdataset_config = self.middleware.call_sync("systemdataset.config")
+        if not systemdataset_config["path"]:
             return None
 
         return f'{systemdataset_config["path"]}/netdata'
@@ -33,15 +33,15 @@ class ReportingService(Service):
             return
 
         try:
-            copytree('/var/lib/netdata', netdata_state_path, config=CopyTreeConfig())
+            copytree("/var/lib/netdata", netdata_state_path, config=CopyTreeConfig())
         except Exception:
-            self.logger.error('Failed to copy netdata state over from /var/lib/netdata', exc_info=True)
+            self.logger.error("Failed to copy netdata state over from /var/lib/netdata", exc_info=True)
             os.chown(netdata_state_path, uid=999, gid=997)
             os.chmod(netdata_state_path, mode=0o755)
 
     @private
     async def start_service(self):
-        if await self.middleware.call('failover.licensed'):
+        if await self.middleware.call("failover.licensed"):
             return
 
-        await (await self.middleware.call('service.control', 'START', 'netdata')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "START", "netdata")).wait(raise_error=True)

@@ -46,7 +46,7 @@ class AppContainerLogsFollowTailEventSource(
     """
     args = AppContainerLogsFollowTailEventSourceArgs
     event = AppContainerLogsFollowTailEventSourceEvent
-    roles = ['APPS_READ']
+    roles = ["APPS_READ"]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -55,7 +55,7 @@ class AppContainerLogsFollowTailEventSource(
     def validate_log_args(self, app_name: str, container_id: str) -> None:
         app = self.middleware.call_sync2(self.middleware.services.app.get_instance, app_name)
         if app.state not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
-            raise CallError(f'Unable to retrieve logs of stopped {app_name!r} app')
+            raise CallError(f"Unable to retrieve logs of stopped {app_name!r} app")
 
         if not any(c.id == container_id for c in app.active_workloads.container_details):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)
@@ -63,10 +63,10 @@ class AppContainerLogsFollowTailEventSource(
     def run_sync(self) -> None:
         app_name = self.typed_arg.app_name
         container_id = self.typed_arg.container_id
-        tail_lines: int | str = self.typed_arg.tail_lines or 'all'
+        tail_lines: int | str = self.typed_arg.tail_lines or "all"
 
         self.validate_log_args(app_name, container_id)
-        tz = ZoneInfo(self.middleware.call_sync('system.general.config')['timezone'])
+        tz = ZoneInfo(self.middleware.call_sync("system.general.config")["timezone"])
         with get_docker_client() as docker_client:
             try:
                 container = docker_client.containers.get(container_id)
@@ -89,7 +89,7 @@ class AppContainerLogsFollowTailEventSource(
                 else:
                     log_entry = log_entry.split(maxsplit=1)[-1].lstrip()
 
-                self.send_event('ADDED', fields={'data': log_entry, 'timestamp': timestamp})
+                self.send_event("ADDED", fields={"data": log_entry, "timestamp": timestamp})
 
     async def cancel(self) -> None:
         await super().cancel()

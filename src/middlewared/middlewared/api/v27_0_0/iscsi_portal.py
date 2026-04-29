@@ -21,7 +21,7 @@ class IscsiPortalIP(BaseModel):
     ip: NonEmptyString
     """IP address for the iSCSI portal to listen on."""
 
-    @field_validator('ip')
+    @field_validator("ip")
     @classmethod
     def check_ip(cls, v):
         IPvAnyAddress(v)
@@ -40,7 +40,7 @@ class ISCSIPortalEntry(BaseModel):
     """Array of IP address and port combinations for the portal to listen on."""
     tag: int
     """Numeric tag used to associate this portal with iSCSI targets."""
-    comment: str = ''
+    comment: str = ""
     """Optional comment describing the portal."""
 
 

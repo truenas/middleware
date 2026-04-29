@@ -5,31 +5,31 @@ from middlewared.service import Service, private
 
 class WebUIEnclosureService(Service):
     class Config:
-        namespace = 'webui.enclosure'
+        namespace = "webui.enclosure"
         cli_private = True
-        role_prefix = 'ENCLOSURE'
+        role_prefix = "ENCLOSURE"
 
     @private
     def disk_detail_dict(self):
         return {
-            'size': None,
-            'model': None,
-            'serial': None,
-            'type': None,
-            'rotationrate': None,
+            "size": None,
+            "model": None,
+            "serial": None,
+            "type": None,
+            "rotationrate": None,
         }
 
     @private
     def map_disk_details(self, slot_info, disk_deets):
         for key in self.disk_detail_dict():
-            slot_info[key] = disk_deets.get(slot_info['dev'], {}).get(key)
+            slot_info[key] = disk_deets.get(slot_info["dev"], {}).get(key)
 
     @private
     def map_zpool_info(self, enc_id, disk_slot, dev, pool_info):
-        info = {'enclosure_id': enc_id, 'slot': int(disk_slot), 'dev': dev}
+        info = {"enclosure_id": enc_id, "slot": int(disk_slot), "dev": dev}
         try:
-            index = pool_info['vdev_disks'].index(dev)
-            pool_info['vdev_disks'][index] = info
+            index = pool_info["vdev_disks"].index(dev)
+            pool_info["vdev_disks"][index] = info
         except ValueError:
             # it means the disk's status in zfs land != ONLINE
             # (i.e. it could be OFFLINE) and so it won't show
@@ -37,40 +37,40 @@ class WebUIEnclosureService(Service):
             # this error and still append the disk to the list
             # The `pool_info['disk_status']` key will be added
             # which will give more insight into what's going on
-            pool_info['vdev_disks'].append(info)
+            pool_info["vdev_disks"].append(info)
 
     @private
     def dashboard_impl(self):
-        enclosures = self.middleware.call_sync('enclosure2.query')
+        enclosures = self.middleware.call_sync("enclosure2.query")
         if enclosures:
-            disk_deets = self.middleware.call_sync('device.get_disks')
-            disks_to_pools = self.middleware.call_sync('zpool.status', {'real_paths': True})
+            disk_deets = self.middleware.call_sync("device.get_disks")
+            disks_to_pools = self.middleware.call_sync("zpool.status", {"real_paths": True})
             for enc in enclosures:
-                for disk_slot, slot_info in enc['elements']['Array Device Slot'].items():
-                    for to_pop in ('original', 'value', 'value_raw'):
+                for disk_slot, slot_info in enc["elements"]["Array Device Slot"].items():
+                    for to_pop in ("original", "value", "value_raw"):
                         # remove some values that webUI doesn't use
                         slot_info.pop(to_pop)
 
                     pool_info = None
-                    slot_info.update({'drive_bay_number': int(disk_slot), **self.disk_detail_dict()})
-                    if slot_info['dev']:
+                    slot_info.update({"drive_bay_number": int(disk_slot), **self.disk_detail_dict()})
+                    if slot_info["dev"]:
                         # map disk details
                         # NOTE: some of these fields need to be removed
                         # work with UI to remove unnecessary ones
                         self.map_disk_details(slot_info, disk_deets)
 
-                        if pool_info := disks_to_pools['disks'].get(slot_info['dev']):
+                        if pool_info := disks_to_pools["disks"].get(slot_info["dev"]):
                             # now map zpool info
-                            self.map_zpool_info(enc['id'], disk_slot, slot_info['dev'], pool_info)
+                            self.map_zpool_info(enc["id"], disk_slot, slot_info["dev"], pool_info)
 
-                    slot_info.update({'pool_info': pool_info})
+                    slot_info.update({"pool_info": pool_info})
 
         return enclosures
 
     @api_method(
         WebUIEnclosureDashboardArgs,
         WebUIEnclosureDashboardResult,
-        roles=['ENCLOSURE_READ']
+        roles=["ENCLOSURE_READ"]
     )
     def dashboard(self):
         """This endpoint is used by the webUI for the enclosure dashboard page for TrueNAS sold hardware.

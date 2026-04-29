@@ -3,10 +3,10 @@ from typing import Literal
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    'NTPServerEntry',
-    'NTPServerCreateArgs', 'NTPServerCreateResult',
-    'NTPServerUpdateArgs', 'NTPServerUpdateResult',
-    'NTPServerDeleteArgs', 'NTPServerDeleteResult',
+    "NTPServerEntry",
+    "NTPServerCreateArgs", "NTPServerCreateResult",
+    "NTPServerUpdateArgs", "NTPServerUpdateResult",
+    "NTPServerDeleteArgs", "NTPServerDeleteResult",
 ]
 
 

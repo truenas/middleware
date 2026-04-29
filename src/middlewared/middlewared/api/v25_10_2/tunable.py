@@ -9,7 +9,7 @@ __all__ = [
 
 
 class TunableCreate(BaseModel):
-    type: Literal['SYSCTL', 'UDEV', 'ZFS'] = 'SYSCTL'
+    type: Literal["SYSCTL", "UDEV", "ZFS"] = "SYSCTL"
     """
     * `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (e.g. `0`).
     * `UDEV`: `var` is a udev rules file name (e.g. `10-disable-usb`, `.rules` suffix will be appended automatically) \
@@ -21,7 +21,7 @@ class TunableCreate(BaseModel):
     """Name or identifier of the system parameter to tune."""
     value: str
     """Value to assign to the tunable parameter."""
-    comment: str = ''
+    comment: str = ""
     """Optional descriptive comment explaining the purpose of this tunable."""
     enabled: bool = True
     """Whether this tunable is active and should be applied."""
@@ -38,11 +38,11 @@ class TunableEntry(TunableCreate):
 
 
 class TunableTunableTypeChoices(BaseModel):
-    SYSCTL: Literal['SYSCTL']
+    SYSCTL: Literal["SYSCTL"]
     """System control parameters that affect kernel behavior."""
-    UDEV: Literal['UDEV']
+    UDEV: Literal["UDEV"]
     """Device management rules for hardware detection and configuration."""
-    ZFS: Literal['ZFS']
+    ZFS: Literal["ZFS"]
     """ZFS filesystem kernel module parameters."""
 
 

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-WILDCARD_IPS: list[str] = ['0.0.0.0', '::']
+WILDCARD_IPS: list[str] = ["0.0.0.0", "::"]
 
 
 class PortEntry(TypedDict, total=False):
@@ -40,9 +40,9 @@ class PortDelegate(CallMixin):
     def __init__(self, middleware: Middleware) -> None:
         self.middleware: Middleware = middleware
         self.logger: Logger = middleware.logger
-        for k in ('name', 'namespace', 'title'):
+        for k in ("name", "namespace", "title"):
             if not hasattr(self, k):
-                raise ValueError(f'{k!r} must be specified for port delegate')
+                raise ValueError(f"{k!r} must be specified for port delegate")
 
     async def get_ports(self) -> list[PortDetail]:
         raise NotImplementedError()
@@ -53,14 +53,14 @@ class ServicePortDelegate(PortDelegate):
     port_fields: Iterable[str]
 
     async def basic_checks(self) -> None:
-        if not hasattr(self, 'port_fields'):
-            raise ValueError('Port fields must be set for Service port delegate')
+        if not hasattr(self, "port_fields"):
+            raise ValueError("Port fields must be set for Service port delegate")
         elif not isinstance(self.port_fields, Iterable):
-            raise ValueError('Port fields must be an iterable')
+            raise ValueError("Port fields must be an iterable")
 
     def bind_address(self, config: dict[str, Any]) -> str:
-        default = '0.0.0.0'
-        if hasattr(self, 'bind_address_field'):
+        default = "0.0.0.0"
+        if hasattr(self, "bind_address_field"):
             return config.get(self.bind_address_field) or default
         return default
 
@@ -68,7 +68,7 @@ class ServicePortDelegate(PortDelegate):
         return self.bind_address(config), config[port_field]
 
     async def config(self) -> dict[str, Any]:
-        return await self.middleware.call(f'{self.namespace}.config')  # type: ignore[no-any-return]
+        return await self.middleware.call(f"{self.namespace}.config")  # type: ignore[no-any-return]
 
     async def get_ports_bound_on_wildcards(self) -> list[int]:
         return []
@@ -83,4 +83,4 @@ class ServicePortDelegate(PortDelegate):
 
     async def get_ports(self) -> list[PortDetail]:
         ports = await self.get_ports_internal()
-        return [{'description': None, 'ports': ports}] if ports else []
+        return [{"description": None, "ports": ports}] if ports else []

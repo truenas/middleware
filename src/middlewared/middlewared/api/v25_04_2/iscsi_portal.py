@@ -20,7 +20,7 @@ __all__ = [
 class IscsiPortalIP(BaseModel):
     ip: NonEmptyString
 
-    @field_validator('ip')
+    @field_validator("ip")
     @classmethod
     def check_ip(cls, v):
         IPvAnyAddress(v)
@@ -35,7 +35,7 @@ class ISCSIPortalEntry(BaseModel):
     id: int
     listen: list[IscsiPortalIPInfo]
     tag: int
-    comment: str = ''
+    comment: str = ""
 
 
 class ISCSIPortalListenIpChoicesArgs(BaseModel):

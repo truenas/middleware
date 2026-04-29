@@ -42,16 +42,16 @@ class IPMILanEntry(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class IPMILanQueryOptions(BaseModel):
-    query_remote: bool = Field(alias='query-remote', default=False)
+    query_remote: bool = Field(alias="query-remote", default=False)
     """Whether to query remote IPMI LAN configuration on HA systems."""
 
 
 class IPMILanQuery(BaseModel):
-    query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    query_filters: QueryFilters = Field(alias="query-filters", default=[])
     """Query filters to apply to IPMI LAN configuration results."""
-    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+    query_options: QueryOptions = Field(alias="query-options", default_factory=QueryOptions)
     """Query options for sorting and pagination."""
-    ipmi_options: IPMILanQueryOptions = Field(alias='ipmi-options', default_factory=IPMILanQueryOptions)
+    ipmi_options: IPMILanQueryOptions = Field(alias="ipmi-options", default_factory=IPMILanQueryOptions)
     """IPMI-specific query options."""
 
 

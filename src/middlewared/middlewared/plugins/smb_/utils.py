@@ -9,7 +9,7 @@ def random_sid():
     subauth_2 = randbits(32)
     subauth_3 = randbits(32)
 
-    return f'S-1-5-21-{subauth_1}-{subauth_2}-{subauth_3}'
+    return f"S-1-5-21-{subauth_1}-{subauth_2}-{subauth_3}"
 
 
 def smb_strip_comments(auxparam_in):
@@ -20,13 +20,13 @@ def smb_strip_comments(auxparam_in):
     parsed_config = ""
     for entry in auxparam_in.splitlines():
         entry = entry.strip()
-        if entry == "" or entry.startswith(('#', ';')):
+        if entry == "" or entry.startswith(("#", ";")):
             continue
 
         # For some reason user may have added more comments after the value
         # For example "socket options = IPTOS_LOWDELAY # I read about this on the internet"
         entry = entry.split("#")[0].strip()
-        parsed_config += entry if len(parsed_config) == 0 else f'\n{entry}'
+        parsed_config += entry if len(parsed_config) == 0 else f"\n{entry}"
 
     return parsed_config
 
@@ -38,26 +38,26 @@ def auxsmbconf_dict(aux, direction="TO"):
     `FROM` a dict into a string.
     """
     match direction:
-        case 'TO':
+        case "TO":
             if not isinstance(aux, str):
-                raise ValueError(f'{type(aux)}: wrong input type. Expected str.')
+                raise ValueError(f"{type(aux)}: wrong input type. Expected str.")
 
             ret = {}
             stripped = smb_strip_comments(aux)
             for entry in stripped.splitlines():
-                kv = entry.split('=', 1)
+                kv = entry.split("=", 1)
                 ret[kv[0].strip()] = kv[1].strip()
 
             return ret
 
-        case 'FROM':
+        case "FROM":
             if not isinstance(aux, dict):
-                raise ValueError(f'{type(aux)}: wrong input type. Expected dict.')
+                raise ValueError(f"{type(aux)}: wrong input type. Expected dict.")
 
-            return '\n'.join([f'{k}={v}' if v is not None else k for k, v in aux.items()])
+            return "\n".join([f"{k}={v}" if v is not None else k for k, v in aux.items()])
 
         case _:
-            raise ValueError(f'{direction}: unexpected conversion direction')
+            raise ValueError(f"{direction}: unexpected conversion direction")
 
 
 def is_time_machine_share(data: dict) -> bool:
@@ -75,6 +75,6 @@ def get_share_name(data: dict) -> str:
         return data[share_field.NAME]
 
     if data[share_field.OPTS].get(share_field.HOME):
-        return 'homes'
+        return "homes"
 
     return data[share_field.NAME]

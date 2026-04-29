@@ -15,27 +15,27 @@ from middlewared.utils.tdb import TDBError
 class Gencache(Service):
 
     class Config:
-        namespace = 'idmap.gencache'
+        namespace = "idmap.gencache"
         cli_private = True
         private = True
 
     def __construct_gencache_key(self, data):
-        cache_type = IDMAPCacheType[data['entry_type']]
+        cache_type = IDMAPCacheType[data["entry_type"]]
         match cache_type:
             case IDMAPCacheType.UID2SID | IDMAPCacheType.GID2SID:
-                parsed_entry = data['entry']
+                parsed_entry = data["entry"]
                 if not isinstance(parsed_entry, int):
-                    raise ValueError(f'{parsed_entry}: UID/GID must be integer')
+                    raise ValueError(f"{parsed_entry}: UID/GID must be integer")
             case IDMAPCacheType.SID2XID | IDMAPCacheType.SID2NAME:
-                parsed_entry = data['entry'].upper()
+                parsed_entry = data["entry"].upper()
                 if not wbclient.sid_is_valid(parsed_entry):
-                    raise ValueError(f'{parsed_entry}: not a valid SID')
+                    raise ValueError(f"{parsed_entry}: not a valid SID")
             case IDMAPCacheType.NAME2SID:
-                parsed_entry = data['entry'].upper()
+                parsed_entry = data["entry"].upper()
             case _:
                 raise NotImplementedError(data["entry_type"])
 
-        return f'{cache_type.value}/{parsed_entry}'
+        return f"{cache_type.value}/{parsed_entry}"
 
     def get_idmap_cache_entry(self, data):
         key = self.__construct_gencache_key(data)

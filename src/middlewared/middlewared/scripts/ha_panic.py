@@ -13,14 +13,14 @@ from middlewared.utils.db import query_config_table
 
 def is_ha_capable() -> bool:
     """Check if system is HA-capable hardware."""
-    return detect_platform()[0] != 'MANUAL'
+    return detect_platform()[0] != "MANUAL"
 
 
 def is_failover_enabled() -> bool:
     """Check if failover is enabled (not administratively disabled)."""
     try:
-        config = query_config_table('system_failover')
-        return not config.get('disabled', False)
+        config = query_config_table("system_failover")
+        return not config.get("disabled", False)
     except Exception:
         # If we can't read the config, assume failover is disabled
         return False
@@ -29,11 +29,11 @@ def is_failover_enabled() -> bool:
 def trigger_panic() -> None:
     """Trigger immediate reboot via sysrq (same as failover.become_passive)."""
     # Enable sysrq triggers
-    with open('/proc/sys/kernel/sysrq', 'w') as f:
-        f.write('1')
+    with open("/proc/sys/kernel/sysrq", "w") as f:
+        f.write("1")
     # Immediate reboot - no sync, no umount
-    with open('/proc/sysrq-trigger', 'w') as f:
-        f.write('b')
+    with open("/proc/sysrq-trigger", "w") as f:
+        f.write("b")
 
 
 def main() -> int:
@@ -45,5 +45,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

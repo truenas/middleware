@@ -90,15 +90,15 @@ if typing.TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
 
-__all__ = ('VMDeviceService',)
+__all__ = ("VMDeviceService",)
 
 
 class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     class Config:
-        namespace = 'vm.device'
-        cli_namespace = 'service.vm.device'
-        role_prefix = 'VM_DEVICE'
+        namespace = "vm.device"
+        cli_namespace = "service.vm.device"
+        role_prefix = "VM_DEVICE"
         entry = VMDeviceEntry
 
     def __init__(self, middleware: Middleware) -> None:
@@ -108,7 +108,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceCreateArgs, VMDeviceCreateResult,
-        audit='VM device create',
+        audit="VM device create",
         audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
         check_annotations=True,
     )
@@ -127,7 +127,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceUpdateArgs, VMDeviceUpdateResult,
-        audit='VM device update',
+        audit="VM device update",
         audit_callback=True,
         check_annotations=True,
     )
@@ -141,7 +141,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceDeleteArgs, VMDeviceDeleteResult,
-        audit='VM device delete',
+        audit="VM device delete",
         audit_callback=True,
         check_annotations=True,
     )
@@ -151,7 +151,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         """
         return await self._svc_part.do_delete(id_, options, audit_callback=audit_callback)
 
-    @api_method(VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult, roles=['VM_DEVICE_READ'], check_annotations=True)
+    @api_method(VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult, roles=["VM_DEVICE_READ"], check_annotations=True)
     async def bind_choices(self) -> dict[str, str]:
         """
         Available choices for Bind attribute.
@@ -160,11 +160,11 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceConvertArgs, VMDeviceConvertResult,
-        roles=['VM_DEVICE_WRITE'],
-        audit='Converting disk image',
+        roles=["VM_DEVICE_WRITE"],
+        audit="Converting disk image",
         check_annotations=True,
     )
-    @job(lock='vm.device.convert', lock_queue_size=1)
+    @job(lock="vm.device.convert", lock_queue_size=1)
     def convert(self, job: Job, data: VMDeviceConvert) -> bool:
         """
         Convert between disk images and ZFS volumes. Supported disk image formats \
@@ -173,7 +173,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         """
         return convert_disk(self.context, job, data)
 
-    @api_method(VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult, roles=['VM_DEVICE_READ'], check_annotations=True)
+    @api_method(VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult, roles=["VM_DEVICE_READ"], check_annotations=True)
     async def disk_choices(self) -> dict[str, str]:
         """
         Returns disk choices for device type "DISK".
@@ -182,14 +182,14 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceIommuEnabledArgs, VMDeviceIommuEnabledResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def iommu_enabled(self) -> bool:
         """Returns "true" if iommu is enabled, "false" otherwise"""
         return _iommu_enabled()
 
     @api_method(
-        VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, roles=['VM_DEVICE_READ'], check_annotations=True
+        VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, roles=["VM_DEVICE_READ"], check_annotations=True
     )
     def iotype_choices(self) -> VMDeviceIotypeChoices:
         """
@@ -199,7 +199,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     async def nic_attach_choices(self) -> VMDeviceNicAttachChoices:
         """
@@ -209,7 +209,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDevicePassthroughDeviceArgs, VMDevicePassthroughDeviceResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def passthrough_device(self, device: str) -> VMDevicePassthroughDevice:
         """Retrieve details about `device` PCI device"""
@@ -217,7 +217,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDevicePassthroughDeviceChoicesArgs, VMDevicePassthroughDeviceChoicesResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def passthrough_device_choices(self) -> VMDevicePassthroughInfo:
         """Available choices for PCI passthru devices"""
@@ -225,7 +225,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceUsbControllerChoicesArgs, VMDeviceUsbControllerChoicesResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def usb_controller_choices(self) -> dict[str, str]:
         """Retrieve USB controller type choices"""
@@ -233,7 +233,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceUsbPassthroughDeviceArgs, VMDeviceUsbPassthroughDeviceResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def usb_passthrough_device(self, device: str) -> USBPassthroughDevice:
         """Retrieve details about `device` USB device."""
@@ -241,7 +241,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceUsbPassthroughChoicesArgs, VMDeviceUsbPassthroughChoicesResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def usb_passthrough_choices(self) -> USBPassthroughInfo:
         """Available choices for USB passthrough devices."""
@@ -249,13 +249,13 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
 
     @api_method(
         VMDeviceVirtualSizeArgs, VMDeviceVirtualSizeResult,
-        roles=['VM_DEVICE_READ'], check_annotations=True,
+        roles=["VM_DEVICE_READ"], check_annotations=True,
     )
     def virtual_size(self, data: VMDeviceVirtualSize) -> int:
         """
         Get the virtual size of a disk image using qemu-img info.
         """
-        return virtual_size_impl('vm.device.virtual_size', data.path)
+        return virtual_size_impl("vm.device.virtual_size", data.path)
 
     @private
     async def validate_display_devices(self, verrors: ValidationErrors, vm_instance: dict[str, typing.Any]) -> None:

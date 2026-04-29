@@ -30,7 +30,7 @@ class ReplicationConfigService(ConfigService):
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
-            config['id'],
+            config["id"],
             config
         )
 

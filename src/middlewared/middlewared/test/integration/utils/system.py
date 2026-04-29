@@ -50,7 +50,7 @@ def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
     if remote_node:
         assert ha is True, "Cannot select remote_node on non-HA system"
         ha_ips = truenas_server.ha_ips()
-        node_ip = ha_ips['standby']
+        node_ip = ha_ips["standby"]
 
     assert ssh(f"systemctl restart {svc_to_restart}", ip=node_ip), \
         (ssh(f"systemctl status {svc_to_restart}", ip=node_ip),

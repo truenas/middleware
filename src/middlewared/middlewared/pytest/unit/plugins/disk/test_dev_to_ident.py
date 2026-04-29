@@ -67,7 +67,7 @@ BY_XEN_DEVICENAME = (
 )
 
 
-@pytest.mark.parametrize('disk_name, sys_disks, result', [
+@pytest.mark.parametrize("disk_name, sys_disks, result", [
     BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL, BY_XEN_DEVICENAME
 ])
 def test_dev_to_ident(disk_name, sys_disks, result):

@@ -13,12 +13,12 @@ async def license_active(context: ServiceContext) -> bool:
     then this will return False, otherwise this will return true.
     """
     system_chassis = await context.call2(context.s.truenas.get_chassis_hardware)
-    if system_chassis == TRUENAS_UNKNOWN or 'MINI' in system_chassis:
+    if system_chassis == TRUENAS_UNKNOWN or "MINI" in system_chassis:
         # 1. if it's not iX branded hardware
         # 2. OR if it's a MINI, then allow containers/vms
         return True
 
-    return await context.middleware.call('system.feature_enabled', 'APPS')  # type: ignore[no-any-return]
+    return await context.middleware.call("system.feature_enabled", "APPS")  # type: ignore[no-any-return]
 
 
 async def pool_choices(context: ServiceContext) -> dict[str, str]:
@@ -28,15 +28,15 @@ async def pool_choices(context: ServiceContext) -> dict[str, str]:
         context.s.zfs.resource.query_impl,
         ZFSResourceQuery(
             paths=[
-                p['name']
+                p["name"]
                 for p in imported_pools.values()
-                if p['name'] not in BOOT_POOL_NAME_VALID
+                if p["name"] not in BOOT_POOL_NAME_VALID
             ],
-            properties=['encryption'],
+            properties=["encryption"],
         )
     ):
-        enc = get_encryption_info(ds['properties'])
+        enc = get_encryption_info(ds["properties"])
         if not enc.locked:
-            pools[ds['name']] = ds['name']
+            pools[ds["name"]] = ds["name"]
 
     return pools

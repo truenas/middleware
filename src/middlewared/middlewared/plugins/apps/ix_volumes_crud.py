@@ -60,14 +60,14 @@ def query_ix_volumes(
 
     apps: dict[str, list[str]] = collections.defaultdict(list)
     for ds in datasets:
-        if ds['name'].count('/') <= 3:
+        if ds["name"].count("/") <= 3:
             continue
-        name_split = ds['name'].split('/', 4)
+        name_split = ds["name"].split("/", 4)
         apps[name_split[3]].append(name_split[-1])
 
     volumes: list[dict[str, Any]] = []
     for app_name, app_volumes in apps.items():
         for volume in app_volumes:
-            volumes.append({'name': volume, 'app_name': app_name})
+            volumes.append({"name": volume, "app_name": app_name})
 
     return to_entries(filter_list(volumes, filters, options.model_dump()), AppsIxVolumeEntry)

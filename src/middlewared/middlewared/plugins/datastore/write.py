@@ -58,7 +58,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         """
         table = self._get_table(name)
         options = self._handle_datastore_opts(options)
-        insert, relationships = self._extract_relationships(table, options['prefix'], data)
+        insert, relationships = self._extract_relationships(table, options["prefix"], data)
         for column in table.c:
             if column.default is not None:
                 value = column.default.arg
@@ -67,7 +67,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 insert.setdefault(column.name, value)
             if not column.nullable:
                 if isinstance(column.type, (types.String, types.Text)):
-                    insert.setdefault(column.name, '')
+                    insert.setdefault(column.name, "")
 
         pk_column = self._get_pk(table)
         # Only use last_insert_rowid if the PK is an integer type AND we didn't provide a value
@@ -76,11 +76,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             pk_column.name not in insert
         )
         result = await self.middleware.call(
-            'datastore.execute_write',
+            "datastore.execute_write",
             table.insert().values(**insert),
             {
-                'ha_sync': options['ha_sync'],
-                'return_last_insert_rowid': return_last_insert_rowid,
+                "ha_sync": options["ha_sync"],
+                "return_last_insert_rowid": return_last_insert_rowid,
             },
         )
         if return_last_insert_rowid:
@@ -92,16 +92,16 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             await self._handle_relationships(pk, relationships)
         except Exception:
             await self.middleware.call(
-                'datastore.execute_write',
+                "datastore.execute_write",
                 table.delete().where(pk_column == pk),
                 {
-                    'ha_sync': options['ha_sync'],
+                    "ha_sync": options["ha_sync"],
                 },
             )
             raise
 
-        if options['send_events']:
-            await self.middleware.call('datastore.send_insert_events', name, insert)
+        if options["send_events"]:
+            await self.middleware.call("datastore.send_insert_events", name, insert)
 
         return pk
 
@@ -113,9 +113,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         data = data.copy()
         options = self._handle_datastore_opts(options)
         if isinstance(id_or_filters, list):
-            rows = await self.middleware.call('datastore.query', name, id_or_filters, {'prefix': options['prefix']})
+            rows = await self.middleware.call("datastore.query", name, id_or_filters, {"prefix": options["prefix"]})
             if len(rows) != 1:
-                raise RuntimeError(f'{len(rows)} found, expecting one')
+                raise RuntimeError(f"{len(rows)} found, expecting one")
 
             id_ = rows[0][self._get_pk(table).name]
         else:
@@ -126,21 +126,21 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 if column.name[:-3] in data:
                     data[column.name] = data.pop(column.name[:-3])
 
-        update, relationships = self._extract_relationships(table, options['prefix'], data)
+        update, relationships = self._extract_relationships(table, options["prefix"], data)
 
         if update:
             result = await self.middleware.call(
-                'datastore.execute_write',
-                table.update().values(**update).where(self._where_clause(table, id_, {'prefix': options['prefix']})),
+                "datastore.execute_write",
+                table.update().values(**update).where(self._where_clause(table, id_, {"prefix": options["prefix"]})),
                 {
-                    'ha_sync': options['ha_sync'],
+                    "ha_sync": options["ha_sync"],
                 },
             )
             if result.rowcount != 1:
                 raise NoRowsWereUpdatedException()
 
-            if options['send_events']:
-                await self.middleware.call('datastore.send_update_events', name, id_)
+            if options["send_events"]:
+                await self.middleware.call("datastore.send_update_events", name, id_)
 
         await self._handle_relationships(id_, relationships)
 
@@ -169,13 +169,13 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             remote_pk, relationship_remote_pk = relationship.secondary_synchronize_pairs[0]
 
             await self.middleware.call(
-                'datastore.execute_write',
+                "datastore.execute_write",
                 relationship_local_pk.table.delete().where(relationship_local_pk == pk)
             )
 
             for value in values:
                 await self.middleware.call(
-                    'datastore.execute_write',
+                    "datastore.execute_write",
                     relationship_local_pk.table.insert().values({
                         relationship_local_pk.name: pk,
                         relationship_remote_pk.name: value,
@@ -184,7 +184,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     def _where_clause(self, table, id_or_filters, options):
         if isinstance(id_or_filters, list):
-            return and_(*self._filters_to_queryset(id_or_filters, table, options['prefix'], {}))
+            return and_(*self._filters_to_queryset(id_or_filters, table, options["prefix"], {}))
         else:
             return self._get_pk(table) == id_or_filters
 
@@ -195,14 +195,14 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         table = self._get_table(name)
         options = self._handle_datastore_opts(options)
         await self.middleware.call(
-            'datastore.execute_write',
-            table.delete().where(self._where_clause(table, id_or_filters, {'prefix': options['prefix']})),
+            "datastore.execute_write",
+            table.delete().where(self._where_clause(table, id_or_filters, {"prefix": options["prefix"]})),
             {
-                'ha_sync': options['ha_sync'],
+                "ha_sync": options["ha_sync"],
             },
         )
 
-        if not isinstance(id_or_filters, list) and options['send_events']:
-            await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
+        if not isinstance(id_or_filters, list) and options["send_events"]:
+            await self.middleware.call("datastore.send_delete_events", name, id_or_filters)
 
         return True

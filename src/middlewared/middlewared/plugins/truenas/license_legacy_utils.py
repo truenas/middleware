@@ -12,7 +12,7 @@ from .license_utils import FeatureInfo, LicenseInfo
 logger = logging.getLogger(__name__)
 
 
-LEGACY_LICENSE_FILE = '/data/license'
+LEGACY_LICENSE_FILE = "/data/license"
 LICENSE_ADDHW_MAPPING = MappingProxyType({
     1: "E16",
     2: "E24",
@@ -35,7 +35,7 @@ def get_legacy_license_info() -> LicenseInfo | None:
     """Return a LicenseInfo built from the legacy on-disk license, or None."""
     try:
         with open(LEGACY_LICENSE_FILE) as f:
-            return parse_legacy_license(f.read().strip('\n'))
+            return parse_legacy_license(f.read().strip("\n"))
     except FileNotFoundError:
         return None
     except Exception as e:

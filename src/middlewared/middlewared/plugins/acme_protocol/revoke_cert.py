@@ -16,4 +16,4 @@ def revoke_certificate(
         cert_obj = x509.load_pem_x509_certificate(certificate.encode())
         acme_client.revoke(cert_obj, 0)
     except (errors.ClientError, messages.Error) as e:
-        raise CallError(f'Failed to revoke certificate: {e}')
+        raise CallError(f"Failed to revoke certificate: {e}")

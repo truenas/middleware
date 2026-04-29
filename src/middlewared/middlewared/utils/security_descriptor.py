@@ -18,8 +18,8 @@ CUSTOM_ACCESS_MASK_STRING = "CUSTOM"
 
 class SDDLAceType(enum.Enum):
     """ defined in MS-DTYP """
-    ALLOWED = 'A'
-    DENIED = 'D'
+    ALLOWED = "A"
+    DENIED = "D"
 
 
 class SDDLAccessMaskStandard(enum.IntEnum):
@@ -48,25 +48,25 @@ def security_descriptor_to_bytes(sd: security.descriptor) -> bytes:
 
 def share_acl_to_sd_bytes(share_acl: list[dict[str, Any]]) -> bytes:
     """ Convert share_acl list to SDDL string and then to security descriptor bytes """
-    sddl_str = 'D:'
+    sddl_str = "D:"
     for ace in share_acl:
-        if ace['ae_perm'] == CUSTOM_ACCESS_MASK_STRING:
+        if ace["ae_perm"] == CUSTOM_ACCESS_MASK_STRING:
             raise ValueError(
-                'CUSTOM perm is not supported for writing an ACL. The '
-                'presence of this value indicates that the share ACL was '
-                'written outside of the TrueNAS API / UI and so should be '
-                'adjusted to a supported value'
+                "CUSTOM perm is not supported for writing an ACL. The "
+                "presence of this value indicates that the share ACL was "
+                "written outside of the TrueNAS API / UI and so should be "
+                "adjusted to a supported value"
             )
 
-        sddl_ace_type = SDDLAceType[ace['ae_type']].value
-        sddl_access = hex(SDDLAccessMaskStandard[ace['ae_perm']].value)
-        sddl_sid = ace['ae_who_sid']
-        sddl_ace = f'({sddl_ace_type};;{sddl_access};;;{sddl_sid})'
+        sddl_ace_type = SDDLAceType[ace["ae_type"]].value
+        sddl_access = hex(SDDLAccessMaskStandard[ace["ae_perm"]].value)
+        sddl_sid = ace["ae_who_sid"]
+        sddl_ace = f"({sddl_ace_type};;{sddl_access};;;{sddl_sid})"
         sddl_str += sddl_ace
 
     sd_obj = security.descriptor().from_sddl(sddl_str, security.dom_sid())
     if sd_obj.dacl is None:
-        raise ValueError(f'{sddl_str}, malformed sddl string')
+        raise ValueError(f"{sddl_str}, malformed sddl string")
 
     return security_descriptor_to_bytes(sd_obj)
 
@@ -94,16 +94,16 @@ def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict[str, str]]:
 
         match ace.type:
             case security.SEC_ACE_TYPE_ACCESS_ALLOWED:
-                ace_type = 'ALLOWED'
+                ace_type = "ALLOWED"
             case security.SEC_ACE_TYPE_ACCESS_DENIED:
-                ace_type = 'DENIED'
+                ace_type = "DENIED"
             case _:
-                raise ValueError(f'{ace.type}: unexpected ACE type')
+                raise ValueError(f"{ace.type}: unexpected ACE type")
 
         share_acl.append({
-            'ae_who_sid': dom_sid,
-            'ae_perm': perm,
-            'ae_type': ace_type
+            "ae_who_sid": dom_sid,
+            "ae_perm": perm,
+            "ae_type": ace_type
         })
 
     return share_acl
@@ -114,9 +114,9 @@ def legacy_share_acl_string_to_sd_bytes(aclstr: str) -> bytes:
     share_acl = []
     for ace in aclstr.split():
         # sample ace: "S-1-1-0:ALLOWED/0x0/FULL"
-        ae_who, ae_data = ace.split(':')
-        ae_type, empty, ae_perm = ae_data.split('/')
+        ae_who, ae_data = ace.split(":")
+        ae_type, empty, ae_perm = ae_data.split("/")
 
-        share_acl.append({'ae_who_sid': ae_who, 'ae_perm': ae_perm, 'ae_type': ae_type})
+        share_acl.append({"ae_who_sid": ae_who, "ae_perm": ae_perm, "ae_type": ae_type})
 
     return share_acl_to_sd_bytes(share_acl)

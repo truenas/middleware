@@ -36,11 +36,11 @@ class BinaryMock:
 
 def set_usr_readonly(value, ip=None):
     cmd = 'python3 -c "'
-    cmd += 'from truenas_os_pyutils.mount import statmount;'
-    cmd += 'import truenas_pylibzfs;'
+    cmd += "from truenas_os_pyutils.mount import statmount;"
+    cmd += "import truenas_pylibzfs;"
     cmd += r'ds_name = statmount(path=\"/usr\", as_dict=False).sb_source;'
-    cmd += r'hdl = truenas_pylibzfs.open_handle();'
-    cmd += r'hdl.open_resource(name=ds_name).set_properties(properties={truenas_pylibzfs.ZFSProperty.READONLY: '
+    cmd += r"hdl = truenas_pylibzfs.open_handle();"
+    cmd += r"hdl.open_resource(name=ds_name).set_properties(properties={truenas_pylibzfs.ZFSProperty.READONLY: "
     cmd += f'\\"{value}\\"' + '});"'
     ssh(cmd, ip=ip)
 

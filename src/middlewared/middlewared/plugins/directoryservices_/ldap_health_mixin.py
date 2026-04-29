@@ -9,7 +9,7 @@ from middlewared.utils.directoryservices.ldap_client import LdapClient
 
 class LDAPHealthMixin:
     def _recover_ldap_config(self) -> list[dict]:
-        return self.middleware.call_sync('etc.generate', 'ldap')
+        return self.middleware.call_sync("etc.generate", "ldap")
 
     def _recover_ldap(self, error: LDAPHealthError) -> None:
         """
@@ -23,23 +23,23 @@ class LDAPHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'RESTART', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.middleware.call_sync("service.control", "RESTART", "sssd", DEF_SVC_OPTS).wait_sync(raise_error=True)
 
     def _ldap_get_dn(self, dn=None, scope_base=True):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         This is available for development and debug purposes.
         """
-        data = self.middleware.call_sync('directoryservices.config')
-        if data['service_type'] not in (DSType.LDAP.value, DSType.IPA.value):
-            raise CallError('Method not available for directory services type')
+        data = self.middleware.call_sync("directoryservices.config")
+        if data["service_type"] not in (DSType.LDAP.value, DSType.IPA.value):
+            raise CallError("Method not available for directory services type")
 
         ldap_config = dsconfig_to_ldap_client_config(data)
         return LdapClient.search(
             ldap_config,
-            dn or data['configuration']['basedn'],
+            dn or data["configuration"]["basedn"],
             ldap.SCOPE_BASE if scope_base else ldap.SCOPE_SUBTREE,
-            '(objectclass=*)'
+            "(objectclass=*)"
         )
 
     def _ldap_get_root_dse(self, data: dict) -> dict:
@@ -47,7 +47,7 @@ class LDAPHealthMixin:
         Use directory service config to retrieve root DSE of an LDAP server
         """
         ldap_config = dsconfig_to_ldap_client_config(data)
-        return LdapClient.search(ldap_config, '', ldap.SCOPE_BASE, '(objectclass=*)')
+        return LdapClient.search(ldap_config, "", ldap.SCOPE_BASE, "(objectclass=*)")
 
     def _health_check_ldap(self) -> None:
         """
@@ -56,11 +56,11 @@ class LDAPHealthMixin:
         This method is called periodically from our alert framework.
         """
 
-        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_config = self.middleware.call_sync("directoryservices.config")
 
         # There is a small chance we have an oddball generic LDAP + KRB5
         # domain and will need to perform LDAP health checks.
-        if ds_config['kerberos_realm']:
+        if ds_config["kerberos_realm"]:
             self._health_check_krb5()
 
         # Verify that our stored credentials are sufficient to authenticate
@@ -80,10 +80,10 @@ class LDAPHealthMixin:
         # We don't want to move the sssd restart into the alert itself because
         # we need to populate the error reason into `_faulted_reason` so that
         # it appears in our directory services summary
-        if not self.middleware.call_sync('service.started', 'sssd'):
+        if not self.middleware.call_sync("service.started", "sssd"):
             try:
                 self.middleware.call_sync(
-                    'service.control', 'START', 'sssd', {'silent': False}
+                    "service.control", "START", "sssd", {"silent": False}
                 ).wait_sync(raise_error=True)
             except CallError as e:
                 self._faulted_reason = str(e)

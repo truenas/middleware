@@ -159,8 +159,8 @@ class ZpoolTooManyScrubsException(ZpoolException):
 
     def __init__(self, running: int):
         self.message = (
-            f'{running} scrubs are already running. Running too many scrubs simultaneously '
-            'will result in an unresponsive system. Refusing to start scrub.'
+            f"{running} scrubs are already running. Running too many scrubs simultaneously "
+            "will result in an unresponsive system. Refusing to start scrub."
         )
         super().__init__(running)
 

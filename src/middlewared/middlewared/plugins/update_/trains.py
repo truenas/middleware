@@ -54,7 +54,7 @@ class ReleaseManifest(Release):
 
 
 # Module-level configuration
-_opts = {'raise_for_status': True, 'trust_env': True, 'timeout': ClientTimeout(INTERNET_TIMEOUT)}
+_opts = {"raise_for_status": True, "trust_env": True, "timeout": ClientTimeout(INTERNET_TIMEOUT)}
 _update_srv = scale_update_server()
 _release_notes_cache: dict[str, tuple[str | None, float]] = {}
 
@@ -66,7 +66,7 @@ def get_manifest_file() -> UpdateManifest:
 
 
 async def fetch(context: ServiceContext, url: str) -> Any:
-    await context.middleware.call('network.general.will_perform_activity', 'update')
+    await context.middleware.call("network.general.will_perform_activity", "update")
 
     async with ClientSession(**_opts) as client:  # type: ignore
         try:
@@ -75,14 +75,14 @@ async def fetch(context: ServiceContext, url: str) -> Any:
         except ClientError as e:
             # Some `aiohttp.ClientConnectorError` subclasses (i.e. `ClientConnectorCertificateError`) do not have
             # `os_error` attribute despite the parent class having one.
-            if isinstance(e, ClientConnectorError) and hasattr(e, 'os_error') and e.os_error.errno == errno.ENETUNREACH:
+            if isinstance(e, ClientConnectorError) and hasattr(e, "os_error") and e.os_error.errno == errno.ENETUNREACH:
                 error = errno.ENETUNREACH
             else:
                 error = errno.ECONNRESET
 
-            raise CallError(f'Error while fetching update manifest: {e}', error)
+            raise CallError(f"Error while fetching update manifest: {e}", error)
         except TimeoutError:
-            raise CallError('Connection timeout while fetching update manifest', errno.ETIMEDOUT)
+            raise CallError("Connection timeout while fetching update manifest", errno.ETIMEDOUT)
 
 
 async def get_trains(context: ServiceContext) -> Trains:
@@ -142,7 +142,7 @@ async def get_next_trains_names(context: ServiceContext, trains: Trains) -> list
     try:
         index = trains_names.index(current_train_name)
     except ValueError:
-        raise CallError(f'Current train {current_train_name!r} is not present in the update trains list') from None
+        raise CallError(f"Current train {current_train_name!r} is not present in the update trains list") from None
 
     profile = profile_.UpdateProfiles[(await context.call2(context.s.update.config)).profile]
 
@@ -180,7 +180,7 @@ async def release_notes(context: ServiceContext, train: str, filename: str) -> s
     :param filename: filename of the update file (from the release manifest)
     :return: release notes or `null` if not available.
     """
-    await context.middleware.call('network.general.will_perform_activity', 'update')
+    await context.middleware.call("network.general.will_perform_activity", "update")
 
     for key, (notes, expires_at) in list(_release_notes_cache.items()):
         if time.monotonic() > expires_at:

@@ -19,20 +19,20 @@ from middlewared.utils.filter_list import filter_list
 
 
 class DNSNsUpdateOpA(BaseModel):
-    command: Literal['ADD', 'DELETE']
+    command: Literal["ADD", "DELETE"]
     name: str
-    type: Literal['A'] = 'A'
+    type: Literal["A"] = "A"
     ttl: int = 3600
     address: IPv4Nameserver
     do_ptr: bool = True
 
 
 class DNSNsUpdateOpAAAA(DNSNsUpdateOpA):
-    type: Literal['AAAA']
+    type: Literal["AAAA"]
     address: IPv6Nameserver
 
 
-@single_argument_args('data')
+@single_argument_args("data")
 class DNSNsUpdateArgs(BaseModel):
     """ Override the nameserver used for nsupdate command. This may be required in
     more complex environments where the nameservers are also KDCs. """
@@ -48,24 +48,24 @@ class DNSNsUpdateResult(BaseModel):
 class DNSService(Service):
 
     class Config:
-        cli_namespace = 'network.dns'
+        cli_namespace = "network.dns"
 
-    @filterable_api_method(item=DNSQueryItem, roles=['NETWORK_INTERFACE_READ'])
+    @filterable_api_method(item=DNSQueryItem, roles=["NETWORK_INTERFACE_READ"])
     def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
         """
         ips = []
         with contextlib.suppress(Exception):
-            with open('/etc/resolv.conf') as f:
-                for line in filter(lambda x: x.startswith('nameserver'), f):
-                    ip = line[len('nameserver'):].strip()
+            with open("/etc/resolv.conf") as f:
+                for line in filter(lambda x: x.startswith("nameserver"), f):
+                    ip = line[len("nameserver"):].strip()
                     try:
                         ipaddress.ip_address(ip)  # make sure it's a valid IP (better safe than sorry)
                     except ValidationErrors:
-                        self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
+                        self.logger.warning("IP %r in resolv.conf does not seem to be valid", ip)
                     else:
-                        ip = {'nameserver': ip}
+                        ip = {"nameserver": ip}
                         if ip not in ips:
                             ips.append(ip)
 
@@ -73,52 +73,52 @@ class DNSService(Service):
 
     @private
     def sync(self):
-        domain = ''
+        domain = ""
         domains = []
         nameservers = []
-        gc = self.middleware.call_sync('datastore.query', 'network.globalconfiguration')[0]
-        if gc['gc_domain']:
-            domain = gc['gc_domain']
-        if gc['gc_domains']:
-            domains = gc['gc_domains'].split()
-        if gc['gc_nameserver1']:
-            nameservers.append(gc['gc_nameserver1'])
-        if gc['gc_nameserver2']:
-            nameservers.append(gc['gc_nameserver2'])
-        if gc['gc_nameserver3']:
-            nameservers.append(gc['gc_nameserver3'])
+        gc = self.middleware.call_sync("datastore.query", "network.globalconfiguration")[0]
+        if gc["gc_domain"]:
+            domain = gc["gc_domain"]
+        if gc["gc_domains"]:
+            domains = gc["gc_domains"].split()
+        if gc["gc_nameserver1"]:
+            nameservers.append(gc["gc_nameserver1"])
+        if gc["gc_nameserver2"]:
+            nameservers.append(gc["gc_nameserver2"])
+        if gc["gc_nameserver3"]:
+            nameservers.append(gc["gc_nameserver3"])
 
-        resolvconf = ''
+        resolvconf = ""
         if domain:
-            resolvconf += 'domain {}\n'.format(domain)
+            resolvconf += "domain {}\n".format(domain)
         if domains:
-            resolvconf += 'search {}\n'.format(' '.join(domains))
+            resolvconf += "search {}\n".format(" ".join(domains))
 
-        resolvconf += self.middleware.call_sync('dns.configure_nameservers', nameservers)
+        resolvconf += self.middleware.call_sync("dns.configure_nameservers", nameservers)
 
         try:
-            with atomic_write('/etc/resolv.conf', 'w') as f:
+            with atomic_write("/etc/resolv.conf", "w") as f:
                 f.write(resolvconf)
         except Exception:
-            self.logger.error('Failed to write /etc/resolv.conf', exc_info=True)
+            self.logger.error("Failed to write /etc/resolv.conf", exc_info=True)
 
     @private
     def configure_nameservers(self, nameservers):
-        result = ''
+        result = ""
         if nameservers:
             # means nameservers are configured explicitly so add them
             for i in nameservers:
-                result += f'nameserver {i}\n'
+                result += f"nameserver {i}\n"
         else:
             # means there aren't any nameservers configured so let's
             # check to see if dhcp is running on any of the interfaces
             # and if there are, then check DHCP leases for
             # nameservers that were handed to us via DHCP
-            interfaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
+            interfaces = self.middleware.call_sync("datastore.query", "network.interfaces")
             if interfaces:
-                interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
+                interfaces = [i["int_interface"] for i in interfaces if i["int_dhcp"]]
             else:
-                ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
+                ignore = tuple(self.middleware.call_sync("interface.internal_interfaces"))
                 interfaces = list()
                 with netlink_route() as sock:
                     for ifname in get_links(sock):
@@ -130,7 +130,7 @@ class DNSService(Service):
                 lease = dhcp_leases(iface)
                 if lease and lease.domain_name_servers:
                     for dns in lease.domain_name_servers.split():
-                        dns_from_dhcp.add(f'nameserver {dns.strip()}\n')
+                        dns_from_dhcp.add(f"nameserver {dns.strip()}\n")
 
             for dns in dns_from_dhcp:
                 result += dns
@@ -139,53 +139,53 @@ class DNSService(Service):
 
     @api_method(DNSNsUpdateArgs, DNSNsUpdateResult, private=True)
     def nsupdate(self, data):
-        if data['use_kerberos']:
-            self.middleware.call_sync('kerberos.check_ticket')
+        if data["use_kerberos"]:
+            self.middleware.call_sync("kerberos.check_ticket")
 
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
             ptrs = []
-            for entry in data['ops']:
-                addr = ipaddress.ip_address(entry['address'])
+            for entry in data["ops"]:
+                addr = ipaddress.ip_address(entry["address"])
 
-                directive = ' '.join([
-                    'update',
-                    entry['command'].lower(),
-                    entry['name'],
-                    str(entry['ttl']),
-                    entry['type'],
+                directive = " ".join([
+                    "update",
+                    entry["command"].lower(),
+                    entry["name"],
+                    str(entry["ttl"]),
+                    entry["type"],
                     addr.compressed,
-                    '\n'
+                    "\n"
                 ])
 
                 tmpfile.write(directive.encode())
-                if entry['do_ptr']:
-                    ptrs.append((addr.reverse_pointer, entry['name']))
+                if entry["do_ptr"]:
+                    ptrs.append((addr.reverse_pointer, entry["name"]))
 
             if ptrs:
                 # additional newline means "send"
                 # in this case we send our A and AAAA changes
                 # prior to sending our PTR changes
-                tmpfile.write(b'\n')
+                tmpfile.write(b"\n")
 
                 for ptr in ptrs:
                     reverse_pointer, name = ptr
-                    directive = ' '.join([
-                        'update',
-                        entry['command'].lower(),
+                    directive = " ".join([
+                        "update",
+                        entry["command"].lower(),
                         reverse_pointer,
-                        str(entry['ttl']),
-                        'PTR',
+                        str(entry["ttl"]),
+                        "PTR",
                         name,
-                        '\n'
+                        "\n"
                     ])
                     tmpfile.write(directive.encode())
 
-            tmpfile.write(b'send\n')
+            tmpfile.write(b"send\n")
             tmpfile.file.flush()
 
-            cmd = ['nsupdate', '-t', str(data['timeout'])]
-            if data['use_kerberos']:
-                cmd.append('-g')
+            cmd = ["nsupdate", "-t", str(data["timeout"])]
+            if data["use_kerberos"]:
+                cmd.append("-g")
 
             cmd.append(tmpfile.name)
             nsupdate_proc = subprocess.run(cmd, capture_output=True)
@@ -195,5 +195,5 @@ class DNSService(Service):
             #
             # Future enhancement can be to perform forward-lookups to validate
             # changes were applied properly
-            if nsupdate_proc.returncode and 'tsig verify failure' not in nsupdate_proc.stderr.decode():
-                raise CallError(f'nsupdate failed: {nsupdate_proc.stderr.decode()}')
+            if nsupdate_proc.returncode and "tsig verify failure" not in nsupdate_proc.stderr.decode():
+                raise CallError(f"nsupdate failed: {nsupdate_proc.stderr.decode()}")

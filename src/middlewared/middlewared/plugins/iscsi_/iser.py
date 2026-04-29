@@ -2,7 +2,7 @@ import subprocess
 
 from middlewared.service import Service
 
-KERNEL_MODULE = 'isert_scst'
+KERNEL_MODULE = "isert_scst"
 
 
 class iSCSITargetISERService(Service):
@@ -12,14 +12,14 @@ class iSCSITargetISERService(Service):
 
     class Config:
         private = True
-        namespace = 'iscsi.iser'
+        namespace = "iscsi.iser"
 
     async def before_start(self):
-        if await self.middleware.call('iscsi.global.lio_enabled'):
+        if await self.middleware.call("iscsi.global.lio_enabled"):
             # ib_isert is loaded by utils/lio/config.py _load_modules() if needed
             return
-        if await self.middleware.call('iscsi.global.iser_enabled'):
+        if await self.middleware.call("iscsi.global.iser_enabled"):
             await self.middleware.run_in_thread(self._load_kernel_module)
 
     def _load_kernel_module(self):
-        subprocess.run(['modprobe', KERNEL_MODULE])
+        subprocess.run(["modprobe", KERNEL_MODULE])

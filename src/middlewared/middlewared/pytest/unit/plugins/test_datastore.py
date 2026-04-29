@@ -59,22 +59,22 @@ async def datastore_test(mocked_calls=None):
 
 
 class UserModel(Model):
-    __tablename__ = 'account_bsdusers'
+    __tablename__ = "account_bsdusers"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdusr_uid = sa.Column(sa.Integer(), nullable=False)
-    bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), nullable=False)
+    bsdusr_group_id = sa.Column(sa.ForeignKey("account_bsdgroups.id"), nullable=False)
 
 
 class GroupModel(Model):
-    __tablename__ = 'account_bsdgroups'
+    __tablename__ = "account_bsdgroups"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdgrp_gid = sa.Column(sa.Integer(), nullable=False)
 
 
 class GroupMembershipModel(Model):
-    __tablename__ = 'account_bsdgroupmembership'
+    __tablename__ = "account_bsdgroupmembership"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"),
@@ -84,11 +84,11 @@ class GroupMembershipModel(Model):
 
 
 class UserCascadeModel(Model):
-    __tablename__ = 'account_bsdusers_cascade'
+    __tablename__ = "account_bsdusers_cascade"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdusr_uid = sa.Column(sa.Integer(), nullable=False)
-    bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id', ondelete='CASCADE'), nullable=False)
+    bsdusr_group_id = sa.Column(sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"), nullable=False)
 
 
 @pytest.mark.asyncio
@@ -285,7 +285,7 @@ async def test__get_backrefs():
 
 
 class NullableFkModel(Model):
-    __tablename__ = 'test_nullablefk'
+    __tablename__ = "test_nullablefk"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id"), nullable=True)
@@ -305,7 +305,7 @@ async def test__null_fk_load():
 
 
 class StringModel(Model):
-    __tablename__ = 'test_string'
+    __tablename__ = "test_string"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     string = sa.Column(sa.String(100), nullable=True)
@@ -351,7 +351,7 @@ async def test_delete_not_in():
 
 
 class IntegerModel(Model):
-    __tablename__ = 'test_integer'
+    __tablename__ = "test_integer"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     integer = sa.Column(sa.Integer())
@@ -389,7 +389,7 @@ async def test__order_by(order_by, ids):
 
 
 class JSONModel(Model):
-    __tablename__ = 'test_json'
+    __tablename__ = "test_json"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     json_dict = sa.Column(JSON(dict))
@@ -397,8 +397,8 @@ class JSONModel(Model):
 
 
 @pytest.mark.parametrize("id_, json_dict, json_list, json_dict_result, json_list_result", [
-    (1, '{"key": "value"}', '[1, 2]', {"key": "value"}, [1, 2]),  # proper JSON
-    (2, '{"key": "value"', '[1, 2', {}, []),                      # improper JSON
+    (1, '{"key": "value"}', "[1, 2]", {"key": "value"}, [1, 2]),  # proper JSON
+    (2, '{"key": "value"', "[1, 2", {}, []),                      # improper JSON
 ])
 @pytest.mark.asyncio
 async def test__json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
@@ -413,11 +413,11 @@ async def test__json_save():
     async with datastore_test() as ds:
         await ds.insert("test.json", {"json_dict": {"key": "value"}, "json_list": [1, 2]})
         row = ds.fetchall("SELECT * FROM test_json")[0]
-        assert row["json_dict"] == '{"key": "value"}' and row["json_list"] == '[1, 2]'
+        assert row["json_dict"] == '{"key": "value"}' and row["json_list"] == "[1, 2]"
 
 
 class EncryptedJSONModel(Model):
-    __tablename__ = 'test_encryptedjson'
+    __tablename__ = "test_encryptedjson"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     json_dict = sa.Column(JSON(dict, encrypted=True))
@@ -425,7 +425,7 @@ class EncryptedJSONModel(Model):
 
 
 class EncryptedTextModel(Model):
-    __tablename__ = 'test_encryptedtext'
+    __tablename__ = "test_encryptedtext"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     object = sa.Column(EncryptedText(), nullable=True)
@@ -452,9 +452,9 @@ def encrypt(s):
 
 
 @pytest.mark.parametrize("id_, json_dict, json_list, json_dict_result, json_list_result", [
-    (1, '!{"key": "value"}', '![1, 2]', {"key": "value"}, [1, 2]),  # proper JSON
-    (2, '!{"key": "value"', '![1, 2', {}, []),                      # improper JSON
-    (3, '{"key": "value"}', '[1, 2]', {}, []),                      # not encrypted
+    (1, '!{"key": "value"}', "![1, 2]", {"key": "value"}, [1, 2]),  # proper JSON
+    (2, '!{"key": "value"', "![1, 2", {}, []),                      # improper JSON
+    (3, '{"key": "value"}', "[1, 2]", {}, []),                      # not encrypted
 ])
 @pytest.mark.asyncio
 async def test__encrypted_json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
@@ -473,19 +473,19 @@ async def test__encrypted_json_save():
             await ds.insert("test.encryptedjson", {"json_dict": {"key": "value"}, "json_list": [1, 2]})
 
         row = ds.fetchall("SELECT * FROM test_encryptedjson")[0]
-        assert row["json_dict"] == '!{"key": "value"}' and row["json_list"] == '![1, 2]'
+        assert row["json_dict"] == '!{"key": "value"}' and row["json_list"] == "![1, 2]"
 
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (json_dict, json_list) VALUES (?, ?)",
-            ['!{"key": "value"}', '![1, 2]'],
+            ['!{"key": "value"}', "![1, 2]"],
             ANY,
         )
 
 
 @pytest.mark.parametrize("string,object_", [
-    ('!Text', 'Text'),
-    ('Text', ''),
+    ("!Text", "Text"),
+    ("Text", ""),
 ])
 @pytest.mark.asyncio
 async def test__encrypted_text_load(string, object_):
@@ -500,14 +500,14 @@ async def test__encrypted_text_load(string, object_):
 async def test__encrypted_text_save():
     async with datastore_test() as ds:
         with patch("middlewared.sqlalchemy.encrypt", encrypt):
-            await ds.insert("test.encryptedtext", {"object": 'Text'})
+            await ds.insert("test.encryptedtext", {"object": "Text"})
 
-        assert (ds.fetchall("SELECT * FROM test_encryptedtext"))[0]["object"] == '!Text'
+        assert (ds.fetchall("SELECT * FROM test_encryptedtext"))[0]["object"] == "!Text"
 
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            ['!Text'],
+            ["!Text"],
             ANY,
         )
 
@@ -538,7 +538,7 @@ async def test__encrypted_text_save_null():
 
 
 class CustomPkModel(Model):
-    __tablename__ = 'test_custompk'
+    __tablename__ = "test_custompk"
 
     custom_identifier = sa.Column(sa.String(42), primary_key=True)
     custom_name = sa.Column(sa.String(120))
@@ -600,25 +600,25 @@ async def test__delete_by_filter():
 
 
 class DiskModel(Model):
-    __tablename__ = 'storage_disk'
+    __tablename__ = "storage_disk"
 
     id = sa.Column(sa.Integer(), primary_key=True)
 
 
 class SMARTTestModel(Model):
-    __tablename__ = 'tasks_smarttest'
+    __tablename__ = "tasks_smarttest"
 
     id = sa.Column(sa.Integer(), primary_key=True)
 
-    smarttest_disks = relationship('DiskModel', secondary=lambda: SMARTTestDiskModel.__table__)
+    smarttest_disks = relationship("DiskModel", secondary=lambda: SMARTTestDiskModel.__table__)
 
 
 class SMARTTestDiskModel(Model):
-    __tablename__ = 'tasks_smarttest_smarttest_disks'
+    __tablename__ = "tasks_smarttest_smarttest_disks"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey('tasks_smarttest.id'))
-    disk_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_disk.id'))
+    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey("tasks_smarttest.id"))
+    disk_id = sa.Column(sa.Integer(), sa.ForeignKey("storage_disk.id"))
 
 
 @pytest.mark.asyncio
@@ -724,14 +724,14 @@ async def test__insert_callable_default():
 
 
 class StringPrimaryKeyModel(Model):
-    __tablename__ = 'test_stringprimarykey'
+    __tablename__ = "test_stringprimarykey"
 
     string_id = sa.Column(sa.String(100), primary_key=True)
     value = sa.Column(sa.Integer(), nullable=True)
 
 
 class BigIntegerPrimaryKeyModel(Model):
-    __tablename__ = 'test_bigintegerprimarykey'
+    __tablename__ = "test_bigintegerprimarykey"
 
     integer_id = sa.Column(sa.BigInteger(), primary_key=True)
     value = sa.Column(sa.Integer(), nullable=True)
@@ -766,7 +766,7 @@ async def test__insert_integer_pk_record():
 
 
 class SMBModel(Model):
-    __tablename__ = 'test_smb'
+    __tablename__ = "test_smb"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cifs_srv_netbiosname = sa.Column(sa.String(120))
@@ -788,7 +788,7 @@ async def test__already_has_prefix():
 
 
 class TimeModel(Model):
-    __tablename__ = 'test_time'
+    __tablename__ = "test_time"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     time = sa.Column(Time())
@@ -804,7 +804,7 @@ async def test__time():
 
 
 class NullModel(Model):
-    __tablename__ = 'test_null'
+    __tablename__ = "test_null"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     value = sa.Column(sa.Integer(), nullable=True)
@@ -827,7 +827,7 @@ async def test__null_order_by(order_by, result):
 
 
 class AuditModel(Model):
-    __tablename__ = 'audit_middleware_0_1'
+    __tablename__ = "audit_middleware_0_1"
 
     ROW_ID = sa.Column(sa.Integer(), primary_key=True)
     event_data = sa.Column(sa.String())
@@ -836,25 +836,25 @@ class AuditModel(Model):
 
 @pytest.mark.parametrize("filters,expected_ids", [
     # Full array/object matching
-    ([['$.event_data.params', '=', [38]]], [1]),
-    ([['$.event_data.nested', '=', {'key': 'value1'}]], [1]),
-    ([['$.event_data.params', '=', [40, 41]]], [3]),
-    ([['username', '=', 'admin']], [1, 2]),
-    ([['username', '=', 'admin'], ['$.event_data.params', '=', [38]]], [1]),
-    ([['$.event_data.method', '=', 'user.delete']], [1, 3]),
+    ([["$.event_data.params", "=", [38]]], [1]),
+    ([["$.event_data.nested", "=", {"key": "value1"}]], [1]),
+    ([["$.event_data.params", "=", [40, 41]]], [3]),
+    ([["username", "=", "admin"]], [1, 2]),
+    ([["username", "=", "admin"], ["$.event_data.params", "=", [38]]], [1]),
+    ([["$.event_data.method", "=", "user.delete"]], [1, 3]),
     # Array index access
     # Access first element of params array
-    ([['$.event_data.params[0]', '=', 38]], [1]),
-    ([['$.event_data.params[0]', '=', 39]], [2]),
-    ([['$.event_data.params[0]', '=', 40]], [3]),
+    ([["$.event_data.params[0]", "=", 38]], [1]),
+    ([["$.event_data.params[0]", "=", 39]], [2]),
+    ([["$.event_data.params[0]", "=", 40]], [3]),
     # Access second element of params array (only row 3 has two elements)
-    ([['$.event_data.params[1]', '=', 41]], [3]),
+    ([["$.event_data.params[1]", "=", 41]], [3]),
     # Combine array index with other filters
-    ([['$.event_data.method', '=', 'user.delete'], ['$.event_data.params[0]', '=', 38]], [1]),
-    ([['username', '=', 'admin'], ['$.event_data.params[0]', '=', 38]], [1]),
+    ([["$.event_data.method", "=", "user.delete"], ["$.event_data.params[0]", "=", 38]], [1]),
+    ([["username", "=", "admin"], ["$.event_data.params[0]", "=", 38]], [1]),
     # Access nested object property
-    ([['$.event_data.nested.key', '=', 'value1']], [1]),
-    ([['$.event_data.nested.key', '=', 'value2']], [2]),
+    ([["$.event_data.nested.key", "=", "value1"]], [1]),
+    ([["$.event_data.nested.key", "=", "value2"]], [2]),
 ])
 @pytest.mark.asyncio
 async def test__json_path_filters(filters, expected_ids):
@@ -883,7 +883,7 @@ async def test__json_path_filters(filters, expected_ids):
 
 class RolesModel(Model):
     """Model with a JSON column that stores an array directly (not nested in object)"""
-    __tablename__ = 'test_roles'
+    __tablename__ = "test_roles"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String())
@@ -892,11 +892,11 @@ class RolesModel(Model):
 
 @pytest.mark.parametrize("filters,expected_ids", [
     # Top-level array index access
-    ([['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
-    ([['$.roles[0]', '=', 'READONLY_ADMIN']], [2]),
-    ([['$.roles[1]', '=', 'SHARING_ADMIN']], [1]),  # Second role
+    ([["$.roles[0]", "=", "FULL_ADMIN"]], [1]),
+    ([["$.roles[0]", "=", "READONLY_ADMIN"]], [2]),
+    ([["$.roles[1]", "=", "SHARING_ADMIN"]], [1]),  # Second role
     # Combine with regular column filter
-    ([['name', '=', 'Local Administrator'], ['$.roles[0]', '=', 'FULL_ADMIN']], [1]),
+    ([["name", "=", "Local Administrator"], ["$.roles[0]", "=", "FULL_ADMIN"]], [1]),
 ])
 @pytest.mark.asyncio
 async def test__json_path_top_level_array(filters, expected_ids):
@@ -922,7 +922,7 @@ async def test__json_path_top_level_array(filters, expected_ids):
 
 class AuditComplexModel(Model):
     """Model simulating real audit event_data structure with params array containing objects"""
-    __tablename__ = 'audit_complex'
+    __tablename__ = "audit_complex"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     event_data = sa.Column(sa.String())  # JSON with nested structure
@@ -931,16 +931,16 @@ class AuditComplexModel(Model):
 @pytest.mark.parametrize("filters,expected_ids", [
     # Access property of first object in params array (main audit use case)
     # Note: Row 1 and Row 3 both have username=barney in params[0]
-    ([['$.event_data.params[0].username', '=', 'barney']], [1, 3]),
-    ([['$.event_data.params[0].username', '=', 'fred']], [2]),
+    ([["$.event_data.params[0].username", "=", "barney"]], [1, 3]),
+    ([["$.event_data.params[0].username", "=", "fred"]], [2]),
     # Access nested property in array element
-    ([['$.event_data.params[0].settings.theme', '=', 'dark']], [1]),
-    ([['$.event_data.params[0].settings.theme', '=', 'light']], [2]),
+    ([["$.event_data.params[0].settings.theme", "=", "dark"]], [1]),
+    ([["$.event_data.params[0].settings.theme", "=", "light"]], [2]),
     # Combine method filter with params array access (this filters to just row 1)
-    ([['$.event_data.method', '=', 'user.create'], ['$.event_data.params[0].username', '=', 'barney']], [1]),
+    ([["$.event_data.method", "=", "user.create"], ["$.event_data.params[0].username", "=", "barney"]], [1]),
     # Access second positional argument
-    ([['$.event_data.params[1].notify', '=', True]], [1]),
-    ([['$.event_data.params[1].notify', '=', False]], [2]),
+    ([["$.event_data.params[1].notify", "=", True]], [1]),
+    ([["$.event_data.params[1].notify", "=", False]], [2]),
 ])
 @pytest.mark.asyncio
 async def test__json_path_nested_array_object_access(filters, expected_ids):
@@ -972,17 +972,17 @@ async def test__json_path_nested_array_object_access(filters, expected_ids):
 
 
 class LinkedToModel(Model):
-    __tablename__ = 'test_linkedto'
+    __tablename__ = "test_linkedto"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     linkedto_value = sa.Column(sa.Integer())
 
 
 class LinkedFromModel(Model):
-    __tablename__ = 'test_linkedfrom'
+    __tablename__ = "test_linkedfrom"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    linkedfrom_linkedto_id = sa.Column(sa.ForeignKey('test_linkedto.id'), index=True)
+    linkedfrom_linkedto_id = sa.Column(sa.ForeignKey("test_linkedto.id"), index=True)
     linkedfrom_value = sa.Column(sa.Integer())
 
 
@@ -990,206 +990,206 @@ class LinkedFromModel(Model):
     pytest.param(
         {},
         [],
-        {'prefix': 'linkedfrom_'},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'linkedto_value': 42},
-          'value': 142},
-         {'id': 2,
-          'linkedto': {'id': 3, 'linkedto_value': 43},
-          'value': 143}],
-        id='extend_pk NOT supplied, no filter, no extend'),
+        {"prefix": "linkedfrom_"},
+        [{"id": 1,
+          "linkedto": {"id": 2, "linkedto_value": 42},
+          "value": 142},
+         {"id": 2,
+          "linkedto": {"id": 3, "linkedto_value": 43},
+          "value": 143}],
+        id="extend_pk NOT supplied, no filter, no extend"),
 
     pytest.param(
         {},
         [],
-        {'prefix': 'linkedfrom_', 'count': True},
+        {"prefix": "linkedfrom_", "count": True},
         2,
-        id='extend_pk NOT supplied, no filter, no extend, count(2)'),
+        id="extend_pk NOT supplied, no filter, no extend, count(2)"),
 
     pytest.param(
         {},
-        [['id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'count': True},
+        [["id", "=", 2]],
+        {"prefix": "linkedfrom_", "count": True},
         1,
-        id='extend_pk NOT supplied, filter, no extend, count(1)'),
+        id="extend_pk NOT supplied, filter, no extend, count(1)"),
 
     pytest.param(
         {},
-        [['id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'count': True},
+        [["id", "=", 525600]],
+        {"prefix": "linkedfrom_", "count": True},
         0,
-        id='extend_pk NOT supplied, filter, no extend, count(0)'),
+        id="extend_pk NOT supplied, filter, no extend, count(0)"),
 
     pytest.param(
         {},
-        [['linkedto_id', '=', 3]],
-        {'prefix': 'linkedfrom_', 'count': True},
+        [["linkedto_id", "=", 3]],
+        {"prefix": "linkedfrom_", "count": True},
         1,
-        id='extend_pk NOT supplied, filter(underscore), no extend, count(1)'),
+        id="extend_pk NOT supplied, filter(underscore), no extend, count(1)"),
 
     pytest.param(
         {},
-        [['linkedto_id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'count': True},
+        [["linkedto_id", "=", 525600]],
+        {"prefix": "linkedfrom_", "count": True},
         0,
-        id='extend_pk NOT supplied, filter(underscore), no extend, count(0)'),
+        id="extend_pk NOT supplied, filter(underscore), no extend, count(0)"),
 
     pytest.param(
         {},
         [],
-        {'prefix': 'linkedfrom_', 'extend': 'fake.extend.triple_value'},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'linkedto_value': 42},
-          'value': 426},
-         {'id': 2,
-          'linkedto': {'id': 3, 'linkedto_value': 43},
-          'value': 429}],
-        id='extend_pk NOT supplied, no filter, extend(from)'),
+        {"prefix": "linkedfrom_", "extend": "fake.extend.triple_value"},
+        [{"id": 1,
+          "linkedto": {"id": 2, "linkedto_value": 42},
+          "value": 426},
+         {"id": 2,
+          "linkedto": {"id": 3, "linkedto_value": 43},
+          "value": 429}],
+        id="extend_pk NOT supplied, no filter, extend(from)"),
 
     pytest.param(
         {},
-        [['linkedto_id', '=', 3]],
-        {'prefix': 'linkedfrom_', 'extend': 'fake.extend.triple_value'},
-        [{'id': 2,
-          'linkedto': {'id': 3, 'linkedto_value': 43},
-          'value': 429}],
-        id='extend_pk NOT supplied, filter, extend(from)'),
+        [["linkedto_id", "=", 3]],
+        {"prefix": "linkedfrom_", "extend": "fake.extend.triple_value"},
+        [{"id": 2,
+          "linkedto": {"id": 3, "linkedto_value": 43},
+          "value": 429}],
+        id="extend_pk NOT supplied, filter, extend(from)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
+        {"prefix": "linkedto_", "extend": None, "extend_context": None},
         [],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 42},
-          'value': 142},
-         {'id': 2,
-          'linkedto': {'id': 3, 'value': 43},
-          'value': 143}],
-        id='extend_pk supplied, no filter, no extend'),
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"]},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 42},
+          "value": 142},
+         {"id": 2,
+          "linkedto": {"id": 3, "value": 43},
+          "value": 143}],
+        id="extend_pk supplied, no filter, no extend"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
-        [['linkedto_id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 42},
-          'value': 142}],
-        id='extend_pk supplied, filter (underscore), no extend'),
+        {"prefix": "linkedto_", "extend": None, "extend_context": None},
+        [["linkedto_id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"]},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 42},
+          "value": 142}],
+        id="extend_pk supplied, filter (underscore), no extend"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
-        [['linkedto__id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 42},
-          'value': 142}],
-        id='extend_pk supplied, filter (double underscore), no extend'),
+        {"prefix": "linkedto_", "extend": None, "extend_context": None},
+        [["linkedto__id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"]},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 42},
+          "value": 142}],
+        id="extend_pk supplied, filter (double underscore), no extend"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
-        [['linkedto.id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 42},
-          'value': 142}],
-        id='extend_pk supplied, filter (period), no extend'),
+        {"prefix": "linkedto_", "extend": None, "extend_context": None},
+        [["linkedto.id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"]},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 42},
+          "value": 142}],
+        id="extend_pk supplied, filter (period), no extend"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto.id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 84},
-          'value': 142}],
-        id='extend_pk supplied, filter (period), extend'),
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto.id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"]},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 84},
+          "value": 142}],
+        id="extend_pk supplied, filter (period), extend"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto.id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'extend': 'fake.extend.triple_value'},
-        [{'id': 1,
-          'linkedto': {'id': 2, 'value': 84},
-          'value': 426}],
-        id='extend_pk supplied, filter (period), extend (twice)'),
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto.id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "extend": "fake.extend.triple_value"},
+        [{"id": 1,
+          "linkedto": {"id": 2, "value": 84},
+          "value": 426}],
+        id="extend_pk supplied, filter (period), extend (twice)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
         [],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         2,
-        id='extend_pk supplied, no filter, extend, count(2)'),
+        id="extend_pk supplied, no filter, extend, count(2)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['id', '=', 2]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["id", "=", 2]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         1,
-        id='extend_pk supplied, filter, extend, count(1)'),
+        id="extend_pk supplied, filter, extend, count(1)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["id", "=", 525600]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         0,
-        id='extend_pk supplied, filter, extend, count(0)'),
+        id="extend_pk supplied, filter, extend, count(0)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto_id', '=', 3]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto_id", "=", 3]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         1,
-        id='extend_pk supplied, filter(underscore), extend, count(1)'),
+        id="extend_pk supplied, filter(underscore), extend, count(1)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto_id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto_id", "=", 525600]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         0,
-        id='extend_pk supplied, filter(underscore), extend, count(0)'),
+        id="extend_pk supplied, filter(underscore), extend, count(0)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto__id', '=', 3]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto__id", "=", 3]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         1,
-        id='extend_pk supplied, filter(double underscore), extend, count(1)'),
+        id="extend_pk supplied, filter(double underscore), extend, count(1)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto__id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto__id", "=", 525600]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         0,
-        id='extend_pk supplied, filter(double underscore), extend, count(0)'),
+        id="extend_pk supplied, filter(double underscore), extend, count(0)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto.id', '=', 3]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto.id", "=", 3]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         1,
-        id='extend_pk supplied, filter(period), extend, count(1)'),
+        id="extend_pk supplied, filter(period), extend, count(1)"),
 
     pytest.param(
-        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
-        [['linkedto.id', '=', 525600]],
-        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        {"prefix": "linkedto_", "extend": "fake.extend.double_value", "extend_context": None},
+        [["linkedto.id", "=", 525600]],
+        {"prefix": "linkedfrom_", "extend_fk": ["linkedto"], "count": True},
         0,
-        id='extend_pk supplied, filter(period), extend, count(0)'),
+        id="extend_pk supplied, filter(period), extend, count(0)"),
 
 ])
 @pytest.mark.asyncio
 async def test__extend_fk(extend_fk_attrs, filter_, options, expected_result):
     def multiply(times):
         def by(data):
-            if curval := data.get('value', None):
+            if curval := data.get("value", None):
                 if isinstance(curval, int):
-                    data['value'] = curval * times
+                    data["value"] = curval * times
             return data
         return by
 
     mocked_calls = {
-        'datastore.get_service_config_attrs': lambda ftn: extend_fk_attrs,
-        'fake.extend.double_value': multiply(2),
-        'fake.extend.triple_value': multiply(3),
+        "datastore.get_service_config_attrs": lambda ftn: extend_fk_attrs,
+        "fake.extend.double_value": multiply(2),
+        "fake.extend.triple_value": multiply(3),
     }
     async with datastore_test(mocked_calls) as ds:
         await ds.insert("test.linkedto", {"linkedto_value": 1})

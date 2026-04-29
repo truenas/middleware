@@ -16,7 +16,7 @@ get_or_insert_lock = asyncio.Lock()
 
 def config_args(entry: type[BaseModel]) -> type[BaseModel]:
     return create_model(
-        entry.__name__.removesuffix("Entry") + 'ConfigArgs',
+        entry.__name__.removesuffix("Entry") + "ConfigArgs",
         __base__=(BaseModel,),
         __module__=entry.__module__,
     )
@@ -24,7 +24,7 @@ def config_args(entry: type[BaseModel]) -> type[BaseModel]:
 
 def config_result(entry: type[BaseModel]) -> type[BaseModel]:
     return create_model(
-        entry.__name__.removesuffix('Entry') + 'ConfigResult',
+        entry.__name__.removesuffix("Entry") + "ConfigResult",
         __base__=(BaseModel,),
         __module__=entry.__module__,
         result=Annotated[entry, Field()],
@@ -41,9 +41,9 @@ class ConfigServiceMetabase(ServiceBase):
                 b.__name__ == c_b for b, c_b in zip(bases, c_bases)
             )
             for c_name, c_bases in (
-                ('ConfigService', ('ServiceChangeMixin', 'Service', 'Generic')),
-                ('GenericConfigService', ('ConfigService', 'Generic')),
-                ('SystemServiceService', ('ConfigService', 'Generic')),
+                ("ConfigService", ("ServiceChangeMixin", "Service", "Generic")),
+                ("GenericConfigService", ("ConfigService", "Generic")),
+                ("SystemServiceService", ("ConfigService", "Generic")),
             )
         ):
             return klass
@@ -54,11 +54,11 @@ class ConfigServiceMetabase(ServiceBase):
         namespace = config.namespace
 
         if not private and not config.role_prefix:
-            raise ValueError(f'{namespace}: public ConfigService must have role_prefix defined')
+            raise ValueError(f"{namespace}: public ConfigService must have role_prefix defined")
 
         if entry is None:
             if not private:
-                raise ValueError(f'{namespace}: public ConfigService must have entry defined')
+                raise ValueError(f"{namespace}: public ConfigService must have entry defined")
         else:
             # Decorate config method with api_method
             accepts_model = config_args(entry)
@@ -89,23 +89,23 @@ class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetab
 
     async def config(self) -> E:
         options = {}
-        options['extend'] = self._config.datastore_extend
-        options['extend_context'] = self._config.datastore_extend_context
-        options['extend_fk'] = self._config.datastore_extend_fk
-        options['prefix'] = self._config.datastore_prefix
+        options["extend"] = self._config.datastore_extend
+        options["extend_context"] = self._config.datastore_extend_context
+        options["extend_fk"] = self._config.datastore_extend_fk
+        options["prefix"] = self._config.datastore_prefix
         return await self._get_or_insert(self._config.datastore, options)
 
     @pass_app(message_id=True)
     async def update(self, app, message_id, data) -> E:
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [data], app=app, message_id=message_id,
+            f"{self._config.namespace}.update", self, self.do_update, [data], app=app, message_id=message_id,
         )
-        await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
+        await self.middleware.call_hook(f"{self._config.namespace}.post_update", rv)
         return rv
 
     @private
     async def _get_or_insert(self, datastore, options):
-        rows = await self.middleware.call('datastore.query', datastore, [], options)
+        rows = await self.middleware.call("datastore.query", datastore, [], options)
         if not rows:
             async with get_or_insert_lock:
                 # We do this again here to avoid TOCTOU as we don't want multiple calls inserting records
@@ -116,10 +116,10 @@ class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetab
                 # we don't have a row available whereas the row was there but the service's extend
                 # had errored out with that exception and we would misleadingly insert another duplicate
                 # record
-                rows = await self.middleware.call('datastore.query', datastore, [], options)
+                rows = await self.middleware.call("datastore.query", datastore, [], options)
                 if not rows:
-                    await self.middleware.call('datastore.insert', datastore, {})
-                    rows = [await self.middleware.call('datastore.config', datastore, options)]
+                    await self.middleware.call("datastore.insert", datastore, {})
+                    rows = [await self.middleware.call("datastore.config", datastore, options)]
 
         if self._config.generic:
             rows[0] = self._config.entry(**rows[0])

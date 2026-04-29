@@ -26,12 +26,12 @@ class DeviceFactory:
         return self._mapping
 
     def get_device(self, device_data: dict[str, Any]) -> Device:
-        return get_device(device_data, self._mapping[device_data['attributes']['dtype']][1](
-            self.middleware, device_data.get('id'),
+        return get_device(device_data, self._mapping[device_data["attributes"]["dtype"]][1](
+            self.middleware, device_data.get("id"),
         ))
 
     def get_device_adapter(self, device_data: dict[str, Any]) -> DeviceAdapter:
-        device = get_device(device_data, self._mapping[device_data['attributes']['dtype']][1](
-            self.middleware, device_data.get('id'),
+        device = get_device(device_data, self._mapping[device_data["attributes"]["dtype"]][1](
+            self.middleware, device_data.get("id"),
         ))
         return DeviceAdapter(device, device_data)

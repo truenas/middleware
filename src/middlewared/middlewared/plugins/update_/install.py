@@ -20,7 +20,7 @@ STARTING_INSTALLER = "Starting installer"
 
 
 def get_hash(file_path: str, digest: str = "sha1") -> str:
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         return hashlib.file_digest(f, digest).hexdigest()
 
 
@@ -158,6 +158,6 @@ def ensure_free_space(context: ServiceContext, pool_name: str, size: int) -> Non
 
 def _space_left(context: ServiceContext, pool_name: str) -> int:
     space_left: int = context.call_sync2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[pool_name], properties=['available'])
-    )[0]['properties']['available']['value']
+        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[pool_name], properties=["available"])
+    )[0]["properties"]["available"]["value"]
     return space_left

@@ -111,7 +111,7 @@ class NFSService(Service):
     are files in /proc/sys/sunrpc.
     """
 
-    dbgcls = {'NFS': NFS_DBGFLAGS, 'NFSD': NFSD_DBGFLAGS, 'NLM': NLM_DBGFLAGS, 'RPC': RPC_DBGFLAGS}
+    dbgcls = {"NFS": NFS_DBGFLAGS, "NFSD": NFSD_DBGFLAGS, "NLM": NLM_DBGFLAGS, "RPC": RPC_DBGFLAGS}
 
     @api_method(NfsDebugGetArgs, NfsDebugGetResult, private=True)
     def get_debug(self):
@@ -127,18 +127,18 @@ class NFSService(Service):
                 if not svc.endswith("debug"):
                     continue
 
-                svc_name = svc.upper().split('_')[0]
+                svc_name = svc.upper().split("_")[0]
                 with open(f"/proc/sys/sunrpc/{svc}", "r") as f:
                     val = int(f.readline().strip(), 16)
 
                 for dbgflg in self.dbgcls[svc_name]:
-                    if dbgflg.name == 'NONE':
+                    if dbgflg.name == "NONE":
                         continue
 
                     if not (val & dbgflg.value):
                         continue
 
-                    if dbgflg.name == 'ALL' and dbgflg.value != val:
+                    if dbgflg.name == "ALL" and dbgflg.value != val:
                         continue
 
                     flags.append(dbgflg.name)

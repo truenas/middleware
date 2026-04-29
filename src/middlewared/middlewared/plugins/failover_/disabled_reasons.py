@@ -37,7 +37,7 @@ class FailoverDisabledService(Service):
         FailoverDisabledReasonsArgs,
         FailoverDisabledReasonsResult,
         pass_app=True,
-        roles=['FAILOVER_READ']
+        roles=["FAILOVER_READ"]
     )
     def reasons(self, app):
         """Returns a list of reasons why failover is not enabled/functional.

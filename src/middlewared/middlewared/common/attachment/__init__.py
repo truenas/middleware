@@ -21,7 +21,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     # If is not None, corresponding service will be restarted after performing tasks on item
     service: str | None = None
     # attribute which is used to identify human readable description of an attachment
-    resource_name = 'name'
+    resource_name = "name"
     # Priority for ordering delegate operations
     # On start: delegates are processed high-to-low priority (infrastructure starts first)
     # On stop: delegates are processed low-to-high priority (dependent services stop first)
@@ -109,26 +109,26 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
 
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
-        filters = [[self.enabled_field, '=', enabled]]
-        if 'locked' in options:
-            filters += [[self.locked_field, '=', options['locked']]]
+        filters = [[self.enabled_field, "=", enabled]]
+        if "locked" in options:
+            filters += [[self.locked_field, "=", options["locked"]]]
         return filters
 
     async def start_service(self):
         if not (
-            service_obj := await self.middleware.call('service.query', [['service', '=', self.service]])
-        ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
+            service_obj := await self.middleware.call("service.query", [["service", "=", self.service]])
+        ) or not service_obj[0]["enable"] or service_obj[0]["state"] == "RUNNING":
             return
 
-        await (await self.middleware.call('service.control', 'START', self.service)).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "START", self.service)).wait(raise_error=True)
 
     async def query(self, path, enabled, options=None):
         results = []
         options = options or {}
-        check_parent = options.get('check_parent', False)
-        exact_match = options.get('exact_match', False)
+        check_parent = options.get("check_parent", False)
+        exact_match = options.get("exact_match", False)
         for resource in await self.middleware.call(
-            f'{self.namespace}.query', await self.get_query_filters(enabled, options)
+            f"{self.namespace}.query", await self.get_query_filters(enabled, options)
         ):
             if await self.is_child_of_path(resource, path, check_parent, exact_match):
                 results.append(resource)
@@ -138,13 +138,13 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
-                attachment_id = attachment['id']
+                attachment_id = attachment["id"]
             else:
                 attachment_id = attachment.id
 
             await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment_id, {
-                    f'{self.datastore_prefix}{self.enabled_field}': enabled
+                "datastore.update", self.datastore_model, attachment_id, {
+                    f"{self.datastore_prefix}{self.enabled_field}": enabled
                 }
             )
             await self.remove_alert(attachment)
@@ -158,11 +158,11 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
-                attachment_id = attachment['id']
+                attachment_id = attachment["id"]
             else:
                 attachment_id = attachment.id
 
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment_id)
+            await self.middleware.call("datastore.delete", self.datastore_model, attachment_id)
             await self.remove_alert(attachment)
         if attachments:
             await self.restart_reload_services(attachments)
@@ -176,11 +176,11 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
     async def remove_alert(self, attachment):
         if isinstance(attachment, dict):
             # FIXME: This must be eventually removed
-            attachment_id = attachment['id']
+            attachment_id = attachment["id"]
         else:
             attachment_id = attachment.id
 
-        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment_id)
+        await self.middleware.call(f"{self.namespace}.remove_locked_alert", attachment_id)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         # What this is essentially doing is testing if resource in question is a child of queried path
@@ -203,9 +203,9 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         if exact_match or share_path == path:
             return share_path == path
 
-        is_child = await self.middleware.call('filesystem.is_child', share_path, path)
+        is_child = await self.middleware.call("filesystem.is_child", share_path, path)
         if not is_child and check_parent:
-            return await self.middleware.call('filesystem.is_child', path, share_path)
+            return await self.middleware.call("filesystem.is_child", path, share_path)
         else:
             return is_child
 

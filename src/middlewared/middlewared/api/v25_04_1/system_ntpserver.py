@@ -3,16 +3,16 @@ from typing import Literal
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    'NTPPeerEntry', 'NTPServerEntry',
-    'NTPServerCreateArgs', 'NTPServerCreateResult',
-    'NTPServerUpdateArgs', 'NTPServerUpdateResult',
-    'NTPServerDeleteArgs', 'NTPServerDeleteResult',
+    "NTPPeerEntry", "NTPServerEntry",
+    "NTPServerCreateArgs", "NTPServerCreateResult",
+    "NTPServerUpdateArgs", "NTPServerUpdateResult",
+    "NTPServerDeleteArgs", "NTPServerDeleteResult",
 ]
 
 
 class NTPPeerEntry(BaseModel):
-    mode: Literal['SERVER', 'PEER', 'LOCAL']
-    state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE']
+    mode: Literal["SERVER", "PEER", "LOCAL"]
+    state: Literal["BEST", "SELECTED", "SELECTABLE", "FALSE_TICKER", "TOO_VARIABLE", "NOT_SELECTABLE"]
     remote: str
     stratum: int
     poll_interval: int

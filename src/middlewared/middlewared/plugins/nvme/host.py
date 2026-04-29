@@ -4,10 +4,10 @@ import pathlib
 import shutil
 import uuid
 
-NQN_UUID_PREFIX = 'nqn.2011-06.com.truenas:uuid:'
-DATA_NVME_PATH = '/data/subsystems/nvme'
-LIVE_NVMENQN_PATH = '/etc/nvme/hostnqn'
-LIVE_NVMEID_PATH = '/etc/nvme/hostid'
+NQN_UUID_PREFIX = "nqn.2011-06.com.truenas:uuid:"
+DATA_NVME_PATH = "/data/subsystems/nvme"
+LIVE_NVMENQN_PATH = "/etc/nvme/hostnqn"
+LIVE_NVMEID_PATH = "/etc/nvme/hostid"
 
 
 def setup(middleware):
@@ -19,20 +19,20 @@ def setup(middleware):
             pass
 
         # /etc/nvme/hostnqn
-        data_hostnqn = data_nvme / 'hostnqn'
+        data_hostnqn = data_nvme / "hostnqn"
         if not data_hostnqn.exists():
-            data = f'{NQN_UUID_PREFIX}{uuid.uuid4()}'
-            data_hostnqn.write_text(f'{data}\n')
+            data = f"{NQN_UUID_PREFIX}{uuid.uuid4()}"
+            data_hostnqn.write_text(f"{data}\n")
             middleware.logger.debug("Generated hostnqn: %s", data)
         if not os.path.exists(LIVE_NVMENQN_PATH) or not filecmp.cmp(data_hostnqn, LIVE_NVMENQN_PATH):
             shutil.copy2(data_hostnqn, LIVE_NVMENQN_PATH)
             middleware.logger.debug("Wrote %s", LIVE_NVMENQN_PATH)
 
         # /etc/nvme/hostid
-        data_hostid = data_nvme / 'hostid'
+        data_hostid = data_nvme / "hostid"
         if not data_hostid.exists():
-            data = f'{uuid.uuid4()}'
-            data_hostid.write_text(f'{data}\n')
+            data = f"{uuid.uuid4()}"
+            data_hostid.write_text(f"{data}\n")
             middleware.logger.debug("Generated hostid: %s", data)
         if not os.path.exists(LIVE_NVMEID_PATH) or not filecmp.cmp(data_hostid, LIVE_NVMEID_PATH):
             shutil.copy2(data_hostid, LIVE_NVMEID_PATH)

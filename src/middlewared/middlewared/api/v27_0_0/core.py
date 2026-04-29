@@ -33,7 +33,7 @@ __all__ = [
 
 
 class CoreGetServicesArgs(BaseModel):
-    target: Literal['WS', 'CLI', 'REST'] = 'WS'
+    target: Literal["WS", "CLI", "REST"] = "WS"
     """Target interface to get services for.
 
     `WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."""
@@ -47,7 +47,7 @@ class CoreGetServicesResult(BaseModel):
 class CoreGetMethodsArgs(BaseModel):
     service: str | None = None
     """Filters the result for a single service."""
-    target: Literal['WS', 'CLI', 'REST'] = 'WS'
+    target: Literal["WS", "CLI", "REST"] = "WS"
     """Target interface to get methods for.
 
     `WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."""

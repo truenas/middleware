@@ -3,8 +3,8 @@ import subprocess
 
 def fstab_configuration(middleware):
     for command in [
-        ['systemctl', 'daemon-reload'],
-        ['systemctl', 'restart', 'local-fs.target'],
+        ["systemctl", "daemon-reload"],
+        ["systemctl", "restart", "local-fs.target"],
     ]:
         ret = subprocess.run(command, capture_output=True)
         if ret.returncode:

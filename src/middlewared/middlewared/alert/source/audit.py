@@ -57,7 +57,7 @@ class AuditServiceHealthAlertSource(AlertSource):
     async def check(self) -> Alert[AuditServiceHealthAlert] | None:
         try:
             await self.middleware.call(
-                'audit.query', {
+                "audit.query", {
                     "query-options": {"count": True}
                 }
             )

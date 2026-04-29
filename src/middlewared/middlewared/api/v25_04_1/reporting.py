@@ -12,9 +12,9 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
-    'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
-    'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingNetdataGraphsItem',
+    "ReportingEntry", "ReportingUpdateArgs", "ReportingUpdateResult", "ReportingGraphsItem",
+    "ReportingNetdataGetDataArgs", "ReportingNetdataGraphResult", "ReportingNetdataGraphArgs",
+    "ReportingGeneratePasswordArgs", "ReportingGeneratePasswordResult", "ReportingNetdataGraphsItem",
 ]
 
 
@@ -25,7 +25,7 @@ class ReportingEntry(BaseModel):
     tier1_update_interval: int = Field(ge=1)
 
 
-@single_argument_args('reporting_update')
+@single_argument_args("reporting_update")
 class ReportingUpdateArgs(ReportingEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
@@ -38,7 +38,7 @@ timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
 
 
 class ReportingQuery(BaseModel):
-    unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = None
+    unit: typing.Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
     page: int = Field(default=1, ge=1)
     aggregate: bool = True
     start: timestamp | None = None
@@ -47,9 +47,9 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime', 'arcactualrate', 'arcrate',
-        'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
-        'upsload', 'upstemperature',
+        "cpu", "cputemp", "disk", "interface", "load", "processes", "memory", "uptime", "arcactualrate", "arcrate",
+        "arcsize", "arcresult", "disktemp", "upscharge", "upsruntime", "upsvoltage", "upscurrent", "upsfrequency",
+        "upsload", "upstemperature",
     ]
     identifier: NonEmptyString | None = None
 

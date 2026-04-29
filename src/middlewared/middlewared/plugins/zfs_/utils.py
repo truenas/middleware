@@ -15,17 +15,17 @@ __all__ = [
     "zvol_path_to_name",
 ]
 
-LEGACY_USERPROP_PREFIX = 'org.freenas'
-USERPROP_PREFIX = 'org.truenas'
+LEGACY_USERPROP_PREFIX = "org.freenas"
+USERPROP_PREFIX = "org.truenas"
 
 
 class TNUserProp(enum.Enum):
-    DESCRIPTION = f'{LEGACY_USERPROP_PREFIX}:description'
-    QUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:quota_warning'
-    QUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:quota_critical'
-    REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
-    REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
-    MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
+    DESCRIPTION = f"{LEGACY_USERPROP_PREFIX}:description"
+    QUOTA_WARN = f"{LEGACY_USERPROP_PREFIX}:quota_warning"
+    QUOTA_CRIT = f"{LEGACY_USERPROP_PREFIX}:quota_critical"
+    REFQUOTA_WARN = f"{LEGACY_USERPROP_PREFIX}:refquota_warning"
+    REFQUOTA_CRIT = f"{LEGACY_USERPROP_PREFIX}:refquota_critical"
+    MANAGED_BY = f"{USERPROP_PREFIX}:managedby"
 
     def default(self):
         match self:
@@ -38,7 +38,7 @@ class TNUserProp(enum.Enum):
             case TNUserProp.REFQUOTA_CRIT:
                 return AUDIT_DEFAULT_FILL_CRITICAL
             case _:
-                raise ValueError(f'{self.value}: no default value is set')
+                raise ValueError(f"{self.value}: no default value is set")
 
     def quotas():
         return [(a.value, a.default()) for a in [
@@ -100,12 +100,12 @@ def path_to_dataset_impl(path: str) -> str:
     possible.
     """
     sm = statmount(path=path, as_dict=False)
-    if sm.fs_type != 'zfs':
-        raise CallError(f'{path}: path is not a ZFS filesystem')
+    if sm.fs_type != "zfs":
+        raise CallError(f"{path}: path is not a ZFS filesystem")
 
     ds_name = sm.sb_source
     for bp_name in BOOT_POOL_NAME_VALID:
         if is_child(ds_name, bp_name):
-            raise CallError(f'{path}: path is on boot pool')
+            raise CallError(f"{path}: path is on boot pool")
 
     return ds_name

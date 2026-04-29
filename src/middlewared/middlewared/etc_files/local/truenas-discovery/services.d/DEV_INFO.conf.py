@@ -8,19 +8,19 @@ from middlewared.utils.mdns import DevType
 
 
 def render(service, middleware, render_ctx):
-    if render_ctx['failover.status'] not in ('SINGLE', 'MASTER'):
+    if render_ctx["failover.status"] not in ("SINGLE", "MASTER"):
         raise FileShouldNotExist()
 
     try:
         cfg = ServiceConfig(
-            service_type='_device-info._tcp',
+            service_type="_device-info._tcp",
             port=9,
-            txt={'model': str(DevType.MACPRORACK)},
+            txt={"model": str(DevType.MACPRORACK)},
         )
         return generate_service_config(cfg)
     except Exception:
         middleware.logger.error(
-            'Failed to generate DEV_INFO discovery service config',
+            "Failed to generate DEV_INFO discovery service config",
             exc_info=True,
         )
         raise FileShouldNotExist()

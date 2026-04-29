@@ -9,14 +9,14 @@ DQ = deque(maxlen=2)
 
 
 def callback(dev):
-    if uuid := dev.get('ID_PART_ENTRY_UUID'):
-        DQ.append({'time': time(), 'name': dev.sys_name, 'uuid': uuid, 'action': dev.action})
+    if uuid := dev.get("ID_PART_ENTRY_UUID"):
+        DQ.append({"time": time(), "name": dev.sys_name, "uuid": uuid, "action": dev.action})
 
 
 def get_observer():
     ctx = Context()
     mon = Monitor.from_netlink(ctx)
-    mon.filter_by(subsystem='block')
+    mon.filter_by(subsystem="block")
 
     return MonitorObserver(mon, callback=callback)
 
@@ -51,7 +51,7 @@ def main(max_wait=600.0, interval=5.0):
     obs.send_stop()  # clean up background thread (non-blocking)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     finally:

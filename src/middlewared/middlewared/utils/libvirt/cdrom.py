@@ -20,27 +20,27 @@ class CDROMDelegate(DeviceDelegate):
         instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
-        path = device['attributes']['path']
+        path = device["attributes"]["path"]
         check_path_resides_within_volume_sync(
-            verrors, 'attributes.path', path, [
-                i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
+            verrors, "attributes.path", path, [
+                i["name"] for i in query_imported_fast_impl().values() if i["name"] != BOOT_POOL_NAME
             ]
         )
         if instance and not device_uniqueness_check(
-            device, instance, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+            device, instance, ("DISK", "RAW", "CDROM", "FILESYSTEM"),
         ):
             verrors.add(
-                'attributes.path',
+                "attributes.path",
                 f'{instance["name"]} has {path!r} already configured'
             )
 
         if verrors:
             return
 
-        st = self.middleware.call_sync('filesystem.statfs', path)
-        if '/' not in st['source']:
+        st = self.middleware.call_sync("filesystem.statfs", path)
+        if "/" not in st["source"]:
             verrors.add(
-                'attributes.path',
+                "attributes.path",
                 f'The specified path is located in the root dataset of pool {st["source"]!r}. '
                 'VM resources must be stored within a child dataset of the pool, not the '
                 f'pool root. Create a dataset under {st["source"]!r} (e.g., {st["source"]}/iso) '
@@ -58,29 +58,29 @@ class CDROMDelegate(DeviceDelegate):
         # a) Check if libvirt user can access the file
         # b) Change ownership of the file to libvirt user as libvirt would eventually do
         # 3) Check if libvirt user can access the file
-        libvirt_user = self.middleware.call_sync('user.get_user_obj', {"username": LIBVIRT_USER})
+        libvirt_user = self.middleware.call_sync("user.get_user_obj", {"username": LIBVIRT_USER})
         current_owner = os.stat(path)
         is_valid = False
-        if current_owner.st_uid != libvirt_user['pw_uid']:
-            if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
+        if current_owner.st_uid != libvirt_user["pw_uid"]:
+            if self.middleware.call_sync("filesystem.can_access_as_user", LIBVIRT_USER, path, {"read": True}):
                 is_valid = True
             else:
-                os.chown(path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
+                os.chown(path, libvirt_user["pw_uid"], libvirt_user["pw_gid"])
         if not is_valid:
             try:
                 self.middleware.call_sync(
-                    'filesystem.check_path_execute', path, 'USER', libvirt_user['pw_uid'], False
+                    "filesystem.check_path_execute", path, "USER", libvirt_user["pw_uid"], False
                 )
             except CallError as e:
-                verrors.add('attributes.path', e.errmsg)
+                verrors.add("attributes.path", e.errmsg)
 
             if not self.middleware.call_sync(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                    "filesystem.can_access_as_user", LIBVIRT_USER, path, {"read": True}
             ):
                 verrors.add(
-                    'attributes.path',
-                    f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
-                    'permissions are specified.'
+                    "attributes.path",
+                    f"{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct "
+                    "permissions are specified."
                 )
             # Now that we know libvirt user would not be able to read the file in any case,
             # let's rollback the chown change we did

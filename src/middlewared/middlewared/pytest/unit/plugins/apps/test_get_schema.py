@@ -3,34 +3,34 @@ import pytest
 from middlewared.plugins.apps.schema_construction_utils import construct_schema, generate_pydantic_model
 
 
-@pytest.mark.parametrize('data', [
+@pytest.mark.parametrize("data", [
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
-        'schema': {
-            'type': 'dict',
-            'attrs': [
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
+        "schema": {
+            "type": "dict",
+            "attrs": [
                 {
-                    'variable': 'additional_envs',
-                    'label': 'Additional Environment Variables',
-                    'description': 'Configure additional environment variables for Actual Budget.',
-                    'schema': {
-                        'type': 'list',
-                        'default': [],
-                        'items': [
+                    "variable": "additional_envs",
+                    "label": "Additional Environment Variables",
+                    "description": "Configure additional environment variables for Actual Budget.",
+                    "schema": {
+                        "type": "list",
+                        "default": [],
+                        "items": [
                             {
-                                'variable': 'env',
-                                'label': 'Environment Variable',
-                                'schema': {
-                                    'type': 'dict',
-                                    'attrs': [
+                                "variable": "env",
+                                "label": "Environment Variable",
+                                "schema": {
+                                    "type": "dict",
+                                    "attrs": [
                                         {
-                                            'variable': 'name',
-                                            'label': 'Name',
-                                            'schema': {
-                                                'type': 'string',
-                                                'required': True
+                                            "variable": "name",
+                                            "label": "Name",
+                                            "schema": {
+                                                "type": "string",
+                                                "required": True
                                             }
                                         },
                                     ]
@@ -45,33 +45,33 @@ from middlewared.plugins.apps.schema_construction_utils import construct_schema,
 ])
 def test_generate_model_success(data):
     # Test that we can generate a Pydantic model from the schema
-    model = generate_pydantic_model([data], 'test_model')
+    model = generate_pydantic_model([data], "test_model")
     assert model is not None
-    assert hasattr(model, '__fields__')
-    assert 'actual_budget' in model.__fields__
+    assert hasattr(model, "__fields__")
+    assert "actual_budget" in model.__fields__
 
 
-@pytest.mark.parametrize('data', [
+@pytest.mark.parametrize("data", [
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
     },
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
-        'schema': {
-            'type': 'custom',  # Invalid type
-            'attrs': [
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
+        "schema": {
+            "type": "custom",  # Invalid type
+            "attrs": [
                 {
-                    'variable': 'additional_envs',
-                    'label': 'Additional Environment Variables',
-                    'description': 'Configure additional environment variables for Actual Budget.',
-                    'schema': {
-                        'type': 'custom',
-                        'default': [],
-                        'items': []
+                    "variable": "additional_envs",
+                    "label": "Additional Environment Variables",
+                    "description": "Configure additional environment variables for Actual Budget.",
+                    "schema": {
+                        "type": "custom",
+                        "default": [],
+                        "items": []
                     }
                 }
             ]
@@ -80,40 +80,40 @@ def test_generate_model_success(data):
 ])
 def test_generate_model_invalid_type(data):
     with pytest.raises((KeyError, ValueError)):
-        generate_pydantic_model([data], 'test_model')
+        generate_pydantic_model([data], "test_model")
 
 
-@pytest.mark.parametrize('data, existing', [
+@pytest.mark.parametrize("data, existing", [
     (
         {
-            'variable': 'actual_budget',
-            'label': '',
-            'group': 'Actual Budget Configuration',
-            'schema': {
-                'type': 'dict',
-                'immutable': True,
-                'attrs': [
+            "variable": "actual_budget",
+            "label": "",
+            "group": "Actual Budget Configuration",
+            "schema": {
+                "type": "dict",
+                "immutable": True,
+                "attrs": [
                     {
-                        'variable': 'additional_envs',
-                        'label': 'Additional Environment Variables',
-                        'description': 'Configure additional environment variables for Actual Budget.',
-                        'schema': {
-                            'type': 'list',
-                            'default': [],
-                            'immutable': True,
-                            'items': [
+                        "variable": "additional_envs",
+                        "label": "Additional Environment Variables",
+                        "description": "Configure additional environment variables for Actual Budget.",
+                        "schema": {
+                            "type": "list",
+                            "default": [],
+                            "immutable": True,
+                            "items": [
                                 {
-                                    'variable': 'env',
-                                    'label': 'Environment Variable',
-                                    'schema': {
-                                        'type': 'dict',
-                                        'attrs': [
+                                    "variable": "env",
+                                    "label": "Environment Variable",
+                                    "schema": {
+                                        "type": "dict",
+                                        "attrs": [
                                             {
-                                                'variable': 'name',
-                                                'label': 'Name',
-                                                'schema': {
-                                                    'type': 'string',
-                                                    'required': True
+                                                "variable": "name",
+                                                "label": "Name",
+                                                "schema": {
+                                                    "type": "string",
+                                                    "required": True
                                                 }
                                             },
                                         ]
@@ -126,72 +126,72 @@ def test_generate_model_invalid_type(data):
             }
         },
         {
-            'actual_budget': {
-                'additional_envs': [{'env': {'name': 'EXAMPLE_ENV'}}]
+            "actual_budget": {
+                "additional_envs": [{"env": {"name": "EXAMPLE_ENV"}}]
             }
         }
     ),
 ])
 def test_construct_schema_with_existing(data, existing):
     # Test construct_schema with existing values
-    item_version_details = {'schema': {'questions': [data]}}
+    item_version_details = {"schema": {"questions": [data]}}
     result = construct_schema(item_version_details, {}, True, existing)
-    assert 'verrors' in result
-    assert 'new_values' in result
-    assert 'schema_name' in result
-    assert result['schema_name'] == 'app_update'
+    assert "verrors" in result
+    assert "new_values" in result
+    assert "schema_name" in result
+    assert result["schema_name"] == "app_update"
 
 
-@pytest.mark.parametrize('data', [
+@pytest.mark.parametrize("data", [
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
-        'schema': {
-            'type': 'dict',
-            'attrs': [
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
+        "schema": {
+            "type": "dict",
+            "attrs": [
                 {
-                    'variable': 'additional_envs',
-                    'label': 'Additional Environment Variables',
-                    'description': 'Configure additional environment variables for Actual Budget.',
-                    'schema': {
-                        'type': 'list',
-                        'items': [
+                    "variable": "additional_envs",
+                    "label": "Additional Environment Variables",
+                    "description": "Configure additional environment variables for Actual Budget.",
+                    "schema": {
+                        "type": "list",
+                        "items": [
                             {
-                                'variable': 'env',
-                                'label': 'Environment Variable',
-                                'schema': {
-                                    'type': 'dict',
-                                    'attrs': [
+                                "variable": "env",
+                                "label": "Environment Variable",
+                                "schema": {
+                                    "type": "dict",
+                                    "attrs": [
                                         {
-                                            'variable': 'name',
-                                            'label': 'Name',
-                                            'schema': {
-                                                'type': 'string',
-                                                'enum': [],
-                                                'required': True
+                                            "variable": "name",
+                                            "label": "Name",
+                                            "schema": {
+                                                "type": "string",
+                                                "enum": [],
+                                                "required": True
                                             }
                                         },
                                         {
-                                            'variable': 'network',
-                                            'label': '',
-                                            'group': 'Network Configuration',
-                                            'schema': {
-                                                'type': 'dict',
-                                                'attrs': [
+                                            "variable": "network",
+                                            "label": "",
+                                            "group": "Network Configuration",
+                                            "schema": {
+                                                "type": "dict",
+                                                "attrs": [
                                                     {
-                                                        'variable': 'web_port',
-                                                        'label': 'WebUI Port',
-                                                        'description': 'The port for Actual Budget WebUI',
-                                                        'schema': {
-                                                            'type': 'int',
-                                                            'default': 31012,
-                                                            'required': True,
-                                                            '$ref': [
-                                                                'definitions/port'
+                                                        "variable": "web_port",
+                                                        "label": "WebUI Port",
+                                                        "description": "The port for Actual Budget WebUI",
+                                                        "schema": {
+                                                            "type": "int",
+                                                            "default": 31012,
+                                                            "required": True,
+                                                            "$ref": [
+                                                                "definitions/port"
                                                             ],
-                                                            'min': 1,
-                                                            'max': 65535
+                                                            "min": 1,
+                                                            "max": 65535
                                                         }
                                                     }
                                                 ]
@@ -209,16 +209,16 @@ def test_construct_schema_with_existing(data, existing):
 ])
 def test_schema_port_min_max(data):
     # Test that port min/max constraints are handled correctly
-    model = generate_pydantic_model([data], 'test_model')
+    model = generate_pydantic_model([data], "test_model")
     assert model is not None
 
     # Create valid instance
     valid_data = {
-        'actual_budget': {
-            'additional_envs': [{
-                'name': 'test',
-                'network': {
-                    'web_port': 8080
+        "actual_budget": {
+            "additional_envs": [{
+                "name": "test",
+                "network": {
+                    "web_port": 8080
                 }
             }]
         }
@@ -228,11 +228,11 @@ def test_schema_port_min_max(data):
 
     # Test min constraint
     invalid_data = {
-        'actual_budget': {
-            'additional_envs': [{
-                'name': 'test',
-                'network': {
-                    'web_port': 0  # Below min
+        "actual_budget": {
+            "additional_envs": [{
+                "name": "test",
+                "network": {
+                    "web_port": 0  # Below min
                 }
             }]
         }
@@ -241,35 +241,35 @@ def test_schema_port_min_max(data):
         model(**invalid_data)
 
 
-@pytest.mark.parametrize('data', [
+@pytest.mark.parametrize("data", [
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
-        'schema': {
-            'type': 'dict',
-            'attrs': [
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
+        "schema": {
+            "type": "dict",
+            "attrs": [
                 {
-                    'variable': 'additional_envs',
-                    'label': 'Additional Environment Variables',
-                    'description': 'Configure additional environment variables for Actual Budget.',
-                    'schema': {
-                        'type': 'list',
-                        'default': [],
-                        'items': [
+                    "variable": "additional_envs",
+                    "label": "Additional Environment Variables",
+                    "description": "Configure additional environment variables for Actual Budget.",
+                    "schema": {
+                        "type": "list",
+                        "default": [],
+                        "items": [
                             {
-                                'variable': 'env',
-                                'label': 'Environment Variable',
-                                'schema': {
-                                    'type': 'dict',
-                                    'attrs': [
+                                "variable": "env",
+                                "label": "Environment Variable",
+                                "schema": {
+                                    "type": "dict",
+                                    "attrs": [
                                         {
-                                            'variable': 'name',
-                                            'label': 'Name',
-                                            'schema': {
-                                                'type': 'string',
-                                                'valid_chars': '^[a-zA-Z0-9_]+$',
-                                                'required': True
+                                            "variable": "name",
+                                            "label": "Name",
+                                            "schema": {
+                                                "type": "string",
+                                                "valid_chars": "^[a-zA-Z0-9_]+$",
+                                                "required": True
                                             }
                                         }
                                     ]
@@ -284,25 +284,25 @@ def test_schema_port_min_max(data):
 ])
 def test_schema_valid_chars(data):
     # Test that valid_chars constraint works correctly
-    model = generate_pydantic_model([data], 'test_model')
+    model = generate_pydantic_model([data], "test_model")
     assert model is not None
 
     # Create valid instance
     valid_data = {
-        'actual_budget': {
-            'additional_envs': [{
-                'name': 'TEST_VAR_123'
+        "actual_budget": {
+            "additional_envs": [{
+                "name": "TEST_VAR_123"
             }]
         }
     }
     instance = model(**valid_data)
-    assert instance.actual_budget.additional_envs[0].name == 'TEST_VAR_123'
+    assert instance.actual_budget.additional_envs[0].name == "TEST_VAR_123"
 
     # Test invalid characters
     invalid_data = {
-        'actual_budget': {
-            'additional_envs': [{
-                'name': 'TEST-VAR'  # Contains dash, not allowed
+        "actual_budget": {
+            "additional_envs": [{
+                "name": "TEST-VAR"  # Contains dash, not allowed
             }]
         }
     }
@@ -310,41 +310,41 @@ def test_schema_valid_chars(data):
         model(**invalid_data)
 
 
-@pytest.mark.parametrize('data', [
+@pytest.mark.parametrize("data", [
     {
-        'variable': 'actual_budget',
-        'label': '',
-        'group': 'Actual Budget Configuration',
-        'schema': {
-            'type': 'dict',
-            'attrs': [
+        "variable": "actual_budget",
+        "label": "",
+        "group": "Actual Budget Configuration",
+        "schema": {
+            "type": "dict",
+            "attrs": [
                 {
-                    'variable': 'config',
-                    'label': 'Configuration',
-                    'schema': {
-                        'type': 'dict',
-                        'attrs': [
+                    "variable": "config",
+                    "label": "Configuration",
+                    "schema": {
+                        "type": "dict",
+                        "attrs": [
                             {
-                                'variable': 'enabled',
-                                'label': 'Enable Feature',
-                                'schema': {
-                                    'type': 'boolean',
-                                    'default': False
+                                "variable": "enabled",
+                                "label": "Enable Feature",
+                                "schema": {
+                                    "type": "boolean",
+                                    "default": False
                                 }
                             },
                             {
-                                'variable': 'advanced_settings',
-                                'label': 'Advanced Settings',
-                                'schema': {
-                                    'type': 'dict',
-                                    'show_if': [['enabled', '=', True]],
-                                    'attrs': [
+                                "variable": "advanced_settings",
+                                "label": "Advanced Settings",
+                                "schema": {
+                                    "type": "dict",
+                                    "show_if": [["enabled", "=", True]],
+                                    "attrs": [
                                         {
-                                            'variable': 'debug_mode',
-                                            'label': 'Debug Mode',
-                                            'schema': {
-                                                'type': 'boolean',
-                                                'default': False
+                                            "variable": "debug_mode",
+                                            "label": "Debug Mode",
+                                            "schema": {
+                                                "type": "boolean",
+                                                "default": False
                                             }
                                         }
                                     ]
@@ -359,14 +359,14 @@ def test_schema_valid_chars(data):
 ])
 def test_schema_show_if_conditions(data):
     # Test that show_if conditions are properly handled
-    model = generate_pydantic_model([data], 'test_model')
+    model = generate_pydantic_model([data], "test_model")
     assert model is not None
 
     # When enabled is False, advanced_settings should still be optional
     valid_data = {
-        'actual_budget': {
-            'config': {
-                'enabled': False
+        "actual_budget": {
+            "config": {
+                "enabled": False
             }
         }
     }
@@ -375,11 +375,11 @@ def test_schema_show_if_conditions(data):
 
     # When enabled is True, advanced_settings can be provided
     valid_data_with_advanced = {
-        'actual_budget': {
-            'config': {
-                'enabled': True,
-                'advanced_settings': {
-                    'debug_mode': True
+        "actual_budget": {
+            "config": {
+                "enabled": True,
+                "advanced_settings": {
+                    "debug_mode": True
                 }
             }
         }

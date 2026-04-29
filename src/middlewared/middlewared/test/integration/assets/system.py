@@ -43,15 +43,15 @@ def standby_syslog_to_remote_syslog(remote_log_path="/var/log/remote_log.txt"):
         '    destination(d_logs);\n'
         '};\n'
     )
-    remote_ip = truenas_server.ha_ips()['standby']
+    remote_ip = truenas_server.ha_ips()["standby"]
     restore_syslog_config = "ORIG_syslog-ng.config_ORIG"
     try:
         ssh(f"cp /etc/syslog-ng/syslog-ng.conf /etc/syslog-ng/{restore_syslog_config}", ip=remote_ip)
-        cmd_file = open('syslogconf.py', 'w')
+        cmd_file = open("syslogconf.py", "w")
         cmd_file.writelines(remote_syslog_config)
         cmd_file.close()
-        results = send_file('syslogconf.py', '/etc/syslog-ng/syslog-ng.conf', user, password, remote_ip)
-        assert results['result'], str(results['output'])
+        results = send_file("syslogconf.py", "/etc/syslog-ng/syslog-ng.conf", user, password, remote_ip)
+        assert results["result"], str(results["output"])
         restart_systemd_svc("syslog-ng", remote_node=True)
         yield (remote_ip, remote_log_path)
     finally:
@@ -59,6 +59,6 @@ def standby_syslog_to_remote_syslog(remote_log_path="/var/log/remote_log.txt"):
             ssh(f"mv /etc/syslog-ng/{restore_syslog_config} /etc/syslog-ng/syslog-ng.conf", ip=remote_ip)
         restart_systemd_svc("syslog-ng", remote_node=True)
         try:
-            os.unlink('syslogconf.py')
+            os.unlink("syslogconf.py")
         except FileNotFoundError:
             pass

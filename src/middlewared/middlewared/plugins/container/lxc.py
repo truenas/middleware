@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('LXCConfigService',)
+__all__ = ("LXCConfigService",)
 
 
 class LXCConfigService(GenericConfigService[LXCConfigEntry]):
@@ -37,7 +37,7 @@ class LXCConfigService(GenericConfigService[LXCConfigEntry]):
         self._svc_part = LXCConfigServicePart(self.context)
 
     @api_method(
-        LXCConfigUpdateArgs, LXCConfigUpdateResult, audit='LXC configuration update', check_annotations=True,
+        LXCConfigUpdateArgs, LXCConfigUpdateResult, audit="LXC configuration update", check_annotations=True,
     )
     async def do_update(self, data: LXCConfigUpdate) -> LXCConfigEntry:
         """
@@ -45,7 +45,7 @@ class LXCConfigService(GenericConfigService[LXCConfigEntry]):
         """
         return await self._svc_part.do_update(data)
 
-    @api_method(LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult, roles=['LXC_CONFIG_READ'])
+    @api_method(LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult, roles=["LXC_CONFIG_READ"])
     async def bridge_choices(self) -> dict[str, str]:
         """
         Bridge choices for virtualization purposes.

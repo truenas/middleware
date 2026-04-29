@@ -25,10 +25,10 @@ def get_jbof_slot_info(model):
     nvme drives that are mounted via NVMe over Fabrics"""
     if model == JbofModels.ES24N.name:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         model: {
                             i: {
                                 SYSFS_SLOT_KEY: i,
@@ -79,11 +79,11 @@ def get_nvme_slot_info(model):
         ControllerModels.R60.value,
     }:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        'f60_nvme_enclosure': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "f60_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
@@ -95,7 +95,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i in range(1, 25)
                         },
-                        'f100_nvme_enclosure': {
+                        "f100_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
@@ -107,7 +107,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i in range(1, 25)
                         },
-                        'f130_nvme_enclosure': {
+                        "f130_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
@@ -128,7 +128,7 @@ def get_nvme_slot_info(model):
                         # generational m40's, we will always return 4 nvme drive
                         # bays for all m-series platforms and they will be empty
                         # on the platforms that can't physically support these drives
-                        'm30_nvme_enclosure': {
+                        "m30_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -139,7 +139,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'm40_nvme_enclosure': {
+                        "m40_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -150,7 +150,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'm50_nvme_enclosure': {
+                        "m50_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -161,7 +161,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'm60_nvme_enclosure': {
+                        "m60_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -172,7 +172,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'v140_nvme_enclosure': {
+                        "v140_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -184,7 +184,7 @@ def get_nvme_slot_info(model):
                             }
                             for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'v160_nvme_enclosure': {
+                        "v160_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -196,7 +196,7 @@ def get_nvme_slot_info(model):
                             }
                             for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'v260_nvme_enclosure': {
+                        "v260_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -208,7 +208,7 @@ def get_nvme_slot_info(model):
                             }
                             for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'v280_nvme_enclosure': {
+                        "v280_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -220,7 +220,7 @@ def get_nvme_slot_info(model):
                             }
                             for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'r30_nvme_enclosure': {
+                        "r30_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
@@ -234,7 +234,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: True if i > 12 else False,
                             } for i in range(1, 17)
                         },
-                        'r50_nvme_enclosure': {
+                        "r50_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -245,7 +245,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 4), range(49, 52))
                         },
-                        'r50b_nvme_enclosure': {
+                        "r50b_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -256,7 +256,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 3), range(49, 51))
                         },
-                        'r50bm_nvme_enclosure': {
+                        "r50bm_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: j,
@@ -267,7 +267,7 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(49, 53))
                         },
-                        'r60_nvme_enclosure': {
+                        "r60_nvme_enclosure": {
                             i: {
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
@@ -441,10 +441,10 @@ def get_slot_info(enc):
         # this is only mapping 1-24. Please see `combine_enclosures()`
         # for why this is.
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 25)
@@ -458,16 +458,16 @@ def get_slot_info(enc):
         # but it's important to always map the eDrawer4048S1
         # enclosure device to drives 1 - 24
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'product': {
-                        'eDrawer4048S1': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "product": {
+                        "eDrawer4048S1": {
                             # 1 - 24
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 25)
                         },
-                        'eDrawer4048S2': {
+                        "eDrawer4048S2": {
                             # 25 - 48
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: True}
                             for i, j in zip(range(1, 25), range(25, 49))
@@ -478,10 +478,10 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.R10.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: True},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: True},
@@ -506,10 +506,10 @@ def get_slot_info(enc):
         }
     elif enc.model in (ControllerModels.R20.value, ControllerModels.R20B.value):
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: True},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: True},
@@ -525,9 +525,9 @@ def get_slot_info(enc):
                             12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 12, SUPPORTS_IDENTIFY_KEY: True}
                         }
                     },
-                    'id': {
+                    "id": {
                         # on the rear of the system (do not support identify lights)
-                        '3000000000000001': {
+                        "3000000000000001": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: False}
                         }
@@ -537,10 +537,10 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.R20A.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: True},
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: True},
@@ -556,8 +556,8 @@ def get_slot_info(enc):
                             10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 12, SUPPORTS_IDENTIFY_KEY: True}
                         }
                     },
-                    'id': {
-                        '3000000000000001': {
+                    "id": {
+                        "3000000000000001": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: False}
                         }
@@ -567,11 +567,11 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3E.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000001': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 7)
                         }
@@ -581,15 +581,15 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3EP.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000001': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 5)
                         },
-                        '3000000000000002': {
+                        "3000000000000002": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False}
                         }
@@ -599,30 +599,30 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3X.value:
         return {
-            'any_version': False,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000001': {
+            "any_version": False,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 5)
                         },
-                        '3000000000000002': {
+                        "3000000000000002": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
                             4: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: False}
                         }
                     }
                 },
-                '1.0': {
-                    'id': {
-                        '3000000000000002': {
+                "1.0": {
+                    "id": {
+                        "3000000000000002": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: False},
                             4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: False},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 4, SUPPORTS_IDENTIFY_KEY: False}
                         },
-                        '3000000000000001': {
+                        "3000000000000001": {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
                             3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: False}
@@ -633,11 +633,11 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3XP.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000001': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 8)
                         }
@@ -647,15 +647,15 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3XLP.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000002': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000002": {
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: False},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 10, SUPPORTS_IDENTIFY_KEY: False},
                         },
-                        '3000000000000001': {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i + 1, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 9)
                         }
@@ -665,15 +665,15 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINIR.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        '3000000000000001': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
+                        "3000000000000001": {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
                             for i in range(1, 9)
                         },
-                        '3000000000000002': {
+                        "3000000000000002": {
                             4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 9, SUPPORTS_IDENTIFY_KEY: False},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 10, SUPPORTS_IDENTIFY_KEY: False},
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 11, SUPPORTS_IDENTIFY_KEY: False},
@@ -685,10 +685,10 @@ def get_slot_info(enc):
         }
     elif enc.is_hseries:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             1: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 9, SUPPORTS_IDENTIFY_KEY: True},
                             2: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 10, SUPPORTS_IDENTIFY_KEY: True},
@@ -710,10 +710,10 @@ def get_slot_info(enc):
         }
     elif enc.is_mseries:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             # 1 - 24
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
@@ -728,13 +728,13 @@ def get_slot_info(enc):
         # Front 24 slots are split between two HBAs with interleaved mapping
         # Use slot designation to distinguish between enclosures
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "id": {
                         # First VirtualSES enclosure
                         # Handles TrueNAS slots 1-10, 13-14
-                        'NVME0': {
+                        "NVME0": {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
                             for key, sysfs_key, mapped_key in (
                                 (1, 0, 1),
@@ -753,7 +753,7 @@ def get_slot_info(enc):
                         },
                         # Second VirtualSES enclosure
                         # Handles TrueNAS slots 11-12, 15-24
-                        'NVME8': {
+                        "NVME8": {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
                             for key, sysfs_key, mapped_key in (
                                 (1, 0, 11),
@@ -776,10 +776,10 @@ def get_slot_info(enc):
         }
     elif enc.model == JbodModels.ES12.value or enc.is_xseries:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 13)
@@ -790,10 +790,10 @@ def get_slot_info(enc):
         }
     elif enc.is_24_bay_jbod:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 25)
@@ -804,10 +804,10 @@ def get_slot_info(enc):
         }
     elif enc.is_60_bay_jbod:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 61)
@@ -818,10 +818,10 @@ def get_slot_info(enc):
         }
     elif enc.model == JbodModels.ES102.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 103)
@@ -832,10 +832,10 @@ def get_slot_info(enc):
         }
     elif enc.model == JbodModels.ES102G2.value:
         return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
+            "any_version": True,
+            "versions": {
+                "DEFAULT": {
+                    "model": {
                         enc.model: {
                             # drives actually start at index 1 (not 0)
                             i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}

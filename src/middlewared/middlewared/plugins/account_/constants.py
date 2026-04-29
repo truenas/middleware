@@ -3,7 +3,7 @@ from middlewared.utils.privilege_constants import LocalBuiltinAdminGroups, Local
 ADMIN_UID = 950
 ADMIN_GID = 950
 MIN_AUTO_XID = 3000  # See NAS-117892 - purpose is to avoid collision with apps uids/gids
-SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
+SKEL_PATH = "/etc/skel/"  # TODO evaluate whether this is still needed
 
 # TrueNAS historically used /nonexistent as the default home directory for new
 # users. The nonexistent directory has caused problems when
@@ -11,10 +11,10 @@ SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
 # 2) PAM checks for home directory existence
 # And so this default has been deprecated in favor of using /var/empty
 # which is an empty and immutable directory.
-DEFAULT_HOME_PATH = '/var/empty'
-TRUENAS_PAM_SERVICE = '/etc/pam.d/truenas'
-TRUENAS_PAM_API_KEY_SERVICE = '/etc/pam.d/truenas-api-key'
-NO_LOGIN_SHELL = '/usr/sbin/nologin'
+DEFAULT_HOME_PATH = "/var/empty"
+TRUENAS_PAM_SERVICE = "/etc/pam.d/truenas"
+TRUENAS_PAM_API_KEY_SERVICE = "/etc/pam.d/truenas-api-key"
+NO_LOGIN_SHELL = "/usr/sbin/nologin"
 
 USERNS_IDMAP_DIRECT = -1
 USERNS_IDMAP_NONE = 0
@@ -36,14 +36,14 @@ ALLOWED_BUILTIN_GIDS = frozenset({
 CONTAINER_ROOT_UID = 2147000001
 
 SYNTHETIC_CONTAINER_ROOT = {
-    'pw_name': 'truenas_container_unpriv_root',
-    'pw_uid': CONTAINER_ROOT_UID,
-    'pw_gid': 2147000001,
-    'pw_gecos': 'Unprivileged root user for containers',
-    'pw_dir': '/var/empty',
-    'pw_shell': NO_LOGIN_SHELL,
-    'grouplist': None,
-    'sid': None,
-    'source': 'LOCAL',
-    'local': True
+    "pw_name": "truenas_container_unpriv_root",
+    "pw_uid": CONTAINER_ROOT_UID,
+    "pw_gid": 2147000001,
+    "pw_gecos": "Unprivileged root user for containers",
+    "pw_dir": "/var/empty",
+    "pw_shell": NO_LOGIN_SHELL,
+    "grouplist": None,
+    "sid": None,
+    "source": "LOCAL",
+    "local": True
 }

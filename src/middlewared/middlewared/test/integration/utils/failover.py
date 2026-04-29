@@ -37,22 +37,22 @@ def wait_for_standby(delay=5, retries=60):
     settle_ha(delay, retries)
 
 
-def do_failover(delay=5, settle_retries=180, description='', abusive=False, settle=True):
-    orig_master_node = call('failover.node')
+def do_failover(delay=5, settle_retries=180, description="", abusive=False, settle=True):
+    orig_master_node = call("failover.node")
 
     # This node is MASTER and failover isn't disabled for some reason
-    assert call('failover.status') == 'MASTER'
-    assert not call('failover.disabled.reasons')
+    assert call("failover.status") == "MASTER"
+    assert not call("failover.disabled.reasons")
 
     if abusive:
-        p = async_SSH_start('echo 1 > /proc/sys/kernel/sysrq && echo b > /proc/sysrq-trigger')
+        p = async_SSH_start("echo 1 > /proc/sys/kernel/sysrq && echo b > /proc/sysrq-trigger")
         sleep(10)
         async_SSH_done(p, 5)
     else:
-        call('system.reboot', f'do_failover(): {description}')
+        call("system.reboot", f"do_failover(): {description}")
 
     sleep(delay)
 
     if settle:
         settle_ha(delay, settle_retries)
-        assert call('failover.node') != orig_master_node
+        assert call("failover.node") != orig_master_node

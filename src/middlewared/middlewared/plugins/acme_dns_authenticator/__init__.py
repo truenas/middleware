@@ -27,16 +27,16 @@ if TYPE_CHECKING:
     from .authenticators.base import Authenticator
 
 
-__all__ = ('DNSAuthenticatorService',)
+__all__ = ("DNSAuthenticatorService",)
 
 
 class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
 
     class Config:
-        namespace = 'acme.dns.authenticator'
-        cli_namespace = 'system.acme.dns_auth'
+        namespace = "acme.dns.authenticator"
+        cli_namespace = "system.acme.dns_auth"
         entry = DNSAuthenticatorEntry
-        role_prefix = 'NETWORK_INTERFACE'
+        role_prefix = "NETWORK_INTERFACE"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:
@@ -66,7 +66,7 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
     @api_method(
         DNSAuthenticatorAuthenticatorSchemasArgs,
         DNSAuthenticatorAuthenticatorSchemasResult,
-        roles=['READONLY_ADMIN'],
+        roles=["READONLY_ADMIN"],
         check_annotations=True,
     )
     def authenticator_schemas(self) -> list[ACMEDNSAuthenticatorSchema]:
@@ -82,4 +82,4 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('network.general.register_activity', 'acme', 'ACME')
+    await middleware.call("network.general.register_activity", "acme", "ACME")

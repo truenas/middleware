@@ -17,15 +17,15 @@ from middlewared.api.base import (
 from middlewared.utils.smb import SMBUnixCharset
 
 __all__ = [
-    'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
-    'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
-    'SMBEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
-    'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
-    'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
-    'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
+    "SharingSMBGetaclArgs", "SharingSMBGetaclResult",
+    "SharingSMBSetaclArgs", "SharingSMBSetaclResult",
+    "SMBEntry", "SMBUpdateArgs", "SMBUpdateResult",
+    "SMBUnixcharsetChoicesArgs", "SMBUnixcharsetChoicesResult",
+    "SMBBindipChoicesArgs", "SMBBindipChoicesResult",
+    "SharingSMBPresetsArgs", "SharingSMBPresetsResult",
 ]
 
-EMPTY_STRING = ''
+EMPTY_STRING = ""
 
 SMBCharsetType = Literal[
     SMBUnixCharset.UTF_8, SMBUnixCharset.GB2312, SMBUnixCharset.HZ_GB_2312,
@@ -55,14 +55,14 @@ SMBCharsetType = Literal[
 
 
 class SMBShareAclEntryWhoId(BaseModel):
-    id_type: Literal['USER', 'GROUP', 'BOTH']
-    xid: int = Field(alias='id')
+    id_type: Literal["USER", "GROUP", "BOTH"]
+    xid: int = Field(alias="id")
 
 
 class SMBShareAclEntry(BaseModel):
-    ae_perm: Literal['FULL', 'CHANGE', 'READ']
+    ae_perm: Literal["FULL", "CHANGE", "READ"]
     """ Permissions granted to the principal. """
-    ae_type: Literal['ALLOWED', 'DENIED']
+    ae_type: Literal["ALLOWED", "DENIED"]
     """ The type of SMB share ACL entry. """
     ae_who_sid: SID | None = None
     """ SID value of the principal to whom ACL entry applies. """
@@ -71,7 +71,7 @@ class SMBShareAclEntry(BaseModel):
     ae_who_str: NonEmptyString | None = None
     """ User or group name of the principal to whom the ACL entry applies """
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ae_who(self) -> Self:
         if self.ae_who_sid is None and self.ae_who_id is None and self.ae_who_str is None:
             raise ValueError(
@@ -85,11 +85,11 @@ class SMBShareAclEntry(BaseModel):
 class SMBShareAcl(BaseModel):
     share_name: NonEmptyString
     """ Name of the SMB share. """
-    share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')]
+    share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid="S-1-1-0", ae_perm="FULL", ae_type="ALLOWED")]
     """ List of SMB share ACL entries """
 
 
-@single_argument_args('smb_setacl')
+@single_argument_args("smb_setacl")
 class SharingSMBSetaclArgs(SMBShareAcl):
     pass
 
@@ -98,7 +98,7 @@ class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl
 
 
-@single_argument_args('smb_getacl')
+@single_argument_args("smb_getacl")
 class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString
 
@@ -107,7 +107,7 @@ class SharingSMBGetaclResult(SharingSMBSetaclResult):
     pass
 
 
-SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
+SMBEncryption = Literal["DEFAULT", "NEGOTIATE", "DESIRED", "REQUIRED"]
 
 
 class SMBEntry(BaseModel):
@@ -139,9 +139,9 @@ class SMBEntry(BaseModel):
     admin_group: str | None
     """ The selected group will have full administrator privileges on TrueNAS over SMB protocol. """
     guest: NonEmptyString
-    filemask: UnixPerm | Literal['DEFAULT']
+    filemask: UnixPerm | Literal["DEFAULT"]
     """ smb.conf create mask. DEFAULT applies current server default which is 664. """
-    dirmask: UnixPerm | Literal['DEFAULT']
+    dirmask: UnixPerm | Literal["DEFAULT"]
     """ smb.conf directory mask. DEFAULT applies current server default which is 775. """
     ntlmv1_auth: bool
     """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except
@@ -159,7 +159,7 @@ class SMBEntry(BaseModel):
     """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB
     issue and should not be used in production environments. """
 
-    @field_validator('bindip')
+    @field_validator("bindip")
     @classmethod
     def normalize_bindips(cls, values: list[IPvAnyInterface]) -> list[str]:
         """We'll be passed a list of IPvAnyInterface types, and we
@@ -172,7 +172,7 @@ class SMBEntry(BaseModel):
         return [str(i.ip) for i in values]
 
 
-@single_argument_args('smb_update')
+@single_argument_args("smb_update")
 class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

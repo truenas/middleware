@@ -52,16 +52,16 @@ __all__ = ("UpdateService",)
 
 class UpdateService(ConfigService[UpdateEntry]):
     class Config:
-        cli_namespace = 'system.update'
-        role_prefix = 'SYSTEM_UPDATE'
+        cli_namespace = "system.update"
+        role_prefix = "SYSTEM_UPDATE"
         entry = UpdateEntry
         events = [
             Event(
-                name='update.status',
-                description='Updated on update status changes.',
-                roles=['SYSTEM_UPDATE_READ'],
+                name="update.status",
+                description="Updated on update status changes.",
+                roles=["SYSTEM_UPDATE_READ"],
                 models={
-                    'CHANGED': UpdateStatusChangedEvent,
+                    "CHANGED": UpdateStatusChangedEvent,
                 },
             ),
         ]
@@ -88,7 +88,7 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateAvailableVersionsArgs,
         UpdateAvailableVersionsResult,
-        roles=['SYSTEM_UPDATE_READ'],
+        roles=["SYSTEM_UPDATE_READ"],
         check_annotations=True,
     )
     async def available_versions(self) -> list[UpdateAvailableVersion]:
@@ -100,7 +100,7 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateProfileChoicesArgs,
         UpdateProfileChoicesResult,
-        roles=['SYSTEM_UPDATE_READ'],
+        roles=["SYSTEM_UPDATE_READ"],
         check_annotations=True,
     )
     async def profile_choices(self) -> dict[str, UpdateProfileChoice]:
@@ -112,7 +112,7 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateStatusArgs,
         UpdateStatusResult,
-        roles=['SYSTEM_UPDATE_READ'],
+        roles=["SYSTEM_UPDATE_READ"],
         check_annotations=True,
     )
     async def status(self) -> UpdateStatus:
@@ -132,11 +132,11 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateRunArgs,
         UpdateRunResult,
-        roles=['SYSTEM_UPDATE_WRITE'],
+        roles=["SYSTEM_UPDATE_WRITE"],
         pass_app=True,
         check_annotations=True,
     )
-    @job(lock='update')
+    @job(lock="update")
     async def run(self, app: App, job: Job, attrs: UpdateRunAttrs) -> Literal[True]:
         """
         Downloads (if not already in cache) and apply an update.
@@ -146,10 +146,10 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateManualArgs,
         UpdateManualResult,
-        roles=['SYSTEM_UPDATE_WRITE'],
+        roles=["SYSTEM_UPDATE_WRITE"],
         check_annotations=True,
     )
-    @job(lock='update')
+    @job(lock="update")
     def manual(self, job: Job, path: str, options: UpdateManualOptions) -> None:
         """
         Update the system using a manual update file.
@@ -159,17 +159,17 @@ class UpdateService(ConfigService[UpdateEntry]):
     @api_method(
         UpdateFileArgs,
         UpdateFileResult,
-        roles=['SYSTEM_UPDATE_WRITE'],
+        roles=["SYSTEM_UPDATE_WRITE"],
         check_annotations=True,
     )
-    @job(lock='update')
+    @job(lock="update")
     async def file(self, job: Job, options: UpdateFileOptions) -> None:
         """
         Updates the system using the uploaded .tar file.
         """
         return await update_file(self.context, job, options)
 
-    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=['SYSTEM_UPDATE_WRITE'], check_annotations=True)
+    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=["SYSTEM_UPDATE_WRITE"], check_annotations=True)
     @job()
     def download(self, job: Job, train: str | None, version: str | None) -> bool:
         """

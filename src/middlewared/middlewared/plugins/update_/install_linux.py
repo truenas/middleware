@@ -60,9 +60,9 @@ def install(
         old_version = sw_info().version
         new_version = manifest["version"]
         if old_version == new_version:
-            raise CallError(f'You already are using {new_version}')
+            raise CallError(f"You already are using {new_version}")
         if not can_update(old_version, new_version):
-            raise CallError(f'Unable to downgrade from {old_version} to {new_version}')
+            raise CallError(f"Unable to downgrade from {old_version} to {new_version}")
 
         from .install import install_scale
         install_scale(context, mounted, progress_callback, options)

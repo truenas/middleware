@@ -13,26 +13,26 @@ from middlewared.utils import run
 
 from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 
-SCST_BASE = '/sys/kernel/scst_tgt'
-ISCSI_SCSTD_PIDFILE = '/run/iscsi-scstd.pid'
-SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
+SCST_BASE = "/sys/kernel/scst_tgt"
+ISCSI_SCSTD_PIDFILE = "/run/iscsi-scstd.pid"
+SCST_TARGETS_ISCSI_ENABLED_PATH = "/sys/kernel/scst_tgt/targets/iscsi/enabled"
 COPY_MANAGER_LUNS_PATH = (
-    '/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns'
+    "/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns"
 )
-SCST_DEVICES = '/sys/kernel/scst_tgt/devices'
-SCST_SUSPEND = '/sys/kernel/scst_tgt/suspend'
+SCST_DEVICES = "/sys/kernel/scst_tgt/devices"
+SCST_SUSPEND = "/sys/kernel/scst_tgt/suspend"
 SCST_CONTROLLER_A_TARGET_GROUPS_STATE = (
-    '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
+    "/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state"
 )
 SCST_CONTROLLER_B_TARGET_GROUPS_STATE = (
-    '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
+    "/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state"
 )
-SCST_ASYNC_LUN_REPLACE = '/sys/kernel/scst_tgt/async_lun_replace'
+SCST_ASYNC_LUN_REPLACE = "/sys/kernel/scst_tgt/async_lun_replace"
 
 
 class iSCSITargetService(Service):
     class Config:
-        namespace = 'iscsi.scst'
+        namespace = "iscsi.scst"
         private = True
 
     def path_write(self, path, text):
@@ -44,13 +44,13 @@ class iSCSITargetService(Service):
             raise ValueError(f'Unexpected path "{realpath}"')
 
     async def set_all_cluster_mode(self, value):
-        text = f'{int(value)}\n'
-        paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
+        text = f"{int(value)}\n"
+        paths = await self.middleware.call("iscsi.scst.cluster_mode_paths")
         if paths:
             for chunk in itertools.batched(paths, 10):
                 await asyncio.gather(
                     *[
-                        self.middleware.call('iscsi.scst.path_write', path, text)
+                        self.middleware.call("iscsi.scst.path_write", path, text)
                         for path in chunk
                     ]
                 )
@@ -58,7 +58,7 @@ class iSCSITargetService(Service):
     def cluster_mode_paths(self):
         scst_tgt_devices = pathlib.Path(SCST_DEVICES)
         if scst_tgt_devices.exists():
-            return [str(p) for p in scst_tgt_devices.glob('*/cluster_mode')]
+            return [str(p) for p in scst_tgt_devices.glob("*/cluster_mode")]
         else:
             return []
 
@@ -66,23 +66,23 @@ class iSCSITargetService(Service):
         devices = []
         scst_tgt_devices = pathlib.Path(SCST_DEVICES)
         if scst_tgt_devices.exists():
-            for p in scst_tgt_devices.glob('*/cluster_mode'):
-                if p.read_text().splitlines()[0] == '1':
+            for p in scst_tgt_devices.glob("*/cluster_mode"):
+                if p.read_text().splitlines()[0] == "1":
                     devices.append(p.parent.name)
         return devices
 
     def check_cluster_modes_clear(self):
         scst_tgt_devices = pathlib.Path(SCST_DEVICES)
         if scst_tgt_devices.exists():
-            for p in scst_tgt_devices.glob('*/cluster_mode'):
-                if p.read_text().splitlines()[0] == '1':
+            for p in scst_tgt_devices.glob("*/cluster_mode"):
+                if p.read_text().splitlines()[0] == "1":
                     return False
         return True
 
     def check_cluster_mode_paths_present(self, devices):
         for device in devices:
             if not pathlib.Path(
-                f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode'
+                f"{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode"
             ).exists():
                 return False
         return True
@@ -90,42 +90,42 @@ class iSCSITargetService(Service):
     def get_cluster_mode(self, device):
         try:
             return (
-                pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode')
+                pathlib.Path(f"{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode")
                 .read_text()
                 .splitlines()[0]
             )
         except Exception:
-            return 'UNKNOWN'
+            return "UNKNOWN"
 
     async def set_device_cluster_mode(self, device, value):
         await self.middleware.call(
-            'iscsi.scst.path_write',
-            f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
-            f'{int(value)}\n',
+            "iscsi.scst.path_write",
+            f"{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode",
+            f"{int(value)}\n",
         )
 
     async def set_devices_cluster_mode(self, devices, value):
-        text = f'{int(value)}\n'
+        text = f"{int(value)}\n"
         paths = [
-            f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode'
+            f"{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode"
             for device in devices
         ]
         if paths:
             await asyncio.gather(
                 *[
-                    self.middleware.call('iscsi.scst.path_write', path, text)
+                    self.middleware.call("iscsi.scst.path_write", path, text)
                     for path in paths
                 ]
             )
 
     def disable(self):
-        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('0\n')
+        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text("0\n")
 
     def enable(self):
-        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('1\n')
+        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text("1\n")
 
     def suspend(self, value=10):
-        pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
+        pathlib.Path(SCST_SUSPEND).write_text(f"{value}\n")
 
     def suspend_logins(self):
         """Send SIGUSR1 to iscsi-scstd to reject new logins with a retriable error."""
@@ -141,12 +141,12 @@ class iSCSITargetService(Service):
             os.kill(pid, sig)
         except FileNotFoundError:
             self.logger.warning(
-                'iscsi-scstd pidfile not found, daemon may not be running'
+                "iscsi-scstd pidfile not found, daemon may not be running"
             )
         except ProcessLookupError:
-            self.logger.warning('iscsi-scstd process not found (stale pidfile?)')
+            self.logger.warning("iscsi-scstd process not found (stale pidfile?)")
         except ValueError:
-            self.logger.warning('iscsi-scstd pidfile contains invalid PID')
+            self.logger.warning("iscsi-scstd pidfile contains invalid PID")
 
     def clear_suspend(self):
         """suspend could have been called several times, and will need to be decremented
@@ -154,10 +154,10 @@ class iSCSITargetService(Service):
         try:
             p = pathlib.Path(SCST_SUSPEND)
             for i in range(30):
-                if p.read_text().strip() == '0':
+                if p.read_text().strip() == "0":
                     return True
                 else:
-                    p.write_text('-1\n')
+                    p.write_text("-1\n")
         except FileNotFoundError:
             pass
 
@@ -166,7 +166,7 @@ class iSCSITargetService(Service):
     def enabled(self):
         try:
             return (
-                pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).read_text().strip() == '1'
+                pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).read_text().strip() == "1"
             )
         except FileNotFoundError:
             return False
@@ -176,16 +176,16 @@ class iSCSITargetService(Service):
 
     def activate_extent(self, extent_name, extenttype, path):
         if pathlib.Path(path).exists():
-            if extenttype == 'DISK':
+            if extenttype == "DISK":
                 p = pathlib.Path(
-                    f'{SCST_BASE}/handlers/vdisk_blockio/{sanitize_extent(extent_name)}/active'
+                    f"{SCST_BASE}/handlers/vdisk_blockio/{sanitize_extent(extent_name)}/active"
                 )
             else:
                 p = pathlib.Path(
-                    f'{SCST_BASE}/handlers/vdisk_fileio/{sanitize_extent(extent_name)}/active'
+                    f"{SCST_BASE}/handlers/vdisk_fileio/{sanitize_extent(extent_name)}/active"
                 )
             try:
-                p.write_text('1\n')
+                p.write_text("1\n")
                 return True
             except Exception:
                 # Return False on ANY exception
@@ -196,25 +196,25 @@ class iSCSITargetService(Service):
     @private
     async def remove_target_lun(self, target_name: str, lun_id: int):
         # TBD: consider switching to sysfs mgmt write (del {lun_id}) instead of scstadmin
-        driver = 'iscsi' if target_name.startswith('iqn.') else 'qla2x00t'
+        driver = "iscsi" if target_name.startswith("iqn.") else "qla2x00t"
         cp = await run(
             [
-                'scstadmin',
-                '-noprompt',
-                '-rem_lun',
+                "scstadmin",
+                "-noprompt",
+                "-rem_lun",
                 str(lun_id),
-                '-driver',
+                "-driver",
                 driver,
-                '-target',
+                "-target",
                 target_name,
-                '-group',
-                'security_group',
+                "-group",
+                "security_group",
             ],
             check=False,
         )
         if cp.returncode:
             self.logger.error(
-                'Failed to remove LUN %d from target %r: %s',
+                "Failed to remove LUN %d from target %r: %s",
                 lun_id,
                 target_name,
                 cp.stderr.decode(),
@@ -222,117 +222,117 @@ class iSCSITargetService(Service):
 
     def delete_iscsi_lun(self, iqn, lun):
         pathlib.Path(
-            f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
-        ).write_text(f'del {lun}\n')
+            f"{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt"
+        ).write_text(f"del {lun}\n")
 
     def _xfer_prstate(self, luns_path, extent, lun):
         try:
-            srcpath = pathlib.Path(luns_path, str(lun), 'device/pr_state')
-            dstpath = pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(extent)}/pr_state')
+            srcpath = pathlib.Path(luns_path, str(lun), "device/pr_state")
+            dstpath = pathlib.Path(f"{SCST_DEVICES}/{sanitize_extent(extent)}/pr_state")
             dstpath.write_text(srcpath.read_text())
-            return 'replace_no_ua'
+            return "replace_no_ua"
         except OSError:
             pass
-        return 'replace'
+        return "replace"
 
     def replace_iscsi_lun(self, iqn, extent, lun, prstate_save):
-        luns_path = f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns'
+        luns_path = f"{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns"
         if prstate_save:
             op = self._xfer_prstate(luns_path, extent, lun)
         else:
-            op = 'replace'
-        pathlib.Path(luns_path, 'mgmt').write_text(
-            f'{op} {sanitize_extent(extent)} {lun}\n'
+            op = "replace"
+        pathlib.Path(luns_path, "mgmt").write_text(
+            f"{op} {sanitize_extent(extent)} {lun}\n"
         )
 
     def delete_fc_lun(self, wwpn, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(
-            f'del {lun}\n'
+        pathlib.Path(f"{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt").write_text(
+            f"del {lun}\n"
         )
 
     def replace_fc_lun(self, wwpn, extent, lun, prstate_save):
-        luns_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns')
+        luns_path = pathlib.Path(f"{SCST_BASE}/targets/qla2x00t/{wwpn}/luns")
         if prstate_save:
             op = self._xfer_prstate(luns_path, extent, lun)
         else:
-            op = 'replace'
-        pathlib.Path(luns_path, 'mgmt').write_text(
-            f'{op} {sanitize_extent(extent)} {lun}\n'
+            op = "replace"
+        pathlib.Path(luns_path, "mgmt").write_text(
+            f"{op} {sanitize_extent(extent)} {lun}\n"
         )
 
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
-        if node == 'A':
+        if node == "A":
             pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text(
-                'nonoptimized\n'
+                "nonoptimized\n"
             )
-            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text('active\n')
+            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("active\n")
         else:
             pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text(
-                'nonoptimized\n'
+                "nonoptimized\n"
             )
-            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text('active\n')
+            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("active\n")
 
     def reset_target_parameters(self, iqn, parameter_names):
         """Reset the specified parameters to their default values."""
         # Do some sanity checking
         for param in parameter_names:
             if param not in ISCSI_TARGET_PARAMETERS:
-                raise ValueError('Invalid parameter name supplied', param)
-        iqndir = pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}')
+                raise ValueError("Invalid parameter name supplied", param)
+        iqndir = pathlib.Path(f"{SCST_BASE}/targets/iscsi/{iqn}")
         for param in parameter_names:
             try:
-                (iqndir / pathlib.Path(param)).write_text(':default:\n')
+                (iqndir / pathlib.Path(param)).write_text(":default:\n")
             except (FileNotFoundError, PermissionError):
                 # If we're not running, that's OK
                 pass
 
     def apply_config_file(self):
         try:
-            SCSTAdmin.apply_config_file('/etc/scst.conf')
+            SCSTAdmin.apply_config_file("/etc/scst.conf")
         except Exception:
-            self.logger.debug('Failed to apply SCST configuration', exc_info=True)
+            self.logger.debug("Failed to apply SCST configuration", exc_info=True)
             return False
         return True
 
     def set_alua_transitioning(self):
         """Set the local controller's ALUA target group state to transitioning."""
-        node = self.middleware.call_sync('failover.node')
+        node = self.middleware.call_sync("failover.node")
         path = (
             SCST_CONTROLLER_A_TARGET_GROUPS_STATE
-            if node == 'A'
+            if node == "A"
             else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
         )
         try:
-            pathlib.Path(path).write_text('transitioning\n')
+            pathlib.Path(path).write_text("transitioning\n")
         except Exception:
-            self.logger.warning('Failed to set ALUA transitioning state')
+            self.logger.warning("Failed to set ALUA transitioning state")
 
     def set_alua_active(self):
         """Set the local controller's ALUA target group state to active."""
-        node = self.middleware.call_sync('failover.node')
+        node = self.middleware.call_sync("failover.node")
         path = (
             SCST_CONTROLLER_A_TARGET_GROUPS_STATE
-            if node == 'A'
+            if node == "A"
             else SCST_CONTROLLER_B_TARGET_GROUPS_STATE
         )
         try:
-            pathlib.Path(path).write_text('active\n')
+            pathlib.Path(path).write_text("active\n")
         except Exception:
-            self.logger.warning('Failed to set ALUA active state')
+            self.logger.warning("Failed to set ALUA active state")
 
     def enable_async_lun_replace(self):
         """Enable async LUN replace to avoid blocking failover on tgt_dev drain."""
         try:
-            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('1\n')
+            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text("1\n")
         except Exception:
-            self.logger.warning('Failed to enable async_lun_replace')
+            self.logger.warning("Failed to enable async_lun_replace")
 
     def copy_manager_devices(self):
         result = []
         try:
             copy_manager_luns = pathlib.Path(COPY_MANAGER_LUNS_PATH)
-            for p in copy_manager_luns.glob('*/device'):
+            for p in copy_manager_luns.glob("*/device"):
                 try:
                     result.append(p.resolve().name)
                 except (FileNotFoundError, PermissionError):
@@ -350,13 +350,13 @@ class iSCSITargetService(Service):
         for attempt in range(retries):
             cp = await run(
                 [
-                    'scstadmin',
-                    '-force',
-                    '-noprompt',
-                    '-rem_target',
+                    "scstadmin",
+                    "-force",
+                    "-noprompt",
+                    "-rem_target",
                     iqn,
-                    '-driver',
-                    'iscsi',
+                    "-driver",
+                    "iscsi",
                 ],
                 check=False,
             )
@@ -367,7 +367,7 @@ class iSCSITargetService(Service):
 
         # scstadmin writes errors to stdout, not stderr
         self.logger.error(
-            'Failed to remove target %r after %d attempts: %s',
+            "Failed to remove target %r after %d attempts: %s",
             iqn,
             retries,
             cp.stdout.decode() or cp.stderr.decode(),
@@ -377,80 +377,80 @@ class iSCSITargetService(Service):
     def resync_lun_size_for_zvol(self, name):
         # CORE ctl device names are incompatible with SCALE SCST
         # so (similarly to scst.mako.conf) replace period with underscore, slash with dash
-        extent_name = name.replace('.', '_').replace('/', '-')
-        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
-            f.write('1')
+        extent_name = name.replace(".", "_").replace("/", "-")
+        with open(f"{SCST_DEVICES}/{extent_name}/resync_size", "w") as f:
+            f.write("1")
 
     @private
     def resync_lun_size_for_file(self, name):
-        extent_name = name.replace('.', '_')
-        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
-            f.write('1')
+        extent_name = name.replace(".", "_")
+        with open(f"{SCST_DEVICES}/{extent_name}/resync_size", "w") as f:
+            f.write("1")
 
     @private
     def sessions(self, global_info):
         """Enumerate active iSCSI sessions from the SCST sysfs tree."""
         sessions = []
-        base_path = '/sys/kernel/scst_tgt/targets/iscsi'
+        base_path = "/sys/kernel/scst_tgt/targets/iscsi"
         for target_dir in glob.glob(f'{base_path}/{global_info["basename"]}*'):
-            target = target_dir.rsplit('/', 1)[-1]
+            target = target_dir.rsplit("/", 1)[-1]
             if target.startswith(f'{global_info["basename"]}:HA:'):
                 continue
-            for session in os.listdir(os.path.join(target_dir, 'sessions')):
-                session_dir = os.path.join(target_dir, 'sessions', session)
-                ip_file = glob.glob(f'{session_dir}/*/ip')
+            for session in os.listdir(os.path.join(target_dir, "sessions")):
+                session_dir = os.path.join(target_dir, "sessions", session)
+                ip_file = glob.glob(f"{session_dir}/*/ip")
                 if not ip_file:
                     continue
 
                 # Initiator alias is another name sent by initiator but we are unable to retrieve it in scst
                 session_dict = {
-                    'initiator': session.rsplit('#', 1)[0],
-                    'initiator_alias': None,
-                    'target': target,
-                    'target_alias': target.rsplit(':', 1)[-1],
-                    'header_digest': None,
-                    'data_digest': None,
-                    'max_data_segment_length': None,
-                    'max_receive_data_segment_length': None,
-                    'max_xmit_data_segment_length': None,
-                    'max_burst_length': None,
-                    'first_burst_length': None,
-                    'immediate_data': False,
-                    'iser': False,
-                    'offload': False,  # It is a chelsio NIC driver to offload iscsi, we are not using it so far
+                    "initiator": session.rsplit("#", 1)[0],
+                    "initiator_alias": None,
+                    "target": target,
+                    "target_alias": target.rsplit(":", 1)[-1],
+                    "header_digest": None,
+                    "data_digest": None,
+                    "max_data_segment_length": None,
+                    "max_receive_data_segment_length": None,
+                    "max_xmit_data_segment_length": None,
+                    "max_burst_length": None,
+                    "first_burst_length": None,
+                    "immediate_data": False,
+                    "iser": False,
+                    "offload": False,  # It is a chelsio NIC driver to offload iscsi, we are not using it so far
                 }
-                with open(ip_file[0], 'r') as f:
-                    session_dict['initiator_addr'] = f.read().strip()
-                transport = os.path.join(os.path.dirname(ip_file[0]), 'transport')
+                with open(ip_file[0], "r") as f:
+                    session_dict["initiator_addr"] = f.read().strip()
+                transport = os.path.join(os.path.dirname(ip_file[0]), "transport")
                 with suppress(FileNotFoundError):
-                    with open(transport, 'r') as f:
-                        session_dict['iser'] = 'iSER' == f.read().strip()
+                    with open(transport, "r") as f:
+                        session_dict["iser"] = "iSER" == f.read().strip()
                 for k, f, op in (
-                    ('header_digest', 'HeaderDigest', None),
-                    ('data_digest', 'DataDigest', None),
-                    ('max_burst_length', 'MaxBurstLength', lambda i: int(i)),
+                    ("header_digest", "HeaderDigest", None),
+                    ("data_digest", "DataDigest", None),
+                    ("max_burst_length", "MaxBurstLength", lambda i: int(i)),
                     (
-                        'max_receive_data_segment_length',
-                        'MaxRecvDataSegmentLength',
+                        "max_receive_data_segment_length",
+                        "MaxRecvDataSegmentLength",
                         lambda i: int(i),
                     ),
                     (
-                        'max_xmit_data_segment_length',
-                        'MaxXmitDataSegmentLength',
+                        "max_xmit_data_segment_length",
+                        "MaxXmitDataSegmentLength",
                         lambda i: int(i),
                     ),
-                    ('first_burst_length', 'FirstBurstLength', lambda i: int(i)),
+                    ("first_burst_length", "FirstBurstLength", lambda i: int(i)),
                     (
-                        'immediate_data',
-                        'ImmediateData',
-                        lambda i: True if i == 'Yes' else False,
+                        "immediate_data",
+                        "ImmediateData",
+                        lambda i: True if i == "Yes" else False,
                     ),
                 ):
                     f_path = os.path.join(session_dir, f)
                     if os.path.exists(f_path):
-                        with open(f_path, 'r') as fd:
+                        with open(f_path, "r") as fd:
                             data = fd.read().strip()
-                            if data != 'None':
+                            if data != "None":
                                 if op:
                                     data = op(data)
                                 session_dict[k] = data
@@ -458,12 +458,12 @@ class iSCSITargetService(Service):
                 # We get recv/emit data segment length, keeping consistent with freebsd, we can
                 # take the maximum of two and show it for max_data_segment_length
                 if (
-                    session_dict['max_xmit_data_segment_length']
-                    and session_dict['max_receive_data_segment_length']
+                    session_dict["max_xmit_data_segment_length"]
+                    and session_dict["max_receive_data_segment_length"]
                 ):
-                    session_dict['max_data_segment_length'] = max(
-                        session_dict['max_receive_data_segment_length'],
-                        session_dict['max_xmit_data_segment_length'],
+                    session_dict["max_data_segment_length"] = max(
+                        session_dict["max_receive_data_segment_length"],
+                        session_dict["max_xmit_data_segment_length"],
                     )
 
                 sessions.append(session_dict)

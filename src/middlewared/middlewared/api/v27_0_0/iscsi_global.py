@@ -39,7 +39,7 @@ class ISCSIGlobalEntry(BaseModel):
     """Internal iSCSI operational mode."""
 
 
-@single_argument_args('iscsi_update')
+@single_argument_args("iscsi_update")
 class ISCSIGlobalUpdateArgs(ISCSIGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

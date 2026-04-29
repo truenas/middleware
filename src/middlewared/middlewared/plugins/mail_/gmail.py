@@ -19,7 +19,7 @@ class GMailConfigurationDiscardedAlert(OneShotAlertClass):
         title="GMail OAuth Configuration Discarded",
         text=(
             "Your Gmail OAuth configuration was discarded due to a token refresh error. "
-            "Please go to the system email configuration and click the \"Log In to Gmail\" button again."
+            'Please go to the system email configuration and click the "Log In to Gmail" button again.'
         ),
         deleted_automatically=False,
         keys=[],
@@ -82,7 +82,7 @@ class MailService(Service):
 
     @private
     def gmail_send(self, message, config, _retry_broken_pipe=True):
-        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+        self.middleware.call_sync("network.general.will_perform_activity", "mail")
 
         gmail_service = self.middleware.call_sync("mail.gmail_build_service", config)
         if gmail_service == self.gmail_service:

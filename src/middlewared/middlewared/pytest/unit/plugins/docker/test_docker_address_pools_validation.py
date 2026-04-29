@@ -5,10 +5,10 @@ from middlewared.service_exception import ValidationErrors
 
 IP_IN_USE = [
     {
-        'type': 'INET',
-        'address': '172.20.0.33',
-        'netmask': 16,
-        'broadcast': '172.20.0.63'
+        "type": "INET",
+        "address": "172.20.0.33",
+        "netmask": 16,
+        "broadcast": "172.20.0.63"
     },
     {
         "type": "INET6",
@@ -20,41 +20,41 @@ IP_IN_USE = [
 ]
 
 
-@pytest.mark.parametrize('user_specified_networks,error_msg', (
+@pytest.mark.parametrize("user_specified_networks,error_msg", (
     (
         [],
-        'At least one address pool must be specified'),
+        "At least one address pool must be specified"),
     (
-        [{'base': 'fe80::5054:ff:fe4f:bbbe/56', 'size': 64}],
-        'Network fe80::/56 overlaps with an existing system network'
+        [{"base": "fe80::5054:ff:fe4f:bbbe/56", "size": 64}],
+        "Network fe80::/56 overlaps with an existing system network"
     ),
     (
-        [{'base': '172.20.2.0/24', 'size': 27}],
-        'Network 172.20.2.0/24 overlaps with an existing system network'
+        [{"base": "172.20.2.0/24", "size": 27}],
+        "Network 172.20.2.0/24 overlaps with an existing system network"
     ),
     (
-        [{'base': '172.21.2.0/16', 'size': 10}],
-        'Base network 172.21.2.0/16 cannot be smaller than the specified subnet size 10'
+        [{"base": "172.21.2.0/16", "size": 10}],
+        "Base network 172.21.2.0/16 cannot be smaller than the specified subnet size 10"
     ),
     (
-        [{'base': 'fedd::5054:ff:fe4f:bbbe/56', 'size': 10}],
-        'Base network fedd::5054:ff:fe4f:bbbe/56 cannot be smaller than the specified subnet size 10'
+        [{"base": "fedd::5054:ff:fe4f:bbbe/56", "size": 10}],
+        "Base network fedd::5054:ff:fe4f:bbbe/56 cannot be smaller than the specified subnet size 10"
     ),
     (
-        [{'base': '172.21.2.0/16', 'size': 27}, {'base': '172.21.2.0/16', 'size': 27}],
-        'Base network 172.21.2.0/16 is a duplicate of another specified network'
+        [{"base": "172.21.2.0/16", "size": 27}, {"base": "172.21.2.0/16", "size": 27}],
+        "Base network 172.21.2.0/16 is a duplicate of another specified network"
     ),
     (
-        [{'base': 'fedd::5054:ff:fe4f:bbbe/56', 'size': 64}, {'base': 'fedd::5054:ff:fe4f:bbbe/56', 'size': 64}],
-        'Base network fedd::5054:ff:fe4f:bbbe/56 is a duplicate of another specified network'
+        [{"base": "fedd::5054:ff:fe4f:bbbe/56", "size": 64}, {"base": "fedd::5054:ff:fe4f:bbbe/56", "size": 64}],
+        "Base network fedd::5054:ff:fe4f:bbbe/56 is a duplicate of another specified network"
     ),
     (
-        [{'base': '172.21.0.0/16', 'size': 27}, {'base': '172.22.0.0/16', 'size': 27}],
-        ''
+        [{"base": "172.21.0.0/16", "size": 27}, {"base": "172.22.0.0/16", "size": 27}],
+        ""
     ),
     (
-        [{'base': 'fedd::5054:ff:fe4f:bbbe/56', 'size': 64}, {'base': 'fed0::5054:ff:fe4f:bbbe/56', 'size': 64}],
-        ''
+        [{"base": "fedd::5054:ff:fe4f:bbbe/56", "size": 64}, {"base": "fed0::5054:ff:fe4f:bbbe/56", "size": 64}],
+        ""
     ),
 ))
 @pytest.mark.asyncio

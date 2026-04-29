@@ -4,42 +4,42 @@ from middlewared.api import Event, api_method
 from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoChangedEvent, SystemRebootInfoResult
 from middlewared.service import Service, private
 
-CACHE_KEY = 'reboot_reasons'
+CACHE_KEY = "reboot_reasons"
 
 
 class RebootReason(enum.Enum):
     # Ensure when a reason is added here, we update disabled reasons in HA to account for the new/removed knob
-    FIPS = 'FIPS configuration was changed.'
-    GPOSSTIG = 'General Purpose OS STIG configuration was changed.'
+    FIPS = "FIPS configuration was changed."
+    GPOSSTIG = "General Purpose OS STIG configuration was changed."
     GPU_ISOLATION = (
-        'GPU isolation configuration was updated due to removed or reassigned PCI devices. '
-        'A reboot is required to unbind devices from VFIO driver.'
+        "GPU isolation configuration was updated due to removed or reassigned PCI devices. "
+        "A reboot is required to unbind devices from VFIO driver."
     )
-    UPGRADE = 'This system needs to be rebooted in order for the system upgrade to finish.'
+    UPGRADE = "This system needs to be rebooted in order for the system upgrade to finish."
 
 
 class SystemRebootService(Service):
 
     class Config:
-        cli_namespace = 'system.reboot_required'
-        namespace = 'system.reboot'
+        cli_namespace = "system.reboot_required"
+        namespace = "system.reboot"
         events = [
             Event(
-                name='system.reboot.info',
-                description='Sent when a system reboot is required.',
-                roles=['SYSTEM_GENERAL_READ'],
+                name="system.reboot.info",
+                description="Sent when a system reboot is required.",
+                roles=["SYSTEM_GENERAL_READ"],
                 models={
-                    'CHANGED': SystemRebootInfoChangedEvent,
+                    "CHANGED": SystemRebootInfoChangedEvent,
                 },
             ),
         ]
 
-    @api_method(SystemRebootInfoArgs, SystemRebootInfoResult, roles=['SYSTEM_GENERAL_READ'])
+    @api_method(SystemRebootInfoArgs, SystemRebootInfoResult, roles=["SYSTEM_GENERAL_READ"])
     async def info(self):
         return {
-            'boot_id': await self.middleware.call('system.boot_id'),
-            'reboot_required_reasons': [
-                {'code': code, 'reason': reason}
+            "boot_id": await self.middleware.call("system.boot_id"),
+            "reboot_required_reasons": [
+                {"code": code, "reason": reason}
                 for code, reason in (await self._get_reasons()).items()
             ],
         }
@@ -92,12 +92,12 @@ class SystemRebootService(Service):
 
     async def _get_reasons(self) -> dict[str, str]:
         try:
-            return await self.middleware.call('cache.get', CACHE_KEY)
+            return await self.middleware.call("cache.get", CACHE_KEY)
         except KeyError:
             return {}
 
     async def _set_reasons(self, reasons: dict[str, str]):
-        await self.middleware.call('cache.put', CACHE_KEY, reasons)
+        await self.middleware.call("cache.put", CACHE_KEY, reasons)
 
     async def _send_event(self):
-        self.middleware.send_event('system.reboot.info', 'CHANGED', id=None, fields=await self.info())
+        self.middleware.send_event("system.reboot.info", "CHANGED", id=None, fields=await self.info())

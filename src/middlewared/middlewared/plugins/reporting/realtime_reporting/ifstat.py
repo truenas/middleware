@@ -7,10 +7,10 @@ from .utils import normalize_value, safely_retrieve_dimension
 def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> dict:
     data = collections.defaultdict(dict)
     for interface_name in interfaces:
-        link_state = bool(safely_retrieve_dimension(netdata_metrics, f'net_operstate.{interface_name}', 'up', 0))
-        data[interface_name]['link_state'] = 'LINK_STATE_UP' if link_state else 'LINK_STATE_DOWN'
-        data[interface_name]['speed'] = normalize_value(safely_retrieve_dimension(
-            netdata_metrics, f'net_speed.{interface_name}', 'speed', 0), divisor=1000
+        link_state = bool(safely_retrieve_dimension(netdata_metrics, f"net_operstate.{interface_name}", "up", 0))
+        data[interface_name]["link_state"] = "LINK_STATE_UP" if link_state else "LINK_STATE_DOWN"
+        data[interface_name]["speed"] = normalize_value(safely_retrieve_dimension(
+            netdata_metrics, f"net_speed.{interface_name}", "speed", 0), divisor=1000
         )
         if link_state:
             # In Bluefin, `received_bytes` and `sent_bytes` represent bytes per interval,
@@ -26,21 +26,21 @@ def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> 
             # it to bytes/s
 
             data[interface_name].update({
-                'received_bytes_rate': normalize_value(
-                    safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'received', 0),
+                "received_bytes_rate": normalize_value(
+                    safely_retrieve_dimension(netdata_metrics, f"net.{interface_name}", "received", 0),
                     multiplier=1000, divisor=8
                 ),
-                'sent_bytes_rate': normalize_value(
-                    safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'sent', 0),
+                "sent_bytes_rate": normalize_value(
+                    safely_retrieve_dimension(netdata_metrics, f"net.{interface_name}", "sent", 0),
                     multiplier=1000, divisor=8
                 ),
             })
         else:
             data[interface_name].update({
-                'received_bytes': 0,
-                'sent_bytes': 0,
-                'received_bytes_rate': 0,
-                'sent_bytes_rate': 0,
+                "received_bytes": 0,
+                "sent_bytes": 0,
+                "received_bytes_rate": 0,
+                "sent_bytes_rate": 0,
             })
 
     return data

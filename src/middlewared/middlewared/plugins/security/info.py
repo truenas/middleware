@@ -13,12 +13,12 @@ from middlewared.service import CallError, Service
 class SystemSecurityInfoService(Service):
 
     class Config:
-        namespace = 'system.security.info'
-        cli_namespace = 'system.security.info'
+        namespace = "system.security.info"
+        cli_namespace = "system.security.info"
 
     @api_method(
         SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
-        roles=['SYSTEM_SECURITY_READ']
+        roles=["SYSTEM_SECURITY_READ"]
     )
     def fips_available(self):
         """Returns a boolean identifying whether FIPS mode may be toggled on this system"""
@@ -27,12 +27,12 @@ class SystemSecurityInfoService(Service):
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,
-        roles=['SYSTEM_SECURITY_READ']
+        roles=["SYSTEM_SECURITY_READ"]
     )
     def fips_enabled(self):
         """Returns a boolean identifying whether FIPS mode has been enabled on this system"""
-        cp = run(['openssl', 'list', '-providers'], capture_output=True)
+        cp = run(["openssl", "list", "-providers"], capture_output=True)
         if cp.returncode:
-            raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
+            raise CallError(f"Failed to determine if fips is enabled: {cp.stderr.decode()}")
 
-        return b'OpenSSL FIPS Provider' in cp.stdout
+        return b"OpenSSL FIPS Provider" in cp.stdout

@@ -36,7 +36,7 @@ class ISCSIGlobalEntry(BaseModel):
     iser: bool
 
 
-@single_argument_args('iscsi_update')
+@single_argument_args("iscsi_update")
 class ISCSIGlobalUpdateArgs(ISCSIGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

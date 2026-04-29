@@ -3,7 +3,7 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, LongString, single_argument_args
 
 __all__ = [
-    'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'ACMERegistrationEntry',
+    "ACMERegistrationCreateArgs", "ACMERegistrationCreateResult", "ACMERegistrationEntry",
 ]
 
 
@@ -30,7 +30,7 @@ class ACMERegistrationEntry(BaseModel):
     body: ACMERegistrationBody
 
 
-@single_argument_args('acme_registration_create')
+@single_argument_args("acme_registration_create")
 class ACMERegistrationCreateArgs(BaseModel):
     tos: bool = False
     JWK_create: JWKCreate = Field(default=JWKCreate())

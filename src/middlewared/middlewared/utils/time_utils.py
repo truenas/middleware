@@ -12,7 +12,7 @@ def utc_now(naive: bool = True) -> datetime:
 def datetime_to_epoch_days(value: datetime) -> int:
     """ Convert datetime to days since epoch. """
     if not isinstance(value, datetime):
-        raise TypeError(f'{type(value)}: unexpected type')
+        raise TypeError(f"{type(value)}: unexpected type")
 
     return (value - UTC_EPOCH).days
 
@@ -20,6 +20,6 @@ def datetime_to_epoch_days(value: datetime) -> int:
 def epoch_days_to_datetime(value: int) -> datetime:
     """ Convert days since epoch into a UTC datetime object """
     if not isinstance(value, int):
-        raise TypeError(f'{type(value)}: unexpected type')
+        raise TypeError(f"{type(value)}: unexpected type")
 
     return UTC_EPOCH + timedelta(days=value)

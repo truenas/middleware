@@ -387,8 +387,8 @@ class ReplicationService(CRUDService):
                 if not snapshot_tasks and not also_include_naming_schema and not name_regex:
                     verrors.add(
                         "periodic_snapshot_tasks",
-                        "You must at least either bind a periodic snapshot task or provide \"Also Include Naming "
-                        "Schema\" or \"Name Regex\" for push replication task"
+                        'You must at least either bind a periodic snapshot task or provide "Also Include Naming '
+                        'Schema" or "Name Regex" for push replication task'
                     )
 
                 # Automatic PUSH needs a trigger (schedule or periodic snapshot task)

@@ -55,14 +55,14 @@ class PrivilegeService(CRUDService):
         datastore_extend_context = "privilege.item_extend_context"
         cli_namespace = "auth.privilege"
         entry = PrivilegeEntry
-        role_prefix = 'PRIVILEGE'
+        role_prefix = "PRIVILEGE"
         events = [
             Event(
-                name='user.web_ui_login_disabled',
-                description='Sent when root user login to the Web UI is disabled.',
-                roles=['FULL_ADMIN'],
+                name="user.web_ui_login_disabled",
+                description="Sent when root user login to the Web UI is disabled.",
+                roles=["FULL_ADMIN"],
                 models={
-                    'ADDED': UserWebUiLoginDisabledAddedEvent,
+                    "ADDED": UserWebUiLoginDisabledAddedEvent,
                 }
             )
         ]
@@ -137,14 +137,14 @@ class PrivilegeService(CRUDService):
                     verrors.add(
                         "privilege_update.local_groups",
                         f"The group {LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
-                        "among grantees of the \"Local Administrator\" privilege."
+                        'among grantees of the "Local Administrator" privilege.'
                     )
 
                 if not await self.middleware.call("group.has_password_enabled_user", new["local_groups"]):
                     verrors.add(
                         "privilege_update.local_groups",
                         "None of the members of these groups has password login enabled. At least one grantee of "
-                        "the \"Local Administrator\" privilege must have password login enabled."
+                        'the "Local Administrator" privilege must have password login enabled.'
                     )
             elif builtin_privilege == BuiltinPrivileges.READONLY_ADMINISTRATOR:
                 if new["web_shell"]:
@@ -206,7 +206,7 @@ class PrivilegeService(CRUDService):
                 continue
 
             # Currently only local groups may have privileges
-            if groups['by_gid'][local_group_id]['userns_idmap']:
+            if groups["by_gid"][local_group_id]["userns_idmap"]:
                 verrors.add(
                     f"privilege_update.local_groups.{i}",
                     "Privileges may not be granted to groups that have a user namespace idmap "
@@ -238,12 +238,12 @@ class PrivilegeService(CRUDService):
             )
         }
 
-        return {'by_gid': by_gid, 'by_sid': by_sid}
+        return {"by_gid": by_gid, "by_sid": by_sid}
 
     def _local_groups(self, groups, local_groups, *, include_nonexistent=True):
         result = []
         for gid in local_groups:
-            if group := groups['by_gid'].get(gid):
+            if group := groups["by_gid"].get(gid):
                 if group["local"]:
                     result.append(group)
             else:
@@ -266,9 +266,9 @@ class PrivilegeService(CRUDService):
 
         if (sids_to_check := [entry for entry in ds_groups if wbclient.sid_is_valid(str(entry))]):
             try:
-                mapped_sids = (await self.middleware.call('idmap.convert_sids', sids_to_check))['mapped']
+                mapped_sids = (await self.middleware.call("idmap.convert_sids", sids_to_check))["mapped"]
             except Exception:
-                self.logger.warning('Failed to generate privileges for domain groups', exc_info=True)
+                self.logger.warning("Failed to generate privileges for domain groups", exc_info=True)
                 return result
         else:
             mapped_sids = {}
@@ -276,16 +276,16 @@ class PrivilegeService(CRUDService):
         for xid in ds_groups:
             is_sid = False
             if isinstance(xid, int):
-                if (group := groups['by_gid'].get(xid)) is None:
+                if (group := groups["by_gid"].get(xid)) is None:
                     gid = xid
             else:
                 is_sid = True
-                if (group := groups['by_sid'].get(xid)) is None:
+                if (group := groups["by_sid"].get(xid)) is None:
                     unixid = mapped_sids.get(xid)
-                    if unixid is None or unixid['id_type'] == 'USER':
+                    if unixid is None or unixid["id_type"] == "USER":
                         gid = -1
                     else:
-                        gid = unixid['id']
+                        gid = unixid["id"]
 
             if group is None:
                 try:
@@ -315,22 +315,22 @@ class PrivilegeService(CRUDService):
     async def before_user_password_disable(self, user):
         return await self.before_user_deactivation(
             user,
-            'After disabling password for this user no password-enabled local user',
+            "After disabling password for this user no password-enabled local user",
         )
 
     @private
     async def before_user_delete(self, user):
-        return await self.before_user_deactivation(user, 'After deleting this user no local user')
+        return await self.before_user_deactivation(user, "After deleting this user no local user")
 
     @private
     async def before_user_deactivation(self, user, error_text):
         for privilege in await self.middleware.call(
-            'datastore.query',
-            'account.privilege',
-            [['builtin_name', '=', 'LOCAL_ADMINISTRATOR']],
+            "datastore.query",
+            "account.privilege",
+            [["builtin_name", "=", "LOCAL_ADMINISTRATOR"]],
         ):
-            if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'],
-                                              [user['id']]):
+            if not await self.middleware.call("group.has_password_enabled_user", privilege["local_groups"],
+                                              [user["id"]]):
                 raise CallError(
                     f'{error_text} will have built-in privilege {privilege["name"]!r}.',
                     errno.EACCES,
@@ -338,8 +338,8 @@ class PrivilegeService(CRUDService):
 
     @private
     async def before_group_delete(self, group):
-        for privilege in await self.middleware.call('datastore.query', 'account.privilege'):
-            if group['gid'] in privilege['local_groups']:
+        for privilege in await self.middleware.call("datastore.query", "account.privilege"):
+            if group["gid"] in privilege["local_groups"]:
                 raise CallError(
                     f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege '
                     'first, then delete the group.',
@@ -349,8 +349,8 @@ class PrivilegeService(CRUDService):
     @private
     async def used_local_gids(self):
         gids = {}
-        for privilege in await self.middleware.call('datastore.query', 'account.privilege', [], {'order_by': ['id']}):
-            for gid in privilege['local_groups']:
+        for privilege in await self.middleware.call("datastore.query", "account.privilege", [], {"order_by": ["id"]}):
+            for gid in privilege["local_groups"]:
                 gids.setdefault(gid, privilege)
 
         return gids
@@ -371,54 +371,54 @@ class PrivilegeService(CRUDService):
         permissions failure is acceptable. We do not need to log here as there will
         be other failures / alerts and we don't want to spam logs unnecessarily.
         """
-        if groups_key == 'ds_groups':
+        if groups_key == "ds_groups":
             try:
                 sids = await self.middleware.call(
-                    'idmap.convert_unixids',
-                    [{'id_type': 'GROUP', 'id': x} for x in group_ids]
+                    "idmap.convert_unixids",
+                    [{"id_type": "GROUP", "id": x} for x in group_ids]
                 )
             except Exception:
                 group_ids = set(group_ids)
             else:
-                group_ids = set(group_ids) | set([s['sid'] for s in sids['mapped'].values()])
+                group_ids = set(group_ids) | set([s["sid"] for s in sids["mapped"].values()])
         else:
             group_ids = set(group_ids)
 
-        privileges = await self.middleware.call('datastore.query', 'account.privilege')
-        return privileges_group_mapping(privileges, group_ids, groups_key)['privileges']
+        privileges = await self.middleware.call("datastore.query", "account.privilege")
+        return privileges_group_mapping(privileges, group_ids, groups_key)["privileges"]
 
     @private
     async def compose_privilege(self, privileges):
-        security_config = await self.middleware.call('system.security.config')
+        security_config = await self.middleware.call("system.security.config")
         enabled_stig = system_security_config_to_stig_type(security_config)
 
         compose = {
-            'roles': set(),
-            'allowlist': [],
-            'web_shell': False,
-            'webui_access': False,
+            "roles": set(),
+            "allowlist": [],
+            "web_shell": False,
+            "webui_access": False,
         }
         for privilege in privileges:
-            for role in privilege['roles']:
-                compose['roles'] |= self.middleware.role_manager.roles_for_role(role, enabled_stig)
+            for role in privilege["roles"]:
+                compose["roles"] |= self.middleware.role_manager.roles_for_role(role, enabled_stig)
 
-                compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role, enabled_stig))
+                compose["allowlist"].extend(self.middleware.role_manager.allowlist_for_role(role, enabled_stig))
 
-            compose['web_shell'] |= privilege['web_shell']
-            compose['webui_access'] |= privilege_has_webui_access(privilege)
+            compose["web_shell"] |= privilege["web_shell"]
+            compose["webui_access"] |= privilege_has_webui_access(privilege)
 
         if enabled_stig:
-            compose['web_shell'] = False
+            compose["web_shell"] = False
 
         return compose
 
     @private
     async def full_privilege(self):
         return {
-            'roles': {'FULL_ADMIN'},
-            'allowlist': [ALLOW_LIST_FULL_ADMIN.copy()],
-            'web_shell': True,
-            'webui_access': True,
+            "roles": {"FULL_ADMIN"},
+            "allowlist": [ALLOW_LIST_FULL_ADMIN.copy()],
+            "web_shell": True,
+            "webui_access": True,
         }
 
     previous_always_has_root_password_enabled_value = None
@@ -426,25 +426,25 @@ class PrivilegeService(CRUDService):
     @private
     async def always_has_root_password_enabled(self, users=None, groups=None):
         if users is None:
-            users = await self.middleware.call('user.query', [['local', '=', True]])
+            users = await self.middleware.call("user.query", [["local", "=", True]])
         if groups is None:
-            groups = await self.middleware.call('group.query', [['local', '=', True]])
+            groups = await self.middleware.call("group.query", [["local", "=", True]])
 
         root_user = filter_list(
             users,
-            [['username', '=', 'root']],
-            {'get': True},
+            [["username", "=", "root"]],
+            {"get": True},
         )
-        users = await self.local_administrators([root_user['id']], users, groups)
+        users = await self.local_administrators([root_user["id"]], users, groups)
         if not users:
             value = True
         else:
             value = False
 
             if self.previous_always_has_root_password_enabled_value:
-                usernames = [user['username'] for user in users]
+                usernames = [user["username"] for user in users]
                 self.middleware.send_event(
-                    'user.web_ui_login_disabled', 'ADDED', id=None, fields={'usernames': usernames},
+                    "user.web_ui_login_disabled", "ADDED", id=None, fields={"usernames": usernames},
                 )
 
         self.previous_always_has_root_password_enabled_value = value
@@ -454,30 +454,30 @@ class PrivilegeService(CRUDService):
     async def local_administrators(self, exclude_user_ids=None, users=None, groups=None):
         exclude_user_ids = exclude_user_ids or []
         if users is None:
-            users = await self.middleware.call('user.query', [['local', '=', True]])
+            users = await self.middleware.call("user.query", [["local", "=", True]])
         if groups is None:
-            groups = await self.middleware.call('group.query', [['local', '=', True]])
+            groups = await self.middleware.call("group.query", [["local", "=", True]])
 
         local_administrator_privilege = await self.middleware.call(
-            'datastore.query',
-            'account.privilege',
-            [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
-            {'get': True},
+            "datastore.query",
+            "account.privilege",
+            [["builtin_name", "=", BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
+            {"get": True},
         )
         local_administrators = await self.middleware.call(
-            'group.get_password_enabled_users',
-            local_administrator_privilege['local_groups'],
+            "group.get_password_enabled_users",
+            local_administrator_privilege["local_groups"],
             exclude_user_ids,
             groups,
         )
         if not local_administrators:
             root_user = filter_list(
                 users,
-                [['username', '=', 'root']],
-                {'get': True},
+                [["username", "=", "root"]],
+                {"get": True},
             )
-            if root_user['id'] not in exclude_user_ids:
-                if unixhash_is_valid(root_user['unixhash']):
+            if root_user["id"] not in exclude_user_ids:
+                if unixhash_is_valid(root_user["unixhash"]):
                     # This can only be if `always_has_root_password_enabled` is `True`
                     local_administrators = [root_user]
 
@@ -486,7 +486,7 @@ class PrivilegeService(CRUDService):
     @api_method(
         PrivilegeBecomeReadonlyArgs,
         PrivilegeBecomeReadonlyResult,
-        roles=['READONLY_ADMIN'],
+        roles=["READONLY_ADMIN"],
         pass_app=True,
         pass_app_require=True
     )
@@ -495,16 +495,16 @@ class PrivilegeService(CRUDService):
         This action prevents the session from making configuration changes. It also redacts
         sensitive data in API output. """
         if not app.authenticated_credentials.is_user_session:
-            raise CallError(f'{app.authenticated_credentials.class_name}: unexpected credential type')
+            raise CallError(f"{app.authenticated_credentials.class_name}: unexpected credential type")
 
         # Compose a privilege based on only the READONLY_ADMINISTRATOR builtin privilege
         ro_admin = await self.query(
-            [['builtin_name', '=', BuiltinPrivileges.READONLY_ADMINISTRATOR.value]],
-            {'get': True}
+            [["builtin_name", "=", BuiltinPrivileges.READONLY_ADMINISTRATOR.value]],
+            {"get": True}
         )
         composed_privilege = await self.compose_privilege([ro_admin])
 
         # Set the current credential allowlist based on this privilege
-        allowlist = Allowlist(composed_privilege['allowlist'])
+        allowlist = Allowlist(composed_privilege["allowlist"])
         app.authenticated_credentials.allowlist = allowlist
-        app.authenticated_credentials.user['privilege'] = composed_privilege
+        app.authenticated_credentials.user["privilege"] = composed_privilege

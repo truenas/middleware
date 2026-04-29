@@ -77,16 +77,16 @@ class CloudTaskServiceMixin:
             zvol = zvol_path_to_name(path)
             zz = self.call_sync2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
             if not zz:
-                verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
-            elif not zz[0]['type'] == 'VOLUME':
-                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is not a volume')
-            elif has_internal_path(zz[0]['name']):
-                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is an invalid location')
+                verrors.add(f"{name}.{self.path_field}", "Volume does not exist")
+            elif not zz[0]["type"] == "VOLUME":
+                verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is not a volume")
+            elif has_internal_path(zz[0]["name"]):
+                verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is an invalid location")
             else:
                 try:
-                    self.middleware.call_sync(f'{self._config.namespace}.validate_zvol', path)
+                    self.middleware.call_sync(f"{self._config.namespace}.validate_zvol", path)
                 except CallError as e:
-                    verrors.add(f'{name}.{self.path_field}', e.errmsg)
+                    verrors.add(f"{name}.{self.path_field}", e.errmsg)
         else:
             self.middleware.run_coroutine(self.validate_path_field(data, name, verrors, split_path=True))
 

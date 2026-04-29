@@ -147,15 +147,15 @@ if typing.TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
 
-__all__ = ('VMService',)
+__all__ = ("VMService",)
 
 
 class VMService(GenericCRUDService[VMEntry]):
 
     class Config:
-        cli_namespace = 'service.vm'
+        cli_namespace = "service.vm"
         entry = VMEntry
-        role_prefix = 'VM'
+        role_prefix = "VM"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:
@@ -166,8 +166,8 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(
         VMCreateArgs,
         VMCreateResult,
-        audit='VM create',
-        audit_extended=lambda data: data['name'],
+        audit="VM create",
+        audit_extended=lambda data: data["name"],
         check_annotations=True,
     )
     async def do_create(self, data: VMCreate) -> VMEntry:
@@ -210,7 +210,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(
         VMUpdateArgs,
         VMUpdateResult,
-        audit='VM update',
+        audit="VM update",
         audit_callback=True,
         check_annotations=True,
     )
@@ -233,7 +233,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(
         VMDeleteArgs,
         VMDeleteResult,
-        audit='VM delete',
+        audit="VM delete",
         audit_callback=True,
         check_annotations=True,
     )
@@ -244,8 +244,8 @@ class VMService(GenericCRUDService[VMEntry]):
         return self._svc_part.do_delete(id_, data, audit_callback=audit_callback)
 
     @api_method(
-        VMCloneArgs, VMCloneResult, roles=['VM_WRITE'],
-        audit='VM clone', audit_callback=True, check_annotations=True,
+        VMCloneArgs, VMCloneResult, roles=["VM_WRITE"],
+        audit="VM clone", audit_callback=True, check_annotations=True,
     )
     async def clone(self, audit_callback: AuditCallback, id_: int, name: str | None) -> bool:
         """
@@ -256,35 +256,35 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return await clone_vm(self.context, id_, name, audit_callback=audit_callback)
 
-    @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=["VM_READ"], check_annotations=True)
     async def bootloader_options(self) -> VMBootloaderOptions:
         """
         Supported motherboard firmware options.
         """
         return VMBootloaderOptions(**BOOT_LOADER_OPTIONS)
 
-    @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=["VM_READ"], check_annotations=True)
     def bootloader_ovmf_choices(self) -> dict[str, str]:
         """
         Retrieve bootloader ovmf choices
         """
         return bootloader_ovmf_choices()
 
-    @api_method(VMCpuModelChoicesArgs, VMCpuModelChoicesResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMCpuModelChoicesArgs, VMCpuModelChoicesResult, roles=["VM_READ"], check_annotations=True)
     def cpu_model_choices(self) -> dict[str, str]:
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """
         return cpu_model_choices()
 
-    @api_method(VMFlagsArgs, VMFlagsResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMFlagsArgs, VMFlagsResult, roles=["VM_READ"], check_annotations=True)
     async def flags(self) -> VMFlags:
         """
         Returns a dictionary with CPU flags for the hypervisor.
         """
         return await vm_flags(self.context)
 
-    @api_method(VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult, roles=["VM_READ"], check_annotations=True)
     async def get_available_memory(self, overcommit: bool) -> int:
         """
         Get the current maximum amount of available memory to be allocated for VMs.
@@ -305,14 +305,14 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return await get_available_memory(self.context, overcommit)
 
-    @api_method(VMGetConsoleArgs, VMGetConsoleResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetConsoleArgs, VMGetConsoleResult, roles=["VM_READ"], check_annotations=True)
     async def get_console(self, id_: int) -> str:
         """
         Get the console device from a given guest.
         """
         return await get_console(self.context, id_)
 
-    @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=["VM_READ"], check_annotations=True)
     async def get_display_devices(self, id_: int) -> list[VMDisplayDeviceInfo]:
         """
         Get the display devices from a given guest. If a display device has password configured,
@@ -321,7 +321,7 @@ class VMService(GenericCRUDService[VMEntry]):
         return await _get_display_devices(self.context, id_)
 
     @api_method(
-        VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult, roles=['VM_READ'],
+        VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult, roles=["VM_READ"],
         pass_app=True, check_annotations=True,
     )
     async def get_display_web_uri(
@@ -333,14 +333,14 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return await _get_display_web_uri(self.context, app, id_, host, options)
 
-    @api_method(VMGetMemoryUsageArgs, VMGetMemoryUsageResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetMemoryUsageArgs, VMGetMemoryUsageResult, roles=["VM_READ"], check_annotations=True)
     def get_memory_usage(self, id_: int) -> int:
         """
         Get the memory usage of a given VM.
         """
         return get_memory_usage(self.context, id_)
 
-    @api_method(VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, roles=["VM_READ"], check_annotations=True)
     async def get_vm_memory_info(self, vm_id: int) -> VMGetVmMemoryInfo:
         """
         Returns memory information for `vm_id` VM if it is going to be started.
@@ -349,7 +349,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return await get_vm_memory_info(self.context, vm_id)
 
-    @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=["VM_READ"], check_annotations=True)
     async def get_vmemory_in_use(self) -> VMGetVmemoryInUse:
         """
         The total amount of virtual memory in bytes used by guests
@@ -364,7 +364,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(
         VMGuestArchitectureAndMachineChoicesArgs,
         VMGuestArchitectureAndMachineChoicesResult,
-        roles=['VM_READ'],
+        roles=["VM_READ"],
         check_annotations=True,
     )
     def guest_architecture_and_machine_choices(self) -> dict[str, list[str]]:
@@ -376,8 +376,8 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return guest_architecture_and_machine_choices(self.context)
 
-    @api_method(VMLogFileDownloadArgs, VMLogFileDownloadResult, roles=['VM_READ'], check_annotations=True)
-    @job(pipes=['output'])
+    @api_method(VMLogFileDownloadArgs, VMLogFileDownloadResult, roles=["VM_READ"], check_annotations=True)
+    @job(pipes=["output"])
     def log_file_download(self, job: Job, vm_id: int) -> None:
         """
         Retrieve log file contents of `id` VM.
@@ -386,7 +386,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         log_file_download(self.context, job, vm_id)
 
-    @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=["VM_READ"], check_annotations=True)
     def log_file_path(self, vm_id: int) -> str | None:
         """
         Retrieve log file path of `id` VM.
@@ -395,14 +395,14 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return log_file_path(self.context, vm_id)
 
-    @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=["VM_READ"], check_annotations=True)
     async def maximum_supported_vcpus(self) -> int:
         """
         Returns maximum supported VCPU's
         """
         return MAXIMUM_SUPPORTED_VCPUS
 
-    @api_method(VMPortWizardArgs, VMPortWizardResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMPortWizardArgs, VMPortWizardResult, roles=["VM_READ"], check_annotations=True)
     async def port_wizard(self) -> VMPortWizard:
         """
         It returns the next available Display Server Port and Web Port.
@@ -411,14 +411,14 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return await port_wizard(self.context)
 
-    @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'], check_annotations=True)
+    @api_method(VMPoweroffArgs, VMPoweroffResult, roles=["VM_WRITE"], check_annotations=True)
     def poweroff(self, id_: int) -> None:
         """
         Poweroff a VM.
         """
         poweroff_vm(self.context, id_)
 
-    @api_method(VMRandomMacArgs, VMRandomMacResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMRandomMacArgs, VMRandomMacResult, roles=["VM_READ"], check_annotations=True)
     def random_mac(self) -> str:
         """
         Create a random mac address.
@@ -428,29 +428,29 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return random_mac()
 
-    @api_method(VMResolutionChoicesArgs, VMResolutionChoicesResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMResolutionChoicesArgs, VMResolutionChoicesResult, roles=["VM_READ"], check_annotations=True)
     async def resolution_choices(self) -> dict[str, str]:
         """
         Retrieve supported resolution choices for VM Display devices.
         """
         return resolution_choices()
 
-    @api_method(VMRestartArgs, VMRestartResult, roles=['VM_WRITE'], check_annotations=True)
-    @job(lock=lambda args: f'restart_vm_{args[0]}')
+    @api_method(VMRestartArgs, VMRestartResult, roles=["VM_WRITE"], check_annotations=True)
+    @job(lock=lambda args: f"restart_vm_{args[0]}")
     def restart(self, job: Job, id_: int) -> None:
         """
         Restart a VM.
         """
         restart_vm(self.context, id_)
 
-    @api_method(VMResumeArgs, VMResumeResult, roles=['VM_WRITE'], check_annotations=True)
+    @api_method(VMResumeArgs, VMResumeResult, roles=["VM_WRITE"], check_annotations=True)
     def resume(self, id_: int) -> None:
         """
         Resume suspended `id` VM.
         """
         resume_vm(self.context, id_)
 
-    @api_method(VMStartArgs, VMStartResult, roles=['VM_WRITE'], check_annotations=True)
+    @api_method(VMStartArgs, VMStartResult, roles=["VM_WRITE"], check_annotations=True)
     def start(self, id_: int, options: VMStartOptions) -> None:
         """
         Start a VM.
@@ -465,7 +465,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         start_vm(self.context, id_, options)
 
-    @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMStatusArgs, VMStatusResult, roles=["VM_READ"], check_annotations=True)
     async def status(self, id_: int) -> VMStatus:
         """
         Get the status of `id` VM.
@@ -476,8 +476,8 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return (await self.middleware.call2(self.s.vm.get_instance, id_)).status
 
-    @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'], check_annotations=True)
-    @job(lock=lambda args: f'stop_vm_{args[0]}')
+    @api_method(VMStopArgs, VMStopResult, roles=["VM_WRITE"], check_annotations=True)
+    @job(lock=lambda args: f"stop_vm_{args[0]}")
     def stop(self, job: Job, id_: int, options: VMStopOptions) -> None:
         """
         Stops a VM.
@@ -494,7 +494,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(
         VMSupportsVirtualizationArgs,
         VMSupportsVirtualizationResult,
-        roles=['VM_READ'],
+        roles=["VM_READ"],
         check_annotations=True
     )
     def supports_virtualization(self) -> bool:
@@ -503,14 +503,14 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return supports_virtualization()
 
-    @api_method(VMSuspendArgs, VMSuspendResult, roles=['VM_WRITE'], check_annotations=True)
+    @api_method(VMSuspendArgs, VMSuspendResult, roles=["VM_WRITE"], check_annotations=True)
     def suspend(self, id_: int) -> None:
         """
         Suspend `id` VM.
         """
         suspend_vm(self.context, id_)
 
-    @api_method(VMVirtualizationDetailsArgs, VMVirtualizationDetailsResult, roles=['VM_READ'], check_annotations=True)
+    @api_method(VMVirtualizationDetailsArgs, VMVirtualizationDetailsResult, roles=["VM_READ"], check_annotations=True)
     def virtualization_details(self) -> VMVirtualizationDetails:
         """
         Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
@@ -568,7 +568,7 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: ty
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service, however, the VMs still need to be
     # initialized (which is what the above callers are doing)
-    if await middleware.call('failover.licensed'):
+    if await middleware.call("failover.licensed"):
         return
 
     middleware.create_task(middleware.call2(middleware.services.vm.start_on_boot))
@@ -583,10 +583,10 @@ async def setup(middleware: Middleware) -> None:
     # any type of VM initialization. We have to capture the
     # zfs c_max value before we start manipulating these
     # sysctls during vm start/stop
-    await middleware.call('sysctl.store_default_arc_max')
+    await middleware.call("sysctl.store_default_arc_max")
 
-    middleware.event_subscribe('system.ready', __event_system_ready)
-    middleware.event_subscribe('system.shutdown', __event_system_shutdown)
+    middleware.event_subscribe("system.ready", __event_system_ready)
+    middleware.event_subscribe("system.shutdown", __event_system_shutdown)
     middleware.libvirt_domains_manager.vms.connection.register_domain_event_callback(
         functools.partial(vm_domain_event_callback, middleware)
     )

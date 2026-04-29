@@ -11,7 +11,7 @@ from middlewared.service_exception import MatchNotFound
 CF_EMPTY: CompiledFilters = _tf.compile_filters([])
 CO_EMPTY: CompiledOptions = _tf.compile_options()
 
-_Entry = TypeVar('_Entry', bound=dict[str, Any])
+_Entry = TypeVar("_Entry", bound=dict[str, Any])
 
 
 def _build_compiled_options(
@@ -22,16 +22,16 @@ def _build_compiled_options(
     sel = list(select)
     ord_ = list(order_by)
     return _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
+        get=options.get("get", False),
+        count=options.get("count", False),
         select=sel if sel else None,
         order_by=ord_ if ord_ else None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
+        offset=options.get("offset", 0),
+        limit=options.get("limit", 0),
     )
 
 
-_TIMESTAMP_OPS = frozenset(('=', '!=', '<', '>', '<=', '>='))
+_TIMESTAMP_OPS = frozenset(("=", "!=", "<", ">", "<=", ">="))
 
 
 def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -> list | None:
@@ -43,12 +43,12 @@ def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -
          ["expires", ">", datetime(2024, 1, 1)]
     """
     if depth > 3:
-        raise ValueError('query-filters max recursion depth exceeded')
+        raise ValueError("query-filters max recursion depth exceeded")
 
     result = []
     changed = False
     for f in filters:
-        if len(f) == 2 and isinstance(f[0], str) and f[0] == 'OR':
+        if len(f) == 2 and isinstance(f[0], str) and f[0] == "OR":
             # OR node: ['OR', [branch, ...]]
             sub = _preprocess_date_filters(f[1], depth + 1)
             result.append([f[0], sub if sub is not None else list(f[1])])
@@ -64,17 +64,17 @@ def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -
             field, op, value = f
             if isinstance(field, str) and field.endswith(TIMESTAMP_DESIGNATOR):
                 if op not in _TIMESTAMP_OPS:
-                    raise ValueError(f'{op}: invalid timestamp operation.')
+                    raise ValueError(f"{op}: invalid timestamp operation.")
                 if not isinstance(value, str):
                     raise ValueError(
-                        f'{value}: must be an ISO-8601 formatted timestamp string'
+                        f"{value}: must be an ISO-8601 formatted timestamp string"
                     )
                 field = field[:-len(TIMESTAMP_DESIGNATOR)]
                 try:
                     value = datetime.fromisoformat(value)
                 except ValueError:
                     raise ValueError(
-                        f'{value}: must be an ISO-8601 formatted timestamp string'
+                        f"{value}: must be an ISO-8601 formatted timestamp string"
                     ) from None
                 changed = True
             result.append([field, op, value])
@@ -153,7 +153,7 @@ def filter_list(
     rv = _tf.tnfilter(_list, filters=cf, options=co)
     if isinstance(rv, int):
         return rv   # count=True: tnfilter returns int directly
-    if options.get('get') is True:
+    if options.get("get") is True:
         try:
             return rv[0]
         except IndexError:
@@ -178,12 +178,12 @@ def compile_options(options: dict | None = None) -> CompiledOptions:
     """
     options = options or {}
     return _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
-        select=options.get('select') or None,
-        order_by=options.get('order_by') or None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
+        get=options.get("get", False),
+        count=options.get("count", False),
+        select=options.get("select") or None,
+        order_by=options.get("order_by") or None,
+        offset=options.get("offset", 0),
+        limit=options.get("limit", 0),
     )
 
 
@@ -203,5 +203,5 @@ def filter_getattrs(filters: list[Sequence[Any]]) -> set[str]:
         elif len(filter_) == 3:
             attrs.add(filter_[0])
         else:
-            raise ValueError('Invalid filter.')
+            raise ValueError("Invalid filter.")
     return attrs

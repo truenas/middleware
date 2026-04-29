@@ -32,7 +32,7 @@ class QuotaWarningAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['dataset'], args['quota_property']]
+        return [args["dataset"], args["quota_property"]]
 
 
 @dataclass(kw_only=True)
@@ -53,7 +53,7 @@ class QuotaCriticalAlert(AlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return [args['dataset'], args['quota_property']]
+        return [args["dataset"], args["quota_property"]]
 
 
 class QuotaAlertSource(ThreadedAlertSource):
@@ -140,7 +140,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                 owner = self._get_owner(ds, props, mntinfo)
                 if owner != 0:
                     try:
-                        self.middleware.call_sync('user.get_user_obj', {'uid': owner})
+                        self.middleware.call_sync("user.get_user_obj", {"uid": owner})
                     except KeyError:
                         to = None
                         logger.debug("Unable to query user with uid %r", owner)

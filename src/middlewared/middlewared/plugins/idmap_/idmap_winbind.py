@@ -33,38 +33,38 @@ class WBClient:
     def _pyuidgid_to_dict(self, entry):
         """ convert python wbclient uidgid object to dictionary """
         return {
-            'id_type': IDType(entry.id_type).name,
-            'id': entry.id,
-            'name': f'{entry.domain}{self.separator}{entry.name}' if entry.name else None,
-            'sid': entry.sid
+            "id_type": IDType(entry.id_type).name,
+            "id": entry.id,
+            "name": f"{entry.domain}{self.separator}{entry.name}" if entry.name else None,
+            "sid": entry.sid
         }
 
     def _as_dict(self, results, convert_unmapped=False):
-        for entry in list(results['mapped'].keys()):
-            new = self._pyuidgid_to_dict(results['mapped'][entry])
-            if new['id_type'] == IDType.BOTH.name:
-                if results['mapped'][entry].sid_type['parsed'] in ('SID_DOM_GROUP', 'SID_ALIAS'):
-                    new['id_type'] = IDType.GROUP.name
+        for entry in list(results["mapped"].keys()):
+            new = self._pyuidgid_to_dict(results["mapped"][entry])
+            if new["id_type"] == IDType.BOTH.name:
+                if results["mapped"][entry].sid_type["parsed"] in ("SID_DOM_GROUP", "SID_ALIAS"):
+                    new["id_type"] = IDType.GROUP.name
                 else:
-                    new['id_type'] = IDType.USER.name
+                    new["id_type"] = IDType.USER.name
 
-            results['mapped'][entry] = new
+            results["mapped"][entry] = new
 
         # The unmapped entry value may be uidgid type or simply SID string
         # in latter case we shouldn't try to convert
         if convert_unmapped:
-            for entry in list(results['unmapped'].keys()):
-                new = self._pyuidgid_to_dict(results['unmapped'][entry])
-                results['unmapped'][entry] = new
+            for entry in list(results["unmapped"].keys()):
+                new = self._pyuidgid_to_dict(results["unmapped"][entry])
+                results["unmapped"][entry] = new
 
         return results
 
-    def init_domain(self, name='$thisdom'):
+    def init_domain(self, name="$thisdom"):
         domain = self.dom.get(name)
         if domain:
             return domain
 
-        if name == '$thisdom':
+        if name == "$thisdom":
             domain = self.ctx.domain()
         else:
             domain = self.ctx.domain(name)
@@ -72,27 +72,27 @@ class WBClient:
         self.dom[name] = domain
         return domain
 
-    def ping_dc(self, name='$thisdom'):
+    def ping_dc(self, name="$thisdom"):
         """ perform wbinfo --ping-dc """
         dom = self.init_domain(name)
         return dom.ping_dc()
 
-    def check_trust(self, name='$thisdom'):
+    def check_trust(self, name="$thisdom"):
         """ perform wbinfo -t """
         dom = self.init_domain(name)
         return dom.check_secret()
 
-    def domain_info(self, name='$thisdom'):
+    def domain_info(self, name="$thisdom"):
         """ perform wbinfo --domain-info """
         dom = self.init_domain(name)
         return dom.domain_info()
 
     def _batch_request(self, request_fn, list_in):
-        output = {'mapped': {}, 'unmapped': {}}
+        output = {"mapped": {}, "unmapped": {}}
         for chunk in batched(list_in, MAX_REQUEST_LENGTH):
             results = request_fn(list(chunk))
-            output['mapped'] |= results['mapped']
-            output['unmapped'] |= results['unmapped']
+            output["mapped"] |= results["mapped"]
+            output["unmapped"] |= results["unmapped"]
 
         return output
 
@@ -144,8 +144,8 @@ class WBClient:
         }
         """
         payload = [{
-            'id_type': IDType[entry["id_type"]].wbc_str(),
-            'id': entry['id']
+            "id_type": IDType[entry["id_type"]].wbc_str(),
+            "id": entry["id"]
         } for entry in uidgids]
 
         data = self._batch_request(
@@ -155,7 +155,7 @@ class WBClient:
         return self._as_dict(data, True)
 
     def sid_to_idmap_entry(self, sid):
-        mapped = self.sids_to_users_and_groups([sid])['mapped']
+        mapped = self.sids_to_users_and_groups([sid])["mapped"]
         if not mapped:
             raise MatchNotFound(sid)
 
@@ -180,7 +180,7 @@ class WBClient:
         Raises:
             MatchNotFound
         """
-        mapped = self.users_and_groups_to_idmap_entries([data])['mapped']
+        mapped = self.users_and_groups_to_idmap_entries([data])["mapped"]
         if not mapped:
             raise MatchNotFound(str(data))
 

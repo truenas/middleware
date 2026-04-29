@@ -25,20 +25,20 @@ if typing.TYPE_CHECKING:
         get: typing.Literal[False]
 
 
-__all__ = ('AppsIxVolumeService',)
+__all__ = ("AppsIxVolumeService",)
 
 
 class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
 
     class Config:
-        namespace = 'app.ix_volume'
-        cli_namespace = 'app.ix_volume'
+        namespace = "app.ix_volume"
+        cli_namespace = "app.ix_volume"
         event_send = False
         event_register = False
-        role_prefix = 'APPS'
+        role_prefix = "APPS"
         entry = AppsIxVolumeEntry
         generic = True
-        datastore_primary_key = 'name'
+        datastore_primary_key = "name"
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -69,15 +69,15 @@ class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
     async def get_instance(
         self, id_: str, options: QueryOptions | None = None,
     ) -> AppsIxVolumeEntry:
-        raise CallError('app.ix_volume has no stable primary key; use query() instead')
+        raise CallError("app.ix_volume has no stable primary key; use query() instead")
 
     @api_method(
         AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult,
-        roles=['APPS_READ'],
+        roles=["APPS_READ"],
         check_annotations=True,
     )
     def exists(self, name: str) -> bool:
         """
         Check if ix-volumes exist for `name` application.
         """
-        return bool(self.query([['app_name', '=', name]]))
+        return bool(self.query([["app_name", "=", name]]))

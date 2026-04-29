@@ -9,14 +9,14 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
-    'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
-    'TrueNASConnectConfigChangedEvent',
-    'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
+    "TrueNASConnectEntry", "TrueNASConnectGetRegistrationUriArgs",
+    "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdateArgs", "TrueNASConnectUpdateResult",
+    "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult",
+    "TrueNASConnectIpChoicesArgs", "TrueNASConnectIpChoicesResult",
+    "TrueNASConnectConfigChangedEvent",
+    "TrueNASConnectIpsWithHostnamesArgs", "TrueNASConnectIpsWithHostnamesResult",
 ]
 
 
@@ -41,21 +41,21 @@ class TrueNASConnectEntry(BaseModel):
     """Base URL for the TrueNAS Connect service."""
     heartbeat_url: HttpsOnlyURL
     """URL endpoint for sending heartbeat signals to maintain connection status."""
-    tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None
+    tier: Literal["FOUNDATION", "PLUS", "BUSINESS"] | None
     """TrueNAS Connect tier."""
     last_heartbeat_failure_datetime: str | None
     """Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."""
 
     @classmethod
     def to_previous(cls, value):
-        value.setdefault('ips', [])
-        value.setdefault('interfaces', [])
-        value.setdefault('interfaces_ips', [])
-        value.setdefault('use_all_interfaces', False)
+        value.setdefault("ips", [])
+        value.setdefault("interfaces", [])
+        value.setdefault("interfaces_ips", [])
+        value.setdefault("use_all_interfaces", False)
         return value
 
 
-@single_argument_args('tn_connect_update')
+@single_argument_args("tn_connect_update")
 class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     """Whether to enable the TrueNAS Connect service."""

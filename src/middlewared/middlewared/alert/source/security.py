@@ -105,7 +105,7 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
             # and generating a separate CRITICAL alert. The separate CRITICAL alert
             # will be automatically cleared on subsequent etc.generate shadow after
             # updating password.
-            await self.middleware.call('etc.generate', 'shadow')
+            await self.middleware.call("etc.generate", "shadow")
 
         if expiring:
             alerts.append(Alert(

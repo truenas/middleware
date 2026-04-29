@@ -76,18 +76,18 @@ def target_login_test_linux(portal_ip, target_name, check_surfaced_luns=None):
     try:
         if os.geteuid():
             # Non-root requires sudo
-            iscsiadm = ['sudo', 'iscsiadm']
+            iscsiadm = ["sudo", "iscsiadm"]
         else:
-            iscsiadm = ['iscsiadm']
-        run_on_runner(iscsiadm + ['-m', 'discovery', '-t', 'sendtargets', '--portal', portal_ip])
-        run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
+            iscsiadm = ["iscsiadm"]
+        run_on_runner(iscsiadm + ["-m", "discovery", "-t", "sendtargets", "--portal", portal_ip])
+        run_on_runner(iscsiadm + ["-m", "node", "--targetname", target_name, "--portal", portal_ip, "--login"])
         logged_in = True
         if check_surfaced_luns is not None:
             retries = 20
-            pattern = f'ip-{portal_ip}:3260-iscsi-{target_name}-lun-*'
-            by_path = Path('/dev/disk/by-path')
+            pattern = f"ip-{portal_ip}:3260-iscsi-{target_name}-lun-*"
+            by_path = Path("/dev/disk/by-path")
             while retries:
-                luns = set(int(p.name.split('-')[-1]) for p in by_path.glob(pattern))
+                luns = set(int(p.name.split("-")[-1]) for p in by_path.glob(pattern))
                 if luns == check_surfaced_luns:
                     break
                 time.sleep(1)
@@ -101,24 +101,24 @@ def target_login_test_linux(portal_ip, target_name, check_surfaced_luns=None):
         return True
     finally:
         if logged_in:
-            run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--logout'])
+            run_on_runner(iscsiadm + ["-m", "node", "--targetname", target_name, "--portal", portal_ip, "--logout"])
 
 
 @contextlib.contextmanager
 def iscsi_client_freebsd():
-    started = run_on_runner(['service', 'iscsid', 'onestatus'], check=False).returncode == 0
+    started = run_on_runner(["service", "iscsid", "onestatus"], check=False).returncode == 0
     if started:
         yield
     else:
-        run_on_runner(['service', 'iscsid', 'onestart'])
+        run_on_runner(["service", "iscsid", "onestart"])
         try:
             yield
         finally:
-            run_on_runner(['service', 'iscsid', 'onestop'])
+            run_on_runner(["service", "iscsid", "onestop"])
 
 
 def target_login_impl_freebsd(portal_ip, target_name, check_surfaced_luns=None):
-    run_on_runner(['iscsictl', '-A', '-p', portal_ip, '-t', target_name], check=False)
+    run_on_runner(["iscsictl", "-A", "-p", portal_ip, "-t", target_name], check=False)
     retries = 5
     connected = False
     connected_clients = None
@@ -126,11 +126,11 @@ def target_login_impl_freebsd(portal_ip, target_name, check_surfaced_luns=None):
     # to handle that case
     while retries > 0 and not connected:
         time.sleep(3)
-        cp = run_on_runner(['iscsictl', '-L', '--libxo', 'json'])
+        cp = run_on_runner(["iscsictl", "-L", "--libxo", "json"])
         connected_clients = json.loads(cp.stdout)
         connected = any(
-            session.get('state') == 'Connected' for session in connected_clients.get('iscsictl', {}).get('session', [])
-            if session.get('name') == target_name
+            session.get("state") == "Connected" for session in connected_clients.get("iscsictl", {}).get("session", [])
+            if session.get("name") == target_name
         )
         retries -= 1
 
@@ -138,10 +138,10 @@ def target_login_impl_freebsd(portal_ip, target_name, check_surfaced_luns=None):
 
     if check_surfaced_luns is not None:
         luns = set()
-        for session in connected_clients.get('iscsictl', {}).get('session', []):
-            if session.get('name') == target_name and session.get('state') == 'Connected':
-                for lun in session.get('devices', {}).get('lun'):
-                    if lun_val := lun.get('lun'):
+        for session in connected_clients.get("iscsictl", {}).get("session", []):
+            if session.get("name") == target_name and session.get("state") == "Connected":
+                for lun in session.get("devices", {}).get("lun"):
+                    if lun_val := lun.get("lun"):
                         luns.add(lun_val)
         assert check_surfaced_luns == luns, luns
 
@@ -155,4 +155,4 @@ def target_login_test_freebsd(portal_ip, target_name, check_surfaced_luns=None):
         else:
             return True
         finally:
-            run_on_runner(['iscsictl', '-R', '-t', target_name], check=False)
+            run_on_runner(["iscsictl", "-R", "-t", target_name], check=False)

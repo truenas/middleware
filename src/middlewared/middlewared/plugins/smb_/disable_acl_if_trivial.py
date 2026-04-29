@@ -3,8 +3,8 @@ from middlewared.service import Service, private
 
 class SMBService(Service):
     class Config:
-        service = 'cifs'
-        service_verb = 'restart'
+        service = "cifs"
+        service_verb = "restart"
 
     @private
     async def disable_acl_if_trivial(self):

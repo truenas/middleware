@@ -5,20 +5,20 @@ from pydantic import ConfigDict, Field, RootModel
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString, single_argument_args
 
 __all__ = [
-    'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',
-    'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult',
-    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
+    "CatalogEntry", "CatalogUpdateArgs", "CatalogUpdateResult", "CatalogTrainsArgs", "CatalogTrainsResult",
+    "CatalogSyncArgs", "CatalogSyncResult", "CatalogAppInfo", "CatalogAppsArgs", "CatalogAppsResult",
+    "CatalogGetAppDetailsArgs", "CatalogGetAppDetailsResult",
 ]
 
 
 class CatalogEntry(BaseModel):
     id: NonEmptyString
-    label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
+    label: NonEmptyString = Field(pattern=r"^\w+[\w.-]*$")
     preferred_trains: list[NonEmptyString]
     location: NonEmptyString
 
 
-@single_argument_args('catalog_update')
+@single_argument_args("catalog_update")
 class CatalogUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
 
@@ -91,10 +91,10 @@ class CatalogAppInfo(BaseModel):
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
-@single_argument_args('catalog_apps_options')
+@single_argument_args("catalog_apps_options")
 class CatalogAppsArgs(BaseModel):
     cache: bool = True
     cache_only: bool = False

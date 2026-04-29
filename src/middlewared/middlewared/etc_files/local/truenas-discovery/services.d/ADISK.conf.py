@@ -15,35 +15,35 @@ from middlewared.utils.mdns import ip_addresses_to_interface_names
 
 
 def render(service, middleware, render_ctx):
-    if render_ctx['failover.status'] not in ('SINGLE', 'MASTER'):
+    if render_ctx["failover.status"] not in ("SINGLE", "MASTER"):
         raise FileShouldNotExist()
 
-    if not render_ctx['service.started_or_enabled']:
+    if not render_ctx["service.started_or_enabled"]:
         raise FileShouldNotExist()
 
-    shares = middleware.call_sync('sharing.smb.query', [
-        ['OR', [['purpose', '=', 'TIMEMACHINE_SHARE'], ['options.timemachine', '=', True]]],
-        ['enabled', '=', True], ['locked', '=', False],
+    shares = middleware.call_sync("sharing.smb.query", [
+        ["OR", [["purpose", "=", "TIMEMACHINE_SHARE"], ["options.timemachine", "=", True]]],
+        ["enabled", "=", True], ["locked", "=", False],
     ])
     if not shares:
         raise FileShouldNotExist()
 
-    smb_config = render_ctx['smb.config']
+    smb_config = render_ctx["smb.config"]
     interfaces: list[str] = []
-    if smb_config['bindip']:
+    if smb_config["bindip"]:
         interfaces = ip_addresses_to_interface_names(
-            render_ctx['interface.query'], smb_config['bindip'],
+            render_ctx["interface.query"], smb_config["bindip"],
         )
 
-    txt = {'sys': 'waMa=0,adVF=0x100'}
+    txt = {"sys": "waMa=0,adVF=0x100"}
     for dkno, share in enumerate(shares):
-        txt[f'dk{dkno}'] = (
+        txt[f"dk{dkno}"] = (
             f'adVN={share["name"]},adVF=0x82,adVU={share["options"]["vuid"]}'
         )
 
     try:
         cfg = ServiceConfig(
-            service_type='_adisk._tcp',
+            service_type="_adisk._tcp",
             port=9,
             interfaces=interfaces,
             txt=txt,
@@ -51,7 +51,7 @@ def render(service, middleware, render_ctx):
         return generate_service_config(cfg)
     except Exception:
         middleware.logger.error(
-            'Failed to generate ADISK discovery service config',
+            "Failed to generate ADISK discovery service config",
             exc_info=True,
         )
         raise FileShouldNotExist()

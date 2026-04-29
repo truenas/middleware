@@ -23,7 +23,7 @@ class DockerNetworkServicePart(CRUDServicePart[DockerNetworkEntry, str]):
             networks_data = [
                 {
                     k: network.get(k) for k in (
-                        'ipam', 'labels', 'created', 'driver', 'id', 'name', 'scope', 'short_id',
+                        "ipam", "labels", "created", "driver", "id", "name", "scope", "short_id",
                     )
                 }
                 for network in await self.to_thread(list_networks)
@@ -39,17 +39,17 @@ class DockerNetworkServicePart(CRUDServicePart[DockerNetworkEntry, str]):
         return result
 
     async def get_instance(self, id_: str, extra: dict[str, Any] | None = None) -> DockerNetworkEntry:
-        results = await self.query([['id', '=', id_]], QueryOptions())
+        results = await self.query([["id", "=", id_]], QueryOptions())
         if not isinstance(results, list) or not results:
-            raise InstanceNotFound(f'DockerNetwork {id_} does not exist')
+            raise InstanceNotFound(f"DockerNetwork {id_} does not exist")
         return results[0]
 
     async def interfaces_mapping(self) -> list[str]:
         try:
             networks = await self.query([], QueryOptions())
             if isinstance(networks, list):
-                return [f'br-{network.short_id}' for network in networks]
+                return [f"br-{network.short_id}" for network in networks]
             return []
         except Exception as e:
-            self.logger.error('Failed to get docker interfaces mapping: %s', e)
+            self.logger.error("Failed to get docker interfaces mapping: %s", e)
             return []

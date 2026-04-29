@@ -1,9 +1,9 @@
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
-    'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
-    'SystemSecurityInfoFipsAvailableArgs', 'SystemSecurityInfoFipsAvailableResult',
-    'SystemSecurityInfoFipsEnabledArgs', 'SystemSecurityInfoFipsEnabledResult',
+    "SystemSecurityEntry", "SystemSecurityUpdateArgs", "SystemSecurityUpdateResult",
+    "SystemSecurityInfoFipsAvailableArgs", "SystemSecurityInfoFipsAvailableResult",
+    "SystemSecurityInfoFipsEnabledArgs", "SystemSecurityInfoFipsEnabledResult",
 ]
 
 
@@ -15,7 +15,7 @@ class SystemSecurityEntry(BaseModel):
     """ When set, enables compatibility with the General Purpose Operating System STIG. """
 
 
-@single_argument_args('system_security_update')
+@single_argument_args("system_security_update")
 class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

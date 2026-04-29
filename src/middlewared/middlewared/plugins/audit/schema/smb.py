@@ -15,22 +15,22 @@ class AuditEventSMBServiceData(BaseModel):
 
 
 class AuditEventSMB(AuditEvent):
-    service: Literal['SMB']
+    service: Literal["SMB"]
     service_data: AuditEventSMBServiceData
 
 
 class AuditEventSMBResult(BaseModel):
-    type: Literal['NTSTATUS', 'UNIX']
+    type: Literal["NTSTATUS", "UNIX"]
     value_raw: int
     value_parsed: str
 
 
 class AuditEventSMBResultNTStatus(AuditEventSMBResult):
-    type: Literal['NTSTATUS']
+    type: Literal["NTSTATUS"]
 
 
 class AuditEventSMBResultUnix(AuditEventSMBResult):
-    type: Literal['UNIX']
+    type: Literal["UNIX"]
 
 
 class AuditEventSMBUnixToken(BaseModel):
@@ -46,16 +46,16 @@ class AuditEventSMBRenameDstFile(BaseModel):
 
 
 class AuditEventSMBRenameSrcFile(AuditEventSMBRenameDstFile):
-    file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+    file_type: Literal["BLOCK", "CHARACTER", "FIFO", "REGULAR", "DIRECTORY", "SYMLINK"]
 
 
 class AuditEventSMBFile(AuditEventSMBRenameDstFile):
-    type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+    type: Literal["BLOCK", "CHARACTER", "FIFO", "REGULAR", "DIRECTORY", "SYMLINK"]
     name: str
 
 
 class AuditEventDataSMBFileHandle(BaseModel):
-    type: Literal['DEV_INO', 'UUID']
+    type: Literal["DEV_INO", "UUID"]
     value: str
 
 
@@ -89,7 +89,7 @@ class AuditEventSMBAuthenticationEventData(BaseModel):
 
 
 class AuditEventSMBAuthentication(AuditEventSMB):
-    event: Literal['AUTHENTICATION']
+    event: Literal["AUTHENTICATION"]
     event_data: AuditEventSMBAuthenticationEventData
 
 
@@ -101,7 +101,7 @@ class AuditEventSMBConnectEventData(BaseModel):
 
 
 class AuditEventSMBConnect(AuditEventSMB):
-    event: Literal['CONNECT']
+    event: Literal["CONNECT"]
     event_data: AuditEventSMBConnectEventData
 
 
@@ -121,7 +121,7 @@ class AuditEventSMBDisconnectEventData(BaseModel):
 
 
 class AuditEventSMBDisconnect(AuditEventSMB):
-    event: Literal['DISCONNECT']
+    event: Literal["DISCONNECT"]
     event_data: AuditEventSMBDisconnectEventData
 
 
@@ -129,20 +129,20 @@ class AuditEventSMBCreateParameters(BaseModel):
     DesiredAccess: str
     FileAttributes: str
     ShareAccess: str
-    CreateDisposition: Literal['SUPERSEDE', 'OVERWRITE_IF', 'OPEN', 'CREATE', 'OPEN_IF', 'UNKNOWN']
+    CreateDisposition: Literal["SUPERSEDE", "OVERWRITE_IF", "OPEN", "CREATE", "OPEN_IF", "UNKNOWN"]
     CreateOptions: str
 
 
 class AuditEventSMBCreateEventData(BaseModel):
     parameters: AuditEventSMBCreateParameters
-    file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+    file_type: Literal["BLOCK", "CHARACTER", "FIFO", "REGULAR", "DIRECTORY", "SYMLINK"]
     file: AuditEventSMBFile
     result: AuditEventSMBResultNTStatus
     vers: AuditEventVersion
 
 
 class AuditEventSMBCreate(AuditEventSMB):
-    event: Literal['CREATE']
+    event: Literal["CREATE"]
     event_data: AuditEventSMBCreateEventData
 
 
@@ -161,12 +161,12 @@ class AuditEventSMBCloseEventData(BaseModel):
 
 
 class AuditEventSMBClose(AuditEventSMB):
-    event: Literal['CLOSE']
+    event: Literal["CLOSE"]
     event_data: AuditEventSMBCloseEventData
 
 
 class AuditEventSMBSetAttrEventData(BaseModel):
-    attr_type: Literal['DOSMODE', 'TIMESTAMP']
+    attr_type: Literal["DOSMODE", "TIMESTAMP"]
     dosmode: str
     ts: dict
     file: AuditEventSMBFileHandleOuter
@@ -175,7 +175,7 @@ class AuditEventSMBSetAttrEventData(BaseModel):
 
 
 class AuditEventSMBSetAttr(AuditEventSMB):
-    event: Literal['SET_ATTR']
+    event: Literal["SET_ATTR"]
     event_data: AuditEventSMBSetAttrEventData
 
 
@@ -187,7 +187,7 @@ class AuditEventSMBRenameEventData(BaseModel):
 
 
 class AuditEventSMBRename(AuditEventSMB):
-    event: Literal['RENAME']
+    event: Literal["RENAME"]
     event_data: AuditEventSMBRenameEventData
 
 
@@ -198,7 +198,7 @@ class AuditEventSMBUnlinkEventData(BaseModel):
 
 
 class AuditEventSMBUnlink(AuditEventSMB):
-    event: Literal['UNLINK']
+    event: Literal["UNLINK"]
     event_data: AuditEventSMBUnlinkEventData
 
 
@@ -209,7 +209,7 @@ class AuditEventSMBReadEventData(BaseModel):
 
 
 class AuditEventSMBRead(AuditEventSMB):
-    event: Literal['READ']
+    event: Literal["READ"]
     event_data: AuditEventSMBReadEventData
 
 
@@ -220,7 +220,7 @@ class AuditEventSMBWriteEventData(BaseModel):
 
 
 class AuditEventSMBWrite(AuditEventSMB):
-    event: Literal['WRITE']
+    event: Literal["WRITE"]
     event_data: AuditEventSMBWriteEventData
 
 
@@ -231,7 +231,7 @@ class AuditEventSMBOffloadReadEventData(BaseModel):
 
 
 class AuditEventSMBOffloadRead(AuditEventSMB):
-    event: Literal['OFFLOAD_READ']
+    event: Literal["OFFLOAD_READ"]
     event_data: AuditEventSMBOffloadReadEventData
 
 
@@ -242,7 +242,7 @@ class AuditEventSMBOffloadWriteEventData(BaseModel):
 
 
 class AuditEventSMBOffloadWrite(AuditEventSMB):
-    event: Literal['OFFLOAD_WRITE']
+    event: Literal["OFFLOAD_WRITE"]
     event_data: AuditEventSMBOffloadWriteEventData
 
 
@@ -255,7 +255,7 @@ class AuditEventSMBSetACLEventData(BaseModel):
 
 
 class AuditEventSMBSetACL(AuditEventSMB):
-    event: Literal['SET_ACL']
+    event: Literal["SET_ACL"]
     event_data: AuditEventSMBSetACLEventData
 
 
@@ -272,12 +272,12 @@ class AuditEventSMBFSCTLEventData(BaseModel):
 
 
 class AuditEventSMBFSCTL(AuditEventSMB):
-    event: Literal['FSCTL']
+    event: Literal["FSCTL"]
     event_data: AuditEventSMBFSCTLEventData
 
 
 class AuditEventSMBSetQuotaQt(BaseModel):
-    type: Literal['USER', 'GROUP']
+    type: Literal["USER", "GROUP"]
     bsize: str
     soflimit: str
     hardlimit: str
@@ -292,7 +292,7 @@ class AuditEventSMBSetQuotaEventData(BaseModel):
 
 
 class AuditEventSMBSetQuota(AuditEventSMB):
-    event: Literal['SET_QUOTA']
+    event: Literal["SET_QUOTA"]
     event_data: AuditEventSMBSetQuotaEventData
 
 

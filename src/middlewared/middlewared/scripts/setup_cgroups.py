@@ -2,18 +2,18 @@
 import contextlib
 import os
 
-CGROUP_ROOT_PATH = '/sys/fs/cgroup'
-CGROUP_AVAILABLE_CONTROLLERS_PATH = os.path.join(CGROUP_ROOT_PATH, 'cgroup.subtree_control')
+CGROUP_ROOT_PATH = "/sys/fs/cgroup"
+CGROUP_AVAILABLE_CONTROLLERS_PATH = os.path.join(CGROUP_ROOT_PATH, "cgroup.subtree_control")
 
 
 def get_available_controllers_for_consumption() -> set:
     try:
-        with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, 'r') as f:
+        with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, "r") as f:
             return set(f.read().split())
     except FileNotFoundError:
         raise Exception(
-            'Unable to determine cgroup controllers which are available for consumption as '
-            f'{CGROUP_AVAILABLE_CONTROLLERS_PATH!r} does not exist'
+            "Unable to determine cgroup controllers which are available for consumption as "
+            f"{CGROUP_AVAILABLE_CONTROLLERS_PATH!r} does not exist"
         )
 
 
@@ -21,7 +21,7 @@ def update_available_controllers_for_consumption(to_add_controllers: set) -> set
     # This will try to update available controllers for consumption and return the current state
     # regardless of the update failing
     with contextlib.suppress(FileNotFoundError, OSError):
-        with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, 'w') as f:
+        with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, "w") as f:
             f.write(f'{" ".join(map(lambda s: f"+{s}", to_add_controllers))}')
 
     return get_available_controllers_for_consumption()
@@ -32,15 +32,15 @@ def main():
     # https://github.com/kubernetes/kubernetes/blob/08fbe92fa76d35048b4b4891b41fc6912e689cc7/
     # pkg/kubelet/cm/cgroup_manager_linux.go#L238
     # FIXME: See if this is now required for docker
-    supported_controllers = {'cpu', 'cpuset', 'memory', 'hugetlb', 'pids'}
-    system_supported_controllers_path = os.path.join(CGROUP_ROOT_PATH, 'cgroup.controllers')
+    supported_controllers = {"cpu", "cpuset", "memory", "hugetlb", "pids"}
+    system_supported_controllers_path = os.path.join(CGROUP_ROOT_PATH, "cgroup.controllers")
     try:
-        with open(system_supported_controllers_path, 'r') as f:
+        with open(system_supported_controllers_path, "r") as f:
             available_controllers = set(f.read().split())
     except FileNotFoundError:
         raise Exception(
-            'Unable to determine available cgroup controllers as '
-            f'{system_supported_controllers_path!r} does not exist'
+            "Unable to determine available cgroup controllers as "
+            f"{system_supported_controllers_path!r} does not exist"
         )
 
     # What we are doing here is that we get controllers which are supported and required by k8s to function
@@ -61,5 +61,5 @@ def main():
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

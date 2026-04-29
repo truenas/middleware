@@ -27,7 +27,7 @@ __all__ = [
 
 def _validate_snapshot_name(v: str) -> str:
     if not validate_snapshot_name(v):
-        raise ValueError('Please provide a valid snapshot name according to ZFS standards i.e <dataset>@<snapshot>')
+        raise ValueError("Please provide a valid snapshot name according to ZFS standards i.e <dataset>@<snapshot>")
     return v
 
 
@@ -42,7 +42,7 @@ SNAPSHOT_NAME = Annotated[
     BeforeValidator(_validate_snapshot_name),
 ]
 UserPropertyKey = Annotated[str, Field(description="ZFS user property key in namespace:property format (e.g., "
-                                       "'custom:backup_policy', 'org:created_by').", pattern='.*:.*')]
+                                       "'custom:backup_policy', 'org:created_by').", pattern=".*:.*")]
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):

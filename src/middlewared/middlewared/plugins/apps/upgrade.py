@@ -46,9 +46,9 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 
-logger = logging.getLogger('app_lifecycle')
+logger = logging.getLogger("app_lifecycle")
 
-APP_UPGRADE_ALERT_CACHE_KEY = 'app_upgrade_alert_apps'
+APP_UPGRADE_ALERT_CACHE_KEY = "app_upgrade_alert_apps"
 
 
 async def upgrade_summary(
@@ -56,7 +56,7 @@ async def upgrade_summary(
 ) -> AppUpgradeSummary:
     app = await context.call2(context.s.app.get_instance, app_name)
     if app.upgrade_available is False:
-        raise CallError(f'No upgrade available for {app_name!r}')
+        raise CallError(f"No upgrade available for {app_name!r}")
 
     if app.custom_app:
         return upgrade_summary_info(app)
@@ -68,21 +68,21 @@ async def upgrade_summary(
         # but not a version upgrade of compose files
         # If we come at this point for an ix-app, it means that version upgrade was not available
         # and only image updates were available for ix-app
-        if app.metadata['name'] == IX_APP_NAME and app.image_updates_available:
+        if app.metadata["name"] == IX_APP_NAME and app.image_updates_available:
             return upgrade_summary_info(app)
 
         raise
 
     return AppUpgradeSummary(
-        latest_version=versions_config['latest_version']['version'],
-        latest_human_version=versions_config['latest_version']['human_version'],
-        upgrade_version=versions_config['specified_version']['version'],
-        upgrade_human_version=versions_config['specified_version']['human_version'],
-        changelog=versions_config['specified_version']['changelog'],
+        latest_version=versions_config["latest_version"]["version"],
+        latest_human_version=versions_config["latest_version"]["human_version"],
+        upgrade_version=versions_config["specified_version"]["version"],
+        upgrade_human_version=versions_config["specified_version"]["human_version"],
+        changelog=versions_config["specified_version"]["changelog"],
         available_versions_for_upgrade=[
-            AppVersionInfo(version=v['version'], human_version=v['human_version'])
-            for v in versions_config['versions'].values()
-            if Version(v['version']) > Version(app.version)
+            AppVersionInfo(version=v["version"], human_version=v["human_version"])
+            for v in versions_config["versions"].values()
+            if Version(v["version"]) > Version(app.version)
         ],
     )
 
@@ -94,7 +94,7 @@ async def upgrade_bulk(
     total = len(apps)
     for i, entry in enumerate(apps):
         app_name = entry.app_name
-        job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
+        job.set_progress(int(100 * i / total) if total else 0, f"Upgrading {app_name} [{i + 1} / {total}]")
         upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, entry.options)
         result = await upgrade_job.wait(raise_error=False)
         results.append(AppBulkUpgradeJobResult(
@@ -103,7 +103,7 @@ async def upgrade_bulk(
             result=result,
         ))
 
-    job.set_progress(100, 'Bulk upgrade complete')
+    job.set_progress(100, "Bulk upgrade complete")
     await update_app_upgrade_alert(context)
     return results
 
@@ -121,15 +121,15 @@ async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options:
 
 
 def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
-    app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={'retrieve_config': True}))
-    if app.state == 'STOPPED':
-        raise CallError('In order to upgrade an app, it must not be in stopped state')
+    app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={"retrieve_config": True}))
+    if app.state == "STOPPED":
+        raise CallError("In order to upgrade an app, it must not be in stopped state")
 
     if app.upgrade_available is False:
-        raise CallError(f'No upgrade available for {app_name!r}')
+        raise CallError(f"No upgrade available for {app_name!r}")
 
-    if app.custom_app or app.metadata['name'] == IX_APP_NAME:
-        job.set_progress(10, 'Pulling app images')
+    if app.custom_app or app.metadata["name"] == IX_APP_NAME:
+        job.set_progress(10, "Pulling app images")
         try:
             pull_images_internal(context, app_name, app, AppPullImages(redeploy=True))
         finally:
@@ -137,13 +137,13 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             if app.upgrade_available is False or app.custom_app:
                 # Pull may have succeeded but redeploy failed - we early-return here
                 # so that the caller can update alerts based on the refreshed app state
-                context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump(by_alias=True))
-                job.set_progress(100, 'App successfully upgraded and redeployed')
+                context.middleware.send_event("app.query", "CHANGED", id=app_name, fields=app.model_dump(by_alias=True))
+                job.set_progress(100, "App successfully upgraded and redeployed")
                 return app
 
-    job.set_progress(15, f'Retrieving versions for {app_name!r} app')
+    job.set_progress(15, f"Retrieving versions for {app_name!r} app")
     versions_config = context.run_coroutine(get_versions(context, app, options.app_version))
-    upgrade_version = versions_config['specified_version']
+    upgrade_version = versions_config["specified_version"]
 
     job.set_progress(
         20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
@@ -171,17 +171,17 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             context, upgrade_version, config, False, get_installed_app_path(app_name), app,
         ))
         new_values = add_context_to_values(
-            app_name, new_values, upgrade_version['app_metadata'], upgrade=True, upgrade_metadata={
-                'old_version_metadata': app.metadata,
-                'new_version_metadata': upgrade_version['app_metadata'],
+            app_name, new_values, upgrade_version["app_metadata"], upgrade=True, upgrade_metadata={
+                "old_version_metadata": app.metadata,
+                "new_version_metadata": upgrade_version["app_metadata"],
             }
         )
-        update_app_config(app_name, upgrade_version['version'], new_values)
+        update_app_config(app_name, upgrade_version["version"], new_values)
 
-        job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
+        job.set_progress(40, f"Configuration updated for {app_name!r}, upgrading app")
 
         if app_volume_ds := get_app_volume_ds(context, app_name):
-            snap_name = f'{app_volume_ds}@{app.version}'
+            snap_name = f"{app_volume_ds}@{app.version}"
             try:
                 context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
                     path=snap_name,
@@ -198,29 +198,29 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
                 bypass=True,
             ))
 
-            job.set_progress(50, 'Created snapshot for upgrade')
+            job.set_progress(50, "Created snapshot for upgrade")
 
     try:
         compose_action(
-            app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
+            app_name, upgrade_version["version"], "up", force_recreate=True, remove_orphans=True, pull_images=True,
         )
     finally:
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         new_app_instance = context.call_sync2(context.s.app.get_instance, app_name)
         context.middleware.send_event(
-            'app.query', 'CHANGED', id=app_name, fields=new_app_instance.model_dump(by_alias=True),
+            "app.query", "CHANGED", id=app_name, fields=new_app_instance.model_dump(by_alias=True),
         )
 
-    job.set_progress(100, 'Upgraded app successfully')
+    job.set_progress(100, "Upgraded app successfully")
     return new_app_instance
 
 
 async def get_versions(context: ServiceContext, app: AppEntry, new_version: str) -> dict[str, Any]:
     metadata = app.metadata
     app_details = await context.call2(
-        context.s.catalog.get_app_details, metadata['name'], CatalogAppVersionDetails(train=metadata['train'])
+        context.s.catalog.get_app_details, metadata["name"], CatalogAppVersionDetails(train=metadata["train"])
     )
-    if new_version == 'latest':
+    if new_version == "latest":
         new_version = get_latest_version_from_app_versions(app_details.versions)
 
     if new_version not in app_details.versions:
@@ -228,14 +228,14 @@ async def get_versions(context: ServiceContext, app: AppEntry, new_version: str)
 
     verrors = ValidationErrors()
     if Version(new_version) <= Version(app.version):
-        verrors.add('options.app_version', 'Upgrade version must be greater than current version')
+        verrors.add("options.app_version", "Upgrade version must be greater than current version")
 
     verrors.check()
 
     return {
-        'specified_version': app_details.versions[new_version],
-        'versions': app_details.versions,
-        'latest_version': app_details.versions[get_latest_version_from_app_versions(app_details.versions)],
+        "specified_version": app_details.versions[new_version],
+        "versions": app_details.versions,
+        "latest_version": app_details.versions[get_latest_version_from_app_versions(app_details.versions)],
     }
 
 
@@ -245,11 +245,11 @@ def take_snapshot_of_hostpath(
     if not host_path_mapping:
         return
 
-    logger.debug('Taking snapshots of host paths for %r app', app_info.name)
+    logger.debug("Taking snapshots of host paths for %r app", app_info.name)
 
     for host_path, dataset in host_path_mapping.items():
         if not dataset:
-            if host_path.startswith('/mnt/') is False:
+            if host_path.startswith("/mnt/") is False:
                 logger.debug(
                     "Skipping %r host path for %r app's snapshot as it is not under /mnt", host_path,
                     app_info.name
@@ -262,9 +262,9 @@ def take_snapshot_of_hostpath(
 
             continue
 
-        snap_name = f'{dataset}@{get_upgrade_snap_name(app_info.name, app_info.version)}'
+        snap_name = f"{dataset}@{get_upgrade_snap_name(app_info.name, app_info.version)}"
         if context.call_sync2(context.s.zfs.resource.snapshot.exists, snap_name):
-            logger.debug('Snapshot %r already exists for %r app', snap_name, app_info.name)
+            logger.debug("Snapshot %r already exists for %r app", snap_name, app_info.name)
             continue
 
         context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
@@ -272,17 +272,17 @@ def take_snapshot_of_hostpath(
             name=get_upgrade_snap_name(app_info.name, app_info.version),
             bypass=True,
         ))
-        logger.debug('Created snapshot %r for %r app', snap_name, app_info.name)
+        logger.debug("Created snapshot %r for %r app", snap_name, app_info.name)
 
 
 def upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> dict[str, Any]:
     migration_file_paths, config = get_data_for_upgrade_values(app, upgrade_version)
     for migration_file_path in migration_file_paths:
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
+        with tempfile.NamedTemporaryFile(mode="w+") as f:
             try:
                 f.write(dump_yaml(config, default_flow_style=False))
             except yaml.YAMLError as e:
-                raise CallError(f'Failed to dump config for {app.name}: {e}')
+                raise CallError(f"Failed to dump config for {app.name}: {e}")
 
             f.flush()
             cp = subprocess.Popen([migration_file_path, f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -290,37 +290,37 @@ def upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> dict[str, 
 
         migration_file_basename = os.path.basename(migration_file_path)
         if cp.returncode:
-            raise CallError(f'Failed to execute {migration_file_basename!r} migration: {stderr.decode()}')
+            raise CallError(f"Failed to execute {migration_file_basename!r} migration: {stderr.decode()}")
 
         if stdout:
             try:
                 config = safe_yaml_load(stdout.decode())
             except yaml.YAMLError as e:
-                raise CallError(f'{migration_file_basename!r} migration file returned invalid YAML: {e}')
+                raise CallError(f"{migration_file_basename!r} migration file returned invalid YAML: {e}")
 
     return config
 
 
 def get_data_for_upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
     current_version = app.version
-    target_version = upgrade_version['version']
+    target_version = upgrade_version["version"]
     migration_files_path = get_migration_scripts(app.name, current_version, target_version)
     config = get_current_app_config(app.name, current_version)
     file_paths = []
 
-    if migration_files_path['error']:
+    if migration_files_path["error"]:
         raise CallError(f'Failed to apply migrations: {migration_files_path["error"]}')
     else:
         errors = []
-        for migration_file in migration_files_path['migration_files']:
-            if migration_file['error']:
-                errors.append(migration_file['error'])
+        for migration_file in migration_files_path["migration_files"]:
+            if migration_file["error"]:
+                errors.append(migration_file["error"])
             else:
-                file_paths.append(migration_file['migration_file'])
+                file_paths.append(migration_file["migration_file"])
 
         if errors:
-            errors_str = '\n'.join(errors)
-            raise CallError(f'Failed to upgrade because of following migration file(s) error(s):\n{errors_str}')
+            errors_str = "\n".join(errors)
+            raise CallError(f"Failed to upgrade because of following migration file(s) error(s):\n{errors_str}")
 
     return file_paths, config
 
@@ -335,9 +335,9 @@ async def update_app_upgrade_alert(context: ServiceContext) -> None:
     # 1) app version changed
     # 2) major/minor version change of catalog app version (ignore patch)
     apps_with_updates = []
-    for app in await context.call2(context.s.app.query, [['upgrade_available', '=', True]]):
+    for app in await context.call2(context.s.app.query, [["upgrade_available", "=", True]]):
         latest_app_version = app.latest_app_version
-        current_app_version = app.metadata.get('app_version')
+        current_app_version = app.metadata.get("app_version")
         latest_version = app.latest_version
         current_version = app.version
 
@@ -357,7 +357,7 @@ async def update_app_upgrade_alert(context: ServiceContext) -> None:
     # Avoid re-firing the same alert on every catalog sync
     new_apps = set(apps_with_updates)
     try:
-        cached_apps = set(await context.middleware.call('cache.get', APP_UPGRADE_ALERT_CACHE_KEY))
+        cached_apps = set(await context.middleware.call("cache.get", APP_UPGRADE_ALERT_CACHE_KEY))
     except KeyError:
         cached_apps = None
 
@@ -365,24 +365,24 @@ async def update_app_upgrade_alert(context: ServiceContext) -> None:
         if not new_apps:
             # We would like to be certain that we clear any alert if there are no new_apps to
             # avoid any edge case still leaving out the alert
-            await context.call2(context.s.alert.oneshot_delete, 'AppUpdate', None)
+            await context.call2(context.s.alert.oneshot_delete, "AppUpdate", None)
         return
 
     # Delete all existing AppUpdate alerts
-    await context.call2(context.s.alert.oneshot_delete, 'AppUpdate', None)
+    await context.call2(context.s.alert.oneshot_delete, "AppUpdate", None)
 
     # Create single alert if updates exist
     if apps_with_updates:
         count = len(apps_with_updates)
         await context.call2(context.s.alert.oneshot_create, AppUpdateAlert(
             count=count,
-            plural='s' if count != 1 else '',
-            apps=', '.join(apps_with_updates),
+            plural="s" if count != 1 else "",
+            apps=", ".join(apps_with_updates),
         ))
 
-    await context.middleware.call('cache.put', APP_UPGRADE_ALERT_CACHE_KEY, new_apps, 86400)
+    await context.middleware.call("cache.put", APP_UPGRADE_ALERT_CACHE_KEY, new_apps, 86400)
 
 
 async def clear_upgrade_alerts_for_all(context: ServiceContext) -> None:
-    await context.call2(context.s.alert.oneshot_delete, 'AppUpdate', None)
-    await context.middleware.call('cache.pop', APP_UPGRADE_ALERT_CACHE_KEY)
+    await context.call2(context.s.alert.oneshot_delete, "AppUpdate", None)
+    await context.middleware.call("cache.pop", APP_UPGRADE_ALERT_CACHE_KEY)

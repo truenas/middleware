@@ -78,7 +78,7 @@ class AuthOTPToken(BaseModel):
 class AuthRespSuccess(BaseModel):
     response_type: Literal["SUCCESS"]
     user_info: AuthUserInfo | None
-    authenticator: Literal['LEVEL_1', 'LEVEL_2']
+    authenticator: Literal["LEVEL_1", "LEVEL_2"]
 
 
 class AuthRespAuthErr(BaseModel):
@@ -139,12 +139,12 @@ class APIKeyCredentialData(UserCredentialData):
 
 class TokenParentCredentialsData(BaseModel):
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ]
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | ForwardRef("TokenCredentialData")
 
@@ -160,13 +160,13 @@ class AuthSessionsEntry(BaseModel):
     internal: bool
     origin: str
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'LOGIN_ONETIME_PASSWORD',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "LOGIN_ONETIME_PASSWORD",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ]
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData
     created_at: datetime
@@ -218,7 +218,7 @@ class AuthSetAttributeResult(BaseModel):
     result: None
 
 
-@single_argument_args('generate_single_use_password')
+@single_argument_args("generate_single_use_password")
 class AuthGenerateOnetimePasswordArgs(BaseModel):
     username: str
 

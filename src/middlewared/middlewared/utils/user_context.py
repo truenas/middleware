@@ -17,12 +17,12 @@ def set_user_context(user_details: dict[str, Any]) -> None:
         # We need to reset to UID 0 before setgroups is called
         os.seteuid(0)
 
-    os.setgroups(user_details['grouplist'])
+    os.setgroups(user_details["grouplist"])
 
     # We must preserve the saved uid of zero so that we can call this multiple times
     # in same child process.
-    gids = (user_details['pw_gid'], user_details['pw_gid'], 0)
-    uids = (user_details['pw_uid'], user_details['pw_uid'], 0)
+    gids = (user_details["pw_gid"], user_details["pw_gid"], 0)
+    uids = (user_details["pw_uid"], user_details["pw_uid"], 0)
 
     os.setresgid(*gids)
     os.setresuid(*uids)
@@ -43,13 +43,13 @@ def set_user_context(user_details: dict[str, Any]) -> None:
         )
 
     try:
-        os.chdir(user_details['pw_dir'])
+        os.chdir(user_details["pw_dir"])
     except Exception:
-        os.chdir('/var/empty')
+        os.chdir("/var/empty")
 
     os.environ.update({
-        'HOME': user_details['pw_dir'],
-        'PATH': '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin',
+        "HOME": user_details["pw_dir"],
+        "PATH": "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin",
     })
 
 
@@ -61,7 +61,7 @@ def run_with_user_context_initializer(user_details: dict[str, Any]) -> None:
 def run_with_user_context[T](
     func: Callable[..., T], user_details: dict[str, Any], func_args: list[Any] | None = None
 ) -> T:
-    assert {'pw_uid', 'pw_gid', 'pw_dir', 'pw_name', 'grouplist'} - set(user_details) == set()
+    assert {"pw_uid", "pw_gid", "pw_dir", "pw_name", "grouplist"} - set(user_details) == set()
 
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=1, initializer=functools.partial(run_with_user_context_initializer, user_details)

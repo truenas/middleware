@@ -32,11 +32,11 @@ class Client(TNClient):
 
 class TrueNAS_Server:
     __slots__ = (
-        '_ip',
-        '_nodea_ip',
-        '_nodeb_ip',
-        '_server_type',
-        '_client',
+        "_ip",
+        "_nodea_ip",
+        "_nodeb_ip",
+        "_server_type",
+        "_client",
     )
 
     def __init__(self):
@@ -95,8 +95,8 @@ class TrueNAS_Server:
 
     @server_type.setter
     def server_type(self, server_type: str):
-        if server_type not in ('ENTERPRISE_HA', 'STANDARD'):
-            raise ValueError(f'{server_type}: unknown server type')
+        if server_type not in ("ENTERPRISE_HA", "STANDARD"):
+            raise ValueError(f"{server_type}: unknown server type")
 
         self._server_type = server_type
 
@@ -108,7 +108,7 @@ class TrueNAS_Server:
                 self._client.ping()
                 return self._client
             except Exception as e:
-                logger.warning('Re-connecting test client due to %r', e)
+                logger.warning("Re-connecting test client due to %r", e)
                 # failed liveness check, perhaps server rebooted
                 # if target is truly broken we'll pick up error
                 # when trying to establish a new client connection
@@ -120,12 +120,12 @@ class TrueNAS_Server:
         host()
 
         if (addr := self.ip) is None:
-            raise RuntimeError('IP is not set')
+            raise RuntimeError("IP is not set")
 
         uri = host_websocket_uri(addr)
         cl = Client(uri, private_methods=True, py_exceptions=True, log_py_exceptions=True, verify_ssl=False)
         try:
-            cl.login_with_password('root', password())
+            cl.login_with_password("root", password())
         except Exception:
             cl.close()
             raise
@@ -134,27 +134,27 @@ class TrueNAS_Server:
         return self._client
 
     def ha_ips(self) -> dict:
-        if self.server_type == 'STANDARD':
-            raise ValueError('Not an HA server')
+        if self.server_type == "STANDARD":
+            raise ValueError("Not an HA server")
 
         elif self.server_type is None:
-            raise RuntimeError('TrueNAS server object not initialized')
+            raise RuntimeError("TrueNAS server object not initialized")
 
-        failover_node = self.client.call('failover.node')
-        if failover_node not in ('A', 'B'):
-            raise RuntimeError(f'{failover_node}: unexpected failover node')
+        failover_node = self.client.call("failover.node")
+        if failover_node not in ("A", "B"):
+            raise RuntimeError(f"{failover_node}: unexpected failover node")
 
-        if failover_node == 'A':
+        if failover_node == "A":
             active_controller = self.nodea_ip
             standby_controller = self.nodeb_ip
         else:
             active_controller = self.nodeb_ip
             standby_controller = self.nodea_ip
 
-        assert all((active_controller, standby_controller)), 'Unable to determine both HA controller IP addresses'
+        assert all((active_controller, standby_controller)), "Unable to determine both HA controller IP addresses"
         return {
-            'active': active_controller,
-            'standby': standby_controller
+            "active": active_controller,
+            "standby": standby_controller
         }
 
 
@@ -175,7 +175,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                 try:
                     c.login_with_password(auth[0], auth[1])
                 except CallError as e:
-                    if e.errno == errno.EBUSY and e.errmsg == 'Rate Limit Exceeded':
+                    if e.errno == errno.EBUSY and e.errmsg == "Rate Limit Exceeded":
                         # our "roles" tests (specifically common_checks() function)
                         # isn't designed very well since it's generating random users
                         # for every unique test_* function in every test file....
@@ -187,7 +187,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                     else:
                         raise
                 except ClientException as e:
-                    if e.errno == errno.EBUSY and e.error == 'Rate Limit Exceeded':
+                    if e.errno == errno.EBUSY and e.error == "Rate Limit Exceeded":
                         # Same as above, but for clients with `py_exceptions=False`
                         truenas_server.client.call("rate.limit.cache_clear")
                         c.login_with_password(auth[0], auth[1])
@@ -198,7 +198,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                         raise
             yield c
     except socket.timeout:
-        fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
+        fail(f"socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}")
 
 
 def host():
@@ -206,10 +206,10 @@ def host():
         return truenas_server
 
     # Initialize our settings. At this point on HA servers, the VIP is not available
-    truenas_server.server_type = os.environ['SERVER_TYPE']
+    truenas_server.server_type = os.environ["SERVER_TYPE"]
 
     # Some older test runners have old python
-    if truenas_server.server_type == 'ENTERPRISE_HA':
+    if truenas_server.server_type == "ENTERPRISE_HA":
         if "USE_VIP" in os.environ and os.environ["USE_VIP"] == "yes":
             truenas_server.ip = os.environ["virtual_ip"]
         else:
@@ -223,7 +223,7 @@ def host():
 
 
 def host_websocket_uri(host_ip=None, ssl=True, version="current"):
-    prefix = 'wss://' if ssl else 'ws://'
+    prefix = "wss://" if ssl else "ws://"
     return f"{prefix}{host_ip or host().ip}/api/{version}"
 
 

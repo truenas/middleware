@@ -24,8 +24,8 @@ class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], A
     config = AlertClassConfig(
         category=AlertCategory.HA,
         level=AlertLevel.CRITICAL,
-        title='Other Controller is Inaccessible',
-        text='Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.',
+        title="Other Controller is Inaccessible",
+        text="Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.",
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
         proactive_support_notify_gone=True,
@@ -44,7 +44,7 @@ class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]]:
         try:
-            await self.middleware.call('failover.call_remote', 'core.ping', [], {'timeout': 2})
+            await self.middleware.call("failover.call_remote", "core.ping", [], {"timeout": 2})
         except Exception:
             if time.monotonic() - self.last_available > 4 * 3600:
                 if self.incident_id is None:

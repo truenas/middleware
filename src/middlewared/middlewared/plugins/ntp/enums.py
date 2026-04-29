@@ -4,49 +4,49 @@ import enum
 
 
 class Mode(enum.Enum):
-    SERVER = 'SERVER'
-    PEER = 'PEER'
-    LOCAL = 'LOCAL'
+    SERVER = "SERVER"
+    PEER = "PEER"
+    LOCAL = "LOCAL"
 
     @staticmethod
     def from_str(strval: str) -> Mode:
-        if strval in ('SERVER', '^'):
+        if strval in ("SERVER", "^"):
             return Mode.SERVER
-        elif strval in ('PEER', '='):
+        elif strval in ("PEER", "="):
             return Mode.PEER
-        elif strval in ('LOCAL', '#'):
+        elif strval in ("LOCAL", "#"):
             return Mode.LOCAL
         else:
-            raise NotImplementedError(f'Invalid mode: {strval}')
+            raise NotImplementedError(f"Invalid mode: {strval}")
 
     def __str__(self) -> str:
         return str(self.value)
 
 
 class State(enum.Enum):
-    BEST = 'BEST'
-    SELECTED = 'SELECTED'
-    SELECTABLE = 'SELECTABLE'
-    FALSE_TICKER = 'FALSE_TICKER'
-    TOO_VARIABLE = 'TOO_VARIABLE'
-    NOT_SELECTABLE = 'NOT_SELECTABLE'
+    BEST = "BEST"
+    SELECTED = "SELECTED"
+    SELECTABLE = "SELECTABLE"
+    FALSE_TICKER = "FALSE_TICKER"
+    TOO_VARIABLE = "TOO_VARIABLE"
+    NOT_SELECTABLE = "NOT_SELECTABLE"
 
     @staticmethod
     def from_str(strval: str) -> State:
-        if strval in ('BEST', '*'):
+        if strval in ("BEST", "*"):
             return State.BEST
-        elif strval in ('SELECTED', '+'):
+        elif strval in ("SELECTED", "+"):
             return State.SELECTED
-        elif strval in ('SELECTABLE', '-'):
+        elif strval in ("SELECTABLE", "-"):
             return State.SELECTABLE
-        elif strval in ('FALSE_TICKER', 'x'):
+        elif strval in ("FALSE_TICKER", "x"):
             return State.FALSE_TICKER
-        elif strval in ('TOO_VARIABLE', '~'):
+        elif strval in ("TOO_VARIABLE", "~"):
             return State.TOO_VARIABLE
-        elif strval in ('NOT_SELECTABLE', '?'):
+        elif strval in ("NOT_SELECTABLE", "?"):
             return State.NOT_SELECTABLE
         else:
-            raise NotImplementedError(f'Invalid state: {strval}')
+            raise NotImplementedError(f"Invalid state: {strval}")
 
     def is_active(self) -> bool:
         return self in [State.BEST, State.SELECTED]

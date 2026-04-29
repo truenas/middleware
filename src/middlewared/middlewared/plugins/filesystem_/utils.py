@@ -20,10 +20,10 @@ from middlewared.utils.filesystem.acl import (
 
 
 class AclToolAction(enum.StrEnum):
-    CHOWN = 'chown'  # Only chown files
-    CLONE = 'clone'  # Use simplified imheritance logic
-    INHERIT = 'inherit'  # NFS41-style inheritance
-    STRIP = 'strip'  # Strip ACL from specified path
+    CHOWN = "chown"  # Only chown files
+    CLONE = "clone"  # Use simplified imheritance logic
+    INHERIT = "inherit"  # NFS41-style inheritance
+    STRIP = "strip"  # Strip ACL from specified path
 
 
 @dataclasses.dataclass(slots=True)
@@ -71,9 +71,9 @@ class _NFS4InheritedAcls:
 
 def _get_mount_info(fd: int):
     sm = _statmount(fd=fd, as_dict=False)
-    abs_path = os.readlink(f'/proc/self/fd/{fd}')
+    abs_path = os.readlink(f"/proc/self/fd/{fd}")
     rel = os.path.relpath(abs_path, sm.mnt_point)
-    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
+    return sm.mnt_point, sm.sb_source, (None if rel == "." else rel), sm.mnt_id
 
 
 class AclTool:
@@ -90,9 +90,9 @@ class AclTool:
     """
 
     __slots__ = (
-        'fd', 'action', 'uid', 'gid', 'options', 'job', 'tls',
-        'nfs4_inh', 'posix_file_acl', '_action_fd_fn',
-        'total_objects', 'cumulative_processed', 'last_report_time',
+        "fd", "action", "uid", "gid", "options", "job", "tls",
+        "nfs4_inh", "posix_file_acl", "_action_fd_fn",
+        "total_objects", "cumulative_processed", "last_report_time",
     )
 
     _OPTIONS_TYPE = types.MappingProxyType({
@@ -103,16 +103,16 @@ class AclTool:
     })
 
     _ACTION_FN = types.MappingProxyType({
-        AclToolAction.CHOWN: '_do_chown',
-        AclToolAction.STRIP: '_do_strip',
-        AclToolAction.CLONE: '_do_acl',
-        AclToolAction.INHERIT: '_do_acl',
+        AclToolAction.CHOWN: "_do_chown",
+        AclToolAction.STRIP: "_do_strip",
+        AclToolAction.CLONE: "_do_acl",
+        AclToolAction.INHERIT: "_do_acl",
     })
 
     def __init__(self, fd, action, uid, gid, options, job=None, tls=None):
         expected = self._OPTIONS_TYPE[action]
         if not isinstance(options, expected):
-            raise TypeError(f'{action}: expected {expected.__name__}, got {type(options).__name__}')
+            raise TypeError(f"{action}: expected {expected.__name__}, got {type(options).__name__}")
         self.fd = fd
         self.action = action
         self.uid = uid
@@ -138,18 +138,18 @@ class AclTool:
         try:
             self.total_objects = estimate_object_count_impl(self.tls, fs_name)
             if self.options.traverse:
-                real_path = os.readlink(f'/proc/self/fd/{self.fd}')
+                real_path = os.readlink(f"/proc/self/fd/{self.fd}")
                 _sm_flags = (
                     truenas_os.STATMOUNT_MNT_POINT |
                     truenas_os.STATMOUNT_SB_SOURCE |
                     truenas_os.STATMOUNT_FS_TYPE
                 )
                 for entry in truenas_os.iter_mount(mnt_id=mnt_id, statmount_flags=_sm_flags):
-                    if not entry.mnt_point.startswith(real_path + '/'):
+                    if not entry.mnt_point.startswith(real_path + "/"):
                         continue
-                    if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
+                    if entry.fs_type == "zfs" and entry.sb_source and "@" in entry.sb_source:
                         continue
-                    if entry.fs_type == 'zfs' and entry.sb_source:
+                    if entry.fs_type == "zfs" and entry.sb_source:
                         self.total_objects += estimate_object_count_impl(self.tls, entry.sb_source)
         except Exception:
             self.total_objects = 0
@@ -165,7 +165,7 @@ class AclTool:
             pct = None
         self.job.set_progress(
             pct,
-            f'Processing {state.current_directory} ({self.cumulative_processed:,} files processed)',
+            f"Processing {state.current_directory} ({self.cumulative_processed:,} files processed)",
         )
 
     def _do_chown(self, fd, isdir, depth):
@@ -209,7 +209,7 @@ class AclTool:
                 try:
                     self._apply_action(item, it, depth_offset)
                 except OSError as e:
-                    raise CallError(f'acltool [{self.action}] failed on item in {mnt_point}: {e}')
+                    raise CallError(f"acltool [{self.action}] failed on item in {mnt_point}: {e}")
 
     def run(self):
         mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(self.fd)
@@ -225,7 +225,7 @@ class AclTool:
         self._process_mount(mountpoint, fs_name, rel_path)
 
         if self.options.traverse:
-            real_path = os.readlink(f'/proc/self/fd/{self.fd}')
+            real_path = os.readlink(f"/proc/self/fd/{self.fd}")
             _sm_flags = (
                 truenas_os.STATMOUNT_MNT_POINT |
                 truenas_os.STATMOUNT_SB_SOURCE |
@@ -233,15 +233,15 @@ class AclTool:
             )
             for entry in truenas_os.iter_mount(mnt_id=mnt_id, statmount_flags=_sm_flags):
                 child_mnt = entry.mnt_point
-                if not child_mnt.startswith(real_path + '/'):
+                if not child_mnt.startswith(real_path + "/"):
                     continue
 
                 # Skip ZFS snapshot mounts: they are read-only and transient, so
                 # write operations (fsetacl/fchown/fchmod) would fail with EROFS.
-                if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
+                if entry.fs_type == "zfs" and entry.sb_source and "@" in entry.sb_source:
                     continue
 
-                child_depth = len(child_mnt[len(real_path):].strip('/').split('/'))
+                child_depth = len(child_mnt[len(real_path):].strip("/").split("/"))
                 child_fd = truenas_os.openat2(
                     child_mnt, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
                 )
@@ -250,7 +250,7 @@ class AclTool:
                         self.cumulative_processed += 1
                         self._action_fd_fn(child_fd, True, child_depth)
                     except OSError as e:
-                        raise CallError(f'acltool [{self.action}] failed on {child_mnt}: {e}')
+                        raise CallError(f"acltool [{self.action}] failed on {child_mnt}: {e}")
                     self._process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
                 finally:
                     os.close(child_fd)
@@ -265,19 +265,19 @@ def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
     that is created (in certain scenarios) to meet user expectations of
     inheritance.
     """
-    acltype = FS_ACL_Type(theacl['acltype'])
+    acltype = FS_ACL_Type(theacl["acltype"])
 
     match acltype:
         case FS_ACL_Type.NFS4:
-            obj = nfs4acl_dict_to_obj(theacl['acl'], theacl.get('aclflags'))
-            return nfs4acl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0, simplified=False)['acl']
+            obj = nfs4acl_dict_to_obj(theacl["acl"], theacl.get("aclflags"))
+            return nfs4acl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0, simplified=False)["acl"]
 
         case FS_ACL_Type.POSIX1E:
-            obj = posixacl_dict_to_obj(theacl['acl'])
-            return posixacl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0)['acl']
+            obj = posixacl_dict_to_obj(theacl["acl"])
+            return posixacl_obj_to_dict(obj.generate_inherited_acl(is_dir=isdir), 0, 0)["acl"]
 
         case FS_ACL_Type.DISABLED:
-            raise ValueError('ACL is disabled')
+            raise ValueError("ACL is disabled")
 
         case _:
-            raise TypeError(f'{acltype}: unknown ACL type')
+            raise TypeError(f"{acltype}: unknown ACL type")

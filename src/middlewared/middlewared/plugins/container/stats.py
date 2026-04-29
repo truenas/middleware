@@ -9,7 +9,7 @@ from middlewared.service import Service
 class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSourceArgs]):
     args = ContainersMetricsEventSourceArgs
     event = ContainersMetricsEventSourceEvent
-    roles = ['CONTAINER_READ']
+    roles = ["CONTAINER_READ"]
 
     def run_sync(self) -> None:
         interval = self.typed_arg.interval
@@ -19,7 +19,7 @@ class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSource
             retries = 2
             while retries > 0:
                 try:
-                    netdata_metrics = self.middleware.call_sync('netdata.get_all_metrics')
+                    netdata_metrics = self.middleware.call_sync("netdata.get_all_metrics")
                     containers_mapping = {
                         f'lxc/{inst.uuid.replace("-", "")}': inst.id for inst in self.middleware.call_sync2(
                             self.middleware.services.container.query, [], QueryOptions(force_sql_filters=True)
@@ -36,7 +36,7 @@ class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSource
 
             if netdata_metrics and containers_mapping:
                 containers_status = get_cgroup_stats(netdata_metrics, list(containers_mapping))
-                self.send_event('ADDED', fields={
+                self.send_event("ADDED", fields={
                     containers_mapping[cgroup_name]: stats for cgroup_name, stats in containers_status.items()
                 })
 
@@ -46,7 +46,7 @@ class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSource
 class ContainersService(Service):
 
     class Config:
-        cli_namespace = 'service.container'
+        cli_namespace = "service.container"
         event_sources = {
-            'container.metrics': ContainersMetricsEventSource,
+            "container.metrics": ContainersMetricsEventSource,
         }

@@ -8,54 +8,54 @@ if TYPE_CHECKING:
 
 def service_config(klass, config):
     namespace = klass.__name__
-    if namespace.endswith('Service'):
+    if namespace.endswith("Service"):
         namespace = namespace[:-7]
     namespace = namespace.lower()
 
     config_attrs = {
-        'datastore': None,
-        'datastore_prefix': '',
-        'datastore_extend': None,
-        'datastore_extend_fk': None,
-        'datastore_extend_context': None,
-        'datastore_primary_key': 'id',
-        'datastore_primary_key_type': 'integer',
-        'entry': None,
-        'event_register': True,
-        'event_send': True,
-        'events': [],
-        'event_sources': {},
-        'service': None,
-        'service_verb': 'reload',
-        'service_verb_sync': True,
-        'namespace': namespace,
-        'namespace_alias': None,
-        'private': False,
-        'thread_pool': None,
-        'cli_namespace': None,
-        'cli_private': False,
-        'cli_description': None,
-        'role_prefix': None,
-        'role_separate_delete': False,
-        'verbose_name': klass.__name__.replace('Service', ''),
+        "datastore": None,
+        "datastore_prefix": "",
+        "datastore_extend": None,
+        "datastore_extend_fk": None,
+        "datastore_extend_context": None,
+        "datastore_primary_key": "id",
+        "datastore_primary_key_type": "integer",
+        "entry": None,
+        "event_register": True,
+        "event_send": True,
+        "events": [],
+        "event_sources": {},
+        "service": None,
+        "service_verb": "reload",
+        "service_verb_sync": True,
+        "namespace": namespace,
+        "namespace_alias": None,
+        "private": False,
+        "thread_pool": None,
+        "cli_namespace": None,
+        "cli_private": False,
+        "cli_description": None,
+        "role_prefix": None,
+        "role_separate_delete": False,
+        "verbose_name": klass.__name__.replace("Service", ""),
         # Set this to `true` if you inherit from `CRUDService[EntryModel]` so that `query` and `get_instance` return
         # model classes. FIXME: eventually this will be true for all classes, and this setting must be removed.
-        'generic': False,
+        "generic": False,
         # This is only valid for CRUD service
-        'pass_app_to_query': False,
+        "pass_app_to_query": False,
     }
     config_attrs.update({
         k: v
         for k, v in list(config.items())
-        if not k.startswith('_')
+        if not k.startswith("_")
     })
 
-    return type('Config', (), config_attrs)
+    return type("Config", (), config_attrs)
 
 
 def get_service_name(klass):
     service_name = klass.__name__
-    if service_name.endswith('Service'):
+    if service_name.endswith("Service"):
         service_name = service_name[:-7]
 
     return service_name
@@ -73,9 +73,9 @@ def validate_api_method_schema_class_names(klass):
     errors = []
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
         if (
-            name.startswith('_') or
-            name in {'call2', 'call_sync2'} or
-            getattr(method, '_private', False) or
+            name.startswith("_") or
+            name in {"call2", "call_sync2"} or
+            getattr(method, "_private", False) or
             klass._config.private
         ):
             continue
@@ -98,20 +98,20 @@ def validate_api_method_schema_class_names(klass):
         if will_be_wrapped_later:
             continue
 
-        if not hasattr(method, 'new_style_accepts'):
+        if not hasattr(method, "new_style_accepts"):
             raise RuntimeError(
                 f"API method {method!r} is public, but has no @api_method."
             )
 
         # Remove do_ prefix only for do_create, do_update, do_delete
-        method_name = name[3:] if name in ('do_create', 'do_update', 'do_delete') else name
+        method_name = name[3:] if name in ("do_create", "do_update", "do_delete") else name
 
         # Convert snake_case to CamelCase
-        method_name = ''.join(word.capitalize() for word in method_name.split('_'))
+        method_name = "".join(word.capitalize() for word in method_name.split("_"))
         expected_accepts = f"{service_name}{method_name}Args"
         expected_returns = f"{service_name}{method_name}Result"
 
-        if method.new_style_accepts.__name__ != 'QueryArgs':
+        if method.new_style_accepts.__name__ != "QueryArgs":
             if method.new_style_accepts.__name__ != expected_accepts:
                 errors.append(
                     f"API method {method!r} has incorrect accepts class name. "
@@ -126,7 +126,7 @@ def validate_api_method_schema_class_names(klass):
 
     if errors:
         raise RuntimeError(
-            f"Service {klass.__name__} has API method schema class name validation errors:\n" + '\n'.join(errors)
+            f"Service {klass.__name__} has API method schema class name validation errors:\n" + "\n".join(errors)
         )
 
 
@@ -134,7 +134,7 @@ def validate_entry_schema_class_names(klass):
     service_name = get_service_name(klass)
     if klass._config.entry is not None:
         model = klass._config.entry
-        model_name = f'{service_name}Entry'
+        model_name = f"{service_name}Entry"
         if model.__name__ != model_name:
             raise RuntimeError(
                 f"Service {klass.__name__} has incorrect entry schema class name. Expected {model_name}, "
@@ -148,17 +148,17 @@ def validate_event_schema_class_names(klass):
     errors = []
     for event in klass._config.events:
         for event_type, model in event.models.items():
-            prefix = f'{klass._config.namespace}.'
+            prefix = f"{klass._config.namespace}."
             if event.name.startswith(prefix):
-                model_name = service_name + ''.join(
+                model_name = service_name + "".join(
                     word.capitalize()
-                    for word in event.name.removeprefix(prefix).replace('.', '_').split('_') + [event_type, 'Event']
+                    for word in event.name.removeprefix(prefix).replace(".", "_").split("_") + [event_type, "Event"]
                 )
             else:
                 # We allow events to be defined outside its parent service namespace
-                model_name = ''.join(
+                model_name = "".join(
                     word.capitalize()
-                    for word in event.name.replace('.', '_').split('_') + [event_type, 'Event']
+                    for word in event.name.replace(".", "_").split("_") + [event_type, "Event"]
                 )
 
             if model.__name__ != model_name:
@@ -169,7 +169,7 @@ def validate_event_schema_class_names(klass):
 
     if errors:
         raise RuntimeError(
-            f"Service {klass.__name__} has API event schema class name validation errors:\n" + '\n'.join(errors)
+            f"Service {klass.__name__} has API event schema class name validation errors:\n" + "\n".join(errors)
         )
 
 
@@ -206,23 +206,23 @@ class ServiceBase(type):
     """
     _config: type
     _config_specified: dict
-    _register_models: list[tuple[type['BaseModel'], 'ModelFactory', str]]
+    _register_models: list[tuple[type["BaseModel"], "ModelFactory", str]]
 
     def __new__(cls, name, bases, attrs):
         super_new = super(ServiceBase, cls).__new__
-        if name == 'Service' and bases == ():
+        if name == "Service" and bases == ():
             return super_new(cls, name, bases, attrs)
 
-        config = attrs.pop('Config', None)
+        config = attrs.pop("Config", None)
         klass = super_new(cls, name, bases, attrs)
 
         if config:
-            klass._config_specified = {k: v for k, v in config.__dict__.items() if not k.startswith('_')}
+            klass._config_specified = {k: v for k, v in config.__dict__.items() if not k.startswith("_")}
         else:
             klass._config_specified = {}
 
         klass._config = service_config(klass, klass._config_specified)
-        klass._register_models = sum([getattr(getattr(klass, m), '_register_models', []) for m in dir(klass)], [])
+        klass._register_models = sum([getattr(getattr(klass, m), "_register_models", []) for m in dir(klass)], [])
 
         # Validate API method argument class names
         validate_api_method_schema_class_names(klass)

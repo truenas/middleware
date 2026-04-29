@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class NetworkBridgeModel(Model):
-    __tablename__ = 'network_bridge'
+    __tablename__ = "network_bridge"
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
-    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
+    interface_id = sa.Column(sa.ForeignKey("network_interfaces.id", ondelete="CASCADE"))
     members = sa.Column(sa.JSON(list), default=[])
 
 
@@ -30,7 +30,7 @@ class NetworkInterfaceModel(Model):
 
 
 class NetworkInterfaceLinkAddressModel(Model):
-    __tablename__ = 'network_interface_link_address'
+    __tablename__ = "network_interface_link_address"
 
     id = sa.Column(sa.Integer, primary_key=True)  # noqa
     interface = sa.Column(sa.String(300))
@@ -39,23 +39,23 @@ class NetworkInterfaceLinkAddressModel(Model):
 
 
 class NetworkLaggInterfaceModel(Model):
-    __tablename__ = 'network_lagginterface'
+    __tablename__ = "network_lagginterface"
 
     id = sa.Column(sa.Integer, primary_key=True)  # noqa
-    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id'))
+    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey("network_interfaces.id"))
 
 
 class NetworkLaggInterfaceMemberModel(Model):
-    __tablename__ = 'network_lagginterfacemembers'
+    __tablename__ = "network_lagginterfacemembers"
 
     id = sa.Column(sa.Integer, primary_key=True)  # noqa
     lagg_ordernum = sa.Column(sa.Integer())
-    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
+    lagg_interfacegroup_id = sa.Column(sa.ForeignKey("network_lagginterface.id", ondelete="CASCADE"), index=True)
     lagg_physnic = sa.Column(sa.String(120), unique=True)
 
 
 class NetworkVlanModel(Model):
-    __tablename__ = 'network_vlan'
+    __tablename__ = "network_vlan"
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
     vlan_vint = sa.Column(sa.String(120))
@@ -63,7 +63,7 @@ class NetworkVlanModel(Model):
 
 
 class VMDeviceModel(Model):
-    __tablename__ = 'vm_device'
+    __tablename__ = "vm_device"
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
     attributes = sa.Column(sa.JSON(dict))

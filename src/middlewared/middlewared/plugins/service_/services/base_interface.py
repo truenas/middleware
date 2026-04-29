@@ -18,7 +18,7 @@ class ServiceInterface(CallMixin):
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def get_state(self) -> 'ServiceState':
+    async def get_state(self) -> "ServiceState":
         raise NotImplementedError
 
     async def get_unit_state(self):

@@ -7,7 +7,7 @@ __all__ = ["AuditCallback", "JobProgressCallback", "EventType", "ExcInfo", "OptE
 AuditCallback = Callable[[str], None]
 JobProgressCallback = Callable[[dict[str, Any]], None] | None
 
-EventType: TypeAlias = Literal['ADDED', 'CHANGED', 'REMOVED']
+EventType: TypeAlias = Literal["ADDED", "CHANGED", "REMOVED"]
 
 ExcInfo: TypeAlias = tuple[type[BaseException], BaseException, TracebackType]
 OptExcInfo: TypeAlias = ExcInfo | tuple[None, None, None]

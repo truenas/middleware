@@ -11,24 +11,24 @@ from middlewared.service import Service
 class SystemAdvancedService(Service):
 
     class Config:
-        namespace = 'system.advanced'
-        cli_namespace = 'system.advanced'
+        namespace = "system.advanced"
+        cli_namespace = "system.advanced"
 
     @api_method(
         SystemAdvancedSyslogCertificateChoicesArgs,
         SystemAdvancedSyslogCertificateChoicesResult,
-        roles=['READONLY_ADMIN']
+        roles=["READONLY_ADMIN"]
     )
     async def syslog_certificate_choices(self):
         """
         Return choices of certificates which can be used for `syslogservers.N.tls_certificate`.
         """
         return {
-            i['id']: i['name']
+            i["id"]: i["name"]
             for i in await self.middleware.call(
-                'certificate.query', [
-                    ['cert_type_CSR', '=', False],
-                    ['cert_type_CA', '=', False]
+                "certificate.query", [
+                    ["cert_type_CSR", "=", False],
+                    ["cert_type_CA", "=", False]
                 ]
             )
         }

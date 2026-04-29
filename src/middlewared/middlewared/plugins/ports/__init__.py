@@ -8,7 +8,7 @@ from middlewared.service import Service, ValidationErrors
 
 from . import ports as _ports
 
-__all__ = ('PortService',)
+__all__ = ("PortService",)
 
 
 class PortService(Service):
@@ -32,7 +32,7 @@ class PortService(Service):
         self,
         schema: str,
         port: int,
-        bindip: str = '0.0.0.0',
+        bindip: str = "0.0.0.0",
         whitelist_namespace: str | None = None,
         raise_error: bool = False,
     ) -> ValidationErrors | None:

@@ -14,7 +14,7 @@ from middlewared.api.base import (
     match_validator,
 )
 
-RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+RE_TARGET_NAME = re.compile(r"^[-a-z0-9\.:]+$")
 
 __all__ = [
     "iSCSITargetEntry",
@@ -32,7 +32,7 @@ __all__ = [
 class IscsiGroup(BaseModel):
     portal: int
     initiator: int | None = None
-    authmethod: IscsiAuthType = 'NONE'
+    authmethod: IscsiAuthType = "NONE"
     auth: int | None = None
 
 
@@ -52,7 +52,7 @@ class iSCSITargetEntry(BaseModel):
                     ),
                     StringConstraints(max_length=120)]
     alias: str | None = None
-    mode: Literal['ISCSI', 'FC', 'BOTH'] = 'ISCSI'
+    mode: Literal["ISCSI", "FC", "BOTH"] = "ISCSI"
     groups: list[IscsiGroup] = []
     auth_networks: list[str] = []  # IPvAnyNetwork: "Object of type IPv4Network is not JSON serializable", etc
     rel_tgt_id: int

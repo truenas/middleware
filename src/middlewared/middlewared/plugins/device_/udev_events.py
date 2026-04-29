@@ -12,15 +12,15 @@ class DeviceService(Service):
 
     @private
     async def settle_udev_events(self):
-        cp = await run(['udevadm', 'settle'], stdout=subprocess.DEVNULL, check=False)
+        cp = await run(["udevadm", "settle"], stdout=subprocess.DEVNULL, check=False)
         if cp.returncode != 0:
-            self.middleware.logger.error('Failed to settle udev events: %s', cp.stderr.decode())
+            self.middleware.logger.error("Failed to settle udev events: %s", cp.stderr.decode())
 
     @private
     async def trigger_udev_events(self, device):
-        cp = await run(['udevadm', 'trigger', device], stdout=subprocess.DEVNULL, check=False)
+        cp = await run(["udevadm", "trigger", device], stdout=subprocess.DEVNULL, check=False)
         if cp.returncode != 0:
-            self.middleware.logger.error('Failed to trigger udev events: %s', cp.stderr.decode())
+            self.middleware.logger.error("Failed to trigger udev events: %s", cp.stderr.decode())
 
 
 def udev_events(middleware):
@@ -32,18 +32,18 @@ def udev_events(middleware):
             context = pyudev.Context()
             monitor = pyudev.Monitor.from_netlink(context)
             monitor.set_receive_buffer_size(_256MB)
-            monitor.filter_by(subsystem='block')
-            monitor.filter_by(subsystem='dlm')
-            monitor.filter_by(subsystem='net')
+            monitor.filter_by(subsystem="block")
+            monitor.filter_by(subsystem="dlm")
+            monitor.filter_by(subsystem="net")
             for device in iter(monitor.poll, None):
-                data = dict(device) | {'SYS_NAME': device.sys_name}
+                data = dict(device) | {"SYS_NAME": device.sys_name}
                 mw_method = middleware.call_hook_sync
-                if device.subsystem == 'net':
+                if device.subsystem == "net":
                     # udev.net hook is inline=True
                     mw_method = middleware.call_hook_inline
-                mw_method(f'udev.{device.subsystem}', data=data)
+                mw_method(f"udev.{device.subsystem}", data=data)
         except Exception:
-            middleware.logger.error('Polling udev failed', exc_info=True)
+            middleware.logger.error("Polling udev failed", exc_info=True)
             time.sleep(10)
 
 

@@ -33,7 +33,7 @@ class Authenticator:
         try:
             perform_ret = self._perform(domain, validation_name, validation_content)
         except Exception as e:
-            raise CallError(f'Failed to perform {self.NAME} challenge for {domain!r} domain: {e}')
+            raise CallError(f"Failed to perform {self.NAME} challenge for {domain!r} domain: {e}")
         else:
             self.wait_for_records_to_propagate(perform_ret)
 
@@ -47,7 +47,7 @@ class Authenticator:
         try:
             self._cleanup(domain, validation_name, validation_content)
         except Exception as e:
-            raise CallError(f'Failed to cleanup {self.NAME} challenge for {domain!r} domain: {e}')
+            raise CallError(f"Failed to cleanup {self.NAME} challenge for {domain!r} domain: {e}")
 
     def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
         raise NotImplementedError

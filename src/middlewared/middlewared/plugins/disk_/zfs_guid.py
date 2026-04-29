@@ -29,13 +29,13 @@ class DiskService(Service):
         )
 
         for entry in disks_with_zfs_guid:
-            if entry['expiretime'] is None:
+            if entry["expiretime"] is None:
                 disk = entry
                 break
 
             if disk is None:
                 disk = entry
-            elif entry['expiretime'] > disk['expiretime']:
+            elif entry["expiretime"] > disk["expiretime"]:
                 disk = entry
 
         return disk

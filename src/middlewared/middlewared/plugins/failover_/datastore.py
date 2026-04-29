@@ -14,22 +14,22 @@ from middlewared.service import Service
 from middlewared.utils import db as db_utils
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
-FREENAS_DATABASE_REPLICATED = f'{FREENAS_DATABASE}.replicated'
+FREENAS_DATABASE_REPLICATED = f"{FREENAS_DATABASE}.replicated"
 RAISE_ALERT_SYNC_RETRY_TIME = 1200  # 20mins (some platforms take 15-20mins to reboot)
 
 
 class FailoverDatastoreService(Service):
 
     class Config:
-        namespace = 'failover.datastore'
+        namespace = "failover.datastore"
         private = True
         thread_pool = thread_pool
 
     async def sql(self, data, sql, params):
-        if await self.middleware.call('system.version') != data['version']:
+        if await self.middleware.call("system.version") != data["version"]:
             return
 
-        if await self.middleware.call('failover.status') != 'BACKUP':
+        if await self.middleware.call("failover.status") != "BACKUP":
             # We can't query failover.status on `MASTER` node (please see `hook_datastore_execute_write` for
             # explanations). Non-BACKUP nodes are responsible for checking their failover status.
             return
@@ -38,7 +38,7 @@ class FailoverDatastoreService(Service):
         # datetimes in the database, so let's strip `tzinfo`.
         params = [p.replace(tzinfo=None) if isinstance(p, datetime) else p for p in params]
 
-        await self.middleware.call('datastore.execute', sql, params)
+        await self.middleware.call("datastore.execute", sql, params)
 
     failure = False
 
@@ -54,21 +54,21 @@ class FailoverDatastoreService(Service):
             # This is executed in `hook_datastore_execute_write` so we can't query local failover status here, and we'll
             # have to rely on remote.
             if (fs := self.middleware.call_sync(
-                'failover.call_remote',
-                'failover.status',
+                "failover.call_remote",
+                "failover.status",
                 [],
-                {'timeout': 5}
-            )) == 'BACKUP':
+                {"timeout": 5}
+            )) == "BACKUP":
                 self.send()
             else:
                 # Avoid sending database if we are not MASTER.
-                self.logger.warning('Remote node failover status is %s while retrying database send', fs)
+                self.logger.warning("Remote node failover status is %s while retrying database send", fs)
                 self.failure = False
         except Exception as e:
-            self.logger.warning('Error sending database to remote node on first replication failure: %r', e)
+            self.logger.warning("Error sending database to remote node on first replication failure: %r", e)
 
             def send_retry():
-                set_thread_name('failover_datastore')
+                set_thread_name("failover_datastore")
 
                 raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
                 total_mins = raise_alert_time / 60
@@ -81,17 +81,17 @@ class FailoverDatastoreService(Service):
                         # Someone sent the database for us
                         return
 
-                    if self.middleware.call_sync('failover.in_progress'):
-                        self.logger.warning('Failover in progress, deferring database replication retry')
+                    if self.middleware.call_sync("failover.in_progress"):
+                        self.logger.warning("Failover in progress, deferring database replication retry")
                         continue
 
-                    if (fs := self.middleware.call_sync('failover.status')) != 'MASTER':
-                        self.logger.warning('Failover status is %s while retrying database send', fs)
+                    if (fs := self.middleware.call_sync("failover.status")) != "MASTER":
+                        self.logger.warning("Failover status is %s while retrying database send", fs)
                         self.failure = False
                         break
 
                     try:
-                        self.middleware.call_sync('failover.datastore.send')
+                        self.middleware.call_sync("failover.datastore.send")
                     except Exception:
                         pass
 
@@ -102,20 +102,20 @@ class FailoverDatastoreService(Service):
             start_daemon_thread(name="fo_db_retry", target=send_retry)
 
     def send(self):
-        token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token', [
+        token = self.middleware.call_sync("failover.call_remote", "auth.generate_token", [
             300,  # ttl
             {},  # Attributes (not required for file uploads)
             True,  # match origin
             True,  # single-use (required if STIG enabled)
         ])
         self.middleware.call_sync(
-            'failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED,
-            {'mode': db_utils.FREENAS_DATABASE_MODE},
+            "failover.send_file", token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED,
+            {"mode": db_utils.FREENAS_DATABASE_MODE},
         )
-        self.middleware.call_sync('failover.call_remote', 'failover.datastore.receive')
+        self.middleware.call_sync("failover.call_remote", "failover.datastore.receive")
 
         self.failure = False
-        self.call_sync2(self.s.alert.oneshot_delete, 'FailoverSyncFailed', None)
+        self.call_sync2(self.s.alert.oneshot_delete, "FailoverSyncFailed", None)
 
     def receive(self):
         # Take the following example:
@@ -146,21 +146,21 @@ class FailoverDatastoreService(Service):
         #
         # To prevent this, we check to make sure the local database alembic revision matches the replicated
         # database that has been sent to us.
-        loc_vers = db_utils.query_config_table('alembic_version')['version_num']
-        rep_vers = db_utils.query_config_table('alembic_version', FREENAS_DATABASE_REPLICATED)['version_num']
+        loc_vers = db_utils.query_config_table("alembic_version")["version_num"]
+        rep_vers = db_utils.query_config_table("alembic_version", FREENAS_DATABASE_REPLICATED)["version_num"]
         if loc_vers != rep_vers:
             self.logger.warning(
-                'Received database alembic revision (%s) does not match local database alembic revision (%s)',
+                "Received database alembic revision (%s) does not match local database alembic revision (%s)",
                 rep_vers, loc_vers
             )
             return
 
         os.rename(FREENAS_DATABASE_REPLICATED, FREENAS_DATABASE)
-        self.middleware.call_sync('datastore.setup')
+        self.middleware.call_sync("datastore.setup")
 
     async def force_send(self):
-        if await self.middleware.call('failover.status') == 'MASTER':
-            await self.middleware.call('failover.datastore.set_failure')
+        if await self.middleware.call("failover.status") == "MASTER":
+            await self.middleware.call("failover.datastore.set_failure")
 
 
 def hook_datastore_execute_write(middleware, sql, params, options):
@@ -169,40 +169,40 @@ def hook_datastore_execute_write(middleware, sql, params, options):
     # a deadlock. That's why we can't query failover status and will always try to replicate all queries to the other
     # node. The other node will check its own failover status upon receiving them.
 
-    if not options['ha_sync']:
+    if not options["ha_sync"]:
         return
 
-    if not middleware.call_sync('failover.licensed'):
+    if not middleware.call_sync("failover.licensed"):
         return
 
-    if middleware.call_sync('failover.datastore.is_failure'):
+    if middleware.call_sync("failover.datastore.is_failure"):
         return
 
-    if middleware.call_sync('failover.in_progress'):
+    if middleware.call_sync("failover.in_progress"):
         return
 
     try:
         middleware.call_sync(
-            'failover.call_remote',
-            'failover.datastore.sql',
+            "failover.call_remote",
+            "failover.datastore.sql",
             [
                 {
-                    'version': middleware.call_sync('system.version'),
+                    "version": middleware.call_sync("system.version"),
                 },
                 sql,
                 params,
             ],
             {
-                'timeout': 10,
+                "timeout": 10,
             },
         )
     except Exception as e:
-        middleware.logger.warning('Error replicating SQL on the remote node: %r', e)
-        middleware.call_sync('failover.datastore.set_failure')
+        middleware.logger.warning("Error replicating SQL on the remote node: %r", e)
+        middleware.call_sync("failover.datastore.set_failure")
 
 
 async def setup(middleware):
-    if not await middleware.call('system.is_enterprise'):
+    if not await middleware.call("system.is_enterprise"):
         return
 
-    middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
+    middleware.register_hook("datastore.post_execute_write", hook_datastore_execute_write, inline=True)

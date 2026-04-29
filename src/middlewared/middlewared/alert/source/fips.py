@@ -34,11 +34,11 @@ class FIPSProviderAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
-        fips_configured = (await self.middleware.call('system.security.config'))['enable_fips']
+        fips_configured = (await self.middleware.call("system.security.config"))["enable_fips"]
         configuration = "enabled" if fips_configured else "disabled"
 
         try:
-            fips_enabled = await self.middleware.call('system.security.info.fips_enabled')
+            fips_enabled = await self.middleware.call("system.security.info.fips_enabled")
         except Exception:
             return Alert(FIPSMisconfigurationAlert(configuration=configuration, state="unknown"))
 

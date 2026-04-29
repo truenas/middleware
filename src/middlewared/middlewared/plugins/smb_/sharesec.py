@@ -19,13 +19,13 @@ from middlewared.utils.tdb import (
 
 from .constants import SAMBA_BOOTENV_DIR
 
-LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')
+LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, "share_info.tdb")
 SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 SHARE_INFO_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
-SHARE_INFO_VERSION_KEY = 'INFO/version'
-SHARE_INFO_VERSION_DATA = b64encode(pack('<I', 3))
+SHARE_INFO_VERSION_KEY = "INFO/version"
+SHARE_INFO_VERSION_DATA = b64encode(pack("<I", 3))
 TDB_SHARE_INFO_CONFIG = (LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS)
-CTDB_SHARE_INFO_CONFIG = ('share_info.tdb', SHARE_INFO_CTDB_OPTIONS)
+CTDB_SHARE_INFO_CONFIG = ("share_info.tdb", SHARE_INFO_CTDB_OPTIONS)
 
 
 def _share_info_db_config(cluster: bool) -> TDBOptions:
@@ -35,7 +35,7 @@ def _share_info_db_config(cluster: bool) -> TDBOptions:
 def fetch_share_acl(share_name: str, cluster: bool) -> str:
     """ fetch base64-encoded NT ACL for SMB share """
     with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
-        return hdl.get(f'SECDESC/{share_name.lower()}')
+        return hdl.get(f"SECDESC/{share_name.lower()}")
 
 
 def set_version_share_info(cluster: bool):
@@ -54,32 +54,32 @@ def store_share_acl(share_name: str, val: str, cluster: bool) -> None:
         if set_version_key:
             hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
-        hdl.store(f'SECDESC/{share_name.lower()}', val)
+        hdl.store(f"SECDESC/{share_name.lower()}", val)
         hdl.flush()
 
 
 def remove_share_acl(share_name: str, cluster: bool) -> None:
     """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
     with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
-        hdl.delete(f'SECDESC/{share_name.lower()}')
+        hdl.delete(f"SECDESC/{share_name.lower()}")
         hdl.flush()
 
 
 class ShareSec(Service):
 
     class Config:
-        namespace = 'smb.sharesec'
+        namespace = "smb.sharesec"
         private = True
 
     @filterable_api_method(private=True)
     def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
         try:
             with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
                 return filter_list(
                     hdl.entries(),
-                    filters + [['key', '^', 'SECDESC/']],
+                    filters + [["key", "^", "SECDESC/"]],
                     options
                 )
         except FileNotFoundError:
@@ -91,19 +91,19 @@ class ShareSec(Service):
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
 
-        if share_name.upper() == 'HOMES':
-            share_filter = [['options.home', '=', True]]
+        if share_name.upper() == "HOMES":
+            share_filter = [["options.home", "=", True]]
         else:
-            share_filter = [['name', 'C=', share_name]]
+            share_filter = [["name", "C=", share_name]]
 
         try:
             self.middleware.call_sync(
-                'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
+                "sharing.smb.query", share_filter, {"get": True, "select": ["home", "name"]}
             )
         except MatchNotFound as exc:
-            raise CallError(f'{share_name}: share does not exist') from exc
+            raise CallError(f"{share_name}: share does not exist") from exc
 
         if not cluster and not os.path.exists(LOCAL_SHARE_INFO_FILE):
             set_version_share_info(False)
@@ -113,9 +113,9 @@ class ShareSec(Service):
             share_acl = sd_bytes_to_share_acl(share_sd_bytes)
         except MatchNotFound:
             # Non-exist share ACL is treated as granting world FULL permissions
-            share_acl = [{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
+            share_acl = [{"ae_who_sid": "S-1-1-0", "ae_perm": "FULL", "ae_type": "ALLOWED"}]
 
-        return {'share_name': share_name, 'share_acl': share_acl}
+        return {"share_name": share_name, "share_acl": share_acl}
 
     def setacl(self, data):
         """
@@ -135,24 +135,24 @@ class ShareSec(Service):
 
         `ae_type` can be ALLOWED or DENIED.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
 
-        if data['share_name'].upper() == 'HOMES':
-            share_filter = [['options.home', '=', True]]
+        if data["share_name"].upper() == "HOMES":
+            share_filter = [["options.home", "=", True]]
         else:
-            share_filter = [['name', 'C=', data['share_name']]]
+            share_filter = [["name", "C=", data["share_name"]]]
 
         try:
-            config_share = self.middleware.call_sync('sharing.smb.query', share_filter, {'get': True})
+            config_share = self.middleware.call_sync("sharing.smb.query", share_filter, {"get": True})
         except MatchNotFound as exc:
             raise CallError(f'{data["share_name"]}: share does not exist') from exc
 
-        share_sd_bytes = b64encode(share_acl_to_sd_bytes(data['share_acl'])).decode()
-        store_share_acl(data['share_name'], share_sd_bytes, cluster)
+        share_sd_bytes = b64encode(share_acl_to_sd_bytes(data["share_acl"])).decode()
+        store_share_acl(data["share_name"], share_sd_bytes, cluster)
 
         self.middleware.call_sync(
-            'datastore.update', 'sharing.cifs_share', config_share['id'],
-            {'cifs_share_acl': share_sd_bytes}
+            "datastore.update", "sharing.cifs_share", config_share["id"],
+            {"cifs_share_acl": share_sd_bytes}
         )
 
     def flush_share_info(self):
@@ -160,15 +160,15 @@ class ShareSec(Service):
         Write stored share acls to share_info.tdb. This should only be called
         if share_info.tdb contains default entries.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-        shares = self.middleware.call_sync('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
+        cluster = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        shares = self.middleware.call_sync("datastore.query", "sharing.cifs_share", [], {"prefix": "cifs_"})
         for share in shares:
-            share_name = 'HOMES' if share['home'] else share['name']
-            if share['share_acl'] and share['share_acl'].startswith('S-1-'):
-                sd_bytes = legacy_share_acl_string_to_sd_bytes(share['share_acl'])
+            share_name = "HOMES" if share["home"] else share["name"]
+            if share["share_acl"] and share["share_acl"].startswith("S-1-"):
+                sd_bytes = legacy_share_acl_string_to_sd_bytes(share["share_acl"])
                 store_share_acl(share_name, sd_bytes, cluster)
-            elif share['share_acl']:
-                store_share_acl(share_name, share['share_acl'], cluster)
+            elif share["share_acl"]:
+                store_share_acl(share_name, share["share_acl"], cluster)
 
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):
@@ -176,7 +176,7 @@ class ShareSec(Service):
             self.flush_share_info()
             return
 
-        self.middleware.call_sync('smb.sharesec.synchronize_acls')
+        self.middleware.call_sync("smb.sharesec.synchronize_acls")
 
     async def synchronize_acls(self):
         """
@@ -188,24 +188,24 @@ class ShareSec(Service):
         fakes a single S-1-1-0:ALLOW/0x0/FULL entry in the absence of an entry for a
         share in share_info.tdb.
         """
-        if not (entries := (await self.middleware.call('smb.sharesec.entries'))):
+        if not (entries := (await self.middleware.call("smb.sharesec.entries"))):
             # Current share_info.tdb doesn't exist or has no entries. If the config DB has any
             # entries we should flush them to running configuration.
-            if await self.middleware.call('datastore.query', 'sharing.cifs_share'):
-                await self.middleware.call('smb.sharesec.flush_share_info')
+            if await self.middleware.call("datastore.query", "sharing.cifs_share"):
+                await self.middleware.call("smb.sharesec.flush_share_info")
             return
 
-        shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
+        shares = await self.middleware.call("datastore.query", "sharing.cifs_share", [], {"prefix": "cifs_"})
         for s in shares:
-            share_name = s['name'] if not s['home'] else 'homes'
-            if not (share_acl := filter_list(entries, [['key', '=', f'SECDESC/{share_name.lower()}']])):
+            share_name = s["name"] if not s["home"] else "homes"
+            if not (share_acl := filter_list(entries, [["key", "=", f"SECDESC/{share_name.lower()}"]])):
                 continue
 
-            if share_acl[0]['value'] != s['share_acl']:
-                self.logger.debug('Updating stored copy of SMB share ACL on %s', share_name)
+            if share_acl[0]["value"] != s["share_acl"]:
+                self.logger.debug("Updating stored copy of SMB share ACL on %s", share_name)
                 await self.middleware.call(
-                    'datastore.update',
-                    'sharing.cifs_share',
-                    s['id'],
-                    {'cifs_share_acl': share_acl[0]['value']}
+                    "datastore.update",
+                    "sharing.cifs_share",
+                    s["id"],
+                    {"cifs_share_acl": share_acl[0]["value"]}
                 )

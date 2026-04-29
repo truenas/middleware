@@ -1,7 +1,7 @@
 from middlewared.api.base import BaseModel
 
 __all__ = [
-    'IdmapDomainClearIdmapCacheArgs', 'IdmapDomainClearIdmapCacheResult',
+    "IdmapDomainClearIdmapCacheArgs", "IdmapDomainClearIdmapCacheResult",
 ]
 
 

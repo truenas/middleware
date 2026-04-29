@@ -23,13 +23,13 @@ from .faillock import is_tally_locked
 
 
 class TruenasPamFile(enum.StrEnum):
-    DEFAULT = '/etc/pam.d/truenas'
+    DEFAULT = "/etc/pam.d/truenas"
     """ used for regular username / password authentication """
-    API_KEY = '/etc/pam.d/truenas-api-key'
+    API_KEY = "/etc/pam.d/truenas-api-key"
     """ used for authentication with API key """
-    UNIX = '/etc/pam.d/truenas-unix'
+    UNIX = "/etc/pam.d/truenas-unix"
     """ used for authentication via unix socket """
-    COMMON_SESSION = '/etc/pam.d/truenas-session'
+    COMMON_SESSION = "/etc/pam.d/truenas-session"
     """ session-related modules common to all middleware authenticators """
 
     @property
@@ -39,19 +39,19 @@ class TruenasPamFile(enum.StrEnum):
 
 class AccountFlag(enum.StrEnum):
     # Account-specific flags
-    SYS_ADMIN = 'SYS_ADMIN'  # account is root or truenas_admin
-    DIRECTORY_SERVICE = 'DIRECTORY_SERVICE'  # account is provided by a directory service
-    LOCAL = 'LOCAL'  # account is provided by the passwd file (and hopefully in our config)
-    ACTIVE_DIRECTORY = 'ACTIVE_DIRECTORY'  # account is provided by AD
-    IPA = 'IPA'  # account is provided by FreeIPA
-    LDAP = 'LDAP'  # account is provided by ordinary LDAP server
+    SYS_ADMIN = "SYS_ADMIN"  # account is root or truenas_admin
+    DIRECTORY_SERVICE = "DIRECTORY_SERVICE"  # account is provided by a directory service
+    LOCAL = "LOCAL"  # account is provided by the passwd file (and hopefully in our config)
+    ACTIVE_DIRECTORY = "ACTIVE_DIRECTORY"  # account is provided by AD
+    IPA = "IPA"  # account is provided by FreeIPA
+    LDAP = "LDAP"  # account is provided by ordinary LDAP server
 
     # Flags about how authenticated
-    TWOFACTOR = '2FA'  # Account requires 2FA (NOTE: PAM currently isn't evaluating second factor)
-    API_KEY = 'API_KEY'  # Account authenticated by API key
-    SCRAM = 'SCRAM'
-    OTPW = 'OTPW'  # Account authenticated by a single-use password
-    PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
+    TWOFACTOR = "2FA"  # Account requires 2FA (NOTE: PAM currently isn't evaluating second factor)
+    API_KEY = "API_KEY"  # Account authenticated by API key
+    SCRAM = "SCRAM"
+    OTPW = "OTPW"  # Account authenticated by a single-use password
+    PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED"  # Password change for account is required
 
 
 DEFAULT_LOGIN_SUCCESS = TrueNASAuthenticatorResponse(
@@ -59,7 +59,7 @@ DEFAULT_LOGIN_SUCCESS = TrueNASAuthenticatorResponse(
 )
 
 DEFAULT_LOGIN_FAIL = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGIN, PAMCode.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
+    TrueNASAuthenticatorStage.LOGIN, PAMCode.PAM_SYSTEM_ERR, "Unexpected Session Manager"
 )
 
 DEFAULT_LOGOUT_SUCCESS = TrueNASAuthenticatorResponse(
@@ -67,7 +67,7 @@ DEFAULT_LOGOUT_SUCCESS = TrueNASAuthenticatorResponse(
 )
 
 DEFAULT_LOGOUT_FAIL = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGOUT, PAMCode.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
+    TrueNASAuthenticatorStage.LOGOUT, PAMCode.PAM_SYSTEM_ERR, "Unexpected Session Manager"
 )
 
 
@@ -83,30 +83,30 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
 
         if origin.family == AF_UNIX:
             session_data = {
-                'origin_family': 'AF_UNIX',
-                'origin': {
-                    'pid': origin.pid,
-                    'uid': origin.uid,
-                    'gid': origin.gid,
-                    'loginuid': origin.loginuid,
-                    'sec': 'unconfined',
+                "origin_family": "AF_UNIX",
+                "origin": {
+                    "pid": origin.pid,
+                    "uid": origin.uid,
+                    "gid": origin.gid,
+                    "loginuid": origin.loginuid,
+                    "sec": "unconfined",
                 },
-                'extra': {
-                    'secure_transport': origin.secure_transport
+                "extra": {
+                    "secure_transport": origin.secure_transport
                 }
             }
         elif origin.family == AF_INET or origin.family == AF_INET6:
             session_data = {
-                'origin_family': 'AF_INET' if origin.family == AF_INET else 'AF_INET6',
-                'origin': {
-                    'loc_addr': str(origin.loc_addr),
-                    'loc_port': origin.loc_port,
-                    'rem_addr': str(origin.rem_addr),
-                    'rem_port': origin.rem_port,
-                    'ssl': origin.ssl
+                "origin_family": "AF_INET" if origin.family == AF_INET else "AF_INET6",
+                "origin": {
+                    "loc_addr": str(origin.loc_addr),
+                    "loc_port": origin.loc_port,
+                    "rem_addr": str(origin.rem_addr),
+                    "rem_port": origin.rem_port,
+                    "ssl": origin.ssl
                 },
-                'extra': {
-                    'secure_transport': origin.secure_transport
+                "extra": {
+                    "secure_transport": origin.secure_transport
                 }
             }
 
@@ -116,9 +116,9 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         # populate our internal passwd reference. This should only be called once during authentication
         passwd = getpwnam(username, as_dict=True)
         grouplist = []
-        for grp in os.getgrouplist(passwd['pw_name'], passwd['pw_gid']):
+        for grp in os.getgrouplist(passwd["pw_name"], passwd["pw_gid"]):
             try:
-                if getgrgid(grp).source != passwd['source']:
+                if getgrgid(grp).source != passwd["source"]:
                     # Enforce that users can't have groups from other providers
                     continue
             except Exception:
@@ -128,40 +128,40 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             grouplist.append(grp)
 
         self.passwd = passwd | {
-            'grouplist': tuple(grouplist),
-            'local': passwd['source'] == NssModule.FILES.name,
-            'account_attributes': []
+            "grouplist": tuple(grouplist),
+            "local": passwd["source"] == NssModule.FILES.name,
+            "account_attributes": []
         }
 
         passwd = self.passwd
 
         # Swap out the NSS module name with strings middleware expects and begin populating account flags
-        match passwd['source']:
+        match passwd["source"]:
             case NssModule.FILES.name:
-                passwd['source'] = 'LOCAL'
-                passwd['account_attributes'] = [AccountFlag.LOCAL]
+                passwd["source"] = "LOCAL"
+                passwd["account_attributes"] = [AccountFlag.LOCAL]
             case NssModule.WINBIND.name:
-                passwd['source'] = 'ACTIVEDIRECTORY'
-                passwd['account_attributes'] = [
+                passwd["source"] = "ACTIVEDIRECTORY"
+                passwd["account_attributes"] = [
                     AccountFlag.DIRECTORY_SERVICE, AccountFlag.ACTIVE_DIRECTORY
                 ]
             case NssModule.SSS.name:
-                passwd['source'] = 'LDAP'
+                passwd["source"] = "LDAP"
                 if DSHealthObj.dstype is DSType.IPA:
-                    passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.IPA]
+                    passwd["account_attributes"] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.IPA]
                 else:
-                    passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
+                    passwd["account_attributes"] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
 
         if self.state.service == TruenasPamFile.API_KEY.service:
-            passwd['account_attributes'].append(AccountFlag.API_KEY)
+            passwd["account_attributes"].append(AccountFlag.API_KEY)
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
         if self.twofactor_user:
-            passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
+            passwd["account_attributes"].append(AccountFlag.TWOFACTOR)
 
-        if passwd['pw_uid'] in (0, ADMIN_UID):
-            passwd['account_attributes'].append(AccountFlag.SYS_ADMIN)
-            if not passwd['local']:
+        if passwd["pw_uid"] in (0, ADMIN_UID):
+            passwd["account_attributes"].append(AccountFlag.SYS_ADMIN)
+            if not passwd["local"]:
                 raise ValueError("System administrator account is being provided by non-local source")
 
         # Retrieve via property getter to ensure we're returning a proper copy
@@ -180,7 +180,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             username=username,
             service=service.service,
             rhost=str(origin),
-            pam_env={'pam_truenas_session_data': dumps(session_info)}
+            pam_env={"pam_truenas_session_data": dumps(session_info)}
         )
         self.otpw_possible = True
         self._session_uuid = None
@@ -195,7 +195,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             # properly set by the PAM module. This is a very unexpected error and so we are intentionally
             # not attempting to handle it here.
             try:
-                uuid_str = self.ctx.get_env('pam_truenas_session_uuid')
+                uuid_str = self.ctx.get_env("pam_truenas_session_uuid")
                 self._session_uuid = UUID(uuid_str)
             except Exception as exc:
                 # PAM stack is misconfigured (pam_truenas possibly omitted). We don't
@@ -212,11 +212,11 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
     @property
     def truenas_user_obj(self):
         """ Create a copy of the stored passwd dict for user. """
-        if not getattr(self, 'passwd') or self.passwd is None:
-            raise ValueError('passwd entry not set')
+        if not getattr(self, "passwd") or self.passwd is None:
+            raise ValueError("passwd entry not set")
 
         out = self.passwd.copy()
-        out['account_attributes'] = out['account_attributes'].copy()
+        out["account_attributes"] = out["account_attributes"].copy()
         return out
 
     def __otpw_authenticate(self, password, passwd_entry):
@@ -226,26 +226,26 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         if not self.otpw_possible:
             return
 
-        otpw_resp = OTPW_MANAGER.authenticate(passwd_entry['pw_uid'], password)
+        otpw_resp = OTPW_MANAGER.authenticate(passwd_entry["pw_uid"], password)
         match otpw_resp.code:
             case OTPWResponseCode.SUCCESS:
-                self.passwd['account_attributes'].append(AccountFlag.OTPW)
+                self.passwd["account_attributes"].append(AccountFlag.OTPW)
                 # PASSWORD_CHANGE_REQUIRED can only be set for local accounts. We don't allow
                 # password changes through middleware currently for directory services.
-                if otpw_resp.data['password_set_override'] and passwd_entry['source'] == 'LOCAL':
-                    self.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
+                if otpw_resp.data["password_set_override"] and passwd_entry["source"] == "LOCAL":
+                    self.passwd["account_attributes"].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
 
                 code = PAMCode.PAM_SUCCESS
                 reason = None
             case OTPWResponseCode.EXPIRED:
                 code = PAMCode.PAM_CRED_EXPIRED
-                reason = 'Onetime password is expired'
+                reason = "Onetime password is expired"
             case OTPWResponseCode.NO_KEY:
                 # Indicate to caller to send original PAM response
                 return
             case _:
                 code = PAMCode.PAM_AUTH_ERR
-                reason = f'Onetime password authentication failed: {otpw_resp.code}'
+                reason = f"Onetime password authentication failed: {otpw_resp.code}"
 
         return code, reason
 
@@ -310,13 +310,13 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         stage = TrueNASAuthenticatorStage.AUTH
 
         if not self.twofactor_user:
-            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, 'User does not support two-factor auth')
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, "User does not support two-factor auth")
 
         resp = self.auth_continue([twofactor_token])
         if resp.code == PAMCode.PAM_SUCCESS:
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
-            assert pw['pw_name'] == resp.user_info['pw_name']
+            assert pw["pw_name"] == resp.user_info["pw_name"]
             resp.user_info = pw
 
         return resp
@@ -327,7 +327,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         try:
             pw = self._get_user_obj(username)
         except KeyError:
-            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f'{username}: user does not exist')
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f"{username}: user does not exist")
 
         code = None
         reason = None
@@ -340,17 +340,17 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             raise FileNotFoundError(self._service)
 
         if self._service.service != self.state.service:
-            raise RuntimeError(f'{self.state.service}: unexpected PAM service. Expected: {self._service.service}')
+            raise RuntimeError(f"{self.state.service}: unexpected PAM service. Expected: {self._service.service}")
 
         # pass the normalized name to the PAM stack when authenticating
-        resp = self.pam_authenticate_simple(pw['pw_name'], password)
+        resp = self.pam_authenticate_simple(pw["pw_name"], password)
         if resp.code != PAMCode.PAM_SUCCESS:
             if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service == TruenasPamFile.DEFAULT.service:
                 # This is possibly due to tally lock. In this case we'll change PAM code to reflect locked
                 # status
-                if is_tally_locked(pw['pw_name']):
+                if is_tally_locked(pw["pw_name"]):
                     resp.code = PAMCode.PAM_PERM_DENIED
-                    resp.reason = 'Account is locked due to failed login attempts.'
+                    resp.reason = "Account is locked due to failed login attempts."
                 else:
                     otpw_resp = self.__otpw_authenticate(password, pw)
                     if otpw_resp:
@@ -359,7 +359,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                             # swap out our pam service with UNIX to properly initialize
                             # underlying PAM context.
                             self.state.service = TruenasPamFile.UNIX.service
-                            resp = self.pam_authenticate_simple(pw['pw_name'], '')
+                            resp = self.pam_authenticate_simple(pw["pw_name"], "")
                             resp.user_info = pw
                         else:
                             resp.code = code
@@ -379,14 +379,14 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 resp.reason = acct_resp.reason
                 if acct_resp.code == PAMCode.PAM_AUTH_ERR:
                     pam_messages = self.ctx.messages()
-                    if pam_messages and any([m.msg.startswith('Your account has expired') for m in pam_messages[-1]]):
+                    if pam_messages and any([m.msg.startswith("Your account has expired") for m in pam_messages[-1]]):
                         resp.code = PAMCode.PAM_ACCT_EXPIRED
-                        resp.reason = 'Account expired due to aging rules'
+                        resp.reason = "Account expired due to aging rules"
 
         if resp.code == PAMCode.PAM_SUCCESS:
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
-            assert pw['pw_name'] == resp.user_info['pw_name']
+            assert pw["pw_name"] == resp.user_info["pw_name"]
             resp.user_info = pw
 
         return resp
@@ -397,7 +397,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
     is handled With ScramPamAuthenticator. """
     def __init__(self, *, username: str, origin: ConnectionOrigin):
         if not origin.is_tcp_ip_family:
-            raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
+            raise TypeError(f"{origin}: unexpected origin for ApiKeyPamAuthenticator")
 
         super().__init__(username=username, origin=origin, service=TruenasPamFile.API_KEY)
         self.otpw_possible = False
@@ -405,7 +405,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
     def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
         """ Split up API key into DBID and actual key material then pass to backend """
         try:
-            dbid, key = password.split('-', 1)
+            dbid, key = password.split("-", 1)
         except ValueError:
             # Not a valid API key, but let the backend do the erroring out
             return super().authenticate(username, password)
@@ -417,7 +417,7 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
 class ScramPamAuthenticator(UserPamAuthenticator):
     def __init__(self, *, client_first_message: str, origin: ConnectionOrigin):
         if not origin.is_tcp_ip_family:
-            raise TypeError(f'{origin}: unexpected origin for ScramPamAuthenticator')
+            raise TypeError(f"{origin}: unexpected origin for ScramPamAuthenticator")
 
         try:
             self.client_first = truenas_pyscram.ClientFirstMessage(rfc_string=client_first_message)
@@ -425,7 +425,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             # Fill in some dummy values that will not grant access. We initialize here
             # so that we can minimally provide reasonable error responses to subsequent
             # calls and not fial in init.
-            super().__init__(username='nobody', origin=origin, service=TruenasPamFile.API_KEY)
+            super().__init__(username="nobody", origin=origin, service=TruenasPamFile.API_KEY)
             self.scram_error = exc
             self.sent_server_first = False
             self.sent_server_final = False
@@ -455,44 +455,44 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, str(self.scram_error))
 
         if self.sent_server_first:
-            raise RuntimeError('Already sent server first response')
+            raise RuntimeError("Already sent server first response")
 
         try:
             self._get_user_obj(self.username)
         except KeyError:
             return TrueNASAuthenticatorResponse(
-                stage, PAMCode.PAM_AUTH_ERR, f'{self.username}: user does not exist'
+                stage, PAMCode.PAM_AUTH_ERR, f"{self.username}: user does not exist"
             )
 
         resp = self.auth_init()
         if resp.code != PAMCode.PAM_CONV_AGAIN:
             return TrueNASAuthenticatorResponse(
                 stage, PAMCode.PAM_AUTH_ERR,
-                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+                f"{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]"
             )
 
         client_resp = []
         for msg in resp.reason:
             if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
-                if 'Send SCRAM ClientFirst message' not in msg.msg:
-                    raise RuntimeError(f'{msg.msg}: unexpected PAM response')
+                if "Send SCRAM ClientFirst message" not in msg.msg:
+                    raise RuntimeError(f"{msg.msg}: unexpected PAM response")
 
                 client_resp.append(str(self.client_first))
             elif msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_ON:
                 client_resp.append(self.username)
             else:
-                raise RuntimeError(f'{msg}: unexpected PAM respones')
+                raise RuntimeError(f"{msg}: unexpected PAM respones")
 
         # now time to get the ServerFirstResponse
         resp = self.auth_continue(client_resp)
         if resp.code != PAMCode.PAM_CONV_AGAIN:
             return TrueNASAuthenticatorResponse(
                 stage, PAMCode.PAM_AUTH_ERR,
-                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+                f"{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]"
             )
 
         if len(resp.reason) != 1:
-            raise RuntimeError(f'{resp.reason}: unexpected PAM response')
+            raise RuntimeError(f"{resp.reason}: unexpected PAM response")
 
         self.sent_server_first = True
         return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_CONV_AGAIN, resp.reason[0].msg)
@@ -500,30 +500,30 @@ class ScramPamAuthenticator(UserPamAuthenticator):
     def handle_final_message(self, rfc_string: str) -> TrueNASAuthenticatorResponse:
         stage = TrueNASAuthenticatorStage.AUTH
         if self.sent_server_final:
-            raise RuntimeError('Already sent ServerFinalMessage')
+            raise RuntimeError("Already sent ServerFinalMessage")
 
         if not self.sent_server_first:
-            raise RuntimeError('Did not send ServerFirstMessage')
+            raise RuntimeError("Did not send ServerFirstMessage")
 
         resp = self.auth_continue([rfc_string])
         if resp.code != PAMCode.PAM_CONV_AGAIN:
             return TrueNASAuthenticatorResponse(
                 stage, PAMCode.PAM_AUTH_ERR,
-                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+                f"{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]"
             )
 
         msg = resp.reason[0]
         if msg.msg_style != MSGStyle.PAM_TEXT_INFO:
-            raise RuntimeError(f'{msg}: unexpected PAM message')
+            raise RuntimeError(f"{msg}: unexpected PAM message")
 
         passwd = self.truenas_user_obj
         if self.dbid:
-            passwd['account_attributes'].append(AccountFlag.API_KEY)
+            passwd["account_attributes"].append(AccountFlag.API_KEY)
 
-        passwd['account_attributes'].append(AccountFlag.SCRAM)
+        passwd["account_attributes"].append(AccountFlag.SCRAM)
 
         # send final message to close out the authentication
-        self.auth_continue([''])
+        self.auth_continue([""])
 
         return TrueNASAuthenticatorResponse(
             stage=stage,
@@ -546,13 +546,13 @@ class InternalPamAuthenticator(UserPamAuthenticator):
         In TrueNAS 25.10 and earlier this would be optionally skipped in case of
         internal sessions. Performance with the new cpython extensions and PAM module design
         should be good enough to generate proper sessions for everything going through middleware. """
-        return super().authenticate(username, '')
+        return super().authenticate(username, "")
 
 
 class UnixPamAuthenticator(InternalPamAuthenticator):
     def __init__(self, *, username: str, origin: ConnectionOrigin):
         if not origin.is_unix_family:
-            raise TypeError(f'{origin}: unexpected origin for UnixPamAuthenticator')
+            raise TypeError(f"{origin}: unexpected origin for UnixPamAuthenticator")
 
         super().__init__(username=username, origin=origin)
 

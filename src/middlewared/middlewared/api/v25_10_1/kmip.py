@@ -12,9 +12,9 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'KMIPEntry', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
-    'KMIPSyncKeysArgs', 'KMIPSyncKeysResult', 'KMIPClearSyncPendingKeysArgs',
-    'KMIPClearSyncPendingKeysResult', 'KMIPUpdateArgs', 'KMIPUpdateResult'
+    "KMIPEntry", "KMIPKmipSyncPendingArgs", "KMIPKmipSyncPendingResult",
+    "KMIPSyncKeysArgs", "KMIPSyncKeysResult", "KMIPClearSyncPendingKeysArgs",
+    "KMIPClearSyncPendingKeysResult", "KMIPUpdateArgs", "KMIPUpdateResult"
 ]
 
 
@@ -35,11 +35,11 @@ class KMIPEntry(BaseModel):
     """TCP port number for the KMIP server connection."""
     server: NonEmptyString | None
     """Hostname or IP address of the KMIP server or `null` if not configured."""
-    ssl_version: Literal['PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1', 'PROTOCOL_TLSv1_2']
+    ssl_version: Literal["PROTOCOL_TLSv1", "PROTOCOL_TLSv1_1", "PROTOCOL_TLSv1_2"]
     """SSL/TLS protocol version to use for KMIP connections."""
 
 
-@single_argument_args('kmip_update')
+@single_argument_args("kmip_update")
 class KMIPUpdateArgs(KMIPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     enabled: bool
@@ -48,7 +48,7 @@ class KMIPUpdateArgs(KMIPEntry, metaclass=ForUpdateMetaclass):
     """Whether to force clear existing keys when disabling KMIP."""
     change_server: bool
     """Whether the KMIP server configuration is being changed."""
-    validate_: bool = Field(alias='validate')
+    validate_: bool = Field(alias="validate")
     """Whether to validate the KMIP server connection before saving."""
 
 

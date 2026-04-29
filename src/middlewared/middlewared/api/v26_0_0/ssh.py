@@ -2,7 +2,7 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, TcpPort, excluded_field
 
-__all__ = ['SSHEntry', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
+__all__ = ["SSHEntry", "SSHBindifaceChoicesArgs", "SSHBindifaceChoicesResult", "SSHUpdateArgs", "SSHUpdateResult",]
 
 
 class SSHEntry(BaseModel):
@@ -22,13 +22,13 @@ class SSHEntry(BaseModel):
     """Whether TCP forwarding is enabled."""
     compression: bool
     """Whether compression is enabled for SSH connections."""
-    sftp_log_level: Literal['', 'QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE', 'DEBUG', 'DEBUG2', 'DEBUG3']
+    sftp_log_level: Literal["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"]
     """Logging level for SFTP subsystem (empty string means default)."""
     sftp_log_facility: Literal[
-        '', 'DAEMON', 'USER', 'AUTH', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7'
+        "", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4", "LOCAL5", "LOCAL6", "LOCAL7"
     ]
     """Syslog facility for SFTP logging (empty string means default)."""
-    weak_ciphers: list[Literal['AES128-CBC', 'NONE']]
+    weak_ciphers: list[Literal["AES128-CBC", "NONE"]]
     """Array of weak ciphers to enable for compatibility with legacy clients."""
     options: LongString
     """Additional SSH daemon configuration options."""

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class ServiceModel(sa.Model):
-    __tablename__ = 'services_services'
+    __tablename__ = "services_services"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     srv_service = sa.Column(sa.String(120))
@@ -43,22 +43,22 @@ class ServiceService(CRUDService):
 
     class Config:
         cli_namespace = "service"
-        datastore_prefix = 'srv_'
-        datastore_extend = 'service.service_extend'
-        datastore_extend_context = 'service.service_extend_context'
+        datastore_prefix = "srv_"
+        datastore_extend = "service.service_extend"
+        datastore_extend_context = "service.service_extend_context"
         role_prefix = "SERVICE"
         entry = ServiceEntry
 
     @private
     async def service_extend_context(self, services, extra):
-        if not extra.get('include_state', True):
+        if not extra.get("include_state", True):
             return {}
 
         if not isinstance(services, list):
             services = [services]
 
         jobs = {
-            asyncio.ensure_future(self.get_state(service['service'])): service
+            asyncio.ensure_future(self.get_state(service["service"])): service
             for service in services
         }
 
@@ -77,24 +77,24 @@ class ServiceService(CRUDService):
                 try:
                     result = task.result()
                 except Exception:
-                    self.logger.warning('Task %r failed', exc_info=True)
+                    self.logger.warning("Task %r failed", exc_info=True)
 
             if result is None:
                 return None
 
             return {
-                'service': entry['service'],
-                'info': {
-                    'state': 'RUNNING' if result.running else 'STOPPED',
-                    'pids': result.pids
+                "service": entry["service"],
+                "info": {
+                    "state": "RUNNING" if result.running else "STOPPED",
+                    "pids": result.pids
                 }
             }
 
-        return {srv['service']: srv['info'] for srv in map(result, jobs) if srv is not None}
+        return {srv["service"]: srv["info"] for srv in map(result, jobs) if srv is not None}
 
     @private
     async def service_extend(self, svc, ctx):
-        return svc | ctx.get(svc['service'], {'state': 'UNKNOWN', 'pids': []})
+        return svc | ctx.get(svc["service"], {"state": "UNKNOWN", "pids": []})
 
     @filterable_api_method(item=ServiceEntry)
     async def query(self, filters, options):
@@ -106,23 +106,23 @@ class ServiceService(CRUDService):
         defaults to True.
         """
         default_options = {
-            'prefix': self._config.datastore_prefix,
-            'extend': self._config.datastore_extend,
-            'extend_context': self._config.datastore_extend_context
+            "prefix": self._config.datastore_prefix,
+            "extend": self._config.datastore_extend,
+            "extend_context": self._config.datastore_extend_context
         }
 
-        if set(filter_getattrs(filters)) & {'state', 'pids'}:
-            services = await self.middleware.call('datastore.query', 'services.services', [], default_options)
+        if set(filter_getattrs(filters)) & {"state", "pids"}:
+            services = await self.middleware.call("datastore.query", "services.services", [], default_options)
             return filter_list(services, filters, options)
 
-        return await self.middleware.call('datastore.query', 'services.services', filters, options | default_options)
+        return await self.middleware.call("datastore.query", "services.services", filters, options | default_options)
 
     @api_method(
         ServiceUpdateArgs,
         ServiceUpdateResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE',
-               'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
-        audit='Update service configuration',
+        roles=["SERVICE_WRITE", "SHARING_NFS_WRITE", "SHARING_SMB_WRITE", "SHARING_ISCSI_WRITE",
+               "SHARING_FTP_WRITE", "SHARING_NVME_TARGET_WRITE"],
+        audit="Update service configuration",
         audit_callback=True,
         pass_app=True,
     )
@@ -131,39 +131,39 @@ class ServiceService(CRUDService):
         Update service entry of `id_or_name`.
         """
         if isinstance(id_or_name, int) or id_or_name.isdigit():
-            filters = [['id', '=', int(id_or_name)]]
+            filters = [["id", "=", int(id_or_name)]]
         else:
-            filters = [['service', '=', id_or_name]]
+            filters = [["service", "=", id_or_name]]
 
-        if not (svc := await self.middleware.call('datastore.query', 'services.services', filters, {'prefix': 'srv_'})):
-            raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
+        if not (svc := await self.middleware.call("datastore.query", "services.services", filters, {"prefix": "srv_"})):
+            raise CallError(f"Service {id_or_name} not found.", errno.ENOENT)
 
         svc = svc[0]
-        audit_callback(svc['service'])
-        if not app_has_write_privilege_for_service(app, svc['service']):
+        audit_callback(svc["service"])
+        if not app_has_write_privilege_for_service(app, svc["service"]):
             raise CallError(f'{svc["service"]}: authenticated session lacks privilege to update service', errno.EPERM)
 
         rv = await self.middleware.call(
-            'datastore.update', 'services.services', svc['id'], {'srv_enable': data['enable']}
+            "datastore.update", "services.services", svc["id"], {"srv_enable": data["enable"]}
         )
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('service.notify_running', svc['service'])
+        await self.middleware.call("etc.generate", "rc")
+        await self.middleware.call("service.notify_running", svc["service"])
         return rv
 
     @api_method(
         ServiceControlArgs,
         ServiceControlResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE',
-               'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
+        roles=["SERVICE_WRITE", "SHARING_NFS_WRITE", "SHARING_SMB_WRITE", "SHARING_ISCSI_WRITE",
+               "SHARING_FTP_WRITE", "SHARING_NVME_TARGET_WRITE"],
         pass_app=True,
-        audit='Service Control:',
-        audit_extended=lambda verb, service: f'{verb} {service}',
+        audit="Service Control:",
+        audit_extended=lambda verb, service: f"{verb} {service}",
     )
-    @job(lock=lambda args: f'service_{args[1]}')
+    @job(lock=lambda args: f"service_{args[1]}")
     async def control(self, app, job, verb, service, options):
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
-            raise CallError(f'{service}: authenticated session lacks privilege to {verb.lower()} service', errno.EPERM)
+            raise CallError(f"{service}: authenticated session lacks privilege to {verb.lower()} service", errno.EPERM)
         return await getattr(self, verb.lower())(service, options)
 
     @private
@@ -171,19 +171,19 @@ class ServiceService(CRUDService):
         """
         Start the service specified by `service`.
         """
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
 
         try:
-            async with asyncio.timeout(options['timeout']):
-                await self.middleware.call_hook('service.pre_action', service, 'start', options)
+            async with asyncio.timeout(options["timeout"]):
+                await self.middleware.call_hook("service.pre_action", service, "start", options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.middleware.call("service.generate_etc", service_object)
 
                 try:
                     await service_object.check_configuration()
                 except CallError:
-                    if options['silent']:
-                        self.logger.warning('%s: service failed configuration check',
+                    if options["silent"]:
+                        self.logger.warning("%s: service failed configuration check",
                                             service_object.name, exc_info=True)
                         return False
 
@@ -193,13 +193,13 @@ class ServiceService(CRUDService):
                 try:
                     await service_object.start()
                 except ServiceActionError as e:
-                    self.logger.warning('%s: %s', service, e)
+                    self.logger.warning("%s: %s", service, e)
                 ok, failed_units = await self._check_service_health(
                     service, service_object, "start",
                 )
                 if ok:
                     await service_object.after_start()
-                    await self.middleware.call('service.notify_running', service)
+                    await self.middleware.call("service.notify_running", service)
                     if service_object.deprecated:
                         await self.call2(
                             self.s.alert.oneshot_create,
@@ -207,26 +207,26 @@ class ServiceService(CRUDService):
                         )
                     return True
 
-                await self.middleware.call('service.notify_running', service)
-                if options['silent']:
+                await self.middleware.call("service.notify_running", service)
+                if options["silent"]:
                     return False
 
                 raise CallError(
                     await service_object.failure_logs(failed_units=failed_units)
-                    or 'Service not running after start'
+                    or "Service not running after start"
                 )
         except asyncio.TimeoutError:
-            if options['silent']:
+            if options["silent"]:
                 return False
 
-            raise CallError('Timed out while starting the service', errno.ETIMEDOUT)
+            raise CallError("Timed out while starting the service", errno.ETIMEDOUT)
 
-    @api_method(ServiceStartedArgs, ServiceStartedResult, roles=['SERVICE_READ'])
+    @api_method(ServiceStartedArgs, ServiceStartedResult, roles=["SERVICE_READ"])
     async def started(self, service):
         """
         Test if service specified by `service` has been started.
         """
-        service_object: 'ServiceInterface' = await self.middleware.call('service.object', service)
+        service_object: "ServiceInterface" = await self.middleware.call("service.object", service)
 
         state = await service_object.get_state()
 
@@ -234,28 +234,28 @@ class ServiceService(CRUDService):
             if state.running:
                 await self.call2(self.s.alert.oneshot_create, DeprecatedServiceAlert(service=service_object.name))
             else:
-                await self.call2(self.s.alert.oneshot_delete, 'DeprecatedService', service_object.name)
+                await self.call2(self.s.alert.oneshot_delete, "DeprecatedService", service_object.name)
 
         return state.running
 
-    @api_method(ServiceStartedOrEnabledArgs, ServiceStartedOrEnabledResult, roles=['SERVICE_READ'])
+    @api_method(ServiceStartedOrEnabledArgs, ServiceStartedOrEnabledResult, roles=["SERVICE_READ"])
     async def started_or_enabled(self, service):
         """
         Test if service specified by `service` is started or enabled to start automatically.
         """
-        svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
-        return svc['state'] == 'RUNNING' or svc['enable']
+        svc = await self.middleware.call("service.query", [["service", "=", service]], {"get": True})
+        return svc["state"] == "RUNNING" or svc["enable"]
 
     @private
     async def stop(self, service, options):
         """
         Stop the service specified by `service`.
         """
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
 
         try:
-            async with asyncio.timeout(options['timeout']):
-                await self.middleware.call_hook('service.pre_action', service, 'stop', options)
+            async with asyncio.timeout(options["timeout"]):
+                await self.middleware.call_hook("service.pre_action", service, "stop", options)
 
                 try:
                     await service_object.before_stop()
@@ -265,42 +265,42 @@ class ServiceService(CRUDService):
                 state = await service_object.get_state()
                 if not state.running:
                     await service_object.after_stop()
-                    await self.middleware.call('service.notify_running', service)
+                    await self.middleware.call("service.notify_running", service)
                     if service_object.deprecated:
-                        await self.call2(self.s.alert.oneshot_delete, 'DeprecatedService', service_object.name)
+                        await self.call2(self.s.alert.oneshot_delete, "DeprecatedService", service_object.name)
 
                     return True
 
                 self.logger.error("Service %r running after stop", service)
-                await self.middleware.call('service.notify_running', service)
-                if options['silent']:
+                await self.middleware.call("service.notify_running", service)
+                if options["silent"]:
                     return False
-                raise CallError(await service_object.failure_logs() or 'Service still running after stop')
+                raise CallError(await service_object.failure_logs() or "Service still running after stop")
         except asyncio.TimeoutError:
-            if options['silent']:
+            if options["silent"]:
                 return False
 
-            raise CallError('Timed out while stopping the service', errno.ETIMEDOUT)
+            raise CallError("Timed out while stopping the service", errno.ETIMEDOUT)
 
     @private
     async def restart(self, service, options):
         """
         Restart the service specified by `service`.
         """
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
 
         try:
-            async with asyncio.timeout(options['timeout']):
-                await self.middleware.call_hook('service.pre_action', service, 'restart', options)
+            async with asyncio.timeout(options["timeout"]):
+                await self.middleware.call_hook("service.pre_action", service, "restart", options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.middleware.call("service.generate_etc", service_object)
 
                 return await self._restart(service, service_object)
         except asyncio.TimeoutError:
-            if options['silent']:
+            if options["silent"]:
                 return False
 
-            raise CallError('Timed out while restarting the service', errno.ETIMEDOUT)
+            raise CallError("Timed out while restarting the service", errno.ETIMEDOUT)
 
     async def _check_service_health(self, service, service_object, action):
         """Check service state and sub-unit health after a start/restart/reload.
@@ -330,14 +330,14 @@ class ServiceService(CRUDService):
             try:
                 await service_object.restart()
             except ServiceActionError as e:
-                self.logger.warning('%s: %s', service, e)
+                self.logger.warning("%s: %s", service, e)
             await service_object.after_restart()
 
             ok, failed_units = await self._check_service_health(
                 service, service_object, "restart",
             )
             if not ok:
-                await self.middleware.call('service.notify_running', service)
+                await self.middleware.call("service.notify_running", service)
                 return False
 
         else:
@@ -356,17 +356,17 @@ class ServiceService(CRUDService):
             try:
                 await service_object.start()
             except ServiceActionError as e:
-                self.logger.warning('%s: %s', service, e)
+                self.logger.warning("%s: %s", service, e)
             ok, failed_units = await self._check_service_health(
                 service, service_object, "restart",
             )
             if not ok:
-                await self.middleware.call('service.notify_running', service)
+                await self.middleware.call("service.notify_running", service)
                 return False
 
             await service_object.after_start()
 
-        await self.middleware.call('service.notify_running', service)
+        await self.middleware.call("service.notify_running", service)
         if service_object.deprecated:
             await self.call2(self.s.alert.oneshot_create, DeprecatedServiceAlert(service=service_object.name))
 
@@ -377,13 +377,13 @@ class ServiceService(CRUDService):
         """
         Reload the service specified by `service`.
         """
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
 
         try:
-            async with asyncio.timeout(options['timeout']):
-                await self.middleware.call_hook('service.pre_action', service, 'reload', options)
+            async with asyncio.timeout(options["timeout"]):
+                await self.middleware.call_hook("service.pre_action", service, "reload", options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.middleware.call("service.generate_etc", service_object)
 
                 # Check if service is running before attempting reload
                 state = await service_object.get_state()
@@ -397,7 +397,7 @@ class ServiceService(CRUDService):
                     try:
                         await service_object.reload()
                     except ServiceActionError as e:
-                        self.logger.warning('%s: %s', service, e)
+                        self.logger.warning("%s: %s", service, e)
                     await service_object.after_reload()
 
                     ok, failed_units = await self._check_service_health(
@@ -407,44 +407,44 @@ class ServiceService(CRUDService):
                 else:
                     return await self._restart(service, service_object)
         except asyncio.TimeoutError:
-            if options['silent']:
+            if options["silent"]:
                 return False
 
-            raise CallError('Timed out while reloading the service', errno.ETIMEDOUT)
+            raise CallError("Timed out while reloading the service", errno.ETIMEDOUT)
 
-    SERVICES: dict[str, 'ServiceInterface'] = {}
+    SERVICES: dict[str, "ServiceInterface"] = {}
 
     @private
-    async def register_object(self, object_: 'ServiceInterface'):
+    async def register_object(self, object_: "ServiceInterface"):
         if object_.name in self.SERVICES:
             raise CallError(f"Service object {object_.name} is already registered")
 
         self.SERVICES[object_.name] = object_
 
     @private
-    async def object(self, name: str) -> 'ServiceInterface':
+    async def object(self, name: str) -> "ServiceInterface":
         try:
             return self.SERVICES[name]
         except KeyError:
             raise MatchNotFound(name) from None
 
     @private
-    async def get_state(self, name: str) -> 'ServiceState':
-        return await (await self.middleware.call('service.object', name)).get_state()
+    async def get_state(self, name: str) -> "ServiceState":
+        return await (await self.middleware.call("service.object", name)).get_state()
 
     @private
-    async def generate_etc(self, object_: 'ServiceInterface'):
+    async def generate_etc(self, object_: "ServiceInterface"):
         for etc in await object_.select_etc():
             await self.middleware.call("etc.generate", etc)
 
     @private
     async def notify_running(self, service):
         try:
-            svc = await self.middleware.call('service.query', [('service', '=', service)], {'get': True})
+            svc = await self.middleware.call("service.query", [("service", "=", service)], {"get": True})
         except MatchNotFound:
             return
 
-        self.middleware.send_event('service.query', 'CHANGED', fields=svc)
+        self.middleware.send_event("service.query", "CHANGED", fields=svc)
 
     @private
     async def identify_process(self, procname):
@@ -455,21 +455,21 @@ class ServiceService(CRUDService):
 
     @private
     async def get_unit_state(self, service):
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
         return await service_object.get_unit_state()
 
     @private
     async def become_active(self, service):
         """During a HA failover event certain services may support this method being called
         when the node is becoming the new ACTIVE node"""
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
         return await service_object.become_active()
 
     @private
     async def become_standby(self, service):
         """During a HA failover event certain services may support this method being called
         when the node is becoming the new STANDBY node"""
-        service_object = await self.middleware.call('service.object', service)
+        service_object = await self.middleware.call("service.object", service)
         return await service_object.become_standby()
 
     @private
@@ -484,13 +484,13 @@ class ServiceService(CRUDService):
             boolean: True if process was terminated with SIGTERM, false if SIGKILL was used
         """
         if pid <= 0 or pid == os.getpid():
-            raise ValidationError('terminate_process.pid', 'Invalid PID')
+            raise ValidationError("terminate_process.pid", "Invalid PID")
         try:
             return terminate_pid(pid, timeout)
         except ProcessLookupError:
             raise ValidationError(
-                'terminate_process.pid',
-                f'No such process with PID: {pid}',
+                "terminate_process.pid",
+                f"No such process with PID: {pid}",
                 errno.ENOENT,
             )
 
@@ -508,11 +508,11 @@ class ServiceService(CRUDService):
 
 
 async def __event_service_ready(middleware, event_type, args):
-    middleware.create_task(middleware.call('service.check_deprecated_services'))
+    middleware.create_task(middleware.call("service.check_deprecated_services"))
 
 
 async def setup(middleware):
     for klass in all_services:
-        await middleware.call('service.register_object', klass(middleware))
+        await middleware.call("service.register_object", klass(middleware))
 
-    middleware.event_subscribe('system.ready', __event_service_ready)
+    middleware.event_subscribe("system.ready", __event_service_ready)

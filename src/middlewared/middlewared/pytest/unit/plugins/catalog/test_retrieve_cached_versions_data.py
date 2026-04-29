@@ -7,19 +7,19 @@ from middlewared.plugins.catalog.apps_util import retrieve_cached_versions_data
 from middlewared.service import CallError
 
 
-@pytest.mark.parametrize('file, should_work', [
+@pytest.mark.parametrize("file, should_work", [
     (
-        '''
+        """
         version: 1.0.1
-        ''',
+        """,
         False
     ),
     (
-        '''
+        """
         {
             'versions': '1.0.1'
         }
-        ''',
+        """,
         False
     ),
     (
@@ -28,7 +28,7 @@ from middlewared.service import CallError
     ),
     (
         textwrap.dedent(
-            '''
+            """
             {
                 "1.0.1": {
                     "name": "chia",
@@ -65,18 +65,18 @@ from middlewared.service import CallError
                     }
                 }
             }
-            '''
+            """
         ),
         True
     ),
 ])
-@unittest.mock.patch('builtins.open', new_callable=unittest.mock.mock_open)
+@unittest.mock.patch("builtins.open", new_callable=unittest.mock.mock_open)
 def test_retrieve_cached_versions_data(mock_file, file, should_work):
     mock_file.return_value.read.return_value = file
 
     if should_work:
-        result = retrieve_cached_versions_data('/path/to/app', 'actual-budget')
+        result = retrieve_cached_versions_data("/path/to/app", "actual-budget")
         assert isinstance(result, dict)
     else:
         with pytest.raises(CallError):
-            retrieve_cached_versions_data('/path/to/app', 'actual-budget')
+            retrieve_cached_versions_data("/path/to/app", "actual-budget")

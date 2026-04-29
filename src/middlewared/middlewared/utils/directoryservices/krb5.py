@@ -28,87 +28,87 @@ from middlewared.utils.time_utils import utc_now
 from .krb5_constants import KRB_ETYPE, KRB_Keytab, krb5ccache, krb_tkt_flag
 
 # See lib/krb5/keytab/kt_file.c in MIT kerberos source
-KRB5_KT_VNO = b'\x05\x02'  # KRB v5 keytab version 2, (last changed in 2009)
+KRB5_KT_VNO = b"\x05\x02"  # KRB v5 keytab version 2, (last changed in 2009)
 
 # Some environments may have very slow replication between KDCs. When we first join
 # we need to lock in the KDC we used to join for a period of time
 
 SAF_CACHE_TIMEOUT = timedelta(hours=1)
-SAF_CACHE_FILE = os.path.join('/root', '.KDC_SERVER_AFFINITY')
+SAF_CACHE_FILE = os.path.join("/root", ".KDC_SERVER_AFFINITY")
 GSS_LOCK = Lock()
 
 
 # The following schemas are used for validation of klist / ktutil_list output
 KLIST_ENTRY_SCHEMA = {
-    'type': 'object',
-    'properties': {
-        'issued': {'type': 'integer'},
-        'expires': {'type': 'integer'},
-        'renew_until': {'type': 'integer'},
-        'client': {'type': 'string'},
-        'server': {'type': 'string'},
-        'etype': {'type': 'string'},
-        'flags': {
-            'type': 'array',
-            'items': {
-                'type': 'string',
-                'enum': [k.name for k in krb_tkt_flag],
-                'uniqueItems': True
+    "type": "object",
+    "properties": {
+        "issued": {"type": "integer"},
+        "expires": {"type": "integer"},
+        "renew_until": {"type": "integer"},
+        "client": {"type": "string"},
+        "server": {"type": "string"},
+        "etype": {"type": "string"},
+        "flags": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [k.name for k in krb_tkt_flag],
+                "uniqueItems": True
             }
         }
     },
-    'required': [
-        'issued', 'expires', 'renew_until',
-        'client', 'server', 'etype', 'flags'
+    "required": [
+        "issued", "expires", "renew_until",
+        "client", "server", "etype", "flags"
     ],
-    'additionalProperties': False
+    "additionalProperties": False
 }
 
 KLIST_OUTPUT_SCHEMA = {
-    'type': 'object',
-    'properties': {
-        'default_principal': {'type': 'string'},
-        'ticket_cache': {
-            'type': 'object',
-            'properties': {
-                'type': {'type': 'string'},
-                'name': {'type': 'string'}
+    "type": "object",
+    "properties": {
+        "default_principal": {"type": "string"},
+        "ticket_cache": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "name": {"type": "string"}
             },
-            'required': ['type', 'name']
+            "required": ["type", "name"]
         },
-        'tickets': {
-            'type': 'array',
-            'items': KLIST_ENTRY_SCHEMA,
-            'uniqueItems': True
+        "tickets": {
+            "type": "array",
+            "items": KLIST_ENTRY_SCHEMA,
+            "uniqueItems": True
         },
     },
-    'required': ['default_principal', 'ticket_cache', 'tickets']
+    "required": ["default_principal", "ticket_cache", "tickets"]
 }
 
 KTUTIL_LIST_ENTRY_SCHEMA = {
-    'type': 'object',
-    'properties': {
-        'slot': {'type': 'integer'},
-        'kvno': {'type': 'integer'},
-        'principal': {'type': 'string'},
-        'etype': {
-            'type': 'string',
-            'enum': [k.value for k in KRB_ETYPE],
-            'uniqueItems': True
+    "type": "object",
+    "properties": {
+        "slot": {"type": "integer"},
+        "kvno": {"type": "integer"},
+        "principal": {"type": "string"},
+        "etype": {
+            "type": "string",
+            "enum": [k.value for k in KRB_ETYPE],
+            "uniqueItems": True
         },
-        'etype_deprecated': {'type': 'boolean'},
-        'date': {'type': 'integer'},
+        "etype_deprecated": {"type": "boolean"},
+        "date": {"type": "integer"},
     },
-    'required': [
-        'slot', 'kvno', 'etype', 'etype_deprecated', 'date'
+    "required": [
+        "slot", "kvno", "etype", "etype_deprecated", "date"
     ],
-    'additionalProperties': False
+    "additionalProperties": False
 }
 
 KTUTIL_LIST_OUTPUT_SCHEMA = {
-    'type': 'array',
-    'items': KTUTIL_LIST_ENTRY_SCHEMA,
-    'uniqueItems': True
+    "type": "array",
+    "items": KTUTIL_LIST_ENTRY_SCHEMA,
+    "uniqueItems": True
 }
 
 
@@ -145,15 +145,15 @@ def parse_klist_output(klistbuf: str) -> list:
 
     parsed_klist = []
     for idx, e in enumerate(tickets):
-        if e.startswith('Ticket cache'):
-            cache_type, cache_name = e.strip('Ticket cache: ').split(':', 1)
+        if e.startswith("Ticket cache"):
+            cache_type, cache_name = e.strip("Ticket cache: ").split(":", 1)
             ticket_cache = {
-                'type': cache_type,
-                'name': cache_name.strip()
+                "type": cache_type,
+                "name": cache_name.strip()
             }
 
-        if e.startswith('Default'):
-            default_principal = (e.split(':')[1]).strip()
+        if e.startswith("Default"):
+            default_principal = (e.split(":")[1]).strip()
             continue
 
         if e and e[0].isdigit():
@@ -163,7 +163,7 @@ def parse_klist_output(klistbuf: str) -> list:
             client = default_principal
             server = d[2]
             renew_until = 0
-            flags = ''
+            flags = ""
             etype = None
 
             for i in range(idx + 1, idx + 3):
@@ -178,7 +178,7 @@ def parse_klist_output(klistbuf: str) -> list:
                 if tickets[i].startswith("\trenew"):
                     ts, flags = tickets[i].split(",")
                     renew_until = int(time.mktime(time.strptime(
-                        ts.strip('\trenew until '), "%m/%d/%y %H:%M:%S"
+                        ts.strip("\trenew until "), "%m/%d/%y %H:%M:%S"
                     )))
                     flags = flags.split("Flags: ")[1]
                     continue
@@ -188,24 +188,24 @@ def parse_klist_output(klistbuf: str) -> list:
                 etype = extra[1].strip()
 
             parsed_klist.append({
-                'issued': issued,
-                'expires': expires,
-                'renew_until': renew_until,
-                'client': client,
-                'server': server,
-                'etype': etype,
-                'flags': [krb_tkt_flag(f).name for f in flags],
+                "issued": issued,
+                "expires": expires,
+                "renew_until": renew_until,
+                "client": client,
+                "server": server,
+                "etype": etype,
+                "flags": [krb_tkt_flag(f).name for f in flags],
             })
 
     return {
-        'default_principal': default_principal,
-        'ticket_cache': ticket_cache,
-        'tickets': parsed_klist,
+        "default_principal": default_principal,
+        "ticket_cache": ticket_cache,
+        "tickets": parsed_klist,
     }
 
 
 def klist_impl(ccache_path: str) -> list:
-    kl = subprocess.run(['klist', '-ef', ccache_path], capture_output=True)
+    kl = subprocess.run(["klist", "-ef", ccache_path], capture_output=True)
     return parse_klist_output(kl.stdout.decode())
 
 
@@ -248,9 +248,9 @@ def gss_acquire_cred_user(
 
     if ccache_path is not None:
         gssapi.raw.store_cred_into(
-            {'ccache': ccache_path},
+            {"ccache": ccache_path},
             cr.creds,
-            usage='initiate',
+            usage="initiate",
             mech=gssapi.raw.MechType.kerberos,
             set_default=True, overwrite=True
         )
@@ -281,14 +281,14 @@ def gss_acquire_cred_principal(
         gssapi.exceptions.BadNameError -- user supplied invalid kerberos principal name
     """
     gss_name = gssapi.Name(principal_name, gssapi.NameType.kerberos_principal)
-    store = {'client_keytab': KRB_Keytab.SYSTEM.value}
+    store = {"client_keytab": KRB_Keytab.SYSTEM.value}
     if ccache_path is not None:
-        store['ccache'] = ccache_path
+        store["ccache"] = ccache_path
 
     cr = gssapi.Credentials(
         name=gss_name,
         store=store,
-        usage='initiate',
+        usage="initiate",
         lifetime=lifetime,
     )
 
@@ -310,12 +310,12 @@ def gss_get_current_cred(
     None.
     """
     try:
-        cred = gssapi.Credentials(store={'ccache': ccache_path}, usage='initiate')
+        cred = gssapi.Credentials(store={"ccache": ccache_path}, usage="initiate")
     except gssapi.exceptions.MissingCredentialsError:
         if not raise_error:
             return None
 
-        raise CallError(f'{ccache_path}: Credentials cache does not exist', errno.ENOENT)
+        raise CallError(f"{ccache_path}: Credentials cache does not exist", errno.ENOENT)
 
     try:
         cred.inquire()
@@ -329,7 +329,7 @@ def gss_get_current_cred(
         if not raise_error:
             return None
 
-        raise CallError('Kerberos ticket is expired', errno.ENOKEY)
+        raise CallError("Kerberos ticket is expired", errno.ENOKEY)
 
     except Exception as e:
         if not raise_error:
@@ -343,23 +343,23 @@ def gss_get_current_cred(
 @gssapi_synchronized
 def gss_dump_cred(cred: gssapi.Credentials) -> dict:
     if not isinstance(cred, gssapi.Credentials):
-        raise TypeError(f'{type(cred)}: not gssapi.Credentials type')
+        raise TypeError(f"{type(cred)}: not gssapi.Credentials type")
 
     match cred.name.name_type:
         case gssapi.NameType.user:
-            name_type_str = 'USER'
+            name_type_str = "USER"
         case gssapi.NameType.kerberos_principal:
-            name_type_str = 'KERBEROS_PRINCIPAL'
+            name_type_str = "KERBEROS_PRINCIPAL"
         case _:
             # We only expect to have USER and KERBEROS principals
             # we'll dump the OID
-            name_type_str = f'UNEXPECTED NAME TYPE: {cred.name.name_type}'
+            name_type_str = f"UNEXPECTED NAME TYPE: {cred.name.name_type}"
 
     return {
-        'name': str(cred.name),
-        'name_type': name_type_str,
-        'name_type_oid': cred.name.name_type.dotted_form,
-        'lifetime': cred.lifetime,
+        "name": str(cred.name),
+        "name_type": name_type_str,
+        "name_type_oid": cred.name.name_type.dotted_form,
+        "lifetime": cred.lifetime,
     }
 
 
@@ -381,12 +381,12 @@ def parse_keytab(keytab_output: list) -> list:
     for idx, line in enumerate(keytab_output):
         fields = line.split()
         keytab_entries.append({
-            'slot': idx + 1,
-            'kvno': int(fields[0]),
-            'principal': fields[3],
-            'etype': fields[4][1:-1].strip('DEPRECATED:'),
-            'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
-            'date': int(time.mktime(time.strptime(fields[1], '%m/%d/%y'))),
+            "slot": idx + 1,
+            "kvno": int(fields[0]),
+            "principal": fields[3],
+            "etype": fields[4][1:-1].strip("DEPRECATED:"),
+            "etype_deprecated": fields[4][1:].startswith("DEPRECATED"),
+            "date": int(time.mktime(time.strptime(fields[1], "%m/%d/%y"))),
         })
 
     return keytab_entries
@@ -399,7 +399,7 @@ def ktutil_list_impl(keytab_file: str = KRB_Keytab.SYSTEM.value) -> list:
     `keytab_file` - path to kerberos keytab
     """
     kt_output = subprocess.run(
-        ['klist', '-ket', keytab_file],
+        ["klist", "-ket", keytab_file],
         capture_output=True
     )
 
@@ -419,11 +419,11 @@ def keytab_services(keytab_file: str) -> list:
     """
     keytab_data = filter_list(
         ktutil_list_impl(keytab_file),
-        [['principal', 'rin', '/']]
+        [["principal", "rin", "/"]]
     )
     services = []
     for entry in keytab_data:
-        services.append(entry['principal'].split('/')[0])
+        services.append(entry["principal"].split("/")[0])
 
     return services
 
@@ -440,7 +440,7 @@ def extract_from_keytab(
     """
     kt_list = ktutil_list_impl(keytab_file)
     to_keep = filter_list(kt_list, filters)
-    to_remove = [entry['slot'] for entry in kt_list if entry not in to_keep]
+    to_remove = [entry["slot"] for entry in kt_list if entry not in to_keep]
 
     if len(kt_list) == len(to_remove):
         # Let caller know that keytab would be empty. If we were to follow
@@ -450,14 +450,14 @@ def extract_from_keytab(
 
     tmp_keytab = __tmp_krb5_keytab()
 
-    rkt = f'rkt {keytab_file}'
-    wkt = f'wkt {tmp_keytab}'
+    rkt = f"rkt {keytab_file}"
+    wkt = f"wkt {tmp_keytab}"
 
-    delents = "\n".join(f'delent {slot}' for slot in reversed(to_remove))
+    delents = "\n".join(f"delent {slot}" for slot in reversed(to_remove))
 
     ktutil_op = subprocess.run(
-        ['ktutil'],
-        input=f'{rkt}\n{delents}\n{wkt}\n'.encode(),
+        ["ktutil"],
+        input=f"{rkt}\n{delents}\n{wkt}\n".encode(),
         check=False, capture_output=True
     )
 
@@ -468,9 +468,9 @@ def extract_from_keytab(
         raise RuntimeError(ktutil_op.stderr.decode())
 
     if len(ktutil_list_impl(tmp_keytab)) != len(to_keep):
-        raise RuntimeError('Temporary keytab did not contain correct number of entries')
+        raise RuntimeError("Temporary keytab did not contain correct number of entries")
 
-    with open(tmp_keytab, 'rb') as f:
+    with open(tmp_keytab, "rb") as f:
         kt_bytes = f.read()
 
     os.remove(tmp_keytab)
@@ -490,7 +490,7 @@ def concatenate_keytab_data(keytab_data: list[bytes]) -> bytes:
         for data in keytab_data:
             # then write each keytab in the list to temporary files
             with temporary_keytab() as kt:
-                with open(kt, 'wb') as f:
+                with open(kt, "wb") as f:
                     f.write(data)
                     f.flush()
 
@@ -498,32 +498,32 @@ def concatenate_keytab_data(keytab_data: list[bytes]) -> bytes:
                 # ktutil read the data, then write it. This validates that
                 # the data is actually a keberos keytab.
                 kt_copy = subprocess.run(
-                    ['ktutil'],
-                    input=f'rkt {kt}\nwkt {unified}'.encode(),
+                    ["ktutil"],
+                    input=f"rkt {kt}\nwkt {unified}".encode(),
                     capture_output=True
                 )
                 if kt_copy.stderr:
-                    raise RuntimeError('Failed to concatenate keytabs: %s',
+                    raise RuntimeError("Failed to concatenate keytabs: %s",
                                        kt_copy.stderr.decode())
 
         # get bytes of the unified keytab before allowing contextmanager
         # to delete it
-        with open(unified, 'rb') as f:
+        with open(unified, "rb") as f:
             return f.read()
 
 
 def middleware_ccache_uid(data: dict) -> int:
-    cc_uid = data.get('ccache_uid', 0)
+    cc_uid = data.get("ccache_uid", 0)
     if not isinstance(cc_uid, int):
-        raise TypeError(f'{type(cc_uid)}: expected ccache_uid to be an int')
+        raise TypeError(f"{type(cc_uid)}: expected ccache_uid to be an int")
 
     return cc_uid
 
 
 def middleware_ccache_type(data: dict) -> krb5ccache:
-    cc = data.get('ccache', krb5ccache.SYSTEM.name)
+    cc = data.get("ccache", krb5ccache.SYSTEM.name)
     if not isinstance(cc, str):
-        raise TypeError(f'{type(cc)}: expected ccache to be string')
+        raise TypeError(f"{type(cc)}: expected ccache to be string")
 
     return krb5ccache[cc]
 
@@ -549,7 +549,7 @@ def middleware_ccache_path(data: dict) -> str:
 
 def kdc_saf_cache_get() -> str | None:
     try:
-        with open(SAF_CACHE_FILE, 'r') as f:
+        with open(SAF_CACHE_FILE, "r") as f:
             kdc, timeout = f.read().split()
             if utc_now(naive=False).timestamp() > int(timeout.strip()):
                 # Expired
@@ -562,10 +562,10 @@ def kdc_saf_cache_get() -> str | None:
 
 def kdc_saf_cache_set(kdc: str) -> None:
     if not isinstance(kdc, str):
-        raise TypeError(f'{kdc}: not a string')
+        raise TypeError(f"{kdc}: not a string")
 
     expiration = int((utc_now(naive=False) + SAF_CACHE_TIMEOUT).timestamp())
-    write_if_changed(SAF_CACHE_FILE, f'{kdc} {expiration}')
+    write_if_changed(SAF_CACHE_FILE, f"{kdc} {expiration}")
 
 
 def kdc_saf_cache_remove() -> None:

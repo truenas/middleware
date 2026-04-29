@@ -6,7 +6,7 @@ from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString, 
 from middlewared.api.current import ECCurves
 
 
-@single_argument_args('certificate_create_acme')
+@single_argument_args("certificate_create_acme")
 class CertificateCreateACMEArgs(BaseModel):
     name: NonEmptyString
     tos: bool
@@ -16,13 +16,13 @@ class CertificateCreateACMEArgs(BaseModel):
     dns_mapping: dict[str, int]
 
 
-@single_argument_args('certificate_create_csr')
+@single_argument_args("certificate_create_csr")
 class CertificateCreateCSRArgs(BaseModel):
     name: NonEmptyString
     # Key specific
     key_length: int | None = None
-    key_type: Literal['RSA', 'EC'] = 'RSA'
-    ec_curve: Literal[tuple(s.value for s in ECCurves)] = 'SECP384R1'
+    key_type: Literal["RSA", "EC"] = "RSA"
+    ec_curve: Literal[tuple(s.value for s in ECCurves)] = "SECP384R1"
     passphrase: NonEmptyString | None = None
     # CSR specific
     city: NonEmptyString | None = None
@@ -32,12 +32,12 @@ class CertificateCreateCSRArgs(BaseModel):
     organization: NonEmptyString | None = None
     organizational_unit: NonEmptyString | None = None
     state: NonEmptyString | None = None
-    digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512']
+    digest_algorithm: Literal["SHA224", "SHA256", "SHA384", "SHA512"]
     cert_extensions: dict = Field(default_factory=dict)  # FIXME: Improve this
     san: list[NonEmptyString] = Field(min_length=1)
 
 
-@single_argument_args('certificate_create_csr_imported')
+@single_argument_args("certificate_create_csr_imported")
 class CertificateCreateImportedCSRArgs(BaseModel):
     name: NonEmptyString
     CSR: LongNonEmptyString
@@ -45,7 +45,7 @@ class CertificateCreateImportedCSRArgs(BaseModel):
     passphrase: NonEmptyString | None = None
 
 
-@single_argument_args('certificate_create_certificate_imported')
+@single_argument_args("certificate_create_certificate_imported")
 class CertificateCreateImportedCertificateArgs(BaseModel):
     name: NonEmptyString
     certificate: LongNonEmptyString

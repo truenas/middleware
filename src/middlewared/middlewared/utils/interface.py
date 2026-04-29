@@ -25,8 +25,8 @@ def wait_on_interface_link_state_up(interface: str) -> bool:
     time_waited = 0
     while time_waited < IFACE_LINK_STATE_MAX_WAIT:
         with contextlib.suppress(FileNotFoundError):
-            with open(os.path.join('/sys/class/net', interface, 'operstate'), 'r') as f:
-                if f.read().strip().lower() == 'up':
+            with open(os.path.join("/sys/class/net", interface, "operstate"), "r") as f:
+                if f.read().strip().lower() == "up":
                     return True
 
         time.sleep(sleep_interval)

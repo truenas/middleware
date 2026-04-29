@@ -23,14 +23,14 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('UPSService',)
+__all__ = ("UPSService",)
 
 
 class UPSService(SystemServiceService[UPSEntry]):
 
     class Config:
-        cli_namespace = 'service.ups'
-        role_prefix = 'SYSTEM_GENERAL'
+        cli_namespace = "service.ups"
+        role_prefix = "SYSTEM_GENERAL"
         entry = UPSEntry
         generic = True
 
@@ -58,20 +58,20 @@ class UPSService(SystemServiceService[UPSEntry]):
         """
         return await self._service_part.do_update(data)
 
-    @api_method(UPSDriverChoicesArgs, UPSDriverChoicesResult, check_annotations=True, roles=['SYSTEM_GENERAL_READ'])
+    @api_method(UPSDriverChoicesArgs, UPSDriverChoicesResult, check_annotations=True, roles=["SYSTEM_GENERAL_READ"])
     def driver_choices(self) -> dict[str, str]:
         """
         Returns choices of UPS drivers supported by the system.
         """
         return driver_choices()
 
-    @api_method(UPSPortChoicesArgs, UPSPortChoicesResult, roles=['SYSTEM_GENERAL_READ'], check_annotations=True)
+    @api_method(UPSPortChoicesArgs, UPSPortChoicesResult, roles=["SYSTEM_GENERAL_READ"], check_annotations=True)
     def port_choices(self) -> list[str]:
         """
         Returns available UPS device ports for the system (serial ports, USB HID devices, and "auto").
         """
-        adv_config = self.middleware.call_sync('system.advanced.config')
-        return port_choices(adv_config['serialconsole'], adv_config['serialport'])
+        adv_config = self.middleware.call_sync("system.advanced.config")
+        return port_choices(adv_config["serialconsole"], adv_config["serialport"])
 
     @private
     async def dismiss_alerts(self) -> None:
@@ -85,4 +85,4 @@ class UPSService(SystemServiceService[UPSEntry]):
 
 async def setup(middleware: Middleware) -> None:
     # Let's delete all UPS related alerts when starting middlewared ensuring we don't have any leftovers
-    await middleware.call('ups.dismiss_alerts')
+    await middleware.call("ups.dismiss_alerts")

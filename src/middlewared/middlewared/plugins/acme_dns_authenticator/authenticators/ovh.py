@@ -33,40 +33,40 @@ class _OVHLexiconClient:
         config_resolver_cls: Any = ConfigResolver
         resolver = config_resolver_cls()
         return resolver.with_dict({
-            'provider_name': 'ovh',
-            'domain': domain,
-            'delegated': domain,  # Bypass Lexicon subdomain resolution
-            'ttl': self.ttl,
-            'ovh': {
-                'auth_entrypoint': self.endpoint,
-                'auth_application_key': self.application_key,
-                'auth_application_secret': self.application_secret,
-                'auth_consumer_key': self.consumer_key
+            "provider_name": "ovh",
+            "domain": domain,
+            "delegated": domain,  # Bypass Lexicon subdomain resolution
+            "ttl": self.ttl,
+            "ovh": {
+                "auth_entrypoint": self.endpoint,
+                "auth_application_key": self.application_key,
+                "auth_application_secret": self.application_secret,
+                "auth_consumer_key": self.consumer_key
             }
         })
 
     def add_txt_record(self, domain: str, validation_name: str, validation_content: str) -> None:
         """Add a TXT record using the OVH API via Lexicon"""
         with Client(self._get_config(domain)) as operations:
-            operations.create_record(rtype='TXT', name=validation_name, content=validation_content)
+            operations.create_record(rtype="TXT", name=validation_name, content=validation_content)
 
     def del_txt_record(self, domain: str, validation_name: str, validation_content: str) -> None:
         """Delete a TXT record using the OVH API via Lexicon"""
         with Client(self._get_config(domain)) as operations:
-            operations.delete_record(rtype='TXT', name=validation_name, content=validation_content)
+            operations.delete_record(rtype="TXT", name=validation_name, content=validation_content)
 
 
 class OVHAuthenticator(Authenticator):
 
-    NAME = 'OVH'
+    NAME = "OVH"
     PROPAGATION_DELAY = 60
     SCHEMA_MODEL = OVHSchemaArgs
 
     def initialize_credentials(self) -> None:
-        self.application_key: str = self.attributes['application_key']
-        self.application_secret: str = self.attributes['application_secret']
-        self.consumer_key: str = self.attributes['consumer_key']
-        self.endpoint: str = self.attributes['endpoint']
+        self.application_key: str = self.attributes["application_key"]
+        self.application_secret: str = self.attributes["application_secret"]
+        self.consumer_key: str = self.attributes["consumer_key"]
+        self.endpoint: str = self.attributes["endpoint"]
 
     @staticmethod
     async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:

@@ -21,7 +21,7 @@ def _normalize_dict(dict_in) -> None:
         if isinstance(value, dict):
             _normalize_dict(value)
 
-        dict_in[key.replace(' ', '_').lower()] = value
+        dict_in[key.replace(" ", "_").lower()] = value
 
     return dict_in
 
@@ -50,11 +50,11 @@ def get_domain_info(domain: str, retry: bool = False) -> dict:
     """
     netads = subprocess.run([
         SMBCmd.NET.value,
-        '-d', '0',
-        '-S', domain,
-        '--json',
-        '--option', f'realm={domain}',
-        'ads', 'info'
+        "-d", "0",
+        "-S", domain,
+        "--json",
+        "--option", f"realm={domain}",
+        "ads", "info"
     ], check=False, capture_output=True)
 
     if netads.returncode == 0:
@@ -70,8 +70,8 @@ def get_domain_info(domain: str, retry: bool = False) -> dict:
             return get_domain_info(domain, False)
 
         raise CallError(
-            f'{domain}: Failed to discover Active Directory Domain Controller '
-            'for domain. This may indicate a DNS misconfiguration.',
+            f"{domain}: Failed to discover Active Directory Domain Controller "
+            "for domain. This may indicate a DNS misconfiguration.",
             errno.ENOENT
         )
 
@@ -83,21 +83,21 @@ def lookup_dc(domain_name: str, server: str | None) -> dict:
     (may be IP address or FQDN or workgroup) or domain itself (if unspecified) """
     cmd = [
         SMBCmd.NET.value,
-        '-S', domain_name,
-        '--json',
-        '--realm', domain_name,
+        "-S", domain_name,
+        "--json",
+        "--realm", domain_name,
     ]
 
     if server:
-        cmd.extend(['--server', server])
+        cmd.extend(["--server", server])
 
-    cmd.extend(['ads', 'lookup'])
+    cmd.extend(["ads", "lookup"])
 
     lookup = subprocess.run(cmd, check=False, capture_output=True)
     if lookup.returncode != 0:
         raise CallError(
-            'Failed to look up Domain Controller information: '
-            f'{lookup.stderr.decode().strip()}'
+            "Failed to look up Domain Controller information: "
+            f"{lookup.stderr.decode().strip()}"
         )
 
     data = json.loads(lookup.stdout.decode())
@@ -106,10 +106,10 @@ def lookup_dc(domain_name: str, server: str | None) -> dict:
 
 def get_machine_account_status(target_dc: str = None) -> dict:
     def parse_result(data, out):
-        if ':' not in data:
+        if ":" not in data:
             return
 
-        key, value = data.split(':', 1)
+        key, value = data.split(":", 1)
         if key not in out:
             # This is not a line we're interested in
             return
@@ -123,29 +123,29 @@ def get_machine_account_status(target_dc: str = None) -> dict:
 
         return
 
-    cmd = [SMBCmd.NET.value, '-P', 'ads', 'status']
+    cmd = [SMBCmd.NET.value, "-P", "ads", "status"]
     if target_dc:
-        cmd.extend(['-S', target_dc])
+        cmd.extend(["-S", target_dc])
 
     results = subprocess.run(cmd, capture_output=True)
     if results.returncode != 0:
         raise CallError(
-            'Failed to retrieve machine account status: '
-            f'{results.stderr.decode().strip()}'
+            "Failed to retrieve machine account status: "
+            f"{results.stderr.decode().strip()}"
         )
 
     output = {
-        'userAccountControl': -1,
-        'objectSid': None,
-        'sAMAccountName': None,
-        'dNSHostName': None,
-        'servicePrincipalName': [],
-        'msDS-SupportedEncryptionTypes': -1
+        "userAccountControl": -1,
+        "objectSid": None,
+        "sAMAccountName": None,
+        "dNSHostName": None,
+        "servicePrincipalName": [],
+        "msDS-SupportedEncryptionTypes": -1
     }
 
     for line in results.stdout.decode().splitlines():
         parse_result(line, output)
 
-    output['userAccountControl'] = ADUserAccountControl.parse_flags(output['userAccountControl'])
-    output['msDS-SupportedEncryptionTypes'] = ADEncryptionTypes.parse_flags(output['msDS-SupportedEncryptionTypes'])
+    output["userAccountControl"] = ADUserAccountControl.parse_flags(output["userAccountControl"])
+    output["msDS-SupportedEncryptionTypes"] = ADEncryptionTypes.parse_flags(output["msDS-SupportedEncryptionTypes"])
     return output

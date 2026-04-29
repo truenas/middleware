@@ -14,16 +14,16 @@ from middlewared.service import CallError, Service, private
 
 class GetRemoteAclOpts(BaseModel):
     use_kerberos: bool = False
-    output_format: Literal['SMB', 'LOCAL'] = 'SMB'
+    output_format: Literal["SMB", "LOCAL"] = "SMB"
 
 
-@single_argument_args('get_remote_acl')
+@single_argument_args("get_remote_acl")
 class GetRemoteAclArgs(BaseModel):
     server: NonEmptyString
     share: NonEmptyString
     username: NonEmptyString
     password: Secret[NonEmptyString]
-    path: NonEmptyString = '\\'
+    path: NonEmptyString = "\\"
     options: GetRemoteAclOpts = Field(default_factory=GetRemoteAclOpts)
 
 
@@ -168,8 +168,8 @@ class ACLPerms(enum.Enum):
 class SMBService(Service):
 
     class Config:
-        service = 'cifs'
-        service_verb = 'restart'
+        service = "cifs"
+        service_verb = "restart"
 
     @api_method(GetRemoteAclArgs, GetRemoteAclResult, private=True)
     def get_remote_acl(self, data):
@@ -193,44 +193,44 @@ class SMBService(Service):
         which will present the information as a Windows SD or 'LOCAL', which formats
         the ACL information according local filesystem of the TrueNAS server.
         """
-        if data['options']['use_kerberos']:
+        if data["options"]["use_kerberos"]:
             raise CallError("kerberos authentication for this function is not "
                             "currently supported.", errno.EOPNOTSUPP)
 
         sc = subprocess.run([
             SMBCmd.SMBCACLS.value,
             f'//{data["server"]}/{data["share"]}',
-            data['path'], '-j', '-U', data['username']],
+            data["path"], "-j", "-U", data["username"]],
             capture_output=True,
             check=False,
-            input=data['password'].encode()
+            input=data["password"].encode()
         )
         if sc.returncode != 0:
             raise CallError("Failed to retrieve remote SMB server ACL: "
                             f"{sc.stderr.decode().strip()}")
         smb_sd = json.loads(sc.stdout.decode().splitlines()[1])
-        if data['options']['output_format'] == 'SMB':
+        if data["options"]["output_format"] == "SMB":
             return {"acl_type": "SMB", "acl_data": smb_sd}
 
-        return self.middleware.call_sync('smb.convert_acl', ACLType.SMB.value, smb_sd)
+        return self.middleware.call_sync("smb.convert_acl", ACLType.SMB.value, smb_sd)
 
     @private
     async def smb_to_nfsv4(self, sd, ignore_errors=False):
         acl_out = {"uid": None, "gid": None, "acl": []}
-        idmaps = await self.middleware.call('idmap.convert_sids', [
-            entry['trustee']['sid'] for entry in sd['dacl']
+        idmaps = await self.middleware.call("idmap.convert_sids", [
+            entry["trustee"]["sid"] for entry in sd["dacl"]
         ])
-        for x in sd['dacl']:
-            entry = {'tag': None, 'id': None, 'type': None, 'perms': {}, 'flags': {}}
-            entry['perms'] = ACLPerms.convert('SMB', x['access_mask']['special'])
-            entry['flags'] = ACLFlags.convert('SMB', x['flags'])
-            entry['type'] = "ALLOW" if x['type'] == "ALLOWED" else "DENY"
+        for x in sd["dacl"]:
+            entry = {"tag": None, "id": None, "type": None, "perms": {}, "flags": {}}
+            entry["perms"] = ACLPerms.convert("SMB", x["access_mask"]["special"])
+            entry["flags"] = ACLFlags.convert("SMB", x["flags"])
+            entry["type"] = "ALLOW" if x["type"] == "ALLOWED" else "DENY"
 
-            if x['trustee']['sid'] in ACLPrincipal.sids():
-                aclp = ACLPrincipal.from_sid(x['trustee']['sid'])
-                entry['tag'] = aclp.to_nfsv4()
+            if x["trustee"]["sid"] in ACLPrincipal.sids():
+                aclp = ACLPrincipal.from_sid(x["trustee"]["sid"])
+                entry["tag"] = aclp.to_nfsv4()
             else:
-                trustee = idmaps['mapped'].get(x['trustee']['sid'])
+                trustee = idmaps["mapped"].get(x["trustee"]["sid"])
                 if trustee is None:
                     if not ignore_errors:
                         raise CallError(f"Failed to convert SID [{x['trustee']['sid']}] "
@@ -240,10 +240,10 @@ class SMBService(Service):
                                       f"to ID. Dropping entry from ACL: {x}.")
                     continue
 
-                entry['tag'] = "USER" if trustee['id_type'] == "USER" else "GROUP"
-                entry['id'] = trustee['id']
+                entry["tag"] = "USER" if trustee["id_type"] == "USER" else "GROUP"
+                entry["id"] = trustee["id"]
 
-            acl_out['acl'].append(entry)
+            acl_out["acl"].append(entry)
 
         return {"acl_type": "NFSV4", "acl_data": acl_out}
 
@@ -252,16 +252,16 @@ class SMBService(Service):
         out = {"sid": None, "name": None}
         if unixid is None:
             aclp = ACLPrincipal.from_nfsv4(id_type)
-            out['sid'] = aclp.to_sid()
-            out['name'] = aclp.to_smb()
+            out["sid"] = aclp.to_sid()
+            out["name"] = aclp.to_smb()
         else:
-            idmaps = await self.middleware.call('idmap.convert_unixids', [{
-                'id_type': id_type, 'id': unixid
+            idmaps = await self.middleware.call("idmap.convert_unixids", [{
+                "id_type": id_type, "id": unixid
             }])
             key = f'{"UID" if id_type == "USER" else "GID"}:{id}'
-            if (entry := idmaps['mapped'].get(key)):
-                out['sid'] = entry['sid']
-                out['name'] = entry['name']
+            if (entry := idmaps["mapped"].get(key)):
+                out["sid"] = entry["sid"]
+                out["name"] = entry["name"]
 
         return out
 
@@ -330,13 +330,13 @@ class SMBService(Service):
                     "INHERIT_ONLY": False,
                     "NO_PROPAGATE_INHERIT": False
                 })
-                sd_out['dacl'].append(entry)
-                sd_out['dacl'].append(dup_entry)
+                sd_out["dacl"].append(entry)
+                sd_out["dacl"].append(dup_entry)
             else:
-                sd_out['dacl'].append(entry)
+                sd_out["dacl"].append(entry)
 
         if not inherited_present:
-            sd_out['control']['DACL Protected'] = True
+            sd_out["control"]["DACL Protected"] = True
 
         return {"acl_type": "SMB", "acl_data": sd_out}
 

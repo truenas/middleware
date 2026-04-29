@@ -102,61 +102,61 @@ def parse_zfs_event(data: dict[str, typing.Any]) -> ZfsEvent | None:
     Returns:
         A typed ZfsEvent subclass instance, or None if the event class is not recognized
     """
-    event_class = data.get('class')
+    event_class = data.get("class")
     if not event_class:
         return None
 
     match event_class:
-        case 'sysevent.fs.zfs.resilver_start':
-            if pool := data.get('pool'):
+        case "sysevent.fs.zfs.resilver_start":
+            if pool := data.get("pool"):
                 return ZfsResilverStartEvent(class_=event_class, pool=pool)
 
-        case 'sysevent.fs.zfs.resilver_finish':
-            if pool := data.get('pool'):
+        case "sysevent.fs.zfs.resilver_finish":
+            if pool := data.get("pool"):
                 return ZfsResilverFinishEvent(class_=event_class, pool=pool)
 
-        case 'sysevent.fs.zfs.scrub_start':
-            if pool := data.get('pool'):
+        case "sysevent.fs.zfs.scrub_start":
+            if pool := data.get("pool"):
                 return ZfsScrubStartEvent(class_=event_class, pool=pool)
 
-        case 'sysevent.fs.zfs.scrub_finish':
-            if pool := data.get('pool'):
+        case "sysevent.fs.zfs.scrub_finish":
+            if pool := data.get("pool"):
                 return ZfsScrubFinishEvent(class_=event_class, pool=pool)
 
-        case 'sysevent.fs.zfs.scrub_abort':
-            if pool := data.get('pool'):
+        case "sysevent.fs.zfs.scrub_abort":
+            if pool := data.get("pool"):
                 return ZfsScrubAbortEvent(class_=event_class, pool=pool)
 
-        case 'resource.fs.zfs.statechange':
-            if pool := data.get('pool'):
+        case "resource.fs.zfs.statechange":
+            if pool := data.get("pool"):
                 return ZfsStateChangeEvent(class_=event_class, pool=pool)
 
-        case 'ereport.fs.zfs.checksum':
+        case "ereport.fs.zfs.checksum":
             return ZfsChecksumErrorEvent(class_=event_class)
 
-        case 'ereport.fs.zfs.data':
+        case "ereport.fs.zfs.data":
             return ZfsDataErrorEvent(class_=event_class)
 
-        case 'ereport.fs.zfs.io':
+        case "ereport.fs.zfs.io":
             return ZfsIoErrorEvent(class_=event_class)
 
-        case 'ereport.fs.zfs.vdev.clear':
+        case "ereport.fs.zfs.vdev.clear":
             return ZfsVdevClearEvent(class_=event_class)
 
-        case 'sysevent.fs.zfs.config_sync':
-            if pool := data.get('pool'):
-                return ZfsConfigSyncEvent(class_=event_class, pool=pool, guid=data.get('guid'))
+        case "sysevent.fs.zfs.config_sync":
+            if pool := data.get("pool"):
+                return ZfsConfigSyncEvent(class_=event_class, pool=pool, guid=data.get("guid"))
 
-        case 'sysevent.fs.zfs.pool_import':
-            if pool := data.get('pool'):
-                return ZfsPoolImportEvent(class_=event_class, pool=pool, guid=data.get('guid') or '')
+        case "sysevent.fs.zfs.pool_import":
+            if pool := data.get("pool"):
+                return ZfsPoolImportEvent(class_=event_class, pool=pool, guid=data.get("guid") or "")
 
-        case 'sysevent.fs.zfs.pool_destroy':
-            if pool := data.get('pool'):
-                return ZfsPoolDestroyEvent(class_=event_class, pool=pool, guid=data.get('guid') or '')
+        case "sysevent.fs.zfs.pool_destroy":
+            if pool := data.get("pool"):
+                return ZfsPoolDestroyEvent(class_=event_class, pool=pool, guid=data.get("guid") or "")
 
-        case 'sysevent.fs.zfs.history_event':
-            if (dsname := data.get('history_dsname')) and (internal_name := data.get('history_internal_name')):
+        case "sysevent.fs.zfs.history_event":
+            if (dsname := data.get("history_dsname")) and (internal_name := data.get("history_internal_name")):
                 return ZfsHistoryEvent(
                     class_=event_class,
                     history_dsname=dsname,

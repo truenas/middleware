@@ -5,15 +5,15 @@ from middlewared.utils.directoryservices.ipa import generate_ipa_default_config
 
 
 def render(service, middleware, render_ctx):
-    ds = render_ctx['directoryservices.config']
-    if ds['service_type'] != DSType.IPA.value:
+    ds = render_ctx["directoryservices.config"]
+    if ds["service_type"] != DSType.IPA.value:
         raise FileShouldNotExist()
 
-    ipa_config = ds['configuration']
+    ipa_config = ds["configuration"]
     return generate_ipa_default_config(
         ds_config_to_fqdn(ds).lower(),
-        ipa_config['basedn'],
-        ipa_config['domain'].lower(),
-        ds['kerberos_realm'],
-        ipa_config['target_server']
+        ipa_config["basedn"],
+        ipa_config["domain"].lower(),
+        ds["kerberos_realm"],
+        ipa_config["target_server"]
     )

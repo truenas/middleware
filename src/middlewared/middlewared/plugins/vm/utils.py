@@ -11,18 +11,18 @@ from middlewared.utils.filesystem.copy import (
     copytree,
 )
 
-SYSTEM_TPM_FOLDER_PATH = '/var/db/system/vm/tpm'
-SYSTEM_NVRAM_FOLDER_PATH = '/var/db/system/vm/nvram'
+SYSTEM_TPM_FOLDER_PATH = "/var/db/system/vm/tpm"
+SYSTEM_NVRAM_FOLDER_PATH = "/var/db/system/vm/nvram"
 LIBVIRT_QEMU_UID = 986
 LIBVIRT_QEMU_GID = 986
 
 
 def get_vm_tpm_state_dir_name(id_: int, name: str) -> str:
-    return f'{id_}_{name}_tpm_state'
+    return f"{id_}_{name}_tpm_state"
 
 
 def get_vm_nvram_file_name(id_: int, name: str) -> str:
-    return f'{id_}_{name}_VARS.fd'
+    return f"{id_}_{name}_VARS.fd"
 
 
 def vm_nvram_path(id_: int, name: str) -> str:
@@ -227,8 +227,8 @@ def vm_state_missing_sources(
     operators know libvirt/swtpm will initialise fresh state on next start.
     """
     missing: list[str] = []
-    if bootloader == 'UEFI' and not os.path.exists(vm_nvram_path(id_, name)):
-        missing.append('NVRAM')
+    if bootloader == "UEFI" and not os.path.exists(vm_nvram_path(id_, name)):
+        missing.append("NVRAM")
     if tpm and not os.path.exists(vm_tpm_path(id_, name)):
-        missing.append('TPM')
+        missing.append("TPM")
     return missing

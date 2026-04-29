@@ -42,20 +42,20 @@ LOG_CACHE_ENTRY_INTERVAL = 10  # Update progress of job every nth user / group
 TDB_LOCKS = defaultdict(Lock)
 
 CACHE_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
-CACHE_DIR = '/var/db/system/directory_services'
+CACHE_DIR = "/var/db/system/directory_services"
 
-TRUENAS_CACHE_VERSION_KEY = 'TRUENAS_VERSION'
-CACHE_EXPIRATION_KEY = 'CACHE_EXPIRATION'
+TRUENAS_CACHE_VERSION_KEY = "TRUENAS_VERSION"
+CACHE_EXPIRATION_KEY = "CACHE_EXPIRATION"
 CACHE_LIFETIME = timedelta(days=1)
 
 
 class DSCacheFile(enum.Enum):
-    USER = 'directoryservice_cache_user'
-    GROUP = 'directoryservice_cache_group'
+    USER = "directoryservice_cache_user"
+    GROUP = "directoryservice_cache_group"
 
     @property
     def path(self):
-        return os.path.join(CACHE_DIR, f'{self.value}.tdb')
+        return os.path.join(CACHE_DIR, f"{self.value}.tdb")
 
 
 class DSCacheFill:
@@ -75,9 +75,9 @@ class DSCacheFill:
 
     def __enter__(self):
         os.makedirs(CACHE_DIR, mode=0o700, exist_ok=True)
-        file_prefix = f'directory_service_cache_tmp_{uuid4()}'
-        self.users_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_user.tdb'), CACHE_OPTIONS)
-        self.groups_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_group.tdb'), CACHE_OPTIONS)
+        file_prefix = f"directory_service_cache_tmp_{uuid4()}"
+        self.users_handle = TDBHandle(os.path.join(CACHE_DIR, f"{file_prefix}_user.tdb"), CACHE_OPTIONS)
+        self.groups_handle = TDBHandle(os.path.join(CACHE_DIR, f"{file_prefix}_group.tdb"), CACHE_OPTIONS)
         # Ensure we have clean initial state and restrictive permissions
         self.users_handle.clear()
         os.chmod(self.users_handle.full_path, 0o600)
@@ -134,26 +134,26 @@ class DSCacheFill:
 
         for idx, entry in enumerate(nss_entries):
             unixkey = f'{IDType[entry["id_type"]].wbc_str()}:{entry["id"]}'
-            if unixkey not in idmaps['mapped']:
+            if unixkey not in idmaps["mapped"]:
                 # not all users / groups in SSSD have SIDs
                 # and so we'll leave them with a null SID
                 # rather than removing from nss_entries
                 continue
 
-            idmap_entry = idmaps['mapped'][unixkey]
-            if idmap_entry['sid'].startswith((SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX)):
+            idmap_entry = idmaps["mapped"][unixkey]
+            if idmap_entry["sid"].startswith((SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX)):
                 # There is a collision between local user / group and our AD one.
                 # pop from cache
                 to_remove.append(idx)
                 continue
 
-            if idmap_entry['sid'].startswith(SID_BUILTIN_PREFIX):
+            if idmap_entry["sid"].startswith(SID_BUILTIN_PREFIX):
                 # We don't want users to select auto-generated builtin groups
                 to_remove.append(idx)
                 continue
 
-            entry['sid'] = idmap_entry['sid']
-            entry['id_type'] = idmap_entry['id_type']
+            entry["sid"] = idmap_entry["sid"]
+            entry["id_type"] = idmap_entry["id_type"]
 
         to_remove.reverse()
         for idx in to_remove:
@@ -178,17 +178,17 @@ class DSCacheFill:
             case IDType.GROUP:
                 nss_fn = grp.itergrp
             case _:
-                raise ValueError(f'{entry_type}: unexpected `entry_type`')
+                raise ValueError(f"{entry_type}: unexpected `entry_type`")
 
         nss = nss_fn(module=nss_module.name)
         for entries in batched(nss, MAX_REQUEST_LENGTH):
             out = []
             for entry in entries:
                 out.append({
-                    'id': entry.pw_uid if entry_type is IDType.USER else entry.gr_gid,
-                    'sid': None,
-                    'nss': entry,
-                    'id_type': entry_type.name,
+                    "id": entry.pw_uid if entry_type is IDType.USER else entry.gr_gid,
+                    "sid": None,
+                    "nss": entry,
+                    "id_type": entry_type.name,
                 })
 
             # Depending on the directory sevice we may need to add SID
@@ -244,13 +244,13 @@ class DSCacheFill:
                 nss_module = NssModule.SSS
                 idmap_ctx = idmap_sss.SSSClient()
             case _:
-                raise ValueError(f'{ds_type}: unknown DSType')
+                raise ValueError(f"{ds_type}: unknown DSType")
 
         user_count = 0
         group_count = 0
         expiration = utc_now(naive=False) + CACHE_LIFETIME
 
-        job.set_progress(40, 'Preparing to add users to cache')
+        job.set_progress(40, "Preparing to add users to cache")
         for hdl in (self.users_handle, self.groups_handle):
             _tdb_add_version(hdl, truenas_version)
             _tdb_add_expiration(hdl, expiration)
@@ -263,7 +263,7 @@ class DSCacheFill:
         ):
             # Now iterate members of 100 for insertion
             for u in users:
-                user_data = u['nss']
+                user_data = u["nss"]
 
                 # Apparently, some semi-broken AD deployments may return invalid
                 # name information for accounts and we can end up with empty string here.
@@ -274,45 +274,45 @@ class DSCacheFill:
                     continue
 
                 entry = {
-                    'id': BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
-                    'uid': user_data.pw_uid,
-                    'username': user_data.pw_name,
-                    'unixhash': None,
-                    'smbhash': None,
-                    'group': {},
-                    'home': user_data.pw_dir,
-                    'shell': user_data.pw_shell or '/usr/bin/sh',  # An empty string as pw_shell means sh
-                    'full_name': user_data.pw_gecos,
-                    'builtin': False,
-                    'email': None,
-                    'password_disabled': False,
-                    'locked': False,
-                    'sudo_commands': [],
-                    'sudo_commands_nopasswd': [],
-                    'groups': [],
-                    'sshpubkey': None,
-                    'immutable': True,
-                    'twofactor_auth_configured': False,
-                    'local': False,
-                    'smb': u['sid'] is not None,
-                    'sid': u['sid'],
-                    'roles': [],
-                    'api_keys': [],
-                    'last_password_change': None,
-                    'password_age': None,
-                    'password_history': None,
-                    'password_change_required': False,
-                    'webshare': False,
+                    "id": BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
+                    "uid": user_data.pw_uid,
+                    "username": user_data.pw_name,
+                    "unixhash": None,
+                    "smbhash": None,
+                    "group": {},
+                    "home": user_data.pw_dir,
+                    "shell": user_data.pw_shell or "/usr/bin/sh",  # An empty string as pw_shell means sh
+                    "full_name": user_data.pw_gecos,
+                    "builtin": False,
+                    "email": None,
+                    "password_disabled": False,
+                    "locked": False,
+                    "sudo_commands": [],
+                    "sudo_commands_nopasswd": [],
+                    "groups": [],
+                    "sshpubkey": None,
+                    "immutable": True,
+                    "twofactor_auth_configured": False,
+                    "local": False,
+                    "smb": u["sid"] is not None,
+                    "sid": u["sid"],
+                    "roles": [],
+                    "api_keys": [],
+                    "last_password_change": None,
+                    "password_age": None,
+                    "password_history": None,
+                    "password_change_required": False,
+                    "webshare": False,
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:
-                    job.set_progress(50, f'{user_data.pw_name}: adding user to cache. User count: {user_count}')
+                    job.set_progress(50, f"{user_data.pw_name}: adding user to cache. User count: {user_count}")
 
                 # Store forward and reverse entries
                 _tdb_add_entry(self.users_handle, user_data.pw_uid, user_data.pw_name, entry)
                 user_count += 1
 
-        job.set_progress(70, 'Preparing to add groups to cache')
+        job.set_progress(70, "Preparing to add groups to cache")
         # First grab batches of 100 entries
         for groups in self._get_entries_for_cache(
             idmap_ctx,
@@ -320,35 +320,35 @@ class DSCacheFill:
             IDType.GROUP,
         ):
             for g in groups:
-                group_data = g['nss']
+                group_data = g["nss"]
 
                 # Handle some broken AD responses. See note above.
                 if not group_data.gr_name:
                     continue
 
                 entry = {
-                    'id': BASE_SYNTHETIC_DATASTORE_ID + group_data.gr_gid,
-                    'gid': group_data.gr_gid,
-                    'name': group_data.gr_name,
-                    'group': group_data.gr_name,
-                    'builtin': False,
-                    'immutable': True,
-                    'sudo_commands': [],
-                    'sudo_commands_nopasswd': [],
-                    'users': [],
-                    'local': False,
-                    'smb': g['sid'] is not None,
-                    'sid': g['sid'],
-                    'roles': []
+                    "id": BASE_SYNTHETIC_DATASTORE_ID + group_data.gr_gid,
+                    "gid": group_data.gr_gid,
+                    "name": group_data.gr_name,
+                    "group": group_data.gr_name,
+                    "builtin": False,
+                    "immutable": True,
+                    "sudo_commands": [],
+                    "sudo_commands_nopasswd": [],
+                    "users": [],
+                    "local": False,
+                    "smb": g["sid"] is not None,
+                    "sid": g["sid"],
+                    "roles": []
                 }
 
                 if group_count % LOG_CACHE_ENTRY_INTERVAL == 0:
-                    job.set_progress(80, f'{group_data.gr_name}: adding group to cache. Group count: {group_count}')
+                    job.set_progress(80, f"{group_data.gr_name}: adding group to cache. Group count: {group_count}")
 
                 _tdb_add_entry(self.groups_handle, group_data.gr_gid, group_data.gr_name, entry)
                 group_count += 1
 
-        job.set_progress(100, f'Cached {user_count} users and {group_count} groups.')
+        job.set_progress(100, f"Cached {user_count} users and {group_count} groups.")
         self._commit()
 
 
@@ -357,12 +357,12 @@ def _tdb_add_version(
     version: str
 ) -> None:
     """ Unlocked call to add version info to a TDB handle. """
-    handle.store(TRUENAS_CACHE_VERSION_KEY, {'truenas_version': version})
+    handle.store(TRUENAS_CACHE_VERSION_KEY, {"truenas_version": version})
 
 
 def _tdb_add_expiration(handle: TDBHandle, timestamp: datetime) -> None:
     """ Add expiration timestamp to TDB handle. """
-    handle.store(CACHE_EXPIRATION_KEY, {'expiration': timestamp})
+    handle.store(CACHE_EXPIRATION_KEY, {"expiration": timestamp})
 
 
 def _tdb_add_entry(
@@ -378,8 +378,8 @@ def _tdb_add_entry(
     Raises:
         RuntimeError via `tdb` library
     """
-    handle.store(f'ID_{xid}', entry)
-    handle.store(f'NAME_{name}', entry)
+    handle.store(f"ID_{xid}", entry)
+    handle.store(f"NAME_{name}", entry)
 
 
 def insert_cache_entry(
@@ -397,8 +397,8 @@ def insert_cache_entry(
     """
     with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         handle.batch_op([
-            TDBBatchOperation(action=TDBBatchAction.SET, key=f'ID_{xid}', value=entry),
-            TDBBatchOperation(action=TDBBatchAction.SET, key=f'NAME_{xid}', value=entry),
+            TDBBatchOperation(action=TDBBatchAction.SET, key=f"ID_{xid}", value=entry),
+            TDBBatchOperation(action=TDBBatchAction.SET, key=f"NAME_{xid}", value=entry),
         ])
 
 
@@ -415,9 +415,9 @@ def retrieve_cache_entry(
         MatchNotFound
     """
     if xid is not None:
-        key = f'ID_{xid}'
+        key = f"ID_{xid}"
     else:
-        key = f'NAME_{name}'
+        key = f"NAME_{name}"
 
     with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         return handle.get(key)
@@ -429,7 +429,7 @@ def query_cache_entries(
     options: dict
 ) -> list:
     with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
-        return filter_list(handle.entries(include_keys=False, key_prefix='ID_'), filters, options)
+        return filter_list(handle.entries(include_keys=False, key_prefix="ID_"), filters, options)
 
 
 def check_cache_version(truenas_version: str) -> None:
@@ -446,7 +446,7 @@ def check_cache_version(truenas_version: str) -> None:
             with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
                 try:
                     vers_data = hdl.get(TRUENAS_CACHE_VERSION_KEY)
-                    if vers_data['truenas_version'] == truenas_version:
+                    if vers_data["truenas_version"] == truenas_version:
                         continue
                 except Exception:
                     pass
@@ -485,7 +485,7 @@ def check_cache_expired() -> bool:
             with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
                 try:
                     vers_data = hdl.get(CACHE_EXPIRATION_KEY)
-                    if vers_data['expiration'] > now:
+                    if vers_data["expiration"] > now:
                         # We have timestamp and it isn't expired. Move on to next file.
                         continue
                 except Exception:

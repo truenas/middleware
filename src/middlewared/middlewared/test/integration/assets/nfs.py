@@ -13,11 +13,11 @@ __all__ = ["nfs_share", "nfs_server"]
 @contextlib.contextmanager
 def nfs_server():
     try:
-        res = call('service.control', 'START', 'nfs', {'silent': False}, job=True)
+        res = call("service.control", "START", "nfs", {"silent": False}, job=True)
         sleep(1)
         yield res
     finally:
-        call('service.control', 'STOP', 'nfs', {'silent': False}, job=True)
+        call("service.control", "STOP", "nfs", {"silent": False}, job=True)
 
 
 @contextlib.contextmanager

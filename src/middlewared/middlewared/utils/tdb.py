@@ -27,8 +27,8 @@ FD_CLOSED = -1
 MUTEX_LOCKING = 4096
 
 TDB_LOCKS: defaultdict[str, RLock] = defaultdict(RLock)
-TDBOptions = namedtuple('TDBOptions', ['backend', 'data_type', 'clustered'], defaults=[None, None, False])
-TDB_HANDLES: dict[str, 'TDBHandle'] = {}
+TDBOptions = namedtuple("TDBOptions", ["backend", "data_type", "clustered"], defaults=[None, None, False])
+TDB_HANDLES: dict[str, "TDBHandle"] = {}
 CTDB_HANDLES: dict[str, Any] = {}
 
 
@@ -42,9 +42,9 @@ class TDBPathType(enum.Enum):
 
     CUSTOM - arbitrary filesystem path (used for interacting with service TDB files)
     """
-    VOLATILE = '/var/run/tdb/volatile'
-    PERSISTENT = '/root/tdb/persistent'
-    CUSTOM = ''
+    VOLATILE = "/var/run/tdb/volatile"
+    PERSISTENT = "/root/tdb/persistent"
+    CUSTOM = ""
 
 
 class TDBDataType(enum.Enum):
@@ -122,7 +122,7 @@ class TDBHandle:
     # function pointers for basic ops (always set in __init__)
     ops: Any = None
 
-    def __enter__(self) -> 'TDBHandle':
+    def __enter__(self) -> "TDBHandle":
         return self
 
     def __exit__(self, tp: type[BaseException] | None, val: BaseException | None, traceback: Any) -> None:
@@ -144,11 +144,11 @@ class TDBHandle:
         if not self.hdl or self.hdl.fd == FD_CLOSED:
             return False
 
-        if not os.path.exists(f'/proc/self/fd/{self.hdl.fd}'):
+        if not os.path.exists(f"/proc/self/fd/{self.hdl.fd}"):
             return False
 
         # if file has been renamed or deleted from under us, readlink will show different path
-        return os.readlink(f'/proc/self/fd/{self.hdl.fd}') == self.full_path
+        return os.readlink(f"/proc/self/fd/{self.hdl.fd}") == self.full_path
 
     def parse_value(self, tdb_val: bytes) -> dict[str, Any] | str:
         match self.data_type:
@@ -159,7 +159,7 @@ class TDBHandle:
             case TDBDataType.STRING:
                 out = tdb_val.decode()
             case _:
-                raise ValueError(f'{self.data_type}: unknown data type')
+                raise ValueError(f"{self.data_type}: unknown data type")
 
         return out
 
@@ -203,7 +203,7 @@ class TDBHandle:
         """
         tdb_key = key.encode()
         if self.keys_null_terminated:
-            tdb_key += b'\x00'
+            tdb_key += b"\x00"
 
         match self.data_type:
             case TDBDataType.BYTES:
@@ -213,7 +213,7 @@ class TDBHandle:
             case TDBDataType.STRING:
                 tdb_val = value.encode()  # type: ignore[union-attr]
             case _:
-                raise ValueError(f'{self.data_type}: unknown data type')
+                raise ValueError(f"{self.data_type}: unknown data type")
 
         self.ops.store(tdb_key, tdb_val)
 
@@ -270,8 +270,8 @@ class TDBHandle:
             tdb_val = self.get(tdb_key)
             if include_keys:
                 yield {
-                    'key': tdb_key,
-                    'value': tdb_val
+                    "key": tdb_key,
+                    "value": tdb_val
                 }
             else:
                 yield tdb_val
@@ -306,7 +306,7 @@ class TDBHandle:
                     case TDBBatchAction.GET:
                         output[op.key] = self.get(op.key)
                     case _:
-                        raise ValueError(f'{op.action}: unknown batch operation type')
+                        raise ValueError(f"{op.action}: unknown batch operation type")
 
             self.hdl.transaction_commit()
         except Exception:
@@ -329,17 +329,17 @@ class TDBHandle:
         self.data_type = TDBDataType(options.data_type)
 
         match os.path.basename(name):
-            case 'gencache.tdb':
+            case "gencache.tdb":
                 # See gencache_init() in source3/lib/gencache.c in Samba
                 tdb_flags = tdb.INCOMPATIBLE_HASH | tdb.NOSYNC | MUTEX_LOCKING
                 self.keys_null_terminated = True
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o644
-            case 'secrets.tdb':
+            case "secrets.tdb":
                 tdb_flags = tdb.DEFAULT
                 open_flags = os.O_RDWR
                 open_mode = 0o600
-            case 'group_mapping.tdb' | 'group_mapping_rejects.tdb' | 'passdb.tdb':
+            case "group_mapping.tdb" | "group_mapping_rejects.tdb" | "passdb.tdb":
                 tdb_flags = tdb.DEFAULT
                 open_flags = os.O_RDWR
                 self.keys_null_terminated = True
@@ -356,14 +356,14 @@ class TDBHandle:
             case TDBPathType.CUSTOM:
                 if not os.path.isabs(name):
                     raise ValueError(
-                        f'{name}: must be an absolute path when using custom TDB path'
+                        f"{name}: must be an absolute path when using custom TDB path"
                     )
                 self.full_path = name
             case _:
                 if not os.path.exists(self.path_type.value):
                     os.makedirs(self.path_type.value, mode=0o700, exist_ok=True)
 
-                self.full_path = f'{self.path_type.value}/{name}.tdb'
+                self.full_path = f"{self.path_type.value}/{name}.tdb"
 
         self.hdl = tdb.Tdb(self.full_path, 0, tdb_flags, open_flags, open_mode)
         self.options = options
@@ -404,7 +404,7 @@ class CTDBHandle(TDBHandle):
             value = self.parse_value(ctdb_val)
 
             if include_keys:
-                yield {'key': key, 'value': value}
+                yield {"key": key, "value": value}
             else:
                 yield value
 
@@ -424,11 +424,11 @@ class CTDBHandle(TDBHandle):
         for op in ops:
             tdb_key = op.key.encode()
             if self.keys_null_terminated:
-                tdb_key += b'\x00'
+                tdb_key += b"\x00"
 
             match op.action:
                 case TDBBatchAction.GET:
-                    batch_ops.append(pyctdb.BatchOp('GET', tdb_key, None))
+                    batch_ops.append(pyctdb.BatchOp("GET", tdb_key, None))
                 case TDBBatchAction.SET:
                     match self.data_type:
                         case TDBDataType.BYTES:
@@ -438,12 +438,12 @@ class CTDBHandle(TDBHandle):
                         case TDBDataType.STRING:
                             tdb_val = op.value.encode()  # type: ignore[union-attr]
                         case _:
-                            raise ValueError(f'{self.data_type}: unknown data type')
-                    batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, tdb_val)))
+                            raise ValueError(f"{self.data_type}: unknown data type")
+                    batch_ops.append(pyctdb.BatchOp(("SET", tdb_key, tdb_val)))
                 case TDBBatchAction.DEL:
-                    batch_ops.append(pyctdb.BatchOp(('DEL', tdb_key, None)))
+                    batch_ops.append(pyctdb.BatchOp(("DEL", tdb_key, None)))
                 case _:
-                    raise ValueError(f'{op.action}: unknown batch operation type')
+                    raise ValueError(f"{op.action}: unknown batch operation type")
 
         # Execute batch operations (returns dict with index -> bytes value)
         raw_results = self.hdl.batch_op(batch_ops)
@@ -470,7 +470,7 @@ class CTDBHandle(TDBHandle):
 
     def __init__(self, name: str, options: TDBOptions):
         if pyctdb is None:
-            raise RuntimeError('pyctdb module not available')
+            raise RuntimeError("pyctdb module not available")
 
         self.name = name
         self.data_type = TDBDataType(options.data_type)
@@ -480,9 +480,9 @@ class CTDBHandle(TDBHandle):
 
         # lazy-initialize CTDB client
         try:
-            client = CTDB_HANDLES['__client__']
+            client = CTDB_HANDLES["__client__"]
         except KeyError:
-            client = CTDB_HANDLES['__client__'] = pyctdb.Client()
+            client = CTDB_HANDLES["__client__"] = pyctdb.Client()
 
         persistent = self.path_type == TDBPathType.PERSISTENT
 
@@ -505,7 +505,7 @@ def get_tdb_handle(name: str, tdb_options: TDBOptions) -> Generator[TDBHandle]:
             entry = CTDB_HANDLES.setdefault(name, CTDBHandle(name, tdb_options))
 
         if entry.options != tdb_options:
-            raise ValueError('Inconsistent options')
+            raise ValueError("Inconsistent options")
 
         if not entry.validate_handle():
             entry.close()
@@ -521,7 +521,7 @@ def get_tdb_handle(name: str, tdb_options: TDBOptions) -> Generator[TDBHandle]:
             entry = TDB_HANDLES.setdefault(name, TDBHandle(name, tdb_options))
 
         if entry.options != tdb_options:
-            raise ValueError('Inconsistent options')
+            raise ValueError("Inconsistent options")
 
         if not entry.validate_handle():
             entry.close()

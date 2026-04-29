@@ -34,18 +34,18 @@ from middlewared.utils.tdb import (
     get_tdb_handle,
 )
 
-WINBINDD_AUTO_ALLOCATED = ('S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546')
+WINBINDD_AUTO_ALLOCATED = ("S-1-5-32-544", "S-1-5-32-545", "S-1-5-32-546")
 WINBINDD_WELL_KNOWN_PADDING = 100
 MAPPED_WELL_KNOWN_SIDS_CNT = len([s for s in WellKnownSid if s.valid_for_mapping])
 # Simple sanity check that we haven't added hard-coded mappings for well-known-sids that
 # exceed the space we've reserved in tdb file for them.
 assert MAPPED_WELL_KNOWN_SIDS_CNT + len(WINBINDD_AUTO_ALLOCATED) < WINBINDD_WELL_KNOWN_PADDING
 
-WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.path}/winbindd_cache.tdb'
+WINBIND_IDMAP_CACHE = f"{SMBPath.CACHE_DIR.path}/winbindd_cache.tdb"
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 WINBIND_IDMAP_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
 WINBIND_IDMAP_TDB_CONFIG = (WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS)
-WINBIND_IDMAP_CTDB_CONFIG = ('winbindd_cache.tdb', WINBIND_IDMAP_CTDB_OPTIONS)
+WINBIND_IDMAP_CTDB_CONFIG = ("winbindd_cache.tdb", WINBIND_IDMAP_CTDB_OPTIONS)
 
 
 def _get_winbind_idmap_cache_config(clustered):
@@ -60,32 +60,32 @@ def clear_winbind_idmap_cache(clustered):
 class SMBService(Service):
 
     class Config:
-        service = 'cifs'
-        service_verb = 'restart'
+        service = "cifs"
+        service_verb = "restart"
 
     @private
     def add_groupmap(self, group):
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-        server_sid = self.middleware.call_sync('smb.local_server_sid')
-        rid = db_id_to_rid(IDType.GROUP, group['id'])
+        clustered = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        server_sid = self.middleware.call_sync("smb.local_server_sid")
+        rid = db_id_to_rid(IDType.GROUP, group["id"])
         entry = SMBGroupMap(
-            sid=f'{server_sid}-{rid}',
-            gid=group['gid'],
+            sid=f"{server_sid}-{rid}",
+            gid=group["gid"],
             sid_type=lsa_sidtype.ALIAS,
-            name=group['group'],
-            comment=''
+            name=group["group"],
+            comment=""
         )
         insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [entry])
 
     @private
     def del_groupmap(self, db_id):
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-        server_sid = self.middleware.call_sync('smb.local_server_sid')
+        clustered = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
+        server_sid = self.middleware.call_sync("smb.local_server_sid")
         rid = db_id_to_rid(IDType.GROUP, db_id)
         delete_groupmap_entry(
             GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
             GroupmapEntryType.GROUP_MAPPING,
-            entry_sid=f'{server_sid}-{rid}',
+            entry_sid=f"{server_sid}-{rid}",
         )
 
     @private
@@ -100,98 +100,98 @@ class SMBService(Service):
         """
         # fresh groupmap listing is to ensure we have accurate / current info.
         groupmap = self.groupmap_list()
-        localsid = groupmap['localsid']
+        localsid = groupmap["localsid"]
 
         entries = [
             SMBGroupMembership(
-                sid=f'{localsid}-{DomainRid.ADMINS}',
+                sid=f"{localsid}-{DomainRid.ADMINS}",
                 groups=(SMBBuiltin.ADMINISTRATORS.sid,)
             ),
             SMBGroupMembership(
-                sid=f'{localsid}-{DomainRid.GUESTS}',
+                sid=f"{localsid}-{DomainRid.GUESTS}",
                 groups=(SMBBuiltin.GUESTS.sid,)
             ),
             SMBGroupMembership(
-                sid=groupmap['local'][SMBBuiltin.USERS.rid]['sid'],
+                sid=groupmap["local"][SMBBuiltin.USERS.rid]["sid"],
                 groups=(SMBBuiltin.USERS.sid,)
             ),
         ]
 
         # We keep separate list of what members we expect for these groups
-        admins = [f'{localsid}-{DomainRid.ADMINS}']
-        guests = [f'{localsid}-{DomainRid.GUESTS}']
+        admins = [f"{localsid}-{DomainRid.ADMINS}"]
+        guests = [f"{localsid}-{DomainRid.GUESTS}"]
 
         # Samba has special behavior if DomainRid.USERS is set for local domain
         # and so we map the builtin_users account to a normal sid then make it
         # a member of S-1-5-32-545
-        users = [groupmap['local'][SMBBuiltin.USERS.rid]['sid']]
-        smb_config = self.middleware.call_sync('smb.config')
-        groupmap_file = GroupmapFile.DEFAULT if not smb_config['stateful_failover'] else GroupmapFile.CLUSTERED
+        users = [groupmap["local"][SMBBuiltin.USERS.rid]["sid"]]
+        smb_config = self.middleware.call_sync("smb.config")
+        groupmap_file = GroupmapFile.DEFAULT if not smb_config["stateful_failover"] else GroupmapFile.CLUSTERED
 
-        if (admin_group := smb_config['admin_group']):
-            if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
+        if (admin_group := smb_config["admin_group"]):
+            if (found := self.middleware.call_sync("group.query", [("group", "=", admin_group)])):
                 entries.append(SMBGroupMembership(
-                    sid=found[0]['sid'],
+                    sid=found[0]["sid"],
                     groups=(SMBBuiltin.ADMINISTRATORS.sid,)
                 ))
-                admins.append(found[0]['sid'])
+                admins.append(found[0]["sid"])
             else:
-                self.logger.warning('%s: SMB admin group does not exist', admin_group)
+                self.logger.warning("%s: SMB admin group does not exist", admin_group)
 
-        ds = self.middleware.call_sync('directoryservices.status')
-        if ds['type'] == DSType.AD.value:
+        ds = self.middleware.call_sync("directoryservices.status")
+        if ds["type"] == DSType.AD.value:
             try:
-                workgroup = smb_config['workgroup']
-                domain_sid = self.middleware.call_sync('directoryservices.secrets.domain_sid', workgroup)
+                workgroup = smb_config["workgroup"]
+                domain_sid = self.middleware.call_sync("directoryservices.secrets.domain_sid", workgroup)
                 # add domain account SIDS
                 entries.append((SMBGroupMembership(
-                    sid=f'{domain_sid}-{DomainRid.ADMINS}',
+                    sid=f"{domain_sid}-{DomainRid.ADMINS}",
                     groups=(SMBBuiltin.ADMINISTRATORS.sid,)
                 )))
-                admins.append(f'{domain_sid}-{DomainRid.ADMINS}')
+                admins.append(f"{domain_sid}-{DomainRid.ADMINS}")
                 entries.append((SMBGroupMembership(
-                    sid=f'{domain_sid}-{DomainRid.USERS}',
+                    sid=f"{domain_sid}-{DomainRid.USERS}",
                     groups=(SMBBuiltin.USERS.sid,)
                 )))
-                users.append(f'{domain_sid}-{DomainRid.USERS}')
+                users.append(f"{domain_sid}-{DomainRid.USERS}")
                 entries.append((SMBGroupMembership(
-                    sid=f'{domain_sid}-{DomainRid.GUESTS}',
+                    sid=f"{domain_sid}-{DomainRid.GUESTS}",
                     groups=(SMBBuiltin.GUESTS.sid,)
                 )))
-                guests.append(f'{domain_sid}-{DomainRid.GUESTS}')
+                guests.append(f"{domain_sid}-{DomainRid.GUESTS}")
             except Exception:
-                self.logger.warning('Failed to retrieve domain SID from secrets', exc_info=True)
+                self.logger.warning("Failed to retrieve domain SID from secrets", exc_info=True)
 
         insert_groupmap_entries(groupmap_file, entries)
 
         # double-check that we have expected memberships now and no extras
         unexpected_memberof_entries = query_groupmap_entries(groupmap_file, [
-            ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-            ['sid', 'nin', admins + guests + users]
+            ["entry_type", "=", GroupmapEntryType.MEMBERSHIP.name],
+            ["sid", "nin", admins + guests + users]
         ], {})
 
         for entry in unexpected_memberof_entries:
             self.logger.error(
-                '%s: unexpected account present in group mapping configuration for groups '
-                'with the following sids %s. This grants the account privileges beyond what '
-                'would normally be granted by the backend in TrueNAS potentially indicating '
-                'an underlying security issue. This mapping entry will be automatically '
-                'removed to restore TrueNAS to its expected configuration.',
-                entry['sid'], entry['groups']
+                "%s: unexpected account present in group mapping configuration for groups "
+                "with the following sids %s. This grants the account privileges beyond what "
+                "would normally be granted by the backend in TrueNAS potentially indicating "
+                "an underlying security issue. This mapping entry will be automatically "
+                "removed to restore TrueNAS to its expected configuration.",
+                entry["sid"], entry["groups"]
             )
 
             try:
                 delete_groupmap_entry(
                     groupmap_file,
                     GroupmapEntryType.MEMBERSHIP,
-                    entry_sid=entry['sid'],
+                    entry_sid=entry["sid"],
                 )
             except Exception:
-                self.logger.error('Failed to remove unexpected groupmap entry', exc_info=True)
+                self.logger.error("Failed to remove unexpected groupmap entry", exc_info=True)
 
     @private
     def initialize_idmap_tdb(self, low_range):
-        tdb_path = f'{SMBPath.STATEDIR.path}/winbindd_idmap.tdb'
+        tdb_path = f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb"
         tdb_flags = tdb.DEFAULT
         open_flags = os.O_CREAT | os.O_RDWR
 
@@ -203,13 +203,13 @@ class SMBService(Service):
 
         try:
             for key, val in [
-                (b'IDMAP_VERSION\x00', 2),
-                (b'USER HWM\x00', low_range),
-                (b'GROUP HWM\x00', low_range)
+                (b"IDMAP_VERSION\x00", 2),
+                (b"USER HWM\x00", low_range),
+                (b"GROUP HWM\x00", low_range)
             ]:
                 tdb_handle.store(key, struct.pack("<L", val))
         except Exception:
-            self.logger.warning('Failed to initialize winbindd_idmap.tdb', exc_info=True)
+            self.logger.warning("Failed to initialize winbindd_idmap.tdb", exc_info=True)
             tdb_handle.close()
             return None
 
@@ -224,8 +224,8 @@ class SMBService(Service):
         conflict. Winbindd will regenerate the removed ones as-needed.
         """
         def add_key(tdb_handle, gid, sid):
-            gid_val = f'GID {gid}\x00'.encode()
-            sid_val = f'{sid}\x00'.encode()
+            gid_val = f"GID {gid}\x00".encode()
+            sid_val = f"{sid}\x00".encode()
             tdb_handle.store(gid_val, sid_val)
             tdb_handle.store(sid_val, gid_val)
 
@@ -236,7 +236,7 @@ class SMBService(Service):
 
         must_reload = False
         len_wb_groups = len(WINBINDD_AUTO_ALLOCATED)
-        builtins = self.middleware.call_sync('idmap.builtins')
+        builtins = self.middleware.call_sync("idmap.builtins")
 
         try:
             tdb_handle = tdb.open(f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb")
@@ -247,25 +247,25 @@ class SMBService(Service):
 
         try:
             tdb_handle.transaction_start()
-            group_hwm_bytes = tdb_handle.get(b'GROUP HWM\00')
+            group_hwm_bytes = tdb_handle.get(b"GROUP HWM\00")
             hwm = struct.unpack("<L", group_hwm_bytes)[0]
             min_hwm = low_range + WINBINDD_WELL_KNOWN_PADDING
             # We need to keep some space available for any new winbindd entries we want
             # to have hard-coded relative mappings in the idmap.tdb file
             if hwm < min_hwm:
                 new_hwm_bytes = struct.pack("<L", min_hwm)
-                tdb_handle.store(b'GROUP HWM\00', new_hwm_bytes)
+                tdb_handle.store(b"GROUP HWM\00", new_hwm_bytes)
                 must_reload = True
 
             for key in tdb_handle.keys():
                 # sample key: b'GID 9000020\x00'
-                if key[:3] == b'GID' and int(key.decode()[4:-1]) < (low_range + len_wb_groups):
+                if key[:3] == b"GID" and int(key.decode()[4:-1]) < (low_range + len_wb_groups):
                     reverse = tdb_handle.get(key)
                     remove_key(tdb_handle, key, reverse)
                     must_reload = True
 
             for entry in builtins:
-                if not entry['set']:
+                if not entry["set"]:
                     continue
 
                 sid_key = f'{entry["sid"]}\x00'.encode()
@@ -275,12 +275,12 @@ class SMBService(Service):
                         self.logger.debug(
                             "incorrect sid mapping detected %s -> %s"
                             "replacing with %s -> %s",
-                            entry['sid'], val.decode()[4:-1] if val else "None",
-                            entry['sid'], entry['gid']
+                            entry["sid"], val.decode()[4:-1] if val else "None",
+                            entry["sid"], entry["gid"]
                         )
                         remove_key(tdb_handle, f'{entry["sid"]}\x00'.encode(), val)
 
-                    add_key(tdb_handle, entry['gid'], entry['sid'])
+                    add_key(tdb_handle, entry["gid"], entry["sid"])
                     must_reload = True
 
             tdb_handle.transaction_commit()
@@ -293,7 +293,7 @@ class SMBService(Service):
             tdb_handle.close()
 
         if clustered:
-            with get_tdb_handle('winbind_idmap.tdb', WINBIND_IDMAP_CTDB_OPTIONS) as hdl:
+            with get_tdb_handle("winbind_idmap.tdb", WINBIND_IDMAP_CTDB_OPTIONS) as hdl:
                 hdl.sync_with_tdb(f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb")
 
         return must_reload
@@ -307,26 +307,26 @@ class SMBService(Service):
         """
         rv = {"builtins": {}, "local": {}, "local_builtins": {}}
 
-        localsid = self.middleware.call_sync('smb.local_server_sid')
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        localsid = self.middleware.call_sync("smb.local_server_sid")
+        clustered = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
         entries_to_fix = []
 
         for g in query_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [
-            ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
+            ["entry_type", "=", GroupmapEntryType.GROUP_MAPPING.name]
         ], {}):
-            gid = g['gid']
+            gid = g["gid"]
             if gid == -1:
                 # This entry must be omitted because it does not contain a mapping
                 # to a valid group id.
                 entries_to_fix.append(g)
                 continue
 
-            if g['sid'].startswith("S-1-5-32"):
-                key = 'builtins'
-            elif g['sid'].startswith(localsid) and g['gid'] in (544, 546):
-                key = 'local_builtins'
-            elif g['sid'].startswith(localsid):
-                if int(get_domain_rid(g['sid'])) < BASE_RID_USER:
+            if g["sid"].startswith("S-1-5-32"):
+                key = "builtins"
+            elif g["sid"].startswith(localsid) and g["gid"] in (544, 546):
+                key = "local_builtins"
+            elif g["sid"].startswith(localsid):
+                if int(get_domain_rid(g["sid"])) < BASE_RID_USER:
                     # This is an entry that is for an existing group account
                     # but it currently maps to the wrong SID (generated by
                     # algorithmic base for pdb backend)
@@ -334,7 +334,7 @@ class SMBService(Service):
 
                     continue
 
-                key = 'local'
+                key = "local"
             else:
                 # There is a groupmap that is not for local machine sid to
                 # a local group account. This can potentially happen if somehow our
@@ -346,19 +346,19 @@ class SMBService(Service):
 
             rv[key][gid] = g
 
-        rv['localsid'] = localsid
+        rv["localsid"] = localsid
 
         for entry in entries_to_fix:
             # Write the various incorrect or invalid groupmap entries to our rejects
             # tdb file so that we can use them for checks against current share ACL.
 
-            if entry['gid'] != -1:
+            if entry["gid"] != -1:
                 gm = SMBGroupMap(
-                    sid=entry['sid'],
-                    gid=entry['gid'],
+                    sid=entry["sid"],
+                    gid=entry["gid"],
                     sid_type=lsa_sidtype.ALIAS,
-                    name=entry['name'],
-                    comment=entry['comment']
+                    name=entry["name"],
+                    comment=entry["comment"]
                 )
                 insert_groupmap_entries(GroupmapFile.REJECT, [gm])
 
@@ -366,10 +366,10 @@ class SMBService(Service):
                 delete_groupmap_entry(
                     GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
                     GroupmapEntryType.GROUP_MAPPING,
-                    entry_sid=entry['sid'],
+                    entry_sid=entry["sid"],
                 )
             except Exception:
-                self.logger.debug('Failed to delete invalid entry', exc_info=True)
+                self.logger.debug("Failed to delete invalid entry", exc_info=True)
 
         if entries_to_fix:
             self.migrate_share_groupmap()
@@ -389,10 +389,10 @@ class SMBService(Service):
         example, the administrators RID for a domain (remote and local) must be a member of S-1-5-32-544
         otherwise domain admins won't have DACL override privileges.
         """
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        clustered = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
 
         if not sid_is_valid(sid):
-            raise ValueError(f'{sid}: not a valid SID')
+            raise ValueError(f"{sid}: not a valid SID")
 
         return list_foreign_group_memberships(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, sid)
 
@@ -419,7 +419,7 @@ class SMBService(Service):
                 gid=gid,
                 sid_type=lsa_sidtype.ALIAS,
                 name=b.nt_name,
-                comment=''
+                comment=""
             ))
 
         return self.validate_groupmap_hwm(low_range, clustered)
@@ -436,9 +436,9 @@ class SMBService(Service):
         4) flush various caches if required.
         """
         entries = []
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
+        clustered = self.middleware.call_sync("datastore.config", "services.cifs")["cifs_srv_stateful_failover"]
 
-        if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
+        if not bypass_sentinel_check and not self.middleware.call_sync("smb.is_configured"):
             raise CallError(
                 "SMB server configuration is not complete. "
                 "This may indicate system dataset setup failure."
@@ -446,36 +446,36 @@ class SMBService(Service):
 
         groupmap = self.groupmap_list()
 
-        groups = self.middleware.call_sync('group.query', [('local', '=', True), ('smb', '=', True)])
-        groups.append(self.middleware.call_sync('group.query', [
-            ('gid', '=', SMBBuiltin.ADMINISTRATORS.rid), ('local', '=', True)
-        ], {'get': True}))
+        groups = self.middleware.call_sync("group.query", [("local", "=", True), ("smb", "=", True)])
+        groups.append(self.middleware.call_sync("group.query", [
+            ("gid", "=", SMBBuiltin.ADMINISTRATORS.rid), ("local", "=", True)
+        ], {"get": True}))
         gid_set = {x["gid"] for x in groups}
 
         for group in groups:
             entries.append(SMBGroupMap(
-                sid=group['sid'],
-                gid=group['gid'],
+                sid=group["sid"],
+                gid=group["gid"],
                 sid_type=lsa_sidtype.ALIAS,
-                name=group['group'],
-                comment=''
+                name=group["group"],
+                comment=""
             ))
 
         groupmap_file = GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED
 
-        for entry in groupmap['local'].values():
+        for entry in groupmap["local"].values():
             # delete entries that don't map to a local account
-            if entry['gid'] in gid_set:
+            if entry["gid"] in gid_set:
                 continue
 
             try:
                 delete_groupmap_entry(
                     groupmap_file,
                     GroupmapEntryType.GROUP_MAPPING,
-                    entry_sid=entry['sid'],
+                    entry_sid=entry["sid"],
                 )
             except Exception:
-                self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
+                self.logger.warning("%s: failed to remove group mapping", entry["sid"], exc_info=True)
 
         must_remove_cache = self.sync_builtins(entries, clustered)
         insert_groupmap_entries(groupmap_file, entries)
@@ -485,9 +485,9 @@ class SMBService(Service):
         if must_remove_cache:
             clear_winbind_idmap_cache(clustered)
             try:
-                self.middleware.call_sync('idmap.gencache.flush')
+                self.middleware.call_sync("idmap.gencache.flush")
             except Exception:
-                self.logger.warning('Failed to flush caches after groupmap changes.', exc_info=True)
+                self.logger.warning("Failed to flush caches after groupmap changes.", exc_info=True)
 
     @private
     def migrate_share_groupmap(self):
@@ -507,8 +507,8 @@ class SMBService(Service):
         all existing SMB share ACLs and remap the rejected SID to the correct current value
         assigned to the GID.
         """
-        rejects = {g['sid']: g for g in query_groupmap_entries(GroupmapFile.REJECT, [
-            ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
+        rejects = {g["sid"]: g for g in query_groupmap_entries(GroupmapFile.REJECT, [
+            ["entry_type", "=", GroupmapEntryType.GROUP_MAPPING.name]
         ], {})}
 
         if not rejects:
@@ -518,39 +518,39 @@ class SMBService(Service):
         set_reject_sids = set(list(rejects.keys()))
 
         # generate dictionary for current valid groups that have SIDs in the rejects list
-        current = {g['gid']: g['sid'] for g in self.middleware.call_sync('group.query', [
-            ['gid', 'in', [g['gid'] for g in rejects.values()]], ['local', '=', True]
+        current = {g["gid"]: g["sid"] for g in self.middleware.call_sync("group.query", [
+            ["gid", "in", [g["gid"] for g in rejects.values()]], ["local", "=", True]
         ])}
 
         for sid, gm in rejects.copy().items():
-            rejects[sid]['new_sid'] = current.get(gm['gid'])
+            rejects[sid]["new_sid"] = current.get(gm["gid"])
 
-        for share in self.middleware.call_sync('sharing.smb.query'):
-            acl = self.middleware.call_sync('smb.sharesec.getacl', share['name'])['share_acl']
-            acl_sids = set(ace['ae_who_sid'] for ace in acl)
+        for share in self.middleware.call_sync("sharing.smb.query"):
+            acl = self.middleware.call_sync("smb.sharesec.getacl", share["name"])["share_acl"]
+            acl_sids = set(ace["ae_who_sid"] for ace in acl)
 
             if not set_reject_sids & acl_sids:
                 # the share ACL does not use any of the affected SIDs.
                 continue
 
             for ace in acl:
-                if (entry := rejects.get(ace['ae_who_sid'])) is None:
+                if (entry := rejects.get(ace["ae_who_sid"])) is None:
                     continue
 
-                if entry['new_sid'] is None:
+                if entry["new_sid"] is None:
                     self.logger.warning(
-                        'Share ACL entry [%s] references SID [%s] which at one point mapped to '
-                        'a local group with gid [%d] that no longer exists.',
-                        share['name'], ace['ae_who_sid'], entry['gid']
+                        "Share ACL entry [%s] references SID [%s] which at one point mapped to "
+                        "a local group with gid [%d] that no longer exists.",
+                        share["name"], ace["ae_who_sid"], entry["gid"]
                     )
                     # preserve just in case user restores group
                     continue
 
-                ace['ae_who_sid'] = entry['new_sid']
+                ace["ae_who_sid"] = entry["new_sid"]
 
                 self.logger.debug(
-                    '%s: correcting ACL entry in share for group [%d] from SID %s to %s',
-                    share['name'], entry['gid'], ace['ae_who_sid'], entry['new_sid']
+                    "%s: correcting ACL entry in share for group [%d] from SID %s to %s",
+                    share["name"], entry["gid"], ace["ae_who_sid"], entry["new_sid"]
                 )
 
-            self.middleware.call_sync('smb.sharesec.setacl', {'share_name': share['name'], 'share_acl': acl})
+            self.middleware.call_sync("smb.sharesec.setacl", {"share_name": share["name"], "share_acl": acl})

@@ -12,12 +12,12 @@ from .lifecycle import get_rendered_template_config_of_app
 
 
 def normalized_port_value(scheme: str, port: int) -> str:
-    return '' if ((scheme == 'http' and port == 80) or (scheme == 'https' and port == 443)) else f':{port}'
+    return "" if ((scheme == "http" and port == 80) or (scheme == "https" and port == 443)) else f":{port}"
 
 
 def normalized_host_value(host: str) -> str:
-    if ':' in host:
-        return f'[{host}]'
+    if ":" in host:
+        return f"[{host}]"
     return host
 
 
@@ -29,24 +29,24 @@ def get_portals_and_app_notes(app_name: str, version: str) -> dict[str, Any]:
         if k in rendered_config
     }
     config: dict[str, Any] = {
-        'portals': {},
-        'notes': None,
-        'action_required': False,
+        "portals": {},
+        "notes": None,
+        "action_required": False,
     }
     if portal_and_notes_config:
         try:
-            validate_portals_and_notes('portal', portal_and_notes_config)
+            validate_portals_and_notes("portal", portal_and_notes_config)
         except ValidationErrors:
             return config
 
     portals = {}
     for portal in portal_and_notes_config.get(IX_PORTAL_KEY, []):
-        port_value = normalized_port_value(portal['scheme'], portal['port'])
-        host_value = normalized_host_value(portal['host'])
-        portals[portal['name']] = f'{portal["scheme"]}://{host_value}{port_value}{portal.get("path", "")}'
+        port_value = normalized_port_value(portal["scheme"], portal["port"])
+        host_value = normalized_host_value(portal["host"])
+        portals[portal["name"]] = f'{portal["scheme"]}://{host_value}{port_value}{portal.get("path", "")}'
 
     return {
-        'portals': portals,
-        'notes': portal_and_notes_config.get(IX_NOTES_KEY),
-        'action_required': bool(portal_and_notes_config.get(IX_ACTION_REQUIRED_KEY)),
+        "portals": portals,
+        "notes": portal_and_notes_config.get(IX_NOTES_KEY),
+        "action_required": bool(portal_and_notes_config.get(IX_ACTION_REQUIRED_KEY)),
     }

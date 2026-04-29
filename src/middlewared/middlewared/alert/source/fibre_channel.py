@@ -5,10 +5,10 @@ class FCHardwareAddedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.WARNING,
-        title='Fibre Channel HBAs added.',
+        title="Fibre Channel HBAs added.",
         text=(
-            'Fibre Channel HBAs added.  '
-            'Fibre Channel switches may require reconfiguration.'
+            "Fibre Channel HBAs added.  "
+            "Fibre Channel switches may require reconfiguration."
         ),
         deleted_automatically=False,
     )
@@ -18,11 +18,11 @@ class FCHardwareReplacedAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SHARING,
         level=AlertLevel.CRITICAL,
-        title='Fibre Channel HBAs replaced.',
+        title="Fibre Channel HBAs replaced.",
         text=(
-            'Fibre Channel HBAs replaced.  '
-            'Target/WWPN mapping may have changed.  '
-            'Fibre Channel switches may require reconfiguration.'
+            "Fibre Channel HBAs replaced.  "
+            "Target/WWPN mapping may have changed.  "
+            "Fibre Channel switches may require reconfiguration."
         ),
         deleted_automatically=False,
     )

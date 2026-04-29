@@ -23,7 +23,7 @@ class QueryOptions(BaseModel):
     limit: int = 0
     force_sql_filters: bool = False
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_query_options(self) -> Self:
         validate_options(self.model_dump())
         return self

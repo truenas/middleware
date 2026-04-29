@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 
 class AppFSAttachmentDelegate(FSAttachmentDelegate):
-    name = 'apps'
-    title = 'Apps'
+    name = "apps"
+    title = "Apps"
     # Apps depend on Docker, so they start after and stop before Docker
     priority = 5
 
@@ -25,19 +25,19 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
             # - app is not stopped and we are looking for disabled apps
             if not (skip_app := not app.active_workloads.volumes):
                 if enabled:
-                    skip_app |= app.state == 'STOPPED'
+                    skip_app |= app.state == "STOPPED"
                 else:
-                    skip_app |= app.state != 'STOPPED'
+                    skip_app |= app.state != "STOPPED"
 
             if skip_app:
                 continue
 
             if await self.middleware.call(
-                'filesystem.is_child', [volume.source for volume in app.active_workloads.volumes], path
+                "filesystem.is_child", [volume.source for volume in app.active_workloads.volumes], path
             ):
                 apps_attached.append({
-                    'id': app.name,
-                    'name': app.name,
+                    "id": app.name,
+                    "name": app.name,
                 })
 
         return apps_attached
@@ -45,18 +45,18 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments: list[dict[str, str]]) -> None:
         for attachment in attachments:
             try:
-                await (await self.call2(self.s.app.stop, attachment['id'])).wait(raise_error=True)
+                await (await self.call2(self.s.app.stop, attachment["id"])).wait(raise_error=True)
             except Exception:
-                self.middleware.logger.error('Unable to stop %r app', attachment['id'], exc_info=True)
+                self.middleware.logger.error("Unable to stop %r app", attachment["id"], exc_info=True)
 
     async def toggle(self, attachments: list[dict[str, str]], enabled: bool) -> None:
         # if enabled is true - we are going to ignore that as we don't want to scale up releases
         # automatically when a path becomes available
         for attachment in ([] if enabled else attachments):
             try:
-                await (await self.call2(self.s.app.stop, attachment['id'])).wait(raise_error=True)
+                await (await self.call2(self.s.app.stop, attachment["id"])).wait(raise_error=True)
             except Exception:
-                self.middleware.logger.error('Unable to stop %r app', attachment['id'], exc_info=True)
+                self.middleware.logger.error("Unable to stop %r app", attachment["id"], exc_info=True)
 
     async def stop(self, attachments: list[dict[str, str]]) -> None:
         await self.toggle(attachments, False)
@@ -67,5 +67,5 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
 
 async def setup(middleware: Middleware) -> None:
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', AppFSAttachmentDelegate(middleware))
+        middleware.call("pool.dataset.register_attachment_delegate", AppFSAttachmentDelegate(middleware))
     )

@@ -8,35 +8,35 @@ from middlewared.utils.network import system_ips_to_cidrs, validate_network_over
 def validate_address_pools(system_ips: list[dict[str, Any]], user_specified_networks: list[dict[str, Any]]) -> None:
     verrors = ValidationErrors()
     if not user_specified_networks:
-        verrors.add('docker_update.address_pools', 'At least one address pool must be specified')
+        verrors.add("docker_update.address_pools", "At least one address pool must be specified")
     verrors.check()
 
     network_cidrs = system_ips_to_cidrs(system_ips)
     seen_networks = set()
     for index, user_network in enumerate(user_specified_networks):
-        if isinstance(user_network['base'], (ipaddress.IPv4Interface, ipaddress.IPv6Interface)):
-            base_network = user_network['base'].network
-            user_network['base'] = str(user_network['base'])
+        if isinstance(user_network["base"], (ipaddress.IPv4Interface, ipaddress.IPv6Interface)):
+            base_network = user_network["base"].network
+            user_network["base"] = str(user_network["base"])
         else:
-            base_network = ipaddress.ip_network(user_network['base'], False)
+            base_network = ipaddress.ip_network(user_network["base"], False)
 
         # Validate subnet size vs. base network
-        if base_network.prefixlen > user_network['size']:
+        if base_network.prefixlen > user_network["size"]:
             verrors.add(
-                f'docker_update.address_pools.{index}.base',
+                f"docker_update.address_pools.{index}.base",
                 f'Base network {user_network["base"]} cannot be smaller than '
                 f'the specified subnet size {user_network["size"]}'
             )
 
         # Validate no overlaps with system networks
         validate_network_overlaps(
-            f'docker_update.address_pools.{index}.base', base_network, network_cidrs, verrors
+            f"docker_update.address_pools.{index}.base", base_network, network_cidrs, verrors
         )
 
         # Validate no duplicate networks
         if base_network in seen_networks:
             verrors.add(
-                f'docker_update.address_pools.{index}.base',
+                f"docker_update.address_pools.{index}.base",
                 f'Base network {user_network["base"]} is a duplicate of another specified network'
             )
 

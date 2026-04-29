@@ -27,16 +27,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('WebshareService',)
+__all__ = ("WebshareService",)
 
 
 class WebshareService(GenericConfigService[WebshareEntry]):
 
     class Config:
-        service = 'webshare'
-        service_verb = 'reload'
-        cli_namespace = 'service.webshare'
-        role_prefix = 'SHARING_WEBSHARE'
+        service = "webshare"
+        service_verb = "reload"
+        cli_namespace = "service.webshare"
+        role_prefix = "SHARING_WEBSHARE"
         generic = True
         entry = WebshareEntry
 
@@ -46,7 +46,7 @@ class WebshareService(GenericConfigService[WebshareEntry]):
 
     @api_method(
         WebshareUpdateArgs, WebshareUpdateResult,
-        audit='Update Webshare configuration', check_annotations=True,
+        audit="Update Webshare configuration", check_annotations=True,
     )
     async def do_update(self, data: WebshareUpdate) -> WebshareEntry:
         """Update Webshare Service Configuration."""
@@ -56,7 +56,7 @@ class WebshareService(GenericConfigService[WebshareEntry]):
         if old.search != new.search:
             await self.call2(self.s.truesearch.configure)
 
-        await self._service_change(self._config.service, 'reload')
+        await self._service_change(self._config.service, "reload")
 
         return new
 

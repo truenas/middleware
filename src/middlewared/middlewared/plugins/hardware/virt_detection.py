@@ -18,7 +18,7 @@ class HardwareVirtualization(Service):
     @api_method(
         HardwareVirtualizationVariantArgs,
         HardwareVirtualizationVariantResult,
-        roles=['SYSTEM_GENERAL_READ']
+        roles=["SYSTEM_GENERAL_READ"]
     )
     def variant(self) -> str:
         """Report the virtualization variation of TrueNAS system"""
@@ -33,10 +33,10 @@ class HardwareVirtualization(Service):
     @private
     def is_virtualized(self) -> bool:
         """Detect if the TrueNAS system is virtualized"""
-        return self.variant_impl() != 'none'
+        return self.variant_impl() != "none"
 
     @private
     @cache
     def guest_vms_supported(self) -> bool:
         """Detect if TrueNAS system supports guest VMs"""
-        return os.path.exists('/dev/kvm')
+        return os.path.exists("/dev/kvm")

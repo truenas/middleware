@@ -31,7 +31,7 @@ class iSCSITargetExtentEntry(BaseModel):
     """Unique identifier for the iSCSI extent."""
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
     """Name of the iSCSI extent."""
-    type: IscsiExtentType = 'DISK'
+    type: IscsiExtentType = "DISK"
     """Type of the extent storage backend."""
     disk: str | None = None
     """Disk device to use for the extent or `null` if using a file."""
@@ -47,7 +47,7 @@ This is a read-only field automatically populated from "path"."""
     """The path of the file-based extent relative to the dataset mountpoint (e.g., 'extents/lun0.img'). \
 An empty string indicates the file is at the dataset root. Returns `null` for non-FILE types or if the path \
 cannot be resolved yet. This is a read-only field automatically populated from "path"."""
-    filesize: str | int = '0'
+    filesize: str | int = "0"
     """Size of the file-based extent in bytes."""
     blocksize: IscsiExtentBlockSize = 512
     """Block size for the extent in bytes."""
@@ -55,7 +55,7 @@ cannot be resolved yet. This is a read-only field automatically populated from "
     """Whether to use physical block size reporting."""
     avail_threshold: Annotated[int, Field(ge=1, le=99)] | None = None
     """Available space threshold percentage or `null` to disable."""
-    comment: str = ''
+    comment: str = ""
     """Optional comment describing the extent."""
     naa: str = Field(max_length=34)
     """Network Address Authority (NAA) identifier for the extent."""
@@ -63,7 +63,7 @@ cannot be resolved yet. This is a read-only field automatically populated from "
     """Whether to enable insecure Third Party Copy (TPC) operations."""
     xen: bool = False
     """Whether to enable Xen compatibility mode."""
-    rpm: IscsiExtentRPM = 'SSD'
+    rpm: IscsiExtentRPM = "SSD"
     """Reported RPM type for the extent."""
     ro: bool = False
     """Whether the extent is read-only."""

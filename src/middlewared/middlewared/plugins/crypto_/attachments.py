@@ -4,7 +4,7 @@ from middlewared.service import Service, private
 class CertificateService(Service):
 
     class Config:
-        cli_namespace = 'system.certificate'
+        cli_namespace = "system.certificate"
 
     def __init__(self, *args, **kwargs):
         super(CertificateService, self).__init__(*args, **kwargs)

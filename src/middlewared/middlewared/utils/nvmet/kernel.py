@@ -90,7 +90,7 @@ class NvmetConfig:
             while not p.exists() and retries > 0:
                 time.sleep(1)
                 retries -= 1
-            p.write_text(f'{v}\n')
+            p.write_text(f"{v}\n")
         return retries
 
     def set_attrs(self, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
@@ -101,7 +101,7 @@ class NvmetConfig:
         if oldval == newval:
             return True
         # Include the special case where we treat '\0' and '' the same
-        if oldval == '' and newval == '\0':
+        if oldval == "" and newval == "\0":
             return True
         # Also try converting to string
         if oldval == str(newval):
@@ -115,97 +115,97 @@ class NvmetConfig:
             curval = p.read_text().strip()
             if not self.values_match(curval, v):
                 try:
-                    p.write_text(f'{v}\n')
+                    p.write_text(f"{v}\n")
                 except OSError:
-                    logger.exception('Failed to update %s: current=%r new=%r', p, curval, v)
+                    logger.exception("Failed to update %s: current=%r new=%r", p, curval, v)
                     raise
 
 
 class NvmetHostConfig(NvmetConfig):
-    directory = 'hosts'
-    query = 'nvmet.host.query'
-    query_key = 'hostnqn'
+    directory = "hosts"
+    query = "nvmet.host.query"
+    query_key = "hostnqn"
 
     def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
-            if k in ('dhchap_key', 'dhchap_ctrl_key'):
-                result[k] = '\0' if v is None else v
-            elif k == 'dhchap_dhgroup':
+            if k in ("dhchap_key", "dhchap_ctrl_key"):
+                result[k] = "\0" if v is None else v
+            elif k == "dhchap_dhgroup":
                 result[k] = DHCHAP_DHGROUP.by_api(v).sysfs
-            elif k == 'dhchap_hash':
+            elif k == "dhchap_hash":
                 result[k] = DHCHAP_HASH.by_api(v).sysfs
         return result
 
 
 class NvmetPortConfig(NvmetConfig):
-    directory = 'ports'
-    query = 'nvmet.port.query'
-    query_key = 'index'
+    directory = "ports"
+    query = "nvmet.port.query"
+    query_key = "index"
 
     def config_dict(self, render_ctx):
         # For ports we may want to inject or remove ports wrt the ANA
         # settings.  ANA ports will be offset by ANA_PORT_INDEX_OFFSET (5000).
         config = {}
-        non_ana_port_ids = render_ctx['nvmet.port.usage']['non_ana_port_ids']
-        ana_port_ids = render_ctx['nvmet.port.usage']['ana_port_ids']
+        non_ana_port_ids = render_ctx["nvmet.port.usage"]["non_ana_port_ids"]
+        ana_port_ids = render_ctx["nvmet.port.usage"]["ana_port_ids"]
         for entry in render_ctx[self.query]:
-            port_id = entry['id']
+            port_id = entry["id"]
             if port_id in non_ana_port_ids:
                 config[str(entry[self.query_key])] = entry
             if port_id in ana_port_ids:
                 new_index = ANA_PORT_INDEX_OFFSET + entry[self.query_key]
-                config[str(new_index)] = entry | {'index': new_index}
+                config[str(new_index)] = entry | {"index": new_index}
         return config
 
     def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
             match k:
-                case 'addr_trtype':
+                case "addr_trtype":
                     result[k] = PORT_TRTYPE.by_api(v).sysfs
-                case 'addr_adrfam':
+                case "addr_adrfam":
                     result[k] = PORT_ADDR_FAMILY.by_api(v).sysfs
-                case 'addr_traddr':
+                case "addr_traddr":
                     result[k] = addr_traddr_to_address(
-                        attrs.get('index', 0),
-                        attrs['addr_trtype'],
+                        attrs.get("index", 0),
+                        attrs["addr_trtype"],
                         v,
                         render_ctx
                     )
-                case 'addr_trsvcid':
+                case "addr_trsvcid":
                     result[k] = v
-                case 'inline_data_size':
+                case "inline_data_size":
                     if v is not None:
-                        result['param_inline_data_size'] = str(v)
-                case 'max_queue_size':
+                        result["param_inline_data_size"] = str(v)
+                case "max_queue_size":
                     if v is not None:
-                        result['param_max_queue_size'] = str(v)
-                case 'pi_enable':
-                    result['param_pi_enable'] = '0' if v in (None, False) else '1'
+                        result["param_max_queue_size"] = str(v)
+                case "pi_enable":
+                    result["param_pi_enable"] = "0" if v in (None, False) else "1"
 
         return result
 
     def port_ana_path(self, path: pathlib.Path, render_ctx: dict):
-        match render_ctx['failover.node']:
-            case 'A':
-                return pathlib.Path(path, 'ana_groups', str(NVMET_NODE_A_ANA_GRPID))
-            case 'B':
-                return pathlib.Path(path, 'ana_groups', str(NVMET_NODE_B_ANA_GRPID))
+        match render_ctx["failover.node"]:
+            case "A":
+                return pathlib.Path(path, "ana_groups", str(NVMET_NODE_A_ANA_GRPID))
+            case "B":
+                return pathlib.Path(path, "ana_groups", str(NVMET_NODE_B_ANA_GRPID))
             case _:
                 return None
 
     def ensure_ana_state(self, path: pathlib.Path, render_ctx: dict):
-        if not render_ctx['failover.licensed']:
+        if not render_ctx["failover.licensed"]:
             return
         ana_path = self.port_ana_path(path, render_ctx)
-        if render_ctx['nvmet.global.ana_active']:
+        if render_ctx["nvmet.global.ana_active"]:
             ana_path.mkdir(exist_ok=True)
-            ana_state_path = pathlib.Path(ana_path, 'ana_state')
+            ana_state_path = pathlib.Path(ana_path, "ana_state")
             cur_state = ana_state_path.read_text().strip()
             new_state = ana_state(render_ctx)
             if cur_state != new_state:
-                ana_state_path.write_text(f'{new_state}\n')
+                ana_state_path.write_text(f"{new_state}\n")
         else:
             if ana_path.is_dir():
                 ana_path.rmdir()
@@ -217,7 +217,7 @@ class NvmetPortConfig(NvmetConfig):
         self.ensure_ana_state(path, render_ctx)
 
     def pre_delete(self, path: pathlib.Path, render_ctx: dict):
-        if not render_ctx['failover.licensed']:
+        if not render_ctx["failover.licensed"]:
             return
         if ana_path := self.port_ana_path(path, render_ctx):
             if ana_path.is_dir():
@@ -225,11 +225,11 @@ class NvmetPortConfig(NvmetConfig):
 
 
 class NvmetPortReferralConfig(NvmetConfig):
-    directory = 'ports'
-    query = 'nvmet.port.usage'
-    query_key = 'non_ana_referrals'
+    directory = "ports"
+    query = "nvmet.port.usage"
+    query_key = "non_ana_referrals"
 
-    ITEMS = ('addr_trtype', 'addr_adrfam', 'addr_traddr', 'addr_trsvcid')
+    ITEMS = ("addr_trtype", "addr_adrfam", "addr_traddr", "addr_trsvcid")
 
     def handle_port(self, index):
         return index < ANA_PORT_INDEX_OFFSET
@@ -239,10 +239,10 @@ class NvmetPortReferralConfig(NvmetConfig):
 
     def map_port_to_referral_attrs(self, attrs: dict, render_ctx: dict, remote: bool):
         return {
-            'addr_trtype': PORT_TRTYPE.by_api(attrs['addr_trtype']).sysfs,
-            'addr_adrfam': PORT_ADDR_FAMILY.by_api(attrs['addr_adrfam']).sysfs,
-            'addr_traddr': attrs['addr_traddr'],
-            'addr_trsvcid': str(attrs['addr_trsvcid']),
+            "addr_trtype": PORT_TRTYPE.by_api(attrs["addr_trtype"]).sysfs,
+            "addr_adrfam": PORT_ADDR_FAMILY.by_api(attrs["addr_adrfam"]).sysfs,
+            "addr_traddr": attrs["addr_traddr"],
+            "addr_trsvcid": str(attrs["addr_trsvcid"]),
         }
 
     def read(self, parent: pathlib.Path):
@@ -253,7 +253,7 @@ class NvmetPortReferralConfig(NvmetConfig):
 
     @contextmanager
     def modify(self, parent: pathlib.Path):
-        enable_path = pathlib.Path(parent, 'enable')
+        enable_path = pathlib.Path(parent, "enable")
         enable_path.write_text("0\n")
         try:
             yield
@@ -261,7 +261,7 @@ class NvmetPortReferralConfig(NvmetConfig):
             enable_path.write_text("1\n")
 
     def ports_by_index(self, render_ctx):
-        return {self.index(port['index']): port for port in render_ctx['nvmet.port.query']}
+        return {self.index(port["index"]): port for port in render_ctx["nvmet.port.query"]}
 
     def update_referral(self, refdir, attrs):
         existing = self.read(refdir)
@@ -270,19 +270,19 @@ class NvmetPortReferralConfig(NvmetConfig):
                 for item in self.ITEMS:
                     if attrs[item] == existing[item]:
                         continue
-                    pathlib.Path(refdir, item).write_text(f'{attrs[item]}\n')
+                    pathlib.Path(refdir, item).write_text(f"{attrs[item]}\n")
 
     @contextmanager
     def render(self, render_ctx: dict):
         to_remove = []
         referral_ids = render_ctx[self.query][self.query_key]
-        port_id_to_index = {port['id']: self.index(port['index']) for port in render_ctx['nvmet.port.query']}
+        port_id_to_index = {port["id"]: self.index(port["index"]) for port in render_ctx["nvmet.port.query"]}
         ports_by_index = self.ports_by_index(render_ctx)
         referrals = defaultdict(set)
         for src_id, dst_id in referral_ids:
             referrals[port_id_to_index[src_id]].add(port_id_to_index[dst_id])
 
-        for portpath in pathlib.Path(NVMET_KERNEL_CONFIG_DIR, 'ports').iterdir():
+        for portpath in pathlib.Path(NVMET_KERNEL_CONFIG_DIR, "ports").iterdir():
             try:
                 parent_index = int(portpath.name)
             except ValueError:
@@ -292,7 +292,7 @@ class NvmetPortReferralConfig(NvmetConfig):
             if not self.handle_port(parent_index):
                 continue
 
-            referrals_path = pathlib.Path(portpath, 'referrals')
+            referrals_path = pathlib.Path(portpath, "referrals")
             # First check if there are any ports whose referrals are to be ENTIRELY removed
             if parent_index in referrals:
                 # We're supposed to have some referrals.  Check for additions,
@@ -320,7 +320,7 @@ class NvmetPortReferralConfig(NvmetConfig):
                     index = int(key)
                     port = ports_by_index[index]
                     attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
-                    attrs['enable'] = '1'
+                    attrs["enable"] = "1"
                     path = pathlib.Path(referrals_path, key)
                     retries = self.set_mapped_attrs(path, attrs, retries, render_ctx)
             else:
@@ -333,9 +333,9 @@ class NvmetPortReferralConfig(NvmetConfig):
 
 
 class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
-    directory = 'ports'
-    query = 'nvmet.port.usage'
-    query_key = 'ana_referrals'
+    directory = "ports"
+    query = "nvmet.port.usage"
+    query_key = "ana_referrals"
 
     def handle_port(self, index):
         return index >= ANA_PORT_INDEX_OFFSET
@@ -351,10 +351,10 @@ class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
         # This will then be used by the map_port_to_referral_attrs in
         # this class to work out the address to be used.
         result = {}
-        for port in render_ctx['nvmet.port.query']:
-            new_index = self.index(port['index'])
-            if new_index != port['index']:
-                result[new_index] = port.copy() | {'index': new_index}
+        for port in render_ctx["nvmet.port.query"]:
+            new_index = self.index(port["index"])
+            if new_index != port["index"]:
+                result[new_index] = port.copy() | {"index": new_index}
             else:
                 result[new_index] = port
         return result
@@ -364,67 +364,67 @@ class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
         # This is an ANA port, update the addr_traddr
         # We could be pointing at other ports on the same node, or on the
         # other node - specified by remote parameter
-        if attrs.get('index', 0) > ANA_PORT_INDEX_OFFSET:
-            curval = attrs['addr_traddr']
-            prefix = attrs['addr_trtype'].lower()
-            choices = render_ctx[f'{prefix}.nvmet.port.transport_address_choices']
-            pair = choices[curval].split('/')
-            match render_ctx['failover.node']:
-                case 'A':
+        if attrs.get("index", 0) > ANA_PORT_INDEX_OFFSET:
+            curval = attrs["addr_traddr"]
+            prefix = attrs["addr_trtype"].lower()
+            choices = render_ctx[f"{prefix}.nvmet.port.transport_address_choices"]
+            pair = choices[curval].split("/")
+            match render_ctx["failover.node"]:
+                case "A":
                     if remote:
                         newval = pair[1]
                     else:
                         newval = pair[0]
-                case 'B':
+                case "B":
                     if remote:
                         newval = pair[0]
                     else:
                         newval = pair[1]
-            data['addr_traddr'] = newval
+            data["addr_traddr"] = newval
         return data
 
 
 class NvmetSubsysConfig(NvmetConfig):
-    directory = 'subsystems'
-    query = 'nvmet.subsys.query'
-    query_key = 'subnqn'
+    directory = "subsystems"
+    query = "nvmet.subsys.query"
+    query_key = "subnqn"
 
     def pre_delete(self, path: pathlib.Path, render_ctx: dict):
         # If we are force deleting a subsystem, then namespaces
         # will have been deleted from the config, but not yet
         # propagated live.  So, delete the namespaces here.
-        for ns in pathlib.Path(path / 'namespaces').iterdir():
+        for ns in pathlib.Path(path / "namespaces").iterdir():
             ns.rmdir()
 
     def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
             match k:
-                case 'serial':
-                    result['attr_serial'] = v
-                case 'allow_any_host':
-                    result['attr_allow_any_host'] = '1' if v else '0'
-                case 'pi_enable':
-                    result['attr_pi_enable'] = '0' if v in (None, False) else '1'
-                case 'qid_max' | 'ieee_oui':
+                case "serial":
+                    result["attr_serial"] = v
+                case "allow_any_host":
+                    result["attr_allow_any_host"] = "1" if v else "0"
+                case "pi_enable":
+                    result["attr_pi_enable"] = "0" if v in (None, False) else "1"
+                case "qid_max" | "ieee_oui":
                     if v:
-                        result[f'attr_{k}'] = v
+                        result[f"attr_{k}"] = v
         # Perhaps inject some values
-        match render_ctx['failover.node']:
-            case 'A':
-                result['attr_cntlid_max'] = NVMET_NODE_A_MAX_CONTROLLER_ID
-            case 'B':
-                result['attr_cntlid_min'] = NVMET_NODE_B_MIN_CONTROLLER_ID
+        match render_ctx["failover.node"]:
+            case "A":
+                result["attr_cntlid_max"] = NVMET_NODE_A_MAX_CONTROLLER_ID
+            case "B":
+                result["attr_cntlid_min"] = NVMET_NODE_B_MIN_CONTROLLER_ID
 
-        result['attr_model'] = render_ctx['nvmet.subsys.model']
-        result['attr_firmware'] = render_ctx['nvmet.subsys.firmware']
+        result["attr_model"] = render_ctx["nvmet.subsys.model"]
+        result["attr_firmware"] = render_ctx["nvmet.subsys.firmware"]
         return result
 
 
 class NvmetNamespaceConfig(NvmetConfig):
-    directory = 'namespaces'
-    query = 'nvmet.namespace.query'
-    query_key = 'nsid'
+    directory = "namespaces"
+    query = "nvmet.namespace.query"
+    query_key = "nsid"
 
     @contextmanager
     def render(self, render_ctx: dict):
@@ -433,24 +433,24 @@ class NvmetNamespaceConfig(NvmetConfig):
         subsys_to_subnqn = {}
         subsys_to_ns = defaultdict(dict)
         for entry in render_ctx[self.query]:
-            subsys = entry['subsys']
-            subsys_id = subsys['id']
-            subsys_to_subnqn[subsys_id] = subsys['subnqn']
-            subsys_to_ns[subsys_id][str(entry['nsid'])] = entry
+            subsys = entry["subsys"]
+            subsys_id = subsys["id"]
+            subsys_to_subnqn[subsys_id] = subsys["subnqn"]
+            subsys_to_ns[subsys_id][str(entry["nsid"])] = entry
 
         # We could have additional subsystems that no longer
         # have any namespaces attached.  Need to find them so that
         # we cleanup deleted namespaces.
-        for subsys in render_ctx['nvmet.subsys.query']:
-            subsys_id = subsys['id']
+        for subsys in render_ctx["nvmet.subsys.query"]:
+            subsys_id = subsys["id"]
             if subsys_id not in subsys_to_ns:
-                subsys_to_subnqn[subsys_id] = subsys['subnqn']
+                subsys_to_subnqn[subsys_id] = subsys["subnqn"]
                 subsys_to_ns[subsys_id] = {}
 
         remove_dirs = []
         for subsys_id, namespaces in subsys_to_ns.items():
             parent_dir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
-                                      'subsystems',
+                                      "subsystems",
                                       subsys_to_subnqn[subsys_id],
                                       self.directory)
 
@@ -482,28 +482,28 @@ class NvmetNamespaceConfig(NvmetConfig):
 
     def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
-        for k in ('device_uuid', 'device_nguid'):
+        for k in ("device_uuid", "device_nguid"):
             result[k] = attrs[k]
 
-        device_path = attrs.get('device_path')
-        if device_path and not attrs['locked']:
-            if dp := _map_device_path(attrs['device_type'], device_path):
-                result['device_path'] = dp
+        device_path = attrs.get("device_path")
+        if device_path and not attrs["locked"]:
+            if dp := _map_device_path(attrs["device_type"], device_path):
+                result["device_path"] = dp
 
-        result['buffered_io'] = NAMESPACE_DEVICE_TYPE.by_api(attrs['device_type']).sysfs
+        result["buffered_io"] = NAMESPACE_DEVICE_TYPE.by_api(attrs["device_type"]).sysfs
 
-        result['resv_enable'] = 1
-        result['ana_grpid'] = NVMET_DEFAULT_ANA_GRPID
+        result["resv_enable"] = 1
+        result["ana_grpid"] = NVMET_DEFAULT_ANA_GRPID
 
         # Is ANA active for this namespace (subsystem)
-        if subsys_ana(attrs['subsys'], render_ctx):
-            result['ana_grpid'] = ana_grpid(render_ctx)
+        if subsys_ana(attrs["subsys"], render_ctx):
+            result["ana_grpid"] = ana_grpid(render_ctx)
 
-        match render_ctx['failover.status']:
-            case 'SINGLE' | 'MASTER':
-                result['enable'] = '1' if attrs['enabled'] and not attrs['locked'] else '0'
-            case 'BACKUP':
-                result['enable'] = '0'
+        match render_ctx["failover.status"]:
+            case "SINGLE" | "MASTER":
+                result["enable"] = "1" if attrs["enabled"] and not attrs["locked"] else "0"
+            case "BACKUP":
+                result["enable"] = "0"
 
         return result
 
@@ -517,10 +517,10 @@ class NvmetLinkConfig:
     dst_query_keys = []
 
     def src_name_prefix(self, render_ctx: dict):
-        return ''
+        return ""
 
     def dst_name_prefix(self, render_ctx: dict):
-        return ''
+        return ""
 
     def create_links(self, entry: dict, render_ctx: dict):
         return True
@@ -536,7 +536,7 @@ class NvmetLinkConfig:
         rootdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.src_parentdir)
         dstdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.dst_dir)
         to_unlink = []
-        for path in rootdir.glob(f'*/{self.src_subdir}/*'):
+        for path in rootdir.glob(f"*/{self.src_subdir}/*"):
             if path.is_symlink():
                 name = path.name
                 parent = path.parent.parent.name
@@ -569,27 +569,27 @@ class NvmetLinkConfig:
 
 
 class NvmetHostSubsysConfig(NvmetLinkConfig):
-    query = 'nvmet.host_subsys.query'
-    src_parentdir = 'subsystems'
-    src_subdir = 'allowed_hosts'
-    src_query_keys = ['subsys', 'subnqn']
-    dst_dir = 'hosts'
-    dst_query_keys = ['host', 'hostnqn']
+    query = "nvmet.host_subsys.query"
+    src_parentdir = "subsystems"
+    src_subdir = "allowed_hosts"
+    src_query_keys = ["subsys", "subnqn"]
+    dst_dir = "hosts"
+    dst_query_keys = ["host", "hostnqn"]
 
     def src_dir_name(self, entry, render_ctx: dict):
-        return f'{entry[self.src_query_keys[0]][self.src_query_keys[1]]}'
+        return f"{entry[self.src_query_keys[0]][self.src_query_keys[1]]}"
 
     def dst_name(self, entry):
-        return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
+        return f"{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}"
 
 
 class NvmetPortSubsysConfig(NvmetLinkConfig):
-    query = 'nvmet.port_subsys.query'
-    src_parentdir = 'ports'
-    src_subdir = 'subsystems'
-    src_query_keys = ['port', 'index']
-    dst_dir = 'subsystems'
-    dst_query_keys = ['subsys', 'subnqn']
+    query = "nvmet.port_subsys.query"
+    src_parentdir = "ports"
+    src_subdir = "subsystems"
+    src_query_keys = ["port", "index"]
+    dst_dir = "subsystems"
+    dst_query_keys = ["subsys", "subnqn"]
 
     def src_dir_name(self, entry, render_ctx: dict):
         if (index := port_subsys_index(entry, render_ctx)) is None:
@@ -598,15 +598,15 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
         return str(index)
 
     def dst_name(self, entry):
-        return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
+        return f"{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}"
 
     def create_links(self, entry: dict, render_ctx: dict):
         # There are two reasons why we might NOT want to create a link
         # 1. The port is not enabled
         # 2. The port is RDMA, but the global RDMA setting is off
-        if not entry['port']['enabled']:
+        if not entry["port"]["enabled"]:
             return False
-        if entry['port']['addr_trtype'] == PORT_TRTYPE.RDMA.api and not render_ctx['nvmet.global.rdma_enabled']:
+        if entry["port"]["addr_trtype"] == PORT_TRTYPE.RDMA.api and not render_ctx["nvmet.global.rdma_enabled"]:
             return False
         return True
 
@@ -637,46 +637,46 @@ def write_config(config):
 
 def _map_device_path(device_type, device_path):
     match device_type:
-        case 'FILE':
-            if device_path.startswith('/mnt/'):
+        case "FILE":
+            if device_path.startswith("/mnt/"):
                 return device_path
-        case 'ZVOL':
-            if device_path.startswith('zvol/'):
+        case "ZVOL":
+            if device_path.startswith("zvol/"):
                 return zvol_name_to_path(device_path[5:])
 
 
 def _set_namespace_field(subnqn, nsnum, field, value):
     try:
         pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
-                     'subsystems',
+                     "subsystems",
                      subnqn,
-                     'namespaces',
+                     "namespaces",
                      str(nsnum),
-                     field).write_text(f'{value}\n')
+                     field).write_text(f"{value}\n")
     except FileNotFoundError:
         pass
 
 
 def _set_namespace_enable(subnqn, nsnum, value):
-    _set_namespace_field(subnqn, nsnum, 'enable', value)
+    _set_namespace_field(subnqn, nsnum, "enable", value)
 
 
 def lock_namespace(data):
-    _set_namespace_enable(data['subsys']['subnqn'], data['nsid'], 0)
+    _set_namespace_enable(data["subsys"]["subnqn"], data["nsid"], 0)
 
 
 def unlock_namespace(data):
-    _set_namespace_field(data['subsys']['subnqn'],
-                         data['nsid'],
-                         'device_path',
-                         _map_device_path(data['device_type'], data['device_path']))
-    _set_namespace_enable(data['subsys']['subnqn'], data['nsid'], 1)
+    _set_namespace_field(data["subsys"]["subnqn"],
+                         data["nsid"],
+                         "device_path",
+                         _map_device_path(data["device_type"], data["device_path"]))
+    _set_namespace_enable(data["subsys"]["subnqn"], data["nsid"], 1)
 
 
 def resize_namespace(data):
-    _set_namespace_field(data['subsys']['subnqn'],
-                         data['nsid'],
-                         'revalidate_size',
+    _set_namespace_field(data["subsys"]["subnqn"],
+                         data["nsid"],
+                         "revalidate_size",
                          1)
 
 
@@ -685,24 +685,24 @@ def clear_config():
     if not config_root.exists():
         return
 
-    for port in pathlib.Path(config_root, 'ports').iterdir():
-        for subsys in pathlib.Path(port, 'subsystems').iterdir():
+    for port in pathlib.Path(config_root, "ports").iterdir():
+        for subsys in pathlib.Path(port, "subsystems").iterdir():
             subsys.unlink()
-        for referral in pathlib.Path(port, 'referrals').iterdir():
+        for referral in pathlib.Path(port, "referrals").iterdir():
             referral.rmdir()
-        for ana in pathlib.Path(port, 'ana_groups').iterdir():
-            if ana.name != '1':
+        for ana in pathlib.Path(port, "ana_groups").iterdir():
+            if ana.name != "1":
                 ana.rmdir()
         port.rmdir()
 
-    for subsys in pathlib.Path(config_root, 'subsystems').iterdir():
-        for host in pathlib.Path(subsys, 'allowed_hosts').iterdir():
+    for subsys in pathlib.Path(config_root, "subsystems").iterdir():
+        for host in pathlib.Path(subsys, "allowed_hosts").iterdir():
             host.unlink()
-        for ns in pathlib.Path(subsys, 'namespaces').iterdir():
+        for ns in pathlib.Path(subsys, "namespaces").iterdir():
             ns.rmdir()
         subsys.rmdir()
 
-    for host in pathlib.Path(config_root, 'hosts').iterdir():
+    for host in pathlib.Path(config_root, "hosts").iterdir():
         host.rmdir()
 
 
@@ -712,10 +712,10 @@ def nvmet_kernel_module_loaded():
 
 def load_modules(modules):
     if modules:
-        command = ['modprobe', '-a'] + modules
+        command = ["modprobe", "-a"] + modules
         subprocess.run(command)
 
 
 def unload_module(mod):
-    command = ['rmmod', mod]
+    command = ["rmmod", mod]
     subprocess.run(command, capture_output=True)

@@ -28,8 +28,8 @@ class LDAPClient:
         pyldap.set_option(pyldap.OPT_REFERRALS, 0)
 
     def __setup_ssl(self, data):
-        if data['credential']['credential_type'] == DSCredType.LDAP_MTLS:
-            cert = data['credential']['client_certificate']
+        if data["credential"]["credential_type"] == DSCredType.LDAP_MTLS:
+            cert = data["credential"]["client_certificate"]
 
             pyldap.set_option(
                 pyldap.OPT_X_TLS_CERTFILE,
@@ -42,10 +42,10 @@ class LDAPClient:
 
         pyldap.set_option(
             pyldap.OPT_X_TLS_CACERTFILE,
-            '/etc/ssl/certs/ca-certificates.crt'
+            "/etc/ssl/certs/ca-certificates.crt"
         )
 
-        if data['validate_certificates']:
+        if data["validate_certificates"]:
             pyldap.set_option(
                 pyldap.OPT_X_TLS_REQUIRE_CERT,
                 pyldap.OPT_X_TLS_DEMAND
@@ -69,9 +69,9 @@ class LDAPClient:
 
             raise
 
-        pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['timeout'])
+        pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data["timeout"])
 
-        if data['starttls']:
+        if data["starttls"]:
             try:
                 self._handle.start_tls_s()
             except Exception:
@@ -82,23 +82,23 @@ class LDAPClient:
                 raise
 
         try:
-            match data['credential']['credential_type']:
+            match data["credential"]["credential_type"]:
                 case DSCredType.LDAP_ANONYMOUS:
                     bound = self._handle.simple_bind_s()
                 case DSCredType.LDAP_PLAIN:
                     bound = self._handle.simple_bind_s(
-                        data['credential']['binddn'],
-                        data['credential']['bindpw']
+                        data["credential"]["binddn"],
+                        data["credential"]["bindpw"]
                     )
                 case DSCredType.LDAP_MTLS:
-                    self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                    self._handle.sasl_non_interactive_bind_s("EXTERNAL")
                     bound = True
                 case DSCredType.KERBEROS_USER | DSCredType.KERBEROS_PRINCIPAL:
                     self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
                     self._handle.sasl_gssapi_bind_s()
                     bound = True
                 case _:
-                    raise ValueError('Unhandled credential type')
+                    raise ValueError("Unhandled credential type")
         except Exception:
             self._handle = None
             if not raise_error:
@@ -129,7 +129,7 @@ class LDAPClient:
 
         saved_error = None
 
-        for server in data['server_urls']:
+        for server in data["server_urls"]:
             try:
                 bound = self.__perform_bind(data, server)
             except Exception as e:
@@ -170,21 +170,21 @@ class LDAPClient:
                     parsed_data.update({k: v})
 
                 res.append({
-                    'dn': r[0],
-                    'data': parsed_data
+                    "dn": r[0],
+                    "data": parsed_data
                 })
 
         return res
 
     @ldap_client_lock
-    def search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filterstr='', sizelimit=0):
+    def search(self, ldap_config, basedn="", scope=pyldap.SCOPE_SUBTREE, filterstr="", sizelimit=0):
         self.open(ldap_config)
         result = []
         clientctrls = None
         paged = SimplePagedResultsControl(
             criticality=False,
             size=self.pagesize,
-            cookie=''
+            cookie=""
         )
         paged_ctrls = {SimplePagedResultsControl.controlType: SimplePagedResultsControl}
         retry = True
@@ -202,7 +202,7 @@ class LDAPClient:
                     attrsonly=0,
                     serverctrls=serverctrls,
                     clientctrls=clientctrls,
-                    timeout=ldap_config['timeout'],
+                    timeout=ldap_config["timeout"],
                     sizelimit=sizelimit
                 )
 

@@ -3,11 +3,11 @@ from typing import Literal
 from middlewared.api.base import BaseModel, LongString, NonEmptyString
 
 __all__ = [
-    'AppImageEntry', 'AppImageParsedRepoTags', 'AppImageAuthConfig',
-    'AppImagePull', 'AppImagePullArgs', 'AppImagePullResult',
-    'AppImageDeleteOptions', 'AppImageDeleteArgs', 'AppImageDeleteResult',
-    'AppImageDockerhubRateLimitInfo',
-    'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
+    "AppImageEntry", "AppImageParsedRepoTags", "AppImageAuthConfig",
+    "AppImagePull", "AppImagePullArgs", "AppImagePullResult",
+    "AppImageDeleteOptions", "AppImageDeleteArgs", "AppImageDeleteResult",
+    "AppImageDockerhubRateLimitInfo",
+    "AppImageDockerhubRateLimitArgs", "AppImageDockerhubRateLimitResult",
 ]
 
 

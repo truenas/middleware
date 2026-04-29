@@ -58,13 +58,13 @@ class NFSService(Service):
             else:
                 # Replace rmtab excluding ip_to_clear
                 with tempfile.NamedTemporaryFile(
-                    mode='wt',
+                    mode="wt",
                     dir=NFSServicePathInfo.STATEDIR.path(),
                     delete=False
                 ) as outf:
                     with open(rmtab, "r") as inf:
                         for entry in inf:
-                            if entry.split(':')[0] in ip_to_clear:
+                            if entry.split(":")[0] in ip_to_clear:
                                 continue
                             else:
                                 outf.write(entry)
@@ -76,7 +76,7 @@ class NFSService(Service):
         item=NFSGetNfs3ClientsEntry,
         # NFS_WRITE because this exposes hostnames and IP addresses
         # READONLY is considered administrative-level permission
-        roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
+        roles=["READONLY_ADMIN", "SHARING_NFS_WRITE"]
     )
     def get_nfs3_clients(self, filters, options):
         """
@@ -99,7 +99,7 @@ class NFSService(Service):
                 info = safe_yaml_load(f)
 
                 # NFS-135435: Fixup non-printable chars
-                for item in ['name', 'Implementation domain', 'Implementation name']:
+                for item in ["name", "Implementation domain", "Implementation name"]:
                     if raw_val := info.get(item):
                         info[item] = "".join(c if c.isprintable() else "\uFFFD" for c in raw_val)
 
@@ -124,7 +124,7 @@ class NFSService(Service):
         item=NFSGetNfs4ClientsEntry,
         # NFS_WRITE because this exposes hostnames, IP addresses and other details
         # READONLY is considered administrative-level permission
-        roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
+        roles=["READONLY_ADMIN", "SHARING_NFS_WRITE"]
     )
     def get_nfs4_clients(self, filters, options):
         """
@@ -207,7 +207,7 @@ class NFSService(Service):
 
         return filter_list(clients, filters, options)
 
-    @api_method(NFSClientCountArgs, NFSClientCountResult, roles=['SHARING_NFS_READ'])
+    @api_method(NFSClientCountArgs, NFSClientCountResult, roles=["SHARING_NFS_READ"])
     def client_count(self):
         """
         Return currently connected clients count.

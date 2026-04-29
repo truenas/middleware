@@ -2,7 +2,7 @@ import ctypes
 import signal
 import threading
 
-__all__ = ['set_name', 'set_cmdline', 'set_pdeath_sig']
+__all__ = ["set_name", "set_cmdline", "set_pdeath_sig"]
 
 # from linux/prctl.h
 PR_SET_PDEATHSIG = 1

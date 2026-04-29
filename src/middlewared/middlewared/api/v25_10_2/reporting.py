@@ -13,11 +13,11 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
-    'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
-    'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingRealtimeEventSourceArgs',
-    'ReportingRealtimeEventSourceEvent', 'ReportingGetDataArgs', 'ReportingGetDataResult', 'ReportingGraphArgs',
-    'ReportingGraphResult', 'ReportingNetdataGetDataResult', 'ReportingNetdataGraphsItem',
+    "ReportingEntry", "ReportingUpdateArgs", "ReportingUpdateResult", "ReportingGraphsItem",
+    "ReportingNetdataGetDataArgs", "ReportingNetdataGraphResult", "ReportingNetdataGraphArgs",
+    "ReportingGeneratePasswordArgs", "ReportingGeneratePasswordResult", "ReportingRealtimeEventSourceArgs",
+    "ReportingRealtimeEventSourceEvent", "ReportingGetDataArgs", "ReportingGetDataResult", "ReportingGraphArgs",
+    "ReportingGraphResult", "ReportingNetdataGetDataResult", "ReportingNetdataGraphsItem",
 ]
 
 
@@ -32,7 +32,7 @@ class ReportingEntry(BaseModel):
     """Interval in seconds for updating aggregated tier1 data."""
 
 
-@single_argument_args('reporting_update')
+@single_argument_args("reporting_update")
 class ReportingUpdateArgs(ReportingEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
@@ -46,7 +46,7 @@ timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
 
 
 class ReportingQuery(BaseModel):
-    unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = None
+    unit: typing.Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
     """Time unit for data aggregation. `null` for default aggregation."""
     page: int = Field(default=1, ge=1)
     """Page number for paginated results."""
@@ -60,9 +60,9 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime', 'arcactualrate', 'arcrate',
-        'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
-        'upsload', 'upstemperature',
+        "cpu", "cputemp", "disk", "interface", "load", "processes", "memory", "uptime", "arcactualrate", "arcrate",
+        "arcsize", "arcresult", "disktemp", "upscharge", "upsruntime", "upsvoltage", "upscurrent", "upsfrequency",
+        "upsload", "upstemperature",
     ]
     """Type of performance metric to retrieve.
 

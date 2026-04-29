@@ -11,8 +11,8 @@ async def render(service, middleware):
         for unit in await middleware.call("service.systemd_units", service["service"]):
             services_enabled[unit] = service["enable"]
 
-    licensed = await middleware.call('failover.licensed')
-    lio_enabled = await middleware.call('iscsi.global.lio_enabled')
+    licensed = await middleware.call("failover.licensed")
+    lio_enabled = await middleware.call("iscsi.global.lio_enabled")
 
     for unit, enable in services_enabled.items():
         state = await system_dbus.get_unit_file_state(unit)
@@ -30,5 +30,5 @@ async def render(service, middleware):
             await system_dbus.set_unit_file_state(unit, enable)
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
-    with atomic_write('/data/user-services.json', 'w', perms=0o600) as f:
+    with atomic_write("/data/user-services.json", "w", perms=0o600) as f:
         f.write(json.dumps(services_enabled))

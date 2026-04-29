@@ -18,7 +18,7 @@ def get_disk_stats() -> dict[str, dict[str, float | int]]:
     available_disks = {d.name: d for d in iterate_disks()}
     stats = {}
     with contextlib.suppress(IOError):
-        with open('/proc/diskstats', 'r') as disk_stats_fd:
+        with open("/proc/diskstats", "r") as disk_stats_fd:
             for entry in disk_stats_fd:
                 parts = entry.strip().split()
                 if len(parts) < 14:
@@ -35,15 +35,15 @@ def get_disk_stats() -> dict[str, dict[str, float | int]]:
                     write_sectors = int(parts[9])
                     busy_time = int(parts[12])
                 except (IndexError, ValueError) as e:
-                    logger.error('Failed to parse disk stats for %r: %r', disk_name, e)
+                    logger.error("Failed to parse disk stats for %r: %r", disk_name, e)
                     continue
 
                 stats[available_disks[disk_name].identifier] = {
-                    'reads': (read_sectors * SECTOR_SIZE) / 1024,  # convert to kb
-                    'writes': (write_sectors * SECTOR_SIZE) / 1024,  # convert to kb
-                    'read_ops': read_ops,
-                    'write_ops': write_ops,
-                    'busy': busy_time,
+                    "reads": (read_sectors * SECTOR_SIZE) / 1024,  # convert to kb
+                    "writes": (write_sectors * SECTOR_SIZE) / 1024,  # convert to kb
+                    "read_ops": read_ops,
+                    "write_ops": write_ops,
+                    "busy": busy_time,
                 }
 
     return stats

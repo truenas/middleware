@@ -22,9 +22,9 @@ class USBStorageAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.HARDWARE,
         level=AlertLevel.CRITICAL,
-        title='A USB Storage Device Has Been Connected to This System',
-        text=('A USB storage device %r has been connected to this system. Please remove that USB device to '
-              'prevent problems with system boot or HA failover.'),
+        title="A USB Storage Device Has Been Connected to This System",
+        text=("A USB storage device %r has been connected to this system. Please remove that USB device to "
+              "prevent problems with system boot or HA failover."),
         products=(ProductType.ENTERPRISE,),
         proactive_support=True,
     )

@@ -18,7 +18,7 @@ def outdated_docker_images_for_app(context: ServiceContext, app_name: str) -> li
     image_update_cache = context.call_sync2(context.s.app.image.get_update_cache, True)
     images = []
     for image_tag in app.active_workloads.images:
-        if image_update_cache.get(normalize_reference(image_tag)['complete_tag']):
+        if image_update_cache.get(normalize_reference(image_tag)["complete_tag"]):
             images.append(image_tag)
 
     return images
@@ -33,11 +33,11 @@ def pull_images_internal(
     context: ServiceContext, app_name: str, app: AppEntry, options: AppPullImages, job: Job | None = None,
 ) -> None:
     if job is not None:
-        job.set_progress(20, 'Pulling app images')
+        job.set_progress(20, "Pulling app images")
 
-    compose_action(app_name, app.version, action='pull')
+    compose_action(app_name, app.version, action="pull")
     if job is not None:
-        job.set_progress(80 if options.redeploy else 100, 'Images pulled successfully')
+        job.set_progress(80 if options.redeploy else 100, "Images pulled successfully")
 
     # We will update image cache so that it reflects the fact that image has been pulled again
     # We won't really check again here but rather just update the cache directly because we know
@@ -49,4 +49,4 @@ def pull_images_internal(
     if options.redeploy:
         context.call_sync2(context.s.app.redeploy, app_name).wait_sync(raise_error=True)
         if job is not None:
-            job.set_progress(100, 'App redeployed successfully')
+            job.set_progress(100, "App redeployed successfully")

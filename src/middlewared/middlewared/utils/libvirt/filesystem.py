@@ -16,13 +16,13 @@ class FilesystemDelegate(DeviceDelegate):
         instance: dict[str, Any] | None = None,
         update: bool = True,
     ) -> None:
-        path = device['attributes']['source']
-        self.middleware.call_sync('container.device.validate_path_field', verrors, 'attributes.path', path)
+        path = device["attributes"]["source"]
+        self.middleware.call_sync("container.device.validate_path_field", verrors, "attributes.path", path)
         if instance is not None and not device_uniqueness_check(
-            device, instance, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+            device, instance, ("DISK", "RAW", "CDROM", "FILESYSTEM"),
         ):
             verrors.add(
-                'attributes.target',
+                "attributes.target",
                 f'{instance["name"]} has {device["attributes"]["target"]!r} target already configured'
             )
         super().validate_middleware(device, verrors, old, instance, update)

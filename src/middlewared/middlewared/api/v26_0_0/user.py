@@ -74,7 +74,7 @@ class UserEntry(BaseModel):
     webshare: bool = False
     """ The user account may be used to access WebShare shares. If set to `true` the user is automatically added to \
     the `webshare` group."""
-    userns_idmap: Literal['DIRECT', None] | ContainerXID = None
+    userns_idmap: Literal["DIRECT", None] | ContainerXID = None
     """
     Specifies the subuid mapping for this user. If DIRECT then the UID will be \
     directly mapped to all containers. Alternatively, the target UID may be \
@@ -213,7 +213,7 @@ class UserGetUserObj(BaseModel):
     """
     sid: str | None
     """Optional SID value for the account that is present if `sid_info` is specified in payload."""
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
+    source: Literal["LOCAL", "ACTIVEDIRECTORY", "LDAP"]
     """The source for the user account."""
     local: bool
     """The account is local to TrueNAS or provided by a directory service."""
@@ -271,13 +271,13 @@ class UserShellChoicesArgs(BaseModel):
 class UserShellChoicesResult(BaseModel):
     result: dict = Field(examples=[
         {
-            '/usr/bin/bash': 'bash',
-            '/usr/bin/rbash': 'rbash',
-            '/usr/bin/dash': 'dash',
-            '/usr/bin/sh': 'sh',
-            '/usr/bin/zsh': 'zsh',
-            '/usr/bin/tmux': 'tmux',
-            '/usr/sbin/nologin': 'nologin'
+            "/usr/bin/bash": "bash",
+            "/usr/bin/rbash": "rbash",
+            "/usr/bin/dash": "dash",
+            "/usr/bin/sh": "sh",
+            "/usr/bin/zsh": "zsh",
+            "/usr/bin/tmux": "tmux",
+            "/usr/sbin/nologin": "nologin"
         },
     ])
     """Object of available shell paths and their descriptive names."""
@@ -329,7 +329,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 
 
 class UserSetupLocalAdministratorArgs(BaseModel):
-    username: Literal['root', 'truenas_admin']
+    username: Literal["root", "truenas_admin"]
     """Administrator username to configure."""
     password: Secret[str]
     """Password for the administrator account."""

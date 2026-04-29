@@ -1,14 +1,14 @@
 from middlewared.api.base import BaseModel
 
 __all__ = (
-    'CertificateCountryChoicesArgs',
-    'CertificateCountryChoicesResult',
-    'CertificateAcmeServerChoicesArgs',
-    'CertificateAcmeServerChoicesResult',
-    'CertificateEcCurveChoicesArgs',
-    'CertificateEcCurveChoicesResult',
-    'CertificateExtendedKeyUsageChoicesArgs',
-    'CertificateExtendedKeyUsageChoicesResult',
+    "CertificateCountryChoicesArgs",
+    "CertificateCountryChoicesResult",
+    "CertificateAcmeServerChoicesArgs",
+    "CertificateAcmeServerChoicesResult",
+    "CertificateEcCurveChoicesArgs",
+    "CertificateEcCurveChoicesResult",
+    "CertificateExtendedKeyUsageChoicesArgs",
+    "CertificateExtendedKeyUsageChoicesResult",
 )
 
 

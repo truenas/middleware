@@ -12,17 +12,17 @@ class AuditEventSudoEventData(BaseModel):
 
 
 class AuditEventSudo(AuditEvent):
-    event: Literal['ACCEPT', 'REJECT']
+    event: Literal["ACCEPT", "REJECT"]
     event_data: AuditEventSudoEventData
-    service: Literal['SUDO']
+    service: Literal["SUDO"]
 
 
 class AuditEventSudoAccept(AuditEventSudo):
-    event: Literal['ACCEPT']
+    event: Literal["ACCEPT"]
 
 
 class AuditEventSudoReject(AuditEventSudo):
-    event: Literal['REJECT']
+    event: Literal["REJECT"]
 
 
 AUDIT_EVENT_SUDO_JSON_SCHEMAS = [

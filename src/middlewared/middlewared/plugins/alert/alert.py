@@ -82,7 +82,7 @@ class AlertSourceLock:
 
 
 class AlertModel(sa.Model):
-    __tablename__ = 'system_alert'
+    __tablename__ = "system_alert"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     node = sa.Column(sa.String(100))
@@ -357,14 +357,14 @@ class AlertService(Service):
     async def terminate(self) -> None:
         await self.call2(self.s.alert.flush_alerts)
 
-    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=["ALERT_LIST_READ"])
     async def list_policies(self) -> list[str]:
         """
         List all alert policies which indicate the frequency of the alerts.
         """
         return POLICIES
 
-    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=["ALERT_LIST_READ"])
     async def list_categories(self, options: dict[str, Any]) -> list[dict[str, Any]]:
         """
         List all types of alerts which the system can issue.
@@ -405,7 +405,7 @@ class AlertService(Service):
             if any(alert_class.config.category == alert_category for alert_class in classes)
         ]
 
-    @api_method(AlertListArgs, AlertListResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListArgs, AlertListResult, roles=["ALERT_LIST_READ"])
     async def list(self) -> list[dict[str, Any]]:
         """
         List all types of alerts including active/dismissed currently in the system.
@@ -430,25 +430,25 @@ class AlertService(Service):
     @private
     async def node_map(self) -> dict[str, str]:
         nodes: dict[str, str] = {
-            'A': 'Controller A',
-            'B': 'Controller B',
+            "A": "Controller A",
+            "B": "Controller B",
         }
-        if await self.middleware.call('failover.licensed'):
-            node: str = await self.middleware.call('failover.node')
-            status: str = await self.middleware.call('failover.status')
-            if status == 'MASTER':
-                if node == 'A':
+        if await self.middleware.call("failover.licensed"):
+            node: str = await self.middleware.call("failover.node")
+            status: str = await self.middleware.call("failover.status")
+            if status == "MASTER":
+                if node == "A":
                     nodes = {
-                        'A': 'Active Controller (A)',
-                        'B': 'Standby Controller (B)',
+                        "A": "Active Controller (A)",
+                        "B": "Standby Controller (B)",
                     }
                 else:
                     nodes = {
-                        'A': 'Standby Controller (A)',
-                        'B': 'Active Controller (B)',
+                        "A": "Standby Controller (A)",
+                        "B": "Active Controller (B)",
                     }
             else:
-                nodes[node] = f'{status.title()} Controller ({node})'
+                nodes[node] = f"{status.title()} Controller ({node})"
 
         return nodes
 
@@ -458,7 +458,7 @@ class AlertService(Service):
         except IndexError:
             return None
 
-    @api_method(AlertDismissArgs, AlertDismissResult, roles=['ALERT_LIST_WRITE'])
+    @api_method(AlertDismissArgs, AlertDismissResult, roles=["ALERT_LIST_WRITE"])
     async def dismiss(self, uuid: str) -> None:
         """
         Dismiss `id` alert.
@@ -496,7 +496,7 @@ class AlertService(Service):
         if removed:
             self._send_alert_deleted_event(alert)
 
-    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=['ALERT_LIST_WRITE'])
+    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=["ALERT_LIST_WRITE"])
     async def restore(self, uuid: str) -> None:
         """
         Restore `id` alert which had been dismissed.
@@ -691,12 +691,12 @@ class AlertService(Service):
         return str(uuid.uuid4())
 
     async def __should_run_or_send_alerts(self) -> bool:
-        if await self.middleware.call('system.state') != 'READY':
+        if await self.middleware.call("system.state") != "READY":
             return False
 
-        if await self.middleware.call('failover.licensed'):
-            status: str = await self.middleware.call('failover.status')
-            if status == 'BACKUP' or await self.middleware.call('failover.in_progress'):
+        if await self.middleware.call("failover.licensed"):
+            status: str = await self.middleware.call("failover.status")
+            if status == "BACKUP" or await self.middleware.call("failover.in_progress"):
                 return False
 
         return True
@@ -744,7 +744,7 @@ class AlertService(Service):
                     try:
                         run_on_backup_node = (await self.middleware.call(
                             "failover.call_remote", "system.time_info", *args
-                        ))['uptime_seconds'] > FAILOVER_ALERTS_BACKOFF_SECS
+                        ))["uptime_seconds"] > FAILOVER_ALERTS_BACKOFF_SECS
                     except Exception:
                         pass
 
@@ -788,7 +788,7 @@ class AlertService(Service):
                 if e.errno not in NETWORK_ERRORS + (CallError.EALERTCHECKERUNAVAILABLE,):
                     raise
         except ReserveFDException:
-            self.logger.debug('Failed to reserve a privileged port')
+            self.logger.debug("Failed to reserve a privileged port")
         except Exception as e:
             other_node_alerts = [Alert(
                 AlertSourceRunFailedOnBackupNodeAlert(source_name=name, traceback=str(e)),
@@ -965,8 +965,8 @@ class AlertService(Service):
     @periodic(3600, run_on_start=False)
     @private
     async def flush_alerts(self) -> None:
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
+        if await self.middleware.call("failover.licensed"):
+            if await self.middleware.call("failover.status") == "BACKUP":
                 return
 
         await self.middleware.call("datastore.delete", "system.alert", [])

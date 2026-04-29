@@ -4,37 +4,37 @@ import os
 from middlewared.utils import ctdb
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 
-CONFIGURED_SENTINEL = '/var/run/samba/.configured'
-SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
+CONFIGURED_SENTINEL = "/var/run/samba/.configured"
+SMB_AUDIT_DEFAULTS = {"enable": False, "watch_list": [], "ignore_list": []}
 VEEAM_REPO_BLOCKSIZE = 131072
-SAMBA_BOOTENV_DIR = '/var/lib/truenas-samba'
+SAMBA_BOOTENV_DIR = "/var/lib/truenas-samba"
 
 
 class SMBCmd(enum.Enum):
     """ Shell commands related to samba that may be used by backend. """
-    NET = 'net'
-    PDBEDIT = 'pdbedit'
-    SHARESEC = 'sharesec'
-    SMBCACLS = 'smbcacls'
-    SMBCONTROL = 'smbcontrol'
-    SMBPASSWD = 'smbpasswd'
-    STATUS = 'smbstatus'
-    WBINFO = 'wbinfo'
+    NET = "net"
+    PDBEDIT = "pdbedit"
+    SHARESEC = "sharesec"
+    SMBCACLS = "smbcacls"
+    SMBCONTROL = "smbcontrol"
+    SMBPASSWD = "smbpasswd"
+    STATUS = "smbstatus"
+    WBINFO = "wbinfo"
 
 
 class SMBEncryption(enum.Enum):
     """ SMB server encryption options """
-    DEFAULT = 'default'
-    NEGOTIATE = 'if_required'
-    DESIRED = 'desired'
-    REQUIRED = 'required'
+    DEFAULT = "default"
+    NEGOTIATE = "if_required"
+    DESIRED = "desired"
+    REQUIRED = "required"
 
 
 class SMBBuiltin(enum.Enum):
     """ Class for SMB builtin accounts that have special local groups. """
-    ADMINISTRATORS = ('builtin_administrators', 'S-1-5-32-544')
-    GUESTS = ('builtin_guests', 'S-1-5-32-546')
-    USERS = ('builtin_users', 'S-1-5-32-545')
+    ADMINISTRATORS = ("builtin_administrators", "S-1-5-32-544")
+    GUESTS = ("builtin_guests", "S-1-5-32-546")
+    USERS = ("builtin_users", "S-1-5-32-545")
 
     @property
     def nt_name(self):
@@ -49,7 +49,7 @@ class SMBBuiltin(enum.Enum):
     @property
     def rid(self):
         """ RID value of builtin """
-        return int(self.value[1].split('-')[-1])
+        return int(self.value[1].split("-")[-1])
 
     @property
     def unix_groups(self):
@@ -73,26 +73,26 @@ class SMBBuiltin(enum.Enum):
 
 class SMBPath(enum.Enum):
     """ SMB related paths. This is consumed by smb.configure """
-    GLOBALCONF = ('/etc/smb4.conf', 0o644, False)
-    STUBCONF = ('/usr/local/etc/smb4.conf', 0o644, False)
-    SHARECONF = ('/etc/smb4_share.conf', 0o755, False)
+    GLOBALCONF = ("/etc/smb4.conf", 0o644, False)
+    STUBCONF = ("/usr/local/etc/smb4.conf", 0o644, False)
+    SHARECONF = ("/etc/smb4_share.conf", 0o755, False)
     STATEDIR = (SAMBA_BOOTENV_DIR, 0o755, True)
-    PRIVATEDIR = (os.path.join(SAMBA_BOOTENV_DIR, 'private'), 0o700, True)
+    PRIVATEDIR = (os.path.join(SAMBA_BOOTENV_DIR, "private"), 0o700, True)
     KEYTABDIR = (SAMBA_KEYTAB_DIR, 0o700, True)
-    CACHE_DIR = ('/var/run/samba-cache', 0o755, True)
-    PASSDB_DIR = ('/var/run/samba-cache/private', 0o700, True)
-    MSG_SOCK = (os.path.join(SAMBA_BOOTENV_DIR, 'private', 'msg.sock'), 0o700, False)
-    RUNDIR = ('/var/run/samba', 0o755, True)
-    LOCKDIR = ('/var/run/samba-lock', 0o755, True)
-    LOGDIR = ('/var/log/samba4', 0o755, True)
+    CACHE_DIR = ("/var/run/samba-cache", 0o755, True)
+    PASSDB_DIR = ("/var/run/samba-cache/private", 0o700, True)
+    MSG_SOCK = (os.path.join(SAMBA_BOOTENV_DIR, "private", "msg.sock"), 0o700, False)
+    RUNDIR = ("/var/run/samba", 0o755, True)
+    LOCKDIR = ("/var/run/samba-lock", 0o755, True)
+    LOGDIR = ("/var/log/samba4", 0o755, True)
     CTDB_RUNDIR = (ctdb.CTDB_RUN_DIR, 0o755, True)
     CTDB_DATADIR = (ctdb.CTDB_DATA_DIR, 0o755, True)
     CTDB_STATEDIR = (ctdb.STATE_DB, 0o755, True)
     CTDB_VOLATILEDDB = (ctdb.VOLATILE_DB, 0o755, True)
     CTDB_PERSITENTDB = (ctdb.PERSISTENT_DB, 0o755, True)
-    CTDB_LOGDIR = ('/var/log/ctdb', 0o755, True)
-    IPCSHARE = ('/tmp', 0o1777, True)
-    WINBINDD_PRIVILEGED = (os.path.join(SAMBA_BOOTENV_DIR, 'winbindd_privileged'), 0o750, True)
+    CTDB_LOGDIR = ("/var/log/ctdb", 0o755, True)
+    IPCSHARE = ("/tmp", 0o1777, True)
+    WINBINDD_PRIVILEGED = (os.path.join(SAMBA_BOOTENV_DIR, "winbindd_privileged"), 0o750, True)
 
     @property
     def mode(self):
@@ -113,43 +113,43 @@ class SMBPath(enum.Enum):
 class SMBShareField(enum.StrEnum):
     """ Fields that are used for SMB shares. This is used to make it easier for
     linter to pick up typos. """
-    PURPOSE = 'purpose'
-    PATH = 'path'
-    PATH_SUFFIX = 'path_suffix'
-    HOME = 'home'
-    NAME = 'name'
-    COMMENT = 'comment'
-    RO = 'readonly'
-    BROWSEABLE = 'browsable'
-    RECYCLE = 'recyclebin'
-    GUESTOK = 'guestok'
-    HOSTSALLOW = 'hostsallow'
-    HOSTSDENY = 'hostsdeny'
-    AUX = 'auxsmbconf'
-    ABE = 'access_based_share_enumeration'
-    ACL = 'acl'
-    DURABLEHANDLE = 'durablehandle'
-    STREAMS = 'streams'
-    TIMEMACHINE = 'timemachine'
-    TIMEMACHINE_QUOTA = 'timemachine_quota'
-    SHADOWCOPY = 'shadowcopy'
-    FSRVP = 'fsrvp'
-    ENABLED = 'enabled'
-    LOCKED = 'locked'
-    AFP = 'afp'
-    AUDIT = 'audit'
-    AUDIT_ENABLE = 'enable'
-    AUDIT_WATCH_LIST = 'watch_list'
-    AUDIT_IGNORE_LIST = 'ignore_list'
-    AUTO_QUOTA = 'auto_quota'
-    AUTO_SNAP = 'auto_snapshot'
-    AUTO_DS = 'auto_dataset_creation'
-    WORM_GRACE = 'grace_period'
-    AAPL_MANGLING = 'aapl_name_mangling'
-    DS_NAMING_SCHEMA = 'dataset_naming_schema'
-    REMOTE_PATH = 'remote_path'
-    VUID = 'vuid'
-    OPTS = 'options'
+    PURPOSE = "purpose"
+    PATH = "path"
+    PATH_SUFFIX = "path_suffix"
+    HOME = "home"
+    NAME = "name"
+    COMMENT = "comment"
+    RO = "readonly"
+    BROWSEABLE = "browsable"
+    RECYCLE = "recyclebin"
+    GUESTOK = "guestok"
+    HOSTSALLOW = "hostsallow"
+    HOSTSDENY = "hostsdeny"
+    AUX = "auxsmbconf"
+    ABE = "access_based_share_enumeration"
+    ACL = "acl"
+    DURABLEHANDLE = "durablehandle"
+    STREAMS = "streams"
+    TIMEMACHINE = "timemachine"
+    TIMEMACHINE_QUOTA = "timemachine_quota"
+    SHADOWCOPY = "shadowcopy"
+    FSRVP = "fsrvp"
+    ENABLED = "enabled"
+    LOCKED = "locked"
+    AFP = "afp"
+    AUDIT = "audit"
+    AUDIT_ENABLE = "enable"
+    AUDIT_WATCH_LIST = "watch_list"
+    AUDIT_IGNORE_LIST = "ignore_list"
+    AUTO_QUOTA = "auto_quota"
+    AUTO_SNAP = "auto_snapshot"
+    AUTO_DS = "auto_dataset_creation"
+    WORM_GRACE = "grace_period"
+    AAPL_MANGLING = "aapl_name_mangling"
+    DS_NAMING_SCHEMA = "dataset_naming_schema"
+    REMOTE_PATH = "remote_path"
+    VUID = "vuid"
+    OPTS = "options"
 
 
 LEGACY_SHARE_FIELDS = frozenset([

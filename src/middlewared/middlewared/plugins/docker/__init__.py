@@ -59,27 +59,27 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('DockerService',)
+__all__ = ("DockerService",)
 
 
 class DockerService(GenericConfigService[DockerEntry]):
 
     class Config:
-        cli_namespace = 'app.docker'
-        role_prefix = 'DOCKER'
+        cli_namespace = "app.docker"
+        role_prefix = "DOCKER"
         entry = DockerEntry
         events = [
             Event(
-                name='docker.state',
-                description='Docker state events',
-                roles=['DOCKER_READ'],
-                models={'CHANGED': DockerStateChangedEvent},
+                name="docker.state",
+                description="Docker state events",
+                roles=["DOCKER_READ"],
+                models={"CHANGED": DockerStateChangedEvent},
             ),
             Event(
-                name='docker.events',
-                description='Docker container events',
-                roles=['DOCKER_READ'],
-                models={'ADDED': DockerEventsAddedEvent},
+                name="docker.events",
+                description="Docker container events",
+                roles=["DOCKER_READ"],
+                models={"ADDED": DockerEventsAddedEvent},
             )
         ]
         generic = True
@@ -91,12 +91,12 @@ class DockerService(GenericConfigService[DockerEntry]):
 
     @api_method(
         DockerBackupArgs, DockerBackupResult,
-        audit='Docker: Backup',
+        audit="Docker: Backup",
         audit_extended=lambda backup_name: backup_name,
-        roles=['DOCKER_WRITE'],
+        roles=["DOCKER_WRITE"],
         check_annotations=True,
     )
-    @job(lock='docker_backup')
+    @job(lock="docker_backup")
     def backup(self, job: Job, backup_name: str | None) -> str:
         """
         Create a backup of existing apps.
@@ -107,12 +107,12 @@ class DockerService(GenericConfigService[DockerEntry]):
 
     @api_method(
         DockerBackupToPoolArgs, DockerBackupToPoolResult,
-        audit='Docker: Backup to pool',
+        audit="Docker: Backup to pool",
         audit_extended=lambda target_pool: target_pool,
-        roles=['DOCKER_WRITE'],
+        roles=["DOCKER_WRITE"],
         check_annotations=True,
     )
-    @job(lock='docker_backup_to_pool')
+    @job(lock="docker_backup_to_pool")
     async def backup_to_pool(self, job: Job, target_pool: str) -> None:
         """
         Create a backup of existing apps on `target_pool`.
@@ -127,9 +127,9 @@ class DockerService(GenericConfigService[DockerEntry]):
 
     @api_method(
         DockerDeleteBackupArgs, DockerDeleteBackupResult,
-        audit='Docker: Deleting Backup',
+        audit="Docker: Deleting Backup",
         audit_extended=lambda backup_name: backup_name,
-        roles=['DOCKER_WRITE'],
+        roles=["DOCKER_WRITE"],
         check_annotations=True,
     )
     def delete_backup(self, backup_name: str) -> None:
@@ -138,41 +138,41 @@ class DockerService(GenericConfigService[DockerEntry]):
         """
         delete_backup(self.context, backup_name)
 
-    @api_method(DockerListBackupsArgs, DockerListBackupsResult, roles=['DOCKER_READ'], check_annotations=True)
+    @api_method(DockerListBackupsArgs, DockerListBackupsResult, roles=["DOCKER_READ"], check_annotations=True)
     def list_backups(self) -> DockerBackupMap:
         """
         List existing app backups.
         """
         return list_backups(self.context)
 
-    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'], check_annotations=True)
+    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=["DOCKER_READ"], check_annotations=True)
     async def nvidia_present(self) -> bool:
         """Returns whether a non-isolated NVIDIA GPU is present in the system."""
-        return await self.middleware.call('system.advanced.nvidia_present')  # type: ignore[no-any-return]
+        return await self.middleware.call("system.advanced.nvidia_present")  # type: ignore[no-any-return]
 
     @api_method(
         DockerRestoreBackupArgs, DockerRestoreBackupResult,
-        audit='Docker: Restoring Backup',
+        audit="Docker: Restoring Backup",
         audit_extended=lambda backup_name: backup_name,
-        roles=['DOCKER_WRITE'],
+        roles=["DOCKER_WRITE"],
         check_annotations=True,
     )
-    @job(lock='docker_restore_backup')
+    @job(lock="docker_restore_backup")
     def restore_backup(self, job: Job, backup_name: str) -> None:
         """
         Restore a backup of existing apps.
         """
         restore_backup(self.context, job, backup_name)
 
-    @api_method(DockerStatusArgs, DockerStatusResult, roles=['DOCKER_READ'], check_annotations=True)
+    @api_method(DockerStatusArgs, DockerStatusResult, roles=["DOCKER_READ"], check_annotations=True)
     async def status(self) -> DockerStatusInfo:
         """
         Returns the status of the docker service.
         """
         return get_status()
 
-    @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations', check_annotations=True)
-    @job(lock='docker_update')
+    @api_method(DockerUpdateArgs, DockerUpdateResult, audit="Docker: Updating Configurations", check_annotations=True)
+    @job(lock="docker_update")
     async def do_update(self, job: Job, data: DockerUpdate) -> DockerEntry:
         """
         Update Docker service configuration.
@@ -236,7 +236,7 @@ class DockerService(GenericConfigService[DockerEntry]):
 async def _event_system_ready(middleware: Middleware, event_type: str, args: typing.Any) -> None:
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service
-    if await middleware.call('failover.licensed'):
+    if await middleware.call("failover.licensed"):
         return
 
     if (await middleware.call2(middleware.services.docker.config)).pool:
@@ -246,15 +246,15 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
 
 
 async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
-    if not await middleware.call('docker.license_active'):
+    if not await middleware.call("docker.license_active"):
         # We would like to stop docker in this case
-        await middleware.call('service.control', 'STOP', 'docker')
+        await middleware.call("service.control", "STOP", "docker")
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.event_subscribe('system.ready', _event_system_ready)
+    middleware.event_subscribe("system.ready", _event_system_ready)
     await middleware.call2(middleware.services.docker.initialize_state)
-    middleware.register_hook('system.post_license_update', handle_license_update)
-    middleware.register_hook('update.post_run', post_system_update_hook, sync=True)
+    middleware.register_hook("system.post_license_update", handle_license_update)
+    middleware.register_hook("update.post_run", post_system_update_hook, sync=True)
     # We are going to check in setup docker events if setting up events is relevant or not
     middleware.create_task(middleware.call2(middleware.services.docker.setup_docker_events))

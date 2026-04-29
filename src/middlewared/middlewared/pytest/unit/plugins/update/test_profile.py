@@ -14,7 +14,7 @@ async def test_profile_choices():
 
     service = UpdateService(middleware)
 
-    with patch('middlewared.plugins.update_.profile_.current_version_profile', new=AsyncMock(return_value="GENERAL")):
+    with patch("middlewared.plugins.update_.profile_.current_version_profile", new=AsyncMock(return_value="GENERAL")):
         choices = await service.profile_choices()
         assert list(choices.keys()) == ["GENERAL", "MISSION_CRITICAL"]
         assert choices["GENERAL"].available
@@ -29,7 +29,7 @@ async def test_profile_choices_current_is_always_available():
 
     service = UpdateService(middleware)
 
-    with patch('middlewared.plugins.update_.profile_.current_version_profile', new=AsyncMock(return_value="GENERAL")):
+    with patch("middlewared.plugins.update_.profile_.current_version_profile", new=AsyncMock(return_value="GENERAL")):
         choices = await service.profile_choices()
         assert list(choices.keys()) == ["GENERAL", "MISSION_CRITICAL"]
         assert choices["GENERAL"].available

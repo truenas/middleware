@@ -25,7 +25,7 @@ class InterfaceService(Service):
     @api_method(
         InterfaceServicesRestartedOnSyncArgs,
         InterfaceServicesRestartedOnSyncResult,
-        roles=['NETWORK_INTERFACE_READ']
+        roles=["NETWORK_INTERFACE_READ"]
     )
     async def services_restarted_on_sync(self):
         """

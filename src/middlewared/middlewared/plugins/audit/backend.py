@@ -43,7 +43,7 @@ class SQLConn:
     def __init__(self, svc, vers):
         svcs = [svc[0] for svc in AUDITED_SERVICES]
         if svc not in svcs:
-            raise ValueError(f'{svc}: unknown service')
+            raise ValueError(f"{svc}: unknown service")
 
         self.table = AUDIT_TABLES[svc]
         self.table_name = f'audit_{svc}_{str(vers).replace(".", "_")}'
@@ -75,11 +75,11 @@ class SQLConn:
                 self.dbfd = -1
 
             self.engine = create_engine(
-                f'sqlite:///{self.path}',
-                connect_args={'check_same_thread': False}
+                f"sqlite:///{self.path}",
+                connect_args={"check_same_thread": False}
             )
             self.connection = self.engine.connect()
-            self.connection.execute(text('PRAGMA journal_mode=WAL'))
+            self.connection.execute(text("PRAGMA journal_mode=WAL"))
             self.dbfd = os.open(self.path, os.O_PATH)
 
     def batched_entries(self, cursor, select):
@@ -120,23 +120,23 @@ class SQLConn:
         with self.lock:
             if (st := os.fstat(self.dbfd)).st_nlink == 0:
                 raise RuntimeError(
-                    f'{self.path}: audit database was unexpectedly deleted.'
+                    f"{self.path}: audit database was unexpectedly deleted."
                 )
 
             try:
                 if os.lstat(self.path).st_ino != st.st_ino:
                     raise RuntimeError(
-                        f'{self.path}: audit database was unexpectedly replaced.'
+                        f"{self.path}: audit database was unexpectedly replaced."
                     )
             except FileNotFoundError:
-                raise RuntimeError(f'{self.path}: audit database was renamed.')
+                raise RuntimeError(f"{self.path}: audit database was renamed.")
 
             try:
                 cursor = self.connection.execute(text(query) if isinstance(query, str) else query, {})
             except DBAPIError as e:
                 # We want to squash errors that are due to presence of missing
                 # table. See note for audit_table_exists() method.
-                if not str(e.orig).startswith('no such table'):
+                if not str(e.orig).startswith("no such table"):
                     raise
 
                 yield 0 if is_count else []
@@ -147,7 +147,7 @@ class SQLConn:
                     results = list(cursor.mappings())
                     if not results:
                         yield 0
-                    yield results[0]['count']
+                    yield results[0]["count"]
                 for batch in self.batched_entries(cursor, select):
                     yield batch
             finally:
@@ -168,7 +168,7 @@ class SQLConn:
                 expired.delete(synchronize_session=False)
                 s.commit()
 
-            self.connection.connection.execute('VACUUM')
+            self.connection.connection.execute("VACUUM")
 
 
 class AuditBackendService(Service, FilterMixin, SchemaMixin):
@@ -188,13 +188,13 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         """
         for svc, conn in self.connections.items():
             # Dismiss any existing AuditSetup one-shot alerts
-            self.call_sync2(self.s.alert.oneshot_delete, 'AuditBackendSetup', {"service": svc})
+            self.call_sync2(self.s.alert.oneshot_delete, "AuditBackendSetup", {"service": svc})
             try:
                 conn.setup()
             except Exception:
                 self.call_sync2(self.s.alert.oneshot_create, AuditBackendSetupAlert(service=svc))
                 self.logger.error(
-                    '%s: failed to set up auditing database connection.',
+                    "%s: failed to set up auditing database connection.",
                     svc, exc_info=True
                 )
 
@@ -214,7 +214,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         data = []
 
         try:
-            for batch in conn.fetchall(qs, options.get('select', []), options.get('count', False)):
+            for batch in conn.fetchall(qs, options.get("select", []), options.get("count", False)):
                 if isinstance(batch, int):
                     # we got the count rather than entries list
                     return batch
@@ -225,7 +225,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                 # we're doing these operations.
                 data.extend(batch)
         except RuntimeError:
-            self.logger.critical('Failed to fetch information from audit database', exc_info=True)
+            self.logger.critical("Failed to fetch information from audit database", exc_info=True)
             conn.setup()
             return self.__fetchall(conn, qs, filters, options, retry=False)
 
@@ -264,15 +264,15 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
     def __create_queryset_common(self, conn, filters, options):
         """ common method between query and export to generate a queryset """
-        order_by = options.get('order_by', []).copy()
-        do_count = options.get('count', False)
+        order_by = options.get("order_by", []).copy()
+        do_count = options.get("count", False)
         from_ = conn.table
         order_by_source = {col.name: col for col in conn.table.c}
 
         if do_count:
-            qs = select(func.count('ROW_ID').label('count')).select_from(from_)
+            qs = select(func.count("ROW_ID").label("count")).select_from(from_)
         else:
-            to_select = options.get('select', [])
+            to_select = options.get("select", [])
             if not to_select:
                 # We treat absence of explicit select as ALL
                 columns = list(conn.table.c)
@@ -290,14 +290,14 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         if order_by:
             for i, order in enumerate(order_by):
                 wrapper = None
-                if order.startswith('nulls_first:'):
+                if order.startswith("nulls_first:"):
                     wrapper = nullsfirst
-                    order = order[len('nulls_first:'):]
-                elif order.startswith('nulls_last:'):
+                    order = order[len("nulls_first:"):]
+                elif order.startswith("nulls_last:"):
                     wrapper = nullslast
-                    order = order[len('nulls_last:'):]
+                    order = order[len("nulls_last:"):]
 
-                if order.startswith('-'):
+                if order.startswith("-"):
                     order_by[i] = order_by_source[order[1:]].desc()
                 else:
                     order_by[i] = order_by_source[order]
@@ -307,11 +307,11 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
             qs = qs.order_by(*order_by)
 
-        if options['offset']:
-            qs = qs.offset(options['offset'])
+        if options["offset"]:
+            qs = qs.offset(options["offset"])
 
-        if options['limit']:
-            qs = qs.limit(options['limit'])
+        if options["limit"]:
+            qs = qs.limit(options["limit"])
 
         return qs
 
@@ -326,24 +326,24 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         try:
             conn = self.connections[db_name]
         except KeyError:
-            raise CallError(f'Invalid database name: {db_name!r}')
+            raise CallError(f"Invalid database name: {db_name!r}")
 
         if conn.connection is None:
-            raise CallError(f'{db_name}: connection to audit database is not initialized.')
+            raise CallError(f"{db_name}: connection to audit database is not initialized.")
 
         # we need a sanity check here to avoid loading huge audit tables into memory
-        if not options['count'] and not options['limit']:
+        if not options["count"] and not options["limit"]:
             raise CallError(
-                'Auditing queries require pagination of results. This means that '
-                'you can either retrieve the row count, or specify a limit on number of '
-                'results.', errno.E2BIG
+                "Auditing queries require pagination of results. This means that "
+                "you can either retrieve the row count, or specify a limit on number of "
+                "results.", errno.E2BIG
             )
 
         qs = self.__create_queryset_common(conn, filters, options)
 
         result = self.__fetchall(conn, qs, filters, options)
 
-        if options['get']:
+        if options["get"]:
             try:
                 return result[0]
             except IndexError:
@@ -353,18 +353,18 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
     @job()
     def export_to_file(self, job, db_name, export_format, destination, filters, options):
-        job.set_progress(None, f'Quering data for {export_format} audit report')
+        job.set_progress(None, f"Quering data for {export_format} audit report")
 
-        if options.get('count'):
-            raise CallError('Exporting count to file is not supported')
+        if options.get("count"):
+            raise CallError("Exporting count to file is not supported")
 
         try:
             conn = self.connections[db_name]
         except KeyError:
-            raise CallError(f'Invalid database name: {db_name!r}')
+            raise CallError(f"Invalid database name: {db_name!r}")
 
         if conn.connection is None:
-            raise CallError(f'{db_name}: connection to audit database is not initialized.')
+            raise CallError(f"{db_name}: connection to audit database is not initialized.")
 
         qs = self.__create_queryset_common(conn, filters, options)
 
@@ -372,19 +372,19 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         # format in AUDIT_CHUNK_SZ batches. Once this is complete we will create a tar.gz
         # file for them by using `tar -cz` command to avoid having extra copies of buffers
         # in the middlewared process during python tarfile operations.
-        dest_tar = f'{destination}.tar.gz'
+        dest_tar = f"{destination}.tar.gz"
         for idx, batch in enumerate(conn.fetchall(
-            qs, options.get('select', []), options.get('count', False)
+            qs, options.get("select", []), options.get("count", False)
         )):
             member_name = os.path.basename(destination.replace(
-                export_format.lower(), f'part_{idx:05d}.{export_format.lower()}'
+                export_format.lower(), f"part_{idx:05d}.{export_format.lower()}"
             ))
-            job.set_progress(50, f'Writing report component: {member_name}')
-            with open(os.path.join(destination, member_name), 'w') as f:
+            job.set_progress(50, f"Writing report component: {member_name}")
+            with open(os.path.join(destination, member_name), "w") as f:
                 match export_format:
-                    case 'JSON':
+                    case "JSON":
                         ejson.dump(batch, f, indent=4)
-                    case 'CSV':
+                    case "CSV":
                         fieldnames = batch[0].keys()
                         writer = csv.DictWriter(f, fieldnames=fieldnames)
                         writer.writeheader()
@@ -395,16 +395,16 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                                     entry[key] = ejson.dumps(entry[key])
 
                             writer.writerow(entry)
-                    case 'YAML':
+                    case "YAML":
                         yaml.dump(batch, f)
                     case _:
-                        raise ValueError(f'{export_format}: unexpected export format')
+                        raise ValueError(f"{export_format}: unexpected export format")
 
                 f.flush()
 
-        job.set_progress(75, 'Compressing report')
-        subprocess.run(['tar', '-cvzf', dest_tar, destination, '--remove-files'])
-        job.set_progress(100, f'Audit report completed and available at {dest_tar}')
+        job.set_progress(75, "Compressing report")
+        subprocess.run(["tar", "-cvzf", dest_tar, destination, "--remove-files"])
+        job.set_progress(100, f"Audit report completed and available at {dest_tar}")
         return dest_tar
 
     @periodic(interval=86400, run_on_start=False)
@@ -413,7 +413,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         This is a private method that should only be called as a periodic task.
         It deletes database entries that are older than the specified lifetime.
         """
-        retention_period = self.middleware.call_sync('datastore.config', 'system.audit')['retention']
+        retention_period = self.middleware.call_sync("datastore.config", "system.audit")["retention"]
         for svc, conn in self.connections.items():
             try:
                 conn.enforce_retention(retention_period)
@@ -423,9 +423,9 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     svc, exc_info=True
                 )
         try:
-            self.middleware.call_sync('audit.cleanup_reports')
+            self.middleware.call_sync("audit.cleanup_reports")
         except Exception:
             self.logger.warning(
-                'Cleanup of auditing report directory failed',
+                "Cleanup of auditing report directory failed",
                 exc_info=True
             )

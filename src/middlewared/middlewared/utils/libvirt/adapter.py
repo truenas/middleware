@@ -23,12 +23,12 @@ class DeviceAdapter:
     ) -> None:
         verrors = ValidationErrors()
 
-        dump = validate_model(self.delegate.schema_model, self.data['attributes'])
-        self.data['attributes'] = dump
+        dump = validate_model(self.delegate.schema_model, self.data["attributes"])
+        self.data["attributes"] = dump
 
         device_errors = self.pylibvirt_device.validate()
         for field, error in device_errors:
-            verrors.add(f'attributes.{field}', error)
+            verrors.add(f"attributes.{field}", error)
 
         self.delegate.validate_middleware(self.data, verrors, old, instance, update)
 

@@ -4,23 +4,23 @@ from truenas_verify import mtree_verify
 
 from middlewared.utils.jsonpath import query_filters_json_path_parse, query_select_json_path_parse
 
-AUDIT_DATASET_PATH = '/audit'
+AUDIT_DATASET_PATH = "/audit"
 AUDIT_LIFETIME = 7
 AUDIT_DEFAULT_RESERVATION = 0
 AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 75
-AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
-AUDITED_SERVICES = (('MIDDLEWARE', 0.1), ('SMB', 0.1), ('SUDO', 0.1), ('SYSTEM', 0.1))
+AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, "reports")
+AUDITED_SERVICES = (("MIDDLEWARE", 0.1), ("SMB", 0.1), ("SUDO", 0.1), ("SYSTEM", 0.1))
 SQL_SAFE_FIELDS = frozenset([
-    'audit_id',
-    'message_timestamp',
-    'address',
-    'username',
-    'session',
-    'service',
-    'event',
-    'success',
+    "audit_id",
+    "message_timestamp",
+    "address",
+    "username",
+    "session",
+    "service",
+    "event",
+    "success",
 ])
 AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
 # Number of entries yielded by our batched iterator. This should match
@@ -30,44 +30,44 @@ AUDIT_CHUNK_SZ = 10000  # number of audit entries yielded by iterator
 
 
 def audit_program(svc):
-    if svc == 'SUDO':
-        return 'sudo'
+    if svc == "SUDO":
+        return "sudo"
     else:
-        return f'TNAUDIT_{svc}'
+        return f"TNAUDIT_{svc}"
 
 
 def audit_custom_section(svc, section):
     """
     Can be used to control whether generic SVC mako rendering applies for this section/service.
     """
-    if svc == 'SUDO' and section == 'log':
+    if svc == "SUDO" and section == "log":
         return True
     return False
 
 
 def audit_file_path(svc):
-    return f'{AUDIT_DATASET_PATH}/{svc}.db'
+    return f"{AUDIT_DATASET_PATH}/{svc}.db"
 
 
 def parse_filter(filter_in, filters_out):
     # handle OR
     if len(filter_in) == 2:
-        if filter_in[0] != 'OR':
-            raise ValueError(f'{filter_in}: invalid filter')
+        if filter_in[0] != "OR":
+            raise ValueError(f"{filter_in}: invalid filter")
 
         or_filters = []
         for f in filter_in[1]:
             parse_filter(f, or_filters)
 
-        filters_out.append(['OR', or_filters])
+        filters_out.append(["OR", or_filters])
 
         return
 
     if len(filter_in) != 3:
-        raise ValueError(f'{filter_in}: invalid filter')
+        raise ValueError(f"{filter_in}: invalid filter")
 
     # check operation field
-    if filter_in[0] == 'service':
+    if filter_in[0] == "service":
         # Since we are now limiting to a single service we'll
         # just ignore filters that try to change what service
         # we're querying. The filter would either have no effect at
@@ -76,10 +76,10 @@ def parse_filter(filter_in, filters_out):
         return
 
     if filter_in[0] not in SQL_SAFE_FIELDS:
-        if not filter_in[0].startswith(('service_data', 'event_data')):
+        if not filter_in[0].startswith(("service_data", "event_data")):
             raise ValueError(
-                f'{filter_in[0]}: specified filter field may not be '
-                'specified for filtering on audit queries'
+                f"{filter_in[0]}: specified filter field may not be "
+                "specified for filtering on audit queries"
             )
 
     filters_out.append(filter_in)
@@ -105,11 +105,11 @@ def parse_query_filters(filters: list) -> list:
 
 def parse_query_options(options: dict) -> dict:
     out = options.copy()
-    out['select'] = query_select_json_path_parse(options.get('select', []))
-    if out.get('get'):
+    out["select"] = query_select_json_path_parse(options.get("select", []))
+    if out.get("get"):
         # If we're only getting a single result then we can place an SQL
         # LIMIT for a single result in the statement we generate
-        out['limit'] = 1
+        out["limit"] = 1
     return out
 
 
@@ -118,10 +118,10 @@ async def setup_truenas_verify(middleware, sysver: str) -> int:
     Called by audit setup to generate the initial truenas_verify
     file for an updated or initial TrueNAS version.
     """
-    if os.path.exists('/data/skip-truenas-verify'):
+    if os.path.exists("/data/skip-truenas-verify"):
         # Takes too much time on developer middleware restart
         return 0
 
-    verify_rc = await middleware.run_in_thread(mtree_verify.do_verify, ['init', sysver])
+    verify_rc = await middleware.run_in_thread(mtree_verify.do_verify, ["init", sysver])
 
     return verify_rc

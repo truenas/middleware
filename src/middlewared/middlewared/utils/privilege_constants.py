@@ -1,6 +1,6 @@
 import enum
 
-ALLOW_LIST_FULL_ADMIN = {'method': '*', 'resource': '*'}
+ALLOW_LIST_FULL_ADMIN = {"method": "*", "resource": "*"}
 
 
 class LocalBuiltinAdminGroups(enum.IntEnum):

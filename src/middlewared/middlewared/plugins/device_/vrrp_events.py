@@ -10,7 +10,7 @@ from time import sleep, time
 from middlewared.service import Service
 from middlewared.utils.prctl import set_name
 
-LOGGER = getLogger('failover')  # so logs show up in /var/log/failover.log
+LOGGER = getLogger("failover")  # so logs show up in /var/log/failover.log
 
 
 @dataclass
@@ -41,9 +41,9 @@ class VrrpThreadService(Service):
     def set_non_crit_ifaces(self):
         if VrrpObjs.fifo_thread is not None:
             VrrpObjs.fifo_thread.non_crit_ifaces = set(
-                i['int_interface'] for i in self.middleware.call_sync(
-                    'datastore.query', 'network.interfaces'
-                ) if not i['int_critical']
+                i["int_interface"] for i in self.middleware.call_sync(
+                    "datastore.query", "network.interfaces"
+                ) if not i["int_critical"]
             )
 
 
@@ -51,12 +51,12 @@ class VrrpEventThread(Thread):
 
     def __init__(self, **kwargs):
         super(VrrpEventThread, self).__init__()
-        self.middleware = kwargs.get('middleware')
+        self.middleware = kwargs.get("middleware")
         self.event_queue = VrrpObjs.event_queue
         self.shutdown_event = Event()
         self.pause_event = Event()
         self.grace_period = 0.5
-        self.user_provided_timeout = kwargs.get('timeout') or 2
+        self.user_provided_timeout = kwargs.get("timeout") or 2
         self.max_wait = self.user_provided_timeout + self.grace_period
         self.settle_time = (self.max_wait / 2) + self.grace_period
         self.max_rapid_settle_time = 5
@@ -80,8 +80,8 @@ class VrrpEventThread(Thread):
         self.__upt = value
 
     def run(self):
-        set_name('vrrp_event_thread')
-        LOGGER.info('vrrp event thread started')
+        set_name("vrrp_event_thread")
+        LOGGER.info("vrrp event thread started")
         last_event, backoff = None, False
         while not self.shutdown_event.is_set():
             if self.pause_event.is_set():
@@ -124,14 +124,14 @@ class VrrpEventThread(Thread):
             #   have a "settle" time. If we continue to receive a rapid
             #   succesion of events, then we'll log a message and ignore the
             #   event since it will wreak havoc on the HA system.
-            time_diff_floor = floor((this_event['time'] - last_event['time']))
+            time_diff_floor = floor((this_event["time"] - last_event["time"]))
             max_wait_floor = floor(self.max_wait)
             if last_event == this_event or time_diff_floor > max_wait_floor:
                 # scenario #1 and scenario #3 listed above
                 last_event = None
                 backoff = False
                 self.event_queue.pop()
-                self.middleware.call_hook_sync('vrrp.fifo', data=this_event)
+                self.middleware.call_hook_sync("vrrp.fifo", data=this_event)
             elif time_diff_floor == max_wait_floor:
                 # scenario #2 listed above
                 # NOTE:
@@ -144,7 +144,7 @@ class VrrpEventThread(Thread):
                 last_event = None
                 backoff = False
                 self.event_queue.pop()
-                self.middleware.call_hook_sync('vrrp.fifo', data=this_event)
+                self.middleware.call_hook_sync("vrrp.fifo", data=this_event)
             elif time_diff_floor < max_wait_floor:
                 # scenario #4 listed above
                 # NOTE:
@@ -166,9 +166,9 @@ class VrrpEventThread(Thread):
                     last_event = None
                     backoff = False
                     self.event_queue.pop()
-                    LOGGER.warning('Detected rapid succession of failover events: (%r)', this_event)
+                    LOGGER.warning("Detected rapid succession of failover events: (%r)", this_event)
             else:
-                LOGGER.warning('Unhandled failover event. last_event: %r, this_event: %r', last_event, this_event)
+                LOGGER.warning("Unhandled failover event. last_event: %r, this_event: %r", last_event, this_event)
                 last_event = None
                 backoff = False
                 self.event_queue.pop()
@@ -179,16 +179,16 @@ class VrrpFifoThread(Thread):
     def __init__(self, *args, **kwargs):
         super(VrrpFifoThread, self).__init__()
         self._retry_timeout = 2  # timeout in seconds before retrying to connect to FIFO
-        self._vrrp_file = '/var/run/vrrpd.fifo'
+        self._vrrp_file = "/var/run/vrrpd.fifo"
         self.pause_event = Event()
-        self.middleware = kwargs.get('middleware')
-        self.non_crit_ifaces = kwargs.get('non_crit_ifaces') or VrrpObjs.non_crit_ifaces
+        self.middleware = kwargs.get("middleware")
+        self.non_crit_ifaces = kwargs.get("non_crit_ifaces") or VrrpObjs.non_crit_ifaces
         self.event_queue = VrrpObjs.event_queue
-        self.shutdown_line = '--SHUTDOWN--'
+        self.shutdown_line = "--SHUTDOWN--"
 
     def shutdown(self):
-        with open(self._vrrp_file, 'w') as f:
-            f.write(f'{self.shutdown_line}\n')
+        with open(self._vrrp_file, "w") as f:
+            f.write(f"{self.shutdown_line}\n")
 
     def pause(self):
         self.pause_event.set()
@@ -207,43 +207,43 @@ class VrrpFifoThread(Thread):
     def format_fifo_msg(self, msg):
         if any((
             not isinstance(msg, dict),
-            not msg.get('event'),
-            len(msg['event'].split()) != 4,
-            not msg.get('time'),
+            not msg.get("event"),
+            len(msg["event"].split()) != 4,
+            not msg.get("time"),
         )):
-            LOGGER.error('Ignoring unexpected VRRP event message: %r', msg)
+            LOGGER.error("Ignoring unexpected VRRP event message: %r", msg)
             return
 
         try:
-            info = msg['event'].split()
-            ifname = info[1].split('_')[0].strip('"')  # interface
+            info = msg["event"].split()
+            ifname = info[1].split("_")[0].strip('"')  # interface
             event = info[2]  # the state that is being transititoned to
         except Exception:
-            LOGGER.error('Failed parsing vrrp message', exc_info=True)
+            LOGGER.error("Failed parsing vrrp message", exc_info=True)
             return
         else:
-            if event not in ('MASTER', 'BACKUP', 'FAULT'):
+            if event not in ("MASTER", "BACKUP", "FAULT"):
                 return
 
-            if event == 'FAULT':
+            if event == "FAULT":
                 # a FAULT message is sent when iface goes down
-                event = 'BACKUP'
+                event = "BACKUP"
 
-        return {'ifname': ifname, 'event': event, 'time': msg['time']}
+        return {"ifname": ifname, "event": event, "time": msg["time"]}
 
     def run(self):
-        set_name('vrrp_fifo_thread')
+        set_name("vrrp_fifo_thread")
         try:
             self.create_fifo()
         except Exception:
-            LOGGER.error('FATAL: Unable to create VRRP fifo.', exc_info=True)
+            LOGGER.error("FATAL: Unable to create VRRP fifo.", exc_info=True)
             return
 
         log_it = True
         while True:
             try:
                 with open(self._vrrp_file) as f:
-                    LOGGER.info('vrrp fifo connection established')
+                    LOGGER.info("vrrp fifo connection established")
                     for line in f:
                         if self.pause_event.is_set():
                             continue
@@ -252,12 +252,12 @@ class VrrpFifoThread(Thread):
                         if event == self.shutdown_line:
                             return
 
-                        formatted = self.format_fifo_msg({'event': event, 'time': time()})
+                        formatted = self.format_fifo_msg({"event": event, "time": time()})
                         if not formatted:
                             continue
-                        elif formatted['ifname'] in self.non_crit_ifaces:
+                        elif formatted["ifname"] in self.non_crit_ifaces:
                             LOGGER.debug(
-                                'Received an event (%r) for a non-critical interface, ignoring.',
+                                "Received an event (%r) for a non-critical interface, ignoring.",
                                 formatted
                             )
                             continue
@@ -266,7 +266,7 @@ class VrrpFifoThread(Thread):
             except Exception:
                 if log_it:
                     LOGGER.warning(
-                        'vrrp fifo connection not established, retrying every %d seconds',
+                        "vrrp fifo connection not established, retrying every %d seconds",
                         self._retry_timeout,
                         exc_info=True
                     )
@@ -275,10 +275,10 @@ class VrrpFifoThread(Thread):
 
 
 async def _start_stop_vrrp_threads(middleware):
-    while not await middleware.call('system.ready'):
+    while not await middleware.call("system.ready"):
         await asyncio_sleep(0.2)
 
-    licensed = await middleware.call('failover.licensed')
+    licensed = await middleware.call("failover.licensed")
     if not licensed:
         # maybe the system is being downgraded to non-HA
         # (this is rare but still need to handle it) or
@@ -296,10 +296,10 @@ async def _start_stop_vrrp_threads(middleware):
         # if this is a system that is being licensed for HA for the
         # first time (without being rebooted) then we need to make
         # sure we start these threads
-        timeout = (await middleware.call('failover.config'))['timeout']
+        timeout = (await middleware.call("failover.config"))["timeout"]
         nci = set(
-            i['int_interface'] for i in await middleware.call('datastore.query', 'network.interfaces')
-            if not i['int_critical']
+            i["int_interface"] for i in await middleware.call("datastore.query", "network.interfaces")
+            if not i["int_critical"]
         )
         if VrrpObjs.fifo_thread is None or not VrrpObjs.fifo_thread.is_alive():
             VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware, non_crit_ifaces=nci)
@@ -316,4 +316,4 @@ async def _post_license_update(middleware, *args, **kwargs):
 
 async def setup(middleware):
     middleware.create_task(_start_stop_vrrp_threads(middleware))
-    middleware.register_hook('system.post_license_update', _post_license_update)
+    middleware.register_hook("system.post_license_update", _post_license_update)

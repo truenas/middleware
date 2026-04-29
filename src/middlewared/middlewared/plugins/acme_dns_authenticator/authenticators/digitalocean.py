@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 class DigitalOceanAuthenticator(Authenticator):
 
-    NAME = 'digitalocean'
+    NAME = "digitalocean"
     PROPAGATION_DELAY = 60
     SCHEMA_MODEL = DigitalOceanSchemaArgs
 
     def initialize_credentials(self) -> None:
-        self.digitalocean_token: str = self.attributes['digitalocean_token']
+        self.digitalocean_token: str = self.attributes["digitalocean_token"]
 
     @staticmethod
     async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:

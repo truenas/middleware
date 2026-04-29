@@ -56,7 +56,7 @@ class JobsCopyService(Service):
             else:
                 text = f.read()
                 # Remove the leftovers of the first incomplete line
-                text = text[text.find(b'\n') + 1:]
+                text = text[text.find(b"\n") + 1:]
 
         return base64.b64encode(gzip.compress(text)).decode("ascii")
 

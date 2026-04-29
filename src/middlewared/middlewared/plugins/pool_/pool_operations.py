@@ -13,7 +13,7 @@ from middlewared.service_exception import ValidationError
 class PoolService(Service):
 
     class Config:
-        cli_namespace = 'storage.pool'
+        cli_namespace = "storage.pool"
         event_send = False
 
     @private
@@ -21,28 +21,28 @@ class PoolService(Service):
         """
         Configure resilver priority based on user selected off-peak hours.
         """
-        resilver = self.middleware.call_sync('datastore.config', 'storage.resilver')
+        resilver = self.middleware.call_sync("datastore.config", "storage.resilver")
 
-        if not resilver['enabled'] or not resilver['weekday']:
+        if not resilver["enabled"] or not resilver["weekday"]:
             return
 
         higher_prio = False
-        weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
+        weekdays = map(lambda x: int(x), resilver["weekday"].split(","))
         now = datetime.datetime.now()
         now_t = now.time()
         # end overlaps the day
-        if resilver['begin'] > resilver['end']:
-            if now.isoweekday() in weekdays and now_t >= resilver['begin']:
+        if resilver["begin"] > resilver["end"]:
+            if now.isoweekday() in weekdays and now_t >= resilver["begin"]:
                 higher_prio = True
             else:
                 lastweekday = now.isoweekday() - 1
                 if lastweekday == 0:
                     lastweekday = 7
-                if lastweekday in weekdays and now_t < resilver['end']:
+                if lastweekday in weekdays and now_t < resilver["end"]:
                     higher_prio = True
         # end does not overlap the day
         else:
-            if now.isoweekday() in weekdays and now_t >= resilver['begin'] and now_t < resilver['end']:
+            if now.isoweekday() in weekdays and now_t >= resilver["begin"] and now_t < resilver["end"]:
                 higher_prio = True
 
         if higher_prio:
@@ -56,16 +56,16 @@ class PoolService(Service):
             nia_delay = 5
             scrub_max_active = 3
 
-        with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
+        with open("/sys/module/zfs/parameters/zfs_resilver_min_time_ms", "w") as f:
             f.write(str(resilver_min_time_ms))
-        with open('/sys/module/zfs/parameters/zfs_vdev_nia_credit', 'w') as f:
+        with open("/sys/module/zfs/parameters/zfs_vdev_nia_credit", "w") as f:
             f.write(str(nia_credit))
-        with open('/sys/module/zfs/parameters/zfs_vdev_nia_delay', 'w') as f:
+        with open("/sys/module/zfs/parameters/zfs_vdev_nia_delay", "w") as f:
             f.write(str(nia_delay))
-        with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
+        with open("/sys/module/zfs/parameters/zfs_vdev_scrub_max_active", "w") as f:
             f.write(str(scrub_max_active))
 
-    @api_method(PoolScrubArgs, PoolScrubResult, roles=['POOL_WRITE'])
+    @api_method(PoolScrubArgs, PoolScrubResult, roles=["POOL_WRITE"])
     @job(transient=True)
     async def scrub(self, job, oid, action):
         """
@@ -85,14 +85,14 @@ class PoolService(Service):
                 "params": [1, "START"]
             }
         """
-        pool = await self.middleware.call('pool.get_instance', oid)
-        return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
+        pool = await self.middleware.call("pool.get_instance", oid)
+        return await job.wrap(await self.middleware.call("pool.scrub.scrub", pool["name"], action))
 
     @api_method(
         PoolUpgradeArgs,
         PoolUpgradeResult,
         pass_thread_local_storage=True,
-        roles=['POOL_WRITE']
+        roles=["POOL_WRITE"]
     )
     def upgrade(self, tls, oid):
         """
@@ -108,26 +108,26 @@ class PoolService(Service):
         if the pool is not currently imported.
         """
         pool = self.middleware.call_sync(
-            'datastore.query', 'storage.volume', [['id', '=', oid]]
+            "datastore.query", "storage.volume", [["id", "=", oid]]
         )
         if not pool:
             raise ValidationError(
-                'pool.upgrade',
-                f'pool with database id {oid!r} does not exist',
+                "pool.upgrade",
+                f"pool with database id {oid!r} does not exist",
                 errno.ENOENT
             )
 
-        pname = pool[0]['vol_name']
+        pname = pool[0]["vol_name"]
         try:
             upgrade_zpool_impl(tls.lzh, pname)
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 raise ValidationError(
-                    'pool.upgrade',
-                    f'pool {pname!r} is not imported',
+                    "pool.upgrade",
+                    f"pool {pname!r} is not imported",
                     errno.ENOENT
                 )
             raise
         else:
-            self.call_sync2(self.s.alert.oneshot_delete, 'PoolUpgraded', pname)
+            self.call_sync2(self.s.alert.oneshot_delete, "PoolUpgraded", pname)
             return True

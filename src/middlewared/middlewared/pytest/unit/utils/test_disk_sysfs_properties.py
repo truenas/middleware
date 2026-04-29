@@ -22,6 +22,7 @@ from middlewared.utils.disks_.disk_class import DiskEntry, TempEntry
 # Fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_sysfs(tmp_path):
     """Build a temp /sys/block tree and transparently redirect DiskEntry I/O.

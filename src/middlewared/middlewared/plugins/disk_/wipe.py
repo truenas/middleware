@@ -42,30 +42,30 @@ class DiskService(Service):
                 time.sleep(0.5)
 
             try:
-                sectsize = int((path_obj / 'queue/logical_block_size').read_text().strip())
+                sectsize = int((path_obj / "queue/logical_block_size").read_text().strip())
                 with os.scandir(path_obj) as dir_contents:
                     for partdir in filter(lambda x: x.is_dir() and x.name.startswith(dev_name), dir_contents):
                         partdir_obj = pathlib.Path(partdir.path)
-                        part_num = int((partdir_obj / 'partition').read_text().strip())
-                        part_start = int((partdir_obj / 'start').read_text().strip()) * sectsize
+                        part_num = int((partdir_obj / "partition").read_text().strip())
+                        part_start = int((partdir_obj / "start").read_text().strip()) * sectsize
                         startsect[part_num] = part_start
             except (FileNotFoundError, ValueError):
                 continue
             except Exception:
                 if _try + 1 == tries:  # range() built-in is half-open
-                    self.logger.error('Unexpected failure gathering partition info', exc_info=True)
+                    self.logger.error("Unexpected failure gathering partition info", exc_info=True)
 
         return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
         disk_path = f'/dev/{dev.removeprefix("/dev/")}'
-        with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
+        with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), "wb") as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
                 # no size means nothing else will work
                 self.logger.error('Unable to determine size of "%s"', dev)
                 return
-            elif size < 33554432 and mode == 'QUICK':
+            elif size < 33554432 and mode == "QUICK":
                 # we wipe the first and last 33554432 bytes (32MB) of the
                 # device when it's the "QUICK" mode so if the device is smaller
                 # than that, ignore it.
@@ -73,15 +73,15 @@ class DiskService(Service):
 
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
-            if mode in ('QUICK', 'FULL'):
-                to_write = b'0' * CHUNK
+            if mode in ("QUICK", "FULL"):
+                to_write = b"0" * CHUNK
             else:
                 to_write = os.urandom(CHUNK)
 
             # seek back to the beginning of the disk
             os.lseek(f.fileno(), 0, os.SEEK_SET)
 
-            if mode == 'QUICK':
+            if mode == "QUICK":
                 _32 = 32
                 for i in range(_32):
                     # wipe first 32MB
@@ -139,4 +139,4 @@ class DiskService(Service):
             event.set()
             raise
         if sync:
-            await self.middleware.call('disk.sync', dev)
+            await self.middleware.call("disk.sync", dev)

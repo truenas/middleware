@@ -249,7 +249,7 @@ def process_ssh_keyscan_output(output):
 
 
 class KeychainCredentialModel(sa.Model):
-    __tablename__ = 'system_keychaincredential'
+    __tablename__ = "system_keychaincredential"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
@@ -420,7 +420,7 @@ class KeychainCredentialService(CRUDService):
             id_,
         )
 
-    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult, roles=['KEYCHAIN_CREDENTIAL_READ'])
+    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult, roles=["KEYCHAIN_CREDENTIAL_READ"])
     async def used_by(self, id_):
         """
         Returns list of objects that use this credential.
@@ -606,7 +606,7 @@ class KeychainCredentialService(CRUDService):
             except Exception as e:
                 raise CallError(f"Semi-automatic SSH connection setup failed: {e!r}")
 
-            user = c.call("user.query", [["username", "=", data["username"]], ['local', '=', True]], {"get": True})
+            user = c.call("user.query", [["username", "=", data["username"]], ["local", "=", True]], {"get": True})
             user_update = {}
             if user["shell"] == NO_LOGIN_SHELL:
                 user_update["shell"] = "/usr/bin/bash"

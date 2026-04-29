@@ -14,13 +14,13 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'DockerAddressPool', 'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
-    'DockerEntry', 'DockerRegistryMirror', 'DockerUpdateArgs', 'DockerUpdateResult',
-    'DockerStatusArgs', 'DockerStatusResult',
-    'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
-    'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
-    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
-    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate', 'DockerStatusInfo',
+    "DockerAddressPool", "DockerBackupAppInfo", "DockerBackupEntry", "DockerBackupMap",
+    "DockerEntry", "DockerRegistryMirror", "DockerUpdateArgs", "DockerUpdateResult",
+    "DockerStatusArgs", "DockerStatusResult",
+    "DockerNvidiaPresentArgs", "DockerNvidiaPresentResult", "DockerBackupArgs", "DockerBackupResult",
+    "DockerListBackupsArgs", "DockerListBackupsResult", "DockerRestoreBackupArgs", "DockerRestoreBackupResult",
+    "DockerDeleteBackupArgs", "DockerDeleteBackupResult", "DockerBackupToPoolArgs", "DockerBackupToPoolResult",
+    "DockerEventsAddedEvent", "DockerStateChangedEvent", "DockerUpdate", "DockerStatusInfo",
 ]
 
 
@@ -30,23 +30,23 @@ class DockerAddressPool(BaseModel):
     size: Annotated[int, Field(ge=1)]
     """Subnet size for networks allocated from this pool."""
 
-    @field_serializer('base')
+    @field_serializer("base")
     def serialize_base(self, v):
         return str(v)
 
-    @field_validator('base')
+    @field_validator("base")
     @classmethod
     def check_prefixlen(cls, v):
         if v.network.prefixlen in (32, 128):
-            raise ValueError('Prefix length of base network cannot be 32 or 128.')
+            raise ValueError("Prefix length of base network cannot be 32 or 128.")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_attrs(self):
         if self.base.version == 4 and self.size > 32:
-            raise ValueError('Size must be <= 32 for IPv4.')
+            raise ValueError("Size must be <= 32 for IPv4.")
         elif self.base.version == 6 and self.size > 128:
-            raise ValueError('Size must be <= 128 for IPv6.')
+            raise ValueError("Size must be <= 128 for IPv6.")
         return self
 
 
@@ -88,29 +88,29 @@ class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):
     registry_mirrors: list[DockerRegistryMirror]
     """Array of registry mirrors."""
 
-    @field_validator('cidr_v6')
+    @field_validator("cidr_v6")
     @classmethod
     def validate_ipv6(cls, v):
         if v.version != 6:
-            raise ValueError('cidr_v6 must be an IPv6 address.')
+            raise ValueError("cidr_v6 must be an IPv6 address.")
         if v.network.prefixlen == 128:
-            raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
+            raise ValueError("Prefix length of cidr_v6 network cannot be 128.")
         return v
 
-    @field_validator('registry_mirrors')
+    @field_validator("registry_mirrors")
     @classmethod
     def validate_registry_mirrors(cls, v):
         for mirror in v:
-            if urlparse(mirror.url).scheme == 'http' and not mirror.insecure:
+            if urlparse(mirror.url).scheme == "http" and not mirror.insecure:
                 raise ValueError(
                     f'Registry mirror URL that starts with "http://" must be marked as insecure: {mirror.url}'
                 )
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_attrs(self):
         if self.migrate_applications is True and not self.pool:
-            raise ValueError('Pool is required when migrating applications.')
+            raise ValueError("Pool is required when migrating applications.")
         return self
 
 
@@ -132,8 +132,8 @@ class DockerStatusInfo(BaseModel):
     description: str
     """Human-readable description of the current Docker service status."""
     status: Literal[
-        'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
-        'FAILED', 'MIGRATING', 'MIGRATION_FAILED'
+        "PENDING", "RUNNING", "STOPPED", "INITIALIZING", "STOPPING", "UNCONFIGURED",
+        "FAILED", "MIGRATING", "MIGRATION_FAILED"
     ]
     """Current state of the Docker service."""
 

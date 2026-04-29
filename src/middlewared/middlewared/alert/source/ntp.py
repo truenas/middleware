@@ -39,12 +39,12 @@ class NTPHealthCheckAlertSource(AlertSource):
         active_peer = [x for x in peers if x.is_active()]
         if not active_peer:
             return Alert(
-                NTPHealthCheckAlert(reason=f'No Active NTP peers: {[{str(x)} for x in peers]}')
+                NTPHealthCheckAlert(reason=f"No Active NTP peers: {[{str(x)} for x in peers]}")
             )
 
         peer = active_peer[0]
         if peer.offset_in_secs < 300:
             return None
 
-        msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
+        msg = f"{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes."
         return Alert(NTPHealthCheckAlert(reason=msg))

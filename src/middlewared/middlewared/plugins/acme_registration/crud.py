@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class ACMERegistrationModel(sa.Model):
-    __tablename__ = 'system_acmeregistration'
+    __tablename__ = "system_acmeregistration"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     uri = sa.Column(sa.String(200))
@@ -33,25 +33,25 @@ class ACMERegistrationModel(sa.Model):
 
 
 class ACMERegistrationBodyModel(sa.Model):
-    __tablename__ = 'system_acmeregistrationbody'
+    __tablename__ = "system_acmeregistrationbody"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     status = sa.Column(sa.String(10))
     key = sa.Column(sa.Text())
-    acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True)
+    acme_id = sa.Column(sa.ForeignKey("system_acmeregistration.id"), index=True)
 
 
 class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
-    _datastore = 'system.acmeregistration'
+    _datastore = "system.acmeregistration"
     _entry = ACMERegistrationEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        data['body'] = {
+        data["body"] = {
             key: value for key, value in
             (await self.middleware.call(
-                'datastore.query', 'system.acmeregistrationbody',
-                [['acme', '=', data['id']]], {'get': True}
-            )).items() if key != 'acme'
+                "datastore.query", "system.acmeregistrationbody",
+                [["acme", "=", data["id"]]], {"get": True}
+            )).items() if key != "acme"
         }
         return data
 
@@ -66,25 +66,25 @@ class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
             directory = _get_directory(self.middleware, data.acme_directory_uri)
         except CallError as e:
             verrors.add(
-                'acme_registration_create.acme_directory_uri',
-                f'System was unable to retrieve the directory with the specified acme_directory_uri: {e.errmsg}',
+                "acme_registration_create.acme_directory_uri",
+                f"System was unable to retrieve the directory with the specified acme_directory_uri: {e.errmsg}",
             )
 
         # Normalizing uri after directory call as let's encrypt staging api
         # does not accept a trailing slash right now
         acme_directory_uri = data.acme_directory_uri
-        acme_directory_uri += '/' if acme_directory_uri[-1] != '/' else ''
+        acme_directory_uri += "/" if acme_directory_uri[-1] != "/" else ""
 
         if not data.tos:
             verrors.add(
-                'acme_registration_create.tos',
-                'Please agree to the terms of service',
+                "acme_registration_create.tos",
+                "Please agree to the terms of service",
             )
 
-        if self.run_coroutine(self.query([['directory', '=', acme_directory_uri]])):
+        if self.run_coroutine(self.query([["directory", "=", acme_directory_uri]])):
             verrors.add(
-                'acme_registration_create.acme_directory_uri',
-                'A registration with the specified directory uri already exists',
+                "acme_registration_create.acme_directory_uri",
+                "A registration with the specified directory uri already exists",
             )
 
         verrors.check()
@@ -102,26 +102,26 @@ class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
         )
 
         registration_id: int = self.middleware.call_sync(
-            'datastore.insert',
+            "datastore.insert",
             self._datastore,
             {
-                'uri': register.uri,
-                'tos': register.terms_of_service or '',
-                'new_account_uri': directory.newAccount,
-                'new_nonce_uri': directory.newNonce,
-                'new_order_uri': directory.newOrder,
-                'revoke_cert_uri': directory.revokeCert,
-                'directory': acme_directory_uri,
+                "uri": register.uri,
+                "tos": register.terms_of_service or "",
+                "new_account_uri": directory.newAccount,
+                "new_nonce_uri": directory.newNonce,
+                "new_order_uri": directory.newOrder,
+                "revoke_cert_uri": directory.revokeCert,
+                "directory": acme_directory_uri,
             },
         )
 
         self.middleware.call_sync(
-            'datastore.insert',
-            'system.acmeregistrationbody',
+            "datastore.insert",
+            "system.acmeregistrationbody",
             {
-                'status': register.body.status,
-                'key': key.json_dumps(),
-                'acme': registration_id,
+                "status": register.body.status,
+                "key": key.json_dumps(),
+                "acme": registration_id,
             },
         )
 
@@ -129,13 +129,13 @@ class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
 
 
 def _get_directory(middleware: Middleware, acme_directory_uri: str) -> messages.Directory:
-    middleware.call_sync('network.general.will_perform_activity', 'acme')
+    middleware.call_sync("network.general.will_perform_activity", "acme")
 
     try:
-        acme_directory_uri = acme_directory_uri.rstrip('/')
+        acme_directory_uri = acme_directory_uri.rstrip("/")
         response = requests.get(acme_directory_uri).json()
         return messages.Directory({
-            key: response[key] for key in ['newAccount', 'newNonce', 'newOrder', 'revokeCert']
+            key: response[key] for key in ["newAccount", "newNonce", "newOrder", "revokeCert"]
         })
     except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
         raise CallError(str(e))

@@ -17,16 +17,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('ACMERegistrationService',)
+__all__ = ("ACMERegistrationService",)
 
 
 class ACMERegistrationService(GenericCRUDService[ACMERegistrationEntry]):
 
     class Config:
-        namespace = 'acme.registration'
-        cli_namespace = 'system.acme.registration'
+        namespace = "acme.registration"
+        cli_namespace = "system.acme.registration"
         entry = ACMERegistrationEntry
-        role_prefix = 'NETWORK_INTERFACE'
+        role_prefix = "NETWORK_INTERFACE"
         private = True
         generic = True
 

@@ -31,7 +31,7 @@ class iSCSITargetExtentEntry(BaseModel):
     """Unique identifier for the iSCSI extent."""
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
     """Name of the iSCSI extent."""
-    type: IscsiExtentType = 'DISK'
+    type: IscsiExtentType = "DISK"
     """Type of the extent storage backend."""
     disk: str | None = None
     """Disk device to use for the extent or `null` if using a file."""
@@ -39,7 +39,7 @@ class iSCSITargetExtentEntry(BaseModel):
     """Serial number for the extent or `null` to auto-generate."""
     path: str | None = None
     """File path for file-based extents or `null` if using a disk."""
-    filesize: str | int = '0'
+    filesize: str | int = "0"
     """Size of the file-based extent in bytes."""
     blocksize: IscsiExtentBlockSize = 512
     """Block size for the extent in bytes."""
@@ -47,7 +47,7 @@ class iSCSITargetExtentEntry(BaseModel):
     """Whether to use physical block size reporting."""
     avail_threshold: Annotated[int, Field(ge=1, le=99)] | None = None
     """Available space threshold percentage or `null` to disable."""
-    comment: str = ''
+    comment: str = ""
     """Optional comment describing the extent."""
     naa: str = Field(max_length=34)
     """Network Address Authority (NAA) identifier for the extent."""
@@ -55,7 +55,7 @@ class iSCSITargetExtentEntry(BaseModel):
     """Whether to enable insecure Third Party Copy (TPC) operations."""
     xen: bool = False
     """Whether to enable Xen compatibility mode."""
-    rpm: IscsiExtentRPM = 'SSD'
+    rpm: IscsiExtentRPM = "SSD"
     """Reported RPM type for the extent."""
     ro: bool = False
     """Whether the extent is read-only."""

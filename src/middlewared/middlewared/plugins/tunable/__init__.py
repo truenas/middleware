@@ -27,16 +27,16 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('TunableService',)
+__all__ = ("TunableService",)
 
 
 class TunableService(GenericCRUDService[TunableEntry]):
 
     class Config:
-        cli_namespace = 'system.tunable'
+        cli_namespace = "system.tunable"
         entry = TunableEntry
         generic = True
-        role_prefix = 'SYSTEM_TUNABLE'
+        role_prefix = "SYSTEM_TUNABLE"
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -52,20 +52,20 @@ class TunableService(GenericCRUDService[TunableEntry]):
         """Retrieve the supported tunable types that can be changed."""
         return {k: k for k in TUNABLE_TYPES}  # type: ignore[return-value]
 
-    @api_method(TunableCreateArgs, TunableCreateResult, audit='Tunable create', check_annotations=True)
-    @job(lock='tunable_crud')
+    @api_method(TunableCreateArgs, TunableCreateResult, audit="Tunable create", check_annotations=True)
+    @job(lock="tunable_crud")
     async def do_create(self, job: Job, data: TunableCreate) -> TunableEntry:
         """Create a tunable."""
         return await self._svc_part.do_create(data)
 
-    @api_method(TunableUpdateArgs, TunableUpdateResult, audit='Tunable update', check_annotations=True)
-    @job(lock='tunable_crud')
+    @api_method(TunableUpdateArgs, TunableUpdateResult, audit="Tunable update", check_annotations=True)
+    @job(lock="tunable_crud")
     async def do_update(self, job: Job, id_: int, data: TunableUpdate) -> TunableEntry:
         """Update Tunable of `id`."""
         return await self._svc_part.do_update(id_, data)
 
-    @api_method(TunableDeleteArgs, TunableDeleteResult, audit='Tunable delete', check_annotations=True)
-    @job(lock='tunable_crud')
+    @api_method(TunableDeleteArgs, TunableDeleteResult, audit="Tunable delete", check_annotations=True)
+    @job(lock="tunable_crud")
     async def do_delete(self, job: Job, id_: int) -> None:
         """Delete Tunable of `id`."""
         await self._svc_part.do_delete(id_)

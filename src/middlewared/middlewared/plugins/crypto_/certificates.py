@@ -31,7 +31,7 @@ from .utils import CERT_TYPE_CSR, CERT_TYPE_EXISTING, get_cert_info_from_data, g
 
 
 class CertificateModel(sa.Model):
-    __tablename__ = 'system_certificate'
+    __tablename__ = "system_certificate"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cert_type = sa.Column(sa.Integer())
@@ -42,27 +42,27 @@ class CertificateModel(sa.Model):
     cert_acme_uri = sa.Column(sa.String(200), nullable=True)
     cert_domains_authenticators = sa.Column(sa.JSON(dict, encrypted=True), nullable=True)
     cert_renew_days = sa.Column(sa.Integer(), nullable=True, default=10)
-    cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
+    cert_acme_id = sa.Column(sa.ForeignKey("system_acmeregistration.id"), index=True, nullable=True)
     cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 class CertificateService(CRUDService):
 
     class Config:
-        datastore = 'system.certificate'
-        datastore_extend = 'certificate.cert_extend'
-        datastore_prefix = 'cert_'
-        cli_namespace = 'system.certificate'
-        role_prefix = 'CERTIFICATE'
+        datastore = "system.certificate"
+        datastore_extend = "certificate.cert_extend"
+        datastore_prefix = "cert_"
+        cli_namespace = "system.certificate"
+        role_prefix = "CERTIFICATE"
         entry = CertificateEntry
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
-            'CERTIFICATE_CREATE_IMPORTED': 'create_imported_certificate',
-            'CERTIFICATE_CREATE_IMPORTED_CSR': 'create_imported_csr',
-            'CERTIFICATE_CREATE_CSR': 'create_csr',
-            'CERTIFICATE_CREATE_ACME': 'create_acme_certificate',
+            "CERTIFICATE_CREATE_IMPORTED": "create_imported_certificate",
+            "CERTIFICATE_CREATE_IMPORTED_CSR": "create_imported_csr",
+            "CERTIFICATE_CREATE_CSR": "create_csr",
+            "CERTIFICATE_CREATE_ACME": "create_acme_certificate",
         }
 
     @private
@@ -73,15 +73,15 @@ class CertificateService(CRUDService):
     @private
     async def cert_services_validation(self, id_, schema_name, raise_verrors=True):
         # General method to check certificate health wrt usage in services
-        cert = await self.middleware.call('certificate.query', [['id', '=', id_]])
+        cert = await self.middleware.call("certificate.query", [["id", "=", id_]])
         verrors = ValidationErrors()
         if cert:
             cert = cert[0]
-            if cert['name'].startswith(TNC_CERT_PREFIX):
+            if cert["name"].startswith(TNC_CERT_PREFIX):
                 # We have added an explicit check here to account for users who already
                 # were using TNC and had it configured for UI already as nginx would fail to
                 # configure SSL otherwise for them if we fail it here
-                ui_cert_id = (await self.middleware.call('system.general.config'))['ui_certificate']
+                ui_cert_id = (await self.middleware.call("system.general.config"))["ui_certificate"]
                 if not ui_cert_id or ui_cert_id != id_:
                     verrors.add(
                         schema_name,
@@ -89,17 +89,17 @@ class CertificateService(CRUDService):
                         'and cannot be used by other services'
                     )
 
-            if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR'] or cert['cert_type_CA']:
+            if cert["cert_type"] != "CERTIFICATE" or cert["cert_type_CSR"] or cert["cert_type_CA"]:
                 verrors.add(
                     schema_name,
-                    'Selected certificate must be a valid certificate and not a CSR or CA'
+                    "Selected certificate must be a valid certificate and not a CSR or CA"
                 )
             else:
                 await self.cert_checks(cert, verrors, schema_name)
         else:
             verrors.add(
                 schema_name,
-                f'No Certificate found with the provided id: {id_}'
+                f"No Certificate found with the provided id: {id_}"
             )
 
         if raise_verrors:
@@ -109,122 +109,122 @@ class CertificateService(CRUDService):
 
     @private
     async def cert_checks(self, cert, verrors, schema_name):
-        valid_key_size = {'EC': 28, 'RSA': 2048}
-        if not cert.get('fingerprint'):
+        valid_key_size = {"EC": 28, "RSA": 2048}
+        if not cert.get("fingerprint"):
             verrors.add(
                 schema_name,
                 f'{cert["name"]} certificate is malformed'
             )
 
-        if not cert['privatekey']:
+        if not cert["privatekey"]:
             verrors.add(
                 schema_name,
-                'Selected certificate does not have a private key'
+                "Selected certificate does not have a private key"
             )
-        elif not cert['key_length']:
+        elif not cert["key_length"]:
             verrors.add(
                 schema_name,
                 "Failed to parse certificate's private key"
             )
-        elif cert['key_length'] < valid_key_size[cert['key_type']]:
+        elif cert["key_length"] < valid_key_size[cert["key_type"]]:
             verrors.add(
                 schema_name,
                 f"{cert['name']}'s private key size is less than {valid_key_size[cert['key_type']]} bits"
             )
 
-        if cert['until'] and datetime.datetime.strptime(
-            cert['until'], '%a %b  %d %H:%M:%S %Y'
+        if cert["until"] and datetime.datetime.strptime(
+            cert["until"], "%a %b  %d %H:%M:%S %Y"
         ) < datetime.datetime.now():
             verrors.add(
                 schema_name,
                 f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
             )
 
-        if cert['digest_algorithm'] in ['MD5', 'SHA1']:
+        if cert["digest_algorithm"] in ["MD5", "SHA1"]:
             verrors.add(
                 schema_name,
-                'Please use a certificate whose digest algorithm has at least 112 security bits'
+                "Please use a certificate whose digest algorithm has at least 112 security bits"
             )
 
     @private
     async def validate_cert_name(self, cert_name, schema_name, verrors):
-        if await self.middleware.call('datastore.query', self._config.datastore, [('cert_name', '=', cert_name)]):
+        if await self.middleware.call("datastore.query", self._config.datastore, [("cert_name", "=", cert_name)]):
             verrors.add(
-                f'{schema_name}.name',
-                'A certificate with this name already exists'
+                f"{schema_name}.name",
+                "A certificate with this name already exists"
             )
 
     @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
-        create_type = data['create_type']
+        create_type = data["create_type"]
 
-        await self.validate_cert_name(data['name'], schema_name, verrors)
+        await self.validate_cert_name(data["name"], schema_name, verrors)
 
-        if country := data.get('country'):
-            await validate_country(self.middleware, country, verrors, f'{schema_name}.country')
+        if country := data.get("country"):
+            await validate_country(self.middleware, country, verrors, f"{schema_name}.country")
 
-        if certificate := data.get('certificate'):
+        if certificate := data.get("certificate"):
             matches = RE_CERTIFICATE.findall(certificate)
 
             if not matches or not await self.middleware.run_in_thread(load_certificate, certificate):
                 verrors.add(
-                    f'{schema_name}.certificate',
-                    'Not a valid certificate'
+                    f"{schema_name}.certificate",
+                    "Not a valid certificate"
                 )
 
-        private_key = data.get('privatekey')
-        passphrase = data.get('passphrase')
+        private_key = data.get("privatekey")
+        passphrase = data.get("passphrase")
         if private_key:
             if err := await self.middleware.run_in_thread(validate_private_key, private_key, passphrase):
-                verrors.add(f'{schema_name}.privatekey', err)
+                verrors.add(f"{schema_name}.privatekey", err)
 
-        if csr := data.get('CSR'):
+        if csr := data.get("CSR"):
             if not await self.middleware.run_in_thread(load_certificate_request, csr):
                 verrors.add(
-                    f'{schema_name}.CSR',
-                    'Please provide a valid CSR'
+                    f"{schema_name}.CSR",
+                    "Please provide a valid CSR"
                 )
 
-        csr_id = data.get('csr_id')
+        csr_id = data.get("csr_id")
         if csr_id and not await self.middleware.call(
-            'certificate.query', [['id', '=', csr_id], ['cert_type_CSR', '=', True]]
+            "certificate.query", [["id", "=", csr_id], ["cert_type_CSR", "=", True]]
         ):
             verrors.add(
-                f'{schema_name}.csr_id',
-                'Please provide a valid csr_id'
+                f"{schema_name}.csr_id",
+                "Please provide a valid csr_id"
             )
 
-        if not verrors and create_type == 'CERTIFICATE_CREATE_IMPORTED' and (err := await self.middleware.run_in_thread(
+        if not verrors and create_type == "CERTIFICATE_CREATE_IMPORTED" and (err := await self.middleware.run_in_thread(
             validate_certificate_with_key, certificate, private_key, passphrase
         )):
             verrors.add(
-                f'{schema_name}.privatekey',
-                f'Private key does not match certificate: {err}'
+                f"{schema_name}.privatekey",
+                f"Private key does not match certificate: {err}"
             )
 
-        if create_type == 'CERTIFICATE_CREATE_CSR':
-            key_type = data.get('key_type')
+        if create_type == "CERTIFICATE_CREATE_CSR":
+            key_type = data.get("key_type")
             if not key_type:
                 verrors.add(
-                    f'{schema_name}.key_type',
-                    'This field is required.'
+                    f"{schema_name}.key_type",
+                    "This field is required."
                 )
-            elif key_type != 'EC':
-                if not data.get('key_length'):
+            elif key_type != "EC":
+                if not data.get("key_length"):
                     verrors.add(
-                        f'{schema_name}.key_length',
-                        'RSA-based keys require an entry in this field.'
+                        f"{schema_name}.key_length",
+                        "RSA-based keys require an entry in this field."
                     )
-                if not data.get('digest_algorithm'):
+                if not data.get("digest_algorithm"):
                     verrors.add(
-                        f'{schema_name}.digest_algorithm',
-                        'This field is required.'
+                        f"{schema_name}.digest_algorithm",
+                        "This field is required."
                     )
 
-            if cert_extensions := data.get('cert_extensions'):
+            if cert_extensions := data.get("cert_extensions"):
                 verrors.extend(
-                    (await self.middleware.call('cryptokey.validate_extensions', cert_extensions, schema_name))
+                    (await self.middleware.call("cryptokey.validate_extensions", cert_extensions, schema_name))
                 )
 
         return verrors
@@ -240,7 +240,7 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_ACME         - create_acme_certificate
 
     @api_method(CertificateCreateArgs, CertificateCreateResult)
-    @job(lock='cert_create')
+    @job(lock="cert_create")
     async def do_create(self, job, data):
         """
         Create a new Certificate
@@ -301,72 +301,72 @@ class CertificateService(CRUDService):
                 }]
             }
         """
-        verrors = await self.validate_common_attributes(data, 'certificate_create')
-        add_to_trusted_store = data.pop('add_to_trusted_store', False)
-        create_type = data.pop('create_type')
-        if add_to_trusted_store and create_type in ('CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_CSR'):
-            verrors.add('certificate_create.add_to_trusted_store', 'Cannot add CSR to trusted store')
+        verrors = await self.validate_common_attributes(data, "certificate_create")
+        add_to_trusted_store = data.pop("add_to_trusted_store", False)
+        create_type = data.pop("create_type")
+        if add_to_trusted_store and create_type in ("CERTIFICATE_CREATE_IMPORTED_CSR", "CERTIFICATE_CREATE_CSR"):
+            verrors.add("certificate_create.add_to_trusted_store", "Cannot add CSR to trusted store")
 
         verrors.check()
 
-        job.set_progress(10, 'Initial validation complete')
+        job.set_progress(10, "Initial validation complete")
 
         payload_keys = []
-        if create_type == 'CERTIFICATE_CREATE_IMPORTED':
-            payload_keys = ['name', 'certificate', 'privatekey', 'passphrase']
-        elif create_type == 'CERTIFICATE_CREATE_CSR':
+        if create_type == "CERTIFICATE_CREATE_IMPORTED":
+            payload_keys = ["name", "certificate", "privatekey", "passphrase"]
+        elif create_type == "CERTIFICATE_CREATE_CSR":
             payload_keys = [
-                'name', 'key_length', 'key_type', 'ec_curve', 'passphrase', 'city', 'common', 'country', 'email',
-                'organization', 'organizational_unit', 'state', 'digest_algorithm', 'san', 'cert_extensions',
+                "name", "key_length", "key_type", "ec_curve", "passphrase", "city", "common", "country", "email",
+                "organization", "organizational_unit", "state", "digest_algorithm", "san", "cert_extensions",
             ]
-        elif create_type == 'CERTIFICATE_CREATE_IMPORTED_CSR':
-            payload_keys = ['name', 'CSR', 'privatekey', 'passphrase']
-        elif create_type == 'CERTIFICATE_CREATE_ACME':
-            payload_keys = ['name', 'tos', 'csr_id', 'renew_days', 'acme_directory_uri', 'dns_mapping']
+        elif create_type == "CERTIFICATE_CREATE_IMPORTED_CSR":
+            payload_keys = ["name", "CSR", "privatekey", "passphrase"]
+        elif create_type == "CERTIFICATE_CREATE_ACME":
+            payload_keys = ["name", "tos", "csr_id", "renew_days", "acme_directory_uri", "dns_mapping"]
 
-        db_payload = await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, {
+        db_payload = await self.middleware.call(f"certificate.{self.map_functions[create_type]}", job, {
             k: data[k] for k in payload_keys
         }) | {
-            'name': data['name'],
-            'add_to_trusted_store': add_to_trusted_store,
+            "name": data["name"],
+            "add_to_trusted_store": add_to_trusted_store,
         }
 
         pk = await self.middleware.call(
-            'datastore.insert',
+            "datastore.insert",
             self._config.datastore,
             db_payload,
-            {'prefix': self._config.datastore_prefix}
+            {"prefix": self._config.datastore_prefix}
         )
 
-        await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
 
-        job.set_progress(100, 'Certificate created successfully')
+        job.set_progress(100, "Certificate created successfully")
 
         return await self.get_instance(pk)
 
     @api_method(CertificateCreateACMEArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_acme_certificate(self, job, data):
-        csr_data = self.middleware.call_sync('certificate.get_instance', data['csr_id'])
+        csr_data = self.middleware.call_sync("certificate.get_instance", data["csr_id"])
 
-        data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
+        data["acme_directory_uri"] += "/" if data["acme_directory_uri"][-1] != "/" else ""
 
         final_order = self.call_sync2(self.s.acme.protocol.issue_certificate, job, 25, data, csr_data)
 
-        job.set_progress(95, 'Final order received from ACME server')
+        job.set_progress(95, "Final order received from ACME server")
 
         cert_dict = {
-            'acme': self.call_sync2(
+            "acme": self.call_sync2(
                 self.s.acme.registration.query,
-                [['directory', '=', data['acme_directory_uri']]]
+                [["directory", "=", data["acme_directory_uri"]]]
             )[0].id,
-            'acme_uri': final_order.uri,
-            'certificate': final_order.fullchain_pem,
-            'CSR': csr_data['CSR'],
-            'privatekey': csr_data['privatekey'],
-            'name': data['name'],
-            'type': CERT_TYPE_EXISTING,
-            'domains_authenticators': data['dns_mapping'],
-            'renew_days': data['renew_days'],
+            "acme_uri": final_order.uri,
+            "certificate": final_order.fullchain_pem,
+            "CSR": csr_data["CSR"],
+            "privatekey": csr_data["privatekey"],
+            "name": data["name"],
+            "type": CERT_TYPE_EXISTING,
+            "domains_authenticators": data["dns_mapping"],
+            "renew_days": data["renew_days"],
         }
 
         return cert_dict
@@ -374,37 +374,37 @@ class CertificateService(CRUDService):
     @api_method(CertificateCreateCSRArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_csr(self, job, data):
         cert_info = get_cert_info_from_data(data)
-        cert_info['cert_extensions'] = data['cert_extensions']
+        cert_info["cert_extensions"] = data["cert_extensions"]
         req, key = generate_certificate_signing_request(cert_info)
-        job.set_progress(90, 'Finalizing changes')
+        job.set_progress(90, "Finalizing changes")
 
         return {
-            'CSR': req,
-            'privatekey': key,
-            'type': CERT_TYPE_CSR,
+            "CSR": req,
+            "privatekey": key,
+            "type": CERT_TYPE_CSR,
         }
 
     @api_method(CertificateCreateImportedCSRArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_imported_csr(self, job, data):
         # FIXME: Validate private key matches CSR
-        job.set_progress(90, 'Finalizing changes')
+        job.set_progress(90, "Finalizing changes")
         return {
-            'CSR': data['CSR'],
-            'privatekey': get_private_key(data),
-            'type': CERT_TYPE_CSR,
+            "CSR": data["CSR"],
+            "privatekey": get_private_key(data),
+            "type": CERT_TYPE_CSR,
         }
 
     @api_method(CertificateCreateImportedCertificateArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_imported_certificate(self, job, data):
-        job.set_progress(90, 'Finalizing changes')
+        job.set_progress(90, "Finalizing changes")
         return {
-            'certificate': data['certificate'],
-            'privatekey': get_private_key(data),
-            'type': CERT_TYPE_EXISTING,
+            "certificate": data["certificate"],
+            "privatekey": get_private_key(data),
+            "type": CERT_TYPE_EXISTING,
         }
 
     @api_method(CertificateUpdateArgs, CertificateUpdateResult)
-    @job(lock='cert_update')
+    @job(lock="cert_update")
     async def do_update(self, job, id_, data):
         """
         Update certificate of `id`
@@ -429,77 +429,77 @@ class CertificateService(CRUDService):
             }
         """
         old = await self.get_instance(id_)
-        if old.get('acme'):
-            old['acme'] = old['acme']['id']
+        if old.get("acme"):
+            old["acme"] = old["acme"]["id"]
 
         new = old.copy()
 
         new.update(data)
 
-        if any(new.get(k) != old.get(k) for k in ('name', 'renew_days', 'add_to_trusted_store')):
+        if any(new.get(k) != old.get(k) for k in ("name", "renew_days", "add_to_trusted_store")):
 
             verrors = ValidationErrors()
-            tnc_config = await self.middleware.call('tn_connect.config')
-            if tnc_config['certificate'] == id_:
+            tnc_config = await self.middleware.call("tn_connect.config")
+            if tnc_config["certificate"] == id_:
                 verrors.add(
-                    'certificate_update.name',
-                    'This certificate is being used by TrueNAS Connect service and cannot be modified'
+                    "certificate_update.name",
+                    "This certificate is being used by TrueNAS Connect service and cannot be modified"
                 )
                 verrors.check()
 
-            if new['name'] != old['name']:
-                await self.validate_cert_name(new['name'], 'certificate_update', verrors)
+            if new["name"] != old["name"]:
+                await self.validate_cert_name(new["name"], "certificate_update", verrors)
 
-            if not new.get('acme') and data.get('renew_days'):
+            if not new.get("acme") and data.get("renew_days"):
                 verrors.add(
-                    'certificate_update.renew_days',
-                    'Certificate renewal days is only supported for ACME certificates'
+                    "certificate_update.renew_days",
+                    "Certificate renewal days is only supported for ACME certificates"
                 )
 
-            if new['add_to_trusted_store'] and new['cert_type_CSR']:
+            if new["add_to_trusted_store"] and new["cert_type_CSR"]:
                 verrors.add(
-                    'certificate_update.add_to_trusted_store',
+                    "certificate_update.add_to_trusted_store",
                     "A CSR cannot be added to the system's trusted store"
                 )
 
             verrors.check()
 
-            to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
+            to_update = {"renew_days": new["renew_days"]} if data.get("renew_days") else {}
 
             await self.middleware.call(
-                'datastore.update',
+                "datastore.update",
                 self._config.datastore,
                 id_,
-                {'name': new['name'], 'add_to_trusted_store': new['add_to_trusted_store'], **to_update},
-                {'prefix': self._config.datastore_prefix}
+                {"name": new["name"], "add_to_trusted_store": new["add_to_trusted_store"], **to_update},
+                {"prefix": self._config.datastore_prefix}
             )
 
-            await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
 
-        job.set_progress(90, 'Finalizing changes')
+        job.set_progress(90, "Finalizing changes")
 
         return await self.get_instance(id_)
 
     @private
     async def delete_domains_authenticator(self, auth_id):
         # Delete provided auth_id from all ACME based certs domains_authenticators
-        for cert in await self.query([['acme', '!=', None]]):
-            if auth_id in cert['domains_authenticators'].values():
+        for cert in await self.query([["acme", "!=", None]]):
+            if auth_id in cert["domains_authenticators"].values():
                 await self.middleware.call(
-                    'datastore.update',
+                    "datastore.update",
                     self._config.datastore,
-                    cert['id'],
+                    cert["id"],
                     {
-                        'domains_authenticators': {
-                            k: v for k, v in cert['domains_authenticators'].items()
+                        "domains_authenticators": {
+                            k: v for k, v in cert["domains_authenticators"].items()
                             if v != auth_id
                         }
                     },
-                    {'prefix': self._config.datastore_prefix}
+                    {"prefix": self._config.datastore_prefix}
                 )
 
     @api_method(CertificateDeleteArgs, CertificateDeleteResult)
-    @job(lock='cert_delete')
+    @job(lock="cert_delete")
     def do_delete(self, job, id_, force):
         """
         Delete certificate of `id`.
@@ -524,30 +524,30 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        certificate = self.middleware.call_sync('certificate.get_instance', id_)
-        self.middleware.call_sync('certificate.check_cert_deps', id_)
+        certificate = self.middleware.call_sync("certificate.get_instance", id_)
+        self.middleware.call_sync("certificate.check_cert_deps", id_)
 
-        if certificate.get('acme') and not certificate['expired']:
+        if certificate.get("acme") and not certificate["expired"]:
             # We won't try revoking a certificate which has expired already
             try:
                 self.call_sync2(
                     self.s.acme.protocol.revoke_certificate, self.call_sync2(
-                        self.s.acme.protocol.get_acme_client_and_key_payload, certificate['acme']['directory'], True
-                    ), certificate['certificate'],
+                        self.s.acme.protocol.get_acme_client_and_key_payload, certificate["acme"]["directory"], True
+                    ), certificate["certificate"],
                 )
             except CallError:
                 if not force:
                     raise
 
         response = self.middleware.call_sync(
-            'datastore.delete',
+            "datastore.delete",
             self._config.datastore,
             id_
         )
 
-        self.middleware.call_sync('service.control', 'START', 'ssl').wait_sync(raise_error=True)
+        self.middleware.call_sync("service.control", "START", "ssl").wait_sync(raise_error=True)
 
-        self.call_sync2(self.s.alert.alert_source_clear_run, 'CertificateChecks')
+        self.call_sync2(self.s.alert.alert_source_clear_run, "CertificateChecks")
 
         job.set_progress(100)
         return response

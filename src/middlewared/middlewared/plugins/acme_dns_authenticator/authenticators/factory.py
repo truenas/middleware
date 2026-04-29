@@ -22,7 +22,7 @@ class AuthenticatorFactory:
 
     def authenticator(self, name: str) -> type[Authenticator]:
         if name not in self._creators:
-            raise CallError(f'Unable to locate {name!r} authenticator.', errno=errno.ENOENT)
+            raise CallError(f"Unable to locate {name!r} authenticator.", errno=errno.ENOENT)
         return self._creators[name]
 
     def get_authenticators(self, include_internal: bool = False) -> dict[str, type[Authenticator]]:

@@ -29,46 +29,46 @@ if TYPE_CHECKING:
 
 
 class PoolScrubModel(sa.Model):
-    __tablename__ = 'storage_scrub'
+    __tablename__ = "storage_scrub"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
+    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey("storage_volume.id", ondelete="CASCADE"))
     scrub_threshold = sa.Column(sa.Integer(), default=35)
     scrub_description = sa.Column(sa.String(200))
-    scrub_minute = sa.Column(sa.String(100), default='00')
-    scrub_hour = sa.Column(sa.String(100), default='00')
-    scrub_daymonth = sa.Column(sa.String(100), default='*')
-    scrub_month = sa.Column(sa.String(100), default='*')
-    scrub_dayweek = sa.Column(sa.String(100), default='7')
+    scrub_minute = sa.Column(sa.String(100), default="00")
+    scrub_hour = sa.Column(sa.String(100), default="00")
+    scrub_daymonth = sa.Column(sa.String(100), default="*")
+    scrub_month = sa.Column(sa.String(100), default="*")
+    scrub_dayweek = sa.Column(sa.String(100), default="7")
     scrub_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class PoolScrubService(CRUDService):
 
     class Config:
-        datastore = 'storage.scrub'
-        datastore_extend = 'pool.scrub.pool_scrub_extend'
-        datastore_prefix = 'scrub_'
-        namespace = 'pool.scrub'
-        cli_namespace = 'storage.scrub'
-        role_prefix = 'POOL_SCRUB'
+        datastore = "storage.scrub"
+        datastore_extend = "pool.scrub.pool_scrub_extend"
+        datastore_prefix = "scrub_"
+        namespace = "pool.scrub"
+        cli_namespace = "storage.scrub"
+        role_prefix = "POOL_SCRUB"
         entry = PoolScrubEntry
         events = [
             Event(
-                name='pool.scan',
-                description='Progress of pool resilver/scrub.',
-                roles=['POOL_SCRUB_READ'],
+                name="pool.scan",
+                description="Progress of pool resilver/scrub.",
+                roles=["POOL_SCRUB_READ"],
                 models={
-                    'CHANGED': PoolScanChangedEvent,
+                    "CHANGED": PoolScanChangedEvent,
                 },
             ),
         ]
 
     @private
     async def pool_scrub_extend(self, data):
-        pool = data.pop('volume')
-        data['pool'] = pool['id']
-        data['pool_name'] = pool['vol_name']
+        pool = data.pop("volume")
+        data["pool"] = pool["id"]
+        data["pool_name"] = pool["vol_name"]
         convert_db_format_to_schedule(data)
         return data
 
@@ -76,32 +76,32 @@ class PoolScrubService(CRUDService):
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
-        pool_pk = data.get('pool')
+        pool_pk = data.get("pool")
         if pool_pk:
             pool_obj = await self.middleware.call(
-                'datastore.query',
-                'storage.volume',
-                [('id', '=', pool_pk)]
+                "datastore.query",
+                "storage.volume",
+                [("id", "=", pool_pk)]
             )
 
             if len(pool_obj) == 0:
                 verrors.add(
-                    f'{schema}.pool',
-                    'The specified volume does not exist'
+                    f"{schema}.pool",
+                    "The specified volume does not exist"
                 )
             elif (
-                'id' not in data.keys() or
+                "id" not in data.keys() or
                 (
-                    'id' in data.keys() and
-                    'original_pool_id' in data.keys() and
-                    pool_pk != data['original_pool_id']
+                    "id" in data.keys() and
+                    "original_pool_id" in data.keys() and
+                    pool_pk != data["original_pool_id"]
                 )
             ):
-                scrub_obj = await self.query([('pool', '=', pool_pk)])
+                scrub_obj = await self.query([("pool", "=", pool_pk)])
                 if len(scrub_obj) != 0:
                     verrors.add(
-                        f'{schema}.pool',
-                        'A scrub with this pool already exists'
+                        f"{schema}.pool",
+                        "A scrub with this pool already exists"
                     )
 
         return verrors, data
@@ -134,22 +134,22 @@ class PoolScrubService(CRUDService):
                 }]
             }
         """
-        verrors, data = await self.validate_data(data, 'pool_scrub_create')
+        verrors, data = await self.validate_data(data, "pool_scrub_create")
         verrors.check()
 
-        data['volume'] = data.pop('pool')
+        data["volume"] = data.pop("pool")
         convert_schedule_to_db_format(data)
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert',
+        data["id"] = await self.middleware.call(
+            "datastore.insert",
             self._config.datastore,
             data,
-            {'prefix': self._config.datastore_prefix}
+            {"prefix": self._config.datastore_prefix}
         )
 
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
 
-        return await self.get_instance(data['id'])
+        return await self.get_instance(data["id"])
 
     @api_method(PoolScrubUpdateArgs, PoolScrubUpdateResult)
     async def do_update(self, id_, data):
@@ -158,29 +158,29 @@ class PoolScrubService(CRUDService):
         """
         task_data = await self.get_instance(id_)
         original_data = task_data.copy()
-        task_data['original_pool_id'] = original_data['pool']
+        task_data["original_pool_id"] = original_data["pool"]
         task_data.update(data)
-        verrors, task_data = await self.validate_data(task_data, 'pool_scrub_update')
+        verrors, task_data = await self.validate_data(task_data, "pool_scrub_update")
         verrors.check()
 
-        task_data.pop('original_pool_id')
+        task_data.pop("original_pool_id")
         convert_schedule_to_db_format(task_data)
         convert_schedule_to_db_format(original_data)
 
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 
-            task_data['volume'] = task_data.pop('pool')
-            task_data.pop('pool_name', None)
+            task_data["volume"] = task_data.pop("pool")
+            task_data.pop("pool_name", None)
 
             await self.middleware.call(
-                'datastore.update',
+                "datastore.update",
                 self._config.datastore,
                 id_,
                 task_data,
-                {'prefix': self._config.datastore_prefix}
+                {"prefix": self._config.datastore_prefix}
             )
 
-            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+            await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
@@ -190,22 +190,22 @@ class PoolScrubService(CRUDService):
         Delete scrub task of `id`.
         """
         response = await self.middleware.call(
-            'datastore.delete',
+            "datastore.delete",
             self._config.datastore,
             id_
         )
 
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return response
 
-    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])
+    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=["POOL_WRITE"])
     @pass_thread_local_storage
     @job(
         description=lambda name, action="START": (
             f"Scrub of pool {name!r}" if action == "START"
             else f"{action.title()} scrubbing pool {name!r}"
         ),
-        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else '',
+        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else "",
     )
     def scrub(self, job: Job, tls, name: str, action: Literal["START", "STOP", "PAUSE"]) -> None:
         """
@@ -227,7 +227,7 @@ class PoolScrubService(CRUDService):
         except Exception as e:
             raise CallError(str(e)) from e
 
-    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'])
+    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=["POOL_WRITE"])
     def run(self, name: str, threshold: int) -> None:
         """
         Initiate a scrub of pool ``name`` if the most recent scrub finished
@@ -237,4 +237,4 @@ class PoolScrubService(CRUDService):
         .. deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
-        self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
+        self.middleware.call_sync("zpool.scrub.run", {"pool_name": name, "threshold": threshold})

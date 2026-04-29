@@ -22,7 +22,7 @@ release_manifest = {
     "filesize": 0,
 }
 new_version_manifest = {
-    "manifest": {**release_manifest, 'profile': 'MISSION_CRITICAL', 'train': 'TrueNAS-SCALE-Fangtooth'},
+    "manifest": {**release_manifest, "profile": "MISSION_CRITICAL", "train": "TrueNAS-SCALE-Fangtooth"},
     "release_notes": "<release notes>",
     "release_notes_url": "<release notes url>",
 }
@@ -159,16 +159,16 @@ async def test_update_status(train_releases, result):
     service = UpdateService(middleware)
 
     with (
-        patch('middlewared.plugins.update_.status.get_trains'),
-        patch('middlewared.plugins.update_.status.get_current_train_name', return_value=CURRENT_TRAIN_NAME),
-        patch('middlewared.plugins.update_.status.current_version_profile', return_value=CURRENT_VERSION_PROFILE),
-        patch('middlewared.plugins.update_.status.get_next_trains_names', return_value=NEXT_TRAIN_NAMES),
-        patch('middlewared.plugins.update_.status.get_train_releases',
+        patch("middlewared.plugins.update_.status.get_trains"),
+        patch("middlewared.plugins.update_.status.get_current_train_name", return_value=CURRENT_TRAIN_NAME),
+        patch("middlewared.plugins.update_.status.current_version_profile", return_value=CURRENT_VERSION_PROFILE),
+        patch("middlewared.plugins.update_.status.get_next_trains_names", return_value=NEXT_TRAIN_NAMES),
+        patch("middlewared.plugins.update_.status.get_train_releases",
               side_effect=lambda ctx, train: train_releases[train]),
-        patch('middlewared.plugins.update_.version.release_notes', return_value="<release notes>"),
-        patch('middlewared.plugins.update_.profile_.get_manifest_file',
+        patch("middlewared.plugins.update_.version.release_notes", return_value="<release notes>"),
+        patch("middlewared.plugins.update_.profile_.get_manifest_file",
               return_value=UpdateManifest(train=CURRENT_TRAIN_NAME, buildtime=0, version=CURRENT_VERSION)),
-        patch('middlewared.plugins.update_.profile_.get_train_releases',
+        patch("middlewared.plugins.update_.profile_.get_train_releases",
               side_effect=lambda ctx, train: train_releases.get(train, {}))
     ):
 

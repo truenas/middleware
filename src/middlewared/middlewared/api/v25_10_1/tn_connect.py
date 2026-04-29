@@ -3,12 +3,12 @@ from pydantic import IPvAnyAddress
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
-    'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
+    "TrueNASConnectEntry", "TrueNASConnectGetRegistrationUriArgs",
+    "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdateArgs", "TrueNASConnectUpdateResult",
+    "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult",
+    "TrueNASConnectIpChoicesArgs", "TrueNASConnectIpChoicesResult",
 ]
 
 
@@ -43,7 +43,7 @@ class TrueNASConnectEntry(BaseModel):
     """URL endpoint for sending heartbeat signals to maintain connection status."""
 
 
-@single_argument_args('tn_connect_update')
+@single_argument_args("tn_connect_update")
 class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     """Whether to enable the TrueNAS Connect service."""

@@ -57,7 +57,7 @@ def another_pool(data=None, topology=None):
         # If the pool has been exported and reimported then it may change id
         # Therefore query by the guid to see if this is the case.
         try:
-            pool_id = call('pool.query', [['guid', '=', pool['guid']]], {'get': True})['id']
+            pool_id = call("pool.query", [["guid", "=", pool["guid"]]], {"get": True})["id"]
         except MatchNotFound:
             pass
         try:
@@ -79,15 +79,15 @@ def dataset(name, data=None, pool=pool, **kwargs):
 
     try:
         if "acl" in kwargs:
-            call("filesystem.setacl", {'path': f"/mnt/{dataset}", "dacl": kwargs['acl']})
+            call("filesystem.setacl", {"path": f"/mnt/{dataset}", "dacl": kwargs["acl"]})
         elif "mode" in kwargs:
-            call("filesystem.setperm", {'path': f"/mnt/{dataset}", "mode": kwargs['mode'] or "777"})
+            call("filesystem.setperm", {"path": f"/mnt/{dataset}", "mode": kwargs["mode"] or "777"})
 
         yield dataset
     finally:
-        if kwargs.get('delete', True):
-            if 'delete_delay' in kwargs:
-                time.sleep(kwargs['delete_delay'])
+        if kwargs.get("delete", True):
+            if "delete_delay" in kwargs:
+                time.sleep(kwargs["delete_delay"])
 
             try:
                 call("pool.dataset.delete", dataset, {"recursive": True})

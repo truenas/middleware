@@ -44,11 +44,11 @@ async def status_change(context: ServiceContext) -> None:
 async def validate_fs(context: ServiceContext) -> None:
     config = await context.call2(context.s.docker.config)
     if not config.pool:
-        raise CallError(f'{config.pool!r} pool not found.')
+        raise CallError(f"{config.pool!r} pool not found.")
 
     assert config.dataset is not None
     ds = {
-        i['name']
+        i["name"]
         for i in await context.call2(
             context.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=docker_datasets(config.dataset), properties=None)
@@ -60,9 +60,9 @@ async def validate_fs(context: ServiceContext) -> None:
     await context.to_thread(create_update_docker_datasets, context, config.dataset)
 
     for i in (config.dataset, config.pool):
-        if await context.middleware.call('pool.dataset.path_in_locked_datasets', i):
+        if await context.middleware.call("pool.dataset.path_in_locked_datasets", i):
             raise CallError(
-                f'Cannot start docker because {i!r} is located in a locked dataset.',
+                f"Cannot start docker because {i!r} is located in a locked dataset.",
                 errno=CallError.EDATASETISLOCKED,
             )
 
@@ -85,7 +85,7 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
     """
     expected_docker_datasets = docker_datasets(docker_ds)
     actual_docker_datasets = {
-        i['name']: i['properties'] for i in context.call_sync2(
+        i["name"]: i["properties"] for i in context.call_sync2(
             context.s.zfs.resource.query_impl,
             ZFSResourceQuery(
                 paths=expected_docker_datasets,
@@ -96,19 +96,19 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
     for dataset_name in expected_docker_datasets:
         if existing_dataset := actual_docker_datasets.get(dataset_name):
             update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
-            if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
+            if any(val["raw"] != update_props[name] for name, val in existing_dataset.items()):
                 # if any of the zfs properties don't match what we expect we'll update all properties
                 context.middleware.call_sync(
-                    'pool.dataset.update_impl',
+                    "pool.dataset.update_impl",
                     UpdateImplArgs(name=dataset_name, zprops=update_props)
                 )
         else:
             move_conflicting_dir(dataset_name)
             context.middleware.call_sync(
-                'pool.dataset.create_impl',
+                "pool.dataset.create_impl",
                 CreateImplArgs(
                     name=dataset_name,
-                    ztype='FILESYSTEM',
+                    ztype="FILESYSTEM",
                     zprops=DatasetDefaults.create_time_props(os.path.basename(dataset_name))
                 )
             )
@@ -123,12 +123,12 @@ def move_conflicting_dir(ds_name: str) -> None:
     with contextlib.suppress(FileNotFoundError):
         # can't stop someone from manually creating same name
         # directories on disk so we'll just move them
-        shutil.move(from_path, f'{from_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+        shutil.move(from_path, f"{from_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}")
 
 
 async def validate_interfaces(context: ServiceContext) -> None:
     default_iface, success = await context.to_thread(wait_for_default_interface_link_state_up)
     if default_iface is None:
-        raise CallError('Unable to determine default interface')
+        raise CallError("Unable to determine default interface")
     elif not success:
-        raise CallError(f'Default interface {default_iface!r} is not in active state')
+        raise CallError(f"Default interface {default_iface!r} is not in active state")

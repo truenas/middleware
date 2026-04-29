@@ -28,27 +28,27 @@ class SystemService(Service):
     class Config:
         events = [
             Event(
-                name='system.ready',
-                description='Finished boot process',
-                roles=['SYSTEM_GENERAL_READ'],
+                name="system.ready",
+                description="Finished boot process",
+                roles=["SYSTEM_GENERAL_READ"],
                 models={
-                    'ADDED': SystemReadyAddedEvent,
+                    "ADDED": SystemReadyAddedEvent,
                 },
             ),
             Event(
-                name='system.reboot',
-                description='Started reboot process',
-                roles=['SYSTEM_GENERAL_READ'],
+                name="system.reboot",
+                description="Started reboot process",
+                roles=["SYSTEM_GENERAL_READ"],
                 models={
-                    'ADDED': SystemRebootAddedEvent,
+                    "ADDED": SystemRebootAddedEvent,
                 },
             ),
             Event(
-                name='system.shutdown',
-                description='Started shutdown process',
-                roles=['SYSTEM_GENERAL_READ'],
+                name="system.shutdown",
+                description="Started shutdown process",
+                roles=["SYSTEM_GENERAL_READ"],
                 models={
-                    'ADDED': SystemShutdownAddedEvent,
+                    "ADDED": SystemShutdownAddedEvent,
                 },
             ),
         ]

@@ -71,7 +71,7 @@ def __getgrnam_r(name: str, result_p: Any, buffer_p: Any, buflen: int, nss_modul
     ]
 
     err = ctypes.c_int()
-    name_bytes = name.encode('utf-8')
+    name_bytes = name.encode("utf-8")
     res = func(ctypes.c_char_p(name_bytes), result_p, buffer_p, buflen, ctypes.byref(err))
 
     return (int(res), err.value, result_p)
@@ -372,7 +372,7 @@ def itergrp(
         grp = getgrall()
     """
     if module == NssModule.ALL.name:
-        raise ValueError('Please select one of: FILES, WINBIND, SSS')
+        raise ValueError("Please select one of: FILES, WINBIND, SSS")
 
     mod = NssModule[module]
     __setgrent(mod)

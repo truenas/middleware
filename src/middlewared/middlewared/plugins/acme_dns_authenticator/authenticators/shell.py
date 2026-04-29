@@ -29,15 +29,15 @@ logger = logging.getLogger(__name__)
 
 class ShellAuthenticator(Authenticator):
 
-    NAME = 'shell'
+    NAME = "shell"
     PROPAGATION_DELAY: float = 60
     SCHEMA_MODEL = ShellSchemaArgs
 
     def initialize_credentials(self) -> None:
-        self.script: str = self.attributes['script']
-        self.user: str = self.attributes['user']
-        self.timeout: int = self.attributes['timeout']
-        self.PROPAGATION_DELAY = self.attributes['delay']
+        self.script: str = self.attributes["script"]
+        self.user: str = self.attributes["user"]
+        self.timeout: int = self.attributes["timeout"]
+        self.PROPAGATION_DELAY = self.attributes["delay"]
 
     @staticmethod
     async def validate_credentials(middleware: Middleware, data: dict[str, Any]) -> dict[str, Any]:
@@ -47,33 +47,33 @@ class ShellAuthenticator(Authenticator):
         # 3) User can access the script in question
         verrors = ValidationErrors()
         try:
-            await middleware.call('user.get_user_obj', {'username': data['user']})
+            await middleware.call("user.get_user_obj", {"username": data["user"]})
         except KeyError:
-            verrors.add('user', f'Unable to locate {data["user"]!r} user')
+            verrors.add("user", f'Unable to locate {data["user"]!r} user')
 
-        await check_path_resides_within_volume(verrors, middleware, 'script', data['script'])
+        await check_path_resides_within_volume(verrors, middleware, "script", data["script"])
 
         try:
             can_access = await middleware.call(
-                'filesystem.can_access_as_user', data['user'], data['script'], {'execute': True}
+                "filesystem.can_access_as_user", data["user"], data["script"], {"execute": True}
             )
         except CallError as e:
-            verrors.add('script', f'Unable to validate script: {e}')
+            verrors.add("script", f"Unable to validate script: {e}")
         else:
             if not can_access:
-                verrors.add('user', f'{data["user"]!r} user does not has permission to execute the script')
+                verrors.add("user", f'{data["user"]!r} user does not has permission to execute the script')
 
         verrors.check()
         return data
 
     def _perform(self, domain: str, validation_name: str, validation_content: str) -> None:
         run_command_with_user_context(
-            f'{self.script} set {domain} {validation_name} {validation_content}', self.user,
+            f"{self.script} set {domain} {validation_name} {validation_content}", self.user,
             output=False, timeout=self.timeout
         )
 
     def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
         run_command_with_user_context(
-            f'{self.script} unset {domain} {validation_name} {validation_content}', self.user,
+            f"{self.script} unset {domain} {validation_name} {validation_content}", self.user,
             output=False, timeout=self.timeout
         )

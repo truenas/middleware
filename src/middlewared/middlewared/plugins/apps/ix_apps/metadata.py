@@ -14,7 +14,7 @@ from .utils import dump_yaml
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
     """ wrapper around safe_yaml_load that ensures a dict is always returned """
     try:
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, "r") as f:
             return safe_yaml_load(f, dict)
     except (FileNotFoundError, yaml.YAMLError, ValueError):
         return {}
@@ -28,13 +28,13 @@ def update_app_metadata(
     app_name: str, app_version_details: dict[str, typing.Any], migrated: bool | None = None,
     custom_app: bool = False,
 ) -> None:
-    migrated = get_app_metadata(app_name).get('migrated', False) if migrated is None else migrated
+    migrated = get_app_metadata(app_name).get("migrated", False) if migrated is None else migrated
     write_if_changed(get_installed_app_metadata_path(app_name), dump_yaml({
-            'metadata': app_version_details['app_metadata'],
-            'migrated': migrated,
-            'custom_app': custom_app,
-            **{k: app_version_details[k] for k in ('version', 'human_version')},
-            **get_portals_and_app_notes(app_name, app_version_details['version']),
+            "metadata": app_version_details["app_metadata"],
+            "migrated": migrated,
+            "custom_app": custom_app,
+            **{k: app_version_details[k] for k in ("version", "human_version")},
+            **get_portals_and_app_notes(app_name, app_version_details["version"]),
             # TODO: We should not try to get portals for custom apps for now
         }), perms=0o600, raise_error=False)
 
@@ -60,9 +60,9 @@ def get_collective_metadata() -> dict[str, typing.Any]:
 
 
 def update_app_yaml_for_last_update(version_path: str, last_update: str) -> None:
-    app_yaml_path = os.path.join(version_path, 'app.yaml')
+    app_yaml_path = os.path.join(version_path, "app.yaml")
 
     app_config = _load_app_yaml(app_yaml_path)
-    app_config['last_update'] = last_update
+    app_config["last_update"] = last_update
 
     write_if_changed(app_yaml_path, dump_yaml(app_config), perms=0o600, raise_error=False)

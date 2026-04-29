@@ -4,11 +4,11 @@ import uuid
 
 import truenas_pypwenc
 
-__all__ = ['PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'pwenc_rename', 'pwenc_encrypt', 'pwenc_decrypt',
-           'pwenc_generate_secret']
+__all__ = ["PWENC_FILE_SECRET", "PWENC_FILE_SECRET_MODE", "pwenc_rename", "pwenc_encrypt", "pwenc_decrypt",
+           "pwenc_generate_secret"]
 
 
-PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
+PWENC_PADDING = b"{"  # This is for legacy compatibility. aes-256-ctr doesn't need padding
 PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
 global_ctx = None
@@ -53,7 +53,7 @@ def pwenc_rename(source_path: str) -> None:
         # that the source_path actually exists
         os.chmod(source_path, PWENC_FILE_SECRET_MODE)
         os.chown(source_path, 0, 0)
-        backup_name = f'{PWENC_FILE_SECRET}_old.{uuid.uuid4()}'
+        backup_name = f"{PWENC_FILE_SECRET}_old.{uuid.uuid4()}"
         backup_created = False
 
         try:
@@ -113,7 +113,7 @@ def pwenc_generate_secret() -> None:
     """ Create a new pwenc secret. """
     with lock:
         try:
-            os.rename(PWENC_FILE_SECRET, f'{PWENC_FILE_SECRET}_old.{uuid.uuid4()}')
+            os.rename(PWENC_FILE_SECRET, f"{PWENC_FILE_SECRET}_old.{uuid.uuid4()}")
         except FileNotFoundError:
             pass
 
@@ -125,7 +125,7 @@ def pwenc_generate_secret() -> None:
 
 def encrypt(decrypted: str) -> str:
     """ Encrypt the input data string and return a base64 string """
-    data = decrypted.encode('utf8')
+    data = decrypted.encode("utf8")
     encrypted = pwenc_encrypt(data)
     return encrypted.decode()
 
@@ -133,14 +133,14 @@ def encrypt(decrypted: str) -> str:
 def decrypt(encrypted: str, _raise: bool = False) -> str:
     """ Decrypt the input base64 string and return a string """
     if not encrypted:
-        return ''
+        return ""
 
-    data = encrypted.encode('utf8')
+    data = encrypted.encode("utf8")
 
     try:
         decrypted = pwenc_decrypt(data)
-        return decrypted.decode('utf8')
+        return decrypted.decode("utf8")
     except Exception:
         if _raise:
             raise
-        return ''
+        return ""

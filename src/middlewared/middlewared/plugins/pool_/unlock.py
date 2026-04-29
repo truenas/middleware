@@ -8,14 +8,14 @@ from .utils import dataset_mountpoint
 class PoolDatasetService(Service):
 
     class Config:
-        namespace = 'pool.dataset'
+        namespace = "pool.dataset"
 
     @private
     async def unlock_restarted_vms(self, dataset):
         result = []
-        for vm in await self.call2(self.s.vm.query, [('autostart', '=', True)]):
+        for vm in await self.call2(self.s.vm.query, [("autostart", "=", True)]):
             for device in vm.devices:
-                if device.attributes.dtype not in ('DISK', 'RAW'):
+                if device.attributes.dtype not in ("DISK", "RAW"):
                     continue
 
                 path = device.attributes.path
@@ -23,11 +23,11 @@ class PoolDatasetService(Service):
                     continue
 
                 unlock = False
-                if dataset['type'] == 'FILESYSTEM' and (mountpoint := dataset_mountpoint(dataset)):
-                    unlock = path.startswith(mountpoint + '/') or path.startswith(
-                        zvol_name_to_path(dataset['name']) + '/'
+                if dataset["type"] == "FILESYSTEM" and (mountpoint := dataset_mountpoint(dataset)):
+                    unlock = path.startswith(mountpoint + "/") or path.startswith(
+                        zvol_name_to_path(dataset["name"]) + "/"
                     )
-                elif dataset['type'] == 'VOLUME' and zvol_name_to_path(dataset['name']) == path:
+                elif dataset["type"] == "VOLUME" and zvol_name_to_path(dataset["name"]) == path:
                     unlock = True
 
                 if unlock:
@@ -39,12 +39,12 @@ class PoolDatasetService(Service):
     @private
     async def restart_vms_after_unlock(self, dataset):
         for vm in await self.unlock_restarted_vms(dataset):
-            if (await self.call2(self.s.vm.status, vm.id)).state == 'RUNNING':
+            if (await self.call2(self.s.vm.status, vm.id)).state == "RUNNING":
                 stop_job = await self.call2(self.s.vm.stop, vm.id, VMStopOptions())
                 await stop_job.wait()
                 if stop_job.error:
-                    self.logger.error('Failed to stop %r VM: %s', vm.name, stop_job.error)
+                    self.logger.error("Failed to stop %r VM: %s", vm.name, stop_job.error)
             try:
                 await self.call2(self.s.vm.start, vm.id, VMStartOptions())
             except Exception:
-                self.logger.error('Failed to start %r VM after %r unlock', vm.name, dataset['name'], exc_info=True)
+                self.logger.error("Failed to start %r VM after %r unlock", vm.name, dataset["name"], exc_info=True)

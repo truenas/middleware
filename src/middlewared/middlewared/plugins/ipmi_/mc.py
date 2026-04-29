@@ -6,9 +6,9 @@ from middlewared.service import Service
 class IpmiMcService(Service):
 
     class Config:
-        namespace = 'ipmi.mc'
+        namespace = "ipmi.mc"
         private = True
-        cli_namespace = 'service.ipmi.mc'
+        cli_namespace = "service.ipmi.mc"
 
     def info(self):
         """Return looks like:
@@ -33,12 +33,12 @@ class IpmiMcService(Service):
             }
         """
         rv = {}
-        if not self.middleware.call_sync('ipmi.is_loaded'):
+        if not self.middleware.call_sync("ipmi.is_loaded"):
             return rv
 
-        out = run(['bmc-info', '--get-device-id'], capture_output=True)
-        for line in filter(lambda x: x, out.stdout.decode().split('\n')):
-            ele, status = line.split(':', 1)
-            rv[ele.strip().replace(' ', '_').lower()] = status.strip()
+        out = run(["bmc-info", "--get-device-id"], capture_output=True)
+        for line in filter(lambda x: x, out.stdout.decode().split("\n")):
+            ele, status = line.split(":", 1)
+            rv[ele.strip().replace(" ", "_").lower()] = status.strip()
 
         return rv

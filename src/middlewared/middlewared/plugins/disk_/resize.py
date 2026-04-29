@@ -10,24 +10,24 @@ class DiskService(Service):
 
     @private
     async def resize_impl(self, disk):
-        cmd = ['disk_resize', disk['name']]
+        cmd = ["disk_resize", disk["name"]]
         err = f'DISK: {disk["name"]!r}'
-        if disk['size']:
+        if disk["size"]:
             err += f' SIZE: {disk["size"]} gigabytes'
             cmd.append(f'{disk["size"]}G')
 
         try:
-            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
         except Exception as e:
-            err += f' ERROR: {str(e)}'
+            err += f" ERROR: {str(e)}"
             raise UnexpectedFailure(err)
         else:
             if cp.returncode != 0:
-                err += f' ERROR: {cp.stdout}'
+                err += f" ERROR: {cp.stdout}"
                 raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
     @private
-    @job(lock='disk_resize')
+    @job(lock="disk_resize")
     async def resize(self, job, data: list[dict], sync: bool = True, raise_error: bool = False):
         """
         Takes a list of disks. Each list entry is a dict that requires a key, value pair.
@@ -48,14 +48,14 @@ class DiskService(Service):
         verrors = ValidationErrors()
         disks = []
         for disk in data:
-            if disk['name'] in disks:
-                verrors.add('disk.resize', f'Disk {disk["name"]!r} specified more than once.')
+            if disk["name"] in disks:
+                verrors.add("disk.resize", f'Disk {disk["name"]!r} specified more than once.')
             else:
-                disk.setdefault('size', None)
-                disks.append(disk['name'])
+                disk.setdefault("size", None)
+                disks.append(disk["name"])
 
         if not disks:
-            verrors.add('disk.resize', 'At least 1 disk must be provided')
+            verrors.add("disk.resize", "At least 1 disk must be provided")
 
         verrors.check()
 
@@ -66,14 +66,14 @@ class DiskService(Service):
             if isinstance(exc, Exception):
                 failures.append(str(exc))
             else:
-                self.logger.info('Successfully resized %r', disk['name'])
-                success.append(disk['name'])
+                self.logger.info("Successfully resized %r", disk["name"])
+                success.append(disk["name"])
 
         if sync and success:
             if len(success) > 1:
-                await (await self.middleware.call('disk.sync_all')).wait()
+                await (await self.middleware.call("disk.sync_all")).wait()
             else:
-                await self.middleware.call('disk.sync', success[0])
+                await self.middleware.call("disk.sync", success[0])
 
         if failures:
             err = f'Failure resizing: {", ".join(failures)}'

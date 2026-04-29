@@ -66,7 +66,7 @@ class NFSEntry(BaseModel):
     """ Enable or disable NFS over RDMA.  Requires RDMA capable NIC. """
 
 
-@single_argument_args('nfs_update')
+@single_argument_args("nfs_update")
 class NFSUpdateArgs(NFSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()

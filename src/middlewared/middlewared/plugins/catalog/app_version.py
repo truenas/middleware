@@ -18,18 +18,18 @@ def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppV
     app_location = os.path.join(get_train_path(catalog.location), options.train, app_name)
     try:
         if not stat.S_ISDIR(os.stat(app_location).st_mode):
-            raise CallError(f'{app_location!r} must be a directory')
+            raise CallError(f"{app_location!r} must be a directory")
     except FileNotFoundError:
-        raise CallError(f'Unable to locate {app_name!r} at {app_location!r}', errno=errno.ENOENT)
+        raise CallError(f"Unable to locate {app_name!r} at {app_location!r}", errno=errno.ENOENT)
 
     train_data = context.call_sync2(context.s.catalog.apps, CatalogApps(
         retrieve_all_trains=False,
         trains=[options.train],
     ))
     if options.train not in train_data.root:
-        raise CallError(f'Unable to locate {options.train!r} train')
+        raise CallError(f"Unable to locate {options.train!r} train")
     elif app_name not in train_data.root[options.train].root:
-        raise CallError(f'Unable to locate {app_name!r} app in {options.train!r} train')
+        raise CallError(f"Unable to locate {app_name!r} app in {options.train!r} train")
 
     questions_context = context.run_coroutine(get_normalized_questions_context(context)).model_dump(by_alias=True)
     app_details = retrieve_app_details(
@@ -37,6 +37,6 @@ def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppV
     )
     recommended_apps = context.run_coroutine(retrieve_recommended_apps(context))
     if options.train in recommended_apps and app_name in recommended_apps[options.train]:
-        app_details['recommended'] = True
+        app_details["recommended"] = True
 
     return CatalogAppDetails.model_validate(app_details)

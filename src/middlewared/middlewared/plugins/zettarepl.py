@@ -160,8 +160,8 @@ class ZettareplProcess:
 
     def __call__(self):
         try:
-            set_name('mw-zettarepl')
-            set_cmdline('mw-zettarepl')
+            set_name("mw-zettarepl")
+            set_cmdline("mw-zettarepl")
             die_with_parent()
             move_to_root_cgroups(os.getpid())
             if logging.getLevelName(self.debug_level) == logging.TRACE:
@@ -174,8 +174,8 @@ class ZettareplProcess:
                 default_level = logging.getLevelName(self.debug_level)
             setup_logging("", "DEBUG", self.log_handler)
             oqlh = ObserverQueueLoggingHandler(self.observer_queue)
-            oqlh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
-                                                '%Y/%m/%d %H:%M:%S'))
+            oqlh.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s",
+                                                "%Y/%m/%d %H:%M:%S"))
             logging.getLogger("zettarepl").addHandler(oqlh)
             for handler in logging.getLogger("zettarepl").handlers:
                 handler.addFilter(LongStringsFilter())
@@ -294,7 +294,7 @@ class ZettareplService(Service):
         # prints a "leaked semaphore" UserWarning for each one. Suppress it via PYTHONWARNINGS
         # here, before Queue() triggers the daemon spawn, so the daemon inherits the filter.
         # warnings.filterwarnings() in the parent process has no effect on the daemon subprocess.
-        os.environ.setdefault('PYTHONWARNINGS', 'ignore:resource_tracker:UserWarning')
+        os.environ.setdefault("PYTHONWARNINGS", "ignore:resource_tracker:UserWarning")
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.replication_jobs_channels = defaultdict(list)
@@ -865,7 +865,7 @@ class ZettareplService(Service):
                 "Remote host identification has changed. Someone could be eavesdropping on you right now (man-in-the-"
                 "middle attack)! It is also possible that a host key has just been changed. The fingerprint for the "
                 f"RSA key sent by the remote host is {fingerprint}. Please edit your SSH connection and click "
-                "\"Discover Remote Host Key\" to resolve this issue.",
+                '"Discover Remote Host Key" to resolve this issue.',
                 errno=errno.EACCES,
             )
         except (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
