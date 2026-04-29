@@ -98,7 +98,9 @@ class SMARTAlertSource(ThreadedAlertSource):
                 ec = attr["raw"]["value"]
 
         if ata_tests := data.get("ata_smart_self_test_log", {}).get("table", []):
-            test_failed = not ata_tests[-1]["status"]["passed"]
+            # NAS-140419: smartctl writes table[] newest-first (see ataPrintSmartSelfTestlog
+            # in smartmontools/ataprint.cpp), so [0] is the most recent test.
+            test_failed = not ata_tests[0]["status"]["passed"]
 
         return SmartInfo(
             uncorrected_errors=ue,
