@@ -30,38 +30,38 @@ class ContainerRegistryClientMixin:
         url: str,
         options: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-        mode: str = 'get',
+        mode: str = "get",
         auth: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         options = options or {}
-        timeout = options.get('timeout', 15)
-        assert mode in ('get', 'head')
-        response: dict[str, Any] = {'error': None, 'response': {}, 'response_obj': None}
+        timeout = options.get("timeout", 15)
+        assert mode in ("get", "head")
+        response: dict[str, Any] = {"error": None, "response": {}, "response_obj": None}
         try:
             async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as ss:
                     coro = getattr(ss, mode)
                     req = await coro(url, headers=headers, auth=aiohttp.BasicAuth(**auth) if auth else None)
-                    response['response_obj'] = req
+                    response["response_obj"] = req
                     if req.status != 200:
-                        cnt = ''
+                        cnt = ""
                         if req.content:
-                            cnt = f' ({req.content})'
-                        response['error'] = f'Received response code {req.status}{cnt}'
+                            cnt = f" ({req.content})"
+                        response["error"] = f"Received response code {req.status}{cnt}"
                     else:
                         try:
-                            response['response'] = await req.json()
+                            response["response"] = await req.json()
                         except aiohttp.ContentTypeError as e:
                             # quay.io registry returns malformed content type header
                             # which aiohttp fails to parse even though the content
                             # returned by registry is valid json
-                            response['error'] = f'Unable to parse response: {e}'
+                            response["error"] = f"Unable to parse response: {e}"
                         except RuntimeError as e:
-                            response['error'] = f'Connection closed before the response could be fully read ({e})'
+                            response["error"] = f"Connection closed before the response could be fully read ({e})"
         except asyncio.TimeoutError:
-            response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
+            response["error"] = f"Unable to connect with {url} in {timeout} seconds."
         except aiohttp.ClientResponseError as e:
-            response.update({'error': str(e), 'error_obj': e})
+            response.update({"error": str(e), "error_obj": e})
         return response
 
     async def _get_token(
@@ -73,15 +73,15 @@ class ContainerRegistryClientMixin:
     ) -> str:
         query_params = urllib.parse.urlencode(
             {
-                'service': service,
-                'scope': scope,
+                "service": service,
+                "scope": scope,
             }
         )
-        response = await self._api_call(f'{auth_url}?{query_params}', auth=auth)
-        if response['error']:
-            raise CallError(f'Unable to retrieve token for {scope!r}: {response["error"]}')
+        response = await self._api_call(f"{auth_url}?{query_params}", auth=auth)
+        if response["error"]:
+            raise CallError(f"Unable to retrieve token for {scope!r}: {response['error']}")
 
-        return str(response['response']['token'])
+        return str(response["response"]["token"])
 
     async def _get_manifest_response(
         self,
@@ -92,26 +92,26 @@ class ContainerRegistryClientMixin:
         mode: str,
         raise_error: bool,
     ) -> dict[str, Any]:
-        manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
+        manifest_url = f"https://{registry}/v2/{image}/manifests/{tag}"
         # 1) try getting manifest
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
-        if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
+        if (error := response.get("error_obj")) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
                 # 2) try to get token from manifest api call's response headers
                 auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
                 token = await self._get_token(
-                    scope=auth_data['scope'],
-                    auth_url=auth_data.get('auth_url', DOCKER_AUTH_URL),
-                    service=auth_data.get('service', DOCKER_AUTH_SERVICE),
+                    scope=auth_data["scope"],
+                    auth_url=auth_data.get("auth_url", DOCKER_AUTH_URL),
+                    service=auth_data.get("service", DOCKER_AUTH_SERVICE),
                 )
-                headers['Authorization'] = f'Bearer {token}'
+                headers["Authorization"] = f"Bearer {token}"
                 # 3) Redo the manifest call with updated token
                 response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
-        if raise_error and response['error']:
+        if raise_error and response["error"]:
             raise CallError(
-                f'Unable to retrieve latest image digest for registry={registry} '
-                f'image={image} tag={tag}: {response["error"]}'
+                f"Unable to retrieve latest image digest for registry={registry} "
+                f"image={image} tag={tag}: {response['error']}"
             )
 
         return response
@@ -123,7 +123,7 @@ class ContainerRegistryClientMixin:
         headers: dict[str, str],
     ) -> dict[str, str]:
         if registry == DEFAULT_DOCKER_REGISTRY:
-            headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
+            headers["Authorization"] = f"Bearer {await self._get_token(scope=f'repository:{image}:pull')}"
         return headers
 
     async def _get_repo_digest(self, registry: str, image: str, tag: str) -> list[str]:
@@ -135,19 +135,19 @@ class ContainerRegistryClientMixin:
                 registry,
                 image,
                 {
-                    'Accept': (
-                        f'{DOCKER_MANIFEST_SCHEMA_V2}, '
-                        f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
-                        f'{DOCKER_MANIFEST_SCHEMA_V1}, '
-                        f'{DOCKER_MANIFEST_OCI_V1}'
+                    "Accept": (
+                        f"{DOCKER_MANIFEST_SCHEMA_V2}, "
+                        f"{DOCKER_MANIFEST_LIST_SCHEMA_V2}, "
+                        f"{DOCKER_MANIFEST_SCHEMA_V1}, "
+                        f"{DOCKER_MANIFEST_OCI_V1}"
                     )
                 },
             ),
-            'get',
+            "get",
             True,
         )
         digests = parse_digest_from_schema(response)
-        digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
+        digests.append(response["response_obj"].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
 
     async def get_docker_hub_rate_limit_preview(
@@ -155,4 +155,4 @@ class ContainerRegistryClientMixin:
         auth: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         token = await self._get_token(scope="repository:ratelimitpreview/test:pull", auth=auth)
-        return await self._api_call(url=DOCKER_RATELIMIT_URL, headers={'Authorization': f'Bearer {token}'}, mode='head')
+        return await self._api_call(url=DOCKER_RATELIMIT_URL, headers={"Authorization": f"Bearer {token}"}, mode="head")

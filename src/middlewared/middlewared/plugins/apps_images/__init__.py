@@ -40,19 +40,19 @@ if typing.TYPE_CHECKING:
         get: typing.Literal[False]
 
 
-__all__ = ('AppImageService',)
+__all__ = ("AppImageService",)
 
 
 class AppImageService(GenericCRUDService[AppImageEntry, str]):
     class Config:
-        namespace = 'app.image'
-        cli_namespace = 'app.image'
-        role_prefix = 'APPS'
+        namespace = "app.image"
+        cli_namespace = "app.image"
+        role_prefix = "APPS"
         entry = AppImageEntry
         generic = True
         event_send = False
         event_register = False
-        datastore_primary_key = 'id'
+        datastore_primary_key = "id"
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
@@ -103,7 +103,7 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
     @api_method(
         AppImagePullArgs,
         AppImagePullResult,
-        roles=['APPS_WRITE'],
+        roles=["APPS_WRITE"],
         check_annotations=True,
     )
     @job()
@@ -131,7 +131,7 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
     @api_method(
         AppImageDockerhubRateLimitArgs,
         AppImageDockerhubRateLimitResult,
-        roles=['APPS_READ'],
+        roles=["APPS_READ"],
         check_annotations=True,
     )
     async def dockerhub_rate_limit(self) -> AppImageDockerhubRateLimitInfo:

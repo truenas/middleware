@@ -21,24 +21,24 @@ def pull_image_action(
         # Just having some sanity checks in place in case we come across some weird registry
         if (
             not isinstance(entry, dict)
-            or any(k not in entry for k in ('progressDetail', 'status'))
-            or entry['status'].lower().strip() not in ('pull complete', 'downloading')
+            or any(k not in entry for k in ("progressDetail", "status"))
+            or entry["status"].lower().strip() not in ("pull complete", "downloading")
         ):
             return
 
-        if entry['status'].lower().strip() == 'pull complete':
-            job.set_progress(95, 'Image downloaded, doing post processing')
+        if entry["status"].lower().strip() == "pull complete":
+            job.set_progress(95, "Image downloaded, doing post processing")
             return
 
-        progress = entry['progressDetail']
+        progress = entry["progressDetail"]
         if (
             not isinstance(progress, dict)
-            or any(k not in progress for k in ('current', 'total'))
-            or progress['current'] > progress['total']
+            or any(k not in progress for k in ("current", "total"))
+            or progress["current"] > progress["total"]
         ):
             return
 
-        job.set_progress((progress['current'] / progress['total']) * 90, 'Pulling image')
+        job.set_progress((progress["current"] / progress["total"]) * 90, "Pulling image")
 
     context.call_sync2(context.s.docker.validate_state)
     image_tag = data.image
@@ -51,9 +51,9 @@ def pull_image_action(
         # belongs has saved creds and use those.
         app_registries = {registry.uri: registry for registry in context.call_sync2(context.s.app.registry.query)}
         fallback = get_normalized_auth_config(app_registries, image_tag)
-        username = fallback.get('username')
-        password = fallback.get('password')
-        registry_uri = fallback.get('registry_uri')
+        username = fallback.get("username")
+        password = fallback.get("password")
+        registry_uri = fallback.get("registry_uri")
 
     pull_image(image_tag, callback, username, password, registry_uri)
-    job.set_progress(100, f'{image_tag!r} image pulled successfully')
+    job.set_progress(100, f"{image_tag!r} image pulled successfully")

@@ -55,23 +55,23 @@ def query_images(
     if not context.call_sync2(context.s.docker.validate_state, False):
         return to_entries(filter_list([], filters, options.model_dump()), AppImageEntry)
 
-    parse_all_tags = options.extra.get('parse_tags')
+    parse_all_tags = options.extra.get("parse_tags")
     images: list[dict[str, Any]] = []
     for image in list_images():
-        repo_tags = image.get('repo_tags', [])
+        repo_tags = image.get("repo_tags", [])
         config: dict[str, Any] = {
-            'id': image.get('id'),
-            'repo_tags': repo_tags,
-            'repo_digests': image.get('repo_digests', []),
-            'size': image.get('size'),
-            'created': image.get('created'),
-            'author': image.get('author'),
-            'comment': image.get('comment'),
-            'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
-            'update_available': any(IMAGE_CACHE[r] for r in repo_tags),
+            "id": image.get("id"),
+            "repo_tags": repo_tags,
+            "repo_digests": image.get("repo_digests", []),
+            "size": image.get("size"),
+            "created": image.get("created"),
+            "author": image.get("author"),
+            "comment": image.get("comment"),
+            "dangling": len(repo_tags) == 1 and repo_tags[0] == "<none>:<none>",
+            "update_available": any(IMAGE_CACHE[r] for r in repo_tags),
         }
         if parse_all_tags:
-            config['parsed_repo_tags'] = parse_tags(repo_tags)
+            config["parsed_repo_tags"] = parse_tags(repo_tags)
         images.append(config)
 
     return to_entries(filter_list(images, filters, options.model_dump()), AppImageEntry)
@@ -82,7 +82,7 @@ def get_image_instance(
     image_id: str,
     options: QueryOptions,
 ) -> AppImageEntry:
-    results = query_images(context, [['id', '=', image_id]], QueryOptions(extra=options.extra))
+    results = query_images(context, [["id", "=", image_id]], QueryOptions(extra=options.extra))
     if not results:
-        raise InstanceNotFound(f'Image {image_id} does not exist')
+        raise InstanceNotFound(f"Image {image_id} does not exist")
     return results[0]
