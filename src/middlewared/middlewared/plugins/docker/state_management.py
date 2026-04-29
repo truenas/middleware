@@ -129,7 +129,7 @@ async def periodic_check(context: ServiceContext) -> None:
 
     docker_config = await context.call2(context.s.docker.config)
     if docker_config.enable_image_updates:
-        context.create_task(context.middleware.call('app.image.op.check_update'))
+        context.create_task(context.call2(context.s.app.image.check_update))
 
 
 def terminate_timeout() -> int:

@@ -3,7 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
 __all__ = [
-    'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
+    'AppImageEntry', 'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
     'AppImagePullArgs', 'AppImagePullResult', 'AppImageDeleteArgs', 'AppImageDeleteResult',
 ]
 
@@ -46,12 +46,12 @@ class AppImageEntry(BaseModel):
     """Parsed repository tag information or `null` if not available."""
 
 
-class ContainerImagesDockerhubRateLimitArgs(BaseModel):
+class AppImageDockerhubRateLimitArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class ContainerImagesDockerhubRateLimitResult(BaseModel):
+class AppImageDockerhubRateLimitResult(BaseModel):
     total_pull_limit: int | None = None
     """Total pull limit for Docker Hub registry."""
     total_time_limit_in_secs: int | None = None

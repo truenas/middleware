@@ -54,7 +54,7 @@ class DockerService(SimpleService):
         await self.middleware.call2(self.s.docker.set_status, Status.RUNNING.value)
         self.middleware.create_task(self.middleware.call2(self.s.docker.setup_docker_events))
         if (await self.middleware.call2(self.s.docker.config)).enable_image_updates:
-            self.middleware.create_task(self.middleware.call('app.image.op.check_update'))
+            self.middleware.create_task(self.middleware.call2(self.s.app.image.check_update))
 
     async def before_stop(self):
         await self.middleware.call2(self.s.docker.set_status, Status.STOPPING.value)

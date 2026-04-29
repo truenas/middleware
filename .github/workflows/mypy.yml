@@ -29,6 +29,7 @@ jobs:
             middlewared/plugins/alert/ \
             middlewared/plugins/app_registry/ \
             middlewared/plugins/apps/ \
+            middlewared/plugins/apps_images/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
