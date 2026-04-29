@@ -9,6 +9,7 @@ import uuid
 
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
+from truenas_pylibvirt.nsexec import ALL_CAPABILITIES as CAPABILITIES
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
@@ -27,7 +28,6 @@ from .bridge import container_bridge_name
 from .dataset import ensure_datasets
 from .info import license_active, pool_choices
 from .lifecycle import pylibvirt_container
-from .nsenter import CAPABILITIES
 from .utils import container_dataset
 
 if TYPE_CHECKING:
