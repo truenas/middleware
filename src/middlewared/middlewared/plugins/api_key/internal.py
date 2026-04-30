@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'api_key_privilege_check',
-    'authenticate_impl',
-    'check_status',
-    'revoke_impl',
-    'validate_api_key_data',
+    "api_key_privilege_check",
+    "authenticate_impl",
+    "check_status",
+    "revoke_impl",
+    "validate_api_key_data",
 )
 
 
@@ -39,18 +39,18 @@ def api_key_privilege_check(
         return
 
     # `has_role` is declared on the untyped base `SessionManagerCredentials`.
-    if creds.has_role('API_KEY_WRITE'):  # type: ignore[no-untyped-call]
+    if creds.has_role("API_KEY_WRITE"):  # type: ignore[no-untyped-call]
         return
 
     # `.user` only exists on the `UserSessionManagerCredentials` subclass
     # (and `TokenSessionManagerCredentials` when wrapping a user session) -
     # is_user_session has already been checked above.
-    auth_user = creds.user['username']  # type: ignore[attr-defined]
+    auth_user = creds.user["username"]  # type: ignore[attr-defined]
 
     if auth_user != username:
         raise CallError(
-            f'{auth_user}: authenticated user lacks privileges to create or '
-            'modify API keys of other users.', errno.EACCES
+            f"{auth_user}: authenticated user lacks privileges to create or modify API keys of other users.",
+            errno.EACCES,
         )
 
 
@@ -63,19 +63,20 @@ async def validate_api_key_data(
     id_: int | None = None,
 ) -> None:
     rows = await context.middleware.call(
-        'datastore.query', datastore,
-        [['name', '=', data['name']], ['id', '!=', id_]],
+        "datastore.query",
+        datastore,
+        [["name", "=", data["name"]], ["id", "!=", id_]],
     )
     if rows:
-        verrors.add(schema_name, 'name must be unique')
+        verrors.add(schema_name, "name must be unique")
 
-    if (expiration := data.get('expires_at')) is not None:
+    if (expiration := data.get("expires_at")) is not None:
         if utc_now(naive=False) > expiration:
-            verrors.add(schema_name, 'Expiration date is in the past')
+            verrors.add(schema_name, "Expiration date is in the past")
 
 
 async def check_status(context: ServiceContext) -> None:
-    await context.call2(context.s.alert.alert_source_clear_run, 'ApiKeyRevoked')
+    await context.call2(context.s.alert.alert_source_clear_run, "ApiKeyRevoked")
 
 
 async def authenticate_impl(
@@ -86,16 +87,16 @@ async def authenticate_impl(
 ) -> tuple[dict[str, Any], dict[str, Any]] | None:
     """Wrapper around `auth.authenticate` for the file upload endpoint."""
     try:
-        key_id = int(key.split('-', 1)[0])
+        key_id = int(key.split("-", 1)[0])
     except ValueError:
         return None
 
     auth_ctx = app.authentication_context
     if not auth_ctx:
-        raise CallError('Authentication context was not initialized')
+        raise CallError("Authentication context was not initialized")
 
     if auth_ctx.pam_hdl:
-        raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
+        raise CallError(f"{auth_ctx.pam_hdl}: Unexpected existing authenticator")
 
     entry: ApiKeyEntry = await context.call2(context.s.api_key.get_instance, key_id)
 
@@ -106,8 +107,8 @@ async def authenticate_impl(
         app=app,
         auth_ctx=auth_ctx,
         auth_data={
-            'username': entry.username or 'root',
-            'api_key': key,
+            "username": entry.username or "root",
+            "api_key": key,
         },
     )
 
@@ -115,10 +116,13 @@ async def authenticate_impl(
         return None
 
     # Return user_info and key metadata (cred.user contains the authenticated user info)
-    return (cred.user, {
-        'id': entry.id,
-        'name': entry.name,
-    })
+    return (
+        cred.user,
+        {
+            "id": entry.id,
+            "name": entry.name,
+        },
+    )
 
 
 async def revoke_impl(
@@ -129,8 +133,10 @@ async def revoke_impl(
 ) -> None:
     """Revoke an API key, deactivate it in the pam_tdb file, and clear/raise the alert."""
     await context.middleware.call(
-        'datastore.update', datastore, key_id,
-        {'expiry': -1, 'revoked_reason': reason},
+        "datastore.update",
+        datastore,
+        key_id,
+        {"expiry": -1, "revoked_reason": reason},
     )
-    await context.middleware.call('etc.generate', 'pam')
+    await context.middleware.call("etc.generate", "pam")
     await check_status(context)

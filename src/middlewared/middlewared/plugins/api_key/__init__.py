@@ -34,16 +34,15 @@ if TYPE_CHECKING:
     from middlewared.utils.origin import ConnectionOrigin
 
 
-__all__ = ('ApiKeyService',)
+__all__ = ("ApiKeyService",)
 
 
 class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
-
     class Config:
-        namespace = 'api_key'
-        datastore = 'account.api_key'
-        cli_namespace = 'auth.api_key'
-        role_prefix = 'API_KEY'
+        namespace = "api_key"
+        datastore = "account.api_key"
+        cli_namespace = "auth.api_key"
+        role_prefix = "API_KEY"
         entry = ApiKeyEntry
         generic = True
 
@@ -54,9 +53,9 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     @api_method(
         ApiKeyCreateArgs,
         ApiKeyCreateResult,
-        audit='Create API key',
-        audit_extended=lambda data: data['name'],
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        audit="Create API key",
+        audit_extended=lambda data: data["name"],
+        roles=["READONLY_ADMIN", "API_KEY_WRITE"],
         pass_app=True,
         check_annotations=True,
     )
@@ -71,9 +70,9 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     @api_method(
         ApiKeyUpdateArgs,
         ApiKeyUpdateResult,
-        audit='Update API key',
+        audit="Update API key",
         audit_callback=True,
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        roles=["READONLY_ADMIN", "API_KEY_WRITE"],
         pass_app=True,
         check_annotations=True,
     )
@@ -94,9 +93,9 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     @api_method(
         ApiKeyDeleteArgs,
         ApiKeyDeleteResult,
-        audit='Delete API key',
+        audit="Delete API key",
         audit_callback=True,
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        roles=["READONLY_ADMIN", "API_KEY_WRITE"],
         pass_app=True,
         check_annotations=True,
     )
@@ -115,7 +114,7 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     @api_method(
         ApiKeyMyKeysArgs,
         ApiKeyMyKeysResult,
-        roles=['READONLY_ADMIN', 'API_KEY_READ'],
+        roles=["READONLY_ADMIN", "API_KEY_READ"],
         pass_app=True,
         pass_app_require=True,
         check_annotations=True,
@@ -123,15 +122,15 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     async def my_keys(self, app: App) -> list[ApiKeyEntry]:
         """Get the existing API keys for the currently authenticated user."""
         if app.authenticated_credentials is None or not app.authenticated_credentials.is_user_session:
-            raise CallError('Not a user session')
+            raise CallError("Not a user session")
 
-        username = app.authenticated_credentials.user['username']  # type: ignore[attr-defined]
-        return await self._svc_part.query([['username', '=', username]])
+        username = app.authenticated_credentials.user["username"]  # type: ignore[attr-defined]
+        return await self._svc_part.query([["username", "=", username]])
 
     @api_method(
         ApiKeyConvertRawKeyArgs,
         ApiKeyConvertRawKeyResult,
-        roles=['API_KEY_READ'],
+        roles=["API_KEY_READ"],
         check_annotations=True,
     )
     async def convert_raw_key(self, raw_key: Secret[str]) -> ApiKeyScramData:

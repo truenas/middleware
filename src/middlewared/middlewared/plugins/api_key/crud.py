@@ -33,14 +33,14 @@ if TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
 
-_ADMIN_UID_FILTER = compile_filters([['uid', '=', 950]])
-_ADMIN_UID_GET_OPTS = compile_options({'get': True})
+_ADMIN_UID_FILTER = compile_filters([["uid", "=", 950]])
+_ADMIN_UID_GET_OPTS = compile_options({"get": True})
 
 RAW_KEY_SZ = 64
 
 
 class APIKeyModel(sa.Model):
-    __tablename__ = 'account_api_key'
+    __tablename__ = "account_api_key"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(200))
@@ -55,36 +55,37 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
-    _datastore = 'account.api_key'
+    _datastore = "account.api_key"
     _entry = ApiKeyEntry
 
     async def extend_context(
-        self, rows: list[dict[str, Any]], extra: dict[str, Any],
+        self,
+        rows: list[dict[str, Any]],
+        extra: dict[str, Any],
     ) -> dict[str, Any]:
         # user.query performs an expensive datastore extend that we do not
         # need here (e.g. 2FA status), so query the table directly.
-        users = await self.middleware.call(
-            'datastore.query', 'account.bsdusers',
-            [], {'prefix': 'bsdusr_'}
-        )
+        users = await self.middleware.call("datastore.query", "account.bsdusers", [], {"prefix": "bsdusr_"})
 
-        by_id: dict[int, str] = {x['id']: x['username'] for x in users}
+        by_id: dict[int, str] = {x["id"]: x["username"] for x in users}
 
         # Convert legacy keys into the appropriate local administrator account.
         if result := _tf.tnfilter(users, filters=_ADMIN_UID_FILTER, options=_ADMIN_UID_GET_OPTS):
-            root_name = result[0]['username']
+            root_name = result[0]["username"]
         else:
-            root_name = 'root'
+            root_name = "root"
 
         return {
-            'by_id': by_id,
-            'by_sid': {},
-            'now': utc_now(naive=False),
-            'root_name': root_name,
+            "by_id": by_id,
+            "by_sid": {},
+            "now": utc_now(naive=False),
+            "root_name": root_name,
         }
 
     async def extend(
-        self, data: dict[str, Any], context: dict[str, Any],
+        self,
+        data: dict[str, Any],
+        context: dict[str, Any],
     ) -> dict[str, Any]:
         """
         * modify `user_identifier` (change type to int if digit, otherwise
@@ -95,127 +96,134 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         * add `expires_at` - derived from `expiry`
         * add `revoked` - derived from `expiry`
         """
-        user_identifier = data['user_identifier']
-        expiry = data.pop('expiry')
+        user_identifier = data["user_identifier"]
+        expiry = data.pop("expiry")
 
-        data.update({
-            'username': None,
-            'local': True,
-            'expires_at': None,
-            'revoked': False,
-        })
+        data.update(
+            {
+                "username": None,
+                "local": True,
+                "expires_at": None,
+                "revoked": False,
+            }
+        )
         if user_identifier.isdigit():
             # If we can't resolve the ID then the account was probably deleted
             # and we didn't quite get to clean up yet.
-            data['user_identifier'] = int(user_identifier)
-            data['username'] = context['by_id'].get(data['user_identifier'])
+            data["user_identifier"] = int(user_identifier)
+            data["username"] = context["by_id"].get(data["user_identifier"])
         elif user_identifier == LEGACY_API_KEY_USERNAME:
             # This may be magic string designating a migrated API key
-            data['username'] = context['root_name']
+            data["username"] = context["root_name"]
         elif sid_is_valid(user_identifier):
-            if (username := context['by_sid'].get(user_identifier)) is None:
-                resp = await self.middleware.call('idmap.convert_sids', [user_identifier])
-                if entry := resp['mapped'].get(user_identifier):
-                    username = entry['name']
+            if (username := context["by_sid"].get(user_identifier)) is None:
+                resp = await self.middleware.call("idmap.convert_sids", [user_identifier])
+                if entry := resp["mapped"].get(user_identifier):
+                    username = entry["name"]
                     # Feed SID we looked up back into our extend context
                     # Because there may be multiple keys for same SID value
-                    context['by_sid'][user_identifier] = username
+                    context["by_sid"][user_identifier] = username
 
             if username:
-                data['username'] = username
+                data["username"] = username
         else:
             # Something wildly invalid got written, but we can't
             # write a log message here (queried too frequently).
-            data['username'] = None
-            data['local'] = True
+            data["username"] = None
+            data["local"] = True
 
-        if data['username'] is None:
+        if data["username"] is None:
             # prevent keys we can't resolve from being written
-            data['revoked'] = True
-            data['revoked_reason'] = 'User does not exist'
+            data["revoked"] = True
+            data["revoked_reason"] = "User does not exist"
 
         match expiry:
             case -1:
                 # key has been forcibly revoked
-                data['revoked'] = True
+                data["revoked"] = True
             case 0 | None:
                 # zero value indicates never expires
                 pass
             case _:
-                data['expires_at'] = datetime.fromtimestamp(expiry, UTC)
+                data["expires_at"] = datetime.fromtimestamp(expiry, UTC)
 
         return data
 
     def compress(self, data: dict[str, Any]) -> dict[str, Any]:
         out = data.copy()
-        if 'expires_at' in out:
-            if (expires_at := out.pop('expires_at')) is None:
-                out['expiry'] = 0
+        if "expires_at" in out:
+            if (expires_at := out.pop("expires_at")) is None:
+                out["expiry"] = 0
             else:
-                out['expiry'] = int(expires_at.timestamp())
+                out["expiry"] = int(expires_at.timestamp())
 
-        if out.get('revoked'):
-            out['expiry'] = -1
+        if out.get("revoked"):
+            out["expiry"] = -1
 
         # extend() converts a digit user_identifier to int; coerce back to
         # str so the SQLA String column stays consistent on round trip.
-        if isinstance(out.get('user_identifier'), int):
-            out['user_identifier'] = str(out['user_identifier'])
+        if isinstance(out.get("user_identifier"), int):
+            out["user_identifier"] = str(out["user_identifier"])
 
-        for key in ('username', 'revoked', 'local', 'client_key'):
+        for key in ("username", "revoked", "local", "client_key"):
             out.pop(key, None)
 
         return out
 
     async def do_create(self, app: App | None, data: ApiKeyCreate) -> ApiKeyEntryWithKey:
-        if (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+        if (await self.middleware.call("system.security.config"))["enable_gpos_stig"]:
             raise CallError(
-                'Changes to API keys are not permitted in GPOS STIG mode',
+                "Changes to API keys are not permitted in GPOS STIG mode",
                 errno.EACCES,
             )
 
         # Privilege errors come first so we don't leak information.
-        api_key_privilege_check(app, data.username, 'api_key.create')
+        api_key_privilege_check(app, data.username, "api_key.create")
 
         verrors = ValidationErrors()
         await validate_api_key_data(
-            self, self._datastore, 'api_key_create', data.model_dump(), verrors,
+            self,
+            self._datastore,
+            "api_key_create",
+            data.model_dump(),
+            verrors,
         )
         users = await self.middleware.call(
-            'user.query', [['username', '=', data.username]],
+            "user.query",
+            [["username", "=", data.username]],
         )
         if not users:
-            verrors.add('api_key_create', 'User does not exist.')
-        elif not users[0]['roles']:
-            verrors.add('api_key_create', 'User lacks privilege role membership.')
+            verrors.add("api_key_create", "User does not exist.")
+        elif not users[0]["roles"]:
+            verrors.add("api_key_create", "User lacks privilege role membership.")
 
         verrors.check()
 
         user = users[0]
-        if user['local']:
-            user_identifier = str(user['id'])
-        elif user['sid']:
-            user_identifier = user['sid']
+        if user["local"]:
+            user_identifier = str(user["id"])
+        elif user["sid"]:
+            user_identifier = user["sid"]
         else:
             # DS but no SID; fall back to synthesized DB id (derived from UID)
-            user_identifier = str(user['id'])
+            user_identifier = str(user["id"])
 
         raw_key = generate_string(string_size=RAW_KEY_SZ)
         auth_data = await self.to_thread(generate_api_key_auth_data, raw_key)
 
         ds_data: dict[str, Any] = {
-            'name': data.name,
-            'user_identifier': user_identifier,
-            'created_at': utc_now(),
+            "name": data.name,
+            "user_identifier": user_identifier,
+            "created_at": utc_now(),
             **auth_data,
         }
         entry = await self._create(ds_data)
-        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call("etc.generate", "pam")
 
         with_key = ApiKeyEntryWithKey(
-            **entry.model_dump(context={'expose_secrets': True}),
-            key=f'{entry.id}-{raw_key}',
-            client_key=auth_data['client_key'],
+            **entry.model_dump(context={"expose_secrets": True}),
+            key=f"{entry.id}-{raw_key}",
+            client_key=auth_data["client_key"],
         )
         return with_key
 
@@ -226,46 +234,51 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         id_: int,
         data: ApiKeyUpdate,
     ) -> ApiKeyEntryWithKey | ApiKeyEntry:
-        if (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+        if (await self.middleware.call("system.security.config"))["enable_gpos_stig"]:
             raise CallError(
-                'Changes to API keys are not permitted in GPOS STIG mode',
+                "Changes to API keys are not permitted in GPOS STIG mode",
                 errno.EACCES,
             )
 
         old = await self.get_instance(id_)
         audit_callback(old.name)
 
-        api_key_privilege_check(app, old.username or '', 'api_key.update')
+        api_key_privilege_check(app, old.username or "", "api_key.update")
 
         update_dict = data.model_dump(exclude_unset=True)
-        reset = update_dict.pop('reset', False)
+        reset = update_dict.pop("reset", False)
 
-        merged = old.model_dump(context={'expose_secrets': True})
+        merged = old.model_dump(context={"expose_secrets": True})
         merged.update(update_dict)
 
         verrors = ValidationErrors()
         await validate_api_key_data(
-            self, self._datastore, 'api_key_update', merged, verrors, id_=id_,
+            self,
+            self._datastore,
+            "api_key_update",
+            merged,
+            verrors,
+            id_=id_,
         )
         verrors.check()
 
         if not reset:
             entry = await self._update(id_, merged)
-            await self.middleware.call('etc.generate', 'pam')
+            await self.middleware.call("etc.generate", "pam")
             return entry
 
         raw_key = generate_string(string_size=RAW_KEY_SZ)
         auth_data = await self.to_thread(generate_api_key_auth_data, raw_key)
         merged.update(auth_data)
-        merged['revoked'] = False
+        merged["revoked"] = False
 
         entry = await self._update(id_, merged)
-        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call("etc.generate", "pam")
         await check_status(self)
         return ApiKeyEntryWithKey(
-            **entry.model_dump(context={'expose_secrets': True}),
-            key=f'{entry.id}-{raw_key}',
-            client_key=auth_data['client_key'],
+            **entry.model_dump(context={"expose_secrets": True}),
+            key=f"{entry.id}-{raw_key}",
+            client_key=auth_data["client_key"],
         )
 
     async def do_delete(
@@ -277,39 +290,39 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         entry = await self.get_instance(id_)
         audit_callback(entry.name)
 
-        api_key_privilege_check(app, entry.username or '', 'api_key.delete')
+        api_key_privilege_check(app, entry.username or "", "api_key.delete")
 
         await self._delete(id_)
-        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call("etc.generate", "pam")
         await check_status(self)
 
     async def convert_raw_key(self, raw_key: str) -> ApiKeyScramData:
         verrors = ValidationErrors()
         key_id = 0
-        key_data = ''
+        key_data = ""
         salt: bytes | None = None
 
         # The plaintext is stripped before pattern matching to be tolerant of
         # paste artifacts.
         raw_key = raw_key.strip()
         try:
-            key_id_str, key_data = raw_key.split('-', 1)
+            key_id_str, key_data = raw_key.split("-", 1)
             key_id = int(key_id_str)
         except ValueError:
-            verrors.add('api_key_convert_raw_key', 'Not a valid raw API key')
+            verrors.add("api_key_convert_raw_key", "Not a valid raw API key")
 
         if not verrors:
             if key_id <= 0:
-                verrors.add('api_key_convert_raw_key', 'Invalid key id')
+                verrors.add("api_key_convert_raw_key", "Invalid key id")
 
             if len(key_data) != RAW_KEY_SZ:
-                verrors.add('api_key_convert_raw_key', 'Unexpected key size.')
+                verrors.add("api_key_convert_raw_key", "Unexpected key size.")
 
-            key_info = await self.query([['id', '=', key_id]])
+            key_info = await self.query([["id", "=", key_id]])
             if not key_info:
-                verrors.add('api_key_convert_raw_key', 'Key does not exist.')
+                verrors.add("api_key_convert_raw_key", "Key does not exist.")
             elif key_info[0].revoked:
-                verrors.add('api_key_convert_raw_key', 'Key is revoked.')
+                verrors.add("api_key_convert_raw_key", "Key is revoked.")
             else:
                 salt = b64decode(key_info[0].salt.get_secret_value())
 
