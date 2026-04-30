@@ -30,7 +30,7 @@ KSTAT_REQUIRED_ATTRS = (
     'l2_write_bytes',
 )
 
-PERCENT_KEYS = ('ddh%', 'ddi%', 'ddm%', 'dmh%', 'dmi%', 'dmm%', 'l2hit%', 'l2miss%')
+PERCENT_KEYS = frozenset({'ddh%', 'ddi%', 'ddm%', 'dmh%', 'dmi%', 'dmm%', 'l2hit%', 'l2miss%'})
 
 
 def test_get_arc_stats_runs():
@@ -39,7 +39,7 @@ def test_get_arc_stats_runs():
 
 
 def test_get_arc_stats_keys_match_descriptions():
-    assert set(get_arc_stats()) == set(ArcStatDescriptions)
+    assert get_arc_stats().keys() == ArcStatDescriptions.keys()
 
 
 def test_get_arc_stats_value_shape():
@@ -81,7 +81,7 @@ def test_get_arc_stats_demand_percentages_sum():
 @pytest.mark.parametrize('intv', [1, 2, 5])
 def test_get_arc_stats_intv(intv):
     stats = get_arc_stats(intv)
-    assert set(stats) == set(ArcStatDescriptions)
+    assert stats.keys() == ArcStatDescriptions.keys()
     for key in PERCENT_KEYS:
         assert 0 <= stats[key][0] <= 100
 

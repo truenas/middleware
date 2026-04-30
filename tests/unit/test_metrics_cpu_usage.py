@@ -29,10 +29,10 @@ def test_second_call_in_range():
 
 def test_keys_match_proc_stat():
     usage, cached = get_cpu_usage(None)
-    assert set(usage) == set(cached)
+    assert usage.keys() == cached.keys()
     assert 'cpu' in usage
-    expected_cores = {f'cpu{i}' for i in range(cpu_info()['core_count'])}
-    assert expected_cores <= set(usage)
+    expected_cores = frozenset(f'cpu{i}' for i in range(cpu_info()['core_count']))
+    assert expected_cores <= usage.keys()
 
 
 def test_cached_values_are_lists_of_int():

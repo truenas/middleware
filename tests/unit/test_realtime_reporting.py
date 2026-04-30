@@ -23,7 +23,7 @@ from middlewared.utils.disks import get_disk_names
 from middlewared.utils.disks_.disk_class import iterate_disks
 
 
-ZFS_EVENT_KEYS = {
+ZFS_EVENT_KEYS = frozenset({
     'demand_accesses_per_second',
     'demand_data_accesses_per_second',
     'demand_metadata_accesses_per_second',
@@ -46,19 +46,21 @@ ZFS_EVENT_KEYS = {
     'l2arc_miss_percentage',
     'bytes_read_per_second_from_the_l2arc',
     'bytes_written_per_second_to_the_l2arc',
-}
+})
 
-ZFS_PERCENT_KEYS = {k for k in ZFS_EVENT_KEYS if k.endswith('_percentage')}
+ZFS_PERCENT_KEYS = frozenset(k for k in ZFS_EVENT_KEYS if k.endswith('_percentage'))
 
-MEMORY_EVENT_KEYS = {
+MEMORY_EVENT_KEYS = frozenset({
     'arc_size',
     'arc_free_memory',
     'arc_available_memory',
     'physical_memory_total',
     'physical_memory_available',
-}
+})
 
-DISK_EVENT_KEYS = {'read_ops', 'read_bytes', 'write_ops', 'write_bytes', 'busy'}
+DISK_EVENT_KEYS = frozenset({'read_ops', 'read_bytes', 'write_ops', 'write_bytes', 'busy'})
+
+CPU_PER_CORE_KEYS = frozenset({'usage', 'temp'})
 
 
 @pytest.fixture(scope='module')
@@ -85,14 +87,14 @@ def interface_names():
 
 def test_arc_stats_empty_dict_safe():
     result = get_arc_stats({})
-    assert set(result) == ZFS_EVENT_KEYS
+    assert result.keys() == ZFS_EVENT_KEYS
     for key, value in result.items():
         assert value == 0, f'{key}: {value!r}'
 
 
 def test_arc_stats_live_shape(netdata_metrics):
     result = get_arc_stats(netdata_metrics)
-    assert set(result) == ZFS_EVENT_KEYS
+    assert result.keys() == ZFS_EVENT_KEYS
     for key, value in result.items():
         assert isinstance(value, (int, float)), f'{key}: {type(value).__name__}'
         assert value >= 0, f'{key}: {value!r}'
@@ -105,14 +107,14 @@ def test_arc_stats_live_shape(netdata_metrics):
 
 def test_memory_empty_dict_safe():
     result = get_memory_info({})
-    assert set(result) == MEMORY_EVENT_KEYS
+    assert result.keys() == MEMORY_EVENT_KEYS
     for key, value in result.items():
         assert value == 0, f'{key}: {value!r}'
 
 
 def test_memory_live_shape(netdata_metrics):
     result = get_memory_info(netdata_metrics)
-    assert set(result) == MEMORY_EVENT_KEYS
+    assert result.keys() == MEMORY_EVENT_KEYS
     for key, value in result.items():
         assert isinstance(value, (int, float)), f'{key}: {type(value).__name__}'
         assert value >= 0, f'{key}: {value!r}'
@@ -125,23 +127,23 @@ def test_memory_live_shape(netdata_metrics):
 
 
 def _expected_cpu_keys():
-    return {'cpu'} | {f'cpu{i}' for i in range(cpu_info()['core_count'])}
+    return frozenset({'cpu'} | {f'cpu{i}' for i in range(cpu_info()['core_count'])})
 
 
 def test_cpu_empty_dict_safe():
     result = get_cpu_stats({})
-    assert set(result) == _expected_cpu_keys()
+    assert result.keys() == _expected_cpu_keys()
     for core, sub in result.items():
-        assert set(sub) == {'usage', 'temp'}, f'{core}: {set(sub)!r}'
+        assert sub.keys() == CPU_PER_CORE_KEYS, f'{core}: {sub.keys()!r}'
         assert sub['usage'] == 0
         assert sub['temp'] is None
 
 
 def test_cpu_live_shape(netdata_metrics):
     result = get_cpu_stats(netdata_metrics)
-    assert set(result) == _expected_cpu_keys()
+    assert result.keys() == _expected_cpu_keys()
     for core, sub in result.items():
-        assert set(sub) == {'usage', 'temp'}
+        assert sub.keys() == CPU_PER_CORE_KEYS
         assert isinstance(sub['usage'], (int, float))
         assert 0 <= sub['usage'] <= 100, f'{core}: usage={sub["usage"]!r}'
         assert sub['temp'] is None or isinstance(sub['temp'], (int, float))
@@ -152,7 +154,7 @@ def test_cpu_live_shape(netdata_metrics):
 
 def test_disk_empty_inputs_safe():
     result = get_disk_stats({}, [], {})
-    assert set(result) == DISK_EVENT_KEYS
+    assert result.keys() == DISK_EVENT_KEYS
     for key, value in result.items():
         assert value == 0, f'{key}: {value!r}'
 
@@ -161,7 +163,7 @@ def test_disk_live_shape(netdata_metrics):
     disks = get_disk_names()
     disk_mapping = {entry.name: entry.identifier for entry in iterate_disks()}
     result = get_disk_stats(netdata_metrics, disks, disk_mapping)
-    assert set(result) == DISK_EVENT_KEYS
+    assert result.keys() == DISK_EVENT_KEYS
     for key, value in result.items():
         assert isinstance(value, (int, float)), f'{key}: {type(value).__name__}'
         assert value >= 0, f'{key}: {value!r}'
@@ -179,7 +181,7 @@ def test_interface_live_shape(netdata_metrics, interface_names):
     if not interface_names:
         pytest.skip('no network interfaces reported by interface.query')
     result = get_interface_stats(netdata_metrics, interface_names)
-    assert set(result) == set(interface_names)
+    assert result.keys() == frozenset(interface_names)
     for name, sub in result.items():
         assert sub['link_state'] in ('LINK_STATE_UP', 'LINK_STATE_DOWN'), \
             f'{name}: {sub["link_state"]!r}'
