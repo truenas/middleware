@@ -1,4 +1,6 @@
 import os
+import platform
+
 import pytest
 
 from middlewared.utils import pam
@@ -49,6 +51,6 @@ def test_map_module_exists(pam_module):
     if pam_module == 'pam_truenas.so':
         libpath = '/usr/lib/security'
     else:
-        libpath = '/usr/lib/x86_64-linux-gnu/security'
+        libpath = f'/usr/lib/{platform.machine()}-linux-gnu/security'
 
     assert os.path.exists(os.path.join(libpath, pam_module))
