@@ -6,30 +6,29 @@ from .context import Context
 
 
 def get_artifacts(ctx: Context) -> None:
-    if ctx.verbose:
-        if ctx.ha:
-            get_folder("/var/log", f"{ctx.artifacts}/log_nodea", "root", "testing", ctx.ip)
-            get_folder("/var/log", f"{ctx.artifacts}/log_nodeb", "root", "testing", ctx.ip2)
-            get_cmd_result(
-                "midclt call core.get_jobs | jq .",
-                f"{ctx.artifacts}/core.get_jobs_nodea.json",
-                ctx.ip,
-            )
-            get_cmd_result(
-                "midclt call core.get_jobs | jq .",
-                f"{ctx.artifacts}/core.get_jobs_nodeb.json",
-                ctx.ip2,
-            )
-            get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg_nodea.json", ctx.ip)
-            get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg_nodeb.json", ctx.ip2)
-        else:
-            get_folder("/var/log", f"{ctx.artifacts}/log", "root", "testing", ctx.ip)
-            get_cmd_result(
-                "midclt call core.get_jobs | jq .",
-                f"{ctx.artifacts}/core.get_jobs.json",
-                ctx.ip,
-            )
-            get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg.json", ctx.ip)
+    if ctx.ha:
+        get_folder("/var/log", f"{ctx.artifacts}/log_nodea", "root", "testing", ctx.ip)
+        get_folder("/var/log", f"{ctx.artifacts}/log_nodeb", "root", "testing", ctx.ip2)
+        get_cmd_result(
+            "midclt call core.get_jobs | jq .",
+            f"{ctx.artifacts}/core.get_jobs_nodea.json",
+            ctx.ip,
+        )
+        get_cmd_result(
+            "midclt call core.get_jobs | jq .",
+            f"{ctx.artifacts}/core.get_jobs_nodeb.json",
+            ctx.ip2,
+        )
+        get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg_nodea.json", ctx.ip)
+        get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg_nodeb.json", ctx.ip2)
+    else:
+        get_folder("/var/log", f"{ctx.artifacts}/log", "root", "testing", ctx.ip)
+        get_cmd_result(
+            "midclt call core.get_jobs | jq .",
+            f"{ctx.artifacts}/core.get_jobs.json",
+            ctx.ip,
+        )
+        get_cmd_result("dmesg", f"{ctx.artifacts}/dmesg.json", ctx.ip)
 
 
 def get_folder(folder: str, destination: str, username: str, passwrd: str | None, host: str) -> dict[str, bool | str]:
