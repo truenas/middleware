@@ -509,7 +509,7 @@ class AuditService(ConfigService):
         # Generate the initial truenas_verify file
         try:
             current_version = await self.middleware.call('system.version')
-            rc = await setup_truenas_verify(self.middleware, current_version)
+            rc = await self.middleware.run_in_thread(setup_truenas_verify, current_version)
             if rc:
                 self.logger.warning(
                     'Did not get clean result from truenas_verify initial setup. See %s',

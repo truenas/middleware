@@ -22,7 +22,7 @@ class LXCFSAttachmentDelegate(FSAttachmentDelegate):
         # We would just like to return here that a specific pool/root dataset is being used
         # by LXC, nothing special otherwise needs to be done here
         results: list[dict[str, str]] = []
-        query_ds = os.path.relpath(path, '/mnt')
+        query_ds = os.path.relpath(path, '/mnt')  # noqa: ASYNC240
         containers = await self.middleware.call2(self.s.container.query)
         assert isinstance(containers, list)
         for container in containers:

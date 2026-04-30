@@ -122,9 +122,13 @@ async def vm_flags(context: ServiceContext) -> VMFlags:
     if RE_VENDOR_INTEL.findall(cp.stdout.decode()):
         flags.intel_vmx = True
         unrestricted_guest_path = '/sys/module/kvm_intel/parameters/unrestricted_guest'
-        if os.path.exists(unrestricted_guest_path):
-            with open(unrestricted_guest_path, 'r') as f:
-                flags.unrestricted_guest = f.read().strip().lower() == 'y'
+
+        def read_unrestricted_guest() -> None:
+            if os.path.exists(unrestricted_guest_path):
+                with open(unrestricted_guest_path, 'r') as f:
+                    flags.unrestricted_guest = f.read().strip().lower() == 'y'
+
+        await context.middleware.run_in_thread(read_unrestricted_guest)
     elif RE_VENDOR_AMD.findall(cp.stdout.decode()):
         flags.amd_rvi = True
         cp = await run(['cpuid', '-l', '0x8000000A'], check=False)

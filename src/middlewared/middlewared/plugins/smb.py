@@ -1066,7 +1066,8 @@ class SharingSMBService(SharingService):
 
     @private
     async def legacy_afp_check(self, data, schema, verrors):
-        to_check = Path(data[share_field.PATH]).resolve(strict=False)
+        to_check = await self.middleware.run_in_thread(lambda: Path(data[share_field.PATH]).resolve(strict=False))
+
         legacy_afp = await self.query([
             (f"{share_field.OPTS}.{share_field.AFP}", "=", True),
             (share_field.ENABLED, "=", True),
@@ -1080,16 +1081,19 @@ class SharingSMBService(SharingService):
                 # Shares have matching AFP settings
                 continue
 
-            s = Path(share[share_field.PATH]).resolve(strict=not share[share_field.LOCKED])
-            if s.is_relative_to(to_check) or to_check.is_relative_to(s):
-                verrors.add(
-                    f"{schema}.afp",
-                    "Compatibility settings for legacy AFP shares (paths that once hosted "
-                    "AFP shares that have been converted to SMB shares) must be "
-                    "consistent with the legacy AFP compatibility settings of any existing SMB "
-                    f"share that exports the same paths. The new share [{data['name']}] conflicts "
-                    f"with share [{share['name']}] on path [{share['path']}]."
-                )
+            def resolve():
+                s = Path(share[share_field.PATH]).resolve(strict=not share[share_field.LOCKED])
+                if s.is_relative_to(to_check) or to_check.is_relative_to(s):
+                    verrors.add(
+                        f"{schema}.afp",
+                        "Compatibility settings for legacy AFP shares (paths that once hosted "
+                        "AFP shares that have been converted to SMB shares) must be "
+                        "consistent with the legacy AFP compatibility settings of any existing SMB "
+                        f"share that exports the same paths. The new share [{data['name']}] conflicts "
+                        f"with share [{share['name']}] on path [{share['path']}]."
+                    )
+
+            await self.middleware.run_in_thread(resolve)
 
     @private
     async def must_reload_globals(self, data):

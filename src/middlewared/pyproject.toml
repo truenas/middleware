@@ -48,12 +48,16 @@ select = [
     "E",
     # Pyflakes
     "F",
+    # flake8-async
+    "ASYNC",
     # flake8-tidy-imports
     "TID",
     # isort
     "I",
 ]
 ignore = [
+    # Async function definition with a `timeout` parameter
+    "ASYNC109",
     # Prefer absolute imports over relative imports from parent modules
     "TID252",
 ]

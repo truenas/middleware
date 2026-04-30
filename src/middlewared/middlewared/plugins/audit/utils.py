@@ -113,7 +113,7 @@ def parse_query_options(options: dict) -> dict:
     return out
 
 
-async def setup_truenas_verify(middleware, sysver: str) -> int:
+def setup_truenas_verify(sysver: str) -> int:
     """
     Called by audit setup to generate the initial truenas_verify
     file for an updated or initial TrueNAS version.
@@ -122,6 +122,6 @@ async def setup_truenas_verify(middleware, sysver: str) -> int:
         # Takes too much time on developer middleware restart
         return 0
 
-    verify_rc = await middleware.run_in_thread(mtree_verify.do_verify, ['init', sysver])
+    verify_rc = mtree_verify.do_verify(['init', sysver])
 
     return verify_rc
