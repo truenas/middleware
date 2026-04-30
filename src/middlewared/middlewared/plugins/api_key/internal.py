@@ -99,6 +99,7 @@ async def authenticate_impl(
 
     entry: ApiKeyEntry = await context.call2(context.s.api_key.get_instance, key_id)
 
+    # Call the authentication helper directly
     pam_resp, cred = await context.to_thread(
         login_ex_api_key_plain,
         context.middleware,
@@ -113,6 +114,7 @@ async def authenticate_impl(
     if pam_resp.code != PAMCode.PAM_SUCCESS or cred is None:
         return None
 
+    # Return user_info and key metadata (cred.user contains the authenticated user info)
     return (cred.user, {
         'id': entry.id,
         'name': entry.name,

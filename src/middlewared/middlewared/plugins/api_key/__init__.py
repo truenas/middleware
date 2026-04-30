@@ -155,8 +155,14 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
         key: str,
         origin: ConnectionOrigin,
     ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Wrapper around `auth.authenticate` for file upload endpoint."""
         return await authenticate_impl(self.context, app, key, origin)
 
     @private
     async def revoke(self, key_id: int, reason: str) -> None:
+        """
+        Revoke the specified API key in the DB, deactivate in the pam_tdb file, and
+        generate a middleware alert that it has been revoked. This is a private method
+        that is called when API key passed as plain-text over insecure transport.
+        """
         await revoke_impl(self.context, self._config.datastore, key_id, reason)

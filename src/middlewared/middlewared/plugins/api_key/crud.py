@@ -105,31 +105,41 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
             'revoked': False,
         })
         if user_identifier.isdigit():
+            # If we can't resolve the ID then the account was probably deleted
+            # and we didn't quite get to clean up yet.
             data['user_identifier'] = int(user_identifier)
             data['username'] = context['by_id'].get(data['user_identifier'])
         elif user_identifier == LEGACY_API_KEY_USERNAME:
+            # This may be magic string designating a migrated API key
             data['username'] = context['root_name']
         elif sid_is_valid(user_identifier):
             if (username := context['by_sid'].get(user_identifier)) is None:
                 resp = await self.middleware.call('idmap.convert_sids', [user_identifier])
                 if entry := resp['mapped'].get(user_identifier):
                     username = entry['name']
+                    # Feed SID we looked up back into our extend context
+                    # Because there may be multiple keys for same SID value
                     context['by_sid'][user_identifier] = username
 
             if username:
                 data['username'] = username
         else:
+            # Something wildly invalid got written, but we can't
+            # write a log message here (queried too frequently).
             data['username'] = None
             data['local'] = True
 
         if data['username'] is None:
+            # prevent keys we can't resolve from being written
             data['revoked'] = True
             data['revoked_reason'] = 'User does not exist'
 
         match expiry:
             case -1:
+                # key has been forcibly revoked
                 data['revoked'] = True
             case 0 | None:
+                # zero value indicates never expires
                 pass
             case _:
                 data['expires_at'] = datetime.fromtimestamp(expiry, UTC)
