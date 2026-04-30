@@ -1,7 +1,8 @@
 import os
 
-from middlewared.service import Service, private
 from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, copytree
+
+from middlewared.service import Service, private
 
 from .utils import get_netdata_state_path
 

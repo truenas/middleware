@@ -4,7 +4,6 @@ import shutil
 import stat
 
 import truenas_os
-
 from truenas_os_pyutils.io import atomic_write, safe_open
 from truenas_os_pyutils.truenas_shutil import (
     CopyTreeConfig,

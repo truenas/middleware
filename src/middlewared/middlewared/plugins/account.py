@@ -15,6 +15,7 @@ from threading import Lock
 
 from sqlalchemy.orm import relationship
 from truenas_os_pyutils.io import atomic_write
+from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, copytree
 from truenas_pypam import PAMCode
 import wbclient
 
@@ -78,7 +79,6 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, copytree
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.nss.nss_common import NssModule
