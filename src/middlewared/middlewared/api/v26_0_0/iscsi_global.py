@@ -35,7 +35,7 @@ class ISCSIGlobalEntry(BaseModel):
     systems and requires the system and network environment have Remote Direct Memory Access (RDMA)-capable hardware."""
     direct_config: bool | None
     """Whether configuration is written into the kernel directly by middlewared."""
-    mode: int = Field(ge=0, le=2)
+    mode: int = Field(ge=0, le=1)
     """Internal iSCSI operational mode."""
 
 
