@@ -215,6 +215,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
             "name": data.name,
             "user_identifier": user_identifier,
             "created_at": utc_now(),
+            "expires_at": data.expires_at,
             **auth_data,
         }
         entry = await self._create(ds_data)
