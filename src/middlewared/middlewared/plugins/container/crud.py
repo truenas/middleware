@@ -73,7 +73,7 @@ class ContainerModel(sa.Model):
     __tablename__ = 'container_container'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    uuid = sa.Column(sa.Text(), nullable=False)
+    uuid = sa.Column(sa.Text())
     name = sa.Column(sa.Text())
     description = sa.Column(sa.Text())
     autostart = sa.Column(sa.Boolean())
