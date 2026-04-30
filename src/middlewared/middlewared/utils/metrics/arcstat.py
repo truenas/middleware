@@ -1,6 +1,6 @@
 from types import MappingProxyType
 
-from truenas_pylibzfs.kstat import ArcStats, get_arcstats
+from truenas_pylibzfs import kstat
 
 # We are essentially
 # copying the same logic in the upstream `arc_summary.py`
@@ -57,7 +57,7 @@ def do_round(dividend: int, divisor: int, to_decimal_place: int = 2) -> float:
     return round((dividend / divisor), to_decimal_place)
 
 
-def calculate_arc_demand_stats_impl(st: ArcStats, intv: int) -> dict[str, int | float]:
+def calculate_arc_demand_stats_impl(st: kstat.ArcStats, intv: int) -> dict[str, int | float]:
     v: dict[str, int | float] = dict()
     v["dread"] = (
         do_round((st.demand_data_hits + st.demand_metadata_hits), intv)
@@ -87,7 +87,7 @@ def calculate_arc_demand_stats_impl(st: ArcStats, intv: int) -> dict[str, int | 
     return v
 
 
-def calculate_l2arc_stats_impl(st: ArcStats, intv: int) -> dict[str, int | float]:
+def calculate_l2arc_stats_impl(st: kstat.ArcStats, intv: int) -> dict[str, int | float]:
     v = {
         "l2hits": 0,
         "l2miss": 0,
@@ -110,7 +110,7 @@ def calculate_l2arc_stats_impl(st: ArcStats, intv: int) -> dict[str, int | float
     return v
 
 
-def calculate_arc_stats_impl(st: ArcStats, intv: int) -> dict[str, tuple[int | float, str]]:
+def calculate_arc_stats_impl(st: kstat.ArcStats, intv: int) -> dict[str, tuple[int | float, str]]:
     v: dict[str, int | float] = {
         "free": st.memory_free_bytes,
         "avail": st.memory_available_bytes,
@@ -123,4 +123,4 @@ def calculate_arc_stats_impl(st: ArcStats, intv: int) -> dict[str, tuple[int | f
 
 
 def get_arc_stats(intv: int = 1) -> dict[str, tuple[int | float, str]]:
-    return calculate_arc_stats_impl(get_arcstats(), intv)
+    return calculate_arc_stats_impl(kstat.get_arcstats(), intv)
