@@ -61,7 +61,7 @@ class ContainerStatus(BaseModel):
 class ContainerEntry(BaseModel):
     id: int
     """Container ID."""
-    uuid: UUIDv4String | None = None
+    uuid: UUIDv4String
     """Container UUID (for libvirt)."""
     name: NonEmptyString
     """Container name."""
@@ -126,6 +126,8 @@ class ContainerCreate(ContainerEntry):
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     default_network: Excluded = excluded_field()
+    uuid: UUIDv4String | None = None
+    """Container UUID (for libvirt). Auto-generated if not provided."""
     pool: str | None = None
     """Pool to use for this container. Leave it null to use container preferred pool instead."""
     image: "ContainerCreateImage"
