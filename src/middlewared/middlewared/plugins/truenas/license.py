@@ -13,6 +13,7 @@ from middlewared.api.current import (
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadResult,
 )
+from middlewared.plugins.system.product import SystemService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import Service, ValidationError, private
 
@@ -53,6 +54,8 @@ class TrueNASLicenseService(Service):
             os.remove(LEGACY_LICENSE_FILE)
 
         get_legacy_license_info.cache_clear()
+
+        SystemService.PRODUCT_TYPE = None
 
         self.middleware.call_sync("etc.generate", "rc")
 
