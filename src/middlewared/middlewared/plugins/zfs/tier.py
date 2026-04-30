@@ -27,37 +27,36 @@ from truenas_zfstierd_common import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ZfsTierEntry,
-    ZfsTierUpdateArgs,
-    ZfsTierUpdateResult,
-    ZfsTierRewriteJobCreateArgs,
-    ZfsTierRewriteJobCreateResult,
-    ZfsTierRewriteJobQueryArgs,
-    ZfsTierRewriteJobQueryResult,
-    ZfsTierRewriteJobStatusArgs,
-    ZfsTierRewriteJobStatusResult,
-    ZfsTierRewriteJobCancelArgs,
-    ZfsTierRewriteJobCancelResult,
-    ZfsTierRewriteJobRecoverArgs,
-    ZfsTierRewriteJobRecoverResult,
-    ZfsTierRewriteJobQueryEventSourceArgs,
-    ZfsTierRewriteJobQueryEventSourceEvent,
-    ZfsTierRewriteJobStatusEventSourceArgs,
-    ZfsTierRewriteJobStatusEventSourceEvent,
+    ZFSResourceQuery,
     ZfsTierDatasetSetTierArgs,
     ZfsTierDatasetSetTierResult,
+    ZfsTierEntry,
+    ZfsTierRewriteJobCancelArgs,
+    ZfsTierRewriteJobCancelResult,
+    ZfsTierRewriteJobCreateArgs,
+    ZfsTierRewriteJobCreateResult,
     ZfsTierRewriteJobFailuresArgs,
     ZfsTierRewriteJobFailuresResult,
-    ZFSResourceQuery,
+    ZfsTierRewriteJobQueryArgs,
+    ZfsTierRewriteJobQueryEventSourceArgs,
+    ZfsTierRewriteJobQueryEventSourceEvent,
+    ZfsTierRewriteJobQueryResult,
+    ZfsTierRewriteJobRecoverArgs,
+    ZfsTierRewriteJobRecoverResult,
+    ZfsTierRewriteJobStatusArgs,
+    ZfsTierRewriteJobStatusEventSourceArgs,
+    ZfsTierRewriteJobStatusEventSourceEvent,
+    ZfsTierRewriteJobStatusResult,
+    ZfsTierUpdateArgs,
+    ZfsTierUpdateResult,
 )
 from middlewared.event import TypedEventSource
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.tunable.utils import set_zfs_parameter, zfs_parameter_value
-from middlewared.service import CallError, ConfigServicePart, GenericConfigService, private, ValidationError
+from middlewared.service import CallError, ConfigServicePart, GenericConfigService, ValidationError, private
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-
 
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"

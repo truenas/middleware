@@ -15,8 +15,8 @@ from middlewared.api.base import (
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 
 from .common import QueryFilters, QueryOptions
-from .zfs_tier import TierInfo
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
+from .zfs_tier import TierInfo
 
 __all__ = [
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",

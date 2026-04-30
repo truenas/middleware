@@ -7,8 +7,8 @@ from truenas_zfstierd_common import RewriteJobStatus
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
-    AlertClassConfig,
     AlertClass,
+    AlertClassConfig,
     AlertLevel,
     NonDataclassAlertClass,
     OneShotAlertClass,

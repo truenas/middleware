@@ -19,7 +19,8 @@ from middlewared.api.base import (
 from middlewared.plugins.smb_.constants import LEGACY_SHARE_FIELDS
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.utils.lang import undefined
-from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, SearchProtocol, validate_smb_path_suffix
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, SMBUnixCharset, validate_smb_path_suffix
+
 from .common import QueryFilters, QueryOptions
 from .zfs_tier import TierInfo
 
