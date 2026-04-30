@@ -23,7 +23,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         if not docker_config.pool:
             return results
 
-        query_dataset = os.path.relpath(path, '/mnt')
+        query_dataset = os.path.relpath(path, '/mnt')  # noqa: ASYNC240
         if query_dataset in (docker_config.dataset, docker_config.pool) or query_dataset.startswith(
             f'{docker_config.dataset}/'
         ):

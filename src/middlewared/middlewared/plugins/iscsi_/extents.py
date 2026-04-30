@@ -611,14 +611,14 @@ class iSCSITargetExtentService(SharingService):
             return naa
 
     @api_method(iSCSITargetExtentDiskChoicesArgs, iSCSITargetExtentDiskChoicesResult)
-    async def disk_choices(self):
+    def disk_choices(self):
         """
         Return a dict of available zvols that can be used
         when creating an extent.
         """
         diskchoices = {}
 
-        for zvol in await self.call2(
+        for zvol in self.call_sync2(
             self.middleware.services.zfs.resource.unlocked_zvols_fast,
             [['attachment', '=', None]],
             {},
@@ -722,7 +722,7 @@ class iSCSITargetExtentService(SharingService):
         return result
 
     @private
-    async def logged_in_extent(self, iqn, lun):
+    def logged_in_extent(self, iqn, lun):
         """Return the device name (e.g. 13:0:0:0) of the logged in IQN/lun"""
         p = pathlib.Path('/sys/devices/platform')
         for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):

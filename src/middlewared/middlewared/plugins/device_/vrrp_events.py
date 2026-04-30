@@ -275,7 +275,7 @@ class VrrpFifoThread(Thread):
 
 
 async def _start_stop_vrrp_threads(middleware):
-    while not await middleware.call('system.ready'):
+    while not await middleware.call('system.ready'):  # noqa: ASYNC110
         await asyncio_sleep(0.2)
 
     licensed = await middleware.call('failover.licensed')

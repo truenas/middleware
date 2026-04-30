@@ -192,7 +192,7 @@ class PoolService(Service):
             'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
         ):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
-            if os.path.exists(encrypted_mountpoint):
+            if await self.middleware.run_in_thread(os.path.exists, encrypted_mountpoint):
                 try:
                     await self.middleware.call('filesystem.set_zfs_attributes', {
                         'path': encrypted_mountpoint,
