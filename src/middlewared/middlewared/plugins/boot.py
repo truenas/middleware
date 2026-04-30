@@ -83,7 +83,7 @@ class BootService(Service):
         return await self.get_disks_cache()
 
     @private
-    async def get_boot_type(self):
+    def get_boot_type(self):
         """
         Get the boot type of the boot pool.
 
