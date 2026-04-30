@@ -17,7 +17,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         if not k8s_config['pool']:
             return results
 
-        query_dataset = os.path.relpath(path, '/mnt')
+        query_dataset = os.path.relpath(path, '/mnt')  # noqa: ASYNC240
         if query_dataset in (k8s_config['dataset'], k8s_config['pool']) or query_dataset.startswith(
             f'{k8s_config["dataset"]}/'
         ):

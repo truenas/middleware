@@ -524,8 +524,7 @@ class PoolService(CRUDService):
             fsoptions['checksum'] = data['checksum'].lower()
 
         cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
-        if not os.path.isdir(cachefile_dir):
-            os.makedirs(cachefile_dir)
+        await self.middleware.run_in_thread(os.makedirs, cachefile_dir, exist_ok=True)
 
         pool_id = z_pool = encrypted_dataset_pk = None
         try:

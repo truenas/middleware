@@ -46,7 +46,7 @@ class ContainerService(Service):
                 )
             )
 
-        if not os.path.exists(main_dataset_mountpoint):
+        if not await self.middleware.run_in_thread(os.path.exists, main_dataset_mountpoint):
             await self.call2(self.s.zfs.resource.mount, main_dataset)
 
         for dataset in datasets:

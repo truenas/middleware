@@ -15,7 +15,7 @@ class LXCFSAttachmentDelegate(FSAttachmentDelegate):
         # We would just like to return here that a specific pool/root dataset is being used
         # by LXC, nothing special otherwise needs to be done here
         results = []
-        query_ds = os.path.relpath(path, '/mnt')
+        query_ds = os.path.relpath(path, '/mnt')  # noqa: ASYNC240
         for container in await self.middleware.call('container.query'):
             container_pool = container['dataset'].split('/')[0]
             if query_ds == container_pool or query_ds.startswith(container_dataset(container_pool)):
