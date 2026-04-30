@@ -170,7 +170,7 @@ def api_method[**P, T](
     decorated method. NOTE: this is using a traditional threading.local() object and not a ContextVar so the
     method must be a non-coroutine based method/function.
 
-    `removed_in` specifies major TrueNAS version (in the format vXX.YY) which removes this API method.
+    `removed_in` specifies major TrueNAS version (in the format vXX) which removes this API method.
     """
     if list(returns.model_fields.keys()) != ["result"]:
         raise TypeError("`returns` model must only have one field called `result`")
