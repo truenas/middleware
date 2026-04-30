@@ -5,15 +5,15 @@ from pydantic import Field
 from middlewared.api.base import (
     BaseModel,
     Excluded,
-    excluded_field,
     ForUpdateMetaclass,
     NonEmptyString,
+    excluded_field,
     query_result,
     single_argument_args,
     single_argument_result,
 )
-from .common import StorageTier, QueryFilters, QueryOptions
 
+from .common import QueryFilters, QueryOptions, StorageTier
 
 __all__ = [
     "ZfsTierEntry",

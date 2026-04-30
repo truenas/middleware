@@ -2,7 +2,6 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import AfterValidator, Field
 
-from .zfs_tier import TierInfo
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -13,6 +12,8 @@ from middlewared.api.base import (
     excluded_field,
     single_argument_args,
 )
+
+from .zfs_tier import TierInfo
 
 __all__ = [
     "NFSGetNfs3ClientsEntry",
