@@ -347,12 +347,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     def _create_api(self, version: str, method_factory: typing.Callable[[Middleware, str], Method]) -> API:
         methods = []
-        for method_name, method in self._get_methods():
-            if removed_in := getattr(method, "_removed_in", None):
-                if version >= removed_in:
-                    continue
+        for method_name, methodobj in self._get_methods():
+            method = method_factory(self, method_name)
 
-            methods.append(method_factory(self, method_name))
+            if removed_in := getattr(methodobj, "_removed_in", None):
+                if version >= removed_in:
+                    method.private = True
+
+            methods.append(method)
 
         events = []
 

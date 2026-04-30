@@ -21,6 +21,7 @@ class Method:
         self.middleware = middleware
         self.name = name
         self.serviceobj, self.methodobj = self.middleware.get_method(self.name)
+        self._private: bool | None = None
 
     async def accepts_model(self):
         """
@@ -36,7 +37,19 @@ class Method:
 
     @property
     def private(self):
+        if self._private is not None:
+            return self._private
+
         return getattr(self.methodobj, "_private", False) or self.serviceobj._config.private
+
+    @private.setter
+    def private(self, private: bool) -> None:
+        """
+        Override the private attribute of the method.
+        :param private: new private value
+        :return:
+        """
+        self._private = private
 
     async def call(self, app: "RpcWebSocketApp", id_: Any, params: list):
         """
