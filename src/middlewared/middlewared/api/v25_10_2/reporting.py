@@ -177,7 +177,7 @@ class ReportingRealtimeEventSourceArgs(BaseModel):
 class ReportingRealtimeEventSourceEvent(BaseModel):
     cpu: dict
     """CPU performance metrics for real-time monitoring."""
-    disls: "ReportingRealtimeEventSourceEventDisks"
+    disks: "ReportingRealtimeEventSourceEventDisks"
     """Disk performance metrics for real-time monitoring."""
     interfaces: dict
     """Network interface statistics for real-time monitoring."""
