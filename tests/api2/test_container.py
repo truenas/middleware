@@ -327,7 +327,14 @@ def test_capabilities(ubuntu_image, configuration, has):
 
         def normalize(output):
             # `groups=0(root)` vs `groups=`
-            return re.sub("groups=(.*)", "", output)
+            output = re.sub("groups=(.*)", "", output)
+            # The nsexec entry path deliberately sets PR_SET_NO_NEW_PRIVS so
+            # setuid binaries inside the rootfs can't gain caps the entered
+            # shell doesn't already hold; the container init does not. This
+            # test is about capability equality, not securebits, so mask
+            # the differing flag.
+            output = re.sub(r"no-new-privs=\d", "no-new-privs=X", output)
+            return output
 
         # Ensure that the process launched with `nsenter` has the same capabilities as container init process
         assert normalize(ssh(nsenter(c, "capsh --print"))) == normalize(s)
