@@ -54,22 +54,21 @@ def test_api_key_nonexistent_username():
 
 def test_api_key_create_with_expires_at_persists():
     expires_at = (datetime.now(UTC) + timedelta(days=1)).replace(microsecond=0)
-    key_info = call('api_key.create', {'name': 'Test Expiry Key', 'username': 'root', 'expires_at': expires_at})
-    try:
-        queried = call('api_key.query', [['id', '=', key_info['id']]], {'get': True})
+    name = 'Test Expiry Key'
+    with api_key(name=name, expires_at=expires_at):
+        queried = call('api_key.query', [['name', '=', name]], {'get': True})
         assert queried['expires_at'] is not None
         got = queried['expires_at']
         if isinstance(got, str):
             got = datetime.fromisoformat(got)
         assert int(got.timestamp()) == int(expires_at.timestamp())
-    finally:
-        call('api_key.delete', key_info['id'])
 
 
 def test_api_key_create_with_past_expires_at_fails():
     past = datetime.fromtimestamp(1, UTC)
     with pytest.raises(ValidationErrors) as ve:
-        call('api_key.create', {'name': 'Test Past Expiry', 'username': 'root', 'expires_at': past})
+        with api_key(name='Test Past Expiry', expires_at=past):
+            pass
 
     assert 'Expiration date is in the past' in ve.value.errors[0].errmsg
 
