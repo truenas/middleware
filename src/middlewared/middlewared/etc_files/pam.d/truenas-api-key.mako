@@ -1,16 +1,13 @@
 <%
-    from middlewared.utils.filter_list import filter_list
     from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
     from middlewared.utils.pam import STANDALONE_ACCOUNT, FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC
 
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
     truenas_admin_string = ''
-    legacy_users = filter_list(render_ctx['api_key.query'], [
-        ['user_identifier', '=', LEGACY_API_KEY_USERNAME]
-    ], {'select': ['username']})
-
-    if legacy_users:
-        truenas_admin_string = f'truenas_admin={legacy_users[0]["username"]}'
+    for key in render_ctx['api_key.query']:
+        if key.user_identifier == LEGACY_API_KEY_USERNAME:
+            truenas_admin_string = f'truenas_admin={key.username}'
+            break
 %>\
 # Pam configuration for API key authentication
 

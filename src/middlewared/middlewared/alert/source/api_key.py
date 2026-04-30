@@ -29,11 +29,11 @@ class ApiKeyRevokedAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         alerts: list[Alert[Any]] = []
-        for key in await self.middleware.call("api_key.query"):
-            if key["revoked"]:
+        for key in await self.call2(self.s.api_key.query):
+            if key.revoked:
                 alerts.append(Alert(ApiKeyRevokedAlert(
-                    name=key["name"],
-                    reason=key["revoked_reason"],
+                    name=key.name,
+                    reason=key.revoked_reason or '',
                 )))
 
         return alerts

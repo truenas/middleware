@@ -1048,7 +1048,7 @@ class AuthService(Service):
         """
         try:
             key_id = int(api_key.split('-')[0])
-            key_entry = await self.middleware.call('api_key.query', [['id', '=', key_id]])
+            key_entry = await self.call2(self.s.api_key.get_instance, key_id)
         except Exception:
             key_entry = None
 
@@ -1068,7 +1068,7 @@ class AuthService(Service):
 
         resp = await self.login_ex(app, {
             'mechanism': AuthMech.API_KEY_PLAIN,
-            'username': key_entry[0]['username'],
+            'username': key_entry.username,
             'api_key': api_key,
             'login_options': {'user_info': False, 'reconnect_token': False},
         })

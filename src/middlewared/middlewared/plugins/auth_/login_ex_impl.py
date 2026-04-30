@@ -215,9 +215,9 @@ def login_ex_api_key_plain(
     # audit entry in case of failure.
     try:
         key_id = int(auth_data['api_key'].split('-')[0])
-        key = middleware.call_sync(
-            'api_key.query', [['id', '=', key_id]],
-            {'get': True, 'select': ['id', 'name', 'expires_at', 'revoked']}
+        key = middleware.call_sync2(
+            middleware.services.api_key.get_instance, key_id,
+            {'select': ['id', 'name', 'expires_at', 'revoked']},
         )
     except Exception:
         key = None
@@ -226,14 +226,14 @@ def login_ex_api_key_plain(
         # Key may be expired or revoked. In both of these cases we won't
         # have a key in the user's keyring. There's no way to differentiate
         # at PAM level because both fail with ENOKEY.
-        if key['expires_at']:
+        if key.expires_at:
             resp = TrueNASAuthenticatorResponse(
                 stage=TrueNASAuthenticatorStage.AUTH,
                 code=PAMCode.PAM_CRED_EXPIRED,
                 reason='Api key is expired'
             )
 
-        elif key['revoked']:
+        elif key.revoked:
             resp = TrueNASAuthenticatorResponse(
                 stage=TrueNASAuthenticatorStage.AUTH,
                 code=PAMCode.PAM_AUTH_ERR,
@@ -243,14 +243,16 @@ def login_ex_api_key_plain(
         else:
             middleware.logger.warning('%s: unexpected PAM_AUTHINFO_UNAVAIL response '
                                       'for API key. Forcibly regenerating API keys.',
-                                      key['name'])
+                                      key.name)
             middleware.call_sync('etc.generate', 'pam')
 
     if resp.code == PAMCode.PAM_SUCCESS:
         if not app.origin.secure_transport:
             # Per NEP if plain API key auth occurs over insecure transport
             # the key should be automatically revoked.
-            middleware.call_sync('api_key.revoke', key_id, 'Attempt to use over an insecure transport')
+            middleware.call_sync2(
+                middleware.services.api_key.revoke, key_id, 'Attempt to use over an insecure transport',
+            )
             sleep(CURRENT_AAL.get_delay_interval())
 
             resp = TrueNASAuthenticatorResponse(
@@ -263,7 +265,9 @@ def login_ex_api_key_plain(
             # Now perform API access check
             user_info = middleware.call_sync('auth.authenticate_user', resp.user_info)
             if user_info:
-                cred = ApiKeySessionManagerCredentials(user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl)
+                cred = ApiKeySessionManagerCredentials(
+                    user_info, key.model_dump(), CURRENT_AAL.level, auth_ctx.pam_hdl,
+                )
             else:
                 auth_ctx.pam_hdl.end()
                 resp = TrueNASAuthenticatorResponse(
@@ -276,7 +280,10 @@ def login_ex_api_key_plain(
         middleware.log_audit_message_sync(app, 'AUTHENTICATION', {
             'credentials': {
                 'credentials': 'API_KEY',
-                'credentials_data': {'username': auth_data['username'], 'api_key': key if key else '<INVALID>'}
+                'credentials_data': {
+                    'username': auth_data['username'],
+                    'api_key': key.model_dump() if key else '<INVALID>',
+                },
             },
             'error': resp.reason,
         }, False)
@@ -497,12 +504,12 @@ def login_ex_scram(
                 # SCRAM authentication can in theory be either an API key or password
                 user_info = middleware.call_sync('auth.authenticate_user', resp.user_info)
                 if auth_ctx.pam_hdl.dbid:
-                    key = middleware.call_sync(
-                        'api_key.query', [['id', '=', auth_ctx.pam_hdl.dbid]],
-                        {'get': True, 'select': ['id', 'name']}
+                    key = middleware.call_sync2(
+                        middleware.services.api_key.get_instance, auth_ctx.pam_hdl.dbid,
+                        {'select': ['id', 'name']},
                     )
                     cred = ApiKeySessionManagerCredentials(
-                        user_info, key, CURRENT_AAL.level, auth_ctx.pam_hdl
+                        user_info, key.model_dump(), CURRENT_AAL.level, auth_ctx.pam_hdl,
                     )
                 else:
                     cred = UserSessionManagerCredentials(
