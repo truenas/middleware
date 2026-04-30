@@ -1,0 +1,19 @@
+#!/bin/sh
+# Runs in the very first phase of initramfs, before any host driver has
+# bound to the PCI devices. For every slot listed in the config, set the
+# driver_override to vfio-pci so the kernel attaches vfio-pci instead of
+# the host driver, then load vfio-pci to trigger binding.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+config="/etc/truenas_vfio_pci_ids"
+[ -s "$config" ] || exit 0
+
+while read -r dev; do
+    [ -n "$dev" ] || continue
+    echo vfio-pci > "/sys/bus/pci/devices/$dev/driver_override" 2>/dev/null
+done < "$config"
+modprobe -i vfio-pci

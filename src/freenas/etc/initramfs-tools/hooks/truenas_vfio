@@ -1,0 +1,21 @@
+#!/bin/sh
+# Bake the vfio modules and the PCI slot list into the initrd so init-top
+# can bind isolated devices to vfio-pci before any host driver attaches.
+# The slot list is written by middlewared to /data (which survives BE
+# upgrades via the installer's /data rsync).
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+config="/data/subsystems/initramfs/truenas_vfio_pci_ids"
+# Nothing to do unless there's at least one slot to isolate.
+[ -s "$config" ] || exit 0
+
+# Pulling vfio_pci pulls vfio + vfio_iommu_type1 in via depmod-resolved deps.
+manual_add_modules vfio_pci
+
+copy_file config "$config" /etc/truenas_vfio_pci_ids
