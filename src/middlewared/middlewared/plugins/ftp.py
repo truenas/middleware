@@ -165,7 +165,7 @@ class FTPService(SystemServiceService):
                 )
             else:
                 verrors.extend((await self.middleware.call2(
-                    self.middleware.services.certificate.cert_services_validation,
+                    self.s.certificate.cert_services_validation,
                     new["ssltls_certificate"], "ftp_update.ssltls_certificate", False,
                 )))
 

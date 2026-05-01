@@ -27,7 +27,7 @@ class WebUICryptoService(Service):
         Names (SANs).
         """
         return await self.middleware.call2(
-            self.middleware.services.certificate.get_domain_names, cert_id,
+            self.s.certificate.get_domain_names, cert_id,
         )
 
     @api_method(

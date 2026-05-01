@@ -278,7 +278,7 @@ class DirectoryServices(ConfigService):
                 pass
             case DSCredType.LDAP_MTLS:
                 cert_id = self.middleware.call_sync2(
-                    self.middleware.services.certificate.query,
+                    self.s.certificate.query,
                     [['name', '=', data['credential']['client_certificate']]],
                     QueryOptions(get=True),
                 ).id

@@ -162,7 +162,7 @@ class SystemGeneralService(ConfigService):
         else:
             verrors.extend(
                 await self.middleware.call2(
-                    self.middleware.services.certificate.cert_services_validation,
+                    self.s.certificate.cert_services_validation,
                     ui_certificate, 'ui_certificate', False,
                 )
             )

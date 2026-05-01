@@ -67,11 +67,11 @@ class IPAJoinMixin:
         if job:
             job.set_progress(description='Removing IPA certificate.')
         if (ipa_cert := self.middleware.call_sync2(
-            self.middleware.services.certificate.query,
+            self.s.certificate.query,
             [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
         )):
             delete_job = self.middleware.call_sync2(
-                self.middleware.services.certificate.delete, ipa_cert[0].id,
+                self.s.certificate.delete, ipa_cert[0].id,
             )
             delete_job.wait_sync(raise_error=True)
 
@@ -515,7 +515,7 @@ class IPAJoinMixin:
                 )
         else:
             cert_job = self.middleware.call_sync2(
-                self.middleware.services.certificate.create,
+                self.s.certificate.create,
                 {
                     'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
                     'certificate': resp['cacert'],
