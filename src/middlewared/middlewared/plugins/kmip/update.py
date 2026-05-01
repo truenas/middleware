@@ -80,20 +80,20 @@ class KMIPService(ConfigService):
 
         if new['enabled']:
             verrors.extend((await self.middleware.call2(
-                self.middleware.services.certificate.cert_services_validation,
+                self.s.certificate.cert_services_validation,
                 new['certificate'], 'kmip_update.certificate', False,
             )))
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
         ca_list = await self.middleware.call2(
-            self.middleware.services.certificate.query,
+            self.s.certificate.query,
             [['id', '=', new['certificate_authority']]],
         )
         if ca_list and not verrors:
             ca = ca_list[0]
             cert_entry = await self.middleware.call2(
-                self.middleware.services.certificate.get_instance, new['certificate'],
+                self.s.certificate.get_instance, new['certificate'],
             )
             cert_pem = cert_entry.certificate.value if cert_entry.certificate is not None else ''
             ca_pem = ca.certificate.value if ca.certificate is not None else ''

@@ -100,7 +100,7 @@ class CertificateChecksAlertSource(AlertSource):
 
         # system certs
         certs: list[CertificateEntry] = await self.middleware.call2(
-            self.middleware.services.certificate.query, [['certificate', '!=', None]],
+            self.s.certificate.query, [['certificate', '!=', None]],
         )
 
         for cert in certs:

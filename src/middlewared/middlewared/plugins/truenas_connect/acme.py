@@ -121,7 +121,7 @@ class TNCACMEService(Service):
             return False, None
 
         certificate = self.middleware.call_sync2(
-            self.middleware.services.certificate.get_instance, config['certificate'],
+            self.s.certificate.get_instance, config['certificate'],
         )
         try:
             cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
@@ -211,7 +211,7 @@ class TNCACMEService(Service):
             return
 
         certificate = await self.middleware.call2(
-            self.middleware.services.certificate.get_instance, tnc_config['certificate'],
+            self.s.certificate.get_instance, tnc_config['certificate'],
         )
         acme_config = await self.middleware.call('tn_connect.acme.config')
         if acme_config['error']:

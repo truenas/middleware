@@ -784,7 +784,7 @@ class FailoverEventsService(Service):
 
         logger.info('Initializing task to renew certs if necessary')
         self.middleware.create_task(
-            self.middleware.call2(self.middleware.services.certificate.renew_certs),
+            self.middleware.call2(self.s.certificate.renew_certs),
         )
         logger.info('Done initializing task to renew certs if necessary')
 
