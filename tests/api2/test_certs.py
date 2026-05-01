@@ -8,40 +8,42 @@ from truenas_api_client import ValidationErrors
 
 
 def test_creating_csr():
-    with certificate_signing_request('csr_test') as csr:
-        assert csr['cert_type_CSR'] is True, csr
+    with certificate_signing_request("csr_test") as csr:
+        assert csr["cert_type_CSR"] is True, csr
 
 
 def test_created_certs_exist_on_filesystem():
-    with certificate_signing_request('csr_test'):
+    with certificate_signing_request("csr_test"):
         assert get_cert_current_files() == get_cert_expected_files()
 
 
 def test_deleted_certs_dont_exist_on_filesystem():
-    with certificate_signing_request('csr_test2'):
+    with certificate_signing_request("csr_test2"):
         pass
     assert get_cert_current_files() == get_cert_expected_files()
 
 
 def get_cert_expected_files():
     expected_files = set()
-    for cert in call('certificate.query'):
-        if cert['chain_list']:
-            expected_files.add(cert['certificate_path'])
-        if cert['privatekey']:
-            expected_files.add(cert['privatekey_path'])
-        if cert['cert_type_CSR']:
-            expected_files.add(cert['csr_path'])
+    for cert in call("certificate.query"):
+        if cert["chain_list"]:
+            expected_files.add(cert["certificate_path"])
+        if cert["privatekey"]:
+            expected_files.add(cert["privatekey_path"])
+        if cert["cert_type_CSR"]:
+            expected_files.add(cert["csr_path"])
     return expected_files
 
 
 def get_cert_current_files():
-    return {f['path'] for f in call('filesystem.listdir', '/etc/certificates')}
+    return {f["path"] for f in call("filesystem.listdir", "/etc/certificates")}
 
 
-@pytest.mark.parametrize('certificate,private_key,should_work', [
-    (
-        textwrap.dedent('''\
+@pytest.mark.parametrize(
+    "certificate,private_key,should_work",
+    [
+        (
+            textwrap.dedent("""\
             -----BEGIN CERTIFICATE-----
             MIIEDTCCAvWgAwIBAgIEAKWUWTANBgkqhkiG9w0BAQsFADBVMQswCQYDVQQGEwJV
             UzEMMAoGA1UECAwDdXNhMRMwEQYDVQQHDApjYWxpZm9ybmlhMQswCQYDVQQKDAJs
@@ -66,8 +68,8 @@ def get_cert_current_files():
             uLEje++rBbfIX9VPCRS/c3gYAOHu66LYI3toTomY8U3YYiQk8bC3Rp9uAjmgI3br
             4DHLwRTEUbOL8CdNcGb1qvO8xBSRzjMIZM8QJHSyYNcM
             -----END CERTIFICATE-----
-        '''),
-        textwrap.dedent('''\
+        """),
+            textwrap.dedent("""\
             -----BEGIN PRIVATE KEY-----
             MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCtvPEA2x3/jp0r
             iSdgb7TqB9uAobzttYbW9E0+WLqf3sLJJ4F4Iq0AI1YYMtOOwcjmvC52eSaqxoGc
@@ -96,11 +98,11 @@ def get_cert_current_files():
             wNpy8J/4ldluyidX61N0dMS+NL4l4TPjTvOY22KzjwfnBoqzg+93Mt//M4HfR/ka
             3EWl5VmzbuEeytrcH3uHAUpkKg==
             -----END PRIVATE KEY-----
-        '''),
-        True,
-    ),
-    (
-        textwrap.dedent('''\
+        """),
+            True,
+        ),
+        (
+            textwrap.dedent("""\
            -----BEGIN CERTIFICATE-----
            MIIEDTCCAvWgAwIBAgIEAKWUWTANBgkqhkiG9w0BAQsFADBVMQswCQYDVQQGEwJV
            UzEMMAoGA1UECAwDdXNhMRMwEQYDVQQHDApjYWxpZm9ybmlhMQswCQYDVQQKDAJs
@@ -125,8 +127,8 @@ def get_cert_current_files():
            uLEje++rBbfIX9VPCRS/c3gYAOHu66LYI3toTomY8U3YYiQk8bC3Rp9uAjmgI3br
            4DHLwRTEUbOL8CdNcGb1qvO8xBSRzjMIZM8QJHSyYNcM
            -----END CERTIFICATE-----
-        '''),
-        textwrap.dedent('''\
+        """),
+            textwrap.dedent("""\
             -----BEGIN PRIVATE KEY-----
             MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDVMPccUqq6jd8h
             h0ybrwRkvK+pvOJze00IK7F6A8RRyCwDL2Yc0GpWR5ecY+jBiZ1n+TfKfaybdKR0
@@ -155,11 +157,11 @@ def get_cert_current_files():
             Hnm0S8e25py1Lj+bk1tH0ku1I8qcAtihYBtSwPGj+66Qyr8KOlxZP2Scvcqu+zBc
             cyhsrrlRc3Gky9L5gtdxdeo=
             -----END PRIVATE KEY-----
-        '''),
-        False,
-    ),
-    (
-        textwrap.dedent('''\
+        """),
+            False,
+        ),
+        (
+            textwrap.dedent("""\
            -----BEGIN CERTIFICATE-----
            ntnv5rxGqdYHEDPo
            j8oo1HQv8vqhDcKUJOKH5j5cWO+W75CpAHuMfgxKJ9WdxPSNpKZoOKIMd2hwd4ng
@@ -167,8 +169,8 @@ def get_cert_current_files():
            uLEje++rBbfIX9VPCRS/c3gYAOHu66LYI3toTomY8U3YYiQk8bC3Rp9uAjmgI3br
            4DHLwRTEUbOL8CdNcGb1qvO8xBSRzjMIZM8QJHSyYNcM
            -----END CERTIFICATE-----
-        '''),
-        textwrap.dedent('''\
+        """),
+            textwrap.dedent("""\
             -----BEGIN PRIVATE KEY-----
             MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDVMPccUqq6jd8h
             h0ybrwRkvK+pvOJze00IK7F6A8RRyCwDL2Yc0GpWR5ecY+jBiZ1n+TfKfaybdKR0
@@ -197,23 +199,25 @@ def get_cert_current_files():
             Hnm0S8e25py1Lj+bk1tH0ku1I8qcAtihYBtSwPGj+66Qyr8KOlxZP2Scvcqu+zBc
             cyhsrrlRc3Gky9L5gtdxdeo=
             -----END PRIVATE KEY-----
-        '''),
-        False,
-    )
-], ids=['valid_cert', 'invalid_cert', 'invalid_cert'])
+        """),
+            False,
+        ),
+    ],
+    ids=["valid_cert", "invalid_cert", "invalid_cert"],
+)
 def test_importing_certificate_validation(certificate, private_key, should_work):
     payload = {
-        'name': 'test-cert',
-        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-        'certificate': certificate,
-        'privatekey': private_key,
+        "name": "test-cert",
+        "create_type": "CERTIFICATE_CREATE_IMPORTED",
+        "certificate": certificate,
+        "privatekey": private_key,
     }
     if should_work:
-        cert = call('certificate.create', payload, job=True)
+        cert = call("certificate.create", payload, job=True)
         try:
-            assert cert['parsed'] is True, cert
+            assert cert["parsed"] is True, cert
         finally:
-            call('certificate.delete', cert['id'], job=True)
+            call("certificate.delete", cert["id"], job=True)
     else:
         with pytest.raises(ValidationErrors):
-            call('certificate.create', payload, job=True)
+            call("certificate.create", payload, job=True)
