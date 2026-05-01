@@ -105,6 +105,7 @@ from middlewared.plugins.alert.service import AlertServiceService
 from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
+from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
@@ -219,6 +220,7 @@ class ServiceContainer(BaseServiceContainer):
         self.api_key = ApiKeyService(middleware)
         self.app = AppService(middleware)
         self.catalog = CatalogService(middleware)
+        self.certificate = CertificateService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.docker = DockerService(middleware)
