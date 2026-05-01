@@ -474,6 +474,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         Delete Rsync Task of `id`.
         """
         res = await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        for klass in ('RsyncSuccess', 'RsyncFailed'):
+            await self.middleware.call('alert.oneshot_delete', klass, id_)
         await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
         return res
 
