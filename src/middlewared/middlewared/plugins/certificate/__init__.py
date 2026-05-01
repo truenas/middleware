@@ -23,6 +23,7 @@ from .attachment_delegate import (
     register_attachment_delegate,
 )
 from .crud import CertificateServicePart
+from .dhparam import dhparam_setup
 
 if TYPE_CHECKING:
     from middlewared.common.attachment.certificate import CertificateAttachmentDelegate
@@ -89,6 +90,11 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         from the system even if some error occurred while revoking the certificate with the ACME Server.
         """
         return self._svc_part.do_delete(job, id_, force)
+
+    @private
+    @job()
+    def dhparam_setup(self, job: Job) -> None:
+        dhparam_setup()
 
     @private
     async def get_attachments(self, cert_id: int) -> list[str | None]:
