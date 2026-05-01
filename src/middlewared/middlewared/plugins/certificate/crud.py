@@ -22,6 +22,7 @@ from .create_handlers import (
     create_imported_certificate,
     create_imported_csr,
 )
+from .cert_extensions import validate_extensions
 from .query_utils import normalize_cert_attrs
 
 if TYPE_CHECKING:
@@ -233,8 +234,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
                     'RSA-based keys require an entry in this field.',
                 )
 
-            ext_errors: ValidationErrors = await self.middleware.call(
-                'cryptokey.validate_extensions',
+            ext_errors = validate_extensions(
                 data.cert_extensions.model_dump(),
                 schema,
             )
