@@ -16,6 +16,7 @@ from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 from middlewared.utils.lang import undefined
 import middlewared.sqlalchemy as sa
 
+from .attachment_delegate import check_cert_deps
 from .create_handlers import (
     create_acme_certificate,
     create_csr,
@@ -147,8 +148,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
 
     def do_delete(self, job: Job, id_: int, force: bool) -> bool:
         certificate = self.get_instance__sync(id_)
-        # FIXME: Port this properly
-        self.middleware.call_sync('certificate.check_cert_deps', id_)
+        self.run_coroutine(check_cert_deps(id_))
 
         if certificate.acme and not certificate.expired:
             # `certificate.certificate` is a LongStringWrapper here; revoke_certificate
