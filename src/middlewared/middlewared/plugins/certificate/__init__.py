@@ -4,12 +4,20 @@ from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    CertificateAcmeServerChoicesArgs,
+    CertificateAcmeServerChoicesResult,
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
     CertificateCreate,
     CertificateCreateArgs,
     CertificateCreateResult,
     CertificateDeleteArgs,
     CertificateDeleteResult,
+    CertificateEcCurveChoicesArgs,
+    CertificateEcCurveChoicesResult,
     CertificateEntry,
+    CertificateExtendedKeyUsageChoicesArgs,
+    CertificateExtendedKeyUsageChoicesResult,
     CertificateUpdate,
     CertificateUpdateArgs,
     CertificateUpdateResult,
@@ -26,6 +34,13 @@ from .attachment_delegate import (
 from .crud import CertificateServicePart
 from .default_cert_setup import setup_self_signed_cert_for_ui
 from .dhparam import dhparam_setup
+from .info import (
+    acme_server_choices,
+    country_choices,
+    ec_curve_choices,
+    extended_key_usage_choices,
+    get_domain_names,
+)
 from .renew_certs import renew_certs
 from .service_checks import cert_services_validation
 from .utils import DEFAULT_CERT_NAME
@@ -96,6 +111,52 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         """
         return self._svc_part.do_delete(job, id_, force)
 
+    @api_method(
+        CertificateAcmeServerChoicesArgs,
+        CertificateAcmeServerChoicesResult,
+        roles=['CERTIFICATE_READ'],
+        check_annotations=True,
+    )
+    async def acme_server_choices(self) -> dict[str, str]:
+        """
+        Dictionary of popular ACME Servers with their directory URI
+        endpoints which we display automatically in the UI.
+        """
+        return acme_server_choices()
+
+    @api_method(
+        CertificateCountryChoicesArgs,
+        CertificateCountryChoicesResult,
+        roles=['CERTIFICATE_READ'],
+        check_annotations=True,
+    )
+    def country_choices(self) -> dict[str, str]:
+        """Returns country choices for creating a certificate/csr."""
+        return country_choices()
+
+    @api_method(
+        CertificateEcCurveChoicesArgs,
+        CertificateEcCurveChoicesResult,
+        roles=['CERTIFICATE_READ'],
+        check_annotations=True,
+    )
+    async def ec_curve_choices(self) -> dict[str, str]:
+        """Dictionary of supported EC curves."""
+        return ec_curve_choices()
+
+    @api_method(
+        CertificateExtendedKeyUsageChoicesArgs,
+        CertificateExtendedKeyUsageChoicesResult,
+        roles=['CERTIFICATE_READ'],
+        check_annotations=True,
+    )
+    async def extended_key_usage_choices(self) -> dict[str, str]:
+        """
+        Dictionary of names that can be used in the
+        ExtendedKeyUsage attribute of a certificate request.
+        """
+        return extended_key_usage_choices()
+
     @private
     async def cert_services_validation(
         self, id_: int, schema_name: str, raise_verrors: bool = True,
@@ -114,6 +175,10 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @private
     async def get_attachments(self, cert_id: int) -> list[str | None]:
         return await get_attachments(cert_id)
+
+    @private
+    async def get_domain_names(self, cert_id: int) -> list[str]:
+        return await get_domain_names(self.context, cert_id)
 
     @private
     async def in_use_attachments(self, cert_id: int) -> list[CertificateAttachmentDelegate]:
