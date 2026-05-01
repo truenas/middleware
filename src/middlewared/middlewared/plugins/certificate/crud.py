@@ -151,6 +151,10 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
         self.middleware.call_sync('certificate.check_cert_deps', id_)
 
         if certificate.acme and not certificate.expired:
+            # `certificate.certificate` is a LongStringWrapper here; revoke_certificate
+            # takes a plain str. ACME-issued certs always have the cert PEM populated,
+            # but guard against None defensively.
+            cert_pem = certificate.certificate.value if certificate.certificate else ''
             try:
                 self.call_sync2(
                     self.s.acme.protocol.revoke_certificate,
@@ -158,7 +162,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
                         self.s.acme.protocol.get_acme_client_and_key_payload,
                         certificate.acme['directory'], True,
                     ),
-                    certificate.certificate,
+                    cert_pem,
                 )
             except CallError:
                 if not force:
