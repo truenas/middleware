@@ -25,7 +25,7 @@ def issue_certificate(
     context.middleware.call_sync('network.general.will_perform_activity', 'acme')
     verrors = ValidationErrors()
 
-    domains: list[Any] = context.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
+    domains: list[Any] = context.call_sync2(context.s.certificate.get_domain_names, csr_data['id'])
     dns_authenticator_ids = [
         o.id for o in context.call_sync2(context.s.acme.dns.authenticator.query)
     ]

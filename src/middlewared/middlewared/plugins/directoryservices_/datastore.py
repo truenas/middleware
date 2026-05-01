@@ -276,9 +276,11 @@ class DirectoryServices(ConfigService):
             case DSCredType.LDAP_ANONYMOUS:
                 pass
             case DSCredType.LDAP_MTLS:
-                cert_id = self.middleware.call_sync('certificate.query', [
-                    ['name', '=', data['credential']['client_certificate']]
-                ], {'get': True})['id']
+                cert_id = self.middleware.call_sync2(
+                    self.middleware.services.certificate.query,
+                    [['name', '=', data['credential']['client_certificate']]],
+                    {'get': True},
+                ).id
                 datastore_cred['cred_ldap_mtls_cert'] = cert_id
             case _:
                 raise ValueError(f'{data["credential"]["credential_type"]}: unhandled credential type')

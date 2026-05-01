@@ -66,10 +66,13 @@ class IPAJoinMixin:
 
         if job:
             job.set_progress(description='Removing IPA certificate.')
-        if (ipa_cert := self.middleware.call_sync('certificate.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
-        ])):
-            delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
+        if (ipa_cert := self.middleware.call_sync2(
+            self.middleware.services.certificate.query,
+            [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
+        )):
+            delete_job = self.middleware.call_sync2(
+                self.middleware.services.certificate.delete, ipa_cert[0].id,
+            )
             delete_job.wait_sync(raise_error=True)
 
     def _ipa_cleanup(self, job: Job, ds_config: dict):
@@ -511,12 +514,15 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
-            cert_job = self.middleware.call_sync('certificate.create', {
-                'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
-                'certificate': resp['cacert'],
-                'add_to_trusted_store': True,
-                'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-            })
+            cert_job = self.middleware.call_sync2(
+                self.middleware.services.certificate.create,
+                {
+                    'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
+                    'certificate': resp['cacert'],
+                    'add_to_trusted_store': True,
+                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                },
+            )
             cert_job.wait_sync(raise_error=True)
 
         # We've joined API and have a proper host principal. Time to destroy admin keytab.

@@ -120,9 +120,12 @@ class TNCACMEService(Service):
             logger.debug('No TNC certificate configured, skipping renewal check')
             return False, None
 
-        certificate = self.middleware.call_sync('certificate.get_instance', config['certificate'])
+        certificate = self.middleware.call_sync2(
+            self.middleware.services.certificate.get_instance, config['certificate'],
+        )
         try:
-            cert_id = get_cert_id(certificate['certificate'])
+            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
+            cert_id = get_cert_id(cert_pem)
         except Exception:
             logger.error('Failed to parse TNC certificate to get its ID', exc_info=True)
             # This should not happen, but if it does
@@ -207,7 +210,9 @@ class TNCACMEService(Service):
             logger.debug('No TNC certificate configured, skipping revocation')
             return
 
-        certificate = await self.middleware.call('certificate.get_instance', tnc_config['certificate'])
+        certificate = await self.middleware.call2(
+            self.middleware.services.certificate.get_instance, tnc_config['certificate'],
+        )
         acme_config = await self.middleware.call('tn_connect.acme.config')
         if acme_config['error']:
             self.logger.error(
@@ -216,8 +221,9 @@ class TNCACMEService(Service):
             return
 
         try:
+            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
             await self.call2(
-                self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], certificate['certificate'],
+                self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], cert_pem,
             )
         except CallError:
             logger.error('Failed to revoke TNC certificate', exc_info=True)

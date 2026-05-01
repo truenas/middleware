@@ -23,8 +23,8 @@ async def redeploy_cert_attachments(cert_id: int) -> None:
 
 async def check_cert_deps(cert_id: int) -> None:
     if deps := await get_attachments(cert_id):
-        deps_str = ''
+        deps_str = ""
         for i, svc in enumerate(deps):
-            deps_str += f'{i+1}) {svc}\n'
+            deps_str += f"{i + 1}) {svc}\n"
 
-        raise CallError(f'Certificate is being used by following service(s):\n{deps_str}')
+        raise CallError(f"Certificate is being used by following service(s):\n{deps_str}")

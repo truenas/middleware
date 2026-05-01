@@ -4,12 +4,18 @@
     tls_options = []
     if ftp['tls']:
         try:
-            middleware.call_sync('certificate.cert_services_validation', ftp['ssltls_certificate'], 'ftp.ftp_ssltls_certificate_id')
+            middleware.call_sync2(
+                middleware.services.certificate.cert_services_validation,
+                ftp['ssltls_certificate'], 'ftp.ftp_ssltls_certificate_id',
+            )
         except Exception:
             # certificate is not valid
             pass
         else:
-            cert = middleware.call_sync('certificate.query', [['id', '=', ftp['ssltls_certificate']]], {'get': True})
+            cert = middleware.call_sync2(
+                middleware.services.certificate.query,
+                [['id', '=', ftp['ssltls_certificate']]], {'get': True},
+            )
 
             # Generate TLS options
             for k, v in [
@@ -39,15 +45,15 @@ TLSProtocol TLSv1.2 TLSv1.3
 % if tls_options:
 TLSOptions ${' '.join(tls_options)}
 % endif
-% if cert['key_type'] == 'EC':
-TLSECCertificateFile "${cert['certificate_path']}"
-TLSECCertificateKeyFile "${cert['privatekey_path']}"
+% if cert.key_type == 'EC':
+TLSECCertificateFile "${cert.certificate_path}"
+TLSECCertificateKeyFile "${cert.privatekey_path}"
 % else:
-TLSRSACertificateFile "${cert['certificate_path']}"
-TLSRSACertificateKeyFile "${cert['privatekey_path']}"
+TLSRSACertificateFile "${cert.certificate_path}"
+TLSRSACertificateKeyFile "${cert.privatekey_path}"
 % endif
-% if cert['chain']:
-TLSCertificateChainFile "${cert['certificate_path']}"
+% if cert.chain:
+TLSCertificateChainFile "${cert.certificate_path}"
 % endif
 TLSVerifyClient off
 TLSRequired ${ftp['tls_policy']}

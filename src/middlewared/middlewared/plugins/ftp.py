@@ -164,9 +164,9 @@ class FTPService(SystemServiceService):
                     "Please provide a valid certificate id when TLS is enabled"
                 )
             else:
-                verrors.extend((await self.middleware.call(
-                    "certificate.cert_services_validation", new["ssltls_certificate"],
-                    "ftp_update.ssltls_certificate", False
+                verrors.extend((await self.middleware.call2(
+                    self.middleware.services.certificate.cert_services_validation,
+                    new["ssltls_certificate"], "ftp_update.ssltls_certificate", False,
                 )))
 
         if new["masqaddress"]:

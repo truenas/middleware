@@ -259,7 +259,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         # We will not make this fatal in case user had it configured with some other plugin
         # before we had added validation to prevent users from doing that
         logger.debug('Deleting TNC certificate with id %d', cert_id)
-        delete_job = await self.middleware.call('certificate.delete', cert_id, True)
+        delete_job = await self.middleware.call2(
+            self.middleware.services.certificate.delete, cert_id, True,
+        )
         await delete_job.wait()
         if delete_job.error:
             logger.error('Failed to delete TNC certificate: %s', delete_job.error)
