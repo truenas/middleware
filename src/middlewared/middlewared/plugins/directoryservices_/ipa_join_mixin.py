@@ -493,11 +493,16 @@ class IPAJoinMixin:
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], compressed)
 
         # update our cacerts with IPA domain one:
-        existing_cacert = self.middleware.call_sync('certificate.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
-        ])
+        existing_cacert = self.middleware.call_sync2(
+            self.s.certificate.query,
+            [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
+        )
         if existing_cacert:
-            if existing_cacert[0]['certificate'] != resp['cacert']:
+            stored_cert = (
+                existing_cacert[0].certificate.value
+                if existing_cacert[0].certificate is not None else None
+            )
+            if stored_cert != resp['cacert']:
                 # We'll continue to try joining the IPA domain and hope for the best.
                 # It's technically possible that we will still be able to validate
                 # the cert / have working SSL.
