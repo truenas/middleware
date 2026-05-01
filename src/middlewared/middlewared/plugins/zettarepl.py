@@ -14,9 +14,9 @@ import socket
 import threading
 import time
 import types
+from zoneinfo import ZoneInfo
 
 import paramiko.ssh_exception
-import pytz
 from truenas_api_client import Client, ClientException
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
@@ -257,7 +257,7 @@ class ZettareplProcess:
                 if "max_parallel_replication_tasks" in args:
                     self.zettarepl.max_parallel_replication_tasks = args["max_parallel_replication_tasks"]
                 if "timezone" in args:
-                    self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args["timezone"])
+                    self.zettarepl.scheduler.tz_clock.timezone = ZoneInfo(args["timezone"])
             if command == "tasks":
                 definition = Definition.from_data(args, raise_on_error=False)
                 self.observer_queue.put(DefinitionErrors(definition.errors))
