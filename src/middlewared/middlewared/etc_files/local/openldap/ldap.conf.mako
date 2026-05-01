@@ -1,4 +1,5 @@
 <%
+    from middlewared.api.current import QueryOptions
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
@@ -44,7 +45,7 @@
     if credential['credential_type'] == DSCredType.LDAP_MTLS:
         cert = middleware.call_sync2(
             middleware.services.certificate.query,
-            [['name', '=', credential['client_certificate']]], {'get': True},
+            [['name', '=', credential['client_certificate']]], QueryOptions(get=True),
         )
         tls_certfile = cert.certificate_path
         tls_keyfile = cert.privatekey_path

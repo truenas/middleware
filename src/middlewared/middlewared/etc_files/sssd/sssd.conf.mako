@@ -1,6 +1,7 @@
 <%
     import os
 
+    from middlewared.api.current import QueryOptions
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices import ldap_constants as constants
     from middlewared.utils.directoryservices import ldap_utils as utils
@@ -21,7 +22,7 @@
                 cert = middleware.call_sync2(
                     middleware.services.certificate.query,
                     [('name', '=', ds_config['credential']['client_certificate'])],
-                    {'get': True},
+                    QueryOptions(get=True),
                 )
             except Exception:
                 middleware.logger.error('Failed to retrieve client certificate', exc_info=True)

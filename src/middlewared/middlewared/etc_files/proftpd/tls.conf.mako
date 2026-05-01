@@ -1,4 +1,6 @@
 <%
+    from middlewared.api.current import QueryOptions
+
     ftp = render_ctx['ftp.config']
     cert = None
     tls_options = []
@@ -14,7 +16,7 @@
         else:
             cert = middleware.call_sync2(
                 middleware.services.certificate.query,
-                [['id', '=', ftp['ssltls_certificate']]], {'get': True},
+                [['id', '=', ftp['ssltls_certificate']]], QueryOptions(get=True),
             )
 
             # Generate TLS options
