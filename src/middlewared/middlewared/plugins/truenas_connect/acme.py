@@ -8,7 +8,7 @@ from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.status import Status
 from truenas_crypto_utils.read import get_cert_id
 
-from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
+from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service, job
 
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX

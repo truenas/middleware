@@ -4,7 +4,7 @@ import uuid
 
 from truenas_connect_utils.status import Status
 
-from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
+from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
 from middlewared.service import Service
 
 from .utils import CERT_RENEW_DAYS
