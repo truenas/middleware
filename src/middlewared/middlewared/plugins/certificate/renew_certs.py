@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+import datetime
+from typing import TYPE_CHECKING
+
+from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
+
+from middlewared.service import ServiceContext
+from middlewared.utils.time_utils import utc_now
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
+
+
+def renew_certs(context: ServiceContext, job: Job) -> None:
+    if not context.middleware.call_sync('failover.is_single_master_node'):
+        # We do not want to try and renew certs on standby node
+        # However when master boots, it is highly likely that it is not master yet
+        # So on master event, we will try to renew certs
+        return
+
+    if system_cert := context.middleware.call_sync('system.general.config')['ui_certificate']:
+        system_cert = context.call_sync2(context.s.certificate.get_instance, system_cert)
+
+    system_cert_ids = []
+    tnc_config = context.middleware.call_sync('tn_connect.config')
+    if (
+        system_cert
+        and (
+            (
+                system_cert.organization in ('iXsystems Inc. dba TrueNAS', 'iXsystems')
+                and system_cert.san == ['DNS:localhost']
+                and system_cert.cert_type_existing is True
+            )
+            or tnc_config['certificate'] == system_cert.id
+        )
+    ):
+        system_cert_ids.append(system_cert.id)
+
+    if tnc_config['certificate'] and (not system_cert or tnc_config['certificate'] != system_cert.id):
+        system_cert_ids.append(tnc_config['certificate'])
+
+    if system_cert_ids:
+        filters = [(
+            'OR', (('acme', '!=', None), ('id', 'in', system_cert_ids))
+        )]
+    else:
+        filters = [('acme', '!=', None)]
+
+    certs = context.call_sync2(context.s.certificate.query, filters)
+
+    progress = 0
+    changed_certs = []
+    for cert in certs:
+        progress += (100 / len(certs))
+
+        if not (
+            datetime.datetime.strptime(cert.until, '%a %b %d %H:%M:%S %Y') - utc_now()
+        ).days < (cert.renew_days or 10):
+            continue
+
+        # renew cert
+        context.logger.debug(f'Renewing certificate {cert.name}')
+        if cert.id == tnc_config['certificate']:
+            context.create_task(context.middleware.call('tn_connect.acme.renew_cert'))
+            continue
+        elif not cert.acme:
+            cert_str, key = generate_self_signed_certificate()
+            cert_payload = {
+                'certificate': cert_str,
+                'privatekey': key,
+            }
+
+        else:
+            final_order = context.call_sync2(
+                context.s.acme.protocol.issue_certificate,
+                job, progress / 4, {
+                    'tos': True,
+                    'acme_directory_uri': cert['acme']['directory'],
+                    'dns_mapping': cert['domains_authenticators'],
+                },
+                cert
+            )
+            cert_payload = {
+                'certificate': final_order.fullchain_pem,
+                'acme_uri': final_order.uri,
+            }
+
+        context.middleware.call_sync(
+            'datastore.update',
+            'system.certificate',
+            cert['id'],
+            cert_payload,
+            {'prefix': 'cert_'}
+        )
+        changed_certs.append(cert)
+
+    context.middleware.call_sync('etc.generate', 'ssl')
+
+    for cert in changed_certs:
+        try:
+            context.call_sync2(context.s.certificate.redeploy_cert_attachments, cert.id)
+        except Exception:
+            context.logger.error(
+                'Failed to reload services dependent on %r certificate', cert.name, exc_info=True
+            )
+
+        job.set_progress(progress)
