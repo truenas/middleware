@@ -234,6 +234,10 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
     skipped the write_zfs_modprobe content comparison) would silently
     rebuild the initrd on every tunable update.
     """
+    # Distinct values are required for the test to actually exercise
+    # do_update's full path (otherwise it short-circuits on entry-equality).
+    assert ZFS_NEW_VALUE != ZFS_DEFAULT_VALUE
+
     with mock_update_initramfs():
         # Disabled ZFS tunable: do_create's ZFS branch is gated on `enabled`,
         # so update_initramfs is not called and the modprobe file is untouched.
@@ -247,15 +251,19 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
             assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", "", check=False)
             assert_update_initramfs_run_count(0)
 
-            # Real DB-level mutation (old != new at field level, so do_update
-            # does not short-circuit). update_initramfs runs, but
-            # write_zfs_modprobe sees no enabled ZFS tunables -> file content
-            # is unchanged (still empty) -> returns False ->
-            # boot.update_initramfs is called with force=False -> the existing
-            # initrd is kept and the mocked update-initramfs is never invoked.
+            # Real value change. do_update's old != new short-circuit at
+            # crud.py:121 does NOT fire, so update_initramfs is invoked.
+            # write_zfs_modprobe queries enabled ZFS tunables, finds none,
+            # produces empty content matching the already-empty (missing)
+            # modprobe file, and returns False — so boot.update_initramfs
+            # runs with force=False and the existing initrd is kept.
             call("tunable.update", tunable["id"], {
                 "value": ZFS_DEFAULT_VALUE,
             }, job=True)
+
+            # Confirm do_update actually ran the update (proves we are not
+            # accidentally hitting the entry-equality short-circuit).
+            assert call("tunable.get_instance", tunable["id"])["value"] == ZFS_DEFAULT_VALUE
 
             assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", "", check=False)
             assert_update_initramfs_run_count(0)
