@@ -79,9 +79,10 @@ class SystemGeneralService(Service):
         """Return available certificates that may be used to
         bind the webserver to when connecting via HTTPS protocol."""
         return {
-            i["id"]: i["name"]
-            for i in await self.middleware.call(
-                "certificate.query", [("cert_type_CSR", "=", False), ("cert_type_CA", "=", False)]
+            i.id: i.name
+            for i in await self.middleware.call2(
+                self.s.certificate.query,
+                [("cert_type_CSR", "=", False), ("cert_type_CA", "=", False)],
             )
         }
 

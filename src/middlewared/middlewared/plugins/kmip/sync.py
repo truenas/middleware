@@ -23,13 +23,19 @@ class KMIPService(Service, KMIPServerMixin):
     def connection_config(self, data=None):
         config = self.middleware.call_sync('kmip.config')
         config.update(data or {})
-        cert = self.middleware.call_sync('certificate.query', [['id', '=', config['certificate']]])
-        ca = self.middleware.call_sync('certificate.query', [['id', '=', config['certificate_authority']]])
+        cert = self.middleware.call_sync2(
+            self.s.certificate.query, [['id', '=', config['certificate']]],
+        )
+        ca = self.middleware.call_sync2(
+            self.s.certificate.query, [['id', '=', config['certificate_authority']]],
+        )
         if not cert or not ca:
             raise CallError('Certificate/CA not setup correctly')
         return {
-            **config, 'cert': cert[0]['certificate_path'],
-            'cert_key': cert[0]['privatekey_path'], 'ca': ca[0]['certificate_path']
+            **config,
+            'cert': cert[0].certificate_path,
+            'cert_key': cert[0].privatekey_path,
+            'ca': ca[0].certificate_path,
         }
 
     @private

@@ -55,10 +55,10 @@ async def container_console_choices(context: ServiceContext, app_name: str) -> A
 
 async def certificate_choices(context: ServiceContext) -> AppCertificateChoices:
     return [
-        AppCertificate(**cert) for cert in await context.middleware.call(
-            'certificate.query',
+        AppCertificate(id=cert.id, name=cert.name)
+        for cert in await context.call2(
+            context.s.certificate.query,
             [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False], ['parsed', '=', True]],
-            {'select': ['name', 'id']},
         )
     ]
 
