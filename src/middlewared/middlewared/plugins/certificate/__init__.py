@@ -14,11 +14,18 @@ from middlewared.api.current import (
     CertificateUpdateArgs,
     CertificateUpdateResult,
 )
-from middlewared.service import GenericCRUDService, job
+from middlewared.service import GenericCRUDService, job, private
 
+from .attachment_delegate import (
+    get_attachments,
+    in_use_attachments,
+    redeploy_cert_attachments,
+    register_attachment_delegate,
+)
 from .crud import CertificateServicePart
 
 if TYPE_CHECKING:
+    from middlewared.common.attachment.certificate import CertificateAttachmentDelegate
     from middlewared.job import Job
     from middlewared.main import Middleware
 
@@ -82,3 +89,19 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         from the system even if some error occurred while revoking the certificate with the ACME Server.
         """
         return self._svc_part.do_delete(job, id_, force)
+
+    @private
+    async def get_attachments(self, cert_id: int) -> list[str | None]:
+        return await get_attachments(cert_id)
+
+    @private
+    async def in_use_attachments(self, cert_id: int) -> list[CertificateAttachmentDelegate]:
+        return await in_use_attachments(cert_id)
+
+    @private
+    async def redeploy_cert_attachments(self, cert_id: int) -> None:
+        await redeploy_cert_attachments(cert_id)
+
+    @private
+    async def register_attachment_delegate(self, delegate: CertificateAttachmentDelegate) -> None:
+        register_attachment_delegate(delegate)
