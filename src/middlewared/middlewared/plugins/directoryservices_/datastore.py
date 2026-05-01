@@ -13,6 +13,7 @@ from middlewared.api.current import (
     DirectoryServicesSyncKeytabResult,
     DirectoryServicesUpdateArgs,
     DirectoryServicesUpdateResult,
+    QueryOptions,
 )
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, job, private
@@ -279,7 +280,7 @@ class DirectoryServices(ConfigService):
                 cert_id = self.middleware.call_sync2(
                     self.middleware.services.certificate.query,
                     [['name', '=', data['credential']['client_certificate']]],
-                    {'get': True},
+                    QueryOptions(get=True),
                 ).id
                 datastore_cred['cred_ldap_mtls_cert'] = cert_id
             case _:
