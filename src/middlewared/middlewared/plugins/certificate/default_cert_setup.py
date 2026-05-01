@@ -7,13 +7,15 @@ from middlewared.service import ServiceContext
 from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
 
 async def setup_self_signed_cert_for_ui(context: ServiceContext, cert_name: str = DEFAULT_CERT_NAME) -> None:
-    cert_id = None
+    cert_id: int | None = None
     index = 1
     while not cert_id:
-        cert = await context.call2(context.s.certificate.query, [['name', '=', cert_name]])
-        if cert:
-            cert = cert[0]
-            if await context.call2(context.s.certificate.cert_services_validation, cert.id, 'certificate', False):
+        certs = await context.call2(context.s.certificate.query, [['name', '=', cert_name]])
+        if certs:
+            cert = certs[0]
+            if await context.call2(
+                context.s.certificate.cert_services_validation, cert.id, 'certificate', False,
+            ):
                 cert_name = f'{cert_name}_{index}'
                 index += 1
             else:
@@ -45,9 +47,10 @@ async def setup_self_signed_cert_for_ui_impl(context: ServiceContext, cert_name:
 
     # We use datastore.insert to directly insert in db as this is a self-signed cert
     # and we don't allow that via regular api
-    return await context.middleware.call(
+    new_id: int = await context.middleware.call(
         'datastore.insert',
         'system.certificate',
         cert_dict,
         {'prefix': 'cert_'}
     )
+    return new_id
