@@ -433,8 +433,20 @@ def _delete_storage_object(so_dir: pathlib.Path):
     """Remove a storage object directory.
 
     LIO's enable attribute is write-once ("1" only); there is no disable op.
-    Just rmdir directly once all LUN symlinks referencing this object are gone.
+    Once all LUN symlinks referencing this object are gone, remove any
+    user-created ALUA groups first (controller_A, controller_B), then rmdir
+    the SO.  default_tg_pt_gp is a kernel default group and is auto-removed
+    by configfs on rmdir; user-created groups must be removed explicitly or
+    the kernel returns ENOTEMPTY for the SO rmdir.
     """
+    alua_dir = so_dir / "alua"
+    if alua_dir.exists():
+        for group_dir in list(alua_dir.iterdir()):
+            if group_dir.is_dir() and group_dir.name != ALUA_DEFAULT_GROUP:
+                try:
+                    group_dir.rmdir()
+                except OSError:
+                    pass
     try:
         so_dir.rmdir()
     except OSError:
