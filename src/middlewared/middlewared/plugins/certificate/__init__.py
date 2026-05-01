@@ -14,7 +14,7 @@ from middlewared.api.current import (
     CertificateUpdateArgs,
     CertificateUpdateResult,
 )
-from middlewared.service import GenericCRUDService, ValidationErrors, job, private
+from middlewared.service import GenericCRUDService, ValidationErrors, job, periodic, private
 
 from .acme_cleanup import delete_domains_authenticator
 from .attachment_delegate import (
@@ -26,6 +26,7 @@ from .attachment_delegate import (
 from .crud import CertificateServicePart
 from .default_cert_setup import setup_self_signed_cert_for_ui
 from .dhparam import dhparam_setup
+from .renew_certs import renew_certs
 from .service_checks import cert_services_validation
 from .utils import DEFAULT_CERT_NAME
 
@@ -125,6 +126,12 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @private
     async def register_attachment_delegate(self, delegate: CertificateAttachmentDelegate) -> None:
         register_attachment_delegate(delegate)
+
+    @periodic(86400)
+    @private
+    @job(lock='acme_cert_renewal')
+    def renew_certs(self, job: Job) -> None:
+        renew_certs(self.context, job)
 
     @private
     async def setup_self_signed_cert_for_ui(self, cert_name: str = DEFAULT_CERT_NAME) -> None:
