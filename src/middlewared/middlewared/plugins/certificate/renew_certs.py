@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
 
@@ -40,6 +40,7 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
     if tnc_config['certificate'] and (not system_cert or tnc_config['certificate'] != system_cert.id):
         system_cert_ids.append(tnc_config['certificate'])
 
+    filters: list[Any]
     if system_cert_ids:
         filters = [(
             'OR', (('acme', '!=', None), ('id', 'in', system_cert_ids))
@@ -49,10 +50,13 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
 
     certs = context.call_sync2(context.s.certificate.query, filters)
 
-    progress = 0
+    progress: float = 0
     changed_certs = []
     for cert in certs:
         progress += (100 / len(certs))
+
+        if cert.until is None:
+            continue
 
         if not (
             datetime.datetime.strptime(cert.until, '%a %b %d %H:%M:%S %Y') - utc_now()
@@ -72,14 +76,15 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
             }
 
         else:
+            assert cert.acme is not None  # narrowed by `if not cert.acme: ... else:` above
             final_order = context.call_sync2(
                 context.s.acme.protocol.issue_certificate,
-                job, progress / 4, {
+                job, int(progress / 4), {
                     'tos': True,
-                    'acme_directory_uri': cert['acme']['directory'],
-                    'dns_mapping': cert['domains_authenticators'],
+                    'acme_directory_uri': cert.acme['directory'],
+                    'dns_mapping': cert.domains_authenticators,
                 },
-                cert
+                cert.model_dump(context={'expose_secrets': True}),
             )
             cert_payload = {
                 'certificate': final_order.fullchain_pem,
@@ -89,7 +94,7 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
         context.middleware.call_sync(
             'datastore.update',
             'system.certificate',
-            cert['id'],
+            cert.id,
             cert_payload,
             {'prefix': 'cert_'}
         )
