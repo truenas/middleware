@@ -99,7 +99,7 @@ def test_udev_lifecycle():
     def assert_exists():
         assert_ssh_both_nodes(
             "cat /etc/udev/rules.d/10-disable-usb.rules",
-            f"BUS==\"usb\", OPTIONS+=\"ignore_device\"\n",
+            "BUS==\"usb\", OPTIONS+=\"ignore_device\"\n",
         )
 
     def assert_does_not_exist():
@@ -166,7 +166,7 @@ def test_zfs_lifecycle():
             assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_NEW_VALUE}\n")
 
         def assert_update_initramfs_run_count(value):
-            assert_ssh_both_nodes(f"cat /tmp/mock-update-initramfs-run-count", f"{value}\n")
+            assert_ssh_both_nodes("cat /tmp/mock-update-initramfs-run-count", f"{value}\n")
 
         assert_default_value()
 
@@ -197,6 +197,81 @@ def test_zfs_lifecycle():
 
         assert_default_value()
         assert_update_initramfs_run_count(4)
+
+
+def test_zfs_no_rebuild_when_modprobe_unchanged():
+    """
+    Cover update_initramfs's change-detection optimization: when a ZFS
+    tunable mutation does not change the materialized modprobe file
+    content, update-initramfs must NOT be invoked. Only enabled tunables
+    contribute to the file, so updating the value of a *disabled* tunable
+    leaves the file unchanged and must not trigger an initramfs rebuild.
+
+    Without this test, a regression that always passed force=True (or that
+    skipped the write_zfs_modprobe content comparison) would silently
+    rebuild the initrd on every tunable update.
+    """
+    binary = "/usr/sbin/update-initramfs"
+    code = textwrap.dedent("""\
+        import os
+
+        path = "/tmp/mock-update-initramfs-run-count"
+        if os.path.exists(path):
+            run_count = int(open(path).read().strip())
+        else:
+            run_count = 0
+
+        run_count += 1
+
+        with open(path, "w") as f:
+            f.write(f"{run_count}\\n")
+    """)
+
+    zfs_modprobe_path = "/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
+    counter_path = "/tmp/mock-update-initramfs-run-count"
+
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(mock_binary(binary, code=code, exitcode=0))
+        if ha:
+            stack.enter_context(
+                mock_binary(binary, code=code, exitcode=0, remote=True)
+            )
+
+        # Reset counter so we can assert absolute values.
+        assert_ssh_both_nodes(f"rm -f {counter_path} && echo ok", "ok\n")
+
+        def assert_run_count(value):
+            assert_ssh_both_nodes(
+                f"cat {counter_path} 2>/dev/null || echo 0",
+                f"{value}\n", check=False,
+            )
+
+        # Disabled ZFS tunable: do_create's ZFS branch is gated on `enabled`,
+        # so update_initramfs is not called and the modprobe file is untouched.
+        tunable = call("tunable.create", {
+            "type": "ZFS",
+            "var": ZFS,
+            "value": ZFS_NEW_VALUE,
+            "enabled": False,
+        }, job=True)
+        try:
+            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
+            assert_run_count(0)
+
+            # Real DB-level mutation (old != new at field level, so do_update
+            # does not short-circuit). update_initramfs runs, but
+            # write_zfs_modprobe sees no enabled ZFS tunables -> file content
+            # is unchanged (still empty) -> returns False ->
+            # boot.update_initramfs is called with force=False -> the existing
+            # initrd is kept and the mocked update-initramfs is never invoked.
+            call("tunable.update", tunable["id"], {
+                "value": ZFS_DEFAULT_VALUE,
+            }, job=True)
+
+            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
+            assert_run_count(0)
+        finally:
+            call("tunable.delete", tunable["id"], job=True)
 
 
 def test_arc_max_set():

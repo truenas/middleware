@@ -105,10 +105,11 @@ def write_zfs_modprobe(middleware: Middleware) -> bool:
     Returns True if the file changed (caller should force an initramfs rebuild).
     """
     options = []
-    for tunable in middleware.call_sync(
-        'tunable.query', [['type', '=', 'ZFS'], ['enabled', '=', True]]
+    for tunable in middleware.call_sync2(
+        middleware.services.tunable.query,
+        [['type', '=', 'ZFS'], ['enabled', '=', True]],
     ):
-        options.append(f'{tunable["var"]}={tunable["value"]}')
+        options.append(f'{tunable.var}={tunable.value}')
 
     # Sort so plain text equality is meaningful for change detection,
     # regardless of tunable.query / sysfs enumeration order.
