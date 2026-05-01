@@ -24,8 +24,10 @@ from .attachment_delegate import (
     register_attachment_delegate,
 )
 from .crud import CertificateServicePart
+from .default_cert_setup import setup_self_signed_cert_for_ui
 from .dhparam import dhparam_setup
 from .service_checks import cert_services_validation
+from .utils import DEFAULT_CERT_NAME
 
 if TYPE_CHECKING:
     from middlewared.common.attachment.certificate import CertificateAttachmentDelegate
@@ -123,3 +125,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @private
     async def register_attachment_delegate(self, delegate: CertificateAttachmentDelegate) -> None:
         register_attachment_delegate(delegate)
+
+    @private
+    async def setup_self_signed_cert_for_ui(self, cert_name: str = DEFAULT_CERT_NAME) -> None:
+        return await setup_self_signed_cert_for_ui(self.context, cert_name)
