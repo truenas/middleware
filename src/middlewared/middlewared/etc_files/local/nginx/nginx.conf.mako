@@ -4,6 +4,7 @@
 
     from middlewared.alert.source.certificates import WebUiCertificateSetupFailedAlert
     from middlewared.logger import NGINX_LOG_PATH
+    from middlewared.plugins.certificate.dhparam import DHPARAM_PEM_PATH
 
     # Let's ensure that /var/log/nginx directory exists
     os.makedirs(NGINX_LOG_PATH, exist_ok=True)
@@ -40,7 +41,6 @@
         if cert:
             cert = cert[0]
 
-    dhparams_file = middleware.call_sync('certificate.dhparam')
     x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
     ip_list = []
@@ -200,7 +200,7 @@ http {
         http2 on;
         ssl_certificate        "${server['cert']['certificate_path']}";
         ssl_certificate_key    "${server['cert']['privatekey_path']}";
-        ssl_dhparam "${dhparams_file}";
+        ssl_dhparam "${DHPARAM_PEM_PATH}";
         ssl_session_timeout    120m;
         ssl_session_cache      shared:ssl:16m;
         ssl_protocols ${' '.join(general_settings['ui_httpsprotocols'])};
