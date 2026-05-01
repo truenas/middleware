@@ -1,5 +1,6 @@
 import logging
 import textwrap
+from types import SimpleNamespace
 
 import pytest
 
@@ -94,7 +95,8 @@ from middlewared.service import ServiceContext
 @pytest.mark.asyncio
 async def test_normalize_certificate(cert, value, should_work):
     middleware = Middleware()
-    middleware['certificate.get_instance'] = lambda *args: cert
+    cert_model = SimpleNamespace(model_dump=lambda **kwargs: {'certificate': cert})
+    middleware.services.certificate.get_instance = lambda *args: cert_model
     ctx = ServiceContext(middleware, logging.getLogger('test'))
     complete_config = {'ix_certificates': {value: cert}}
     result = await normalize_certificate(ctx, {'schema': {'type': 'int'}}, value, complete_config, {})

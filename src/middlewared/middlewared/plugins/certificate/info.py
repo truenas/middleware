@@ -7,8 +7,8 @@ from middlewared.utils.country_codes import get_country_codes
 
 def acme_server_choices() -> dict[str, str]:
     return {
-        'https://acme-staging-v02.api.letsencrypt.org/directory': "Let's Encrypt Staging Directory",
-        'https://acme-v02.api.letsencrypt.org/directory': "Let's Encrypt Production Directory",
+        "https://acme-staging-v02.api.letsencrypt.org/directory": "Let's Encrypt Staging Directory",
+        "https://acme-v02.api.letsencrypt.org/directory": "Let's Encrypt Production Directory",
     }
 
 

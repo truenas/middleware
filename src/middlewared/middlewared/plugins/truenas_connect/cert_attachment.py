@@ -9,4 +9,7 @@ class TNCCertificateAttachment(CertificateServiceAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('certificate.register_attachment_delegate', TNCCertificateAttachment(middleware))
+    await middleware.call2(
+        middleware.services.certificate.register_attachment_delegate,
+        TNCCertificateAttachment(middleware),
+    )

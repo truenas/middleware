@@ -9,4 +9,7 @@ class FTPCertificateAttachment(CertificateServiceAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('certificate.register_attachment_delegate', FTPCertificateAttachment(middleware))
+    await middleware.call2(
+        middleware.services.certificate.register_attachment_delegate,
+        FTPCertificateAttachment(middleware),
+    )

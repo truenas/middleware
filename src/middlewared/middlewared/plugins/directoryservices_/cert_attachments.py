@@ -17,8 +17,8 @@ class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
         match ds_config['service_type']:
             case DSType.IPA.value:
                 # IPA bind may rely on the presence of the IPA server's cacert
-                cert_name = (await self.middleware.call('certificate.get_instance', cert_id))['name']
-                return cert_name == IpaConfigName.IPA_CACERT
+                cert = await self.call2(self.s.certificate.get_instance, cert_id)
+                return cert.name == IpaConfigName.IPA_CACERT
             case DSType.LDAP.value:
                 # Check is below
                 pass
@@ -36,4 +36,7 @@ class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('certificate.register_attachment_delegate', DSCertificateAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.certificate.register_attachment_delegate,
+        DSCertificateAttachmentDelegate(middleware),
+    )

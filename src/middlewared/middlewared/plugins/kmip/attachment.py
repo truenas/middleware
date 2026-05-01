@@ -23,5 +23,8 @@ class KMIPServicePortDelegate(ServicePortDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('certificate.register_attachment_delegate', KmipCertificateAttachment(middleware))
+    await middleware.call2(
+        middleware.services.certificate.register_attachment_delegate,
+        KmipCertificateAttachment(middleware),
+    )
     await middleware.call('port.register_attachment_delegate', KMIPServicePortDelegate(middleware))

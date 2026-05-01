@@ -47,7 +47,10 @@ def render(service: Service, middleware: Middleware) -> None:
     os.makedirs('/etc/certificates', 0o755, exist_ok=True)
 
     expected_files = set()
-    certs = middleware.call_sync('certificate.query')
+    certs = [
+        c.model_dump(context={'expose_secrets': True})
+        for c in middleware.call_sync2(middleware.services.certificate.query)
+    ]
 
     expected_files |= write_certificates(certs)
 

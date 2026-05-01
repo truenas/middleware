@@ -51,14 +51,13 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('CertificateService',)
+__all__ = ("CertificateService",)
 
 
 class CertificateService(GenericCRUDService[CertificateEntry]):
-
     class Config:
-        cli_namespace = 'system.certificate'
-        role_prefix = 'CERTIFICATE'
+        cli_namespace = "system.certificate"
+        role_prefix = "CERTIFICATE"
         entry = CertificateEntry
         generic = True
 
@@ -67,7 +66,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         self._svc_part = CertificateServicePart(self.context)
 
     @api_method(CertificateCreateArgs, CertificateCreateResult, check_annotations=True)
-    @job(lock='cert_create')
+    @job(lock="cert_create")
     async def do_create(self, job: Job, data: CertificateCreate) -> CertificateEntry:
         """
         Create a new Certificate
@@ -93,13 +92,13 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         return await self._svc_part.do_create(job, data)
 
     @api_method(CertificateUpdateArgs, CertificateUpdateResult, check_annotations=True)
-    @job(lock='cert_update')
+    @job(lock="cert_update")
     async def do_update(self, job: Job, id_: int, data: CertificateUpdate) -> CertificateEntry:
         """Update certificate of `id`."""
         return await self._svc_part.do_update(job, id_, data)
 
     @api_method(CertificateDeleteArgs, CertificateDeleteResult, check_annotations=True)
-    @job(lock='cert_delete')
+    @job(lock="cert_delete")
     def do_delete(self, job: Job, id_: int, force: bool) -> bool:
         """
         Delete certificate of `id`.
@@ -114,7 +113,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @api_method(
         CertificateAcmeServerChoicesArgs,
         CertificateAcmeServerChoicesResult,
-        roles=['CERTIFICATE_READ'],
+        roles=["CERTIFICATE_READ"],
         check_annotations=True,
     )
     async def acme_server_choices(self) -> dict[str, str]:
@@ -127,7 +126,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @api_method(
         CertificateCountryChoicesArgs,
         CertificateCountryChoicesResult,
-        roles=['CERTIFICATE_READ'],
+        roles=["CERTIFICATE_READ"],
         check_annotations=True,
     )
     def country_choices(self) -> dict[str, str]:
@@ -137,7 +136,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @api_method(
         CertificateEcCurveChoicesArgs,
         CertificateEcCurveChoicesResult,
-        roles=['CERTIFICATE_READ'],
+        roles=["CERTIFICATE_READ"],
         check_annotations=True,
     )
     async def ec_curve_choices(self) -> dict[str, str]:
@@ -147,7 +146,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @api_method(
         CertificateExtendedKeyUsageChoicesArgs,
         CertificateExtendedKeyUsageChoicesResult,
-        roles=['CERTIFICATE_READ'],
+        roles=["CERTIFICATE_READ"],
         check_annotations=True,
     )
     async def extended_key_usage_choices(self) -> dict[str, str]:
@@ -159,7 +158,10 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
 
     @private
     async def cert_services_validation(
-        self, id_: int, schema_name: str, raise_verrors: bool = True,
+        self,
+        id_: int,
+        schema_name: str,
+        raise_verrors: bool = True,
     ) -> ValidationErrors | None:
         return await cert_services_validation(self.context, id_, schema_name, raise_verrors)
 
@@ -194,7 +196,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
 
     @periodic(86400)
     @private
-    @job(lock='acme_cert_renewal')
+    @job(lock="acme_cert_renewal")
     def renew_certs(self, job: Job) -> None:
         renew_certs(self.context, job)
 
@@ -208,22 +210,20 @@ async def setup(middleware: Middleware) -> None:
     system_cert_id = None
     certs = []
     try:
-        system_general_config = await middleware.call('system.general.config')
-        system_cert_id = system_general_config['ui_certificate']
-        certs = await middleware.call('datastore.query', 'system.certificate', [], {'prefix': 'cert_'})
+        system_general_config = await middleware.call("system.general.config")
+        system_cert_id = system_general_config["ui_certificate"]
+        certs = await middleware.call("datastore.query", "system.certificate", [], {"prefix": "cert_"})
     except Exception as e:
         failure = True
-        middleware.logger.error(f'Failed to retrieve certificates: {e}', exc_info=True)
+        middleware.logger.error(f"Failed to retrieve certificates: {e}", exc_info=True)
 
-    if not failure and (not system_cert_id or system_cert_id not in [c['id'] for c in certs]):
+    if not failure and (not system_cert_id or system_cert_id not in [c["id"] for c in certs]):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
             await middleware.call2(middleware.services.certificate.setup_self_signed_cert_for_ui)
         except Exception as e:
             failure = True
-            middleware.logger.error(
-                'Failed to set certificate for system.general plugin: %s', e, exc_info=True
-            )
+            middleware.logger.error("Failed to set certificate for system.general plugin: %s", e, exc_info=True)
 
     if not failure:
-        middleware.logger.trace('Certificate setup for System complete')
+        middleware.logger.trace("Certificate setup for System complete")

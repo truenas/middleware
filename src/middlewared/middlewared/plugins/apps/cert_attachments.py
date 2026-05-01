@@ -47,7 +47,10 @@ class AppCertificateService(Service):
     async def get_apps_consuming_outdated_certs(self, filters: list[Any] | None = None) -> list[str]:
         apps_having_outdated_certs = []
         filters = filters or []
-        certs = {c['id']: c for c in await self.middleware.call('certificate.query')}
+        certs = {
+            c.id: c.model_dump(context={'expose_secrets': True})
+            for c in await self.call2(self.s.certificate.query)
+        }
         config = await self.middleware.run_in_thread(get_collective_config)
         apps = {app.name: app for app in await self.call2(self.s.app.query, filters)}
         for app_name, app_config in config.items():
@@ -70,6 +73,7 @@ class AppCertificateService(Service):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call(
-        'certificate.register_attachment_delegate', AppCertificateAttachmentDelegate(middleware)
+    await middleware.call2(
+        middleware.services.certificate.register_attachment_delegate,
+        AppCertificateAttachmentDelegate(middleware),
     )
