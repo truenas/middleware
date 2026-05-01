@@ -136,3 +136,29 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @private
     async def setup_self_signed_cert_for_ui(self, cert_name: str = DEFAULT_CERT_NAME) -> None:
         return await setup_self_signed_cert_for_ui(self.context, cert_name)
+
+
+async def setup(middleware: Middleware) -> None:
+    failure = False
+    system_cert_id = None
+    certs = []
+    try:
+        system_general_config = await middleware.call('system.general.config')
+        system_cert_id = system_general_config['ui_certificate']
+        certs = await middleware.call('datastore.query', 'system.certificate', [], {'prefix': 'cert_'})
+    except Exception as e:
+        failure = True
+        middleware.logger.error(f'Failed to retrieve certificates: {e}', exc_info=True)
+
+    if not failure and (not system_cert_id or system_cert_id not in [c['id'] for c in certs]):
+        # create a self signed cert if it doesn't exist and set ui_certificate to it's value
+        try:
+            await middleware.call2(middleware.services.certificate.setup_self_signed_cert_for_ui)
+        except Exception as e:
+            failure = True
+            middleware.logger.error(
+                'Failed to set certificate for system.general plugin: %s', e, exc_info=True
+            )
+
+    if not failure:
+        middleware.logger.trace('Certificate setup for System complete')
