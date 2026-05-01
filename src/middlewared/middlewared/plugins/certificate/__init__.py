@@ -14,8 +14,9 @@ from middlewared.api.current import (
     CertificateUpdateArgs,
     CertificateUpdateResult,
 )
-from middlewared.service import GenericCRUDService, job, private
+from middlewared.service import GenericCRUDService, ValidationErrors, job, private
 
+from .acme_cleanup import delete_domains_authenticator
 from .attachment_delegate import (
     get_attachments,
     in_use_attachments,
@@ -24,6 +25,7 @@ from .attachment_delegate import (
 )
 from .crud import CertificateServicePart
 from .dhparam import dhparam_setup
+from .service_checks import cert_services_validation
 
 if TYPE_CHECKING:
     from middlewared.common.attachment.certificate import CertificateAttachmentDelegate
@@ -90,6 +92,16 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
         from the system even if some error occurred while revoking the certificate with the ACME Server.
         """
         return self._svc_part.do_delete(job, id_, force)
+
+    @private
+    async def cert_services_validation(
+        self, id_: int, schema_name: str, raise_verrors: bool = True,
+    ) -> ValidationErrors | None:
+        return await cert_services_validation(self.context, id_, schema_name, raise_verrors)
+
+    @private
+    async def delete_domains_authenticator(self, auth_id: int) -> None:
+        await delete_domains_authenticator(self.context, auth_id)
 
     @private
     @job()
