@@ -16,6 +16,25 @@ ZFS = "zil_nocacheflush"
 ZFS_DEFAULT_VALUE = "0"
 ZFS_NEW_VALUE = "1"
 
+ZFS_MODPROBE_PATH = "/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
+
+UPDATE_INITRAMFS_BINARY = "/usr/sbin/update-initramfs"
+UPDATE_INITRAMFS_RUN_COUNT_PATH = "/tmp/mock-update-initramfs-run-count"
+UPDATE_INITRAMFS_MOCK_CODE = textwrap.dedent("""\
+    import os
+
+    path = "/tmp/mock-update-initramfs-run-count"
+    if os.path.exists(path):
+        run_count = int(open(path).read().strip())
+    else:
+        run_count = 0
+
+    run_count += 1
+
+    with open(path, "w") as f:
+        f.write(f"{run_count}\\n")
+""")
+
 
 def assert_ssh_both_nodes(command, output, **kwargs):
     ips = [None]
@@ -24,6 +43,38 @@ def assert_ssh_both_nodes(command, output, **kwargs):
 
     for ip in ips:
         assert ssh(command, ip=ip, **kwargs) == output
+
+
+@contextlib.contextmanager
+def mock_update_initramfs():
+    """
+    Replace `update-initramfs` with a counter-incrementing Python mock on
+    both nodes for the duration of the block, and reset the counter on
+    entry so callers can assert absolute values via
+    `assert_update_initramfs_run_count`.
+    """
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(mock_binary(
+            UPDATE_INITRAMFS_BINARY, code=UPDATE_INITRAMFS_MOCK_CODE, exitcode=0,
+        ))
+        if ha:
+            stack.enter_context(mock_binary(
+                UPDATE_INITRAMFS_BINARY, code=UPDATE_INITRAMFS_MOCK_CODE,
+                exitcode=0, remote=True,
+            ))
+        assert_ssh_both_nodes(
+            f"rm -f {UPDATE_INITRAMFS_RUN_COUNT_PATH} && echo ok", "ok\n",
+        )
+        yield
+
+
+def assert_update_initramfs_run_count(value):
+    # `|| echo 0` so the assertion works before the mock has been invoked
+    # (i.e., the counter file doesn't exist yet).
+    assert_ssh_both_nodes(
+        f"cat {UPDATE_INITRAMFS_RUN_COUNT_PATH} 2>/dev/null || echo 0",
+        f"{value}\n",
+    )
 
 
 def test_create_invalid_sysctl():
@@ -131,42 +182,14 @@ def test_udev_lifecycle():
 
 
 def test_zfs_lifecycle():
-    binary = "/usr/sbin/update-initramfs"
-    code = textwrap.dedent("""\
-        import os
-
-        path = "/tmp/mock-update-initramfs-run-count"
-        if os.path.exists(path):
-            run_count = int(open(path).read().strip())
-        else:
-            run_count = 0
-
-        run_count += 1
-
-        with open(path, "w") as f:
-            f.write(f"{run_count}\\n")
-    """)
-    exitcode = 0
-
-    with contextlib.ExitStack() as stack:
-        stack.enter_context(mock_binary(binary, code=code, exitcode=exitcode))
-        if ha:
-            stack.enter_context(
-                mock_binary(binary, code=code, exitcode=exitcode, remote=True)
-            )
-
-        zfs_modprobe_path = "/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
-
+    with mock_update_initramfs():
         def assert_default_value():
-            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
+            assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", "", check=False)
             assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_DEFAULT_VALUE}\n")
 
         def assert_new_value():
-            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", f"options zfs {ZFS}={ZFS_NEW_VALUE}\n", check=False)
+            assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", f"options zfs {ZFS}={ZFS_NEW_VALUE}\n", check=False)
             assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_NEW_VALUE}\n")
-
-        def assert_update_initramfs_run_count(value):
-            assert_ssh_both_nodes("cat /tmp/mock-update-initramfs-run-count", f"{value}\n")
 
         assert_default_value()
 
@@ -211,41 +234,7 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
     skipped the write_zfs_modprobe content comparison) would silently
     rebuild the initrd on every tunable update.
     """
-    binary = "/usr/sbin/update-initramfs"
-    code = textwrap.dedent("""\
-        import os
-
-        path = "/tmp/mock-update-initramfs-run-count"
-        if os.path.exists(path):
-            run_count = int(open(path).read().strip())
-        else:
-            run_count = 0
-
-        run_count += 1
-
-        with open(path, "w") as f:
-            f.write(f"{run_count}\\n")
-    """)
-
-    zfs_modprobe_path = "/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
-    counter_path = "/tmp/mock-update-initramfs-run-count"
-
-    with contextlib.ExitStack() as stack:
-        stack.enter_context(mock_binary(binary, code=code, exitcode=0))
-        if ha:
-            stack.enter_context(
-                mock_binary(binary, code=code, exitcode=0, remote=True)
-            )
-
-        # Reset counter so we can assert absolute values.
-        assert_ssh_both_nodes(f"rm -f {counter_path} && echo ok", "ok\n")
-
-        def assert_run_count(value):
-            assert_ssh_both_nodes(
-                f"cat {counter_path} 2>/dev/null || echo 0",
-                f"{value}\n", check=False,
-            )
-
+    with mock_update_initramfs():
         # Disabled ZFS tunable: do_create's ZFS branch is gated on `enabled`,
         # so update_initramfs is not called and the modprobe file is untouched.
         tunable = call("tunable.create", {
@@ -255,8 +244,8 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
             "enabled": False,
         }, job=True)
         try:
-            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
-            assert_run_count(0)
+            assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", "", check=False)
+            assert_update_initramfs_run_count(0)
 
             # Real DB-level mutation (old != new at field level, so do_update
             # does not short-circuit). update_initramfs runs, but
@@ -268,8 +257,8 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
                 "value": ZFS_DEFAULT_VALUE,
             }, job=True)
 
-            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
-            assert_run_count(0)
+            assert_ssh_both_nodes(f"cat {ZFS_MODPROBE_PATH}", "", check=False)
+            assert_update_initramfs_run_count(0)
         finally:
             call("tunable.delete", tunable["id"], job=True)
 
