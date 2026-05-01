@@ -10,6 +10,7 @@ from .realtime_reporting import (
     get_arc_stats,
     get_cpu_stats,
     get_disk_stats,
+    get_gpu_stats,
     get_interface_stats,
     get_memory_info,
     get_pool_stats,
@@ -23,7 +24,7 @@ def get_disks_with_identifiers() -> dict[str, str]:
 class RealtimeEventSource(EventSource):
     """
     Retrieve real time statistics for CPU, network,
-    virtual memory and zfs arc.
+    virtual memory, zfs arc, storage pools, and GPU.
     """
 
     args = ReportingRealtimeEventSourceArgs
@@ -86,6 +87,7 @@ class ReportingRealtimeService(Service):
                     ]
                 ),
                 'pools': get_pool_stats(netdata_metrics),
+                'gpu': get_gpu_stats(),
             })
 
         return data
