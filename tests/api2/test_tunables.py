@@ -155,12 +155,14 @@ def test_zfs_lifecycle():
                 mock_binary(binary, code=code, exitcode=exitcode, remote=True)
             )
 
+        zfs_modprobe_path = "/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
+
         def assert_default_value():
-            assert_ssh_both_nodes("cat /etc/modprobe.d/zfs.conf", "", check=False)
+            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", "", check=False)
             assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_DEFAULT_VALUE}\n")
 
         def assert_new_value():
-            assert_ssh_both_nodes("cat /etc/modprobe.d/zfs.conf", f"options zfs {ZFS}={ZFS_NEW_VALUE}\n", check=False)
+            assert_ssh_both_nodes(f"cat {zfs_modprobe_path}", f"options zfs {ZFS}={ZFS_NEW_VALUE}\n", check=False)
             assert_ssh_both_nodes(f"cat /sys/module/zfs/parameters/{ZFS}", f"{ZFS_NEW_VALUE}\n")
 
         def assert_update_initramfs_run_count(value):
