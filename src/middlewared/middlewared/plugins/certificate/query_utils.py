@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import os
+from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -9,16 +12,16 @@ from truenas_crypto_utils.utils import RE_CERTIFICATE
 from .utils import CERT_ROOT_PATH, CERT_TYPE_CSR, CERT_TYPE_EXISTING
 
 logger = logging.getLogger(__name__)
-CERT_REPORT_ERRORS = set()
+CERT_REPORT_ERRORS: set[tuple[str, str]] = set()
 
 
-def cert_extend_report_error(title: str, cert: dict) -> None:
+def cert_extend_report_error(title: str, cert: dict[str, Any]) -> None:
     item = (title, cert['name'])
     if item not in CERT_REPORT_ERRORS:
         logger.debug('Failed to load %s of %s', title, cert['name'])
 
 
-def normalize_cert_attrs(cert: dict) -> None:
+def normalize_cert_attrs(cert: dict[str, Any]) -> None:
     root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
@@ -41,7 +44,7 @@ def normalize_cert_attrs(cert: dict) -> None:
     if cert['CSR']:
         cert['csr_path'] = os.path.join(root_path, f'{cert["name"]}.csr')
 
-    certs = []
+    certs: list[str] = []
     if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
         certs = RE_CERTIFICATE.findall(cert['certificate'])
 
@@ -71,8 +74,10 @@ def normalize_cert_attrs(cert: dict) -> None:
         if key_obj:
             if isinstance(key_obj, Ed25519PrivateKey):
                 cert['key_length'] = 32
-            else:
+            elif isinstance(key_obj, (rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey, dsa.DSAPrivateKey)):
                 cert['key_length'] = key_obj.key_size
+            else:
+                cert['key_length'] = None
             if isinstance(key_obj, (ec.EllipticCurvePrivateKey, Ed25519PrivateKey)):
                 cert['key_type'] = 'EC'
             elif isinstance(key_obj, rsa.RSAPrivateKey):

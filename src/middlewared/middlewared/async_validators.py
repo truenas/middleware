@@ -50,7 +50,9 @@ async def resolve_hostname(middleware, verrors, name, hostname):
         )
 
 
-async def validate_country(middleware, country_name, verrors, v_field_name):
+async def validate_country(
+    middleware: Middleware, country_name: str, verrors: ValidationErrors, v_field_name: str
+) -> None:
     if country_name not in (await middleware.call('system.general.country_choices')):
         verrors.add(
             v_field_name,

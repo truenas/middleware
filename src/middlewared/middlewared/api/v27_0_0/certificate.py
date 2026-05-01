@@ -12,12 +12,12 @@ from middlewared.api.base import (
     LongString,
     NonEmptyString,
     match_validator,
-    single_argument_args,
 )
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
-    'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
+    'CertificateEntry', 'CertificateCreate', 'CertificateCreateArgs', 'CertificateCreateResult',
+    'CertificateUpdate', 'CertificateUpdateArgs', 'CertificateUpdateResult',
+    'CertificateDeleteArgs', 'CertificateDeleteResult',
     'ECCurves', 'EKU_OID',
 ]
 
@@ -195,8 +195,7 @@ class CertificateExtensions(BaseModel):
     """Key Usage extension configuration defining permitted cryptographic operations."""
 
 
-@single_argument_args('certificate_create')
-class CertificateCreateArgs(BaseModel):
+class CertificateCreate(BaseModel):
     name: CERT_NAME
     """Certificate name."""
     create_type: Literal[
@@ -259,6 +258,11 @@ class CertificateCreateArgs(BaseModel):
     Number of days before the certificate expiration date to attempt certificate renewal. If certificate renewal \
     fails, renewal will be reattempted every day until expiration.
     """
+
+
+class CertificateCreateArgs(BaseModel):
+    certificate_create: CertificateCreate
+    """Certificate create parameters."""
 
 
 class CertificateCreateResult(BaseModel):
