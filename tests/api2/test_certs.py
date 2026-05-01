@@ -7,38 +7,6 @@ from middlewared.test.integration.utils import call
 from truenas_api_client import ValidationErrors
 
 
-# We would like to test the following cases
-# Create CSR
-# Import cert
-
-
-# FIXME: Do this pelase
-'''
-@pytest.mark.parametrize('add_to_trusted_store_enabled', [
-    True,
-    False,
-])
-def test_cert_add_to_trusted_store(add_to_trusted_store_enabled):
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_trusted_store_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            'add_to_trusted_store': add_to_trusted_store_enabled,
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['add_to_trusted_store'] == add_to_trusted_store_enabled
-            args = ['filesystem.stat', os.path.join('/var/local/ca-certificates', f'cert_{cert["name"]}.crt')]
-            if add_to_trusted_store_enabled:
-                assert call(*args)
-            else:
-                with pytest.raises(Exception):
-                    call(*args)
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-'''
-
 def test_creating_csr():
     with certificate_signing_request('csr_test') as csr:
         assert csr['cert_type_CSR'] is True, csr
@@ -234,29 +202,18 @@ def get_cert_current_files():
     )
 ], ids=['valid_cert', 'invalid_cert', 'invalid_cert'])
 def test_importing_certificate_validation(certificate, private_key, should_work):
-    cert_params = {'certificate': certificate, 'privatekey': private_key}
+    payload = {
+        'name': 'test-cert',
+        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+        'certificate': certificate,
+        'privatekey': private_key,
+    }
     if should_work:
-        cert = None
-        if should_work:
-            try:
-                cert = call(
-                    'certificate.create', {
-                        'name': 'test-cert',
-                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                        **cert_params,
-                    }, job=True
-                )
-                assert cert['parsed'] is True, cert
-            finally:
-                if cert:
-                    call('certificate.delete', cert['id'], job=True)
-
-        else:
-            with pytest.raises(ValidationErrors):
-                call(
-                    'certificate.create', {
-                        'name': 'test-cert',
-                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                        **cert_params,
-                    }, job=True
-                )
+        cert = call('certificate.create', payload, job=True)
+        try:
+            assert cert['parsed'] is True, cert
+        finally:
+            call('certificate.delete', cert['id'], job=True)
+    else:
+        with pytest.raises(ValidationErrors):
+            call('certificate.create', payload, job=True)
