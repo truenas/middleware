@@ -1,7 +1,7 @@
 from configparser import RawConfigParser
 from io import StringIO
-import os
-from tempfile import NamedTemporaryFile
+
+from truenas_os_pyutils.io import atomic_write
 
 from .ipa_constants import IPAPath
 
@@ -52,15 +52,9 @@ def generate_ipa_default_config(
 
 
 def _write_ipa_file(ipa_path: IPAPath, data: bytes) -> str:
-    with NamedTemporaryFile(dir=IPAPath.IPADIR.path, delete=False) as f:
+    with atomic_write(ipa_path.path, 'wb', tmppath=IPAPath.IPADIR.path, perms=ipa_path.perm) as f:
         f.write(data)
-        f.flush()
-        os.rename(f.name, ipa_path.path)
-        os.fchmod(f.fileno(), ipa_path.perm)
-        if not os.path.exists(ipa_path.path):
-            raise RuntimeError(f'{ipa_path.path}: failed to create file')
-
-        return ipa_path.path
+    return ipa_path.path
 
 
 def write_ipa_default_config(

@@ -8,7 +8,8 @@ import subprocess
 import threading
 import uuid
 
-from truenas_os_pyutils.mount import iter_mountinfo, statmount
+import truenas_os
+from truenas_os_pyutils.mount import iter_mountinfo, statmount, umount
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -392,9 +393,23 @@ class SystemDatasetService(ConfigService):
                 except Exception:
                     self.logger.warning("Failed to clear old core files.", exc_info=True)
 
-            subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
+            # ValueError when /var/lib/systemd/coredump is not a mountpoint.
+            with suppress(OSError, ValueError):
+                umount('/var/lib/systemd/coredump')
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
-            subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
+            with suppress(OSError):
+                tree_fd = truenas_os.open_tree(
+                    path=corepath,
+                    flags=truenas_os.OPEN_TREE_CLONE | truenas_os.OPEN_TREE_CLOEXEC,
+                )
+                try:
+                    truenas_os.move_mount(
+                        from_path='', from_dirfd=tree_fd,
+                        to_path='/var/lib/systemd/coredump',
+                        flags=truenas_os.MOVE_MOUNT_F_EMPTY_PATH,
+                    )
+                finally:
+                    os.close(tree_fd)
 
         return self.middleware.call_sync('systemdataset.config')
 
@@ -633,7 +648,8 @@ class SystemDatasetService(ConfigService):
                 os.mkdir(f'{MIDDLEWARE_RUN_DIR}/system.new')
             else:
                 # Make sure we clean up any previous attempts
-                subprocess.run(['umount', '-R', path], check=False)
+                with suppress(OSError, ValueError):
+                    umount(path, recursive=True)
         else:
             path = SYSDATASET_PATH
 
@@ -655,7 +671,8 @@ class SystemDatasetService(ConfigService):
                 # same way: non-fatal.
                 if cp.returncode in (0, 24):
                     # Let's make sure that we don't have coredump directory mounted
-                    subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
+                    with suppress(OSError, ValueError):
+                        umount('/var/lib/systemd/coredump')
                     self.__umount(_from, config['uuid'])
                     self.__umount(_to, config['uuid'])
                     self.__mount(_to, config['uuid'], SYSDATASET_PATH)

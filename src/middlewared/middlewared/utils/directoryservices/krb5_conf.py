@@ -11,9 +11,9 @@ from copy import deepcopy
 from enum import Enum, auto
 import ipaddress
 import logging
-import os
-from tempfile import NamedTemporaryFile
 from typing import Optional
+
+from truenas_os_pyutils.io import atomic_write
 
 from .krb5_constants import KRB_ETYPE, KRB_AppDefaults, KRB_LibDefaults, KRB_RealmProperty
 
@@ -392,9 +392,5 @@ class KRB5Conf():
         Write the stored krb5.conf file to the specified `path`
         """
         config = self.generate()
-        with NamedTemporaryFile(delete=False, dir=os.path.dirname(path)) as f:
-            f.write(config.encode())
-            f.flush()
-            os.fchmod(f.fileno(), 0o644)
-
-            os.rename(f.name, path)
+        with atomic_write(path, perms=0o644) as f:
+            f.write(config)

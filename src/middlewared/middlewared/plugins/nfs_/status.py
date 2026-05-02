@@ -1,7 +1,8 @@
 from contextlib import suppress
 import os
-import tempfile
 import typing
+
+from truenas_os_pyutils.io import atomic_write
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -57,20 +58,13 @@ class NFSService(Service):
                     pass
             else:
                 # Replace rmtab excluding ip_to_clear
-                with tempfile.NamedTemporaryFile(
-                    mode='wt',
-                    dir=NFSServicePathInfo.STATEDIR.path(),
-                    delete=False
-                ) as outf:
+                with atomic_write(rmtab) as outf:
                     with open(rmtab, "r") as inf:
                         for entry in inf:
                             if entry.split(':')[0] in ip_to_clear:
                                 continue
                             else:
                                 outf.write(entry)
-                    outf.flush()
-                    os.fsync(outf.fileno())
-                    os.rename(outf.name, rmtab)
 
     @filterable_api_method(
         item=NFSGetNfs3ClientsEntry,
