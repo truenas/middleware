@@ -1,17 +1,13 @@
-from typing import Annotated, Any
+from typing import Annotated
 import uuid
 
 from pydantic import (
     AfterValidator,
-    BeforeValidator,
     Field,
-    GetCoreSchemaHandler,
-    PlainSerializer,
 )
 from pydantic import (
     HttpUrl as _HttpUrl,
 )
-from pydantic_core import CoreSchema, PydanticKnownError, core_schema
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 from middlewared.api.base.validators import email_validator, time_validator
@@ -22,48 +18,6 @@ __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
     "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "UUIDv4String",
 ]
-
-
-class LongStringWrapper:
-    """
-    We have to box our long strings in this class to bypass the global limit for string length.
-    """
-
-    max_length = 2048000  # historic maximum length of string in filesystem.file_receive
-    __normalize_as__ = str
-
-    def __init__(self, value):
-        if isinstance(value, LongStringWrapper):
-            value = value.value
-
-        if not isinstance(value, str):
-            raise PydanticKnownError("string_type")
-
-        if len(value) > self.max_length:
-            raise PydanticKnownError("string_too_long", {"max_length": self.max_length})
-
-        self.value = value
-
-    def __len__(self):
-        return len(self.value)
-
-    def __eq__(self, other):
-        return isinstance(other, LongStringWrapper) and self.value == other.value
-
-    def __repr__(self):
-        return f"LongStringWrapper({self.value})"
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> CoreSchema:
-        return core_schema.json_or_python_schema(
-            json_schema=core_schema.str_schema(),
-            python_schema=core_schema.no_info_after_validator_function(
-                cls,
-                core_schema.is_instance_schema(LongStringWrapper),
-            ),
-        )
 
 
 def uuidv4_validator(value):
@@ -77,11 +31,7 @@ def uuidv4_validator(value):
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
-LongString = Annotated[
-    LongStringWrapper,
-    BeforeValidator(LongStringWrapper),
-    PlainSerializer(lambda x: x.value if isinstance(x, LongStringWrapper) else x),
-]
+LongString = Annotated[str, Field(max_length=2 ** 31 - 1)]
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
 TimeString = Annotated[str, AfterValidator(time_validator), Field(examples=["00:00", "06:30", "18:00", "23:00"])]
