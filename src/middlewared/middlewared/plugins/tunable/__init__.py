@@ -20,7 +20,7 @@ from middlewared.api.current import (
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import TunableServicePart
-from .utils import TUNABLE_TYPES, handle_tunable_change, set_sysctl, set_zfs_parameter
+from .utils import TUNABLE_TYPES, handle_tunable_change, set_sysctl, set_zfs_parameter, write_zfs_modprobe
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -77,6 +77,10 @@ class TunableService(GenericCRUDService[TunableEntry]):
     @private
     def set_zfs_parameter(self, name: str, value: str) -> None:
         set_zfs_parameter(self.middleware, name, value)
+
+    @private
+    def write_zfs_modprobe(self) -> bool:
+        return write_zfs_modprobe(self.middleware)
 
     @private
     async def handle_tunable_change(self, tunable: dict[str, Any]) -> None:

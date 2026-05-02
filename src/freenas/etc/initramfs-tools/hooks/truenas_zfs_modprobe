@@ -1,0 +1,17 @@
+#!/bin/sh
+# Bake the zfs modprobe options written by middlewared into the initrd so they
+# apply when zfs loads to import the boot pool. The source file lives under
+# /data (which survives BE upgrades via the installer's /data rsync).
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+config="/data/subsystems/initramfs/truenas_zfs_modprobe.conf"
+# Nothing to do unless there's at least one option to apply.
+[ -s "$config" ] || exit 0
+
+copy_file config "$config" /etc/modprobe.d/zfs.conf
