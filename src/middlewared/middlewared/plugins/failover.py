@@ -211,12 +211,13 @@ class FailoverService(ConfigService):
 
         Returns one of:
 
-        * "MASTER"
-        * "BACKUP"
-        * "ELECTING"
-        * "IMPORTING"
-        * "ERROR"
-        * "SINGLE"
+        * "MASTER" - this node holds the VIPs and has the zpool(s) imported.
+        * "BACKUP" - the peer is MASTER; this node is idle and ready to take over.
+        * "ELECTING" - a failover event is in progress and the active node is being chosen.
+        * "IMPORTING" - this node is in the process of becoming MASTER.
+        * "ERROR" - neither node has the zpool(s) imported.
+        * "SINGLE" - this is a non-HA system.
+        * "UNKNOWN" - status could not be determined from local state and the peer queries failed.
         """
         status = await self._status(app)
         if status != self.LAST_STATUS:
@@ -366,9 +367,23 @@ class FailoverService(ConfigService):
         FailoverSyncToPeerArgs,
         FailoverSyncToPeerResult,
         roles=['FAILOVER_WRITE'],
+        audit='Failover sync to peer',
     )
     def sync_to_peer(self, options):
-        """Sync database and files to the other controller."""
+        """
+        Sync configuration state to the other controller: persisted interface
+        link addresses, system dataset UUID, the configuration database, cached
+        ZFS encryption keys, license, pwenc secret, SSH authorized_keys, zpool
+        cachefile, and SNMP config. Fires `config.on_upload` and
+        `system.post_license_update` hooks on the peer.
+
+        Intended to be called on the active controller (the data flow pushes
+        state from caller to peer); callers are expected to gate on
+        `failover.status == 'MASTER'` externally.
+
+        If `options.reboot` is true, the peer is rebooted after the sync
+        completes.
+        """
         standby = ' standby controller.'
 
         self.logger.debug('Persisting interface link addresses')
@@ -409,10 +424,13 @@ class FailoverService(ConfigService):
         FailoverSyncFromPeerArgs,
         FailoverSyncFromPeerResult,
         roles=['FAILOVER_WRITE'],
+        audit='Failover sync from peer',
     )
     def sync_from_peer(self):
         """
-        Sync database and files from the other controller.
+        Trigger the peer to push its configuration state to this node by
+        invoking `failover.sync_to_peer` on the peer. All side effects of
+        that method apply.
         """
         self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
 
@@ -684,6 +702,11 @@ class FailoverService(ConfigService):
         Upgrade process will start concurrently on both nodes. Once both
         upgrades are applied, the Standby Controller will reboot. This
         job will wait for that job to complete before finalizing.
+
+        Progress is reported in the form:
+
+            Active Controller: <percent>%: <description>
+            Standby Controller: <percent>%: <description>
         """
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')

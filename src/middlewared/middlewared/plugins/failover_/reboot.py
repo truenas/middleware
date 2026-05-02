@@ -90,6 +90,14 @@ class FailoverRebootService(Service):
 
     @api_method(FailoverRebootInfoArgs, FailoverRebootInfoResult, roles=['FAILOVER_READ'])
     async def info(self):
+        """
+        Return reboot-required information for both nodes in the failover pair.
+
+        The returned structure contains a `this_node` entry with the local
+        node's reboot info and an `other_node` entry with the peer's reboot
+        info, or `null` if the peer is unreachable or does not support
+        `system.reboot.info` (legacy).
+        """
         changed = False
 
         try:
@@ -175,7 +183,12 @@ class FailoverRebootService(Service):
 
         return info
 
-    @api_method(FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult, roles=['FULL_ADMIN'])
+    @api_method(
+        FailoverRebootOtherNodeArgs,
+        FailoverRebootOtherNodeResult,
+        roles=['FULL_ADMIN'],
+        audit='Failover reboot other node',
+    )
     @job(lock='reboot_standby')
     async def other_node(self, job, options):
         """
@@ -183,6 +196,11 @@ class FailoverRebootService(Service):
 
         NOTE: This makes very few checks on HA systems. You need to
             know what you're doing before calling this.
+
+        If `options.graceful` is true, or if the peer's active boot environment
+        differs from this node's, the peer is rebooted via `system.reboot`.
+        Otherwise, `failover.become_passive` is invoked on the peer, which
+        simulates a failover event by forcibly rebooting it.
         """
         if not await self.middleware.call('failover.licensed'):
             return
