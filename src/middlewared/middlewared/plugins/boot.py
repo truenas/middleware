@@ -30,7 +30,6 @@ BOOT_POOL_NAME = BOOT_POOL_DISKS = None
 
 
 class BootUpdateInitramfsOptions(BaseModel):
-    database: str | None = None
     force: bool = False
 
 
@@ -233,8 +232,6 @@ class BootService(Service):
         Returns true if initramfs was updated and false otherwise.
         """
         args = ['/']
-        if options['database']:
-            args.extend(['-d', options['database']])
         if options['force']:
             args.extend(['-f'])
 
@@ -319,10 +316,6 @@ class BootService(Service):
             )
 
 
-async def on_config_upload(middleware, path):
-    await middleware.call('boot.update_initramfs', {'database': path})
-
-
 async def setup(middleware):
     global BOOT_POOL_NAME
 
@@ -350,5 +343,3 @@ async def setup(middleware):
             break
     else:
         middleware.logger.error('Failed to detect boot pool name.')
-
-    middleware.register_hook('config.on_upload', on_config_upload, sync=True)

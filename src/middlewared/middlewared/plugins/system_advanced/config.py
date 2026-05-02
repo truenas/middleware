@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 import re
 import tempfile
@@ -20,6 +21,8 @@ from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
+
+from .debug_kernel import write_debug_kernel_flag
 
 settings = SettingsHelper()
 
@@ -254,6 +257,9 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['debugkernel'] != config_data['debugkernel']:
                 generate_grub = True
+                # Keep the on-disk flag in sync on every transition so
+                # truenas-initrd.py reads the right value on the next regen.
+                await asyncio.to_thread(write_debug_kernel_flag, self.middleware)
 
             if original_data['nvidia'] != config_data['nvidia']:
                 await self.middleware.call('system.advanced.handle_nvidia_toggle')
