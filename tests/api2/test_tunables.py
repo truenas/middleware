@@ -271,6 +271,36 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
             call("tunable.delete", tunable["id"], job=True)
 
 
+def test_zfs_no_rebuild_on_metadata_only_change():
+    """
+    do_update must not invoke `update-initramfs` (or rewrite the live ZFS
+    parameter) when a ZFS tunable's `value`/`enabled` haven't changed.
+    Editing a cosmetic field like `comment` doesn't affect kernel state or
+    the modprobe file, so the kernel write and initramfs rebuild are
+    skipped entirely.
+    """
+    with mock_update_initramfs():
+        tunable = call("tunable.create", {
+            "type": "ZFS",
+            "var": ZFS,
+            "value": ZFS_NEW_VALUE,
+        }, job=True)
+        try:
+            # Create on enabled tunable bumps the counter once.
+            assert_update_initramfs_run_count(1)
+
+            call("tunable.update", tunable["id"], {
+                "comment": "metadata-only change",
+            }, job=True)
+
+            # The update persisted in the DB...
+            assert call("tunable.get_instance", tunable["id"])["comment"] == "metadata-only change"
+            # ...but do_update skipped the kernel write and initramfs path.
+            assert_update_initramfs_run_count(1)
+        finally:
+            call("tunable.delete", tunable["id"], job=True)
+
+
 def test_arc_max_set():
     tunable = call("tunable.create", {"type": "ZFS", "var": "zfs_arc_max", "value": "8675309"}, job=True)
     try:

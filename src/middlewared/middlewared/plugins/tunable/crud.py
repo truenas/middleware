@@ -132,13 +132,18 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
                 else:
                     await self.to_thread(reset_sysctl, self.middleware, new, failover_licensed)
             elif new.type == 'ZFS':
-                if new.enabled:
-                    await self.to_thread(set_zfs_parameter, self.middleware, new.var, new.value, failover_licensed)
-                else:
-                    await self.to_thread(reset_zfs_parameter, self.middleware, new, failover_licensed)
+                # Skip the kernel write and initramfs rebuild when neither
+                # `value` nor `enabled` changed — those are the only fields
+                # that affect the live ZFS parameter or the modprobe file.
+                # A comment-only edit doesn't need to touch either.
+                if old.value != new.value or old.enabled != new.enabled:
+                    if new.enabled:
+                        await self.to_thread(set_zfs_parameter, self.middleware, new.var, new.value, failover_licensed)
+                    else:
+                        await self.to_thread(reset_zfs_parameter, self.middleware, new, failover_licensed)
 
-                if data.update_initramfs:
-                    await update_initramfs(self.middleware, failover_licensed)
+                    if data.update_initramfs:
+                        await update_initramfs(self.middleware, failover_licensed)
             else:
                 await handle_tunable_change(self.middleware, new.model_dump(), failover_licensed)
         except Exception:
