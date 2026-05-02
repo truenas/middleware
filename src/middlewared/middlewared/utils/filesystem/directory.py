@@ -1,49 +1,39 @@
-# This provides a middleware backend oriented directory generator that
-# is primarily consumed by filesystem.listdir, but may be used in other
-# places. It is primarily a thin wrapper around os.scandir, but also
-# provides statx output and other optional file information in the
-# returned dictionaries.
+# Single-level directory listing built on top of
+# ``truenas_os.iter_filesystem_contents``.  Used by ``filesystem.listdir`` and
+# the various ``directory_is_empty`` callers.
 #
-# NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_directory.py
+# NOTE: tests for these utils live in tests/unit/test_directory.py
 
 from __future__ import annotations
 
-from collections import namedtuple
-from collections.abc import Callable
+from collections.abc import Iterator
 import enum
 import errno
 import os
-import pathlib
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any
 
-from truenas_os import AT_EMPTY_PATH, AT_FDCWD, RESOLVE_NO_SYMLINKS, StatxResult, openat2, statx
+import truenas_os
 
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import STATX_DEFAULT_MASK, StatxEntryResult, statx_entry_impl
-from .utils import path_in_ctldir
+from .stat_x import StatxAttr, StatxEtype
+from .utils import get_mount_info_for_path, path_in_ctldir
 
 
 class DirectoryRequestMask(enum.IntFlag):
     """
-    Allow users to specify what information they want with the returned
-    directory object. Removing unnecessary information may be useful to
-    improve performance of the DirectoryIterator.
+    Bitmask controlling which optional metadata fields are populated for each
+    yielded entry.  Omitting bits avoids the corresponding syscall(s) per entry.
 
-    ACL - include boolean whether ACL is present (requires listxattr call)
+    ACL       - boolean for whether the entry has an ACL (uses listxattr)
+    CTLDIR    - boolean for whether the entry is in a ZFS ctldir
+    REALPATH  - resolved (symlink-followed) path
+    XATTRS    - list of extended attribute names
+    ZFS_ATTRS - list of ZFS file attribute names; None for non-ZFS entries
 
-    CTLDIR - include boolean whether path is in ZFS ctldir (requires multiple
-        stat() calls per file
-
-    REALPATH - include output of `realpath` call
-
-    XATTR - list of extended attributes (requires listxattr call)
-
-    ZFS_ATTRS - include ZFS attributes (requires fcntl call per file)
-
-    NOTE: this changes to this should also be reflected in API test
-    `test_listdir_request_mask.py`
+    NOTE: changes here should be reflected in the ``test_listdir_request_mask``
+    API test.
     """
     ACL = enum.auto()
     CTLDIR = enum.auto()
@@ -53,333 +43,164 @@ class DirectoryRequestMask(enum.IntFlag):
 
 
 ALL_ATTRS = (
-    DirectoryRequestMask.ACL |
-    DirectoryRequestMask.CTLDIR |
-    DirectoryRequestMask.REALPATH |
-    DirectoryRequestMask.XATTRS |
-    DirectoryRequestMask.ZFS_ATTRS
+    DirectoryRequestMask.ACL
+    | DirectoryRequestMask.CTLDIR
+    | DirectoryRequestMask.REALPATH
+    | DirectoryRequestMask.XATTRS
+    | DirectoryRequestMask.ZFS_ATTRS
 )
 
-dirent_struct = namedtuple('dirent_struct', [
-    'name', 'path', 'realpath', 'stat', 'etype', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
-])
 
-T_DirEntry = TypeVar('T_DirEntry', dict[str, Any], dirent_struct)
-
-
-class DirectoryFd():
-    """
-    Wrapper for O_DIRECTORY open of a file that allows for automatic closing
-    when object is garbage collected.
-    """
-    def __init__(self, path: str | pathlib.Path, dir_fd: int | None = None) -> None:
-        self.__path = path
-        self.__dir_fd: int | None = None
-        self.__dir_fd = openat2(
-            os.fspath(path),
-            os.O_DIRECTORY,
-            AT_FDCWD if dir_fd is None else dir_fd,
-            resolve=RESOLVE_NO_SYMLINKS,
-        )
-
-    def __del__(self) -> None:
-        self.close()
-
-    def __repr__(self) -> str:
-        return f"<DirectoryFd path='{self.__path}' fileno={self.fileno}>"
-
-    def close(self) -> None:
-        if self.__dir_fd is None:
-            return
-
-        os.close(self.__dir_fd)
-        self.__dir_fd = None
-
-    @property
-    def fileno(self) -> int | None:
-        return self.__dir_fd
+def _etype(item: truenas_os.IterInstance) -> str:
+    if item.isdir:
+        return StatxEtype.DIRECTORY.name
+    if item.islnk:
+        return StatxEtype.SYMLINK.name
+    if item.isreg:
+        return StatxEtype.FILE.name
+    return StatxEtype.OTHER.name
 
 
-class DirectoryIterator(Generic[T_DirEntry]):
-    """
-    A simple wrapper around os.scandir that provides additional features
-    such as statx output, xattr, and acl presence.
+def _statx_attr_names(stx_attributes: int) -> list[str]:
+    return [a.name for a in StatxAttr if stx_attributes & a.value and a.name is not None]
 
-    `path` - directory to iterate. `dir_fd` must be specified if relative
-    path is used.
 
-    `file_type` - optimization to only yield results of the specified file
-    type. Defaults to all file types.
-
-    `request_mask` - bitmask of additional data to include with yielded
-    entries. See DirectoryRequestMask. Defaults to _all_ possible attributes.
-
-    `dir_fd` - optional argument to specify an open file descriptor for case
-    where we are opening a relative path.
-
-    `as_dict` - yield entries in dictionary expected by `filesystem.listdir`.
-    When set to False, then struct_direct (see above) is returned. Default is True
-
-    Context manager protocol is supported and preferred for most cases as it
-    will more aggressively free resources.
-
-    ```
-    with DirectoryIterator('/mnt') as d_iter:
-        for entry in d_iter:
-            print(entry)
-    ```
-
-    NOTE: this iterator maintains two open files:
-    1. the file underlying os.scandir object.
-    2. the O_DIRECTORY open of the `path` that was used to create os.scandir
-       object. This is required to allow peforming *_at syscalls on directory
-       entries.
-    """
-
-    @overload
-    def __init__(
-            self: DirectoryIterator[dict[str, Any]],
-            path: str | pathlib.Path,
-            file_type: FileType | None = None,
-            request_mask: DirectoryRequestMask | None = None,
-            dir_fd: int | None = None,
-            *,
-            as_dict: Literal[True] = True,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-            self: DirectoryIterator[dirent_struct],
-            path: str | pathlib.Path,
-            file_type: FileType | None = None,
-            request_mask: DirectoryRequestMask | None = None,
-            dir_fd: int | None = None,
-            *,
-            as_dict: Literal[False],
-    ) -> None: ...
-
-    def __init__(
-            self,
-            path: str | pathlib.Path,
-            file_type: FileType | None = None,
-            request_mask: DirectoryRequestMask | None = None,
-            dir_fd: int | None = None,
-            as_dict: bool = True,
-    ) -> None:
-        self.__dir_fd: DirectoryFd | None = None
-        self.__path_iter: os._ScandirIterator[str] | None = None
-        self.__path = path
-
-        self.__dir_fd = DirectoryFd(path, dir_fd)
-        self.__file_type = FileType(file_type).name if file_type else None
-        dir_fd_num = self.__dir_fd.fileno
-        assert dir_fd_num is not None
-        self.__path_iter = os.scandir(dir_fd_num)
-        self.__stat = statx('', dir_fd=dir_fd_num, flags=AT_EMPTY_PATH, mask=STATX_DEFAULT_MASK)
-
-        # Explicitly allow zero for request_mask
-        self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
-
-        self.__as_dict = as_dict
-        self.__return_fn: Callable[..., T_DirEntry] = (
-            self.__return_dict if as_dict else self.__return_dirent  # type: ignore[assignment]
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f"<DirectoryIterator path='{self.__path}' "
-            f"file_type='{'ALL' if self.__file_type is None else self.__file_type}' "
-            f"request_mask={self.__request_mask}>"
-        )
-
-    def __iter__(self) -> DirectoryIterator[T_DirEntry]:
-        return self
-
-    def __del__(self) -> None:
-        self.close()
-
-    def __enter__(self) -> DirectoryIterator[T_DirEntry]:
-        return self
-
-    def __exit__(self, tp: object, value: object, traceback: object) -> None:
-        # Since we know we're leaving scope of context manager
-        # we can more aggressively close resources
-        self.close(force=True)
-
-    def __check_dir_entry(self, dirent: os.DirEntry[str]) -> StatxEntryResult | None:
-        dir_fd = self.dir_fd
-        assert dir_fd is not None
-        stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=dir_fd)
-        if stat_info is None:
-            # path doesn't exist anymore
+def _zfs_attrs_for(fd: int) -> list[str] | None:
+    try:
+        return zfs_attributes_dump(fget_zfs_file_attributes(fd))
+    except OSError as e:
+        # ENOTTY/EINVAL: not a ZFS filesystem.  Match historical None sentinel.
+        if e.errno in (errno.ENOTTY, errno.EINVAL):
             return None
+        raise
 
-        if self.__file_type and stat_info['etype'] != self.__file_type:
-            # pre-filtering optimization to only select single type of
-            # file. This is used by webui to only return directories
-            # and reduces cost of any subsequent filtering.
-            return None
 
-        return stat_info
+def _build_entry(
+    parent_path: str,
+    item: truenas_os.IterInstance,
+    etype: str,
+    mask: DirectoryRequestMask,
+) -> dict[str, Any] | None:
+    """
+    Render a single iter_filesystem_contents item as a listdir-shaped dict.
 
-    def __return_dirent(
-            self,
-            dirent: os.DirEntry[str],
-            st: StatxEntryResult,
-            realpath: str | None, xattrs: list[str] | None,
-            acl: bool | None, zfs_attrs: list[str] | None,
-            is_in_ctldir: bool | None,
-    ) -> dirent_struct:
-        """
-        More memory-efficient objects for case where dictionary isn't needed or desired.
-        """
-        return dirent_struct(
-            dirent.name,
-            os.path.join(self.__path, dirent.name),
-            realpath,
-            st['st'],
-            st['etype'],
-            acl,
-            xattrs,
-            zfs_attrs,
-            is_in_ctldir
-        )
+    Symlinks are followed for stat/xattr/zfs metadata to match the historical
+    listdir contract (size/mode/etc reflect the symlink target).  A broken
+    symlink — one whose follow-statx fails with ``FileNotFoundError`` — is
+    skipped by returning ``None``.
+    """
+    item_path = os.path.join(parent_path, item.name)
 
-    def __return_dict(
-            self,
-            dirent: os.DirEntry[str],
-            st: StatxEntryResult,
-            realpath: str | None,
-            xattrs: list[str] | None,
-            acl: bool | None,
-            zfs_attrs: list[str] | None,
-            is_in_ctldir: bool | None,
-    ) -> dict[str, Any]:
-        stat = st['st']
-        return {
-            'name': dirent.name,
-            'path': os.path.join(self.__path, dirent.name),
-            'realpath': realpath,
-            'type': st['etype'],
-            'size': stat.stx_size,
-            'allocation_size': stat.stx_blocks * 512,
-            'mode': stat.stx_mode,
-            'acl': acl,
-            'uid': stat.stx_uid,
-            'gid': stat.stx_gid,
-            'mount_id': stat.stx_mnt_id,
-            'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
-            'is_ctldir': is_in_ctldir,
-            'attributes': st['attributes'],
-            'xattrs': xattrs,
-            'zfs_attrs': zfs_attrs
-        }
-
-    def __next__(self) -> T_DirEntry:
-        # dirent here is os.DirEntry yielded from os.scandir()
-        assert self.__path_iter is not None
-        dirent = next(self.__path_iter)
-        while (st := self.__check_dir_entry(dirent)) is None:
-            dirent = next(self.__path_iter)
-
-        if self.__request_mask == 0:
-            # Skip an unnecessary file open/close if we only need stat info
-            return self.__return_fn(dirent, st, None, None, None, None, None)
-
+    if item.islnk:
+        # iter_filesystem_contents gives us O_PATH on the symlink itself.
+        # Follow the link (path-based) so stat / xattr / zfs reflect the target.
         try:
-            fd = os.open(dirent.name, os.O_RDONLY, dir_fd=self.dir_fd)
+            st = truenas_os.statx(
+                item_path,
+                mask=truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE,
+            )
         except FileNotFoundError:
-            # `dirent` was most likely deleted while we were generating listing
-            # There's not point in logging an error. Just keep moving on.
-            return self.__next__()
-        except OSError as err:
-            if err.errno in (errno.ENXIO, errno.ENODEV):
-                # this can happen for broken symlinks
-                return self.__next__()
-
-            raise
-
-        try:
-            if self.__request_mask & int(DirectoryRequestMask.REALPATH):
-                realpath = os.path.realpath(f'/proc/self/fd/{fd}')
-            else:
-                realpath = None
-
-            if self.__request_mask & int(DirectoryRequestMask.XATTRS):
-                xattrs = os.listxattr(fd)
-            else:
-                xattrs = None
-
-            if self.__request_mask & int(DirectoryRequestMask.ACL):
-                # try to avoid listing xattrs twice
-                acl = acl_is_present(os.listxattr(fd) if xattrs is None else xattrs)
-            else:
-                acl = None
-
-            if self.__request_mask & int(DirectoryRequestMask.ZFS_ATTRS):
-                try:
-                    attr_mask = fget_zfs_file_attributes(fd)
-                    zfs_attrs = zfs_attributes_dump(attr_mask)
-                except OSError as e:
-                    # non-ZFS filesystems will fail with ENOTTY or EINVAL
-                    # In this case we set `None` to indicate non-ZFS
-                    if e.errno not in (errno.ENOTTY, errno.EINVAL):
-                        raise e from None
-
-                    zfs_attrs = None
-            else:
-                zfs_attrs = None
-
-            if self.__request_mask & int(DirectoryRequestMask.CTLDIR):
-                is_in_ctldir = path_in_ctldir(os.path.join(self.__path, dirent.name))
-            else:
-                is_in_ctldir = None
-
-        finally:
-            os.close(fd)
-
-        return self.__return_fn(dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir)
-
-    @property
-    def dir_fd(self) -> int | None:
-        """
-        File descriptor for O_DIRECTORY open for target directory.
-        """
-        if self.__dir_fd is None:
             return None
+        meta_fd: int | None = None
+    else:
+        st = item.statxinfo
+        meta_fd = item.fd
 
-        return self.__dir_fd.fileno
+    attributes = _statx_attr_names(st.stx_attributes)
 
-    @property
-    def request_mask(self) -> DirectoryRequestMask:
-        return self.__request_mask
+    realpath = os.path.realpath(item_path) if mask & DirectoryRequestMask.REALPATH else None
 
-    @property
-    def stat(self) -> StatxResult:
-        return self.__stat
-
-    def close(self, force: bool = False) -> None:
+    if mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
         try:
-            if self.__path_iter is not None:
-                self.__path_iter.close()
-                self.__path_iter = None
-        except Exception:
-            pass
+            xattr_list = os.listxattr(meta_fd) if meta_fd is not None else os.listxattr(item_path)
+        except OSError:
+            xattr_list = []
+    else:
+        xattr_list = None
 
-        if self.__dir_fd is not None:
-            # decrement reference to __dir_fd and allow
-            # garbage collecter to do cleanup. This behavior
-            # can be overriden by passing a force parameter
-            if force:
-                self.__dir_fd.close()
+    xattrs = xattr_list if mask & DirectoryRequestMask.XATTRS else None
+    acl = acl_is_present(xattr_list) if mask & DirectoryRequestMask.ACL else None
 
-            self.__dir_fd = None
+    if mask & DirectoryRequestMask.ZFS_ATTRS:
+        if meta_fd is not None:
+            zfs_attrs = _zfs_attrs_for(meta_fd)
+        else:
+            try:
+                tgt_fd = os.open(item_path, os.O_RDONLY)
+            except OSError:
+                zfs_attrs = None
+            else:
+                try:
+                    zfs_attrs = _zfs_attrs_for(tgt_fd)
+                finally:
+                    os.close(tgt_fd)
+    else:
+        zfs_attrs = None
+
+    is_ctldir = path_in_ctldir(item_path) if mask & DirectoryRequestMask.CTLDIR else None
+
+    return {
+        'name': item.name,
+        'path': item_path,
+        'realpath': realpath,
+        'type': etype,
+        'size': st.stx_size,
+        'allocation_size': st.stx_blocks * 512,
+        'mode': st.stx_mode,
+        'acl': acl,
+        'uid': st.stx_uid,
+        'gid': st.stx_gid,
+        'mount_id': st.stx_mnt_id,
+        'is_mountpoint': StatxAttr.MOUNT_ROOT.name in attributes,
+        'is_ctldir': is_ctldir,
+        'attributes': attributes,
+        'xattrs': xattrs,
+        'zfs_attrs': zfs_attrs,
+    }
 
 
-def directory_is_empty(path: str) -> bool:
+def iter_listdir(
+    path: str | os.PathLike,
+    file_type: FileType | None = None,
+    request_mask: DirectoryRequestMask | None = None,
+) -> Iterator[dict[str, Any]]:
     """
-    This is a more memory-efficient way of determining whether a directory is empty
-    than looking at os.listdir results.
+    Yield single-level directory entries for ``path`` as listdir-shaped dicts.
+
+    `file_type` - optional pre-filter restricting yielded entries to a single
+    ``FileType``.
+
+    `request_mask` - bitmask of optional metadata to populate.  ``None`` (the
+    default) populates everything in :data:`ALL_ATTRS`; pass an explicit
+    ``DirectoryRequestMask(0)`` to skip every optional fetch.
     """
-    with DirectoryIterator(path, request_mask=DirectoryRequestMask(0), as_dict=False) as d_iter:
-        return not any(d_iter)
+    mnt, fs, rel = get_mount_info_for_path(path)
+    mask = ALL_ATTRS if request_mask is None else request_mask
+    want_type = FileType(file_type).name if file_type is not None else None
+    parent_path = os.fspath(path)
+
+    with truenas_os.iter_filesystem_contents(
+        mnt, fs,
+        relative_path=rel,
+        include_symlinks=True,
+    ) as it:
+        for item in it:
+            if item.isdir:
+                # Single-level: never descend.
+                it.skip()
+
+            etype = _etype(item)
+            if want_type is not None and etype != want_type:
+                continue
+
+            entry = _build_entry(parent_path, item, etype, mask)
+            if entry is None:
+                continue
+            yield entry
+
+
+def directory_is_empty(path: str | os.PathLike) -> bool:
+    """
+    Memory-efficient test for whether ``path`` is an empty directory.
+    """
+    return not any(iter_listdir(path, request_mask=DirectoryRequestMask(0)))

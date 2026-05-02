@@ -47,7 +47,7 @@ from middlewared.service import CallError, Service, filterable_api_method, job, 
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present
 from middlewared.utils.filesystem.constants import FileType
-from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
+from middlewared.utils.filesystem.directory import DirectoryRequestMask, iter_listdir
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
@@ -386,8 +386,10 @@ class FilesystemService(Service):
             # filter these here.
             filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
 
-        with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
-            return filter_list(d_iter, filters, options)
+        return filter_list(
+            iter_listdir(path, file_type=file_type, request_mask=request_mask),
+            filters, options,
+        )
 
     @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'])
     def stat(self, _path):
