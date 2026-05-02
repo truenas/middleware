@@ -256,11 +256,31 @@ class FilesystemService(Service):
         if p.exists():
             raise CallError(f'{path}: path already exists.', errno.EEXIST)
 
-        realpath = os.path.realpath(path)
-        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
-            raise CallError(f'{path}: path not permitted', errno.EPERM)
+        # Resolve the parent with no symlink follow and operate via dir_fd, so the
+        # prefix check below cannot be raced against the mkdir.
+        parent = os.path.dirname(path) or '/'
+        basename = os.path.basename(path)
+        try:
+            parent_fd = truenas_os.openat2(
+                parent, os.O_DIRECTORY,
+                resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+            )
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError(f'{path}: symlinks in path are not permitted', errno.EPERM)
+            if e.errno == errno.ENOENT:
+                raise CallError(f'{path}: parent directory does not exist', errno.ENOENT)
+            raise
 
-        os.mkdir(path, mode=mode)
+        try:
+            realpath = os.path.join(os.readlink(f'/proc/self/fd/{parent_fd}'), basename)
+            if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
+                raise CallError(f'{path}: path not permitted', errno.EPERM)
+
+            os.mkdir(basename, mode=mode, dir_fd=parent_fd)
+        finally:
+            os.close(parent_fd)
+
         st = stat_x.statx_entry_impl(p)
         stat = st['st']
 
