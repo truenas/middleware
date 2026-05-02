@@ -60,14 +60,16 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime', 'arcactualrate', 'arcrate',
-        'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
-        'upsload', 'upstemperature',
+        'cpu', 'gpu','cputemp', 'gputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime',
+        'arcactualrate', 'arcrate', 'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage',
+        'upscurrent', 'upsfrequency', 'upsload', 'upstemperature',
     ]
     """Type of performance metric to retrieve.
 
     * `cpu`: CPU usage statistics
+    * `gpu`: GPU usage statistics
     * `cputemp`: CPU temperature readings
+    * `gputemp`: GPU temperature readings
     * `disk`: Disk I/O statistics
     * `interface`: Network interface statistics
     * `load`: System load averages

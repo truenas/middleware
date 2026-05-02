@@ -13,6 +13,8 @@ from middlewared.plugins.reporting.netdata.graphs import (
     DemandMetadataAccessesPerSecondPlugin,
     DISKPlugin,
     DiskTempPlugin,
+    GPUPlugin,
+    GPUTempPlugin,
     InterfacePlugin,
     LoadPlugin,
     MemoryPlugin,
@@ -37,6 +39,8 @@ from middlewared.pytest.unit.middleware import Middleware
     (DemandMetadataAccessesPerSecondPlugin, 'demand_metadata_accesses_per_second', ['time']),
     (ARCSizePlugin, 'arc_size', ['time']),
     (DiskTempPlugin, 'sda', ['time', 'temperature_value']),
+    (GPUPlugin, 'gpu', ['time']),
+    (GPUTempPlugin, 'gputemp', ['time']),
 ])
 @pytest.mark.asyncio
 async def test_netdata_client_malformed_response_error(obj, identifier, legend):

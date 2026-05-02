@@ -6,6 +6,7 @@ import typing
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
 from .netdata.graph_base import GraphBase
+from ...utils.metrics.gpu_usage import get_gpu_usage
 
 # https://learn.netdata.cloud/docs/netdata-agent/configuration/optimizing-metrics-database/
 # change-how-long-netdata-stores-metrics
@@ -53,7 +54,7 @@ def get_netdata_state_path() -> str:
 
 
 def get_metrics_approximation(
-    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
+    disk_count: int, core_count: int, gpu_count: int, interface_count: int, pool_count: int, vms_count: int,
     systemd_service_count: int, containers_count: typing.Optional[int] = 10,
 ) -> dict:
     data = {
@@ -121,6 +122,12 @@ def get_metrics_approximation(
 
             # cputemp
             'cputemp.temperatures': core_count + 1,
+
+            # gpu usage
+            'gpu.usage': gpu_count,
+
+            # gputemp
+            'gputemp.temperatures': gpu_count,
 
             # ups
             'nut_ups.charge': 1,

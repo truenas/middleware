@@ -87,7 +87,7 @@ class ReportingRealtimeService(Service):
                     ]
                 ),
                 'pools': get_pool_stats(netdata_metrics),
-                'gpu': get_gpu_stats(),
+                'gpu': get_gpu_stats(netdata_metrics),
             })
 
         return data
