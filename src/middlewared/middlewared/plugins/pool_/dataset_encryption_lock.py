@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import uuid
 
+import truenas_os
 from truenas_pylibzfs import ZFSError, ZFSException
 
 from middlewared.api import api_method
@@ -280,7 +281,13 @@ class PoolDatasetService(Service):
                         # we already checked above that path above is not a mountpoint and we didn't have a
                         # covert mount under us of this dataset. So we should be able to simply rename here.
                         try:
-                            os.rename(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+                            # AT_RENAME_NOREPLACE so a race that materializes the destination name surfaces
+                            # as an error instead of silently clobbering whatever appeared.
+                            truenas_os.renameat2(
+                                mount_path,
+                                f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
+                                flags=truenas_os.AT_RENAME_NOREPLACE,
+                            )
                         except Exception as e:
                             self.logger.error('%s: failed to move unexpected directory or file from mount path',
                                               mount_path, exc_info=True)
