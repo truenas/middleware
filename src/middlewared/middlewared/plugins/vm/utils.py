@@ -4,10 +4,10 @@ import shutil
 import stat
 
 import truenas_os
-
-from middlewared.utils.filesystem.copy import (
+from truenas_os_pyutils.io import atomic_write, safe_open
+from truenas_os_pyutils.truenas_shutil import (
     CopyTreeConfig,
-    clone_or_copy_file,
+    copyfile,
     copytree,
 )
 
@@ -122,44 +122,39 @@ def delete_vm_state(id_: int, name: str) -> None:
 
 
 def _copy_nvram_file(src: str, dst: str) -> None:
-    """Symlink-safe single-file copy with O_EXCL no-clobber.
+    """Copy an NVRAM file from one VM slot to another.
 
-    Uses clone_or_copy_file for the byte transfer (block clone on ZFS,
-    sendfile/userspace fallback). Replicates source uid/gid, mode, and
-    atime/mtime via fd-based syscalls. xattrs are NOT copied — NVRAM
-    files written by libvirt/OVMF do not carry meaningful xattrs.
+    Atomic so a mid-copy crash cannot leave a half-written NVRAM behind
+    that libvirt would later boot the cloned VM from.
 
-    Symlink protection is O_NOFOLLOW on both endpoints; O_EXCL on dst
-    refuses to clobber any pre-existing inode. If anything fails after
-    dst was created, the partial dst is unlinked before re-raising.
+    No-clobber because if dst already exists it is stale state from a
+    previously deleted VM occupying the same id slot — we refuse and
+    surface the cleanup decision rather than silently overwrite it.
+
+    uid/gid/mode are preserved so the cloned NVRAM remains writable by
+    the libvirt-qemu user that runs qemu. xattrs and atime/mtime are
+    not copied — NVRAM written by libvirt/OVMF carries no meaningful
+    xattrs, and qemu overwrites both timestamps the first time the
+    cloned VM boots.
 
     Raises:
         FileNotFoundError: src does not exist.
         FileExistsError: dst already exists (file/symlink/dir).
-        OSError: on symlink at src/dst (ELOOP), I/O failure, etc.
+        SymlinkInPathError: any component of src is a symlink.
+        OSError: I/O failure, etc.
     """
-    src_fd = os.open(src, os.O_RDONLY | os.O_NOFOLLOW)
-    try:
+    with safe_open(src, 'rb') as sf:
+        src_fd = sf.fileno()
         src_st = os.fstat(src_fd)
-        flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
-        dst_fd = os.open(dst, flags, mode=0o600)
-        try:
-            try:
-                clone_or_copy_file(src_fd, dst_fd)
-                os.fchown(dst_fd, src_st.st_uid, src_st.st_gid)
-                os.fchmod(dst_fd, stat.S_IMODE(src_st.st_mode))
-                os.utime(dst_fd, ns=(src_st.st_atime_ns, src_st.st_mtime_ns))
-            except Exception:
-                # dst was created by O_CREAT|O_EXCL above; remove the
-                # partial file before propagating so callers don't see
-                # half-written state.
-                with contextlib.suppress(OSError):
-                    os.unlink(dst)
-                raise
-        finally:
-            os.close(dst_fd)
-    finally:
-        os.close(src_fd)
+
+        with atomic_write(
+            dst, 'wb',
+            uid=src_st.st_uid,
+            gid=src_st.st_gid,
+            perms=stat.S_IMODE(src_st.st_mode),
+            noclobber=True,
+        ) as df:
+            copyfile(src_fd, df.fileno())
 
 
 def copy_vm_state(src_id: int, src_name: str, dst_id: int, dst_name: str) -> None:
