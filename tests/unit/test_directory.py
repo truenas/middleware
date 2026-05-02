@@ -70,20 +70,19 @@ def validate_attributes(dirent):
 
 
 def test__length_no_filters(directory_for_test):
-    dir_iter = directory.DirectoryIterator(directory_for_test)
-    assert len(filter_list(dir_iter, [], {})) == 2 * len(TEST_FILES + TEST_DIRS)
-
-    dir_iter.close()
+    assert len(filter_list(
+        directory.iter_listdir(directory_for_test), [], {}
+    )) == 2 * len(TEST_FILES + TEST_DIRS)
 
 
 def test__length_iter_dirs(directory_for_test):
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test, file_type=constants.FileType.DIRECTORY),
+        directory.iter_listdir(directory_for_test, file_type=constants.FileType.DIRECTORY),
         [], {}
     )) == len(TEST_DIRS)
 
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test),
+        directory.iter_listdir(directory_for_test),
         [['type', '=', 'DIRECTORY']], {}
     )) == len(TEST_DIRS)
 
@@ -92,12 +91,12 @@ def test__length_iter_dirs(directory_for_test):
 
 def test__length_iter_files(directory_for_test):
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test, file_type=constants.FileType.FILE),
+        directory.iter_listdir(directory_for_test, file_type=constants.FileType.FILE),
         [], {}
     )) == len(TEST_FILES)
 
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test),
+        directory.iter_listdir(directory_for_test),
         [['type', '=', 'FILE']], {}
     )) == len(TEST_FILES)
 
@@ -106,38 +105,34 @@ def test__length_iter_symlink(directory_for_test):
     expected_symlinks = len(TEST_FILES) + len(TEST_DIRS)
 
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test, file_type=constants.FileType.SYMLINK),
+        directory.iter_listdir(directory_for_test, file_type=constants.FileType.SYMLINK),
         [], {}
     )) == expected_symlinks
 
     assert len(filter_list(
-        directory.DirectoryIterator(directory_for_test),
+        directory.iter_listdir(directory_for_test),
         [['type', '=', 'SYMLINK']], {}
     )) == expected_symlinks
 
 
 def test__stat_attributes_dirents(directory_for_test):
-    dir_iter = directory.DirectoryIterator(directory_for_test)
-    for dirent in dir_iter:
+    for dirent in directory.iter_listdir(directory_for_test):
         validate_attributes(dirent)
 
 
 def test__directory_zero_request_mask(directory_for_test):
-    dir_iter = directory.DirectoryIterator(directory_for_test, request_mask=0)
-    for dirent in dir_iter:
+    for dirent in directory.iter_listdir(directory_for_test, request_mask=directory.DirectoryRequestMask(0)):
         assert dirent['realpath'] is None
         assert dirent['is_ctldir'] is None
         assert dirent['zfs_attrs'] is None
         assert dirent['xattrs'] is None
         assert dirent['acl'] is None
 
-    del(dir_iter)
-    gc.collect()
-
 
 def test__directory_realpath_request_mask(directory_for_test):
-    dir_iter = directory.DirectoryIterator(directory_for_test, request_mask=directory.DirectoryRequestMask.REALPATH)
-    for dirent in dir_iter:
+    for dirent in directory.iter_listdir(
+        directory_for_test, request_mask=directory.DirectoryRequestMask.REALPATH
+    ):
         assert dirent['realpath'] is not None
         assert dirent['is_ctldir'] is None
         assert dirent['zfs_attrs'] is None
@@ -146,8 +141,9 @@ def test__directory_realpath_request_mask(directory_for_test):
 
 
 def test__directory_xattrs_request_mask(directory_for_test):
-    dir_iter = directory.DirectoryIterator(directory_for_test, request_mask=directory.DirectoryRequestMask.XATTRS)
-    for dirent in dir_iter:
+    for dirent in directory.iter_listdir(
+        directory_for_test, request_mask=directory.DirectoryRequestMask.XATTRS
+    ):
         assert dirent['realpath'] is None
         assert dirent['is_ctldir'] is None
         assert dirent['zfs_attrs'] is None
@@ -156,13 +152,14 @@ def test__directory_xattrs_request_mask(directory_for_test):
 
 
 def test__directory_acl_request_mask(directory_for_test):
-    with directory.DirectoryIterator(directory_for_test, request_mask=directory.DirectoryRequestMask.ACL) as dir_iter:
-        for dirent in dir_iter:
-            assert dirent['realpath'] is None
-            assert dirent['is_ctldir'] is None
-            assert dirent['zfs_attrs'] is None
-            assert dirent['xattrs'] is None
-            assert dirent['acl'] is not None
+    for dirent in directory.iter_listdir(
+        directory_for_test, request_mask=directory.DirectoryRequestMask.ACL
+    ):
+        assert dirent['realpath'] is None
+        assert dirent['is_ctldir'] is None
+        assert dirent['zfs_attrs'] is None
+        assert dirent['xattrs'] is None
+        assert dirent['acl'] is not None
 
 
 def test__directory_request_mask():
@@ -178,21 +175,3 @@ def test__directory_is_empty(tmpdir):
     assert directory.directory_is_empty(tmpdir)
     os.mkdir(os.path.join(tmpdir, 'testfile'))
     assert not directory.directory_is_empty(tmpdir)
-
-
-def test__directory_fd(directory_for_test):
-    # without dir_fd specified (open(2))
-    dfd = directory.DirectoryFd(directory_for_test)
-
-    # basic smoke-test of __repr__ for the DirectoryFd objec
-    assert str(directory_for_test) in repr(dfd)
-
-    # with dir_fd specified (openat(2) with relative path).
-    dfd2 = directory.DirectoryFd('testdir1', dir_fd=dfd.fileno)
-    assert 'testdir1' in repr(dfd2)
-
-    dfd.close()
-    assert dfd.fileno is None
-
-    with pytest.raises(NotADirectoryError):
-        directory.DirectoryFd(os.path.join(directory_for_test, 'testfile1'))

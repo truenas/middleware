@@ -4,7 +4,10 @@
 # path_in_ctldir() has test coverage via api tests for filesystem.stat
 # and filesystem.listdir methods since it requires access to zpool.
 
+import os
 from pathlib import Path
+
+from truenas_os_pyutils.mount import statmount
 
 from .constants import ZFSCTL
 
@@ -34,3 +37,17 @@ def path_in_ctldir(path_in: str | Path) -> bool:
         path = path.parent
 
     return is_in_ctldir
+
+
+def get_mount_info_for_path(path: str | os.PathLike) -> tuple[str, str, str | None]:
+    """
+    Resolve a directory path to the (mountpoint, filesystem_name, relative_path)
+    triple required by ``truenas_os.iter_filesystem_contents``.
+
+    Symlinks anywhere in the input are resolved before lookup so the helper can
+    be used directly from path-only APIs (e.g. ``filesystem.listdir``).
+    """
+    real = os.path.realpath(os.fspath(path))
+    sm = statmount(path=real, as_dict=False)
+    rel = os.path.relpath(real, sm.mnt_point)
+    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)
