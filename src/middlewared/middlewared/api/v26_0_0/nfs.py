@@ -13,6 +13,8 @@ from middlewared.api.base import (
     single_argument_args,
 )
 
+from .zfs_tier import TierInfo
+
 __all__ = [
     "NFSGetNfs3ClientsEntry",
     "NFSGetNfs4ClientsEntry",
@@ -175,6 +177,11 @@ class SharingNFSEntry(BaseModel):
     Enterprise feature to enable access to the ZFS snapshot directory for the export.
     Export path must be the root directory of a ZFS dataset.
     """
+    tier: TierInfo | None = None
+    """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
+    managed through API endpoints in the `pool.dataset` namespace.
+
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed or if tiering is disabled."""
 
 
 class NfsShareCreate(SharingNFSEntry):
@@ -182,6 +189,7 @@ class NfsShareCreate(SharingNFSEntry):
     dataset: Excluded = excluded_field()
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
 
 class SharingNFSCreateArgs(BaseModel):

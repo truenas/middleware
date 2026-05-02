@@ -8,6 +8,8 @@ from middlewared.api.base import (
     excluded_field,
 )
 
+from .zfs_tier import TierInfo
+
 __all__ = [
     "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdate", "WebshareUpdateResult",
     "WebshareBindipChoicesArgs", "WebshareBindipChoicesResult",
@@ -79,6 +81,11 @@ class SharingWebshareEntry(BaseModel):
         - False: The share is not in a locked dataset.
         - None: Lock status is not available because path locking information was not requested.
     """
+    tier: TierInfo | None = None
+    """Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
+managed by TrueNAS automatically based on dataset activity.
+
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed or if tiering is disabled."""
 
 
 class SharingWebshareCreate(SharingWebshareEntry):
@@ -86,6 +93,7 @@ class SharingWebshareCreate(SharingWebshareEntry):
     dataset: Excluded = excluded_field()
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
 
 class SharingWebshareCreateArgs(BaseModel):

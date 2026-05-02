@@ -1,11 +1,15 @@
 from datetime import datetime, time
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import AfterValidator, Field, model_validator
 
 from middlewared.api.base import BaseModel, TimeString, croniter_for_schedule, validate_filters, validate_options
 
-__all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel"]
+__all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
+           "StorageTier"]
+
+StorageTier = Literal['REGULAR', 'PERFORMANCE']
+"""Storage performance tier. `REGULAR` uses standard-capacity drives; `PERFORMANCE` uses fast media (e.g. NVMe)."""
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
 QF_FIELD = Field(default=[], description=QF_DOC, examples=[

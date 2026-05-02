@@ -234,6 +234,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
 
         # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
@@ -274,6 +275,7 @@ class SMBService(ConfigService):
             bind_ip_choices,
             is_enterprise,
             security_config,
+            tiering_enabled,
         )
 
     @api_method(SMBBindipChoicesArgs, SMBBindipChoicesResult)
@@ -746,6 +748,7 @@ class SharingSMBModel(sa.Model):
 
 class SharingSMBService(SharingService):
 
+    include_tier_info = True
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
     path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
@@ -1559,6 +1562,7 @@ class SharingSMBService(SharingService):
                 data[param] = True
 
         data.pop(self.locked_field, None)
+        data.pop('tier', None)
         data.update(opts)
 
         # hosts allow and hosts deny are space-delimited
