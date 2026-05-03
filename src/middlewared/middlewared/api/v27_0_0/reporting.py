@@ -60,14 +60,16 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime', 'arcactualrate', 'arcrate',
-        'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
-        'upsload', 'upstemperature',
+        'cpu', 'gpu','cputemp', 'gputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime',
+        'arcactualrate', 'arcrate', 'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage',
+        'upscurrent', 'upsfrequency', 'upsload', 'upstemperature',
     ]
     """Type of performance metric to retrieve.
 
     * `cpu`: CPU usage statistics
+    * `gpu`: GPU usage statistics
     * `cputemp`: CPU temperature readings
+    * `gputemp`: GPU temperature readings
     * `disk`: Disk I/O statistics
     * `interface`: Network interface statistics
     * `load`: System load averages
@@ -187,6 +189,31 @@ class ReportingRealtimeEventSourceEvent(BaseModel):
     """ZFS performance metrics for real-time monitoring."""
     pools: dict
     """Storage pool statistics for real-time monitoring."""
+    gpu: "ReportingRealtimeEventSourceEventGPU"
+    """GPU usage metrics for real-time monitoring."""
+
+
+class ReportingRealtimeEventSourceEventGPU(BaseModel):
+    index: int
+    """GPU device index."""
+    name: str
+    """GPU device name."""
+    gpu_utilization: float | None
+    """GPU core utilization percentage."""
+    memory_utilization: float | None
+    """GPU memory utilization percentage."""
+    memory_total: int | None
+    """Total GPU memory in MiB."""
+    memory_used: int | None
+    """Used GPU memory in MiB."""
+    memory_free: int | None
+    """Free GPU memory in MiB."""
+    temperature: int | None
+    """GPU temperature in degrees Celsius."""
+    fan_speed: int | None
+    """GPU fan speed percentage."""
+    power_draw: float | None
+    """GPU power draw in watts."""
 
 
 class ReportingRealtimeEventSourceEventDisks(BaseModel):
