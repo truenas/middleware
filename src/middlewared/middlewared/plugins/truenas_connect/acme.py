@@ -8,7 +8,7 @@ from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.status import Status
 from truenas_crypto_utils.read import get_cert_id
 
-from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
+from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service, job
 
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
@@ -120,9 +120,12 @@ class TNCACMEService(Service):
             logger.debug('No TNC certificate configured, skipping renewal check')
             return False, None
 
-        certificate = self.middleware.call_sync('certificate.get_instance', config['certificate'])
+        certificate = self.middleware.call_sync2(
+            self.s.certificate.get_instance, config['certificate'],
+        )
         try:
-            cert_id = get_cert_id(certificate['certificate'])
+            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
+            cert_id = get_cert_id(cert_pem)
         except Exception:
             logger.error('Failed to parse TNC certificate to get its ID', exc_info=True)
             # This should not happen, but if it does
@@ -185,11 +188,19 @@ class TNCACMEService(Service):
     @job(lock='tn_connect_cert_generation')
     async def create_cert(self, job, cert_id=None, cert_renewal_id=None):
         csr_details = None
-        if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
-            csr_details = {
-                'csr': cert[0]['CSR'],
-                'private_key': cert[0]['privatekey'],
-            }
+        if cert_id is not None:
+            cert_list = await self.middleware.call2(
+                self.s.certificate.query, [['id', '=', cert_id]],
+            )
+            if cert_list:
+                cert = cert_list[0]
+                pk_inner = (
+                    cert.privatekey.get_secret_value() if cert.privatekey is not None else None
+                )
+                csr_details = {
+                    'csr': cert.CSR.value if cert.CSR is not None else None,
+                    'private_key': pk_inner.value if pk_inner else None,
+                }
 
         resp = await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
@@ -207,7 +218,9 @@ class TNCACMEService(Service):
             logger.debug('No TNC certificate configured, skipping revocation')
             return
 
-        certificate = await self.middleware.call('certificate.get_instance', tnc_config['certificate'])
+        certificate = await self.middleware.call2(
+            self.s.certificate.get_instance, tnc_config['certificate'],
+        )
         acme_config = await self.middleware.call('tn_connect.acme.config')
         if acme_config['error']:
             self.logger.error(
@@ -216,8 +229,9 @@ class TNCACMEService(Service):
             return
 
         try:
+            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
             await self.call2(
-                self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], certificate['certificate'],
+                self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], cert_pem,
             )
         except CallError:
             logger.error('Failed to revoke TNC certificate', exc_info=True)

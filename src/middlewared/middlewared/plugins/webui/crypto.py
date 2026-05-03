@@ -26,7 +26,9 @@ class WebUICryptoService(Service):
         This includes the Common Name (if set) followed by any Subject Alternative
         Names (SANs).
         """
-        return await self.middleware.call('certificate.get_domain_names', cert_id)
+        return await self.middleware.call2(
+            self.s.certificate.get_domain_names, cert_id,
+        )
 
     @api_method(
         WebUICryptoCsrProfilesArgs,

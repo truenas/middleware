@@ -54,7 +54,7 @@ class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
         return await self._update(id_, old_dict)
 
     async def do_delete(self, id_: int) -> bool:
-        await self.middleware.call('certificate.delete_domains_authenticator', id_)
+        await self.call2(self.s.certificate.delete_domains_authenticator, id_)
         await self._delete(id_)
         return True
 

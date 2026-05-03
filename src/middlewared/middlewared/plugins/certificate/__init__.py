@@ -1,0 +1,229 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CertificateAcmeServerChoicesArgs,
+    CertificateAcmeServerChoicesResult,
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
+    CertificateCreate,
+    CertificateCreateArgs,
+    CertificateCreateResult,
+    CertificateDeleteArgs,
+    CertificateDeleteResult,
+    CertificateEcCurveChoicesArgs,
+    CertificateEcCurveChoicesResult,
+    CertificateEntry,
+    CertificateExtendedKeyUsageChoicesArgs,
+    CertificateExtendedKeyUsageChoicesResult,
+    CertificateUpdate,
+    CertificateUpdateArgs,
+    CertificateUpdateResult,
+)
+from middlewared.service import GenericCRUDService, ValidationErrors, job, periodic, private
+
+from .acme_cleanup import delete_domains_authenticator
+from .attachment_delegate import (
+    get_attachments,
+    in_use_attachments,
+    redeploy_cert_attachments,
+    register_attachment_delegate,
+)
+from .crud import CertificateServicePart
+from .default_cert_setup import setup_self_signed_cert_for_ui
+from .dhparam import dhparam_setup
+from .info import (
+    acme_server_choices,
+    country_choices,
+    ec_curve_choices,
+    extended_key_usage_choices,
+    get_domain_names,
+)
+from .renew_certs import renew_certs
+from .service_checks import cert_services_validation
+from .utils import DEFAULT_CERT_NAME
+
+if TYPE_CHECKING:
+    from middlewared.common.attachment.certificate import CertificateAttachmentDelegate
+    from middlewared.job import Job
+    from middlewared.main import Middleware
+
+
+__all__ = ("CertificateService",)
+
+
+class CertificateService(GenericCRUDService[CertificateEntry]):
+    class Config:
+        cli_namespace = "system.certificate"
+        role_prefix = "CERTIFICATE"
+        entry = CertificateEntry
+        generic = True
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._svc_part = CertificateServicePart(self.context)
+
+    @api_method(CertificateCreateArgs, CertificateCreateResult, check_annotations=True)
+    @job(lock="cert_create")
+    async def do_create(self, job: Job, data: CertificateCreate) -> CertificateEntry:
+        """
+        Create a new Certificate
+
+        Certificates are classified under following types and the necessary keywords to be passed
+        for `create_type` attribute to create the respective type of certificate
+
+        1) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+
+        2) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+
+        3) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+
+        4) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
+
+        By default, created CSRs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
+        `key_type` attribute. If the `ec_curve` attribute is not specified for the Elliptic Curve Key, then default to
+        using "SECP384R1" curve.
+
+        A type is selected by the Certificate Service based on `create_type`. The rest of the values in `data` are
+        validated accordingly and finally a certificate is made based on the selected type.
+        """
+        return await self._svc_part.do_create(job, data)
+
+    @api_method(CertificateUpdateArgs, CertificateUpdateResult, check_annotations=True)
+    @job(lock="cert_update")
+    async def do_update(self, job: Job, id_: int, data: CertificateUpdate) -> CertificateEntry:
+        """Update certificate of `id`."""
+        return await self._svc_part.do_update(job, id_, data)
+
+    @api_method(CertificateDeleteArgs, CertificateDeleteResult, check_annotations=True)
+    @job(lock="cert_delete")
+    def do_delete(self, job: Job, id_: int, force: bool) -> bool:
+        """
+        Delete certificate of `id`.
+
+        If the certificate is an ACME based certificate, certificate service will try to
+        revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
+        and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
+        from the system even if some error occurred while revoking the certificate with the ACME Server.
+        """
+        return self._svc_part.do_delete(job, id_, force)
+
+    @api_method(
+        CertificateAcmeServerChoicesArgs,
+        CertificateAcmeServerChoicesResult,
+        roles=["CERTIFICATE_READ"],
+        check_annotations=True,
+    )
+    async def acme_server_choices(self) -> dict[str, str]:
+        """
+        Dictionary of popular ACME Servers with their directory URI
+        endpoints which we display automatically in the UI.
+        """
+        return acme_server_choices()
+
+    @api_method(
+        CertificateCountryChoicesArgs,
+        CertificateCountryChoicesResult,
+        roles=["CERTIFICATE_READ"],
+        check_annotations=True,
+    )
+    def country_choices(self) -> dict[str, str]:
+        """Returns country choices for creating a certificate/csr."""
+        return country_choices()
+
+    @api_method(
+        CertificateEcCurveChoicesArgs,
+        CertificateEcCurveChoicesResult,
+        roles=["CERTIFICATE_READ"],
+        check_annotations=True,
+    )
+    async def ec_curve_choices(self) -> dict[str, str]:
+        """Dictionary of supported EC curves."""
+        return ec_curve_choices()
+
+    @api_method(
+        CertificateExtendedKeyUsageChoicesArgs,
+        CertificateExtendedKeyUsageChoicesResult,
+        roles=["CERTIFICATE_READ"],
+        check_annotations=True,
+    )
+    async def extended_key_usage_choices(self) -> dict[str, str]:
+        """
+        Dictionary of names that can be used in the
+        ExtendedKeyUsage attribute of a certificate request.
+        """
+        return extended_key_usage_choices()
+
+    @private
+    async def cert_services_validation(
+        self,
+        id_: int,
+        schema_name: str,
+        raise_verrors: bool = True,
+    ) -> ValidationErrors | None:
+        return await cert_services_validation(self.context, id_, schema_name, raise_verrors)
+
+    @private
+    async def delete_domains_authenticator(self, auth_id: int) -> None:
+        await delete_domains_authenticator(self.context, auth_id)
+
+    @private
+    @job()
+    def dhparam_setup(self, job: Job) -> None:
+        dhparam_setup()
+
+    @private
+    async def get_attachments(self, cert_id: int) -> list[str | None]:
+        return await get_attachments(cert_id)
+
+    @private
+    async def get_domain_names(self, cert_id: int) -> list[str]:
+        return await get_domain_names(self.context, cert_id)
+
+    @private
+    async def in_use_attachments(self, cert_id: int) -> list[CertificateAttachmentDelegate]:
+        return await in_use_attachments(cert_id)
+
+    @private
+    async def redeploy_cert_attachments(self, cert_id: int) -> None:
+        await redeploy_cert_attachments(cert_id)
+
+    @private
+    async def register_attachment_delegate(self, delegate: CertificateAttachmentDelegate) -> None:
+        register_attachment_delegate(delegate)
+
+    @periodic(86400)
+    @private
+    @job(lock="acme_cert_renewal")
+    def renew_certs(self, job: Job) -> None:
+        renew_certs(self.context, job)
+
+    @private
+    async def setup_self_signed_cert_for_ui(self, cert_name: str = DEFAULT_CERT_NAME) -> None:
+        return await setup_self_signed_cert_for_ui(self.context, cert_name)
+
+
+async def setup(middleware: Middleware) -> None:
+    failure = False
+    system_cert_id = None
+    certs = []
+    try:
+        system_general_config = await middleware.call("system.general.config")
+        system_cert_id = system_general_config["ui_certificate"]
+        certs = await middleware.call("datastore.query", "system.certificate", [], {"prefix": "cert_"})
+    except Exception as e:
+        failure = True
+        middleware.logger.error(f"Failed to retrieve certificates: {e}", exc_info=True)
+
+    if not failure and (not system_cert_id or system_cert_id not in [c["id"] for c in certs]):
+        # create a self signed cert if it doesn't exist and set ui_certificate to it's value
+        try:
+            await middleware.call2(middleware.services.certificate.setup_self_signed_cert_for_ui)
+        except Exception as e:
+            failure = True
+            middleware.logger.error("Failed to set certificate for system.general plugin: %s", e, exc_info=True)
+
+    if not failure:
+        middleware.logger.trace("Certificate setup for System complete")

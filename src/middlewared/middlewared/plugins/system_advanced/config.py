@@ -122,8 +122,9 @@ class SystemAdvancedService(ConfigService):
             cert_id = server['tls_certificate']
             if server['transport'] == 'TLS' and cert_id:
                 verrors.extend(
-                    await self.middleware.call(
-                        'certificate.cert_services_validation', cert_id, f'syslogservers.{i}.tls_certificate', False
+                    await self.middleware.call2(
+                        self.s.certificate.cert_services_validation,
+                        cert_id, f'syslogservers.{i}.tls_certificate', False,
                     )
                 )
 

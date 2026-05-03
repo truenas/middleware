@@ -4,6 +4,7 @@
 
     from middlewared.alert.source.certificates import WebUiCertificateSetupFailedAlert
     from middlewared.logger import NGINX_LOG_PATH
+    from middlewared.plugins.certificate.dhparam import DHPARAM_PEM_PATH
 
     # Let's ensure that /var/log/nginx directory exists
     os.makedirs(NGINX_LOG_PATH, exist_ok=True)
@@ -36,11 +37,13 @@
     cert = None
     if general_settings['ui_certificate']:
         # Use query instead of get_instance to avoid raising exceptions that could break nginx rendering
-        cert = middleware.call_sync('certificate.query', [["id", "=", general_settings['ui_certificate']]])
-        if cert:
-            cert = cert[0]
+        cert_list = middleware.call_sync2(
+            middleware.services.certificate.query,
+            [["id", "=", general_settings['ui_certificate']]],
+        )
+        if cert_list:
+            cert = cert_list[0].model_dump(context={'expose_secrets': True})
 
-    dhparams_file = middleware.call_sync('certificate.dhparam')
     x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
     ip_list = []
@@ -55,7 +58,10 @@
         ip_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
 
     # Let's verify that required SSL support in the backend is complete by middlewared
-    if not cert or middleware.call_sync('certificate.cert_services_validation', cert['id'], 'nginx.certificate', False):
+    if not cert or middleware.call_sync2(
+        middleware.services.certificate.cert_services_validation,
+        cert['id'], 'nginx.certificate', False,
+    ):
         ssl_configuration = False
         middleware.call_sync2(middleware.services.alert.oneshot_create, WebUiCertificateSetupFailedAlert())
     else:
@@ -81,7 +87,9 @@
     has_tn_connect = tn_connect_config['certificate'] is not None
     try:
         tnc_basename = middleware.call_sync('tn_connect.hostname.basename_from_cert')
-        tnc_cert = middleware.call_sync('certificate.get_instance', tn_connect_config['certificate']) if tn_connect_config['certificate'] else None
+        tnc_cert = middleware.call_sync2(
+            middleware.services.certificate.get_instance, tn_connect_config['certificate'],
+        ).model_dump(context={'expose_secrets': True}) if tn_connect_config['certificate'] else None
     except Exception:
         # This should not happen but better safe then sorry as we don't want to disrupt nginx configuration
         tnc_basename = tnc_cert = None
@@ -200,7 +208,7 @@ http {
         http2 on;
         ssl_certificate        "${server['cert']['certificate_path']}";
         ssl_certificate_key    "${server['cert']['privatekey_path']}";
-        ssl_dhparam "${dhparams_file}";
+        ssl_dhparam "${DHPARAM_PEM_PATH}";
         ssl_session_timeout    120m;
         ssl_session_cache      shared:ssl:16m;
         ssl_protocols ${' '.join(general_settings['ui_httpsprotocols'])};

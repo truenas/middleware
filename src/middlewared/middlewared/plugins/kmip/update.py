@@ -79,25 +79,34 @@ class KMIPService(ConfigService):
             verrors.add('kmip_update.server', 'Please specify a valid hostname or an IPv4 address')
 
         if new['enabled']:
-            verrors.extend((await self.middleware.call(
-                'certificate.cert_services_validation', new['certificate'], 'kmip_update.certificate', False
+            verrors.extend((await self.middleware.call2(
+                self.s.certificate.cert_services_validation,
+                new['certificate'], 'kmip_update.certificate', False,
             )))
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
-        ca = await self.middleware.call('certificate.query', [['id', '=', new['certificate_authority']]])
-        if ca and not verrors:
-            ca = ca[0]
+        ca_list = await self.middleware.call2(
+            self.s.certificate.query,
+            [['id', '=', new['certificate_authority']]],
+        )
+        if ca_list and not verrors:
+            ca = ca_list[0]
+            cert_entry = await self.middleware.call2(
+                self.s.certificate.get_instance, new['certificate'],
+            )
+            cert_pem = cert_entry.certificate.value if cert_entry.certificate is not None else ''
+            ca_pem = ca.certificate.value if ca.certificate is not None else ''
             if not await self.middleware.run_in_thread(
                 validate_cert_with_chain,
-                (await self.middleware.call('certificate.get_instance', new['certificate']))['certificate'],
-                [ca['certificate']]
+                cert_pem,
+                [ca_pem],
             ):
                 verrors.add(
                     'kmip_update.certificate_authority',
                     'Certificate chain could not be verified with specified certificate authority.'
                 )
-        elif not ca and new['enabled']:
+        elif not ca_list and new['enabled']:
             verrors.add('kmip_update.certificate_authority', 'Please specify a valid id.')
 
         if new.pop('validate', True) and new['enabled'] and not verrors:

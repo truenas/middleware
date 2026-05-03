@@ -24,12 +24,10 @@ class SystemAdvancedService(Service):
         Return choices of certificates which can be used for `syslogservers.N.tls_certificate`.
         """
         return {
-            i['id']: i['name']
-            for i in await self.middleware.call(
-                'certificate.query', [
-                    ['cert_type_CSR', '=', False],
-                    ['cert_type_CA', '=', False]
-                ]
+            i.id: i.name
+            for i in await self.middleware.call2(
+                self.s.certificate.query,
+                [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False]],
             )
         }
 

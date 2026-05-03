@@ -13,6 +13,7 @@ from middlewared.api.current import (
     DirectoryServicesSyncKeytabResult,
     DirectoryServicesUpdateArgs,
     DirectoryServicesUpdateResult,
+    QueryOptions,
 )
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, job, private
@@ -276,9 +277,11 @@ class DirectoryServices(ConfigService):
             case DSCredType.LDAP_ANONYMOUS:
                 pass
             case DSCredType.LDAP_MTLS:
-                cert_id = self.middleware.call_sync('certificate.query', [
-                    ['name', '=', data['credential']['client_certificate']]
-                ], {'get': True})['id']
+                cert_id = self.middleware.call_sync2(
+                    self.s.certificate.query,
+                    [['name', '=', data['credential']['client_certificate']]],
+                    QueryOptions(get=True),
+                ).id
                 datastore_cred['cred_ldap_mtls_cert'] = cert_id
             case _:
                 raise ValueError(f'{data["credential"]["credential_type"]}: unhandled credential type')
@@ -881,13 +884,14 @@ class DirectoryServices(ConfigService):
         Note that prior configuration of LDAP server is required and uploading a custom
         certificate to TrueNAS may also be required. """
         return {
-            i['name']: i['name']
-            for i in await self.middleware.call(
-                'certificate.query', [
+            i.name: i.name
+            for i in await self.middleware.call2(
+                self.s.certificate.query,
+                [
                     ['cert_type', '=', 'CERTIFICATE'],
                     ['cert_type_CSR', '=', False],
-                    ['cert_type_CA', '=', False]
-                ]
+                    ['cert_type_CA', '=', False],
+                ],
             )
         }
 

@@ -66,10 +66,13 @@ class IPAJoinMixin:
 
         if job:
             job.set_progress(description='Removing IPA certificate.')
-        if (ipa_cert := self.middleware.call_sync('certificate.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
-        ])):
-            delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
+        if (ipa_cert := self.middleware.call_sync2(
+            self.s.certificate.query,
+            [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
+        )):
+            delete_job = self.middleware.call_sync2(
+                self.s.certificate.delete, ipa_cert[0].id,
+            )
             delete_job.wait_sync(raise_error=True)
 
     def _ipa_cleanup(self, job: Job, ds_config: dict):
@@ -490,11 +493,16 @@ class IPAJoinMixin:
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], compressed)
 
         # update our cacerts with IPA domain one:
-        existing_cacert = self.middleware.call_sync('certificate.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
-        ])
+        existing_cacert = self.middleware.call_sync2(
+            self.s.certificate.query,
+            [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
+        )
         if existing_cacert:
-            if existing_cacert[0]['certificate'] != resp['cacert']:
+            stored_cert = (
+                existing_cacert[0].certificate.value
+                if existing_cacert[0].certificate is not None else None
+            )
+            if stored_cert != resp['cacert']:
                 # We'll continue to try joining the IPA domain and hope for the best.
                 # It's technically possible that we will still be able to validate
                 # the cert / have working SSL.
@@ -511,12 +519,15 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
-            cert_job = self.middleware.call_sync('certificate.create', {
-                'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
-                'certificate': resp['cacert'],
-                'add_to_trusted_store': True,
-                'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-            })
+            cert_job = self.middleware.call_sync2(
+                self.s.certificate.create,
+                {
+                    'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
+                    'certificate': resp['cacert'],
+                    'add_to_trusted_store': True,
+                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                },
+            )
             cert_job.wait_sync(raise_error=True)
 
         # We've joined API and have a proper host principal. Time to destroy admin keytab.

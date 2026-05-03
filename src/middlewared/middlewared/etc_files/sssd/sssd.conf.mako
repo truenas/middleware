@@ -1,6 +1,7 @@
 <%
     import os
 
+    from middlewared.api.current import QueryOptions
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices import ldap_constants as constants
     from middlewared.utils.directoryservices import ldap_utils as utils
@@ -18,14 +19,16 @@
         certpath = None
         if ds_config['credential']['credential_type'] == DSCredType.LDAP_MTLS:
             try:
-                cert = middleware.call_sync('certificate.query', [
-                    ('name', '=', ds_config['credential']['client_certificate'])
-                ], {'get': True})
+                cert = middleware.call_sync2(
+                    middleware.services.certificate.query,
+                    [('name', '=', ds_config['credential']['client_certificate'])],
+                    QueryOptions(get=True),
+                )
             except Exception:
                 middleware.logger.error('Failed to retrieve client certificate', exc_info=True)
             else:
-                certpath = cert['certificate_path']
-                keypath = cert['privatekey_path']
+                certpath = cert.certificate_path
+                keypath = cert.privatekey_path
 
         domain = kerberos_realm or 'LDAP'
         for param in (ds_config['configuration']['auxiliary_parameters'] or '').splitlines():
