@@ -224,7 +224,11 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
     host_ips = set()
     workloads['containers'] = len(app_resources['containers'])
     for container in app_resources['containers']:
-        service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
+        service_name = (
+            container['Config']['Labels'].get(COMPOSE_SERVICE_KEY)
+            or container.get('Name', '').lstrip('/')
+            or 'unknown'
+        )
         container_ports_config = []
         images.add(container['Config']['Image'])
         for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
