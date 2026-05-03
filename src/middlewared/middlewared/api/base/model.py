@@ -11,7 +11,7 @@ from pydantic.main import ModelT
 from pydantic.types import SecretType
 from pydantic_core import SchemaSerializer, core_schema
 
-from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
+from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
 
@@ -35,10 +35,7 @@ def _serialize_secret(value: Secret[SecretType], info: core_schema.Serialization
     Return the hidden value if "expose_secrets" was passed to `model_dump`. Otherwise, return the redaction string.
     """
     if isinstance(info.context, dict) and info.context.get("expose_secrets") is True:
-        return_val = value.get_secret_value()
-        if isinstance(return_val, LongStringWrapper):
-            return_val = return_val.value
-        return return_val
+        return value.get_secret_value()
     else:
         # always serialize Secret as if info.mode="json" (never return a Secret object)
         return SECRET_VALUE
@@ -103,10 +100,15 @@ def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDe
     cls.model_rebuild(force=True)
 
 
-def _annotate_not_required(annotation: type[Any] | None):
+def _annotate_not_required(annotation: type[Any] | None, metadata: list[Any] = ()):
     if get_origin(annotation) is Secret:
-        new_annotation = Secret[get_args(annotation)[0] | _NotRequired]
+        inner = get_args(annotation)[0]
+        if metadata:
+            inner = Annotated[inner, *metadata]
+        new_annotation = Secret[inner | _NotRequired]
     else:
+        if metadata:
+            annotation = Annotated[annotation, *metadata]
         new_annotation = annotation | _NotRequired
 
     return new_annotation
@@ -126,7 +128,12 @@ class _BaseModelMetaclass(ModelMetaclass):
             if field.default is NotRequired:
                 # Update annotation of any field with a default of `NotRequired` since fields
                 # are serialized according to their annotation, not their value.
-                field.annotation = _annotate_not_required(field.annotation)
+                # Field metadata (e.g. `MaxLen`) is folded into the inner annotation so the
+                # constraint applies to the typed arm of the union rather than only to the
+                # union as a whole — otherwise the model config's `str_max_length` wins for
+                # the bare `str` arm.
+                field.annotation = _annotate_not_required(field.annotation, field.metadata)
+                field.metadata = []
                 has_not_required = True
 
         if has_not_required:
