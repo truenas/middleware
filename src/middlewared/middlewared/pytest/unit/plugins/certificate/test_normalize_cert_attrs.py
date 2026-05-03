@@ -37,15 +37,17 @@ def csr_pair():
 
 @pytest.fixture(scope="module")
 def ca_cert_pair():
-    return generate_certificate({
-        **SUBJECT_DEFAULTS,
-        "common": "Test CA",
-        "san": ["DNS:ca.example.com"],
-        "cert_extensions": {
-            "BasicConstraints": {"enabled": True, "ca": True, "extension_critical": True},
-            "KeyUsage": {"enabled": True, "key_cert_sign": True, "crl_sign": True},
-        },
-    })
+    return generate_certificate(
+        {
+            **SUBJECT_DEFAULTS,
+            "common": "Test CA",
+            "san": ["DNS:ca.example.com"],
+            "cert_extensions": {
+                "BasicConstraints": {"enabled": True, "ca": True, "extension_critical": True},
+                "KeyUsage": {"enabled": True, "key_cert_sign": True, "crl_sign": True},
+            },
+        }
+    )
 
 
 @pytest.fixture(scope="module")
@@ -53,15 +55,9 @@ def self_signed_pair():
     return generate_self_signed_certificate()
 
 
-CORRUPT_CERT = (
-    "-----BEGIN CERTIFICATE-----\n"
-    "this is not valid base64 cert data\n"
-    "-----END CERTIFICATE-----\n"
-)
+CORRUPT_CERT = "-----BEGIN CERTIFICATE-----\nthis is not valid base64 cert data\n-----END CERTIFICATE-----\n"
 CORRUPT_CSR = (
-    "-----BEGIN CERTIFICATE REQUEST-----\n"
-    "this is not valid base64 csr data\n"
-    "-----END CERTIFICATE REQUEST-----\n"
+    "-----BEGIN CERTIFICATE REQUEST-----\nthis is not valid base64 csr data\n-----END CERTIFICATE REQUEST-----\n"
 )
 
 
@@ -259,10 +255,24 @@ def test_corrupt_certificate_does_not_break_pydantic_validation():
     assert row["extensions"] == {}
     # Every other parse-derived field is None
     for key in (
-        "digest_algorithm", "lifetime", "country", "state", "city",
-        "from", "until", "organization", "organizational_unit", "email",
-        "common", "san", "serial", "fingerprint", "expired", "DN",
-        "subject_name_hash", "chain",
+        "digest_algorithm",
+        "lifetime",
+        "country",
+        "state",
+        "city",
+        "from",
+        "until",
+        "organization",
+        "organizational_unit",
+        "email",
+        "common",
+        "san",
+        "serial",
+        "fingerprint",
+        "expired",
+        "DN",
+        "subject_name_hash",
+        "chain",
     ):
         assert row[key] is None, f"expected {key!r} to be None on failed parse, got {row[key]!r}"
 

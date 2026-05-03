@@ -12,7 +12,6 @@ from middlewared.alert.base import (
     OneShotAlertClass,
 )
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.api.current import CertificateEntry
 from middlewared.utils.time_utils import utc_now
 
 
