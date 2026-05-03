@@ -113,6 +113,7 @@ def normalize_cert_attrs(cert: dict[str, Any]) -> None:
 
     if failed_parsing:
         # Normalizing cert/csr
+        cert["extensions"] = {}
         cert.update(
             {
                 key: None
@@ -131,7 +132,6 @@ def normalize_cert_attrs(cert: dict[str, Any]) -> None:
                     "san",
                     "serial",
                     "fingerprint",
-                    "extensions",
                     "expired",
                     "DN",
                     "subject_name_hash",
