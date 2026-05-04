@@ -10,8 +10,8 @@ from pydantic.main import ModelT
 from pydantic.types import SecretType
 from pydantic_core import SchemaSerializer, core_schema
 
-from middlewared.api.base.private import guard_private_fields
-from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
+from middlewared.api.base.private import guard_private_fields, is_private_guard
+from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
 
@@ -36,10 +36,7 @@ def _serialize_secret(value: Secret[SecretType], info: core_schema.Serialization
     Return the hidden value if "expose_secrets" was passed to `model_dump`. Otherwise, return the redaction string.
     """
     if isinstance(info.context, dict) and info.context.get("expose_secrets") is True:
-        return_val = value.get_secret_value()
-        if isinstance(return_val, LongStringWrapper):
-            return_val = return_val.value
-        return return_val
+        return value.get_secret_value()
     else:
         # always serialize Secret as if info.mode="json" (never return a Secret object)
         return SECRET_VALUE
@@ -104,10 +101,24 @@ def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDe
     cls.model_rebuild(force=True)
 
 
-def _annotate_not_required(annotation: type[Any] | None):
+def _is_field_level_metadata(metadata: Any) -> bool:
+    """Whether `metadata` must stay in `FieldInfo.metadata` instead of being folded into the annotation.
+
+    `SkipJsonSchema` (and therefore `Private`) stops being honored once it is nested inside a union member, and
+    the private guard has to see every supplied value, so neither may be folded by `_annotate_not_required`.
+    """
+    return isinstance(metadata, SkipJsonSchema) or is_private_guard(metadata)
+
+
+def _annotate_not_required(annotation: type[Any] | None, metadata: list[Any] = ()):
     if get_origin(annotation) is Secret:
-        new_annotation = Secret[get_args(annotation)[0] | _NotRequired]
+        inner = get_args(annotation)[0]
+        if metadata:
+            inner = Annotated[inner, *metadata]
+        new_annotation = Secret[inner | _NotRequired]
     else:
+        if metadata:
+            annotation = Annotated[annotation, *metadata]
         new_annotation = annotation | _NotRequired
 
     return new_annotation
@@ -123,7 +134,9 @@ class _BaseModelMetaclass(ModelMetaclass):
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
         # Attaches the guard as field-level metadata, which is where `SkipJsonSchema` (and therefore
-        # `Private`) has to stay in order to be honored.
+        # `Private`) has to stay in order to be honored. Must run before the `NotRequired` handling
+        # below so that the guard is treated as field-level metadata instead of being folded into the
+        # annotation.
         has_private = guard_private_fields(cls)
 
         has_not_required = False
@@ -131,7 +144,14 @@ class _BaseModelMetaclass(ModelMetaclass):
             if field.default is NotRequired:
                 # Update annotation of any field with a default of `NotRequired` since fields
                 # are serialized according to their annotation, not their value.
-                field.annotation = _annotate_not_required(field.annotation)
+                # Field metadata (e.g. `MaxLen`) is folded into the inner annotation so the
+                # constraint applies to the typed arm of the union rather than only to the
+                # union as a whole — otherwise the model config's `str_max_length` wins for
+                # the bare `str` arm.
+                field_level = [metadata for metadata in field.metadata if _is_field_level_metadata(metadata)]
+                foldable = [metadata for metadata in field.metadata if not _is_field_level_metadata(metadata)]
+                field.annotation = _annotate_not_required(field.annotation, foldable)
+                field.metadata = field_level
                 has_not_required = True
 
         if has_not_required:
