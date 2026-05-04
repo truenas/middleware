@@ -95,10 +95,9 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         current = self.info_private()
         had_license = current is not None and current.origin is LicenseOrigin.ISSUED
 
-        # `check_annotations` hands the method the undumped model value, so the PEM has to be
-        # unwrapped twice: out of the Secret that keeps it off the audit trail, then out of the
-        # LongStringWrapper that carries strings over the default length limit.
-        text = license_.get_secret_value().value
+        # `check_annotations` hands the method the undumped model value, so the PEM arrives still
+        # boxed in the Secret that keeps it off the audit trail.
+        text = license_.get_secret_value()
         # The daemon only knows PEM and would reject a legacy blob with a parser error that tells the
         # user nothing useful, so catch it before it is written over the installed license.
         if _is_legacy_license(text):
