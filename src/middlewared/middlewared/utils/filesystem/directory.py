@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+import contextlib
 import enum
 import errno
 import os
@@ -75,6 +76,33 @@ def _zfs_attrs_for(fd: int) -> list[str] | None:
         raise
 
 
+@contextlib.contextmanager
+def _readable_meta_fd(item: truenas_os.IterInstance, item_path: str) -> Iterator[int]:
+    """Yield an fd suitable for stat / listxattr / ZFS ioctls on the entry's
+    target inode.
+
+    The three entry shapes the iterator can produce:
+
+    * ordinary file or dir — ``item.fd`` is already O_RDONLY-equivalent.
+    * symlink — ``item.fd`` is O_PATH on the link itself; we want the target,
+      so we open ``item_path`` (which follows the link).
+    * mountpoint — ``item.fd`` is O_PATH on the mount root.  statx works but
+      listxattr / ioctl return EBADF.  Reopening via ``/proc/self/fd/<fd>``
+      upgrades to O_RDONLY through the procfs magic-link, which is race-free
+      against concurrent mount-table changes.
+    """
+    if not item.islnk and not item.ismount:
+        yield item.fd
+        return
+
+    open_path = f'/proc/self/fd/{item.fd}' if item.ismount else item_path
+    fd = os.open(open_path, os.O_RDONLY)
+    try:
+        yield fd
+    finally:
+        os.close(fd)
+
+
 def _build_entry(
     parent_path: str,
     item: truenas_os.IterInstance,
@@ -85,9 +113,9 @@ def _build_entry(
     Render a single iter_filesystem_contents item as a listdir-shaped dict.
 
     Symlinks are followed for stat/xattr/zfs metadata to match the historical
-    listdir contract (size/mode/etc reflect the symlink target).  A broken
-    symlink — one whose follow-statx fails with ``FileNotFoundError`` — is
-    skipped by returning ``None``.
+    listdir contract (size/mode/etc reflect the symlink target).  An entry
+    whose target inode can't be opened — broken symlink, target races away,
+    EACCES on the target — is skipped by returning ``None``.
     """
     item_path = os.path.join(parent_path, item.name)
 
@@ -101,41 +129,31 @@ def _build_entry(
             )
         except FileNotFoundError:
             return None
-        meta_fd: int | None = None
     else:
         st = item.statxinfo
-        meta_fd = item.fd
 
     attributes = _statx_attr_names(st.stx_attributes)
 
     realpath = os.path.realpath(item_path) if mask & DirectoryRequestMask.REALPATH else None
 
-    if mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
-        try:
-            xattr_list = os.listxattr(meta_fd) if meta_fd is not None else os.listxattr(item_path)
-        except OSError:
-            xattr_list = []
-    else:
-        xattr_list = None
-
-    xattrs = xattr_list if mask & DirectoryRequestMask.XATTRS else None
-    acl = acl_is_present(xattr_list) if mask & DirectoryRequestMask.ACL else None
-
-    if mask & DirectoryRequestMask.ZFS_ATTRS:
-        if meta_fd is not None:
-            zfs_attrs = _zfs_attrs_for(meta_fd)
-        else:
-            try:
-                tgt_fd = os.open(item_path, os.O_RDONLY)
-            except OSError:
-                zfs_attrs = None
-            else:
+    try:
+        with _readable_meta_fd(item, item_path) as meta_fd:
+            if mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
                 try:
-                    zfs_attrs = _zfs_attrs_for(tgt_fd)
-                finally:
-                    os.close(tgt_fd)
-    else:
-        zfs_attrs = None
+                    xattr_list = os.listxattr(meta_fd)
+                except OSError:
+                    xattr_list = []
+            else:
+                xattr_list = None
+
+            xattrs = xattr_list if mask & DirectoryRequestMask.XATTRS else None
+            acl = acl_is_present(xattr_list) if mask & DirectoryRequestMask.ACL else None
+
+            zfs_attrs = _zfs_attrs_for(meta_fd) if mask & DirectoryRequestMask.ZFS_ATTRS else None
+    except OSError:
+        # Symlink target became unreachable between statx and open, or the
+        # mountpoint's procfs reopen failed.  Skip the entry like a broken link.
+        return None
 
     is_ctldir = path_in_ctldir(item_path) if mask & DirectoryRequestMask.CTLDIR else None
 
@@ -183,10 +201,14 @@ def iter_listdir(
         mnt, fs,
         relative_path=rel,
         include_symlinks=True,
+        include_mountpoints=True,
     ) as it:
         for item in it:
-            if item.isdir:
-                # Single-level: never descend.
+            if item.isdir and not item.ismount:
+                # Single-level: never descend.  Mountpoint entries are yielded
+                # as files (the iterator never descends into them) so they
+                # were never pushed onto its dir_stack — calling skip() on
+                # one would pop the *parent* and terminate iteration early.
                 it.skip()
 
             etype = _etype(item)

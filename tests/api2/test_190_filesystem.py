@@ -88,10 +88,33 @@ def test_immutable_flag():
 
 def test_filesystem_listdir_exclude_non_mounts():
     with directory("/mnt/random_dir"):
-        # exclude dirs at root of /mnt since this
-        # directory is used exclusively to mount zpools
-        for i in call("filesystem.listdir", "/mnt"):
-            assert i["name"] != "random_dir"
+        listing = call("filesystem.listdir", "/mnt")
+        names = {i["name"] for i in listing}
+        # exclude dirs at root of /mnt since this directory is used
+        # exclusively to mount zpools
+        assert "random_dir" not in names
+        # /mnt is on rootfs and the pool roots are separate ZFS mounts;
+        # listdir must still surface them or every pool-listing UI breaks.
+        assert pool_name in names, names
+
+
+def test_filesystem_listdir_includes_child_datasets():
+    """Child datasets are separate ZFS mounts; listdir must still see them.
+
+    iter_filesystem_contents pins to a single mount via RESOLVE_NO_XDEV, so
+    without explicit handling child-dataset entries are silently dropped from
+    the parent's listing. Regression guard for NAS-140883.
+    """
+    with create_dataset("listdir_parent") as parent:
+        parent_path = f"/mnt/{parent}"
+        with create_dataset("listdir_parent/child") as child:
+            entry = call(
+                "filesystem.listdir", parent_path,
+                [["name", "=", "child"]], {"get": True},
+            )
+            assert entry["type"] == "DIRECTORY"
+            assert entry["is_mountpoint"] is True
+            assert entry["path"] == f"/mnt/{child}"
 
 
 def test_filesystem_stat_filetype():
