@@ -8,6 +8,8 @@ from middlewared.api.current import (
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadArgs,
     TrueNASLicenseUploadResult,
+    TrueNASLicenseFingerprintArgs,
+    TrueNASLicenseFingerprintResult,
     TrueNASLicenseInfoArgs,
     TrueNASLicenseInfoResult,
 )
@@ -20,6 +22,7 @@ from .license_legacy_utils import LEGACY_LICENSE_FILE, get_legacy_license_info
 from .license_utils import (
     LicenseInfo,
     configure_ha_license,
+    get_fingerprint_b64,
     get_license_info,
     upload_license,
 )
@@ -94,6 +97,16 @@ class TrueNASLicenseService(Service):
             result["type"] = info.type.name
 
         return result
+
+    @api_method(
+        TrueNASLicenseFingerprintArgs,
+        TrueNASLicenseFingerprintResult,
+        roles=["READONLY_ADMIN"],
+        check_annotations=True,
+    )
+    def fingerprint(self) -> str:
+        """Return the system hardware fingerprint as a base64-encoded JSON string."""
+        return get_fingerprint_b64()
 
     @private
     def info_private(self) -> LicenseInfo | None:
