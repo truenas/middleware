@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import contextlib
 from dataclasses import dataclass
 from datetime import date
+import json
 import logging
 import os
 import shutil
@@ -10,7 +12,7 @@ import time
 import typing
 
 from truenas_os_pyutils.io import atomic_write
-from truenas_pylicensed import LicenseStatus, LicenseType, verify
+from truenas_pylicensed import LicenseStatus, LicenseType, get_fingerprint, verify
 
 from middlewared.service import CallError, ValidationError
 
@@ -25,8 +27,34 @@ __all__ = (
     "LicenseInfo",
     "upload_license",
     "get_license_info",
+    "get_fingerprint_b64",
     "configure_ha_license",
 )
+
+
+def get_fingerprint_b64() -> str:
+    """Return the system hardware fingerprint as a base64-encoded
+    JSON string suitable for the license signing server."""
+    daemon_fp = get_fingerprint()
+    smbios = typing.cast(dict[str, typing.Any], daemon_fp.get("smbios", {}))
+    flat: dict[str, typing.Any] = {
+        "macs": daemon_fp.get("macs", []),
+        "cpu_id": daemon_fp["cpu_id"],
+        "machine_id": daemon_fp["machine_id"],
+    }
+    for flat_key, smbios_key in (
+        ("smbios_uuid", "uuid"),
+        ("product_serial", "product_serial"),
+        ("chassis_serial", "chassis_serial"),
+        ("board_serial", "board_serial"),
+    ):
+        component = smbios.get(smbios_key, {})
+        if component.get("available"):
+            flat[flat_key] = component.get("value")
+        else:
+            flat[flat_key] = None
+    return base64.b64encode(json.dumps(flat).encode()).decode()
+
 
 LICENSE_DIR = "/data/subsystems/truenas_license"
 LICENSE_FILE = f"{LICENSE_DIR}/license"
@@ -123,8 +151,7 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
         # Wait for the daemon to reload the new license
         lic = _wait_for_reload_seq_change(
             initial_seq,
-            "License daemon did not reload after upload (reload_seq unchanged). "
-            "The daemon may be unresponsive.",
+            "License daemon did not reload after upload (reload_seq unchanged). The daemon may be unresponsive.",
         )
 
         yield lic
@@ -191,9 +218,7 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
             for name, f in (lic.features or {}).items()
         ],
         serials=lic.system_id["serials"] if lic.system_id else [],
-        enclosures={
-            model: entry["count"] for model, entry in (lic.enclosures or {}).items()
-        },
+        enclosures={model: entry["count"] for model, entry in (lic.enclosures or {}).items()},
         contract_type=contract_type,
     )
 
