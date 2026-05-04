@@ -124,7 +124,7 @@ class TNCACMEService(Service):
             self.s.certificate.get_instance, config['certificate'],
         )
         try:
-            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
+            cert_pem = certificate.certificate or ''
             cert_id = get_cert_id(cert_pem)
         except Exception:
             logger.error('Failed to parse TNC certificate to get its ID', exc_info=True)
@@ -194,12 +194,9 @@ class TNCACMEService(Service):
             )
             if cert_list:
                 cert = cert_list[0]
-                pk_inner = (
-                    cert.privatekey.get_secret_value() if cert.privatekey is not None else None
-                )
                 csr_details = {
-                    'csr': cert.CSR.value if cert.CSR is not None else None,
-                    'private_key': pk_inner.value if pk_inner else None,
+                    'csr': cert.CSR,
+                    'private_key': cert.privatekey.get_secret_value() if cert.privatekey is not None else None,
                 }
 
         resp = await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
@@ -229,7 +226,7 @@ class TNCACMEService(Service):
             return
 
         try:
-            cert_pem = certificate.certificate.value if certificate.certificate is not None else ''
+            cert_pem = certificate.certificate or ''
             await self.call2(
                 self.s.acme.protocol.revoke_certificate, acme_config['acme_details'], cert_pem,
             )

@@ -62,18 +62,14 @@ def create_imported_certificate(
         _raise_validation_errors(e)
         raise
 
-    # Build the return dict from the payload's model_dump (with expose_secrets) so
-    # LongString-typed fields are unwrapped to plain str — attribute access yields
-    # LongStringWrapper which sqlite3 cannot bind.
-    payload_raw = payload.model_dump(context={"expose_secrets": True})
     job.set_progress(90, "Finalizing changes")
     return {
-        "certificate": payload_raw["certificate"],
+        "certificate": payload.certificate,
         "privatekey": get_private_key(
             {
-                "private_key": payload_raw["privatekey"],
-                "privatekey": payload_raw["privatekey"],
-                "passphrase": payload_raw["passphrase"],
+                "private_key": payload.privatekey,
+                "privatekey": payload.privatekey,
+                "passphrase": payload.passphrase,
             }
         ),
         "type": CERT_TYPE_EXISTING,
@@ -97,19 +93,15 @@ def create_imported_csr(
         _raise_validation_errors(e)
         raise
 
-    # Build the return dict from the payload's model_dump (with expose_secrets) so
-    # LongString-typed fields are unwrapped to plain str — attribute access yields
-    # LongStringWrapper which sqlite3 cannot bind.
-    payload_raw = payload.model_dump(context={"expose_secrets": True})
     # FIXME: Validate private key matches CSR
     job.set_progress(90, "Finalizing changes")
     return {
-        "CSR": payload_raw["CSR"],
+        "CSR": payload.CSR,
         "privatekey": get_private_key(
             {
-                "private_key": payload_raw["privatekey"],
-                "privatekey": payload_raw["privatekey"],
-                "passphrase": payload_raw["passphrase"],
+                "private_key": payload.privatekey,
+                "privatekey": payload.privatekey,
+                "passphrase": payload.passphrase,
             }
         ),
         "type": CERT_TYPE_CSR,
@@ -179,8 +171,6 @@ def create_acme_certificate(
     if not directory_uri.endswith("/"):
         directory_uri = directory_uri + "/"
 
-    csr_dump = csr_data.model_dump(context={"expose_secrets": True})
-
     final_order = context.call_sync2(
         context.s.acme.protocol.issue_certificate,
         job,
@@ -191,7 +181,7 @@ def create_acme_certificate(
             "acme_directory_uri": directory_uri,
             "dns_mapping": payload.dns_mapping,
         },
-        csr_dump,
+        csr_data.model_dump(context={"expose_secrets": True}),
     )
     job.set_progress(95, "Final order received from ACME server")
 
@@ -199,15 +189,12 @@ def create_acme_certificate(
         context.s.acme.registration.query,
         [["directory", "=", directory_uri]],
     )
-    # Pull LongString-typed fields from the dumped dict (plain str). Attribute
-    # access on csr_data.CSR / csr_data.privatekey.get_secret_value() yields
-    # LongStringWrapper, which sqlite3 cannot bind via the EncryptedText adapter.
     return {
         "acme": registration[0].id,
         "acme_uri": final_order.uri,
         "certificate": final_order.fullchain_pem,
-        "CSR": csr_dump["CSR"],
-        "privatekey": csr_dump["privatekey"],
+        "CSR": csr_data.CSR,
+        "privatekey": csr_data.privatekey.get_secret_value(),
         "name": payload.name,
         "type": CERT_TYPE_EXISTING,
         "domains_authenticators": payload.dns_mapping,

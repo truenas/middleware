@@ -151,10 +151,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
         self.run_coroutine(check_cert_deps(id_))
 
         if certificate.acme and not certificate.expired:
-            # `certificate.certificate` is a LongStringWrapper here; revoke_certificate
-            # takes a plain str. ACME-issued certs always have the cert PEM populated,
-            # but guard against None defensively.
-            cert_pem = certificate.certificate.value if certificate.certificate else ""
+            cert_pem = certificate.certificate or ""
             try:
                 self.call_sync2(
                     self.s.acme.protocol.revoke_certificate,
@@ -182,13 +179,10 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
     ) -> None:
         verrors = ValidationErrors()
 
-        # Flatten Secret/LongStringWrapper-typed fields into raw dict[str, Any]
-        # so we can hand plain strings to the truenas_crypto_utils helpers.
-        raw = data.model_dump(context={"expose_secrets": True})
-        certificate: str | None = raw["certificate"]
-        privatekey: str | None = raw["privatekey"]
-        csr: str | None = raw["CSR"]
-        passphrase: str | None = raw["passphrase"]
+        certificate: str | None = data.certificate
+        privatekey: str | None = data.privatekey.get_secret_value() if data.privatekey else None
+        csr: str | None = data.CSR
+        passphrase: str | None = data.passphrase
 
         await self._validate_cert_name(data.name, schema, verrors)
 

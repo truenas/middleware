@@ -95,8 +95,8 @@ class KMIPService(ConfigService):
             cert_entry = await self.middleware.call2(
                 self.s.certificate.get_instance, new['certificate'],
             )
-            cert_pem = cert_entry.certificate.value if cert_entry.certificate is not None else ''
-            ca_pem = ca.certificate.value if ca.certificate is not None else ''
+            cert_pem = cert_entry.certificate or ''
+            ca_pem = ca.certificate or ''
             if not await self.middleware.run_in_thread(
                 validate_cert_with_chain,
                 cert_pem,

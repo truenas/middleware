@@ -16,4 +16,4 @@ def render(service, middleware, render_ctx):
     if not cert:
         raise FileShouldNotExist()
 
-    return cert[0].certificate.value if cert[0].certificate is not None else None
+    return cert[0].certificate

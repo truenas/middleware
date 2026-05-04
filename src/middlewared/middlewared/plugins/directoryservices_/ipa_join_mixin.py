@@ -498,10 +498,7 @@ class IPAJoinMixin:
             [['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]],
         )
         if existing_cacert:
-            stored_cert = (
-                existing_cacert[0].certificate.value
-                if existing_cacert[0].certificate is not None else None
-            )
+            stored_cert = existing_cacert[0].certificate
             if stored_cert != resp['cacert']:
                 # We'll continue to try joining the IPA domain and hope for the best.
                 # It's technically possible that we will still be able to validate
