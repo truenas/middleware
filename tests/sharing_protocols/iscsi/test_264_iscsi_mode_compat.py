@@ -33,6 +33,7 @@ from assets.websocket.iscsi import (
 from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled
 from auto_config import pool_name
+from middlewared.test.integration.assets.iscsi import lio_supported
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
 from protocols import ISCSIDiscover, iscsi_scsi_connection
@@ -176,6 +177,14 @@ def _vendor_nibbles_from_naa(naa_hex):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope='module', autouse=True)
+def _require_lio():
+    """Skip entire module if LIO mode (2) is not supported by the API."""
+    if not lio_supported():
+        pytest.skip('LIO mode (2) not accepted by API')
+    yield
 
 
 @pytest.fixture(scope='module')
