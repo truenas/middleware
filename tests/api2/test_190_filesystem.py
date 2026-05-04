@@ -101,9 +101,7 @@ def test_filesystem_listdir_exclude_non_mounts():
 def test_filesystem_listdir_includes_child_datasets():
     """Child datasets are separate ZFS mounts; listdir must still see them.
 
-    iter_filesystem_contents pins to a single mount via RESOLVE_NO_XDEV, so
-    without explicit handling child-dataset entries are silently dropped from
-    the parent's listing. Regression guard for NAS-140883.
+    Regression guard for NAS-140883.
     """
     with create_dataset("listdir_parent") as parent:
         parent_path = f"/mnt/{parent}"
