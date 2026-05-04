@@ -21,6 +21,7 @@ from middlewared.api.current import (
     BootSetScrubIntervalArgs,
     BootSetScrubIntervalResult,
 )
+from middlewared.plugins.initramfs import write_initramfs_flags
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import BOOT_POOL_NAME_VALID, run
 from middlewared.utils.disks import valid_zfs_partition_uuids
@@ -246,6 +247,15 @@ class BootService(Service):
         return cp.returncode == 1
 
     @private
+    def write_initramfs_flags(self, db_path=None):
+        """
+        Thin wrapper around the module-level `write_initramfs_flags` so the
+        peer node can invoke it via `failover.call_remote` on HA. Local
+        callers should call the function directly via `asyncio.to_thread`.
+        """
+        return write_initramfs_flags(self.middleware, db_path)
+
+    @private
     async def expand(self):
         await self.check_update_ashift_property()
         boot_pool = await self.middleware.call('boot.pool_name')
@@ -316,6 +326,20 @@ class BootService(Service):
             )
 
 
+def on_config_upload(middleware, path):
+    # Materialize every /data/subsystems/initramfs/* flag from the *uploaded*
+    # DB before the in-process datastore swap (which only happens at next
+    # boot, in the config plugin's setup). Without this the regenerated initrd
+    # reflects the OLD live DB, and the user has to reboot a second time
+    # before the new config takes effect.
+    #
+    # Hook is synchronous (call_hook_sync) so we run on the calling thread,
+    # do the file writes inline, and dispatch the rebuild back through the
+    # event loop via call_sync.
+    write_initramfs_flags(middleware, path)
+    middleware.call_sync('boot.update_initramfs', {'force': True})
+
+
 async def setup(middleware):
     global BOOT_POOL_NAME
 
@@ -343,3 +367,5 @@ async def setup(middleware):
             break
     else:
         middleware.logger.error('Failed to detect boot pool name.')
+
+    middleware.register_hook('config.on_upload', on_config_upload, sync=True)

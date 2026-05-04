@@ -231,7 +231,7 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
     leaves the file unchanged and must not trigger an initramfs rebuild.
 
     Without this test, a regression that always passed force=True (or that
-    skipped the write_zfs_modprobe content comparison) would silently
+    skipped the write_initramfs_flags content comparison) would silently
     rebuild the initrd on every tunable update.
     """
     # Distinct values are required for the test to actually exercise
@@ -253,7 +253,7 @@ def test_zfs_no_rebuild_when_modprobe_unchanged():
 
             # Real value change. do_update's old != new short-circuit at
             # crud.py:121 does NOT fire, so update_initramfs is invoked.
-            # write_zfs_modprobe queries enabled ZFS tunables, finds none,
+            # write_initramfs_flags queries enabled ZFS tunables, finds none,
             # produces empty content matching the already-empty (missing)
             # modprobe file, and returns False — so boot.update_initramfs
             # runs with force=False and the existing initrd is kept.
