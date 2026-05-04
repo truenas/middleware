@@ -5,6 +5,7 @@ from pathlib import Path
 import platform
 import time
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import RunOnRunnerException, call, run_on_runner
 
 # We could be running these tests on a Linux or FreeBSD test-runner, so the commands
@@ -156,3 +157,36 @@ def target_login_test_freebsd(portal_ip, target_name, check_surfaced_luns=None):
             return True
         finally:
             run_on_runner(['iscsictl', '-R', '-t', target_name], check=False)
+
+
+def lio_supported() -> bool:
+    """Return True if LIO mode (2) is accepted by the API.
+
+    Probes by stopping the iSCSI service if it is running, attempting to set
+    mode=2, then restoring the original mode and service running state.
+    """
+    _SERVICE = "iscsitarget"
+    _LIO_MODE = 2
+
+    cfg = call("iscsi.global.config")
+    original_mode = cfg["mode"]
+    was_running = call("service.started", _SERVICE)
+
+    if was_running:
+        call("service.control", "STOP", _SERVICE, job=True)
+
+    accepted = True
+    try:
+        call("iscsi.global.update", {"mode": _LIO_MODE})
+    except ValidationErrors as e:
+        if any(err.attribute == "iscsi_update.mode" for err in e.errors):
+            accepted = False
+        else:
+            raise
+    finally:
+        if accepted:
+            call("iscsi.global.update", {"mode": original_mode})
+        if was_running:
+            call("service.control", "START", _SERVICE, job=True)
+
+    return accepted
