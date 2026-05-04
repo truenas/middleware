@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import threading
 import time
-import contextlib
-import os
 
 import libzfs
 import netsnmpagent
@@ -233,6 +231,18 @@ zvol_table = agent.Table(
     ],
 )
 
+dataset_table = agent.Table(
+    oidstr="TRUENAS-MIB::datasetTable",
+    indexes=[agent.Integer32()],
+    columns=[
+        (1, agent.Integer32()),
+        (2, agent.DisplayString()),
+        (3, agent.Counter64()),
+        (4, agent.Counter64()),
+        (5, agent.Counter64()),
+    ],
+)
+
 hdd_temp_table = agent.Table(
     oidstr="TRUENAS-MIB::hddTempTable",
     indexes=[
@@ -361,41 +371,51 @@ def fill_in_zvol_snmp_row_info(idx, info):
     row.setRowCell(5, agent.Counter64(info["properties"]["referenced"]["parsed"]))
 
 
+def fill_in_dataset_snmp_row_info(idx, info):
+    row = dataset_table.addRow([agent.Integer32(idx)])
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(info["name"]))
+    row.setRowCell(3, agent.Counter64(info["properties"]["used"]["parsed"]))
+    row.setRowCell(4, agent.Counter64(info["properties"]["available"]["parsed"]))
+    row.setRowCell(5, agent.Counter64(info["properties"]["referenced"]["parsed"]))
+
+
+def collect_dataset_info(state, ds_info):
+    state["dataset_idx"] += 1
+    fill_in_dataset_snmp_row_info(state["dataset_idx"], ds_info)
+    if ds_info["type"] == "VOLUME":
+        state["zvol_idx"] += 1
+        fill_in_zvol_snmp_row_info(state["zvol_idx"], ds_info)
+
+    for child in ds_info.get("children", ()):
+        collect_dataset_info(state, child)
+
+
 def report_zfs_info(prev_zpool_info):
     zpool_table.clear()
     zvol_table.clear()
+    dataset_table.clear()
 
-    # zpool related information
+    state = {"pool_idx": 0, "zvol_idx": 0, "dataset_idx": 0}
+
     with libzfs.ZFS() as z:
-        for idx, zpool in enumerate(z.pools, start=1):
+        for zpool in z.pools:
+            state["pool_idx"] += 1
             name = zpool.name
             health = zpool.properties["health"].value
             io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zpool)
-            fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s)
+            fill_in_zpool_snmp_row_info(state["pool_idx"], name, health, io_overall, io_1s)
             # be sure and update our zpool io data so next time it's called
             # we calculate the 1sec values properly
             prev_zpool_info.update(io_overall)
 
-        zvols = get_list_of_zvols()
         kwargs = {
             'user_props': False,
             'props': ['used', 'available', 'referenced'],
-            'retrieve_children': False,
-            'datasets': zvols,
+            'retrieve_children': True,
         }
-        for idx, ds_info in enumerate(z.datasets_serialized(**kwargs), start=1):
-            fill_in_zvol_snmp_row_info(idx, ds_info)
-
-
-def get_list_of_zvols():
-    zvols = set()
-    root_dir = '/dev/zvol/'
-    with contextlib.suppress(FileNotFoundError):  # no zvols
-        for dir_path, unused_dirs, files in os.walk(root_dir):
-            for file in filter(lambda x: '@' not in x, files):
-                zvols.add(os.path.join(dir_path, file).removeprefix(root_dir).replace('+', ' '))
-
-    return list(zvols)
+        for ds_info in z.datasets_serialized(**kwargs):
+            collect_dataset_info(state, ds_info)
 
 
 if __name__ == "__main__":
