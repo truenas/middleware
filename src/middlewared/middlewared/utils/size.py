@@ -1,8 +1,6 @@
 import re
 import types
 
-import humanfriendly
-
 DECIMAL_UNITS = types.MappingProxyType(
     {
         '': 1,
@@ -42,11 +40,28 @@ BINARY_UNITS = types.MappingProxyType(
     }
 )
 MB = 1048576
+UNITS = ('KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB')
 RE_SIZE = re.compile(r'([\d\.]+)\s*([A-Za-z]*)')
 
 
 def format_size(size: int) -> str:
-    return humanfriendly.format_size(size, binary=True)
+    """
+    Format a byte count as a human-readable string using binary (1024-based) units.
+
+    Sizes below 1024 render as bytes (e.g. '512 bytes', '1 byte'). Larger sizes
+    scale up through KiB, MiB, ... YiB and are rendered with up to two decimal
+    places, with trailing zeros stripped (e.g. '1 KiB', '1.5 KiB', '1.46 KiB').
+    Values that exceed YiB are clamped to the YiB unit (e.g. '1024 YiB').
+    """
+    if size < 1024:
+        return f'{size} byte' if size == 1 else f'{size} bytes'
+    value = size / 1024
+    last_idx = len(UNITS) - 1
+    for i, unit in enumerate(UNITS):
+        if value < 1024 or i == last_idx:
+            break
+        value /= 1024
+    return f'{value:.2f}'.rstrip('0').rstrip('.') + f' {unit}'
 
 
 def normalize_size(size: str, raise_exception: bool = True) -> int | None:
